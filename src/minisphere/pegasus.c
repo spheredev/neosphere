@@ -1668,7 +1668,7 @@ js_FS_readFile(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(file_data = sfs_fslurp(g_fs, filename, NULL, &file_size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot read file '%s'", filename);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
 	buffer = duk_push_fixed_buffer(ctx, file_size);
 	memcpy(buffer, file_data, file_size);
 	free(file_data);
@@ -1724,7 +1724,7 @@ js_FS_writeFile(duk_context* ctx)
 	buffer = duk_require_buffer_data(ctx, 1, &size);
 
 	if (!sfs_fspew(g_fs, filename, NULL, buffer, size))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot write file '%s'", filename);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
 	return 0;
 }
 
@@ -1924,7 +1924,7 @@ js_new_Font(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(font = font_load(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load font `%s`", filename);
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Font", font);
 	return 0;
@@ -2130,7 +2130,7 @@ js_new_Texture(duk_context* ctx)
 		filename = duk_require_path(ctx, 0, NULL, false, false);
 		image = image_load(filename);
 		if (image == NULL)
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
 	}
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Texture", image);
@@ -2513,7 +2513,7 @@ js_new_Mixer(duk_context* ctx)
 	if (channels < 1 || channels > 7)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid channel count");
 	if (!(mixer = mixer_new(frequency, bits, channels)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot create %d-bit %dch voice", bits, channels);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create %d-bit %dch voice", bits, channels);
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Mixer", mixer);
 	return 0;
@@ -2916,7 +2916,7 @@ js_new_Sample(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(sample = sample_new(filename, true)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sample `%s`", filename);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load sample `%s`", filename);
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Sample", sample);
 	return 0;
@@ -3366,7 +3366,7 @@ js_new_Sound(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(sound = sound_new(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load sound `%s`", filename);
 	duk_push_class_obj(ctx, "Sound", sound);
 	return 1;
 }
@@ -3714,19 +3714,19 @@ js_new_Surface(duk_context* ctx)
 		height = duk_require_int(ctx, 1);
 		fill_color = n_args >= 3 ? duk_pegasus_require_color(ctx, 2) : color_new(0, 0, 0, 0);
 		if (!(image = image_new(width, height)))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create surface");
 		image_fill(image, fill_color);
 	}
 	else if (duk_is_class_obj(ctx, 0, "Texture")) {
 		src_image = duk_require_class_obj(ctx, 0, "Texture");
 		if (!(image = image_clone(src_image)))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "surface creation failed");
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create surface");
 	}
 	else {
 		filename = duk_require_path(ctx, 0, NULL, false, false);
 		image = image_load(filename);
 		if (image == NULL)
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
 	}
 	duk_push_class_obj(ctx, "Surface", image);
 	return 1;
