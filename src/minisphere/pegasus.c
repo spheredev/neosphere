@@ -2948,12 +2948,32 @@ static duk_ret_t
 js_Sample_play(duk_context* ctx)
 {
 	mixer_t*  mixer;
+	int       num_args;
+	float     pan = 0.0;
 	sample_t* sample;
+	float     speed = 1.0;
+	float     volume = 1.0;
 
+	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
 	sample = duk_require_class_obj(ctx, -1, "Sample");
 	mixer = duk_require_class_obj(ctx, 0, "Mixer");
+	if (num_args >= 2) {
+		duk_require_object_coercible(ctx, 1);
+		duk_get_prop_string(ctx, 1, "volume");
+		if (!duk_is_undefined(ctx, -1))
+			volume = duk_require_number(ctx, -3);
+		duk_get_prop_string(ctx, 1, "pan");
+		if (!duk_is_undefined(ctx, -1))
+			pan = duk_require_number(ctx, -2);
+		duk_get_prop_string(ctx, 1, "speed");
+		if (!duk_is_undefined(ctx, -1))
+			speed = duk_require_number(ctx, -1);
+	}
 
+	sample_set_gain(sample, volume);
+	sample_set_pan(sample, pan);
+	sample_set_speed(sample, speed);
 	sample_play(sample, mixer);
 	return 0;
 }
