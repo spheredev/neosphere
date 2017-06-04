@@ -2004,24 +2004,20 @@ js_GradientLine(duk_context* ctx)
 	color_t color2;
 	float   length;
 	float   tx, ty;
-	int     x_size;
-	int     x1;
-	int     x2;
-	int     y_size;
-	int     y1;
-	int     y2;
+	float   x1;
+	float   x2;
+	float   y1;
+	float   y2;
 	
 	x1 = duk_to_int(ctx, 0);
 	y1 = duk_to_int(ctx, 1);
-	x2 = x1 + duk_to_int(ctx, 2);
-	y2 = y1 + duk_to_int(ctx, 3);
+	x2 = duk_to_int(ctx, 2);
+	y2 = duk_to_int(ctx, 3);
 	color1 = duk_require_sphere_color(ctx, 4);
 	color2 = duk_require_sphere_color(ctx, 5);
 
 	if (!screen_is_skipframe(g_screen)) {
-		x_size = x2 - x1;
-		y_size = y2 - y1;
-		length = sqrt(x_size * x_size + y_size * y_size);
+		length = hypotf(x2 - x1, y2 - y1);
 		tx = 0.5 * (y2 - y1) / length;
 		ty = 0.5 * -(x2 - x1) / length;
 		ALLEGRO_VERTEX verts[] = {
@@ -4828,12 +4824,10 @@ js_Surface_gradientLine(duk_context* ctx)
 	image_t* image;
 	float    length;
 	float    tx, ty;
-	int      x_size;
-	int      x1;
-	int      x2;
-	int      y_size;
-	int      y1;
-	int      y2;
+	float    x1;
+	float    x2;
+	float    y1;
+	float    y2;
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
@@ -4841,16 +4835,14 @@ js_Surface_gradientLine(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 	x1 = duk_to_int(ctx, 0);
 	y1 = duk_to_int(ctx, 1);
-	x2 = x1 + duk_to_int(ctx, 2);
-	y2 = y1 + duk_to_int(ctx, 3);
+	x2 = duk_to_int(ctx, 2);
+	y2 = duk_to_int(ctx, 3);
 	color1 = duk_require_sphere_color(ctx, 4);
 	color2 = duk_require_sphere_color(ctx, 5);
 
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(image_bitmap(image));
-	x_size = x2 - x1;
-	y_size = y2 - y1;
-	length = sqrt(x_size * x_size + y_size * y_size);
+	length = hypotf(x2 - x1, y2 - y1);
 	tx = 0.5 * (y2 - y1) / length;
 	ty = 0.5 * -(x2 - x1) / length;
 	ALLEGRO_VERTEX verts[] = {

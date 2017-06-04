@@ -13,7 +13,7 @@ vX.X.X - TBD
 * Removes the `minify` module from Cell's standard library.
 * Removes `describe()` from the Cellscript API.
 * Updates miniRT Terminal to use `Dispatch` internally, avoiding an unnecessary
-  implicit dependency on miniRT Threads.
+  implicit dependency on Threads.
 * Fixes a bug where `Dispatch.onRender()` jobs will be called in reverse order
   following a call to `Dispatch.onUpdate()`.
 * Fixes a bug where Sphere v1 `Surface#cloneSection()` and `Surface#rotate()`
