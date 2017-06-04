@@ -84,6 +84,7 @@ static duk_ret_t js_GrabImage                  (duk_context* ctx);
 static duk_ret_t js_GrabSurface                (duk_context* ctx);
 static duk_ret_t js_GradientCircle             (duk_context* ctx);
 static duk_ret_t js_GradientEllipse            (duk_context* ctx);
+static duk_ret_t js_GradientLine               (duk_context* ctx);
 static duk_ret_t js_GradientRectangle          (duk_context* ctx);
 static duk_ret_t js_GradientTriangle           (duk_context* ctx);
 static duk_ret_t js_HashByteArray              (duk_context* ctx);
@@ -250,6 +251,7 @@ static duk_ret_t js_Surface_flipVertically     (duk_context* ctx);
 static duk_ret_t js_Surface_getPixel           (duk_context* ctx);
 static duk_ret_t js_Surface_gradientCircle     (duk_context* ctx);
 static duk_ret_t js_Surface_gradientEllipse    (duk_context* ctx);
+static duk_ret_t js_Surface_gradientLine       (duk_context* ctx);
 static duk_ret_t js_Surface_gradientRectangle  (duk_context* ctx);
 static duk_ret_t js_Surface_line               (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedCircle     (duk_context* ctx);
@@ -404,6 +406,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "GrabSurface", js_GrabSurface);
 	api_define_function(ctx, NULL, "GradientCircle", js_GradientCircle);
 	api_define_function(ctx, NULL, "GradientEllipse", js_GradientEllipse);
+	api_define_function(ctx, NULL, "GradientLine", js_GradientLine);
 	api_define_function(ctx, NULL, "GradientRectangle", js_GradientRectangle);
 	api_define_function(ctx, NULL, "GradientTriangle", js_GradientTriangle);
 	api_define_function(ctx, NULL, "HashByteArray", js_HashByteArray);
@@ -581,6 +584,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSurface", "getPixel", js_Surface_getPixel);
 	api_define_method(ctx, "ssSurface", "gradientCircle", js_Surface_gradientCircle);
 	api_define_method(ctx, "ssSurface", "gradientEllipse", js_Surface_gradientEllipse);
+	api_define_method(ctx, "ssSurface", "gradientLine", js_Surface_gradientLine);
 	api_define_method(ctx, "ssSurface", "gradientRectangle", js_Surface_gradientRectangle);
 	api_define_method(ctx, "ssSurface", "line", js_Surface_line);
 	api_define_method(ctx, "ssSurface", "outlinedCircle", js_Surface_outlinedCircle);
@@ -1990,6 +1994,44 @@ js_GradientEllipse(duk_context* ctx)
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
+js_GradientLine(duk_context* ctx)
+{
+	color_t color1;
+	color_t color2;
+	float   length;
+	float   tx, ty;
+	int     x_size;
+	int     x1;
+	int     x2;
+	int     y_size;
+	int     y1;
+	int     y2;
+	
+	x1 = duk_to_int(ctx, 0);
+	y1 = duk_to_int(ctx, 1);
+	x2 = x1 + duk_to_int(ctx, 2);
+	y2 = y1 + duk_to_int(ctx, 3);
+	color1 = duk_require_sphere_color(ctx, 4);
+	color2 = duk_require_sphere_color(ctx, 5);
+
+	if (!screen_is_skipframe(g_screen)) {
+		x_size = x2 - x1;
+		y_size = y2 - y1;
+		length = sqrt(x_size * x_size + y_size * y_size);
+		tx = 0.5 * (y2 - y1) / length;
+		ty = 0.5 * -(x2 - x1) / length;
+		ALLEGRO_VERTEX verts[] = {
+			{ x1 + tx, y1 + ty, 0, 0, 0, nativecolor(color1) },
+			{ x1 - tx, y1 - ty, 0, 0, 0, nativecolor(color1) },
+			{ x2 - tx, y2 - ty, 0, 0, 0, nativecolor(color2) },
+			{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) }
+		};
+		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
+	}
 	return 0;
 }
 
@@ -4772,6 +4814,52 @@ js_Surface_gradientRectangle(duk_context* ctx)
 		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	al_set_target_backbuffer(screen_display(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_gradientLine(duk_context* ctx)
+{
+	int      blend_mode;
+	color_t  color1;
+	color_t  color2;
+	image_t* image;
+	float    length;
+	float    tx, ty;
+	int      x_size;
+	int      x1;
+	int      x2;
+	int      y_size;
+	int      y1;
+	int      y2;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	x1 = duk_to_int(ctx, 0);
+	y1 = duk_to_int(ctx, 1);
+	x2 = x1 + duk_to_int(ctx, 2);
+	y2 = y1 + duk_to_int(ctx, 3);
+	color1 = duk_require_sphere_color(ctx, 4);
+	color2 = duk_require_sphere_color(ctx, 5);
+
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	x_size = x2 - x1;
+	y_size = y2 - y1;
+	length = sqrt(x_size * x_size + y_size * y_size);
+	tx = 0.5 * (y2 - y1) / length;
+	ty = 0.5 * -(x2 - x1) / length;
+	ALLEGRO_VERTEX verts[] = {
+		{ x1 + tx, y1 + ty, 0, 0, 0, nativecolor(color1) },
+		{ x1 - tx, y1 - ty, 0, 0, 0, nativecolor(color1) },
+		{ x2 - tx, y2 - ty, 0, 0, 0, nativecolor(color2) },
+		{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) }
+	};
+	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
 	return 0;

@@ -207,8 +207,8 @@ Sphere.sleep(timeout);
     is in seconds, and may include fractions (e.g., 1.5).
 
     Note: Any pending Dispatch.now() jobs will be run before sleeping.
-		  Depending on how long that takes, Sphere.sleep() may take longer than
-		  expected to return.
+          Depending on how long that takes, Sphere.sleep() may take longer than
+          expected to return.
 
 
 Dispatch API
@@ -1030,16 +1030,16 @@ Sample#play(mixer[, options]);
             silent.  Volume levels higher than 1.0 will amplify the sound but
             may cause distortion.  Volume is 1.0 if not specified.
 
-		options.pan
+        options.pan
 
-		    A volume between -1.0 and 1.0 specifying the left/right balance.
-		    -1.0 is full left, +1.0 is full right, and 0.0 is dead center.  Pan
-		    is 0.0 (center) if not specified.
+            A volume between -1.0 and 1.0 specifying the left/right balance.
+            -1.0 is full left, +1.0 is full right, and 0.0 is dead center.  Pan
+            is 0.0 (center) if not specified.
 
-		options.speed
+        options.speed
 
-		    Playback speed, where 1.0 is normal speed.  Also affects pitch.
-		    Speed is 1.0x if not specified.
+            Playback speed, where 1.0 is normal speed.  Also affects pitch.
+            Speed is 1.0x if not specified.
 
 Sample#stopAll();
 

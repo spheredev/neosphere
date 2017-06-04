@@ -9,7 +9,7 @@ vX.X.X - TBD
   the same time.
 * Adds support for `Sphere.Game` in Cellscripts, allowing the data in the JSON
   manifest to be manipulated directly.
-* Adds support for the Sphere v1 SoundEffect API.
+* Adds more missing Sphere v1 API functions, further improving compatibility.
 * Removes the `minify` module from Cell's standard library.
 * Removes `describe()` from the Cellscript API.
 * Updates miniRT Terminal to use `Dispatch` internally, avoiding an unnecessary
