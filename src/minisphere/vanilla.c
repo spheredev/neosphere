@@ -1895,14 +1895,18 @@ js_GarbageCollect(duk_context* ctx)
 static duk_ret_t
 js_GrabImage(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int w = duk_to_int(ctx, 2);
-	int h = duk_to_int(ctx, 3);
-
 	image_t* image;
+	int      height;
+	int      width;
+	int      x;
+	int      y;
 
-	if (!(image = screen_grab(g_screen, x, y, w, h)))
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
+
+	if (!(image = screen_grab(g_screen, x, y, width, height)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to grab backbuffer image");
 	duk_push_class_obj(ctx, "ssImage", image);
 	return 1;
@@ -1911,14 +1915,18 @@ js_GrabImage(duk_context* ctx)
 static duk_ret_t
 js_GrabSurface(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int w = duk_to_int(ctx, 2);
-	int h = duk_to_int(ctx, 3);
-
 	image_t* image;
+	int      height;
+	int      width;
+	int      x;
+	int      y;
 
-	if (!(image = screen_grab(g_screen, x, y, w, h)))
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
+
+	if (!(image = screen_grab(g_screen, x, y, width, height)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to grab backbuffer image");
 	duk_push_class_obj(ctx, "ssSurface", image);
 	return 1;
@@ -1929,34 +1937,39 @@ js_GradientCircle(duk_context* ctx)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
-	int x = duk_to_number(ctx, 0);
-	int y = duk_to_number(ctx, 1);
-	int radius = duk_to_number(ctx, 2);
-	color_t in_color = duk_require_sphere_color(ctx, 3);
-	color_t out_color = duk_require_sphere_color(ctx, 4);
-
-	double phi;
-	int    vcount;
+	color_t inner_color;
+	int     num_verts;
+	color_t outer_color;
+	double  phi;
+	float   radius;
+	float   x;
+	float   y;
 
 	int i;
 
+	x = trunc(duk_to_number(ctx, 0));
+	y = trunc(duk_to_number(ctx, 1));
+	radius = trunc(duk_to_number(ctx, 2));
+	inner_color = duk_require_sphere_color(ctx, 3);
+	outer_color = duk_require_sphere_color(ctx, 4);
+
 	if (screen_is_skipframe(g_screen))
 		return 0;
-	vcount = fmin(radius, 126);
+	num_verts = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(in_color);
-	for (i = 0; i < vcount; ++i) {
-		phi = 2 * M_PI * i / vcount;
+	s_vbuf[0].color = nativecolor(inner_color);
+	for (i = 0; i < num_verts; ++i) {
+		phi = 2 * M_PI * i / num_verts;
 		s_vbuf[i + 1].x = x + cos(phi) * radius;
 		s_vbuf[i + 1].y = y - sin(phi) * radius;
 		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(out_color);
+		s_vbuf[i + 1].color = nativecolor(outer_color);
 	}
 	s_vbuf[i + 1].x = x + cos(0) * radius;
 	s_vbuf[i + 1].y = y - sin(0) * radius;
 	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(out_color);
-	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	s_vbuf[i + 1].color = nativecolor(outer_color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return 0;
 }
 
@@ -1965,35 +1978,40 @@ js_GradientEllipse(duk_context* ctx)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
-	int x = trunc(duk_to_number(ctx, 0));
-	int y = trunc(duk_to_number(ctx, 1));
-	int rx = trunc(duk_to_number(ctx, 2));
-	int ry = trunc(duk_to_number(ctx, 3));
-	color_t in_color = duk_require_sphere_color(ctx, 4);
-	color_t out_color = duk_require_sphere_color(ctx, 5);
-
-	double phi;
-	int    vcount;
+	color_t inner_color;
+	int     num_verts;
+	color_t outer_color;
+	double  phi;
+	float   rx, ry;
+	float   x;
+	float   y;
 
 	int i;
 
+	x = trunc(duk_to_number(ctx, 0));
+	y = trunc(duk_to_number(ctx, 1));
+	rx = trunc(duk_to_number(ctx, 2));
+	ry = trunc(duk_to_number(ctx, 3));
+	inner_color = duk_require_sphere_color(ctx, 4);
+	outer_color = duk_require_sphere_color(ctx, 5);
+
 	if (screen_is_skipframe(g_screen))
 		return 0;
-	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
+	num_verts = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(in_color);
-	for (i = 0; i < vcount; ++i) {
-		phi = 2 * M_PI * i / vcount;
+	s_vbuf[0].color = nativecolor(inner_color);
+	for (i = 0; i < num_verts; ++i) {
+		phi = 2 * M_PI * i / num_verts;
 		s_vbuf[i + 1].x = x + cos(phi) * rx;
 		s_vbuf[i + 1].y = y - sin(phi) * ry;
 		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(out_color);
+		s_vbuf[i + 1].color = nativecolor(outer_color);
 	}
 	s_vbuf[i + 1].x = x + cos(0) * rx;
 	s_vbuf[i + 1].y = y - sin(0) * ry;
 	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(out_color);
-	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	s_vbuf[i + 1].color = nativecolor(outer_color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return 0;
 }
 
@@ -2009,10 +2027,10 @@ js_GradientLine(duk_context* ctx)
 	float   y1;
 	float   y2;
 	
-	x1 = duk_to_int(ctx, 0);
-	y1 = duk_to_int(ctx, 1);
-	x2 = duk_to_int(ctx, 2);
-	y2 = duk_to_int(ctx, 3);
+	x1 = trunc(duk_to_number(ctx, 0)) + 0.5;
+	y1 = trunc(duk_to_number(ctx, 1)) + 0.5;
+	x2 = trunc(duk_to_number(ctx, 2)) + 0.5;
+	y2 = trunc(duk_to_number(ctx, 3)) + 0.5;
 	color1 = duk_require_sphere_color(ctx, 4);
 	color2 = duk_require_sphere_color(ctx, 5);
 
@@ -2024,7 +2042,7 @@ js_GradientLine(duk_context* ctx)
 			{ x1 + tx, y1 + ty, 0, 0, 0, nativecolor(color1) },
 			{ x1 - tx, y1 - ty, 0, 0, 0, nativecolor(color1) },
 			{ x2 - tx, y2 - ty, 0, 0, 0, nativecolor(color2) },
-			{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) }
+			{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) },
 		};
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
 	}
@@ -2034,14 +2052,21 @@ js_GradientLine(duk_context* ctx)
 static duk_ret_t
 js_GradientRectangle(duk_context* ctx)
 {
-	int x1 = duk_to_int(ctx, 0);
-	int y1 = duk_to_int(ctx, 1);
-	int x2 = x1 + duk_to_int(ctx, 2);
-	int y2 = y1 + duk_to_int(ctx, 3);
-	color_t color_ul = duk_require_sphere_color(ctx, 4);
-	color_t color_ur = duk_require_sphere_color(ctx, 5);
-	color_t color_lr = duk_require_sphere_color(ctx, 6);
-	color_t color_ll = duk_require_sphere_color(ctx, 7);
+	color_t color_ul;
+	color_t color_ur;
+	color_t color_lr;
+	color_t color_ll;
+	float   x1, x2;
+	float   y1, y2;
+	
+	x1 = trunc(duk_to_number(ctx, 0));
+	y1 = trunc(duk_to_number(ctx, 1));
+	x2 = x1 + trunc(duk_to_number(ctx, 2));
+	y2 = y1 + trunc(duk_to_number(ctx, 3));
+	color_ul = duk_require_sphere_color(ctx, 4);
+	color_ur = duk_require_sphere_color(ctx, 5);
+	color_lr = duk_require_sphere_color(ctx, 6);
+	color_ll = duk_require_sphere_color(ctx, 7);
 
 	if (!screen_is_skipframe(g_screen)) {
 		ALLEGRO_VERTEX verts[] = {
@@ -2058,15 +2083,16 @@ js_GradientRectangle(duk_context* ctx)
 static duk_ret_t
 js_GradientTriangle(duk_context* ctx)
 {
-	int     x1, y1, x2, y2, x3, y3;
 	color_t color1, color2, color3;
+	float   x1, x2, x3;
+	float   y1, y2, y3;
 
-	x1 = duk_to_int(ctx, 0);
-	y1 = duk_to_int(ctx, 1);
-	x2 = duk_to_int(ctx, 2);
-	y2 = duk_to_int(ctx, 3);
-	x3 = duk_to_int(ctx, 4);
-	y3 = duk_to_int(ctx, 5);
+	x1 = trunc(duk_to_number(ctx, 0));
+	y1 = trunc(duk_to_number(ctx, 1));
+	x2 = trunc(duk_to_number(ctx, 2));
+	y2 = trunc(duk_to_number(ctx, 3));
+	x3 = trunc(duk_to_number(ctx, 4));
+	y3 = trunc(duk_to_number(ctx, 5));
 	color1 = duk_require_sphere_color(ctx, 6);
 	color2 = duk_require_sphere_color(ctx, 7);
 	color3 = duk_require_sphere_color(ctx, 8);
@@ -2101,14 +2127,14 @@ static duk_ret_t
 js_HashFromFile(duk_context* ctx)
 {
 	void*       data;
+	size_t      file_size;
 	const char* filename;
-	size_t      size;
 
 	filename = duk_require_path(ctx, 0, "other", true, false);
 
-	if (!(data = sfs_fslurp(g_fs, filename, NULL, &size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to read file");
-	duk_push_string(ctx, md5sum(data, size));
+	if (!(data = sfs_fslurp(g_fs, filename, NULL, &file_size)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file");
+	duk_push_string(ctx, md5sum(data, file_size));
 	return 1;
 }
 
@@ -2127,16 +2153,19 @@ js_HashFromString(duk_context* ctx)
 static duk_ret_t
 js_InflateByteArray(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	bytearray_t* array = duk_require_class_obj(ctx, 0, "ssByteArray");
-	int max_size = n_args >= 2 ? duk_to_int(ctx, 1) : 0;
-
-	bytearray_t* new_array;
+	bytearray_t*  array;
+	int           max_size;
+	bytearray_t*  new_array;
+	int           num_args;
+	
+	num_args = duk_get_top(ctx);
+	array = duk_require_class_obj(ctx, 0, "ssByteArray");
+	max_size = num_args >= 2 ? duk_to_int(ctx, 1) : 0;
 
 	if (max_size < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "buffer size must not be negative (got: %d)", max_size);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "negative buffer size");
 	if (!(new_array = bytearray_inflate(array, max_size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to inflate source ByteArray");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't inflate byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }
@@ -2144,11 +2173,15 @@ js_InflateByteArray(duk_context* ctx)
 static duk_ret_t
 js_Line(duk_context* ctx)
 {
-	float x1 = duk_to_int(ctx, 0) + 0.5;
-	float y1 = duk_to_int(ctx, 1) + 0.5;
-	float x2 = duk_to_int(ctx, 2) + 0.5;
-	float y2 = duk_to_int(ctx, 3) + 0.5;
-	color_t color = duk_require_sphere_color(ctx, 4);
+	color_t color;
+	float   x1, x2;
+	float   y1, y2;
+	
+	x1 = trunc(duk_to_number(ctx, 0)) + 0.5;
+	y1 = trunc(duk_to_number(ctx, 1)) + 0.5;
+	x2 = trunc(duk_to_number(ctx, 2)) + 0.5;
+	y2 = trunc(duk_to_number(ctx, 3)) + 0.5;
+	color = duk_require_sphere_color(ctx, 4);
 
 	if (!screen_is_skipframe(g_screen))
 		al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
@@ -2158,9 +2191,9 @@ js_Line(duk_context* ctx)
 static duk_ret_t
 js_LineSeries(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
+	int num_args = duk_get_top(ctx);
 	color_t color = duk_require_sphere_color(ctx, 1);
-	int type = n_args >= 3 ? duk_to_int(ctx, 2) : LINE_MULTIPLE;
+	int type = num_args >= 3 ? duk_to_int(ctx, 2) : LINE_MULTIPLE;
 
 	size_t          num_points;
 	int             x, y;
@@ -5052,7 +5085,7 @@ js_Surface_rotate(duk_context* ctx)
 	w = new_w = image_width(image);
 	h = new_h = image_height(image);
 	if (want_resize) {
-		// TODO: implement in-place resizing for Surface:rotate()
+		// TODO: implement in-place resizing for Surface#rotate()
 	}
 	if ((new_image = image_new(new_w, new_h)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failed to create new surface bitmap");
