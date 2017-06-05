@@ -18,6 +18,8 @@ vX.X.X - TBD
   following a call to `Dispatch.onUpdate()`.
 * Fixes a bug where Sphere v1 `Surface#cloneSection()` and `Surface#rotate()`
   could introduce graphical artifacts on some platforms.
+* Fixes a bug where `Sound#pan` range is treated as [-255,+255] instead of the
+  documented range of [-1.0,+1.0].
 * Fixes a bug where Cell will sometimes not detect a filename conflict.
 
 

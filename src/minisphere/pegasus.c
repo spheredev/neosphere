@@ -3433,21 +3433,21 @@ js_Sound_get_pan(duk_context* ctx)
 	duk_push_this(ctx);
 	sound = duk_require_class_obj(ctx, -1, "Sound");
 
-	duk_push_int(ctx, sound_pan(sound) * 255);
+	duk_push_number(ctx, sound_pan(sound));
 	return 1;
 }
 
 static duk_ret_t
 js_Sound_set_pan(duk_context* ctx)
 {
-	int new_pan = duk_require_int(ctx, 0);
-
+	float    new_pan;
 	sound_t* sound;
 
 	duk_push_this(ctx);
 	sound = duk_require_class_obj(ctx, -1, "Sound");
+	new_pan = duk_require_number(ctx, 0);
 
-	sound_set_pan(sound, (float)new_pan / 255);
+	sound_set_pan(sound, new_pan);
 	return 0;
 }
 
