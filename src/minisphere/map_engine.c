@@ -2977,10 +2977,10 @@ js_MapEngine(duk_context* ctx)
 	if (!change_map(filename, true))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to load map `%s`", filename);
 	while (!s_exiting) {
-		render_map();
-		screen_flip(g_screen, s_framerate);
 		update_map_engine(true);
 		process_map_input();
+		render_map();
+		screen_flip(g_screen, s_framerate);
 	}
 	reset_persons(false);
 	s_is_map_running = false;
