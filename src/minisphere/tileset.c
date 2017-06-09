@@ -11,7 +11,6 @@ struct tileset
 	atlas_t*     atlas;
 	int          atlas_pitch;
 	int          height;
-	image_t*     texture;
 	int          num_tiles;
 	struct tile* tiles;
 	int          width;
@@ -256,10 +255,15 @@ tileset_set_image(tileset_t* tileset, int tile_index, image_t* image)
 	//     replaces.  if it's not, the engine won't crash, but it may cause graphical
 	//     glitches.
 	
-	rect_t xy;
+	image_t* texture;
+	rect_t   xy;
 	
 	xy = atlas_xy(tileset->atlas, tile_index);
-	image_blit(image, tileset->texture, xy.x1, xy.y1);
+	texture = atlas_image(tileset->atlas);
+	
+	// we could just swap out the tile image pointer which would be faster than
+	// blitting, but then we'd lose all the benefits of the tile atlas.
+	image_blit(image, texture, xy.x1, xy.y1);
 }
 
 bool

@@ -4602,19 +4602,22 @@ js_Surface_createImage(duk_context* ctx)
 static duk_ret_t
 js_Surface_drawText(duk_context* ctx)
 {
-	font_t* font = duk_require_class_obj(ctx, 0, "ssFont");
-	int x = duk_to_int(ctx, 1);
-	int y = duk_to_int(ctx, 2);
-	const char* text = duk_to_string(ctx, 3);
-
-	int      blend_mode;
-	color_t  color;
-	image_t* image;
+	int         blend_mode;
+	color_t     color;
+	font_t*     font;
+	image_t*    image;
+	const char* text;
+	int         x;
+	int         y;
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	font = duk_require_class_obj(ctx, 0, "ssFont");
+	x = duk_to_int(ctx, 1);
+	y = duk_to_int(ctx, 2);
+	text = duk_to_string(ctx, 3);
 
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
 	apply_blend_mode(blend_mode);
