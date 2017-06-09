@@ -14,8 +14,12 @@ vX.X.X - TBD
 * Removes `describe()` from the Cellscript API.
 * Updates miniRT Terminal to use `Dispatch` internally, avoiding an unnecessary
   implicit dependency on Threads.
+* Fixes a segfault that occurs when a game calls `SetTileImage()` or
+  `SetTileSurface()`.
 * Fixes a bug where `Dispatch.onRender()` jobs will be called in reverse order
   following a call to `Dispatch.onUpdate()`.
+* Fixes a bug where miniSphere calls the render script before the update script
+  on map engine startup, leading to compatibility issues.
 * Fixes a bug where Sphere v1 `Surface#cloneSection()` and `Surface#rotate()`
   could introduce graphical artifacts on some platforms.
 * Fixes a bug where `Sound#pan` range is treated as [-255,+255] instead of the
