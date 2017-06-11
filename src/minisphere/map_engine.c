@@ -56,6 +56,7 @@ static duk_ret_t js_GetCurrentZone          (duk_context* ctx);
 static duk_ret_t js_GetInputPerson          (duk_context* ctx);
 static duk_ret_t js_GetLayerHeight          (duk_context* ctx);
 static duk_ret_t js_GetLayerMask            (duk_context* ctx);
+static duk_ret_t js_GetLayerName            (duk_context* ctx);
 static duk_ret_t js_GetLayerWidth           (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate   (duk_context* ctx);
 static duk_ret_t js_GetNextAnimatedTile     (duk_context* ctx);
@@ -1525,6 +1526,7 @@ init_map_engine_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "GetInputPerson", js_GetInputPerson);
 	api_define_function(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
 	api_define_function(ctx, NULL, "GetLayerMask", js_GetLayerMask);
+	api_define_function(ctx, NULL, "GetLayerName", js_GetLayerName);
 	api_define_function(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
 	api_define_function(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
 	api_define_function(ctx, NULL, "GetNextAnimatedTile", js_GetNextAnimatedTile);
