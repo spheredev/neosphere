@@ -1264,7 +1264,7 @@ js_GetPersonBase(duk_context* ctx)
 	rect_t    base;
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if (!(person = find_person(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	base = get_sprite_base(get_person_spriteset(person));
 	duk_push_object(ctx);
@@ -1286,7 +1286,7 @@ js_GetPersonData(duk_context* ctx)
 	spriteset_t* spriteset;
 	int          width, height;
 
-	if ((person = find_person(name)) == NULL)
+	if (!(person = find_person(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	spriteset = person->sprite;
 	get_sprite_size(spriteset, &width, &height);
@@ -1311,7 +1311,7 @@ js_GetPersonDirection(duk_context* ctx)
 	
 	person_t*   person;
 
-	if ((person = find_person(name)) == NULL)
+	if (!(person = find_person(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_string(ctx, person->direction);
 	return 1;
@@ -1324,7 +1324,7 @@ js_GetPersonFollowDistance(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if (!(person = find_person(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (person->leader == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "person has no leader");

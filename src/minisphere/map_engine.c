@@ -1692,7 +1692,10 @@ js_IsInputAttached(duk_context* ctx)
 		player = -1;
 		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
 			player = s_players[i].person == person ? i : player;
-		if (player == -1) return duk_push_false(ctx), 1;
+		if (player == -1) {
+			duk_push_false(ctx);
+			return 1;
+		}
 	}
 	else if (duk_is_number(ctx, 0))
 		player = duk_get_int(ctx, 0);
@@ -1818,9 +1821,12 @@ js_GetCurrentZone(duk_context* ctx)
 static duk_ret_t
 js_GetInputPerson(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	int player = n_args >= 1 ? duk_to_int(ctx, 0) : 0;
-	
+	int num_args;
+	int player;
+
+	num_args = duk_get_top(ctx);
+	player = num_args >= 1 ? duk_to_int(ctx, 0) : 0;
+
 	if (player < 0 || player >= MAX_PLAYERS)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
 	if (s_players[player].person == NULL)
@@ -1832,7 +1838,9 @@ js_GetInputPerson(duk_context* ctx)
 static duk_ret_t
 js_GetLayerHeight(duk_context* ctx)
 {
-	int layer = duk_require_map_layer(ctx, 0);
+	int layer;
+
+	layer = duk_require_map_layer(ctx, 0);
 
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
@@ -2213,18 +2221,22 @@ js_SetCameraY(duk_context* ctx)
 static duk_ret_t
 js_SetColorMask(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	color_t new_mask = duk_require_sphere_color(ctx, 0);
-	int frames = n_args >= 2 ? duk_to_int(ctx, 1) : 0;
+	color_t new_mask;
+	int     num_args;
+	int     num_frames;
+
+	num_args = duk_get_top(ctx);
+	new_mask = duk_require_sphere_color(ctx, 0);
+	num_frames = num_args >= 2 ? duk_to_int(ctx, 1) : 0;
 
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (frames < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "frames must be positive (got: %d)", frames);
-	if (frames > 0) {
+	if (num_frames < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid number of frames");
+	if (num_frames > 0) {
 		s_fade_color_to = new_mask;
 		s_fade_color_from = s_color_mask;
-		s_fade_frames = frames;
+		s_fade_frames = num_frames;
 		s_fade_progress = 0;
 	}
 	else {
@@ -2323,10 +2335,11 @@ js_SetLayerReflective(duk_context* ctx)
 static duk_ret_t
 js_SetLayerRenderer(duk_context* ctx)
 {
-	int layer = duk_require_map_layer(ctx, 0);
-	
+	int       layer;
 	char      script_name[50];
 	script_t* script;
+
+	layer = duk_require_map_layer(ctx, 0);
 	
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
@@ -2351,17 +2364,20 @@ js_SetLayerSize(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (new_width <= 0 || new_height <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "dimensions must be positive and nonzero (got W: %d, H: %d)", new_width, new_height);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid layer dimensions");
 	if (!resize_map_layer(layer, new_width, new_height))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to resize layer %d", layer);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't resize layer");
 	return 0;
 }
 
 static duk_ret_t
 js_SetLayerVisible(duk_context* ctx)
 {
-	int layer = duk_require_map_layer(ctx, 0);
-	bool is_visible = duk_to_boolean(ctx, 1);
+	bool is_visible;
+	int  layer;
+
+	layer = duk_require_map_layer(ctx, 0);
+	is_visible = duk_to_boolean(ctx, 1);
 
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
