@@ -10,6 +10,7 @@ vX.X.X - TBD
 * Adds support for `Sphere.Game` in Cellscripts, allowing the data in the JSON
   manifest to be manipulated directly.
 * Adds more missing Sphere v1 API functions, further improving compatibility.
+* Removes the `pact` module from the miniRT.
 * Removes the `minify` module from Cell's standard library.
 * Removes `describe()` from the Cellscript API.
 * Updates miniRT Terminal to use `Dispatch` internally, avoiding an unnecessary
