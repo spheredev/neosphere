@@ -13,10 +13,10 @@ module.exports =
 	undefine:  undefine,
 };
 
-const from    = require('from');
-const Log     = require('logger').Log;
-const prim    = require('prim');
-const scenes  = require('scenes');
+const from   = require('from');
+const Logger = require('debug').Logger;
+const prim   = require('prim');
+const scenes = require('scenes');
 
 var keyboard = Keyboard.Default;
 var mouse = Mouse.Default;
@@ -36,7 +36,7 @@ var entry = "";
 var cursorColor = Color.Gold;
 var fps = screen.frameRate;
 var logger = 'logPath' in Sphere.Game
-    ? new Log(Sphere.Game.logPath)
+    ? new Logger(Sphere.Game.logPath)
     : null;
 new scenes.Scene()
 	.doWhile(function() { return true; })
