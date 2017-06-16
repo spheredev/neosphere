@@ -6,9 +6,8 @@
 'use strict';
 module.exports =
 {
-	__esModule:  true,
-	defScenelet: defScenelet,
-	Scene:       Scene
+	__esModule: true,
+	Scene:      Scene,
 };
 
 const assert  = require('assert');
@@ -22,8 +21,8 @@ threads.create({
 	render: _renderScenes,
 }, 99);
 
-// scenes.defScenelet()
-// register a new scenelet.
+// Scene.defineAction()
+// register a new scene action ("scenelet").
 // arguments:
 //     name: the name of the scenelet.  this should be a valid JavaScript identifier (alphanumeric, no spaces).
 //     def:  an object defining the scenelet callbacks:
@@ -39,10 +38,10 @@ threads.create({
 //                               related to the command (e.g. text boxes).
 //           .finish(scene):     optional.  called after command execution ends, just before Scenes executes
 //                               the next instruction in the queue.
-function defScenelet(name, def)
+Scene.defineAction = function defineAction(name, def)
 {
 	if (name in Scene.prototype)
-		throw new Error("scenelet ID `" + name + "` already in use");
+		throw new Error("scenelet name `" + name + "` already in use");
 	Scene.prototype[name] = function() {
 		this.enqueue({
 			arguments: arguments,
@@ -56,8 +55,6 @@ function defScenelet(name, def)
 	};
 };
 
-// scenes.Scene()
-// construct a scene definition.
 function Scene()
 {
 	var activation = null;
@@ -68,7 +65,7 @@ function Scene()
 	var queueToFill = [];
 	var tasks = [];
 
-	var goTo = function(address)
+	function goTo(address)
 	{
 		activation.pc = address;
 	};
@@ -344,14 +341,14 @@ function _updateScenes()
 	return true;
 };
 
-defScenelet('call',
+Scene.defineAction('call',
 {
 	start: function(scene, method /*...*/) {
 		method.apply(null, [].slice.call(arguments, 2));
 	}
 });
 
-defScenelet('fadeTo',
+Scene.defineAction('fadeTo',
 {
 	start: function(scene, color, frames) {
 		assert.ok(typeof frames === 'number');
@@ -365,7 +362,7 @@ defScenelet('fadeTo',
 	}
 });
 
-defScenelet('pause',
+Scene.defineAction('pause',
 {
 	start: function(scene, frames) {
 		this.duration = frames;
@@ -377,7 +374,7 @@ defScenelet('pause',
 	}
 });
 
-defScenelet('playSound',
+Scene.defineAction('playSound',
 {
 	start: function(scene, fileName) {
 		this.sound = new Sound(fileName);
@@ -389,7 +386,7 @@ defScenelet('playSound',
 	}
 });
 
-defScenelet('tween',
+Scene.defineAction('tween',
 {
 	start: function(scene, object, frames, easingType, endValues) {
 		this.easers = {
