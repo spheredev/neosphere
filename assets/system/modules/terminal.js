@@ -1,16 +1,16 @@
 /**
- *  miniRT term CommonJS module
- *  (c) 2015-2016 Fat Cerberus
+ *  miniRT terminal CommonJS module
+ *  (c) 2015-2017 Fat Cerberus
 **/
 
 'use strict';
 exports.__esModule = true;
 exports.default = exports;
 
-const from   = require('from');
-const Logger = require('debug').Logger;
-const prim   = require('prim');
-const Scene  = require('scenes').Scene;
+const from   = require('from'),
+      Logger = require('logger'),
+      prim   = require('prim'),
+      Scene  = require('scene');
 
 var keyboard = Keyboard.Default;
 var mouse = Mouse.Default;

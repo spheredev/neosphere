@@ -1,16 +1,11 @@
 /**
  *  miniRT joy CommonJS module
- *  (c) 2015-2016 Fat Cerberus
+ *  (c) 2015-2017 Fat Cerberus
 **/
 
 'use strict';
-module.exports =
-{
-	get P1() { return devices[0] || Joystick.Null; },
-	get P2() { return devices[1] || Joystick.Null; },
-	get P3() { return devices[2] || Joystick.Null; },
-	get P4() { return devices[3] || Joystick.Null; },
-};
+exports.__esModule = true;
+exports.default = exports;
 
 const from = require('from');
 
@@ -20,3 +15,27 @@ var devices = from.Array(Joystick.getDevices())
 	.where(function(d) { return d.numAxes >= 2; })
 	.where(function(d) { return d.numButtons >= 5; })
 	.toArray();
+
+Object.defineProperty(exports, 'P1',
+{
+	enumerable: false, configurable: true,
+	get: function() { return devices[0] || Joystick.Null; },
+});
+
+Object.defineProperty(exports, 'P2',
+{
+	enumerable: false, configurable: true,
+	get: function() { return devices[1] || Joystick.Null; },
+});
+
+Object.defineProperty(exports, 'P3',
+{
+	enumerable: false, configurable: true,
+	get: function() { return devices[2] || Joystick.Null; },
+});
+
+Object.defineProperty(exports, 'P4',
+{
+	enumerable: false, configurable: true,
+	get: function() { return devices[3] || Joystick.Null; },
+});

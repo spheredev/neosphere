@@ -1,22 +1,20 @@
 /**
- *  miniRT scenes CommonJS module
- *  (c) 2015-2016 Fat Cerberus
+ *  miniRT scene CommonJS module
+ *  (c) 2015-2017 Fat Cerberus
 **/
 
 'use strict';
-module.exports =
-{
-	__esModule: true,
-	Scene:      Scene,
-};
+exports = module.exports = Scene;
+exports.__esModule = true;
+exports.default = exports;
 
-const assert  = require('assert');
-const from    = require('from');
-const prim    = require('prim');
-const threads = require('threads');
+const assert = require('assert'),
+      from   = require('from'),
+      prim   = require('prim'),
+      Thread = require('thread');
 
 var screenMask = Color.Transparent;
-threads.create({
+Thread.create({
 	update: _updateScenes,
 	render: _renderScenes,
 }, 99);
@@ -73,7 +71,7 @@ function Scene()
 	function runTimeline(ctx)
 	{
 		if ('opThread' in ctx) {
-			if (threads.isRunning(ctx.opThread))
+			if (Thread.isRunning(ctx.opThread))
 				return true;
 			else {
 				from.Array(tasks)
@@ -98,7 +96,7 @@ function Scene()
 				activation = null;
 			}
 			if (ctx.op.update != null) {
-				ctx.opThread = threads.create({
+				ctx.opThread = Thread.create({
 					update: ctx.op.update.bind(ctx.opctx, this),
 					render: typeof ctx.op.render === 'function' ? ctx.op.render.bind(ctx.opctx, this) : undefined,
 					getInput: typeof ctx.op.getInput  === 'function' ? ctx.op.getInput.bind(ctx.opctx, this) : undefined,
@@ -110,10 +108,10 @@ function Scene()
 			return true;
 		} else {
 			if (from.Array(ctx.forks)
-				.where(function(tid) { return threads.isRunning(tid); })
+				.where(function(tid) { return Thread.isRunning(tid); })
 				.count() == 0)
 			{
-				var self = threads.self();
+				var self = Thread.self();
 				from.Array(tasks)
 					.where(function(tid) { return self == tid })
 					.remove();
@@ -130,7 +128,7 @@ function Scene()
 	//     true if the scene is still executing commands; false otherwise.
 	function isRunning()
 	{
-		return threads.isRunning(mainThread);
+		return Thread.isRunning(mainThread);
 	};
 
 	// Scene:doIf()
@@ -196,7 +194,7 @@ function Scene()
 							pc: 0,
 							forks: [],
 						};
-						var tid = threads.create({
+						var tid = Thread.create({
 							update: runTimeline.bind(scene, ctx)
 						});
 						tasks.push(tid);
@@ -271,7 +269,7 @@ function Scene()
 			},
 			update: function(scene) {
 				return from.Array(this.forks)
-					.where(function(tid) { return threads.isRunning(tid); })
+					.where(function(tid) { return Thread.isRunning(tid); })
 					.count() > 0;
 			}
 		};
@@ -293,12 +291,12 @@ function Scene()
 			pc: 0,
 			forks: [],
 		};
-		mainThread = threads.create({
+		mainThread = Thread.create({
 			update: runTimeline.bind(this, ctx)
 		});
 		tasks.push(mainThread);
 		if (waitUntilDone)
-			threads.join(mainThread);
+			Thread.join(mainThread);
 		return this;
 	};
 
@@ -310,7 +308,7 @@ function Scene()
 	function stop()
 	{
 		from.Array(tasks).each(function(tid) {
-			threads.kill(tid);
+			Thread.kill(tid);
 		});
 	};
 

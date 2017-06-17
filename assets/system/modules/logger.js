@@ -1,16 +1,12 @@
 /***
- *   miniRT debug CommonJS module
-  *  (c) 2015-2016 Fat Cerberus
+ *   miniRT logger CommonJS module
+  *  (c) 2015-2017 Fat Cerberus
 ***/
 
 'use strict';
-module.exports =
-{
-	__esModule: true,
-	assert: require('assert'),
-	Logger: Logger,
-	Test:   require('test'),
-};
+exports = module.exports = Logger;
+exports.__esModule = true;
+exports.default = exports;
 
 function Logger(fileName)
 {

@@ -8,7 +8,7 @@ exports = module.exports = assert;
 exports.__esModule = true;
 exports.default = exports;
 
-exports.assert = assert.ok = assert;
+assert.ok = assert;
 function assert(guard, message)
 {
 	equal(!!guard, true, message);

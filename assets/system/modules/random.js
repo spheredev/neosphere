@@ -1,26 +1,17 @@
 /**
  *  miniRT random CommonJS module
- *  (c) 2016 Fat Cerberus
+ *  (c) 2016-2017 Fat Cerberus
 **/
 
 'use strict';
-module.exports =
-{
-	__esModule: true,
-	chance:     chance,
-	discrete:   discrete,
-	normal:     normal,
-	sample:     sample,
-	string:     string,
-	uniform:    uniform,
-};
+exports.__esModule = true;
+exports.default = exports;
 
 const assert = require('assert');
 
-const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
 var rng = new RNG();
 
+exports.chance = chance;
 function chance(odds)
 {
 	assert.ok(typeof odds === 'number', "odds must be a number");
@@ -28,6 +19,7 @@ function chance(odds)
 	return odds > rng.next();
 }
 
+exports.discrete = discrete;
 function discrete(min, max)
 {
 	assert.ok(typeof min === 'number', "min must be a number");
@@ -40,7 +32,7 @@ function discrete(min, max)
 	return min + Math.floor(rng.next() * range);
 }
 
-normal.memo = null;
+exports.normal = normal;
 function normal(mean, sigma)
 {
 	assert.ok(typeof mean === 'number', "mean must be a number");
@@ -50,7 +42,7 @@ function normal(mean, sigma)
 	// immediately, and save the second to be returned on the next call to
 	// random.normal().
 	var x, u, v, w;
-	if (normal.memo === null) {
+	if (normal.memo === undefined) {
 		do {
 			u = 2.0 * rng.next() - 1.0;
 			v = 2.0 * rng.next() - 1.0;
@@ -62,11 +54,12 @@ function normal(mean, sigma)
 	}
 	else {
 		x = normal.memo;
-		normal.memo = null;
+		delete normal.memo;
 	}
 	return mean + x * sigma;
 }
 
+exports.sample = sample;
 function sample(array)
 {
 	assert.ok(Array.isArray(array), "argument must be an array");
@@ -75,10 +68,12 @@ function sample(array)
 	return array[index];
 }
 
+exports.string = string;
 function string(length)
 {
-	if (length === void null)
-		length = 10;
+	const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+	length = length !== undefined ? length : 10;
 
 	assert.ok(typeof length === 'number', "length must be a number");
 	assert.ok(length > 0, "length must be greater than zero");
@@ -92,6 +87,7 @@ function string(length)
 	return string;
 }
 
+exports.uniform = uniform;
 function uniform(mean, variance)
 {
 	assert.ok(typeof mean === 'number', "mean must be a number");
