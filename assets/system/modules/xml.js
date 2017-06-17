@@ -4,14 +4,12 @@
 **/
 
 'use strict';
-module.exports =
-{
-	load:  load,
-	parse: parse,
-};
+exports.__esModule = true;
+exports.default = exports;
 
 const sax = require('./lib/sax');
 
+exports.load = load;
 function load(fileName)
 {
 	var buffer = FS.readFile(fileName);
@@ -19,6 +17,7 @@ function load(fileName)
 	return parse(xmlText);
 }
 
+exports.parse = parse;
 function parse(xmlText)
 {
 	var dom = { type: 'root', nodes: [] };

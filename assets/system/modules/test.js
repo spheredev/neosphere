@@ -4,13 +4,13 @@
 **/
 
 'use strict';
-module.exports =
-{
-	run: run
-};
+exports.__esModule = true;
+exports.default = exports;
 
 const from = require('from');
 
+
+exports.run = run;
 function run(tests)
 {
 	from.Object(tests)

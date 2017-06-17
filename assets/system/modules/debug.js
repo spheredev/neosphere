@@ -1,14 +1,15 @@
 /***
- *   miniRT logger CommonJS module
+ *   miniRT debug CommonJS module
   *  (c) 2015-2016 Fat Cerberus
 ***/
 
 'use strict';
 module.exports =
 {
+	__esModule: true,
 	assert: require('assert'),
-	test:   require('test'),
 	Logger: Logger,
+	Test:   require('test'),
 };
 
 function Logger(fileName)
@@ -22,8 +23,7 @@ function Logger(fileName)
 	this.stream.write(this.utf8.encode("\n" + logLine + "\n"));
 }
 
-Logger.prototype.beginGroup =
-function beginGroup(text)
+Logger.prototype.beginGroup = function beginGroup(text)
 {
 	text = text.toString();
 
@@ -31,15 +31,13 @@ function beginGroup(text)
 	this.groups.push(text);
 };
 	
-Logger.prototype.endGroup =
-function endGroup()
+Logger.prototype.endGroup = function endGroup()
 {
 	var groupName = this.groups.pop();
 	this.write("END: " + groupName);
 };
 	
-Logger.prototype.write =
-function write(text)
+Logger.prototype.write = function write(text)
 {
 	text = text.toString();
 

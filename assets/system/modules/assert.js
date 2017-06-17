@@ -4,9 +4,11 @@
 **/
 
 'use strict';
-module.exports = assert;
+exports = module.exports = assert;
+exports.__esModule = true;
+exports.default = exports;
 
-assert.ok = assert;
+exports.assert = assert.ok = assert;
 function assert(guard, message)
 {
 	equal(!!guard, true, message);

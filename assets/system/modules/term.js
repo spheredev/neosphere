@@ -4,19 +4,13 @@
 **/
 
 'use strict';
-module.exports =
-{
-	get visible() { return visible.yes; },
-	set visible(value) { value ? _show() : _hide(); },
-	define:    define,
-	print:     print,
-	undefine:  undefine,
-};
+exports.__esModule = true;
+exports.default = exports;
 
 const from   = require('from');
 const Logger = require('debug').Logger;
 const prim   = require('prim');
-const scenes = require('scenes');
+const Scene  = require('scenes').Scene;
 
 var keyboard = Keyboard.Default;
 var mouse = Mouse.Default;
@@ -38,23 +32,66 @@ var fps = screen.frameRate;
 var logger = 'logPath' in Sphere.Game
     ? new Logger(Sphere.Game.logPath)
     : null;
-new scenes.Scene()
+new Scene()
 	.doWhile(function() { return true; })
 		.tween(cursorColor, 0.25 * fps, 'easeInSine', { alpha: 255 })
 		.tween(cursorColor, 0.25 * fps, 'easeOutSine', { alpha: 64 })
 	.end()
 	.run();
-Dispatch.onRender(render, Infinity);
+Dispatch.onRender(_render, Infinity);
 Dispatch.onUpdate(function() {
-	getInput();
-	update();
+	_getInput();
+	_update();
 }, Infinity);
 
 print(Sphere.Game.name + " miniRT Console");
 print(Sphere.Platform + " " + Sphere.Version + " - Sphere v" + Sphere.APIVersion + " L" + Sphere.APILevel + " API");
 print("");
 
-function executeCommand(command)
+Object.defineProperty(exports, 'visible',
+{
+	enumerable: true, configurable: true,
+	get: function() { return visible.yes; },
+	set: function(value) { value ? _show() : _hide(); },
+});
+
+exports.define = define;
+function define(name, that, methods)
+{
+	for (var instruction in methods) {
+		commands.push({
+			entity: name,
+			instruction: instruction,
+			that: that,
+			method: methods[instruction]
+		});
+	}
+}
+
+exports.print = print;
+function print(/*...*/)
+{
+	var lineInBuffer = nextLine % bufferSize;
+	buffer[lineInBuffer] = ">" + arguments[0];
+	for (var i = 1; i < arguments.length; ++i) {
+		buffer[lineInBuffer] += " >>" + arguments[i];
+	}
+	++nextLine;
+	visible.line = 0.0;
+	console.log(buffer[lineInBuffer]);
+	if (logger !== null)
+        logger.write(buffer[lineInBuffer]);
+}
+
+exports.undefine = undefine;
+function undefine(name)
+{
+	from.Array(commands)
+		.where(function(c) { return c.entity == name; })
+		.remove();
+}
+
+function _executeCommand(command)
 {
 	// tokenize the command string
 	var tokens = command.match(/'.*?'|".*?"|\S+/g);
@@ -103,7 +140,7 @@ function executeCommand(command)
 	});
 }
 
-function getInput()
+function _getInput()
 {
 	if (!wasKeyDown && keyboard.isPressed(Key.Tilde)) {
 		if (!visible.yes)
@@ -127,7 +164,7 @@ function getInput()
 		switch (keycode) {
 			case Key.Enter:
 				print("Command entered: '" + entry + "'");
-				executeCommand(entry);
+				_executeCommand(entry);
 				entry = "";
 				break;
 			case Key.Backspace:
@@ -135,12 +172,12 @@ function getInput()
 				break;
 			case Key.Home:
 				var newLine = buffer.length - numLines;
-				new scenes.Scene()
+				new Scene()
 					.tween(visible, 0.125 * fps, 'easeOut', { line: newLine })
 					.run();
 				break;
 			case Key.End:
-				new scenes.Scene()
+				new Scene()
 					.tween(visible, 0.125 * fps, 'easeOut', { line: 0.0 })
 					.run();
 				break;
@@ -157,7 +194,16 @@ function getInput()
 	}
 }
 
-function render()
+function _hide()
+{
+	var fps = screen.frameRate;
+	new Scene()
+		.tween(visible, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
+		.call(function() { visible.yes = false; entry = ""; })
+		.run();
+}
+
+function _render()
 {
 	if (visible.fade <= 0.0)
 		return;
@@ -190,61 +236,18 @@ function render()
 	screen.clipTo(0, 0, screen.width, screen.height);
 }
 
-function update()
-{
-	if (visible.fade <= 0.0) {
-		visible.line = 0.0;
-	}
-	return true;
-}
-
-function print(/*...*/)
-{
-	var lineInBuffer = nextLine % bufferSize;
-	buffer[lineInBuffer] = ">" + arguments[0];
-	for (var i = 1; i < arguments.length; ++i) {
-		buffer[lineInBuffer] += " >>" + arguments[i];
-	}
-	++nextLine;
-	visible.line = 0.0;
-	console.log(buffer[lineInBuffer]);
-	if (logger !== null)
-        logger.write(buffer[lineInBuffer]);
-}
-
-function define(name, that, methods)
-{
-	for (var instruction in methods) {
-		commands.push({
-			entity: name,
-			instruction: instruction,
-			that: that,
-			method: methods[instruction]
-		});
-	}
-}
-
-function undefine(name)
-{
-	from.Array(commands)
-		.where(function(c) { return c.entity == name; })
-		.remove();
-}
-
-function _hide()
-{
-	var fps = screen.frameRate;
-	new scenes.Scene()
-		.tween(visible, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
-		.call(function() { visible.yes = false; entry = ""; })
-		.run();
-}
-
 function _show()
 {
 	var fps = screen.frameRate;
-	new scenes.Scene()
+	new Scene()
 		.tween(visible, 0.25 * fps, 'easeOutQuad', { fade: 1.0 })
 		.call(function() { visible.yes = true; })
 		.run();
+}
+
+function _update()
+{
+	if (visible.fade <= 0.0)
+		visible.line = 0.0;
+	return true;
 }

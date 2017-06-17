@@ -4,11 +4,19 @@
 **/
 
 'use strict';
-module.exports = from;
+exports = module.exports = from;
+exports.__esModule = true;
+exports.default = exports;
 
 const assert = require('assert');
 const random = require('random');
 
+const PK =
+{
+	ItemSource: Symbol('itemSource'),
+};
+
+exports.from = from;
 function from(target/*, ...*/)
 {
 	// for multiple targets, query against the list of targets and unroll with
@@ -51,11 +59,6 @@ function fromIterable(target)
 	var itemSource = new IterableSource(target);
 	return new FromQuery(itemSource);
 }
-
-const PK =
-{
-	ItemSource: Symbol('itemSource'),
-};
 
 function MAKEPOINT(sourceType, op)
 {
