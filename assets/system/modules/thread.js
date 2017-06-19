@@ -73,6 +73,8 @@ Thread.self = function self()
 
 function Thread(options)
 {
+	options = options !== undefined ? options : {};
+
 	this.threadID = null;
 	this.threadPriority = options.priority !== undefined
 		? options.priority : 0;

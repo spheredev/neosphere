@@ -1,6 +1,6 @@
 // this is your game's Cellscript, used to instruct the Cell compiler how to
 // build your game.  like a Sphere game, the Cellscript is written in
-// JavaScript, however with a different set of bindings tailored for compiling
+// JavaScript, however with a different set of functions tailored for compiling
 // and packaging games.
 
 
@@ -11,11 +11,12 @@
 import {{ transpile }} from 'compiler';
 
 
-// describe the game we're building.  this gets written to the game manifest
-// (game.json) at the end of the build.
+// describe the game we're building.  everything in Sphere.Game gets written to
+// the game manifest (game.json) at the end of the build.
 
-describe("{0}", {{
+Object.assign(Sphere.Game, {{
 	version: 2,  // Sphere v2
+	name: "{0}",
 	author: "{1}",
 	summary: "{2}",
 	resolution: '{3}x{4}',
@@ -23,9 +24,9 @@ describe("{0}", {{
 }});
 
 
-// minisphere doesn't natively support ECMAScript 2015; if our scripts use any
-// new JavaScript features such as destructuring, minisphere won't be able to
-// run them.  to get around that, we can have Cell transpile the scripts.
+// ECMAScript 2015 is not yet natively supported by the engine; if our scripts
+// use new JavaScript features such as destructuring, miniSphere won't be able
+// to run them.  to get around that, Cell can transpile the scripts.
 //
 // note: transpile() creates one target file for each source file.  this is why
 //       it takes a directory as its first argument rather than a filename.

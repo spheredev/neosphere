@@ -3,64 +3,61 @@
  *  (c) <year> <whoever made the game>
  */
 
-// pull in some useful modules.  these are all part of the Sphere v2 standard
-// library so you can count on them being available.
-import assert      from 'assert';
-import from        from 'from';
-import * as prim   from 'prim';
-import * as random from 'random';
+import * as Prim from 'prim';
+import Thread    from 'thread';
 
-// declare variables used by the game.
-var image = new Texture('images/justSaiyan.png');
-var x = 0, xVel = 1;
-var y = 0, yVel = 1;
-
-screen.frameRate = 60;  // note: 60fps is the default.
-
-// tell the engine which functions to call to update and render the game.  if
-// no update or render functions are registered the game will terminate as soon
-// as the main script finishes running.  we don't want that.
-Dispatch.onUpdate(doUpdate);
-Dispatch.onRender(doRender);
-
-// when you're ready to start programming, delete this comment block and the
-// two lines below.  but first, click Debug and see what happens!
-var message = "This game is buggy!";
-throw new Error(message);
-
-function doUpdate()
+class Game extends Thread
 {
-	// put code here to update your game every frame, for example moving
-	// sprites and updating animations.
-	x += xVel;
-	y += yVel;
-	if (x <= 0) { x = 0; xVel = 1; }
-	if (x >= screen.width - image.width) {
-		x = screen.width - image.width;
-		xVel = -1;
+	constructor()
+	{
+		super();
+
+		// perform startup processing here: initializing data, calling
+		// setup functions, etc.
+		this.image = new Texture('images/justSaiyan.png');
+		this.x = 0;
+		this.y = 0;
+		this.xVel = 1;
+		this.yVel = 1;
 	}
-	if (y <= 0) { y = 0; yVel = 1; }
-	if (y >= screen.height - image.height) {
-		y = screen.height - image.height;
-		yVel = -1;
+
+	on_update()
+	{
+		// put code here to update your game every frame, for example moving
+		// sprites and updating animations.
+		this.x += this.xVel;
+		this.y += this.yVel;
+		if (this.x <= 0) { this.x = 0; this.xVel = 1; }
+		if (this.x >= screen.width - this.image.width) {
+			this.x = screen.width - this.image.width;
+			this.xVel = -1;
+		}
+		if (this.y <= 0) { this.y = 0; this.yVel = 1; }
+		if (this.y >= screen.height - this.image.height) {
+			this.y = screen.height - this.image.height;
+			this.yVel = -1;
+		}
+	}
+
+	on_render()
+	{
+		// put code here to draw a frame.  don't do anything other than rendering
+		// here, as renders can be skipped and thus are not guaranteed to match the
+		// frame rate.
+		Prim.rect(screen, 0, 0, screen.width, screen.height, Color.DodgerBlue);
+		Prim.ellipse(screen,
+			screen.width / 2, screen.height / 2,
+			screen.width / 4, screen.height / 4,
+			Color.Chartreuse, Color.DarkGreen);
+		Prim.lineEllipse(screen,
+			screen.width / 2, screen.height / 2,
+			screen.width / 4, screen.height / 4,
+			Color.Black);
+
+		Prim.blit(screen, this.x, this.y, this.image);
+		Prim.lineRect(screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
 	}
 }
 
-function doRender()
-{
-	// put code here to draw a frame.  don't do anything other than rendering
-	// here, as renders can be skipped and thus are not guaranteed to match the
-	// frame rate.
-	prim.rect(screen, 0, 0, screen.width, screen.height, Color.DodgerBlue);
-	prim.ellipse(screen,
-		screen.width / 2, screen.height / 2,
-		screen.width / 4, screen.height / 4,
-		Color.Chartreuse, Color.DarkGreen);
-	prim.lineEllipse(screen,
-		screen.width / 2, screen.height / 2,
-		screen.width / 4, screen.height / 4,
-		Color.Black);
-
-	prim.blit(screen, x, y, image);
-	prim.lineRect(screen, x, y, image.width, image.height, 2, Color.Black);
-}
+// ...and go!
+new Game().start();
