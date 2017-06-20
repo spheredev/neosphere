@@ -1,5 +1,5 @@
 /***
- *   miniRT aggregated CommonJS module
+ *   Sphere v2 standard library for miniSphere
   *  (c) 2015-2017 Fat Cerberus
 ***/
 
@@ -17,5 +17,6 @@ Object.assign(exports,
 	Random:   require('random'),
 	Scene:    require('scene'),
 	Terminal: require('terminal'),
+	Test:     require('test'),
 	Thread:   require('thread'),
 });

@@ -681,21 +681,22 @@ random.uniform(mean, variance);
     `variance`.
 
 
-`scenes` Module
----------------
+`Scene` object
+--------------
 
-A powerful scene engine which can run multiple operations in parallel, and then
-sync the timelines up as needed.  An example of this would be where several
-characters need to move into place for a cutscene, but may take differing
-amounts of time to get there.  The game can fork the timeline once for each
-character, and then resync on the main timeline, which will wait until all
-the forked timelines finish before continuing.
+The Scene object encapsulates a powerful scene engine which can run multiple
+operations in parallel, and then sync the timelines up as needed.  An example
+of this would be where several characters need to move into place for a
+cutscene, but may take differing amounts of time to get there.  The game can
+fork the timeline once for each character, and then resync on the main
+timeline, which will wait until all the forked timelines finish before
+continuing.
 
-The scenes module is originally based on the Scenario standalone cutscene
-engine for Sphere v1, updated to take advantage of Sphere v2 features and to
-integrate more seamlessly with other miniRT components.
+Scene is originally based on the Scenario standalone cutscene engine for
+Sphere v1, but has been updated to take advantage of Sphere v2 features and to
+integrate more seamlessly with other Sphere v2 technologies.
 
-    const scenes = require('scenes');
+    const Scene = require('scene');
 
 A scene consists of a chain of scenelet invocations, with optional forks and
 resync points.  For example, supposing the scenelets used have been properly
@@ -703,7 +704,7 @@ defined, the scene below would cause the screen to fade out simultaneously and
 the person `scott` to walk offscreen, and finally change the background music
 only when both are complete:
 
-    var myScene = new scenes.Scene()
+    var myScene = new Scene()
         .fork()  // fork the timeline
             .fadeTo(new Color(0, 0, 0, 255), 2.0)  // 2 sec. fade
         .end()
@@ -717,12 +718,12 @@ See the documentation for `Scene#run()` below to find out how to play a scene
 in blocking mode.
 
 
-scenes.defScenelet(name, def);
+Scene.defineAction(name, def);
 
-    Registers a new scenelet with miniRT.  `name` is the name of the scenelet
-    and should be a valid JavaScript identifier (although this is not enforced).
-    `def` is an object defining the scenelet, and should include the following
-    function properties:
+    Registers a new action with the scene engine.  `name` is the name of the
+    action and should be a valid JavaScript identifier (although this is not
+	enforced).  `def` is an object defining the scenelet, and should include
+	the following function properties:
 
         def.start(scene, ...)
 
@@ -754,11 +755,11 @@ scenes.defScenelet(name, def);
             accept player input for that scenelet.  Only scenelets implementing
             a .getInput() callback are considered for topmost status.
 
-    Each callback receives a reference to the scene object which invoked it as
+    Each callback receives a reference to the Scene object which invoked it as
     its first argument, and its `this` binding is set to a unique object it can
     use to manage execution state for that invocation only.
 
-new scenes.Scene();
+new Scene();
 
     Constructs a new scene definition.  The scene starts with no scenelets and
     will do nothing when run.  Calling any method other than .run() on the scene

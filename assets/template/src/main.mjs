@@ -3,8 +3,7 @@
  *  (c) <year> <whoever made the game>
  */
 
-import * as Prim from 'prim';
-import Thread    from 'thread';
+import { Prim, Thread } from 'sphere-runtime';
 
 class Game extends Thread
 {

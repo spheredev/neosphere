@@ -10,7 +10,7 @@ exports.default = exports;
 
 const assert = require('assert'),
       from   = require('from'),
-      prim   = require('prim'),
+      Prim   = require('prim'),
       Thread = require('thread');
 
 var screenMask = Color.Transparent;
@@ -331,7 +331,7 @@ function Scene()
 function _renderScenes()
 {
 	if (screenMask.a > 0.0)
-		prim.fill(screen, screenMask);
+		Prim.fill(screen, screenMask);
 };
 
 function _updateScenes()
