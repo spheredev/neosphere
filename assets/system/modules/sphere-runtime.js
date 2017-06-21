@@ -9,14 +9,14 @@ exports.__esModule = true;
 Object.assign(exports,
 {
 	assert:   require('assert'),
-	Delegate: require('delegate'),
 	from:     require('from'),
+	Console:  require('console'),
+	Delegate: require('delegate'),
 	Logger:   require('logger'),
 	Music:    require('music'),
 	Prim:     require('prim'),
 	Random:   require('random'),
 	Scene:    require('scene'),
-	Terminal: require('terminal'),
 	Test:     require('test'),
 	Thread:   require('thread'),
 });

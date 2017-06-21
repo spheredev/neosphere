@@ -1,5 +1,5 @@
 /**
- *  miniRT terminal CommonJS module
+ *  Sphere v2 Runtime: Console module
  *  (c) 2015-2017 Fat Cerberus
 **/
 
@@ -9,7 +9,7 @@ exports.default = exports;
 
 const from   = require('from'),
       Logger = require('logger'),
-      prim   = require('prim'),
+      Prim   = require('prim'),
       Scene  = require('scene');
 
 var keyboard = Keyboard.Default;
@@ -44,9 +44,9 @@ Dispatch.onUpdate(function() {
 	_update();
 }, Infinity);
 
-print(Sphere.Game.name + " miniRT Console");
-print(Sphere.Platform + " " + Sphere.Version + " - Sphere v" + Sphere.APIVersion + " L" + Sphere.APILevel + " API");
-print("");
+log(Sphere.Game.name + " Command Console");
+log(Sphere.Platform + " " + Sphere.Version + " - Sphere v" + Sphere.APIVersion + " L" + Sphere.APILevel + " API");
+log("");
 
 Object.defineProperty(exports, 'visible',
 {
@@ -68,8 +68,8 @@ function define(name, that, methods)
 	}
 }
 
-exports.print = print;
-function print(/*...*/)
+exports.log = log;
+function log(/*...*/)
 {
 	var lineInBuffer = nextLine % bufferSize;
 	buffer[lineInBuffer] = ">" + arguments[0];
@@ -78,7 +78,6 @@ function print(/*...*/)
 	}
 	++nextLine;
 	visible.line = 0.0;
-	console.log(buffer[lineInBuffer]);
 	if (logger !== null)
         logger.write(buffer[lineInBuffer]);
 }
@@ -107,18 +106,18 @@ function _executeCommand(command)
 	if (!from.Array(commands)
 		.any(function(c) { return entity == c.entity; }))
 	{
-		print("Entity name '" + entity + "' not recognized");
+		log("Entity name '" + entity + "' not recognized");
 		return;
 	}
 	if (tokens.length < 2) {
-		print("No instruction provided for '" + entity + "'");
+		log("No instruction provided for '" + entity + "'");
 		return;
 	}
 	if (!from.Array(commands)
 		.where(function(c) { return entity == c.entity; })
 		.any(function(c) { return instruction == c.instruction; }))
 	{
-		print("Instruction '" + instruction + "' not valid for '" + entity + "'");
+		log("Instruction '" + instruction + "' not valid for '" + entity + "'");
 		return;
 	}
 
@@ -163,7 +162,7 @@ function _getInput()
 		var fps = screen.frameRate;
 		switch (keycode) {
 			case Key.Enter:
-				print("Command entered: '" + entry + "'");
+				log("Command entered: '" + entry + "'");
 				_executeCommand(entry);
 				entry = "";
 				break;
@@ -210,7 +209,7 @@ function _render()
 
 	// draw the command prompt...
 	var boxY = -22 * (1.0 - visible.fade);
-	prim.rect(screen, 0, boxY, screen.width, 22, Color.Black.fade(visible.fade * 0.875));
+	Prim.rect(screen, 0, boxY, screen.width, 22, Color.Black.fade(visible.fade * 0.875));
 	var promptWidth = font.getTextSize(prompt + " ").width;
 	font.drawText(screen, 6, 6 + boxY, prompt, Color.Black.fade(visible.fade * 0.75));
 	font.drawText(screen, 5, 5 + boxY, prompt, Color.Gray.fade(visible.fade * 0.75));
@@ -221,7 +220,7 @@ function _render()
 	// ...then the console output
 	var boxHeight = numLines * font.height + 10;
 	var boxY = screen.height - boxHeight * visible.fade;
-	prim.rect(screen, 0, boxY, screen.width, boxHeight, Color.Black.fade(visible.fade * 0.75));
+	Prim.rect(screen, 0, boxY, screen.width, boxHeight, Color.Black.fade(visible.fade * 0.75));
 	screen.clipTo(5, boxY + 5, screen.width - 10, boxHeight - 10);
 	for (var i = -1; i < numLines + 1; ++i) {
 		var lineToDraw = (nextLine - numLines) + i - Math.floor(visible.line);
