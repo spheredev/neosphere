@@ -9,17 +9,22 @@ vX.X.X - TBD
   the same time.
 * Adds support for `Sphere.Game` in Cellscripts, allowing the data in the JSON
   manifest to be manipulated directly.
-* Adds a new `debug` module to the standard library which provides logging,
-  assert, and unit testing functionality all in one place.
 * Adds more missing Sphere v1 API functions, further improving compatibility.
+* Adds a new module, `sphere-runtime`, which brings together all the standard
+  modules and allows multiple symbols to be imported simultaneously when using
+  ES6 `import`.
+* Adds back the `SSJ` object, to allow sending text to the attached debugger
+  (and optionally, to standard output).
+* Renames the `term` module to `console` to improve discoverability.
 * Renames `defScenelet()` from the Scenes module to `Scene.defineAction()`.
-* Removes the `pact` and `logger` modules from the standard library.
+* Removes the `console` object from the Core API, as it turned out to be easily
+  confused with the standard console module.
+* Removes the `pact` module from the standard library.
 * Removes the `minify` module from Cell's standard library.
 * Removes `describe()` from the Cellscript API.
-* Updates miniRT Terminal to use `Dispatch` internally, avoiding an unnecessary
-  implicit dependency on Threads.
-* Fixes a segfault that occurs when a game calls `SetTileImage()` or
-  `SetTileSurface()`.
+* Improves the Sphere Studio project template to illustrate ES6 class syntax
+  as well as better showcasing use of the standard library.
+* Fixes a crash that happens when using `SetTileImage()` or `SetTileSurface()`.
 * Fixes a bug where `Dispatch.onRender()` jobs will be called in reverse order
   following a call to `Dispatch.onUpdate()`.
 * Fixes a bug where miniSphere calls the render script before the update script
