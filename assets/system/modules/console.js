@@ -55,8 +55,8 @@ Object.defineProperty(exports, 'visible',
 	set: function(value) { value ? _show() : _hide(); },
 });
 
-exports.define = define;
-function define(name, that, methods)
+exports.defineObject = defineObject;
+function defineObject(name, that, methods)
 {
 	for (var instruction in methods) {
 		commands.push({
@@ -83,8 +83,8 @@ function log(/*...*/)
         logger.write(buffer[lineInBuffer]);
 }
 
-exports.undefine = undefine;
-function undefine(name)
+exports.undefineObject = undefineObject;
+function undefineObject(name)
 {
 	from.Array(commands)
 		.where(function(c) { return c.entity == name; })
@@ -107,18 +107,18 @@ function _executeCommand(command)
 	if (!from.Array(commands)
 		.any(function(c) { return entity == c.entity; }))
 	{
-		log("Entity name '" + entity + "' not recognized");
+		log("unrecognized object name '" + entity + "'");
 		return;
 	}
 	if (tokens.length < 2) {
-		log("No instruction provided for '" + entity + "'");
+		log("missing instruction for '" + entity + "'");
 		return;
 	}
 	if (!from.Array(commands)
 		.where(function(c) { return entity == c.entity; })
 		.any(function(c) { return instruction == c.instruction; }))
 	{
-		log("Instruction '" + instruction + "' not valid for '" + entity + "'");
+		log("instruction '" + instruction + "' not valid for '" + entity + "'");
 		return;
 	}
 
@@ -163,7 +163,7 @@ function _getInput()
 		var fps = screen.frameRate;
 		switch (keycode) {
 			case Key.Enter:
-				log("Command entered: '" + entry + "'");
+				log("user entered console command '" + entry + "'");
 				_executeCommand(entry);
 				entry = "";
 				break;

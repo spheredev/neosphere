@@ -3,7 +3,7 @@
  *  (c) <year> <whoever made the game>
  */
 
-import { Prim, Thread } from 'sphere-runtime';
+import { Music, Prim, Thread } from 'sphere-runtime';
 
 class Game extends Thread
 {
@@ -18,6 +18,9 @@ class Game extends Thread
 		this.y = 0;
 		this.xVel = 1;
 		this.yVel = 1;
+		
+		// fade in music for 60 frames
+		Music.play('music/oneWorld.ogg', 60);
 	}
 
 	on_update()

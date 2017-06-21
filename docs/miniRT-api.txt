@@ -937,24 +937,25 @@ Writer#writeString32(value[, littleEndian]);
     in little-endian mode.  Otherwise, writes in big-endian mode.
 
 
-`term` Module
+`console` Module
 -------------
 
-The term module allows you to add a text-based debug console to your game.
-miniRT provides a full command parser, so all your game is responsible for is
-providing the names and implementations of supported terminal commands.
+The console module allows you to add a text-based debug console to your game.
+The Sphere runtime provides a full command parser, so all your game is
+responsible for is providing the names and implementations of supported console
+commands.
 
 During gameplay, if the game allows it, the console may be shown and hidden
 using the tilde key (`~`).
 
-    const term = require('term');
+    const console = require('console');
 
 
-term.visible [read/write]
+console.visible [read/write]
 
     Gets or sets whether the console is visible to the player.
 
-term.define(objectName, thisObj, commands);
+console.defineObject(objectName, thisObj, commands);
 
     Registers an object and a set of commands with the console.  `commands` is
     an object providing the names and implementations of the commands being
@@ -981,12 +982,12 @@ term.define(objectName, thisObj, commands);
     perform some form of error checking in their command functions to prevent
     the player from destabilizing the game.
 
-term.print(text[, text2[, ...]]);
+console.log(text[, text2[, ...]]);
 
-    Prints a line of text to the console.  Passing more than one value will
-    cause the strings to be separated with chevrons (`>>`).
+    Logs a line of text to the console.  Passing more than one value will cause
+    the strings to be separated with chevrons (`>>`).
 
-term.undefine(objectName);
+console.undefineObject(objectName);
 
     Unregisters all commands previously registered under `objectName`.  See
     `term.define()` for more information.  Note: It is not currently
