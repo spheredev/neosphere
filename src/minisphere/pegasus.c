@@ -184,13 +184,6 @@ COLORS[] =
 };
 
 static duk_ret_t js_require                    (duk_context* ctx);
-static duk_ret_t js_console_assert             (duk_context* ctx);
-static duk_ret_t js_console_debug              (duk_context* ctx);
-static duk_ret_t js_console_error              (duk_context* ctx);
-static duk_ret_t js_console_info               (duk_context* ctx);
-static duk_ret_t js_console_log                (duk_context* ctx);
-static duk_ret_t js_console_trace              (duk_context* ctx);
-static duk_ret_t js_console_warn               (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_get_frameSkip       (duk_context* ctx);
@@ -300,6 +293,8 @@ static duk_ret_t js_RNG_finalize               (duk_context* ctx);
 static duk_ret_t js_RNG_get_state              (duk_context* ctx);
 static duk_ret_t js_RNG_set_state              (duk_context* ctx);
 static duk_ret_t js_RNG_next                   (duk_context* ctx);
+static duk_ret_t js_SSJ_log                    (duk_context* ctx);
+static duk_ret_t js_SSJ_trace                  (duk_context* ctx);
 static duk_ret_t js_new_Sample                 (duk_context* ctx);
 static duk_ret_t js_Sample_finalize            (duk_context* ctx);
 static duk_ret_t js_Sample_get_fileName        (duk_context* ctx);
@@ -486,6 +481,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "RNG", "fromState", js_RNG_fromState);
 	api_define_property(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
 	api_define_method(ctx, "RNG", "next", js_RNG_next);
+	api_define_function(ctx, "SSJ", "log", js_SSJ_log);
+	api_define_function(ctx, "SSJ", "trace", js_SSJ_trace);
 	api_define_class(ctx, "Sample", js_new_Sample, js_Sample_finalize);
 	api_define_property(ctx, "Sample", "fileName", js_Sample_get_fileName, NULL);
 	api_define_method(ctx, "Sample", "play", js_Sample_play);
@@ -539,13 +536,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_define_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_define_function(ctx, "console", "assert", js_console_assert);
-	api_define_function(ctx, "console", "debug", js_console_debug);
-	api_define_function(ctx, "console", "error", js_console_error);
-	api_define_function(ctx, "console", "info", js_console_info);
-	api_define_function(ctx, "console", "log", js_console_log);
-	api_define_function(ctx, "console", "trace", js_console_trace);
-	api_define_function(ctx, "console", "warn", js_console_warn);
 	api_define_object(ctx, NULL, "screen", "Surface", NULL);
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop(ctx, "screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
@@ -689,15 +679,6 @@ initialize_pegasus_api(duk_context* ctx)
 		++p;
 	}
 	duk_pop(ctx);
-
-	// `console` is a Proxy so that unimplemented methods do not throw
-	duk_eval_string_noresult(ctx,
-		"global.console = new Proxy(global.console, {\n"
-		"    get: function(t, name) {\n"
-		"        return name in t ? t[name] : function() {};\n"
-		"    }\n"
-		"});"
-	);
 }
 
 bool
@@ -1039,116 +1020,6 @@ js_require(duk_context* ctx)
 	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
 		duk_throw(ctx);
 	return 1;
-}
-
-static duk_ret_t
-js_console_assert(duk_context* ctx)
-{
-	const char* message;
-	bool        result;
-
-	result = duk_to_boolean(ctx, 0);
-	message = duk_safe_to_string(ctx, 1);
-
-	if (!result)
-		debug_print(message, PRINT_ASSERT, true);
-	return 0;
-}
-
-static duk_ret_t
-js_console_debug(duk_context* ctx)
-{
-	int num_items;
-
-	// join the passed-in arguments separated with spaces
-	num_items = duk_get_top(ctx);
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	debug_print(duk_get_string(ctx, -1), PRINT_DEBUG, true);
-	return 0;
-}
-
-static duk_ret_t
-js_console_error(duk_context* ctx)
-{
-	int num_items;
-
-	// join the passed-in arguments separated with spaces
-	num_items = duk_get_top(ctx);
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	debug_print(duk_get_string(ctx, -1), PRINT_ERROR, true);
-	return 0;
-}
-
-static duk_ret_t
-js_console_info(duk_context* ctx)
-{
-	int num_items;
-
-	// join the passed-in arguments separated with spaces
-	num_items = duk_get_top(ctx);
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	debug_print(duk_get_string(ctx, -1), PRINT_INFO, true);
-	return 0;
-}
-
-static duk_ret_t
-js_console_log(duk_context* ctx)
-{
-	// note: console.log() does not currently support format specifiers.
-	//       this may change in a future implementation.
-
-	int num_items;
-
-	// join the passed-in arguments separated with spaces
-	num_items = duk_get_top(ctx);
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	debug_print(duk_get_string(ctx, -1), PRINT_NORMAL, true);
-	return 0;
-}
-
-static duk_ret_t
-js_console_trace(duk_context* ctx)
-{
-	// note: console.log() does not currently support format specifiers.
-	//       this may change in a future implementation.
-
-	int num_items;
-
-	// join the passed-in arguments separated with spaces
-	num_items = duk_get_top(ctx);
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	debug_print(duk_get_string(ctx, -1), PRINT_TRACE, true);
-	return 0;
-}
-
-static duk_ret_t
-js_console_warn(duk_context* ctx)
-{
-	int num_items;
-
-	// join the passed-in arguments separated with spaces
-	num_items = duk_get_top(ctx);
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	debug_print(duk_get_string(ctx, -1), PRINT_WARN, true);
-	return 0;
 }
 
 static duk_ret_t
@@ -2905,6 +2776,36 @@ js_RNG_next(duk_context* ctx)
 
 	duk_push_number(ctx, xoro_gen_double(xoro));
 	return 1;
+}
+
+static duk_ret_t
+js_SSJ_log(duk_context* ctx)
+{
+	int num_items;
+
+	// join the passed-in arguments separated with spaces
+	num_items = duk_get_top(ctx);
+	duk_push_string(ctx, " ");
+	duk_insert(ctx, 0);
+	duk_join(ctx, num_items);
+
+	debug_print(duk_get_string(ctx, -1), PRINT_NORMAL, true);
+	return 0;
+}
+
+static duk_ret_t
+js_SSJ_trace(duk_context* ctx)
+{
+	int num_items;
+
+	// join the passed-in arguments separated with spaces
+	num_items = duk_get_top(ctx);
+	duk_push_string(ctx, " ");
+	duk_insert(ctx, 0);
+	duk_join(ctx, num_items);
+
+	debug_print(duk_get_string(ctx, -1), PRINT_TRACE, true);
+	return 0;
 }
 
 static duk_ret_t
