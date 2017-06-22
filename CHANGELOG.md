@@ -4,6 +4,9 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* When using ES6 modules (`.mjs`), the main module can now `export default` a
+  class and the engine will instantiate it and call its `start()` method.  This
+  mirrors how Sphere 1.x calls the global `game()` function on startup.
 * Adds a new `Sample` class which works like `Sound` but loads the sound into
   memory instead of streaming it and allows multiple instances to be played at
   the same time.
@@ -22,8 +25,8 @@ vX.X.X - TBD
 * Removes the `pact` module from the standard library.
 * Removes the `minify` module from Cell's standard library.
 * Removes `describe()` from the Cellscript API.
-* Improves the Sphere Studio project template to illustrate ES6 class syntax
-  as well as better showcasing use of the standard library.
+* Improves the Sphere Studio project template to illustrate the use of class
+  syntax as well as better showcasing the standard library.
 * Fixes a crash that happens when using `SetTileImage()` or `SetTileSurface()`.
 * Fixes a bug where `Dispatch.onRender()` jobs will be called in reverse order
   following a call to `Dispatch.onUpdate()`.
