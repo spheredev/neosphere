@@ -15,12 +15,11 @@ import {{ transpile }} from 'compiler';
 // the game manifest (game.json) at the end of the build.
 
 Object.assign(Sphere.Game, {{
-	version: 2,  // Sphere v2
 	name: "{0}",
 	author: "{1}",
 	summary: "{2}",
 	resolution: '{3}x{4}',
-	main: 'scripts/main.js',
+	main: 'bin/main.js',
 }});
 
 
@@ -32,8 +31,8 @@ Object.assign(Sphere.Game, {{
 //       it takes a directory as its first argument rather than a filename.
 //       install() works similarly (see below).
 
-transpile('@/scripts/', files('src/*.mjs'));
-transpile('@/scripts/', files('src/*.js'));
+transpile('@/bin/', files('src/*.mjs'));
+transpile('@/bin/', files('src/*.js'));
 
 
 // this tells Cell which files to copy from the source tree when packaging the
@@ -47,4 +46,5 @@ transpile('@/scripts/', files('src/*.js'));
 //       game's JSON manifest like in Sphere.
 
 install('@/images/', files('images/*.png', true));
+install('@/music/',  files('music/*.ogg', true));
 install('@/',        files('icon.png'));

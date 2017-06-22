@@ -251,14 +251,27 @@ main(int argc, char* argv[])
 	script_path = fs_script_path(g_fs);
 	if (!script_eval(path_cstr(script_path), fs_version(g_fs) >= 2))
 		goto on_js_error;
-	duk_pop(g_duk);
 
-	// Sphere v1 BC mode: call game() function, if it exists
-	if (fs_version(g_fs) < 2) {
+	if (fs_version(g_fs) >= 2) {
+		// Sphere v2 mode.  check for an exported Game class and instantiate it,
+		// then call game.start().
+		duk_get_prop_string(g_duk, -1, "default");
+		if (duk_is_function(g_duk, -1)) {
+			if (duk_pnew(g_duk, 0) != DUK_EXEC_SUCCESS)
+				goto on_js_error;
+			duk_get_prop_string(g_duk, -1, "start");
+			duk_swap_top(g_duk, -2);
+			if (duk_is_callable(g_duk, -2) && duk_pcall_method(g_duk, 0) != DUK_EXEC_SUCCESS)
+				goto on_js_error;
+		}
+		duk_pop_2(g_duk);
+	}
+	else {
+		// compatibility mode, call game() function, if it exists
 		duk_get_global_string(g_duk, "game");
 		if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 			goto on_js_error;
-		duk_pop(g_duk);
+		duk_pop_2(g_duk);
 	}
 
 	// start the Sphere v2 frame loop.  note that this isn't contingent on the

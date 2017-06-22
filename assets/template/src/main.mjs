@@ -5,22 +5,22 @@
 
 import { Music, Prim, Thread } from 'sphere-runtime';
 
-class Game extends Thread
+export default
+class MyGame extends Thread
 {
 	constructor()
 	{
 		super();
 
-		// perform startup processing here: initializing data, calling
-		// setup functions, etc.
+		// initialize data for the game session
 		this.image = new Texture('images/justSaiyan.png');
 		this.x = 0;
 		this.y = 0;
 		this.xVel = 1;
 		this.yVel = 1;
-		
-		// fade in music for 60 frames
-		Music.play('music/oneWorld.ogg', 60);
+
+		// avoid boredom by playing some background music!
+		Music.play('music/vegeta.ogg');
 	}
 
 	on_update()
@@ -60,6 +60,3 @@ class Game extends Thread
 		Prim.lineRect(screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
 	}
 }
-
-// ...and go!
-new Game().start();
