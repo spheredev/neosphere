@@ -253,7 +253,7 @@ main(int argc, char* argv[])
 		goto on_js_error;
 
 	if (fs_version(g_fs) >= 2) {
-		// Sphere v2 mode.  check for an exported Game class and instantiate it,
+		// modular mode (Sv2).  check for an exported Game class and instantiate it,
 		// then call game.start().
 		duk_get_prop_string(g_duk, -1, "default");
 		if (duk_is_function(g_duk, -1)) {
@@ -267,7 +267,7 @@ main(int argc, char* argv[])
 		duk_pop_2(g_duk);
 	}
 	else {
-		// compatibility mode, call game() function, if it exists
+		// compatibility mode (Sv1), call game() function (if it exists)
 		duk_get_global_string(g_duk, "game");
 		if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
 			goto on_js_error;

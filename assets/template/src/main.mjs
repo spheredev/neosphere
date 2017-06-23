@@ -6,21 +6,20 @@
 import { Music, Prim, Thread } from 'sphere-runtime';
 
 export default
-class MyGame extends Thread
+class MyNewGame extends Thread
 {
 	constructor()
 	{
-		/* put code in here to initialize your game on startup--setting up
-		   data, loading resources, etc.  use `this` to associate things with
-		   the Game object, or `global` to make global variables that are
-		   accessible game-wide. */
+		super();  // call the superclass constructor
 
-		// construct the parent class by calling its constructor (in our case,
-		// Thread).  any class with an `extends` clause must do this in its
-		// constructor.
-		super();
+		/*
+		 *  put code in here to initialize your game on startup--setting up
+		 *  data, loading resources, etc.  use `this` to associate things with
+		 *  the Game object, or `global` to make global variables that are
+		 *  accessible game-wide.
+		 */
 
-		// initialize data for our game session
+		// initialize data for our session
 		this.image = new Texture('images/justSaiyan.png');
 		this.x = 0;
 		this.y = 0;
@@ -33,8 +32,11 @@ class MyGame extends Thread
 
 	on_update()
 	{
-		/* put code in here to update your game every frame, for example moving
-		   sprites and updating animations. */
+		/*
+		 *  put code in here to update game state, for example moving character
+		 *  sprites or updating animations.  this will be called once per frame
+		 *  at a rate determined by the value of screen.frameRate.
+		 */
 
 		this.x += this.xVel;
 		this.y += this.yVel;
@@ -58,9 +60,11 @@ class MyGame extends Thread
 
 	on_render()
 	{
-		/* put code in here to draw a frame.  don't do anything other than
-		   rendering-related things here, as renders can be skipped and thus
-		   are not guaranteed to match the frame rate. */
+		/*
+		 *  put code in here to draw things each frame.  don't do anything
+		 *  other than drawing-related things here, as render calls can be
+		 *  skipped and are not guaranteed to match the frame rate.
+		 */
 
 		Prim.rect(screen, 0, 0, screen.width, screen.height, Color.DodgerBlue);
 		Prim.ellipse(screen,
