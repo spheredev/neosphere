@@ -24,6 +24,7 @@ var numLines = Math.floor((screen.height - 32) / font.height);
 var bufferSize = 1000;
 var prompt = "$";
 
+var activationKey = Key.Tilde;
 var buffer = [];
 var commands = [];
 var entry = "";
@@ -38,11 +39,6 @@ new Scene()
 		.tween(cursorColor, 0.25 * fps, 'easeOutSine', { alpha: 64 })
 	.end()
 	.run();
-Dispatch.onRender(_render, Infinity);
-Dispatch.onUpdate(function() {
-	_getInput();
-	_update();
-}, Infinity);
 
 log(Sphere.Game.name + " Command Console");
 log(Sphere.Platform + " " + Sphere.Version + " - Sphere v" + Sphere.APIVersion + " L" + Sphere.APILevel + " API");
@@ -66,6 +62,19 @@ function defineObject(name, that, methods)
 			method: methods[instruction]
 		});
 	}
+}
+
+exports.initialize = initialize;
+function initialize(hotkey)
+{
+	hotkey = hotkey !== undefined ? hotkey : Key.Tilde;
+
+	activationKey = hotkey;
+	Dispatch.onRender(_render, Infinity);
+	Dispatch.onUpdate(function() {
+		_getInput();
+		_update();
+	}, Infinity);
 }
 
 exports.log = log;
@@ -142,13 +151,13 @@ function _executeCommand(command)
 
 function _getInput()
 {
-	if (!wasKeyDown && keyboard.isPressed(Key.Tilde)) {
+	if (!wasKeyDown && keyboard.isPressed(activationKey)) {
 		if (!visible.yes)
 			_show();
 		else
 			_hide();
 	}
-	wasKeyDown = keyboard.isPressed(Key.Tilde);
+	wasKeyDown = keyboard.isPressed(activationKey);
 	if (visible.yes) {
 		var mouseEvent = mouse.getEvent();
 		var wheelUp = mouseEvent !== null && mouseEvent.key == MouseKey.WheelUp;
@@ -161,6 +170,8 @@ function _getInput()
 		}
 		var keycode = keyboard.getKey();
 		var fps = screen.frameRate;
+		if (keycode === activationKey)
+			return;
 		switch (keycode) {
 			case Key.Enter:
 				log("user entered console command '" + entry + "'");
@@ -182,7 +193,6 @@ function _getInput()
 					.run();
 				break;
 			case Key.Tab:
-			case Key.Tilde:
 			case null:
                 break;
 			default:
