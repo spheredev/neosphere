@@ -12,13 +12,14 @@ vX.X.X - TBD
   the same time.
 * Adds support for `Sphere.Game` in Cellscripts, allowing the data in the JSON
   manifest to be manipulated directly.
-* Adds more missing Sphere v1 API functions, further improving compatibility.
 * Adds a new module, `sphere-runtime`, which brings together all the standard
   modules and allows multiple symbols to be imported simultaneously when using
   ES6 `import`.
 * Adds back the `SSJ` object, to allow sending text to the attached debugger
   (and optionally, to standard output).
-* Renames the `term` module to `console` to improve discoverability.
+* Adds more missing Sphere v1 API functions, further improving compatibility.
+* Renames several standard modules, e.g. `term` -> `console`, and tweaks the
+  API to make them easier to understand and use.
 * Renames `defScenelet()` from the Scenes module to `Scene.defineAction()`.
 * Removes the `console` object from the Core API, as it turned out to be easily
   confused with the standard console module.

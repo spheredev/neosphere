@@ -1,12 +1,9 @@
 miniRT API Reference
 ====================
 
-Sphere v2 specifies a set of CommonJS modules known as the standard library.
-The standard library provides high-level functionality above and beyond what
-the lower-level Sphere API provides.
-
-miniSphere's implementation of the standard library is called miniRT and is
-made up of several components, each of which is documented below.
+Besides the low-level Core API, the Sphere platform includes a set of standard
+objects used for higher-level tasks, known as the Sphere Runtime.  This file
+documents the Sphere Runtime API.
 
 
 `assert` Module
@@ -937,25 +934,33 @@ Writer#writeString32(value[, littleEndian]);
     in little-endian mode.  Otherwise, writes in big-endian mode.
 
 
-`console` Module
--------------
+`Console` Object
+----------------
 
-The console module allows you to add a text-based debug console to your game.
-The Sphere runtime provides a full command parser, so all your game is
-responsible for is providing the names and implementations of supported console
-commands.
+The `Console` object provides a way to add a text-based debug console to your
+game.  A full command parser is already built in, so the only thing your game
+needs to do is provide names and implementations for supported console
+commands.  Sphere will do the rest.
 
-During gameplay, if the game allows it, the console may be shown and hidden
-using the tilde key (`~`).
+During gameplay, if the game allows it, the console can be shown and hidden
+using a hotkey (`~` by default).
 
-    const console = require('console');
+Console.visible [read/write]
 
+    Gets or sets whether the console is visible to the player.  Setting this to
+    `true` will show the console, while setting to `false` will hide it.
 
-console.visible [read/write]
+Console.initialize(options);
 
-    Gets or sets whether the console is visible to the player.
+    Initializes the console, enabling the player to access it while in-game.
+    `options` can include any of the following properties:
+    
+        options.hotKey
 
-console.defineObject(objectName, thisObj, commands);
+            A `Key` value specifying which keyboard key will show and hide the
+            console.  If not provided, defaults to `Key.Tilde`.
+
+Console.defineObject(objectName, thisObj, commands);
 
     Registers an object and a set of commands with the console.  `commands` is
     an object providing the names and implementations of the commands being
@@ -982,12 +987,12 @@ console.defineObject(objectName, thisObj, commands);
     perform some form of error checking in their command functions to prevent
     the player from destabilizing the game.
 
-console.log(text[, text2[, ...]]);
+Console.log(text[, text2[, ...]]);
 
     Logs a line of text to the console.  Passing more than one value will cause
     the strings to be separated with chevrons (`>>`).
 
-console.undefineObject(objectName);
+Console.undefineObject(objectName);
 
     Unregisters all commands previously registered under `objectName`.  See
     `term.define()` for more information.  Note: It is not currently

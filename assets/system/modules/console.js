@@ -51,6 +51,19 @@ Object.defineProperty(exports, 'visible',
 	set: function(value) { value ? _show() : _hide(); },
 });
 
+exports.initialize = initialize;
+function initialize(options)
+{
+	options = options !== undefined ? options : {};
+
+	activationKey = options.hotKey !== undefined ? options.hotKey : Key.Tilde;
+	Dispatch.onRender(_render, Infinity);
+	Dispatch.onUpdate(function() {
+		_getInput();
+		_update();
+	}, Infinity);
+}
+
 exports.defineObject = defineObject;
 function defineObject(name, that, methods)
 {
@@ -62,19 +75,6 @@ function defineObject(name, that, methods)
 			method: methods[instruction]
 		});
 	}
-}
-
-exports.initialize = initialize;
-function initialize(hotkey)
-{
-	hotkey = hotkey !== undefined ? hotkey : Key.Tilde;
-
-	activationKey = hotkey;
-	Dispatch.onRender(_render, Infinity);
-	Dispatch.onUpdate(function() {
-		_getInput();
-		_update();
-	}, Infinity);
 }
 
 exports.log = log;
@@ -174,7 +174,7 @@ function _getInput()
 			return;
 		switch (keycode) {
 			case Key.Enter:
-				log("user entered console command '" + entry + "'");
+				log("player entered command '" + entry + "'");
 				_executeCommand(entry);
 				entry = "";
 				break;
