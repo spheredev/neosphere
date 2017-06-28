@@ -123,6 +123,7 @@ static duk_ret_t js_DetachCamera            (duk_context* ctx);
 static duk_ret_t js_DetachInput             (duk_context* ctx);
 static duk_ret_t js_DetachPlayerInput       (duk_context* ctx);
 static duk_ret_t js_ExecuteTrigger          (duk_context* ctx);
+static duk_ret_t js_ExecuteZoneScript       (duk_context* ctx);
 static duk_ret_t js_ExecuteZones            (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine           (duk_context* ctx);
 static duk_ret_t js_MapToScreenX            (duk_context* ctx);
@@ -1593,6 +1594,7 @@ init_map_engine_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "DetachInput", js_DetachInput);
 	api_define_function(ctx, NULL, "DetachPlayerInput", js_DetachPlayerInput);
 	api_define_function(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
+	api_define_function(ctx, NULL, "ExecuteZoneScript", js_ExecuteZoneScript);
 	api_define_function(ctx, NULL, "ExecuteZones", js_ExecuteZones);
 	api_define_function(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
 	api_define_function(ctx, NULL, "MapEngine", js_MapEngine);
@@ -2936,6 +2938,28 @@ js_ExecuteTrigger(duk_context* ctx)
 		script_run(trigger->script, true);
 		s_current_trigger = last_trigger;
 	}
+	return 0;
+}
+
+static duk_ret_t
+js_ExecuteZoneScript(duk_context* ctx)
+{
+	int              last_zone;
+	struct map_zone* zone;
+	int              zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!is_map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
+	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+
+	zone = vector_get(s_map->zones, zone_index);
+	last_zone = s_current_zone;
+	s_current_zone = zone_index;
+	script_run(zone->script, true);
+	s_current_zone = last_zone;
 	return 0;
 }
 

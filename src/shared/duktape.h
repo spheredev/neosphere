@@ -1,13 +1,13 @@
 /*
- *  Duktape public API for Duktape 2.1.99.
+ *  Duktape public API for Duktape 2.1.0.
  *
  *  See the API reference for documentation on call semantics.  The exposed,
  *  supported API is between the "BEGIN PUBLIC API" and "END PUBLIC API"
  *  comments.  Other parts of the header are Duktape internal and related to
  *  e.g. platform/compiler/feature detection.
  *
- *  Git commit 67cdd256d923268c4f83afe1885b5342e80d6953 (v2.1.0-222-g67cdd256).
- *  Git branch master.
+ *  Git commit 1f1f51a4f9595ffe8def0e9ba45b20f14679393a (v2.1.0).
+ *  Git branch HEAD.
  *
  *  See Duktape AUTHORS.rst and LICENSE.txt for copyright and
  *  licensing information.
@@ -89,7 +89,6 @@
  *  * Remko Tron\u00e7on (https://el-tramo.be)
  *  * Romero Malaquias (rbsm@ic.ufal.br)
  *  * Michael Drake <michael.drake@codethink.co.uk>
- *  * Steven Don (https://github.com/shdon)
  *  
  *  Other contributions
  *  ===================
@@ -152,16 +151,16 @@
  * development snapshots have 99 for patch level (e.g. 0.10.99 would be a
  * development version after 0.10.0 but before the next official release).
  */
-#define DUK_VERSION                       20199L
+#define DUK_VERSION                       20100L
 
 /* Git commit, describe, and branch for Duktape build.  Useful for
  * non-official snapshot builds so that application code can easily log
  * which Duktape snapshot was used.  Not available in the Ecmascript
  * environment.
  */
-#define DUK_GIT_COMMIT                    "67cdd256d923268c4f83afe1885b5342e80d6953"
-#define DUK_GIT_DESCRIBE                  "v2.1.0-222-g67cdd256"
-#define DUK_GIT_BRANCH                    "master"
+#define DUK_GIT_COMMIT                    "1f1f51a4f9595ffe8def0e9ba45b20f14679393a"
+#define DUK_GIT_DESCRIBE                  "v2.1.0"
+#define DUK_GIT_BRANCH                    "HEAD"
 
 /* External duk_config.h provides platform/compiler/OS dependent
  * typedefs and macros, and DUK_USE_xxx config options so that
@@ -632,7 +631,6 @@ DUK_EXTERNAL_DECL duk_idx_t duk_push_array(duk_context *ctx);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_c_function(duk_context *ctx, duk_c_function func, duk_idx_t nargs);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_c_lightfunc(duk_context *ctx, duk_c_function func, duk_idx_t nargs, duk_idx_t length, duk_int_t magic);
 DUK_EXTERNAL_DECL duk_idx_t duk_push_thread_raw(duk_context *ctx, duk_uint_t flags);
-DUK_EXTERNAL_DECL duk_idx_t duk_push_proxy(duk_context *ctx);
 
 #define duk_push_thread(ctx) \
 	duk_push_thread_raw((ctx), 0 /*flags*/)
@@ -736,8 +734,6 @@ DUK_EXTERNAL_DECL duk_bool_t duk_is_thread(duk_context *ctx, duk_idx_t idx);
 
 #define duk_is_callable(ctx,idx) \
 	duk_is_function((ctx), (idx))
-DUK_EXTERNAL_DECL duk_bool_t duk_is_constructable(duk_context *ctx, duk_idx_t idx);
-
 DUK_EXTERNAL_DECL duk_bool_t duk_is_dynamic_buffer(duk_context *ctx, duk_idx_t idx);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_fixed_buffer(duk_context *ctx, duk_idx_t idx);
 DUK_EXTERNAL_DECL duk_bool_t duk_is_external_buffer(duk_context *ctx, duk_idx_t idx);
