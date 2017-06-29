@@ -253,6 +253,7 @@ static duk_ret_t js_Surface_gradientEllipse    (duk_context* ctx);
 static duk_ret_t js_Surface_gradientLine       (duk_context* ctx);
 static duk_ret_t js_Surface_gradientRectangle  (duk_context* ctx);
 static duk_ret_t js_Surface_line               (duk_context* ctx);
+static duk_ret_t js_Surface_lineSeries         (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedCircle     (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedEllipse    (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedRectangle  (duk_context* ctx);
@@ -586,6 +587,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSurface", "gradientLine", js_Surface_gradientLine);
 	api_define_method(ctx, "ssSurface", "gradientRectangle", js_Surface_gradientRectangle);
 	api_define_method(ctx, "ssSurface", "line", js_Surface_line);
+	api_define_method(ctx, "ssSurface", "lineSeries", js_Surface_lineSeries);
 	api_define_method(ctx, "ssSurface", "outlinedCircle", js_Surface_outlinedCircle);
 	api_define_method(ctx, "ssSurface", "outlinedEllipse", js_Surface_outlinedEllipse);
 	api_define_method(ctx, "ssSurface", "outlinedRectangle", js_Surface_outlinedRectangle);
@@ -2178,20 +2180,25 @@ js_Line(duk_context* ctx)
 static duk_ret_t
 js_LineSeries(duk_context* ctx)
 {
-	int num_args = duk_get_top(ctx);
-	color_t color = duk_require_sphere_color(ctx, 1);
-	int type = num_args >= 3 ? duk_to_int(ctx, 2) : LINE_MULTIPLE;
-
+	color_t         color;
+	int             num_args;
 	size_t          num_points;
+	int             type;
 	int             x, y;
 	ALLEGRO_VERTEX* vertices;
 	ALLEGRO_COLOR   vtx_color;
 
 	size_t i;
 
+	num_args = duk_get_top(ctx);
+	color = duk_require_sphere_color(ctx, 1);
+	type = num_args >= 3 ? duk_to_int(ctx, 2) : LINE_MULTIPLE;
+
 	if (!duk_is_array(ctx, 0))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
-	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
+	duk_get_prop_string(ctx, 0, "length");
+	num_points = duk_get_uint(ctx, -1);
+	duk_pop(ctx);
 	if (num_points < 2)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "two or more vertices required");
 	if (num_points > INT_MAX)
@@ -2201,8 +2208,8 @@ js_LineSeries(duk_context* ctx)
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
-		duk_get_prop_string(ctx, 0, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, 0, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
@@ -2494,7 +2501,9 @@ js_PointSeries(duk_context* ctx)
 
 	if (!duk_is_array(ctx, 0))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
-	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
+	duk_get_prop_string(ctx, 0, "length");
+	num_points = duk_get_uint(ctx, -1);
+	duk_pop(ctx);
 	if (num_points < 1)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "one or more vertices required");
 	if (num_points > INT_MAX)
@@ -2504,8 +2513,8 @@ js_PointSeries(duk_context* ctx)
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
-		duk_get_prop_string(ctx, 0, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, 0, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
@@ -4895,13 +4904,69 @@ js_Surface_line(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
+	blend_mode = duk_get_int(ctx, -1);
+
 	apply_blend_mode(blend_mode);
 	al_set_target_bitmap(image_bitmap(image));
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
 	al_set_target_backbuffer(screen_display(g_screen));
 	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_lineSeries(duk_context* ctx)
+{
+	int             blend_mode;
+	color_t         color;
+	image_t*        image;
+	int             num_args;
+	size_t          num_points;
+	int             type;
+	int             x, y;
+	ALLEGRO_VERTEX* vertices;
+	ALLEGRO_COLOR   vtx_color;
+
+	size_t i;
+
+	num_args = duk_get_top(ctx);
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	color = duk_require_sphere_color(ctx, 1);
+	type = num_args >= 3 ? duk_to_int(ctx, 2) : LINE_MULTIPLE;
+
+	if (!duk_is_array(ctx, 0))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
+	duk_get_prop_string(ctx, 0, "length");
+	num_points = duk_get_uint(ctx, -1);
+	duk_pop(ctx);
+	if (num_points < 2)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "two or more vertices required");
+	if (num_points > INT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices");
+	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate vertex buffer");
+	vtx_color = nativecolor(color);
+	for (i = 0; i < num_points; ++i) {
+		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
+		duk_get_prop_string(ctx, -1, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_pop(ctx);
+		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
+		vertices[i].color = vtx_color;
+	}
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
+		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
+		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
+		: ALLEGRO_PRIM_LINE_LIST
+	);
+	al_set_target_backbuffer(screen_display(g_screen));
+	reset_blender();
+	free(vertices);
 	return 0;
 }
 
@@ -4975,15 +5040,17 @@ js_Surface_pointSeries(duk_context* ctx)
 	duk_pop(ctx);
 	if (!duk_is_array(ctx, 0))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
-	duk_get_prop_string(ctx, 0, "length"); num_points = duk_get_uint(ctx, 0); duk_pop(ctx);
+	duk_get_prop_string(ctx, 0, "length");
+	num_points = duk_get_uint(ctx, -1);
+	duk_pop(ctx);
 	if (num_points > INT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices (%u)", num_points);
 	vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX));
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		duk_get_prop_index(ctx, 0, i);
-		duk_get_prop_string(ctx, 0, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, 0, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
 		duk_pop(ctx);
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;

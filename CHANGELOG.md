@@ -33,6 +33,8 @@ vX.X.X - TBD
   following a call to `Dispatch.onUpdate()`.
 * Fixes a bug where miniSphere calls the render script before the update script
   on map engine startup, leading to compatibility issues.
+* Fixes a bug in `LineSeries()` and `PointSeries()` that made them always throw
+  a "two or more vertices required" error.
 * Fixes a bug where Sphere v1 `Surface#cloneSection()` and `Surface#rotate()`
   could introduce graphical artifacts on some platforms.
 * Fixes a bug where `Sound#pan` range is treated as [-255,+255] instead of the
