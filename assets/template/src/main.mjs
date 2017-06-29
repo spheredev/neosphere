@@ -66,17 +66,17 @@ class MyNewGame extends Thread
 		 *  skipped and are not guaranteed to match the frame rate.
 		 */
 
-		Prim.rect(screen, 0, 0, screen.width, screen.height, Color.DodgerBlue);
-		Prim.ellipse(screen,
+		Prim.fill(screen, Color.DodgerBlue);
+		Prim.drawFilledEllipse(screen,
 			screen.width / 2, screen.height / 2,
 			screen.width / 4, screen.height / 4,
 			Color.Chartreuse, Color.DarkGreen);
-		Prim.lineEllipse(screen,
+		Prim.drawEllipse(screen,
 			screen.width / 2, screen.height / 2,
 			screen.width / 4, screen.height / 4,
 			Color.Black);
 
 		Prim.blit(screen, this.x, this.y, this.image);
-		Prim.lineRect(screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
+		Prim.drawRectangle(screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
 	}
 }
