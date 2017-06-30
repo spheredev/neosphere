@@ -9,17 +9,26 @@ const Prim =
 {
 	blit(surface, x, y, texture, mask)
 	{
+		Prim.blitSection(surface, x, y, texture, 0, 0, texture.width, texture.height, mask);
+	},
+
+	blitSection(surface, x, y, texture, sx, sy, width, height, mask)
+	{
 		mask = mask || Color.White;
 
 		var x1 = x;
 		var y1 = y;
-		var x2 = x1 + texture.width;
-		var y2 = y1 + texture.height;
+		var x2 = x1 + width;
+		var y2 = y1 + height;
+		var u1 = sx / texture.width;
+		var v1 = 1.0 - sy / texture.height;
+		var u2 = (sx + width) / texture.width;
+		var v2 = 1.0 - (sy + height) / texture.height;
 		var shape = new Shape([
-			{ x: x1, y: y1, u: 0.0, v: 1.0, color: mask },
-			{ x: x2, y: y1, u: 1.0, v: 1.0, color: mask },
-			{ x: x1, y: y2, u: 0.0, v: 0.0, color: mask },
-			{ x: x2, y: y2, u: 1.0, v: 0.0, color: mask },
+			{ x: x1, y: y1, u: u1, v: v1, color: mask },
+			{ x: x2, y: y1, u: u2, v: v1, color: mask },
+			{ x: x1, y: y2, u: u1, v: v2, color: mask },
+			{ x: x2, y: y2, u: u2, v: v2, color: mask },
 		], texture, ShapeType.TriStrip);
 		shape.draw(surface);
 	},
@@ -50,12 +59,12 @@ const Prim =
 		shape.draw(surface);
 	},
 
-	drawFilledCircle(surface, x, y, radius, color, color2)
+	drawSolidCircle(surface, x, y, radius, color, color2)
 	{
-		Prim.drawFilledEllipse(surface, x, y, radius, radius, color, color2);
+		Prim.drawSolidEllipse(surface, x, y, radius, radius, color, color2);
 	},
 
-	drawFilledEllipse(surface, x, y, rx, ry, color, color2)
+	drawSolidEllipse(surface, x, y, rx, ry, color, color2)
 	{
 		color2 = color2 || color;
 
@@ -84,7 +93,7 @@ const Prim =
 		shape.draw(surface);
 	},
 
-	drawFilledRectangle(surface, x, y, width, height, color_ul, color_ur, color_lr, color_ll)
+	drawSolidRectangle(surface, x, y, width, height, color_ul, color_ur, color_lr, color_ll)
 	{
 		color_ur = color_ur || color_ul;
 		color_lr = color_lr || color_ul;
@@ -99,7 +108,7 @@ const Prim =
 		shape.draw(surface);
 	},
 
-	drawFilledTriangle(surface, x1, y1, x2, y2, x3, y3, color1, color2, color3)
+	drawSolidTriangle(surface, x1, y1, x2, y2, x3, y3, color1, color2, color3)
 	{
 		color2 = color2 || color1;
 		color3 = color3 || color1;
@@ -134,7 +143,7 @@ const Prim =
 
 	drawPoint(surface, x, y, color)
 	{
-		Prim.drawFilledRectangle(surface, x, y, 1, 1, color);
+		Prim.drawSolidRectangle(surface, x, y, 1, 1, color);
 	},
 
 	drawRectangle(surface, x, y, width, height, thickness, color)
@@ -161,7 +170,7 @@ const Prim =
 
 	fill(surface, color)
 	{
-		Prim.drawFilledRectangle(surface, 0, 0, surface.width, surface.height, color);
+		Prim.drawSolidRectangle(surface, 0, 0, surface.width, surface.height, color);
 	},
 };
 

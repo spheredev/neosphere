@@ -67,7 +67,7 @@ class MyNewGame extends Thread
 		 */
 
 		Prim.fill(screen, Color.DodgerBlue);
-		Prim.drawFilledEllipse(screen,
+		Prim.drawSolidEllipse(screen,
 			screen.width / 2, screen.height / 2,
 			screen.width / 4, screen.height / 4,
 			Color.Chartreuse, Color.DarkGreen);

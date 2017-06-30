@@ -569,70 +569,74 @@ Pact:welsh(reason);
     reject with, usually an Error object.
 
 
-`prim` Module
--------------
+`Prim` namespace
+----------------
 
-The prim module provides convenience functions for drawing common graphics
-primitives such as circles and rectangles.  This mimics the primitives provided
-in Sphere v1 but is based on Galileo, the Sphere v2 graphics framework.
+The `Prim` namespace provides convenience functions for drawing common graphics
+primitives such as circles and rectangles, which are tedious to render using
+the Core API directly.
 
-    const prim = require('prim');
+    const Prim = require('prim');
 
+Prim.blit(surface, x, y, texture[, mask]);
 
-prim.blit(surface, x, y, image[, mask]);
+    Draws the specified texture as a textured quad.  `mask` is used to color
+	the quad's vertices and has the effect of tinting the rendered image.  If
+	no mask is specified, `Color.White` is assumed, which leaves the image
+	colors as-is.
 
-    Draws an image as a textured quad.  `mask` is used to color the quad's
-    vertices and has the effect of tinting the rendered image.  If no mask is
-    specified, `Color.White` is assumed, which leaves the image colors as-is.
+Prim.blitSection(surface, x, y, image, sx, sy, width, height[, mask]);
 
-prim.circle(surface, x, y, radius, color[, color2]);
+    Like `Prim.blit()`, but allows drawing only part of a texture.  `sx`, `sy`,
+	`width` and `height` specify the section to be drawn.
+
+Prim.drawCircle(surface, x, y, radius, color);
+
+    Draws the outline of a circle.
+
+Prim.drawEllipse(surface, x, y, rx, ry, color);
+
+    Like `Prim.drawCircle()`, but draws an ellipse instead.
+
+Prim.drawLine(surface, x1, y1, x2, y2, thickness, color[, color2]);
+
+    Draws a line segment of given thickness from (x1,y1) to (x2,y2).  If
+    `color2` is provided, draws a gradient line.
+
+Prim.drawPoint(suface, x, y, color);
+
+    Draws a single pixel.
+
+Prim.drawRectangle(surface, x, y, width, height, thickness, color);
+
+    Draws the outline of a rectangle with given thickness.
+
+Prim.drawSolidCircle(surface, x, y, radius, color[, color2]);
 
     Draws a solid circle.  If `color2` is given, draws a gradient circle where
     `color` is the color in the center and `color2` is the color at the edges
     of the circle.
 
-prim.ellipse(surface, x, y, rx, ry, color[, color2]);
+Prim.drawSolidEllipse(surface, x, y, rx, ry, color[, color2]);
 
-    Like prim.circle(), but draws a solid ellipse instead of a circle.  `rx` is
-    the horizontal radius and `ry` the vertical radius.
+    Like `Prim.drawSolidCircle()`, but draws an ellipse instead.  `rx` is the
+	horizontal radius and `ry` is the vertical radius.
 
-prim.fill(surface, color);
-
-    Fills a surface with a specified color.  This is effectively shorthand for
-    drawing a rectangle of the specified color over the whole surface.
-
-prim.line(surface, x1, y1, x2, y2, thickness, color[, color2]);
-
-    Draws a line segment of given thickness from (x1,y1) to (x2,y2).  If
-    `color2` is provided, draws a gradient line.
-
-prim.lineCircle(surface, x, y, radius, color);
-
-    Draws the outline of a circle.
-
-prim.lineEllipse(surface, x, y, rx, ry, color);
-
-    Like prim.lineCircle(), but draws the outline of an ellipse instead of a
-    circle.
-
-prim.lineRect(surface, x, y, width, height, thickness, color);
-
-    Draws the outline of a rectangle with given thickness.
-
-prim.point(suface, x, y, color);
-
-    Draws a single pixel.
-
-prim.rect(surface, x, y, width, height, color_ul[, color_ur, color_lr, color_ll]);
+Prim.drawSolidRectangle(surface, x, y, width, height, color_ul[, color_ur, color_lr, color_ll]);
 
     Draws a solid rectangle.  If four colors are given instead of one, draws a
     gradient rectangle with each corner a different color.  Colors are given in
     clockwise order starting from the upper left.
 
-prim.triangle(surface, x1, y1, x2, y2, x3, y3, color[, color2, color3]);
+Prim.drawSolidTriangle(surface, x1, y1, x2, y2, x3, y3, color[, color2, color3]);
 
     Draws a solid triangle.  If three colors are given instead of one, draws a
     gradient triangle with each vertex a different color.
+
+Prim.fill(surface, color);
+
+    Fills a surface with a specified color.  This is effectively shorthand for
+    drawing a rectangle of the specified color over the whole surface.
 
 
 `random` Module
