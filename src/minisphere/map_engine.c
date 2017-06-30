@@ -2966,15 +2966,18 @@ js_ExecuteZoneScript(duk_context* ctx)
 static duk_ret_t
 js_ExecuteZones(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int layer = duk_require_map_layer(ctx, 2);
-
 	int              index;
 	int              last_zone;
+	int              layer;
+	int              x;
+	int              y;
 	struct map_zone* zone;
 
 	int i;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
 
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");

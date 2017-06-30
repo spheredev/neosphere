@@ -5,22 +5,28 @@ vX.X.X - TBD
 ------------
 
 * When using ES6 modules (`.mjs`), the main module can now `export default` a
-  class and the engine will instantiate it and call its `start()` method.  This
-  mirrors how Sphere 1.x calls the global `game()` function on startup.
+  class and miniSphere will automatically instantiate it and call its `start()`
+  method.  This mirrors how Sphere v1 engines call the global `game()` function
+  on startup.
 * Adds a new `Sample` class which works like `Sound` but loads the sound into
   memory instead of streaming it and allows multiple instances to be played at
   the same time.
 * Adds support for `Sphere.Game` in Cellscripts, allowing the data in the JSON
   manifest to be manipulated directly.
+* Adds `Prim.blitSection()`, to allow drawing only part of an image.
+* Adds `Console.initialize()` which must now be called manually to enable the
+  debug console.  Simply doing `require('console')` is no longer enough.
 * Adds a new module, `sphere-runtime`, which brings together all the standard
-  modules and allows multiple symbols to be imported simultaneously when using
-  ES6 `import`.
+  modules and allows multiple symbols to be imported simultaneously by using
+  `import {}`.
 * Adds back the `SSJ` object, to allow sending text to the attached debugger
   (and optionally, to standard output).
 * Adds more missing Sphere v1 API functions, further improving compatibility.
-* Renames several standard modules, e.g. `term` -> `console`, and tweaks the
-  API to make them easier to understand and use.
-* Renames `defScenelet()` from the Scenes module to `Scene.defineAction()`.
+* Renames several standard modules, e.g. `term` becomes `console`.
+* Renames `Prim` functions to better reflect their immediate nature and improve
+  code readability, at the expense of some extra verbosity.  For example,
+  `Prim.line()` becomes `Prim.drawLine()`.
+* Renames `defScenelet()` to `Scene.defineAction()`.
 * Removes the `console` object from the Core API, as it turned out to be easily
   confused with the standard console module.
 * Removes the `pact` module from the standard library.
@@ -29,8 +35,8 @@ vX.X.X - TBD
 * Improves the Sphere Studio project template to illustrate the use of class
   syntax as well as better showcasing the standard library.
 * Fixes a crash that happens when using `SetTileImage()` or `SetTileSurface()`.
-* Fixes a bug where `Dispatch.onRender()` jobs will be called in reverse order
-  following a call to `Dispatch.onUpdate()`.
+* Fixes a bug where `Dispatch.onRender()` jobs are processed in reverse order
+  following a call to `Dispatch.onUpdate()`, and vice versa.
 * Fixes a bug where miniSphere calls the render script before the update script
   on map engine startup, leading to compatibility issues.
 * Fixes a bug in `LineSeries()` and `PointSeries()` that made them always throw
