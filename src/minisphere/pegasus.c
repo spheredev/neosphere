@@ -1877,7 +1877,7 @@ js_Font_drawText(duk_context* ctx)
 			wraptext_free(wraptext);
 		}
 		if (surface != NULL)
-			al_set_target_backbuffer(screen_display(g_screen));
+			al_set_target_bitmap(screen_backbuffer(g_screen));
 	}
 	return 0;
 }
@@ -3127,7 +3127,7 @@ js_Shape_draw(duk_context* ctx)
 	shape_draw(shape, transform);
 	shader_use(NULL);
 	if (surface != NULL)
-		al_set_target_backbuffer(screen_display(g_screen));
+		al_set_target_bitmap(screen_backbuffer(g_screen));
 	return 0;
 }
 

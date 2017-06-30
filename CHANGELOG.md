@@ -32,8 +32,10 @@ vX.X.X - TBD
 * Removes the `pact` module from the standard library.
 * Removes the `minify` module from Cell's standard library.
 * Removes `describe()` from the Cellscript API.
-* Improves the Sphere Studio project template to illustrate the use of class
-  syntax as well as better showcasing the standard library.
+* Updates the internal graphics framework to use a pixel-perfect backbuffer,
+  which improves screenshots and fixes several rendering-related bugs.
+* Updates the Sphere Studio project template with code to illustrate the use of
+  ES6 class syntax as well as better showcasing the standard library.
 * Fixes a crash that happens when using `SetTileImage()` or `SetTileSurface()`.
 * Fixes a bug where `Dispatch.onRender()` jobs are processed in reverse order
   following a call to `Dispatch.onUpdate()`, and vice versa.

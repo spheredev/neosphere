@@ -344,7 +344,7 @@ image_blit(image_t* image, image_t* target_image, int x, int y)
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
 	al_set_blender(blend_op, blend_mode_src, blend_mode_dest);
-	al_set_target_backbuffer(screen_display(g_screen));
+	al_set_target_bitmap(screen_backbuffer(g_screen));
 }
 
 void

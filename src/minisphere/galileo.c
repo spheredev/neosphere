@@ -234,7 +234,7 @@ group_draw(const group_t* group, image_t* surface)
 #endif
 
 	if (surface != NULL)
-		al_set_target_backbuffer(screen_display(g_screen));
+		al_set_target_bitmap(screen_backbuffer(g_screen));
 }
 
 void
