@@ -317,6 +317,7 @@ screen_flip(screen_t* screen, int framerate)
 			screen->take_screenshot = false;
 		}
 		al_set_target_backbuffer(screen->display);
+		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		al_draw_scaled_bitmap(screen->backbuffer, 0, 0, screen->x_size, screen->y_size,
 			screen->x_offset, screen->y_offset, screen->x_size * screen->x_scale, screen->y_size * screen->y_scale,
 			0x0);
@@ -371,9 +372,8 @@ screen_flip(screen_t* screen, int framerate)
 	}
 	++screen->num_frames;
 	if (!screen->skip_frame) {
-		// disable clipping momentarily so we can clear the letterbox area.
-		// this prevents artifacts which manifest with some graphics drivers.
-		al_set_clipping_rectangle(0, 0, screen_cx, screen_cy);
+		// disable clipping so we can clear the whole backbuffer.
+		al_set_clipping_rectangle(0, 0, screen->x_size, screen->y_size);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		screen_set_clipping(screen, screen->clip_rect);
 	}
