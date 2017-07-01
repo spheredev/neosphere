@@ -80,8 +80,8 @@ get_default_shader(void)
 
 	if (s_def_shader == NULL) {
 		console_log(3, "compiling Galileo default shaders");
-		vs_filename = kev_read_string(g_sys_conf, "GalileoVertShader", "shaders/galileo.vs.glsl");
-		fs_filename = kev_read_string(g_sys_conf, "GalileoFragShader", "shaders/galileo.fs.glsl");
+		vs_filename = kev_read_string(g_sys_conf, "GalileoVertShader", "shaders/galileo.vert");
+		fs_filename = kev_read_string(g_sys_conf, "GalileoFragShader", "shaders/galileo.frag");
 		vs_pathname = strdup(system_path(vs_filename));
 		fs_pathname = strdup(system_path(fs_filename));
 		s_def_shader = shader_new(vs_pathname, fs_pathname);

@@ -697,17 +697,18 @@ new Color(red, green, blue[, alpha]);
 
     Constructs a new Color object.  Color objects are used to specify the color
     of elements such as vertices and primitives.  Color components should be in
-    the range [0.0-1.0] and out-of-range values will be silently clamped.
-    `alpha` specifies opacity and defaults to 1.0 if not provided.
+    the range [0.0,1.0]; out-of-range values are silently clamped.  `alpha`
+	specifies the color's opacity and defaults to 1.0 if not provided.
 
-Color#red [read/write]
-Color#green [read/write]
-Color#blue [read/write]
-Color#alpha [read/write]
+Color#r [read/write]
+Color#g [read/write]
+Color#b [read/write]
+Color#a [read/write]
 
-    Gets or sets the individual components of the color.  Values outside the
-    range of [0-1] are accepted, but the engine will automatically clamp them
-    during rendering.
+    Gets or sets the individual components of the color (red, green, blue, or
+	alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
+	HDR is not supported and the engine will automatically clamp such colors
+	when rendered.
 
 Color#name [read-only]
 

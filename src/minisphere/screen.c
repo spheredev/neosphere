@@ -386,24 +386,13 @@ screen_flip(screen_t* screen, int framerate)
 image_t*
 screen_grab(screen_t* screen, int x, int y, int width, int height)
 {
-	ALLEGRO_BITMAP* backbuffer;
-	image_t*        image;
-	int             scale_width;
-	int             scale_height;
+	image_t* image;
 
-	x = x * screen->x_scale + screen->x_offset;
-	y = y * screen->y_scale + screen->y_offset;
-	scale_width = width * screen->x_scale;
-	scale_height = height * screen->y_scale;
-
-	if (!(image = image_new(scale_width, scale_height)))
+	if (!(image = image_new(width, height)))
 		goto on_error;
-	backbuffer = al_get_backbuffer(screen->display);
 	al_set_target_bitmap(image_bitmap(image));
-	al_draw_bitmap_region(backbuffer, x, y, scale_width, scale_height, 0, 0, 0x0);
+	al_draw_bitmap_region(screen->backbuffer, x, y, width, height, 0, 0, 0x0);
 	al_set_target_bitmap(screen->backbuffer);
-	if (!image_rescale(image, width, height))
-		goto on_error;
 	return image;
 
 on_error:
