@@ -261,6 +261,8 @@ static duk_ret_t js_Surface_outlinedEllipse    (duk_context* ctx);
 static duk_ret_t js_Surface_outlinedRectangle  (duk_context* ctx);
 static duk_ret_t js_Surface_pointSeries        (duk_context* ctx);
 static duk_ret_t js_Surface_rotate             (duk_context* ctx);
+static duk_ret_t js_Surface_rotateBlitMaskSurface    (duk_context* ctx);
+static duk_ret_t js_Surface_rotateBlitSurface        (duk_context* ctx);
 static duk_ret_t js_Surface_rectangle          (duk_context* ctx);
 static duk_ret_t js_Surface_replaceColor       (duk_context* ctx);
 static duk_ret_t js_Surface_rescale            (duk_context* ctx);
@@ -269,6 +271,10 @@ static duk_ret_t js_Surface_setAlpha           (duk_context* ctx);
 static duk_ret_t js_Surface_setBlendMode       (duk_context* ctx);
 static duk_ret_t js_Surface_setPixel           (duk_context* ctx);
 static duk_ret_t js_Surface_toString           (duk_context* ctx);
+static duk_ret_t js_Surface_transformBlitMaskSurface (duk_context* ctx);
+static duk_ret_t js_Surface_transformBlitSurface     (duk_context* ctx);
+static duk_ret_t js_Surface_zoomBlitMaskSurface      (duk_context* ctx);
+static duk_ret_t js_Surface_zoomBlitSurface          (duk_context* ctx);
 static duk_ret_t js_WindowStyle_finalize       (duk_context* ctx);
 static duk_ret_t js_WindowStyle_drawWindow     (duk_context* ctx);
 static duk_ret_t js_WindowStyle_getColorMask   (duk_context* ctx);
@@ -597,6 +603,8 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSurface", "outlinedRectangle", js_Surface_outlinedRectangle);
 	api_define_method(ctx, "ssSurface", "pointSeries", js_Surface_pointSeries);
 	api_define_method(ctx, "ssSurface", "rotate", js_Surface_rotate);
+	api_define_method(ctx, "ssSurface", "rotateBlitMaskSurface", js_Surface_rotateBlitMaskSurface);
+	api_define_method(ctx, "ssSurface", "rotateBlitSurface", js_Surface_rotateBlitSurface);
 	api_define_method(ctx, "ssSurface", "rectangle", js_Surface_rectangle);
 	api_define_method(ctx, "ssSurface", "replaceColor", js_Surface_replaceColor);
 	api_define_method(ctx, "ssSurface", "rescale", js_Surface_rescale);
@@ -605,6 +613,10 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSurface", "setBlendMode", js_Surface_setBlendMode);
 	api_define_method(ctx, "ssSurface", "setPixel", js_Surface_setPixel);
 	api_define_method(ctx, "ssSurface", "toString", js_Surface_toString);
+	api_define_method(ctx, "ssSurface", "transformBlitMaskSurface", js_Surface_transformBlitMaskSurface);
+	api_define_method(ctx, "ssSurface", "transformBlitSurface", js_Surface_transformBlitSurface);
+	api_define_method(ctx, "ssSurface", "zoomBlitMaskSurface", js_Surface_zoomBlitMaskSurface);
+	api_define_method(ctx, "ssSurface", "zoomBlitSurface", js_Surface_zoomBlitSurface);
 
 	api_define_class(ctx, "ssWindowStyle", NULL, js_WindowStyle_finalize);
 	api_define_method(ctx, "ssWindowStyle", "drawWindow", js_WindowStyle_drawWindow);
@@ -5283,6 +5295,71 @@ js_Surface_rotate(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Surface_rotateBlitMaskSurface(duk_context* ctx)
+{
+	float    angle;
+	int      blend_mode;
+	int      height;
+	image_t* image;
+	color_t  mask;
+	image_t* source_image;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	source_image = duk_require_class_obj(ctx, 0, "ssSurface");
+	x = duk_to_int(ctx, 1);
+	y = duk_to_int(ctx, 2);
+	angle = duk_to_number(ctx, 3);
+	mask = duk_require_sphere_color(ctx, 4);
+
+	width = image_width(source_image);
+	height = image_height(source_image);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_tinted_rotated_bitmap(image_bitmap(image), nativecolor(mask),
+		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
+	al_set_target_bitmap(screen_backbuffer(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_rotateBlitSurface(duk_context* ctx)
+{
+	float    angle;
+	int      blend_mode;
+	int      height;
+	image_t* image;
+	image_t* source_image;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	source_image = duk_require_class_obj(ctx, 0, "ssSurface");
+	x = duk_to_int(ctx, 1);
+	y = duk_to_int(ctx, 2);
+	angle = duk_to_number(ctx, 3);
+
+	width = image_width(source_image);
+	height = image_height(source_image);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_rotated_bitmap(image_bitmap(image), width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
+	al_set_target_bitmap(screen_backbuffer(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
 js_Surface_rectangle(duk_context* ctx)
 {
 	int x = duk_to_int(ctx, 0);
@@ -5382,6 +5459,156 @@ js_Surface_toString(duk_context* ctx)
 {
 	duk_push_string(ctx, "[object surface]");
 	return 1;
+}
+
+static duk_ret_t
+js_Surface_transformBlitMaskSurface(duk_context* ctx)
+{
+	int      blend_mode;
+	int      height;
+	image_t* image;
+	color_t  mask;
+	image_t* source_image;
+	int      width;
+	int      x1, x2, x3, x4;
+	int      y1, y2, y3, y4;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	source_image = duk_require_class_obj(ctx, 0, "ssSurface");
+	x1 = duk_to_int(ctx, 1);
+	y1 = duk_to_int(ctx, 2);
+	x2 = duk_to_int(ctx, 3);
+	y2 = duk_to_int(ctx, 4);
+	x3 = duk_to_int(ctx, 5);
+	y3 = duk_to_int(ctx, 6);
+	x4 = duk_to_int(ctx, 7);
+	y4 = duk_to_int(ctx, 8);
+	mask = duk_require_sphere_color(ctx, 9);
+
+	width = image_width(source_image);
+	height = image_height(source_image);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	ALLEGRO_VERTEX v[] = {
+		{ x1, y1, 0, 0, 0, nativecolor(mask) },
+		{ x2, y2, 0, width, 0, nativecolor(mask) },
+		{ x4, y4, 0, 0, height, nativecolor(mask) },
+		{ x3, y3, 0, width, height, nativecolor(mask) },
+	};
+	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	al_set_target_bitmap(screen_backbuffer(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_transformBlitSurface(duk_context* ctx)
+{
+	int      blend_mode;
+	int      height;
+	image_t* image;
+	image_t* source_image;
+	int      width;
+	int      x1, x2, x3, x4;
+	int      y1, y2, y3, y4;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	source_image = duk_require_class_obj(ctx, 0, "ssSurface");
+	x1 = duk_to_int(ctx, 1);
+	y1 = duk_to_int(ctx, 2);
+	x2 = duk_to_int(ctx, 3);
+	y2 = duk_to_int(ctx, 4);
+	x3 = duk_to_int(ctx, 5);
+	y3 = duk_to_int(ctx, 6);
+	x4 = duk_to_int(ctx, 7);
+	y4 = duk_to_int(ctx, 8);
+
+	width = image_width(source_image);
+	height = image_height(source_image);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	ALLEGRO_VERTEX v[] = {
+		{ x1, y1, 0, 0, 0, al_map_rgba(255, 255, 255, 255) },
+		{ x2, y2, 0, width, 0, al_map_rgba(255, 255, 255, 255) },
+		{ x4, y4, 0, 0, height, al_map_rgba(255, 255, 255, 255) },
+		{ x3, y3, 0, width, height, al_map_rgba(255, 255, 255, 255) },
+	};
+	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	al_set_target_bitmap(screen_backbuffer(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_zoomBlitMaskSurface(duk_context* ctx)
+{
+	int      blend_mode;
+	int      height;
+	image_t* image;
+	color_t  mask;
+	float    scale;
+	image_t* source_image;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	source_image = duk_require_class_obj(ctx, 0, "ssSurface");
+	x = duk_to_int(ctx, 1);
+	y = duk_to_int(ctx, 2);
+	scale = duk_to_number(ctx, 3);
+	mask = duk_require_sphere_color(ctx, 4);
+
+	width = image_width(source_image);
+	height = image_height(source_image);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_tinted_scaled_bitmap(image_bitmap(image), nativecolor(mask),
+		0, 0, width, height, x, y, width * scale, height * scale, 0x0);
+	al_set_target_bitmap(screen_backbuffer(g_screen));
+	reset_blender();
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_zoomBlitSurface(duk_context* ctx)
+{
+	int      blend_mode;
+	int      height;
+	image_t* image;
+	float    scale;
+	image_t* source_image;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	source_image = duk_require_class_obj(ctx, 0, "ssSurface");
+	x = duk_to_int(ctx, 1);
+	y = duk_to_int(ctx, 2);
+	scale = duk_to_number(ctx, 3);
+
+	width = image_width(source_image);
+	height = image_height(source_image);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_scaled_bitmap(image_bitmap(image),
+		0, 0, width, height, x, y, width * scale, height * scale, 0x0);
+	al_set_target_bitmap(screen_backbuffer(g_screen));
+	reset_blender();
+	return 0;
 }
 
 static duk_ret_t
