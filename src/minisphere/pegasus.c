@@ -886,8 +886,10 @@ duk_pegasus_require_script(duk_context* ctx, duk_idx_t index)
 static duk_ret_t
 duk_safe_event_loop(duk_context* ctx)
 {
-	while (async_busy())
+	while (async_busy()) {
 		screen_flip(g_screen, s_framerate);
+		screen_set_clipping(g_screen, new_rect(0, 0, g_res_x, g_res_y));
+	}
 	return 0;
 }
 
