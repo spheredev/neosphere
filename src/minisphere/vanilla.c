@@ -57,6 +57,7 @@ static duk_ret_t js_SetFrameRate               (duk_context* ctx);
 static duk_ret_t js_SetMousePosition           (duk_context* ctx);
 static duk_ret_t js_Abort                      (duk_context* ctx);
 static duk_ret_t js_ApplyColorMask             (duk_context* ctx);
+static duk_ret_t js_BezierCurve                (duk_context* ctx);
 static duk_ret_t js_BindJoystickButton         (duk_context* ctx);
 static duk_ret_t js_BindKey                    (duk_context* ctx);
 static duk_ret_t js_BlendColors                (duk_context* ctx);
@@ -236,6 +237,7 @@ static duk_ret_t js_Surface_get_width          (duk_context* ctx);
 static duk_ret_t js_Surface_applyColorFX       (duk_context* ctx);
 static duk_ret_t js_Surface_applyColorFX4      (duk_context* ctx);
 static duk_ret_t js_Surface_applyLookup        (duk_context* ctx);
+static duk_ret_t js_Surface_bezierCurve        (duk_context* ctx);
 static duk_ret_t js_Surface_blit               (duk_context* ctx);
 static duk_ret_t js_Surface_blitMaskSurface    (duk_context* ctx);
 static duk_ret_t js_Surface_blitSurface        (duk_context* ctx);
@@ -378,6 +380,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "SetMousePosition", js_SetMousePosition);
 	api_define_function(ctx, NULL, "Abort", js_Abort);
 	api_define_function(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
+	api_define_function(ctx, NULL, "BezierCurve", js_BezierCurve);
 	api_define_function(ctx, NULL, "BindJoystickButton", js_BindJoystickButton);
 	api_define_function(ctx, NULL, "BindKey", js_BindKey);
 	api_define_function(ctx, NULL, "BlendColors", js_BlendColors);
@@ -570,6 +573,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssSurface", "applyColorFX", js_Surface_applyColorFX);
 	api_define_method(ctx, "ssSurface", "applyColorFX4", js_Surface_applyColorFX4);
 	api_define_method(ctx, "ssSurface", "applyLookup", js_Surface_applyLookup);
+	api_define_method(ctx, "ssSurface", "bezierCurve", js_Surface_bezierCurve);
 	api_define_method(ctx, "ssSurface", "blit", js_Surface_blit);
 	api_define_method(ctx, "ssSurface", "blitMaskSurface", js_Surface_blitMaskSurface);
 	api_define_method(ctx, "ssSurface", "blitSurface", js_Surface_blitSurface);
@@ -1495,6 +1499,61 @@ js_ApplyColorMask(duk_context* ctx)
 
 	if (!screen_is_skipframe(g_screen))
 		al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, nativecolor(color));
+	return 0;
+}
+
+static duk_ret_t
+js_BezierCurve(duk_context* ctx)
+{
+	color_t         color;
+	float           cp[8];
+	bool            is_quadratic = true;
+	int             num_args;
+	int             num_points;
+	ALLEGRO_VERTEX* points;
+	double          step_size;
+	float           x1, x2, x3, x4;
+	float           y1, y2, y3, y4;
+
+	int i;
+
+	num_args = duk_get_top(ctx);
+	color = duk_require_sphere_color(ctx, 0);
+	step_size = duk_to_number(ctx, 1);
+	x1 = duk_to_number(ctx, 2);
+	y1 = duk_to_number(ctx, 3);
+	x2 = duk_to_number(ctx, 4);
+	y2 = duk_to_number(ctx, 5);
+	x3 = duk_to_number(ctx, 6);
+	y3 = duk_to_number(ctx, 7);
+	if (num_args >= 10) {
+		is_quadratic = false;
+		x4 = duk_to_number(ctx, 8);
+		y4 = duk_to_number(ctx, 9);
+	}
+
+	if (!screen_is_skipframe(g_screen)) {
+		cp[0] = x1; cp[1] = y1;
+		cp[2] = x2; cp[3] = y2;
+		cp[4] = x3; cp[5] = y3;
+		cp[6] = x4; cp[7] = y4;
+		if (is_quadratic) {
+			// convert quadratic Bezier curve to cubic
+			cp[6] = x3; cp[7] = y3;
+			cp[2] = x1 + (2.0 / 3.0) * (x2 - x1);
+			cp[3] = y1 + (2.0 / 3.0) * (y2 - y1);
+			cp[4] = x3 + (2.0 / 3.0) * (x2 - x3);
+			cp[5] = y3 + (2.0 / 3.0) * (y2 - y3);
+		}
+		step_size = step_size < 0.001 ? 0.001 : step_size > 1.0 ? 1.0 : step_size;
+		num_points = 1.0 / step_size;
+		points = calloc(num_points, sizeof(ALLEGRO_VERTEX));
+		al_calculate_spline(&points[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
+		for (i = 0; i < num_points; ++i)
+			points[i].color = nativecolor(color);
+		al_draw_prim(points, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
+		free(points);
+	}
 	return 0;
 }
 
@@ -4471,6 +4530,69 @@ js_Surface_applyLookup(duk_context* ctx)
 	free(green_lu);
 	free(blue_lu);
 	free(alpha_lu);
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_bezierCurve(duk_context* ctx)
+{
+	int             blend_mode;
+	color_t         color;
+	float           cp[8];
+	image_t*        image;
+	bool            is_quadratic = true;
+	int             num_args;
+	int             num_points;
+	double          step_size;
+	ALLEGRO_VERTEX* vertices;
+	float           x1, x2, x3, x4;
+	float           y1, y2, y3, y4;
+
+	int i;
+
+	num_args = duk_get_top(ctx);
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "ssSurface");
+	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
+	blend_mode = duk_get_int(ctx, -1);
+	color = duk_require_sphere_color(ctx, 0);
+	step_size = duk_to_number(ctx, 1);
+	x1 = duk_to_number(ctx, 2);
+	y1 = duk_to_number(ctx, 3);
+	x2 = duk_to_number(ctx, 4);
+	y2 = duk_to_number(ctx, 5);
+	x3 = duk_to_number(ctx, 6);
+	y3 = duk_to_number(ctx, 7);
+	if (num_args >= 10) {
+		is_quadratic = false;
+		x4 = duk_to_number(ctx, 8);
+		y4 = duk_to_number(ctx, 9);
+	}
+
+	cp[0] = x1; cp[1] = y1;
+	cp[2] = x2; cp[3] = y2;
+	cp[4] = x3; cp[5] = y3;
+	cp[6] = x4; cp[7] = y4;
+	if (is_quadratic) {
+		// convert quadratic Bezier curve to cubic
+		cp[6] = x3; cp[7] = y3;
+		cp[2] = x1 + (2.0 / 3.0) * (x2 - x1);
+		cp[3] = y1 + (2.0 / 3.0) * (y2 - y1);
+		cp[4] = x3 + (2.0 / 3.0) * (x2 - x3);
+		cp[5] = y3 + (2.0 / 3.0) * (y2 - y3);
+	}
+	step_size = step_size < 0.001 ? 0.001 : step_size > 1.0 ? 1.0 : step_size;
+	num_points = 1.0 / step_size;
+	vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX));
+	al_calculate_spline(&vertices[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
+	for (i = 0; i < num_points; ++i)
+		vertices[i].color = nativecolor(color);
+	apply_blend_mode(blend_mode);
+	al_set_target_bitmap(image_bitmap(image));
+	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
+	al_set_target_bitmap(screen_backbuffer(g_screen));
+	reset_blender();
+	free(vertices);
 	return 0;
 }
 
