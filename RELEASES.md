@@ -1,6 +1,43 @@
 Release Notes
 =============
 
+miniSphere 4.6
+--------------
+
+* When using standard JavaScript modules (`.mjs`), the main module of a
+  Sphere v2 game can now optionally use `export default` to export a class.
+  The exported class should implement, at the very least, a `start()` method
+  to be called by the engine on startup.  If the startup class derives from
+  `Thread`, you need only implement the `on_update()` and `on_render()`
+  handlers and miniSphere will kick off your main thread for you!
+
+* Several Sphere Runtime modules have been removed or renamed.  Pact is no
+  longer available, and term has been renamed to Console.  All CommonJS modules
+  making up the Sphere Runtime now also match the object they export.  For
+  instance, `require('scene')` returns the standard `Scene` object.
+
+* Most `Prim` methods have been renamed to make them more self-documenting and
+  to make it more obvious that these represent immediate-mode drawing.  For
+  example, `Prim.line()` is now called `Prim.drawLine()`.  Refer to the API
+  documentation for the full list.
+
+* The Sphere v2 Core API now includes a `Sample` class which allows a single
+  loaded sound to be played multiple times simultaneously, on any mixer.  This
+  is great for sound effects.
+
+* `describe()` has been removed from the Cellscript API and Cellscripts must
+  now manipulate the contents of `Sphere.Game` directly.  If desired, you can
+  use ES6 `Object.assign()` to get semantics similar to `describe()`.
+
+* `SSJ.log()` and `SSJ.trace()` have returned and allow logging text to the
+  attached debugger.  `SSJ.log()` output will also be visible in the terminal,
+  while `SSJ.trace()` output will not.
+
+* You must now call `Console.initialize()` to enable the debug console for your
+  game.  Loading the console module with `require()` will no longer enable it
+  automatically.
+
+
 miniSphere 4.5
 --------------
 

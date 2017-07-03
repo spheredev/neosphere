@@ -37,6 +37,7 @@ vX.X.X - TBD
 * Updates the Sphere Studio project template with code to illustrate the use of
   ES6 class syntax as well as better showcasing the standard library.
 * Fixes a crash that happens when using `SetTileImage()` or `SetTileSurface()`.
+* Fixes a bug where Cell will sometimes not detect a filename conflict.
 * Fixes a bug where `Dispatch.onRender()` jobs are processed in reverse order
   following a call to `Dispatch.onUpdate()`, and vice versa.
 * Fixes a bug where miniSphere calls the render script before the update script
@@ -45,9 +46,8 @@ vX.X.X - TBD
   a "two or more vertices required" error.
 * Fixes a bug where Sphere v1 `Surface#cloneSection()` and `Surface#rotate()`
   could introduce graphical artifacts on some platforms.
-* Fixes a bug where `Sound#pan` range is treated as [-255,+255] instead of the
-  documented range of [-1.0,+1.0].
-* Fixes a bug where Cell will sometimes not detect a filename conflict.
+* Fixes a bug where Sphere v2 `Sound#pan` range is treated as [-255,+255]
+  instead of the documented range of [-1.0,+1.0].
 
 
 v4.5.11 - April 27, 2017
