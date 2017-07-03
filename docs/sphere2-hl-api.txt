@@ -412,6 +412,127 @@ Delegate:remove(handler[, thisObj]);
     if no matching handler is registered.
 
 
+`FileReader` Object
+-------------------
+
+`FileReader` allows you to read from structured binary files like those used
+for Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
+You can also read individual binary values from the file.
+
+    import { FileReader } from 'sphere-runtime';
+	const FileReader = require('fileReader');
+
+new FileReader(stream, schema);
+
+    Creates a Reader object which can be used to read binary data from
+    a stream.  `stream` is an object with a read() method taking a byte count
+    and returning an ArrayBuffer, such as a FileStream or Socket.
+
+FileReader#readFloat32([littleEndian]);
+FileReader#readFloat64([littleEndian]);
+
+    Reads an IEEE floating point value from the associated stream.  If
+    `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
+    big-endian mode.
+
+FileReader#readInt8();
+FileReader#readInt16([littleEndian]);
+FileReader#readInt32([littleEndian]);
+FileReader#readUint8();
+FileReader#readUint16([littleEndian]);
+FileReader#readUint32([littleEndian]);
+
+    Reads an integer value from the associated stream.  If `littleEndian` is
+    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
+
+    Note: "readUint" variants read unsigned values.  "readInt" variants read
+          signed ("two's complement") values.
+
+FileReader#readString(length);
+
+    Reads a UTF-8 string from the associated stream.  `length` specifies how
+    many bytes to read.
+
+FileReader#readString8();
+FileReader#readString16([littleEndian]);
+FileReader#readString32([littleEndian]);
+
+    Reads a UTF-8 length-prefixed string from the associated stream, where the
+    length in bytes is stored as an unsigned integer.  If `littleEndian` is
+    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
+
+FileReader#readStruct(desc);
+
+    Reads an object from the associated stream, based on `desc`.  The
+    descriptor is an object describing the layout and typing of the data; for
+    example, the following will read the 256-byte header from a Sphere v1
+    format map file:
+
+        rmp_header = myReader.readStruct({
+            signature: { type: 'fstring', length: 4 },
+            version: { type: 'uint16le' },
+            type: { type: 'uint8' },
+            numLayers: { type: 'uint8' },
+            reserved1: { type: 'raw', size: 1 },
+            numEntities: { type: 'uint16le' },
+            startX: { type: 'uint16le' },
+            startY: { type: 'uint16le' },
+            startLayer: { type: 'uint8' },
+            startDir: { type: 'uint8' },
+            numStrings: { type: 'uint16le' },
+            numZones: { type: 'uint16le' },
+            repeating: { type: 'bool' },
+            reserved2: { type: 'raw', size: 234 },
+        });
+
+
+`FileWriter` Object
+-------------------
+
+`FileWriter` allows you to write binary data to files.  Like `FileReader`, but
+for write access.
+
+    import { FileWriter } from 'sphere-runtime';
+	const FileWriter = require('fileWriter');
+
+new FileWriter(stream);
+
+    Creates a Writer object which can be used to write binary data to a
+    stream.  `stream` is an object with a write() method that takes an
+    ArrayBuffer, such as a FileStream or Socket.
+
+FileWriter#writeFloat32(value[, littleEndian]);
+FileWriter#writeFloat64(value[, littleEndian]);
+
+    Writes a floating point value to the stream.  If `littleEndian` is true,
+    writes in little-endian mode.  Otherwise writes in big-endian mode.
+
+FileWriter#writeInt8(value);
+FileWriter#writeInt16(value[, littleEndian]);
+FileWriter#writeInt32(value[, littleEndian]);
+FileWriter#writeUint8(value);
+FileWriter#writeUint16(value[, littleEndian]);
+FileWriter#writeUint32(value[, littleEndian]);
+
+    Writes an integer value to the associated stream.  If `littleEndian` is
+    true, writes in little-endian mode.  Otherwise writes in big-endian mode.
+
+    Note: "writeUint" variants write unsigned values.  "writeInt" variants
+          write signed ("two's complement") values.
+
+FileWriter#writeString(value);
+
+    Writes a UTF-8 string to the associated stream.
+
+FileWriter#writeString8(value);
+FileWriter#writeString16(value[, littleEndian]);
+FileWriter#writeString32(value[, littleEndian]);
+
+    Writes a UTF-8 length-prefixed string to the associated stream, where the
+    length is stored as an unsigned integer.  If `littleEndian` is true, writes
+    in little-endian mode.  Otherwise, writes in big-endian mode.
+
+
 `Logger` Object
 ---------------
 
@@ -769,6 +890,28 @@ Scene#stop();
     player: The next time the scene is run, it will start from the beginning.
 
 
+`Test` Namespace
+----------------
+
+An implementation of the standard CommonJS testing module.  The primary use for
+this namespace is to automate unit testing.  The `Test` namespace consists of a
+single function.  Unit test code itself can likely benefit from the `assert`
+function though; see above for more information about that one.
+
+    import { Test } from 'sphere-runtime';
+	const Test = require('test');
+
+Test.run(tests);
+
+    Runs all unit tests in `tests`.  `tests` is an object with a number of
+    methods beginning with the word "test", e.g. testPig(), testCow(), etc.
+    Each one will be called in turn, in Object.keys() order.
+
+    Note: If you need a bit more organization, `tests` can also have subobjects
+          beginning with the word "test".  Any test methods found in subobjects
+          will be called as well.
+
+
 `Thread` Namespace
 ------------------
 
@@ -845,7 +988,7 @@ Thread.self();
     active thread.  Otherwise, returns 0.
 
 
-`joy` module
+`joy` Module
 ------------
 
 The joy module provides a simplified interface for games that want to support
@@ -867,138 +1010,6 @@ joy.P4 [read-only]
 
     Note: Only connected devices with at least 5 buttons and 2 axes are
           considered.
-
-
-`struct` Module
----------------
-
-The struct module allows you to read from structured binary files like those
-used for Sphere game assets (maps, tilesets, etc.) based on a simple JSON
-schema.
-
-    const struct = require('struct');
-
-new struct.Reader(stream, schema);
-
-    Creates a Reader object which can be used to read binary data from
-    a stream.  `stream` is an object with a read() method taking a byte count
-    and returning an ArrayBuffer, such as a FileStream or Socket.
-
-Reader#readFloat32([littleEndian]);
-Reader#readFloat64([littleEndian]);
-
-    Reads an IEEE floating point value from the associated stream.  If
-    `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
-    big-endian mode.
-
-Reader#readInt8();
-Reader#readInt16([littleEndian]);
-Reader#readInt32([littleEndian]);
-Reader#readUint8();
-Reader#readUint16([littleEndian]);
-Reader#readUint32([littleEndian]);
-
-    Reads an integer value from the associated stream.  If `littleEndian` is
-    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
-
-    Note: "readUint" variants read unsigned values.  "readInt" variants read
-          signed ("two's complement") values.
-
-Reader#readString(length);
-
-    Reads a UTF-8 string from the associated stream.  `length` specifies how
-    many bytes to read.
-
-Reader#readString8();
-Reader#readString16([littleEndian]);
-Reader#readString32([littleEndian]);
-
-    Reads a UTF-8 length-prefixed string from the associated stream, where the
-    length in bytes is stored as an unsigned integer.  If `littleEndian` is
-    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
-
-Reader#readStruct(desc);
-
-    Reads an object from the associated stream, based on `desc`.  The
-    descriptor is an object describing the layout and typing of the data; for
-    example, the following will read the 256-byte header from a Sphere v1
-    format map file:
-
-        rmp_header = myReader.readStruct({
-            signature: { type: 'fstring', length: 4 },
-            version: { type: 'uint16le' },
-            type: { type: 'uint8' },
-            numLayers: { type: 'uint8' },
-            reserved1: { type: 'raw', size: 1 },
-            numEntities: { type: 'uint16le' },
-            startX: { type: 'uint16le' },
-            startY: { type: 'uint16le' },
-            startLayer: { type: 'uint8' },
-            startDir: { type: 'uint8' },
-            numStrings: { type: 'uint16le' },
-            numZones: { type: 'uint16le' },
-            repeating: { type: 'bool' },
-            reserved2: { type: 'raw', size: 234 },
-        });
-
-new struct.Writer(stream);
-
-    Creates a Writer object which can be used to write binary data to a
-    stream.  `stream` is an object with a write() method that takes an
-    ArrayBuffer, such as a FileStream or Socket.
-
-Writer#writeFloat32(value[, littleEndian]);
-Writer#writeFloat64(value[, littleEndian]);
-
-    Writes a floating point value to the stream.  If `littleEndian` is true,
-    writes in little-endian mode.  Otherwise writes in big-endian mode.
-
-Writer#writeInt8(value);
-Writer#writeInt16(value[, littleEndian]);
-Writer#writeInt32(value[, littleEndian]);
-Writer#writeUint8(value);
-Writer#writeUint16(value[, littleEndian]);
-Writer#writeUint32(value[, littleEndian]);
-
-    Writes an integer value to the associated stream.  If `littleEndian` is
-    true, writes in little-endian mode.  Otherwise writes in big-endian mode.
-
-    Note: "writeUint" variants write unsigned values.  "writeInt" variants
-          write signed ("two's complement") values.
-
-Writer#writeString(value);
-
-    Writes a UTF-8 string to the associated stream.
-
-Writer#writeString8(value);
-Writer#writeString16(value[, littleEndian]);
-Writer#writeString32(value[, littleEndian]);
-
-    Writes a UTF-8 length-prefixed string to the associated stream, where the
-    length is stored as an unsigned integer.  If `littleEndian` is true, writes
-    in little-endian mode.  Otherwise, writes in big-endian mode.
-
-
-`test` Module
--------------
-
-An implementation of the standard CommonJS testing module.  The primary use for
-this module is to automate unit testing.  Its API consists of a single
-function.  Unit test code itself can likely benefit from the `assert` module
-though; see above for more information about that one.
-
-    const test = require('test');
-
-
-test.run(tests);
-
-    Runs all unit tests in `tests`.  `tests` is an object with a number of
-    methods beginning with the word "test", e.g. testPig(), testCow(), etc.
-    Each one will be called in turn, in Object.keys() order.
-
-    Note: If you need a bit more organization, `tests` can also have subobjects
-          beginning with the word "test".  Any test methods found in subobjects
-          will be called as well.
 
 
 `xml` Module
