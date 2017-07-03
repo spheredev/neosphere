@@ -81,9 +81,9 @@ Source: "..\msw64\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Compo
 Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun; Check: IsWin64
 Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cell; Check: IsWin64
 Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/ssj; Check: IsWin64
-Source: "..\msw\documentation\sphere2-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
+Source: "..\msw\documentation\sphere2-core-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
+Source: "..\msw\documentation\sphere2-hl-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\cellscript-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cell
-Source: "..\msw\documentation\miniRT-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\msw\template\*"; DestDir: "{app}\template"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
 #ifdef HAVE_SPHERE_STUDIO
@@ -120,9 +120,9 @@ Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
 Name: "{group}\Sphere Studio IDE"; Filename: "{app}\ide\Sphere Studio.exe"; Components: spherun/ide
 #endif
 Name: "{group}\miniSphere Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
-Name: "{group}\Sphere v2 API Reference"; Filename: "{app}\documentation\sphere2-api.txt"; Components: spherun
+Name: "{group}\Sphere v2 Core API Reference"; Filename: "{app}\documentation\sphere2-core-api.txt"; Components: spherun
+Name: "{group}\Sphere Runtime API Reference"; Filename: "{app}\documentation\sphere2-hl-api.txt"; Components: spherun
 Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cellscript-api.txt"; Components: spherun/cell
-Name: "{group}\miniRT API Reference"; Filename: "{app}\documentation\miniRT-api.txt"; Components: spherun
 
 [Run]
 #ifdef HAVE_SPHERE_STUDIO

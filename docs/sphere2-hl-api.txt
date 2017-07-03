@@ -1,13 +1,13 @@
-miniRT API Reference
-====================
+Sphere Runtime API Reference
+============================
 
-Besides the low-level Core API, the Sphere platform includes a set of standard
-objects used for higher-level tasks, known as the Sphere Runtime.  This file
-documents the Sphere Runtime API.
+Besides the low-level Core API, the Sphere platform also includes a set of
+standard objects used for higher-level tasks, collectively known as the
+Sphere Runtime.  This file documents the API.
 
 
-`assert` Module
----------------
+`assert` Function
+-----------------
 
 An implementation of the standard CommonJS assertions module.  Assertions are
 useful both for making unit tests as well as verifying that runtime conditions
@@ -16,13 +16,13 @@ the condition is true (hence the name); if that turns out not to be the case,
 an AssertionError will be thrown instead of continuing normal operation.  With
 strategic placement of assertions, bugs can be uncovered faster.
 
-Each function in this module accepts an optional `error_text` parameter.  This
-specifies the error message to use if an AssertionError is thrown.  If no
+Each assertion function accepts an optional `error_text` parameter.  This
+specifies the error message to use if an AssertionError gets thrown.  If no
 message is specified, a default message will be used approximating the
 offending expression, e.g. "AssertionError: 2 < 1"
 
+    import { assert } from 'sphere-runtime';
     const assert = require('assert');
-
 
 assert(condition[, error_text]);
 assert.ok(condition[, error_text]);
@@ -38,8 +38,8 @@ assert.deepStrictEqual(value, expected[, error_text]);
     value according to either the equality operator (==) or strict equality
     operator (===), respectively.
 
-    Note: assert.deepStrictEqual() has an additional requirement that the
-          objects must have the same prototype.  assert.deepEqual(), by
+    Note: `assert.deepStrictEqual()` has an additional requirement that the
+          objects must have the same prototype.  `assert.deepEqual()`, by
           contrast, doesn't look at the objects' prototypes at all.
 
 assert.equal(value, expected[, error_text]);
@@ -48,65 +48,32 @@ assert.notEqual(value, unexpected[, error_text]);
 assert.notStrictEqual(value, expected[, error_text]);
 
     Asserts that two values either match or do not match, respectively.
-    The standard variants test for loose equality (==), while the "strict"
-    variants test for strict equality (===).
+    The standard variants test for loose equality (`==`), while the "strict"
+    variants test for strict equality (`===`).
 
 assert.throws(func, expected[, error_text]);
 assert.doesNotThrow(func, expected[, error_text]);
 
     Asserts that the specified function either throws or does not throw a
     specified class of exception.  `expected` can either be an error
-    constructor such as TypeError or ReferenceError, or a predicate function.
-    If it's a predicate function, the function should return true if the thrown
-    exception matches, or false otherwise.
+    constructor such as `TypeError` or `ReferenceError`, or a predicate
+    function.  If it's a predicate function, the function should return true if
+    the thrown exception matches, or false otherwise.
 
     Note: To avoid suppressing unrelated exceptions, any exception that doesn't
           match the specified criteria will be rethrown as-is.
 
 
-`events` Module
+`from` Function
 ---------------
 
-A simple multicast delegate implementation which works similarly to events in
-.NET.  An object exposes one or more delegates, which can have handler
-functions registered to them by outside code.  When something interesting
-happens, the object owning the delegate invokes it, which calls all the
-registered handlers in turn.  In this way outside code can react to changing
-situations without breaking encapsulation.
-
-    const events = require('events');
-
-
-new events.Delegate();
-
-    Constructs a new delegate.  The delegate starts out empty, with no handlers
-    attached.
-
-Delegate:add(handler[, thisObj]);
-
-    Registers the function `handler` with the delegate.  Whenever the delegate
-    is invoked, all handlers registered at that time will be called in order.
-    `thisObj` is optional and specifies an object to use for the `this` binding
-    when calling `handler`.
-
-    add() will throw an error if a matching handler has already been
-    registered.
-
-Delegate:remove(handler[, thisObj]);
-
-    Removes a previously-registered handler from the delegate.  Throws an error
-    if no matching handler is registered.
-
-
-`from` module
--------------
-
-The `from` module provides games with the ability to perform complex queries
+The `from` function provides games with the ability to perform complex queries
 against the contents of arrays and objects.  One use case is in battle engines:
 you could, for instance, query for only those battlers on the enemy side, or
 use a query to narrow down the scope of status effects.  Even enemy AI code can
 benefit from queries!
 
+    import { from } from 'sphere-runtime';
     const from = require('from');
 
 If you're familiar with C#, the from() function exposed by this module works a
@@ -239,7 +206,7 @@ from#each(callback);
     the callback is ignored.  This is used to loop over the results of a query,
     the way you would loop over an array using arrayObj.forEach() in standard
     JavaScript.
-    
+
     Note: Using a `for...of` loop is generally preferred over from#each().
           This is mainly provided to ease things for legacy code, as pre-ES2015
           JavaScript doesn't support `for...of`.
@@ -346,64 +313,138 @@ from#where(predicate);
     that match the predicate will be passed on.
 
 
-`joy` module
-------------
+`Console` Object
+----------------
 
-The joy module provides a simplified interface for games that want to support
-joystick input without the complexity of the Sphere v2 Joystick API.  Using
-this module, a game can support joystick input for up to 4 players
-simultaneously.
+The `Console` object provides a way to add a text-based debug console to your
+game.  A full command parser is already built in, so the only thing your game
+needs to do is provide names and implementations for supported console
+commands.  Sphere will do the rest.
 
-    const joy = require('joy');
+During gameplay, if the game allows it, the console can be shown and hidden
+using a hotkey (`~` by default).
+
+Console.visible [read/write]
+
+    Gets or sets whether the console is visible to the player.  Setting this to
+    `true` will show the console, while setting to `false` will hide it.
+
+Console.initialize(options);
+
+    Initializes the console, enabling the player to access it while in-game.
+    `options` can include any of the following properties:
+
+        options.hotKey
+
+            A `Key` value specifying which keyboard key will show and hide the
+            console.  If not provided, defaults to `Key.Tilde`.
+
+Console.defineObject(objectName, thisObj, commands);
+
+    Registers an object and a set of commands with the console.  `commands` is
+    an object providing the names and implementations of the commands being
+    added, which will be associated with the name specified by `objectName`.
+    Each property of `commands` has as its key the command name, and a function
+    as its value, which will be called when the command is invoked.  `thisObj`
+    specifies a `this` binding to use when calling a command function.
+
+    As this API is complex and difficult to explain, an example might help
+    illuminate things.  A sample term.define() call might look something like
+    this:
+
+        term.define('sound', null, {
+            'play': function(filename) {
+                if (fs.exists(filename)) {
+                    new Sound(filename).play(Mixer.Default);
+                }
+            }
+        });
+
+    The player could then type `sound play sounds/munch.wav` into the console
+    to play that sound (assuming it exists).  Note that if an error is thrown
+    while processing a command, the console will not catch it.  Games should
+    perform some form of error checking in their command functions to prevent
+    the player from destabilizing the game.
+
+Console.log(text[, text2[, ...]]);
+
+    Logs a line of text to the console.  Passing more than one value will cause
+    the strings to be separated with chevrons (`>>`).
+
+Console.undefineObject(objectName);
+
+    Unregisters all commands previously registered under `objectName`.  See
+    `term.define()` for more information.  Note: It is not currently
+    possible to unregister individual commands.
 
 
-joy.P1 [read-only]
-joy.P2 [read-only]
-joy.P3 [read-only]
-joy.P4 [read-only]
+`Delegate` Object
+-----------------
 
-    Gets a Joystick object representing a connected device.  `joy.P1` always
-    refers to the same device within a session; likewise for the other
-    properties.  If no suitable device is available for the specified player,
-    `Joystick.Null` is returned instead.
+A simple multicast delegate implementation which works similarly to events in
+.NET.  An object exposes one or more delegates, which can have handler
+functions registered to them by outside code.  When something interesting
+happens, the object owning the delegate invokes it, which calls all the
+registered handlers in turn.  In this way outside code can react to changing
+situations without breaking encapsulation.
 
-    Note: Only connected devices with at least 5 buttons and 2 axes are
-          considered.
+    import { Delegate } from 'sphere-runtime';
+    const Delegate = require('delegate');
+
+new Delegate();
+
+    Constructs a new delegate.  The delegate starts out empty, with no handlers
+    attached.
+
+Delegate:add(handler[, thisObj]);
+
+    Registers the function `handler` with the delegate.  Whenever the delegate
+    is invoked, all handlers registered at that time will be called in order.
+    `thisObj` is optional and specifies an object to use for the `this` binding
+    when calling `handler`.
+
+    add() will throw an error if a matching handler has already been
+    registered.
+
+Delegate:remove(handler[, thisObj]);
+
+    Removes a previously-registered handler from the delegate.  Throws an error
+    if no matching handler is registered.
 
 
-`logger` Module
+`Logger` Object
 ---------------
 
-The logger module provides basic logging functionality.  Your game can use this
-to log lines of text to a file complete with timestamps for each, often useful
-for debugging purposes.
+The `Logger` object provides basic logging functionality.  Your game can use
+this to log lines of text to a file--complete with timestamps for each--which
+is often very useful for debugging purposes.
 
-    const logger = require('logger');
+    import { Logger } from 'sphere-runtime';
+    const Logger = require('logger');
 
-
-new logger.Log(filename);
+new Logger(filename);
 
     Opens the given file for logging.  If the file cannot be opened for
     writing, an error is thrown.
 
-Log#beginGroup(text);
+Logger#beginGroup(text);
 
     Begins an group.  All log entries in a group will be indented.  Groups can
     be nested.
 
-Log#endGroup();
+Logger#endGroup();
 
     Closes the most recently opened group.  There should be a corresponding
     endGroup() for each beginGroup() call.
 
-Log#write(text);
+Logger#write(text);
 
     Writes a timestamped entry to the log.  `text` should contain no newline
     characters, although this is not enforced.
 
 
-`music` Module
---------------
+`Music` Namespace
+-----------------
 
 A flexible system based on Audialis for managing playback of background music.
 The design, based on a pushdown stack, integrates well with finite state
@@ -411,27 +452,27 @@ machine architectures, which are often themselves based on a stack of states.
 Code can push new BGM to the music stack, and when it is later popped, the
 previous track resumes right where it left off.
 
-miniRT supports crossfading, which helps smooth out BGM transitions.  The stack
-can also be bypassed when needed, from simply switching out the song on top of
-the stack with another track, to overriding the contents of the stack entirely,
-which is often useful in RPGs to override the battle music for storyline
-reasons.
+The Music engine supports crossfading, which helps smooth out BGM transitions.
+The music stack can also be bypassed when needed, from simply switching out the
+song on top of the stack with another track, to overriding the contents of the
+stack entirely, which is often useful in RPGs to override the battle music for
+story reasons.
 
-    const music = require('music');
+    import { Music } from 'sphere-runtime';
+    const Music = require('music');
 
-
-music.adjusting [read-only]
+Music.adjusting [read-only]
 
     true if the music volume is currently being adjusted by a call to
-    music.adjust() (see below), otherwise false.
+    music.adjustVolume() (see below), otherwise false.
 
-music.adjust(newVolume, time);
+Music.adjustVolume(newVolume, time);
 
     Smoothly adjusts the BGM volume level.  `newVolume` should be a value
     between 0 and 1, where 0 is silent and 1 is full volume.  `time` is the
     amount of game time the adjustment should take, in frames.
 
-music.override(path[, fadeTime]);
+Music.override(path[, fadeTime]);
 
     Overrides the BGM stack by playing the song specified by `path` at all
     times.  This may be useful in RPGs, for example to override the battle music
@@ -443,7 +484,7 @@ music.override(path[, fadeTime]);
     the override is lifted (by calling reset()), the song on top of the stack at
     that time will play.
 
-music.play(path[, fadeTime]);
+Music.play(path[, fadeTime]);
 
     Replaces the song on top of the music stack with the track named by `path`.
     This is not the same as an override; if play() or push() is called
@@ -451,141 +492,40 @@ music.play(path[, fadeTime]);
 
     `fadeTime` is the amount of crossfade to apply, in frames.
 
-music.pop([fadeTime]);
+Music.pop([fadeTime]);
 
     Pops the topmost song off the music stack.  This will resume playing
     whatever song was playing when the corresponding push() was done.
 
-music.push(path[, fadeTime]);
+Music.push(path[, fadeTime]);
 
     Pushes a new song to the music stack.  If pop() is called later, the
     previous BGM will resume from where it left off.  `fadeTime` is the amount
     of crossfade to apply, in frames.
 
-music.reset([fadeTime]);
+Music.reset([fadeTime]);
 
     Resets the BGM manager to normal operation, removing any outstanding
     overrides.  `fadeTime` is the amount of crossfade to apply, in frames.
 
 
-`pacts` Module
---------------
-
-Pacts is an implementation of the Promises/A+ standard.  Promises are commonly
-used in JavaScript frameworks such as Node.js to implement asynchronous logic.
-Code which receives a promise can register a function to be called once when
-the promise is fulfilled, which allows normal execution to continue while some
-long-running operation takes place in the background.
-
-Promises are so called because they represent a promise to return a value at
-some later time.  Promises can be chained, which enables something akin to C#'s
-`async` and `await` keywords.  This is done by having a promise's fulfillment
-function itself return a promise, which will then be used as input for the next
-link in the chain:
-
-    loadHugePigFile()                    // <- makes a promise, then works in background
-        .then(function(file) {           // <- receives fulfillment value
-            return processPigFile(file); // <- also makes a promise
-        }).then(function(numPigs) {      // <- receives fulfillment value
-            console.log("Wow, that actually finished?!");
-            console.log("Loaded " + numPigs + " big fat pigs! *MUNCH*");
-        });
-
-Outside code must not be allowed to resolve a promise prematurely.  Only the
-code which made the promise should resolve it, and this is enforced through
-encapsulation (the promise is resolved directly via a closure passed to the
-Promise constructor).  This makes managing them difficult--which is where the
-Pact object comes in.  A Pact can be used to make an unlimited number of
-promises which can then be resolved through that pact.  In this way
-encapsulation of the Promise object is maintained while keeping things simple
-for the code handing them out.
-
-    const pacts = require('pacts');
-
-
-new pacts.Promise(fn);
-
-    Makes a promise.  `fn` should be a function with the following signature,
-    where `resolve` and `reject` are themselves functions:
-
-        function fn(resolve, reject)
-
-    This function should call resolve(value) to fulfill the promise with
-    `value`, or reject(reason) to reject the promise.  `reason` is usually an
-    Error object or derivative, but this is not enforced.  If `fn` throws, the
-    promise will be rejected with the thrown value as the reason.
-
-    To maintain encapsulation and prevent unrelated code from resolving a
-    promise, resolution is only possible using the functions passed to `fn`.
-    This makes things difficult for the code which is actually responsible for
-    satisfying the promise.  Consider using a Pact (see below) to simplify the
-    process.
-
-Promise.all(promises);
-
-    Makes a promise which is fulfilled only when all promises in the array
-    `promises` have been fulfilled.  If any of the promises is rejected, the
-    Promise.all() promise will be rejected immediately with the same reason
-    value.
-
-Promise.race(promises);
-
-    Makes a promise which resolves once any promise in `promises` is resolved,
-    with the same value or reason.
-
-Promise.reject(reason);
-
-    Makes a promise which is rejected immediately with `reason` (usually an
-    Error value).
-
-Promise.resolve(value);
-
-    Makes a promise which is fulfilled immediately with `value`.
-
-new pacts.Pact();
-
-    Creates a new pact.  As described above, Pacts are used to generate
-    promises which can then be resolved through the pact.
-
-Pact:promise();
-
-    Makes a promise using this pact.  The promise can only be resolved through
-    the pact used to make it.
-
-Pact:resolve(promise, value);
-
-    Fulfills a promise with `value`.  `promise` must have come from this pact.
-    It is a TypeError to fulfill a promise using an unrelated pact.
-
-Pact:reject(promise, reason);
-
-    Rejects a promise with `reason` (usually an Error value).  `promise` must
-    have come from this pact.  It is a TypeError to reject a promise using an
-    unrelated pact.
-
-Pact:welsh(reason);
-
-    Rejects all outstanding promises from this pact.  `reason` is the value to
-    reject with, usually an Error object.
-
-
-`Prim` namespace
+`Prim` Namespace
 ----------------
 
 The `Prim` namespace provides convenience functions for drawing common graphics
 primitives such as circles and rectangles, which are tedious to render using
 the Core API directly.
 
+    import { Prim } from 'sphere-runtime';
     const Prim = require('prim');
 
 Prim.blit(surface, x, y, texture[, mask]);
 
-    Draws the specified texture as a textured quad.  `mask` is used to color
-	the quad's vertices and has the effect of tinting the rendered image.  If
-	no mask is specified, `Color.White` is assumed, which leaves the image
-	colors as-is.
+    Draws the specified texture as a plain image.  `mask` gets multiplied into
+    each texel and has the effect of tinting the rendered image.  If no mask is
+    specified, `Color.White` is assumed, which leaves the image as-is.
 
-Prim.blitSection(surface, x, y, image, sx, sy, width, height[, mask]);
+Prim.blitSection(surface, x, y, texture, sx, sy, width, height[, mask]);
 
     Like `Prim.blit()`, but allows drawing only part of a texture.  `sx`, `sy`,
 	`width` and `height` specify the section to be drawn.
@@ -635,54 +575,56 @@ Prim.drawSolidTriangle(surface, x1, y1, x2, y2, x3, y3, color[, color2, color3])
 
 Prim.fill(surface, color);
 
-    Fills a surface with a specified color.  This is effectively shorthand for
-    drawing a rectangle of the specified color over the whole surface.
+    Fills a surface with a specified color.  In practice, this has the same
+    effect as drawing a rectangle of the specified color over the entire
+    surface.
 
 
-`random` Module
----------------
+`Random` Namespace
+------------------
 
 Many games don't need the full power of the Sphere `RNG` object and just need
-a convenient way to generate random numbers for various purposes.
+a convenient way to generate random numbers for various purposes.  The `Random`
+namespace provides exactly that.
 
-    const random = require('random');
+    import { Random } from 'sphere-runtime';
+    const Random = require('random');
 
-
-random.chance(odds);
+Random.chance(odds);
 
     Returns true or false depending on the given odds.  `odds` is a number in
     the range [0-1] specifying the odds of returning true.  For example, odds
     of 0.75 will return true 75% of the time.
 
-random.discrete(min, max);
+Random.discrete(min, max);
 
     Returns a random integer uniformly distributed within the range [min,max].
 
-random.normal(mean, sigma);
+Random.normal(mean, sigma);
 
     Returns a random floating point number from a normal distribution
     (sometimes called a bell curve) with expected value of `mean` and standard
     deviation `sigma`.
 
-random.sample(array);
+Random.sample(array);
 
     Returns a randomly chosen item from the specified array.
 
-random.string(length);
+Random.string(length);
 
     Returns a randomly generated string consisting of alphanumeric characters.
     The generated string looks something like a YouTube video hash (e.g.
     YlHRHDrKS) and is useful for uniquely identifying things, for example to
     generate temporary filenames.
 
-random.uniform(mean, variance);
+Random.uniform(mean, variance);
 
     Returns a random floating point value uniformly distributed around `mean`
     with an absolute maximum deviation ("give or take") specified by
     `variance`.
 
 
-`Scene` object
+`Scene` Object
 --------------
 
 The Scene object encapsulates a powerful scene engine which can run multiple
@@ -697,6 +639,7 @@ Scene is originally based on the Scenario standalone cutscene engine for
 Sphere v1, but has been updated to take advantage of Sphere v2 features and to
 integrate more seamlessly with other Sphere v2 technologies.
 
+    import { Scene } from 'sphere-runtime';
     const Scene = require('scene');
 
 A scene consists of a chain of scenelet invocations, with optional forks and
@@ -717,7 +660,6 @@ This scene can be played back at any time by calling `myScene.run()`.  miniRT's
 scene engine uses the threads module and by default, scenes are nonblocking.
 See the documentation for `Scene#run()` below to find out how to play a scene
 in blocking mode.
-
 
 Scene.defineAction(name, def);
 
@@ -827,6 +769,106 @@ Scene#stop();
     player: The next time the scene is run, it will start from the beginning.
 
 
+`Thread` Namespace
+------------------
+
+An easy-to-use cooperative threading engine.  In Sphere v1, games could define
+an update and render script, which would called each frame.  Using the `Thread`
+object, multiple threads can be created, each with its own update and render
+handler.  This allows many actions to run simultaneously.  For example, you
+might have a thread to run the in-game clock and another to manage animations.
+An active-time battle engine might even use several threads to manage each of
+the units on the battlefield.
+
+    import { Thread } from 'sphere-runtime';
+    const Thread = require('thread');
+
+Thread.create(def[, priority]);
+
+    Creates a new thread and returns its thread ID (an integer).  `def` should
+    be an object with the following properties:
+
+        def.update()
+
+            The thread's update function.  This is called once per game frame to
+            update any state maintained by the thread.  The update function
+            should return true to keep the thread going.  If it ever returns
+            false, the thread will terminate.
+
+        def.render()
+
+            Optional.  The thread's render function.  This is called once per
+            render frame to perform any rendering related to the thread.  For
+            example, a thread managing a battle unit could render its sprite.
+            Render order of threads is determined by `priority`, with higher
+            priority threads being rendered later (closer to the screen).
+
+        def.getInput()
+
+            Optional.  Called once per frame to process player input for the
+            thread.  In the current version of miniRT (2.0), getInput() and
+            update() calls will always match 1:1.  Future versions may change
+            this however, for example by implementing an input stack or
+            Z-ordering of some form.
+
+    Each of the above functions is called with its `this` binding set to `def`.
+    This can be used to implement an "entity": a full object implementing the
+    above functions which manages its own thread.
+
+Thread.isRunning(tid);
+
+    true if a thread with thread ID `tid` is running.  miniRT never recycles
+    thread IDs, so this can be counted on to return false if given the tid of a
+    thread which has terminated.
+
+Thread.join(tid);
+
+    Blocks the caller and awaits termination of the thread with thread ID `tid`.
+    Any running threads (and the map engine, if it's in use) will continue to
+    run.  If called during a thread update, the calling thread will be blocked
+    from updating or accepting input until the join is satisfied.
+
+    Note that due to limitations inherent to JavaScript's single-threaded
+    architecture, join is implemented recursively and can only be satisfied in
+    a last-in-first-out manner.  So if two threads are being awaited and the
+    first one terminates, the corresponding join cannot be satisfied until the
+    second thread also terminates.
+
+Thread.kill(tid);
+
+    Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
+    invalid or has already terminated, nothing happens.
+
+Thread.self();
+
+    When called from an update or render function, returns the thread ID of the
+    active thread.  Otherwise, returns 0.
+
+
+`joy` module
+------------
+
+The joy module provides a simplified interface for games that want to support
+joystick input without the complexity of the Sphere v2 Joystick API.  Using
+this module, a game can support joystick input for up to 4 players
+simultaneously.
+
+    const joy = require('joy');
+
+joy.P1 [read-only]
+joy.P2 [read-only]
+joy.P3 [read-only]
+joy.P4 [read-only]
+
+    Gets a Joystick object representing a connected device.  `joy.P1` always
+    refers to the same device within a session; likewise for the other
+    properties.  If no suitable device is available for the specified player,
+    `Joystick.Null` is returned instead.
+
+    Note: Only connected devices with at least 5 buttons and 2 axes are
+          considered.
+
+
 `struct` Module
 ---------------
 
@@ -835,7 +877,6 @@ used for Sphere game assets (maps, tilesets, etc.) based on a simple JSON
 schema.
 
     const struct = require('struct');
-
 
 new struct.Reader(stream, schema);
 
@@ -938,71 +979,6 @@ Writer#writeString32(value[, littleEndian]);
     in little-endian mode.  Otherwise, writes in big-endian mode.
 
 
-`Console` Object
-----------------
-
-The `Console` object provides a way to add a text-based debug console to your
-game.  A full command parser is already built in, so the only thing your game
-needs to do is provide names and implementations for supported console
-commands.  Sphere will do the rest.
-
-During gameplay, if the game allows it, the console can be shown and hidden
-using a hotkey (`~` by default).
-
-Console.visible [read/write]
-
-    Gets or sets whether the console is visible to the player.  Setting this to
-    `true` will show the console, while setting to `false` will hide it.
-
-Console.initialize(options);
-
-    Initializes the console, enabling the player to access it while in-game.
-    `options` can include any of the following properties:
-    
-        options.hotKey
-
-            A `Key` value specifying which keyboard key will show and hide the
-            console.  If not provided, defaults to `Key.Tilde`.
-
-Console.defineObject(objectName, thisObj, commands);
-
-    Registers an object and a set of commands with the console.  `commands` is
-    an object providing the names and implementations of the commands being
-    added, which will be associated with the name specified by `objectName`.
-    Each property of `commands` has as its key the command name, and a function
-    as its value, which will be called when the command is invoked.  `thisObj`
-    specifies a `this` binding to use when calling a command function.
-
-    As this API is complex and difficult to explain, an example might help
-    illuminate things.  A sample term.define() call might look something like
-    this:
-
-        term.define('sound', null, {
-            'play': function(filename) {
-                if (fs.exists(filename)) {
-                    new Sound(filename).play(Mixer.Default);
-                }
-            }
-        });
-
-    The player could then type `sound play sounds/munch.wav` into the console
-    to play that sound (assuming it exists).  Note that if an error is thrown
-    while processing a command, the console will not catch it.  Games should
-    perform some form of error checking in their command functions to prevent
-    the player from destabilizing the game.
-
-Console.log(text[, text2[, ...]]);
-
-    Logs a line of text to the console.  Passing more than one value will cause
-    the strings to be separated with chevrons (`>>`).
-
-Console.undefineObject(objectName);
-
-    Unregisters all commands previously registered under `objectName`.  See
-    `term.define()` for more information.  Note: It is not currently
-    possible to unregister individual commands.
-
-
 `test` Module
 -------------
 
@@ -1025,82 +1001,6 @@ test.run(tests);
           will be called as well.
 
 
-`threads` Module
-----------------
-
-This is an easy-to-use cooperative threading engine.  In Sphere v1, games could
-define an update and render script, which would called each frame.  In miniRT,
-multiple threads can be created, each with its own update and render function.
-This allows many actions to run simultaneously.  For example, you might have a
-thread to run the in-game clock and another to manage animations.  An
-active-time battle engine might even use several threads to manage each of the
-units on the battlefield.
-
-    const threads = require('threads');
-
-
-threads.create(def[, priority]);
-
-    Creates a new thread and returns its thread ID (an integer).  `def` should
-    be an object with the following properties:
-
-        def.update()
-
-            The thread's update function.  This is called once per game frame to
-            update any state maintained by the thread.  The update function
-            should return true to keep the thread going.  If it ever returns
-            false, the thread will terminate.
-
-        def.render()
-
-            Optional.  The thread's render function.  This is called once per
-            render frame to perform any rendering related to the thread.  For
-            example, a thread managing a battle unit could render its sprite.
-            Render order of threads is determined by `priority`, with higher
-            priority threads being rendered later (closer to the screen).
-
-        def.getInput()
-
-            Optional.  Called once per frame to process player input for the
-            thread.  In the current version of miniRT (2.0), getInput() and
-            update() calls will always match 1:1.  Future versions may change
-            this however, for example by implementing an input stack or
-            Z-ordering of some form.
-
-    Each of the above functions is called with its `this` binding set to `def`.
-    This can be used to implement an "entity": a full object implementing the
-    above functions which manages its own thread.
-
-threads.isRunning(tid);
-
-    true if a thread with thread ID `tid` is running.  miniRT never recycles
-    thread IDs, so this can be counted on to return false if given the tid of a
-    thread which has terminated.
-
-threads.join(tid);
-
-    Blocks the caller and awaits termination of the thread with thread ID `tid`.
-    Any running threads (and the map engine, if it's in use) will continue to
-    run.  If called during a thread update, the calling thread will be blocked
-    from updating or accepting input until the join is satisfied.
-
-    Note that due to limitations inherent to JavaScript's single-threaded
-    architecture, join is implemented recursively and can only be satisfied in
-    a last-in-first-out manner.  So if two threads are being awaited and the
-    first one terminates, the corresponding join cannot be satisfied until the
-    second thread also terminates.
-
-threads.kill(tid);
-
-    Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
-    invalid or has already terminated, nothing happens.
-
-threads.self();
-
-    When called from an update or render function, returns the thread ID of the
-    active thread.  Otherwise, returns 0.
-
-
 `xml` Module
 ------------
 
@@ -1109,7 +1009,6 @@ This module is based on the MIT-licensed "sax js" parser.  The API is simple
 but should cover most use cases for game development.
 
     const xml = require('xml');
-
 
 xml.load(fileName);
 
