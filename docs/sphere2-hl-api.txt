@@ -313,16 +313,16 @@ from#where(predicate);
     that match the predicate will be passed on.
 
 
-`Console` Object
-----------------
+`Console` namespace
+-------------------
 
-The `Console` object provides a way to add a text-based debug console to your
-game.  A full command parser is already built in, so the only thing your game
-needs to do is provide names and implementations for supported console
+The `Console` namespace provides a way to add a text-based debug console to
+your game.  A full command parser is already built in, so the only thing your
+game needs to do is provide names and implementations for supported console
 commands.  Sphere will do the rest.
 
-During gameplay, if the game allows it, the console can be shown and hidden
-using a hotkey (`~` by default).
+During gameplay, if the game has initialized the console, it can be shown and
+hidden by the player using a hotkey (`~` by default).
 
 Console.visible [read/write]
 
@@ -378,6 +378,127 @@ Console.undefineObject(objectName);
     possible to unregister individual commands.
 
 
+`DataReader` Object
+-------------------
+
+`DataReader` allows you to read from structured binary files like those used
+for Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
+You can also read individual binary values from the file.
+
+    import { DataReader } from 'sphere-runtime';
+    const DataReader = require('dataReader');
+
+new DataReader(stream, schema);
+
+    Constructs a `DataReader` object which can be used to read binary data from
+    a stream.  `stream` is an object with a `read()` method taking a byte count
+    and returning an ArrayBuffer, such as a `FileStream` or `Socket`.
+
+DataReader#readFloat32([littleEndian]);
+DataReader#readFloat64([littleEndian]);
+
+    Reads an IEEE floating point value from the associated stream.  If
+    `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
+    big-endian mode.
+
+DataReader#readInt8();
+DataReader#readInt16([littleEndian]);
+DataReader#readInt32([littleEndian]);
+DataReader#readUint8();
+DataReader#readUint16([littleEndian]);
+DataReader#readUint32([littleEndian]);
+
+    Reads an integer value from the associated stream.  If `littleEndian` is
+    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
+
+    Note: "readUint" variants read unsigned values.  "readInt" variants read
+          signed ("two's complement") values.
+
+DataReader#readString(length);
+
+    Reads a UTF-8 string from the associated stream.  `length` specifies how
+    many bytes to read.
+
+DataReader#readString8();
+DataReader#readString16([littleEndian]);
+DataReader#readString32([littleEndian]);
+
+    Reads a UTF-8 length-prefixed string from the associated stream, where the
+    length in bytes is stored as an unsigned integer.  If `littleEndian` is
+    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
+
+DataReader#readStruct(desc);
+
+    Reads an object from the associated stream, based on `desc`.  The
+    descriptor is an object describing the layout and typing of the data; for
+    example, the following will read the 256-byte header from a Sphere v1
+    format map file:
+
+        rmp_header = myReader.readStruct({
+            signature: { type: 'fstring', length: 4 },
+            version: { type: 'uint16le' },
+            type: { type: 'uint8' },
+            numLayers: { type: 'uint8' },
+            reserved1: { type: 'raw', size: 1 },
+            numEntities: { type: 'uint16le' },
+            startX: { type: 'uint16le' },
+            startY: { type: 'uint16le' },
+            startLayer: { type: 'uint8' },
+            startDir: { type: 'uint8' },
+            numStrings: { type: 'uint16le' },
+            numZones: { type: 'uint16le' },
+            repeating: { type: 'bool' },
+            reserved2: { type: 'raw', size: 234 },
+        });
+
+
+`DataWriter` Object
+-------------------
+
+`DataWriter` allows you to write binary data to files or sockets.  It's like
+`DataReader` (see above), but for write access.
+
+    import { DataWriter } from 'sphere-runtime';
+    const DataWriter = require('dataWriter');
+
+new DataWriter(stream);
+
+    Constructs a `DataWriter` object which can be used to write binary data
+    into a stream.  `stream` is an object with a `write()` method that takes an
+    ArrayBuffer, such as a `FileStream` or `Socket`.
+
+DataWriter#writeFloat32(value[, littleEndian]);
+DataWriter#writeFloat64(value[, littleEndian]);
+
+    Writes a floating point value to the stream.  If `littleEndian` is true,
+    writes in little-endian mode.  Otherwise writes in big-endian mode.
+
+DataWriter#writeInt8(value);
+DataWriter#writeInt16(value[, littleEndian]);
+DataWriter#writeInt32(value[, littleEndian]);
+DataWriter#writeUint8(value);
+DataWriter#writeUint16(value[, littleEndian]);
+DataWriter#writeUint32(value[, littleEndian]);
+
+    Writes an integer value to the associated stream.  If `littleEndian` is
+    true, writes in little-endian mode.  Otherwise writes in big-endian mode.
+
+    Note: "writeUint" variants write unsigned values.  "writeInt" variants
+          write signed ("two's complement") values.
+
+DataWriter#writeString(value);
+
+    Writes a UTF-8 string to the associated stream.
+
+DataWriter#writeString8(value);
+DataWriter#writeString16(value[, littleEndian]);
+DataWriter#writeString32(value[, littleEndian]);
+
+    Writes a UTF-8 length-prefixed string to the associated stream, where the
+    length is stored as an unsigned integer.  If `littleEndian` is true, writes
+    in little-endian mode.  Otherwise, writes in big-endian mode.
+
+
 `Delegate` Object
 -----------------
 
@@ -412,125 +533,29 @@ Delegate:remove(handler[, thisObj]);
     if no matching handler is registered.
 
 
-`FileReader` Object
--------------------
+`Joypad` Namespace
+------------------
 
-`FileReader` allows you to read from structured binary files like those used
-for Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
-You can also read individual binary values from the file.
+The `Joypad` namespace provides a simplified interface for games that want to
+support joystick input without the complexity of the Sphere v2 Joystick API.
+Using this module, games can support joystick input for up to 4 players
+simultaneously.
 
-    import { FileReader } from 'sphere-runtime';
-	const FileReader = require('fileReader');
+    import { Joypad } from 'sphere-runtime';
+    const Joypad = require('joypad');
 
-new FileReader(stream, schema);
+Joypad.P1 [read-only]
+Joypad.P2 [read-only]
+Joypad.P3 [read-only]
+Joypad.P4 [read-only]
 
-    Creates a Reader object which can be used to read binary data from
-    a stream.  `stream` is an object with a read() method taking a byte count
-    and returning an ArrayBuffer, such as a FileStream or Socket.
+    Gets a Joystick object representing a connected device.  `Joypad.P1` always
+    refers to the same device within a session; likewise for the other players.
+    If no suitable device is available for the specified player,
+	`Joystick.Null` is returned instead.
 
-FileReader#readFloat32([littleEndian]);
-FileReader#readFloat64([littleEndian]);
-
-    Reads an IEEE floating point value from the associated stream.  If
-    `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
-    big-endian mode.
-
-FileReader#readInt8();
-FileReader#readInt16([littleEndian]);
-FileReader#readInt32([littleEndian]);
-FileReader#readUint8();
-FileReader#readUint16([littleEndian]);
-FileReader#readUint32([littleEndian]);
-
-    Reads an integer value from the associated stream.  If `littleEndian` is
-    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
-
-    Note: "readUint" variants read unsigned values.  "readInt" variants read
-          signed ("two's complement") values.
-
-FileReader#readString(length);
-
-    Reads a UTF-8 string from the associated stream.  `length` specifies how
-    many bytes to read.
-
-FileReader#readString8();
-FileReader#readString16([littleEndian]);
-FileReader#readString32([littleEndian]);
-
-    Reads a UTF-8 length-prefixed string from the associated stream, where the
-    length in bytes is stored as an unsigned integer.  If `littleEndian` is
-    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
-
-FileReader#readStruct(desc);
-
-    Reads an object from the associated stream, based on `desc`.  The
-    descriptor is an object describing the layout and typing of the data; for
-    example, the following will read the 256-byte header from a Sphere v1
-    format map file:
-
-        rmp_header = myReader.readStruct({
-            signature: { type: 'fstring', length: 4 },
-            version: { type: 'uint16le' },
-            type: { type: 'uint8' },
-            numLayers: { type: 'uint8' },
-            reserved1: { type: 'raw', size: 1 },
-            numEntities: { type: 'uint16le' },
-            startX: { type: 'uint16le' },
-            startY: { type: 'uint16le' },
-            startLayer: { type: 'uint8' },
-            startDir: { type: 'uint8' },
-            numStrings: { type: 'uint16le' },
-            numZones: { type: 'uint16le' },
-            repeating: { type: 'bool' },
-            reserved2: { type: 'raw', size: 234 },
-        });
-
-
-`FileWriter` Object
--------------------
-
-`FileWriter` allows you to write binary data to files.  Like `FileReader`, but
-for write access.
-
-    import { FileWriter } from 'sphere-runtime';
-	const FileWriter = require('fileWriter');
-
-new FileWriter(stream);
-
-    Creates a Writer object which can be used to write binary data to a
-    stream.  `stream` is an object with a write() method that takes an
-    ArrayBuffer, such as a FileStream or Socket.
-
-FileWriter#writeFloat32(value[, littleEndian]);
-FileWriter#writeFloat64(value[, littleEndian]);
-
-    Writes a floating point value to the stream.  If `littleEndian` is true,
-    writes in little-endian mode.  Otherwise writes in big-endian mode.
-
-FileWriter#writeInt8(value);
-FileWriter#writeInt16(value[, littleEndian]);
-FileWriter#writeInt32(value[, littleEndian]);
-FileWriter#writeUint8(value);
-FileWriter#writeUint16(value[, littleEndian]);
-FileWriter#writeUint32(value[, littleEndian]);
-
-    Writes an integer value to the associated stream.  If `littleEndian` is
-    true, writes in little-endian mode.  Otherwise writes in big-endian mode.
-
-    Note: "writeUint" variants write unsigned values.  "writeInt" variants
-          write signed ("two's complement") values.
-
-FileWriter#writeString(value);
-
-    Writes a UTF-8 string to the associated stream.
-
-FileWriter#writeString8(value);
-FileWriter#writeString16(value[, littleEndian]);
-FileWriter#writeString32(value[, littleEndian]);
-
-    Writes a UTF-8 length-prefixed string to the associated stream, where the
-    length is stored as an unsigned integer.  If `littleEndian` is true, writes
-    in little-endian mode.  Otherwise, writes in big-endian mode.
+    Note: Only connected devices with at least 5 buttons and 2 axes are
+          considered.
 
 
 `Logger` Object
@@ -649,7 +674,7 @@ Prim.blit(surface, x, y, texture[, mask]);
 Prim.blitSection(surface, x, y, texture, sx, sy, width, height[, mask]);
 
     Like `Prim.blit()`, but allows drawing only part of a texture.  `sx`, `sy`,
-	`width` and `height` specify the section to be drawn.
+    `width` and `height` specify the section to be drawn.
 
 Prim.drawCircle(surface, x, y, radius, color);
 
@@ -681,7 +706,7 @@ Prim.drawSolidCircle(surface, x, y, radius, color[, color2]);
 Prim.drawSolidEllipse(surface, x, y, rx, ry, color[, color2]);
 
     Like `Prim.drawSolidCircle()`, but draws an ellipse instead.  `rx` is the
-	horizontal radius and `ry` is the vertical radius.
+    horizontal radius and `ry` is the vertical radius.
 
 Prim.drawSolidRectangle(surface, x, y, width, height, color_ul[, color_ur, color_lr, color_ll]);
 
@@ -786,8 +811,8 @@ Scene.defineAction(name, def);
 
     Registers a new action with the scene engine.  `name` is the name of the
     action and should be a valid JavaScript identifier (although this is not
-	enforced).  `def` is an object defining the scenelet, and should include
-	the following function properties:
+    enforced).  `def` is an object defining the scenelet, and should include
+    the following function properties:
 
         def.start(scene, ...)
 
@@ -899,7 +924,7 @@ single function.  Unit test code itself can likely benefit from the `assert`
 function though; see above for more information about that one.
 
     import { Test } from 'sphere-runtime';
-	const Test = require('test');
+    const Test = require('test');
 
 Test.run(tests);
 
@@ -988,43 +1013,20 @@ Thread.self();
     active thread.  Otherwise, returns 0.
 
 
-`joy` Module
-------------
+`XML` Namespace
+---------------
 
-The joy module provides a simplified interface for games that want to support
-joystick input without the complexity of the Sphere v2 Joystick API.  Using
-this module, a game can support joystick input for up to 4 players
-simultaneously.
+The `XML` namespace provides functions to parse XML-formatted data and build a
+document object model (DOM) from it.  This module is based on the MIT-licensed
+"sax js" parser.  The API is simple but should cover most use cases.
 
-    const joy = require('joy');
+    import { XML } from 'sphere-runtime';
+    const XML = require('xml');
 
-joy.P1 [read-only]
-joy.P2 [read-only]
-joy.P3 [read-only]
-joy.P4 [read-only]
+XML.readFile(fileName);
 
-    Gets a Joystick object representing a connected device.  `joy.P1` always
-    refers to the same device within a session; likewise for the other
-    properties.  If no suitable device is available for the specified player,
-    `Joystick.Null` is returned instead.
-
-    Note: Only connected devices with at least 5 buttons and 2 axes are
-          considered.
-
-
-`xml` Module
-------------
-
-Parses XML-formatted data and builds a document object model (DOM) from it.
-This module is based on the MIT-licensed "sax js" parser.  The API is simple
-but should cover most use cases for game development.
-
-    const xml = require('xml');
-
-xml.load(fileName);
-
-    Loads XML from a file and returns a DOM built from it.  This function will
-    throw if an error occurs during parsing, for example due to invalid or
+    Loads XML data from a file and returns a DOM built from it.  This function
+    will throw if an error occurs during parsing, for example due to invalid or
     malformed XML.
 
     The DOM generated by this function is defined as follows:
@@ -1038,10 +1040,10 @@ xml.load(fileName);
            property; instead they have a `text` string property with their
            content.
 
-xml.parse(text);
+XML.parse(text);
 
     Parses XML text provided to the function and returns a DOM built from it.
-    Use this when you've already retrieved XML text and have it stored as a
-    string.
+    Use this when you've already acquired XML data from some source.
 
-    Note: The return value and throw semantics are identical to xml.load().
+    Note: The return value and throw semantics are identical to
+          `XML.readFile()`.

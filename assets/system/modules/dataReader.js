@@ -1,14 +1,14 @@
 /**
- *  Sphere v2 Runtime: FileReader object
+ *  Sphere v2 Runtime: DataReader object
  *  (c) 2015-2017 Fat Cerberus
 **/
 
 'use strict';
 const assert = require('assert');
 
-function FileReader(stream)
+function DataReader(stream)
 {
-	assert(this instanceof FileReader, "constructor requires 'new'");
+	assert(this instanceof DataReader, "constructor requires 'new'");
 	assert('read' in stream, "not a readable stream");
 
 	var m_decoder = new TextDecoder('utf-8');

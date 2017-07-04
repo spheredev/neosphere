@@ -9,8 +9,8 @@ exports.default = exports;
 
 const sax = require('./lib/sax');
 
-exports.load = load;
-function load(fileName)
+exports.readFile = readFile;
+function readFile(fileName)
 {
 	var buffer = FS.readFile(fileName);
 	var xmlText = new TextDecoder().decode(buffer);

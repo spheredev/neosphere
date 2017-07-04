@@ -1,5 +1,5 @@
 /**
- *  miniRT joy CommonJS module
+ *  Sphere v2 Runtime: Joypad namespace
  *  (c) 2015-2017 Fat Cerberus
 **/
 

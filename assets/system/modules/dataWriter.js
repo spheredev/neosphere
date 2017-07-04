@@ -1,14 +1,14 @@
 /**
- *  Sphere v2 Runtime: FileWriter object
+ *  Sphere v2 Runtime: DataWriter object
  *  (c) 2015-2017 Fat Cerberus
 **/
 
 'use strict';
 const assert = require('assert');
 
-function FileWriter(stream)
+function DataWriter(stream)
 {
-	assert(this instanceof FileWriter, "constructor requires 'new'");
+	assert(this instanceof DataWriter, "constructor requires 'new'");
 	assert('write' in stream, "not a writable stream");
 
 	var m_encoder = new TextEncoder();

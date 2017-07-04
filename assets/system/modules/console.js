@@ -1,5 +1,5 @@
 /**
- *  Sphere v2 Runtime: Console module
+ *  Sphere v2 Runtime: Console namespace
  *  (c) 2015-2017 Fat Cerberus
 **/
 
