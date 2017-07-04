@@ -211,6 +211,24 @@ Sphere.sleep(timeout);
           expected to return.
 
 
+Debugging Functions
+-------------------
+
+miniSphere provides the `SSJ` object which allows you to send text to an
+attached debugger such as SSJ or SSJ Blue.
+
+SSJ.log(text);
+
+    Logs `text` to the debugger.  If the game is started using `spherun`, the
+    text is also logged to the terminal.
+
+SSJ.trace(text);
+
+    Logs `text` to the debugger.  This is intended for low-level, detailed
+    logging; trace output will not be displayed, even in the debugger, unless
+    its display is enabled by the user.
+
+
 Dispatch API
 ------------
 

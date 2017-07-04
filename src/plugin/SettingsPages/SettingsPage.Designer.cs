@@ -94,9 +94,9 @@
             this.ShowTraceCheckBox.AutoSize = true;
             this.ShowTraceCheckBox.Location = new System.Drawing.Point(12, 58);
             this.ShowTraceCheckBox.Name = "ShowTraceCheckBox";
-            this.ShowTraceCheckBox.Size = new System.Drawing.Size(289, 17);
+            this.ShowTraceCheckBox.Size = new System.Drawing.Size(283, 17);
             this.ShowTraceCheckBox.TabIndex = 4;
-            this.ShowTraceCheckBox.Text = "Show output produced by `SSJ.trace()` while debugging";
+            this.ShowTraceCheckBox.Text = "Show output produced by `SSJ.trace` while debugging";
             this.ShowTraceCheckBox.UseVisualStyleBackColor = true;
             // 
             // TestInWindowCheckBox

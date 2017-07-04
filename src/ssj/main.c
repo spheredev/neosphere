@@ -291,7 +291,7 @@ print_usage(void)
 	printf("   -a, --attach     Attach to a target which has already been started.  If no  \n");
 	printf("                    connection can be made within 30 seconds, SSJ will exit.   \n");
 	printf("       --no-pause   Prevent SSJ from pausing execution on attach.              \n");
-	printf("   -t, --trace      Show trace-level output, e.g., from console.trace().       \n");
+	printf("   -t, --trace      Show trace-level output, e.g., from SSJ.trace().           \n");
 	printf("       --version    Print the version number of SSJ and its dependencies.      \n");
 	printf("       --help       Print this help text.                                      \n");
 }
