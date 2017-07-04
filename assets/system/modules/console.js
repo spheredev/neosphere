@@ -40,10 +40,6 @@ new Scene()
 	.end()
 	.run();
 
-log(Sphere.Game.name + " Command Console");
-log(Sphere.Platform + " " + Sphere.Version + " - Sphere v" + Sphere.APIVersion + " L" + Sphere.APILevel + " API");
-log("");
-
 Object.defineProperty(exports, 'visible',
 {
 	enumerable: true, configurable: true,
@@ -144,7 +140,12 @@ function _executeCommand(command)
 		.each(function(desc)
 	{
 		Dispatch.now(function() {
-			desc.method.apply(desc.that, tokens.slice(2));
+			try {
+				desc.method.apply(desc.that, tokens.slice(2));
+			}
+			catch(e) {
+				log("caught error '" + e.toString() + "'");
+			}
 		});
 	});
 }
