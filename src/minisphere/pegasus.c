@@ -277,8 +277,11 @@ static duk_ret_t js_Model_get_transform        (duk_context* ctx);
 static duk_ret_t js_Model_set_shader           (duk_context* ctx);
 static duk_ret_t js_Model_set_transform        (duk_context* ctx);
 static duk_ret_t js_Model_draw                 (duk_context* ctx);
+static duk_ret_t js_Model_setColorVector       (duk_context* ctx);
 static duk_ret_t js_Model_setFloat             (duk_context* ctx);
+static duk_ret_t js_Model_setFloatVector       (duk_context* ctx);
 static duk_ret_t js_Model_setInt               (duk_context* ctx);
+static duk_ret_t js_Model_setIntVector         (duk_context* ctx);
 static duk_ret_t js_Model_setMatrix            (duk_context* ctx);
 static duk_ret_t js_Mouse_get_Default          (duk_context* ctx);
 static duk_ret_t js_Mouse_get_x                (duk_context* ctx);
@@ -466,8 +469,11 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Model", "shader", js_Model_get_shader, js_Model_set_shader);
 	api_define_property(ctx, "Model", "transform", js_Model_get_transform, js_Model_set_transform);
 	api_define_method(ctx, "Model", "draw", js_Model_draw);
+	api_define_method(ctx, "Model", "setColorVector", js_Model_setColorVector);
 	api_define_method(ctx, "Model", "setFloat", js_Model_setFloat);
+	api_define_method(ctx, "Model", "setFloatVector", js_Model_setFloatVector);
 	api_define_method(ctx, "Model", "setInt", js_Model_setInt);
+	api_define_method(ctx, "Model", "setIntVector", js_Model_setIntVector);
 	api_define_method(ctx, "Model", "setMatrix", js_Model_setMatrix);
 	api_define_class(ctx, "Mouse", NULL, NULL);
 	api_define_static_prop(ctx, "Mouse", "Default", js_Mouse_get_Default, NULL);
@@ -2544,6 +2550,27 @@ js_Model_draw(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Model_setColorVector(duk_context* ctx)
+{
+	color_t     color;
+	group_t*    group;
+	const char* name;
+	float       values[4];
+
+	duk_push_this(ctx);
+	group = duk_require_class_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	color = duk_pegasus_require_color(ctx, 1);
+
+	values[0] = color.r / 255.0;
+	values[1] = color.g / 255.0;
+	values[2] = color.b / 255.0;
+	values[3] = color.a / 255.0;
+	group_put_float_vector(group, name, values, 4);
+	return 0;
+}
+
+static duk_ret_t
 js_Model_setFloat(duk_context* ctx)
 {
 	group_t*    group;
@@ -2556,7 +2583,36 @@ js_Model_setFloat(duk_context* ctx)
 	value = duk_require_number(ctx, 1);
 
 	group_put_float(group, name, value);
-	return 1;
+	return 0;
+}
+
+static duk_ret_t
+js_Model_setFloatVector(duk_context* ctx)
+{
+	group_t*    group;
+	const char* name;
+	int         size;
+	float       values[4];
+
+	int i;
+
+	duk_push_this(ctx);
+	group = duk_require_class_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	if (!duk_is_array(ctx, 1))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array was expected here");
+	
+	size = (int)duk_get_length(ctx, 1);
+	if (size < 2 || size > 4)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid number of components");
+
+	for (i = 0; i < size; ++i) {
+		duk_get_prop_index(ctx, 1, (duk_uarridx_t)i);
+		values[i] = duk_require_number(ctx, -1);
+		duk_pop(ctx);
+	}
+	group_put_float_vector(group, name, values, size);
+	return 0;
 }
 
 static duk_ret_t
@@ -2572,7 +2628,36 @@ js_Model_setInt(duk_context* ctx)
 	value = duk_require_int(ctx, 1);
 
 	group_put_int(group, name, value);
-	return 1;
+	return 0;
+}
+
+static duk_ret_t
+js_Model_setIntVector(duk_context* ctx)
+{
+	group_t*    group;
+	const char* name;
+	int         size;
+	int         values[4];
+
+	int i;
+
+	duk_push_this(ctx);
+	group = duk_require_class_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	if (!duk_is_array(ctx, 1))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array was expected here");
+
+	size = (int)duk_get_length(ctx, 1);
+	if (size < 2 || size > 4)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid number of components");
+
+	for (i = 0; i < size; ++i) {
+		duk_get_prop_index(ctx, 1, (duk_uarridx_t)i);
+		values[i] = duk_require_int(ctx, -1);
+		duk_pop(ctx);
+	}
+	group_put_int_vector(group, name, values, size);
+	return 0;
 }
 
 static duk_ret_t
@@ -2588,7 +2673,7 @@ js_Model_setMatrix(duk_context* ctx)
 	matrix = duk_require_class_obj(ctx, 1, "Transform");
 
 	group_put_matrix(group, name, matrix);
-	return 1;
+	return 0;
 }
 
 static duk_ret_t

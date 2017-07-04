@@ -825,14 +825,34 @@ Model#draw(surface);
     (see below) are applied as if all the shapes comprising it were a single
     primitive.
 
+Model#setColorVector(name, color);
+
+    Sets the value of a GLSL floating point 4-vector uniform (`vec4`) from the
+    components of a `Color` object.  Order is assumed to be RGBA.
+
 Model#setFloat(name, value);
 Model#setInt(name, value);
+
+    Sets the value of a GLSL scalar uniform.
+    
+    Note: Only `float` and `int` types are currently supported.
+
+Model#setFloatVector(name, values);
+Model#setIntVector(name, values);
+
+    Sets the value of a GLSL vector uniform.  `values` must be an array and
+    contain between 2 and 4 values, inclusive.  If not, an error will be
+    thrown.
+
+    Note: Only `vecN` (float) and `ivecN` (integer) types are currently
+          supported.
+
 Model#setMatrix(name, transform);
 
-    Sets the value of a GLSL uniform.  When the model is drawn, if its shader
-    program contains a uniform called `name` of the proper type, the value will
-    be uploaded to that uniform.  It is safe to call this even if the uniform
-    turns out not to exist (in which case the call is effectively a no-op).
+    Sets the value of 4x4 matrix uniform (`mat4`) using the underlying matrix
+    cells of a `Transform` object.
+    
+    Note: Matrix types other than `mat4` are not currently supported.
 
 Shader.Default [read-only]
 

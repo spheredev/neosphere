@@ -21,10 +21,13 @@ struct uniform
 {
 	char              name[256];
 	enum uniform_type type;
+	int               vector_size;
 	union {
 		ALLEGRO_TRANSFORM mat_value;
 		int               int_value;
+		int               intvec[4];
 		float             float_value;
+		float             floatvec[4];
 	};
 };
 
@@ -212,8 +215,14 @@ group_draw(const group_t* group, image_t* surface)
 			case UNIFORM_FLOAT:
 				al_set_shader_float(p->name, p->float_value);
 				break;
+			case UNIFORM_FLOAT_VEC:
+				al_set_shader_float_vector(p->name, p->vector_size, p->floatvec, 1);
+				break;
 			case UNIFORM_INT:
 				al_set_shader_int(p->name, p->int_value);
+				break;
+			case UNIFORM_INT_VEC:
+				al_set_shader_int_vector(p->name, p->vector_size, p->intvec, 1);
 				break;
 			case UNIFORM_MATRIX:
 				al_set_shader_matrix(p->name, &p->mat_value);
@@ -251,6 +260,20 @@ group_put_float(group_t* group, const char* name, float value)
 }
 
 void
+group_put_float_vector(group_t* group, const char* name, float values[], int size)
+{
+	struct uniform unif;
+
+	free_cached_uniform(group, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_FLOAT_VEC;
+	unif.vector_size = size;
+	memcpy(unif.floatvec, values, sizeof(float) * size);
+	vector_push(group->uniforms, &unif);
+}
+
+void
 group_put_int(group_t* group, const char* name, int value)
 {
 	struct uniform unif;
@@ -260,6 +283,20 @@ group_put_int(group_t* group, const char* name, int value)
 	unif.name[255] = '\0';
 	unif.type = UNIFORM_INT;
 	unif.int_value = value;
+	vector_push(group->uniforms, &unif);
+}
+
+void
+group_put_int_vector(group_t* group, const char* name, int values[], int size)
+{
+	struct uniform unif;
+
+	free_cached_uniform(group, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_INT_VEC;
+	unif.vector_size = size;
+	memcpy(unif.intvec, values, sizeof(int) * size);
 	vector_push(group->uniforms, &unif);
 }
 
