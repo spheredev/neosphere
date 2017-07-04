@@ -42,8 +42,8 @@ matrix_free(matrix_t* matrix)
 	free(matrix);
 }
 
-const float*
-matrix_items(const matrix_t* matrix)
+float*
+matrix_items(matrix_t* matrix)
 {
 	return &matrix->transform.m[0][0];
 }

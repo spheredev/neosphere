@@ -8,7 +8,7 @@ matrix_t*                matrix_clone     (const matrix_t* matrix);
 matrix_t*                matrix_ref       (matrix_t* matrix);
 void                     matrix_free      (matrix_t* matrix);
 const ALLEGRO_TRANSFORM* matrix_transform (const matrix_t* matrix);
-const float*             matrix_items     (const matrix_t* matrix);
+float*                   matrix_items     (matrix_t* matrix);
 void                     matrix_compose   (matrix_t* matrix, const matrix_t* other);
 void                     matrix_identity  (matrix_t* matrix);
 void                     matrix_rotate    (matrix_t* matrix, float theta, float vx, float vy, float vz);

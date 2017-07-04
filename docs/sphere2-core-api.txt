@@ -980,6 +980,14 @@ new Transform();
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
 
+Transform#matrix [read-only]
+
+    Gets an object you can use to access the cells of the underlying matrix.
+    The object is used like a two-dimensional array:
+
+	    cellValue = transform_obj.matrix[i][j];
+	    transform_obj.matrix[i][j] = newValue;
+
 Transform#identity();
 
     Re-initializes this matrix as an identity matrix.

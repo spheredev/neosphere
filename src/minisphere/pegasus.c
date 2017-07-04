@@ -356,6 +356,8 @@ static duk_ret_t js_Surface_get_width          (duk_context* ctx);
 static duk_ret_t js_Surface_toTexture          (duk_context* ctx);
 static duk_ret_t js_new_Transform              (duk_context* ctx);
 static duk_ret_t js_Transform_finalize         (duk_context* ctx);
+static duk_ret_t js_Transform_get_matrix       (duk_context* ctx);
+static duk_ret_t js_Transform_set_matrix       (duk_context* ctx);
 static duk_ret_t js_Transform_compose          (duk_context* ctx);
 static duk_ret_t js_Transform_identity         (duk_context* ctx);
 static duk_ret_t js_Transform_rotate           (duk_context* ctx);
@@ -536,6 +538,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Texture", "height", js_Texture_get_height, NULL);
 	api_define_property(ctx, "Texture", "width", js_Texture_get_width, NULL);
 	api_define_class(ctx, "Transform", js_new_Transform, js_Transform_finalize);
+	api_define_property(ctx, "Transform", "matrix", js_Transform_get_matrix, NULL);
 	api_define_method(ctx, "Transform", "compose", js_Transform_compose);
 	api_define_method(ctx, "Transform", "identity", js_Transform_identity);
 	api_define_method(ctx, "Transform", "rotate", js_Transform_rotate);
@@ -3813,6 +3816,80 @@ js_Transform_finalize(duk_context* ctx)
 	matrix = duk_require_class_obj(ctx, 0, "Transform");
 
 	matrix_free(matrix);
+	return 0;
+}
+
+static duk_ret_t
+js_Transform_get_matrix(duk_context* ctx)
+{
+	int       magic;
+	matrix_t* matrix;
+	float*    values;
+
+	int i, j;
+
+	magic = duk_get_current_magic(ctx);
+
+	if (magic == 0) {
+		// on first access: set up getters and setters
+		duk_push_this(ctx);
+		matrix = duk_require_class_obj(ctx, -1, "Transform");
+		values = matrix_items(matrix);
+		duk_push_object(ctx);
+		for (i = 0; i < 4; ++i) {
+			duk_push_int(ctx, i);
+			duk_push_object(ctx);
+			for (j = 0; j < 4; ++j) {
+				duk_push_int(ctx, j);
+				duk_push_c_function(ctx, js_Transform_get_matrix, DUK_VARARGS);
+				duk_set_magic(ctx, -1, 1 + (j * 4 + i));
+				duk_push_this(ctx);
+				duk_put_prop_string(ctx, -2, "\xFF" "transform");
+				duk_push_c_function(ctx, js_Transform_set_matrix, DUK_VARARGS);
+				duk_set_magic(ctx, -1, 1 + (j * 4 + i));
+				duk_push_this(ctx);
+				duk_put_prop_string(ctx, -2, "\xFF" "transform");
+				duk_def_prop(ctx, -4, DUK_DEFPROP_SET_ENUMERABLE
+					| DUK_DEFPROP_HAVE_GETTER | DUK_DEFPROP_HAVE_SETTER);
+			}
+			duk_def_prop(ctx, -3, DUK_DEFPROP_SET_ENUMERABLE | DUK_DEFPROP_HAVE_VALUE);
+		}
+		duk_push_this(ctx);
+		duk_push_string(ctx, "matrix");
+		duk_dup(ctx, -3);
+		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
+			| DUK_DEFPROP_CLEAR_ENUMERABLE
+			| DUK_DEFPROP_CLEAR_WRITABLE
+			| DUK_DEFPROP_SET_CONFIGURABLE);
+		duk_pop(ctx);
+		return 1;
+	}
+	else {
+		duk_push_current_function(ctx);
+		duk_get_prop_string(ctx, -1, "\xFF" "transform");
+		matrix = duk_require_class_obj(ctx, -1, "Transform");
+		values = matrix_items(matrix);
+		duk_push_number(ctx, values[magic - 1]);
+		return 1;
+	}
+}
+
+static duk_ret_t
+js_Transform_set_matrix(duk_context* ctx)
+{
+	int       magic;
+	matrix_t* matrix;
+	float     new_value;
+	float*    values;
+
+	magic = duk_get_current_magic(ctx);
+	new_value = duk_require_number(ctx, 0);
+
+	duk_push_current_function(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "transform");
+	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	values = matrix_items(matrix);
+	values[magic - 1] = new_value;
 	return 0;
 }
 
