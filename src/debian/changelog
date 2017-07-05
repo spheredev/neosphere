@@ -1,9 +1,63 @@
+minisphere (4.6.0) trusty; urgency=low
+
+  * When using ES6 modules (`.mjs`), the main module can now `export default` a
+    class and miniSphere will automatically instantiate it and call its `start()`
+    method.  This mirrors how Sphere v1 engines call the global `game()` function
+    on startup.
+  * Adds a new `Sample` class which works like `Sound` but loads the sound into
+    memory instead of streaming it and allows multiple instances to be played at
+    the same time.
+  * Adds methods to `Model` for setting vector-valued shader uniforms.
+  * Adds `Transform#matrix`, allowing direct access to the individual matrix
+    cells of a transformation.
+  * Adds back the `SSJ` object, to allow sending text to the attached debugger
+    (and optionally, to standard output).
+  * Adds `Prim.blitSection()`, to allow drawing only part of an image.
+  * Adds `Console.initialize()` which must now be called manually to enable the
+    debug console.  Simply doing `require('console')` is no longer enough.
+  * Adds a new module, `sphere-runtime`, which brings together all the standard
+    modules and allows multiple symbols to be imported simultaneously by using
+    `import {}`.
+  * Adds support for `Sphere.Game` in Cellscripts, allowing the data in the JSON
+    manifest to be manipulated directly.
+  * Adds more missing Sphere v1 API functions, further improving compatibility.
+  * Renames several standard modules, e.g. `term` becomes `console`.
+  * Renames `Prim` functions to better reflect their immediate nature and improve
+    code readability, at the expense of some extra verbosity.  For example,
+    `Prim.line()` becomes `Prim.drawLine()`.
+  * Renames `defScenelet()` to `Scene.defineAction()`.
+  * Removes the `console` object from the Core API, as it turned out to be easily
+    confused with the standard console module.
+  * Removes the `pact` module from the standard library.
+  * Removes the `minify` module from Cell's standard library.
+  * Removes `describe()` from the Cellscript API.
+  * Updates the internal graphics framework to use a pixel-perfect backbuffer,
+    which improves screenshots and fixes several rendering-related bugs.
+  * Updates the Sphere Studio project template with code to illustrate the use of
+    ES6 class syntax as well as better showcasing the standard library.
+  * Fixes a crash that happens when using `SetTileImage()` or `SetTileSurface()`.
+  * Fixes a bug where an error thrown during execution of a Console command will
+    crash the game with a JavaScript error.
+  * Fixes a bug where Cell will sometimes not detect a filename conflict.
+  * Fixes a bug where `Dispatch.onRender()` jobs are processed in reverse order
+    following a call to `Dispatch.onUpdate()`, and vice versa.
+  * Fixes a bug where miniSphere calls the render script before the update script
+    on map engine startup, leading to compatibility issues.
+  * Fixes a bug in `LineSeries()` and `PointSeries()` that made them always throw
+    a "two or more vertices required" error.
+  * Fixes a bug where Sphere v1 `Surface#cloneSection()` and `Surface#rotate()`
+    could introduce graphical artifacts on some platforms.
+  * Fixes a bug where Sphere v2 `Sound#pan` range is treated as [-255,+255]
+    instead of the documented range of [-1.0,+1.0].
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 4 Jul 2017 00:00:00 -0500
+
 minisphere (4.5.11) trusty; urgency=low
 
-* Now uses TypeScript to transpile Cellscripts, improving build times a bit.
-* Fixes a bug where SSJ repeats the previous action after an invalid command.
-* Fixes a bug where regular expressions containing an octal escape (e.g. `\3`)
-  cause a SyntaxError.
+  * Now uses TypeScript to transpile Cellscripts, improving build times a bit.
+  * Fixes a bug where SSJ repeats the previous action after an invalid command.
+  * Fixes a bug where regular expressions containing an octal escape (e.g. `\3`)
+    cause a SyntaxError.
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 27 Apr 2017 00:00:00 -0500
 

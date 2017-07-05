@@ -8,7 +8,7 @@
 
 #define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "X.X.X"
+#define AppVersion3 "4.6.0"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -35,8 +35,6 @@ DefaultDirName={pf}\{#AppName}
 DefaultGroupName=miniSphere GDK
 DisableProgramGroupPage=yes
 DisableWelcomePage=no
-InfoBeforeFile=changelog.rtf
-InfoAfterFile=release.rtf
 LicenseFile=../LICENSE.txt
 SetupIconFile=..\msvs\spherical.ico
 SolidCompression=yes
