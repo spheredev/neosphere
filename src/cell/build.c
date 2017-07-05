@@ -206,7 +206,6 @@ build_free(build_t* build)
 	if (build == NULL)
 		return;
 
-	printf("\n");
 	printf("%d error(s), %d warning(s).\n",
 		visor_num_errors(build->visor),
 		visor_num_warns(build->visor));

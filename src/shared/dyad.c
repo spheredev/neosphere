@@ -84,12 +84,12 @@
 /* Memory                                                                    */
 /*===========================================================================*/
 
-static void panic(const char *fmt, ...);
+static void dyad_panic(const char *fmt, ...);
 
 static void *dyad_realloc(void *ptr, int n) {
   ptr = realloc(ptr, n);
   if (!ptr && n != 0) {
-    panic("out of memory");
+    dyad_panic("out of memory");
   }
   return ptr;
 }
@@ -306,7 +306,7 @@ static double dyad_tickInterval = 1;
 static double dyad_lastTick = 0;
 
 
-static void panic(const char *fmt, ...) {
+static void dyad_panic(const char *fmt, ...) {
   va_list args;
   va_start(args, fmt);
   vsprintf(dyad_panicMsgBuffer, fmt, args);
@@ -803,7 +803,7 @@ void dyad_init(void) {
   WSADATA dat;
   int err = WSAStartup(MAKEWORD(2, 2), &dat);
   if (err != 0) {
-    panic("WSAStartup failed (%d)", err);
+    dyad_panic("WSAStartup failed (%d)", err);
   }
 #else
   /* Stops the SIGPIPE signal being raised when writing to a closed socket */
