@@ -82,7 +82,6 @@ needed, and their values accessed from JavaScript through `Sphere.Game`.
     breaks.
 
 
-
 SphereFS File System
 --------------------
 
@@ -137,13 +136,13 @@ require(module_id);
     module.
 
 
-Sphere v2 Platform API
-----------------------
+`Sphere` Namespace
+------------------
 
-The `Sphere` object is provided to allow games to communicate with the
-underlying Sphere v2 platform.  The `Sphere` object's properties provide access
-to the engine's name and version number as well as the API level supported, and
-there are also several methods for managing engine execution.
+The `Sphere` namespace hosts functions and properties that allow the game to
+communicate with the underlying Sphere platform.  The properties provide access
+to the engine's name, version number, and API level, and there are several
+methods for managing execution.
 
 Sphere.Platform [read-only]
 
@@ -189,33 +188,33 @@ Sphere.restart();
 
 Sphere.run();
 
-    Runs a single iteration of the Sphere v2 event loop.  This function always
-    returns true, allowing it to be used as part of a loop condition; for
+    Runs a single iteration of the Sphere event loop.  This function always
+    returns true, allowing it to be used as part of a loop condition.  For
     example:
 
         while (!isDone && Sphere.run()) {
             // do stuff here
         }
 
-    Note: Be careful.  This function runs all pending immediate jobs in the job
-          queue.  That may lead to undesirable side effects if a Dispatch job
+    Note: Be careful.  Calling this will run all pending immediate jobs in the
+	      job queue, which may have unexpected side effects if a Dispatch job
           modifies a global variable, for example.
 
 Sphere.sleep(timeout);
 
     Suspends JavaScript execution for the specified amount of time.  `timeout`
-    is in seconds, and may include fractions (e.g., 1.5).
+    is in seconds, and may include a fractional component (e.g., 1.5).
 
-    Note: Any pending Dispatch.now() jobs will be run before sleeping.
+    Note: Any pending `Dispatch.now()` jobs will be run before sleeping.
           Depending on how long that takes, Sphere.sleep() may take longer than
           expected to return.
 
 
-Debugging Functions
--------------------
+`SSJ` Namespace
+---------------
 
-miniSphere provides the `SSJ` object which allows you to send text to an
-attached debugger such as SSJ or SSJ Blue.
+The `SSJ` namespace allows your game to communicate with an attached debugger
+such as SSJ or SSJ Blue.
 
 SSJ.log(text);
 
@@ -229,13 +228,13 @@ SSJ.trace(text);
     its display is enabled by the user.
 
 
-Dispatch API
-------------
+`Dispatch` Namespace
+--------------------
 
 The Dispatch API is used to set up asynchronous function calls which are later
 performed from a designated part of the Sphere event loop.  This is like an
-advanced version of Sphere v1 update and render scripts, but better integrated
-and available throughout the engine.
+advanced version of Sphere v1's update and render scripts, but more tightly
+integrated and available throughout the engine.
 
 Dispatch.cancel(token);
 
@@ -292,59 +291,185 @@ Dispatch.onUpdate(fn[, priority]);
              those rendered synchronously.
 
 
-Random Number Generator API
----------------------------
+`FS` Namespace
+--------------
 
-Games often have need of a good psuedorandom number generator, particularly in
-the case of RPGs.  JavaScript provides a basic generator in the form of
-Math.random().  Sphere v2 takes it a step further with the powerful `RNG`
-object.
+The `FS` namespace allows your game to access asset and save files, create or
+remove directories, etc.  All file system operations are sandboxed to prevent
+damage to the system.
 
-miniSphere uses the xoroshiro128+ algorithm to generate high-quality random
-numbers and allows manually seeding the generator, as well as saving and
-restoring the exact state of the generator at any time.  RNG state is often
-saved along with other save data as a way to deter save scumming.
+FS.createDirectory(dir_name);
 
-RNG.fromSeed(seed);
+    Creates the specified directory and any of its parent directories that
+    don't already exist.
 
-    Constructs a new random number generator seeded using the specified value.
-    The specific sequence of numbers generated is entirely defined by the seed:
-    Two generators running in parallel, initialized with the same seed, will
-    always produce the same sequence.
+FS.deleteFile(filename);
 
-    `seed` is a number greater than zero.  If the seed is fractional, only the
-    integer part is used; everything after the decimal point is ignored.
+    Deletes `filename` from the file system.
 
-RNG.fromState(state);
+FS.exists(filename);
 
-    Constructs a new random number generator which starts in the specified
-    state.  See RNG#state for more information.
+    Checks whether the specified file exists and returns true if it does.
+    Otherwise, returns false.
 
-new RNG();
+FS.readFile(filename);
 
-    Constructs a new random number generator seeded from the current system
-    time.
+    Reads all data from the specified file and returns it as an ArrayBuffer.
+    This avoids the need to explicitly open and close a file when all you want
+    to do is read its contents into memory.
 
-RNG#state [read/write]
+FS.removeDirectory(dir_name);
 
-    Gets or sets the current state of this generator.  State is encoded as
-    a 32-digit hexadecimal string which makes it easy to save and restore.
-
-    When setting `RNG#state`, the string given must be exactly 32 characters
-    and consist only of hexadecimal digits (0-9, A-F), otherwise a TypeError
+    Deletes the specified directory.  The directory must be empty or an error
     will be thrown.
 
-RNG#next();
+FS.rename(srcname, destname);
 
-    Gets the next random number in the sequence.  Value returned is in the
-    range [0-1).
+    Renames the file named by `srcname` to `destname`, both of which are
+    assumed to be full SphereFS paths.  This can also be used to move a file
+    between directories; if so, the destination directory must already exist.
+
+FS.resolve(path);
+
+    Resolves a path (which may contain relative components) to its canonical
+    SphereFS representation.  This can be useful when data is associated with
+    individual assets, such as map files, and you need to ensure the same data
+    is pulled for a given file regardless of the path used to access it.
+
+    Note that the resource referred to by the path doesn't need to exist.  As
+    with other FS methods, FS.resolve() will throw an error if an absolute path
+    is passed in.
+
+FS.writeFile(filename, data);
+
+    Writes an entire file in one go.  If a file already exists with the given
+    filename, it will be overwritten.  'data' is an ArrayBuffer, TypedArray or
+    DataView containing the data to be written.
 
 
-Keyboard Routines
+`FileStream` Object
+-------------------
+	
+new FileStream(filename, op);
+
+    Constructs a FileStream that provides access to the contents of a specified
+    file.  `op` specifies the file operation requested and must be one of the
+    following:
+
+        FileOp.Read
+
+            Read data from the file.  The file must exist and will be opened in
+            read-only mode.  Any attempt to write to the file will throw a
+            TypeError.
+
+        FileOp.Write
+
+            Write data to the file.  Be careful: If the file already exists,
+            its contents will be overwritten.  If that behavior is not desired,
+            use `FileOp.Update` instead.
+
+        FileOp.Update
+
+            Amend the file.  If a file by the specified name doesn't exist, it
+            will be created.  For convenience, the file pointer is initially
+            placed at the end of the file.
+
+    Requesting write access to a file residing in a read-only directory (e.g.,
+    the system directory `#/`) will throw a TypeError.
+
+FileStream#dispose();
+
+    Disposes of the FileStream object, after which it should not be used.
+    Attempting to read or write to a stream after it is disposed of will throw
+    an error.
+
+    Note: While it's not strictly necessary to call `dispose()` on FileStreams,
+          it may take some time for the garbage collector to get to them.  If
+          there's an active FileStream in write mode for a given file, an error
+          will be thrown if you try to construct another one.
+
+FileStream#fileName [read-only]
+
+    Gets the full, canonical SphereFS filename of the underlying file.
+
+FileStream#position [read/write]
+
+    Gets or sets the file position, which determines where in the file the next
+    read or write will start from.  Expressed in bytes.
+
+    Note: For files opened for writing, it is valid to seek past the end of the
+          stream.  In this case the next write will be at the new position and
+          the intervening space filled with NUL bytes.
+
+FileStream#size [read-only]
+
+    Gets the size of the underlying file, in bytes.
+
+FileStream#read(num_bytes);
+
+    Reads data from the file, up to the specified number of bytes, and returns
+    it as an ArrayBuffer.  The file must be opened for reading.
+
+FileStream#write(data);
+
+    Writes data to the file and advances the file pointer.  `data` should be an
+    ArrayBuffer, TypedArray or DataView containing the data to be written.
+
+
+`Joystick` Object
 -----------------
 
-What would a game be without the ability for the player to control it?  This
-set of functions allows your game to accept input via the keyboard, the most
+Joystick.Null [read-only]
+
+    Gets the null joystick.  When polled, a null joystick returns neutral
+    values for all inputs.  Joystick.Null can be used in place of a real
+    Joystick object to simplify input code.
+
+Joystick.getDevices();
+
+    Gets an array of Joystick objects, one for each connected gamepad or
+    joystick.
+
+Joystick#name [read-only]
+
+    Gets the name of the device, as reported by the Allegro backend.  Xbox
+    controllers are reported as "XInput Joystick <n>"
+
+Joystick#numAxes [read-only]
+
+    Gets the number of analog axes supported by the device.
+
+Joystick#numButtons [read-only]
+
+    Gets the number of buttons supported by the device.
+
+Joystick#getPosition(axisID);
+
+    Polls the device and gets the current position along the specified analog
+    axis.  To get the number of axes supported by a device, use the `numAxes`
+    property.
+
+    Note: Axes are numbered sequentially, starting from 0.  Which physical axis
+          is associated with any given axis ID will vary from device to device.
+          For gamepads with analog sticks, though, it's generally a safe bet
+          that the primary analog stick will be mapped to the first two axes.
+
+Joystick#isPressed(buttonID);
+
+    Polls the device and returns true if the specified button is currently
+    depressed.  To get the number of buttons supported by a device, use the
+    `numButtons` property.
+
+    Note: Buttons are numbered sequentially, starting from 0.  As with axes,
+          which physical button is associated with any given button ID will
+          vary from device to device.
+
+
+`Keyboard` Object
+-----------------
+
+What would a game be without the ability for the player to control it?  The
+`Keyboard` object allows your game to accept input via the keyboard, the most
 common input method for a PC game.
 
 Key [enumeration]
@@ -457,8 +582,9 @@ Key [enumeration]
 
 Keyboard.Default [read-only]
 
-    Gets the default keyboard device.  miniSphere currently only supports a
-    single keyboard.
+    Gets a `Keyboard` object for the default keyboard device.
+	
+	Note: miniSphere currently only supports a single keyboard.
 
 Keyboard#capsLock [read-only]
 Keyboard#numLock [read-only]
@@ -491,62 +617,13 @@ Keyboard#isPressed(key);
     should be a member of the Key enumeration.
 
 
-Joystick Routines
------------------
-
-Joystick.Null [read-only]
-
-    Gets the null joystick.  When polled, a null joystick returns neutral
-    values for all inputs.  Joystick.Null can be used in place of a real
-    Joystick object to simplify input code.
-
-Joystick.getDevices();
-
-    Gets an array of Joystick objects, one for each connected gamepad or
-    joystick.
-
-Joystick#name [read-only]
-
-    Gets the name of the device, as reported by the Allegro backend.  Xbox
-    controllers are reported as "XInput Joystick <n>"
-
-Joystick#numAxes [read-only]
-
-    Gets the number of analog axes supported by the device.
-
-Joystick#numButtons [read-only]
-
-    Gets the number of buttons supported by the device.
-
-Joystick#getPosition(axisID);
-
-    Polls the device and gets the current position along the specified analog
-    axis.  To get the number of axes supported by a device, use the `numAxes`
-    property.
-
-    Note: Axes are numbered sequentially, starting from 0.  Which physical axis
-          is associated with any given axis ID will vary from device to device.
-          For gamepads with analog sticks, though, it's generally a safe bet
-          that the primary analog stick will be mapped to the first two axes.
-
-Joystick#isPressed(buttonID);
-
-    Polls the device and returns true if the specified button is currently
-    depressed.  To get the number of buttons supported by a device, use the
-    `numButtons` property.
-
-    Note: Buttons are numbered sequentially, starting from 0.  As with axes,
-          which physical button is associated with any given button ID will
-          vary from device to device.
-
-
-Mouse Routines
+`Mouse` Object
 --------------
 
-These methods allow access to the mouse, another common input method for games.
-As with the Keyboard API, the Mouse API provides access to an event queue which
-accumulates mouse clicks and other events until the game is ready to process
-them.
+The `Mouse` object allows your game to accept input from a mouse, another
+common input method for games.  As with the `Keyboard` object, `Mouse` provides
+an event queue which accumulates clicks and other events until the game is
+ready to process them.
 
 MouseKey [enumeration]
 
@@ -561,8 +638,9 @@ MouseKey [enumeration]
 
 Mouse.Default [read-only]
 
-    Gets the default mouse device.  miniSphere currently only supports a single
-    mouse.
+    Gets a `Mouse` object for the default mouse device.
+	
+	Note: miniSphere currently only supports a single mouse.
 
 Mouse#x [read-only]
 Mouse#y [read-only]
@@ -600,6 +678,54 @@ Mouse#isPressed(key);
 
     Note: This function always returns false for virtual keys such as WheelUp
           and WheelDown.
+
+
+`RNG` Object
+------------
+
+Games often have need of a good psuedorandom number generator, particularly in
+the case of RPGs.  JavaScript provides a barebones generator in the form of
+`Math.random()`.  Sphere takes it one step further with the powerful `RNG`
+object.
+
+Sphere uses the xoroshiro128+ algorithm to generate high-quality random numbers
+and allows manually seeding the generator, as well as saving and restoring the
+exact state of the generator at any time.  RNG state is often saved along with
+other save data as a way to deter save scumming.
+
+RNG.fromSeed(seed);
+
+    Constructs a new random number generator seeded using the specified value.
+    The specific sequence of numbers generated is entirely defined by the seed:
+    Two generators running in parallel, initialized with the same seed, will
+    always produce the same sequence.
+
+    `seed` is a number greater than zero.  If the seed is fractional, only the
+    integer part is used; everything after the decimal point is ignored.
+
+RNG.fromState(state);
+
+    Constructs a new random number generator which starts in the specified
+    state.  See RNG#state for more information.
+
+new RNG();
+
+    Constructs a new random number generator seeded from the current system
+    time.
+
+RNG#state [read/write]
+
+    Gets or sets the current state of this generator.  State is encoded as
+    a 32-digit hexadecimal string which makes it easy to save and restore.
+
+    When setting `RNG#state`, the string given must be exactly 32 characters
+    and consist only of hexadecimal digits (0-9, A-F), otherwise a TypeError
+    will be thrown.
+
+RNG#next();
+
+    Gets the next random number in the sequence.  Value returned is in the
+    range [0-1).
 
 
 Graphics API
@@ -1191,126 +1317,6 @@ SoundStream#stop();
     Stops playback of the stream and frees its buffer.  This should be called
     when you are done using a stream.  The stream may be reused after a stop()
     call, but you will have to feed new audio data.
-
-
-File System API
----------------
-
-miniSphere provides the `FS` object to allow games to access asset and save
-files, create or remove directories, and so on.
-
-FS.createDirectory(dir_name);
-
-    Creates the specified directory and any of its parent directories that
-    don't already exist.
-
-FS.deleteFile(filename);
-
-    Deletes `filename` from the file system.
-
-FS.exists(filename);
-
-    Checks whether the specified file exists and returns true if it does.
-    Otherwise, returns false.
-
-FS.readFile(filename);
-
-    Reads all data from the specified file and returns it as an ArrayBuffer.
-    This avoids the need to explicitly open and close a file when all you want
-    to do is read its contents into memory.
-
-FS.removeDirectory(dir_name);
-
-    Deletes the specified directory.  The directory must be empty or an error
-    will be thrown.
-
-FS.rename(srcname, destname);
-
-    Renames the file named by `srcname` to `destname`, both of which are
-    assumed to be full SphereFS paths.  This can also be used to move a file
-    between directories; if so, the destination directory must already exist.
-
-FS.resolve(path);
-
-    Resolves a path (which may contain relative components) to its canonical
-    SphereFS representation.  This can be useful when data is associated with
-    individual assets, such as map files, and you need to ensure the same data
-    is pulled for a given file regardless of the path used to access it.
-
-    Note that the resource referred to by the path doesn't need to exist.  As
-    with other FS methods, FS.resolve() will throw an error if an absolute path
-    is passed in.
-
-FS.writeFile(filename, data);
-
-    Writes an entire file in one go.  If a file already exists with the given
-    filename, it will be overwritten.  'data' is an ArrayBuffer, TypedArray or
-    DataView containing the data to be written.
-
-new FileStream(filename, op);
-
-    Constructs a FileStream that provides access to the contents of a specified
-    file.  `op` specifies the file operation requested and must be one of the
-    following:
-
-        FileOp.Read
-
-            Read data from the file.  The file must exist and will be opened in
-            read-only mode.  Any attempt to write to the file will throw a
-            TypeError.
-
-        FileOp.Write
-
-            Write data to the file.  Be careful: If the file already exists,
-            its contents will be overwritten.  If that behavior is not desired,
-            use `FileOp.Update` instead.
-
-        FileOp.Update
-
-            Amend the file.  If a file by the specified name doesn't exist, it
-            will be created.  For convenience, the file pointer is initially
-            placed at the end of the file.
-
-    Requesting write access to a file residing in a read-only directory (e.g.,
-    the system directory `#/`) will throw a TypeError.
-
-FileStream#dispose();
-
-    Disposes of the FileStream object, after which it should not be used.
-    Attempting to read or write to a stream after it is disposed of will throw
-    an error.
-
-    Note: While it's not strictly necessary to call `dispose()` on FileStreams,
-          it may take some time for the garbage collector to get to them.  If
-          there's an active FileStream in write mode for a given file, an error
-          will be thrown if you try to construct another one.
-
-FileStream#fileName [read-only]
-
-    Gets the full, canonical SphereFS filename of the underlying file.
-
-FileStream#position [read/write]
-
-    Gets or sets the file position, which determines where in the file the next
-    read or write will start from.  Expressed in bytes.
-
-    Note: For files opened for writing, it is valid to seek past the end of the
-          stream.  In this case the next write will be at the new position and
-          the intervening space filled with NUL bytes.
-
-FileStream#size [read-only]
-
-    Gets the size of the underlying file, in bytes.
-
-FileStream#read(num_bytes);
-
-    Reads data from the file, up to the specified number of bytes, and returns
-    it as an ArrayBuffer.  The file must be opened for reading.
-
-FileStream#write(data);
-
-    Writes data to the file and advances the file pointer.  `data` should be an
-    ArrayBuffer, TypedArray or DataView containing the data to be written.
 
 
 Networking API

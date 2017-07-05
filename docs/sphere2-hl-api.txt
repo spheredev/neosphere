@@ -324,6 +324,9 @@ commands.  Sphere will do the rest.
 During gameplay, if the game has initialized the console, it can be shown and
 hidden by the player using a hotkey (`~` by default).
 
+    import { Console } from 'sphere-runtime';
+	const Console = require('console');
+
 Console.visible [read/write]
 
     Gets or sets whether the console is visible to the player.  Setting this to
@@ -526,6 +529,12 @@ Delegate#add(handler[, thisObj]);
 
     add() will throw an error if a matching handler has already been
     registered.
+
+Delegate#call([...]);
+
+    Calls all handlers registered with the delegate.  Calls are made in order
+	of registration, and any arguments passed to `call()` are forwarded to the
+	handlers as-is.
 
 Delegate#remove(handler[, thisObj]);
 
