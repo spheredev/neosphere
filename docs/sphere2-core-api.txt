@@ -7,9 +7,9 @@ miniSphere 4.0, has been deprecated in its entirety.  It is not documented here
 at all; while games using the legacy functions will continue to run, new code
 should be written against the modern Sphere v2 API, documented here.
 
-To ease migration of existing Sphere v1 codebases to Sphere v2, legacy and
-modern API calls may be freely intermingled within the same codebase, and this
-is true even when the engine is running in compatibility mode.
+In order to ease migration of existing Sphere v1 codebases to Sphere v2, legacy
+and modern API calls may be freely intermingled within the same codebase, and
+that holds true even when the engine is running in compatibility mode.
 
 
 JSON Game Manifest (`game.json`)
@@ -23,8 +23,8 @@ engine runs the game.
 Here's a sample manifest:
 
     {
-        "version": 2,
         "name": "Spectacles: Bruce's Story",
+        "version": 2,
         "author": "Fat Cerberus",
         "summary": "Follow Scott Starcross in his quest to stop the Primus.",
         "resolution": "320x240",
@@ -33,23 +33,24 @@ Here's a sample manifest:
 
 JSON fields defined by the Sphere v2 specification are documented below.
 Because the manifest format is JSON, as many additional fields may be added as
-needed, and their values accessed from JavaScript through `Sphere.Game`.
+needed, and their values can be accessed from JavaScript through `Sphere.Game`.
 
 "version" [default: 2]
 
-    The Sphere standards version the game was developed against.  If this is 2,
-    the game runs in Sphere v2 mode.  In Sphere v2 mode, the main script is
-    loaded as a CommonJS module, which enables use of relative paths in
-    require() calls (see below), as well as ensuring variable and function
-    declarations remain local to the module.
+    The Sphere standards version the game was developed against.  If this is
+    set to 2 (or is just not present) the game runs in Sphere v2 mode.  In
+    Sphere v2 mode, the main script is run as a CommonJS module, which enables
+    the use of relative paths in `require()` (see below), as well as ensuring
+    variable and function declarations remain local to the module.
 
-    If this is 1, the game runs in Sphere v1 compatibility mode.  In this mode,
-    the main module is executed as normal program code, and miniSphere calls
-    the global game() function--if one is provided--to begin game execution.
+    If this is set to 1, the game runs in Sphere v1 compatibility mode.  In
+    compatibility mode, the main module is executed as normal JavaScript
+    program code, and miniSphere calls the global `game()` function--if one is
+    provided--to begin game execution.
 
     Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
           be available for use by game code.  The version in the manifest
-          currently only affects the way the main module is run.  This may
+          currently only affects the way the main module is loaded.  That may
           change in the future, however.
 
 "author" [default: none]
@@ -112,26 +113,26 @@ Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
       be met with a sandbox violation error.
 
 
-CommonJS API
-------------
+`require` Function
+------------------
 
-Sphere uses the CommonJS standard for dependency management.  In CommonJS, each
-script is run as a function, which isolates modules from one another and
-enables more granular control of exports.  In addition, because the code
-importing a module decides under what name to store the imports (if at all),
-naming conflicts between modules are avoided entirely.
+Sphere uses the CommonJS module standard to manage script dependencies.  In a
+CommonJS environment, each script runs as a function, which help isolate them
+from one another and enables more granular control of exports.  In addition,
+because the code importing a module decides under what name to store the
+imports (if at all), naming conflicts between modules are avoided entirely.
 
 require(module_id);
 
-    Loads a CommonJS module and returns its export table.  `module_id` is an
-    abstract path (a string) identifying the module to load, with the same
-    semantics as in, e.g. Node.js.  If the module cannot be found, an error will
-    be thrown.  The engine will look for modules in the following locations:
+    Loads a CommonJS module and returns its export table.  `module_id` is a
+    string identifying the module to load, with the same semantics as in, e.g.
+    Node.js.  If the module cannot be found, an error will be thrown.  The
+    engine will look for modules in the following locations:
 
         @/lib/
         #/modules/
 
-    If require() is provided with a module ID beginning with either `./` or
+    If `require()` is provided with a module ID beginning with either `./` or
     `../`, this indicates a path relative to the location of the calling
     module.
 
@@ -150,7 +151,7 @@ Sphere.Platform [read-only]
 
 Sphere.Version [read-only]
 
-    The version number of the engine; e.g. "4.6.0".
+    The version number of the engine; e.g. "X.X.X".
 
 Sphere.APIVersion [read-only]
 Sphere.APILevel [read-only]
@@ -210,22 +211,90 @@ Sphere.sleep(timeout);
           expected to return.
 
 
-`SSJ` Namespace
----------------
+`Color` Object
+--------------
 
-The `SSJ` namespace allows your game to communicate with an attached debugger
-such as SSJ or SSJ Blue.
+The `Color` object represents an RGB color value.  It also has an alpha
+component and can therefore represent translucent colors.
 
-SSJ.log(text);
+Color.Red [read-only]
+Color.Green [read-only]
+Color.Blue [read-only]
+Color.Transparent [read-only]
+etc...
 
-    Logs `text` to the debugger.  If the game is started using `spherun`, the
-    text is also logged to the terminal.
+    Gets a copy of a predefined color.  The entire X11 color set is provided,
+    giving you access to such colors as `DodgerBlue` and `Chartreuse` in
+    addition to the standard red, green, blue, yellow, etc.
 
-SSJ.trace(text);
+    Each of these is an accessor which returns a new Color object every time
+    it is invoked.  This ensures that code like what's shown below won't cause
+    undesirable side effects:
 
-    Logs `text` to the debugger.  This is intended for low-level, detailed
-    logging; trace output will not be displayed, even in the debugger, unless
-    its display is enabled by the user.
+        var color = Color.Red;
+        color.blue = 255;  // we needed magenta instead
+
+    The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
+    false, but this is rarely an issue in practice.
+
+Color.is(color1, color2);
+
+    Returns true if `color1` refers to the same physical color as `color2`
+    without regard to their alpha components.  Otherwise returns false.
+
+    Note: This is not the same as comparing the color objects' .name properties
+          because Color#name encodes the alpha channel in addition to the
+          physical color.
+
+Color.mix(color1, color2[, w1, w2]);
+
+    Calculates a weighted average of two colors.  `w1` and `w2` are optional
+    and specify the relative weights of `color1` and `color2` respectively.  If
+    the weights are omitted, the mix is 50/50.
+
+Color.of(name);
+
+    Returns a Color object from `name`, which can either be the name of a
+    predefined X11 color without spaces (e.g. "chartreuse"), or an ARGB
+    signature such as "#800000FF".  If `name` cannot be resolved to a color,
+    throws a TypeError.
+
+new Color(red, green, blue[, alpha]);
+
+    Constructs a new Color object.  Color objects are used to specify the color
+    of elements such as vertices and primitives.  Color components should be in
+    the range [0.0,1.0]; out-of-range values are silently clamped.  `alpha`
+	specifies the color's opacity and defaults to 1.0 if not provided.
+
+Color#r [read/write]
+Color#g [read/write]
+Color#b [read/write]
+Color#a [read/write]
+
+    Gets or sets the individual components of the color (red, green, blue, or
+	alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
+	HDR is not supported and the engine will automatically clamp such colors
+	when rendered.
+
+Color#name [read-only]
+
+    Gets the name of the Color according to its component values such that
+    Color.of(color.name) will give back a Color with the same values.  Useful
+    for saving and reading back colors from save files.
+
+Color#clone();
+
+    Returns a copy of this Color object.  Changes to the clone will not affect
+    the original object.
+
+Color#fade(alpha);
+
+    Scales this color's alpha channel by `alpha`, between 0.0 and 1.0, and
+    returns the result.  The red, green, and blue components are not modified.
+    This is useful when you need to make a predefined color translucent, for
+    instance:
+
+        var translucentBlue = Color.Blue.fade(0.5);
 
 
 `Dispatch` Namespace
@@ -414,6 +483,56 @@ FileStream#write(data);
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
+
+
+`Font` Object
+-------------
+
+The `Font` object specifies a typeface that can be used when drawing text.
+Sphere provides a default font which is the same for all games, or you can load
+one from an RFN font file.
+
+Font.Default [read-only]
+
+    Gets the default engine font.  This is the font used for the FPS counter
+    and system messages.
+
+new Font(filename);
+
+    Constructs a Font object from a font file.  Currently only the Sphere RFN
+    font format is supported.
+
+Font#fileName [read-only]
+
+    Gets the full, canonical SphereFS filename of the file used to construct
+    this Font object.
+
+Font#height [read-only]
+
+    Gets the line height, in pixels, for text rendered using this font.
+
+Font#drawText(surface, x, y, text[, color[, wrap_width]]);
+
+    Renders `text` to the specified surface at (x,y).  `color` defaults to
+    Color.White if not provided, and `wrap_width` specifies the width in which
+    to constrain the text.  If `wrap_width` is not provided, no wrapping is
+    performed.
+
+Font#getTextSize(text, wrap_width);
+
+    Gets the size, in pixels, of `text` if it were rendered by Font:drawText()
+    with the specified wrap width.  Return value is an object with `width` and
+    `height` properties.
+
+Font#wordWrap(text, wrap_width);
+
+    Wraps `text` as if it were drawn with Font#drawText() using the specified
+    wrap width.  Returns an array of strings, representing the lines in the
+    wrapped text.
+
+    When drawing large amounts of word-wrapped text every frame, for example in
+    a text box, this function should be used to pre-wrap the text since
+    performing wrapping calculations every frame can get expensive.
 
 
 `Joystick` Object
@@ -728,19 +847,73 @@ RNG#next();
     range [0-1).
 
 
+`SSJ` Namespace
+---------------
+
+The `SSJ` namespace allows your game to communicate with an attached debugger
+such as SSJ or SSJ Blue.
+
+SSJ.log(text);
+
+    Logs `text` to the debugger.  If the game is started using `spherun`, the
+    text is also logged to the terminal.
+
+SSJ.trace(text);
+
+    Logs `text` to the debugger.  This is intended for low-level, detailed
+    logging; trace output will not be displayed, even in the debugger, unless
+    its display is enabled by the user.
+
+
+`Surface` Object
+----------------
+
+A `Surface` object represents a rendering target.  Your game doesn't always
+need to draw directly to the screen; it sometimes makes sense to compose
+complex parts of a scene in advance, offscreen, so that you don't have to
+redraw them every frame.
+
+new Surface(width, height[, fill_color]);
+
+    Constructs a new surface with the specified width and height, optionally
+    filled with 'fill_color'.  If a fill color is not provided, the created
+    surface will be filled with transparent pixels.
+
+    Surfaces are meant to used as render targets from drawing operations.  This
+    enables static elements of a scene, such as a HUD, to be rendered in
+    advance, potentially improving performance.
+
+new Surface(filename);
+
+    Constructs a new Surface whose initial contents are taken from the
+    specified image file.
+
+Surface#width [read-only]
+Surface#height [read-only]
+
+    Gets the width and height of the surface, in pixels.  For the screen, this
+
+Surface#toTexture();
+
+    Returns a Texture created from the current contents of this Surface.  Note
+    that drawing to the surface afterwards will not affect the texture, which
+    is read-only.
+
+
 Graphics API
 ------------
 
-Unlike in Sphere 1.x, in second-generation games all rendering, both 2D and 3D,
-is done through the Galileo API.  Galileo represents a more modern, polygon-
-based approach to graphics.  Scenes are built from groups of Shape objects
-representing graphics primitives (triangle strips, fans, etc.).
+Unlike in Sphere 1.x, all rendering in a Sphere v2 engine, both 2D and 3D, is
+done through the Galileo API.  This is a more modern, polygon-based approach to
+graphics.  Scenes are built from groups of Shape objects representing graphics
+primitives (triangle strips, fans, etc.), which is a much better match for how
+modern graphics hardware actually works.
 
-screen [global variable]
+screen [global variable, read-only]
 
-    A Surface object (see below) representing the primary render target--
-    specifically, the backbuffer.  Anything drawn to this surface will become
-    visible to the player when calling `screen.flip()`.
+    A `Surface` object (see below) representing the primary render target--
+    the screen.  Anything drawn to `screen` will become visible to the player
+    when calling `screen.flip()`.
 
 screen.frameRate [read/write]
 
@@ -757,10 +930,11 @@ screen.fullScreen [read/write]
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
 
-screen.width [read-only]
-screen.height [read-only]
+screen.transform [read/write]
 
-    Gets the width and height of the screen resolution.
+    Gets or sets a `Transform` representing the current projection matrix.  By
+    default, this is an orthographic (2D) projection mapping vertex coordinates
+    directly to screen pixels.
 
 screen.clipTo(x, y, width, height);
 
@@ -794,127 +968,6 @@ screen.resize(width, height);
 
     Changes the game's resolution.  The change is not persistent and lasts only
     until the engine is closed.
-
-Color.Red [read-only]
-Color.Green [read-only]
-Color.Blue [read-only]
-Color.Transparent [read-only]
-etc...
-
-    Gets a copy of a predefined color.  The entire X11 color set is provided,
-    giving you access to such colors as `DodgerBlue` and `Chartreuse` in
-    addition to the standard red, green, blue, yellow, etc.
-
-    Each of these is an accessor which returns a new Color object every time
-    it is invoked.  This ensures that code like what's shown below won't cause
-    undesirable side effects:
-
-        var color = Color.Red;
-        color.blue = 255;  // we needed magenta instead
-
-    The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
-    false, but this is rarely an issue in practice.
-
-Color.is(color1, color2);
-
-    Returns true if `color1` refers to the same physical color as `color2`
-    without regard to their alpha components.  Otherwise returns false.
-
-    Note: This is not the same as comparing the color objects' .name properties
-          because Color#name encodes the alpha channel in addition to the
-          physical color.
-
-Color.mix(color1, color2[, w1, w2]);
-
-    Calculates a weighted average of two colors.  `w1` and `w2` are optional
-    and specify the relative weights of `color1` and `color2` respectively.  If
-    the weights are omitted, the mix is 50/50.
-
-Color.of(name);
-
-    Returns a Color object from `name`, which can either be the name of a
-    predefined X11 color without spaces (e.g. "chartreuse"), or an ARGB
-    signature such as "#800000FF".  If `name` cannot be resolved to a color,
-    throws a TypeError.
-
-new Color(red, green, blue[, alpha]);
-
-    Constructs a new Color object.  Color objects are used to specify the color
-    of elements such as vertices and primitives.  Color components should be in
-    the range [0.0,1.0]; out-of-range values are silently clamped.  `alpha`
-	specifies the color's opacity and defaults to 1.0 if not provided.
-
-Color#r [read/write]
-Color#g [read/write]
-Color#b [read/write]
-Color#a [read/write]
-
-    Gets or sets the individual components of the color (red, green, blue, or
-	alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
-	HDR is not supported and the engine will automatically clamp such colors
-	when rendered.
-
-Color#name [read-only]
-
-    Gets the name of the Color according to its component values such that
-    Color.of(color.name) will give back a Color with the same values.  Useful
-    for saving and reading back colors from save files.
-
-Color#clone();
-
-    Returns a copy of this Color object.  Changes to the clone will not affect
-    the original object.
-
-Color#fade(alpha);
-
-    Scales this color's alpha channel by `alpha`, between 0.0 and 1.0, and
-    returns the result.  The red, green, and blue components are not modified.
-    This is useful when you need to make a predefined color translucent, for
-    instance:
-
-        var translucentBlue = Color.Blue.fade(0.5);
-
-Font.Default [read-only]
-
-    Gets the default engine font.  This is the font used for the FPS counter
-    and system messages.
-
-new Font(filename);
-
-    Constructs a Font object from a font file.  Currently only the Sphere RFN
-    font format is supported.
-
-Font#fileName [read-only]
-
-    Gets the full, canonical SphereFS filename of the file used to construct
-    this Font object.
-
-Font#height [read-only]
-
-    Gets the line height, in pixels, for text rendered using this font.
-
-Font#drawText(surface, x, y, text[, color[, wrap_width]]);
-
-    Renders `text` to the specified surface at (x,y).  `color` defaults to
-    Color.White if not provided, and `wrap_width` specifies the width in which
-    to constrain the text.  If `wrap_width` is not provided, no wrapping is
-    performed.
-
-Font#getTextSize(text, wrap_width);
-
-    Gets the size, in pixels, of `text` if it were rendered by Font:drawText()
-    with the specified wrap width.  Return value is an object with `width` and
-    `height` properties.
-
-Font#wordWrap(text, wrap_width);
-
-    Wraps `text` as if it were drawn with Font#drawText() using the specified
-    wrap width.  Returns an array of strings, representing the lines in the
-    wrapped text.
-
-    When drawing large amounts of word-wrapped text every frame, for example in
-    a text box, this function should be used to pre-wrap the text since
-    performing wrapping calculations every frame can get expensive.
 
 new Texture(filename);
 
@@ -1075,32 +1128,6 @@ Shape#draw(surface[, transform]);
     Surface to draw on.  If `surface` is omitted, the shape is drawn on the
     backbuffer.
 
-new Surface(width, height[, fill_color]);
-
-    Constructs a new surface with the specified width and height, optionally
-    filled with 'fill_color'.  If a fill color is not provided, the created
-    surface will be filled with transparent pixels.
-
-    Surfaces are meant to used as render targets from drawing operations.  This
-    enables static elements of a scene, such as a HUD, to be rendered in
-    advance, potentially improving performance.
-
-new Surface(filename);
-
-    Constructs a new Surface whose initial contents are taken from the
-    specified image file.
-
-Surface#width [read-only]
-Surface#height [read-only]
-
-    Gets the width and height of the surface, in pixels.
-
-Surface#toTexture();
-
-    Returns a Texture created from the current contents of this Surface.  Note
-    that drawing to the surface afterwards will not affect the texture, which
-    is read-only.
-
 new Transform();
 
     Constructs a transformation matrix.  The object represents a 4x4 matrix
@@ -1122,6 +1149,15 @@ Transform#compose(otherMatrix);
 
     Composes this transform with another.  `otherMatrix` is multiplied from the
     left such that transformations are performed in the order you specify.
+
+Transform#project2D(left, right, top, bottom, near, far);
+
+    Multiplies this transform's matrix with an orthographic (parallel)
+	projection.
+
+Transform#project3D(left, right, top, bottom, near, far);
+
+    Multiplies this transform's matrix with a 3D perspective projection.
 
 Transform#rotate(theta[, vx, vy, vz]);
 

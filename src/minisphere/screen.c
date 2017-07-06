@@ -31,6 +31,7 @@ struct screen
 	bool             show_fps;
 	bool             skip_frame;
 	bool             take_screenshot;
+	matrix_t*        transform;
 	bool             use_shaders;
 	int              x_offset;
 	float            x_scale;
@@ -46,10 +47,11 @@ screen_t*
 screen_new(const char* title, image_t* icon, int x_size, int y_size, int frameskip, bool avoid_sleep)
 {
 	ALLEGRO_BITMAP*  backbuffer = NULL;
+	int              bitmap_flags;
 	ALLEGRO_DISPLAY* display;
 	ALLEGRO_BITMAP*  icon_bitmap;
 	screen_t*        obj;
-	int              bitmap_flags;
+	matrix_t*        transform;
 	bool             use_shaders = false;
 	int              x_scale;
 	int              y_scale;
@@ -100,10 +102,13 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	}
 
 	al_set_target_bitmap(backbuffer);
+	transform = matrix_new();
+	matrix_orthographic(transform, 0, x_size, 0, y_size, -1.0f, 1.0f);
 	
 	obj = calloc(1, sizeof(screen_t));
 	obj->display = display;
 	obj->backbuffer = backbuffer;
+	obj->transform = transform;
 	obj->x_size = x_size;
 	obj->y_size = y_size;
 	obj->max_skips = frameskip;
@@ -193,6 +198,12 @@ screen_get_mouse_xy(const screen_t* obj, int* o_x, int* o_y)
 	*o_y = (mouse_state.y - obj->y_offset) / obj->y_scale;
 }
 
+matrix_t*
+screen_get_transform(const screen_t* screen)
+{
+	return screen->transform;
+}
+
 void
 screen_set_clipping(screen_t* obj, rect_t clip_rect)
 {
@@ -220,6 +231,17 @@ screen_set_mouse_xy(screen_t* obj, int x, int y)
 	x = x * obj->x_scale + obj->x_offset;
 	y = y * obj->y_scale + obj->y_offset;
 	al_set_mouse_xy(obj->display, x, y);
+}
+
+void
+screen_set_transform(screen_t* screen, matrix_t* matrix)
+{
+	matrix_t* old_matrix;
+
+	old_matrix = screen->transform;
+	screen->transform = matrix_ref(matrix);
+	matrix_free(old_matrix);
+	refresh_display(screen);
 }
 
 void
@@ -446,6 +468,8 @@ screen_transform(screen_t* obj, const matrix_t* matrix)
 	if (matrix != NULL)
 		al_compose_transform(&transform, matrix_transform(matrix));
 	al_use_transform(&transform);
+	if (al_get_target_bitmap() == obj->backbuffer)
+		al_use_projection_transform(matrix_transform(obj->transform));
 }
 
 void

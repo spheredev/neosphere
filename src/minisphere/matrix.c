@@ -37,7 +37,7 @@ matrix_ref(matrix_t* matrix)
 void
 matrix_free(matrix_t* matrix)
 {
-	if (--matrix->refcount > 0)
+	if (matrix != NULL && --matrix->refcount > 0)
 		return;
 	free(matrix);
 }
@@ -64,6 +64,18 @@ void
 matrix_identity(matrix_t* matrix)
 {
 	al_identity_transform(&matrix->transform);
+}
+
+void
+matrix_orthographic(matrix_t* matrix, float left, float right, float top, float bottom, float z_near, float z_far)
+{
+	al_orthographic_transform(&matrix->transform, left, top, z_near, right, bottom, z_far);
+}
+
+void
+matrix_perspective(matrix_t* matrix, float left, float right, float top, float bottom, float z_near, float z_far)
+{
+	al_perspective_transform(&matrix->transform, left, top, z_near, right, bottom, z_far);
 }
 
 void

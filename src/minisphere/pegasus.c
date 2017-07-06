@@ -185,11 +185,13 @@ COLORS[] =
 
 static duk_ret_t js_require                    (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
-static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_get_frameSkip       (duk_context* ctx);
-static duk_ret_t js_screen_set_frameSkip       (duk_context* ctx);
 static duk_ret_t js_screen_get_fullScreen      (duk_context* ctx);
+static duk_ret_t js_screen_get_transform       (duk_context* ctx);
+static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
+static duk_ret_t js_screen_set_frameSkip       (duk_context* ctx);
 static duk_ret_t js_screen_set_fullScreen      (duk_context* ctx);
+static duk_ret_t js_screen_set_transform       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_now                 (duk_context* ctx);
@@ -360,6 +362,8 @@ static duk_ret_t js_Transform_get_matrix       (duk_context* ctx);
 static duk_ret_t js_Transform_set_matrix       (duk_context* ctx);
 static duk_ret_t js_Transform_compose          (duk_context* ctx);
 static duk_ret_t js_Transform_identity         (duk_context* ctx);
+static duk_ret_t js_Transform_project2D        (duk_context* ctx);
+static duk_ret_t js_Transform_project3D        (duk_context* ctx);
 static duk_ret_t js_Transform_rotate           (duk_context* ctx);
 static duk_ret_t js_Transform_scale            (duk_context* ctx);
 static duk_ret_t js_Transform_translate        (duk_context* ctx);
@@ -541,6 +545,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Transform", "matrix", js_Transform_get_matrix, NULL);
 	api_define_method(ctx, "Transform", "compose", js_Transform_compose);
 	api_define_method(ctx, "Transform", "identity", js_Transform_identity);
+	api_define_method(ctx, "Transform", "project2D", js_Transform_project2D);
+	api_define_method(ctx, "Transform", "project3D", js_Transform_project3D);
 	api_define_method(ctx, "Transform", "rotate", js_Transform_rotate);
 	api_define_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_define_method(ctx, "Transform", "translate", js_Transform_translate);
@@ -549,6 +555,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop(ctx, "screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
 	api_define_static_prop(ctx, "screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
+	api_define_static_prop(ctx, "screen", "transform", js_screen_get_transform, js_screen_set_transform);
 	api_define_function(ctx, "screen", "clipTo", js_screen_clipTo);
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "now", js_screen_now);
@@ -1086,6 +1093,13 @@ js_screen_get_fullScreen(duk_context* ctx)
 }
 
 static duk_ret_t
+js_screen_get_transform(duk_context* ctx)
+{
+	duk_push_class_obj(ctx, "Transform", screen_get_transform(g_screen));
+	return 1;
+}
+
+static duk_ret_t
 js_screen_set_fullScreen(duk_context* ctx)
 {
 	bool fullscreen;
@@ -1093,6 +1107,17 @@ js_screen_set_fullScreen(duk_context* ctx)
 	fullscreen = duk_require_boolean(ctx, 0);
 	
 	screen_set_fullscreen(g_screen, fullscreen);
+	return 0;
+}
+
+static duk_ret_t
+js_screen_set_transform(duk_context* ctx)
+{
+	matrix_t* matrix;
+
+	matrix = duk_require_class_obj(ctx, 0, "Transform");
+
+	screen_set_transform(g_screen, matrix);
 	return 0;
 }
 
@@ -3854,6 +3879,9 @@ js_Transform_get_matrix(duk_context* ctx)
 			}
 			duk_def_prop(ctx, -3, DUK_DEFPROP_SET_ENUMERABLE | DUK_DEFPROP_HAVE_VALUE);
 		}
+		
+		// store the generated object so we don't have to keep generating it on
+		// every access
 		duk_push_this(ctx);
 		duk_push_string(ctx, "matrix");
 		duk_dup(ctx, -3);
@@ -3920,6 +3948,55 @@ js_Transform_identity(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Transform_project2D(duk_context* ctx)
+{
+	matrix_t* matrix;
+	int       num_args;
+	float     x1, x2;
+	float     y1, y2;
+	float     z1 = -1.0f;
+	float     z2 = 1.0f;
+
+	num_args = duk_get_top(ctx);
+	duk_push_this(ctx);
+	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	x1 = duk_require_number(ctx, 0);
+	x2 = duk_require_number(ctx, 1);
+	y1 = duk_require_number(ctx, 2);
+	y2 = duk_require_number(ctx, 3);
+	if (num_args >= 6) {
+		z1 = duk_require_number(ctx, 4);
+		z2 = duk_require_number(ctx, 5);
+	}
+
+	matrix_orthographic(matrix, x1, x2, y1, y2, z1, z2);
+	return 1;
+}
+
+static duk_ret_t
+js_Transform_project3D(duk_context* ctx)
+{
+	matrix_t* matrix;
+	int       num_args;
+	float     x1, x2;
+	float     y1, y2;
+	float     z1, z2;
+
+	num_args = duk_get_top(ctx);
+	duk_push_this(ctx);
+	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	x1 = duk_require_number(ctx, 0);
+	x2 = duk_require_number(ctx, 1);
+	y1 = duk_require_number(ctx, 2);
+	y2 = duk_require_number(ctx, 3);
+	z1 = duk_require_number(ctx, 4);
+	z2 = duk_require_number(ctx, 5);
+
+	matrix_perspective(matrix, x1, x2, y1, y2, z1, z2);
+	return 1;
+}
+
+static duk_ret_t
 js_Transform_rotate(duk_context* ctx)
 {
 	matrix_t* matrix;
@@ -3929,8 +4006,8 @@ js_Transform_rotate(duk_context* ctx)
 	float     vy = 0.0;
 	float     vz = 1.0;
 
+	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	num_args = duk_get_top(ctx) - 1;
 	matrix = duk_require_class_obj(ctx, -1, "Transform");
 	theta = duk_require_number(ctx, 0);
 	if (num_args >= 2) {
@@ -3952,8 +4029,8 @@ js_Transform_scale(duk_context* ctx)
 	float     sy;
 	float     sz = 1.0;
 
+	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	num_args = duk_get_top(ctx) - 1;
 	matrix = duk_require_class_obj(ctx, -1, "Transform");
 	sx = duk_require_number(ctx, 0);
 	sy = duk_require_number(ctx, 1);
@@ -3973,8 +4050,8 @@ js_Transform_translate(duk_context* ctx)
 	float     dy;
 	float     dz = 0.0;
 
+	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	num_args = duk_get_top(ctx) - 1;
 	matrix = duk_require_class_obj(ctx, -1, "Transform");
 	dx = duk_require_number(ctx, 0);
 	dy = duk_require_number(ctx, 1);
