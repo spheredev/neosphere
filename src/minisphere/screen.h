@@ -27,11 +27,11 @@ void             screen_draw_status       (screen_t* screen, const char* text, c
 void             screen_flip              (screen_t* screen, int framerate);
 image_t*         screen_grab              (screen_t* screen, int x, int y, int width, int height);
 void             screen_queue_screenshot  (screen_t* screen);
+void             screen_render_to         (screen_t* screen, matrix_t* transform);
 void             screen_resize            (screen_t* screen, int x_size, int y_size);
 void             screen_show_mouse        (screen_t* screen, bool visible);
 void             screen_toggle_fps        (screen_t* screen);
 void             screen_toggle_fullscreen (screen_t* screen);
-void             screen_transform         (screen_t* screen, const matrix_t* matrix);
 void             screen_unskip_frame      (screen_t* screen);
 
 #endif // MINISPHERE__DISPLAY_H__INCLUDED

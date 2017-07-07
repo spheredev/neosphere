@@ -204,7 +204,9 @@ group_draw(const group_t* group, image_t* surface)
 	struct uniform* p;
 
 	if (surface != NULL)
-		al_set_target_bitmap(image_bitmap(surface));
+		image_render_to(surface, group->transform);
+	else
+		screen_render_to(g_screen, group->transform);
 
 #if defined(MINISPHERE_USE_SHADERS)
 	if (are_shaders_active()) {
@@ -232,11 +234,10 @@ group_draw(const group_t* group, image_t* surface)
 	}
 #endif
 
-	screen_transform(g_screen, group->transform);
 	iter = vector_enum(group->shapes);
 	while (vector_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
-	screen_transform(g_screen, NULL);
+	screen_render_to(g_screen, NULL);
 
 #if defined(MINISPHERE_USE_SHADERS)
 	shader_use(NULL);
@@ -443,9 +444,9 @@ shape_calculate_uv(shape_t* shape)
 void
 shape_draw(shape_t* shape, matrix_t* matrix)
 {
-	screen_transform(g_screen, matrix);
+	screen_render_to(g_screen, matrix);
 	render_shape(shape);
-	screen_transform(g_screen, NULL);
+	screen_render_to(g_screen, NULL);
 }
 
 void

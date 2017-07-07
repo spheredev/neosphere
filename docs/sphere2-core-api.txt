@@ -868,10 +868,13 @@ SSJ.trace(text);
 `Surface` Object
 ----------------
 
-A `Surface` object represents a rendering target.  Your game doesn't always
+The `Surface` object represents a rendering target.  Your game doesn't always
 need to draw directly to the screen; it sometimes makes sense to compose
 complex parts of a scene in advance, offscreen, so that you don't have to
 redraw them every frame.
+
+Note: The built-in `screen` object is itself a surface and supports the same
+      operations as any other `Surface` object.
 
 new Surface(width, height[, fill_color]);
 
@@ -887,6 +890,16 @@ new Surface(filename);
 
     Constructs a new Surface whose initial contents are taken from the
     specified image file.
+
+Surface#transform [read/write]
+
+    Gets or sets a `Transform` representing the surface's projection matrix.
+    When rendering is done on the surface, the projection matrix is the last
+    one applied and affects the entire scene.
+    
+    Note: The default projection matrix in Sphere is NOT an identity matrix.
+          When a surface is created, Sphere sets its transform to an
+		  orthographic matrix suitable for pixel-perfect 2D rendering.
 
 Surface#width [read-only]
 Surface#height [read-only]
@@ -929,12 +942,6 @@ screen.fullScreen [read/write]
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
-
-screen.transform [read/write]
-
-    Gets or sets a `Transform` representing the current projection matrix.  By
-    default, this is an orthographic (2D) projection mapping vertex coordinates
-    directly to screen pixels.
 
 screen.clipTo(x, y, width, height);
 

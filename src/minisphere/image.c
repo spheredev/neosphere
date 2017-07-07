@@ -2,6 +2,7 @@
 #include "image.h"
 
 #include "color.h"
+#include "matrix.h"
 
 struct image
 {
@@ -13,6 +14,7 @@ struct image
 	unsigned int    lock_count;
 	char*           path;
 	color_t*        pixel_cache;
+	matrix_t*       transform;
 	int             width;
 	int             height;
 	image_t*        parent;
@@ -35,6 +37,8 @@ image_new(int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	image->transform = matrix_new();
+	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:
@@ -55,6 +59,8 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = image_ref(parent);
+	image->transform = matrix_new();
+	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:
@@ -76,7 +82,9 @@ image_clone(const image_t* src_image)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	
+	image->transform = matrix_new();
+	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
+
 	return image_ref(image);
 
 on_error:
@@ -107,9 +115,12 @@ image_load(const char* filename)
 	al_fread(al_file, first_16, 16);
 	al_fseek(al_file, 0, ALLEGRO_SEEK_SET);
 	file_ext = strrchr(filename, '.');
-	if (memcmp(first_16, "BM", 2) == 0) file_ext = ".bmp";
-	if (memcmp(first_16, "\211PNG\r\n\032\n", 8) == 0) file_ext = ".png";
-	if (memcmp(first_16, "\0xFF\0xD8", 2) == 0) file_ext = ".jpg";
+	if (memcmp(first_16, "BM", 2) == 0)
+		file_ext = ".bmp";
+	if (memcmp(first_16, "\211PNG\r\n\032\n", 8) == 0)
+		file_ext = ".png";
+	if (memcmp(first_16, "\0xFF\0xD8", 2) == 0)
+		file_ext = ".jpg";
 
 	if (!(image->bitmap = al_load_bitmap_f(al_file, file_ext)))
 		goto on_error;
@@ -117,6 +128,8 @@ image_load(const char* filename)
 	free(slurp);
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	image->transform = matrix_new();
+	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
 
 	image->path = strdup(filename);
 	image->id = s_next_image_id++;
@@ -158,6 +171,8 @@ image_read(sfs_file_t* file, int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	image->transform = matrix_new();
+	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:
@@ -182,8 +197,10 @@ image_read_slice(sfs_file_t* file, image_t* parent, int x, int y, int width, int
 	int i_y;
 
 	file_pos = sfs_ftell(file);
-	if (!(image = image_new_slice(parent, x, y, width, height))) goto on_error;
-	if (!(lock = image_lock(parent))) goto on_error;
+	if (!(image = image_new_slice(parent, x, y, width, height)))
+		goto on_error;
+	if (!(lock = image_lock(parent)))
+		goto on_error;
 	for (i_y = 0; i_y < height; ++i_y) {
 		pline = lock->pixels + x + (i_y + y) * lock->pitch;
 		if (sfs_fread(pline, width * 4, 1, file) != 1)
@@ -221,6 +238,7 @@ image_free(image_t* image)
 	al_destroy_bitmap(image->bitmap);
 	image_free(image->parent);
 	free(image->path);
+	matrix_free(image->transform);
 	free(image);
 }
 
@@ -247,6 +265,22 @@ int
 image_width(const image_t* image)
 {
 	return image->width;
+}
+
+matrix_t*
+image_get_transform(const image_t* image)
+{
+	return image->transform;
+}
+
+void
+image_set_transform(image_t* image, matrix_t* transform)
+{
+	matrix_t* old_value;
+
+	old_value = image->transform;
+	image->transform = matrix_ref(transform);
+	matrix_free(old_value);
 }
 
 bool
@@ -538,6 +572,22 @@ image_rescale(image_t* image, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	return true;
+}
+
+void
+image_render_to(image_t* image, matrix_t* transform)
+{
+	ALLEGRO_TRANSFORM matrix;
+	
+	al_set_target_bitmap(image->bitmap);
+	al_use_projection_transform(matrix_transform(image->transform));
+	if (transform != NULL) {
+		al_use_transform(matrix_transform(transform));
+	}
+	else {
+		al_identity_transform(&matrix);
+		al_use_transform(&matrix);
+	}
 }
 
 bool

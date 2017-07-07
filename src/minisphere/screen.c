@@ -270,7 +270,7 @@ screen_draw_status(screen_t* obj, const char* text, color_t color)
 		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
 	font_draw_text(g_sys_font, color, (bounds.x2 + bounds.x1) / 2,
 		bounds.y1 + 5, TEXT_ALIGN_CENTER, text);
-	screen_transform(obj, NULL);
+	screen_render_to(obj, NULL);
 }
 
 void
@@ -357,7 +357,7 @@ screen_flip(screen_t* screen, int framerate)
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
 			font_draw_text(g_sys_font, color_new(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
 			font_draw_text(g_sys_font, color_new(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
-			screen_transform(g_screen, NULL);
+			screen_render_to(g_screen, NULL);
 		}
 		al_set_target_bitmap(screen->backbuffer);
 		al_flip_display();
@@ -429,6 +429,22 @@ screen_queue_screenshot(screen_t* obj)
 }
 
 void
+screen_render_to(screen_t* screen, matrix_t* transform)
+{
+	ALLEGRO_TRANSFORM matrix;
+	
+	al_set_target_bitmap(screen->backbuffer);
+	al_use_projection_transform(matrix_transform(screen->transform));
+	if (transform != NULL) {
+		al_use_transform(matrix_transform(transform));
+	}
+	else {
+		al_identity_transform(&matrix);
+		al_use_transform(&matrix);
+	}
+}
+
+void
 screen_resize(screen_t* obj, int x_size, int y_size)
 {
 	obj->x_size = x_size;
@@ -457,19 +473,6 @@ screen_toggle_fullscreen(screen_t* obj)
 {
 	obj->fullscreen = !obj->fullscreen;
 	refresh_display(obj);
-}
-
-void
-screen_transform(screen_t* obj, const matrix_t* matrix)
-{
-	ALLEGRO_TRANSFORM transform;
-	
-	al_identity_transform(&transform);
-	if (matrix != NULL)
-		al_compose_transform(&transform, matrix_transform(matrix));
-	al_use_transform(&transform);
-	if (al_get_target_bitmap() == obj->backbuffer)
-		al_use_projection_transform(matrix_transform(obj->transform));
 }
 
 void
@@ -517,6 +520,6 @@ refresh_display(screen_t* obj)
 			(monitor.y1 + monitor.y2) / 2 - obj->y_size * obj->y_scale / 2);
 	}
 	
-	screen_transform(obj, NULL);
+	screen_render_to(obj, NULL);
 	screen_set_clipping(obj, obj->clip_rect);
 }

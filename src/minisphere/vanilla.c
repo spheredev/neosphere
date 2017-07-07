@@ -3280,7 +3280,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 		bitmap = al_create_bitmap(width, height);
 		al_set_target_bitmap(bitmap);
 		font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
-		al_set_target_bitmap(screen_backbuffer(g_screen));
+		screen_render_to(g_screen, NULL);
 		reset_blender();
 		al_draw_scaled_bitmap(bitmap, 0, 0, width, height, x, y, width * scale, height * scale, 0x0);
 		al_destroy_bitmap(bitmap);
@@ -4604,9 +4604,9 @@ js_Surface_bezierCurve(duk_context* ctx)
 	for (i = 0; i < num_points; ++i)
 		vertices[i].color = nativecolor(color);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	free(vertices);
 	return 0;
@@ -4646,9 +4646,9 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_tinted_bitmap(image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4666,12 +4666,12 @@ js_Surface_blitSurface(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	blend_mode = duk_get_int(ctx, -1);
 
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_bitmap(image_bitmap(src_image), x, y, 0x0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4710,10 +4710,10 @@ js_Surface_cloneSection(duk_context* ctx)
 
 	if ((new_image = image_new(width, height)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create surface");
-	al_set_target_bitmap(image_bitmap(new_image));
+	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	duk_push_class_obj(ctx, "ssSurface", new_image);
 	return 1;
 }
@@ -4753,11 +4753,12 @@ js_Surface_drawText(duk_context* ctx)
 	y = duk_to_int(ctx, 2);
 	text = duk_to_string(ctx, 3);
 
-	duk_get_prop_string(ctx, 0, "\xFF" "color_mask"); color = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, 0, "\xFF" "color_mask");
+	color = duk_require_sphere_color(ctx, -1);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4776,12 +4777,12 @@ js_Surface_filledCircle(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
+	blend_mode = duk_get_int(ctx, -1);
+
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_filled_circle(x, y, radius, nativecolor(color));
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4801,12 +4802,12 @@ js_Surface_filledEllipse(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
+	blend_mode = duk_get_int(ctx, -1);
+	
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_filled_ellipse(x, y, rx, ry, nativecolor(color));
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4818,7 +4819,7 @@ js_Surface_flipHorizontally(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
-	duk_pop(ctx);
+
 	image_flip(image, true, false);
 	return 0;
 }
@@ -4830,7 +4831,7 @@ js_Surface_flipVertically(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
-	duk_pop(ctx);
+
 	image_flip(image, false, true);
 	return 0;
 }
@@ -4883,7 +4884,7 @@ js_Surface_gradientCircle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	vcount = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
 	s_vbuf[0].color = nativecolor(in_color);
@@ -4899,7 +4900,7 @@ js_Surface_gradientCircle(duk_context* ctx)
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4929,7 +4930,7 @@ js_Surface_gradientEllipse(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
 	s_vbuf[0].color = nativecolor(in_color);
@@ -4945,7 +4946,7 @@ js_Surface_gradientEllipse(duk_context* ctx)
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4971,7 +4972,7 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
@@ -4980,7 +4981,7 @@ js_Surface_gradientRectangle(duk_context* ctx)
 		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5011,7 +5012,7 @@ js_Surface_gradientLine(duk_context* ctx)
 	color2 = duk_require_sphere_color(ctx, 5);
 
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	length = hypotf(x2 - x1, y2 - y1);
 	tx = 0.5 * (y2 - y1) / length;
 	ty = 0.5 * -(x2 - x1) / length;
@@ -5022,7 +5023,7 @@ js_Surface_gradientLine(duk_context* ctx)
 		{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) }
 	};
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5045,9 +5046,9 @@ js_Surface_line(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5096,13 +5097,13 @@ js_Surface_lineSeries(duk_context* ctx)
 		vertices[i].color = vtx_color;
 	}
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
 		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
 		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
 		: ALLEGRO_PRIM_LINE_LIST
 	);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	free(vertices);
 	return 0;
@@ -5125,9 +5126,9 @@ js_Surface_outlinedCircle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5150,9 +5151,9 @@ js_Surface_outlinedEllipse(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5194,9 +5195,9 @@ js_Surface_pointSeries(duk_context* ctx)
 		vertices[i].color = vtx_color;
 	}
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	free(vertices);
 	return 0;
@@ -5222,9 +5223,9 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5284,10 +5285,10 @@ js_Surface_rotate(duk_context* ctx)
 	}
 	if ((new_image = image_new(new_w, new_h)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failed to create new surface bitmap");
-	al_set_target_bitmap(image_bitmap(new_image));
+	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_rotated_bitmap(image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 
 	// free old image and replace internal image pointer
 	// at one time this was an acceptable thing to do; now it's just a hack
@@ -5324,10 +5325,10 @@ js_Surface_rotateBlitMaskSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_tinted_rotated_bitmap(image_bitmap(source_image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5356,9 +5357,9 @@ js_Surface_rotateBlitSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_rotated_bitmap(image_bitmap(source_image), width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5381,9 +5382,9 @@ js_Surface_rectangle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5495,7 +5496,7 @@ js_Surface_transformBlitMaskSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(mask) },
 		{ x2, y2, 0, width, 0, nativecolor(mask) },
@@ -5503,7 +5504,7 @@ js_Surface_transformBlitMaskSurface(duk_context* ctx)
 		{ x3, y3, 0, width, height, nativecolor(mask) },
 	};
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5536,7 +5537,7 @@ js_Surface_transformBlitSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, al_map_rgba(255, 255, 255, 255) },
 		{ x2, y2, 0, width, 0, al_map_rgba(255, 255, 255, 255) },
@@ -5544,7 +5545,7 @@ js_Surface_transformBlitSurface(duk_context* ctx)
 		{ x3, y3, 0, width, height, al_map_rgba(255, 255, 255, 255) },
 	};
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5575,12 +5576,12 @@ js_Surface_zoomBlitMaskSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_tinted_scaled_bitmap(image_bitmap(source_image),
 		nativecolor(mask),
 		0, 0, width, height, x, y, width * scale, height * scale,
 		0x0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5609,11 +5610,11 @@ js_Surface_zoomBlitSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	apply_blend_mode(blend_mode);
-	al_set_target_bitmap(image_bitmap(image));
+	image_render_to(image, NULL);
 	al_draw_scaled_bitmap(image_bitmap(source_image),
 		0, 0, width, height, x, y, width * scale, height * scale,
 		0x0);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }

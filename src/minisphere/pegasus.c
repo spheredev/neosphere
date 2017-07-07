@@ -187,11 +187,9 @@ static duk_ret_t js_require                    (duk_context* ctx);
 static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_get_frameSkip       (duk_context* ctx);
 static duk_ret_t js_screen_get_fullScreen      (duk_context* ctx);
-static duk_ret_t js_screen_get_transform       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameSkip       (duk_context* ctx);
 static duk_ret_t js_screen_set_fullScreen      (duk_context* ctx);
-static duk_ret_t js_screen_set_transform       (duk_context* ctx);
 static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_now                 (duk_context* ctx);
@@ -354,7 +352,9 @@ static duk_ret_t js_SoundStream_stop           (duk_context* ctx);
 static duk_ret_t js_new_Surface                (duk_context* ctx);
 static duk_ret_t js_Surface_finalize           (duk_context* ctx);
 static duk_ret_t js_Surface_get_height         (duk_context* ctx);
+static duk_ret_t js_Surface_get_transform      (duk_context* ctx);
 static duk_ret_t js_Surface_get_width          (duk_context* ctx);
+static duk_ret_t js_Surface_set_transform      (duk_context* ctx);
 static duk_ret_t js_Surface_toTexture          (duk_context* ctx);
 static duk_ret_t js_new_Transform              (duk_context* ctx);
 static duk_ret_t js_Transform_finalize         (duk_context* ctx);
@@ -535,6 +535,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Sound", "stop", js_Sound_stop);
 	api_define_class(ctx, "Surface", js_new_Surface, js_Surface_finalize);
 	api_define_property(ctx, "Surface", "height", js_Surface_get_height, NULL);
+	api_define_property(ctx, "Surface", "transform", js_Surface_get_transform, js_Surface_set_transform);
 	api_define_property(ctx, "Surface", "width", js_Surface_get_width, NULL);
 	api_define_method(ctx, "Surface", "toTexture", js_Surface_toTexture);
 	api_define_class(ctx, "Texture", js_new_Texture, js_Texture_finalize);
@@ -555,7 +556,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop(ctx, "screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
 	api_define_static_prop(ctx, "screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
-	api_define_static_prop(ctx, "screen", "transform", js_screen_get_transform, js_screen_set_transform);
 	api_define_function(ctx, "screen", "clipTo", js_screen_clipTo);
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "now", js_screen_now);
@@ -1093,13 +1093,6 @@ js_screen_get_fullScreen(duk_context* ctx)
 }
 
 static duk_ret_t
-js_screen_get_transform(duk_context* ctx)
-{
-	duk_push_class_obj(ctx, "Transform", screen_get_transform(g_screen));
-	return 1;
-}
-
-static duk_ret_t
 js_screen_set_fullScreen(duk_context* ctx)
 {
 	bool fullscreen;
@@ -1107,17 +1100,6 @@ js_screen_set_fullScreen(duk_context* ctx)
 	fullscreen = duk_require_boolean(ctx, 0);
 	
 	screen_set_fullscreen(g_screen, fullscreen);
-	return 0;
-}
-
-static duk_ret_t
-js_screen_set_transform(duk_context* ctx)
-{
-	matrix_t* matrix;
-
-	matrix = duk_require_class_obj(ctx, 0, "Transform");
-
-	screen_set_transform(g_screen, matrix);
 	return 0;
 }
 
@@ -3794,6 +3776,21 @@ js_Surface_get_height(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Surface_get_transform(duk_context* ctx)
+{
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "Surface");
+
+	if (image != NULL)
+		duk_push_class_obj(ctx, "Transform", image_get_transform(image));
+	else
+		duk_push_class_obj(ctx, "Transform", screen_get_transform(g_screen));
+	return 1;
+}
+
+static duk_ret_t
 js_Surface_get_width(duk_context* ctx)
 {
 	image_t* image;
@@ -3805,6 +3802,23 @@ js_Surface_get_width(duk_context* ctx)
 		duk_push_int(ctx, image_width(image));
 	else
 		duk_push_int(ctx, g_res_x);
+	return 1;
+}
+
+static duk_ret_t
+js_Surface_set_transform(duk_context* ctx)
+{
+	image_t*  image;
+	matrix_t* transform;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "Surface");
+	transform = duk_require_class_obj(ctx, 0, "Transform");
+
+	if (image != NULL)
+		image_set_transform(image, transform);
+	else
+		screen_set_transform(g_screen, transform);
 	return 1;
 }
 
