@@ -67,13 +67,13 @@ matrix_identity(matrix_t* matrix)
 }
 
 void
-matrix_orthographic(matrix_t* matrix, float left, float right, float top, float bottom, float z_near, float z_far)
+matrix_orthographic(matrix_t* matrix, float left, float top, float right, float bottom, float z_near, float z_far)
 {
 	al_orthographic_transform(&matrix->transform, left, top, z_near, right, bottom, z_far);
 }
 
 void
-matrix_perspective(matrix_t* matrix, float left, float right, float top, float bottom, float z_near, float z_far)
+matrix_perspective(matrix_t* matrix, float left, float top, float right, float bottom, float z_near, float z_far)
 {
 	al_perspective_transform(&matrix->transform, left, top, z_near, right, bottom, z_far);
 }

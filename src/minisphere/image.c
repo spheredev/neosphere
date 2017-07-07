@@ -38,7 +38,7 @@ image_new(int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
+	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:
@@ -60,7 +60,7 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = image_ref(parent);
 	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
+	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:
@@ -83,7 +83,7 @@ image_clone(const image_t* src_image)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
+	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	return image_ref(image);
 
@@ -129,7 +129,7 @@ image_load(const char* filename)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
+	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	image->path = strdup(filename);
 	image->id = s_next_image_id++;
@@ -172,7 +172,7 @@ image_read(sfs_file_t* file, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, image->width, 0.0f, image->height, -1.0f, 1.0f);
+	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:

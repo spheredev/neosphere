@@ -118,7 +118,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	obj->show_fps = true;
 #endif
 
-	matrix_orthographic(obj->transform, 0, x_size, 0, y_size, -1.0f, 1.0f);
+	matrix_orthographic(obj->transform, 0.0f, 0.0f, x_size, y_size, -1.0f, 1.0f);
 	screen_set_clipping(obj, new_rect(0, 0, x_size, y_size));
 	refresh_display(obj);
 	return obj;

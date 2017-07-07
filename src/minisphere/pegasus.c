@@ -3975,15 +3975,15 @@ js_Transform_project2D(duk_context* ctx)
 	duk_push_this(ctx);
 	matrix = duk_require_class_obj(ctx, -1, "Transform");
 	x1 = duk_require_number(ctx, 0);
-	x2 = duk_require_number(ctx, 1);
-	y1 = duk_require_number(ctx, 2);
+	y1 = duk_require_number(ctx, 1);
+	x2 = duk_require_number(ctx, 2);
 	y2 = duk_require_number(ctx, 3);
 	if (num_args >= 6) {
 		z1 = duk_require_number(ctx, 4);
 		z2 = duk_require_number(ctx, 5);
 	}
 
-	matrix_orthographic(matrix, x1, x2, y1, y2, z1, z2);
+	matrix_orthographic(matrix, x1, y1, x2, y2, z1, z2);
 	return 1;
 }
 
@@ -4000,13 +4000,13 @@ js_Transform_project3D(duk_context* ctx)
 	duk_push_this(ctx);
 	matrix = duk_require_class_obj(ctx, -1, "Transform");
 	x1 = duk_require_number(ctx, 0);
-	x2 = duk_require_number(ctx, 1);
-	y1 = duk_require_number(ctx, 2);
+	y1 = duk_require_number(ctx, 1);
+	x2 = duk_require_number(ctx, 2);
 	y2 = duk_require_number(ctx, 3);
 	z1 = duk_require_number(ctx, 4);
 	z2 = duk_require_number(ctx, 5);
 
-	matrix_perspective(matrix, x1, x2, y1, y2, z1, z2);
+	matrix_perspective(matrix, x1, y1, x2, y2, z1, z2);
 	return 1;
 }
 

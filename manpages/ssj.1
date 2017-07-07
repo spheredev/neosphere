@@ -12,11 +12,11 @@ ssj \- the JavaScript debugger for miniSphere
 .ad
 .hy
 .SH DESCRIPTION
-When used in combination with miniSphere, SSJ allows you step through a game's code and track its state as it executes.
+When used in combination with miniSphere, SSj allows you step through a game's code and track its state as it executes.
 In this regard it is similar in purpose to other CLI debuggers such as GDB.
 The debugger enables you to diagnose bugs and crashes as they happen by tracking program variables, function calls, and objects, all while your game is still running.
 .P
-Using SSJ, you have to ability to:
+Using SSj, you have to ability to:
 .IP \(bu 3
 Step through a game's source code one line at a time.
 This lets you see the code paths the game takes and often helps illuminate difficult-to-understand bugs.
@@ -38,15 +38,15 @@ Games will often log interesting events using
 or the
 .B console
 object.
-SSJ will let you see that output.
+SSj will let you see that output.
 .P
 Unless you use the
 .B \-\-attach
-option (see below), SSJ will start miniSphere for you.
+option (see below), SSj will start miniSphere for you.
 This avoids to need to open a separate terminal for debugging.
 Simply provide the name of a Sphere game directory or package as the last argument to the
 .BR ssj (1)
-command, and SSJ will do the rest.
+command, and SSj will do the rest.
 .SH OPTIONS
 .TP
 .BR \-c ", " \-\-attach
@@ -57,17 +57,17 @@ This can be invaluable by allowing you to debug hard-to-reproduce bugs when they
 .TP
 .BR \-\-no\-pause
 Sends a resume command upon attachment.
-Normally SSJ automatically pauses execution so you can see the program exactly as it was when the debugger attached.
+Normally SSj automatically pauses execution so you can see the program exactly as it was when the debugger attached.
 Use the
 .B \-\-no\-pause
 option to override this behavior.
 .TP
 .B \-\-version
-Show the version number of SSJ along with the version numbers of any libraries it depends on.
+Show the version number of SSj along with the version numbers of any libraries it depends on.
 .SH COMMANDS
-Once attached, SSJ provides a large set of tools for you to use in debugging your game.
-Since SSJ is a console debugger, these are provided through a command-line interface.
-Below is a list of all commands supported by this version of SSJ:
+Once attached, SSj provides a large set of tools for you to use in debugging your game.
+Since SSj is a console debugger, these are provided through a command-line interface.
+Below is a list of all commands supported by this version of SSj:
 .TP
 .BR backtrace " or " bt
 View the contents of the call stack.
@@ -77,7 +77,7 @@ This allows you to see which function calls are in progress and is especially us
 Set a breakpoint at
 .IR file:line .
 When you have an idea in which part of the program a bug resides but aren't sure of the exact cause, breakpoints can be invaluable.
-When the breakpoint is reached, execution will pause, leaving SSJ in control.
+When the breakpoint is reached, execution will pause, leaving SSj in control.
 .B breakpoint
 will show the ID number of the set breakpoint, which you will need if want to clear it later using
 .BR clearbreak .
@@ -92,7 +92,7 @@ with no arguments.
 .TP
 .BR continue " or " c
 Resume normal execution.
-If a breakpoint is hit or an error is thrown which is not caught, SSJ will pause execution again.
+If a breakpoint is hit or an error is thrown which is not caught, SSj will pause execution again.
 .TP
 .BR down " or " d
 Move down the callstack relative to the selected frame, towards the innermost call.
@@ -122,7 +122,7 @@ Select a callstack frame to examine.
 Use
 .B backtrace
 to see the full list of frames on the callstack.
-When SSJ pauses execution, the innermost JavaScript frame is selected, which corresponds to the function call in progress.
+When SSj pauses execution, the innermost JavaScript frame is selected, which corresponds to the function call in progress.
 Sometimes it's necessary when investigating a bug to view the state earlier in the call chain.
 The
 .frame
@@ -168,13 +168,13 @@ Show the function name, filename and current line number for the innermost JavaS
 This can help you to regain your bearings after an extended debugging session.
 .TP
 .BR quit " or " q
-Quit SSJ.
+Quit SSj.
 This will detach the debugger and return you to the shell.
-In most cases the miniSphere debug target will also close, unless SSJ was started with the
+In most cases the miniSphere debug target will also close, unless SSj was started with the
 .B -c
 option to connect to a running instance.
 .P
-If you need help with any of these commands while using SSJ, you can use the
+If you need help with any of these commands while using SSj, you can use the
 .B help
 command.
 .B help
