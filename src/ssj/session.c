@@ -107,7 +107,7 @@ session_run(session_t* obj, bool run_now)
 
 	while (inferior_attached(obj->inferior))
 		do_command_line(obj);
-	printf("SSJ session terminated.\n");
+	printf("SSj session terminated.\n");
 }
 
 static const char*
@@ -246,7 +246,7 @@ do_command_line(session_t* obj)
 				command = command_parse("frame");
 			break;
 		default:
-			printf("nothing to repeat, please enter a valid SSJ command.\n");
+			printf("nothing to repeat, please enter a valid SSj command.\n");
 			printf("type 'help' to see a list of usable commands.\n");
 			command = NULL;
 			goto finished;
@@ -351,7 +351,7 @@ handle_breakpoint(session_t* obj, command_t* cmd)
 		filename = command_get_string(cmd, 1);
 		linenum = command_get_int(cmd, 1);
 		if ((handle = inferior_add_breakpoint(obj->inferior, filename, linenum)) < 0)
-			printf("SSJ was unable to set the breakpoint.\n");
+			printf("SSj was unable to set the breakpoint.\n");
 		else {
 			i = obj->num_breaks++;
 			obj->breaks = realloc(obj->breaks, obj->num_breaks * sizeof(struct breakpoint));

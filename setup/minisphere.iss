@@ -56,7 +56,7 @@ Name: "spherun"; Description: "Spherical GDK / miniSphere Console"; Types: devel
 Name: "spherun/ide"; Description: "Sphere Studio - the Sphere development environment"; Types: developer
 #endif
 Name: "spherun/cell"; Description: "Cell - the Sphere packaging compiler"; Types: developer
-Name: "spherun/ssj"; Description: "SSJ - the Sphere JavaScript debugger"; Types: developer
+Name: "spherun/ssj"; Description: "SSj - the Sphere JavaScript debugger"; Types: developer
 
 [Tasks]
 Name: "assoc"; Description: "&Associate these file extensions with miniSphere:"; GroupDescription: "Automatically open Sphere file types:"

@@ -4,6 +4,8 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* SSJ has been renamed to SSj, making the name more visually unique and,
+  hopefully, more memorable.
 * Adds support for 2D (orthographic) and 3D (perspective) projection matrices.
 
 

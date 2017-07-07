@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+miniSphere X.X
+--------------
+
+* The `SSJ` namespace has been renamed to `SSj` as part of rebranding the
+  debugger.
+
+
 miniSphere 4.6
 --------------
 

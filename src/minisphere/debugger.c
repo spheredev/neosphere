@@ -72,7 +72,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 	}
 	duk_pop(g_duk);
 	
-	// listen for SSJ connection on TCP port 1208. the listening socket will remain active
+	// listen for SSj connection on TCP port 1208. the listening socket will remain active
 	// for the duration of the session, allowing a debugger to be attached at any time.
 	console_log(1, "listening for debugger on TCP port %d", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
@@ -144,7 +144,7 @@ get_compiled_name(const char* source_name)
 {
 	// perform a reverse lookup on the source map to find the compiled name
 	// of an asset based on its name in the source tree.  this is needed to
-	// support SSJ source code download, since SSJ only knows the source names.
+	// support SSj source code download, since SSj only knows the source names.
 
 	static char retval[SPHERE_PATH_MAX];
 

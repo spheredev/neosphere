@@ -51,7 +51,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	ALLEGRO_DISPLAY* display;
 	ALLEGRO_BITMAP*  icon_bitmap;
 	screen_t*        obj;
-	matrix_t*        transform;
 	bool             use_shaders = false;
 	int              x_scale;
 	int              y_scale;
@@ -101,14 +100,10 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 		al_set_display_icon(display, icon_bitmap);
 	}
 
-	al_set_target_bitmap(backbuffer);
-	transform = matrix_new();
-	matrix_orthographic(transform, 0, x_size, 0, y_size, -1.0f, 1.0f);
-	
 	obj = calloc(1, sizeof(screen_t));
 	obj->display = display;
 	obj->backbuffer = backbuffer;
-	obj->transform = transform;
+	obj->transform = matrix_new();
 	obj->x_size = x_size;
 	obj->y_size = y_size;
 	obj->max_skips = frameskip;
@@ -123,6 +118,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	obj->show_fps = true;
 #endif
 
+	matrix_orthographic(obj->transform, 0, x_size, 0, y_size, -1.0f, 1.0f);
 	screen_set_clipping(obj, new_rect(0, 0, x_size, y_size));
 	refresh_display(obj);
 	return obj;

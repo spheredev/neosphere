@@ -24,8 +24,8 @@ help_print(const char* command_name)
 			" v,  vars         List local variables and their values in the active frame    \n"
 			" u,  up           Move up the call stack (outwards) from the selected frame    \n"
 			" w,  where        Show the filename and line number of the next line of code   \n"
-			" q,  quit         Detach and terminate your SSJ debugging session              \n"
-			" h,  help         Get help with SSJ commands                                   \n\n"
+			" q,  quit         Detach and terminate your SSj debugging session              \n"
+			" h,  help         Get help with SSj commands                                   \n\n"
 
 			"Type 'help <command>' for help with individual commands.                       \n"
 		);
@@ -43,7 +43,7 @@ help_print(const char* command_name)
 		printf(
 			"Set a breakpoint at <file:line>.  When you have an idea in which part of the   \n"
 			"program a bug resides but aren't sure of the exact cause, breakpoints can be   \n"
-			"invaluable.  When the breakpoint is reached, execution will pause, leaving SSJ \n"
+			"invaluable.  When the breakpoint is reached, execution will pause, leaving SSj \n"
 			"in control.                                                                    \n\n"
 			"The ID number of the set breakpoint will be given, which will be needed if you \n"
 			"want to clear it later using `clearbreak`.                                        \n\n"
@@ -66,7 +66,7 @@ help_print(const char* command_name)
 	else if (strcmp(command_name, "continue") == 0) {
 		printf(
 			"Resume normal execution.  If a breakpoint is hit or an error is thrown which is\n"
-			"not caught, SSJ will pause execution again.                                    \n\n"
+			"not caught, SSj will pause execution again.                                    \n\n"
 			"SYNTAX:                                                                        \n"
 			"    continue                                                                   \n"
 		);
@@ -106,7 +106,7 @@ help_print(const char* command_name)
 	else if (strcmp(command_name, "frame") == 0) {
 		printf(
 			"Select a callstack frame to examine.  Use `backtrace` to see the full list of  \n"
-			"frames on the callstack.  When SSJ pauses execution, the innermost JavaScript  \n"
+			"frames on the callstack.  When SSj pauses execution, the innermost JavaScript  \n"
 			"frame is selected, which corresponds to the function call in progress.         \n\n"
 			"Sometimes it's necessary when investigating a bug to view the state earlier in \n"
 			"the call chain.  The `frame` command changes the context used for the following\n"
@@ -189,8 +189,8 @@ help_print(const char* command_name)
 	}
 	else if (strcmp(command_name, "quit") == 0) {
 		printf(
-			"Quit SSJ.  This will detach the debugger and return you to the shell.  In most \n"
-			"cases the miniSphere debug target will also close, unless SSJ was started with \n"
+			"Quit SSj.  This will detach the debugger and return you to the shell.  In most \n"
+			"cases the miniSphere debug target will also close, unless SSj was started with \n"
 			"the `-c` option to connect to a running instance.                              \n\n"
 			"SYNTAX:                                                                        \n"
 			"    quit                                                                       \n"
@@ -198,10 +198,10 @@ help_print(const char* command_name)
 	}
 	else if (strcmp(command_name, "help") == 0) {
 		printf(
-			"Get help with SSJ commands.  Since you're seeing this text, it looks like you  \n"
+			"Get help with SSj commands.  Since you're seeing this text, it looks like you  \n"
 			"already know what to do!                                                       \n\n"
 			"SYNTAX:                                                                        \n"
-			"    help           - show a list of SSJ commands and their functions           \n"
+			"    help           - show a list of SSj commands and their functions           \n"
 			"    help <command> - get help with a specific command                          \n"
 		);
 	}
