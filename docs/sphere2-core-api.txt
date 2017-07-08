@@ -1157,14 +1157,17 @@ Transform#compose(otherMatrix);
     Composes this transform with another.  `otherMatrix` is multiplied from the
     left such that transformations are performed in the order you specify.
 
-Transform#project2D(left, top, right, bottom, near, far);
+Transform#project2D(left, top, right, bottom[, near, far]);
 
     Multiplies this transform's matrix with an orthographic (parallel)
 	projection.
 
-Transform#project3D(left, top, right, bottom, near, far);
+Transform#project3D(fov, aspect, near, far);
 
-    Multiplies this transform's matrix with a 3D perspective projection.
+    Multiplies this transform's matrix with a 3D perspective projection.  `fov`
+    is the size of the vertical field of view, in degrees.  `aspect` should
+    match the aspect ratio of the game.  For example, if the game resolution
+    is 1280x720, then `aspect` would usually be (16 / 9).
 
 Transform#rotate(theta[, vx, vy, vz]);
 

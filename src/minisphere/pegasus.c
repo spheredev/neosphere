@@ -3990,23 +3990,24 @@ js_Transform_project2D(duk_context* ctx)
 static duk_ret_t
 js_Transform_project3D(duk_context* ctx)
 {
+	float     aspect;
 	matrix_t* matrix;
 	int       num_args;
-	float     x1, x2;
-	float     y1, y2;
+	float     fov;
+	float     fw, fh;
 	float     z1, z2;
 
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
 	matrix = duk_require_class_obj(ctx, -1, "Transform");
-	x1 = duk_require_number(ctx, 0);
-	y1 = duk_require_number(ctx, 1);
-	x2 = duk_require_number(ctx, 2);
-	y2 = duk_require_number(ctx, 3);
-	z1 = duk_require_number(ctx, 4);
-	z2 = duk_require_number(ctx, 5);
+	fov = duk_require_number(ctx, 0);
+	aspect = duk_require_number(ctx, 1);
+	z1 = duk_require_number(ctx, 2);
+	z2 = duk_require_number(ctx, 3);
 
-	matrix_perspective(matrix, x1, y1, x2, y2, z1, z2);
+	fh = tan(fov / 360 * M_PI) * z1;
+	fw = fh * aspect;
+	matrix_perspective(matrix, -fw, -fh, fw, fh, z1, z2);
 	return 1;
 }
 
