@@ -244,12 +244,15 @@ void
 screen_draw_status(screen_t* obj, const char* text, color_t color)
 {
 	rect_t            bounds;
+	ALLEGRO_BITMAP*   old_target;
 	int               screen_cx;
 	int               screen_cy;
 	ALLEGRO_TRANSFORM trans;
 	int               width;
 	int               height;
 
+	old_target = al_get_target_bitmap();
+	al_set_target_backbuffer(obj->display);
 	screen_cx = al_get_display_width(obj->display);
 	screen_cy = al_get_display_height(obj->display);
 	width = font_get_width(g_sys_font, text) + 20;
@@ -266,7 +269,7 @@ screen_draw_status(screen_t* obj, const char* text, color_t color)
 		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
 	font_draw_text(g_sys_font, color, (bounds.x2 + bounds.x1) / 2,
 		bounds.y1 + 5, TEXT_ALIGN_CENTER, text);
-	screen_render_to(obj, NULL);
+	al_set_target_bitmap(old_target);
 }
 
 void
@@ -287,7 +290,6 @@ screen_flip(screen_t* screen, int framerate)
 	ALLEGRO_BITMAP*   snapshot;
 	double            time_left;
 	char              timestamp[100];
-	ALLEGRO_TRANSFORM trans;
 	int               x, y;
 
 	size_t i;
@@ -348,12 +350,9 @@ screen_flip(screen_t* screen, int framerate)
 				sprintf(fps_text, "%d fps", screen->fps_flips);
 			x = screen_cx - screen->x_offset - 108;
 			y = screen_cy - screen->y_offset - 24;
-			al_identity_transform(&trans);
-			al_use_transform(&trans);
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
 			font_draw_text(g_sys_font, color_new(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
 			font_draw_text(g_sys_font, color_new(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
-			screen_render_to(g_screen, NULL);
 		}
 		al_set_target_bitmap(screen->backbuffer);
 		al_flip_display();

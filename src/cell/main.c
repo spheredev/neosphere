@@ -224,7 +224,7 @@ print_banner(bool want_copyright, bool want_deps)
 	printf("%s %s Sphere packaging compiler (%s)\n", COMPILER_NAME, VERSION_NAME,
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
-		printf("a JavaScript-powered build tool for miniSphere\n");
+		printf("the JavaScript-powered build engine for Sphere\n");
 		printf("(c) 2015-2017 Fat Cerberus\n");
 	}
 	if (want_deps) {
