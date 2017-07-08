@@ -25,6 +25,7 @@ Here's a sample manifest:
     {
         "name": "Spectacles: Bruce's Story",
         "version": 2,
+        "saveID": "fatCerberus.spectacles",
         "author": "Fat Cerberus",
         "summary": "Follow Scott Starcross in his quest to stop the Primus.",
         "resolution": "320x240",
@@ -75,6 +76,16 @@ needed, and their values can be accessed from JavaScript through `Sphere.Game`.
     720p resolution would be expressed as "1280x720".
 
     Note: The resolution can be changed at runtime by calling screen.resize().
+
+"saveID" [default: none]
+
+    A string usually of the form "authorID.titleID" uniquely identifying the
+    game for the purposes of save data management.
+
+    Note: While providing a save ID is optional, one must be defined before a
+		  game can use its SphereFS save store (`~/`).  Legacy games using
+		  only an SGM manifest therefore can't take advantage of the save
+		  store.
 
 "summary" [default: none]
 
