@@ -3002,7 +3002,7 @@ js_new_Server(duk_context* ctx)
 	if (max_backlog <= 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "max_backlog cannot be <= 0", max_backlog);
 
-	if (socket = listen_on_port(NULL, port, 1024, max_backlog))
+	if (socket = socket_new_server(NULL, port, 1024, max_backlog))
 		duk_push_class_obj(ctx, "Server", socket);
 	else
 		duk_push_null(ctx);
@@ -3015,7 +3015,7 @@ js_Server_finalize(duk_context* ctx)
 	socket_t* socket;
 
 	socket = duk_require_class_obj(ctx, 0, "Server");
-	free_socket(socket);
+	socket_free(socket);
 	return 0;
 }
 
@@ -3030,7 +3030,7 @@ js_Server_accept(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
-	new_socket = accept_next_socket(socket);
+	new_socket = socket_accept(socket);
 	if (new_socket)
 		duk_push_class_obj(ctx, "Socket", new_socket);
 	else
@@ -3048,7 +3048,7 @@ js_Server_close(duk_context* ctx)
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
 	if (socket != NULL)
-		free_socket(socket);
+		socket_free(socket);
 	return 0;
 }
 
@@ -3238,7 +3238,7 @@ js_new_Socket(duk_context* ctx)
 	hostname = duk_require_string(ctx, 0);
 	port = duk_require_int(ctx, 1);
 
-	if ((socket = connect_to_host(hostname, port, 1024)) != NULL)
+	if ((socket = socket_new_client(hostname, port, 1024)) != NULL)
 		duk_push_class_obj(ctx, "Socket", socket);
 	else
 		duk_push_null(ctx);
@@ -3252,7 +3252,7 @@ js_Socket_finalize(duk_context* ctx)
 
 	socket = duk_require_class_obj(ctx, 0, "Socket");
 
-	free_socket(socket);
+	socket_free(socket);
 	return 0;
 }
 
@@ -3266,7 +3266,7 @@ js_Socket_get_bytesPending(duk_context* ctx)
 
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
-	duk_push_uint(ctx, (duk_uint_t)get_socket_read_size(socket));
+	duk_push_uint(ctx, (duk_uint_t)socket_num_bytes(socket));
 	return 1;
 }
 
@@ -3279,7 +3279,7 @@ js_Socket_get_connected(duk_context* ctx)
 	socket = duk_require_class_obj(ctx, -1, "Socket");
 
 	if (socket != NULL)
-		duk_push_boolean(ctx, is_socket_live(socket));
+		duk_push_boolean(ctx, socket_connected(socket));
 	else
 		duk_push_false(ctx);
 	return 1;
@@ -3295,9 +3295,9 @@ js_Socket_get_remoteAddress(duk_context* ctx)
 
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
-	if (!is_socket_live(socket))
+	if (!socket_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
-	duk_push_string(ctx, get_socket_host(socket));
+	duk_push_string(ctx, socket_hostname(socket));
 	return 1;
 }
 
@@ -3311,9 +3311,9 @@ js_Socket_get_remotePort(duk_context* ctx)
 
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
-	if (!is_socket_live(socket))
+	if (!socket_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
-	duk_push_int(ctx, get_socket_port(socket));
+	duk_push_int(ctx, socket_port(socket));
 	return 1;
 }
 
@@ -3328,7 +3328,7 @@ js_Socket_close(duk_context* ctx)
 	duk_push_null(ctx);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	if (socket != NULL)
-		free_socket(socket);
+		socket_free(socket);
 	return 0;
 }
 
@@ -3346,10 +3346,10 @@ js_Socket_read(duk_context* ctx)
 	num_bytes = duk_require_uint(ctx, 0);
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
-	if (!is_socket_live(socket))
+	if (!socket_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
-	bytes_read = read_socket(socket, buffer, num_bytes);
+	bytes_read = socket_read(socket, buffer, num_bytes);
 	duk_push_buffer_object(ctx, -1, 0, bytes_read, DUK_BUFOBJ_ARRAYBUFFER);
 	return 1;
 }
@@ -3367,9 +3367,9 @@ js_Socket_write(duk_context* ctx)
 
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
-	if (!is_socket_live(socket))
+	if (!socket_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket disconnected");
-	write_socket(socket, payload, write_size);
+	socket_write(socket, payload, write_size);
 	return 0;
 }
 

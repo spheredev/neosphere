@@ -195,5 +195,5 @@ dmessage_send(const dmessage_t* o, socket_t* socket)
 	dvalue = dvalue_new(DVALUE_EOM);
 	dvalue_send(dvalue, socket);
 	dvalue_free(dvalue);
-	return socket_is_live(socket);
+	return socket_connected(socket);
 }

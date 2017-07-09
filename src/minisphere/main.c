@@ -335,7 +335,7 @@ do_events(void)
 {
 	ALLEGRO_EVENT event;
 
-	update_sockets();
+	sockets_update();
 
 #if defined(MINISPHERE_SPHERUN)
 	update_debugger();

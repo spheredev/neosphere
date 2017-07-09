@@ -411,5 +411,5 @@ dvalue_send(const dvalue_t* obj, socket_t* socket)
 		socket_send(socket, data, obj->ptr.value.size);
 		break;
 	}
-	return socket_is_live(socket);
+	return socket_connected(socket);
 }

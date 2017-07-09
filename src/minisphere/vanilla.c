@@ -2306,7 +2306,7 @@ js_ListenOnPort(duk_context* ctx)
 	
 	port = duk_to_int(ctx, 0);
 
-	if (socket = listen_on_port(NULL, port, 1024, 0))
+	if (socket = socket_new_server(NULL, port, 1024, 0))
 		duk_push_class_obj(ctx, "ssSocket", socket);
 	else
 		duk_push_null(ctx);
@@ -2436,7 +2436,7 @@ js_OpenAddress(duk_context* ctx)
 	hostname = duk_require_string(ctx, 0);
 	port = duk_to_int(ctx, 1);
 	
-	if ((socket = connect_to_host(hostname, port, 1024)) != NULL)
+	if ((socket = socket_new_client(hostname, port, 1024)) != NULL)
 		duk_push_class_obj(ctx, "ssSocket", socket);
 	else
 		duk_push_null(ctx);
@@ -3890,7 +3890,7 @@ js_Socket_finalize(duk_context* ctx)
 	socket_t* socket;
 
 	socket = duk_require_class_obj(ctx, 0, "ssSocket");
-	free_socket(socket);
+	socket_free(socket);
 	return 1;
 }
 
@@ -3904,7 +3904,7 @@ js_Socket_close(duk_context* ctx)
 	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	duk_pop(ctx);
 	if (socket != NULL)
-		free_socket(socket);
+		socket_free(socket);
 	return 1;
 }
 
@@ -3918,7 +3918,7 @@ js_Socket_getPendingReadSize(duk_context* ctx)
 	duk_pop(ctx);
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
-	duk_push_uint(ctx, (duk_uint_t)peek_socket(socket));
+	duk_push_uint(ctx, (duk_uint_t)socket_peek(socket));
 	return 1;
 }
 
@@ -3931,7 +3931,7 @@ js_Socket_isConnected(duk_context* ctx)
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
 	duk_pop(ctx);
 	if (socket != NULL)
-		duk_push_boolean(ctx, is_socket_live(socket));
+		duk_push_boolean(ctx, socket_connected(socket));
 	else
 		duk_push_false(ctx);
 	return 1;
@@ -3953,11 +3953,11 @@ js_Socket_read(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "must read at least 1 byte (got: %i)", length);
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
-	if (!is_socket_live(socket))
+	if (!socket_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is not connected");
 	if (!(read_buffer = malloc(length)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate read buffer");
-	read_socket(socket, read_buffer, length);
+	socket_read(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
@@ -3991,9 +3991,9 @@ js_Socket_write(duk_context* ctx)
 	}
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
-	if (!is_socket_live(socket))
+	if (!socket_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is not connected");
-	write_socket(socket, payload, write_size);
+	socket_write(socket, payload, write_size);
 	return 0;
 }
 

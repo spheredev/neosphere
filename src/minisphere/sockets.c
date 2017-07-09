@@ -1,10 +1,6 @@
 #include "minisphere.h"
 #include "sockets.h"
 
-static void on_dyad_accept  (dyad_Event* e);
-static void on_dyad_receive (dyad_Event* e);
-
-
 struct socket
 {
 	unsigned int refcount;
@@ -14,14 +10,16 @@ struct socket
 	uint8_t*     buffer;
 	size_t       buffer_size;
 	size_t       pend_size;
-	socket_t*    pipe_target;
 	int          max_backlog;
 	int          num_backlog;
 	dyad_Stream* *backlog;
 };
 
-unsigned int s_next_socket_id = 0;
-unsigned int s_num_refs       = 0;
+static void on_dyad_accept(dyad_Event* e);
+static void on_dyad_receive(dyad_Event* e);
+
+static unsigned int s_next_socket_id = 0;
+static unsigned int s_num_refs       = 0;
 
 bool
 sockets_init(void)
@@ -47,13 +45,13 @@ sockets_uninit(void)
 }
 
 void
-update_sockets(void)
+sockets_update(void)
 {
 	dyad_update();
 }
 
 socket_t*
-connect_to_host(const char* hostname, int port, size_t buffer_size)
+socket_new_client(const char* hostname, int port, size_t buffer_size)
 {
 	socket_t*    socket = NULL;
 	dyad_Stream* stream = NULL;
@@ -71,7 +69,7 @@ connect_to_host(const char* hostname, int port, size_t buffer_size)
 		goto on_error;
 	
 	socket->id = s_next_socket_id++;
-	return ref_socket(socket);
+	return socket_ref(socket);
 
 on_error:
 	console_log(2, "failed to connect socket #%u", s_next_socket_id++);
@@ -84,7 +82,7 @@ on_error:
 }
 
 socket_t*
-listen_on_port(const char* hostname, int port, size_t buffer_size, int max_backlog)
+socket_new_server(const char* hostname, int port, size_t buffer_size, int max_backlog)
 {
 	int          backlog_size;
 	socket_t*    socket = NULL;
@@ -92,7 +90,7 @@ listen_on_port(const char* hostname, int port, size_t buffer_size, int max_backl
 
 	console_log(2, "opening socket #%u to listen on %i", s_next_socket_id, port);
 	if (max_backlog > 0)
-		console_log(3, "    backlog: up to %i", max_backlog);
+		console_log(3, "    backlog size: %i", max_backlog);
 	
 	socket = calloc(1, sizeof(socket_t));
 	if (max_backlog == 0)
@@ -120,7 +118,7 @@ listen_on_port(const char* hostname, int port, size_t buffer_size, int max_backl
 	}
 	
 	socket->id = s_next_socket_id++;
-	return ref_socket(socket);
+	return socket_ref(socket);
 
 on_error:
 	console_log(2, "failed to open socket #%u", s_next_socket_id++);
@@ -134,156 +132,131 @@ on_error:
 }
 
 socket_t*
-ref_socket(socket_t* socket)
+socket_ref(socket_t* it)
 {
-	if (socket != NULL)
-		++socket->refcount;
-	return socket;
+	if (it != NULL)
+		++it->refcount;
+	return it;
 }
 
 void
-free_socket(socket_t* socket)
+socket_free(socket_t* it)
 {
-	unsigned int threshold;
-	
 	int i;
 	
-	if (socket == NULL) return;
-	
-	// handle the case where a socket is piped into itself.
-	// the circular reference will otherwise prevent the socket from being freed.
-	threshold = socket->pipe_target == socket ? 1 : 0;
-	if (--socket->refcount > threshold)
+	if (it == NULL || --it->refcount > 0)
 		return;
-	
-	console_log(3, "disposing socket #%u no longer in use", socket->id);
-	for (i = 0; i < socket->num_backlog; ++i)
-		dyad_end(socket->backlog[i]);
-	dyad_end(socket->stream);
-	if (socket->stream_ipv6 != NULL)
-		dyad_end(socket->stream_ipv6);
-	free_socket(socket->pipe_target);
-	free(socket);
+
+	console_log(3, "disposing socket #%u no longer in use", it->id);
+	for (i = 0; i < it->num_backlog; ++i)
+		dyad_end(it->backlog[i]);
+	dyad_end(it->stream);
+	if (it->stream_ipv6 != NULL)
+		dyad_end(it->stream_ipv6);
+	free(it);
 }
 
 bool
-is_socket_live(socket_t* socket)
+socket_connected(socket_t* it)
 {
 	int state;
 
-	state = dyad_getState(socket->stream);
+	state = dyad_getState(it->stream);
 	return state == DYAD_STATE_CONNECTED
 		|| state == DYAD_STATE_CLOSING;
 }
 
-bool	
-is_socket_server(socket_t* socket)
+const char*
+socket_hostname(socket_t* it)
 {
-	return dyad_getState(socket->stream) == DYAD_STATE_LISTENING;
+	return dyad_getAddress(it->stream);
 }
 
-const char*
-get_socket_host(socket_t* socket)
+bool
+socket_is_server(socket_t* it)
 {
-	return dyad_getAddress(socket->stream);
+	return dyad_getState(it->stream) == DYAD_STATE_LISTENING;
+}
+
+size_t
+socket_num_bytes(socket_t* it)
+{
+	return it->pend_size;
 }
 
 int
-get_socket_port(socket_t* socket)
+socket_port(socket_t* it)
 {
-	return dyad_getPort(socket->stream);
-}
-
-size_t
-get_socket_read_size(socket_t* socket)
-{
-	return socket->pend_size;
+	return dyad_getPort(it->stream);
 }
 
 socket_t*
-accept_next_socket(socket_t* listener)
+socket_accept(socket_t* it)
 {
-	socket_t* socket;
+	socket_t* client;
 
 	int i;
 
-	if (listener->num_backlog == 0)
+	if (it->num_backlog == 0)
 		return NULL;
 
 	console_log(2, "spawning new socket #%u for connection to socket #%u",
-		s_next_socket_id, listener->id);
+		s_next_socket_id, it->id);
 	console_log(2, "    remote address: %s:%d",
-		dyad_getAddress(listener->backlog[0]),
-		dyad_getPort(listener->backlog[0]));
+		dyad_getAddress(it->backlog[0]),
+		dyad_getPort(it->backlog[0]));
 
 	// construct a socket object for the new connection
-	socket = calloc(1, sizeof(socket_t));
-	socket->buffer = malloc(listener->buffer_size);
-	socket->buffer_size = listener->buffer_size;
-	socket->stream = listener->backlog[0];
-	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
+	client = calloc(1, sizeof(socket_t));
+	client->buffer = malloc(it->buffer_size);
+	client->buffer_size = it->buffer_size;
+	client->stream = it->backlog[0];
+	dyad_addListener(client->stream, DYAD_EVENT_DATA, on_dyad_receive, client);
 
 	// we accepted the connection, remove it from the backlog
-	--listener->num_backlog;
-	for (i = 0; i < listener->num_backlog; ++i)
-		listener->backlog[i] = listener->backlog[i + 1];
+	--it->num_backlog;
+	for (i = 0; i < it->num_backlog; ++i)
+		it->backlog[i] = it->backlog[i + 1];
 
-	socket->id = s_next_socket_id++;
-	return ref_socket(socket);
-}
-
-size_t
-peek_socket(const socket_t* socket)
-{
-	return socket->pend_size;
+	client->id = s_next_socket_id++;
+	return socket_ref(client);
 }
 
 void
-pipe_socket(socket_t* socket, socket_t* destination)
+socket_close(socket_t* it)
 {
-	socket_t* old_target;
-	
-	console_log(2, "piping socket #%u into destination socket #%u", socket->id, destination->id);
-	old_target = socket->pipe_target;
-	socket->pipe_target = ref_socket(destination);
-	free_socket(old_target);
-	if (socket->pipe_target != NULL && socket->pend_size > 0) {
-		console_log(4, "piping %zd bytes into socket #%u", socket->pend_size, destination->id);
-		write_socket(destination, socket->buffer, socket->pend_size);
-		socket->pend_size = 0;
-	}
+	console_log(2, "shutting down socket #%u", it->id);
+	dyad_end(it->stream);
 }
 
 size_t
-read_socket(socket_t* socket, void* buffer, size_t n_bytes)
+socket_peek(const socket_t* it)
 {
-	n_bytes = n_bytes <= socket->pend_size ? n_bytes : socket->pend_size;
-	console_log(4, "reading %zd bytes from socket #%u", n_bytes, socket->id);
-	memcpy(buffer, socket->buffer, n_bytes);
-	memmove(socket->buffer, socket->buffer + n_bytes, socket->pend_size - n_bytes);
-	socket->pend_size -= n_bytes;
+	return it->pend_size;
+}
+
+size_t
+socket_read(socket_t* it, void* buffer, size_t n_bytes)
+{
+	n_bytes = n_bytes <= it->pend_size ? n_bytes : it->pend_size;
+	console_log(4, "reading %zd bytes from socket #%u", n_bytes, it->id);
+	memcpy(buffer, it->buffer, n_bytes);
+	memmove(it->buffer, it->buffer + n_bytes, it->pend_size - n_bytes);
+	it->pend_size -= n_bytes;
 	return n_bytes;
 }
 
 void
-shutdown_socket(socket_t* socket)
+socket_write(socket_t* it, const void* data, size_t n_bytes)
 {
-	console_log(2, "shutting down socket #%u", socket->id);
-	dyad_end(socket->stream);
-}
-
-void
-write_socket(socket_t* socket, const void* data, size_t n_bytes)
-{
-	console_log(4, "writing %zd bytes to socket #%u", n_bytes, socket->id);
-	dyad_write(socket->stream, data, (int)n_bytes);
+	console_log(4, "writing %zd bytes to socket #%u", n_bytes, it->id);
+	dyad_write(it->stream, data, (int)n_bytes);
 }
 
 static void
 on_dyad_accept(dyad_Event* e)
 {
-	int          new_backlog_len;
-
+	int       new_backlog_len;
 	socket_t* socket = e->udata;
 
 	if (socket->max_backlog > 0) {
@@ -317,20 +290,12 @@ on_dyad_receive(dyad_Event* e)
 	size_t    new_pend_size;
 	socket_t* socket = e->udata;
 
-	if (socket->pipe_target != NULL) {
-		// if the socket is a pipe, pass the data through to the destination
-		console_log(4, "piping %d bytes from socket #%u to socket #%u", e->size,
-			socket->id, socket->pipe_target->id);
-		write_socket(socket->pipe_target, e->data, e->size);
+	// buffer any data received until read() is called
+	new_pend_size = socket->pend_size + e->size;
+	if (new_pend_size > socket->buffer_size) {
+		socket->buffer_size = new_pend_size * 2;
+		socket->buffer = realloc(socket->buffer, socket->buffer_size);
 	}
-	else {
-		// buffer any data received until read() is called
-		new_pend_size = socket->pend_size + e->size;
-		if (new_pend_size > socket->buffer_size) {
-			socket->buffer_size = new_pend_size * 2;
-			socket->buffer = realloc(socket->buffer, socket->buffer_size);
-		}
-		memcpy(socket->buffer + socket->pend_size, e->data, e->size);
-		socket->pend_size += e->size;
-	}
+	memcpy(socket->buffer + socket->pend_size, e->data, e->size);
+	socket->pend_size += e->size;
 }

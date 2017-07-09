@@ -63,7 +63,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	obj = calloc(1, sizeof(inferior_t));
 	printf("connecting to %s:%d... ", hostname, port);
 	fflush(stdout);
-	if (!(obj->socket = socket_connect(hostname, port, 30.0)))
+	if (!(obj->socket = socket_new_client(hostname, port, 30.0)))
 		goto on_error;
 	printf("OK.\n");
 	obj->protocol = do_handshake(obj->socket);
