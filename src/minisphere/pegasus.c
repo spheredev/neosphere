@@ -203,6 +203,13 @@ static duk_ret_t js_Sphere_exit                (duk_context* ctx);
 static duk_ret_t js_Sphere_restart             (duk_context* ctx);
 static duk_ret_t js_Sphere_run                 (duk_context* ctx);
 static duk_ret_t js_Sphere_sleep               (duk_context* ctx);
+static duk_ret_t js_new_AudioStream            (duk_context* ctx);
+static duk_ret_t js_AudioStream_finalize       (duk_context* ctx);
+static duk_ret_t js_AudioStream_get_bufferSize (duk_context* ctx);
+static duk_ret_t js_AudioStream_buffer         (duk_context* ctx);
+static duk_ret_t js_AudioStream_play           (duk_context* ctx);
+static duk_ret_t js_AudioStream_pause          (duk_context* ctx);
+static duk_ret_t js_AudioStream_stop           (duk_context* ctx);
 static duk_ret_t js_Color_get_Color            (duk_context* ctx);
 static duk_ret_t js_Color_is                   (duk_context* ctx);
 static duk_ret_t js_Color_mix                  (duk_context* ctx);
@@ -341,13 +348,6 @@ static duk_ret_t js_Sound_set_volume           (duk_context* ctx);
 static duk_ret_t js_Sound_pause                (duk_context* ctx);
 static duk_ret_t js_Sound_play                 (duk_context* ctx);
 static duk_ret_t js_Sound_stop                 (duk_context* ctx);
-static duk_ret_t js_new_SoundStream            (duk_context* ctx);
-static duk_ret_t js_SoundStream_finalize       (duk_context* ctx);
-static duk_ret_t js_SoundStream_get_bufferSize (duk_context* ctx);
-static duk_ret_t js_SoundStream_buffer         (duk_context* ctx);
-static duk_ret_t js_SoundStream_play           (duk_context* ctx);
-static duk_ret_t js_SoundStream_pause          (duk_context* ctx);
-static duk_ret_t js_SoundStream_stop           (duk_context* ctx);
 static duk_ret_t js_new_Surface                (duk_context* ctx);
 static duk_ret_t js_Surface_finalize           (duk_context* ctx);
 static duk_ret_t js_Surface_get_height         (duk_context* ctx);
@@ -414,6 +414,12 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "Sphere", "restart", js_Sphere_restart);
 	api_define_function(ctx, "Sphere", "run", js_Sphere_run);
 	api_define_function(ctx, "Sphere", "sleep", js_Sphere_sleep);
+	api_define_class(ctx, "AudioStream", js_new_AudioStream, js_AudioStream_finalize);
+	api_define_property(ctx, "AudioStream", "bufferSize", js_AudioStream_get_bufferSize, NULL);
+	api_define_method(ctx, "AudioStream", "buffer", js_AudioStream_buffer);
+	api_define_method(ctx, "AudioStream", "pause", js_AudioStream_pause);
+	api_define_method(ctx, "AudioStream", "play", js_AudioStream_play);
+	api_define_method(ctx, "AudioStream", "stop", js_AudioStream_stop);
 	api_define_class(ctx, "Color", js_new_Color, NULL);
 	api_define_function(ctx, "Color", "is", js_Color_is);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
@@ -514,12 +520,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Socket", "close", js_Socket_close);
 	api_define_method(ctx, "Socket", "read", js_Socket_read);
 	api_define_method(ctx, "Socket", "write", js_Socket_write);
-	api_define_class(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
-	api_define_property(ctx, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
-	api_define_method(ctx, "SoundStream", "buffer", js_SoundStream_buffer);
-	api_define_method(ctx, "SoundStream", "pause", js_SoundStream_pause);
-	api_define_method(ctx, "SoundStream", "play", js_SoundStream_play);
-	api_define_method(ctx, "SoundStream", "stop", js_SoundStream_stop);
 	api_define_class(ctx, "Sound", js_new_Sound, js_Sound_finalize);
 	api_define_property(ctx, "Sound", "fileName", js_Sound_get_fileName, NULL);
 	api_define_property(ctx, "Sound", "length", js_Sound_get_length, NULL);
@@ -1248,6 +1248,113 @@ js_Sphere_sleep(duk_context* ctx)
 	if (timeout < 0.0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid sleep timeout");
 	delay(timeout);
+	return 0;
+}
+
+static duk_ret_t
+js_new_AudioStream(duk_context* ctx)
+{
+	stream_t* stream;
+	int       argc;
+	int       frequency;
+	int       bits;
+	int       channels;
+
+	argc = duk_get_top(ctx);
+	frequency = argc >= 1 ? duk_require_int(ctx, 0) : 22050;
+	bits = argc >= 2 ? duk_require_int(ctx, 1) : 8;
+	channels = argc >= 3 ? duk_require_int(ctx, 1) : 1;
+	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth", bits);
+	if (!(stream = stream_new(frequency, bits, channels)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream creation failed");
+	duk_push_class_obj(ctx, "AudioStream", stream);
+	return 1;
+}
+
+static duk_ret_t
+js_AudioStream_finalize(duk_context* ctx)
+{
+	stream_t* stream;
+
+	stream = duk_require_class_obj(ctx, 0, "AudioStream");
+	stream_free(stream);
+	return 0;
+}
+
+static duk_ret_t
+js_AudioStream_get_bufferSize(duk_context* ctx)
+{
+	stream_t*    stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "AudioStream");
+
+	duk_push_number(ctx, stream_bytes_left(stream));
+	return 1;
+}
+
+static duk_ret_t
+js_AudioStream_buffer(duk_context* ctx)
+{
+	// AudioStream:buffer(data);
+	// Arguments:
+	//     data: An ArrayBuffer or TypedArray containing the audio data
+	//           to feed into the stream buffer.
+
+	const void* data;
+	duk_size_t  size;
+	stream_t*   stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "AudioStream");
+
+	data = duk_require_buffer_data(ctx, 0, &size);
+	stream_buffer(stream, data, size);
+	return 0;
+}
+
+static duk_ret_t
+js_AudioStream_pause(duk_context* ctx)
+{
+	stream_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "AudioStream");
+
+	stream_pause(stream, true);
+	return 0;
+}
+
+static duk_ret_t
+js_AudioStream_play(duk_context* ctx)
+{
+	mixer_t*  mixer;
+	int       num_args;
+	stream_t* stream;
+
+	num_args = duk_get_top(ctx);
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "AudioStream");
+
+	if (num_args < 1)
+		stream_pause(stream, false);
+	else {
+		mixer = duk_require_class_obj(ctx, 0, "Mixer");
+		stream_play(stream, mixer);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_AudioStream_stop(duk_context* ctx)
+{
+	stream_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "AudioStream");
+
+	stream_stop(stream);
 	return 0;
 }
 
@@ -3605,113 +3712,6 @@ js_Sound_stop(duk_context* ctx)
 	sound = duk_require_class_obj(ctx, -1, "Sound");
 
 	sound_stop(sound);
-	return 0;
-}
-
-static duk_ret_t
-js_new_SoundStream(duk_context* ctx)
-{
-	stream_t* stream;
-	int       argc;
-	int       frequency;
-	int       bits;
-	int       channels;
-
-	argc = duk_get_top(ctx);
-	frequency = argc >= 1 ? duk_require_int(ctx, 0) : 22050;
-	bits = argc >= 2 ? duk_require_int(ctx, 1) : 8;
-	channels = argc >= 3 ? duk_require_int(ctx, 1) : 1;
-	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth", bits);
-	if (!(stream = stream_new(frequency, bits, channels)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream creation failed");
-	duk_push_class_obj(ctx, "SoundStream", stream);
-	return 1;
-}
-
-static duk_ret_t
-js_SoundStream_finalize(duk_context* ctx)
-{
-	stream_t* stream;
-
-	stream = duk_require_class_obj(ctx, 0, "SoundStream");
-	stream_free(stream);
-	return 0;
-}
-
-static duk_ret_t
-js_SoundStream_get_bufferSize(duk_context* ctx)
-{
-	stream_t*    stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "SoundStream");
-
-	duk_push_number(ctx, stream_bytes_left(stream));
-	return 1;
-}
-
-static duk_ret_t
-js_SoundStream_buffer(duk_context* ctx)
-{
-	// SoundStream:buffer(data);
-	// Arguments:
-	//     data: An ArrayBuffer or TypedArray containing the audio data
-	//           to feed into the stream buffer.
-
-	const void* data;
-	duk_size_t  size;
-	stream_t*   stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "SoundStream");
-
-	data = duk_require_buffer_data(ctx, 0, &size);
-	stream_buffer(stream, data, size);
-	return 0;
-}
-
-static duk_ret_t
-js_SoundStream_pause(duk_context* ctx)
-{
-	stream_t* stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "SoundStream");
-
-	stream_pause(stream, true);
-	return 0;
-}
-
-static duk_ret_t
-js_SoundStream_play(duk_context* ctx)
-{
-	mixer_t*  mixer;
-	int       num_args;
-	stream_t* stream;
-
-	num_args = duk_get_top(ctx);
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "SoundStream");
-
-	if (num_args < 1)
-		stream_pause(stream, false);
-	else {
-		mixer = duk_require_class_obj(ctx, 0, "Mixer");
-		stream_play(stream, mixer);
-	}
-	return 0;
-}
-
-static duk_ret_t
-js_SoundStream_stop(duk_context* ctx)
-{
-	stream_t* stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "SoundStream");
-
-	stream_stop(stream);
 	return 0;
 }
 
