@@ -37,7 +37,7 @@ transform_ref(transform_t* it)
 void
 transform_free(transform_t* it)
 {
-	if (it != NULL && --it->refcount > 0)
+	if (it == NULL || --it->refcount > 0)
 		return;
 	free(it);
 }

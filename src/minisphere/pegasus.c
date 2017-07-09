@@ -2447,7 +2447,7 @@ js_Mixer_set_volume(duk_context* ctx)
 static duk_ret_t
 js_new_Model(duk_context* ctx)
 {
-	group_t*  group;
+	model_t*  group;
 	int       num_args;
 	size_t    num_shapes;
 	shader_t* shader;
@@ -2459,17 +2459,17 @@ js_new_Model(duk_context* ctx)
 	duk_require_object_coercible(ctx, 0);
 	shader = num_args >= 2
 		? duk_require_class_obj(ctx, 1, "Shader")
-		: get_default_shader();
+		: galileo_shader();
 
 	if (!duk_is_array(ctx, 0))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
 
-	group = group_new(shader);
+	group = model_new(shader);
 	num_shapes = duk_get_length(ctx, 0);
 	for (i = 0; i < num_shapes; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		shape = duk_require_class_obj(ctx, -1, "Shape");
-		group_add_shape(group, shape);
+		model_add_shape(group, shape);
 	}
 	duk_push_class_obj(ctx, "Model", group);
 	return 1;
@@ -2478,23 +2478,23 @@ js_new_Model(duk_context* ctx)
 static duk_ret_t
 js_Model_finalize(duk_context* ctx)
 {
-	group_t* group;
+	model_t* group;
 
 	group = duk_require_class_obj(ctx, 0, "Model");
-	group_free(group);
+	model_free(group);
 	return 0;
 }
 
 static duk_ret_t
 js_Model_get_shader(duk_context* ctx)
 {
-	group_t*  group;
+	model_t*  group;
 	shader_t* shader;
 
 	duk_push_this(ctx);
 	group = duk_require_class_obj(ctx, -1, "Model");
 
-	shader = group_get_shader(group);
+	shader = model_get_shader(group);
 	duk_push_class_obj(ctx, "Shader", shader_ref(shader));
 	return 1;
 }
@@ -2502,13 +2502,13 @@ js_Model_get_shader(duk_context* ctx)
 static duk_ret_t
 js_Model_get_transform(duk_context* ctx)
 {
-	group_t*     group;
+	model_t*     group;
 	transform_t* transform;
 
 	duk_push_this(ctx);
 	group = duk_require_class_obj(ctx, -1, "Model");
 
-	transform = group_get_transform(group);
+	transform = model_get_transform(group);
 	duk_push_class_obj(ctx, "Transform", transform_ref(transform));
 	return 1;
 }
@@ -2516,35 +2516,35 @@ js_Model_get_transform(duk_context* ctx)
 static duk_ret_t
 js_Model_set_shader(duk_context* ctx)
 {
-	group_t*  group;
+	model_t*  group;
 	shader_t* shader;
 
 	duk_push_this(ctx);
 	group = duk_require_class_obj(ctx, -1, "Model");
 	shader = duk_require_class_obj(ctx, 0, "Shader");
 
-	group_set_shader(group, shader);
+	model_set_shader(group, shader);
 	return 0;
 }
 
 static duk_ret_t
 js_Model_set_transform(duk_context* ctx)
 {
-	group_t*     group;
+	model_t*     group;
 	transform_t* transform;
 
 	duk_push_this(ctx);
 	group = duk_require_class_obj(ctx, -1, "Model");
 	transform = duk_require_class_obj(ctx, 0, "Transform");
 
-	group_set_transform(group, transform);
+	model_set_transform(group, transform);
 	return 0;
 }
 
 static duk_ret_t
 js_Model_draw(duk_context* ctx)
 {
-	group_t* group;
+	model_t* group;
 	int      num_args;
 	image_t* surface;
 
@@ -2555,7 +2555,7 @@ js_Model_draw(duk_context* ctx)
 		: NULL;
 
 	if (!screen_is_skipframe(g_screen))
-		group_draw(group, surface);
+		model_draw(group, surface);
 	return 0;
 }
 
@@ -2563,7 +2563,7 @@ static duk_ret_t
 js_Model_setColorVector(duk_context* ctx)
 {
 	color_t     color;
-	group_t*    group;
+	model_t*    group;
 	const char* name;
 	float       values[4];
 
@@ -2576,14 +2576,14 @@ js_Model_setColorVector(duk_context* ctx)
 	values[1] = color.g / 255.0;
 	values[2] = color.b / 255.0;
 	values[3] = color.a / 255.0;
-	group_put_float_vector(group, name, values, 4);
+	model_put_float_vector(group, name, values, 4);
 	return 0;
 }
 
 static duk_ret_t
 js_Model_setFloat(duk_context* ctx)
 {
-	group_t*    group;
+	model_t*    group;
 	const char* name;
 	float       value;
 
@@ -2592,14 +2592,14 @@ js_Model_setFloat(duk_context* ctx)
 	name = duk_require_string(ctx, 0);
 	value = duk_require_number(ctx, 1);
 
-	group_put_float(group, name, value);
+	model_put_float(group, name, value);
 	return 0;
 }
 
 static duk_ret_t
 js_Model_setFloatVector(duk_context* ctx)
 {
-	group_t*    group;
+	model_t*    group;
 	const char* name;
 	int         size;
 	float       values[4];
@@ -2621,14 +2621,14 @@ js_Model_setFloatVector(duk_context* ctx)
 		values[i] = duk_require_number(ctx, -1);
 		duk_pop(ctx);
 	}
-	group_put_float_vector(group, name, values, size);
+	model_put_float_vector(group, name, values, size);
 	return 0;
 }
 
 static duk_ret_t
 js_Model_setInt(duk_context* ctx)
 {
-	group_t*    group;
+	model_t*    group;
 	const char* name;
 	int         value;
 
@@ -2637,14 +2637,14 @@ js_Model_setInt(duk_context* ctx)
 	name = duk_require_string(ctx, 0);
 	value = duk_require_int(ctx, 1);
 
-	group_put_int(group, name, value);
+	model_put_int(group, name, value);
 	return 0;
 }
 
 static duk_ret_t
 js_Model_setIntVector(duk_context* ctx)
 {
-	group_t*    group;
+	model_t*    group;
 	const char* name;
 	int         size;
 	int         values[4];
@@ -2666,14 +2666,14 @@ js_Model_setIntVector(duk_context* ctx)
 		values[i] = duk_require_int(ctx, -1);
 		duk_pop(ctx);
 	}
-	group_put_int_vector(group, name, values, size);
+	model_put_int_vector(group, name, values, size);
 	return 0;
 }
 
 static duk_ret_t
 js_Model_setMatrix(duk_context* ctx)
 {
-	group_t*     group;
+	model_t*     group;
 	const char*  name;
 	transform_t* transform;
 
@@ -2682,7 +2682,7 @@ js_Model_setMatrix(duk_context* ctx)
 	name = duk_require_string(ctx, 0);
 	transform = duk_require_class_obj(ctx, 1, "Transform");
 
-	group_put_matrix(group, name, transform);
+	model_put_matrix(group, name, transform);
 	return 0;
 }
 
@@ -3057,7 +3057,7 @@ js_Shader_get_Default(duk_context* ctx)
 {
 	shader_t* shader;
 
-	if (!(shader = get_default_shader()))
+	if (!(shader = galileo_shader()))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "shader compile failed");
 	duk_push_class_obj(ctx, "Shader", shader_ref(shader));
 
@@ -3220,7 +3220,7 @@ js_Shape_draw(duk_context* ctx)
 
 	if (surface != NULL)
 		al_set_target_bitmap(image_bitmap(surface));
-	shader_use(get_default_shader());
+	shader_use(galileo_shader());
 	shape_draw(shape, transform);
 	shader_use(NULL);
 	if (surface != NULL)

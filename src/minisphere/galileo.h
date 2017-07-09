@@ -4,7 +4,7 @@
 #include "shader.h"
 
 typedef struct shape shape_t;
-typedef struct group group_t;
+typedef struct model model_t;
 
 typedef
 enum shape_type
@@ -28,35 +28,32 @@ struct vertex
 	color_t color;
 } vertex_t;
 
-void      initialize_galileo (void);
-void      shutdown_galileo   (void);
-shader_t* get_default_shader (void);
-
-vertex_t vertex (float x, float y, float z, float u, float v, color_t color);
-
-group_t*     group_new              (shader_t* shader);
-group_t*     group_ref              (group_t* group);
-void         group_free             (group_t* group);
-shader_t*    group_get_shader       (const group_t* group);
-transform_t* group_get_transform    (const group_t* group);
-void         group_set_shader       (group_t* group, shader_t* shader);
-void         group_set_transform    (group_t* group, transform_t* transform);
-bool         group_add_shape        (group_t* group, shape_t* shape);
-void         group_draw             (const group_t* group, image_t* surface);
-void         group_put_float        (group_t* group, const char* name, float value);
-void         group_put_int          (group_t* group, const char* name, int value);
-void         group_put_float_vector (group_t* group, const char* name, float values[], int size);
-void         group_put_int_vector   (group_t* group, const char* name, int values[], int size);
-void         group_put_matrix       (group_t* group, const char* name, const transform_t* matrix);
+void         galileo_init           (void);
+void         galileo_uninit         (void);
+shader_t*    galileo_shader         (void);
+model_t*     model_new              (shader_t* shader);
+model_t*     model_ref              (model_t* it);
+void         model_free             (model_t* it);
+shader_t*    model_get_shader       (const model_t* it);
+transform_t* model_get_transform    (const model_t* it);
+void         model_set_shader       (model_t* it, shader_t* shader);
+void         model_set_transform    (model_t* it, transform_t* transform);
+bool         model_add_shape        (model_t* it, shape_t* shape);
+void         model_draw             (const model_t* it, image_t* surface);
+void         model_put_float        (model_t* it, const char* name, float value);
+void         model_put_int          (model_t* it, const char* name, int value);
+void         model_put_float_vector (model_t* it, const char* name, float values[], int size);
+void         model_put_int_vector   (model_t* it, const char* name, int values[], int size);
+void         model_put_matrix       (model_t* it, const char* name, const transform_t* matrix);
 shape_t*     shape_new              (shape_type_t type, image_t* texture);
-shape_t*     shape_ref              (shape_t* shape);
-void         shape_free             (shape_t* shape);
-float_rect_t shape_bounds           (const shape_t* shape);
-image_t*     shape_texture          (const shape_t* shape);
-void         shape_set_texture      (shape_t* shape, image_t* texture);
-bool         shape_add_vertex       (shape_t* shape, vertex_t vertex);
-void         shape_calculate_uv     (shape_t* shape);
-void         shape_draw             (shape_t* shape, transform_t* matrix);
-void         shape_upload           (shape_t* shape);
+shape_t*     shape_ref              (shape_t* it);
+void         shape_free             (shape_t* it);
+float_rect_t shape_bounds           (const shape_t* it);
+image_t*     shape_texture          (const shape_t* it);
+void         shape_set_texture      (shape_t* it, image_t* texture);
+bool         shape_add_vertex       (shape_t* it, vertex_t vertex);
+void         shape_calculate_uv     (shape_t* it);
+void         shape_draw             (shape_t* it, transform_t* matrix);
+void         shape_upload           (shape_t* it);
 
 #endif // MINISPHERE__GALILEO_H__INCLUDED

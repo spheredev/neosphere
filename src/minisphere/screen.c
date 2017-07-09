@@ -41,7 +41,7 @@ struct screen
 	int              y_size;
 };
 
-static void refresh_display (screen_t* obj);
+static void refresh_display (screen_t* screen);
 
 screen_t*
 screen_new(const char* title, image_t* icon, int x_size, int y_size, int frameskip, bool avoid_sleep)
@@ -50,7 +50,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	int              bitmap_flags;
 	ALLEGRO_DISPLAY* display;
 	ALLEGRO_BITMAP*  icon_bitmap;
-	screen_t*        obj;
+	screen_t*        screen;
 	bool             use_shaders = false;
 	int              x_scale;
 	int              y_scale;
@@ -100,148 +100,148 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 		al_set_display_icon(display, icon_bitmap);
 	}
 
-	obj = calloc(1, sizeof(screen_t));
-	obj->display = display;
-	obj->backbuffer = backbuffer;
-	obj->transform = transform_new();
-	obj->x_size = x_size;
-	obj->y_size = y_size;
-	obj->max_skips = frameskip;
-	obj->avoid_sleep = avoid_sleep;
-	obj->have_shaders = use_shaders;
+	screen = calloc(1, sizeof(screen_t));
+	screen->display = display;
+	screen->backbuffer = backbuffer;
+	screen->transform = transform_new();
+	screen->x_size = x_size;
+	screen->y_size = y_size;
+	screen->max_skips = frameskip;
+	screen->avoid_sleep = avoid_sleep;
+	screen->have_shaders = use_shaders;
 
-	obj->fps_poll_time = al_get_time() + 1.0;
-	obj->next_frame_time = al_get_time();
-	obj->last_flip_time = obj->next_frame_time;
+	screen->fps_poll_time = al_get_time() + 1.0;
+	screen->next_frame_time = al_get_time();
+	screen->last_flip_time = screen->next_frame_time;
 
 #ifdef MINISPHERE_SPHERUN
-	obj->show_fps = true;
+	screen->show_fps = true;
 #endif
 
-	transform_orthographic(obj->transform, 0.0f, 0.0f, x_size, y_size, -1.0f, 1.0f);
-	screen_set_clipping(obj, new_rect(0, 0, x_size, y_size));
-	refresh_display(obj);
-	return obj;
+	transform_orthographic(screen->transform, 0.0f, 0.0f, x_size, y_size, -1.0f, 1.0f);
+	screen_set_clipping(screen, new_rect(0, 0, x_size, y_size));
+	refresh_display(screen);
+	return screen;
 }
 
 void
-screen_free(screen_t* obj)
+screen_free(screen_t* it)
 {
-	if (obj == NULL)
+	if (it == NULL)
 		return;
 	
 	console_log(1, "shutting down render context");
-	al_destroy_bitmap(obj->backbuffer);
-	al_destroy_display(obj->display);
-	free(obj);
+	al_destroy_bitmap(it->backbuffer);
+	al_destroy_display(it->display);
+	free(it);
 }
 
 ALLEGRO_BITMAP*
-screen_backbuffer(const screen_t* screen)
+screen_backbuffer(const screen_t* it)
 {
-	return screen->backbuffer;
+	return it->backbuffer;
 }
 
 ALLEGRO_DISPLAY*
-screen_display(const screen_t* obj)
+screen_display(const screen_t* it)
 {
-	return obj->display;
+	return it->display;
 }
 
 bool
-screen_fullscreen(const screen_t* screen)
+screen_fullscreen(const screen_t* it)
 {
-	return screen->fullscreen;
+	return it->fullscreen;
 }
 
 bool
-screen_have_shaders(const screen_t* screen)
+screen_have_shaders(const screen_t* it)
 {
-	return screen->have_shaders;
+	return it->have_shaders;
 }
 
 bool
-screen_is_skipframe(const screen_t* obj)
+screen_is_skipframe(const screen_t* it)
 {
-	return obj->skip_frame;
+	return it->skip_frame;
 }
 
 uint32_t
-screen_now(const screen_t* screen)
+screen_now(const screen_t* it)
 {
-	return screen->now;
+	return it->now;
 }
 
 rect_t
-screen_get_clipping(screen_t* obj)
+screen_get_clipping(screen_t* it)
 {
-	return obj->clip_rect;
+	return it->clip_rect;
 }
 
 int
-screen_get_frameskip(const screen_t* obj)
+screen_get_frameskip(const screen_t* it)
 {
-	return obj->max_skips;
+	return it->max_skips;
 }
 
 void
-screen_get_mouse_xy(const screen_t* obj, int* o_x, int* o_y)
+screen_get_mouse_xy(const screen_t* it, int* o_x, int* o_y)
 {
 	ALLEGRO_MOUSE_STATE mouse_state;
 
 	al_get_mouse_state(&mouse_state);
-	*o_x = (mouse_state.x - obj->x_offset) / obj->x_scale;
-	*o_y = (mouse_state.y - obj->y_offset) / obj->y_scale;
+	*o_x = (mouse_state.x - it->x_offset) / it->x_scale;
+	*o_y = (mouse_state.y - it->y_offset) / it->y_scale;
 }
 
 transform_t*
-screen_get_transform(const screen_t* screen)
+screen_get_transform(const screen_t* it)
 {
-	return screen->transform;
+	return it->transform;
 }
 
 void
-screen_set_clipping(screen_t* obj, rect_t clip_rect)
+screen_set_clipping(screen_t* it, rect_t clip_rect)
 {
-	obj->clip_rect = clip_rect;
+	it->clip_rect = clip_rect;
 	al_set_clipping_rectangle(clip_rect.x1, clip_rect.y1,
 		clip_rect.x2 - clip_rect.x1, clip_rect.y2 - clip_rect.y1);
 }
 
 void
-screen_set_frameskip(screen_t* obj, int max_skips)
+screen_set_frameskip(screen_t* it, int max_skips)
 {
-	obj->max_skips = max_skips;
+	it->max_skips = max_skips;
 }
 
 void
-screen_set_fullscreen(screen_t* screen, bool fullscreen)
+screen_set_fullscreen(screen_t* it, bool fullscreen)
 {
-	screen->fullscreen = fullscreen;
-	refresh_display(screen);
+	it->fullscreen = fullscreen;
+	refresh_display(it);
 }
 
 void
-screen_set_mouse_xy(screen_t* obj, int x, int y)
+screen_set_mouse_xy(screen_t* it, int x, int y)
 {
-	x = x * obj->x_scale + obj->x_offset;
-	y = y * obj->y_scale + obj->y_offset;
-	al_set_mouse_xy(obj->display, x, y);
+	x = x * it->x_scale + it->x_offset;
+	y = y * it->y_scale + it->y_offset;
+	al_set_mouse_xy(it->display, x, y);
 }
 
 void
-screen_set_transform(screen_t* screen, transform_t* matrix)
+screen_set_transform(screen_t* it, transform_t* matrix)
 {
 	transform_t* old_matrix;
 
-	old_matrix = screen->transform;
-	screen->transform = transform_ref(matrix);
+	old_matrix = it->transform;
+	it->transform = transform_ref(matrix);
 	transform_free(old_matrix);
-	refresh_display(screen);
+	refresh_display(it);
 }
 
 void
-screen_draw_status(screen_t* obj, const char* text, color_t color)
+screen_draw_status(screen_t* it, const char* text, color_t color)
 {
 	rect_t            bounds;
 	ALLEGRO_BITMAP*   old_target;
@@ -252,13 +252,13 @@ screen_draw_status(screen_t* obj, const char* text, color_t color)
 	int               height;
 
 	old_target = al_get_target_bitmap();
-	al_set_target_backbuffer(obj->display);
-	screen_cx = al_get_display_width(obj->display);
-	screen_cy = al_get_display_height(obj->display);
+	al_set_target_backbuffer(it->display);
+	screen_cx = al_get_display_width(it->display);
+	screen_cy = al_get_display_height(it->display);
 	width = font_get_width(g_sys_font, text) + 20;
 	height = font_height(g_sys_font) + 10;
-	bounds.x1 = 8 + obj->x_offset;
-	bounds.y1 = screen_cy - obj->y_offset - height - 8;
+	bounds.x1 = 8 + it->x_offset;
+	bounds.y1 = screen_cy - it->y_offset - height - 8;
 	bounds.x2 = bounds.x1 + width;
 	bounds.y2 = bounds.y1 + height;
 	al_identity_transform(&trans);
@@ -273,7 +273,7 @@ screen_draw_status(screen_t* obj, const char* text, color_t color)
 }
 
 void
-screen_flip(screen_t* screen, int framerate)
+screen_flip(screen_t* it, int framerate)
 {
 	char*             filename;
 	char              fps_text[20];
@@ -297,22 +297,22 @@ screen_flip(screen_t* screen, int framerate)
 	async_run_jobs(ASYNC_RENDER);
 
 	// update FPS with 1s granularity
-	if (al_get_time() >= screen->fps_poll_time) {
-		screen->fps_flips = screen->num_flips;
-		screen->fps_frames = screen->num_frames;
-		screen->num_frames = screen->num_flips = 0;
-		screen->fps_poll_time = al_get_time() + 1.0;
+	if (al_get_time() >= it->fps_poll_time) {
+		it->fps_flips = it->num_flips;
+		it->fps_frames = it->num_frames;
+		it->num_frames = it->num_flips = 0;
+		it->fps_poll_time = al_get_time() + 1.0;
 	}
 
 	// flip the backbuffer, unless the preceeding frame was skipped
-	is_backbuffer_valid = !screen->skip_frame;
-	screen_cx = al_get_display_width(screen->display);
-	screen_cy = al_get_display_height(screen->display);
+	is_backbuffer_valid = !it->skip_frame;
+	screen_cx = al_get_display_width(it->display);
+	screen_cy = al_get_display_height(it->display);
 	if (is_backbuffer_valid) {
-		if (screen->take_screenshot) {
+		if (it->take_screenshot) {
 			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
-			snapshot = al_clone_bitmap(screen->backbuffer);
+			snapshot = al_clone_bitmap(it->backbuffer);
 			al_restore_state(&old_state);
 			game_path = fs_path(g_fs);
 			game_filename = path_is_file(game_path)
@@ -334,34 +334,34 @@ screen_flip(screen_t* screen, int framerate)
 			al_save_bitmap(pathstr, snapshot);
 			al_destroy_bitmap(snapshot);
 			path_free(path);
-			screen->take_screenshot = false;
+			it->take_screenshot = false;
 		}
-		al_set_target_backbuffer(screen->display);
+		al_set_target_backbuffer(it->display);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		al_draw_scaled_bitmap(screen->backbuffer, 0, 0, screen->x_size, screen->y_size,
-			screen->x_offset, screen->y_offset, screen->x_size * screen->x_scale, screen->y_size * screen->y_scale,
+		al_draw_scaled_bitmap(it->backbuffer, 0, 0, it->x_size, it->y_size,
+			it->x_offset, it->y_offset, it->x_size * it->x_scale, it->y_size * it->y_scale,
 			0x0);
 		if (is_debugger_attached())
-			screen_draw_status(screen, get_debugger_name(), get_debugger_color());
-		if (screen->show_fps) {
+			screen_draw_status(it, get_debugger_name(), get_debugger_color());
+		if (it->show_fps) {
 			if (framerate > 0)
-				sprintf(fps_text, "%d/%d fps", screen->fps_flips, screen->fps_frames);
+				sprintf(fps_text, "%d/%d fps", it->fps_flips, it->fps_frames);
 			else
-				sprintf(fps_text, "%d fps", screen->fps_flips);
-			x = screen_cx - screen->x_offset - 108;
-			y = screen_cy - screen->y_offset - 24;
+				sprintf(fps_text, "%d fps", it->fps_flips);
+			x = screen_cx - it->x_offset - 108;
+			y = screen_cy - it->y_offset - 24;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
 			font_draw_text(g_sys_font, color_new(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
 			font_draw_text(g_sys_font, color_new(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 		}
-		al_set_target_bitmap(screen->backbuffer);
+		al_set_target_bitmap(it->backbuffer);
 		al_flip_display();
-		screen->last_flip_time = al_get_time();
-		screen->num_skips = 0;
-		++screen->num_flips;
+		it->last_flip_time = al_get_time();
+		it->num_skips = 0;
+		++it->num_flips;
 	}
 	else {
-		++screen->num_skips;
+		++it->num_skips;
 	}
 
 	// if framerate is nonzero and we're backed up on frames, skip frames until we
@@ -369,47 +369,47 @@ screen_flip(screen_t* screen, int framerate)
 	// the engine "can't catch up" (due to a slow machine, overloaded CPU, etc.). better
 	// that we lag instead of never rendering anything at all.
 	if (framerate > 0) {
-		screen->skip_frame = screen->num_skips < screen->max_skips && screen->last_flip_time > screen->next_frame_time;
+		it->skip_frame = it->num_skips < it->max_skips && it->last_flip_time > it->next_frame_time;
 		do {  // kill time while we wait for the next frame
-			time_left = screen->next_frame_time - al_get_time();
-			if (!screen->avoid_sleep && time_left > 0.001)  // engine may stall with < 1ms timeout
+			time_left = it->next_frame_time - al_get_time();
+			if (!it->avoid_sleep && time_left > 0.001)  // engine may stall with < 1ms timeout
 				al_wait_for_event_timed(g_events, NULL, time_left);
 			do_events();
-		} while (al_get_time() < screen->next_frame_time);
-		if (screen->num_skips >= screen->max_skips)  // did we skip too many frames?
-			screen->next_frame_time = al_get_time() + 1.0 / framerate;
+		} while (al_get_time() < it->next_frame_time);
+		if (it->num_skips >= it->max_skips)  // did we skip too many frames?
+			it->next_frame_time = al_get_time() + 1.0 / framerate;
 		else
-			screen->next_frame_time += 1.0 / framerate;
+			it->next_frame_time += 1.0 / framerate;
 	}
 	else {
-		screen->skip_frame = false;
+		it->skip_frame = false;
 		do_events();
-		screen->next_frame_time = al_get_time();
-		screen->next_frame_time = al_get_time();
+		it->next_frame_time = al_get_time();
+		it->next_frame_time = al_get_time();
 	}
-	++screen->num_frames;
-	if (!screen->skip_frame) {
+	++it->num_frames;
+	if (!it->skip_frame) {
 		// disable clipping so we can clear the whole backbuffer.
-		al_set_clipping_rectangle(0, 0, screen->x_size, screen->y_size);
+		al_set_clipping_rectangle(0, 0, it->x_size, it->y_size);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		screen_set_clipping(screen, screen->clip_rect);
+		screen_set_clipping(it, it->clip_rect);
 	}
 
 	async_run_jobs(ASYNC_UPDATE);
 
-	++screen->now;
+	++it->now;
 }
 
 image_t*
-screen_grab(screen_t* screen, int x, int y, int width, int height)
+screen_grab(screen_t* it, int x, int y, int width, int height)
 {
 	image_t* image;
 
 	if (!(image = image_new(width, height)))
 		goto on_error;
 	al_set_target_bitmap(image_bitmap(image));
-	al_draw_bitmap_region(screen->backbuffer, x, y, width, height, 0, 0, 0x0);
-	al_set_target_bitmap(screen->backbuffer);
+	al_draw_bitmap_region(it->backbuffer, x, y, width, height, 0, 0, 0x0);
+	al_set_target_bitmap(it->backbuffer);
 	return image;
 
 on_error:
@@ -418,18 +418,18 @@ on_error:
 }
 
 void
-screen_queue_screenshot(screen_t* obj)
+screen_queue_screenshot(screen_t* it)
 {
-	obj->take_screenshot = true;
+	it->take_screenshot = true;
 }
 
 void
-screen_render_to(screen_t* screen, transform_t* transform)
+screen_render_to(screen_t* it, transform_t* transform)
 {
 	ALLEGRO_TRANSFORM matrix;
 	
-	al_set_target_bitmap(screen->backbuffer);
-	al_use_projection_transform(transform_matrix(screen->transform));
+	al_set_target_bitmap(it->backbuffer);
+	al_use_projection_transform(transform_matrix(it->transform));
 	if (transform != NULL) {
 		al_use_transform(transform_matrix(transform));
 	}
@@ -440,81 +440,81 @@ screen_render_to(screen_t* screen, transform_t* transform)
 }
 
 void
-screen_resize(screen_t* obj, int x_size, int y_size)
+screen_resize(screen_t* it, int x_size, int y_size)
 {
-	obj->x_size = x_size;
-	obj->y_size = y_size;
+	it->x_size = x_size;
+	it->y_size = y_size;
 	
-	refresh_display(obj);
+	refresh_display(it);
 }
 
 void
-screen_show_mouse(screen_t* obj, bool visible)
+screen_show_mouse(screen_t* it, bool visible)
 {
 	if (visible)
-		al_show_mouse_cursor(obj->display);
+		al_show_mouse_cursor(it->display);
 	else
-		al_hide_mouse_cursor(obj->display);
+		al_hide_mouse_cursor(it->display);
 }
 
 void
-screen_toggle_fps(screen_t* obj)
+screen_toggle_fps(screen_t* it)
 {
-	obj->show_fps = !obj->show_fps;
+	it->show_fps = !it->show_fps;
 }
 
 void
-screen_toggle_fullscreen(screen_t* obj)
+screen_toggle_fullscreen(screen_t* it)
 {
-	obj->fullscreen = !obj->fullscreen;
-	refresh_display(obj);
+	it->fullscreen = !it->fullscreen;
+	refresh_display(it);
 }
 
 void
-screen_unskip_frame(screen_t* obj)
+screen_unskip_frame(screen_t* it)
 {
-	obj->skip_frame = false;
+	it->skip_frame = false;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 
 static void
-refresh_display(screen_t* obj)
+refresh_display(screen_t* screen)
 {
 	ALLEGRO_MONITOR_INFO monitor;
 	int                  real_width;
 	int                  real_height;
 
-	al_set_display_flag(obj->display, ALLEGRO_FULLSCREEN_WINDOW, obj->fullscreen);
-	if (obj->fullscreen) {
-		real_width = al_get_display_width(obj->display);
-		real_height = al_get_display_height(obj->display);
-		obj->x_scale = (float)real_width / obj->x_size;
-		obj->y_scale = (float)real_height / obj->y_size;
-		if (obj->x_scale > obj->y_scale) {
-			obj->x_scale = obj->y_scale;
-			obj->x_offset = (real_width - obj->x_size * obj->x_scale) / 2;
-			obj->y_offset = 0.0;
+	al_set_display_flag(screen->display, ALLEGRO_FULLSCREEN_WINDOW, screen->fullscreen);
+	if (screen->fullscreen) {
+		real_width = al_get_display_width(screen->display);
+		real_height = al_get_display_height(screen->display);
+		screen->x_scale = (float)real_width / screen->x_size;
+		screen->y_scale = (float)real_height / screen->y_size;
+		if (screen->x_scale > screen->y_scale) {
+			screen->x_scale = screen->y_scale;
+			screen->x_offset = (real_width - screen->x_size * screen->x_scale) / 2;
+			screen->y_offset = 0.0;
 		}
 		else {
-			obj->y_scale = obj->x_scale;
-			obj->y_offset = (real_height - obj->y_size * obj->y_scale) / 2;
-			obj->x_offset = 0.0;
+			screen->y_scale = screen->x_scale;
+			screen->y_offset = (real_height - screen->y_size * screen->y_scale) / 2;
+			screen->x_offset = 0.0;
 		}
 	}
 	else {
-		obj->x_scale = obj->x_size <= 400 && obj->y_size <= 300
+		screen->x_scale = screen->x_size <= 400 && screen->y_size <= 300
 			? 2.0 : 1.0;
-		obj->y_scale = obj->x_scale;
-		obj->x_offset = obj->y_offset = 0.0;
+		screen->y_scale = screen->x_scale;
+		screen->x_offset = screen->y_offset = 0.0;
 		
 		// size and recenter the window
-		al_resize_display(obj->display, obj->x_size * obj->x_scale, obj->y_size * obj->y_scale);
+		al_resize_display(screen->display, screen->x_size * screen->x_scale, screen->y_size * screen->y_scale);
 		al_get_monitor_info(0, &monitor);
-		al_set_window_position(obj->display,
-			(monitor.x1 + monitor.x2) / 2 - obj->x_size * obj->x_scale / 2,
-			(monitor.y1 + monitor.y2) / 2 - obj->y_size * obj->y_scale / 2);
+		al_set_window_position(screen->display,
+			(monitor.x1 + monitor.x2) / 2 - screen->x_size * screen->x_scale / 2,
+			(monitor.y1 + monitor.y2) / 2 - screen->y_size * screen->y_scale / 2);
 	}
 	
-	screen_render_to(obj, NULL);
-	screen_set_clipping(obj, obj->clip_rect);
+	screen_render_to(screen, NULL);
+	screen_set_clipping(screen, screen->clip_rect);
 }
