@@ -2502,14 +2502,14 @@ js_Model_get_shader(duk_context* ctx)
 static duk_ret_t
 js_Model_get_transform(duk_context* ctx)
 {
-	group_t*  group;
-	matrix_t* matrix;
+	group_t*     group;
+	transform_t* transform;
 
 	duk_push_this(ctx);
 	group = duk_require_class_obj(ctx, -1, "Model");
 
-	matrix = group_get_transform(group);
-	duk_push_class_obj(ctx, "Transform", matrix_ref(matrix));
+	transform = group_get_transform(group);
+	duk_push_class_obj(ctx, "Transform", transform_ref(transform));
 	return 1;
 }
 
@@ -2530,8 +2530,8 @@ js_Model_set_shader(duk_context* ctx)
 static duk_ret_t
 js_Model_set_transform(duk_context* ctx)
 {
-	group_t*  group;
-	matrix_t* transform;
+	group_t*     group;
+	transform_t* transform;
 
 	duk_push_this(ctx);
 	group = duk_require_class_obj(ctx, -1, "Model");
@@ -2673,16 +2673,16 @@ js_Model_setIntVector(duk_context* ctx)
 static duk_ret_t
 js_Model_setMatrix(duk_context* ctx)
 {
-	group_t*    group;
-	matrix_t*   matrix;
-	const char* name;
+	group_t*     group;
+	const char*  name;
+	transform_t* transform;
 
 	duk_push_this(ctx);
 	group = duk_require_class_obj(ctx, -1, "Model");
 	name = duk_require_string(ctx, 0);
-	matrix = duk_require_class_obj(ctx, 1, "Transform");
+	transform = duk_require_class_obj(ctx, 1, "Transform");
 
-	group_put_matrix(group, name, matrix);
+	group_put_matrix(group, name, transform);
 	return 0;
 }
 
@@ -3205,10 +3205,10 @@ js_Shape_set_texture(duk_context* ctx)
 static duk_ret_t
 js_Shape_draw(duk_context* ctx)
 {
-	int       num_args;
-	shape_t*  shape;
-	image_t*  surface = NULL;
-	matrix_t* transform = NULL;
+	int          num_args;
+	shape_t*     shape;
+	image_t*     surface = NULL;
+	transform_t* transform = NULL;
 
 	duk_push_this(ctx);
 	num_args = duk_get_top(ctx) - 1;
@@ -3808,8 +3808,8 @@ js_Surface_get_width(duk_context* ctx)
 static duk_ret_t
 js_Surface_set_transform(duk_context* ctx)
 {
-	image_t*  image;
-	matrix_t* transform;
+	image_t*     image;
+	transform_t* transform;
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "Surface");
@@ -3840,30 +3840,30 @@ js_Surface_toTexture(duk_context* ctx)
 static duk_ret_t
 js_new_Transform(duk_context* ctx)
 {
-	matrix_t* matrix;
+	transform_t* transform;
 
-	matrix = matrix_new();
-	duk_push_class_obj(ctx, "Transform", matrix);
+	transform = transform_new();
+	duk_push_class_obj(ctx, "Transform", transform);
 	return 1;
 }
 
 static duk_ret_t
 js_Transform_finalize(duk_context* ctx)
 {
-	matrix_t* matrix;
+	transform_t* transform;
 
-	matrix = duk_require_class_obj(ctx, 0, "Transform");
+	transform = duk_require_class_obj(ctx, 0, "Transform");
 
-	matrix_free(matrix);
+	transform_free(transform);
 	return 0;
 }
 
 static duk_ret_t
 js_Transform_get_matrix(duk_context* ctx)
 {
-	int       magic;
-	matrix_t* matrix;
-	float*    values;
+	int          magic;
+	transform_t* transform;
+	float*       values;
 
 	int i, j;
 
@@ -3872,8 +3872,8 @@ js_Transform_get_matrix(duk_context* ctx)
 	if (magic == 0) {
 		// on first access: set up getters and setters
 		duk_push_this(ctx);
-		matrix = duk_require_class_obj(ctx, -1, "Transform");
-		values = matrix_items(matrix);
+		transform = duk_require_class_obj(ctx, -1, "Transform");
+		values = transform_values(transform);
 		duk_push_object(ctx);
 		for (i = 0; i < 4; ++i) {
 			duk_push_int(ctx, i);
@@ -3909,8 +3909,8 @@ js_Transform_get_matrix(duk_context* ctx)
 	else {
 		duk_push_current_function(ctx);
 		duk_get_prop_string(ctx, -1, "\xFF" "transform");
-		matrix = duk_require_class_obj(ctx, -1, "Transform");
-		values = matrix_items(matrix);
+		transform = duk_require_class_obj(ctx, -1, "Transform");
+		values = transform_values(transform);
 		duk_push_number(ctx, values[magic - 1]);
 		return 1;
 	}
@@ -3919,18 +3919,18 @@ js_Transform_get_matrix(duk_context* ctx)
 static duk_ret_t
 js_Transform_set_matrix(duk_context* ctx)
 {
-	int       magic;
-	matrix_t* matrix;
-	float     new_value;
-	float*    values;
+	int          magic;
+	float        new_value;
+	transform_t* transform;
+	float*       values;
 
 	magic = duk_get_current_magic(ctx);
 	new_value = duk_require_number(ctx, 0);
 
 	duk_push_current_function(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "transform");
-	matrix = duk_require_class_obj(ctx, -1, "Transform");
-	values = matrix_items(matrix);
+	transform = duk_require_class_obj(ctx, -1, "Transform");
+	values = transform_values(transform);
 	values[magic - 1] = new_value;
 	return 0;
 }
@@ -3938,42 +3938,42 @@ js_Transform_set_matrix(duk_context* ctx)
 static duk_ret_t
 js_Transform_compose(duk_context* ctx)
 {
-	matrix_t* matrix;
-	matrix_t* other;
+	transform_t* other;
+	transform_t* transform;
 
 	duk_push_this(ctx);
-	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	transform = duk_require_class_obj(ctx, -1, "Transform");
 	other = duk_require_class_obj(ctx, 0, "Transform");
 
-	matrix_compose(matrix, other);
+	transform_compose(transform, other);
 	return 1;
 }
 
 static duk_ret_t
 js_Transform_identity(duk_context* ctx)
 {
-	matrix_t* matrix;
+	transform_t* transform;
 
 	duk_push_this(ctx);
-	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	transform = duk_require_class_obj(ctx, -1, "Transform");
 
-	matrix_identity(matrix);
+	transform_identity(transform);
 	return 1;
 }
 
 static duk_ret_t
 js_Transform_project2D(duk_context* ctx)
 {
-	matrix_t* matrix;
-	int       num_args;
-	float     x1, x2;
-	float     y1, y2;
-	float     z1 = -1.0f;
-	float     z2 = 1.0f;
+	int          num_args;
+	transform_t* transform;
+	float        x1, x2;
+	float        y1, y2;
+	float        z1 = -1.0f;
+	float        z2 = 1.0f;
 
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	transform = duk_require_class_obj(ctx, -1, "Transform");
 	x1 = duk_require_number(ctx, 0);
 	y1 = duk_require_number(ctx, 1);
 	x2 = duk_require_number(ctx, 2);
@@ -3983,23 +3983,23 @@ js_Transform_project2D(duk_context* ctx)
 		z2 = duk_require_number(ctx, 5);
 	}
 
-	matrix_orthographic(matrix, x1, y1, x2, y2, z1, z2);
+	transform_orthographic(transform, x1, y1, x2, y2, z1, z2);
 	return 1;
 }
 
 static duk_ret_t
 js_Transform_project3D(duk_context* ctx)
 {
-	float     aspect;
-	matrix_t* matrix;
-	int       num_args;
-	float     fov;
-	float     fw, fh;
-	float     z1, z2;
+	float        aspect;
+	float        fov;
+	int          num_args;
+	float        fw, fh;
+	transform_t* transform;
+	float        z1, z2;
 
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	transform = duk_require_class_obj(ctx, -1, "Transform");
 	fov = duk_require_number(ctx, 0);
 	aspect = duk_require_number(ctx, 1);
 	z1 = duk_require_number(ctx, 2);
@@ -4007,23 +4007,23 @@ js_Transform_project3D(duk_context* ctx)
 
 	fh = tan(fov / 360 * M_PI) * z1;
 	fw = fh * aspect;
-	matrix_perspective(matrix, -fw, -fh, fw, fh, z1, z2);
+	transform_perspective(transform, -fw, -fh, fw, fh, z1, z2);
 	return 1;
 }
 
 static duk_ret_t
 js_Transform_rotate(duk_context* ctx)
 {
-	matrix_t* matrix;
-	int       num_args;
-	float     theta;
-	float     vx = 0.0;
-	float     vy = 0.0;
-	float     vz = 1.0;
+	int          num_args;
+	float        theta;
+	transform_t* transform;
+	float        vx = 0.0;
+	float        vy = 0.0;
+	float        vz = 1.0;
 
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	transform = duk_require_class_obj(ctx, -1, "Transform");
 	theta = duk_require_number(ctx, 0);
 	if (num_args >= 2) {
 		vx = duk_require_number(ctx, 1);
@@ -4031,48 +4031,48 @@ js_Transform_rotate(duk_context* ctx)
 		vz = duk_require_number(ctx, 3);
 	}
 
-	matrix_rotate(matrix, theta, vx, vy, vz);
+	transform_rotate(transform, theta, vx, vy, vz);
 	return 1;
 }
 
 static duk_ret_t
 js_Transform_scale(duk_context* ctx)
 {
-	matrix_t* matrix;
-	int       num_args;
-	float     sx;
-	float     sy;
-	float     sz = 1.0;
+	int          num_args;
+	float        sx;
+	float        sy;
+	float        sz = 1.0;
+	transform_t* transform;
 
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	transform = duk_require_class_obj(ctx, -1, "Transform");
 	sx = duk_require_number(ctx, 0);
 	sy = duk_require_number(ctx, 1);
 	if (num_args >= 3)
 		sz = duk_require_number(ctx, 2);
 
-	matrix_scale(matrix, sx, sy, sz);
+	transform_scale(transform, sx, sy, sz);
 	return 1;
 }
 
 static duk_ret_t
 js_Transform_translate(duk_context* ctx)
 {
-	matrix_t* matrix;
-	int       num_args;
-	float     dx;
-	float     dy;
-	float     dz = 0.0;
+	float        dx;
+	float        dy;
+	float        dz = 0.0;
+	int          num_args;
+	transform_t* transform;
 
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
-	matrix = duk_require_class_obj(ctx, -1, "Transform");
+	transform = duk_require_class_obj(ctx, -1, "Transform");
 	dx = duk_require_number(ctx, 0);
 	dy = duk_require_number(ctx, 1);
 	if (num_args >= 3)
 		dz = duk_require_number(ctx, 2);
 
-	matrix_translate(matrix, dx, dy, dz);
+	transform_translate(transform, dx, dy, dz);
 	return 1;
 }

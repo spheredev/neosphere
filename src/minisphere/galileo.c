@@ -52,7 +52,7 @@ struct group
 	unsigned int id;
 	shader_t*    shader;
 	vector_t*    shapes;
-	matrix_t*    transform;
+	transform_t* transform;
 	vector_t*    uniforms;
 };
 
@@ -117,7 +117,7 @@ group_new(shader_t* shader)
 
 	group = calloc(1, sizeof(group_t));
 	group->shapes = vector_new(sizeof(shape_t*));
-	group->transform = matrix_new();
+	group->transform = transform_new();
 	group->shader = shader_ref(shader);
 	group->uniforms = vector_new(sizeof(struct uniform));
 
@@ -150,7 +150,7 @@ group_free(group_t* group)
 		shape_free(*i_shape);
 	vector_free(group->shapes);
 	shader_free(group->shader);
-	matrix_free(group->transform);
+	transform_free(group->transform);
 	vector_free(group->uniforms);
 	free(group);
 }
@@ -161,7 +161,7 @@ group_get_shader(const group_t* group)
 	return group->shader;
 }
 
-matrix_t*
+transform_t*
 group_get_transform(const group_t* group)
 {
 	return group->transform;
@@ -178,13 +178,13 @@ group_set_shader(group_t* group, shader_t* shader)
 }
 
 void
-group_set_transform(group_t* group, matrix_t* transform)
+group_set_transform(group_t* group, transform_t* transform)
 {
-	matrix_t* old_transform;
+	transform_t* old_transform;
 
 	old_transform = group->transform;
-	group->transform = matrix_ref(transform);
-	matrix_free(old_transform);
+	group->transform = transform_ref(transform);
+	transform_free(old_transform);
 }
 
 bool
@@ -302,7 +302,7 @@ group_put_int_vector(group_t* group, const char* name, int values[], int size)
 }
 
 void
-group_put_matrix(group_t* group, const char* name, const matrix_t* matrix)
+group_put_matrix(group_t* group, const char* name, const transform_t* matrix)
 {
 	struct uniform unif;
 
@@ -310,7 +310,7 @@ group_put_matrix(group_t* group, const char* name, const matrix_t* matrix)
 	strncpy(unif.name, name, 255);
 	unif.name[255] = '\0';
 	unif.type = UNIFORM_MATRIX;
-	al_copy_transform(&unif.mat_value, matrix_transform(matrix));
+	al_copy_transform(&unif.mat_value, transform_matrix(matrix));
 	vector_push(group->uniforms, &unif);
 }
 
@@ -442,7 +442,7 @@ shape_calculate_uv(shape_t* shape)
 }
 
 void
-shape_draw(shape_t* shape, matrix_t* matrix)
+shape_draw(shape_t* shape, transform_t* matrix)
 {
 	screen_render_to(g_screen, matrix);
 	render_shape(shape);

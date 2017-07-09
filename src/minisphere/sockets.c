@@ -24,7 +24,7 @@ unsigned int s_next_socket_id = 0;
 unsigned int s_num_refs       = 0;
 
 bool
-initialize_sockets(void)
+sockets_init(void)
 {
 	if (++s_num_refs > 1)
 		return true;
@@ -37,7 +37,7 @@ initialize_sockets(void)
 }
 
 void
-shutdown_sockets(void)
+sockets_uninit(void)
 {
 	if (--s_num_refs > 0)
 		return;

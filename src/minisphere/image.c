@@ -2,7 +2,7 @@
 #include "image.h"
 
 #include "color.h"
-#include "matrix.h"
+#include "transform.h"
 
 struct image
 {
@@ -14,7 +14,7 @@ struct image
 	unsigned int    lock_count;
 	char*           path;
 	color_t*        pixel_cache;
-	matrix_t*       transform;
+	transform_t*    transform;
 	int             width;
 	int             height;
 	image_t*        parent;
@@ -37,8 +37,8 @@ image_new(int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
+	image->transform = transform_new();
+	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:
@@ -59,8 +59,8 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = image_ref(parent);
-	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
+	image->transform = transform_new();
+	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:
@@ -82,8 +82,8 @@ image_clone(const image_t* src_image)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
+	image->transform = transform_new();
+	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	return image_ref(image);
 
@@ -128,8 +128,8 @@ image_load(const char* filename)
 	free(slurp);
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
+	image->transform = transform_new();
+	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	image->path = strdup(filename);
 	image->id = s_next_image_id++;
@@ -171,8 +171,8 @@ image_read(sfs_file_t* file, int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->transform = matrix_new();
-	matrix_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
+	image->transform = transform_new();
+	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
 on_error:
@@ -238,7 +238,7 @@ image_free(image_t* image)
 	al_destroy_bitmap(image->bitmap);
 	image_free(image->parent);
 	free(image->path);
-	matrix_free(image->transform);
+	transform_free(image->transform);
 	free(image);
 }
 
@@ -267,20 +267,20 @@ image_width(const image_t* image)
 	return image->width;
 }
 
-matrix_t*
+transform_t*
 image_get_transform(const image_t* image)
 {
 	return image->transform;
 }
 
 void
-image_set_transform(image_t* image, matrix_t* transform)
+image_set_transform(image_t* image, transform_t* transform)
 {
-	matrix_t* old_value;
+	transform_t* old_value;
 
 	old_value = image->transform;
-	image->transform = matrix_ref(transform);
-	matrix_free(old_value);
+	image->transform = transform_ref(transform);
+	transform_free(old_value);
 }
 
 bool
@@ -575,14 +575,14 @@ image_rescale(image_t* image, int width, int height)
 }
 
 void
-image_render_to(image_t* image, matrix_t* transform)
+image_render_to(image_t* image, transform_t* transform)
 {
 	ALLEGRO_TRANSFORM matrix;
 	
 	al_set_target_bitmap(image->bitmap);
-	al_use_projection_transform(matrix_transform(image->transform));
+	al_use_projection_transform(transform_matrix(image->transform));
 	if (transform != NULL) {
-		al_use_transform(matrix_transform(transform));
+		al_use_transform(transform_matrix(transform));
 	}
 	else {
 		al_identity_transform(&matrix);

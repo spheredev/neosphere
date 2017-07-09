@@ -366,7 +366,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\minisphere\vanilla.c" />
-    <ClCompile Include="..\src\minisphere\matrix.c" />
+    <ClCompile Include="..\src\minisphere\transform.c" />
     <ClCompile Include="..\src\minisphere\pegasus.c" />
     <ClCompile Include="..\src\minisphere\screen.c" />
     <ClCompile Include="..\src\shared\api.c" />
@@ -410,7 +410,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\minisphere\vanilla.h" />
-    <ClInclude Include="..\src\minisphere\matrix.h" />
+    <ClInclude Include="..\src\minisphere\transform.h" />
     <ClInclude Include="..\src\minisphere\pegasus.h" />
     <ClInclude Include="..\src\minisphere\screen.h" />
     <ClInclude Include="..\src\shared\api.h" />

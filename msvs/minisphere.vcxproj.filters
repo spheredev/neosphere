@@ -114,9 +114,6 @@
     <ClCompile Include="..\src\minisphere\screen.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\minisphere\matrix.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\minisphere\audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -139,6 +136,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\md5.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\minisphere\transform.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -254,9 +254,6 @@
     <ClInclude Include="..\src\minisphere\screen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\minisphere\matrix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\minisphere\audio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -279,6 +276,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minisphere\transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

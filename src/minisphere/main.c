@@ -415,7 +415,7 @@ initialize_engine(void)
 	initialize_galileo();
 	audio_init();
 	initialize_input();
-	initialize_sockets();
+	sockets_init();
 	initialize_spritesets();
 	initialize_map_engine();
 	scripts_init();
@@ -441,7 +441,7 @@ shutdown_engine(void)
 	shutdown_map_engine();
 	shutdown_input();
 	scripts_uninit();
-	shutdown_sockets();
+	sockets_uninit();
 
 	console_log(1, "shutting down Duktape");
 	duk_destroy_heap(g_duk);

@@ -8,7 +8,7 @@
 #include "async.h"
 #include "debugger.h"
 #include "image.h"
-#include "matrix.h"
+#include "transform.h"
 
 struct screen
 {
@@ -31,7 +31,7 @@ struct screen
 	bool             show_fps;
 	bool             skip_frame;
 	bool             take_screenshot;
-	matrix_t*        transform;
+	transform_t*     transform;
 	bool             use_shaders;
 	int              x_offset;
 	float            x_scale;
@@ -103,7 +103,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	obj = calloc(1, sizeof(screen_t));
 	obj->display = display;
 	obj->backbuffer = backbuffer;
-	obj->transform = matrix_new();
+	obj->transform = transform_new();
 	obj->x_size = x_size;
 	obj->y_size = y_size;
 	obj->max_skips = frameskip;
@@ -118,7 +118,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	obj->show_fps = true;
 #endif
 
-	matrix_orthographic(obj->transform, 0.0f, 0.0f, x_size, y_size, -1.0f, 1.0f);
+	transform_orthographic(obj->transform, 0.0f, 0.0f, x_size, y_size, -1.0f, 1.0f);
 	screen_set_clipping(obj, new_rect(0, 0, x_size, y_size));
 	refresh_display(obj);
 	return obj;
@@ -194,7 +194,7 @@ screen_get_mouse_xy(const screen_t* obj, int* o_x, int* o_y)
 	*o_y = (mouse_state.y - obj->y_offset) / obj->y_scale;
 }
 
-matrix_t*
+transform_t*
 screen_get_transform(const screen_t* screen)
 {
 	return screen->transform;
@@ -230,13 +230,13 @@ screen_set_mouse_xy(screen_t* obj, int x, int y)
 }
 
 void
-screen_set_transform(screen_t* screen, matrix_t* matrix)
+screen_set_transform(screen_t* screen, transform_t* matrix)
 {
-	matrix_t* old_matrix;
+	transform_t* old_matrix;
 
 	old_matrix = screen->transform;
-	screen->transform = matrix_ref(matrix);
-	matrix_free(old_matrix);
+	screen->transform = transform_ref(matrix);
+	transform_free(old_matrix);
 	refresh_display(screen);
 }
 
@@ -424,14 +424,14 @@ screen_queue_screenshot(screen_t* obj)
 }
 
 void
-screen_render_to(screen_t* screen, matrix_t* transform)
+screen_render_to(screen_t* screen, transform_t* transform)
 {
 	ALLEGRO_TRANSFORM matrix;
 	
 	al_set_target_bitmap(screen->backbuffer);
-	al_use_projection_transform(matrix_transform(screen->transform));
+	al_use_projection_transform(transform_matrix(screen->transform));
 	if (transform != NULL) {
-		al_use_transform(matrix_transform(transform));
+		al_use_transform(transform_matrix(transform));
 	}
 	else {
 		al_identity_transform(&matrix);

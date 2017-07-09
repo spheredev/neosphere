@@ -23,11 +23,12 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/console.c src/minisphere/debugger.c src/minisphere/font.c \
    src/minisphere/galileo.c src/minisphere/geometry.c src/minisphere/image.c \
    src/minisphere/input.c src/minisphere/kevfile.c src/minisphere/logger.c \
-   src/minisphere/map_engine.c src/minisphere/matrix.c src/minisphere/obsmap.c \
+   src/minisphere/map_engine.c src/minisphere/obsmap.c \
    src/minisphere/pegasus.c src/minisphere/persons.c src/minisphere/screen.c \
    src/minisphere/script.c src/minisphere/shader.c src/minisphere/sockets.c \
    src/minisphere/spherefs.c src/minisphere/spk.c src/minisphere/spriteset.c \
-   src/minisphere/tileset.c src/minisphere/utility.c src/minisphere/vanilla.c \
+   src/minisphere/tileset.c src/minisphere/transform.c \
+   src/minisphere/utility.c src/minisphere/vanilla.c \
    src/minisphere/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \

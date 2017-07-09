@@ -38,16 +38,16 @@ group_t*     group_new              (shader_t* shader);
 group_t*     group_ref              (group_t* group);
 void         group_free             (group_t* group);
 shader_t*    group_get_shader       (const group_t* group);
-matrix_t*    group_get_transform    (const group_t* group);
+transform_t* group_get_transform    (const group_t* group);
 void         group_set_shader       (group_t* group, shader_t* shader);
-void         group_set_transform    (group_t* group, matrix_t* transform);
+void         group_set_transform    (group_t* group, transform_t* transform);
 bool         group_add_shape        (group_t* group, shape_t* shape);
 void         group_draw             (const group_t* group, image_t* surface);
 void         group_put_float        (group_t* group, const char* name, float value);
 void         group_put_int          (group_t* group, const char* name, int value);
 void         group_put_float_vector (group_t* group, const char* name, float values[], int size);
 void         group_put_int_vector   (group_t* group, const char* name, int values[], int size);
-void         group_put_matrix       (group_t* group, const char* name, const matrix_t* matrix);
+void         group_put_matrix       (group_t* group, const char* name, const transform_t* matrix);
 shape_t*     shape_new              (shape_type_t type, image_t* texture);
 shape_t*     shape_ref              (shape_t* shape);
 void         shape_free             (shape_t* shape);
@@ -56,7 +56,7 @@ image_t*     shape_texture          (const shape_t* shape);
 void         shape_set_texture      (shape_t* shape, image_t* texture);
 bool         shape_add_vertex       (shape_t* shape, vertex_t vertex);
 void         shape_calculate_uv     (shape_t* shape);
-void         shape_draw             (shape_t* shape, matrix_t* matrix);
+void         shape_draw             (shape_t* shape, transform_t* matrix);
 void         shape_upload           (shape_t* shape);
 
 #endif // MINISPHERE__GALILEO_H__INCLUDED
