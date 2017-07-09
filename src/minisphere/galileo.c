@@ -2,7 +2,6 @@
 #include "galileo.h"
 
 #include "color.h"
-#include "shader.h"
 #include "vector.h"
 
 static void free_cached_uniform (model_t* model, const char* name);
@@ -31,6 +30,23 @@ struct uniform
 	};
 };
 
+struct model
+{
+	unsigned int refcount;
+	unsigned int id;
+	shader_t*    shader;
+	vector_t*    shapes;
+	transform_t* transform;
+	vector_t*    uniforms;
+};
+
+struct shader
+{
+	unsigned int   id;
+	unsigned int   refcount;
+	ALLEGRO_SHADER* program;
+};
+
 struct shape
 {
 	unsigned int           refcount;
@@ -46,24 +62,17 @@ struct shape
 #endif
 };
 
-struct model
-{
-	unsigned int refcount;
-	unsigned int id;
-	shader_t*    shader;
-	vector_t*    shapes;
-	transform_t* transform;
-	vector_t*    uniforms;
-};
-
 static shader_t*    s_def_shader = NULL;
+static bool         s_have_shaders = false;
 static unsigned int s_next_group_id = 0;
+static unsigned int s_next_shader_id = 1;
 static unsigned int s_next_shape_id = 0;
 
 void
-galileo_init(void)
+galileo_init(bool programmable)
 {
 	console_log(1, "initializing Galileo subsystem");
+	s_have_shaders = programmable;
 }
 
 void
@@ -71,6 +80,12 @@ galileo_uninit(void)
 {
 	console_log(1, "shutting down Galileo subsystem");
 	shader_free(s_def_shader);
+}
+
+bool
+galileo_programmable(void)
+{
+	return s_have_shaders;
 }
 
 shader_t*
@@ -194,8 +209,7 @@ model_draw(const model_t* it, image_t* surface)
 	else
 		screen_render_to(g_screen, it->transform);
 
-#if defined(MINISPHERE_USE_SHADERS)
-	if (are_shaders_active()) {
+	if (s_have_shaders) {
 		shader_use(it->shader != NULL ? it->shader : galileo_shader());
 		iter = vector_enum(it->uniforms);
 		while (p = vector_next(&iter)) {
@@ -218,16 +232,13 @@ model_draw(const model_t* it, image_t* surface)
 			}
 		}
 	}
-#endif
 
 	iter = vector_enum(it->shapes);
 	while (vector_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
 	screen_render_to(g_screen, NULL);
 
-#if defined(MINISPHERE_USE_SHADERS)
 	shader_use(NULL);
-#endif
 
 	if (surface != NULL)
 		al_set_target_bitmap(screen_backbuffer(g_screen));
@@ -298,6 +309,92 @@ model_put_matrix(model_t* it, const char* name, const transform_t* matrix)
 	unif.type = UNIFORM_MATRIX;
 	al_copy_transform(&unif.mat_value, transform_matrix(matrix));
 	vector_push(it->uniforms, &unif);
+}
+
+shader_t*
+shader_new(const char* vs_filename, const char* fs_filename)
+{
+	char*      fs_source = NULL;
+	char*      vs_source = NULL;
+	shader_t*  shader;
+
+	shader = calloc(1, sizeof(shader_t));
+
+	console_log(2, "compiling new shader program #%u", s_next_shader_id);
+
+	if (!(vs_source = sfs_fslurp(g_fs, vs_filename, NULL, NULL)))
+		goto on_error;
+	if (!(fs_source = sfs_fslurp(g_fs, fs_filename, NULL, NULL)))
+		goto on_error;
+	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL)))
+		goto on_error;
+	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vs_source)) {
+		fprintf(stderr, "\nvertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
+		goto on_error;
+	}
+	if (!al_attach_shader_source(shader->program, ALLEGRO_PIXEL_SHADER, fs_source)) {
+		fprintf(stderr, "\nfragment shader compile log:\n%s\n", al_get_shader_log(shader->program));
+		goto on_error;
+	}
+	if (!al_build_shader(shader->program)) {
+		fprintf(stderr, "\nerror building shader program:\n%s\n", al_get_shader_log(shader->program));
+		goto on_error;
+	}
+	free(vs_source);
+	free(fs_source);
+
+	shader->id = s_next_shader_id++;
+	return shader_ref(shader);
+
+on_error:
+	free(vs_source);
+	free(fs_source);
+	if (shader->program != NULL)
+		al_destroy_shader(shader->program);
+	free(shader);
+	return NULL;
+}
+
+shader_t*
+shader_ref(shader_t* shader)
+{
+	if (shader == NULL)
+		return shader;
+	++shader->refcount;
+	return shader;
+}
+
+void
+shader_free(shader_t* shader)
+{
+	if (shader == NULL || --shader->refcount > 0)
+		return;
+
+	console_log(3, "disposing shader program #%u no longer in use", shader->id);
+	al_destroy_shader(shader->program);
+	free(shader);
+}
+
+bool
+shader_use(shader_t* shader)
+{
+	ALLEGRO_SHADER* al_shader;
+
+	if (shader != NULL)
+		console_log(4, "activating shader program #%u", shader->id);
+	else
+		console_log(4, "activating null shader");
+	if (s_have_shaders) {
+		al_shader = shader != NULL ? shader->program : NULL;
+		if (!al_use_shader(al_shader))
+			return false;
+		return true;
+	}
+	else {
+		// if shaders are not supported, degrade gracefully. this simplifies the rest
+		// of the engine, which simply assumes shaders are always supported.
+		return true;
+	}
 }
 
 shape_t*

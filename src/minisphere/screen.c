@@ -62,7 +62,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	// disabled.
 	x_scale = x_size <= 400 && y_size <= 300 ? 2.0 : 1.0;
 	y_scale = x_scale;
-#ifdef MINISPHERE_USE_SHADERS
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (display = al_create_display(x_size * x_scale, y_size * y_scale))
 		use_shaders = true;
@@ -70,10 +69,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 		al_set_new_display_flags(ALLEGRO_OPENGL);
 		display = al_create_display(x_size * x_scale, y_size * y_scale);
 	}
-#else
-	al_set_new_display_flags(ALLEGRO_OPENGL);
-	display = al_create_display(x_size * x_scale, y_size * y_scale);
-#endif
 
 	// custom backbuffer: this allows pixel-perfect rendering regardless
 	// of the actual window size.

@@ -398,7 +398,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\minisphere\obsmap.c" />
     <ClCompile Include="..\src\minisphere\persons.c" />
     <ClCompile Include="..\src\minisphere\script.c" />
-    <ClCompile Include="..\src\minisphere\shader.c" />
     <ClCompile Include="..\src\minisphere\sockets.c" />
     <ClCompile Include="..\src\minisphere\spherefs.c" />
     <ClCompile Include="..\src\minisphere\spk.c" />
@@ -445,7 +444,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\minisphere\obsmap.h" />
     <ClInclude Include="..\src\minisphere\persons.h" />
     <ClInclude Include="..\src\minisphere\script.h" />
-    <ClInclude Include="..\src\minisphere\shader.h" />
     <ClInclude Include="..\src\minisphere\sockets.h" />
     <ClInclude Include="..\src\minisphere\spherefs.h" />
     <ClInclude Include="..\src\minisphere\spk.h" />

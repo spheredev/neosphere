@@ -211,9 +211,6 @@ main(int argc, char* argv[])
 	attach_input_display();
 	kb_load_keymap();
 
-	// initialize shader support
-	initialize_shaders(screen_have_shaders(g_screen));
-
 	// attempt to locate and load system font
 	console_log(1, "loading system default font");
 	if (g_sys_conf != NULL) {
@@ -412,7 +409,7 @@ initialize_engine(void)
 
 	// initialize engine components
 	async_init();
-	galileo_init();
+	galileo_init(true);
 	audio_init();
 	initialize_input();
 	sockets_init();

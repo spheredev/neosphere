@@ -1072,8 +1072,7 @@ Model#setMatrix(name, transform);
 Shader.Default [read-only]
 
     Gets the default Galileo shader program.  This is a very barebones shader
-    which uses screen coordinates for vertices and performs only basic texture
-    mapping.
+    that performs only basic transformations and texture mapping.
 
 new Shader(options);
 

@@ -1,10 +1,17 @@
 #ifndef MINISPHERE__GALILEO_H__INCLUDED
 #define MINISPHERE__GALILEO_H__INCLUDED
 
-#include "shader.h"
+typedef struct shader shader_t;
+typedef struct shape  shape_t;
+typedef struct model  model_t;
 
-typedef struct shape shape_t;
-typedef struct model model_t;
+typedef
+enum shader_type
+{
+	SHADER_TYPE_PIXEL,
+	SHADER_TYPE_VERTEX,
+	SHADER_TYPE_MAX
+} shader_type_t;
 
 typedef
 enum shape_type
@@ -28,8 +35,9 @@ struct vertex
 	color_t color;
 } vertex_t;
 
-void         galileo_init           (void);
+void         galileo_init           (bool programmable);
 void         galileo_uninit         (void);
+bool         galileo_programmable   (void);
 shader_t*    galileo_shader         (void);
 model_t*     model_new              (shader_t* shader);
 model_t*     model_ref              (model_t* it);
@@ -45,6 +53,10 @@ void         model_put_int          (model_t* it, const char* name, int value);
 void         model_put_float_vector (model_t* it, const char* name, float values[], int size);
 void         model_put_int_vector   (model_t* it, const char* name, int values[], int size);
 void         model_put_matrix       (model_t* it, const char* name, const transform_t* matrix);
+shader_t*    shader_new             (const char* vs_path, const char* fs_path);
+shader_t*    shader_ref             (shader_t* shader);
+void         shader_free            (shader_t* shader);
+bool         shader_use             (shader_t* shader);
 shape_t*     shape_new              (shape_type_t type, image_t* texture);
 shape_t*     shape_ref              (shape_t* it);
 void         shape_free             (shape_t* it);
