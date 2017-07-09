@@ -336,8 +336,8 @@ screen_flip(screen_t* it, int framerate)
 		al_draw_scaled_bitmap(it->backbuffer, 0, 0, it->x_size, it->y_size,
 			it->x_offset, it->y_offset, it->x_size * it->x_scale, it->y_size * it->y_scale,
 			0x0);
-		if (is_debugger_attached())
-			screen_draw_status(it, get_debugger_name(), get_debugger_color());
+		if (debugger_attached())
+			screen_draw_status(it, debugger_name(), debugger_color());
 		if (it->show_fps) {
 			if (framerate > 0)
 				sprintf(fps_text, "%d/%d fps", it->fps_flips, it->fps_frames);

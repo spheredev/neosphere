@@ -562,7 +562,7 @@ update_input(void)
 				screen_toggle_fps(g_screen);
 				break;
 			case ALLEGRO_KEY_F12:
-				if (is_debugger_attached())
+				if (debugger_attached())
 					duk_debugger_pause(g_duk);
 				else
 					screen_queue_screenshot(g_screen);

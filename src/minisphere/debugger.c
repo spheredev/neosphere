@@ -41,7 +41,7 @@ static vector_t*  s_sources;
 static bool       s_want_attach;
 
 void
-initialize_debugger(bool want_attach, bool allow_remote)
+debugger_init(bool want_attach, bool allow_remote)
 {
 	void*         data;
 	size_t        data_size;
@@ -86,7 +86,7 @@ initialize_debugger(bool want_attach, bool allow_remote)
 }
 
 void
-shutdown_debugger()
+debugger_uninit()
 {
 	iter_t iter;
 	struct source* p_source;
@@ -105,7 +105,7 @@ shutdown_debugger()
 }
 
 void
-update_debugger(void)
+debugger_update(void)
 {
 	socket_t* socket;
 
@@ -134,13 +134,25 @@ update_debugger(void)
 }
 
 bool
-is_debugger_attached(void)
+debugger_attached(void)
 {
 	return s_is_attached;
 }
 
+color_t
+debugger_color(void)
+{
+	return s_banner_color;
+}
+
 const char*
-get_compiled_name(const char* source_name)
+debugger_name(void)
+{
+	return lstr_cstr(s_banner_text);
+}
+
+const char*
+debugger_compiled_name(const char* source_name)
 {
 	// perform a reverse lookup on the source map to find the compiled name
 	// of an asset based on its name in the source tree.  this is needed to
@@ -171,20 +183,8 @@ get_compiled_name(const char* source_name)
 	return retval;
 }
 
-color_t
-get_debugger_color(void)
-{
-	return s_banner_color;
-}
-
 const char*
-get_debugger_name(void)
-{
-	return lstr_cstr(s_banner_text);
-}
-
-const char*
-get_source_name(const char* compiled_name)
+debugger_source_name(const char* compiled_name)
 {
 	// note: pathname must be canonicalized using fs_make_path() otherwise
 	//       the source map lookup will fail.
@@ -209,10 +209,10 @@ get_source_name(const char* compiled_name)
 }
 
 void
-cache_source(const char* name, const lstring_t* text)
+debugger_cache_source(const char* name, const lstring_t* text)
 {
 	struct source cache_entry;
-	
+
 	iter_t iter;
 	struct source* p_source;
 
@@ -234,10 +234,10 @@ cache_source(const char* name, const lstring_t* text)
 }
 
 void
-debug_print(const char* text, print_op_t op, bool use_console)
+debugger_log(const char* text, print_op_t op, bool use_console)
 {
 	const char* heading;
-	
+
 	duk_push_int(g_duk, APPNFY_DEBUG_PRINT);
 	duk_push_int(g_duk, (int)op);
 	duk_push_string(g_duk, text);
@@ -264,7 +264,7 @@ do_attach_debugger(void)
 	fflush(stdout);
 	timeout = al_get_time() + 30.0;
 	while (s_client == NULL && al_get_time() < timeout) {
-		update_debugger();
+		debugger_update();
 		delay(0.05);
 	}
 	if (s_client == NULL)  // did we time out?
@@ -337,7 +337,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		}
 		
 		name = duk_get_string(ctx, -nvalues + 1);
-		name = get_compiled_name(name);
+		name = debugger_compiled_name(name);
 
 		// check if the data is in the source cache
 		iter = vector_enum(s_sources);

@@ -241,7 +241,7 @@ main(int argc, char* argv[])
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
-	initialize_debugger(want_debug, false);
+	debugger_init(want_debug, false);
 #endif
 
 	// execute the main script
@@ -335,7 +335,7 @@ do_events(void)
 	sockets_update();
 
 #if defined(MINISPHERE_SPHERUN)
-	update_debugger();
+	debugger_update();
 #endif
 
 	async_run_jobs(ASYNC_TICK);
@@ -432,7 +432,7 @@ shutdown_engine(void)
 	kb_save_keymap();
 
 #if defined(MINISPHERE_SPHERUN)
-	shutdown_debugger();
+	debugger_uninit();
 #endif
 
 	shutdown_map_engine();

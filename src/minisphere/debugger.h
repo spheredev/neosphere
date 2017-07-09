@@ -13,15 +13,15 @@ enum print_op
 	PRINT_WARN,
 } print_op_t;
 
-void        initialize_debugger  (bool want_attach, bool allow_remote);
-void        shutdown_debugger    (void);
-void        update_debugger      (void);
-bool        is_debugger_attached (void);
-const char* get_compiled_name    (const char* source_name);
-color_t     get_debugger_color   (void);
-const char* get_debugger_name    (void);
-const char* get_source_name      (const char* pathname);
-void        cache_source         (const char* name, const lstring_t* text);
-void        debug_print          (const char* text, print_op_t op, bool use_console);
+void        debugger_init          (bool want_attach, bool allow_remote);
+void        debugger_uninit        (void);
+void        debugger_update        (void);
+bool        debugger_attached      (void);
+color_t     debugger_color         (void);
+const char* debugger_name          (void);
+const char* debugger_compiled_name (const char* source_name);
+const char* debugger_source_name   (const char* pathname);
+void        debugger_cache_source  (const char* name, const lstring_t* text);
+void        debugger_log           (const char* text, print_op_t op, bool use_console);
 
 #endif // MINISPHERE__DEBUGGER_H__INCLUDED

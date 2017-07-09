@@ -53,7 +53,7 @@ script_eval(const char* filename, bool as_module)
 	}
 	else {
 		path = fs_make_path(filename, NULL, false);
-		source_name = get_source_name(path_cstr(path));
+		source_name = debugger_source_name(path_cstr(path));
 		if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
 			goto on_error;
 		source_text = lstr_from_cp1252(slurp, size);
@@ -103,7 +103,7 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	heapptr = duk_ref_heapptr(g_duk, -1);
 	duk_pop(g_duk);
 
-	cache_source(lstr_cstr(name), source);
+	debugger_cache_source(lstr_cstr(name), source);
 	lstr_free(name);
 
 	script->id = s_next_script_id++;

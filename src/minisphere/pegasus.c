@@ -788,7 +788,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 		duk_push_lstring_t(ctx, code_string);
 		duk_push_string(ctx, "\n})");
 		duk_concat(ctx, 4);
-		duk_push_string(ctx, get_source_name(filename));
+		duk_push_string(ctx, debugger_source_name(filename));
 		if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
 			goto on_error;
 		duk_call(ctx, 0);
@@ -2992,7 +2992,7 @@ js_SSj_log(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_NORMAL, true);
+	debugger_log(duk_get_string(ctx, -1), PRINT_NORMAL, true);
 	return 0;
 }
 
@@ -3007,7 +3007,7 @@ js_SSj_trace(duk_context* ctx)
 	duk_insert(ctx, 0);
 	duk_join(ctx, num_items);
 
-	debug_print(duk_get_string(ctx, -1), PRINT_TRACE, true);
+	debugger_log(duk_get_string(ctx, -1), PRINT_TRACE, true);
 	return 0;
 }
 
