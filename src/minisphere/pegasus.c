@@ -551,7 +551,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_define_method(ctx, "Transform", "translate", js_Transform_translate);
 
-	api_define_object(ctx, NULL, "screen", "Surface", NULL);
+	api_define_object(ctx, NULL, "screen", "Surface", screen_backbuffer(g_screen));
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop(ctx, "screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
 	api_define_static_prop(ctx, "screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
@@ -1986,11 +1986,10 @@ js_Font_drawText(duk_context* ctx)
 		: color_new(255, 255, 255, 255);
 	width = num_args >= 6 ? duk_require_int(ctx, 5) : 0;
 
-	if (surface == NULL && screen_is_skipframe(g_screen))
+	if (surface == screen_backbuffer(g_screen) && screen_is_skipframe(g_screen))
 		return 0;
 	else {
-		if (surface != NULL)
-			al_set_target_bitmap(image_bitmap(surface));
+		image_render_to(surface, NULL);
 		if (num_args < 6)
 			font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
 		else {
@@ -2000,8 +1999,6 @@ js_Font_drawText(duk_context* ctx)
 				font_draw_text(font, color, x, y + i * height, TEXT_ALIGN_LEFT, wraptext_line(wraptext, i));
 			wraptext_free(wraptext);
 		}
-		if (surface != NULL)
-			al_set_target_bitmap(screen_backbuffer(g_screen));
 	}
 	return 0;
 }
@@ -2123,8 +2120,7 @@ js_new_Texture(duk_context* ctx)
 	else {
 		// create an Image by loading an image file
 		filename = duk_require_path(ctx, 0, NULL, false, false);
-		image = image_load(filename);
-		if (image == NULL)
+		if (!(image = image_load(filename)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
 	}
 	duk_push_this(ctx);
@@ -2658,7 +2654,7 @@ js_Model_draw(duk_context* ctx)
 	duk_push_this(ctx);
 	group = duk_require_class_obj(ctx, -1, "Model");
 	surface = num_args >= 1 ? duk_require_class_obj(ctx, 0, "Surface")
-		: NULL;
+		: screen_backbuffer(g_screen);
 
 	if (!screen_is_skipframe(g_screen))
 		model_draw(group, surface);
@@ -3164,7 +3160,7 @@ js_Shader_get_Default(duk_context* ctx)
 	shader_t* shader;
 
 	if (!(shader = galileo_shader()))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "shader compile failed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile default shader");
 	duk_push_class_obj(ctx, "Shader", shader_ref(shader));
 
 	duk_push_this(ctx);
@@ -3203,7 +3199,7 @@ js_new_Shader(duk_context* ctx)
 	fs_filename = duk_require_path(ctx, -1, NULL, false, false);
 	duk_pop_2(ctx);
 	if (!(shader = shader_new(vs_filename, fs_filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "shader compiler failed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile shader");
 	duk_push_class_obj(ctx, "Shader", shader);
 	return 1;
 }
@@ -3324,13 +3320,7 @@ js_Shape_draw(duk_context* ctx)
 	if (num_args >= 2)
 		transform = duk_require_class_obj(ctx, 1, "Transform");
 
-	if (surface != NULL)
-		al_set_target_bitmap(image_bitmap(surface));
-	shader_use(galileo_shader());
-	shape_draw(shape, transform);
-	shader_use(NULL);
-	if (surface != NULL)
-		al_set_target_bitmap(screen_backbuffer(g_screen));
+	shape_draw(shape, surface, transform);
 	return 0;
 }
 
@@ -3741,8 +3731,7 @@ js_new_Surface(duk_context* ctx)
 	}
 	else {
 		filename = duk_require_path(ctx, 0, NULL, false, false);
-		image = image_load(filename);
-		if (image == NULL)
+		if (!(image = image_load(filename)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
 	}
 	duk_push_class_obj(ctx, "Surface", image);
@@ -3767,10 +3756,7 @@ js_Surface_get_height(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "Surface");
 
-	if (image != NULL)
-		duk_push_int(ctx, image_height(image));
-	else
-		duk_push_int(ctx, g_res_y);
+	duk_push_int(ctx, image_height(image));
 	return 1;
 }
 
@@ -3782,10 +3768,7 @@ js_Surface_get_transform(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "Surface");
 
-	if (image != NULL)
-		duk_push_class_obj(ctx, "Transform", image_get_transform(image));
-	else
-		duk_push_class_obj(ctx, "Transform", screen_get_transform(g_screen));
+	duk_push_class_obj(ctx, "Transform", image_get_transform(image));
 	return 1;
 }
 
@@ -3797,10 +3780,7 @@ js_Surface_get_width(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "Surface");
 
-	if (image != NULL)
-		duk_push_int(ctx, image_width(image));
-	else
-		duk_push_int(ctx, g_res_x);
+	duk_push_int(ctx, image_width(image));
 	return 1;
 }
 
@@ -3814,11 +3794,8 @@ js_Surface_set_transform(duk_context* ctx)
 	image = duk_require_class_obj(ctx, -1, "Surface");
 	transform = duk_require_class_obj(ctx, 0, "Transform");
 
-	if (image != NULL)
-		image_set_transform(image, transform);
-	else
-		screen_set_transform(g_screen, transform);
-	return 1;
+	image_set_transform(image, transform);
+	return 0;
 }
 
 static duk_ret_t

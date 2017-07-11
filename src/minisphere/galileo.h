@@ -39,6 +39,7 @@ void         galileo_init           (bool programmable);
 void         galileo_uninit         (void);
 bool         galileo_programmable   (void);
 shader_t*    galileo_shader         (void);
+void         galileo_reset        (void);
 model_t*     model_new              (shader_t* shader);
 model_t*     model_ref              (model_t* it);
 void         model_free             (model_t* it);
@@ -65,7 +66,7 @@ image_t*     shape_texture          (const shape_t* it);
 void         shape_set_texture      (shape_t* it, image_t* texture);
 bool         shape_add_vertex       (shape_t* it, vertex_t vertex);
 void         shape_calculate_uv     (shape_t* it);
-void         shape_draw             (shape_t* it, transform_t* matrix);
+void         shape_draw             (shape_t* it, image_t* surface, transform_t* matrix);
 void         shape_upload           (shape_t* it);
 
 #endif // MINISPHERE__GALILEO_H__INCLUDED

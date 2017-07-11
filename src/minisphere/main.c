@@ -186,11 +186,6 @@ main(int argc, char* argv[])
 		exit_game(false);
 	}
 
-	api_init(g_duk);
-	initialize_vanilla_api(g_duk);
-	init_map_engine_api(g_duk);
-	initialize_pegasus_api(g_duk);
-
 	// set up the render context ("screen") so we can draw stuff
 	fs_get_resolution(g_fs, &g_res_x, &g_res_y);
 	if (!(icon = image_load("icon.png")))
@@ -210,6 +205,11 @@ main(int argc, char* argv[])
 		al_get_display_event_source(screen_display(g_screen)));
 	attach_input_display();
 	kb_load_keymap();
+
+	api_init(g_duk);
+	initialize_vanilla_api(g_duk);
+	init_map_engine_api(g_duk);
+	initialize_pegasus_api(g_duk);
 
 	// attempt to locate and load system font
 	console_log(1, "loading system default font");

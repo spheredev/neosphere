@@ -42,8 +42,8 @@ struct model
 
 struct shader
 {
-	unsigned int   id;
-	unsigned int   refcount;
+	unsigned int    id;
+	unsigned int    refcount;
 	ALLEGRO_SHADER* program;
 };
 
@@ -64,6 +64,7 @@ struct shape
 
 static shader_t*    s_def_shader = NULL;
 static bool         s_have_shaders = false;
+static shader_t*    s_last_shader = NULL;
 static unsigned int s_next_group_id = 0;
 static unsigned int s_next_shader_id = 1;
 static unsigned int s_next_shape_id = 0;
@@ -107,6 +108,17 @@ galileo_shader(void)
 		free(fs_pathname);
 	}
 	return s_def_shader;
+}
+
+void
+galileo_reset(void)
+{
+	// note: this resets internal render state to the default settings for Sphere v1.
+	//       Sv1 APIs should call this before drawing anything; doing so avoids Galileo
+	//       haivng to undo its own state changes all the time, keeping things snappy.
+
+	image_render_to(screen_backbuffer(g_screen), NULL);
+	shader_use(NULL);
 }
 
 model_t*
@@ -204,10 +216,7 @@ model_draw(const model_t* it, image_t* surface)
 	iter_t iter;
 	struct uniform* p;
 
-	if (surface != NULL)
-		image_render_to(surface, it->transform);
-	else
-		screen_render_to(g_screen, it->transform);
+	image_render_to(surface, it->transform);
 
 	if (s_have_shaders) {
 		shader_use(it->shader != NULL ? it->shader : galileo_shader());
@@ -236,12 +245,6 @@ model_draw(const model_t* it, image_t* surface)
 	iter = vector_enum(it->shapes);
 	while (vector_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
-	screen_render_to(g_screen, NULL);
-
-	shader_use(NULL);
-
-	if (surface != NULL)
-		al_set_target_bitmap(screen_backbuffer(g_screen));
 }
 
 void
@@ -380,19 +383,24 @@ shader_use(shader_t* shader)
 {
 	ALLEGRO_SHADER* al_shader;
 
+	if (shader == s_last_shader)
+		return true;
+	
 	if (shader != NULL)
 		console_log(4, "activating shader program #%u", shader->id);
 	else
-		console_log(4, "activating null shader");
+		console_log(4, "activating legacy shaders");
 	if (s_have_shaders) {
 		al_shader = shader != NULL ? shader->program : NULL;
 		if (!al_use_shader(al_shader))
 			return false;
+		s_last_shader = shader;
 		return true;
 	}
 	else {
 		// if shaders are not supported, degrade gracefully. this simplifies the rest
 		// of the engine, which simply assumes shaders are always supported.
+		s_last_shader = shader;
 		return true;
 	}
 }
@@ -525,11 +533,11 @@ shape_calculate_uv(shape_t* it)
 }
 
 void
-shape_draw(shape_t* it, transform_t* matrix)
+shape_draw(shape_t* it, image_t* surface, transform_t* matrix)
 {
-	screen_render_to(g_screen, matrix);
+	image_render_to(surface, matrix);
+	shader_use(galileo_shader());
 	render_shape(it);
-	screen_render_to(g_screen, NULL);
 }
 
 void

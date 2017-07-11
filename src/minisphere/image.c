@@ -23,6 +23,7 @@ struct image
 static void cache_pixels   (image_t* image);
 static void uncache_pixels (image_t* image);
 
+static image_t*     s_last_image = NULL;
 static unsigned int s_next_image_id = 0;
 
 image_t*
@@ -369,16 +370,18 @@ image_apply_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 void
 image_blit(image_t* image, image_t* target_image, int x, int y)
 {
-	int blend_mode_dest;
-	int blend_mode_src;
-	int blend_op;
+	int             blend_mode_dest;
+	int             blend_mode_src;
+	int             blend_op;
+	ALLEGRO_BITMAP* old_target;
 
+	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(image_bitmap(target_image));
 	al_get_blender(&blend_op, &blend_mode_src, &blend_mode_dest);
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
 	al_set_blender(blend_op, blend_mode_src, blend_mode_dest);
-	al_set_target_bitmap(screen_backbuffer(g_screen));
+	al_set_target_bitmap(old_target);
 }
 
 void
@@ -454,17 +457,20 @@ image_draw_tiled_masked(image_t* image, color_t mask, int x, int y, int width, i
 void
 image_fill(image_t* image, color_t color)
 {
-	int             clip_x, clip_y, clip_w, clip_h;
-	ALLEGRO_BITMAP* last_target;
+	int             clip_height;
+	int             clip_width;
+	int             clip_x;
+	int             clip_y;
+	ALLEGRO_BITMAP* old_target;
 
 	uncache_pixels(image);
-	al_get_clipping_rectangle(&clip_x, &clip_y, &clip_w, &clip_h);
+	al_get_clipping_rectangle(&clip_x, &clip_y, &clip_width, &clip_height);
 	al_reset_clipping_rectangle();
-	last_target = al_get_target_bitmap();
+	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(image->bitmap);
 	al_clear_to_color(al_map_rgba(color.r, color.g, color.b, color.a));
-	al_set_target_bitmap(last_target);
-	al_set_clipping_rectangle(clip_x, clip_y, clip_w, clip_h);
+	al_set_target_bitmap(old_target);
+	al_set_clipping_rectangle(clip_x, clip_y, clip_width, clip_height);
 }
 
 bool
@@ -477,11 +483,14 @@ image_flip(image_t* image, bool is_h_flip, bool is_v_flip)
 	if (!is_h_flip && !is_v_flip)  // this really shouldn't happen...
 		return true;
 	uncache_pixels(image);
-	if (!(new_bitmap = al_create_bitmap(image->width, image->height))) return false;
+	if (!(new_bitmap = al_create_bitmap(image->width, image->height)))
+		return false;
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(new_bitmap);
-	if (is_h_flip) draw_flags |= ALLEGRO_FLIP_HORIZONTAL;
-	if (is_v_flip) draw_flags |= ALLEGRO_FLIP_VERTICAL;
+	if (is_h_flip)
+		draw_flags |= ALLEGRO_FLIP_HORIZONTAL;
+	if (is_v_flip)
+		draw_flags |= ALLEGRO_FLIP_VERTICAL;
 	al_draw_bitmap(image->bitmap, 0, 0, draw_flags);
 	al_set_target_bitmap(old_target);
 	al_destroy_bitmap(image->bitmap);
@@ -516,6 +525,24 @@ image_lock(image_t* image)
 	}
 	++image->lock_count;
 	return &image->lock;
+}
+
+void
+image_render_to(image_t* it, transform_t* transform)
+{
+	ALLEGRO_TRANSFORM matrix;
+
+	if (it != s_last_image)
+		al_set_target_bitmap(it->bitmap);
+	al_use_projection_transform(transform_matrix(it->transform));
+	if (transform != NULL) {
+		al_use_transform(transform_matrix(transform));
+	}
+	else {
+		al_identity_transform(&matrix);
+		al_use_transform(&matrix);
+	}
+	s_last_image = it;
 }
 
 bool
@@ -572,22 +599,6 @@ image_rescale(image_t* image, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	return true;
-}
-
-void
-image_render_to(image_t* image, transform_t* transform)
-{
-	ALLEGRO_TRANSFORM matrix;
-	
-	al_set_target_bitmap(image->bitmap);
-	al_use_projection_transform(transform_matrix(image->transform));
-	if (transform != NULL) {
-		al_use_transform(transform_matrix(transform));
-	}
-	else {
-		al_identity_transform(&matrix);
-		al_use_transform(&matrix);
-	}
 }
 
 bool

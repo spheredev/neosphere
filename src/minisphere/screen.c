@@ -8,12 +8,11 @@
 #include "async.h"
 #include "debugger.h"
 #include "image.h"
-#include "transform.h"
 
 struct screen
 {
 	bool             avoid_sleep;
-	ALLEGRO_BITMAP*  backbuffer;
+	image_t*         backbuffer;
 	rect_t           clip_rect;
 	ALLEGRO_DISPLAY* display;
 	int              fps_flips;
@@ -31,7 +30,6 @@ struct screen
 	bool             show_fps;
 	bool             skip_frame;
 	bool             take_screenshot;
-	transform_t*     transform;
 	bool             use_shaders;
 	int              x_offset;
 	float            x_scale;
@@ -46,7 +44,7 @@ static void refresh_display (screen_t* screen);
 screen_t*
 screen_new(const char* title, image_t* icon, int x_size, int y_size, int frameskip, bool avoid_sleep)
 {
-	ALLEGRO_BITMAP*  backbuffer = NULL;
+	image_t*         backbuffer = NULL;
 	int              bitmap_flags;
 	ALLEGRO_DISPLAY* display;
 	ALLEGRO_BITMAP*  icon_bitmap;
@@ -73,8 +71,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	// custom backbuffer: this allows pixel-perfect rendering regardless
 	// of the actual window size.
 	if (display != NULL)
-		backbuffer = al_create_bitmap(x_size, y_size);
-
+		backbuffer = image_new(x_size, y_size);
 	if (backbuffer == NULL) {
 		fprintf(stderr, "FATAL: couldn't initialize render context");
 		return NULL;
@@ -98,7 +95,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	screen = calloc(1, sizeof(screen_t));
 	screen->display = display;
 	screen->backbuffer = backbuffer;
-	screen->transform = transform_new();
 	screen->x_size = x_size;
 	screen->y_size = y_size;
 	screen->max_skips = frameskip;
@@ -113,7 +109,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	screen->show_fps = true;
 #endif
 
-	transform_orthographic(screen->transform, 0.0f, 0.0f, x_size, y_size, -1.0f, 1.0f);
 	screen_set_clipping(screen, new_rect(0, 0, x_size, y_size));
 	refresh_display(screen);
 	return screen;
@@ -126,12 +121,12 @@ screen_free(screen_t* it)
 		return;
 	
 	console_log(1, "shutting down render context");
-	al_destroy_bitmap(it->backbuffer);
+	image_free(it->backbuffer);
 	al_destroy_display(it->display);
 	free(it);
 }
 
-ALLEGRO_BITMAP*
+image_t*
 screen_backbuffer(const screen_t* it)
 {
 	return it->backbuffer;
@@ -189,12 +184,6 @@ screen_get_mouse_xy(const screen_t* it, int* o_x, int* o_y)
 	*o_y = (mouse_state.y - it->y_offset) / it->y_scale;
 }
 
-transform_t*
-screen_get_transform(const screen_t* it)
-{
-	return it->transform;
-}
-
 void
 screen_set_clipping(screen_t* it, rect_t clip_rect)
 {
@@ -225,29 +214,15 @@ screen_set_mouse_xy(screen_t* it, int x, int y)
 }
 
 void
-screen_set_transform(screen_t* it, transform_t* matrix)
-{
-	transform_t* old_matrix;
-
-	old_matrix = it->transform;
-	it->transform = transform_ref(matrix);
-	transform_free(old_matrix);
-	refresh_display(it);
-}
-
-void
 screen_draw_status(screen_t* it, const char* text, color_t color)
 {
 	rect_t            bounds;
 	ALLEGRO_BITMAP*   old_target;
 	int               screen_cx;
 	int               screen_cy;
-	ALLEGRO_TRANSFORM trans;
 	int               width;
 	int               height;
 
-	old_target = al_get_target_bitmap();
-	al_set_target_backbuffer(it->display);
 	screen_cx = al_get_display_width(it->display);
 	screen_cy = al_get_display_height(it->display);
 	width = font_get_width(g_sys_font, text) + 20;
@@ -256,8 +231,8 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 	bounds.y1 = screen_cy - it->y_offset - height - 8;
 	bounds.x2 = bounds.x1 + width;
 	bounds.y2 = bounds.y1 + height;
-	al_identity_transform(&trans);
-	al_use_transform(&trans);
+	old_target = al_get_target_bitmap();
+	al_set_target_backbuffer(it->display);
 	al_draw_filled_rounded_rectangle(bounds.x1, bounds.y1, bounds.x2, bounds.y2, 4, 4,
 		al_map_rgba(16, 16, 16, 192));
 	font_draw_text(g_sys_font, color_new(0, 0, 0, 255), (bounds.x1 + bounds.x2) / 2 + 1,
@@ -277,6 +252,7 @@ screen_flip(screen_t* it, int framerate)
 	bool              is_backbuffer_valid;
 	time_t            now;
 	ALLEGRO_STATE     old_state;
+	ALLEGRO_BITMAP*   old_target;
 	path_t*           path;
 	const char*       pathstr;
 	int               screen_cx;
@@ -307,7 +283,7 @@ screen_flip(screen_t* it, int framerate)
 		if (it->take_screenshot) {
 			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
-			snapshot = al_clone_bitmap(it->backbuffer);
+			snapshot = al_clone_bitmap(image_bitmap(it->backbuffer));
 			al_restore_state(&old_state);
 			game_path = fs_path(g_fs);
 			game_filename = path_is_file(game_path)
@@ -331,9 +307,10 @@ screen_flip(screen_t* it, int framerate)
 			path_free(path);
 			it->take_screenshot = false;
 		}
+		old_target = al_get_target_bitmap();
 		al_set_target_backbuffer(it->display);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		al_draw_scaled_bitmap(it->backbuffer, 0, 0, it->x_size, it->y_size,
+		al_draw_scaled_bitmap(image_bitmap(it->backbuffer), 0, 0, it->x_size, it->y_size,
 			it->x_offset, it->y_offset, it->x_size * it->x_scale, it->y_size * it->y_scale,
 			0x0);
 		if (debugger_attached())
@@ -349,7 +326,7 @@ screen_flip(screen_t* it, int framerate)
 			font_draw_text(g_sys_font, color_new(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
 			font_draw_text(g_sys_font, color_new(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 		}
-		al_set_target_bitmap(it->backbuffer);
+		al_set_target_bitmap(old_target);
 		al_flip_display();
 		it->last_flip_time = al_get_time();
 		it->num_skips = 0;
@@ -380,11 +357,11 @@ screen_flip(screen_t* it, int framerate)
 		it->skip_frame = false;
 		do_events();
 		it->next_frame_time = al_get_time();
-		it->next_frame_time = al_get_time();
 	}
 	++it->num_frames;
 	if (!it->skip_frame) {
 		// disable clipping so we can clear the whole backbuffer.
+		image_render_to(it->backbuffer, NULL);
 		al_set_clipping_rectangle(0, 0, it->x_size, it->y_size);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		screen_set_clipping(it, it->clip_rect);
@@ -402,9 +379,8 @@ screen_grab(screen_t* it, int x, int y, int width, int height)
 
 	if (!(image = image_new(width, height)))
 		goto on_error;
-	al_set_target_bitmap(image_bitmap(image));
-	al_draw_bitmap_region(it->backbuffer, x, y, width, height, 0, 0, 0x0);
-	al_set_target_bitmap(it->backbuffer);
+	image_render_to(image, NULL);
+	al_draw_bitmap_region(image_bitmap(it->backbuffer), x, y, width, height, 0, 0, 0x0);
 	return image;
 
 on_error:
@@ -416,22 +392,6 @@ void
 screen_queue_screenshot(screen_t* it)
 {
 	it->take_screenshot = true;
-}
-
-void
-screen_render_to(screen_t* it, transform_t* transform)
-{
-	ALLEGRO_TRANSFORM matrix;
-	
-	al_set_target_bitmap(it->backbuffer);
-	al_use_projection_transform(transform_matrix(it->transform));
-	if (transform != NULL) {
-		al_use_transform(transform_matrix(transform));
-	}
-	else {
-		al_identity_transform(&matrix);
-		al_use_transform(&matrix);
-	}
 }
 
 void
@@ -510,6 +470,6 @@ refresh_display(screen_t* screen)
 			(monitor.y1 + monitor.y2) / 2 - screen->y_size * screen->y_scale / 2);
 	}
 	
-	screen_render_to(screen, NULL);
+	image_render_to(screen->backbuffer, NULL);
 	screen_set_clipping(screen, screen->clip_rect);
 }

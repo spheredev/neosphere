@@ -12,6 +12,7 @@
 #include "bytearray.h"
 #include "debugger.h"
 #include "font.h"
+#include "galileo.h"
 #include "image.h"
 #include "input.h"
 #include "logger.h"
@@ -1465,7 +1466,7 @@ js_SetFrameRate(duk_context* ctx)
 	int framerate = duk_to_int(ctx, 0);
 
 	if (framerate < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "framerate cannot be negative", framerate);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
 	g_framerate = framerate;
 	return 0;
 }
@@ -1513,8 +1514,10 @@ js_ApplyColorMask(duk_context* ctx)
 
 	color = duk_require_sphere_color(ctx, 0);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, nativecolor(color));
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, nativecolor(color));
 	return 0;
 }
 
@@ -1548,28 +1551,29 @@ js_BezierCurve(duk_context* ctx)
 		y4 = duk_to_number(ctx, 9);
 	}
 
-	if (!screen_is_skipframe(g_screen)) {
-		cp[0] = x1; cp[1] = y1;
-		cp[2] = x2; cp[3] = y2;
-		cp[4] = x3; cp[5] = y3;
-		cp[6] = x4; cp[7] = y4;
-		if (is_quadratic) {
-			// convert quadratic Bezier curve to cubic
-			cp[6] = x3; cp[7] = y3;
-			cp[2] = x1 + (2.0 / 3.0) * (x2 - x1);
-			cp[3] = y1 + (2.0 / 3.0) * (y2 - y1);
-			cp[4] = x3 + (2.0 / 3.0) * (x2 - x3);
-			cp[5] = y3 + (2.0 / 3.0) * (y2 - y3);
-		}
-		step_size = step_size < 0.001 ? 0.001 : step_size > 1.0 ? 1.0 : step_size;
-		num_points = 1.0 / step_size;
-		points = calloc(num_points, sizeof(ALLEGRO_VERTEX));
-		al_calculate_spline(&points[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
-		for (i = 0; i < num_points; ++i)
-			points[i].color = nativecolor(color);
-		al_draw_prim(points, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
-		free(points);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	cp[0] = x1; cp[1] = y1;
+	cp[2] = x2; cp[3] = y2;
+	cp[4] = x3; cp[5] = y3;
+	cp[6] = x4; cp[7] = y4;
+	if (is_quadratic) {
+		// convert quadratic Bezier curve to cubic
+		cp[6] = x3; cp[7] = y3;
+		cp[2] = x1 + (2.0 / 3.0) * (x2 - x1);
+		cp[3] = y1 + (2.0 / 3.0) * (y2 - y1);
+		cp[4] = x3 + (2.0 / 3.0) * (x2 - x3);
+		cp[5] = y3 + (2.0 / 3.0) * (y2 - y3);
 	}
+	step_size = step_size < 0.001 ? 0.001 : step_size > 1.0 ? 1.0 : step_size;
+	num_points = 1.0 / step_size;
+	points = calloc(num_points, sizeof(ALLEGRO_VERTEX));
+	al_calculate_spline(&points[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
+	for (i = 0; i < num_points; ++i)
+		points[i].color = nativecolor(color);
+	galileo_reset();
+	al_draw_prim(points, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
+	free(points);
 	return 0;
 }
 
@@ -1620,7 +1624,7 @@ js_BlendColors(duk_context* ctx)
 	}
 
 	if (w1 < 0.0 || w2 < 0.0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "weights cannot be negative", w1, w2);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid weight(s)", w1, w2);
 
 	duk_push_sphere_color(ctx, color_mix(color1, color2, w1, w2));
 	return 1;
@@ -1635,9 +1639,9 @@ js_CreateByteArray(duk_context* ctx)
 	size = duk_to_int(ctx, 0);
 
 	if (size < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "size cannot be negative");
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid byte array size");
 	if (!(array = bytearray_new(size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create byte array");
 	duk_push_sphere_bytearray(ctx, array);
 	bytearray_free(array);
 	return 1;
@@ -1652,7 +1656,7 @@ js_CreateByteArrayFromString(duk_context* ctx)
 	string = duk_require_lstring_t(ctx, 0);
 
 	if (!(array = bytearray_from_lstring(string)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create byte array");
 	lstr_free(string);
 	duk_push_sphere_bytearray(ctx, array);
 	bytearray_free(array);
@@ -1913,6 +1917,7 @@ js_FilledCircle(duk_context* ctx)
 	s_vbuf[i + 1].y = y - sin(0) * radius;
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(color);
+	galileo_reset();
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return 0;
 }
@@ -1949,6 +1954,7 @@ js_FilledEllipse(duk_context* ctx)
 	s_vbuf[i + 1].y = y - sin(0) * ry;
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(color);
+	galileo_reset();
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return 0;
 }
@@ -2087,6 +2093,7 @@ js_GradientEllipse(duk_context* ctx)
 	s_vbuf[i + 1].y = y - sin(0) * ry;
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(outer_color);
+	galileo_reset();
 	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return 0;
 }
@@ -2110,18 +2117,19 @@ js_GradientLine(duk_context* ctx)
 	color1 = duk_require_sphere_color(ctx, 4);
 	color2 = duk_require_sphere_color(ctx, 5);
 
-	if (!screen_is_skipframe(g_screen)) {
-		length = hypotf(x2 - x1, y2 - y1);
-		tx = 0.5 * (y2 - y1) / length;
-		ty = 0.5 * -(x2 - x1) / length;
-		ALLEGRO_VERTEX verts[] = {
-			{ x1 + tx, y1 + ty, 0, 0, 0, nativecolor(color1) },
-			{ x1 - tx, y1 - ty, 0, 0, 0, nativecolor(color1) },
-			{ x2 - tx, y2 - ty, 0, 0, 0, nativecolor(color2) },
-			{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) },
-		};
-		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
-	}
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	length = hypotf(x2 - x1, y2 - y1);
+	tx = 0.5 * (y2 - y1) / length;
+	ty = 0.5 * -(x2 - x1) / length;
+	ALLEGRO_VERTEX verts[] = {
+		{ x1 + tx, y1 + ty, 0, 0, 0, nativecolor(color1) },
+		{ x1 - tx, y1 - ty, 0, 0, 0, nativecolor(color1) },
+		{ x2 - tx, y2 - ty, 0, 0, 0, nativecolor(color2) },
+		{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) },
+	};
+	galileo_reset();
+	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return 0;
 }
 
@@ -2144,15 +2152,16 @@ js_GradientRectangle(duk_context* ctx)
 	color_lr = duk_require_sphere_color(ctx, 6);
 	color_ll = duk_require_sphere_color(ctx, 7);
 
-	if (!screen_is_skipframe(g_screen)) {
-		ALLEGRO_VERTEX verts[] = {
-			{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
-			{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
-			{ x1, y2, 0, 0, 0, nativecolor(color_ll) },
-			{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
-		};
-		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	}
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	ALLEGRO_VERTEX verts[] = {
+		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
+		{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
+		{ x1, y2, 0, 0, 0, nativecolor(color_ll) },
+		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
+	};
+	galileo_reset();
+	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
 
@@ -2173,14 +2182,15 @@ js_GradientTriangle(duk_context* ctx)
 	color2 = duk_require_sphere_color(ctx, 7);
 	color3 = duk_require_sphere_color(ctx, 8);
 
-	if (!screen_is_skipframe(g_screen)) {
-		ALLEGRO_VERTEX verts[] = {
-			{ x1, y1, 0, 0, 0, nativecolor(color1) },
-			{ x2, y2, 0, 0, 0, nativecolor(color2) },
-			{ x3, y3, 0, 0, 0, nativecolor(color3) },
-		};
-		al_draw_prim(verts, NULL, NULL, 0, 3, ALLEGRO_PRIM_TRIANGLE_LIST);
-	}
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	ALLEGRO_VERTEX verts[] = {
+		{ x1, y1, 0, 0, 0, nativecolor(color1) },
+		{ x2, y2, 0, 0, 0, nativecolor(color2) },
+		{ x3, y3, 0, 0, 0, nativecolor(color3) },
+	};
+	galileo_reset();
+	al_draw_prim(verts, NULL, NULL, 0, 3, ALLEGRO_PRIM_TRIANGLE_LIST);
 	return 0;
 }
 
@@ -2247,8 +2257,10 @@ js_Line(duk_context* ctx)
 	y2 = trunc(duk_to_number(ctx, 3)) + 0.5;
 	color = duk_require_sphere_color(ctx, 4);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
 	return 0;
 }
 
@@ -2289,6 +2301,7 @@ js_LineSeries(duk_context* ctx)
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
 	}
+	galileo_reset();
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
 		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
 		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
@@ -2498,8 +2511,10 @@ js_OutlinedCircle(duk_context* ctx)
 	float radius = trunc(duk_to_number(ctx, 2));
 	color_t color = duk_require_sphere_color(ctx, 3);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_circle(x, y, radius, nativecolor(color), 1.0);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
 	return 0;
 }
 
@@ -2512,8 +2527,10 @@ js_OutlinedEllipse(duk_context* ctx)
 	float ry = duk_to_int(ctx, 3);
 	color_t color = duk_require_sphere_color(ctx, 4);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
 	return 0;
 }
 
@@ -2528,8 +2545,10 @@ js_OutlinedRectangle(duk_context* ctx)
 	color_t color = duk_require_sphere_color(ctx, 4);
 	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
 	return 0;
 }
 
@@ -2545,8 +2564,10 @@ js_OutlinedRoundRectangle(duk_context* ctx)
 	color_t color = duk_require_sphere_color(ctx, 5);
 	int thickness = n_args >= 7 ? duk_to_int(ctx, 6) : 1;
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
 	return 0;
 }
 
@@ -2557,8 +2578,10 @@ js_Point(duk_context* ctx)
 	float y = duk_to_int(ctx, 1) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 2);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_pixel(x, y, nativecolor(color));
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_pixel(x, y, nativecolor(color));
 	return 0;
 }
 
@@ -2594,6 +2617,7 @@ js_PointSeries(duk_context* ctx)
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
 	}
+	galileo_reset();
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
 	free(vertices);
 	return 0;
@@ -2626,8 +2650,10 @@ js_Rectangle(duk_context* ctx)
 	int h = duk_to_int(ctx, 3);
 	color_t color = duk_require_sphere_color(ctx, 4);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
 	return 0;
 }
 
@@ -2735,8 +2761,10 @@ js_RoundRectangle(duk_context* ctx)
 	float radius = duk_to_number(ctx, 4);
 	color_t color = duk_require_sphere_color(ctx, 5);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
 	return 0;
 }
 
@@ -2751,8 +2779,10 @@ js_Triangle(duk_context* ctx)
 	int y3 = duk_to_int(ctx, 5);
 	color_t color = duk_require_sphere_color(ctx, 6);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_filled_triangle(x1, y1, x2, y2, x3, y3, nativecolor(color));
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_filled_triangle(x1, y1, x2, y2, x3, y3, nativecolor(color));
 	return 0;
 }
 
@@ -3202,10 +3232,13 @@ js_Font_drawText(duk_context* ctx)
 
 	duk_push_this(ctx);
 	font = duk_require_class_obj(ctx, -1, "ssFont");
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	if (!screen_is_skipframe(g_screen))
-		font_draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
+	mask = duk_require_sphere_color(ctx, -1);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	font_draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
 	return 0;
 }
 
@@ -3229,25 +3262,27 @@ js_Font_drawTextBox(duk_context* ctx)
 
 	duk_push_this(ctx);
 	font = duk_require_class_obj(ctx, -1, "ssFont");
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
+	mask = duk_require_sphere_color(ctx, -1);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
+	duk_push_this(ctx);
+	duk_push_string(ctx, text);
+	duk_push_int(ctx, w);
+	duk_call_method(ctx, 2);
+	duk_get_prop_string(ctx, -1, "length");
+	num_lines = duk_get_int(ctx, -1);
 	duk_pop(ctx);
-	if (!screen_is_skipframe(g_screen)) {
-		duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
-		duk_push_this(ctx);
-		duk_push_string(ctx, text);
-		duk_push_int(ctx, w);
-		duk_call_method(ctx, 2);
-		duk_get_prop_string(ctx, -1, "length");
-		num_lines = duk_get_int(ctx, -1);
-		duk_pop(ctx);
-		line_height = font_height(font);
-		for (i = 0; i < num_lines; ++i) {
-			duk_get_prop_index(ctx, -1, i); line_text = duk_get_string(ctx, -1); duk_pop(ctx);
-			font_draw_text(font, mask, x + offset, y, TEXT_ALIGN_LEFT, line_text);
-			y += line_height;
-		}
-		duk_pop(ctx);
+	line_height = font_height(font);
+	galileo_reset();
+	for (i = 0; i < num_lines; ++i) {
+		duk_get_prop_index(ctx, -1, i); line_text = duk_get_string(ctx, -1); duk_pop(ctx);
+		font_draw_text(font, mask, x + offset, y, TEXT_ALIGN_LEFT, line_text);
+		y += line_height;
 	}
+	duk_pop(ctx);
 	return 0;
 }
 
@@ -3258,33 +3293,36 @@ js_Font_drawZoomedText(duk_context* ctx)
 	font_t*         font;
 	int             height;
 	color_t         mask;
+	ALLEGRO_BITMAP* old_target;
 	float           scale;
 	const char*     text;
 	int             width;
 	int             x;
 	int             y;
 
+	duk_push_this(ctx);
+	font = duk_require_class_obj(ctx, -1, "ssFont");
+	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
+	mask = duk_require_sphere_color(ctx, -1);
 	x = duk_to_int(ctx, 0);
 	y = duk_to_int(ctx, 1);
 	scale = duk_to_number(ctx, 2);
 	text = duk_to_string(ctx, 3);
 
-	duk_push_this(ctx);
-	font = duk_require_class_obj(ctx, -1, "ssFont");
-	duk_get_prop_string(ctx, -1, "\xFF" "color_mask"); mask = duk_require_sphere_color(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	if (!screen_is_skipframe(g_screen)) {
-		width = font_get_width(font, text);
-		height = font_height(font);
-		apply_blend_mode(BLEND_REPLACE);
-		bitmap = al_create_bitmap(width, height);
-		al_set_target_bitmap(bitmap);
-		font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
-		screen_render_to(g_screen, NULL);
-		reset_blender();
-		al_draw_scaled_bitmap(bitmap, 0, 0, width, height, x, y, width * scale, height * scale, 0x0);
-		al_destroy_bitmap(bitmap);
-	}
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	width = font_get_width(font, text);
+	height = font_height(font);
+	bitmap = al_create_bitmap(width, height);
+	old_target = al_get_target_bitmap();
+	al_set_target_bitmap(bitmap);
+	apply_blend_mode(BLEND_REPLACE);
+	font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
+	al_set_target_bitmap(old_target);
+	galileo_reset();
+	al_draw_scaled_bitmap(bitmap, 0, 0, width, height, x, y, width * scale, height * scale, 0x0);
+	reset_blender();
+	al_destroy_bitmap(bitmap);
 	return 0;
 }
 
@@ -3380,11 +3418,14 @@ static duk_ret_t
 js_Font_setColorMask(duk_context* ctx)
 {
 	font_t* font;
+	color_t mask;
 
 	duk_push_this(ctx);
 	font = duk_require_class_obj(ctx, -1, "ssFont");
-	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "color_mask"); duk_pop(ctx);
-	duk_pop(ctx);
+	mask = duk_require_sphere_color(ctx, 0);
+	
+	duk_push_sphere_color(ctx, mask);
+	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 	return 0;
 }
 
@@ -3465,8 +3506,11 @@ js_Image_blit(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssImage");
-	duk_pop(ctx);
-	if (!screen_is_skipframe(g_screen)) al_draw_bitmap(image_bitmap(image), x, y, 0x0);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 
@@ -3481,8 +3525,11 @@ js_Image_blitMask(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssImage");
-	duk_pop(ctx);
-	if (!screen_is_skipframe(g_screen)) al_draw_tinted_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a), x, y, 0x0);
+	
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_tinted_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a), x, y, 0x0);
 	return 0;
 }
 
@@ -3494,7 +3541,7 @@ js_Image_createSurface(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssImage");
-	duk_pop(ctx);
+
 	if ((new_image = image_clone(image)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
 	duk_push_class_obj(ctx, "ssSurface", new_image);
@@ -3517,12 +3564,13 @@ js_Image_rotateBlit(duk_context* ctx)
 	y = duk_to_int(ctx, 1);
 	angle = duk_to_number(ctx, 2);
 
-	if (!screen_is_skipframe(g_screen)) {
-		width = image_width(image);
-		height = image_height(image);
-		al_draw_rotated_bitmap(image_bitmap(image), width / 2, height / 2,
-			x + width / 2, y + height / 2, angle, 0x0);
-	}
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	width = image_width(image);
+	height = image_height(image);
+	galileo_reset();
+	al_draw_rotated_bitmap(image_bitmap(image), width / 2, height / 2,
+		x + width / 2, y + height / 2, angle, 0x0);
 	return 0;
 }
 
@@ -3544,12 +3592,13 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	angle = duk_to_number(ctx, 2);
 	mask = duk_require_sphere_color(ctx, 3);
 
-	if (!screen_is_skipframe(g_screen)) {
-		width = image_width(image);
-		height = image_height(image);
-		al_draw_tinted_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a),
-			width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	}
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	width = image_width(image);
+	height = image_height(image);
+	galileo_reset();
+	al_draw_tinted_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a),
+		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
 	return 0;
 }
 
@@ -3592,8 +3641,10 @@ js_Image_transformBlit(duk_context* ctx)
 		{ x4 + 0.5, y4 + 0.5, 0, 0, height, mask },
 		{ x3 + 0.5, y3 + 0.5, 0, width, height, mask }
 	};
-	if (!screen_is_skipframe(g_screen))
-		al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
 
@@ -3629,8 +3680,10 @@ js_Image_transformBlitMask(duk_context* ctx)
 		{ x4 + 0.5, y4 + 0.5, 0, 0, height, nativecolor(mask) },
 		{ x3 + 0.5, y3 + 0.5, 0, width, height, nativecolor(mask) }
 	};
-	if (!screen_is_skipframe(g_screen))
-		al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return 0;
 }
 
@@ -3650,12 +3703,13 @@ js_Image_zoomBlit(duk_context* ctx)
 	y = duk_to_int(ctx, 1);
 	scale = duk_to_number(ctx, 2);
 
-	if (!screen_is_skipframe(g_screen)) {
-		width = image_width(image);
-		height = image_height(image);
-		al_draw_scaled_bitmap(image_bitmap(image), 0, 0, width, height, 
-			x, y, width * scale, height * scale, 0x0);
-	}
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	width = image_width(image);
+	height = image_height(image);
+	galileo_reset();
+	al_draw_scaled_bitmap(image_bitmap(image), 0, 0, width, height,
+		x, y, width * scale, height * scale, 0x0);
 	return 0;
 }
 
@@ -3677,12 +3731,13 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	scale = duk_to_number(ctx, 2);
 	mask = duk_require_sphere_color(ctx, 3);
 
-	if (!screen_is_skipframe(g_screen)) {
-		width = image_width(image);
-		height = image_height(image);
-		al_draw_tinted_scaled_bitmap(image_bitmap(image), nativecolor(mask),
-			0, 0, width, height, x, y, width * scale, height * scale, 0x0);
-	}
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	width = image_width(image);
+	height = image_height(image);
+	galileo_reset();
+	al_draw_tinted_scaled_bitmap(image_bitmap(image), nativecolor(mask),
+		0, 0, width, height, x, y, width * scale, height * scale, 0x0);
 	return 0;
 }
 
@@ -4603,10 +4658,9 @@ js_Surface_bezierCurve(duk_context* ctx)
 	al_calculate_spline(&vertices[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
 	for (i = 0; i < num_points; ++i)
 		vertices[i].color = nativecolor(color);
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	free(vertices);
 	return 0;
@@ -4624,8 +4678,10 @@ js_Surface_blit(duk_context* ctx)
 	x = duk_to_int(ctx, 0);
 	y = duk_to_int(ctx, 1);
 
-	if (!screen_is_skipframe(g_screen))
-		al_draw_bitmap(image_bitmap(image), x, y, 0x0);
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
 	return 0;
 }
 
@@ -4645,10 +4701,9 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_tinted_bitmap(image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4668,10 +4723,9 @@ js_Surface_blitSurface(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1);
 
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_bitmap(image_bitmap(src_image), x, y, 0x0);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4713,7 +4767,6 @@ js_Surface_cloneSection(duk_context* ctx)
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
-	screen_render_to(g_screen, NULL);
 	duk_push_class_obj(ctx, "ssSurface", new_image);
 	return 1;
 }
@@ -4747,7 +4800,7 @@ js_Surface_drawText(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
+	blend_mode = duk_get_int(ctx, -1);
 	font = duk_require_class_obj(ctx, 0, "ssFont");
 	x = duk_to_int(ctx, 1);
 	y = duk_to_int(ctx, 2);
@@ -4755,10 +4808,9 @@ js_Surface_drawText(duk_context* ctx)
 
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask");
 	color = duk_require_sphere_color(ctx, -1);
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4779,10 +4831,9 @@ js_Surface_filledCircle(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1);
 
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_filled_circle(x, y, radius, nativecolor(color));
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4804,10 +4855,9 @@ js_Surface_filledEllipse(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1);
 	
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_filled_ellipse(x, y, rx, ry, nativecolor(color));
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4883,8 +4933,6 @@ js_Surface_gradientCircle(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 	duk_pop(ctx);
-	apply_blend_mode(blend_mode);
-	image_render_to(image, NULL);
 	vcount = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
 	s_vbuf[0].color = nativecolor(in_color);
@@ -4899,8 +4947,9 @@ js_Surface_gradientCircle(duk_context* ctx)
 	s_vbuf[i + 1].y = y - sin(0) * radius;
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
+	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4927,10 +4976,8 @@ js_Surface_gradientEllipse(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	apply_blend_mode(blend_mode);
-	image_render_to(image, NULL);
+	blend_mode = duk_get_int(ctx, -1);
+
 	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
 	s_vbuf[0].color = nativecolor(in_color);
@@ -4945,8 +4992,9 @@ js_Surface_gradientEllipse(duk_context* ctx)
 	s_vbuf[i + 1].y = y - sin(0) * ry;
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
+	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -4969,19 +5017,18 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	apply_blend_mode(blend_mode);
-	image_render_to(image, NULL);
-
+	blend_mode = duk_get_int(ctx, -1);
+	
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
 		{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
 		{ x1, y2, 0, 0, 0, nativecolor(color_ll) },
 		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
 	};
+	galileo_reset();
+	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5011,8 +5058,6 @@ js_Surface_gradientLine(duk_context* ctx)
 	color1 = duk_require_sphere_color(ctx, 4);
 	color2 = duk_require_sphere_color(ctx, 5);
 
-	apply_blend_mode(blend_mode);
-	image_render_to(image, NULL);
 	length = hypotf(x2 - x1, y2 - y1);
 	tx = 0.5 * (y2 - y1) / length;
 	ty = 0.5 * -(x2 - x1) / length;
@@ -5022,8 +5067,9 @@ js_Surface_gradientLine(duk_context* ctx)
 		{ x2 - tx, y2 - ty, 0, 0, 0, nativecolor(color2) },
 		{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) }
 	};
+	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5045,10 +5091,9 @@ js_Surface_line(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1);
 
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5096,14 +5141,13 @@ js_Surface_lineSeries(duk_context* ctx)
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
 	}
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
 		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
 		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
 		: ALLEGRO_PRIM_LINE_LIST
 	);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	free(vertices);
 	return 0;
@@ -5123,12 +5167,11 @@ js_Surface_outlinedCircle(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	apply_blend_mode(blend_mode);
+	blend_mode = duk_get_int(ctx, -1);
+
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5148,12 +5191,11 @@ js_Surface_outlinedEllipse(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	apply_blend_mode(blend_mode);
+	blend_mode = duk_get_int(ctx, -1);
+
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5194,10 +5236,9 @@ js_Surface_pointSeries(duk_context* ctx)
 		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
 		vertices[i].color = vtx_color;
 	}
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	free(vertices);
 	return 0;
@@ -5220,12 +5261,11 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	apply_blend_mode(blend_mode);
+	blend_mode = duk_get_int(ctx, -1);
+
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5288,7 +5328,6 @@ js_Surface_rotate(duk_context* ctx)
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_rotated_bitmap(image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
-	screen_render_to(g_screen, NULL);
 
 	// free old image and replace internal image pointer
 	// at one time this was an acceptable thing to do; now it's just a hack
@@ -5324,11 +5363,10 @@ js_Surface_rotateBlitMaskSurface(duk_context* ctx)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_tinted_rotated_bitmap(image_bitmap(source_image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5356,10 +5394,9 @@ js_Surface_rotateBlitSurface(duk_context* ctx)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_rotated_bitmap(image_bitmap(source_image), width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5379,12 +5416,12 @@ js_Surface_rectangle(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
-	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
-	duk_pop(ctx);
-	apply_blend_mode(blend_mode);
+	blend_mode = duk_get_int(ctx, -1);
+
+	galileo_reset();
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5438,8 +5475,8 @@ static duk_ret_t
 js_Surface_setBlendMode(duk_context* ctx)
 {
 	duk_push_this(ctx);
-	duk_dup(ctx, 0); duk_put_prop_string(ctx, -2, "\xFF" "blend_mode");
-	duk_pop(ctx);
+	duk_dup(ctx, 0);
+	duk_put_prop_string(ctx, -2, "\xFF" "blend_mode");
 	return 0;
 }
 
@@ -5495,8 +5532,8 @@ js_Surface_transformBlitMaskSurface(duk_context* ctx)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(mask) },
 		{ x2, y2, 0, width, 0, nativecolor(mask) },
@@ -5504,7 +5541,6 @@ js_Surface_transformBlitMaskSurface(duk_context* ctx)
 		{ x3, y3, 0, width, height, nativecolor(mask) },
 	};
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5536,8 +5572,8 @@ js_Surface_transformBlitSurface(duk_context* ctx)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, al_map_rgba(255, 255, 255, 255) },
 		{ x2, y2, 0, width, 0, al_map_rgba(255, 255, 255, 255) },
@@ -5545,7 +5581,6 @@ js_Surface_transformBlitSurface(duk_context* ctx)
 		{ x3, y3, 0, width, height, al_map_rgba(255, 255, 255, 255) },
 	};
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5575,13 +5610,12 @@ js_Surface_zoomBlitMaskSurface(duk_context* ctx)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_tinted_scaled_bitmap(image_bitmap(source_image),
 		nativecolor(mask),
 		0, 0, width, height, x, y, width * scale, height * scale,
 		0x0);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5609,12 +5643,11 @@ js_Surface_zoomBlitSurface(duk_context* ctx)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	apply_blend_mode(blend_mode);
 	image_render_to(image, NULL);
+	apply_blend_mode(blend_mode);
 	al_draw_scaled_bitmap(image_bitmap(source_image),
 		0, 0, width, height, x, y, width * scale, height * scale,
 		0x0);
-	screen_render_to(g_screen, NULL);
 	reset_blender();
 	return 0;
 }
@@ -5622,54 +5655,60 @@ js_Surface_zoomBlitSurface(duk_context* ctx)
 static duk_ret_t
 js_WindowStyle_finalize(duk_context* ctx)
 {
-	windowstyle_t* winstyle;
+	windowstyle_t* style;
 
-	winstyle = duk_require_class_obj(ctx, 0, "ssWindowStyle");
-	free_windowstyle(winstyle);
+	style = duk_require_class_obj(ctx, 0, "ssWindowStyle");
+	free_windowstyle(style);
 	return 0;
 }
 
 static duk_ret_t
 js_WindowStyle_drawWindow(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int w = duk_to_int(ctx, 2);
-	int h = duk_to_int(ctx, 3);
-
+	int            height;
 	color_t        mask;
+	int            width;
 	windowstyle_t* winstyle;
+	int            x;
+	int            y;
 
 	duk_push_this(ctx);
 	winstyle = duk_require_class_obj(ctx, -1, "ssWindowStyle");
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
 	mask = duk_require_sphere_color(ctx, -1);
-	duk_pop(ctx);
-	duk_pop(ctx);
-	draw_window(winstyle, mask, x, y, w, h);
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
+
+	draw_window(winstyle, mask, x, y, width, height);
 	return 0;
 }
 
 static duk_ret_t
 js_WindowStyle_getColorMask(duk_context* ctx)
 {
+	windowstyle_t* style;
+	
 	duk_push_this(ctx);
-	duk_require_class_obj(ctx, -1, "ssWindowStyle");
+	style = duk_require_class_obj(ctx, -1, "ssWindowStyle");
+	
 	duk_get_prop_string(ctx, -2, "\xFF" "color_mask");
-	duk_remove(ctx, -2);
 	return 1;
 }
 
 static duk_ret_t
 js_WindowStyle_setColorMask(duk_context* ctx)
 {
-	color_t mask = duk_require_sphere_color(ctx, 0);
+	color_t        mask;
+	windowstyle_t* style;
 
 	duk_push_this(ctx);
-	duk_require_class_obj(ctx, -1, "ssWindowStyle");
+	style = duk_require_class_obj(ctx, -1, "ssWindowStyle");
+	mask = duk_require_sphere_color(ctx, 0);
+
 	duk_push_sphere_color(ctx, mask);
 	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
-	duk_pop(ctx);
 	return 0;
 }
 
