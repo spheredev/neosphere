@@ -84,13 +84,13 @@ CopyTool.stage('@/eatypig.fat', files('eaty/pig.src'));
 The Debugger
 ------------
 
-**SSj**, included with miniSphere, is an easy-to-use command-line debugger for
-*Sphere* games.  SSj allows you to step through your game's code and inspect
+**SSJ**, included with miniSphere, is an easy-to-use command-line debugger for
+*Sphere* games.  SSJ allows you to step through your game's code and inspect
 the internal state of the game--variables, call stack, objects, etc.--as it
 executes.  Best of all, the original source files don't need to be present, as
-SSj can download source code directly from the engine instance being debugged.
+SSJ can download source code directly from the engine instance being debugged.
 
-A symbolic debugger like SSj is an invaluable tool for development and is a
+A symbolic debugger like SSJ is an invaluable tool for development and is a
 miniSphere exclusive: no such tool was ever available for the original *Sphere*
 engine.
 

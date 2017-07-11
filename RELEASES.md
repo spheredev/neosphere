@@ -4,8 +4,13 @@ Release Notes
 miniSphere X.X
 --------------
 
-* The `SSJ` namespace has been renamed to `SSj` as part of rebranding the
-  debugger.
+* Games can now assign a `Transform` object to a surface's `transform` property
+  to change the projection matrix.  To create projection matrices, there are
+  two new `Transform` methods: `project2D()` for orthographic projection, and
+  `project3D()` for perspective projection.
+
+* `SoundStream` has been renamed to `AudioStream` to avoid potential confusion
+  with the `Sound` object.  The object's API remains otherwise identical.
 
 
 miniSphere 4.6

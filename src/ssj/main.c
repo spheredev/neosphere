@@ -114,7 +114,7 @@ launch_minisphere(path_t* game_path)
 			path_free(path);
 		else {
 			// suppress miniSphere's stdout. this is kind of a hack for now; eventually
-			// I'd like to intermingle the engine's output with SSj's, like in native
+			// I'd like to intermingle the engine's output with SSJ's, like in native
 			// debuggers e.g. GDB.
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);
 			dup2(open("/dev/null", O_WRONLY), STDERR_FILENO);
@@ -289,9 +289,9 @@ print_usage(void)
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("   -a, --attach     Attach to a target which has already been started.  If no  \n");
-	printf("                    connection can be made within 30 seconds, SSj will exit.   \n");
-	printf("       --no-pause   Prevent SSj from pausing execution on attach.              \n");
-	printf("   -t, --trace      Show trace-level output, e.g., from SSj.trace().           \n");
-	printf("       --version    Print the version number of SSj and its dependencies.      \n");
+	printf("                    connection can be made within 30 seconds, SSJ will exit.   \n");
+	printf("       --no-pause   Prevent SSJ from pausing execution on attach.              \n");
+	printf("   -t, --trace      Show trace-level output, e.g., from SSJ.trace().           \n");
+	printf("       --version    Print the version number of SSJ and its dependencies.      \n");
 	printf("       --help       Print this help text.                                      \n");
 }

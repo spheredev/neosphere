@@ -233,7 +233,7 @@ main(int argc, char* argv[])
 	if (sfs_fexist(g_fs, "#/shim.js", NULL) && !script_eval("#/shim.js", false))
 		goto on_js_error;
 
-	// enable the SSj debug server, wait for a connection if requested.
+	// enable the SSJ debug server, wait for a connection if requested.
 #if defined(MINISPHERE_SPHERUN)
 	if (want_debug) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));

@@ -858,18 +858,18 @@ RNG#next();
     range [0-1).
 
 
-`SSj` Namespace
+`SSJ` Namespace
 ---------------
 
-The `SSj` namespace allows your game to communicate with an attached debugger
-such as SSj or SSj Blue.
+The `SSJ` namespace allows your game to communicate with an attached debugger
+such as SSJ or SSJ Blue.
 
-SSj.log(text);
+SSJ.log(text);
 
     Logs `text` to the debugger.  If the game is started using `spherun`, the
     text is also logged to the terminal.
 
-SSj.trace(text);
+SSJ.trace(text);
 
     Logs `text` to the debugger.  This is intended for low-level, detailed
     logging; trace output will not be displayed, even in the debugger, unless
@@ -1200,32 +1200,10 @@ Audio API
 ---------
 
 Playing sounds and music are both handled in miniSphere by Audialis, the
-evolution of Sphere 1.x's audio subsystem.  Audialis allows you to create mixers
-which can be used to adjust certain parameters across all sounds associated with
-that mixer.  This is useful for implementing global volume controls, for
-example.
-
-Mixer.Default [read-only]
-
-    Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
-    16-bit stereo sound, i.e. CD quality.
-
-new Mixer(frequency, bits[, channels]);
-
-    Constructs a new Mixer object.  Any sounds played through the mixer will use
-    the format specified by the parameters above.  `frequency` is the sample
-    rate, `bits` specifies the bit depth (allowed values are 8, 16 and 24), and
-    `channels` is the number of channels, ranging [1-7].  Channel counts of 5 or
-    higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
-
-    Do note that this creates a _hardware_ mixer.  If the requested format is
-    not supported by the system, an error will be thrown ("unable to create
-    hardware voice").
-
-Mixer#volume [read/write]
-
-    Gets or sets the output volume of the mixer.  This will affect the volume
-    of any sounds played through the mixer.
+evolution of Sphere 1.x's audio subsystem.  Audialis allows you to create
+mixers, which you can use to adjust certain parameters across all sounds
+associated with that mixer.  This is useful for implementing global volume
+controls, for example.
 
 new AudioStream([frequency[, bits[, channels]]]);
 
@@ -1266,6 +1244,28 @@ AudioStream#stop();
     Stops playback of the stream and frees its buffer.  This should be called
     when you are done using a stream.  The stream may be reused after a stop()
     call, but you will have to feed new audio data.
+
+Mixer.Default [read-only]
+
+    Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
+    16-bit stereo sound, i.e. CD quality.
+
+new Mixer(frequency, bits[, channels]);
+
+    Constructs a new Mixer object.  Any sounds played through the mixer will use
+    the format specified by the parameters above.  `frequency` is the sample
+    rate, `bits` specifies the bit depth (allowed values are 8, 16 and 24), and
+    `channels` is the number of channels, ranging [1-7].  Channel counts of 5 or
+    higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
+
+    Do note that this creates a _hardware_ mixer.  If the requested format is
+    not supported by the system, an error will be thrown ("unable to create
+    hardware voice").
+
+Mixer#volume [read/write]
+
+    Gets or sets the output volume of the mixer.  This will affect the volume
+    of any sounds played through the mixer.
 
 new Sample(filename);
 

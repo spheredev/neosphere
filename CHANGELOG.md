@@ -4,9 +4,10 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* SSJ has been renamed to SSj, making the name more visually unique and,
-  hopefully, more memorable.
 * Adds support for 2D (orthographic) and 3D (perspective) projection matrices.
+* Renames the `SoundStream` object to `AudioStream`.
+* Fixes excessive OpenGL state changes in the internal rendering logic, vastly
+  improving the performance of the Sphere v2 graphics API.
 
 
 v4.6.0 - July 4, 2017

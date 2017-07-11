@@ -42,11 +42,11 @@ const Prim =
 	{
 		var numSegments = Math.ceil(10 * Math.sqrt((rx + ry) / 2.0));
 		var vlist = [];
-		var pi2 = 2 * Math.PI;
+		var tau = 2 * Math.PI;
 		var cos = Math.cos;
 		var sin = Math.sin;
 		for (var i = 0; i < numSegments - 1; ++i) {
-			var phi = pi2 * i / numSegments;
+			var phi = tau * i / numSegments;
 			var c = cos(phi);
 			var s = sin(phi);
 			vlist.push({
@@ -70,11 +70,11 @@ const Prim =
 
 		var numSegments = Math.ceil(10 * Math.sqrt((rx + ry) / 2.0));
 		var vlist = [ { x: x, y: y, color: color } ];
-		var pi2 = 2 * Math.PI;
+		var tau = 2 * Math.PI;
 		var cos = Math.cos;
 		var sin = Math.sin;
 		for (var i = 0; i < numSegments; ++i) {
-			var phi = pi2 * i / numSegments;
+			var phi = tau * i / numSegments;
 			var c = cos(phi);
 			var s = sin(phi);
 			vlist[i + 1] = {

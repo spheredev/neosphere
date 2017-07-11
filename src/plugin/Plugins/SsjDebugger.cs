@@ -113,14 +113,14 @@ namespace miniSphere.Gdk.Plugins
             {
                 Attached?.Invoke(this, EventArgs.Empty);
 
-                Panes.Inspector.SSj = this;
+                Panes.Inspector.SSJ = this;
                 Panes.Errors.Ssj = this;
                 Panes.Inspector.Enabled = false;
                 Panes.Console.Clear();
                 Panes.Errors.Clear();
                 Panes.Inspector.Clear();
 
-                Panes.Console.Print(string.Format("SSj Blue " + plugin.Version + " Sphere JavaScript debugger"));
+                Panes.Console.Print(string.Format("SSJ Blue " + plugin.Version + " Sphere JavaScript debugger"));
                 Panes.Console.Print(string.Format("a graphical stepping debugger for Sphere Studio"));
                 Panes.Console.Print(string.Format("(c) 2015-2016 Fat Cerberus"));
                 Panes.Console.Print("");
@@ -155,7 +155,7 @@ namespace miniSphere.Gdk.Plugins
 
                 PluginManager.Core.Docking.Hide(Panes.Inspector);
                 PluginManager.Core.Docking.Activate(Panes.Console);
-                Panes.Console.Print("SSj session has ended.");
+                Panes.Console.Print("SSJ session has ended.");
             }), null);
         }
 
