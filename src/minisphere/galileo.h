@@ -53,7 +53,7 @@ void         model_put_float        (model_t* it, const char* name, float value)
 void         model_put_int          (model_t* it, const char* name, int value);
 void         model_put_float_vector (model_t* it, const char* name, float values[], int size);
 void         model_put_int_vector   (model_t* it, const char* name, int values[], int size);
-void         model_put_matrix       (model_t* it, const char* name, const transform_t* matrix);
+void         model_put_matrix       (model_t* it, const char* name, const transform_t* transform);
 shader_t*    shader_new             (const char* vs_path, const char* fs_path);
 shader_t*    shader_ref             (shader_t* shader);
 void         shader_free            (shader_t* shader);
@@ -66,7 +66,7 @@ image_t*     shape_texture          (const shape_t* it);
 void         shape_set_texture      (shape_t* it, image_t* texture);
 bool         shape_add_vertex       (shape_t* it, vertex_t vertex);
 void         shape_calculate_uv     (shape_t* it);
-void         shape_draw             (shape_t* it, image_t* surface, transform_t* matrix);
+void         shape_draw             (shape_t* it, image_t* surface, transform_t* transform);
 void         shape_upload           (shape_t* it);
 
 #endif // MINISPHERE__GALILEO_H__INCLUDED

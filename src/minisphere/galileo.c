@@ -64,7 +64,6 @@ struct shape
 
 static shader_t*    s_def_shader = NULL;
 static bool         s_have_shaders = false;
-static shader_t*    s_last_shader = NULL;
 static unsigned int s_next_group_id = 0;
 static unsigned int s_next_shader_id = 1;
 static unsigned int s_next_shape_id = 0;
@@ -383,9 +382,6 @@ shader_use(shader_t* shader)
 {
 	ALLEGRO_SHADER* al_shader;
 
-	if (shader == s_last_shader)
-		return true;
-	
 	if (shader != NULL)
 		console_log(4, "activating shader program #%u", shader->id);
 	else
@@ -394,13 +390,11 @@ shader_use(shader_t* shader)
 		al_shader = shader != NULL ? shader->program : NULL;
 		if (!al_use_shader(al_shader))
 			return false;
-		s_last_shader = shader;
 		return true;
 	}
 	else {
 		// if shaders are not supported, degrade gracefully. this simplifies the rest
 		// of the engine, which simply assumes shaders are always supported.
-		s_last_shader = shader;
 		return true;
 	}
 }
@@ -533,9 +527,9 @@ shape_calculate_uv(shape_t* it)
 }
 
 void
-shape_draw(shape_t* it, image_t* surface, transform_t* matrix)
+shape_draw(shape_t* it, image_t* surface, transform_t* transform)
 {
-	image_render_to(surface, matrix);
+	image_render_to(surface, transform);
 	shader_use(galileo_shader());
 	render_shape(it);
 }
