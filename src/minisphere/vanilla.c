@@ -1055,7 +1055,7 @@ js_GetClippingRectangle(duk_context* ctx)
 {
 	rect_t clip;
 
-	clip = screen_get_clipping(g_screen);
+	clip = image_get_scissor(screen_backbuffer(g_screen));
 	duk_push_object(ctx);
 	duk_push_int(ctx, clip.x1); duk_put_prop_string(ctx, -2, "x");
 	duk_push_int(ctx, clip.y1); duk_put_prop_string(ctx, -2, "y");
@@ -1456,7 +1456,8 @@ js_SetClippingRectangle(duk_context* ctx)
 	int width = duk_to_int(ctx, 2);
 	int height = duk_to_int(ctx, 3);
 
-	screen_set_clipping(g_screen, new_rect(x, y, x + width, y + height));
+	image_set_scissor(screen_backbuffer(g_screen),
+		new_rect(x, y, x + width, y + height));
 	return 0;
 }
 

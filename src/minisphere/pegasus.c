@@ -903,7 +903,7 @@ duk_safe_event_loop(duk_context* ctx)
 {
 	while (async_busy()) {
 		screen_flip(g_screen, s_framerate);
-		screen_set_clipping(g_screen, new_rect(0, 0, g_res_x, g_res_y));
+		image_set_scissor(screen_backbuffer(g_screen), new_rect(0, 0, g_res_x, g_res_y));
 	}
 	return 0;
 }
@@ -1114,7 +1114,7 @@ js_screen_clipTo(duk_context* ctx)
 	y = duk_require_int(ctx, 1);
 	width = duk_require_int(ctx, 2);
 	height = duk_require_int(ctx, 3);
-	screen_set_clipping(g_screen, new_rect(x, y, x + width, y + height));
+	image_set_scissor(screen_backbuffer(g_screen), new_rect(x, y, x + width, y + height));
 	return 0;
 }
 
@@ -1122,7 +1122,7 @@ static duk_ret_t
 js_screen_flip(duk_context* ctx)
 {
 	screen_flip(g_screen, s_framerate);
-	screen_set_clipping(g_screen, new_rect(0, 0, g_res_x, g_res_y));
+	image_set_scissor(screen_backbuffer(g_screen), new_rect(0, 0, g_res_x, g_res_y));
 	return 0;
 }
 

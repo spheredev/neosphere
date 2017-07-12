@@ -15,6 +15,7 @@ struct image
 	unsigned int    lock_count;
 	char*           path;
 	color_t*        pixel_cache;
+	rect_t          scissor_box;
 	transform_t*    transform;
 	int             width;
 	int             height;
@@ -39,6 +40,7 @@ image_new(int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	image->scissor_box = new_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -61,6 +63,7 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = image_ref(parent);
+	image->scissor_box = new_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -84,6 +87,7 @@ image_clone(const image_t* src_image)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	image->scissor_box = new_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
@@ -130,6 +134,7 @@ image_load(const char* filename)
 	free(slurp);
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	image->scissor_box = new_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
@@ -173,6 +178,7 @@ image_read(sfs_file_t* file, int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
+	image->scissor_box = new_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -269,10 +275,27 @@ image_width(const image_t* image)
 	return image->width;
 }
 
+rect_t
+image_get_scissor(const image_t* it)
+{
+	return it->scissor_box;
+}
+
 transform_t*
 image_get_transform(const image_t* it)
 {
 	return it->transform;
+}
+
+void
+image_set_scissor(image_t* it, rect_t value)
+{
+	it->scissor_box = value;
+	if (it == s_last_image) {
+		al_set_clipping_rectangle(it->scissor_box.x1, it->scissor_box.y1,
+			it->scissor_box.x2 - it->scissor_box.x1,
+			it->scissor_box.y2 - it->scissor_box.y1);
+	}
 }
 
 void
@@ -535,6 +558,9 @@ image_render_to(image_t* it, transform_t* transform)
 
 	if (it != s_last_image) {
 		al_set_target_bitmap(it->bitmap);
+		al_set_clipping_rectangle(it->scissor_box.x1, it->scissor_box.y1,
+			it->scissor_box.x2 - it->scissor_box.x1,
+			it->scissor_box.y2 - it->scissor_box.y1);
 		al_use_projection_transform(transform_matrix(it->transform));
 		shader_use(NULL, true);
 	}

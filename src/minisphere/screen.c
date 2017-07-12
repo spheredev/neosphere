@@ -95,7 +95,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	screen->show_fps = true;
 #endif
 
-	screen_set_clipping(screen, new_rect(0, 0, x_size, y_size));
 	refresh_display(screen);
 	return screen;
 }
@@ -142,12 +141,6 @@ screen_now(const screen_t* it)
 	return it->now;
 }
 
-rect_t
-screen_get_clipping(screen_t* it)
-{
-	return it->clip_rect;
-}
-
 int
 screen_get_frameskip(const screen_t* it)
 {
@@ -162,14 +155,6 @@ screen_get_mouse_xy(const screen_t* it, int* o_x, int* o_y)
 	al_get_mouse_state(&mouse_state);
 	*o_x = (mouse_state.x - it->x_offset) / it->x_scale;
 	*o_y = (mouse_state.y - it->y_offset) / it->y_scale;
-}
-
-void
-screen_set_clipping(screen_t* it, rect_t clip_rect)
-{
-	it->clip_rect = clip_rect;
-	al_set_clipping_rectangle(clip_rect.x1, clip_rect.y1,
-		clip_rect.x2 - clip_rect.x1, clip_rect.y2 - clip_rect.y1);
 }
 
 void
@@ -235,6 +220,7 @@ screen_flip(screen_t* it, int framerate)
 	ALLEGRO_BITMAP*   old_target;
 	path_t*           path;
 	const char*       pathstr;
+	rect_t            scissor;
 	int               screen_cx;
 	int               screen_cy;
 	int               serial = 1;
@@ -341,10 +327,11 @@ screen_flip(screen_t* it, int framerate)
 	++it->num_frames;
 	if (!it->skip_frame) {
 		// disable clipping so we can clear the whole backbuffer.
+		scissor = image_get_scissor(it->backbuffer);
+		image_set_scissor(it->backbuffer, new_rect(0, 0, it->x_size, it->y_size));
 		image_render_to(it->backbuffer, NULL);
-		al_set_clipping_rectangle(0, 0, it->x_size, it->y_size);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		screen_set_clipping(it, it->clip_rect);
+		image_set_scissor(it->backbuffer, scissor);
 	}
 
 	async_run_jobs(ASYNC_UPDATE);
@@ -451,5 +438,4 @@ refresh_display(screen_t* screen)
 	}
 	
 	image_render_to(screen->backbuffer, NULL);
-	screen_set_clipping(screen, screen->clip_rect);
 }

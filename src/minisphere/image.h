@@ -1,6 +1,7 @@
 #ifndef MINISPHERE__IMAGE_H__INCLUDED
 #define MINISPHERE__IMAGE_H__INCLUDED
 
+#include "geometry.h"
 #include "transform.h"
 
 typedef struct image image_t;
@@ -25,7 +26,9 @@ ALLEGRO_BITMAP* image_bitmap             (image_t* image);
 int             image_height             (const image_t* image);
 const char*     image_path               (const image_t* image);
 int             image_width              (const image_t* image);
+rect_t          image_get_scissor        (const image_t* it);
 transform_t*    image_get_transform      (const image_t* image);
+void            image_set_scissor        (image_t* it, rect_t value);
 void            image_set_transform      (image_t* image, transform_t* transform);
 bool            image_apply_colormat     (image_t* image, colormatrix_t matrix, int x, int y, int width, int height);
 bool            image_apply_colormat_4   (image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat, colormatrix_t ll_mat, colormatrix_t lr_mat, int x, int y, int width, int height);
