@@ -57,7 +57,7 @@ void         model_put_matrix       (model_t* it, const char* name, const transf
 shader_t*    shader_new             (const char* vs_path, const char* fs_path);
 shader_t*    shader_ref             (shader_t* shader);
 void         shader_free            (shader_t* shader);
-bool         shader_use             (shader_t* shader);
+bool         shader_use             (shader_t* shader, bool force_set);
 shape_t*     shape_new              (shape_type_t type, image_t* texture);
 shape_t*     shape_ref              (shape_t* it);
 void         shape_free             (shape_t* it);

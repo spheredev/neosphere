@@ -2,6 +2,7 @@
 #include "image.h"
 
 #include "color.h"
+#include "galileo.h"
 #include "transform.h"
 
 struct image
@@ -269,9 +270,9 @@ image_width(const image_t* image)
 }
 
 transform_t*
-image_get_transform(const image_t* image)
+image_get_transform(const image_t* it)
 {
-	return image->transform;
+	return it->transform;
 }
 
 void
@@ -532,9 +533,11 @@ image_render_to(image_t* it, transform_t* transform)
 {
 	ALLEGRO_TRANSFORM matrix;
 
-	if (it != s_last_image)
+	if (it != s_last_image) {
 		al_set_target_bitmap(it->bitmap);
-	al_use_projection_transform(transform_matrix(it->transform));
+		al_use_projection_transform(transform_matrix(it->transform));
+		shader_use(NULL, true);
+	}
 	if (transform != NULL) {
 		al_use_transform(transform_matrix(transform));
 	}
