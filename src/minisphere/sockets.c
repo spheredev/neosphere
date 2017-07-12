@@ -87,7 +87,7 @@ client_new(const char* hostname, int port, size_t buffer_size)
 	if (!(client->stream = dyad_newStream()))
 		goto on_error;
 	dyad_setNoDelay(client->stream, true);
-	dyad_addListener(client->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
+	dyad_addListener(client->stream, DYAD_EVENT_DATA, on_dyad_receive, client);
 	if (dyad_connect(client->stream, hostname, port) == -1)
 		goto on_error;
 
@@ -100,7 +100,7 @@ on_error:
 		free(client->recv_buffer);
 		if (client->stream != NULL)
 			dyad_close(client->stream);
-		free(socket);
+		free(client);
 	}
 	return NULL;
 }
@@ -164,7 +164,7 @@ client_read(client_t* it, void* buffer, size_t num_bytes)
 	console_log(4, "reading %zd bytes from client #%u", num_bytes, it->id);
 	memcpy(buffer, it->recv_buffer, num_bytes);
 	memmove(it->recv_buffer, it->recv_buffer + num_bytes, it->recv_size - num_bytes);
-	it->recv_buffer -= num_bytes;
+	it->recv_size -= num_bytes;
 	return num_bytes;
 }
 
@@ -196,7 +196,7 @@ server_new(const char* hostname, int port, size_t buffer_size, int max_backlog)
 		if (!(server->stream6 = dyad_newStream()))
 			goto on_error;
 		dyad_setNoDelay(server->stream6, true);
-		dyad_addListener(server->stream6, DYAD_EVENT_ACCEPT, on_dyad_accept, socket);
+		dyad_addListener(server->stream6, DYAD_EVENT_ACCEPT, on_dyad_accept, server);
 		if (dyad_listenEx(server->stream4, "0.0.0.0", port, max_backlog) == -1)
 			goto on_error;
 		if (dyad_listenEx(server->stream6, "::", port, max_backlog) == -1)
@@ -488,12 +488,12 @@ on_dyad_accept(dyad_Event* e)
 
 	new_backlog_len = server->num_backlog + 1;
 	if (new_backlog_len <= server->max_backlog) {
-		console_log(4, "taking connection from %s:%i on socket #%u",
+		console_log(4, "taking connection from %s:%i on server #%u",
 			dyad_getAddress(e->remote), dyad_getPort(e->remote), server->id);
 		server->backlog[server->num_backlog++] = e->remote;
 	}
 	else {
-		console_log(4, "backlog full fpr server #%u, refusing %s:%d", server->id,
+		console_log(4, "backlog full on server #%u, refusing %s:%d", server->id,
 			dyad_getAddress(e->remote), dyad_getPort(e->remote), server->id);
 		dyad_close(e->remote);
 	}
