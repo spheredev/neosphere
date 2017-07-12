@@ -53,13 +53,10 @@ struct shape
 	unsigned int           id;
 	image_t*               texture;
 	shape_type_t           type;
-	ALLEGRO_VERTEX*        sw_vbuf;
 	int                    max_vertices;
 	int                    num_vertices;
 	vertex_t*              vertices;
-#ifdef MINISPHERE_USE_VERTEX_BUF
 	ALLEGRO_VERTEX_BUFFER* vbuf;
-#endif
 };
 
 static shader_t*    s_def_shader = NULL;
@@ -195,7 +192,7 @@ model_set_transform(model_t* it, transform_t* transform)
 bool
 model_add_shape(model_t* it, shape_t* shape)
 {
-	console_log(4, "adding it #%u to model #%u", shape->id, it->id);
+	console_log(4, "adding shape #%u to model #%u", shape->id, it->id);
 
 	shape = shape_ref(shape);
 	vector_push(it->shapes, &shape);
@@ -401,7 +398,7 @@ shape_new(shape_type_t type, image_t* texture)
 		: type == SHAPE_TRI_FAN ? "triangle fan"
 		: type == SHAPE_TRI_STRIP ? "triangle strip"
 		: "automatic";
-	console_log(4, "creating it #%u as %s", s_next_shape_id, type_name);
+	console_log(4, "creating shape #%u as %s", s_next_shape_id, type_name);
 
 	shape = calloc(1, sizeof(shape_t));
 	shape->texture = image_ref(texture);
@@ -424,13 +421,10 @@ shape_free(shape_t* it)
 {
 	if (it == NULL || --it->refcount > 0)
 		return;
-	console_log(4, "disposing it #%u no longer in use", it->id);
+	console_log(4, "disposing shape #%u no longer in use", it->id);
 	image_free(it->texture);
-#ifdef MINISPHERE_USE_VERTEX_BUF
 	if (it->vbuf != NULL)
 		al_destroy_vertex_buffer(it->vbuf);
-#endif
-	free(it->sw_vbuf);
 	free(it->vertices);
 	free(it);
 }
@@ -503,7 +497,7 @@ shape_calculate_uv(shape_t* it)
 
 	int i;
 
-	console_log(4, "auto-calculating U/V for it #%u", it->id);
+	console_log(4, "auto-calculating U/V for shape #%u", it->id);
 
 	for (i = 0; i < it->num_vertices; ++i) {
 		// circumscribe the UV coordinate space.
@@ -531,25 +525,17 @@ shape_upload(shape_t* it)
 
 	int i;
 
-	console_log(3, "uploading it #%u vertices to GPU", it->id);
-#ifdef MINISPHERE_USE_VERTEX_BUF
-	if (it->vbuf != NULL)
-		al_destroy_vertex_buffer(it->vbuf);
-#endif
-	free(it->sw_vbuf); it->sw_vbuf = NULL;
+	console_log(3, "uploading shape #%u vertices to GPU", it->id);
 	bitmap = it->texture != NULL ? image_bitmap(it->texture) : NULL;
 
-	// create a vertex buffer
-#ifdef MINISPHERE_USE_VERTEX_BUF
+	// create a vertex buffer for the shape
+	if (it->vbuf != NULL)
+		al_destroy_vertex_buffer(it->vbuf);
 	if (it->vbuf = al_create_vertex_buffer(NULL, NULL, it->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
 		vertices = al_lock_vertex_buffer(it->vbuf, 0, it->num_vertices, ALLEGRO_LOCK_WRITEONLY);
-#endif
 	if (vertices == NULL) {
-		// hardware buffer couldn't be created, fall back to software
-		console_log(3, "unable to create a VBO for it #%u", it->id);
-		if (!(it->sw_vbuf = malloc(it->num_vertices * sizeof(ALLEGRO_VERTEX))))
-			return;
-		vertices = it->sw_vbuf;
+		console_log(3, "couldn't create a VBO for shape #%u", it->id);
+		return;
 	}
 
 	// upload vertices
@@ -562,25 +548,13 @@ shape_upload(shape_t* it)
 		vertices[i].v = it->vertices[i].v;
 	}
 
-	// unlock hardware buffer, if applicable
-#ifdef MINISPHERE_USE_VERTEX_BUF
-	if (vertices != it->sw_vbuf)
-		al_unlock_vertex_buffer(it->vbuf);
-	else if (it->vbuf != NULL) {
-		al_destroy_vertex_buffer(it->vbuf);
-		it->vbuf = NULL;
-	}
-#endif
+	al_unlock_vertex_buffer(it->vbuf);
 }
 
 static bool
 have_vertex_buffer(const shape_t* shape)
 {
-#ifdef MINISPHERE_USE_VERTEX_BUF
-	return shape->vbuf != NULL || shape->sw_vbuf != NULL;
-#else
-	return shape->sw_vbuf != NULL;
-#endif
+	return shape->vbuf != NULL;
 }
 
 static void
@@ -621,12 +595,5 @@ render_shape(shape_t* shape)
 			: ALLEGRO_PRIM_POINT_LIST;
 
 	bitmap = shape->texture != NULL ? image_bitmap(shape->texture) : NULL;
-#ifdef MINISPHERE_USE_VERTEX_BUF
-	if (shape->vbuf != NULL)
-		al_draw_vertex_buffer(shape->vbuf, bitmap, 0, shape->num_vertices, draw_mode);
-	else
-		al_draw_prim(shape->sw_vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
-#else
-	al_draw_prim(shape->sw_vbuf, NULL, bitmap, 0, shape->num_vertices, draw_mode);
-#endif
+	al_draw_vertex_buffer(shape->vbuf, bitmap, 0, shape->num_vertices, draw_mode);
 }

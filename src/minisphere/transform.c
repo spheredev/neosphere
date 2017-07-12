@@ -81,29 +81,17 @@ transform_perspective(transform_t* it, float left, float top, float right, float
 void
 transform_rotate(transform_t* it, float theta, float vx, float vy, float vz)
 {
-#if defined(MINISPHERE_USE_3D_TRANSFORM)
 	al_rotate_transform_3d(&it->matrix, vx, vy, vz, theta);
-#else
-	al_rotate_transform(&it->matrix, theta);
-#endif
 }
 
 void
 transform_scale(transform_t* it, float sx, float sy, float sz)
 {
-#if defined(MINISPHERE_USE_3D_TRANSFORM)
 	al_scale_transform_3d(&it->matrix, sx, sy, sz);
-#else
-	al_scale_transform(&it->matrix, sx, sy);
-#endif
 }
 
 void
 transform_translate(transform_t* it, float dx, float dy, float dz)
 {
-#if defined(MINISPHERE_USE_3D_TRANSFORM)
 	al_translate_transform_3d(&it->matrix, dx, dy, dz);
-#else
-	al_translate_transform(&it->matrix, dx, dy);
-#endif
 }

@@ -54,6 +54,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 
 	x_scale = x_size <= 400 && y_size <= 300 ? 2.0 : 1.0;
 	y_scale = x_scale;
+	al_set_new_window_title(title);
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	display = al_create_display(x_size * x_scale, y_size * y_scale);
 
@@ -66,7 +67,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 		return NULL;
 	}
 	
-	al_set_window_title(display, title);
 	if (icon != NULL) {
 		bitmap_flags = al_get_new_bitmap_flags();
 		al_set_new_bitmap_flags(

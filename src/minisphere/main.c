@@ -703,7 +703,7 @@ static void
 show_error_screen(const char* message)
 {
 	wraptext_t*            error_info;
-	bool                   is_copied = true;
+	bool                   is_copied = false;
 	bool                   is_finished;
 	int                    frames_till_close;
 	ALLEGRO_KEYBOARD_STATE keyboard;
@@ -718,10 +718,6 @@ show_error_screen(const char* message)
 	// cancel all jobs, including recurring.  we need to run a frame loop
 	// and we don't want any JS code to execute after this point.
 	async_cancel_all(true);
-
-#ifdef MINISPHERE_USE_CLIPBOARD
-	is_copied = false;
-#endif
 
 	title_index = rand() % (sizeof ERROR_TEXT / sizeof(const char*) / 2);
 	title = ERROR_TEXT[title_index][0];
@@ -766,14 +762,12 @@ show_error_screen(const char* message)
 				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
 
 			// if Ctrl+C is pressed, copy the error message and location to clipboard
-#ifdef MINISPHERE_USE_CLIPBOARD
 			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
 				&& al_key_down(&keyboard, ALLEGRO_KEY_C))
 			{
 				is_copied = true;
 				al_set_clipboard_text(screen_display(g_screen), message);
 			}
-#endif
 		}
 		else {
 			--frames_till_close;

@@ -58,12 +58,6 @@
 #define no_return void
 #endif
 
-#if ALLEGRO_VERSION >= 5 && ALLEGRO_SUB_VERSION >= 2
-#define MINISPHERE_USE_3D_TRANSFORM
-#define MINISPHERE_USE_CLIPBOARD
-#define MINISPHERE_USE_VERTEX_BUF
-#endif
-
 extern duk_context*         g_duk;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern sandbox_t*           g_fs;
