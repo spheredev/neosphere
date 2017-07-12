@@ -189,7 +189,6 @@ static duk_ret_t js_screen_get_fullScreen      (duk_context* ctx);
 static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
 static duk_ret_t js_screen_set_frameSkip       (duk_context* ctx);
 static duk_ret_t js_screen_set_fullScreen      (duk_context* ctx);
-static duk_ret_t js_screen_clipTo              (duk_context* ctx);
 static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_now                 (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
@@ -354,6 +353,7 @@ static duk_ret_t js_Surface_get_height         (duk_context* ctx);
 static duk_ret_t js_Surface_get_transform      (duk_context* ctx);
 static duk_ret_t js_Surface_get_width          (duk_context* ctx);
 static duk_ret_t js_Surface_set_transform      (duk_context* ctx);
+static duk_ret_t js_Surface_clipTo             (duk_context* ctx);
 static duk_ret_t js_Surface_toTexture          (duk_context* ctx);
 static duk_ret_t js_new_Transform              (duk_context* ctx);
 static duk_ret_t js_Transform_finalize         (duk_context* ctx);
@@ -536,6 +536,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Surface", "height", js_Surface_get_height, NULL);
 	api_define_property(ctx, "Surface", "transform", js_Surface_get_transform, js_Surface_set_transform);
 	api_define_property(ctx, "Surface", "width", js_Surface_get_width, NULL);
+	api_define_method(ctx, "Surface", "clipTo", js_Surface_clipTo);
 	api_define_method(ctx, "Surface", "toTexture", js_Surface_toTexture);
 	api_define_class(ctx, "Texture", js_new_Texture, js_Texture_finalize);
 	api_define_property(ctx, "Texture", "fileName", js_Texture_get_fileName, NULL);
@@ -555,7 +556,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop(ctx, "screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
 	api_define_static_prop(ctx, "screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
-	api_define_function(ctx, "screen", "clipTo", js_screen_clipTo);
 	api_define_function(ctx, "screen", "flip", js_screen_flip);
 	api_define_function(ctx, "screen", "now", js_screen_now);
 	api_define_function(ctx, "screen", "resize", js_screen_resize);
@@ -1099,22 +1099,6 @@ js_screen_set_fullScreen(duk_context* ctx)
 	fullscreen = duk_require_boolean(ctx, 0);
 	
 	screen_set_fullscreen(g_screen, fullscreen);
-	return 0;
-}
-
-static duk_ret_t
-js_screen_clipTo(duk_context* ctx)
-{
-	int x;
-	int y;
-	int width;
-	int height;
-
-	x = duk_require_int(ctx, 0);
-	y = duk_require_int(ctx, 1);
-	width = duk_require_int(ctx, 2);
-	height = duk_require_int(ctx, 3);
-	image_set_scissor(screen_backbuffer(g_screen), new_rect(x, y, x + width, y + height));
 	return 0;
 }
 
@@ -3792,6 +3776,25 @@ js_Surface_set_transform(duk_context* ctx)
 	transform = duk_require_class_obj(ctx, 0, "Transform");
 
 	image_set_transform(image, transform);
+	return 0;
+}
+
+static duk_ret_t
+js_Surface_clipTo(duk_context* ctx)
+{
+	int      height;
+	image_t* image;
+	int      width;
+	int      x;
+	int      y;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "Surface");
+	x = duk_require_int(ctx, 0);
+	y = duk_require_int(ctx, 1);
+	width = duk_require_int(ctx, 2);
+	height = duk_require_int(ctx, 3);
+	image_set_scissor(image, new_rect(x, y, x + width, y + height));
 	return 0;
 }
 

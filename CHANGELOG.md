@@ -5,6 +5,10 @@ vX.X.X - TBD
 ------------
 
 * Adds support for 2D (orthographic) and 3D (perspective) projection matrices.
+* Adds support for setting a clipping rectangle when rendering to a `Surface`.
+* Removes support for GPUs without shader support.  If the engine can't create
+  a shader-capable display, it will now simply fail to start rather than trying
+  to fall back on the fixed-function pipeline.
 * Renames the `SoundStream` object to `AudioStream`.
 * Fixes excessive OpenGL state changes in the internal rendering logic, vastly
   improving the performance of the Sphere v2 graphics API.
