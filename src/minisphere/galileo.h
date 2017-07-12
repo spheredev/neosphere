@@ -35,9 +35,8 @@ struct vertex
 	color_t color;
 } vertex_t;
 
-void         galileo_init           (bool programmable);
+void         galileo_init           (void);
 void         galileo_uninit         (void);
-bool         galileo_programmable   (void);
 shader_t*    galileo_shader         (void);
 void         galileo_reset        (void);
 model_t*     model_new              (shader_t* shader);

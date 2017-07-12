@@ -63,17 +63,15 @@ struct shape
 };
 
 static shader_t*    s_def_shader = NULL;
-static bool         s_have_shaders = false;
 static shader_t*    s_last_shader = NULL;
 static unsigned int s_next_group_id = 0;
 static unsigned int s_next_shader_id = 1;
 static unsigned int s_next_shape_id = 0;
 
 void
-galileo_init(bool programmable)
+galileo_init(void)
 {
 	console_log(1, "initializing Galileo subsystem");
-	s_have_shaders = programmable;
 }
 
 void
@@ -81,12 +79,6 @@ galileo_uninit(void)
 {
 	console_log(1, "shutting down Galileo subsystem");
 	shader_free(s_def_shader);
-}
-
-bool
-galileo_programmable(void)
-{
-	return s_have_shaders;
 }
 
 shader_t*
@@ -218,27 +210,25 @@ model_draw(const model_t* it, image_t* surface)
 
 	image_render_to(surface, it->transform);
 
-	if (s_have_shaders) {
-		shader_use(it->shader != NULL ? it->shader : galileo_shader(), false);
-		iter = vector_enum(it->uniforms);
-		while (p = vector_next(&iter)) {
-			switch (p->type) {
-			case UNIFORM_FLOAT:
-				al_set_shader_float(p->name, p->float_value);
-				break;
-			case UNIFORM_FLOAT_VEC:
-				al_set_shader_float_vector(p->name, p->vector_size, p->floatvec, 1);
-				break;
-			case UNIFORM_INT:
-				al_set_shader_int(p->name, p->int_value);
-				break;
-			case UNIFORM_INT_VEC:
-				al_set_shader_int_vector(p->name, p->vector_size, p->intvec, 1);
-				break;
-			case UNIFORM_MATRIX:
-				al_set_shader_matrix(p->name, &p->mat_value);
-				break;
-			}
+	shader_use(it->shader != NULL ? it->shader : galileo_shader(), false);
+	iter = vector_enum(it->uniforms);
+	while (p = vector_next(&iter)) {
+		switch (p->type) {
+		case UNIFORM_FLOAT:
+			al_set_shader_float(p->name, p->float_value);
+			break;
+		case UNIFORM_FLOAT_VEC:
+			al_set_shader_float_vector(p->name, p->vector_size, p->floatvec, 1);
+			break;
+		case UNIFORM_INT:
+			al_set_shader_int(p->name, p->int_value);
+			break;
+		case UNIFORM_INT_VEC:
+			al_set_shader_int_vector(p->name, p->vector_size, p->intvec, 1);
+			break;
+		case UNIFORM_MATRIX:
+			al_set_shader_matrix(p->name, &p->mat_value);
+			break;
 		}
 	}
 
@@ -385,24 +375,17 @@ shader_use(shader_t* shader, bool force_set)
 
 	if (shader == s_last_shader && !force_set)
 		return true;
-	
+
 	if (shader != NULL)
 		console_log(4, "activating shader program #%u", shader->id);
 	else
 		console_log(4, "activating legacy shaders");
-	if (s_have_shaders) {
-		al_shader = shader != NULL ? shader->program : NULL;
-		if (!al_use_shader(al_shader))
-			return false;
-		s_last_shader = shader;
-		return true;
-	}
-	else {
-		// if shaders are not supported, degrade gracefully. this simplifies the rest
-		// of the engine, which simply assumes shaders are always supported.
-		s_last_shader = shader;
-		return true;
-	}
+
+	al_shader = shader != NULL ? shader->program : NULL;
+	if (!al_use_shader(al_shader))
+		return false;
+	s_last_shader = shader;
+	return true;
 }
 
 shape_t*

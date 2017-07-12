@@ -19,7 +19,6 @@ struct screen
 	int              fps_frames;
 	double           fps_poll_time;
 	bool             fullscreen;
-	bool             have_shaders;
 	double           last_flip_time;
 	int              max_skips;
 	double           next_frame_time;
@@ -30,7 +29,6 @@ struct screen
 	bool             show_fps;
 	bool             skip_frame;
 	bool             take_screenshot;
-	bool             use_shaders;
 	int              x_offset;
 	float            x_scale;
 	int              x_size;
@@ -49,24 +47,15 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	ALLEGRO_DISPLAY* display;
 	ALLEGRO_BITMAP*  icon_bitmap;
 	screen_t*        screen;
-	bool             use_shaders = false;
 	int              x_scale;
 	int              y_scale;
 
 	console_log(1, "initializing render context at %dx%d", x_size, y_size);
 
-	// try to create a display. if we can't get a programmable pipeline, try again but
-	// only request bare OpenGL. keep in mind that if this happens, shader support will be
-	// disabled.
 	x_scale = x_size <= 400 && y_size <= 300 ? 2.0 : 1.0;
 	y_scale = x_scale;
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
-	if (display = al_create_display(x_size * x_scale, y_size * y_scale))
-		use_shaders = true;
-	else {
-		al_set_new_display_flags(ALLEGRO_OPENGL);
-		display = al_create_display(x_size * x_scale, y_size * y_scale);
-	}
+	display = al_create_display(x_size * x_scale, y_size * y_scale);
 
 	// custom backbuffer: this allows pixel-perfect rendering regardless
 	// of the actual window size.
@@ -77,8 +66,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 		return NULL;
 	}
 	
-	console_log(1, "    shader support: %s", use_shaders ? "yes" : "no");
-
 	al_set_window_title(display, title);
 	if (icon != NULL) {
 		bitmap_flags = al_get_new_bitmap_flags();
@@ -99,7 +86,6 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	screen->y_size = y_size;
 	screen->max_skips = frameskip;
 	screen->avoid_sleep = avoid_sleep;
-	screen->have_shaders = use_shaders;
 
 	screen->fps_poll_time = al_get_time() + 1.0;
 	screen->next_frame_time = al_get_time();
@@ -142,12 +128,6 @@ bool
 screen_fullscreen(const screen_t* it)
 {
 	return it->fullscreen;
-}
-
-bool
-screen_have_shaders(const screen_t* it)
-{
-	return it->have_shaders;
 }
 
 bool

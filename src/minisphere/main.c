@@ -409,7 +409,7 @@ initialize_engine(void)
 
 	// initialize engine components
 	async_init();
-	galileo_init(true);
+	galileo_init();
 	audio_init();
 	initialize_input();
 	sockets_init();

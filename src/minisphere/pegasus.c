@@ -3190,9 +3190,6 @@ js_new_Shader(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "'fragment' must be a string");
 	duk_pop_2(ctx);
 
-	if (!galileo_programmable())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no shader support");
-
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
 	vs_filename = duk_require_path(ctx, -2, NULL, false, false);
