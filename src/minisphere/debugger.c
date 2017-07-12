@@ -34,9 +34,9 @@ static duk_size_t duk_cb_debug_write   (void* udata, const char* data, duk_size_
 static bool       s_is_attached = false;
 static color_t    s_banner_color;
 static lstring_t* s_banner_text;
-static socket_t*  s_client;
+static client_t*  s_client;
 static bool       s_have_source_map = false;
-static socket_t*  s_server;
+static server_t*  s_server;
 static vector_t*  s_sources;
 static bool       s_want_attach;
 
@@ -76,7 +76,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	// for the duration of the session, allowing a debugger to be attached at any time.
 	console_log(1, "listening for debugger on TCP port %d", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
-	s_server = socket_new_server(hostname, TCP_DEBUG_PORT, 1024, 1);
+	s_server = server_new(hostname, TCP_DEBUG_PORT, 1024, 1);
 
 	// if the engine was started in debug mode, wait for a debugger to connect before
 	// beginning execution.
@@ -92,7 +92,7 @@ debugger_uninit()
 	struct source* p_source;
 	
 	do_detach_debugger(true);
-	socket_free(s_server);
+	server_free(s_server);
 	
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
@@ -107,17 +107,17 @@ debugger_uninit()
 void
 debugger_update(void)
 {
-	socket_t* socket;
+	client_t* client;
 
-	if (socket = socket_accept(s_server)) {
+	if (client = server_accept(s_server)) {
 		if (s_client != NULL) {
 			console_log(2, "rejected debug connection from %s, already attached",
-				socket_hostname(socket));
-			socket_free(socket);
+				client_hostname(client));
+			client_free(client);
 		}
 		else {
-			console_log(0, "connected to debug client at %s", socket_hostname(socket));
-			s_client = socket;
+			console_log(0, "connected to debug client at %s", client_hostname(client));
+			s_client = client;
 			duk_debugger_detach(g_duk);
 			dukrub_debugger_attach(g_duk,
 				duk_cb_debug_read,
@@ -275,18 +275,19 @@ do_attach_debugger(void)
 static void
 do_detach_debugger(bool is_shutdown)
 {
-	if (!s_is_attached) return;
+	if (!s_is_attached)
+		return;
 	
 	// detach the debugger
 	console_log(1, "detaching debug session");
 	s_is_attached = false;
 	duk_debugger_detach(g_duk);
 	if (s_client != NULL) {
-		socket_close(s_client);
-		while (socket_connected(s_client))
+		client_close(s_client);
+		while (client_connected(s_client))
 			delay(0.05);
 	}
-	socket_free(s_client);
+	client_free(s_client);
 	s_client = NULL;
 	if (s_want_attach && !is_shutdown)
 		exit_game(true);  // clean detach, exit
@@ -381,7 +382,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 static duk_size_t
 duk_cb_debug_peek(void* udata)
 {
-	return socket_peek(s_client);
+	return client_peek(s_client);
 }
 
 static duk_size_t
@@ -389,14 +390,16 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 {
 	size_t n_bytes;
 
-	if (s_client == NULL) return 0;
+	if (s_client == NULL)
+		return 0;
 
 	// if we return zero, Duktape will drop the session. thus we're forced
 	// to block until we can read >= 1 byte.
-	while ((n_bytes = socket_peek(s_client)) == 0) {
-		if (!socket_connected(s_client)) {  // did a pig eat it?
+	while (!(n_bytes = client_peek(s_client))) {
+		if (!client_connected(s_client)) {  // did a pig eat it?
 			console_log(1, "TCP connection reset while debugging");
-			socket_free(s_client); s_client = NULL;
+			client_free(s_client);
+			s_client = NULL;
 			return 0;  // stupid pig
 		}
 
@@ -405,24 +408,27 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 	}
 
 	// let's not overflow the buffer, alright?
-	if (n_bytes > bufsize) n_bytes = bufsize;
-	socket_read(s_client, buffer, n_bytes);
+	if (n_bytes > bufsize)
+		n_bytes = bufsize;
+	client_read(s_client, buffer, n_bytes);
 	return n_bytes;
 }
 
 static duk_size_t
 duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 {
-	if (s_client == NULL) return 0;
+	if (s_client == NULL)
+		return 0;
 
 	// make sure we're still connected
-	if (!socket_connected(s_client)) {
+	if (!client_connected(s_client)) {
 		console_log(1, "TCP connection reset while debugging");
-		socket_free(s_client); s_client = NULL;
-		return 0;
+		client_free(s_client);
+		s_client = NULL;
+		return 0;  // stupid pig!
 	}
 
 	// send out the data
-	socket_write(s_client, data, size);
+	client_write(s_client, data, size);
 	return size;
 }
