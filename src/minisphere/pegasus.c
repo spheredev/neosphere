@@ -3080,7 +3080,7 @@ js_new_Server(duk_context* ctx)
 	int       max_backlog;
 	int       num_args;
 	int       port;
-	socket_t* socket;
+	server_t* server;
 
 	num_args = duk_get_top(ctx);
 	port = duk_require_int(ctx, 0);
@@ -3088,8 +3088,8 @@ js_new_Server(duk_context* ctx)
 	if (max_backlog <= 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "max_backlog cannot be <= 0", max_backlog);
 
-	if (socket = socket_new_server(NULL, port, 1024, max_backlog))
-		duk_push_class_obj(ctx, "Server", socket);
+	if (server = server_new(NULL, port, 1024, max_backlog))
+		duk_push_class_obj(ctx, "Server", server);
 	else
 		duk_push_null(ctx);
 	return 1;
@@ -3098,10 +3098,10 @@ js_new_Server(duk_context* ctx)
 static duk_ret_t
 js_Server_finalize(duk_context* ctx)
 {
-	socket_t* socket;
+	server_t* server;
 
-	socket = duk_require_class_obj(ctx, 0, "Server");
-	socket_free(socket);
+	server = duk_require_class_obj(ctx, 0, "Server");
+	server_free(server);
 	return 0;
 }
 
@@ -3109,15 +3109,15 @@ static duk_ret_t
 js_Server_accept(duk_context* ctx)
 {
 	socket_t* new_socket;
-	socket_t* socket;
+	server_t* server;
 
 	duk_push_this(ctx);
-	socket = duk_require_class_obj(ctx, -1, "Server");
-	duk_pop(ctx);
-	if (socket == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
-	new_socket = socket_accept(socket);
-	if (new_socket)
+	server = duk_require_class_obj(ctx, -1, "Server");
+
+	if (server == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "server has shut down");
+	new_socket = server_accept(server);
+	if (new_socket != NULL)
 		duk_push_class_obj(ctx, "Socket", new_socket);
 	else
 		duk_push_null(ctx);
@@ -3127,14 +3127,14 @@ js_Server_accept(duk_context* ctx)
 static duk_ret_t
 js_Server_close(duk_context* ctx)
 {
-	socket_t*   socket;
+	server_t* server;
 
 	duk_push_this(ctx);
-	socket = duk_require_class_obj(ctx, -1, "Server");
-	duk_push_null(ctx); duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	duk_pop(ctx);
-	if (socket != NULL)
-		socket_free(socket);
+	server = duk_require_class_obj(ctx, -1, "Server");
+
+	duk_push_null(ctx);
+	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	server_free(server);
 	return 0;
 }
 
@@ -3315,7 +3315,7 @@ js_new_Socket(duk_context* ctx)
 	hostname = duk_require_string(ctx, 0);
 	port = duk_require_int(ctx, 1);
 
-	if ((socket = socket_new_client(hostname, port, 1024)) != NULL)
+	if (socket = socket_new(hostname, port, 1024))
 		duk_push_class_obj(ctx, "Socket", socket);
 	else
 		duk_push_null(ctx);
@@ -3343,7 +3343,7 @@ js_Socket_get_bytesPending(duk_context* ctx)
 
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
-	duk_push_uint(ctx, (duk_uint_t)socket_num_bytes(socket));
+	duk_push_uint(ctx, (duk_uint_t)socket_peek(socket));
 	return 1;
 }
 
@@ -3404,8 +3404,7 @@ js_Socket_close(duk_context* ctx)
 	
 	duk_push_null(ctx);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	if (socket != NULL)
-		socket_free(socket);
+	socket_free(socket);
 	return 0;
 }
 

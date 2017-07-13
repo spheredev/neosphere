@@ -82,9 +82,9 @@ Sphere.Version [read-only]
 error(message);
 
     Produces an error.  Errors generated during Cellscript evaluation will
-	prevent any targets from being built, while errors generated during a build
-	will not (Cell tries to build as many targets as possible).  In both cases
-	the build will ultimately fail and a game manifest will not be generated.
+    prevent any targets from being built, while errors generated during a build
+    will not (Cell tries to build as many targets as possible).  In both cases
+    the build will ultimately fail and a game manifest will not be generated.
 
 files(pattern[, recursive]);
 
@@ -161,7 +161,7 @@ transpile(targetPath, sources);
     and places the output into the directory named by `targetPath`.  Filenames
     ending in `.mjs` are treated as ES2015 modules; anything else is treated as
     a normal script.
-    
+
     Note: `import` and `export` keywords are supported only in ES2015 modules.
           Using them in a normal script will produce a SyntaxError.
 

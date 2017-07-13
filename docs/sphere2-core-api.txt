@@ -83,9 +83,9 @@ needed, and their values can be accessed from JavaScript through `Sphere.Game`.
     game for the purposes of save data management.
 
     Note: While providing a save ID is optional, one must be defined before a
-		  game can use its SphereFS save store (`~/`).  Legacy games using
-		  only an SGM manifest therefore can't take advantage of the save
-		  store.
+          game can use its SphereFS save store (`~/`).  Legacy games using
+          only an SGM manifest therefore can't take advantage of the save
+          store.
 
 "summary" [default: none]
 
@@ -209,7 +209,7 @@ Sphere.run();
         }
 
     Note: Be careful.  Calling this will run all pending immediate jobs in the
-	      job queue, which may have unexpected side effects if a Dispatch job
+          job queue, which may have unexpected side effects if a Dispatch job
           modifies a global variable, for example.
 
 Sphere.sleep(timeout);
@@ -275,7 +275,7 @@ new Color(red, green, blue[, alpha]);
     Constructs a new Color object.  Color objects are used to specify the color
     of elements such as vertices and primitives.  Color components should be in
     the range [0.0,1.0]; out-of-range values are silently clamped.  `alpha`
-	specifies the color's opacity and defaults to 1.0 if not provided.
+    specifies the color's opacity and defaults to 1.0 if not provided.
 
 Color#r [read/write]
 Color#g [read/write]
@@ -283,9 +283,9 @@ Color#b [read/write]
 Color#a [read/write]
 
     Gets or sets the individual components of the color (red, green, blue, or
-	alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
-	HDR is not supported and the engine will automatically clamp such colors
-	when rendered.
+    alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
+    HDR is not supported and the engine will automatically clamp such colors
+    when rendered.
 
 Color#name [read-only]
 
@@ -429,7 +429,7 @@ FS.writeFile(filename, data);
 
 `FileStream` Object
 -------------------
-	
+
 new FileStream(filename, op);
 
     Constructs a FileStream that provides access to the contents of a specified
@@ -713,8 +713,8 @@ Key [enumeration]
 Keyboard.Default [read-only]
 
     Gets a `Keyboard` object for the default keyboard device.
-	
-	Note: miniSphere currently only supports a single keyboard.
+
+    Note: miniSphere currently only supports a single keyboard.
 
 Keyboard#capsLock [read-only]
 Keyboard#numLock [read-only]
@@ -769,8 +769,8 @@ MouseKey [enumeration]
 Mouse.Default [read-only]
 
     Gets a `Mouse` object for the default mouse device.
-	
-	Note: miniSphere currently only supports a single mouse.
+
+    Note: miniSphere currently only supports a single mouse.
 
 Mouse#x [read-only]
 Mouse#y [read-only]
@@ -907,10 +907,10 @@ Surface#transform [read/write]
     Gets or sets a `Transform` representing the surface's projection matrix.
     When rendering is done on the surface, the projection matrix is the last
     one applied and affects the entire scene.
-    
+
     Note: The default projection matrix in Sphere is NOT an identity matrix.
           When a surface is created, Sphere sets its transform to an
-		  orthographic matrix suitable for pixel-perfect 2D rendering.
+          orthographic matrix suitable for pixel-perfect 2D rendering.
 
 Surface#width [read-only]
 Surface#height [read-only]
@@ -1049,7 +1049,7 @@ Model#setFloat(name, value);
 Model#setInt(name, value);
 
     Sets the value of a GLSL scalar uniform.
-    
+
     Note: Only `float` and `int` types are currently supported.
 
 Model#setFloatVector(name, values);
@@ -1066,7 +1066,7 @@ Model#setMatrix(name, transform);
 
     Sets the value of 4x4 matrix uniform (`mat4`) using the underlying matrix
     cells of a `Transform` object.
-    
+
     Note: Matrix types other than `mat4` are not currently supported.
 
 Shader.Default [read-only]
@@ -1155,8 +1155,8 @@ Transform#matrix [read-only]
     Gets an object you can use to access the cells of the underlying matrix.
     The object is used like a two-dimensional array:
 
-	    cellValue = transform_obj.matrix[i][j];
-	    transform_obj.matrix[i][j] = newValue;
+        cellValue = transform_obj.matrix[i][j];
+        transform_obj.matrix[i][j] = newValue;
 
 Transform#identity();
 
@@ -1170,7 +1170,7 @@ Transform#compose(otherMatrix);
 Transform#project2D(left, top, right, bottom[, near, far]);
 
     Multiplies this transform's matrix with an orthographic (parallel)
-	projection.
+    projection.
 
 Transform#project3D(fov, aspect, near, far);
 

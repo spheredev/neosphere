@@ -34,9 +34,9 @@ static duk_size_t duk_cb_debug_write   (void* udata, const char* data, duk_size_
 static bool       s_is_attached = false;
 static color_t    s_banner_color;
 static lstring_t* s_banner_text;
-static client_t*  s_client;
 static bool       s_have_source_map = false;
 static server_t*  s_server;
+static socket_t*  s_socket;
 static vector_t*  s_sources;
 static bool       s_want_attach;
 
@@ -107,17 +107,17 @@ debugger_uninit()
 void
 debugger_update(void)
 {
-	client_t* client;
+	socket_t* client;
 
 	if (client = server_accept(s_server)) {
-		if (s_client != NULL) {
+		if (s_socket != NULL) {
 			console_log(2, "rejected debug connection from %s, already attached",
-				client_hostname(client));
-			client_free(client);
+				socket_hostname(client));
+			socket_free(client);
 		}
 		else {
-			console_log(0, "connected to debug client at %s", client_hostname(client));
-			s_client = client;
+			console_log(0, "connected to debug client at %s", socket_hostname(client));
+			s_socket = client;
 			duk_debugger_detach(g_duk);
 			dukrub_debugger_attach(g_duk,
 				duk_cb_debug_read,
@@ -263,13 +263,13 @@ do_attach_debugger(void)
 	printf("waiting for connection from debug client...\n");
 	fflush(stdout);
 	timeout = al_get_time() + 30.0;
-	while (s_client == NULL && al_get_time() < timeout) {
+	while (s_socket == NULL && al_get_time() < timeout) {
 		debugger_update();
 		delay(0.05);
 	}
-	if (s_client == NULL)  // did we time out?
+	if (s_socket == NULL)  // did we time out?
 		printf("timed out waiting for debug client\n");
-	return s_client != NULL;
+	return s_socket != NULL;
 }
 
 static void
@@ -282,13 +282,13 @@ do_detach_debugger(bool is_shutdown)
 	console_log(1, "detaching debug session");
 	s_is_attached = false;
 	duk_debugger_detach(g_duk);
-	if (s_client != NULL) {
-		client_close(s_client);
-		while (client_connected(s_client))
+	if (s_socket != NULL) {
+		socket_close(s_socket);
+		while (socket_connected(s_socket))
 			delay(0.05);
 	}
-	client_free(s_client);
-	s_client = NULL;
+	socket_free(s_socket);
+	s_socket = NULL;
 	if (s_want_attach && !is_shutdown)
 		exit_game(true);  // clean detach, exit
 }
@@ -296,9 +296,9 @@ do_detach_debugger(bool is_shutdown)
 static void
 duk_cb_debug_detach(void* udata)
 {
-	// note: if s_client is null, a TCP reset was detected by one of the I/O callbacks.
+	// note: if s_socket is null, a TCP reset was detected by one of the I/O callbacks.
 	// if this is the case, wait a bit for the client to reconnect.
-	if (s_client != NULL || !do_attach_debugger())
+	if (s_socket != NULL || !do_attach_debugger())
 		do_detach_debugger(false);
 }
 
@@ -382,7 +382,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 static duk_size_t
 duk_cb_debug_peek(void* udata)
 {
-	return client_peek(s_client);
+	return socket_peek(s_socket);
 }
 
 static duk_size_t
@@ -390,16 +390,16 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 {
 	size_t n_bytes;
 
-	if (s_client == NULL)
+	if (s_socket == NULL)
 		return 0;
 
 	// if we return zero, Duktape will drop the session. thus we're forced
 	// to block until we can read >= 1 byte.
-	while (!(n_bytes = client_peek(s_client))) {
-		if (!client_connected(s_client)) {  // did a pig eat it?
+	while (!(n_bytes = socket_peek(s_socket))) {
+		if (!socket_connected(s_socket)) {  // did a pig eat it?
 			console_log(1, "TCP connection reset while debugging");
-			client_free(s_client);
-			s_client = NULL;
+			socket_free(s_socket);
+			s_socket = NULL;
 			return 0;  // stupid pig
 		}
 
@@ -410,25 +410,25 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 	// let's not overflow the buffer, alright?
 	if (n_bytes > bufsize)
 		n_bytes = bufsize;
-	client_read(s_client, buffer, n_bytes);
+	socket_read(s_socket, buffer, n_bytes);
 	return n_bytes;
 }
 
 static duk_size_t
 duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 {
-	if (s_client == NULL)
+	if (s_socket == NULL)
 		return 0;
 
 	// make sure we're still connected
-	if (!client_connected(s_client)) {
+	if (!socket_connected(s_socket)) {
 		console_log(1, "TCP connection reset while debugging");
-		client_free(s_client);
-		s_client = NULL;
+		socket_free(s_socket);
+		s_socket = NULL;
 		return 0;  // stupid pig!
 	}
 
 	// send out the data
-	client_write(s_client, data, size);
+	socket_write(s_socket, data, size);
 	return size;
 }

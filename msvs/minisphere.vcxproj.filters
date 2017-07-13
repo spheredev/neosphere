@@ -138,6 +138,9 @@
     <ClCompile Include="..\src\minisphere\transform.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\minisphere\legacy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -273,6 +276,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\transform.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minisphere\legacy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

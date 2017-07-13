@@ -325,7 +325,7 @@ During gameplay, if the game has initialized the console, it can be shown and
 hidden by the player using a hotkey (`~` by default).
 
     import { Console } from 'sphere-runtime';
-	const Console = require('console');
+    const Console = require('console');
 
 Console.visible [read/write]
 
@@ -533,8 +533,8 @@ Delegate#add(handler[, thisObj]);
 Delegate#call([...]);
 
     Calls all handlers registered with the delegate.  Calls are made in order
-	of registration, and any arguments passed to `call()` are forwarded to the
-	handlers as-is.
+    of registration, and any arguments passed to `call()` are forwarded to the
+    handlers as-is.
 
 Delegate#remove(handler[, thisObj]);
 
