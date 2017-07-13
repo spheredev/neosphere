@@ -327,6 +327,7 @@ static duk_ret_t js_Socket_get_connected       (duk_context* ctx);
 static duk_ret_t js_Socket_get_remoteAddress   (duk_context* ctx);
 static duk_ret_t js_Socket_get_remotePort      (duk_context* ctx);
 static duk_ret_t js_Socket_close               (duk_context* ctx);
+static duk_ret_t js_Socket_connectTo           (duk_context* ctx);
 static duk_ret_t js_Socket_read                (duk_context* ctx);
 static duk_ret_t js_Socket_write               (duk_context* ctx);
 static duk_ret_t js_new_Sound                  (duk_context* ctx);
@@ -518,6 +519,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Socket", "remoteAddress", js_Socket_get_remoteAddress, NULL);
 	api_define_property(ctx, "Socket", "remotePort", js_Socket_get_remotePort, NULL);
 	api_define_method(ctx, "Socket", "close", js_Socket_close);
+	api_define_method(ctx, "Socket", "connectTo", js_Socket_connectTo);
 	api_define_method(ctx, "Socket", "read", js_Socket_read);
 	api_define_method(ctx, "Socket", "write", js_Socket_write);
 	api_define_class(ctx, "Sound", js_new_Sound, js_Sound_finalize);
@@ -3308,18 +3310,27 @@ js_Shape_draw(duk_context* ctx)
 static duk_ret_t
 js_new_Socket(duk_context* ctx)
 {
-	const char* hostname;
+	const char* hostname = NULL;
+	int         num_args;
 	int         port;
 	socket_t*   socket;
 
-	hostname = duk_require_string(ctx, 0);
-	port = duk_require_int(ctx, 1);
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
-	if (socket = socket_new(hostname, port, 1024))
-		duk_push_class_obj(ctx, "Socket", socket);
-	else
-		duk_push_null(ctx);
-	return 1;
+	num_args = duk_get_top(ctx);
+	if (num_args >= 2) {
+		hostname = duk_require_string(ctx, 0);
+		port = duk_require_int(ctx, 1);
+	}
+
+	if (!(socket = socket_new(1024)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create TCP socket");
+	if (hostname != NULL && !socket_connect(socket, hostname, port))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't connect to %s", hostname);
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Socket", socket);
+	return 0;
 }
 
 static duk_ret_t
@@ -3342,7 +3353,7 @@ js_Socket_get_bytesPending(duk_context* ctx)
 	socket = duk_require_class_obj(ctx, -1, "Socket");
 
 	if (socket == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is not connected");
 	duk_push_uint(ctx, (duk_uint_t)socket_peek(socket));
 	return 1;
 }
@@ -3405,6 +3416,23 @@ js_Socket_close(duk_context* ctx)
 	duk_push_null(ctx);
 	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	socket_free(socket);
+	return 0;
+}
+
+static duk_ret_t
+js_Socket_connectTo(duk_context* ctx)
+{
+	const char* hostname;
+	int         port;
+	socket_t*   socket;
+
+	duk_push_this(ctx);
+	socket = duk_require_class_obj(ctx, -1, "Socket");
+	hostname = duk_require_string(ctx, 0);
+	port = duk_require_int(ctx, 1);
+
+	if (!socket_connect(socket, hostname, port))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't connect to %s", hostname);
 	return 0;
 }
 

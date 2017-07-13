@@ -1398,25 +1398,25 @@ Server#accept();
 Server#close();
 
     Shuts down the server.  Any connections in the backlog will be dropped and
-    no new connections can be made until a new Server is created.
+    no new connections can be made unless a new Server is created on the same
+    port.
 
-new Socket(hostname, port);
+new Socket([hostname, port]);
 
-    Connects to `hostname` on `port` and constructs an Socket representing the
-    connection.  The hostname can either be a named address (e.g. google.com)
-    or an IP address (e.g. 127.0.0.1).  As this operation is non-blocking, a
-    Socket object will be returned even if the connection can be not be made;
-    you must poll Socket#connected to find out when the connection has opened.
+    Constructs a TCP socket object.  If no arguments are provided, the socket
+    starts in a disconnected state, otherwise attempts to connect to `hostname`
+    on `port` and throws an error if the attempt fails. See the documentation
+    for `Socket#connectTo()` for more information on socket connections.
 
 Socket#bytesPending [read-only]
 
-    Gets the number of bytes of data currently in the receive buffer.  Call
-    Socket#read() to retrieve this data.
+    Gets the number of bytes of data currently in this socket's receive buffer.
+    Call `Socket#read()` to retrieve this data.
 
-    Note that more data may be received between the time this is checked the
-    time a read is performed.  It's recommended to poll this value from time to
-    time and perform reads in order to keep the size of the receive buffer
-    down.
+    Note: More data may be received between the time this is checked the time
+          a read is performed.  It's recommended to poll this value from time
+          to time and perform reads in order to keep the size of the receive
+          buffer down.
 
 Socket#connected [read-only]
 
@@ -1439,6 +1439,18 @@ Socket#close();
 
     Disconnects the socket.  Note that any given Socket object is tied to a
     specific session and so cannot be reused after it has been closed.
+
+Socket#connectTo(hostname, port);
+
+    Connects the socket to `hostname` on `port` and throws an error if the
+    initial connection attempt fails.  `hostname` can either be a domain name
+    (e.g. google.com) or IP address (e.g. 127.0.0.1).  If this method succeeds,
+    you must poll `Socket#connected` to find out when the connection has been
+    established before attempting to read or write from the socket.
+
+    Note: A single socket can only be connected to one client at a time.  If
+          the socket is already connected when `Socket#connectTo()` is called,
+          that connection will be closed.
 
 Socket#read(num_bytes);
 

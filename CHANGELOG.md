@@ -6,6 +6,8 @@ vX.X.X - TBD
 
 * Adds support for 2D (orthographic) and 3D (perspective) projection matrices.
 * Adds support for setting a clipping rectangle when rendering to a `Surface`.
+* Adds `Socket#connectTo()` which allows the same socket object to be used for
+  multiple sessions.
 * Removes support for GPUs without shader support.  If the engine can't create
   a shader-capable display, it will now simply fail to start rather than trying
   to fall back on the fixed-function pipeline.

@@ -16,11 +16,18 @@ v1_socket_new_client(const char* hostname, int port)
 	socket_t*    client;
 	v1_socket_t* socket;
 
-	client = socket_new(hostname, port, 4096);
+	if (!(client = socket_new(4096)))
+		goto on_error;
+	if (!socket_connect(client, hostname, port))
+		goto on_error;
 
 	socket = calloc(1, sizeof(v1_socket_t));
 	socket->client = client;
 	return v1_socket_ref(socket);
+
+on_error:
+	socket_free(client);
+	return NULL;
 }
 
 v1_socket_t*

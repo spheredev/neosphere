@@ -60,33 +60,22 @@ sockets_update(void)
 }
 
 socket_t*
-socket_new(const char* hostname, int port, size_t buffer_size)
+socket_new(size_t buffer_size)
 {
 	socket_t* socket;
 
-	console_log(2, "connecting socket #%u to %s:%i", s_next_client_id, hostname, port);
+	console_log(2, "creating TCP socket #%u", s_next_client_id);
 
 	socket = calloc(1, sizeof(socket_t));
 	socket->buffer_size = buffer_size;
-	socket->recv_buffer = malloc(buffer_size);
-	if (!(socket->stream = dyad_newStream()))
+	if (!(socket->recv_buffer = malloc(buffer_size)))
 		goto on_error;
-	dyad_setNoDelay(socket->stream, true);
-	dyad_addListener(socket->stream, DYAD_EVENT_DATA, on_dyad_receive, socket);
-	if (dyad_connect(socket->stream, hostname, port) == -1)
-		goto on_error;
-
 	socket->id = s_next_client_id++;
 	return socket_ref(socket);
 
 on_error:
-	console_log(2, "couldn't connect socket #%u", s_next_client_id++);
-	if (socket != NULL) {
-		free(socket->recv_buffer);
-		if (socket->stream != NULL)
-			dyad_close(socket->stream);
-		free(socket);
-	}
+	console_log(2, "couldn't create TCP socket #%u", s_next_client_id++);
+	free(socket);
 	return NULL;
 }
 
@@ -102,7 +91,7 @@ socket_free(socket_t* it)
 {
 	if (it == NULL || --it->refcount > 0)
 		return;
-	console_log(3, "disposing socket #%u no longer in use", it->id);
+	console_log(3, "disposing TCP socket #%u no longer in use", it->id);
 	dyad_end(it->stream);
 	free(it);
 }
@@ -115,6 +104,24 @@ socket_connected(const socket_t* it)
 	state = dyad_getState(it->stream);
 	return state == DYAD_STATE_CONNECTED
 		|| state == DYAD_STATE_CLOSING;
+}
+
+bool
+socket_connect(socket_t* it, const char* hostname, int port)
+{
+	socket_close(it);
+
+	if (!(it->stream = dyad_newStream()))
+		goto on_error;
+	dyad_setNoDelay(it->stream, true);
+	dyad_addListener(it->stream, DYAD_EVENT_DATA, on_dyad_receive, it);
+	if (dyad_connect(it->stream, hostname, port) == -1)
+		goto on_error;
+	return true;
+
+on_error:
+	console_log(2, "couldn't connect TCP socket #%u to %s:%d", it->id, hostname, port);
+	return false;
 }
 
 const char*
@@ -132,8 +139,12 @@ socket_port(const socket_t* it)
 void
 socket_close(socket_t* it)
 {
-	console_log(2, "shutting down socket #%u", it->id);
+	if (it->stream == NULL)
+		return;
+	console_log(2, "closing connection on TCP socket #%u", it->id);
 	dyad_end(it->stream);
+	it->stream = NULL;
+	it->recv_size = 0;
 }
 
 size_t
@@ -146,7 +157,7 @@ size_t
 socket_read(socket_t* it, void* buffer, size_t num_bytes)
 {
 	num_bytes = num_bytes <= it->recv_size ? num_bytes : it->recv_size;
-	console_log(4, "reading %zd bytes from socket #%u", num_bytes, it->id);
+	console_log(4, "reading %zd bytes from TCP socket #%u", num_bytes, it->id);
 	memcpy(buffer, it->recv_buffer, num_bytes);
 	memmove(it->recv_buffer, it->recv_buffer + num_bytes, it->recv_size - num_bytes);
 	it->recv_size -= num_bytes;
@@ -156,7 +167,7 @@ socket_read(socket_t* it, void* buffer, size_t num_bytes)
 void
 socket_write(socket_t* it, const void* data, size_t num_bytes)
 {
-	console_log(4, "writing %zd bytes to socket #%u", num_bytes, it->id);
+	console_log(4, "writing %zd bytes to TCP socket #%u", num_bytes, it->id);
 	dyad_write(it->stream, data, (int)num_bytes);
 }
 
@@ -239,7 +250,7 @@ server_accept(server_t* it)
 	if (it->num_backlog == 0)
 		return NULL;
 
-	console_log(2, "accepting new socket #%u from server #%u",
+	console_log(2, "accepting new TCP socket #%u from server #%u",
 		s_next_client_id, it->id);
 	console_log(2, "    remote address: %s:%d",
 		dyad_getAddress(it->backlog[0]),
