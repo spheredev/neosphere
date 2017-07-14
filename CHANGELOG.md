@@ -8,12 +8,14 @@ vX.X.X - TBD
 * Adds support for setting a clipping rectangle when rendering to a `Surface`.
 * Adds `Socket#connectTo()` which allows the same socket object to be used for
   multiple sessions.
+* Adds the engine version number to the string returned by `Sphere.Platform`.
 * Removes support for GPUs without shader support.  If the engine can't create
   a shader-capable display, it will now simply fail to start rather than trying
   to fall back on the fixed-function pipeline.
 * Renames the `SoundStream` object to `AudioStream`.
+* Renames `Sphere.APIVersion` to `Sphere.Version`.
 * Fixes excessive OpenGL state changes in the internal rendering logic, vastly
-  improving the performance of the Sphere v2 graphics API.
+  improving performance for games using the Sphere v2 graphics API.
 
 
 v4.6.0 - July 4, 2017

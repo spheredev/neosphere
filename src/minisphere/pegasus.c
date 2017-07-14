@@ -193,7 +193,6 @@ static duk_ret_t js_screen_flip                (duk_context* ctx);
 static duk_ret_t js_screen_now                 (duk_context* ctx);
 static duk_ret_t js_screen_resize              (duk_context* ctx);
 static duk_ret_t js_Sphere_get_APILevel        (duk_context* ctx);
-static duk_ret_t js_Sphere_get_APIVersion      (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Game            (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Platform        (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Version         (duk_context* ctx);
@@ -406,7 +405,6 @@ initialize_pegasus_api(duk_context* ctx)
 
 	// initialize the Sphere v2 API
 	api_define_static_prop(ctx, "Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
-	api_define_static_prop(ctx, "Sphere", "APIVersion", js_Sphere_get_APIVersion, NULL);
 	api_define_static_prop(ctx, "Sphere", "Game", js_Sphere_get_Game, NULL);
 	api_define_static_prop(ctx, "Sphere", "Platform", js_Sphere_get_Platform, NULL);
 	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
@@ -1142,13 +1140,6 @@ js_Sphere_get_APILevel(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Sphere_get_APIVersion(duk_context* ctx)
-{
-	duk_push_int(ctx, API_VERSION);
-	return 1;
-}
-
-static duk_ret_t
 js_Sphere_get_Game(duk_context* ctx)
 {
 	duk_push_lstring_t(ctx, fs_manifest(g_fs));
@@ -1169,14 +1160,14 @@ js_Sphere_get_Game(duk_context* ctx)
 static duk_ret_t
 js_Sphere_get_Platform(duk_context* ctx)
 {
-	duk_push_string(ctx, ENGINE_NAME);
+	duk_push_sprintf(ctx, "%s %s", ENGINE_NAME, VERSION_NAME);
 	return 1;
 }
 
 static duk_ret_t
 js_Sphere_get_Version(duk_context* ctx)
 {
-	duk_push_string(ctx, VERSION_NAME);
+	duk_push_int(ctx, API_VERSION);
 	return 1;
 }
 
