@@ -92,7 +92,8 @@ socket_free(socket_t* it)
 	if (it == NULL || --it->refcount > 0)
 		return;
 	console_log(3, "disposing TCP socket #%u no longer in use", it->id);
-	dyad_end(it->stream);
+	if (it->stream != NULL)
+		dyad_end(it->stream);
 	free(it);
 }
 
@@ -101,6 +102,8 @@ socket_connected(const socket_t* it)
 {
 	int state;
 
+	if (it->stream == NULL)
+		return false;
 	state = dyad_getState(it->stream);
 	return state == DYAD_STATE_CONNECTED
 		|| state == DYAD_STATE_CLOSING;
