@@ -12,6 +12,7 @@
 #include "image.h"
 #include "input.h"
 #include "sockets.h"
+#include "unicode.h"
 #include "xoroshiro.h"
 
 #define API_VERSION 2
@@ -1632,7 +1633,7 @@ js_FS_exists(duk_context* ctx)
 static duk_ret_t
 js_FS_readFile(duk_context* ctx)
 {
-	void*       buffer;
+	lstring_t*  content;
 	void*       file_data;
 	size_t      file_size;
 	const char* filename;
@@ -1641,10 +1642,8 @@ js_FS_readFile(duk_context* ctx)
 
 	if (!(file_data = sfs_fslurp(g_fs, filename, NULL, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
-	buffer = duk_push_fixed_buffer(ctx, file_size);
-	memcpy(buffer, file_data, file_size);
-	free(file_data);
-	duk_push_buffer_object(ctx, -1, 0, file_size, DUK_BUFOBJ_ARRAYBUFFER);
+	content = lstr_from_cp1252(file_data, file_size);
+	duk_push_lstring_t(ctx, content);
 	return 1;
 }
 
@@ -1688,15 +1687,24 @@ js_FS_resolve(duk_context* ctx)
 static duk_ret_t
 js_FS_writeFile(duk_context* ctx)
 {
-	void*       buffer;
+	const void* buffer;
 	const char* filename;
 	size_t      size;
+	lstring_t*  text = NULL;
 
 	filename = duk_require_path(ctx, 0, NULL, false, true);
-	buffer = duk_require_buffer_data(ctx, 1, &size);
-
+	
+	if (duk_is_string(ctx, 1)) {
+		text = duk_require_lstring_t(ctx, 1);
+		buffer = lstr_cstr(text);
+		size = lstr_len(text);
+	}
+	else {
+		buffer = duk_require_buffer_data(ctx, 1, &size);
+	}
 	if (!sfs_fspew(g_fs, filename, NULL, buffer, size))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
+	lstr_free(text);
 	return 0;
 }
 

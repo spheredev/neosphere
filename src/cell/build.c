@@ -782,7 +782,7 @@ push_require(duk_context* ctx, const char* module_id)
 	duk_push_c_function(ctx, js_require, 1);
 	duk_push_string(ctx, "name");
 	duk_push_string(ctx, "require");
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.name
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.filename
 	duk_push_string(ctx, "cache");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "moduleCache");
@@ -1126,23 +1126,20 @@ js_FS_exists(duk_context* ctx)
 static duk_ret_t
 js_FS_readFile(duk_context* ctx)
 {
-	void*       buffer;
 	build_t*    build;
+	lstring_t*  content;
 	void*       file_data;
-	const char* name;
-	size_t      size;
+	size_t      file_size;
+	const char* filename;
 
 	build = duk_get_heap_udata(ctx);
 
-	name = duk_require_path(ctx, 0);
+	filename = duk_require_path(ctx, 0);
 
-	if (!(file_data = fs_fslurp(build->fs, name, &size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "read file failed");
-	buffer = duk_push_fixed_buffer(ctx, size);
-	memcpy(buffer, file_data, size);
-	free(file_data);
-
-	duk_push_buffer_object(ctx, -1, 0, size, DUK_BUFOBJ_ARRAYBUFFER);
+	if (!(file_data = fs_fslurp(build->fs, filename, &file_size)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
+	content = lstr_from_cp1252(file_data, file_size);
+	duk_push_lstring_t(ctx, content);
 	return 1;
 }
 
@@ -1193,16 +1190,26 @@ static duk_ret_t
 js_FS_writeFile(duk_context* ctx)
 {
 	build_t*    build;
-	void*       file_data;
-	const char* name;
-	size_t      size;
+	const void* file_data;
+	size_t      file_size;
+	const char* filename;
+	lstring_t*  text = NULL;
 
 	build = duk_get_heap_udata(ctx);
-	name = duk_require_path(ctx, 0);
-	file_data = duk_require_buffer_data(ctx, 1, &size);
 
-	if (!fs_fspew(build->fs, name, file_data, size))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "write file failed");
+	filename = duk_require_path(ctx, 0);
+
+	if (duk_is_string(ctx, 1)) {
+		text = duk_require_lstring_t(ctx, 1);
+		file_data = lstr_cstr(text);
+		file_size = lstr_len(text);
+	}
+	else {
+		file_data = duk_require_buffer_data(ctx, 1, &file_size);
+	}
+	if (!fs_fspew(build->fs, filename, file_data, file_size))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
+	lstr_free(text);
 	return 0;
 }
 

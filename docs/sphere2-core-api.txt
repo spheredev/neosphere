@@ -391,9 +391,12 @@ FS.exists(filename);
 
 FS.readFile(filename);
 
-    Reads all data from the specified file and returns it as an ArrayBuffer.
-    This avoids the need to explicitly open and close a file when all you want
-    to do is read its contents into memory.
+    Reads all data from the specified file and returns it as a string.  This
+    avoids the need to explicitly open a file and decode its contents when all
+    you want is to load a text file.
+
+    Note: This function performs UTF-8 text decoding, so it is not suitable for
+          reading binary files.
 
 FS.removeDirectory(dir_name);
 
@@ -420,8 +423,11 @@ FS.resolve(path);
 FS.writeFile(filename, data);
 
     Writes an entire file in one go.  If a file already exists with the given
-    filename, it will be overwritten.  'data' is an ArrayBuffer, TypedArray or
-    DataView containing the data to be written.
+    filename, it will be overwritten.  'data' can be a string, ArrayBuffer,
+    TypedArray or DataView whose contents will be written to the file.
+
+    Note: If `data` is a string, it will be UTF-8 encoded when written to the
+          file.  No byte-order mark will be written.
 
 
 `FileStream` Object

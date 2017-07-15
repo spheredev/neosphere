@@ -485,7 +485,7 @@ on_error:
 }
 
 bool
-sfs_fspew(sandbox_t* fs, const char* filename, const char* base_dir, void* buf, size_t size)
+sfs_fspew(sandbox_t* fs, const char* filename, const char* base_dir, const void* buf, size_t size)
 {
 	sfs_file_t* file = NULL;
 

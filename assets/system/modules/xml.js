@@ -12,8 +12,7 @@ const sax = require('./lib/sax');
 exports.readFile = readFile;
 function readFile(fileName)
 {
-	var buffer = FS.readFile(fileName);
-	var xmlText = new TextDecoder().decode(buffer);
+	var xmlText = FS.readFile(fileName);
 	return parse(xmlText);
 }
 

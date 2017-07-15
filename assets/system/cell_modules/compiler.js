@@ -24,8 +24,7 @@ function transpile(dirName, sources)
 function makeTranspileTool(apiVersion)
 {
 	return new Tool(function(outFileName, inFileNames) {
-		var fileContent = FS.readFile(inFileNames[0]);
-		var input = new TextDecoder().decode(fileContent);
+		var input = FS.readFile(inFileNames[0]);
 		var output = ts.transpileModule(input, {
 			fileName: inFileNames[0],
 			reportDiagnostics: true,
@@ -41,7 +40,7 @@ function makeTranspileTool(apiVersion)
 			},
 		});
 		if (from(output.diagnostics).all(function(v) { return v.category !== ts.DiagnosticCategory.Error; }))
-			FS.writeFile(outFileName, new TextEncoder().encode(output.outputText));
+			FS.writeFile(outFileName, output.outputText);
 		from(output.diagnostics).each(function(diag) {
 			var message = ts.flattenDiagnosticMessageText(diag.messageText, '\n');
 			var errorCode = "TS" + diag.code;
