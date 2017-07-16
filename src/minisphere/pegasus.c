@@ -1687,22 +1687,17 @@ js_FS_resolve(duk_context* ctx)
 static duk_ret_t
 js_FS_writeFile(duk_context* ctx)
 {
-	const void* buffer;
+	const void* file_data;
+	size_t      file_size;
 	const char* filename;
-	size_t      size;
 	lstring_t*  text = NULL;
 
 	filename = duk_require_path(ctx, 0, NULL, false, true);
+	text = duk_require_lstring_t(ctx, 1);
 	
-	if (duk_is_string(ctx, 1)) {
-		text = duk_require_lstring_t(ctx, 1);
-		buffer = lstr_cstr(text);
-		size = lstr_len(text);
-	}
-	else {
-		buffer = duk_require_buffer_data(ctx, 1, &size);
-	}
-	if (!sfs_fspew(g_fs, filename, NULL, buffer, size))
+	file_data = lstr_cstr(text);
+	file_size = lstr_len(text);
+	if (!sfs_fspew(g_fs, filename, NULL, file_data, file_size))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
 	return 0;

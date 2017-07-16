@@ -782,7 +782,7 @@ push_require(duk_context* ctx, const char* module_id)
 	duk_push_c_function(ctx, js_require, 1);
 	duk_push_string(ctx, "name");
 	duk_push_string(ctx, "require");
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.filename
+	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.name
 	duk_push_string(ctx, "cache");
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "moduleCache");

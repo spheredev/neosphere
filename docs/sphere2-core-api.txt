@@ -391,21 +391,22 @@ FS.exists(filename);
 
 FS.readFile(filename);
 
-    Reads all data from the specified file and returns it as a string.  This
-    avoids the need to explicitly open a file and decode its contents when all
-    you want is to load a text file.
+    Reads an entire UTF-8 text file into a JavaScript string.  This is a
+    convenience to avoid the need to explicitly construct a FileStream and
+    decode the file contents when all you want is to load a text file.
 
-    Note: This function performs UTF-8 text decoding, so it is not suitable for
-          reading binary files.
+    Note: This performs UTF-8 decoding, making it unsuitable for use with
+          binary data.  To work with binary files, use a FileStream object
+          instead.
 
 FS.removeDirectory(dir_name);
 
     Deletes the specified directory.  The directory must be empty or an error
     will be thrown.
 
-FS.rename(srcname, destname);
+FS.rename(orig_name, new_name);
 
-    Renames the file named by `srcname` to `destname`, both of which are
+    Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full SphereFS paths.  This can also be used to move a file
     between directories; if so, the destination directory must already exist.
 
@@ -417,17 +418,17 @@ FS.resolve(path);
     is pulled for a given file regardless of the path used to access it.
 
     Note that the resource referred to by the path doesn't need to exist.  As
-    with other FS methods, FS.resolve() will throw an error if an absolute path
-    is passed in.
+    with other `FS` methods, `FS.resolve()` will throw an error if an absolute
+    path is passed in.
 
-FS.writeFile(filename, data);
+FS.writeFile(filename, string);
 
-    Writes an entire file in one go.  If a file already exists with the given
-    filename, it will be overwritten.  'data' can be a string, ArrayBuffer,
-    TypedArray or DataView whose contents will be written to the file.
+    Writes a string out to a UTF-8 text file.  If a file already exists with
+    the specified filename, it will be overwritten.
 
-    Note: If `data` is a string, it will be UTF-8 encoded when written to the
-          file.  No byte-order mark will be written.
+    Note: This performs UTF-8 encoding, making it unsuitable for use with
+          binary data.  To work with binary files, use a FileStream object
+          instead.
 
 
 `FileStream` Object

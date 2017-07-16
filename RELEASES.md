@@ -6,11 +6,28 @@ miniSphere X.X
 
 * Games can now assign a `Transform` object to a surface's `transform` property
   to change the projection matrix.  To create projection matrices, there are
-  two new `Transform` methods: `project2D()` for orthographic projection, and
-  `project3D()` for perspective projection.
+  two new `Transform` methods: `.project2D()` for orthographic projection, and
+  `.project3D()` for perspective projection.
+
+* Clipping is now supported for all surfaces, not just the screen.  Your game
+  can now call `.clipTo()` on any Sphere v2 surface object to set its clipping
+  box, just like you can do with `screen`.
+
+* `Socket` objects can now be reused by simply calling the new `.connectTo()`
+  method to reestablish a connection.  This even works for already-connected
+  sockets; the existing connection will be closed in that case.
+
+* For convenience, `FS.readFile()` and `FS.writeFile()` now work directly with
+  strings instead of buffer objects.  This makes them unsuitable for use with
+  binary data due to the UTF-8 processing involved.  Going forward, games that
+  must work with binary files should use a `FileStream` object instead.
 
 * `SoundStream` has been renamed to `AudioStream` to avoid potential confusion
-  with the `Sound` object.  The object's API remains otherwise identical.
+  with the `Sound` object.  The API remains otherwise identical.
+
+* miniSphere will no longer run on computers without a shader-capable GPU.  If
+  you must continue supporting such hardware, you'll have to stick to v4.5.11
+  or earlier.
 
 
 miniSphere 4.6
