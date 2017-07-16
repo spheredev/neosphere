@@ -2762,6 +2762,7 @@ typedef struct duk_hthread duk_context;
  */
 
 #define DUK_USE_FASTINT
+#define DUK_USE_REGEXP_CANON_WORKAROUND
 #define DUK_USE_SYMBOL_BUILTIN
 
 /*
@@ -2897,7 +2898,6 @@ typedef struct duk_hthread duk_context;
 #define DUK_USE_REFCOUNT32
 #define DUK_USE_REFERENCE_COUNTING
 #define DUK_USE_REFLECT_BUILTIN
-#undef DUK_USE_REGEXP_CANON_WORKAROUND
 #define DUK_USE_REGEXP_COMPILER_RECLIMIT 10000
 #define DUK_USE_REGEXP_EXECUTOR_RECLIMIT 10000
 #define DUK_USE_REGEXP_SUPPORT

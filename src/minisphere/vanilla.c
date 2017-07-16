@@ -931,7 +931,7 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 	else if (duk_is_null_or_undefined(ctx, index))
 		return NULL;
 	else
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "script must be string, function, or null/undefined");
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "expected string, function, or null/undefined");
 	return script;
 }
 

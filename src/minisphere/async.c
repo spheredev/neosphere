@@ -6,6 +6,7 @@
 
 struct job
 {
+	bool         finished;
 	async_hint_t hint;
 	double       priority;
 	uint32_t     timer;
@@ -15,6 +16,7 @@ struct job
 
 static int sort_jobs (const void* in_a, const void* in_b);
 
+static bool      s_need_sort = false;
 static int64_t   s_next_token = 1;
 static vector_t* s_onetime;
 static vector_t* s_recurring;
@@ -45,9 +47,23 @@ async_busy(void)
 void
 async_cancel_all(bool recurring)
 {
-	vector_clear(s_onetime);
-	if (recurring)
-		vector_clear(s_recurring);
+	iter_t iter;
+	job_t* job;
+
+	iter = vector_enum(s_onetime);
+	while (vector_next(&iter)) {
+		job = *(job_t**)iter.ptr;
+		job->finished = true;
+	}
+
+	if (recurring) {
+		iter = vector_enum(s_recurring);
+		while (vector_next(&iter)) {
+			job = *(job_t**)iter.ptr;
+			job->finished = true;
+		}
+		s_need_sort = true;
+	}
 }
 
 void
@@ -58,18 +74,17 @@ async_cancel(int64_t token)
 
 	iter = vector_enum(s_onetime);
 	while (p_job = vector_next(&iter)) {
-		if ((*p_job)->token == token) {
-			iter_remove(&iter);
-			free(*p_job);
-		}
+		if ((*p_job)->token == token)
+			(*p_job)->finished = true;
 	}
+	
 	iter = vector_enum(s_recurring);
 	while (p_job = vector_next(&iter)) {
-		if ((*p_job)->token == token) {
-			iter_remove(&iter);
-			free(*p_job);
-		}
+		if ((*p_job)->token == token)
+			(*p_job)->finished = true;
 	}
+	
+	s_need_sort = true;
 }
 
 int64_t
@@ -107,7 +122,7 @@ async_recur(script_t* script, double priority, async_hint_t hint)
 	job->priority = priority;
 	vector_push(s_recurring, &job);
 
-	vector_sort(s_recurring, sort_jobs);
+	s_need_sort = true;
 
 	return job->token;
 }
@@ -115,36 +130,39 @@ async_recur(script_t* script, double priority, async_hint_t hint)
 void
 async_run_jobs(async_hint_t hint)
 {
-	job_t*    job;
-	vector_t* vector;
-
 	iter_t iter;
+	job_t* job;
+
+	if (s_need_sort)
+		vector_sort(s_recurring, sort_jobs);
 
 	// process recurring jobs
 	iter = vector_enum(s_recurring);
 	while (vector_next(&iter)) {
 		job = *(job_t**)iter.ptr;
-		if (job->hint == hint)
+		if (job->hint == hint && !job->finished)
 			script_run(job->script, true);
+		if (job->finished) {
+			script_free(job->script);
+			iter_remove(&iter);
+		}
 	}
 
 	// process one-time jobs.  swap in a fresh queue first to allow nested callbacks
 	// to work.
-	vector = s_onetime;
-	s_onetime = vector_new(sizeof(job_t*));
-	if (vector != NULL) {
-		iter = vector_enum(vector);
+	if (s_onetime != NULL) {
+		iter = vector_enum(s_onetime);
 		while (vector_next(&iter)) {
 			job = *(job_t**)iter.ptr;
-			if (job->hint == hint && job->timer-- == 0) {
+			if (job->hint == hint && job->timer-- == 0 && !job->finished) {
 				script_run(job->script, false);
-				script_free(job->script);
+				job->finished = true;
 			}
-			else {
-				vector_push(s_onetime, &job);
+			if (job->finished) {
+				script_free(job->script);
+				iter_remove(&iter);
 			}
 		}
-		vector_free(vector);
 	}
 }
 
