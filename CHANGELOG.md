@@ -16,6 +16,8 @@ vX.X.X - TBD
   to fall back on the fixed-function pipeline.
 * Renames the `SoundStream` object to `AudioStream`.
 * Renames `Sphere.APIVersion` to `Sphere.Version`.
+* Fixes several bugs in Dispatch job management, including one that can cause
+  the engine to crash with a segfault.
 * Fixes excessive OpenGL state changes in the internal rendering logic, vastly
   improving performance for games using the Sphere v2 graphics API.
 
