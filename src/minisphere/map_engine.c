@@ -1077,13 +1077,13 @@ change_map(const char* filename, bool preserve_persons)
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
 		path = fs_make_path(lstr_cstr(person_info->spriteset), "spritesets", true);
-		spriteset = load_spriteset(path_cstr(path));
+		spriteset = spriteset_load(path_cstr(path));
 		path_free(path);
 		if (spriteset == NULL)
 			goto on_error;
 		if (!(person = create_person(lstr_cstr(person_info->name), spriteset, false, NULL)))
 			goto on_error;
-		free_spriteset(spriteset);
+		spriteset_free(spriteset);
 		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
 		compile_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
 		compile_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
@@ -1130,7 +1130,7 @@ change_map(const char* filename, bool preserve_persons)
 	return true;
 
 on_error:
-	free_spriteset(spriteset);
+	spriteset_free(spriteset);
 	free_map(s_map);
 	return false;
 }

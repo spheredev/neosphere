@@ -187,9 +187,9 @@ create_person(const char* name, spriteset_t* spriteset, bool is_persistent, scri
 	}
 	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
 	person->id = s_next_person_id++;
-	person->sprite = ref_spriteset(spriteset);
+	person->sprite = spriteset_ref(spriteset);
 	set_person_name(person, name);
-	set_person_direction(person, lstr_cstr(person->sprite->poses[0].name));
+	set_person_direction(person, "north");
 	person->is_persistent = is_persistent;
 	person->is_visible = true;
 	person->x = map_origin.x;
@@ -358,7 +358,7 @@ get_person_base(const person_t* person)
 	int    base_x, base_y;
 	double x, y;
 
-	base_rect = zoom_rect(person->sprite->base, person->scale_x, person->scale_y);
+	base_rect = zoom_rect(spriteset_get_base(person->sprite), person->scale_x, person->scale_y);
 	get_person_xy(person, &x, &y, true);
 	base_x = x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
 	base_y = y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
@@ -457,10 +457,10 @@ set_person_spriteset(person_t* person, spriteset_t* spriteset)
 	spriteset_t* old_spriteset;
 	
 	old_spriteset = person->sprite;
-	person->sprite = ref_spriteset(spriteset);
+	person->sprite = spriteset_ref(spriteset);
 	person->anim_frames = get_sprite_frame_delay(person->sprite, person->direction, 0);
 	person->frame = 0;
-	free_spriteset(old_spriteset);
+	spriteset_free(old_spriteset);
 }
 
 void
@@ -614,7 +614,7 @@ render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 		get_person_xy(person, &x, &y, true);
 		x -= cam_x - person->x_offset;
 		y -= cam_y - person->y_offset;
-		draw_sprite(sprite, person->mask, is_flipped, person->theta, person->scale_x, person->scale_y,
+		spriteset_draw(sprite, person->mask, is_flipped, person->theta, person->scale_x, person->scale_y,
 			person->direction, x, y, person->frame);
 	}
 }
@@ -821,7 +821,7 @@ free_person(person_t* person)
 	free(person->steps);
 	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
 		script_free(person->scripts[i]);
-	free_spriteset(person->sprite);
+	spriteset_free(person->sprite);
 	free(person->commands);
 	free(person->name);
 	free(person->direction);
@@ -1081,16 +1081,16 @@ js_CreatePerson(duk_context* ctx)
 	if (duk_is_class_obj(ctx, 1, "ssSpriteset"))
 		// ref the spriteset so we can safely free it later. this avoids
 		// having to check the argument type again.
-		spriteset = ref_spriteset(duk_require_class_obj(ctx, 1, "ssSpriteset"));
+		spriteset = spriteset_ref(duk_require_class_obj(ctx, 1, "ssSpriteset"));
 	else {
 		filename = duk_require_path(ctx, 1, "spritesets", true, false);
-		if (!(spriteset = load_spriteset(filename)))
+		if (!(spriteset = spriteset_load(filename)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to load spriteset `%s`", filename);
 	}
 
 	// create the person and its JS-side data object
 	person = create_person(name, spriteset, !destroy_with_map, NULL);
-	free_spriteset(spriteset);
+	spriteset_free(spriteset);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);
@@ -1266,7 +1266,7 @@ js_GetPersonBase(duk_context* ctx)
 
 	if (!(person = find_person(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	base = get_sprite_base(get_person_spriteset(person));
+	base = spriteset_get_base(get_person_spriteset(person));
 	duk_push_object(ctx);
 	duk_push_int(ctx, base.x1); duk_put_prop_string(ctx, -2, "x1");
 	duk_push_int(ctx, base.y1); duk_put_prop_string(ctx, -2, "y1");
@@ -1502,10 +1502,10 @@ js_GetPersonSpriteset(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if ((new_spriteset = clone_spriteset(get_person_spriteset(person))) == NULL)
+	if ((new_spriteset = spriteset_clone(get_person_spriteset(person))) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to get spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
-	free_spriteset(new_spriteset);
+	spriteset_free(new_spriteset);
 	return 1;
 }
 
@@ -1953,10 +1953,10 @@ js_SetPersonSpriteset(duk_context* ctx)
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if ((new_spriteset = clone_spriteset(spriteset)) == NULL)
+	if ((new_spriteset = spriteset_clone(spriteset)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new spriteset");
 	set_person_spriteset(person, new_spriteset);
-	free_spriteset(new_spriteset);
+	spriteset_free(new_spriteset);
 	return 0;
 }
 

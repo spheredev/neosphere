@@ -10,14 +10,14 @@
 #include <stdint.h>
 #include <string.h>
 
-static bool vector_resize (vector_t* vector, size_t min_items);
+static bool vector_resize (vector_t* vector, int min_items);
 
 struct vector
 {
 	size_t   pitch;
 	uint8_t* buffer;
-	size_t   num_items;
-	size_t   max_items;
+	int      num_items;
+	int      max_items;
 };
 
 vector_t*
@@ -54,13 +54,13 @@ vector_free(vector_t* vector)
 }
 
 void*
-vector_get(const vector_t* vector, size_t index)
+vector_get(const vector_t* vector, int index)
 {
 	return vector->buffer + index * vector->pitch;
 }
 
 void
-vector_set(vector_t* vector, size_t index, const void* in_object)
+vector_set(vector_t* vector, int index, const void* in_object)
 {
 	uint8_t* p_item;
 
@@ -68,7 +68,7 @@ vector_set(vector_t* vector, size_t index, const void* in_object)
 	memcpy(p_item, in_object, vector->pitch);
 }
 
-size_t
+int
 vector_len(const vector_t* vector)
 {
 	return vector->num_items;
@@ -92,7 +92,7 @@ vector_push(vector_t* vector, const void* in_object)
 }
 
 void
-vector_remove(vector_t* vector, size_t index)
+vector_remove(vector_t* vector, int index)
 {
 	size_t   move_size;
 	uint8_t* p_item;
@@ -150,10 +150,10 @@ iter_remove(iter_t* iter)
 }
 
 static bool
-vector_resize(vector_t* vector, size_t min_items)
+vector_resize(vector_t* vector, int min_items)
 {
 	uint8_t* new_buffer;
-	size_t   new_max;
+	int      new_max;
 	
 	new_max = vector->max_items;
 	if (min_items > vector->max_items)  // is the buffer too small?

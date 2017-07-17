@@ -413,7 +413,7 @@ initialize_engine(void)
 	audio_init();
 	initialize_input();
 	sockets_init();
-	initialize_spritesets();
+	spritesets_init();
 	initialize_map_engine();
 	scripts_init();
 
@@ -446,7 +446,7 @@ shutdown_engine(void)
 	console_log(1, "shutting down Dyad");
 	dyad_shutdown();
 
-	shutdown_spritesets();
+	spritesets_uninit();
 	audio_uninit();
 	galileo_uninit();
 	async_uninit();

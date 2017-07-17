@@ -24,7 +24,7 @@ visor_new(void)
 void
 visor_free(visor_t* visor)
 {
-	size_t i;
+	int i;
 
 	for (i = 0; i < vector_len(visor->filenames); ++i)
 		free(*(char**)vector_get(visor->filenames, i));
