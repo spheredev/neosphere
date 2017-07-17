@@ -528,6 +528,64 @@ spriteset_draw(const spriteset_t* it, color_t mask, bool is_flipped, double thet
 		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
 }
 
+bool
+spriteset_save(const spriteset_t* it, const char* filename)
+{
+	sfs_file_t*         file;
+	struct frame*       frame;
+	struct rss_frame_v3 frame_data;
+	image_t*            image;
+	struct rss_header   header;
+	struct pose*        pose;
+	struct rss_dir_v3   pose_data;
+
+	int i, j;
+	
+	file = sfs_fopen(g_fs, filename, NULL, "wb");
+	
+	// write out the RSS header	first
+	image = spriteset_image(it, 0);
+	memcpy(header.signature, ".rss", 4);
+	header.version = 3;
+	header.frame_width = image_width(image);
+	header.frame_height = image_height(image);
+	header.base_x1 = it->base.x1;
+	header.base_y1 = it->base.y1;
+	header.base_x2 = it->base.x2;
+	header.base_y2 = it->base.y2;
+	header.num_images = vector_len(it->images);
+	header.num_directions = vector_len(it->poses);
+	if (sfs_fwrite(&header, sizeof(struct rss_header), 1, file) != 1)
+		goto on_error;
+
+	for (i = 0; i < vector_len(it->images); ++i) {
+		image = *(image_t**)vector_get(it->images, i);
+		image_write(image, file);
+	}
+
+	for (i = 0; i < vector_len(it->poses); ++i) {
+		pose = vector_get(it->poses, i);
+		pose_data.num_frames = vector_len(it->poses);
+		if (sfs_fwrite(&pose_data, sizeof(struct rss_dir_v3), 1, file) != 1)
+			goto on_error;
+		write_lstring(file, pose->name, true);
+		for (j = 0; j < vector_len(pose->frames); ++j) {
+			frame = vector_get(pose->frames, j);
+			frame_data.image_idx = frame->image_idx;
+			frame_data.delay = frame->delay;
+			if (sfs_fwrite(&frame_data, sizeof(struct rss_frame_v3), 1, file) != 1)
+				goto on_error;
+		}
+	}
+	
+	sfs_fclose(file);
+	return true;
+
+on_error:
+	sfs_fclose(file);
+	return false;
+}
+
 static struct pose*
 find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
 {

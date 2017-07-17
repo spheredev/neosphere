@@ -9,7 +9,8 @@ vX.X.X - TBD
 * Adds `Socket#connectTo()` which allows the same socket object to be used for
   multiple sessions.
 * Adds the engine version number to the string returned by `Sphere.Platform`.
-* Adds support for the Sphere v1 `CreateSpriteset()` function.
+* Adds support for the Sphere v1 `CreateSpriteset()` and `Spriteset#save()`
+  functions.
 * Changes `FS.readFile()` and `FS.writeFile()` to work directly with strings
   instead of ArrayBuffers.
 * Removes support for GPUs without shader support.  If the engine can't create

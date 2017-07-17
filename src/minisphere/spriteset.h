@@ -28,5 +28,6 @@ void         spriteset_add_frame         (spriteset_t* it, const char* pose_name
 void         spriteset_add_image         (spriteset_t* it, image_t* image);
 void         spriteset_add_pose          (spriteset_t* it, const char* name);
 void         spriteset_draw              (const spriteset_t* it, color_t mask, bool is_flipped, double theta, double scale_x, double scale_y, const char* pose_name, float x, float y, int frame_index);
+bool         spriteset_save              (const spriteset_t* it, const char* filename);
 
 #endif // MINISPHERE__SPRITESET_H__INCLUDED

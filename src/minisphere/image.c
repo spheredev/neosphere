@@ -680,6 +680,33 @@ image_unlock(image_t* image, image_lock_t* lock)
 	image_free(image);
 }
 
+bool
+image_write(image_t* it, sfs_file_t* file)
+{
+	color_t*      line_ptr;
+	size_t        line_size;
+	image_lock_t* lock;
+
+	int i_y;
+
+	console_log(3, "writing %ix%i image #%u to open file", it->width, it->height, it->id);
+	if (!(lock = image_lock(it)))
+		goto on_error;
+	line_size = it->width * 4;
+	for (i_y = 0; i_y < it->height; ++i_y) {
+		line_ptr = lock->pixels + i_y * lock->pitch;
+		if (sfs_fwrite(line_ptr, line_size, 1, file) != 1)
+			goto on_error;
+	}
+	image_unlock(it, lock);
+	return true;
+
+on_error:
+	console_log(3, "    couldn't write image to file");
+	image_unlock(it, lock);
+	return false;
+}
+
 static void
 cache_pixels(image_t* image)
 {

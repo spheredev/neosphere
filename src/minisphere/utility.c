@@ -149,6 +149,21 @@ on_error:
 	return NULL;
 }
 
+bool
+write_lstring(sfs_file_t* file, const lstring_t* string, bool include_nul)
+{
+	uint16_t length;
+
+	length = (uint16_t)lstr_len(string);
+	if (include_nul)
+		++length;
+	if (sfs_fwrite(&length, 2, 1, file) != 1)
+		return false;
+	if (sfs_fwrite(lstr_cstr(string), length, 1, file) != 1)
+		return false;
+	return true;
+}
+
 char*
 strnewf(const char* fmt, ...)
 {

@@ -16,6 +16,7 @@ void        duk_unref_heapptr     (duk_context* ctx, void* heapptr);
 const char* md5sum                (const void* data, size_t size);
 lstring_t*  read_lstring          (sfs_file_t* file, bool trim_null);
 lstring_t*  read_lstring_raw      (sfs_file_t* file, size_t length, bool trim_null);
+bool        write_lstring         (sfs_file_t* file, const lstring_t* string, bool include_nul);
 char*       strnewf               (const char* fmt, ...);
 
 #endif // MINISPHERE__UTILITY_H__INCLUDED

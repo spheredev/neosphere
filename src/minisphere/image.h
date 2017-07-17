@@ -50,5 +50,6 @@ bool            image_rescale            (image_t* image, int width, int height)
 bool            image_save               (image_t* image, const char* filename);
 void            image_set_pixel          (image_t* image, int x, int y, color_t color);
 void            image_unlock             (image_t* image, image_lock_t* lock);
+bool            image_write              (image_t* it, sfs_file_t* file);
 
 #endif // MINISPHERE__IMAGE_H__INCLUDED

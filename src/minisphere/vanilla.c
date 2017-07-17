@@ -234,6 +234,7 @@ static duk_ret_t js_SoundEffect_toString             (duk_context* ctx);
 static duk_ret_t js_Spriteset_finalize               (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_filename           (duk_context* ctx);
 static duk_ret_t js_Spriteset_clone                  (duk_context* ctx);
+static duk_ret_t js_Spriteset_save                   (duk_context* ctx);
 static duk_ret_t js_Spriteset_toString               (duk_context* ctx);
 static duk_ret_t js_Surface_finalize                 (duk_context* ctx);
 static duk_ret_t js_Surface_get_height               (duk_context* ctx);
@@ -576,6 +577,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_class(ctx, "ssSpriteset", NULL, js_Spriteset_finalize);
 	api_define_property(ctx, "ssSpriteset", "filename", js_Spriteset_get_filename, NULL);
 	api_define_method(ctx, "ssSpriteset", "clone", js_Spriteset_clone);
+	api_define_method(ctx, "ssSpriteset", "save", js_Spriteset_save);
 	api_define_method(ctx, "ssSpriteset", "toString", js_Spriteset_toString);
 
 	api_define_class(ctx, "ssSurface", NULL, js_Surface_finalize);
@@ -4559,6 +4561,22 @@ js_Spriteset_clone(duk_context* ctx)
 	duk_push_sphere_spriteset(ctx, new_spriteset);
 	spriteset_free(new_spriteset);
 	return 1;
+}
+
+static duk_ret_t
+js_Spriteset_save(duk_context* ctx)
+{
+	const char*  filename;
+	spriteset_t* spriteset;
+
+	duk_push_this(ctx);
+	spriteset = duk_require_sphere_spriteset(ctx, -1);
+	filename = duk_require_path(ctx, 0, "spritesets", true, true);
+
+	if (!spriteset_save(spriteset, filename))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't save spriteset");
+	spriteset_free(spriteset);
+	return 0;
 }
 
 static duk_ret_t
