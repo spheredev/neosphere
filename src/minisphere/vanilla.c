@@ -232,8 +232,6 @@ static duk_ret_t js_SoundEffect_stop                 (duk_context* ctx);
 static duk_ret_t js_SoundEffect_toString             (duk_context* ctx);
 static duk_ret_t js_Spriteset_finalize               (duk_context* ctx);
 static duk_ret_t js_Spriteset_get_filename           (duk_context* ctx);
-static duk_ret_t js_Spriteset_get_image              (duk_context* ctx);
-static duk_ret_t js_Spriteset_set_image              (duk_context* ctx);
 static duk_ret_t js_Spriteset_clone                  (duk_context* ctx);
 static duk_ret_t js_Spriteset_toString               (duk_context* ctx);
 static duk_ret_t js_Surface_finalize                 (duk_context* ctx);
@@ -819,9 +817,7 @@ void
 duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 {
 	rect_t      base;
-	int         delay;
 	image_t*    image;
-	int         image_index;
 	const char* pose_name;
 
 	int i, j;
@@ -840,7 +836,7 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	// Spriteset:images
 	duk_push_array(ctx);
 	for (i = 0; i < spriteset_num_images(spriteset); ++i) {
-		image = get_spriteset_image(spriteset, i);
+		image = spriteset_image(spriteset, i);
 		duk_push_class_obj(ctx, "ssImage", image_ref(image));
 		duk_put_prop_index(ctx, -2, i);
 	}
@@ -855,11 +851,10 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 		duk_put_prop_string(ctx, -2, "name");
 		duk_push_array(ctx);
 		for (j = 0; j < spriteset_num_frames(spriteset, pose_name); ++j) {
-			spriteset_frame_info(spriteset, pose_name, j, &image_index, &delay);
 			duk_push_object(ctx);
-			duk_push_int(ctx, image_index);
+			duk_push_int(ctx, spriteset_frame_image_index(spriteset, pose_name, j));
 			duk_put_prop_string(ctx, -2, "index");
-			duk_push_int(ctx, delay);
+			duk_push_int(ctx, spriteset_frame_delay(spriteset, pose_name, j));
 			duk_put_prop_string(ctx, -2, "delay");
 			duk_put_prop_index(ctx, -2, j);
 		}
@@ -931,6 +926,78 @@ duk_require_sphere_script(duk_context* ctx, duk_idx_t index, const char* name)
 	else
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "expected string, function, or null/undefined");
 	return script;
+}
+
+spriteset_t*
+duk_require_sphere_spriteset(duk_context* ctx, duk_idx_t index)
+{
+	// note: this creates a new spriteset from the JavaScript object passed in, which
+	//       is rather inefficient, but consistent with Sphere 1.x behavior.  I assume
+	//       this was the easiest way to allow JS code to modify spritesets, as it
+	//       avoids the need to trap property accesses.
+	
+	rect_t       base;
+	int          delay;
+	image_t*     image;
+	int          image_index;
+	int          num_frames;
+	int          num_images;
+	int          num_poses;
+	const char*  pose_name;
+	spriteset_t* spriteset;
+
+	int i, j;
+
+	index = duk_require_normalize_index(ctx, index);
+	duk_require_class_obj(ctx, index, "ssSpriteset");
+	
+	spriteset = spriteset_new();
+	
+	duk_get_prop_string(ctx, index, "base");
+	duk_get_prop_string(ctx, -1, "x1");
+	base.x1 = duk_require_int(ctx, -1);
+	duk_get_prop_string(ctx, -2, "y1");
+	base.y1 = duk_require_int(ctx, -1);
+	duk_get_prop_string(ctx, -3, "x2");
+	base.x2 = duk_require_int(ctx, -1);
+	duk_get_prop_string(ctx, -4, "y2");
+	base.y2 = duk_require_int(ctx, -1);
+	spriteset_set_base(spriteset, base);
+	duk_pop_n(ctx, 5);
+
+	duk_get_prop_string(ctx, index, "images");
+	num_images = (int)duk_get_length(ctx, -1);
+	for (i = 0; i < num_images; ++i) {
+		duk_get_prop_index(ctx, -1, i);
+		image = duk_require_class_obj(ctx, -1, "ssImage");
+		spriteset_add_image(spriteset, image);
+		duk_pop(ctx);
+	}
+	duk_pop(ctx);
+
+	duk_get_prop_string(ctx, index, "directions");
+	num_poses = (int)duk_get_length(ctx, -1);
+	for (i = 0; i < num_poses; ++i) {
+		duk_get_prop_index(ctx, -1, i);
+		duk_get_prop_string(ctx, -1, "name");
+		pose_name = duk_require_string(ctx, -1);
+		spriteset_add_pose(spriteset, pose_name);
+		duk_get_prop_string(ctx, -2, "frames");
+		num_frames = (int)duk_get_length(ctx, -1);
+		for (j = 0; j < num_frames; ++j) {
+			duk_get_prop_index(ctx, -1, j);
+			duk_get_prop_string(ctx, -1, "index");
+			image_index = duk_require_int(ctx, -1);
+			duk_get_prop_string(ctx, -2, "delay");
+			delay = duk_require_int(ctx, -1);
+			spriteset_add_frame(spriteset, pose_name, image_index, delay);
+			duk_pop_3(ctx);
+		}
+		duk_pop_3(ctx);
+	}
+	duk_pop(ctx);
+
+	return spriteset;
 }
 
 static void
@@ -4418,6 +4485,7 @@ js_Spriteset_finalize(duk_context* ctx)
 	spriteset_t* spriteset;
 
 	spriteset = duk_require_class_obj(ctx, 0, "ssSpriteset");
+
 	spriteset_free(spriteset);
 	return 0;
 }
@@ -4429,39 +4497,9 @@ js_Spriteset_get_filename(duk_context* ctx)
 
 	duk_push_this(ctx);
 	spriteset = duk_require_class_obj(ctx, -1, "ssSpriteset");
-	duk_pop(ctx);
-	duk_push_string(ctx, get_spriteset_path(spriteset));
+
+	duk_push_string(ctx, spriteset_path(spriteset));
 	return 1;
-}
-
-static duk_ret_t
-js_Spriteset_get_image(duk_context* ctx)
-{
-	duk_uarridx_t index;
-	spriteset_t*  spriteset;
-
-	duk_push_this(ctx);
-	spriteset = duk_require_class_obj(ctx, -1, "ssSpriteset");
-	index = duk_to_int(ctx, 0);
-
-	duk_push_class_obj(ctx, "ssImage", image_ref(get_spriteset_image(spriteset, index)));
-	return 1;
-}
-
-static duk_ret_t
-js_Spriteset_set_image(duk_context* ctx)
-{
-	image_t*      image;
-	duk_uarridx_t index;
-	spriteset_t*  spriteset;
-
-	duk_push_this(ctx);
-	spriteset = duk_require_class_obj(ctx, -1, "ssSpriteset");
-	image = duk_require_class_obj(ctx, 0, "ssImage");
-	index = duk_to_int(ctx, 1);
-
-	set_spriteset_image(spriteset, index, image);
-	return 0;
 }
 
 static duk_ret_t
@@ -4474,7 +4512,7 @@ js_Spriteset_clone(duk_context* ctx)
 	spriteset = duk_require_class_obj(ctx, -1, "ssSpriteset");
 
 	if ((new_spriteset = spriteset_clone(spriteset)) == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to clone spriteset");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't clone spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
 	spriteset_free(new_spriteset);
 	return 1;

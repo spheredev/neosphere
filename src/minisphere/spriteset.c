@@ -369,6 +369,38 @@ spriteset_free(spriteset_t* it)
 }
 
 int
+spriteset_frame_delay(const spriteset_t* spriteset, const char* pose_name, int frame_index)
+{
+	const struct frame* frame;
+	const struct pose*  pose;
+
+	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
+		return 0;
+	frame_index %= vector_len(pose->frames);
+	frame = vector_get(pose->frames, frame_index);
+	return frame->delay;
+}
+
+int
+spriteset_frame_image_index(const spriteset_t* spriteset, const char* pose_name, int frame_index)
+{
+	const struct frame* frame;
+	const struct pose*  pose;
+
+	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
+		return 0;
+	frame_index %= vector_len(pose->frames);
+	frame = vector_get(pose->frames, frame_index);
+	return frame->image_idx;
+}
+
+image_t*
+spriteset_image(const spriteset_t* spriteset, int image_index)
+{
+	return *(image_t**)vector_get(spriteset->images, image_index);
+}
+
+int
 spriteset_num_frames(const spriteset_t* it, const char* pose_name)
 {
 	struct pose* pose;
@@ -389,16 +421,10 @@ spriteset_num_poses(const spriteset_t* it)
 	return vector_len(it->poses);
 }
 
-void
-spriteset_frame_info(const spriteset_t* it, const char* pose_name, int index, int* out_image_index, int* out_delay)
+const char*
+spriteset_path(const spriteset_t* spriteset)
 {
-	struct frame* frame;
-	struct pose*  pose;
-
-	pose = find_sprite_pose(it, pose_name);
-	frame = vector_get(pose->frames, index);
-	*out_image_index = frame->image_idx;
-	*out_delay = frame->delay;
+	return spriteset->filename;
 }
 
 const char*
@@ -483,19 +509,6 @@ spriteset_draw(const spriteset_t* it, color_t mask, bool is_flipped, double thet
 		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
 }
 
-int
-get_sprite_frame_delay(const spriteset_t* spriteset, const char* pose_name, int frame_index)
-{
-	const struct frame* frame;
-	const struct pose*  pose;
-	
-	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
-		return 0;
-	frame_index %= vector_len(pose->frames);
-	frame = vector_get(pose->frames, frame_index);
-	return frame->delay;
-}
-
 void
 get_sprite_size(const spriteset_t* spriteset, int* out_width, int* out_height)
 {
@@ -506,50 +519,6 @@ get_sprite_size(const spriteset_t* spriteset, int* out_width, int* out_height)
 		*out_width = image_width(image);
 	if (out_height)
 		*out_height = image_height(image);
-}
-
-const char*
-get_spriteset_path(const spriteset_t* spriteset)
-{
-	return spriteset->filename;
-}
-
-void
-get_spriteset_info(const spriteset_t* spriteset, int* out_num_images, int* out_num_poses)
-{
-	if (out_num_images)
-		*out_num_images = vector_len(spriteset->images);
-	if (out_num_poses)
-		*out_num_poses = vector_len(spriteset->poses);
-}
-
-image_t*
-get_spriteset_image(const spriteset_t* spriteset, int image_index)
-{
-	return *(image_t**)vector_get(spriteset->images, image_index);
-}
-
-bool
-get_spriteset_pose_info(const spriteset_t* spriteset, const char* pose_name, int* out_num_frames)
-{
-	const struct pose* pose;
-
-	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
-		return false;
-	*out_num_frames = vector_len(pose->frames);
-	return true;
-}
-
-void
-set_spriteset_image(spriteset_t* spriteset, int image_index, image_t* image)
-{
-	image_t*  old_image;
-	image_t** slot_ptr;
-	
-	slot_ptr = vector_get(spriteset->images, image_index);
-	old_image = *slot_ptr;
-	*slot_ptr = image_ref(image);
-	image_free(old_image);
 }
 
 static struct pose*
