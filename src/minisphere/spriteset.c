@@ -565,7 +565,7 @@ spriteset_save(const spriteset_t* it, const char* filename)
 
 	for (i = 0; i < vector_len(it->poses); ++i) {
 		pose = vector_get(it->poses, i);
-		pose_data.num_frames = vector_len(it->poses);
+		pose_data.num_frames = vector_len(pose->frames);
 		if (sfs_fwrite(&pose_data, sizeof(struct rss_dir_v3), 1, file) != 1)
 			goto on_error;
 		write_lstring(file, pose->name, true);
