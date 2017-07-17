@@ -61,15 +61,15 @@ The functions and properties below are available for use at all times, by all
 Cellscripts and modules.  No `require()` or `import` statements are necessary
 to use them.
 
-Sphere.Game [read-only]
+Sphere.Game [non-replaceable]
 
     An object whose properties will be written to the game's JSON manifest at
     the end of the build.  For example, `Sphere.Game.name` is the game title.
     If you need to set multiple fields at once, use `Object.assign()`.
 
-    Note: This is "read-only" only insofar as it can't be reassigned.  You are
-          free to do as you please with the object it refers to, but note that
-          only JSON-compatible values will actually be written to `game.json`.
+    Note: You are free to do as you please with this object, but keep in mind
+          that only JSON-compatible values will actually be written out to
+          `game.json`.
 
 Sphere.Platform [read-only]
 

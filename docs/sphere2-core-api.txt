@@ -170,7 +170,7 @@ Sphere.APILevel [read-only]
     methods, or properties are added to the Core API, the API level is
     increased.
 
-Sphere.Game [read-only]
+Sphere.Game [non-replaceable]
 
     An object whose properties describe the currently running game.  The object
     consists of everything in the JSON manifest plus any fields synthesized by
@@ -920,6 +920,7 @@ Surface#width [read-only]
 Surface#height [read-only]
 
     Gets the width and height of the surface, in pixels.  For the screen, this
+    is the game's nominal resolution, i.e. the resolution it renders at.
 
 Surface#toTexture();
 
@@ -1154,7 +1155,7 @@ new Transform();
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
 
-Transform#matrix [read-only]
+Transform#matrix [non-replacable]
 
     Gets an object you can use to access the cells of the underlying matrix.
     The object is used like a two-dimensional array:
