@@ -9,6 +9,7 @@ vX.X.X - TBD
 * Adds `Socket#connectTo()` which allows the same socket object to be used for
   multiple sessions.
 * Adds the engine version number to the string returned by `Sphere.Platform`.
+* Adds support for the Sphere v1 `CreateSpriteset()` function.
 * Changes `FS.readFile()` and `FS.writeFile()` to work directly with strings
   instead of ArrayBuffers.
 * Removes support for GPUs without shader support.  If the engine can't create
@@ -16,6 +17,8 @@ vX.X.X - TBD
   to fall back on the fixed-function pipeline.
 * Renames the `SoundStream` object to `AudioStream`.
 * Renames `Sphere.APIVersion` to `Sphere.Version`.
+* Fixes several limitations in the internal handling of spritesets which were
+  preventing full Sphere 1.x compatibility.
 * Fixes several bugs in Dispatch job management, including one that can cause
   the engine to crash with a segfault.
 * Fixes excessive OpenGL state changes in the internal rendering logic, vastly

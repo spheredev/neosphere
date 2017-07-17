@@ -70,8 +70,9 @@ static duk_ret_t js_CreateByteArray                  (duk_context* ctx);
 static duk_ret_t js_CreateByteArrayFromString        (duk_context* ctx);
 static duk_ret_t js_CreateColor                      (duk_context* ctx);
 static duk_ret_t js_CreateColorMatrix                (duk_context* ctx);
-static duk_ret_t js_CreateStringFromByteArray        (duk_context* ctx);
 static duk_ret_t js_CreateDirectory                  (duk_context* ctx);
+static duk_ret_t js_CreateSpriteset                  (duk_context* ctx);
+static duk_ret_t js_CreateStringFromByteArray        (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode             (duk_context* ctx);
 static duk_ret_t js_CreateSurface                    (duk_context* ctx);
 static duk_ret_t js_DeflateByteArray                 (duk_context* ctx);
@@ -399,6 +400,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "CreateColor", js_CreateColor);
 	api_define_function(ctx, NULL, "CreateColorMatrix", js_CreateColorMatrix);
 	api_define_function(ctx, NULL, "CreateDirectory", js_CreateDirectory);
+	api_define_function(ctx, NULL, "CreateSpriteset", js_CreateSpriteset);
 	api_define_function(ctx, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
 	api_define_function(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
 	api_define_function(ctx, NULL, "CreateSurface", js_CreateSurface);
@@ -1787,6 +1789,58 @@ js_CreateColorMatrix(duk_context* ctx)
 }
 
 static duk_ret_t
+js_CreateDirectory(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_path(ctx, 0, "save", true, true);
+	if (!sfs_mkdir(g_fs, name, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
+	return 0;
+}
+
+static duk_ret_t
+js_CreateSpriteset(duk_context* ctx)
+{
+	int          height;
+	image_t*     image;
+	int          num_frames;
+	int          num_images;
+	int          num_poses;
+	char         pose_name[32];
+	spriteset_t* spriteset;
+	int          width;
+
+	int i, j;
+
+	width = duk_to_int(ctx, 0);
+	height = duk_to_int(ctx, 1);
+	num_images = duk_to_int(ctx, 2);
+	num_poses = duk_to_int(ctx, 3);
+	num_frames = duk_to_int(ctx, 4);
+
+	spriteset = spriteset_new();
+	spriteset_set_base(spriteset, new_rect(0, 0, width, height));
+	image = image_new(width, height);
+	for (i = 0; i < num_images; ++i) {
+		// use the same image in all slots to save memory.  this works because
+		// images are read-only, so it doesn't matter that they all share the same
+		// pixel data.
+		spriteset_add_image(spriteset, image);
+	}
+	image_free(image);
+	for (i = 0; i < num_poses; ++i) {
+		sprintf(pose_name, "unnamed %d", i + 1);
+		spriteset_add_pose(spriteset, pose_name);
+		for (j = 0; j < num_frames; ++j)
+			spriteset_add_frame(spriteset, pose_name, 0, 8);
+	}
+	duk_push_sphere_spriteset(ctx, spriteset);
+	spriteset_free(spriteset);
+	return 1;
+}
+
+static duk_ret_t
 js_CreateStringFromByteArray(duk_context* ctx)
 {
 	bytearray_t* array;
@@ -1799,17 +1853,6 @@ js_CreateStringFromByteArray(duk_context* ctx)
 	size = bytearray_len(array);
 	duk_push_lstring(ctx, (char*)buffer, size);
 	return 1;
-}
-
-static duk_ret_t
-js_CreateDirectory(duk_context* ctx)
-{
-	const char* name;
-
-	name = duk_require_path(ctx, 0, "save", true, true);
-	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
-	return 0;
 }
 
 static duk_ret_t

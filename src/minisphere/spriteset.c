@@ -128,7 +128,8 @@ spriteset_load(const char* filename)
 	// and RSSv2 is the worst, requiring 2 passes to load properly. as a result this
 	// function ended up being way more massive than it has any right to be.
 
-	const char* const def_dir_names[8] = {
+	const char* const DEFAULT_POSE_NAMES[8] =
+	{
 		"north", "northeast", "east", "southeast",
 		"south", "southwest", "west", "northwest"
 	};
@@ -198,9 +199,9 @@ spriteset_load(const char* filename)
 		atlas_unlock(atlas);
 		atlas_free(atlas);
 		for (i = 0; i < 8; ++i) {
-			spriteset_add_pose(spriteset, def_dir_names[i]);
+			spriteset_add_pose(spriteset, DEFAULT_POSE_NAMES[i]);
 			for (j = 0; j < 8; ++j)
-				spriteset_add_frame(spriteset, def_dir_names[i], j + i * 8, 8);
+				spriteset_add_frame(spriteset, DEFAULT_POSE_NAMES[i], j + i * 8, 8);
 		}
 		break;
 	case 2: // RSSv2, requires 2 passes
@@ -211,7 +212,7 @@ spriteset_load(const char* filename)
 			if (sfs_fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			sprintf(extra_pose_name, "extra %d", i);
-			pose_name = i < 8 ? def_dir_names[i] : extra_pose_name;
+			pose_name = i < 8 ? DEFAULT_POSE_NAMES[i] : extra_pose_name;
 			spriteset_add_pose(spriteset, pose_name);
 			for (j = 0; j < dir_v2.num_frames; ++j) {  // skip over frame and image data
 				if (sfs_fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
