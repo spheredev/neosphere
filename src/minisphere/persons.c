@@ -189,7 +189,7 @@ create_person(const char* name, spriteset_t* spriteset, bool is_persistent, scri
 	person->id = s_next_person_id++;
 	person->sprite = spriteset_ref(spriteset);
 	set_person_name(person, name);
-	set_person_direction(person, "north");
+	set_person_direction(person, spriteset_pose_name(spriteset, 0));
 	person->is_persistent = is_persistent;
 	person->is_visible = true;
 	person->x = map_origin.x;
@@ -610,7 +610,8 @@ render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 		if (!person->is_visible || person->layer != layer)
 			continue;
 		sprite = person->sprite;
-		get_sprite_size(sprite, &w, &h);
+		w = spriteset_width(sprite);
+		h = spriteset_height(sprite);
 		get_person_xy(person, &x, &y, true);
 		x -= cam_x - person->x_offset;
 		y -= cam_y - person->y_offset;
@@ -1291,7 +1292,8 @@ js_GetPersonData(duk_context* ctx)
 	if (!(person = find_person(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	spriteset = person->sprite;
-	get_sprite_size(spriteset, &width, &height);
+	width = spriteset_width(spriteset);
+	height = spriteset_height(spriteset);
 	num_directions = spriteset_num_poses(spriteset);
 	num_frames = spriteset_num_frames(spriteset, person->direction);
 	duk_push_global_stash(ctx);
@@ -1859,14 +1861,18 @@ js_SetPersonScaleAbsolute(duk_context* ctx)
 	int width = duk_require_int(ctx, 1);
 	int height = duk_require_int(ctx, 2);
 
-	person_t* person;
-	int       sprite_w, sprite_h;
+	person_t*    person;
+	int          sprite_h;
+	int          sprite_w;
+	spriteset_t* spriteset;
 
 	if ((person = find_person(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (width < 0 || height < 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "scale must be positive (got W: %i, H: %i)", width, height);
-	get_sprite_size(get_person_spriteset(person), &sprite_w, &sprite_h);
+	spriteset = get_person_spriteset(person);
+	sprite_w = spriteset_width(spriteset);
+	sprite_h = spriteset_height(spriteset);
 	set_person_scale(person, width / sprite_w, height / sprite_h);
 	return 0;
 }

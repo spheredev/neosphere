@@ -306,7 +306,7 @@ on_error:
 }
 
 spriteset_t*
-spriteset_clone(const spriteset_t* spriteset)
+spriteset_clone(const spriteset_t* it)
 {
 	spriteset_t*  dolly;
 	struct frame* frame;
@@ -315,15 +315,15 @@ spriteset_clone(const spriteset_t* spriteset)
 	iter_t iter, iter2;
 
 	console_log(2, "cloning new spriteset from source spriteset #%u",
-		s_next_spriteset_id, spriteset->id);
+		s_next_spriteset_id, it->id);
 	
 	dolly = spriteset_new();
-	dolly->filename = strdup(spriteset->filename);
-	dolly->base = spriteset->base;
-	iter = vector_enum(spriteset->images);
+	dolly->filename = strdup(it->filename);
+	dolly->base = it->base;
+	iter = vector_enum(it->images);
 	while (vector_next(&iter))
 		spriteset_add_image(dolly, *(image_t**)iter.ptr);
-	iter = vector_enum(spriteset->poses);
+	iter = vector_enum(it->poses);
 	while (vector_next(&iter)) {
 		pose = iter.ptr;
 		spriteset_add_pose(dolly, lstr_cstr(pose->name));
@@ -369,12 +369,12 @@ spriteset_free(spriteset_t* it)
 }
 
 int
-spriteset_frame_delay(const spriteset_t* spriteset, const char* pose_name, int frame_index)
+spriteset_frame_delay(const spriteset_t* it, const char* pose_name, int frame_index)
 {
 	const struct frame* frame;
 	const struct pose*  pose;
 
-	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
+	if ((pose = find_sprite_pose(it, pose_name)) == NULL)
 		return 0;
 	frame_index %= vector_len(pose->frames);
 	frame = vector_get(pose->frames, frame_index);
@@ -382,22 +382,31 @@ spriteset_frame_delay(const spriteset_t* spriteset, const char* pose_name, int f
 }
 
 int
-spriteset_frame_image_index(const spriteset_t* spriteset, const char* pose_name, int frame_index)
+spriteset_frame_image_index(const spriteset_t* it, const char* pose_name, int frame_index)
 {
 	const struct frame* frame;
 	const struct pose*  pose;
 
-	if ((pose = find_sprite_pose(spriteset, pose_name)) == NULL)
+	if ((pose = find_sprite_pose(it, pose_name)) == NULL)
 		return 0;
 	frame_index %= vector_len(pose->frames);
 	frame = vector_get(pose->frames, frame_index);
 	return frame->image_idx;
 }
 
-image_t*
-spriteset_image(const spriteset_t* spriteset, int image_index)
+int
+spriteset_height(const spriteset_t* it)
 {
-	return *(image_t**)vector_get(spriteset->images, image_index);
+	image_t* image;
+
+	image = *(image_t**)vector_get(it->images, 0);
+	return image_height(image);
+}
+
+image_t*
+spriteset_image(const spriteset_t* it, int image_index)
+{
+	return *(image_t**)vector_get(it->images, image_index);
 }
 
 int
@@ -422,9 +431,9 @@ spriteset_num_poses(const spriteset_t* it)
 }
 
 const char*
-spriteset_path(const spriteset_t* spriteset)
+spriteset_path(const spriteset_t* it)
 {
-	return spriteset->filename;
+	return it->filename;
 }
 
 const char*
@@ -434,6 +443,15 @@ spriteset_pose_name(const spriteset_t* it, int index)
 
 	pose = vector_get(it->poses, index);
 	return lstr_cstr(pose->name);
+}
+
+int
+spriteset_width(const spriteset_t* it)
+{
+	image_t* image;
+	
+	image = *(image_t**)vector_get(it->images, 0);
+	return image_width(image);
 }
 
 rect_t
@@ -507,18 +525,6 @@ spriteset_draw(const spriteset_t* it, color_t mask, bool is_flipped, double thet
 	al_draw_tinted_scaled_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a),
 		(float)image_w / 2, (float)image_h / 2, x + scale_w / 2, y + scale_h / 2,
 		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
-}
-
-void
-get_sprite_size(const spriteset_t* spriteset, int* out_width, int* out_height)
-{
-	image_t* image;
-	
-	image = *(image_t**)vector_get(spriteset->images, 0);
-	if (out_width)
-		*out_width = image_width(image);
-	if (out_height)
-		*out_height = image_height(image);
 }
 
 static struct pose*
