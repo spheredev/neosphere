@@ -109,10 +109,9 @@ from a different location, you can use one of the SphereFS prefixes:
         TypeError.
     #/: The engine's system directory.  This contains assets included with the
         engine.  As with `@/`, this is read-only to Sphere games.
-    ~/: The current user's save data directory.  This is generally used to
-        store save data and such where the user can easily access it.  Note
-        that all games share the same physical directory for this.  That allows
-        games to easily share save data.
+    ~/: The current user's save data directory (note: requires a save ID; refer
+	    to the section on `game.json` above).  This is generally used to store
+		save data and such where the user can easily access it.
 
 As an example, the following will create a FileStream which allows reading from
 the file `EatyPig.bin` residing in the user's save data directory.
@@ -146,6 +145,62 @@ require(module_id);
     If `require()` is provided with a module ID beginning with either `./` or
     `../`, this indicates a path relative to the location of the calling
     module.
+
+
+`screen` Built-In Object
+------------------------
+
+In Sphere v2, the backbuffer is represented as a `Surface` object (see below)
+with some additional special-purpose methods.  This surface is exposed to your
+game code through a built-in global variable, `screen`.
+
+screen [global variable, non-replaceable]
+
+    A `Surface` object (see below) representing the primary render target--the
+    backbuffer.  Anything drawn to `screen` will become visible to the player
+    when calling `screen.flip()`.
+
+screen.frameRate [read/write]
+
+    Gets or sets the frame rate used to regulate `screen.flip()` (see below).
+    Set this to Infinity to disable the frame limiter.
+
+screen.frameSkip [read/write]
+
+    Gets or sets the maximum number of frames the engine is allowed to skip in
+    order to maintain the desired frame rate.
+
+screen.fullScreen [read/write]
+
+    Gets or sets whether the engine is running in fullscreen mode.  Set this to
+    `true` for fullscreen, or `false` for windowed.
+
+screen.flip();
+
+    Performs event loop processing and flips the backbuffer to the screen.
+    `screen.frameRate` determines the maximum number of flips to perform per
+    second; this makes it easier to regulate your game's update rate.
+
+    After a flip, the backbuffer is cleared to black.  If you need to perform a
+    long operation without disturbing the contents of the screen, you should
+    use Sphere.run() instead of screen.flip() to run the event loop.
+
+    Note: Calling screen.flip() resets the clipping rectangle.  See the entry
+          for screen.clipTo() above.
+
+screen.now();
+
+    Returns the number of frames (including skipped frames) processed by the
+    engine since it started running.
+
+    Note: This value will wrap around to zero after around 4.3 billion frames.
+          That typically isn't an issue: at 60 FPS, a game would need to run
+          continuously for *over 2 years* before it would roll over.
+
+screen.resize(width, height);
+
+    Changes the game's resolution.  The change is not persistent and lasts only
+    until the engine is closed.
 
 
 `Sphere` Namespace
@@ -751,6 +806,68 @@ Keyboard#isPressed(key);
     should be a member of the Key enumeration.
 
 
+`Model` Object
+--------------
+
+A `Model` represents a group of shapes, combined with a shader and transforms,
+which are drawn to a surface as a single unit.  Used well, this can improve
+your game's rendering performance by grouping together operations using similar
+parameters.
+
+new Model(shapes[, shader]);
+
+    Constructs a Model out of the provided array of Shape objects.  `shader` is
+    the Shader to use when rendering the model.  See below for more information
+    on shaders.
+
+    When a Model is created, its transformation matrix is set to the
+    identity matrix.  If `shader` is not provided, the default shader program
+    will be used (see `Shader.Default`).
+
+Model#shader [read/write]
+
+    Gets or sets the Shader to use when drawing this model.
+
+Model#transform [read/write]
+
+    Gets or sets the transformation matrix to use when drawing this model.
+
+Model#draw(surface);
+
+    Draws the model on `surface`.  Any transformations defined for the model
+    (see below) are applied as if all the shapes comprising it were a single
+    primitive.
+
+Model#setColorVector(name, color);
+
+    Sets the value of a GLSL floating point 4-vector uniform (`vec4`) from the
+    components of a `Color` object.  Order is assumed to be RGBA.
+
+Model#setFloat(name, value);
+Model#setInt(name, value);
+
+    Sets the value of a GLSL scalar uniform.
+
+    Note: Only `float` and `int` types are currently supported.
+
+Model#setFloatVector(name, values);
+Model#setIntVector(name, values);
+
+    Sets the value of a GLSL vector uniform.  `values` must be an array and
+    contain between 2 and 4 values, inclusive.  If not, an error will be
+    thrown.
+
+    Note: Only `vecN` (float) and `ivecN` (integer) types are currently
+          supported.
+
+Model#setMatrix(name, transform);
+
+    Sets the value of 4x4 matrix uniform (`mat4`) using the underlying matrix
+    cells of a `Transform` object.
+
+    Note: Matrix types other than `mat4` are not currently supported.
+
+
 `Mouse` Object
 --------------
 
@@ -880,199 +997,13 @@ SSJ.trace(text);
     its display is enabled by the user.
 
 
-`Surface` Object
-----------------
-
-The `Surface` object represents a rendering target.  Your game doesn't always
-need to draw directly to the screen; it sometimes makes sense to compose
-complex parts of a scene in advance, offscreen, so that you don't have to
-redraw them every frame.
-
-Note: The built-in `screen` object is itself a surface and supports the same
-      operations as any other `Surface` object.
-
-new Surface(width, height[, fill_color]);
-
-    Constructs a new surface with the specified width and height, optionally
-    filled with 'fill_color'.  If a fill color is not provided, the created
-    surface will be filled with transparent pixels.
-
-    Surfaces are meant to used as render targets from drawing operations.  This
-    enables static elements of a scene, such as a HUD, to be rendered in
-    advance, potentially improving performance.
-
-new Surface(filename);
-
-    Constructs a new Surface whose initial contents are taken from the
-    specified image file.
-
-Surface#transform [read/write]
-
-    Gets or sets a `Transform` representing the surface's projection matrix.
-    When rendering is done on the surface, the projection matrix is the last
-    one applied and affects the entire scene.
-
-    Note: The default projection matrix in Sphere is NOT an identity matrix.
-          When a surface is created, Sphere sets its transform to an
-          orthographic matrix suitable for pixel-perfect 2D rendering.
-
-Surface#width [read-only]
-Surface#height [read-only]
-
-    Gets the width and height of the surface, in pixels.  For the screen, this
-    is the game's nominal resolution, i.e. the resolution it renders at.
-
-Surface#toTexture();
-
-    Returns a Texture created from the current contents of this Surface.  Note
-    that drawing to the surface afterwards will not affect the texture, which
-    is read-only.
-
-
-Graphics API
-------------
-
-Unlike in Sphere 1.x, all rendering in a Sphere v2 engine, both 2D and 3D, is
-done through the Galileo API.  This is a more modern, polygon-based approach to
-graphics.  Scenes are built from groups of Shape objects representing graphics
-primitives (triangle strips, fans, etc.), which is a much better match for how
-modern graphics hardware actually works.
-
-screen [global variable, read-only]
-
-    A `Surface` object (see below) representing the primary render target--
-    the screen.  Anything drawn to `screen` will become visible to the player
-    when calling `screen.flip()`.
-
-screen.frameRate [read/write]
-
-    Gets or sets the frame rate used to regulate `screen.flip()` (see below).
-    Set this to Infinity to disable the frame limiter.
-
-screen.frameSkip [read/write]
-
-    Gets or sets the maximum number of frames the engine is allowed to skip in
-    order to maintain the desired frame rate.
-
-screen.fullScreen [read/write]
-
-    Gets or sets whether the engine is running in fullscreen mode.  Set this to
-    `true` for fullscreen, or `false` for windowed.
-
-screen.clipTo(x, y, width, height);
-
-    Changes the clipping rectangle.  Anything drawn outside of the clipping
-    rectangle won't be rendered.  The effect lasts until the next backbuffer
-    flip.
-
-screen.flip();
-
-    Performs event loop processing and flips the backbuffer to the screen.
-    `screen.frameRate` determines the maximum number of flips to perform per
-    second; this makes it easier to regulate your game's update rate.
-
-    After a flip, the backbuffer is cleared to black.  If you need to perform a
-    long operation without disturbing the contents of the screen, you should
-    use Sphere.run() instead of screen.flip() to run the event loop.
-
-    Note: Calling screen.flip() resets the clipping rectangle.  See the entry
-          for screen.clipTo() above.
-
-screen.now();
-
-    Returns the number of frames (including skipped frames) processed by the
-    engine since it started running.
-
-    Note: This value will wrap around to zero after around 4.3 billion frames.
-          That typically isn't an issue: at 60 FPS, a game would need to run
-          continuously for *over 2 years* before it would roll over.
-
-screen.resize(width, height);
-
-    Changes the game's resolution.  The change is not persistent and lasts only
-    until the engine is closed.
-
-new Texture(filename);
-
-    Constructs a new Texture object from an image file.  Unlike images in
-    Sphere v1, these cannot be rendered directly but instead must be used to
-    texture a Shape object.
-
-    Note that Textures are read-only.  If you need a writable image, you should
-    use a Surface object instead.
-
-new Texture(width, height, pixels);
-
-    Constructs a new Texture from a pixel buffer.  `width` and `height` specify
-    the size of the texture image, and `pixels` is an ArrayBuffer containing
-    the RGBA pixel data to use to initialize the image.  The pixel data should
-    not be padded (i.e. stride is equal to width).
-
-    An error is thrown if the ArrayBuffer doesn't contain enough pixel data to
-    describe the entire texture.
-
-Texture#fileName [read-only]
-
-    Gets the full, canonical SphereFS filename of the file used to construct
-    this Texture object.  For synthesized textures, returns null.
-
-Texture#width [read-only]
-Texture#height [read-only]
-
-    Gets the width or height of the texture, in pixels.
-
-new Model(shapes[, shader]);
-
-    Constructs a Model out of the provided array of Shape objects.  `shader` is
-    the Shader to use when rendering the model.  See below for more information
-    on shaders.
-
-    When a Model is created, its transformation matrix is set to the
-    identity matrix.  If `shader` is not provided, the default shader program
-    will be used (see `Shader.Default`).
-
-Model#shader [read/write]
-
-    Gets or sets the Shader to use when drawing this model.
-
-Model#transform [read/write]
-
-    Gets or sets the transformation matrix to use when drawing this model.
-
-Model#draw(surface);
-
-    Draws the model on `surface`.  Any transformations defined for the model
-    (see below) are applied as if all the shapes comprising it were a single
-    primitive.
-
-Model#setColorVector(name, color);
-
-    Sets the value of a GLSL floating point 4-vector uniform (`vec4`) from the
-    components of a `Color` object.  Order is assumed to be RGBA.
-
-Model#setFloat(name, value);
-Model#setInt(name, value);
-
-    Sets the value of a GLSL scalar uniform.
-
-    Note: Only `float` and `int` types are currently supported.
-
-Model#setFloatVector(name, values);
-Model#setIntVector(name, values);
-
-    Sets the value of a GLSL vector uniform.  `values` must be an array and
-    contain between 2 and 4 values, inclusive.  If not, an error will be
-    thrown.
-
-    Note: Only `vecN` (float) and `ivecN` (integer) types are currently
-          supported.
-
-Model#setMatrix(name, transform);
-
-    Sets the value of 4x4 matrix uniform (`mat4`) using the underlying matrix
-    cells of a `Transform` object.
-
-    Note: Matrix types other than `mat4` are not currently supported.
+`Shader` Object
+---------------
+
+A `Shader` is a program that runs on the system's graphics processor and
+manipulates vertices and pixels as they are rendered to a surface.  Shaders are
+written in the GLSL shader programming language, which is beyond the scope of
+this document.
 
 Shader.Default [read-only]
 
@@ -1094,7 +1025,15 @@ new Shader(options);
             The name of the file containing source code for the GLSL fragment
             shader.
 
-    Note that HLSL (DirectX) shaders are not supported, even on Windows.
+    Note: HLSL (DirectX) shaders are not supported, even on Windows.
+
+
+`Shape` Object
+--------------
+
+A `Shape` represents a group of textured triangles, line segments, or points to
+be drawn to a surface.  Shapes can be drawn directly, or added to a `Model` to
+group related rendering operations together.
 
 ShapeType [enumeration]
 
@@ -1149,6 +1088,107 @@ Shape#draw(surface[, transform]);
     Draws the shape.  `transform` is the Transform to use, and `surface` is the
     Surface to draw on.  If `surface` is omitted, the shape is drawn on the
     backbuffer.
+
+
+`Surface` Object
+----------------
+
+The `Surface` object represents a rendering target.  Your game doesn't always
+need to draw directly to the screen; it sometimes makes sense to compose
+complex parts of a scene in advance, offscreen, so that you don't have to
+redraw them every frame.
+
+Note: The built-in `screen` object is itself a surface and supports the same
+      operations as any other `Surface` object.
+
+new Surface(width, height[, fill_color]);
+
+    Constructs a new surface with the specified width and height, optionally
+    filled with 'fill_color'.  If a fill color is not provided, the created
+    surface will be filled with transparent pixels.
+
+    Surfaces are meant to used as render targets from drawing operations.  This
+    enables static elements of a scene, such as a HUD, to be rendered in
+    advance, potentially improving performance.
+
+new Surface(filename);
+
+    Constructs a new Surface whose initial contents are taken from the
+    specified image file.
+
+Surface#transform [read/write]
+
+    Gets or sets a `Transform` representing the surface's projection matrix.
+    When rendering is done on the surface, the projection matrix is the last
+    one applied and affects the entire scene.
+
+    Note: The default projection matrix in Sphere is NOT an identity matrix.
+          When a surface is created, Sphere sets its transform to an
+          orthographic matrix suitable for pixel-perfect 2D rendering.
+
+Surface#width [read-only]
+Surface#height [read-only]
+
+    Gets the width and height of the surface, in pixels.  For the screen, this
+    is the game's nominal resolution, i.e. the resolution it renders at.
+
+Surface#clipTo(x, y, width, height);
+
+    Sets the surface's clipping rectangle.  Values are expressed in pixels.
+	Anything drawn outside of the clipping rectangle won't be rendered.
+
+	Note: When setting the clipping rectangle for the screen, the effect only
+	      lasts until the next call to `screen.flip()`.
+
+Surface#toTexture();
+
+    Returns a Texture created from the current contents of this Surface.  Note
+    that drawing to the surface afterwards will not affect the texture, which
+    is read-only.
+
+
+`Texture` Object
+----------------
+
+A `Texture` is an image which can used to as a texture for shapes drawn using
+the Sphere v2 graphics API.  Unlike in Sphere v1, you cannot draw an image
+directly using the Core API; it must be used to texture a `Shape`.
+
+new Texture(filename);
+
+    Constructs a new Texture object from an image file.  Unlike images in
+    Sphere v1, these cannot be rendered directly but instead must be used to
+    texture a Shape object.
+
+    Note that Textures are read-only.  If you need a writable image, you should
+    use a Surface object instead.
+
+new Texture(width, height, pixels);
+
+    Constructs a new Texture from a pixel buffer.  `width` and `height` specify
+    the size of the texture image, and `pixels` is an ArrayBuffer containing
+    the RGBA pixel data to use to initialize the image.  The pixel data should
+    not be padded (i.e. stride is equal to width).
+
+    An error is thrown if the ArrayBuffer doesn't contain enough pixel data to
+    describe the entire texture.
+
+Texture#fileName [read-only]
+
+    Gets the full, canonical SphereFS filename of the file used to construct
+    this Texture object.  For synthesized textures, returns null.
+
+Texture#width [read-only]
+Texture#height [read-only]
+
+    Gets the width or height of the texture, in pixels.
+
+
+`Transform` Object
+------------------
+
+A `Transform` represents a transformation matrix used to convert vertex
+coordinates for shapes drawn to a surface.
 
 new Transform();
 
