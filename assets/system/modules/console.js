@@ -40,6 +40,10 @@ new Scene()
 	.end()
 	.run();
 
+log(Sphere.Game.name + " Debug Console");
+log("Sphere v" + Sphere.Version + " API lv. " + Sphere.APILevel + " (" + Sphere.Platform + ")");
+log("");
+
 Object.defineProperty(exports, 'visible',
 {
 	enumerable: true, configurable: true,
@@ -81,6 +85,8 @@ function log(/*...*/)
 	for (var i = 1; i < arguments.length; ++i) {
 		buffer[lineInBuffer] += " >>" + arguments[i];
 	}
+	if (buffer[lineInBuffer] == ">")
+		buffer[lineInBuffer] = "";
 	++nextLine;
 	visible.line = 0.0;
 	SSJ.log(buffer[lineInBuffer].substr(1));
