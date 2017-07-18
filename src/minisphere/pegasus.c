@@ -284,8 +284,10 @@ static duk_ret_t js_Model_set_transform        (duk_context* ctx);
 static duk_ret_t js_Model_draw                 (duk_context* ctx);
 static duk_ret_t js_Model_setColorVector       (duk_context* ctx);
 static duk_ret_t js_Model_setFloat             (duk_context* ctx);
+static duk_ret_t js_Model_setFloatArray        (duk_context* ctx);
 static duk_ret_t js_Model_setFloatVector       (duk_context* ctx);
 static duk_ret_t js_Model_setInt               (duk_context* ctx);
+static duk_ret_t js_Model_setIntArray          (duk_context* ctx);
 static duk_ret_t js_Model_setIntVector         (duk_context* ctx);
 static duk_ret_t js_Model_setMatrix            (duk_context* ctx);
 static duk_ret_t js_Mouse_get_Default          (duk_context* ctx);
@@ -482,8 +484,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Model", "draw", js_Model_draw);
 	api_define_method(ctx, "Model", "setColorVector", js_Model_setColorVector);
 	api_define_method(ctx, "Model", "setFloat", js_Model_setFloat);
+	api_define_method(ctx, "Model", "setFloatArray", js_Model_setFloatArray);
 	api_define_method(ctx, "Model", "setFloatVector", js_Model_setFloatVector);
 	api_define_method(ctx, "Model", "setInt", js_Model_setInt);
+	api_define_method(ctx, "Model", "setIntArray", js_Model_setIntArray);
 	api_define_method(ctx, "Model", "setIntVector", js_Model_setIntVector);
 	api_define_method(ctx, "Model", "setMatrix", js_Model_setMatrix);
 	api_define_class(ctx, "Mouse", NULL, NULL);
@@ -2679,6 +2683,35 @@ js_Model_setFloat(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Model_setFloatArray(duk_context* ctx)
+{
+	model_t*    group;
+	const char* name;
+	int         size;
+	float*      values;
+
+	int i;
+
+	duk_push_this(ctx);
+	group = duk_require_class_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	if (!duk_is_array(ctx, 1))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array was expected here");
+
+	size = (int)duk_get_length(ctx, 1);
+
+	values = malloc(size * sizeof(float));
+	for (i = 0; i < size; ++i) {
+		duk_get_prop_index(ctx, 1, (duk_uarridx_t)i);
+		values[i] = duk_require_number(ctx, -1);
+		duk_pop(ctx);
+	}
+	model_put_float_array(group, name, values, size);
+	free(values);
+	return 0;
+}
+
+static duk_ret_t
 js_Model_setFloatVector(duk_context* ctx)
 {
 	model_t*    group;
@@ -2720,6 +2753,34 @@ js_Model_setInt(duk_context* ctx)
 	value = duk_require_int(ctx, 1);
 
 	model_put_int(group, name, value);
+	return 0;
+}
+
+static duk_ret_t
+js_Model_setIntArray(duk_context* ctx)
+{
+	model_t*    group;
+	const char* name;
+	int         size;
+	int*        values;
+
+	int i;
+
+	duk_push_this(ctx);
+	group = duk_require_class_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	if (!duk_is_array(ctx, 1))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array was expected here");
+
+	size = (int)duk_get_length(ctx, 1);
+	values = malloc(size * sizeof(int));
+	for (i = 0; i < size; ++i) {
+		duk_get_prop_index(ctx, 1, (duk_uarridx_t)i);
+		values[i] = duk_require_int(ctx, -1);
+		duk_pop(ctx);
+	}
+	model_put_int_array(group, name, values, size);
+	free(values);
 	return 0;
 }
 

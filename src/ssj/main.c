@@ -79,7 +79,7 @@ launch_minisphere(path_t* game_path)
 	if (!PathFileExists(TEXT(".\\spherun.exe")))
 		goto on_error;
 	else {
-		memset(&si, 0, sizeof(STARTUPINFOA));
+		ZeroMemory(&si, sizeof(STARTUPINFOA));
 		si.cb = sizeof(STARTUPINFOA);
 		si.dwFlags = STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
 		si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);

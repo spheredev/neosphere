@@ -11,8 +11,10 @@ static void render_shape        (shape_t* shape);
 enum uniform_type
 {
 	UNIFORM_INT,
+	UNIFORM_INT_ARR,
 	UNIFORM_INT_VEC,
 	UNIFORM_FLOAT,
+	UNIFORM_FLOAT_ARR,
 	UNIFORM_FLOAT_VEC,
 	UNIFORM_MATRIX,
 };
@@ -20,13 +22,15 @@ struct uniform
 {
 	char              name[256];
 	enum uniform_type type;
-	int               vector_size;
+	int               num_values;
 	union {
-		ALLEGRO_TRANSFORM mat_value;
+		int*              int_list;
 		int               int_value;
-		int               intvec[4];
+		int               int_vec[4];
+		float*            float_list;
 		float             float_value;
-		float             floatvec[4];
+		float             float_vec[4];
+		ALLEGRO_TRANSFORM mat_value;
 	};
 };
 
@@ -214,14 +218,20 @@ model_draw(const model_t* it, image_t* surface)
 		case UNIFORM_FLOAT:
 			al_set_shader_float(p->name, p->float_value);
 			break;
+		case UNIFORM_FLOAT_ARR:
+			al_set_shader_float_vector(p->name, 1, p->float_list, p->num_values);
+			break;
 		case UNIFORM_FLOAT_VEC:
-			al_set_shader_float_vector(p->name, p->vector_size, p->floatvec, 1);
+			al_set_shader_float_vector(p->name, p->num_values, p->float_vec, 1);
 			break;
 		case UNIFORM_INT:
 			al_set_shader_int(p->name, p->int_value);
 			break;
+		case UNIFORM_INT_ARR:
+			al_set_shader_int_vector(p->name, 1, p->int_list, p->num_values);
+			break;
 		case UNIFORM_INT_VEC:
-			al_set_shader_int_vector(p->name, p->vector_size, p->intvec, 1);
+			al_set_shader_int_vector(p->name, p->num_values, p->int_vec, 1);
 			break;
 		case UNIFORM_MATRIX:
 			al_set_shader_matrix(p->name, &p->mat_value);
@@ -248,6 +258,21 @@ model_put_float(model_t* it, const char* name, float value)
 }
 
 void
+model_put_float_array(model_t* it, const char* name, float values[], int size)
+{
+	struct uniform unif;
+
+	free_cached_uniform(it, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_FLOAT_ARR;
+	unif.float_list = malloc(size * sizeof(float));
+	unif.num_values = size;
+	memcpy(unif.float_list, values, size * sizeof(float));
+	vector_push(it->uniforms, &unif);
+}
+
+void
 model_put_float_vector(model_t* it, const char* name, float values[], int size)
 {
 	struct uniform unif;
@@ -256,8 +281,8 @@ model_put_float_vector(model_t* it, const char* name, float values[], int size)
 	strncpy(unif.name, name, 255);
 	unif.name[255] = '\0';
 	unif.type = UNIFORM_FLOAT_VEC;
-	unif.vector_size = size;
-	memcpy(unif.floatvec, values, sizeof(float) * size);
+	unif.num_values = size;
+	memcpy(unif.float_vec, values, sizeof(float) * size);
 	vector_push(it->uniforms, &unif);
 }
 
@@ -275,6 +300,21 @@ model_put_int(model_t* it, const char* name, int value)
 }
 
 void
+model_put_int_array(model_t* it, const char* name, int values[], int size)
+{
+	struct uniform unif;
+
+	free_cached_uniform(it, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_INT_ARR;
+	unif.int_list = malloc(size * sizeof(int));
+	unif.num_values = size;
+	memcpy(unif.int_list, values, size * sizeof(int));
+	vector_push(it->uniforms, &unif);
+}
+
+void
 model_put_int_vector(model_t* it, const char* name, int values[], int size)
 {
 	struct uniform unif;
@@ -283,8 +323,8 @@ model_put_int_vector(model_t* it, const char* name, int values[], int size)
 	strncpy(unif.name, name, 255);
 	unif.name[255] = '\0';
 	unif.type = UNIFORM_INT_VEC;
-	unif.vector_size = size;
-	memcpy(unif.intvec, values, sizeof(int) * size);
+	unif.num_values = size;
+	memcpy(unif.int_vec, values, sizeof(int) * size);
 	vector_push(it->uniforms, &unif);
 }
 
