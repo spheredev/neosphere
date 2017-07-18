@@ -110,8 +110,8 @@ from a different location, you can use one of the SphereFS prefixes:
     #/: The engine's system directory.  This contains assets included with the
         engine.  As with `@/`, this is read-only to Sphere games.
     ~/: The current user's save data directory (note: requires a save ID; refer
-	    to the section on `game.json` above).  This is generally used to store
-		save data and such where the user can easily access it.
+        to the section on `game.json` above).  This is generally used to store
+        save data and such where the user can easily access it.
 
 As an example, the following will create a FileStream which allows reading from
 the file `EatyPig.bin` residing in the user's save data directory.
@@ -806,6 +806,36 @@ Keyboard#isPressed(key);
     should be a member of the Key enumeration.
 
 
+`Mixer` Object
+--------------
+
+Mixers are used to group related audio together and adjust their parameters as
+a class; this is useful, for example, for implementing global volume controls
+in your game.
+
+Mixer.Default [read-only]
+
+    Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
+    16-bit stereo sound, i.e. CD quality.
+
+new Mixer(frequency, bits[, channels]);
+
+    Constructs a new Mixer object.  Any sounds played through the mixer will use
+    the format specified by the parameters above.  `frequency` is the sample
+    rate, `bits` specifies the bit depth (allowed values are 8, 16 and 24), and
+    `channels` is the number of channels, ranging [1-7].  Channel counts of 5 or
+    higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
+
+    Do note that this creates a _hardware_ mixer.  If the requested format is
+    not supported by the system, an error will be thrown ("unable to create
+    hardware voice").
+
+Mixer#volume [read/write]
+
+    Gets or sets the output volume of the mixer.  This will affect the volume
+    of any sounds played through the mixer.
+
+
 `Model` Object
 --------------
 
@@ -997,6 +1027,88 @@ SSJ.trace(text);
     its display is enabled by the user.
 
 
+`Sample` Object
+---------------
+
+A `Sample` represents a sound effect.  Multiple instances of a sample can be
+played simultaneously, on any mixer.  This is often more desirable than using a
+`Sound` object, which only allows one instance to play at a time.
+
+new Sample(filename);
+
+    Constructs a Sample from the specified audio file.  The audio data is
+    loaded into memory in its entirety and multiple instances can be played
+    simultaneously with no latency, making this very useful for sound effects.
+    Supported formats are Ogg Vorbis (.ogg), WAV, and FLAC.
+
+    Note: Compressed formats like Vorbis will be decompressed during loading,
+          potentially using a large amount of RAM.  It is therefore not
+          recommend to use `Sample` objects for, e.g., background music.  Use a
+          `Sound` instead.
+
+Sample#fileName [read-only]
+
+    Gets the full, canonical SphereFS path of the audio file used to construct
+    this sample.
+
+Sample#play(mixer[, options]);
+
+    Plays the sample on the specified mixer.  Each time this is called, a new
+    stream is started, allowing many instances of the sound to be playing
+    simultaneously.
+
+    `options`, if present, must be an object and can include the following
+    properties (all optional):
+
+        options.volume
+
+            The volume level to play the sound at.  1.0 is full volume, 0.0 is
+            silent.  Volume levels higher than 1.0 will amplify the sound but
+            may cause distortion.  Volume is 1.0 if not specified.
+
+        options.pan
+
+            A volume between -1.0 and 1.0 specifying the left/right balance.
+            -1.0 is full left, +1.0 is full right, and 0.0 is dead center.  Pan
+            is 0.0 (center) if not specified.
+
+        options.speed
+
+            Playback speed, where 1.0 is normal speed.  Also affects pitch.
+            Speed is 1.0x if not specified.
+
+Sample#stopAll();
+
+    Stops playback of all active instances of this sample.
+
+
+`Server` Object
+---------------
+
+A `Server` represents a basic TCP server which listens for connections on a
+specified port.  Clients connecting to the server are placed in a backlog and
+must be explicitly accepted by game code.
+
+new Server(port[, backlog_size]);
+
+    Constructs a new server to listen for connections on the specified port.
+    `backlog_size` specifies the size of the backlog.  If the backlog fills,
+    new connections will be dropped.
+
+Server#accept();
+
+    If one or more connections are waiting in the backlog, removes it from the
+    queue and returns a `Socket` object representing the connection; otherwise,
+    this returns `null`.  This method should be called regularly to prevent the
+    backlog from filling up.
+
+Server#close();
+
+    Shuts down the server.  Any connections in the backlog will be dropped and
+    no new connections can be made until a new server is started on the same
+    port.
+
+
 `Shader` Object
 ---------------
 
@@ -1090,6 +1202,192 @@ Shape#draw(surface[, transform]);
     backbuffer.
 
 
+`Socket` Object
+--------------
+
+A `Socket` represents a TCP connection to another computer.  Sockets can either
+be created manually (if the game is initiating the connection), or returned by
+`Server#accept()` to represent an incoming connection.
+
+new Socket([hostname, port]);
+
+    Constructs a TCP socket object.  If no arguments are provided, the socket
+    starts in a disconnected state, otherwise attempts to connect to `hostname`
+    on `port` and throws an error if the attempt fails. See the documentation
+    for `Socket#connectTo()` for more information on socket connections.
+
+Socket#bytesPending [read-only]
+
+    Gets the number of bytes of data currently in this socket's receive buffer.
+    Call `Socket#read()` to retrieve this data.
+
+    Note: More data may be received between the time this is checked the time
+          a read is performed.  It's recommended to poll this value from time
+          to time and perform reads in order to keep the size of the receive
+          buffer down.
+
+Socket#connected [read-only]
+
+    Gets whether the connection has been established.  As long as this is
+    false, you cannot call any other methods on the socket object.  Doing so
+    will cause an error to be thrown.
+
+Socket#remoteAddress [read-only]
+
+    Gets the IP address of the upstream end of the socket.  Throws an error if
+    accessed before a connection has been established.
+
+Socket#remotePort [read-only]
+
+    Gets the port that the remote machine is using for the connection.
+    Generally not a useful statistic, but it's there if you need it.  Throws an
+    error if accessed before a connection is established.
+
+Socket#close();
+
+    Disconnects the socket.  Note that any given Socket object is tied to a
+    specific session and so cannot be reused after it has been closed.
+
+Socket#connectTo(hostname, port);
+
+    Connects the socket to `hostname` on `port` and throws an error if the
+    initial connection attempt fails.  `hostname` can either be a domain name
+    (e.g. google.com) or IP address (e.g. 127.0.0.1).  If this method succeeds,
+    you must poll `Socket#connected` to find out when the connection has been
+    established before attempting to read or write from the socket.
+
+    Note: A single socket can only be connected to one client at a time.  If
+          the socket is already connected when `Socket#connectTo()` is called,
+          that connection will be closed.
+
+Socket#read(num_bytes);
+
+    Reads up to `num_bytes` bytes from the socket and returns an ArrayBuffer
+    containing the data received.  This method is non-blocking: If more bytes
+    are requested than are available, only the available data will be returned.
+
+Socket#write(data);
+
+    Writes data to the socket, which can be read at the other end.  `data` can
+    be either an ArrayBuffer, TypedArray view, or DataView.
+
+
+`Sound` Object
+--------------
+
+A `Sound` represents a streaming audio file.  Because the sound is streamed, it
+remains compressed, saving RAM; however, only one instance of the sound can be
+played at a time.
+
+new Sound(filename);
+
+    Constructs a Sound object from the specified audio file.  Supported sound
+    formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that
+    unlike in Sphere 1.x, mp3 and MIDI formats are not supported.
+
+Sound#fileName [read-only]
+
+    Gets the full, canonical SphereFS filename of the file used to construct
+    this Sound object.
+
+Sound#length [read-only]
+
+    Gets the length of the sound in microseconds.
+
+Sound#pan [read/write]
+
+    Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
+    left, and 1.0 is full right.
+
+Sound#playing [read-only]
+
+    true if the sound is currently playing, false otherwise.
+
+Sound#position [read/write]
+
+    Gets or sets the playback position within the sound, in seconds.
+
+Sound#repeat [read/write]
+
+    Gets or sets whether the sound will automatically repeat when it reaches
+    the end.
+
+Sound#speed [read/write]
+
+    Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
+    speed, etc.  Note that changing the playback speed affects the pitch as
+    well.
+
+Sound#volume [read/write]
+
+    Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
+    volume.  Higher values are allowed, but may introduce distortion due to
+    clipping.
+
+Sound#pause();
+
+    Pauses the sound.  If it is already paused, this has no effect.
+
+Sound#play([mixer]);
+
+    Begins or resumes sound playback.  When called with no `mixer` argument,
+    Sound#play() will resume playback for a paused sound.  Otherwise, the sound
+    is started from the beginning on the specified mixer.
+
+Sound#stop();
+
+    Stops the sound.  Playback position will be reset to the beginning (0.0s),
+    even if the sound was not playing.
+
+
+`SoundStream` Object
+--------------------
+
+A `SoundStream` represents a dynamic audio stream which can be used to play
+arbitrary audio data, fed to the stream by your game in realtime.  This can be
+used to implement procedural audio, for example.
+
+new SoundStream([frequency[, bits[, channels]]]);
+
+    Constructs an audio stream, which plays arbitrary sound data provided by
+    the game at runtime.  This may be used, for example, to generate sound
+    procedurally or add support for an unsupported audio format in script.
+    `frequency` specifies the stream's sample rate and 'channels' the number of
+    audio channels, ranging [1-7].  Channel counts of 5 and higher imply an
+    additional LFE (subwoofer) channel.
+
+    The default stream format is 8-bit 22050Hz with 1 channel.
+
+SoundStream#bufferSize [read-only]
+
+    Gets the total number of samples in the stream's buffer.
+
+SoundStream#buffer(data);
+
+    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
+    TypedArray or DataView containing the data to write.  While a stream is
+    playing, audio data should be fed into it continuously to prevent skipping.
+
+SoundStream#pause();
+
+    Pauses playback of the stream.  Has no effect if the stream is already
+    paused.
+
+SoundStream#play([mixer]);
+
+    Starts the stream playing, or if no mixer is specified, resumes a paused
+    stream.  Before beginning playback, it is recommended to pre-buffer a few
+    seconds of audio into the stream (see SoundStream:buffer() below).  This
+    will minimize the risk of a buffer underrun and subsequent skipping during
+    playback.
+
+SoundStream#stop();
+
+    Stops playback of the stream and frees its buffer.  This should be called
+    when you are done using a stream.  The stream may be reused after a stop()
+    call, but you will have to feed new audio data.
+
+
 `Surface` Object
 ----------------
 
@@ -1135,10 +1433,10 @@ Surface#height [read-only]
 Surface#clipTo(x, y, width, height);
 
     Sets the surface's clipping rectangle.  Values are expressed in pixels.
-	Anything drawn outside of the clipping rectangle won't be rendered.
+    Anything drawn outside of the clipping rectangle won't be rendered.
 
-	Note: When setting the clipping rectangle for the screen, the effect only
-	      lasts until the next call to `screen.flip()`.
+    Note: When setting the clipping rectangle for the screen, the effect only
+          lasts until the next call to `screen.flip()`.
 
 Surface#toTexture();
 
@@ -1239,271 +1537,3 @@ Transform#translate(tx, ty);
 
     Applies a translation transformation to this matrix.  `tx` and `ty` are the
     horizontal and vertical translations, respectively.
-
-
-Audio API
----------
-
-Playing sounds and music are both handled in miniSphere by Audialis, the
-evolution of Sphere 1.x's audio subsystem.  Audialis allows you to create
-mixers, which you can use to adjust certain parameters across all sounds
-associated with that mixer.  This is useful for implementing global volume
-controls, for example.
-
-Mixer.Default [read-only]
-
-    Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
-    16-bit stereo sound, i.e. CD quality.
-
-new Mixer(frequency, bits[, channels]);
-
-    Constructs a new Mixer object.  Any sounds played through the mixer will use
-    the format specified by the parameters above.  `frequency` is the sample
-    rate, `bits` specifies the bit depth (allowed values are 8, 16 and 24), and
-    `channels` is the number of channels, ranging [1-7].  Channel counts of 5 or
-    higher imply an additional LFE channel (i.e. 5.1, 6.1, 7.1).
-
-    Do note that this creates a _hardware_ mixer.  If the requested format is
-    not supported by the system, an error will be thrown ("unable to create
-    hardware voice").
-
-Mixer#volume [read/write]
-
-    Gets or sets the output volume of the mixer.  This will affect the volume
-    of any sounds played through the mixer.
-
-new Sample(filename);
-
-    Constructs a Sample from the specified audio file.  The audio data is
-    loaded into memory in its entirety and multiple instances can be played
-    simultaneously with no latency, making this very useful for sound effects.
-    Supported formats are Ogg Vorbis (.ogg), WAV, and FLAC.
-
-    Note: Compressed formats like Vorbis will be decompressed during loading,
-          potentially using a large amount of RAM.  It is therefore not
-          recommend to use `Sample` objects for, e.g., background music.  Use a
-          `Sound` instead.
-
-Sample#fileName [read-only]
-
-    Gets the full, canonical SphereFS path of the audio file used to construct
-    this sample.
-
-Sample#play(mixer[, options]);
-
-    Plays the sample on the specified mixer.  Each time this is called, a new
-    stream is started, allowing many instances of the sound to be playing
-    simultaneously.
-
-    `options`, if present, must be an object and can include the following
-    properties (all optional):
-
-        options.volume
-
-            The volume level to play the sound at.  1.0 is full volume, 0.0 is
-            silent.  Volume levels higher than 1.0 will amplify the sound but
-            may cause distortion.  Volume is 1.0 if not specified.
-
-        options.pan
-
-            A volume between -1.0 and 1.0 specifying the left/right balance.
-            -1.0 is full left, +1.0 is full right, and 0.0 is dead center.  Pan
-            is 0.0 (center) if not specified.
-
-        options.speed
-
-            Playback speed, where 1.0 is normal speed.  Also affects pitch.
-            Speed is 1.0x if not specified.
-
-Sample#stopAll();
-
-    Stops playback of all active instances of this sample.
-
-new Sound(filename);
-
-    Constructs a Sound object from the specified audio file.  Supported sound
-    formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that
-    unlike in Sphere 1.x, mp3 and MIDI formats are not supported.
-
-Sound#fileName [read-only]
-
-    Gets the full, canonical SphereFS filename of the file used to construct
-    this Sound object.
-
-Sound#length [read-only]
-
-    Gets the length of the sound in microseconds.
-
-Sound#pan [read/write]
-
-    Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
-    left, and 1.0 is full right.
-
-Sound#playing [read-only]
-
-    true if the sound is currently playing, false otherwise.
-
-Sound#position [read/write]
-
-    Gets or sets the playback position within the sound, in seconds.
-
-Sound#repeat [read/write]
-
-    Gets or sets whether the sound will automatically repeat when it reaches
-    the end.
-
-Sound#speed [read/write]
-
-    Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
-    speed, etc.  Note that changing the playback speed affects the pitch as
-    well.
-
-Sound#volume [read/write]
-
-    Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
-    volume.  Higher values are allowed, but may introduce distortion due to
-    clipping.
-
-Sound#pause();
-
-    Pauses the sound.  If it is already paused, this has no effect.
-
-Sound#play([mixer]);
-
-    Begins or resumes sound playback.  When called with no `mixer` argument,
-    Sound#play() will resume playback for a paused sound.  Otherwise, the sound
-    is started from the beginning on the specified mixer.
-
-Sound#stop();
-
-    Stops the sound.  Playback position will be reset to the beginning (0.0s),
-    even if the sound was not playing.
-
-new SoundStream([frequency[, bits[, channels]]]);
-
-    Constructs an audio stream, which plays arbitrary sound data provided by
-    the game at runtime.  This may be used, for example, to generate sound
-    procedurally or add support for an unsupported audio format in script.
-    `frequency` specifies the stream's sample rate and 'channels' the number of
-    audio channels, ranging [1-7].  Channel counts of 5 and higher imply an
-    additional LFE (subwoofer) channel.
-
-    The default stream format is 8-bit 22050Hz with 1 channel.
-
-SoundStream#bufferSize [read-only]
-
-    Gets the total number of samples in the stream's buffer.
-
-SoundStream#buffer(data);
-
-    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
-    TypedArray or DataView containing the data to write.  While a stream is
-    playing, audio data should be fed into it continuously to prevent skipping.
-
-SoundStream#pause();
-
-    Pauses playback of the stream.  Has no effect if the stream is already
-    paused.
-
-SoundStream#play([mixer]);
-
-    Starts the stream playing, or if no mixer is specified, resumes a paused
-    stream.  Before beginning playback, it is recommended to pre-buffer a few
-    seconds of audio into the stream (see SoundStream:buffer() below).  This
-    will minimize the risk of a buffer underrun and subsequent skipping during
-    playback.
-
-SoundStream#stop();
-
-    Stops playback of the stream and frees its buffer.  This should be called
-    when you are done using a stream.  The stream may be reused after a stop()
-    call, but you will have to feed new audio data.
-
-
-Networking API
---------------
-
-miniSphere provides basic support for TCP sockets.  There are two object types:
-Socket and Server.  A Server is persistent and listens for connections on a
-given port, while Sockets represent individual client connections.
-
-new Server(port[, backlog_size]);
-
-    Constructs a new server which listens for connections on the specified
-    port.  `backlog_size` specifies the size of the backlog.  If the backlog
-    fills, new connections will be dropped.
-
-Server#accept();
-
-    If one or more connections are waiting in the backlog, removes it from the
-    queue and returns a Socket object representing the connection.  Otherwise,
-    returns null.  This should be called regularly to prevent the backlog from
-    filling up.
-
-Server#close();
-
-    Shuts down the server.  Any connections in the backlog will be dropped and
-    no new connections can be made unless a new Server is created on the same
-    port.
-
-new Socket([hostname, port]);
-
-    Constructs a TCP socket object.  If no arguments are provided, the socket
-    starts in a disconnected state, otherwise attempts to connect to `hostname`
-    on `port` and throws an error if the attempt fails. See the documentation
-    for `Socket#connectTo()` for more information on socket connections.
-
-Socket#bytesPending [read-only]
-
-    Gets the number of bytes of data currently in this socket's receive buffer.
-    Call `Socket#read()` to retrieve this data.
-
-    Note: More data may be received between the time this is checked the time
-          a read is performed.  It's recommended to poll this value from time
-          to time and perform reads in order to keep the size of the receive
-          buffer down.
-
-Socket#connected [read-only]
-
-    Gets whether the connection has been established.  As long as this is
-    false, you cannot call any other methods on the socket object.  Doing so
-    will cause an error to be thrown.
-
-Socket#remoteAddress [read-only]
-
-    Gets the IP address of the upstream end of the socket.  Throws an error if
-    accessed before a connection has been established.
-
-Socket#remotePort [read-only]
-
-    Gets the port that the remote machine is using for the connection.
-    Generally not a useful statistic, but it's there if you need it.  Throws an
-    error if accessed before a connection is established.
-
-Socket#close();
-
-    Disconnects the socket.  Note that any given Socket object is tied to a
-    specific session and so cannot be reused after it has been closed.
-
-Socket#connectTo(hostname, port);
-
-    Connects the socket to `hostname` on `port` and throws an error if the
-    initial connection attempt fails.  `hostname` can either be a domain name
-    (e.g. google.com) or IP address (e.g. 127.0.0.1).  If this method succeeds,
-    you must poll `Socket#connected` to find out when the connection has been
-    established before attempting to read or write from the socket.
-
-    Note: A single socket can only be connected to one client at a time.  If
-          the socket is already connected when `Socket#connectTo()` is called,
-          that connection will be closed.
-
-Socket#read(num_bytes);
-
-    Reads up to `num_bytes` bytes from the socket and returns an ArrayBuffer
-    containing the data received.  This method is non-blocking: If more bytes
-    are requested than are available, only the available data will be returned.
-
-Socket#write(data);
-
-    Writes data to the socket, which can be read at the other end.  `data` can
-    be either an ArrayBuffer, TypedArray view, or DataView.
