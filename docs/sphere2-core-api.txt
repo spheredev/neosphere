@@ -1210,46 +1210,6 @@ mixers, which you can use to adjust certain parameters across all sounds
 associated with that mixer.  This is useful for implementing global volume
 controls, for example.
 
-new AudioStream([frequency[, bits[, channels]]]);
-
-    Constructs an audio stream, which plays arbitrary sound data provided by
-    the game at runtime.  This may be used, for example, to generate sound
-    procedurally or add support for an unsupported audio format in script.
-    `frequency` specifies the stream's sample rate and 'channels' the number of
-    audio channels, ranging [1-7].  Channel counts of 5 and higher imply an
-    additional LFE (subwoofer) channel.
-
-    The default stream format is 8-bit 22050Hz with 1 channel.
-
-AudioStream#bufferSize [read-only]
-
-    Gets the total number of samples in the stream's buffer.
-
-AudioStream#buffer(data);
-
-    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
-    TypedArray or DataView containing the data to write.  While a stream is
-    playing, audio data should be fed into it continuously to prevent skipping.
-
-AudioStream#pause();
-
-    Pauses playback of the stream.  Has no effect if the stream is already
-    paused.
-
-AudioStream#play([mixer]);
-
-    Starts the stream playing, or if no mixer is specified, resumes a paused
-    stream.  Before beginning playback, it is recommended to pre-buffer a few
-    seconds of audio into the stream (see AudioStream:buffer() below).  This
-    will minimize the risk of a buffer underrun and subsequent skipping during
-    playback.
-
-AudioStream#stop();
-
-    Stops playback of the stream and frees its buffer.  This should be called
-    when you are done using a stream.  The stream may be reused after a stop()
-    call, but you will have to feed new audio data.
-
 Mixer.Default [read-only]
 
     Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
@@ -1378,6 +1338,46 @@ Sound#stop();
 
     Stops the sound.  Playback position will be reset to the beginning (0.0s),
     even if the sound was not playing.
+
+new SoundStream([frequency[, bits[, channels]]]);
+
+    Constructs an audio stream, which plays arbitrary sound data provided by
+    the game at runtime.  This may be used, for example, to generate sound
+    procedurally or add support for an unsupported audio format in script.
+    `frequency` specifies the stream's sample rate and 'channels' the number of
+    audio channels, ranging [1-7].  Channel counts of 5 and higher imply an
+    additional LFE (subwoofer) channel.
+
+    The default stream format is 8-bit 22050Hz with 1 channel.
+
+SoundStream#bufferSize [read-only]
+
+    Gets the total number of samples in the stream's buffer.
+
+SoundStream#buffer(data);
+
+    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
+    TypedArray or DataView containing the data to write.  While a stream is
+    playing, audio data should be fed into it continuously to prevent skipping.
+
+SoundStream#pause();
+
+    Pauses playback of the stream.  Has no effect if the stream is already
+    paused.
+
+SoundStream#play([mixer]);
+
+    Starts the stream playing, or if no mixer is specified, resumes a paused
+    stream.  Before beginning playback, it is recommended to pre-buffer a few
+    seconds of audio into the stream (see SoundStream:buffer() below).  This
+    will minimize the risk of a buffer underrun and subsequent skipping during
+    playback.
+
+SoundStream#stop();
+
+    Stops playback of the stream and frees its buffer.  This should be called
+    when you are done using a stream.  The stream may be reused after a stop()
+    call, but you will have to feed new audio data.
 
 
 Networking API

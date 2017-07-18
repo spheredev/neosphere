@@ -6,6 +6,8 @@ vX.X.X - TBD
 
 * Adds support for 2D (orthographic) and 3D (perspective) projection matrices.
 * Adds support for setting a clipping rectangle when rendering to a `Surface`.
+* Adds `Model#setFloatArray()` and `Model#setIntArray()` methods for setting
+  the values of array-typed shader uniforms.
 * Adds `Socket#connectTo()` which allows the same socket object to be used for
   multiple sessions.
 * Adds the engine version number to the string returned by `Sphere.Platform`.
@@ -16,7 +18,6 @@ vX.X.X - TBD
 * Removes support for GPUs without shader support.  If the engine can't create
   a shader-capable display, it will now simply fail to start rather than trying
   to fall back on the fixed-function pipeline.
-* Renames the `SoundStream` object to `AudioStream`.
 * Renames `Sphere.APIVersion` to `Sphere.Version`.
 * Fixes several limitations in the internal handling of spritesets which were
   preventing full Sphere 1.x compatibility.

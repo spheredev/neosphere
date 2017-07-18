@@ -4,6 +4,10 @@ Release Notes
 miniSphere X.X
 --------------
 
+* The value of `Sphere.Platform` now includes the version number of the engine,
+  while `Sphere.Version` has been redefined to return the version of the Sphere
+  API, e.g. 2.  `Sphere.APIVersion` has been removed as it is now redundant.
+
 * Games can now assign a `Transform` object to a surface's `transform` property
   to change the projection matrix.  To create projection matrices, there are
   two new `Transform` methods: `.project2D()` for orthographic projection, and
@@ -21,9 +25,6 @@ miniSphere X.X
   strings instead of buffer objects.  This makes them unsuitable for use with
   binary data due to the UTF-8 processing involved.  Going forward, games that
   must work with binary files should use a `FileStream` object instead.
-
-* `SoundStream` has been renamed to `AudioStream` to avoid potential confusion
-  with the `Sound` object.  The API remains otherwise identical.
 
 * miniSphere will no longer run on computers without a shader-capable GPU.  If
   you must continue supporting such hardware, you'll have to stick to v4.5.11
