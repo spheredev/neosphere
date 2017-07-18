@@ -73,11 +73,13 @@ Sphere.Game [non-replaceable]
 
 Sphere.Platform [read-only]
 
-    The name of the compiler, "Cell".
+    A string specifying the name and version number of the compiler.  For
+    example, "Cell X.X.X".
 
 Sphere.Version [read-only]
 
-    The version number of the compiler; e.g., "X.X.X".
+    An integer specifying which version of the Cellscript API is supported by
+    the compiler (e.g., 2).
 
 error(message);
 

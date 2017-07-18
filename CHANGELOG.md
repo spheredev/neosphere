@@ -20,8 +20,8 @@ vX.X.X - TBD
 * Renames `Sphere.APIVersion` to `Sphere.Version`.
 * Fixes several limitations in the internal handling of spritesets which were
   preventing full Sphere 1.x compatibility.
-* Fixes several bugs in Dispatch job management, including one that can cause
-  the engine to crash with a segfault.
+* Fixes several bugs in internal Dispatch job management, including one that
+  can cause the engine to crash with a segfault.
 * Fixes excessive OpenGL state changes in the internal rendering logic, vastly
   improving performance for games using the Sphere v2 graphics API.
 

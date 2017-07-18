@@ -1886,7 +1886,7 @@ js_CreateSurface(duk_context* ctx)
 	fill_color = num_args >= 3 ? duk_require_sphere_color(ctx, 2) : color_new(0, 0, 0, 0);
 
 	if (!(image = image_new(width, height)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create surface");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create surface");
 	image_fill(image, fill_color);
 	duk_push_class_obj(ctx, "ssSurface", image);
 	return 1;
@@ -1902,9 +1902,9 @@ js_DeflateByteArray(duk_context* ctx)
 	bytearray_t* new_array;
 
 	if ((level < 0 || level > 9) && n_args >= 2)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "compression level must be [0-9] (got: %i)", level);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid compression level");
 	if (!(new_array = bytearray_deflate(array, level)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to deflate source ByteArray");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't deflate byte array");
 	duk_push_sphere_bytearray(ctx, new_array);
 	return 1;
 }

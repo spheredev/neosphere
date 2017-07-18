@@ -1068,14 +1068,14 @@ js_Sphere_get_Game(duk_context* ctx)
 static duk_ret_t
 js_Sphere_get_Platform(duk_context* ctx)
 {
-	duk_push_string(ctx, COMPILER_NAME);
+	duk_push_sprintf(ctx, "%s %s", COMPILER_NAME, VERSION_NAME);
 	return 1;
 }
 
 static duk_ret_t
 js_Sphere_get_Version(duk_context* ctx)
 {
-	duk_push_string(ctx, VERSION_NAME);
+	duk_push_int(ctx, 2);
 	return 1;
 }
 
