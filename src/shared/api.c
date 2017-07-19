@@ -359,6 +359,14 @@ duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* class_name)
 }
 
 void
+duk_set_class_ptr(duk_context* ctx, duk_idx_t index, void* udata)
+{
+	index = duk_require_normalize_index(ctx, index);	
+	duk_push_pointer(ctx, udata);
+	duk_put_prop_string(ctx, index, "\xFF" "udata");
+}
+
+void
 duk_to_class_obj(duk_context* ctx, duk_idx_t idx, const char* class_name, void* udata)
 {
 	idx = duk_require_normalize_index(ctx, idx);

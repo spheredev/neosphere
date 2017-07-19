@@ -3193,11 +3193,9 @@ js_File_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssFile");
-	duk_pop(ctx);
+
+	duk_set_class_ptr(ctx, -1, NULL);
 	kev_close(file);
-	duk_push_this(ctx);
-	duk_push_pointer(ctx, NULL); duk_put_prop_string(ctx, -2, "\xFF" "udata");
-	duk_pop(ctx);
 	return 0;
 }
 
@@ -3924,10 +3922,10 @@ js_RawFile_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssRawFile");
-	duk_push_pointer(ctx, NULL);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file was closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file already closed");
+	
+	duk_set_class_ptr(ctx, -1, NULL);
 	sfs_fclose(file);
 	return 0;
 }
@@ -4068,8 +4066,7 @@ js_Socket_close(duk_context* ctx)
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
 	
-	duk_push_null(ctx);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_set_class_ptr(ctx, -1, NULL);
 	v1_socket_free(socket);
 	return 1;
 }
@@ -5421,20 +5418,18 @@ js_Surface_rotate(duk_context* ctx)
 	w = new_w = image_width(image);
 	h = new_h = image_height(image);
 	if (want_resize) {
-		// TODO: implement in-place resizing for Surface#rotate()
+		// FIXME: implement in-place resizing for Surface#rotate()
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
 	}
 	if ((new_image = image_new(new_w, new_h)) == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failed to create new surface bitmap");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create new surface");
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_rotated_bitmap(image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
 
-	// free old image and replace internal image pointer
-	// at one time this was an acceptable thing to do; now it's just a hack
+	// swap out the image pointer and free old image
+	duk_set_class_ptr(ctx, -1, new_image);
 	image_free(image);
-	duk_push_this(ctx);
-	duk_push_pointer(ctx, new_image);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
 	return 1;
 }
 

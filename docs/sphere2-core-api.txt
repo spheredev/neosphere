@@ -147,18 +147,17 @@ require(module_id);
     module.
 
 
-`screen` Built-In Object
-------------------------
+`screen` Built-In Surface
+-------------------------
 
-In Sphere v2, the backbuffer is represented as a `Surface` object (see below)
-with some additional special-purpose methods.  This surface is exposed to your
-game code through a built-in global variable, `screen`.
+In Sphere v2, the backbuffer is exposed as a custom `Surface` object (see
+below) with some additional special-purpose methods.  The surface is accessible
+to game code through a built-in global constant, `screen`.
 
-screen [global variable, non-replaceable]
+screen [global, non-replaceable]
 
-    A `Surface` object (see below) representing the primary render target--the
-    backbuffer.  Anything drawn to `screen` will become visible to the player
-    when calling `screen.flip()`.
+    A `Surface` object (see below) representing the backbuffer.  Anything drawn
+    to `screen` will become visible to the player when calling `screen.flip()`.
 
 screen.frameRate [read/write]
 

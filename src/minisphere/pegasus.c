@@ -1709,8 +1709,7 @@ js_FileStream_dispose(duk_context* ctx)
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "FileStream");
 
-	duk_push_pointer(ctx, NULL);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_set_class_ptr(ctx, -1, NULL);
 	sfs_fclose(file);
 	return 0;
 }
@@ -3082,8 +3081,7 @@ js_Server_close(duk_context* ctx)
 	duk_push_this(ctx);
 	server = duk_require_class_obj(ctx, -1, "Server");
 
-	duk_push_null(ctx);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_set_class_ptr(ctx, -1, NULL);
 	server_free(server);
 	return 0;
 }
@@ -3094,7 +3092,7 @@ js_Shader_get_Default(duk_context* ctx)
 	shader_t* shader;
 
 	if (!(shader = galileo_shader()))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile default shader");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile default shaders");
 	duk_push_class_obj(ctx, "Shader", shader_ref(shader));
 
 	duk_push_this(ctx);
@@ -3130,7 +3128,7 @@ js_new_Shader(duk_context* ctx)
 	fs_filename = duk_require_path(ctx, -1, NULL, false, false);
 	duk_pop_2(ctx);
 	if (!(shader = shader_new(vs_filename, fs_filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile shader");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile shader program");
 	duk_push_class_obj(ctx, "Shader", shader);
 	return 1;
 }
@@ -3359,8 +3357,7 @@ js_Socket_close(duk_context* ctx)
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "Socket");
 	
-	duk_push_null(ctx);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	duk_set_class_ptr(ctx, -1, NULL);
 	socket_free(socket);
 	return 0;
 }
