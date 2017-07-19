@@ -1,6 +1,7 @@
 #include "minisphere.h"
 #include "galileo.h"
 
+#include <gl/GL.h>
 #include "color.h"
 #include "vector.h"
 
@@ -556,6 +557,12 @@ shape_upload(shape_t* it)
 		al_destroy_index_buffer(it->ibo);
 	num_vertices = vector_len(it->vertices);
 	num_indices = vector_len(it->indices);
+	
+	// workaround for Allegro bug: Allegro sometimes doesn't clear the GL error state, causing
+	// vertex buffer creation to randomly fail.  simply retrying will leak a buffer, so instead
+	// we clear the error state ahead of time.
+	while (glGetError() != GL_NO_ERROR);
+
 	if (it->vbo = al_create_vertex_buffer(NULL, NULL, num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
 		vertices = al_lock_vertex_buffer(it->vbo, 0, num_vertices, ALLEGRO_LOCK_WRITEONLY);
 	if (num_indices > 0 && (it->ibo = al_create_index_buffer(2, NULL, num_indices, ALLEGRO_PRIM_BUFFER_STATIC)))

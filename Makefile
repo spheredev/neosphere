@@ -33,7 +33,7 @@ engine_sources=src/minisphere/main.c \
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
-   -lmng -lz -lm
+   -lGL -lmng -lz -lm
 
 cell_sources=src/cell/main.c \
    src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \

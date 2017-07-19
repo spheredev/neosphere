@@ -3035,7 +3035,7 @@ js_new_Server(duk_context* ctx)
 	port = duk_require_int(ctx, 0);
 	max_backlog = num_args >= 2 ? duk_require_int(ctx, 1) : 16;
 	if (max_backlog <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "max_backlog cannot be <= 0", max_backlog);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid backlog size", max_backlog);
 
 	if (server = server_new(NULL, port, 1024, max_backlog))
 		duk_push_class_obj(ctx, "Server", server);
@@ -3145,30 +3145,37 @@ js_Shader_finalize(duk_context* ctx)
 static duk_ret_t
 js_new_Shape(duk_context* ctx)
 {
+	bool         have_indices = false;
+	int          index;
 	int          num_args;
-	size_t       num_vertices;
+	int          num_indices;
+	int          num_vertices;
 	shape_t*     shape;
 	duk_idx_t    stack_idx;
 	image_t*     texture;
 	shape_type_t type;
 	vertex_t     vertex;
 
-	duk_uarridx_t i;
+	int i;
 
 	num_args = duk_get_top(ctx);
-	duk_require_object_coercible(ctx, 0);
-	texture = !duk_is_null(ctx, 1) ? duk_require_class_obj(ctx, 1, "Texture")
-		: NULL;
-	type = num_args >= 3 ? duk_require_int(ctx, 2)
-		: SHAPE_AUTO;
-
 	if (!duk_is_array(ctx, 0))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array required");
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "vertices must be an array");
+	if (duk_is_array(ctx, 1)) {
+		have_indices = true;
+		texture = !duk_is_null(ctx, 1) ? duk_require_class_obj(ctx, 2, "Texture") : NULL;
+		type = num_args >= 3 ? duk_require_int(ctx, 3) : SHAPE_AUTO;
+	} else {
+		texture = !duk_is_null(ctx, 1) ? duk_require_class_obj(ctx, 1, "Texture") : NULL;
+		type = num_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
+	}
+
 	if (type < 0 || type >= SHAPE_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ShapeType constant");
 	
 	shape = shape_new(type, texture);
-	num_vertices = duk_get_length(ctx, 0);
+	num_vertices = (int)duk_get_length(ctx, 0);
+	num_indices = (int)duk_get_length(ctx, 1);
 	for (i = 0; i < num_vertices; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		stack_idx = duk_normalize_index(ctx, -1);
@@ -3189,8 +3196,18 @@ js_new_Shape(duk_context* ctx)
 		duk_pop_n(ctx, 7);
 		shape_add_vertex(shape, vertex);
 	}
+	if (have_indices) {
+		for (i = 0; i < num_indices; ++i) {
+			duk_get_prop_index(ctx, 1, i);
+			index = duk_require_int(ctx, -1);
+			if (index < 0 || index > UINT16_MAX)
+				duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "index out of range");
+			shape_add_index(shape, (uint16_t)index);
+			duk_pop(ctx);
+		}
+	}
 	if (!shape_upload(shape))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't upload shape to GPU");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
 	duk_push_class_obj(ctx, "Shape", shape);
 	return 1;
 }

@@ -1160,12 +1160,12 @@ ShapeType [enumeration]
         ShapeType.Triangles
         ShapeType.TriStrip
 
-new Shape(vertices[, texture[, type]]);
+new Shape(vertices[, indices][, texture[, type]]]);
 
-    Constructs a primitive shape out of the provided array of vertices textured
-    with the Image specified by `texture`.
+    Constructs a primitive shape out of a provided set of vertices, optionally
+    using a specified texture.
 
-    Each vertex can have the following properties:
+    `vertices` is an array of objects with the following properties:
 
         vertex.x, vertex.y
 
@@ -1185,9 +1185,14 @@ new Shape(vertices[, texture[, type]]);
             texture pixels to determine the final color of each pixel in a
             shape.
 
+    `indices` is an optional list of integers in the range [0,65535] specifying
+    the positions in the vertex array to use for the shape's vertices.  This
+    allows identical vertices to be reused.  If `indices` is not specified,
+    vertex values will be taken sequentially from `vertices`.
+    
     `type` specifies the type of primitive (see ShapeType above).  If `type` is
     ShapeType.Auto (the default), the type is determined automatically based on
-    the number of vertices.
+    the number of vertices provided.
 
 Shape#texture [read/write]
 
