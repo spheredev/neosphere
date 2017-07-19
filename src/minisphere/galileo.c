@@ -1,7 +1,7 @@
 #include "minisphere.h"
 #include "galileo.h"
 
-#include <gl/GL.h>
+#include <GL/gl.h>
 #include "color.h"
 #include "vector.h"
 
@@ -547,7 +547,10 @@ shape_upload(shape_t* it)
 
 	iter_t iter;
 
-	console_log(4, "uploading shape #%u vertices to GPU", it->id);
+	num_vertices = vector_len(it->vertices);
+	num_indices = vector_len(it->indices);
+	console_log(4, "uploading shape #%u %d vertices and %d indices to GPU", it->id,
+		num_vertices, num_indices);
 	bitmap = it->texture != NULL ? image_bitmap(it->texture) : NULL;
 
 	// create vertex and index buffers for the shape

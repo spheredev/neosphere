@@ -589,9 +589,9 @@ on_error:
 static struct pose*
 find_pose_by_name(const spriteset_t* spriteset, const char* pose_name)
 {
-	const char*        alt_name;
-	const char*        name_to_find;
-	const struct pose* pose = NULL;
+	const char*  alt_name;
+	const char*  name_to_find;
+	struct pose* pose = NULL;
 
 	iter_t iter;
 
