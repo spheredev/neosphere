@@ -5,7 +5,6 @@
 #include "vector.h"
 
 static void free_cached_uniform (model_t* model, const char* name);
-static bool have_vertex_buffer  (const shape_t* shape);
 static void render_shape        (shape_t* shape);
 
 enum uniform_type
@@ -55,12 +54,12 @@ struct shape
 {
 	unsigned int           refcount;
 	unsigned int           id;
+	ALLEGRO_INDEX_BUFFER*  ibo;
+	vector_t*              indices;
 	image_t*               texture;
 	shape_type_t           type;
-	int                    max_vertices;
-	int                    num_vertices;
-	vertex_t*              vertices;
-	ALLEGRO_VERTEX_BUFFER* vbuf;
+	vector_t*              vertices;
+	ALLEGRO_VERTEX_BUFFER* vbo;
 };
 
 static shader_t*    s_def_shader = NULL;
@@ -443,6 +442,8 @@ shape_new(shape_type_t type, image_t* texture)
 	shape = calloc(1, sizeof(shape_t));
 	shape->texture = image_ref(texture);
 	shape->type = type;
+	shape->vertices = vector_new(sizeof(vertex_t));
+	shape->indices = vector_new(sizeof(uint16_t));
 
 	shape->id = s_next_shape_id++;
 	return shape_ref(shape);
@@ -463,8 +464,8 @@ shape_free(shape_t* it)
 		return;
 	console_log(4, "disposing shape #%u no longer in use", it->id);
 	image_free(it->texture);
-	if (it->vbuf != NULL)
-		al_destroy_vertex_buffer(it->vbuf);
+	if (it->vbo != NULL)
+		al_destroy_vertex_buffer(it->vbo);
 	free(it->vertices);
 	free(it);
 }
@@ -473,19 +474,22 @@ float_rect_t
 shape_bounds(const shape_t* it)
 {
 	float_rect_t bounds;
+	vertex_t*    vertex;
 
-	int i;
+	iter_t iter;
 
-	if (it->num_vertices < 1)
+	if (vector_len(it->vertices) < 1)
 		return new_float_rect(0.0, 0.0, 0.0, 0.0);
+	vertex = vector_get(it->vertices, 0);
 	bounds = new_float_rect(
-		it->vertices[0].x, it->vertices[0].y,
-		it->vertices[0].x, it->vertices[0].y);
-	for (i = 1; i < it->num_vertices; ++i) {
-		bounds.x1 = fmin(it->vertices[i].x, bounds.x1);
-		bounds.y1 = fmin(it->vertices[i].y, bounds.y1);
-		bounds.x2 = fmax(it->vertices[i].x, bounds.x2);
-		bounds.y2 = fmax(it->vertices[i].y, bounds.y2);
+		vertex->x, vertex->y,
+		vertex->x, vertex->y);
+	iter = vector_enum(it->vertices);
+	while (vertex = vector_next(&iter)) {
+		bounds.x1 = fmin(vertex->x, bounds.x1);
+		bounds.y1 = fmin(vertex->y, bounds.y1);
+		bounds.x2 = fmax(vertex->x, bounds.x2);
+		bounds.y2 = fmax(vertex->y, bounds.y2);
 	}
 	return bounds;
 }
@@ -508,45 +512,15 @@ shape_set_texture(shape_t* it, image_t* texture)
 }
 
 bool
-shape_add_vertex(shape_t* it, vertex_t vertex)
+shape_add_index(shape_t* it, uint16_t index)
 {
-	int      new_max;
-	vertex_t *new_buffer;
-
-	if (it->num_vertices + 1 > it->max_vertices) {
-		new_max = (it->num_vertices + 1) * 2;
-		if (!(new_buffer = realloc(it->vertices, new_max * sizeof(vertex_t))))
-			return false;
-		it->vertices = new_buffer;
-		it->max_vertices = new_max;
-	}
-	++it->num_vertices;
-	it->vertices[it->num_vertices - 1] = vertex;
-	return true;
+	return vector_push(it->indices, &index);
 }
 
-void
-shape_calculate_uv(shape_t* it)
+bool
+shape_add_vertex(shape_t* it, vertex_t vertex)
 {
-	// this assigns default UV coordinates to a shape's vertices. note that clockwise
-	// winding from top left is assumed; if the shape is wound any other way, the
-	// texture will be rotated accordingly. if this is not what you want, explicit U/V
-	// coordinates should be supplied.
-
-	double phi;
-
-	int i;
-
-	console_log(4, "auto-calculating U/V for shape #%u", it->id);
-
-	for (i = 0; i < it->num_vertices; ++i) {
-		// circumscribe the UV coordinate space.
-		// the circumcircle is rotated 135 degrees counterclockwise, which ensures
-		// that the top-left corner of a clockwise quad is mapped to (0,0).
-		phi = 2 * M_PI * i / it->num_vertices - M_PI_4 * 3;
-		it->vertices[i].u = cos(phi) * M_SQRT1_2 + 0.5;
-		it->vertices[i].v = sin(phi) * -M_SQRT1_2 + 0.5;
-	}
+	return vector_push(it->vertices, &vertex);
 }
 
 void
@@ -561,40 +535,59 @@ void
 shape_upload(shape_t* it)
 {
 	ALLEGRO_BITMAP* bitmap;
+	uint16_t        index;
+	int             num_indices;
+	int             num_vertices;
+	vertex_t*       vertex;
+	uint16_t*       indices = NULL;
 	ALLEGRO_VERTEX* vertices = NULL;
 
-	int i;
+	iter_t iter;
 
 	console_log(3, "uploading shape #%u vertices to GPU", it->id);
 	bitmap = it->texture != NULL ? image_bitmap(it->texture) : NULL;
 
-	// create a vertex buffer for the shape
-	if (it->vbuf != NULL)
-		al_destroy_vertex_buffer(it->vbuf);
-	if (it->vbuf = al_create_vertex_buffer(NULL, NULL, it->num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
-		vertices = al_lock_vertex_buffer(it->vbuf, 0, it->num_vertices, ALLEGRO_LOCK_WRITEONLY);
+	// create vertex and index buffers for the shape
+	if (it->vbo != NULL)
+		al_destroy_vertex_buffer(it->vbo);
+	if (it->ibo != NULL)
+		al_destroy_index_buffer(it->ibo);
+	num_vertices = vector_len(it->vertices);
+	num_indices = vector_len(it->indices);
+	if (it->vbo = al_create_vertex_buffer(NULL, NULL, num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
+		vertices = al_lock_vertex_buffer(it->vbo, 0, num_vertices, ALLEGRO_LOCK_WRITEONLY);
+	if (num_indices > 0 && (it->ibo = al_create_index_buffer(2, NULL, num_indices, ALLEGRO_PRIM_BUFFER_STATIC)))
+		indices = al_lock_index_buffer(it->ibo, 0, num_vertices, ALLEGRO_LOCK_WRITEONLY);
 	if (vertices == NULL) {
-		console_log(3, "couldn't create a VBO for shape #%u", it->id);
+		console_log(3, "couldn't create VBO for shape #%u", it->id);
+		return;
+	}
+	if (indices == NULL && num_indices > 0) {
+		console_log(3, "couldn't create IBO for shape #%u", it->id);
 		return;
 	}
 
-	// upload vertices
-	for (i = 0; i < it->num_vertices; ++i) {
-		vertices[i].x = it->vertices[i].x;
-		vertices[i].y = it->vertices[i].y;
-		vertices[i].z = it->vertices[i].z;
-		vertices[i].color = nativecolor(it->vertices[i].color);
-		vertices[i].u = it->vertices[i].u;
-		vertices[i].v = it->vertices[i].v;
+	// upload vertices into the VBO
+	iter = vector_enum(it->vertices);
+	while (vertex = vector_next(&iter)) {
+		vertices[iter.index].x = vertex->x;
+		vertices[iter.index].y = vertex->y;
+		vertices[iter.index].z = vertex->z;
+		vertices[iter.index].color = nativecolor(vertex->color);
+		vertices[iter.index].u = vertex->u;
+		vertices[iter.index].v = vertex->v;
 	}
 
-	al_unlock_vertex_buffer(it->vbuf);
-}
+	// upload indices into the IBO.  note this is safe even if it doesn't
+	// seem to be; if indices is NULL at this point, then num_indices is 0
+	// by definition and the loop will not be entered.
+	iter = vector_enum(it->indices);
+	while (vector_next(&iter)) {
+		index = *(uint16_t*)iter.ptr;
+		indices[iter.index] = index;
+	}
 
-static bool
-have_vertex_buffer(const shape_t* shape)
-{
-	return shape->vbuf != NULL;
+	al_unlock_vertex_buffer(it->vbo);
 }
 
 static void
@@ -615,15 +608,19 @@ render_shape(shape_t* shape)
 {
 	ALLEGRO_BITMAP* bitmap;
 	int             draw_mode;
+	int             num_indices;
+	int             num_vertices;
 
-	if (shape->num_vertices == 0)
+	num_indices = vector_len(shape->indices);
+	num_vertices = vector_len(shape->vertices);
+	if (num_vertices == 0)
 		return;
 
-	if (!have_vertex_buffer(shape))
+	if (shape->vbo == NULL || (shape->ibo == NULL && num_indices > 0))
 		shape_upload(shape);
 	if (shape->type == SHAPE_AUTO)
-		draw_mode = shape->num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
-			: shape->num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
+		draw_mode = num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
+			: num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
 			: ALLEGRO_PRIM_TRIANGLE_STRIP;
 	else
 		draw_mode = shape->type == SHAPE_LINES ? ALLEGRO_PRIM_LINE_LIST
@@ -635,5 +632,8 @@ render_shape(shape_t* shape)
 			: ALLEGRO_PRIM_POINT_LIST;
 
 	bitmap = shape->texture != NULL ? image_bitmap(shape->texture) : NULL;
-	al_draw_vertex_buffer(shape->vbuf, bitmap, 0, shape->num_vertices, draw_mode);
+	if (shape->ibo != NULL)
+		al_draw_indexed_buffer(shape->vbo, bitmap, shape->ibo, 0, num_indices, draw_mode);
+	else
+		al_draw_vertex_buffer(shape->vbo, bitmap, 0, num_vertices, draw_mode);
 }

@@ -71,7 +71,7 @@ struct spriteset
 	vector_t*    poses;
 };
 
-static struct pose* find_sprite_pose (const spriteset_t* spriteset, const char* pose_name);
+static struct pose* find_pose_by_name (const spriteset_t* spriteset, const char* pose_name);
 
 static vector_t*    s_load_cache;
 static unsigned int s_next_spriteset_id = 0;
@@ -375,7 +375,7 @@ spriteset_frame_delay(const spriteset_t* it, const char* pose_name, int frame_in
 	const struct frame* frame;
 	const struct pose*  pose;
 
-	if ((pose = find_sprite_pose(it, pose_name)) == NULL)
+	if ((pose = find_pose_by_name(it, pose_name)) == NULL)
 		return 0;
 	frame_index %= vector_len(pose->frames);
 	frame = vector_get(pose->frames, frame_index);
@@ -388,7 +388,7 @@ spriteset_frame_image_index(const spriteset_t* it, const char* pose_name, int fr
 	const struct frame* frame;
 	const struct pose*  pose;
 
-	if ((pose = find_sprite_pose(it, pose_name)) == NULL)
+	if ((pose = find_pose_by_name(it, pose_name)) == NULL)
 		return 0;
 	frame_index %= vector_len(pose->frames);
 	frame = vector_get(pose->frames, frame_index);
@@ -415,7 +415,7 @@ spriteset_num_frames(const spriteset_t* it, const char* pose_name)
 {
 	struct pose* pose;
 
-	pose = find_sprite_pose(it, pose_name);
+	pose = find_pose_by_name(it, pose_name);
 	return vector_len(pose->frames);
 }
 
@@ -475,7 +475,7 @@ spriteset_add_frame(spriteset_t* it, const char* pose_name, int image_idx, int d
 
 	frame.image_idx = image_idx;
 	frame.delay = delay;
-	pose = find_sprite_pose(it, pose_name);
+	pose = find_pose_by_name(it, pose_name);
 	vector_push(pose->frames, &frame);
 }
 
@@ -507,7 +507,7 @@ spriteset_draw(const spriteset_t* it, color_t mask, bool is_flipped, double thet
 	const struct pose* pose;
 	float              scale_w, scale_h;
 
-	if ((pose = find_sprite_pose(it, pose_name)) == NULL)
+	if ((pose = find_pose_by_name(it, pose_name)) == NULL)
 		return;
 	frame_index = frame_index % vector_len(pose->frames);
 	frame = vector_get(pose->frames, frame_index);
@@ -587,7 +587,7 @@ on_error:
 }
 
 static struct pose*
-find_sprite_pose(const spriteset_t* spriteset, const char* pose_name)
+find_pose_by_name(const spriteset_t* spriteset, const char* pose_name)
 {
 	const char*        alt_name;
 	const char*        name_to_find;

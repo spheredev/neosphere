@@ -3147,7 +3147,6 @@ js_Shader_finalize(duk_context* ctx)
 static duk_ret_t
 js_new_Shape(duk_context* ctx)
 {
-	bool         is_missing_uv = false;
 	int          num_args;
 	size_t       num_vertices;
 	shape_t*     shape;
@@ -3181,19 +3180,17 @@ js_new_Shape(duk_context* ctx)
 		if (duk_get_prop_string(ctx, stack_idx, "u"))
 			vertex.u = duk_require_number(ctx, -1);
 		else
-			is_missing_uv = true;
+			vertex.u = 0;
 		if (duk_get_prop_string(ctx, stack_idx, "v"))
 			vertex.v = duk_require_number(ctx, -1);
 		else
-			is_missing_uv = true;
+			vertex.v = 0;
 		vertex.color = duk_get_prop_string(ctx, stack_idx, "color")
 			? duk_pegasus_require_color(ctx, -1)
 			: color_new(255, 255, 255, 255);
 		duk_pop_n(ctx, 7);
 		shape_add_vertex(shape, vertex);
 	}
-	if (is_missing_uv)
-		shape_calculate_uv(shape);
 	shape_upload(shape);
 	duk_push_class_obj(ctx, "Shape", shape);
 	return 1;

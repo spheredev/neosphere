@@ -65,8 +65,8 @@ void         shape_free             (shape_t* it);
 float_rect_t shape_bounds           (const shape_t* it);
 image_t*     shape_texture          (const shape_t* it);
 void         shape_set_texture      (shape_t* it, image_t* texture);
+bool         shape_add_index        (shape_t* it, uint16_t index);
 bool         shape_add_vertex       (shape_t* it, vertex_t vertex);
-void         shape_calculate_uv     (shape_t* it);
 void         shape_draw             (shape_t* it, image_t* surface, transform_t* transform);
 void         shape_upload           (shape_t* it);
 
