@@ -466,6 +466,8 @@ shape_free(shape_t* it)
 	image_free(it->texture);
 	if (it->vbo != NULL)
 		al_destroy_vertex_buffer(it->vbo);
+	if (it->ibo != NULL)
+		al_destroy_index_buffer(it->ibo);
 	free(it->vertices);
 	free(it);
 }
@@ -563,6 +565,7 @@ shape_upload(shape_t* it)
 		return false;
 	}
 	if (indices == NULL && num_indices > 0) {
+		al_unlock_vertex_buffer(it->vbo);
 		console_log(1, "couldn't create IBO for shape #%u", it->id);
 		return false;
 	}
