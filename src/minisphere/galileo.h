@@ -68,6 +68,6 @@ void         shape_set_texture      (shape_t* it, image_t* texture);
 bool         shape_add_index        (shape_t* it, uint16_t index);
 bool         shape_add_vertex       (shape_t* it, vertex_t vertex);
 void         shape_draw             (shape_t* it, image_t* surface, transform_t* transform);
-void         shape_upload           (shape_t* it);
+bool         shape_upload           (shape_t* it);
 
 #endif // MINISPHERE__GALILEO_H__INCLUDED

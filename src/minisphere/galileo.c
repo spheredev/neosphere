@@ -531,7 +531,7 @@ shape_draw(shape_t* it, image_t* surface, transform_t* transform)
 	render_shape(it);
 }
 
-void
+bool
 shape_upload(shape_t* it)
 {
 	ALLEGRO_BITMAP* bitmap;
@@ -544,7 +544,7 @@ shape_upload(shape_t* it)
 
 	iter_t iter;
 
-	console_log(3, "uploading shape #%u vertices to GPU", it->id);
+	console_log(4, "uploading shape #%u vertices to GPU", it->id);
 	bitmap = it->texture != NULL ? image_bitmap(it->texture) : NULL;
 
 	// create vertex and index buffers for the shape
@@ -559,12 +559,12 @@ shape_upload(shape_t* it)
 	if (num_indices > 0 && (it->ibo = al_create_index_buffer(2, NULL, num_indices, ALLEGRO_PRIM_BUFFER_STATIC)))
 		indices = al_lock_index_buffer(it->ibo, 0, num_vertices, ALLEGRO_LOCK_WRITEONLY);
 	if (vertices == NULL) {
-		console_log(3, "couldn't create VBO for shape #%u", it->id);
-		return;
+		console_log(1, "couldn't create VBO for shape #%u", it->id);
+		return false;
 	}
 	if (indices == NULL && num_indices > 0) {
-		console_log(3, "couldn't create IBO for shape #%u", it->id);
-		return;
+		console_log(1, "couldn't create IBO for shape #%u", it->id);
+		return false;
 	}
 
 	// upload vertices into the VBO
@@ -588,6 +588,9 @@ shape_upload(shape_t* it)
 	}
 
 	al_unlock_vertex_buffer(it->vbo);
+	if (it->ibo != NULL)
+		al_unlock_index_buffer(it->ibo);
+	return true;
 }
 
 static void

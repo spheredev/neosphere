@@ -3191,7 +3191,8 @@ js_new_Shape(duk_context* ctx)
 		duk_pop_n(ctx, 7);
 		shape_add_vertex(shape, vertex);
 	}
-	shape_upload(shape);
+	if (!shape_upload(shape))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't upload shape to GPU");
 	duk_push_class_obj(ctx, "Shape", shape);
 	return 1;
 }
