@@ -1966,9 +1966,11 @@ js_new_IndexList(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "first parameter is not an array");
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "expected an array");
 
 	num_entries = (int)duk_get_length(ctx, 0);
+	if (num_entries == 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "empty list not allowed");
 	ibo = ibo_new();
 	for (i = 0; i < num_entries; ++i) {
 		duk_get_prop_index(ctx, 0, i);
@@ -3129,12 +3131,17 @@ js_Shape_finalize(duk_context* ctx)
 static duk_ret_t
 js_Shape_get_indexList(duk_context* ctx)
 {
+	ibo_t*   ibo;
 	shape_t* shape;
 
 	duk_push_this(ctx);
 	shape = duk_require_class_obj(ctx, -1, "Shape");
 
-	duk_push_class_obj(ctx, "IndexList", ibo_ref(shape_get_ibo(shape)));
+	ibo = shape_get_ibo(shape);
+	if (ibo != NULL)
+		duk_push_class_obj(ctx, "IndexList", ibo_ref(ibo));
+	else
+		duk_push_null(ctx);
 	return 1;
 }
 
@@ -3165,12 +3172,13 @@ js_Shape_get_vertexList(duk_context* ctx)
 static duk_ret_t
 js_Shape_set_indexList(duk_context* ctx)
 {
-	ibo_t*   ibo;
+	ibo_t*   ibo = NULL;
 	shape_t* shape;
 
 	duk_push_this(ctx);
 	shape = duk_require_class_obj(ctx, -1, "Shape");
-	ibo = duk_require_class_obj(ctx, 0, "IndexList");
+	if (!duk_is_null(ctx, 0))
+		ibo = duk_require_class_obj(ctx, 0, "IndexList");
 
 	shape_set_ibo(shape, ibo);
 	return 0;
@@ -4233,9 +4241,11 @@ js_new_VertexList(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
 	if (!duk_is_array(ctx, 0))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "first parameter is not an array");
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "expected an array");
 
 	num_entries = (int)duk_get_length(ctx, 0);
+	if (num_entries == 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "empty list not allowed");
 	vbo = vbo_new();
 	for (i = 0; i < num_entries; ++i) {
 		duk_get_prop_index(ctx, 0, i);
