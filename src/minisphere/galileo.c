@@ -34,6 +34,13 @@ struct uniform
 	};
 };
 
+struct ibo
+{
+	unsigned int          refcount;
+	ALLEGRO_INDEX_BUFFER* buffer;
+	vector_t*             indices;
+};
+
 struct model
 {
 	unsigned int refcount;
@@ -53,14 +60,19 @@ struct shader
 
 struct shape
 {
+	unsigned int refcount;
+	unsigned int id;
+	ibo_t*       ibo;
+	image_t*     texture;
+	shape_type_t type;
+	vbo_t*       vbo;
+};
+
+struct vbo
+{
 	unsigned int           refcount;
-	unsigned int           id;
-	ALLEGRO_INDEX_BUFFER*  ibo;
-	vector_t*              indices;
-	image_t*               texture;
-	shape_type_t           type;
+	ALLEGRO_VERTEX_BUFFER* buffer;
 	vector_t*              vertices;
-	ALLEGRO_VERTEX_BUFFER* vbo;
 };
 
 static shader_t*    s_def_shader = NULL;
@@ -112,6 +124,89 @@ galileo_reset(void)
 
 	image_render_to(screen_backbuffer(g_screen), NULL);
 	shader_use(NULL, false);
+}
+
+ibo_t*
+ibo_new(void)
+{
+	ibo_t* ibo;
+
+	ibo = calloc(1, sizeof(ibo_t));
+	ibo->indices = vector_new(sizeof(uint16_t));
+	return ibo_ref(ibo);
+}
+
+ibo_t*
+ibo_ref(ibo_t* it)
+{
+	if (it == NULL)
+		return it;
+	++it->refcount;
+	return it;
+}
+
+void
+ibo_free(ibo_t* it)
+{
+	if (it == NULL || --it->refcount > 0)
+		return;
+	if (it->buffer != NULL)
+		al_destroy_index_buffer(it->buffer);
+	vector_free(it->indices);
+	free(it);
+}
+
+ALLEGRO_INDEX_BUFFER*
+ibo_buffer(const ibo_t* it)
+{
+	return it->buffer;
+}
+
+int
+ibo_len(const ibo_t* it)
+{
+	if (it != NULL)
+		return vector_len(it->indices);
+	else
+		return 0;
+}
+
+void
+ibo_add_index(ibo_t* it, uint16_t index)
+{
+	vector_push(it->indices, &index);
+}
+
+bool
+ibo_upload(ibo_t* it)
+{
+	ALLEGRO_INDEX_BUFFER* buffer;
+	uint16_t*             entries;
+
+	iter_t iter;
+
+	if (it->buffer != NULL) {
+		al_destroy_index_buffer(it->buffer);
+		it->buffer = NULL;
+	}
+
+	// create the index buffer object
+	while (glGetError() != GL_NO_ERROR);  // workaround for Allegro bug
+	if (!(buffer = al_create_index_buffer(2, NULL, vector_len(it->indices), ALLEGRO_PRIM_BUFFER_STATIC)))
+		return false;
+
+	// upload indices to the GPU
+	if (!(entries = al_lock_index_buffer(buffer, 0, vector_len(it->indices), ALLEGRO_LOCK_WRITEONLY))) {
+		al_destroy_index_buffer(buffer);
+		return false;
+	}
+	iter = vector_enum(it->indices);
+	while (vector_next(&iter))
+		entries[iter.index] = *(uint16_t*)iter.ptr;
+	al_unlock_index_buffer(buffer);
+
+	it->buffer = buffer;
+	return true;
 }
 
 model_t*
@@ -426,7 +521,7 @@ shader_use(shader_t* shader, bool force_set)
 }
 
 shape_t*
-shape_new(shape_type_t type, image_t* texture)
+shape_new(vbo_t* vertices, ibo_t* indices, shape_type_t type, image_t* texture)
 {
 	shape_t*    shape;
 	const char* type_name;
@@ -443,8 +538,8 @@ shape_new(shape_type_t type, image_t* texture)
 	shape = calloc(1, sizeof(shape_t));
 	shape->texture = image_ref(texture);
 	shape->type = type;
-	shape->vertices = vector_new(sizeof(vertex_t));
-	shape->indices = vector_new(sizeof(uint16_t));
+	shape->vbo = vbo_ref(vertices);
+	shape->ibo = ibo_ref(indices);
 
 	shape->id = s_next_shape_id++;
 	return shape_ref(shape);
@@ -465,42 +560,37 @@ shape_free(shape_t* it)
 		return;
 	console_log(4, "disposing shape #%u no longer in use", it->id);
 	image_free(it->texture);
-	if (it->vbo != NULL)
-		al_destroy_vertex_buffer(it->vbo);
-	if (it->ibo != NULL)
-		al_destroy_index_buffer(it->ibo);
-	free(it->vertices);
+	vbo_free(it->vbo);
+	ibo_free(it->ibo);
 	free(it);
 }
 
-float_rect_t
-shape_bounds(const shape_t* it)
+ibo_t*
+shape_get_ibo(const shape_t* it)
 {
-	float_rect_t bounds;
-	vertex_t*    vertex;
-
-	iter_t iter;
-
-	if (vector_len(it->vertices) < 1)
-		return new_float_rect(0.0, 0.0, 0.0, 0.0);
-	vertex = vector_get(it->vertices, 0);
-	bounds = new_float_rect(
-		vertex->x, vertex->y,
-		vertex->x, vertex->y);
-	iter = vector_enum(it->vertices);
-	while (vertex = vector_next(&iter)) {
-		bounds.x1 = fmin(vertex->x, bounds.x1);
-		bounds.y1 = fmin(vertex->y, bounds.y1);
-		bounds.x2 = fmax(vertex->x, bounds.x2);
-		bounds.y2 = fmax(vertex->y, bounds.y2);
-	}
-	return bounds;
+	return it->ibo;
 }
 
 image_t*
-shape_texture(const shape_t* it)
+shape_get_texture(const shape_t* it)
 {
 	return it->texture;
+}
+
+vbo_t*
+shape_get_vbo(const shape_t* it)
+{
+	return it->vbo;
+}
+
+void
+shape_set_ibo(shape_t* it, ibo_t* ibo)
+{
+	ibo_t* old_ibo;
+
+	old_ibo = it->ibo;
+	it->ibo = ibo_ref(ibo);
+	ibo_free(old_ibo);
 }
 
 void
@@ -511,19 +601,16 @@ shape_set_texture(shape_t* it, image_t* texture)
 	old_texture = it->texture;
 	it->texture = image_ref(texture);
 	image_free(old_texture);
-	shape_upload(it);
 }
 
-bool
-shape_add_index(shape_t* it, uint16_t index)
+void
+shape_set_vbo(shape_t* it, vbo_t* vbo)
 {
-	return vector_push(it->indices, &index);
-}
+	vbo_t* old_vbo;
 
-bool
-shape_add_vertex(shape_t* it, vertex_t vertex)
-{
-	return vector_push(it->vertices, &vertex);
+	old_vbo = it->vbo;
+	it->vbo = vbo_ref(vbo);
+	vbo_free(old_vbo);
 }
 
 void
@@ -534,75 +621,89 @@ shape_draw(shape_t* it, image_t* surface, transform_t* transform)
 	render_shape(it);
 }
 
-bool
-shape_upload(shape_t* it)
+vbo_t*
+vbo_new(void)
 {
-	ALLEGRO_BITMAP* bitmap;
-	uint16_t        index;
-	int             num_indices;
-	int             num_vertices;
-	vertex_t*       vertex;
-	uint16_t*       indices = NULL;
-	ALLEGRO_VERTEX* vertices = NULL;
+	vbo_t* vbo;
+
+	vbo = calloc(1, sizeof(vbo_t));
+	vbo->vertices = vector_new(sizeof(vertex_t));
+	return vbo_ref(vbo);
+}
+
+vbo_t*
+vbo_ref(vbo_t* it)
+{
+	++it->refcount;
+	return it;
+}
+
+void
+vbo_free(vbo_t* it)
+{
+	if (it == NULL || --it->refcount > 0)
+		return;
+	if (it->buffer != NULL)
+		al_destroy_vertex_buffer(it->buffer);
+	vector_free(it->vertices);
+	free(it);
+}
+
+ALLEGRO_VERTEX_BUFFER*
+vbo_buffer(const vbo_t* it)
+{
+	return it->buffer;
+}
+
+int
+vbo_len(const vbo_t* it)
+{
+	return vector_len(it->vertices);
+}
+
+void
+vbo_add_vertex(vbo_t* it, vertex_t vertex)
+{
+	vector_push(it->vertices, &vertex);
+}
+
+bool
+vbo_upload(vbo_t* it)
+{
+	ALLEGRO_VERTEX_BUFFER* buffer;
+	ALLEGRO_VERTEX*        entries;
+	vertex_t*              vertex;
 
 	iter_t iter;
 
-	num_vertices = vector_len(it->vertices);
-	num_indices = vector_len(it->indices);
-	console_log(4, "uploading shape #%u %d vertices and %d indices to GPU", it->id,
-		num_vertices, num_indices);
-	bitmap = it->texture != NULL ? image_bitmap(it->texture) : NULL;
-
-	// create vertex and index buffers for the shape
-	if (it->vbo != NULL)
-		al_destroy_vertex_buffer(it->vbo);
-	if (it->ibo != NULL)
-		al_destroy_index_buffer(it->ibo);
-	num_vertices = vector_len(it->vertices);
-	num_indices = vector_len(it->indices);
-	
-	// workaround for Allegro bug: Allegro sometimes doesn't clear the GL error state, causing
-	// vertex buffer creation to randomly fail.  simply retrying will leak a buffer, so instead
-	// we clear the error state ahead of time.
-	while (glGetError() != GL_NO_ERROR);
-
-	if (it->vbo = al_create_vertex_buffer(NULL, NULL, num_vertices, ALLEGRO_PRIM_BUFFER_STATIC))
-		vertices = al_lock_vertex_buffer(it->vbo, 0, num_vertices, ALLEGRO_LOCK_WRITEONLY);
-	if (num_indices > 0 && (it->ibo = al_create_index_buffer(2, NULL, num_indices, ALLEGRO_PRIM_BUFFER_STATIC)))
-		indices = al_lock_index_buffer(it->ibo, 0, num_vertices, ALLEGRO_LOCK_WRITEONLY);
-	if (vertices == NULL) {
-		console_log(1, "couldn't create VBO for shape #%u", it->id);
-		return false;
-	}
-	if (indices == NULL && num_indices > 0) {
-		al_unlock_vertex_buffer(it->vbo);
-		console_log(1, "couldn't create IBO for shape #%u", it->id);
-		return false;
+	if (it->buffer != NULL) {
+		al_destroy_vertex_buffer(it->buffer);
+		it->buffer = NULL;
 	}
 
-	// upload vertices into the VBO
+	// create the index buffer object
+	while (glGetError() != GL_NO_ERROR);  // workaround for Allegro bug
+	if (!(buffer = al_create_vertex_buffer(NULL, NULL, vector_len(it->vertices), ALLEGRO_PRIM_BUFFER_STATIC)))
+		return false;
+
+	// upload indices to the GPU
+	if (!(entries = al_lock_vertex_buffer(buffer, 0, vector_len(it->vertices), ALLEGRO_LOCK_WRITEONLY))) {
+		al_destroy_vertex_buffer(buffer);
+		return false;
+	}
 	iter = vector_enum(it->vertices);
-	while (vertex = vector_next(&iter)) {
-		vertices[iter.index].x = vertex->x;
-		vertices[iter.index].y = vertex->y;
-		vertices[iter.index].z = vertex->z;
-		vertices[iter.index].color = nativecolor(vertex->color);
-		vertices[iter.index].u = vertex->u;
-		vertices[iter.index].v = vertex->v;
-	}
-
-	// upload indices into the IBO.  note this is safe even if it doesn't
-	// seem to be; if indices is NULL at this point, then num_indices is 0
-	// by definition and the loop will not be entered.
-	iter = vector_enum(it->indices);
 	while (vector_next(&iter)) {
-		index = *(uint16_t*)iter.ptr;
-		indices[iter.index] = index;
+		vertex = iter.ptr;
+		entries[iter.index].x = vertex->x;
+		entries[iter.index].y = vertex->y;
+		entries[iter.index].z = vertex->z;
+		entries[iter.index].u = vertex->u;
+		entries[iter.index].v = vertex->v;
+		entries[iter.index].color = nativecolor(vertex->color);
 	}
+	al_unlock_vertex_buffer(buffer);
 
-	al_unlock_vertex_buffer(it->vbo);
-	if (it->ibo != NULL)
-		al_unlock_index_buffer(it->ibo);
+	it->buffer = buffer;
 	return true;
 }
 
@@ -627,13 +728,11 @@ render_shape(shape_t* shape)
 	int             num_indices;
 	int             num_vertices;
 
-	num_indices = vector_len(shape->indices);
-	num_vertices = vector_len(shape->vertices);
-	if (num_vertices == 0)
+	if (shape->vbo == NULL)
 		return;
 
-	if (shape->vbo == NULL || (shape->ibo == NULL && num_indices > 0))
-		shape_upload(shape);
+	num_vertices = vbo_len(shape->vbo);
+	num_indices = ibo_len(shape->ibo);
 	if (shape->type == SHAPE_AUTO)
 		draw_mode = num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
 			: num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
@@ -649,7 +748,7 @@ render_shape(shape_t* shape)
 
 	bitmap = shape->texture != NULL ? image_bitmap(shape->texture) : NULL;
 	if (shape->ibo != NULL)
-		al_draw_indexed_buffer(shape->vbo, bitmap, shape->ibo, 0, num_indices, draw_mode);
+		al_draw_indexed_buffer(vbo_buffer(shape->vbo), bitmap, ibo_buffer(shape->ibo), 0, num_indices, draw_mode);
 	else
-		al_draw_vertex_buffer(shape->vbo, bitmap, 0, num_vertices, draw_mode);
+		al_draw_vertex_buffer(vbo_buffer(shape->vbo), bitmap, 0, num_vertices, draw_mode);
 }

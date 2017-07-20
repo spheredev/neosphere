@@ -3146,6 +3146,7 @@ static duk_ret_t
 js_new_Shape(duk_context* ctx)
 {
 	bool         have_indices = false;
+	ibo_t*       ibo = NULL;
 	int          index;
 	int          num_args;
 	int          num_indices;
@@ -3155,6 +3156,7 @@ js_new_Shape(duk_context* ctx)
 	image_t*     texture;
 	shape_type_t type;
 	vertex_t     vertex;
+	vbo_t*       vbo;
 
 	int i;
 
@@ -3172,10 +3174,10 @@ js_new_Shape(duk_context* ctx)
 
 	if (type < 0 || type >= SHAPE_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ShapeType constant");
-	
-	shape = shape_new(type, texture);
+
+	// construct a vertex buffer for the shape
 	num_vertices = (int)duk_get_length(ctx, 0);
-	num_indices = (int)duk_get_length(ctx, 1);
+	vbo = vbo_new();
 	for (i = 0; i < num_vertices; ++i) {
 		duk_get_prop_index(ctx, 0, i);
 		stack_idx = duk_normalize_index(ctx, -1);
@@ -3194,20 +3196,30 @@ js_new_Shape(duk_context* ctx)
 			? duk_pegasus_require_color(ctx, -1)
 			: color_new(255, 255, 255, 255);
 		duk_pop_n(ctx, 7);
-		shape_add_vertex(shape, vertex);
+		vbo_add_vertex(vbo, vertex);
 	}
+	if (!vbo_upload(vbo))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
+	
+	// construct an index buffer (if applicable)
 	if (have_indices) {
+		num_indices = (int)duk_get_length(ctx, 1);
+		ibo = ibo_new();
 		for (i = 0; i < num_indices; ++i) {
 			duk_get_prop_index(ctx, 1, i);
 			index = duk_require_int(ctx, -1);
 			if (index < 0 || index > UINT16_MAX)
 				duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "index out of range");
-			shape_add_index(shape, (uint16_t)index);
+			ibo_add_index(ibo, (uint16_t)index);
 			duk_pop(ctx);
 		}
+		if (!ibo_upload(ibo))
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
 	}
-	if (!shape_upload(shape))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
+
+	shape = shape_new(vbo, ibo, type, texture);
+	vbo_free(vbo);
+	ibo_free(ibo);
 	duk_push_class_obj(ctx, "Shape", shape);
 	return 1;
 }
@@ -3230,7 +3242,7 @@ js_Shape_get_texture(duk_context* ctx)
 	duk_push_this(ctx);
 	shape = duk_require_class_obj(ctx, -1, "Shape");
 
-	duk_push_class_obj(ctx, "Texture", image_ref(shape_texture(shape)));
+	duk_push_class_obj(ctx, "Texture", image_ref(shape_get_texture(shape)));
 	return 1;
 }
 

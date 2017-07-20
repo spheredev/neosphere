@@ -1,9 +1,11 @@
 #ifndef MINISPHERE__GALILEO_H__INCLUDED
 #define MINISPHERE__GALILEO_H__INCLUDED
 
+typedef struct ibo    ibo_t;
+typedef struct model  model_t;
 typedef struct shader shader_t;
 typedef struct shape  shape_t;
-typedef struct model  model_t;
+typedef struct vbo    vbo_t;
 
 typedef
 enum shader_type
@@ -39,6 +41,13 @@ void         galileo_init           (void);
 void         galileo_uninit         (void);
 shader_t*    galileo_shader         (void);
 void         galileo_reset          (void);
+ibo_t*       ibo_new                (void);
+ibo_t*       ibo_ref                (ibo_t* it);
+void         ibo_free               (ibo_t* it);
+ALLEGRO_INDEX_BUFFER* ibo_buffer    (const ibo_t* it);
+int          ibo_len                (const ibo_t* it);
+void         ibo_add_index          (ibo_t* it, uint16_t index);
+bool         ibo_upload             (ibo_t* it);
 model_t*     model_new              (shader_t* shader);
 model_t*     model_ref              (model_t* it);
 void         model_free             (model_t* it);
@@ -59,15 +68,22 @@ shader_t*    shader_new             (const char* vs_path, const char* fs_path);
 shader_t*    shader_ref             (shader_t* shader);
 void         shader_free            (shader_t* shader);
 bool         shader_use             (shader_t* shader, bool force_set);
-shape_t*     shape_new              (shape_type_t type, image_t* texture);
+shape_t*     shape_new              (vbo_t* vertices, ibo_t* indices, shape_type_t type, image_t* texture);
 shape_t*     shape_ref              (shape_t* it);
 void         shape_free             (shape_t* it);
-float_rect_t shape_bounds           (const shape_t* it);
-image_t*     shape_texture          (const shape_t* it);
+ibo_t*       shape_get_ibo          (const shape_t* it);
+image_t*     shape_get_texture      (const shape_t* it);
+vbo_t*       shape_get_vbo          (const shape_t* it);
+void         shape_set_ibo          (shape_t* it, ibo_t* ibo);
 void         shape_set_texture      (shape_t* it, image_t* texture);
-bool         shape_add_index        (shape_t* it, uint16_t index);
-bool         shape_add_vertex       (shape_t* it, vertex_t vertex);
+void         shape_set_vbo          (shape_t* it, vbo_t* vbo);
 void         shape_draw             (shape_t* it, image_t* surface, transform_t* transform);
-bool         shape_upload           (shape_t* it);
+vbo_t*       vbo_new                (void);
+vbo_t*       vbo_ref                (vbo_t* it);
+void         vbo_free               (vbo_t* it);
+ALLEGRO_VERTEX_BUFFER* vbo_buffer   (const vbo_t* it);
+int          vbo_len                (const vbo_t* it);
+void         vbo_add_vertex         (vbo_t* it, vertex_t vertex);
+bool         vbo_upload             (vbo_t* it);
 
 #endif // MINISPHERE__GALILEO_H__INCLUDED
