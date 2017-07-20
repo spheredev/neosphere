@@ -887,6 +887,11 @@ Model#draw(surface);
     (see below) are applied as if all the shapes comprising it were a single
     primitive.
 
+Model#setBoolean(name, value);
+
+    Sets the value of a GLSL boolean-valued (`bool`) uniform.  `value` is
+    either `true` or `false`.
+
 Model#setColorVector(name, color);
 
     Sets the value of a GLSL floating point 4-vector uniform (`vec4`) from the
@@ -897,6 +902,15 @@ Model#setInt(name, value);
 
     Sets the value of a GLSL scalar uniform.
 
+    Note: Only `float` and `int` types are currently supported.
+
+Model#setFloatArray(name, values);
+Model#setIntArray(name, values);
+
+    Sets the values of a GLSL array uniform.  `values` should be an array
+    containing a number of values equal to the size of the array, otherwise
+    the uniform will not be set.
+    
     Note: Only `float` and `int` types are currently supported.
 
 Model#setFloatVector(name, values);

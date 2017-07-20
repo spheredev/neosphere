@@ -272,6 +272,7 @@ static duk_ret_t js_Model_get_transform        (duk_context* ctx);
 static duk_ret_t js_Model_set_shader           (duk_context* ctx);
 static duk_ret_t js_Model_set_transform        (duk_context* ctx);
 static duk_ret_t js_Model_draw                 (duk_context* ctx);
+static duk_ret_t js_Model_setBoolean           (duk_context* ctx);
 static duk_ret_t js_Model_setColorVector       (duk_context* ctx);
 static duk_ret_t js_Model_setFloat             (duk_context* ctx);
 static duk_ret_t js_Model_setFloatArray        (duk_context* ctx);
@@ -491,6 +492,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Model", "shader", js_Model_get_shader, js_Model_set_shader);
 	api_define_property(ctx, "Model", "transform", js_Model_get_transform, js_Model_set_transform);
 	api_define_method(ctx, "Model", "draw", js_Model_draw);
+	api_define_method(ctx, "Model", "setBoolean", js_Model_setBoolean);
 	api_define_method(ctx, "Model", "setColorVector", js_Model_setColorVector);
 	api_define_method(ctx, "Model", "setFloat", js_Model_setFloat);
 	api_define_method(ctx, "Model", "setFloatArray", js_Model_setFloatArray);
@@ -2480,6 +2482,22 @@ js_Model_draw(duk_context* ctx)
 
 	if (!screen_is_skipframe(g_screen))
 		model_draw(group, surface);
+	return 0;
+}
+
+static duk_ret_t
+js_Model_setBoolean(duk_context* ctx)
+{
+	model_t*    group;
+	const char* name;
+	bool        value;
+
+	duk_push_this(ctx);
+	group = duk_require_class_obj(ctx, -1, "Model");
+	name = duk_require_string(ctx, 0);
+	value = duk_require_boolean(ctx, 1);
+
+	model_put_bool(group, name, value);
 	return 0;
 }
 

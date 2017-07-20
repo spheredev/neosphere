@@ -9,8 +9,8 @@ vX.X.X - TBD
 * Adds support for setting a clipping rectangle when rendering to a `Surface`.
 * Adds new `VertexList` and `IndexList` objects, used to store vertices and
   indices, respectively, directly on the GPU for fast access at render time.
-* Adds `Model#setFloatArray()` and `Model#setIntArray()` methods for setting
-  the values of array-typed shader uniforms.
+* Adds new methods to `Model` for setting shader uniforms: `.setBoolean()`,
+  `.setFloatArray()`, and `.setIntArray()`.
 * Adds `Socket#connectTo()` which allows the same socket object to be used for
   multiple sessions.
 * Adds the engine version number to the string returned by `Sphere.Platform`.

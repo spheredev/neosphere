@@ -10,6 +10,7 @@ static void render_shape        (shape_t* shape);
 
 enum uniform_type
 {
+	UNIFORM_BOOL,
 	UNIFORM_INT,
 	UNIFORM_INT_ARR,
 	UNIFORM_INT_VEC,
@@ -24,6 +25,7 @@ struct uniform
 	enum uniform_type type;
 	int               num_values;
 	union {
+		bool              bool_value;
 		int*              int_list;
 		int               int_value;
 		int               int_vec[4];
@@ -310,6 +312,9 @@ model_draw(const model_t* it, image_t* surface)
 	iter = vector_enum(it->uniforms);
 	while (p = vector_next(&iter)) {
 		switch (p->type) {
+		case UNIFORM_BOOL:
+			al_set_shader_bool(p->name, p->bool_value);
+			break;
 		case UNIFORM_FLOAT:
 			al_set_shader_float(p->name, p->float_value);
 			break;
@@ -337,6 +342,19 @@ model_draw(const model_t* it, image_t* surface)
 	iter = vector_enum(it->shapes);
 	while (vector_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
+}
+
+void
+model_put_bool(model_t* it, const char* name, bool value)
+{
+	struct uniform unif;
+
+	free_cached_uniform(it, name);
+	strncpy(unif.name, name, 255);
+	unif.name[255] = '\0';
+	unif.type = UNIFORM_BOOL;
+	unif.bool_value = value;
+	vector_push(it->uniforms, &unif);
 }
 
 void

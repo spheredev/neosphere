@@ -56,6 +56,7 @@ void         model_set_shader       (model_t* it, shader_t* shader);
 void         model_set_transform    (model_t* it, transform_t* transform);
 bool         model_add_shape        (model_t* it, shape_t* shape);
 void         model_draw             (const model_t* it, image_t* surface);
+void         model_put_bool         (model_t* it, const char* name, bool value);
 void         model_put_float        (model_t* it, const char* name, float value);
 void         model_put_float_array  (model_t* it, const char* name, float values[], int size);
 void         model_put_float_vector (model_t* it, const char* name, float values[], int size);
