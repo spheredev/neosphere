@@ -31,6 +31,7 @@ vX.X.X - TBD
   preventing full Sphere 1.x compatibility.
 * Fixes several bugs in internal Dispatch job management, including one that
   can cause the engine to crash with a segfault.
+* Fixes a bug where setting the clipping box out of bounds has no effect.
 * Fixes excessive OpenGL state changes in the internal rendering logic, vastly
   improving performance for games using the Sphere v2 graphics API.
 

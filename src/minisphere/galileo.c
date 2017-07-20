@@ -516,6 +516,12 @@ shader_free(shader_t* shader)
 	free(shader);
 }
 
+ALLEGRO_SHADER*
+shader_program(const shader_t* it)
+{
+	return it->program;
+}
+
 bool
 shader_use(shader_t* shader, bool force_set)
 {
