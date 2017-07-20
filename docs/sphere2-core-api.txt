@@ -604,6 +604,26 @@ Font#wordWrap(text, wrap_width);
     performing wrapping calculations every frame can get expensive.
 
 
+`IndexList` Object
+------------------
+
+An `IndexList` contains indices into a vertex list which are stored on the GPU
+for fast access at render time.  Index lists can be useful if you want to store
+all the vertices for a scene in a single `VertexList` and construct different
+shapes from it.  The index list specifies which vertices from the list to use
+to create a shape.
+
+new IndexList(indices);
+
+    Constructs a new index list from `indices`, an array of integers in the
+    range [0,65535].  If `indices` is not an array or any element is not a
+    number in the above range, an error will be thrown.
+
+    Note: The list of indices stored on the GPU can't be modified later.  If
+          you want to upload a new set of indices, you must construct a new
+          `IndexList`.
+
+
 `Joystick` Object
 -----------------
 
@@ -1160,50 +1180,42 @@ ShapeType [enumeration]
         ShapeType.Triangles
         ShapeType.TriStrip
 
-new Shape(vertices[, indices][, texture[, type]]]);
+new Shape(vertexList[, indexList][, texture[, type]]]);
 
-    Constructs a primitive shape out of a provided set of vertices, optionally
-    using a specified texture.
+    Constructs a primitive shape from a vertex list and optional index list,
+    textured with a specified `Texture` image.
 
-    `vertices` is an array of objects with the following properties:
+    `vertexList` is a `VertexList` containing vertices for the shape, while
+    `indexList`, if provided, is an `IndexList` specifying which vertices from
+    the vertex list will comprise the shape.  If `indexList` is not specified,
+    all vertices from `vertexList` will be used.
 
-        vertex.x, vertex.y
-
-            The location of the vertex.  The final location of each vertex can
-            be modified by using a transformation matrix (see Matrix above).
-
-        vertex.u, vertex.v
-
-            The texture coordinates of the vertex.  This is used to control
-            which part of the texture will be applied to this vertex.  If u/v
-            is not provided for a vertex, it will be assumed to be have its u/v
-            at (0, 0).
-
-        vertex.color
-
-            The color of the vertex.  The vertex colors will be multiplied with
-            texture pixels to determine the final color of each pixel in a
-            shape.
-
-    `indices` is an optional list of integers in the range [0,65535] specifying
-    the positions in the vertex array to use for the shape's vertices.  This
-    allows identical vertices to be reused.  If `indices` is not specified,
-    vertex values will be taken sequentially from `vertices`.
-    
     `type` specifies the type of primitive (see ShapeType above).  If `type` is
     ShapeType.Auto (the default), the type is determined automatically based on
-    the number of vertices provided.
+    the number of vertices or indices provided.
+
+Shape#indexList [read/write]
+
+    Gets or sets the index list used to select vertices for this shape.  Set
+    this to `null` to use the entire vertex list.
 
 Shape#texture [read/write]
 
     The Image to use when texturing the shape. This can be null, in which case
     the vertex colors alone will determine the shape's appearance.
 
+Shape#vertexList [read/write]
+
+    Gets or sets the vertex list containing vertices for this shape.
+
 Shape#draw(surface[, transform]);
 
     Draws the shape.  `transform` is the Transform to use, and `surface` is the
     Surface to draw on.  If `surface` is omitted, the shape is drawn on the
     backbuffer.
+
+    Note: If the shape's current index list is larger than its vertex list, a
+          RangeError will be thrown.
 
 
 `Socket` Object
@@ -1541,3 +1553,41 @@ Transform#translate(tx, ty);
 
     Applies a translation transformation to this matrix.  `tx` and `ty` are the
     horizontal and vertical translations, respectively.
+
+
+`VertexList` Object
+-------------------
+
+A `VertexList` contains a collection of vertices for use when constructing a
+`Shape`.  The vertices in the vertex list are stored on the GPU for fast access
+at render time.
+
+new VertexList(vertices);
+
+    Constructs a new vertex list from `vertices`, an array of objects with the
+    following properties:
+
+        vertex.x, vertex.y
+
+            The location of the vertex.  The final location of each vertex can
+            be modified by using a transformation matrix (see Matrix above).
+
+        vertex.u, vertex.v
+
+            The texture coordinates of the vertex.  This is used to control
+            which part of the texture will be applied to this vertex.  If u/v
+            is not provided for a vertex, it will be assumed to be have its u/v
+            at (0, 0).
+
+        vertex.color
+
+            The color of the vertex.  The vertex colors will be multiplied with
+            texture pixels to determine the final color of each pixel in a
+            shape.
+
+    If `vertices` is not an array or any element is not a valid object as
+    described above, an error will be thrown.
+
+    Note: The list of vertices stored on the GPU can't be modified later.  If
+          you want to upload a new set of vertices, you must construct a new
+          `VertexList`.

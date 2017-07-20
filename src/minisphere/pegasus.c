@@ -241,11 +241,8 @@ static duk_ret_t js_Font_get_height            (duk_context* ctx);
 static duk_ret_t js_Font_drawText              (duk_context* ctx);
 static duk_ret_t js_Font_getTextSize           (duk_context* ctx);
 static duk_ret_t js_Font_wordWrap              (duk_context* ctx);
-static duk_ret_t js_new_Texture                (duk_context* ctx);
-static duk_ret_t js_Texture_finalize           (duk_context* ctx);
-static duk_ret_t js_Texture_get_fileName       (duk_context* ctx);
-static duk_ret_t js_Texture_get_height         (duk_context* ctx);
-static duk_ret_t js_Texture_get_width          (duk_context* ctx);
+static duk_ret_t js_new_IndexList              (duk_context* ctx);
+static duk_ret_t js_IndexList_finalize         (duk_context* ctx);
 static duk_ret_t js_JobToken_finalize          (duk_context* ctx);
 static duk_ret_t js_Joystick_get_Null          (duk_context* ctx);
 static duk_ret_t js_Joystick_getDevices        (duk_context* ctx);
@@ -312,8 +309,12 @@ static duk_ret_t js_new_Shader                 (duk_context* ctx);
 static duk_ret_t js_Shader_finalize            (duk_context* ctx);
 static duk_ret_t js_new_Shape                  (duk_context* ctx);
 static duk_ret_t js_Shape_finalize             (duk_context* ctx);
+static duk_ret_t js_Shape_get_indexList        (duk_context* ctx);
 static duk_ret_t js_Shape_get_texture          (duk_context* ctx);
+static duk_ret_t js_Shape_get_vertexList       (duk_context* ctx);
+static duk_ret_t js_Shape_set_indexList        (duk_context* ctx);
 static duk_ret_t js_Shape_set_texture          (duk_context* ctx);
+static duk_ret_t js_Shape_set_vertexList       (duk_context* ctx);
 static duk_ret_t js_Shape_draw                 (duk_context* ctx);
 static duk_ret_t js_new_Socket                 (duk_context* ctx);
 static duk_ret_t js_Socket_finalize            (duk_context* ctx);
@@ -358,6 +359,11 @@ static duk_ret_t js_Surface_get_width          (duk_context* ctx);
 static duk_ret_t js_Surface_set_transform      (duk_context* ctx);
 static duk_ret_t js_Surface_clipTo             (duk_context* ctx);
 static duk_ret_t js_Surface_toTexture          (duk_context* ctx);
+static duk_ret_t js_new_Texture                (duk_context* ctx);
+static duk_ret_t js_Texture_finalize           (duk_context* ctx);
+static duk_ret_t js_Texture_get_fileName       (duk_context* ctx);
+static duk_ret_t js_Texture_get_height         (duk_context* ctx);
+static duk_ret_t js_Texture_get_width          (duk_context* ctx);
 static duk_ret_t js_new_Transform              (duk_context* ctx);
 static duk_ret_t js_Transform_finalize         (duk_context* ctx);
 static duk_ret_t js_Transform_get_matrix       (duk_context* ctx);
@@ -369,6 +375,8 @@ static duk_ret_t js_Transform_project3D        (duk_context* ctx);
 static duk_ret_t js_Transform_rotate           (duk_context* ctx);
 static duk_ret_t js_Transform_scale            (duk_context* ctx);
 static duk_ret_t js_Transform_translate        (duk_context* ctx);
+static duk_ret_t js_new_VertexList             (duk_context* ctx);
+static duk_ret_t js_VertexList_finalize        (duk_context* ctx);
 
 static void      duk_pegasus_push_color     (duk_context* ctx, color_t color);
 static void      duk_pegasus_push_job_token (duk_context* ctx, int64_t token);
@@ -457,6 +465,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
 	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
+	api_define_class(ctx, "IndexList", js_new_IndexList, js_IndexList_finalize);
 	api_define_class(ctx, "JobToken", NULL, js_JobToken_finalize);
 	api_define_class(ctx, "Joystick", NULL, js_Joystick_finalize);
 	api_define_static_prop(ctx, "Joystick", "Null", js_Joystick_get_Null, NULL);
@@ -514,7 +523,9 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_class(ctx, "Shader", js_new_Shader, js_Shader_finalize);
 	api_define_static_prop(ctx, "Shader", "Default", js_Shader_get_Default, NULL);
 	api_define_class(ctx, "Shape", js_new_Shape, js_Shape_finalize);
+	api_define_property(ctx, "Shape", "indexList", js_Shape_get_indexList, js_Shape_set_indexList);
 	api_define_property(ctx, "Shape", "texture", js_Shape_get_texture, js_Shape_set_texture);
+	api_define_property(ctx, "Shape", "vertexList", js_Shape_get_vertexList, js_Shape_set_vertexList);
 	api_define_method(ctx, "Shape", "draw", js_Shape_draw);
 	api_define_class(ctx, "Socket", js_new_Socket, js_Socket_finalize);
 	api_define_property(ctx, "Socket", "bytesPending", js_Socket_get_bytesPending, NULL);
@@ -556,6 +567,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Transform", "rotate", js_Transform_rotate);
 	api_define_method(ctx, "Transform", "scale", js_Transform_scale);
 	api_define_method(ctx, "Transform", "translate", js_Transform_translate);
+	api_define_class(ctx, "VertexList", js_new_VertexList, js_VertexList_finalize);
 
 	api_define_object(ctx, NULL, "screen", "Surface", screen_backbuffer(g_screen));
 	api_define_static_prop(ctx, "screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
@@ -1942,116 +1954,49 @@ js_Font_wordWrap(duk_context* ctx)
 }
 
 static duk_ret_t
-js_new_Texture(duk_context* ctx)
+js_new_IndexList(duk_context* ctx)
 {
-	const color_t* buffer;
-	size_t         buffer_size;
-	const char*    filename;
-	color_t        fill_color;
-	int            height;
-	image_t*       image;
-	image_lock_t*  lock;
-	int            num_args;
-	color_t*       p_line;
-	image_t*       src_image;
-	int            width;
+	ibo_t*   ibo;
+	uint16_t index;
+	int      num_entries;
 
-	int y;
+	int i;
+	
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
-	num_args = duk_get_top(ctx);
-	if (num_args >= 3 && duk_is_class_obj(ctx, 2, "Color")) {
-		// create an Image filled with a single pixel value
-		width = duk_require_int(ctx, 0);
-		height = duk_require_int(ctx, 1);
-		fill_color = duk_pegasus_require_color(ctx, 2);
-		if (!(image = image_new(width, height)))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image creation failed");
-		image_fill(image, fill_color);
-	}
-	else if (num_args >= 3 && (buffer = duk_get_buffer_data(ctx, 2, &buffer_size))) {
-		// create an Image from an ArrayBuffer or similar object
-		width = duk_require_int(ctx, 0);
-		height = duk_require_int(ctx, 1);
-		if (buffer_size < width * height * sizeof(color_t))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not enough data in buffer");
-		if (!(image = image_new(width, height)))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image creation failed");
-		if (!(lock = image_lock(image))) {
-			image_free(image);
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image lock failed");
+	if (!duk_is_array(ctx, 0))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "first parameter is not an array");
+
+	num_entries = (int)duk_get_length(ctx, 0);
+	ibo = ibo_new();
+	for (i = 0; i < num_entries; ++i) {
+		duk_get_prop_index(ctx, 0, i);
+		index = duk_require_int(ctx, -1);
+		if (index < 0 || index > UINT16_MAX) {
+			ibo_free(ibo);
+			duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "index value out of range");
 		}
-		p_line = lock->pixels;
-		for (y = 0; y < height; ++y) {
-			memcpy(p_line, buffer + y * width, width * sizeof(color_t));
-			p_line += lock->pitch;
-		}
-		image_unlock(image, lock);
+		ibo_add_index(ibo, index);
+		duk_pop(ctx);
 	}
-	else if (duk_is_class_obj(ctx, 0, "Surface")) {
-		// create an Image from a Surface
-		src_image = duk_require_class_obj(ctx, 0, "Surface");
-		if (!(image = image_clone(src_image)))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image creation failed");
-	}
-	else {
-		// create an Image by loading an image file
-		filename = duk_require_path(ctx, 0, NULL, false, false);
-		if (!(image = image_load(filename)))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
+	if (!ibo_upload(ibo)) {
+		ibo_free(ibo);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
 	}
 	duk_push_this(ctx);
-	duk_to_class_obj(ctx, -1, "Texture", image);
+	duk_to_class_obj(ctx, -1, "IndexList", ibo);
 	return 0;
 }
 
 static duk_ret_t
-js_Texture_finalize(duk_context* ctx)
+js_IndexList_finalize(duk_context* ctx)
 {
-	image_t* image;
+	ibo_t* ibo;
 
-	image = duk_require_class_obj(ctx, 0, "Texture");
-	image_free(image);
+	ibo = duk_require_class_obj(ctx, 0, "IndexList");
+	ibo_free(ibo);
 	return 0;
-}
-
-static duk_ret_t
-js_Texture_get_fileName(duk_context* ctx)
-{
-	image_t*    image;
-	const char* path;
-
-	duk_push_this(ctx);
-	image = duk_require_class_obj(ctx, -1, "Texture");
-
-	if (path = image_path(image))
-		duk_push_string(ctx, path);
-	else
-		duk_push_null(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_Texture_get_height(duk_context* ctx)
-{
-	image_t* image;
-
-	duk_push_this(ctx);
-	image = duk_require_class_obj(ctx, -1, "Texture");
-
-	duk_push_int(ctx, image_height(image));
-	return 1;
-}
-
-static duk_ret_t
-js_Texture_get_width(duk_context* ctx)
-{
-	image_t* image;
-
-	duk_push_this(ctx);
-	image = duk_require_class_obj(ctx, -1, "Texture");
-
-	duk_push_int(ctx, image_width(image));
-	return 1;
 }
 
 static duk_ret_t
@@ -3145,28 +3090,19 @@ js_Shader_finalize(duk_context* ctx)
 static duk_ret_t
 js_new_Shape(duk_context* ctx)
 {
-	bool         have_indices = false;
 	ibo_t*       ibo = NULL;
-	int          index;
 	int          num_args;
-	int          num_indices;
-	int          num_vertices;
 	shape_t*     shape;
-	duk_idx_t    stack_idx;
 	image_t*     texture;
 	shape_type_t type;
-	vertex_t     vertex;
 	vbo_t*       vbo;
 
-	int i;
-
 	num_args = duk_get_top(ctx);
-	if (!duk_is_array(ctx, 0))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "vertices must be an array");
-	if (duk_is_array(ctx, 1)) {
-		have_indices = true;
-		texture = !duk_is_null(ctx, 1) ? duk_require_class_obj(ctx, 2, "Texture") : NULL;
-		type = num_args >= 3 ? duk_require_int(ctx, 3) : SHAPE_AUTO;
+	vbo = duk_require_class_obj(ctx, 0, "VertexList");
+	if (duk_is_class_obj(ctx, 1, "IndexList")) {
+		ibo = duk_require_class_obj(ctx, 1, "IndexList");
+		texture = !duk_is_null(ctx, 2) ? duk_require_class_obj(ctx, 2, "Texture") : NULL;
+		type = num_args >= 4 ? duk_require_int(ctx, 3) : SHAPE_AUTO;
 	} else {
 		texture = !duk_is_null(ctx, 1) ? duk_require_class_obj(ctx, 1, "Texture") : NULL;
 		type = num_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
@@ -3175,51 +3111,7 @@ js_new_Shape(duk_context* ctx)
 	if (type < 0 || type >= SHAPE_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ShapeType constant");
 
-	// construct a vertex buffer for the shape
-	num_vertices = (int)duk_get_length(ctx, 0);
-	vbo = vbo_new();
-	for (i = 0; i < num_vertices; ++i) {
-		duk_get_prop_index(ctx, 0, i);
-		stack_idx = duk_normalize_index(ctx, -1);
-		vertex.x = duk_get_prop_string(ctx, stack_idx, "x") ? duk_require_number(ctx, -1) : 0.0;
-		vertex.y = duk_get_prop_string(ctx, stack_idx, "y") ? duk_require_number(ctx, -1) : 0.0;
-		vertex.z = duk_get_prop_string(ctx, stack_idx, "z") ? duk_require_number(ctx, -1) : 0.0;
-		if (duk_get_prop_string(ctx, stack_idx, "u"))
-			vertex.u = duk_require_number(ctx, -1);
-		else
-			vertex.u = 0;
-		if (duk_get_prop_string(ctx, stack_idx, "v"))
-			vertex.v = duk_require_number(ctx, -1);
-		else
-			vertex.v = 0;
-		vertex.color = duk_get_prop_string(ctx, stack_idx, "color")
-			? duk_pegasus_require_color(ctx, -1)
-			: color_new(255, 255, 255, 255);
-		duk_pop_n(ctx, 7);
-		vbo_add_vertex(vbo, vertex);
-	}
-	if (!vbo_upload(vbo))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
-	
-	// construct an index buffer (if applicable)
-	if (have_indices) {
-		num_indices = (int)duk_get_length(ctx, 1);
-		ibo = ibo_new();
-		for (i = 0; i < num_indices; ++i) {
-			duk_get_prop_index(ctx, 1, i);
-			index = duk_require_int(ctx, -1);
-			if (index < 0 || index > UINT16_MAX)
-				duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "index out of range");
-			ibo_add_index(ibo, (uint16_t)index);
-			duk_pop(ctx);
-		}
-		if (!ibo_upload(ibo))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
-	}
-
 	shape = shape_new(vbo, ibo, type, texture);
-	vbo_free(vbo);
-	ibo_free(ibo);
 	duk_push_class_obj(ctx, "Shape", shape);
 	return 1;
 }
@@ -3235,6 +3127,18 @@ js_Shape_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Shape_get_indexList(duk_context* ctx)
+{
+	shape_t* shape;
+
+	duk_push_this(ctx);
+	shape = duk_require_class_obj(ctx, -1, "Shape");
+
+	duk_push_class_obj(ctx, "IndexList", ibo_ref(shape_get_ibo(shape)));
+	return 1;
+}
+
+static duk_ret_t
 js_Shape_get_texture(duk_context* ctx)
 {
 	shape_t* shape;
@@ -3244,6 +3148,32 @@ js_Shape_get_texture(duk_context* ctx)
 
 	duk_push_class_obj(ctx, "Texture", image_ref(shape_get_texture(shape)));
 	return 1;
+}
+
+static duk_ret_t
+js_Shape_get_vertexList(duk_context* ctx)
+{
+	shape_t* shape;
+
+	duk_push_this(ctx);
+	shape = duk_require_class_obj(ctx, -1, "Shape");
+
+	duk_push_class_obj(ctx, "VertexList", vbo_ref(shape_get_vbo(shape)));
+	return 1;
+}
+
+static duk_ret_t
+js_Shape_set_indexList(duk_context* ctx)
+{
+	ibo_t*   ibo;
+	shape_t* shape;
+
+	duk_push_this(ctx);
+	shape = duk_require_class_obj(ctx, -1, "Shape");
+	ibo = duk_require_class_obj(ctx, 0, "IndexList");
+
+	shape_set_ibo(shape, ibo);
+	return 0;
 }
 
 static duk_ret_t
@@ -3257,6 +3187,20 @@ js_Shape_set_texture(duk_context* ctx)
 	texture = duk_require_class_obj(ctx, 0, "Texture");
 
 	shape_set_texture(shape, texture);
+	return 0;
+}
+
+static duk_ret_t
+js_Shape_set_vertexList(duk_context* ctx)
+{
+	shape_t* shape;
+	vbo_t*   vbo;
+
+	duk_push_this(ctx);
+	shape = duk_require_class_obj(ctx, -1, "Shape");
+	vbo = duk_require_class_obj(ctx, 0, "VertexList");
+
+	shape_set_vbo(shape, vbo);
 	return 0;
 }
 
@@ -3275,6 +3219,9 @@ js_Shape_draw(duk_context* ctx)
 		surface = duk_require_class_obj(ctx, 0, "Surface");
 	if (num_args >= 2)
 		transform = duk_require_class_obj(ctx, 1, "Transform");
+
+	if (ibo_len(shape_get_ibo(shape)) > vbo_len(shape_get_vbo(shape)))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "vertex list too small");
 
 	shape_draw(shape, surface, transform);
 	return 0;
@@ -3920,6 +3867,119 @@ js_Surface_toTexture(duk_context* ctx)
 }
 
 static duk_ret_t
+js_new_Texture(duk_context* ctx)
+{
+	const color_t* buffer;
+	size_t         buffer_size;
+	const char*    filename;
+	color_t        fill_color;
+	int            height;
+	image_t*       image;
+	image_lock_t*  lock;
+	int            num_args;
+	color_t*       p_line;
+	image_t*       src_image;
+	int            width;
+
+	int y;
+
+	num_args = duk_get_top(ctx);
+	if (num_args >= 3 && duk_is_class_obj(ctx, 2, "Color")) {
+		// create an Image filled with a single pixel value
+		width = duk_require_int(ctx, 0);
+		height = duk_require_int(ctx, 1);
+		fill_color = duk_pegasus_require_color(ctx, 2);
+		if (!(image = image_new(width, height)))
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image creation failed");
+		image_fill(image, fill_color);
+	}
+	else if (num_args >= 3 && (buffer = duk_get_buffer_data(ctx, 2, &buffer_size))) {
+		// create an Image from an ArrayBuffer or similar object
+		width = duk_require_int(ctx, 0);
+		height = duk_require_int(ctx, 1);
+		if (buffer_size < width * height * sizeof(color_t))
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not enough data in buffer");
+		if (!(image = image_new(width, height)))
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image creation failed");
+		if (!(lock = image_lock(image))) {
+			image_free(image);
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image lock failed");
+		}
+		p_line = lock->pixels;
+		for (y = 0; y < height; ++y) {
+			memcpy(p_line, buffer + y * width, width * sizeof(color_t));
+			p_line += lock->pitch;
+		}
+		image_unlock(image, lock);
+	}
+	else if (duk_is_class_obj(ctx, 0, "Surface")) {
+		// create an Image from a Surface
+		src_image = duk_require_class_obj(ctx, 0, "Surface");
+		if (!(image = image_clone(src_image)))
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image creation failed");
+	}
+	else {
+		// create an Image by loading an image file
+		filename = duk_require_path(ctx, 0, NULL, false, false);
+		if (!(image = image_load(filename)))
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
+	}
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Texture", image);
+	return 0;
+}
+
+static duk_ret_t
+js_Texture_finalize(duk_context* ctx)
+{
+	image_t* image;
+
+	image = duk_require_class_obj(ctx, 0, "Texture");
+	image_free(image);
+	return 0;
+}
+
+static duk_ret_t
+js_Texture_get_fileName(duk_context* ctx)
+{
+	image_t*    image;
+	const char* path;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "Texture");
+
+	if (path = image_path(image))
+		duk_push_string(ctx, path);
+	else
+		duk_push_null(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_Texture_get_height(duk_context* ctx)
+{
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "Texture");
+
+	duk_push_int(ctx, image_height(image));
+	return 1;
+}
+
+static duk_ret_t
+js_Texture_get_width(duk_context* ctx)
+{
+	image_t* image;
+
+	duk_push_this(ctx);
+	image = duk_require_class_obj(ctx, -1, "Texture");
+
+	duk_push_int(ctx, image_width(image));
+	return 1;
+}
+
+static duk_ret_t
 js_new_Transform(duk_context* ctx)
 {
 	transform_t* transform;
@@ -4157,4 +4217,62 @@ js_Transform_translate(duk_context* ctx)
 
 	transform_translate(transform, dx, dy, dz);
 	return 1;
+}
+
+static duk_ret_t
+js_new_VertexList(duk_context* ctx)
+{
+	int       num_entries;
+	duk_idx_t stack_idx;
+	vbo_t*    vbo;
+	vertex_t  vertex;
+
+	int i;
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
+	if (!duk_is_array(ctx, 0))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "first parameter is not an array");
+
+	num_entries = (int)duk_get_length(ctx, 0);
+	vbo = vbo_new();
+	for (i = 0; i < num_entries; ++i) {
+		duk_get_prop_index(ctx, 0, i);
+		duk_require_object_coercible(ctx, -1);
+		stack_idx = duk_normalize_index(ctx, -1);
+		vertex.x = duk_get_prop_string(ctx, stack_idx, "x") ? duk_require_number(ctx, -1) : 0.0;
+		vertex.y = duk_get_prop_string(ctx, stack_idx, "y") ? duk_require_number(ctx, -1) : 0.0;
+		vertex.z = duk_get_prop_string(ctx, stack_idx, "z") ? duk_require_number(ctx, -1) : 0.0;
+		if (duk_get_prop_string(ctx, stack_idx, "u"))
+			vertex.u = duk_require_number(ctx, -1);
+		else
+			vertex.u = 0;
+		if (duk_get_prop_string(ctx, stack_idx, "v"))
+			vertex.v = duk_require_number(ctx, -1);
+		else
+			vertex.v = 0;
+		vertex.color = duk_get_prop_string(ctx, stack_idx, "color")
+			? duk_pegasus_require_color(ctx, -1)
+			: color_new(255, 255, 255, 255);
+		vbo_add_vertex(vbo, vertex);
+		duk_pop_n(ctx, 7);
+	}
+	if (!vbo_upload(vbo)) {
+		vbo_free(vbo);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
+	}
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "VertexList", vbo);
+	return 1;
+}
+
+static duk_ret_t
+js_VertexList_finalize(duk_context* ctx)
+{
+	vbo_t* vbo;
+
+	vbo = duk_require_class_obj(ctx, 0, "VertexList");
+	vbo_free(vbo);
+	return 0;
 }

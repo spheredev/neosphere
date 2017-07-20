@@ -24,12 +24,12 @@ const Prim =
 		var v1 = 1.0 - sy / texture.height;
 		var u2 = (sx + width) / texture.width;
 		var v2 = 1.0 - (sy + height) / texture.height;
-		var shape = new Shape([
+		var shape = new Shape(new VertexList([
 			{ x: x1, y: y1, u: u1, v: v1, color: mask },
 			{ x: x2, y: y1, u: u2, v: v1, color: mask },
 			{ x: x1, y: y2, u: u1, v: v2, color: mask },
 			{ x: x2, y: y2, u: u2, v: v2, color: mask },
-		], texture, ShapeType.TriStrip);
+		]), texture, ShapeType.TriStrip);
 		shape.draw(surface);
 	},
 
@@ -41,7 +41,7 @@ const Prim =
 	drawEllipse(surface, x, y, rx, ry, color)
 	{
 		var numSegments = Math.ceil(10 * Math.sqrt((rx + ry) / 2.0));
-		var vlist = [];
+		var vertices = [];
 		var tau = 2 * Math.PI;
 		var cos = Math.cos;
 		var sin = Math.sin;
@@ -49,13 +49,14 @@ const Prim =
 			var phi = tau * i / numSegments;
 			var c = cos(phi);
 			var s = sin(phi);
-			vlist.push({
+			vertices.push({
 				x: x + c * rx,
 				y: y - s * ry,
 				color: color
 			});
 		}
-		var shape = new Shape(vlist, null, ShapeType.LineLoop)
+		var vList = new VertexList(vertices);
+		var shape = new Shape(vList, null, ShapeType.LineLoop)
 		shape.draw(surface);
 	},
 
@@ -69,7 +70,7 @@ const Prim =
 		color2 = color2 || color;
 
 		var numSegments = Math.ceil(10 * Math.sqrt((rx + ry) / 2.0));
-		var vlist = [ { x: x, y: y, color: color } ];
+		var vertices = [ { x: x, y: y, color: color } ];
 		var tau = 2 * Math.PI;
 		var cos = Math.cos;
 		var sin = Math.sin;
@@ -77,19 +78,20 @@ const Prim =
 			var phi = tau * i / numSegments;
 			var c = cos(phi);
 			var s = sin(phi);
-			vlist[i + 1] = {
+			vertices[i + 1] = {
 				x: x + c * rx,
 				y: y - s * ry,
 				color: color2
 			};
 		}
-		vlist[numSegments + 1] = {
+		vertices[numSegments + 1] = {
 			x: x + rx,  // cos(0) = 1.0
 			y: y,       // sin(0) = 0.0
 			color: color2
 		};
 
-		var shape = new Shape(vlist, null, ShapeType.Fan);
+		var vList = new VertexList(vertices);
+		var shape = new Shape(vList, null, ShapeType.Fan);
 		shape.draw(surface);
 	},
 
@@ -99,12 +101,12 @@ const Prim =
 		color_lr = color_lr || color_ul;
 		color_ll = color_ll || color_ul;
 
-		var shape = new Shape([
+		var shape = new Shape(new VertexList([
 			{ x: x, y: y, color: color_ul },
 			{ x: x + width, y: y, color: color_ur },
 			{ x: x, y: y + height, color: color_ll },
 			{ x: x + width, y: y + height, color: color_lr },
-		], null, ShapeType.TriStrip);
+		]), null, ShapeType.TriStrip);
 		shape.draw(surface);
 	},
 
@@ -113,11 +115,11 @@ const Prim =
 		color2 = color2 || color1;
 		color3 = color3 || color1;
 
-		var shape = new Shape([
+		var shape = new Shape(new VertexList([
 			{ x: x1, y: y1, color: color1 },
 			{ x: x2, y: y2, color: color2 },
 			{ x: x3, y: y3, color: color3 },
-		], null, ShapeType.Triangles);
+		]), null, ShapeType.Triangles);
 	},
 
 	drawLine(surface, x1, y1, x2, y2, thickness, color1, color2)
@@ -132,12 +134,12 @@ const Prim =
 			return;
 		var tx = 0.5 * thickness * (y2 - y1) / length;
 		var ty = 0.5 * thickness * -(x2 - x1) / length;
-		shape = new Shape([
+		shape = new Shape(new VertexList([
 			{ x: x1 + tx, y: y1 + ty, color: color1 },
 			{ x: x1 - tx, y: y1 - ty, color: color1 },
 			{ x: x2 - tx, y: y2 - ty, color: color2 },
 			{ x: x2 + tx, y: y2 + ty, color: color2 },
-		], null, ShapeType.Fan);
+		]), null, ShapeType.Fan);
 		shape.draw(surface);
 	},
 
@@ -153,7 +155,7 @@ const Prim =
 		var y1 = y + t;
 		var x2 = x1 + width - thickness;
 		var y2 = y1 + height - thickness;
-		var shape = new Shape([
+		var shape = new Shape(new VertexList([
 			{ x: x1 - t, y: y1 - t, color: color },
 			{ x: x1 + t, y: y1 + t, color: color },
 			{ x: x2 + t, y: y1 - t, color: color },
@@ -164,7 +166,7 @@ const Prim =
 			{ x: x1 + t, y: y2 - t, color: color },
 			{ x: x1 - t, y: y1 - t, color: color },
 			{ x: x1 + t, y: y1 + t, color: color },
-		], null, ShapeType.TriStrip);
+		]), null, ShapeType.TriStrip);
 		shape.draw(surface);
 	},
 
