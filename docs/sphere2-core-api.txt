@@ -1171,7 +1171,6 @@ ShapeType [enumeration]
     Specifies the type of graphics primitive represented by a Shape object.
     Can be one of the following:
 
-        ShapeType.Auto
         ShapeType.Fan
         ShapeType.Lines
         ShapeType.LineLoop
@@ -1180,19 +1179,16 @@ ShapeType [enumeration]
         ShapeType.Triangles
         ShapeType.TriStrip
 
-new Shape(vertexList[, indexList][, texture[, type]]]);
+new Shape(type[, texture], vertexList[, indexList]);
 
     Constructs a primitive shape from a vertex list and optional index list,
-    textured with a specified `Texture` image.
+    textured with a specified `Texture` image.  `type` specifies the type of
+	primitive to draw (see `ShapeType` above).
 
     `vertexList` is a `VertexList` containing vertices for the shape, while
     `indexList`, if provided, is an `IndexList` specifying which vertices from
     the vertex list will comprise the shape.  If `indexList` is not specified,
     all vertices from `vertexList` will be used.
-
-    `type` specifies the type of primitive (see ShapeType above).  If `type` is
-    ShapeType.Auto (the default), the type is determined automatically based on
-    the number of vertices or indices provided.
 
 Shape#indexList [read/write]
 

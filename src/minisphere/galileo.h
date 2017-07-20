@@ -18,7 +18,6 @@ enum shader_type
 typedef
 enum shape_type
 {
-	SHAPE_AUTO,
 	SHAPE_POINTS,
 	SHAPE_LINES,
 	SHAPE_LINE_LOOP,

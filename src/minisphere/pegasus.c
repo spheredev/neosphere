@@ -684,7 +684,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_const(ctx, "MouseKey", "Middle", MOUSE_KEY_MIDDLE);
 	api_define_const(ctx, "MouseKey", "WheelUp", MOUSE_KEY_WHEEL_UP);
 	api_define_const(ctx, "MouseKey", "WheelDown", MOUSE_KEY_WHEEL_DOWN);
-	api_define_const(ctx, "ShapeType", "Auto", SHAPE_AUTO);
 	api_define_const(ctx, "ShapeType", "Fan", SHAPE_TRI_FAN);
 	api_define_const(ctx, "ShapeType", "Lines", SHAPE_LINES);
 	api_define_const(ctx, "ShapeType", "LineLoop", SHAPE_LINE_LOOP);
@@ -3095,19 +3094,22 @@ js_new_Shape(duk_context* ctx)
 	ibo_t*       ibo = NULL;
 	int          num_args;
 	shape_t*     shape;
-	image_t*     texture;
+	image_t*     texture = NULL;
 	shape_type_t type;
 	vbo_t*       vbo;
 
 	num_args = duk_get_top(ctx);
-	vbo = duk_require_class_obj(ctx, 0, "VertexList");
-	if (duk_is_class_obj(ctx, 1, "IndexList")) {
-		ibo = duk_require_class_obj(ctx, 1, "IndexList");
-		texture = !duk_is_null(ctx, 2) ? duk_require_class_obj(ctx, 2, "Texture") : NULL;
-		type = num_args >= 4 ? duk_require_int(ctx, 3) : SHAPE_AUTO;
-	} else {
+	type = duk_require_int(ctx, 0);
+	if (duk_is_class_obj(ctx, 1, "Texture") || duk_is_null(ctx, 1)) {
 		texture = !duk_is_null(ctx, 1) ? duk_require_class_obj(ctx, 1, "Texture") : NULL;
-		type = num_args >= 3 ? duk_require_int(ctx, 2) : SHAPE_AUTO;
+		vbo = duk_require_class_obj(ctx, 2, "VertexList");
+		if (num_args >= 4)
+			ibo = duk_require_class_obj(ctx, 3, "IndexList");
+	}
+	else {
+		vbo = duk_require_class_obj(ctx, 1, "VertexList");
+		if (num_args >= 3)
+			ibo = duk_require_class_obj(ctx, 2, "IndexList");
 	}
 
 	if (type < 0 || type >= SHAPE_MAX)

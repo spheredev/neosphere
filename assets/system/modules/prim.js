@@ -24,12 +24,13 @@ const Prim =
 		var v1 = 1.0 - sy / texture.height;
 		var u2 = (sx + width) / texture.width;
 		var v2 = 1.0 - (sy + height) / texture.height;
-		var shape = new Shape(new VertexList([
-			{ x: x1, y: y1, u: u1, v: v1, color: mask },
-			{ x: x2, y: y1, u: u2, v: v1, color: mask },
-			{ x: x1, y: y2, u: u1, v: v2, color: mask },
-			{ x: x2, y: y2, u: u2, v: v2, color: mask },
-		]), texture, ShapeType.TriStrip);
+		var shape = new Shape(ShapeType.TriStrip, texture,
+			new VertexList([
+				{ x: x1, y: y1, u: u1, v: v1, color: mask },
+				{ x: x2, y: y1, u: u2, v: v1, color: mask },
+				{ x: x1, y: y2, u: u1, v: v2, color: mask },
+				{ x: x2, y: y2, u: u2, v: v2, color: mask },
+			]));
 		shape.draw(surface);
 	},
 
@@ -56,7 +57,7 @@ const Prim =
 			});
 		}
 		var vList = new VertexList(vertices);
-		var shape = new Shape(vList, null, ShapeType.LineLoop)
+		var shape = new Shape(ShapeType.LineLoop, vList)
 		shape.draw(surface);
 	},
 
@@ -91,7 +92,7 @@ const Prim =
 		};
 
 		var vList = new VertexList(vertices);
-		var shape = new Shape(vList, null, ShapeType.Fan);
+		var shape = new Shape(ShapeType.Fan, vList);
 		shape.draw(surface);
 	},
 
@@ -101,12 +102,13 @@ const Prim =
 		color_lr = color_lr || color_ul;
 		color_ll = color_ll || color_ul;
 
-		var shape = new Shape(new VertexList([
-			{ x: x, y: y, color: color_ul },
-			{ x: x + width, y: y, color: color_ur },
-			{ x: x, y: y + height, color: color_ll },
-			{ x: x + width, y: y + height, color: color_lr },
-		]), null, ShapeType.TriStrip);
+		var shape = new Shape(ShapeType.TriStrip,
+			new VertexList([
+				{ x: x, y: y, color: color_ul },
+				{ x: x + width, y: y, color: color_ur },
+				{ x: x, y: y + height, color: color_ll },
+				{ x: x + width, y: y + height, color: color_lr },
+			]));
 		shape.draw(surface);
 	},
 
@@ -115,11 +117,12 @@ const Prim =
 		color2 = color2 || color1;
 		color3 = color3 || color1;
 
-		var shape = new Shape(new VertexList([
-			{ x: x1, y: y1, color: color1 },
-			{ x: x2, y: y2, color: color2 },
-			{ x: x3, y: y3, color: color3 },
-		]), null, ShapeType.Triangles);
+		var shape = new Shape(ShapeType.Triangles,
+			new VertexList([
+				{ x: x1, y: y1, color: color1 },
+				{ x: x2, y: y2, color: color2 },
+				{ x: x3, y: y3, color: color3 },
+			]));
 	},
 
 	drawLine(surface, x1, y1, x2, y2, thickness, color1, color2)
@@ -134,12 +137,13 @@ const Prim =
 			return;
 		var tx = 0.5 * thickness * (y2 - y1) / length;
 		var ty = 0.5 * thickness * -(x2 - x1) / length;
-		shape = new Shape(new VertexList([
-			{ x: x1 + tx, y: y1 + ty, color: color1 },
-			{ x: x1 - tx, y: y1 - ty, color: color1 },
-			{ x: x2 - tx, y: y2 - ty, color: color2 },
-			{ x: x2 + tx, y: y2 + ty, color: color2 },
-		]), null, ShapeType.Fan);
+		shape = new Shape(ShapeType.Fan,
+			new VertexList([
+				{ x: x1 + tx, y: y1 + ty, color: color1 },
+				{ x: x1 - tx, y: y1 - ty, color: color1 },
+				{ x: x2 - tx, y: y2 - ty, color: color2 },
+				{ x: x2 + tx, y: y2 + ty, color: color2 },
+			]));
 		shape.draw(surface);
 	},
 
@@ -155,18 +159,19 @@ const Prim =
 		var y1 = y + t;
 		var x2 = x1 + width - thickness;
 		var y2 = y1 + height - thickness;
-		var shape = new Shape(new VertexList([
-			{ x: x1 - t, y: y1 - t, color: color },
-			{ x: x1 + t, y: y1 + t, color: color },
-			{ x: x2 + t, y: y1 - t, color: color },
-			{ x: x2 - t, y: y1 + t, color: color },
-			{ x: x2 + t, y: y2 + t, color: color },
-			{ x: x2 - t, y: y2 - t, color: color },
-			{ x: x1 - t, y: y2 + t, color: color },
-			{ x: x1 + t, y: y2 - t, color: color },
-			{ x: x1 - t, y: y1 - t, color: color },
-			{ x: x1 + t, y: y1 + t, color: color },
-		]), null, ShapeType.TriStrip);
+		var shape = new Shape(ShapeType.TriStrip,
+			new VertexList([
+				{ x: x1 - t, y: y1 - t, color: color },
+				{ x: x1 + t, y: y1 + t, color: color },
+				{ x: x2 + t, y: y1 - t, color: color },
+				{ x: x2 - t, y: y1 + t, color: color },
+				{ x: x2 + t, y: y2 + t, color: color },
+				{ x: x2 - t, y: y2 - t, color: color },
+				{ x: x1 - t, y: y2 + t, color: color },
+				{ x: x1 + t, y: y2 - t, color: color },
+				{ x: x1 - t, y: y1 - t, color: color },
+				{ x: x1 + t, y: y1 + t, color: color },
+			]));
 		shape.draw(surface);
 	},
 

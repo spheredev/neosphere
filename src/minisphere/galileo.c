@@ -733,18 +733,13 @@ render_shape(shape_t* shape)
 
 	num_vertices = vbo_len(shape->vbo);
 	num_indices = ibo_len(shape->ibo);
-	if (shape->type == SHAPE_AUTO)
-		draw_mode = num_vertices == 1 ? ALLEGRO_PRIM_POINT_LIST
-			: num_vertices == 2 ? ALLEGRO_PRIM_LINE_LIST
-			: ALLEGRO_PRIM_TRIANGLE_STRIP;
-	else
-		draw_mode = shape->type == SHAPE_LINES ? ALLEGRO_PRIM_LINE_LIST
-			: shape->type == SHAPE_LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
-			: shape->type == SHAPE_LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
-			: shape->type == SHAPE_TRIANGLES ? ALLEGRO_PRIM_TRIANGLE_LIST
-			: shape->type == SHAPE_TRI_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
-			: shape->type == SHAPE_TRI_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
-			: ALLEGRO_PRIM_POINT_LIST;
+	draw_mode = shape->type == SHAPE_LINES ? ALLEGRO_PRIM_LINE_LIST
+		: shape->type == SHAPE_LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
+		: shape->type == SHAPE_LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
+		: shape->type == SHAPE_TRIANGLES ? ALLEGRO_PRIM_TRIANGLE_LIST
+		: shape->type == SHAPE_TRI_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
+		: shape->type == SHAPE_TRI_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
+		: ALLEGRO_PRIM_POINT_LIST;
 
 	bitmap = shape->texture != NULL ? image_bitmap(shape->texture) : NULL;
 	if (shape->ibo != NULL)
