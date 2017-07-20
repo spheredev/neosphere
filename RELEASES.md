@@ -8,6 +8,12 @@ miniSphere X.X
   while `Sphere.Version` has been redefined to return the version of the Sphere
   API, e.g. 2.  `Sphere.APIVersion` has been removed as it is now redundant.
 
+* The `Shape` object has been completely overhauled to better support GPU-side
+  vertex and index lists.  Rather than these lists being maintained internally,
+  they are now exposed to JavaScript code via the new `.vertexList` and
+  `.indexList` properties.  A few breaking changes were made to the API in
+  order to support this; refer to the API documentation for more information.
+
 * Games can now assign a `Transform` object to a surface's `transform` property
   to change the projection matrix.  To create projection matrices, there are
   two new `Transform` methods: `.project2D()` for orthographic projection, and

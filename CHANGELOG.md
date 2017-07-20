@@ -4,10 +4,11 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* Adds support for 2D (orthographic) and 3D (perspective) projection matrices.
+* Adds support for creating 2D (orthographic) and 3D (perspective) projection
+  matrices.
 * Adds support for setting a clipping rectangle when rendering to a `Surface`.
-* Adds support for indexed vertices in `Shape` objects, allowing games to reuse
-  identical vertices within a shape and save memory.
+* Adds new `VertexList` and `IndexList` objects, used to store vertices and
+  indices, respectively, directly on the GPU for fast access at render time.
 * Adds `Model#setFloatArray()` and `Model#setIntArray()` methods for setting
   the values of array-typed shader uniforms.
 * Adds `Socket#connectTo()` which allows the same socket object to be used for
@@ -15,6 +16,8 @@ vX.X.X - TBD
 * Adds the engine version number to the string returned by `Sphere.Platform`.
 * Adds support for the Sphere v1 `CreateSpriteset()` and `Spriteset#save()`
   functions.
+* Changes the signature of the `Shape` constructor in order to support vertex
+  and index lists and make it easier to use.
 * Changes `FS.readFile()` and `FS.writeFile()` to work directly with strings
   instead of ArrayBuffers.
 * Removes support for GPUs without shader support.  If the engine can't create
