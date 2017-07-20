@@ -1,7 +1,6 @@
 #include "minisphere.h"
 #include "galileo.h"
 
-#include <GL/gl.h>
 #include "color.h"
 #include "vector.h"
 
@@ -193,7 +192,6 @@ ibo_upload(ibo_t* it)
 	}
 
 	// create the index buffer object
-	while (glGetError() != GL_NO_ERROR);  // workaround for Allegro bug
 	if (!(buffer = al_create_index_buffer(2, NULL, vector_len(it->indices), ALLEGRO_PRIM_BUFFER_STATIC)))
 		return false;
 
@@ -699,8 +697,7 @@ vbo_upload(vbo_t* it)
 		it->buffer = NULL;
 	}
 
-	// create the index buffer object
-	while (glGetError() != GL_NO_ERROR);  // workaround for Allegro bug
+	// create the vertex buffer object
 	if (!(buffer = al_create_vertex_buffer(NULL, NULL, vector_len(it->vertices), ALLEGRO_PRIM_BUFFER_STATIC)))
 		return false;
 
