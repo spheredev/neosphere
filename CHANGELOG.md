@@ -23,6 +23,7 @@ vX.X.X - TBD
 * Removes support for GPUs without shader support.  If the engine can't create
   a shader-capable display, it will now simply fail to start rather than trying
   to fall back on the fixed-function pipeline.
+* Renames SSJ to SSj, with a lowercase J, to make the name more recognizable.
 * Renames `Sphere.APIVersion` to `Sphere.Version`.
 * Fixes several limitations in the internal handling of spritesets which were
   preventing full Sphere 1.x compatibility.

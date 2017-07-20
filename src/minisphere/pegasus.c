@@ -293,8 +293,8 @@ static duk_ret_t js_RNG_finalize               (duk_context* ctx);
 static duk_ret_t js_RNG_get_state              (duk_context* ctx);
 static duk_ret_t js_RNG_set_state              (duk_context* ctx);
 static duk_ret_t js_RNG_next                   (duk_context* ctx);
-static duk_ret_t js_SSJ_log                    (duk_context* ctx);
-static duk_ret_t js_SSJ_trace                  (duk_context* ctx);
+static duk_ret_t js_SSj_log                    (duk_context* ctx);
+static duk_ret_t js_SSj_trace                  (duk_context* ctx);
 static duk_ret_t js_new_Sample                 (duk_context* ctx);
 static duk_ret_t js_Sample_finalize            (duk_context* ctx);
 static duk_ret_t js_Sample_get_fileName        (duk_context* ctx);
@@ -511,8 +511,8 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "RNG", "fromState", js_RNG_fromState);
 	api_define_property(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
 	api_define_method(ctx, "RNG", "next", js_RNG_next);
-	api_define_function(ctx, "SSJ", "log", js_SSJ_log);
-	api_define_function(ctx, "SSJ", "trace", js_SSJ_trace);
+	api_define_function(ctx, "SSj", "log", js_SSj_log);
+	api_define_function(ctx, "SSj", "trace", js_SSj_trace);
 	api_define_class(ctx, "Sample", js_new_Sample, js_Sample_finalize);
 	api_define_property(ctx, "Sample", "fileName", js_Sample_get_fileName, NULL);
 	api_define_method(ctx, "Sample", "play", js_Sample_play);
@@ -2857,7 +2857,7 @@ js_RNG_next(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SSJ_log(duk_context* ctx)
+js_SSj_log(duk_context* ctx)
 {
 	int num_items;
 
@@ -2872,7 +2872,7 @@ js_SSJ_log(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SSJ_trace(duk_context* ctx)
+js_SSj_trace(duk_context* ctx)
 {
 	int num_items;
 

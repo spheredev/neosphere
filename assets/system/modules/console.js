@@ -89,7 +89,7 @@ function log(/*...*/)
 		buffer[lineInBuffer] = "";
 	++nextLine;
 	visible.line = 0.0;
-	SSJ.log(buffer[lineInBuffer].substr(1));
+	SSj.log(buffer[lineInBuffer].substr(1));
 	if (logger !== null)
         logger.write(buffer[lineInBuffer]);
 }

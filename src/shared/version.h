@@ -3,7 +3,7 @@
 
 #define ENGINE_NAME   "miniSphere"
 #define COMPILER_NAME "Cell"
-#define DEBUGGER_NAME "SSJ"
+#define DEBUGGER_NAME "SSj"
 #define PREPTOOL_NAME "Majin"
 
 #define VERSION_NAME  "X.X.X"
