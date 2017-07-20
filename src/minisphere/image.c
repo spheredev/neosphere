@@ -577,13 +577,14 @@ image_render_to(image_t* it, transform_t* transform)
 bool
 image_replace_color(image_t* image, color_t color, color_t new_color)
 {
-	ALLEGRO_BITMAP*        bitmap = image_bitmap(image);
+	ALLEGRO_BITMAP*        bitmap;
 	uint8_t*               pixel;
 	ALLEGRO_LOCKED_REGION* lock;
 	int                    w, h;
 
 	int i_x, i_y;
 
+	bitmap = image_bitmap(image);
 	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE)) == NULL)
 		return false;
 	uncache_pixels(image);

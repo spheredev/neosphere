@@ -1520,10 +1520,15 @@ js_GetVersionString(duk_context* ctx)
 static duk_ret_t
 js_SetClippingRectangle(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int width = duk_to_int(ctx, 2);
-	int height = duk_to_int(ctx, 3);
+	int height;
+	int width;
+	int x;
+	int y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
 
 	image_set_scissor(screen_backbuffer(g_screen),
 		new_rect(x, y, x + width, y + height));

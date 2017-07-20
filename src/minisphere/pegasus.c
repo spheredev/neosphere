@@ -3875,6 +3875,7 @@ js_Surface_clipTo(duk_context* ctx)
 	y = duk_require_int(ctx, 1);
 	width = duk_require_int(ctx, 2);
 	height = duk_require_int(ctx, 3);
+
 	image_set_scissor(image, new_rect(x, y, x + width, y + height));
 	return 0;
 }

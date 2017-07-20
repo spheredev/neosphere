@@ -50,7 +50,7 @@ static jmp_buf s_jmp_restart;
 
 static const char* const ERROR_TEXT[][2] =
 {
-	{ "*munch*", "a hunger-pig just devoured your game!" },
+	{ "*munch*", "a hunger-pig just devourized your game!" },
 	{ "*CRASH!*", "it's an 812-car pileup!" },
 	{ "so, um... a funny thing happened...", "...on the way to the boss..." },
 	{ "here's the deal.", "the game encountered an error." },
