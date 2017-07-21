@@ -8,6 +8,8 @@ msvs/debug64/
 msvs/obj/
 msvs/obj64/
 msvs/packages/
+msvs/profile/
+msvs/profile64/
 obj/
 setup/*.exe
 
