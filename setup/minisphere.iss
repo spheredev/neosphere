@@ -115,16 +115,16 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 [Icons]
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
 #ifdef HAVE_SPHERE_STUDIO
-Name: "{group}\Sphere Studio IDE"; Filename: "{app}\ide\Sphere Studio.exe"; Components: spherun/ide
+Name: "{commonprograms}\Sphere Studio IDE"; Filename: "{app}\ide\Sphere Studio.exe"; Components: spherun/ide
 #endif
-Name: "{group}\miniSphere Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
-Name: "{group}\Sphere v2 Core API Reference"; Filename: "{app}\documentation\sphere2-core-api.txt"; Components: spherun
-Name: "{group}\Sphere Runtime API Reference"; Filename: "{app}\documentation\sphere2-hl-api.txt"; Components: spherun
+Name: "{group}\Sphere Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
 Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cellscript-api.txt"; Components: spherun/cell
+Name: "{group}\Core API Reference"; Filename: "{app}\documentation\sphere2-core-api.txt"; Components: spherun
+Name: "{group}\Sphere Runtime API Reference"; Filename: "{app}\documentation\sphere2-hl-api.txt"; Components: spherun
 
 [Run]
 #ifdef HAVE_SPHERE_STUDIO
-Filename: "{app}\ide\Sphere Studio.exe"; Description: "Launch Sphere Studio now"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\ide\Sphere Studio.exe"; Description: "Start using Sphere Studio"; Flags: postinstall nowait skipifsilent
 #endif
 
 [Code]
