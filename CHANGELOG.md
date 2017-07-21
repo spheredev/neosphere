@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.7.0 - July 20, 2017
+----------------------
 
 * Adds support for creating 2D (orthographic) and 3D (perspective) projection
   matrices.

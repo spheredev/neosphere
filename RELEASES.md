@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-miniSphere X.X
+miniSphere 4.7
 --------------
 
 * The value of `Sphere.Platform` now includes the version number of the engine,

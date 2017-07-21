@@ -1,4 +1,39 @@
-minisphere (4.6.0) trusty; urgency=low
+minisphere (4.7.0) yakkety; urgency=low
+
+  * Adds support for creating 2D (orthographic) and 3D (perspective) projection
+    matrices.
+  * Adds support for setting a clipping rectangle when rendering to a `Surface`.
+  * Adds new `VertexList` and `IndexList` objects, used to store vertices and
+    indices, respectively, directly on the GPU for fast access at render time.
+  * Adds a new `.transform` property to `Surface` which allows changing the
+    surface's projection matrix.
+  * Adds new methods to `Model` for setting shader uniforms: `.setBoolean()`,
+    `.setFloatArray()`, and `.setIntArray()`.
+  * Adds `Socket#connectTo()` which allows the same socket object to be used for
+    multiple sessions.
+  * Adds the engine version number to the string returned by `Sphere.Platform`.
+  * Adds support for the Sphere v1 `CreateSpriteset()` and `Spriteset#save()`
+    functions.
+  * Changes the signature of the `Shape` constructor in order to support vertex
+    and index lists and make it easier to use.
+  * Changes `FS.readFile()` and `FS.writeFile()` to work directly with strings
+    instead of ArrayBuffers.
+  * Removes support for GPUs without shader support.  If the engine can't create
+    a shader-capable display, it will now simply fail to start rather than trying
+    to fall back on the fixed-function pipeline.
+  * Renames SSJ to SSj, with a lowercase J, to make the name more recognizable.
+  * Renames `Sphere.APIVersion` to `Sphere.Version`.
+  * Fixes several limitations in the internal handling of spritesets which were
+    preventing full Sphere 1.x compatibility.
+  * Fixes several bugs in internal Dispatch job management, including one that
+    can cause the engine to crash with a segfault.
+  * Fixes a bug where setting the clipping box out of bounds has no effect.
+  * Fixes excessive OpenGL state changes in the internal rendering logic, vastly
+    improving performance for games using the Sphere v2 graphics API.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 20 Jul 2017 00:00:00 -0500
+
+minisphere (4.6.0) yakkety; urgency=low
 
   * When using ES6 modules (`.mjs`), the main module can now `export default` a
     class and miniSphere will automatically instantiate it and call its `start()`
@@ -52,7 +87,7 @@ minisphere (4.6.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 4 Jul 2017 00:00:00 -0500
 
-minisphere (4.5.11) trusty; urgency=low
+minisphere (4.5.11) yakkety; urgency=low
 
   * Now uses TypeScript to transpile Cellscripts, improving build times a bit.
   * Fixes a bug where SSJ repeats the previous action after an invalid command.
@@ -61,7 +96,7 @@ minisphere (4.5.11) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 27 Apr 2017 00:00:00 -0500
 
-minisphere (4.5.10) trusty; urgency=low
+minisphere (4.5.10) yakkety; urgency=low
 
   * Fixes a bug where Sphere v1 `drawZoomedText()` ignores non-opaque pixels.
   * Fixes a bug in the RFN font loader where RFNv1 (grayscale) fonts are loaded
@@ -69,7 +104,7 @@ minisphere (4.5.10) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 3 Apr 2017 00:00:00 -0500
 
-minisphere (4.5.9) trusty; urgency=low
+minisphere (4.5.9) yakkety; urgency=low
 
   * Adds tolerance for shebang lines (`#!...`) at the start of JS source files.
   * TypeScript is once again used as the default ES6 transpiler.  A source map is
@@ -78,7 +113,7 @@ minisphere (4.5.9) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 31 Mar 2017 00:00:00 -0500
 
-minisphere (4.5.8) trusty; urgency=low
+minisphere (4.5.8) yakkety; urgency=low
 
   * Add `from#reduce()` API for reducing a collection to a single value.
   * Fixes spurious "target file unchanged after build" warnings when a target
@@ -89,7 +124,7 @@ minisphere (4.5.8) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 20 Mar 2017 00:00:00 -0500
 
-minisphere (4.5.7) trusty; urgency=low
+minisphere (4.5.7) yakkety; urgency=low
 
   * Adds a new `Thread` class which can be subclassed in ES6 to make threaded
     entities.
@@ -101,7 +136,7 @@ minisphere (4.5.7) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 14 Mar 2017 00:00:00 -0500
 
-minisphere (4.5.6) trusty; urgency=low
+minisphere (4.5.6) yakkety; urgency=low
 
   * Improves `for...of` iteration for `from()` queries.  Only the values will now
     be enumerated, rather than key/value pairs.
@@ -112,7 +147,7 @@ minisphere (4.5.6) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 11 Mar 2017 00:00:00 -0500
 
-minisphere (4.5.5) trusty; urgency=low
+minisphere (4.5.5) yakkety; urgency=low
 
   * Changes the built-in ES6 transpiler (used by Cell's `compiler` module) to
     TypeScript, vastly improving compile times over Babel.
@@ -122,7 +157,7 @@ minisphere (4.5.5) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 10 Mar 2017 00:00:00 -0500
 
-minisphere (4.5.4) trusty; urgency=low
+minisphere (4.5.4) yakkety; urgency=low
 
   * Adds a new global binding, `exports`, which maps to the global object, to
     better support certain transpilers (e.g., TypeScript).
@@ -134,7 +169,7 @@ minisphere (4.5.4) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 5 Mar 2017 00:00:00 -0500
 
-minisphere (4.5.3) trusty; urgency=low
+minisphere (4.5.3) yakkety; urgency=low
 
   * Adds support for `Cellscript.mjs`.  if `Cellscript.js` is used, it will now
     be compiled as a script rather than a module.
@@ -145,7 +180,7 @@ minisphere (4.5.3) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 28 Feb 2017 00:00:00 -0500
 
-minisphere (4.5.2) trusty; urgency=low
+minisphere (4.5.2) yakkety; urgency=low
 
   * Changes Cell `transpile` module to use automatic mode for transpile().  `.js`
     files are compiled as scripts (which is Sphere 1.x compatible), while `.mjs`
@@ -154,13 +189,13 @@ minisphere (4.5.2) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 25 Feb 2017 00:00:00 -0500
 
-minisphere (4.5.1) trusty; urgency=low
+minisphere (4.5.1) yakkety; urgency=low
 
   * Adds `PurwaBlue` and `RebeccaPurple` as predefined colors.
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 22 Feb 2017 00:00:00 -0500
 
-minisphere (4.5.0) trusty; urgency=low
+minisphere (4.5.0) yakkety; urgency=low
 
   * Adds support for game-specific save directories.  Set `saveID` in a game's
     JSON manifest to control the subdirectory to which `~/` is mapped.
@@ -187,7 +222,7 @@ minisphere (4.5.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 20 Feb 2017 00:00:00 -0500
 
-minisphere (4.4.4) trusty; urgency=low
+minisphere (4.4.4) yakkety; urgency=low
 
   * The engine is now called miniSphere, with a capital 'S', both to highlight
     its nature as a JavaScript-powered engine and to make the name more readily
@@ -203,7 +238,7 @@ minisphere (4.4.4) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 6 Feb 2017 00:00:00 -0500
 
-minisphere (4.4.3) trusty; urgency=low
+minisphere (4.4.3) yakkety; urgency=low
 
   * Adds support for ECMAScript 2015 syntax in Cellscripts and modules.
   * Adds a new API function, `Color.is()`, for comparing Colors without regard to
@@ -215,7 +250,7 @@ minisphere (4.4.3) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 1 Feb 2017 00:00:00 -0500
 
-minisphere (4.4.2) trusty; urgency=low
+minisphere (4.4.2) yakkety; urgency=low
 
   * Fixes a bug where specifying a nonexistent directory in a Cellscript
     `files()` directive crashes the compiler.
@@ -227,7 +262,7 @@ minisphere (4.4.2) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 30 Jan 2017 00:00:00 -0500
 
-minisphere (4.4.1) trusty; urgency=low
+minisphere (4.4.1) yakkety; urgency=low
 
   * Fixes a bug which caused the Arch and Ubuntu installations of Cell to be
     unable to find the standard library modules.
@@ -236,7 +271,7 @@ minisphere (4.4.1) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 28 Jan 2017 00:00:00 -0500
 
-minisphere (4.4.0) trusty; urgency=low
+minisphere (4.4.0) yakkety; urgency=low
 
   * Overhauls the Cellscript API: `require()` is supported, file paths are
     resolved using SphereFS semantics, and Cellscripts and modules can now define
@@ -281,13 +316,13 @@ minisphere (4.4.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 27 Jan 2017 00:00:00 -0500
 
-minisphere (4.3.8) trusty; urgency=low
+minisphere (4.3.8) yakkety; urgency=low
 
   * Fixes a bug which caused `from#anyIn()` to always return `false`.
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 4 Dec 2016 00:00:00 -0500
 
-minisphere (4.3.7) trusty; urgency=low
+minisphere (4.3.7) yakkety; urgency=low
 
   * Adds experimental support for ECMAScript 2015 `Symbol()` and `Symbol.for()`.
   * Adds a bunch of new query operators: shuffle, random, sample, ascending,
@@ -295,7 +330,7 @@ minisphere (4.3.7) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 2 Dec 2016 00:00:00 -0500
 
-minisphere (4.3.6) trusty; urgency=low
+minisphere (4.3.6) yakkety; urgency=low
 
   * Adds support for composable from() queries, allowing partial application of
     queries as in LINQ.
@@ -303,7 +338,7 @@ minisphere (4.3.6) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 23 Nov 2016 00:00:00 -0500
 
-minisphere (4.3.5) trusty; urgency=low
+minisphere (4.3.5) yakkety; urgency=low
 
   * Adds `from#allIn()`, `from#anyIn()`, and `from#anyIs()`, providing a quick
     way to check whether a query matches specific values without the need to
@@ -315,7 +350,7 @@ minisphere (4.3.5) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 20 Nov 2016 00:00:00 -0500
 
-minisphere (4.3.4) trusty; urgency=low
+minisphere (4.3.4) yakkety; urgency=low
 
   * Adds a new miniRT module, "from", which enables performing queries against
     the contents of objects, arrays, and strings.  This replaces the undocumented
@@ -326,7 +361,7 @@ minisphere (4.3.4) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 17 Nov 2016 00:00:00 -0500
 
-minisphere (4.3.3) trusty; urgency=low
+minisphere (4.3.3) yakkety; urgency=low
 
   * Adds a new miniRT "test" module based on the CommonJS Unit Testing/1.0
     specification.
@@ -336,7 +371,7 @@ minisphere (4.3.3) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 11 Nov 2016 00:00:00 -0500
 
-minisphere (4.3.2) trusty; urgency=low
+minisphere (4.3.2) yakkety; urgency=low
 
   * Adds an API call, `Dispatch.cancelAll()` to cancel all pending one-time jobs
     (recurring jobs must still be cancelled individually).
@@ -352,14 +387,14 @@ minisphere (4.3.2) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 9 Nov 2016 00:00:00 -0500
 
-minisphere (4.3.1) trusty; urgency=low
+minisphere (4.3.1) yakkety; urgency=low
 
   * Improves Sphere v2 behavior: minisphere will now run a frame loop until there
     are no more Dispatch API jobs active before exiting.
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 8 Nov 2016 00:00:00 -0500
 
-minisphere (4.3.0) trusty; urgency=low
+minisphere (4.3.0) yakkety; urgency=low
 
   * Adds a new Dispatch API for setting up asynchronous jobs.  Jobs are called
     from the event loop; for example, `Dispatch.onUpdate()` is processed at the
@@ -393,7 +428,7 @@ minisphere (4.3.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 7 Nov 2016 00:00:00 -0500
 
-minisphere (4.2.4) trusty; urgency=low
+minisphere (4.2.4) yakkety; urgency=low
 
   * Adds streaming support for `TextDecoder`.
   * `system.abort()` now aborts unconditionally, as described in the API
@@ -404,7 +439,7 @@ minisphere (4.2.4) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 7 Oct 2016 00:00:00 -0500
 
-minisphere (4.2.3) trusty; urgency=low
+minisphere (4.2.3) yakkety; urgency=low
 
   * Adds support for the new JavaScript exponentiation operator (e.g.
     `x ** 2`), allowing powers to be calculated without the performance
@@ -415,7 +450,7 @@ minisphere (4.2.3) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 6 Oct 2016 00:00:00 -0500
 
-minisphere (4.2.2) trusty; urgency=low
+minisphere (4.2.2) yakkety; urgency=low
 
   * Adds a new property, `term.visible` to the `term` module and removes the
     `.show()` and `.hide()` methods.
@@ -424,7 +459,7 @@ minisphere (4.2.2) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 28 Sep 2016 00:00:00 -0500
 
-minisphere (4.2.1) trusty; urgency=low
+minisphere (4.2.1) yakkety; urgency=low
 
   * The `ssj` global is now called `SSJ`, to align with usual JavaScript naming
     conventions for namespace-like objects.
@@ -434,7 +469,7 @@ minisphere (4.2.1) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 21 Sep 2016 00:00:00 -0500
 
-minisphere (4.2.0) trusty; urgency=low
+minisphere (4.2.0) yakkety; urgency=low
 
   * Adds native joystick support to the Sphere v2 API.  Previously, using a
     joystick or gamepad required calling Sphere v1 legacy functions.
@@ -453,7 +488,7 @@ minisphere (4.2.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 14 Sep 2016 00:00:00 -0500
 
-minisphere (4.1.1) trusty; urgency=low
+minisphere (4.1.1) yakkety; urgency=low
 
   * When starting a game with a JSON manifest, the main script is now run as a
     CommonJS module unless the manifest explicitly specifies `version: 1`.
@@ -462,7 +497,7 @@ minisphere (4.1.1) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 24 Aug 2016 00:00:00 -0500
 
-minisphere (4.1.0) trusty; urgency=low
+minisphere (4.1.0) yakkety; urgency=low
 
   * Adds a new module to the standard library: `assert`, based on the Node.js
     built-in assert module.  Unlike `ssj.assert()`, the functions in this module
@@ -473,7 +508,7 @@ minisphere (4.1.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 22 Aug 2016 00:00:00 -0500
 
-minisphere (4.0.1) trusty; urgency=low
+minisphere (4.0.1) yakkety; urgency=low
 
   * `system.extensions` now includes properties for individual extensions.  Each
     has a value of `true`, which allows games to check for extensions via, e.g.
@@ -482,7 +517,7 @@ minisphere (4.0.1) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 14 Aug 2016 00:00:00 -0500
 
-minisphere (4.0.0) trusty; urgency=low
+minisphere (4.0.0) yakkety; urgency=low
 
   * Introduces the new Sphere v2 API.  The entire Sphere v1 API, including the
     map engine, has been deprecated and is no longer recommended for use in new
@@ -499,7 +534,7 @@ minisphere (4.0.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 12 Aug 2016 00:00:00 -0500
 
-minisphere (3.3.0) trusty; urgency=low
+minisphere (3.3.0) yakkety; urgency=low
 
   * Now uses xoroshiro128+ as the random number generator instead of the slower
     Mersenne Twister.
@@ -516,7 +551,7 @@ minisphere (3.3.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 31 May 2016 00:00:00 -0500
 
-minisphere (3.2.0) trusty; urgency=low
+minisphere (3.2.0) yakkety; urgency=low
 
   * The module system has been overhauled to work more like Node.js, and now has
     support for `package.json` files, parsing JSON files as objects, and useful
@@ -532,7 +567,7 @@ minisphere (3.2.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 22 May 2016 00:00:00 -0500
 
-minisphere (3.1.2) trusty; urgency=low
+minisphere (3.1.2) yakkety; urgency=low
 
   * Fixes an issue where sounds were reinitialized whenever a script called
     `Sound#play()` (including the first time), potentially triggering a deadlock
@@ -544,7 +579,7 @@ minisphere (3.1.2) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 11 May 2016 00:00:00 -0500
 
-minisphere (3.1.1) trusty; urgency=low
+minisphere (3.1.1) yakkety; urgency=low
 
   * Fixes a bug in miniRT/music where it tried to call `console.write()` instead
     of `console.log()`, causing it to throw an error and potentially crash the
@@ -556,7 +591,7 @@ minisphere (3.1.1) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 10 May 2016 00:00:00 -0500
 
-minisphere (3.1.0) trusty; urgency=low
+minisphere (3.1.0) yakkety; urgency=low
 
   * SphereFS now uses single-character aliases: `#/` for built-in engine assets,
     `@/` for the root of the sandbox, and `~/` for the user data directory (for
@@ -581,7 +616,7 @@ minisphere (3.1.0) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 7 May 2016 00:00:00 -0500
 
-minisphere (3.0.8) trusty; urgency=low
+minisphere (3.0.8) yakkety; urgency=low
 
   * Fixes a bug where minisphere would crash instead of showing an error
     message if it was unable to create a render context.
@@ -590,7 +625,7 @@ minisphere (3.0.8) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 17 Apr 2016 00:00:00 -0500
 
-minisphere (3.0.7) trusty; urgency=low
+minisphere (3.0.7) yakkety; urgency=low
 
   * Fixes an issue where persons with large ignore lists would cause an inordinate
     amount of lag.  This was caused by the engine checking persons' ignore lists
@@ -598,21 +633,21 @@ minisphere (3.0.7) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 14 Apr 2016 00:00:00 -0500
 
-minisphere (3.0.6) trusty; urgency=low
+minisphere (3.0.6) yakkety; urgency=low
 
   * Reverts to the pre-3.0.4 method of map rendering.  It turns out that Allegro's
     sprite batcher is actually pretty awesome.
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 11 Apr 2016 00:00:00 -0500
 
-minisphere (3.0.5) trusty; urgency=low
+minisphere (3.0.5) yakkety; urgency=low
 
   * Fixes a performance regression in 3.0.4 related to Galileo map rendering and
     animated tilesets.
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 10 Apr 2016 00:00:00 -0500
 
-minisphere (3.0.4) trusty; urgency=low
+minisphere (3.0.4) yakkety; urgency=low
 
   * Fixes a memory management bug in Galileo which caused it to leak potentially
     massive amounts of memory in games which generate a lot of Shape objects.
@@ -623,7 +658,7 @@ minisphere (3.0.4) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 9 Apr 2016 00:00:00 -0500
 
-minisphere (3.0.3) trusty; urgency=low
+minisphere (3.0.3) yakkety; urgency=low
 
   * While debugging in Sphere Studio, variables are now sorted alphabetically in
     the Debugger pane.
@@ -634,7 +669,7 @@ minisphere (3.0.3) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 5 Apr 2016 00:00:00 -0500
 
-minisphere (3.0.2) trusty; urgency=low
+minisphere (3.0.2) yakkety; urgency=low
 
   * Improves the file API: The FileStream object now includes methods for
     directly reading and writing integers, strings, and floats in addition to
@@ -645,7 +680,7 @@ minisphere (3.0.2) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 1 Apr 2016 00:00:00 -0500
 
-minisphere (3.0.1) trusty; urgency=low
+minisphere (3.0.1) yakkety; urgency=low
 
   * Fixes a bug where running `minisphere` from the command line and giving an
     invalid or nonexistent game path would cause the engine to segfault trying
@@ -661,7 +696,7 @@ minisphere (3.0.1) trusty; urgency=low
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 29 Mar 2016 00:00:00 -0500
 
-minisphere (3.0.0) trusty; urgency=low
+minisphere (3.0.0) yakkety; urgency=low
 
   * The Windows redistributable and GDK downloads have been combined into a single
     installer.  The engine is so compact that there's nothing gained from having
