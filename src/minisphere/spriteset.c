@@ -205,7 +205,12 @@ spriteset_load(const char* filename)
 		}
 		break;
 	case 2: // RSSv2, requires 2 passes
-		// pass 1 - prepare structures, calculate number of images
+		// note: RSSv2 is technically possible to load in a single pass, but we'd have
+		//       to give up the sprite atlas.  the problem is that we don't know how
+		//       many images there are without actually reading the direction headers,
+		//       so we can't allocate the atlas yet.
+
+		// pass 1 - allocate poses, calculate number of images
 		v2_data_offset = sfs_ftell(file);
 		num_images = 0;
 		for (i = 0; i < rss.num_directions; ++i) {
@@ -227,7 +232,7 @@ spriteset_load(const char* filename)
 			}
 		}
 
-		// pass 2 - read images and frame data
+		// pass 2 - load images and frame data
 		if (!(atlas = atlas_new(num_images, max_width, max_height)))
 			goto on_error;
 		sfs_fseek(file, v2_data_offset, SFS_SEEK_SET);
