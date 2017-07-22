@@ -3169,11 +3169,16 @@ static duk_ret_t
 js_Shape_get_texture(duk_context* ctx)
 {
 	shape_t* shape;
+	image_t* texture;
 
 	duk_push_this(ctx);
 	shape = duk_require_class_obj(ctx, -1, "Shape");
 
-	duk_push_class_obj(ctx, "Texture", image_ref(shape_get_texture(shape)));
+	texture = shape_get_texture(shape);
+	if (texture != NULL)
+		duk_push_class_obj(ctx, "Texture", image_ref(texture));
+	else
+		duk_push_null(ctx);
 	return 1;
 }
 
@@ -3208,11 +3213,12 @@ static duk_ret_t
 js_Shape_set_texture(duk_context* ctx)
 {
 	shape_t* shape;
-	image_t* texture;
+	image_t* texture = NULL;
 
 	duk_push_this(ctx);
 	shape = duk_require_class_obj(ctx, -1, "Shape");
-	texture = duk_require_class_obj(ctx, 0, "Texture");
+	if (!duk_is_null(ctx, 0))
+		texture = duk_require_class_obj(ctx, 0, "Texture");
 
 	shape_set_texture(shape, texture);
 	return 0;

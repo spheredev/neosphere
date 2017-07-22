@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Fixes a bug where reading `Shape#texture` from a shape with no assigned
+  texture is not handled properly and may cause the engine to crash.
+
+
 v4.7.0 - July 20, 2017
 ----------------------
 
