@@ -91,7 +91,7 @@ main(int argc, char* argv[])
 	if (parse_command_line(argc, argv, &g_game_path,
 		&use_fullscreen, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))
 	{
-		initialize_console(use_verbosity);
+		console_init(use_verbosity);
 	}
 	else
 		return EXIT_FAILURE;

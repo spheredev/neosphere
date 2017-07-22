@@ -1034,7 +1034,7 @@ duk_require_rgba_lut(duk_context* ctx, duk_idx_t index)
 }
 
 static void
-apply_blend_mode(int blend_mode)
+use_sphere_blend_mode(int blend_mode)
 {
 	switch (blend_mode) {
 	case BLEND_BLEND:
@@ -1062,7 +1062,7 @@ apply_blend_mode(int blend_mode)
 }
 
 static void
-reset_blender(void)
+reset_blend_modes(void)
 {
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 }
@@ -3425,17 +3425,19 @@ js_Font_drawZoomedText(duk_context* ctx)
 
 	if (screen_is_skipframe(g_screen))
 		return 0;
+	
+	// render the text to a texture so we can scale it up.  not the most
+	// efficient way to do it, sure, but it gets the job done.
 	width = font_get_width(font, text);
 	height = font_height(font);
 	bitmap = al_create_bitmap(width, height);
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(bitmap);
-	apply_blend_mode(BLEND_REPLACE);
 	font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
 	al_set_target_bitmap(old_target);
+	
 	galileo_reset();
 	al_draw_scaled_bitmap(bitmap, 0, 0, width, height, x, y, width * scale, height * scale, 0x0);
-	reset_blender();
 	al_destroy_bitmap(bitmap);
 	return 0;
 }
@@ -4761,9 +4763,9 @@ js_Surface_bezierCurve(duk_context* ctx)
 	for (i = 0; i < num_points; ++i)
 		vertices[i].color = nativecolor(color);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
-	reset_blender();
+	reset_blend_modes();
 	free(vertices);
 	return 0;
 }
@@ -4804,9 +4806,9 @@ js_Surface_blitMaskSurface(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1); duk_pop(ctx);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_tinted_bitmap(image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -4826,9 +4828,9 @@ js_Surface_blitSurface(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_bitmap(image_bitmap(src_image), x, y, 0x0);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -4911,9 +4913,9 @@ js_Surface_drawText(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "\xFF" "color_mask");
 	color = duk_require_sphere_color(ctx, -1);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -4934,9 +4936,9 @@ js_Surface_filledCircle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_filled_circle(x, y, radius, nativecolor(color));
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -4958,9 +4960,9 @@ js_Surface_filledEllipse(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 	
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_filled_ellipse(x, y, rx, ry, nativecolor(color));
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5050,9 +5052,9 @@ js_Surface_gradientCircle(duk_context* ctx)
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5095,9 +5097,9 @@ js_Surface_gradientEllipse(duk_context* ctx)
 	s_vbuf[i + 1].z = 0;
 	s_vbuf[i + 1].color = nativecolor(out_color);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5129,9 +5131,9 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	};
 	galileo_reset();
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5170,9 +5172,9 @@ js_Surface_gradientLine(duk_context* ctx)
 		{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) }
 	};
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5194,9 +5196,9 @@ js_Surface_line(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5244,13 +5246,13 @@ js_Surface_lineSeries(duk_context* ctx)
 		vertices[i].color = vtx_color;
 	}
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
 		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
 		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
 		: ALLEGRO_PRIM_LINE_LIST
 	);
-	reset_blender();
+	reset_blend_modes();
 	free(vertices);
 	return 0;
 }
@@ -5272,9 +5274,9 @@ js_Surface_outlinedCircle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5296,9 +5298,9 @@ js_Surface_outlinedEllipse(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5339,9 +5341,9 @@ js_Surface_pointSeries(duk_context* ctx)
 		vertices[i].color = vtx_color;
 	}
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
-	reset_blender();
+	reset_blend_modes();
 	free(vertices);
 	return 0;
 }
@@ -5366,9 +5368,9 @@ js_Surface_outlinedRectangle(duk_context* ctx)
 	blend_mode = duk_get_int(ctx, -1);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5464,10 +5466,10 @@ js_Surface_rotateBlitMaskSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_tinted_rotated_bitmap(image_bitmap(source_image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5495,9 +5497,9 @@ js_Surface_rotateBlitSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_rotated_bitmap(image_bitmap(source_image), width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5520,9 +5522,9 @@ js_Surface_rectangle(duk_context* ctx)
 
 	galileo_reset();
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5633,7 +5635,7 @@ js_Surface_transformBlitMaskSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(mask) },
 		{ x2, y2, 0, width, 0, nativecolor(mask) },
@@ -5641,7 +5643,7 @@ js_Surface_transformBlitMaskSurface(duk_context* ctx)
 		{ x3, y3, 0, width, height, nativecolor(mask) },
 	};
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5673,7 +5675,7 @@ js_Surface_transformBlitSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, al_map_rgba(255, 255, 255, 255) },
 		{ x2, y2, 0, width, 0, al_map_rgba(255, 255, 255, 255) },
@@ -5681,7 +5683,7 @@ js_Surface_transformBlitSurface(duk_context* ctx)
 		{ x3, y3, 0, width, height, al_map_rgba(255, 255, 255, 255) },
 	};
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5711,12 +5713,12 @@ js_Surface_zoomBlitMaskSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_tinted_scaled_bitmap(image_bitmap(source_image),
 		nativecolor(mask),
 		0, 0, width, height, x, y, width * scale, height * scale,
 		0x0);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 
@@ -5744,11 +5746,11 @@ js_Surface_zoomBlitSurface(duk_context* ctx)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
+	use_sphere_blend_mode(blend_mode);
 	al_draw_scaled_bitmap(image_bitmap(source_image),
 		0, 0, width, height, x, y, width * scale, height * scale,
 		0x0);
-	reset_blender();
+	reset_blend_modes();
 	return 0;
 }
 

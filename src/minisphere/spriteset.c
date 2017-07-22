@@ -187,7 +187,7 @@ spriteset_load(const char* filename)
 	spriteset->base.y2 = rss.base_y2;
 	normalize_rect(&spriteset->base);
 	switch (rss.version) {
-	case 1: // RSSv1: very simple, 
+	case 1: // RSSv1: very simple, 8 directions of 8 frames each
 		if (!(atlas = atlas_new(rss.num_images, rss.frame_width, rss.frame_height)))
 			goto on_error;
 		atlas_lock(atlas);
@@ -204,13 +204,12 @@ spriteset_load(const char* filename)
 				spriteset_add_frame(spriteset, DEFAULT_POSE_NAMES[i], j + i * 8, 8);
 		}
 		break;
-	case 2: // RSSv2, requires 2 passes
+	case 2: // RSSv2: requires 2 passes
+		// pass 1 - allocate poses, calculate number of images
 		// note: RSSv2 is technically possible to load in a single pass, but we'd have
 		//       to give up the sprite atlas.  the problem is that we don't know how
 		//       many images there are without actually reading the direction headers,
 		//       so we can't allocate the atlas yet.
-
-		// pass 1 - allocate poses, calculate number of images
 		v2_data_offset = sfs_ftell(file);
 		num_images = 0;
 		for (i = 0; i < rss.num_directions; ++i) {
@@ -257,7 +256,7 @@ spriteset_load(const char* filename)
 		atlas_unlock(atlas);
 		atlas_free(atlas);
 		break;
-	case 3: // RSSv3, can be done in a single pass thankfully
+	case 3: // RSSv3: can be done in a single pass thankfully
 		if (!(atlas = atlas_new(rss.num_images, rss.frame_width, rss.frame_height)))
 			goto on_error;
 		atlas_lock(atlas);

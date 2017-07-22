@@ -181,7 +181,7 @@ server_new(const char* hostname, int port, size_t buffer_size, int max_backlog)
 
 	console_log(2, "creating server #%u on %s:%d", s_next_server_id, hostname, port);
 	if (max_backlog > 0)
-		console_log(3, "    backlog size: %i", max_backlog);
+		console_log(3, "    backlog size: %d", max_backlog);
 
 	server = calloc(1, sizeof(server_t));
 	server->buffer_size = buffer_size;
@@ -283,7 +283,7 @@ on_dyad_accept(dyad_Event* e)
 
 	new_backlog_len = server->num_backlog + 1;
 	if (new_backlog_len <= server->max_backlog) {
-		console_log(4, "taking connection from %s:%i on server #%u",
+		console_log(4, "taking connection from %s:%d on server #%u",
 			dyad_getAddress(e->remote), dyad_getPort(e->remote), server->id);
 		server->backlog[server->num_backlog++] = e->remote;
 	}

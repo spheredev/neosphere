@@ -1461,7 +1461,7 @@ update_map_engine(bool in_main_loop)
 			last_trigger = s_current_trigger;
 			s_current_trigger = index;
 			s_on_trigger = trigger;
-			if (trigger)
+			if (trigger != NULL)
 				script_run(trigger->script, false);
 			s_current_trigger = last_trigger;
 		}

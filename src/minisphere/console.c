@@ -4,15 +4,9 @@
 static int s_verbosity = 1;
 
 void
-initialize_console(int verbosity)
+console_init(int verbosity)
 {
 	s_verbosity = verbosity;
-}
-
-int
-get_log_verbosity(void)
-{
-	return s_verbosity;
 }
 
 void
