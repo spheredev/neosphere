@@ -613,6 +613,7 @@ stream_new(int frequency, int bits, int channels)
 	if (!(stream->ptr = al_create_audio_stream(4, 1024, frequency, depth_flag, conf)))
 		goto on_error;
 	al_set_audio_stream_playing(stream->ptr, false);
+	al_register_event_source(g_events, al_get_audio_stream_event_source(stream->ptr));
 
 	// allocate an initial stream buffer
 	sample_size = bits == 8 ? 1
