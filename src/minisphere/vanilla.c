@@ -1865,14 +1865,14 @@ js_CreateStringFromByteArray(duk_context* ctx)
 static duk_ret_t
 js_CreateStringFromCode(duk_context* ctx)
 {
-	int code = duk_to_int(ctx, 0);
+	int  code;
 
-	char cstr[2];
+	code = duk_to_int(ctx, 0);
 
 	if (code < 0 || code > 255)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "character code is out of ASCII range (%i)", code);
-	cstr[0] = (char)code; cstr[1] = '\0';
-	duk_push_string(ctx, cstr);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ASCII character code");
+
+	duk_push_sprintf(ctx, "%c", code);
 	return 1;
 }
 
@@ -4122,7 +4122,7 @@ js_Socket_read(duk_context* ctx)
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
 
 	if (length <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "must read at least 1 byte (got: %i)", length);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
 	if (!v1_socket_connected(socket))
@@ -4650,9 +4650,9 @@ js_Surface_applyColorFX(duk_context* ctx)
 	matrix = duk_require_sphere_colormatrix(ctx, 4);
 
 	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "area of effect extends past image (%i,%i,%i,%i)", x, y, width, height);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "FX area of effect out of bounds");
 	if (!image_apply_colormat(image, matrix, x, y, width, height))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to apply transformation");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't apply color FX");
 	return 0;
 }
 
@@ -4674,9 +4674,9 @@ js_Surface_applyColorFX4(duk_context* ctx)
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "FX area of effect out of bounds");
 	if (!image_apply_colormat_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to apply transformation");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't apply color FX");
 	return 0;
 }
 
@@ -4698,9 +4698,9 @@ js_Surface_applyLookup(duk_context* ctx)
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "area of effect extends past image (%i,%i,%i,%i)", x, y, w, h);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "FX area of effect out of bounds");
 	if (!image_apply_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to apply lookup transformation");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't apply color FX");
 	free(red_lu);
 	free(green_lu);
 	free(blue_lu);
@@ -5008,7 +5008,7 @@ js_Surface_getPixel(duk_context* ctx)
 	width = image_width(image);
 	height = image_height(image);
 	if (x < 0 || x >= width || y < 0 || y >= height)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "X/Y out of range (%i,%i) for %ix%i surface", x, y, width, height);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "X/Y out of bounds");
 	pixel = image_get_pixel(image, x, y);
 	duk_push_sphere_color(ctx, pixel);
 	return 1;

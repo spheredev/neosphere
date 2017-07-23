@@ -152,7 +152,7 @@ fs_new(const char* game_path)
 	fs_get_resolution(fs, &res_x, &res_y);
 	console_log(1, "         title: %s", fs_name(fs));
 	console_log(1, "        author: %s", fs_author(fs));
-	console_log(1, "    resolution: %ix%i", res_x, res_y);
+	console_log(1, "    resolution: %dx%d", res_x, res_y);
 	console_log(1, "       save ID: %s", fs_save_id(fs));
 
 	// load the source map

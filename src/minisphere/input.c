@@ -366,7 +366,7 @@ kb_load_keymap(void)
 			: j == PLAYER_KEY_Y ? "Y"
 			: j == PLAYER_KEY_MENU ? "MENU"
 			: "8:12";
-		setting = lstr_newf("keymap_Player%i_%s", i + 1, key_name);
+		setting = lstr_newf("keymap_Player%d_%s", i + 1, key_name);
 		s_key_map[i][j] = kev_read_float(file, lstr_cstr(setting), s_default_key_map[i][j]);
 		lstr_free(setting);
 	}
@@ -397,7 +397,7 @@ kb_save_keymap(void)
 			: j == PLAYER_KEY_Y ? "Y"
 			: j == PLAYER_KEY_MENU ? "MENU"
 			: "8:12";
-		setting = lstr_newf("keymap_Player%i_%s", i + 1, key_name);
+		setting = lstr_newf("keymap_Player%d_%s", i + 1, key_name);
 		kev_write_float(file, lstr_cstr(setting), s_key_map[i][j]);
 		lstr_free(setting);
 	}

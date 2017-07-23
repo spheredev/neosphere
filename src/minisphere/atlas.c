@@ -20,7 +20,7 @@ atlas_new(int num_images, int max_width, int max_height)
 {
 	atlas_t* atlas;
 
-	console_log(4, "creating atlas #%u at %ix%i per image", s_next_atlas_id,
+	console_log(4, "creating atlas #%u at %dx%d per image", s_next_atlas_id,
 		max_width, max_height);
 	
 	atlas = calloc(1, sizeof(atlas_t));

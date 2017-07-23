@@ -188,8 +188,8 @@ mixer_new(int frequency, int bits, int channels)
 	ALLEGRO_AUDIO_DEPTH  depth;
 	mixer_t*             mixer;
 
-	console_log(2, "creating new mixer #%u at %i kHz", s_next_mixer_id, frequency / 1000);
-	console_log(3, "    format: %ich %i Hz, %i-bit", channels, frequency, bits);
+	console_log(2, "creating new mixer #%u at %d kHz", s_next_mixer_id, frequency / 1000);
+	console_log(3, "    format: %dch %d Hz, %d-bit", channels, frequency, bits);
 
 	conf = channels == 2 ? ALLEGRO_CHANNEL_CONF_2
 		: channels == 3 ? ALLEGRO_CHANNEL_CONF_3
@@ -593,8 +593,8 @@ stream_new(int frequency, int bits, int channels)
 	size_t               sample_size;
 	stream_t*            stream;
 
-	console_log(2, "creating new stream #%u at %i kHz", s_next_stream_id, frequency / 1000);
-	console_log(3, "    format: %ich %i Hz, %i-bit", channels, frequency, bits);
+	console_log(2, "creating new stream #%u at %d kHz", s_next_stream_id, frequency / 1000);
+	console_log(3, "    format: %dch %d Hz, %d-bit", channels, frequency, bits);
 
 	stream = calloc(1, sizeof(stream_t));
 

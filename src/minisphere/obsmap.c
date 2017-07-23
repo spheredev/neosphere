@@ -42,7 +42,7 @@ obsmap_add_line(obsmap_t* obsmap, rect_t line)
 	int    new_size;
 	rect_t *line_list;
 	
-	console_log(4, "adding line segment (%i,%i)-(%i,%i) to obstruction map #%u",
+	console_log(4, "adding line segment (%d,%d)-(%d,%d) to obstruction map #%u",
 		line.x1, line.y1, line.x2, line.y2, obsmap->id);
 	
 	if (obsmap->num_lines + 1 > obsmap->max_lines) {

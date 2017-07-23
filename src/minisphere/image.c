@@ -33,7 +33,7 @@ image_new(int width, int height)
 {
 	image_t* image;
 
-	console_log(3, "creating image #%u at %ix%i", s_next_image_id, width, height);
+	console_log(3, "creating image #%u at %dx%d", s_next_image_id, width, height);
 	image = calloc(1, sizeof(image_t));
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
@@ -55,7 +55,7 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 {
 	image_t* image;
 
-	console_log(3, "creating image #%u as %ix%i subimage of image #%u", s_next_image_id, width, height, parent->id);
+	console_log(3, "creating image #%u as %dx%d subimage of image #%u", s_next_image_id, width, height, parent->id);
 	image = calloc(1, sizeof(image_t));
 	if (!(image->bitmap = al_create_sub_bitmap(parent->bitmap, x, y, width, height)))
 		goto on_error;
@@ -162,7 +162,7 @@ image_read(sfs_file_t* file, int width, int height)
 
 	int i_y;
 
-	console_log(3, "reading %ix%i image #%u from open file", width, height, s_next_image_id);
+	console_log(3, "reading %dx%d image #%u from open file", width, height, s_next_image_id);
 	image = calloc(1, sizeof(image_t));
 	file_pos = sfs_ftell(file);
 	if (!(image->bitmap = al_create_bitmap(width, height))) goto on_error;
@@ -705,7 +705,7 @@ image_write(image_t* it, sfs_file_t* file)
 
 	int i_y;
 
-	console_log(3, "writing %ix%i image #%u to open file", it->width, it->height, it->id);
+	console_log(3, "writing %dx%d image #%u to open file", it->width, it->height, it->id);
 	if (!(lock = image_lock(it)))
 		goto on_error;
 	line_size = it->width * 4;

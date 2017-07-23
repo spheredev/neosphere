@@ -16,7 +16,7 @@ bytearray_new(int size)
 {
 	bytearray_t* array;
 	
-	console_log(3, "creating new bytearray #%u size %i bytes",
+	console_log(3, "creating new bytearray #%u size %d bytes",
 		size, s_next_array_id);
 	
 	array = calloc(1, sizeof(bytearray_t));
@@ -37,7 +37,7 @@ bytearray_from_buffer(const void* buffer, int size)
 {
 	bytearray_t* array;
 
-	console_log(3, "creating bytearray from %i-byte buffer", size);
+	console_log(3, "creating bytearray from %d-byte buffer", size);
 	
 	if (!(array = bytearray_new(size)))
 		return NULL;
@@ -235,7 +235,7 @@ bytearray_slice(bytearray_t* array, int start, int length)
 {
 	bytearray_t* new_array;
 
-	console_log(3, "copying %i-byte slice from bytearray #%u", length, array->id);
+	console_log(3, "copying %d-byte slice from bytearray #%u", length, array->id);
 	
 	if (!(new_array = bytearray_new(length)))
 		return NULL;

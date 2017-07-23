@@ -1744,7 +1744,7 @@ js_SetPersonFrameNext(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (frames < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "delay must be positive (got: %i)", frames);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid delay value");
 	person->anim_frames = frames;
 	person->revert_frames = person->revert_delay;
 	return 0;
@@ -1761,7 +1761,7 @@ js_SetPersonFrameRevert(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (frames < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "delay must be positive (got: %i)", frames);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid delay value");
 	person->revert_delay = frames;
 	person->revert_frames = person->revert_delay;
 	return 0;
@@ -1869,7 +1869,7 @@ js_SetPersonScaleAbsolute(duk_context* ctx)
 	if ((person = find_person(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (width < 0 || height < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "scale must be positive (got W: %i, H: %i)", width, height);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid scale dimensions");
 	spriteset = get_person_spriteset(person);
 	sprite_w = spriteset_width(spriteset);
 	sprite_h = spriteset_height(spriteset);
@@ -2056,7 +2056,7 @@ js_SetTalkDistance(duk_context* ctx)
 	int pixels = duk_to_int(ctx, 0);
 
 	if (pixels < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "distance must be positive (got: %i)", pixels);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid talk distance");
 	s_talk_distance = pixels;
 	return 0;
 }
