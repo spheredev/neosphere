@@ -4,6 +4,10 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Fixes a long-standing bug where getting caught in an infinite loop prevents
+  the engine from responding to debugger commands.
+* Fixes a bug where delays, including those from normal frame rate limiting,
+  cause actively playing SoundStreams to starve, leading to stuttering.
 * Fixes a bug where reading `Shape#texture` from a shape with no assigned
   texture is not handled properly and may cause the engine to crash.
 
