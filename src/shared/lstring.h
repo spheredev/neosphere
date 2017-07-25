@@ -1,5 +1,5 @@
-#ifndef MINISPHERE__LSTRING_H__INCLUDED
-#define MINISPHERE__LSTRING_H__INCLUDED
+#ifndef FATCERBERUS__LSTRING_H__INCLUDED
+#define FATCERBERUS__LSTRING_H__INCLUDED
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -18,4 +18,4 @@ int         lstr_cmp         (const lstring_t* string1, const lstring_t* string2
 lstring_t*  lstr_dup         (const lstring_t* string);
 size_t      lstr_len         (const lstring_t* string);
 
-#endif // MINISPHERE__LSTRING_H__INCLUDED
+#endif // FATCERBERUS__LSTRING_H__INCLUDED

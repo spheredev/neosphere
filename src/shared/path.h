@@ -1,5 +1,5 @@
-#ifndef MINISPHERE__PATH_H__INCLUDED
-#define MINISPHERE__PATH_H__INCLUDED
+#ifndef FATCERBERUS__PATH_H__INCLUDED
+#define FATCERBERUS__PATH_H__INCLUDED
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -37,4 +37,4 @@ path_t*     path_set           (path_t* path, const char* pathname);
 path_t*     path_set_dir       (path_t* path, const char* pathname);
 path_t*     path_strip         (path_t* path);
 
-#endif // MINISPHERE__PATH_H__INCLUDED
+#endif // FATCERBERUS__PATH_H__INCLUDED

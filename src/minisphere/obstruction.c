@@ -1,5 +1,5 @@
 #include "minisphere.h"
-#include "obsmap.h"
+#include "obstruction.h"
 
 struct obsmap
 {
@@ -72,6 +72,8 @@ obsmap_test_line(const obsmap_t* obsmap, rect_t line)
 bool
 obsmap_test_rect(const obsmap_t* obsmap, rect_t rect)
 {
+	// this treats `rect` as hollow, which differs from the usual treatment of rectangles
+	// in the engine but matches the behavior of Sphere 1.x.
 	return obsmap_test_line(obsmap, new_rect(rect.x1, rect.y1, rect.x2, rect.y1))
 		|| obsmap_test_line(obsmap, new_rect(rect.x2, rect.y1, rect.x2, rect.y2))
 		|| obsmap_test_line(obsmap, new_rect(rect.x1, rect.y2, rect.x2, rect.y2))

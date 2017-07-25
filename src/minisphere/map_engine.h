@@ -1,7 +1,7 @@
 #ifndef MINISPHERE__MAP_ENGINE_H__INCLUDED
 #define MINISPHERE__MAP_ENGINE_H__INCLUDED
 
-#include "obsmap.h"
+#include "obstruction.h"
 #include "persons.h"
 #include "tileset.h"
 

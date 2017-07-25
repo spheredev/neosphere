@@ -6,7 +6,7 @@
 #include "color.h"
 #include "image.h"
 #include "input.h"
-#include "obsmap.h"
+#include "obstruction.h"
 #include "persons.h"
 #include "script.h"
 #include "tileset.h"

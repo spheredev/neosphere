@@ -1,5 +1,5 @@
-#ifndef MINISPHERE__UNICODE_H__INCLUDED
-#define MINISPHERE__UNICODE_H__INCLUDED
+#ifndef FATCERBERUS__UNICODE_H__INCLUDED
+#define FATCERBERUS__UNICODE_H__INCLUDED
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -24,4 +24,4 @@ utf8_ret_t     utf8_decode_end   (utf8_decode_t* cx);
 utf8_ret_t     utf8_decode_next  (utf8_decode_t* cx, uint8_t byte, uint32_t *out_codepoint);
 size_t         utf8_emit         (uint32_t codep, uint8_t* *p_ptr);
 
-#endif // MINISPHERE__UNICODE_H__INCLUDED
+#endif // FATCERBERUS__UNICODE_H__INCLUDED

@@ -1,5 +1,5 @@
-#ifndef MINISPHERE__XOROSHIRO_H__INCLUDED
-#define MINISPHERE__XOROSHIRO_H__INCLUDED
+#ifndef FATCERBERUS__XOROSHIRO_H__INCLUDED
+#define FATCERBERUS__XOROSHIRO_H__INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -16,4 +16,4 @@ uint64_t xoro_gen_uint   (xoro_t* xoro);
 void     xoro_jump       (xoro_t* xoro);
 void     xoro_reseed     (xoro_t* xoro, uint64_t seed);
 
-#endif // MINISPHERE__XOROSHIRO_H__INCLUDED
+#endif // FATCERBERUS__XOROSHIRO_H__INCLUDED

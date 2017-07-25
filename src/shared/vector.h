@@ -1,5 +1,5 @@
-#ifndef MINISPHERE__VECTOR_H__INCLUDED
-#define MINISPHERE__VECTOR_H__INCLUDED
+#ifndef FATCERBERUS__VECTOR_H__INCLUDED
+#define FATCERBERUS__VECTOR_H__INCLUDED
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -30,4 +30,4 @@ iter_t vector_enum (vector_t* vector);
 void*  vector_next (iter_t* inout_iter);
 void   iter_remove (iter_t* iter);
 
-#endif // MINISPHERE__VECTOR_H__INCLUDED
+#endif // FATCERBERUS__VECTOR_H__INCLUDED

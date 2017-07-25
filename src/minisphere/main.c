@@ -43,7 +43,8 @@ path_t*              g_last_game_path = NULL;
 screen_t*            g_screen = NULL;
 kevfile_t*           g_sys_conf;
 font_t*              g_sys_font = NULL;
-int                  g_res_x, g_res_y;
+int                  g_res_x;
+int                  g_res_y;
 
 static jmp_buf s_jmp_exit;
 static jmp_buf s_jmp_restart;

@@ -4,7 +4,7 @@
 #include "api.h"
 #include "color.h"
 #include "map_engine.h"
-#include "obsmap.h"
+#include "obstruction.h"
 #include "spriteset.h"
 #include "vanilla.h"
 
