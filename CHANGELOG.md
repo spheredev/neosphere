@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Fixes a bug where stepping over a `Dispatch.now()` with SSj sometimes locks
+  up the engine and prevents it from responding to further debugger commands.
+
+
 v4.7.1 - July 24, 2017
 ----------------------
 

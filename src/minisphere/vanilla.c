@@ -1246,7 +1246,7 @@ js_GetKey(duk_context* ctx)
 {
 	while (kb_queue_len() == 0) {
 		delay(0.05);
-		do_events();
+		do_events(false);
 	}
 	duk_push_int(ctx, kb_get_key());
 	return 1;
@@ -1337,7 +1337,7 @@ js_GetMouseWheelEvent(duk_context* ctx)
 	do {
 		while (mouse_queue_len() == 0) {
 			delay(0.05);
-			do_events();
+			do_events(false);
 		}
 		event = mouse_get_event();
 	} while (event.key != MOUSE_KEY_WHEEL_UP && event.key != MOUSE_KEY_WHEEL_DOWN);
@@ -1930,7 +1930,7 @@ js_Delay(duk_context* ctx)
 static duk_ret_t
 js_DoEvents(duk_context* ctx)
 {
-	do_events();
+	do_events(true);
 	duk_push_boolean(ctx, true);
 	return 1;
 }

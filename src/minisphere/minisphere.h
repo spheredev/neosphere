@@ -72,6 +72,6 @@ extern int                  g_res_y;
 
 no_return abort_game        (const char* message);
 void      delay             (double time);
-void      do_events         (void);
+void      do_events         (bool allow_dispatch);
 no_return exit_game         (bool force_shutdown);
 no_return restart_engine    (void);

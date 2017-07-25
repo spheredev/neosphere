@@ -1228,7 +1228,7 @@ js_Sphere_restart(duk_context* ctx)
 static duk_ret_t
 js_Sphere_run(duk_context* ctx)
 {
-	do_events();
+	do_events(true);
 	duk_push_boolean(ctx, true);
 	return 1;
 }

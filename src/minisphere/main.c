@@ -323,12 +323,12 @@ delay(double time)
 		time_left = end_time - al_get_time();
 		if (time_left > 0.001)  // engine may stall with < 1ms timeout
 			al_wait_for_event_timed(g_events, NULL, time_left);
-		do_events();
+		do_events(false);
 	} while (al_get_time() < end_time);
 }
 
 void
-do_events(void)
+do_events(bool allow_dispatch)
 {
 	ALLEGRO_EVENT event;
 
@@ -338,7 +338,8 @@ do_events(void)
 	debugger_update();
 #endif
 
-	async_run_jobs(ASYNC_TICK);
+	if (allow_dispatch)
+		async_run_jobs(ASYNC_TICK);
 	update_input();
 	audio_update();
 
