@@ -47,8 +47,8 @@ static duk_ret_t js_FS_writeFile            (duk_context* ctx);
 static duk_ret_t js_new_FileStream          (duk_context* ctx);
 static duk_ret_t js_FileStream_finalize     (duk_context* ctx);
 static duk_ret_t js_FileStream_dispose      (duk_context* ctx);
+static duk_ret_t js_FileStream_get_fileSize (duk_context* ctx);
 static duk_ret_t js_FileStream_get_position (duk_context* ctx);
-static duk_ret_t js_FileStream_get_size     (duk_context* ctx);
 static duk_ret_t js_FileStream_set_position (duk_context* ctx);
 static duk_ret_t js_FileStream_read         (duk_context* ctx);
 static duk_ret_t js_FileStream_write        (duk_context* ctx);
@@ -139,8 +139,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
 	api_define_class(ctx, "FileStream", js_new_FileStream, js_FileStream_finalize);
+	api_define_property(ctx, "FileStream", "fileSize", js_FileStream_get_fileSize, NULL);
 	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
-	api_define_property(ctx, "FileStream", "size", js_FileStream_get_size, NULL);
 	api_define_method(ctx, "FileStream", "dispose", js_FileStream_dispose);
 	api_define_method(ctx, "FileStream", "read", js_FileStream_read);
 	api_define_method(ctx, "FileStream", "write", js_FileStream_write);
@@ -1273,7 +1273,7 @@ js_FileStream_get_position(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FileStream_get_size(duk_context* ctx)
+js_FileStream_get_fileSize(duk_context* ctx)
 {
 	FILE* file;
 	long  file_pos;

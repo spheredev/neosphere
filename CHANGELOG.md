@@ -4,6 +4,7 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Renames `FileStream#size` to `FileStream#fileSize`.
 * Fixes a bug where stepping over a `Dispatch.now()` with SSj sometimes locks
   up the engine and prevents it from responding to further debugger commands.
 
