@@ -504,7 +504,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\minisphere\async.c" />
     <ClCompile Include="..\src\minisphere\atlas.c" />
     <ClCompile Include="..\src\minisphere\audio.c" />
-    <ClCompile Include="..\src\minisphere\bytearray.c" />
+    <ClCompile Include="..\src\minisphere\byte_array.c" />
     <ClCompile Include="..\src\minisphere\color.c" />
     <ClCompile Include="..\src\minisphere\console.c" />
     <ClCompile Include="..\src\minisphere\debugger.c" />
@@ -550,7 +550,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\minisphere\async.h" />
     <ClInclude Include="..\src\minisphere\atlas.h" />
     <ClInclude Include="..\src\minisphere\audio.h" />
-    <ClInclude Include="..\src\minisphere\bytearray.h" />
+    <ClInclude Include="..\src\minisphere\byte_array.h" />
     <ClInclude Include="..\src\minisphere\color.h" />
     <ClInclude Include="..\src\minisphere\console.h" />
     <ClInclude Include="..\src\minisphere\debugger.h" />

@@ -314,10 +314,10 @@ sphere_abort(const char* message)
 }
 
 no_return
-sphere_exit(bool force_shutdown)
+sphere_exit(bool shutting_down)
 {
-	if (force_shutdown) {
-		free(g_last_game_path);
+	if (shutting_down) {
+		path_free(g_last_game_path);
 		g_last_game_path = NULL;
 	}
 	longjmp(s_jmp_exit, 1);

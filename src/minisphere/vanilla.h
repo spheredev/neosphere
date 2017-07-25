@@ -1,7 +1,7 @@
 #ifndef MINISPHERE__VANILLA_H__INCLUDED
 #define MINISPHERE__VANILLA_H__INCLUDED
 
-#include "bytearray.h"
+#include "byte_array.h"
 #include "spriteset.h"
 
 void initialize_vanilla_api (duk_context* ctx);

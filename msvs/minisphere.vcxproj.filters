@@ -45,9 +45,6 @@
     <ClCompile Include="..\src\minisphere\atlas.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\minisphere\bytearray.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\minisphere\color.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -141,6 +138,9 @@
     <ClCompile Include="..\src\minisphere\obstruction.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\minisphere\byte_array.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -177,9 +177,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\atlas.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\minisphere\bytearray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\color.h">
@@ -279,6 +276,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\obstruction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minisphere\byte_array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

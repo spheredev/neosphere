@@ -9,7 +9,7 @@
 #include "api.h"
 #include "async.h"
 #include "audio.h"
-#include "bytearray.h"
+#include "byte_array.h"
 #include "debugger.h"
 #include "font.h"
 #include "galileo.h"
@@ -2593,7 +2593,7 @@ js_OpenLog(duk_context* ctx)
 	logger_t*   logger;
 
 	filename = duk_require_path(ctx, 0, "logs", true, true);
-	if (!(logger = log_open(filename)))
+	if (!(logger = logger_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open log `%s`", filename);
 	duk_push_class_obj(ctx, "ssLogger", logger);
 	return 1;
@@ -3863,7 +3863,7 @@ js_Logger_finalize(duk_context* ctx)
 	logger_t* logger;
 
 	logger = duk_require_class_obj(ctx, 0, "ssLogger");
-	log_close(logger);
+	logger_free(logger);
 	return 0;
 }
 
@@ -3876,7 +3876,7 @@ js_Logger_beginBlock(duk_context* ctx)
 
 	duk_push_this(ctx);
 	logger = duk_require_class_obj(ctx, -1, "ssLogger");
-	if (!log_begin_block(logger, title))
+	if (!logger_begin_block(logger, title))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new log block");
 	return 0;
 }
@@ -3888,7 +3888,7 @@ js_Logger_endBlock(duk_context* ctx)
 
 	duk_push_this(ctx);
 	logger = duk_require_class_obj(ctx, -1, "ssLogger");
-	log_end_block(logger);
+	logger_end_block(logger);
 	return 0;
 }
 
@@ -3908,7 +3908,7 @@ js_Logger_write(duk_context* ctx)
 
 	duk_push_this(ctx);
 	logger = duk_require_class_obj(ctx, -1, "ssLogger");
-	log_write(logger, NULL, text);
+	logger_write(logger, NULL, text);
 	return 0;
 }
 

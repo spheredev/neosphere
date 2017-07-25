@@ -21,7 +21,7 @@ struct log_block
 static unsigned int s_next_logger_id = 0;
 
 logger_t*
-log_open(const char* filename)
+logger_new(const char* filename)
 {
 	lstring_t* log_entry;
 	logger_t*  logger = NULL;
@@ -40,7 +40,7 @@ log_open(const char* filename)
 	lstr_free(log_entry);
 	
 	logger->id = s_next_logger_id++;
-	return log_ref(logger);
+	return logger_ref(logger);
 
 on_error: // oh no!
 	console_log(2, "failed to open file for logger #%u", s_next_logger_id++);
@@ -49,14 +49,14 @@ on_error: // oh no!
 }
 
 logger_t*
-log_ref(logger_t* logger)
+logger_ref(logger_t* logger)
 {
 	++logger->refcount;
 	return logger;
 }
 
 void
-log_close(logger_t* logger)
+logger_free(logger_t* logger)
 {
 	lstring_t* log_entry;
 	time_t     now;
@@ -75,7 +75,7 @@ log_close(logger_t* logger)
 }
 
 bool
-log_begin_block(logger_t* logger, const char* title)
+logger_begin_block(logger_t* logger, const char* title)
 {
 	lstring_t*        block_name;
 	struct log_block* blocks;
@@ -88,25 +88,25 @@ log_begin_block(logger_t* logger, const char* title)
 		logger->max_blocks = new_count * 2;
 	}
 	if (!(block_name = lstr_newf("%s", title))) return false;
-	log_write(logger, "BEGIN", lstr_cstr(block_name));
+	logger_write(logger, "BEGIN", lstr_cstr(block_name));
 	logger->blocks[logger->num_blocks].name = block_name;
 	++logger->num_blocks;
 	return true;
 }
 
 void
-log_end_block(logger_t* logger)
+logger_end_block(logger_t* logger)
 {
 	lstring_t* block_name;
 	
 	--logger->num_blocks;
 	block_name = logger->blocks[logger->num_blocks].name;
-	log_write(logger, "END", lstr_cstr(block_name));
+	logger_write(logger, "END", lstr_cstr(block_name));
 	lstr_free(block_name);
 }
 
 void
-log_write(logger_t* logger, const char* prefix, const char* text)
+logger_write(logger_t* logger, const char* prefix, const char* text)
 {
 	time_t now;
 	char   timestamp[100];

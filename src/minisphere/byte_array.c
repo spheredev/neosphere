@@ -1,5 +1,5 @@
 #include "minisphere.h"
-#include "bytearray.h"
+#include "byte_array.h"
 
 struct bytearray
 {
@@ -15,18 +15,18 @@ bytearray_t*
 bytearray_new(int size)
 {
 	bytearray_t* array;
-	
-	console_log(3, "creating new bytearray #%u size %d bytes",
+
+	console_log(3, "creating new byte array #%u size %d bytes",
 		size, s_next_array_id);
-	
+
 	array = calloc(1, sizeof(bytearray_t));
 	if (!(array->buffer = calloc(size, 1)))
 		goto on_error;
 	array->size = size;
 	array->id = s_next_array_id++;
-	
+
 	return bytearray_ref(array);
-	
+
 on_error:
 	free(array);
 	return NULL;
@@ -37,12 +37,12 @@ bytearray_from_buffer(const void* buffer, int size)
 {
 	bytearray_t* array;
 
-	console_log(3, "creating bytearray from %d-byte buffer", size);
-	
+	console_log(3, "creating byte array from %d-byte buffer", size);
+
 	if (!(array = bytearray_new(size)))
 		return NULL;
 	memcpy(array->buffer, buffer, size);
-	
+
 	return array;
 }
 
@@ -51,15 +51,15 @@ bytearray_from_lstring(const lstring_t* string)
 {
 	bytearray_t* array;
 
-	console_log(3, "creating bytearray from %u-byte string", lstr_len(string));
-	
+	console_log(3, "creating byte array from %u-byte string", lstr_len(string));
+
 	if (lstr_len(string) <= 65)  // log short strings only
 		console_log(4, "  String: \"%s\"", lstr_cstr(string));
 	if (lstr_len(string) > INT_MAX) return NULL;
 	if (!(array = bytearray_new((int)lstr_len(string))))
 		return NULL;
 	memcpy(array->buffer, lstr_cstr(string), lstr_len(string));
-	
+
 	return array;
 }
 
@@ -75,8 +75,8 @@ bytearray_free(bytearray_t* array)
 {
 	if (array == NULL || --array->refcount > 0)
 		return;
-	
-	console_log(3, "disposing bytearray #%u no longer in use", array->id);
+
+	console_log(3, "disposing byte array #%u no longer in use", array->id);
 	free(array->buffer);
 	free(array);
 }
@@ -137,9 +137,9 @@ bytearray_deflate(bytearray_t* array, int level)
 	size_t       out_size;
 	z_stream     z;
 
-	console_log(3, "deflating bytearray #%u from source bytearray #%u",
+	console_log(3, "deflating byte array #%u from source byte array #%u",
 		s_next_array_id, array->id);
-	
+
 	memset(&z, 0, sizeof(z_stream));
 	z.next_in = (Bytef*)array->buffer;
 	z.avail_in = array->size;
@@ -188,9 +188,9 @@ bytearray_inflate(bytearray_t* array, int max_size)
 	size_t       out_size;
 	z_stream     z;
 
-	console_log(3, "inflating bytearray #%u from source bytearray #%u",
+	console_log(3, "inflating byte array #%u from source byte array #%u",
 		s_next_array_id, array->id);
-	
+
 	memset(&z, 0, sizeof(z_stream));
 	z.next_in = (Bytef*)array->buffer;
 	z.avail_in = array->size;
@@ -235,8 +235,8 @@ bytearray_slice(bytearray_t* array, int start, int length)
 {
 	bytearray_t* new_array;
 
-	console_log(3, "copying %d-byte slice from bytearray #%u", length, array->id);
-	
+	console_log(3, "copying %d-byte slice from byte array #%u", length, array->id);
+
 	if (!(new_array = bytearray_new(length)))
 		return NULL;
 	memcpy(new_array->buffer, array->buffer + start, length);
