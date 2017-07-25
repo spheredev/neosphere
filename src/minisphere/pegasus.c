@@ -1347,7 +1347,10 @@ js_new_Color(duk_context* ctx)
 	int   num_args;
 	int   obj_index;
 	float r;
-	
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	num_args = duk_get_top(ctx);
 	r = duk_require_number(ctx, 0);
 	g = duk_require_number(ctx, 1);
@@ -1804,6 +1807,9 @@ js_new_Font(duk_context* ctx)
 {
 	const char* filename;
 	font_t*     font;
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
@@ -2317,6 +2323,9 @@ js_new_Mixer(duk_context* ctx)
 	mixer_t* mixer;
 	int      num_args;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	num_args = duk_get_top(ctx);
 	frequency = duk_require_int(ctx, 0);
 	bits = duk_require_int(ctx, 1);
@@ -2381,6 +2390,9 @@ js_new_Model(duk_context* ctx)
 
 	duk_uarridx_t i;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	num_args = duk_get_top(ctx);
 	duk_require_object_coercible(ctx, 0);
 	shader = num_args >= 2
@@ -2397,8 +2409,9 @@ js_new_Model(duk_context* ctx)
 		shape = duk_require_class_obj(ctx, -1, "Shape");
 		model_add_shape(group, shape);
 	}
-	duk_push_class_obj(ctx, "Model", group);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Model", group);
+	return 0;
 }
 
 static duk_ret_t
@@ -2818,8 +2831,9 @@ js_new_RNG(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 	
 	xoro = xoro_new((uint64_t)(al_get_time() * 1000000));
-	duk_push_class_obj(ctx, "RNG", xoro);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "RNG", xoro);
+	return 0;
 }
 
 static duk_ret_t
@@ -2910,6 +2924,9 @@ js_new_Sample(duk_context* ctx)
 	const char* filename;
 	sample_t*   sample;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(sample = sample_new(filename, true)))
@@ -2995,17 +3012,21 @@ js_new_Server(duk_context* ctx)
 	int       port;
 	server_t* server;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	num_args = duk_get_top(ctx);
 	port = duk_require_int(ctx, 0);
 	max_backlog = num_args >= 2 ? duk_require_int(ctx, 1) : 16;
+
 	if (max_backlog <= 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid backlog size", max_backlog);
 
-	if (server = server_new(NULL, port, 1024, max_backlog))
-		duk_push_class_obj(ctx, "Server", server);
-	else
-		duk_push_null(ctx);
-	return 1;
+	if (!(server = server_new(NULL, port, 1024, max_backlog)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create server");
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Server", server);
+	return 0;
 }
 
 static duk_ret_t
@@ -3078,6 +3099,9 @@ js_new_Shader(duk_context* ctx)
 	const char* vs_filename;
 	shader_t*   shader;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	if (!duk_is_object(ctx, 0))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "options must be an object");
 	if (duk_get_prop_string(ctx, 0, "vertex"), !duk_is_string(ctx, -1))
@@ -3093,8 +3117,9 @@ js_new_Shader(duk_context* ctx)
 	duk_pop_2(ctx);
 	if (!(shader = shader_new(vs_filename, fs_filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile shader program");
-	duk_push_class_obj(ctx, "Shader", shader);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Shader", shader);
+	return 0;
 }
 
 static duk_ret_t
@@ -3116,6 +3141,9 @@ js_new_Shape(duk_context* ctx)
 	shape_type_t type;
 	vbo_t*       vbo;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	num_args = duk_get_top(ctx);
 	type = duk_require_int(ctx, 0);
 	if (duk_is_class_obj(ctx, 1, "Texture") || duk_is_null(ctx, 1)) {
@@ -3134,8 +3162,9 @@ js_new_Shape(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ShapeType constant");
 
 	shape = shape_new(vbo, ibo, type, texture);
-	duk_push_class_obj(ctx, "Shape", shape);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Shape", shape);
+	return 0;
 }
 
 static duk_ret_t
@@ -3281,7 +3310,7 @@ js_new_Socket(duk_context* ctx)
 	if (!(socket = socket_new(1024)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create TCP socket");
 	if (hostname != NULL && !socket_connect(socket, hostname, port))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't connect to %s", hostname);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't connect to '%s'", hostname);
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Socket", socket);
 	return 0;
@@ -3434,16 +3463,18 @@ static duk_ret_t
 js_new_Sound(duk_context* ctx)
 {
 	const char* filename;
-	duk_int_t   num_args;
 	sound_t*    sound;
 
-	num_args = duk_get_top(ctx);
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
 	if (!(sound = sound_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load sound `%s`", filename);
-	duk_push_class_obj(ctx, "Sound", sound);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Sound", sound);
+	return 0;
 }
 
 static duk_ret_t
@@ -3670,21 +3701,27 @@ static duk_ret_t
 js_new_SoundStream(duk_context* ctx)
 {
 	stream_t* stream;
-	int       argc;
+	int       num_args;
 	int       frequency;
 	int       bits;
 	int       channels;
 
-	argc = duk_get_top(ctx);
-	frequency = argc >= 1 ? duk_require_int(ctx, 0) : 22050;
-	bits = argc >= 2 ? duk_require_int(ctx, 1) : 8;
-	channels = argc >= 3 ? duk_require_int(ctx, 1) : 1;
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+	
+	num_args = duk_get_top(ctx);
+	frequency = num_args >= 1 ? duk_require_int(ctx, 0) : 22050;
+	bits = num_args >= 2 ? duk_require_int(ctx, 1) : 8;
+	channels = num_args >= 3 ? duk_require_int(ctx, 1) : 1;
+	
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth", bits);
+	
 	if (!(stream = stream_new(frequency, bits, channels)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "stream creation failed");
-	duk_push_class_obj(ctx, "SoundStream", stream);
-	return 1;
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create stream");
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "SoundStream", stream);
+	return 0;
 }
 
 static duk_ret_t
@@ -3783,6 +3820,9 @@ js_new_Surface(duk_context* ctx)
 	image_t*    src_image;
 	int         width, height;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	n_args = duk_get_top(ctx);
 	if (n_args >= 2) {
 		width = duk_require_int(ctx, 0);
@@ -3802,8 +3842,9 @@ js_new_Surface(duk_context* ctx)
 		if (!(image = image_load(filename)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
 	}
-	duk_push_class_obj(ctx, "Surface", image);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Surface", image);
+	return 0;
 }
 
 static duk_ret_t
@@ -3918,6 +3959,9 @@ js_new_Texture(duk_context* ctx)
 
 	int y;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	num_args = duk_get_top(ctx);
 	if (num_args >= 3 && duk_is_class_obj(ctx, 2, "Color")) {
 		// create an Image filled with a single pixel value
@@ -4019,9 +4063,13 @@ js_new_Transform(duk_context* ctx)
 {
 	transform_t* transform;
 
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
 	transform = transform_new();
-	duk_push_class_obj(ctx, "Transform", transform);
-	return 1;
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "Transform", transform);
+	return 0;
 }
 
 static duk_ret_t
