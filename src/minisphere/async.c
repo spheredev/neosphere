@@ -25,7 +25,7 @@ static vector_t* s_recurring;
 void
 async_init(void)
 {
-	console_log(1, "initializing async subsystem");
+	console_log(1, "initializing dispatch manager");
 	s_onetime = vector_new(sizeof(job_t*));
 	s_recurring = vector_new(sizeof(job_t*));
 }
@@ -33,7 +33,7 @@ async_init(void)
 void
 async_uninit(void)
 {
-	console_log(1, "shutting down async subsystem");
+	console_log(1, "shutting down dispatch manager");
 	vector_free(s_onetime);
 	vector_free(s_recurring);
 }

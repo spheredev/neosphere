@@ -1245,8 +1245,8 @@ static duk_ret_t
 js_GetKey(duk_context* ctx)
 {
 	while (kb_queue_len() == 0) {
-		delay(0.05);
-		do_events(false);
+		sphere_sleep(0.05);
+		sphere_run(false);
 	}
 	duk_push_int(ctx, kb_get_key());
 	return 1;
@@ -1336,8 +1336,8 @@ js_GetMouseWheelEvent(duk_context* ctx)
 	
 	do {
 		while (mouse_queue_len() == 0) {
-			delay(0.05);
-			do_events(false);
+			sphere_sleep(0.05);
+			sphere_run(false);
 		}
 		event = mouse_get_event();
 	} while (event.key != MOUSE_KEY_WHEEL_UP && event.key != MOUSE_KEY_WHEEL_DOWN);
@@ -1579,7 +1579,7 @@ js_Abort(duk_context* ctx)
 	filename = duk_get_string(ctx, -1);
 	line_number = duk_get_int(ctx, -2);
 	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
-	abort_game(text);
+	sphere_abort(text);
 }
 
 static duk_ret_t
@@ -1923,14 +1923,14 @@ js_Delay(duk_context* ctx)
 
 	if (timeout < 0.0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid delay timeout");
-	delay(floor(timeout) / 1000);
+	sphere_sleep(floor(timeout) / 1000);
 	return 0;
 }
 
 static duk_ret_t
 js_DoEvents(duk_context* ctx)
 {
-	do_events(true);
+	sphere_run(true);
 	duk_push_boolean(ctx, true);
 	return 1;
 }
@@ -1993,13 +1993,13 @@ js_ExecuteGame(duk_context* ctx)
 	path_rebase(g_game_path, games_path);
 	path_free(games_path);
 
-	restart_engine();
+	sphere_restart();
 }
 
 static duk_ret_t
 js_Exit(duk_context* ctx)
 {
-	exit_game(false);
+	sphere_exit(false);
 }
 
 static duk_ret_t
@@ -2864,7 +2864,7 @@ js_RequireSystemScript(duk_context* ctx)
 static duk_ret_t
 js_RestartGame(duk_context* ctx)
 {
-	restart_engine();
+	sphere_restart();
 }
 
 static duk_ret_t

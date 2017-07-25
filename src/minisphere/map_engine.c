@@ -139,19 +139,17 @@ static duk_ret_t js_UpdateMapEngine         (duk_context* ctx);
 
 static mixer_t*            s_bgm_mixer = NULL;
 static person_t*           s_camera_person = NULL;
-static int                 s_cam_x = 0;
-static int                 s_cam_y = 0;
+static int                 s_camera_x = 0;
+static int                 s_camera_y = 0;
 static color_t             s_color_mask;
-static color_t             s_fade_color_from;
-static color_t             s_fade_color_to;
-static int                 s_fade_frames;
-static int                 s_fade_progress;
-static int                 s_map_corner_x;
-static int                 s_map_corner_y;
 static int                 s_current_trigger = -1;
 static int                 s_current_zone = -1;
 static script_t*           s_def_scripts[MAP_SCRIPT_MAX];
 static bool                s_exiting = false;
+static color_t             s_fade_color_from;
+static color_t             s_fade_color_to;
+static int                 s_fade_frames;
+static int                 s_fade_progress;
 static int                 s_framerate = 0;
 static unsigned int        s_frames = 0;
 static bool                s_is_map_running = false;
@@ -1098,8 +1096,8 @@ change_map(const char* filename, bool preserve_persons)
 	}
 
 	// set camera over starting position
-	s_cam_x = s_map->origin.x;
-	s_cam_y = s_map->origin.y;
+	s_camera_x = s_map->origin.x;
+	s_camera_y = s_map->origin.y;
 
 	// start up map BGM (if same as previous, leave alone)
 	if (s_map->bgm_file == NULL && s_map_bgm_stream != NULL) {
@@ -1348,7 +1346,7 @@ render_map(void)
 		layer_width = layer->width * tile_width;
 		layer_height = layer->height * tile_height;
 		off_x = 0; off_y = 0;
-		map_screen_to_layer(z, s_cam_x, s_cam_y, &off_x, &off_y);
+		map_screen_to_layer(z, s_camera_x, s_camera_y, &off_x, &off_y);
 
 		// render person reflections if layer is reflective
 		al_hold_bitmap_drawing(true);
@@ -1435,16 +1433,16 @@ update_map_engine(bool in_main_loop)
 	// update camera
 	if (s_camera_person != NULL) {
 		get_person_xy(s_camera_person, &x, &y, true);
-		s_cam_x = x; s_cam_y = y;
+		s_camera_x = x; s_camera_y = y;
 	}
 
 	// run edge script if the camera has moved past the edge of the map
 	// note: only applies for non-repeating maps
 	if (in_main_loop && !s_map->is_repeating) {
-		script_type = s_cam_y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
-			: s_cam_x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
-			: s_cam_y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
-			: s_cam_x < 0 ? MAP_SCRIPT_ON_LEAVE_WEST
+		script_type = s_camera_y < 0 ? MAP_SCRIPT_ON_LEAVE_NORTH
+			: s_camera_x >= map_w ? MAP_SCRIPT_ON_LEAVE_EAST
+			: s_camera_y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
+			: s_camera_x < 0 ? MAP_SCRIPT_ON_LEAVE_WEST
 			: MAP_SCRIPT_MAX;
 		if (script_type < MAP_SCRIPT_MAX) {
 			script_run(s_def_scripts[script_type], false);
@@ -1763,7 +1761,7 @@ js_GetCameraX(duk_context* ctx)
 {
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	duk_push_int(ctx, s_cam_x);
+	duk_push_int(ctx, s_camera_x);
 	return 1;
 }
 
@@ -1772,7 +1770,7 @@ js_GetCameraY(duk_context* ctx)
 {
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	duk_push_int(ctx, s_cam_y);
+	duk_push_int(ctx, s_camera_y);
 	return 1;
 }
 
@@ -2205,7 +2203,7 @@ js_SetCameraX(duk_context* ctx)
 	
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	s_cam_x = new_x;
+	s_camera_x = new_x;
 	return 0;
 }
 
@@ -2216,7 +2214,7 @@ js_SetCameraY(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	s_cam_y = new_y;
+	s_camera_y = new_y;
 	return 0;
 }
 
@@ -3043,7 +3041,7 @@ js_MapToScreenX(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	offset_x = 0;
-	map_screen_to_map(s_cam_x, s_cam_y, &offset_x, NULL);
+	map_screen_to_map(s_camera_x, s_camera_y, &offset_x, NULL);
 	duk_push_int(ctx, x - offset_x);
 	return 1;
 }
@@ -3059,7 +3057,7 @@ js_MapToScreenY(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	offset_y = 0;
-	map_screen_to_map(s_cam_x, s_cam_y, NULL, &offset_y);
+	map_screen_to_map(s_camera_x, s_camera_y, NULL, &offset_y);
 	duk_push_int(ctx, y - offset_y);
 	return 1;
 }
@@ -3108,7 +3106,7 @@ js_ScreenToMapX(duk_context* ctx)
 	
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	map_screen_to_map(s_cam_x, s_cam_y, &x, NULL);
+	map_screen_to_map(s_camera_x, s_camera_y, &x, NULL);
 	duk_push_int(ctx, x);
 	return 1;
 }
@@ -3121,7 +3119,7 @@ js_ScreenToMapY(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	map_screen_to_map(s_cam_x, s_cam_y, NULL, &y);
+	map_screen_to_map(s_camera_x, s_camera_y, NULL, &y);
 	duk_push_int(ctx, y);
 	return 1;
 }

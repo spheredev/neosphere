@@ -82,7 +82,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	// beginning execution.
 	s_want_attach = want_attach;
 	if (s_want_attach && !do_attach_debugger())
-		exit_game(true);
+		sphere_exit(true);
 }
 
 void
@@ -265,7 +265,7 @@ do_attach_debugger(void)
 	timeout = al_get_time() + 30.0;
 	while (s_socket == NULL && al_get_time() < timeout) {
 		debugger_update();
-		delay(0.05);
+		sphere_sleep(0.05);
 	}
 	if (s_socket == NULL)  // did we time out?
 		printf("timed out waiting for debug client\n");
@@ -285,12 +285,12 @@ do_detach_debugger(bool is_shutdown)
 	if (s_socket != NULL) {
 		socket_close(s_socket);
 		while (socket_connected(s_socket))
-			delay(0.05);
+			sphere_sleep(0.05);
 	}
 	socket_free(s_socket);
 	s_socket = NULL;
 	if (s_want_attach && !is_shutdown)
-		exit_game(true);  // clean detach, exit
+		sphere_exit(true);  // clean detach, exit
 }
 
 static void
@@ -409,7 +409,7 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 		}
 
 		// so the system doesn't think we locked up...
-		delay(0.05);
+		sphere_sleep(0.05);
 	}
 
 	// let's not overflow the buffer, alright?

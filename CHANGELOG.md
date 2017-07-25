@@ -6,9 +6,8 @@ vX.X.X - TBD
 
 * Renames `FileStream#size` to `FileStream#fileSize`.
 * Fixes an issue where chaining `Dispatch.now()` causes the engine to get stuck
-  in an infinite loop of processing new jobs.
-* Fixes a bug where Sphere v2 constructors can be called without `new`, causing
-  undefined behavior.
+  in an infinite loop of processing newly added jobs.
+* Fixes a bug where constructors can be called without using `new`.
 * Fixes a bug where stepping over a `Dispatch.now()` with SSj sometimes locks
   up the engine and prevents it from responding to further debugger commands.
 

@@ -1210,25 +1210,25 @@ js_Sphere_abort(duk_context* ctx)
 	filename = duk_get_string(ctx, -1);
 	line_number = duk_get_int(ctx, -2);
 	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
-	abort_game(text);
+	sphere_abort(text);
 }
 
 static duk_ret_t
 js_Sphere_exit(duk_context* ctx)
 {
-	exit_game(false);
+	sphere_exit(false);
 }
 
 static duk_ret_t
 js_Sphere_restart(duk_context* ctx)
 {
-	restart_engine();
+	sphere_restart();
 }
 
 static duk_ret_t
 js_Sphere_run(duk_context* ctx)
 {
-	do_events(true);
+	sphere_run(true);
 	duk_push_boolean(ctx, true);
 	return 1;
 }
@@ -1242,7 +1242,7 @@ js_Sphere_sleep(duk_context* ctx)
 
 	if (timeout < 0.0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid sleep timeout");
-	delay(timeout);
+	sphere_sleep(timeout);
 	return 0;
 }
 

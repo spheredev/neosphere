@@ -183,7 +183,7 @@ main(int argc, char* argv[])
 #else
 		fprintf(stderr, "ERROR: failed to start `%s`\n", path_cstr(g_game_path));
 #endif
-		exit_game(false);
+		sphere_exit(false);
 	}
 
 	// set up the render context ("screen") so we can draw stuff
@@ -277,7 +277,7 @@ main(int argc, char* argv[])
 	if (!pegasus_run())
 		goto on_js_error;
 
-	exit_game(false);
+	sphere_exit(false);
 
 on_js_error:
 	err_code = duk_get_error_code(g_duk, -1);
@@ -302,33 +302,28 @@ on_js_error:
 		duk_push_string(g_duk, err_msg);
 	}
 	show_error_screen(duk_get_string(g_duk, -1));
-	exit_game(false);
+	sphere_exit(false);
 }
 
 no_return
-abort_game(const char* message)
+sphere_abort(const char* message)
 {
 	show_error_screen(message);
-	exit_game(false);
+	sphere_exit(false);
 }
 
-void
-delay(double time)
+no_return
+sphere_exit(bool force_shutdown)
 {
-	double end_time;
-	double time_left;
-
-	end_time = al_get_time() + time;
-	do {
-		time_left = end_time - al_get_time();
-		if (time_left > 0.001)  // engine may stall with < 1ms timeout
-			al_wait_for_event_timed(g_events, NULL, time_left);
-		do_events(false);
-	} while (al_get_time() < end_time);
+	if (force_shutdown) {
+		free(g_last_game_path);
+		g_last_game_path = NULL;
+	}
+	longjmp(s_jmp_exit, 1);
 }
 
 void
-do_events(bool allow_dispatch)
+sphere_run(bool allow_dispatch)
 {
 	ALLEGRO_EVENT event;
 
@@ -347,25 +342,30 @@ do_events(bool allow_dispatch)
 	while (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
-			exit_game(true);
+			sphere_exit(true);
 		}
 	}
 }
 
 no_return
-exit_game(bool force_shutdown)
-{
-	if (force_shutdown) {
-		free(g_last_game_path);
-		g_last_game_path = NULL;
-	}
-	longjmp(s_jmp_exit, 1);
-}
-
-no_return
-restart_engine(void)
+sphere_restart(void)
 {
 	longjmp(s_jmp_restart, 1);
+}
+
+void
+sphere_sleep(double time)
+{
+	double end_time;
+	double time_left;
+
+	end_time = al_get_time() + time;
+	do {
+		time_left = end_time - al_get_time();
+		if (time_left > 0.001)  // engine may stall with < 1ms timeout
+			al_wait_for_event_timed(g_events, NULL, time_left);
+		sphere_run(false);
+	} while (al_get_time() < end_time);
 }
 
 static bool

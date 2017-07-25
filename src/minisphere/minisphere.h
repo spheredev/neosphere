@@ -58,6 +58,9 @@
 #define no_return void
 #endif
 
+// at some point some of these global variables need to get eaten, preferably by
+// an eaty pig.  they're a relic from the early stages of miniSphere development and
+// I've been too lazy to try to refactor them away.
 extern duk_context*         g_duk;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern sandbox_t*           g_fs;
@@ -70,8 +73,8 @@ extern font_t*              g_sys_font;
 extern int                  g_res_x;
 extern int                  g_res_y;
 
-no_return abort_game        (const char* message);
-void      delay             (double time);
-void      do_events         (bool allow_dispatch);
-no_return exit_game         (bool force_shutdown);
-no_return restart_engine    (void);
+no_return sphere_abort   (const char* message);
+no_return sphere_exit    (bool force_shutdown);
+no_return sphere_restart (void);
+void      sphere_run     (bool allow_dispatch);
+void      sphere_sleep   (double time);
