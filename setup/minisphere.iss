@@ -32,7 +32,7 @@ ChangesAssociations=yes
 ChangesEnvironment=yes
 Compression=lzma
 DefaultDirName={pf}\{#AppName}
-DefaultGroupName=miniSphere GDK
+DefaultGroupName=Sphere GDK
 DisableProgramGroupPage=yes
 DisableWelcomePage=no
 LicenseFile=../LICENSE.txt
@@ -46,17 +46,16 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Types]
 Name: "normal"; Description: "Standard Redistributable (engine only)"
-Name: "developer"; Description: "Spherical Game Development Kit (miniSphere Console)"
+Name: "developer"; Description: "Sphere GDK with IDE (for game development)"
 Name: "custom"; Description: "Custom Installation"; Flags: iscustom
 
 [Components]
-Name: "engine"; Description: "{#AppName} {#AppVersion3} JavaScript Game Engine [Required]"; Types: normal developer custom; Flags: fixed
-Name: "spherun"; Description: "Spherical GDK / miniSphere Console"; Types: developer; Flags: checkablealone
+Name: "engine"; Description: "{#AppName} JavaScript game engine [Required]"; Types: normal developer custom; Flags: fixed
+Name: "spherun"; Description: "Sphere Game Development Kit"; Types: developer
+Name: "spherun/cli"; Description: "Sphere GDK command-line tools (Cell, SSj)"; Types: developer
 #ifdef HAVE_SPHERE_STUDIO
-Name: "spherun/ide"; Description: "Sphere Studio - the Sphere development environment"; Types: developer
+Name: "spherun/ide"; Description: "Sphere Studio, the official IDE for Sphere"; Types: developer
 #endif
-Name: "spherun/cell"; Description: "Cell - the Sphere packaging compiler"; Types: developer
-Name: "spherun/ssj"; Description: "SSj - the Sphere JavaScript debugger"; Types: developer
 
 [Tasks]
 Name: "assoc"; Description: "&Associate these file extensions with miniSphere:"; GroupDescription: "Automatically open Sphere file types:"
@@ -67,21 +66,21 @@ Name: "assoc/spk"; Description: ".spk - Sphere &SPK game package"; GroupDescript
 Name: "assoc_ss"; Description: "&Associate these file extensions with Sphere Studio:"; GroupDescription: "Automatically open Sphere file types:"; Components: spherun/ide
 Name: "assoc_ss/ssproj"; Description: ".ssproj - Sphere Studio project file"; GroupDescription: "Automatically open Sphere file types:"; Components: spherun/ide
 #endif
-Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescription: "Develop on the command line:"; Components: spherun; Flags: checkedonce unchecked
+Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescription: "Develop on the command line:"; Components: spherun/cli; Flags: checkedonce unchecked
 
 [Files]
 Source: "..\msw\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
-Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun
-Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cell
-Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/ssj
-Source: "..\msw\gdk-cp.bat"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun
+Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
+Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
+Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
+Source: "..\msw\gdk-cp.bat"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw64\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
-Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun; Check: IsWin64
-Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cell; Check: IsWin64
-Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/ssj; Check: IsWin64
+Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
+Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
+Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
 Source: "..\msw\documentation\sphere2-core-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\sphere2-hl-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
-Source: "..\msw\documentation\cellscript-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cell
+Source: "..\msw\documentation\cellscript-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\msw\template\*"; DestDir: "{app}\template"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
 #ifdef HAVE_SPHERE_STUDIO
@@ -115,10 +114,10 @@ Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environmen
 [Icons]
 Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
 #ifdef HAVE_SPHERE_STUDIO
-Name: "{commonprograms}\Sphere Studio IDE"; Filename: "{app}\ide\Sphere Studio.exe"; Components: spherun/ide
+Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\ide\Sphere Studio.exe"; Components: spherun/ide
 #endif
-Name: "{group}\Sphere Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun
-Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cellscript-api.txt"; Components: spherun/cell
+Name: "{group}\Sphere Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun/cli
+Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cellscript-api.txt"; Components: spherun/cli
 Name: "{group}\Core API Reference"; Filename: "{app}\documentation\sphere2-core-api.txt"; Components: spherun
 Name: "{group}\Sphere Runtime API Reference"; Filename: "{app}\documentation\sphere2-hl-api.txt"; Components: spherun
 
