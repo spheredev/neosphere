@@ -9,9 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cell compiler", "cell.vcxpr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game Development Kit", "..\src\plugin\Game Development Kit.csproj", "{D242F8EF-7D85-4B6B-9446-6758B68A7F54}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SSJ debugger", "ssj.vcxproj", "{9C731E06-D435-43AF-8730-7BD51A6C731D}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Majin", "majin.vcxproj", "{905AD0D1-6415-4899-A093-EE53014FD31B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SSj debugger", "ssj.vcxproj", "{9C731E06-D435-43AF-8730-7BD51A6C731D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -83,20 +81,6 @@ Global
 		{9C731E06-D435-43AF-8730-7BD51A6C731D}.Profile|x64.Build.0 = Profile|x64
 		{9C731E06-D435-43AF-8730-7BD51A6C731D}.Redist|Win32.ActiveCfg = Console|Win32
 		{9C731E06-D435-43AF-8730-7BD51A6C731D}.Redist|x64.ActiveCfg = Console|x64
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Debug|Win32.Build.0 = Debug|Win32
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Debug|x64.ActiveCfg = Debug|x64
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Debug|x64.Build.0 = Debug|x64
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.GDK|Win32.ActiveCfg = Console|Win32
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.GDK|Win32.Build.0 = Console|Win32
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.GDK|x64.ActiveCfg = Console|x64
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.GDK|x64.Build.0 = Console|x64
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Profile|Win32.ActiveCfg = Profile|Win32
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Profile|Win32.Build.0 = Profile|Win32
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Profile|x64.ActiveCfg = Profile|x64
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Profile|x64.Build.0 = Profile|x64
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Redist|Win32.ActiveCfg = Console|Win32
-		{905AD0D1-6415-4899-A093-EE53014FD31B}.Redist|x64.ActiveCfg = Console|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

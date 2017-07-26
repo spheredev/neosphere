@@ -44,12 +44,6 @@ cell_sources=src/cell/main.c \
 cell_libs= \
    -lz -lm
 
-majin_sources=src/majin/main.c \
-   src/shared/vector.c \
-   src/majin/spk_writer.c
-majin_libs=\
-   -lz
-
 ssj_sources=src/ssj/main.c \
    src/shared/dyad.c src/shared/path.c src/shared/vector.c \
    src/ssj/backtrace.c src/ssj/dmessage.c src/ssj/dvalue.c src/ssj/help.c \
@@ -57,7 +51,7 @@ ssj_sources=src/ssj/main.c \
    src/ssj/sockets.c src/ssj/source.c
 
 .PHONY: all
-all: minisphere spherun cell majin ssj
+all: minisphere spherun cell ssj
 
 .PHONY: minisphere
 minisphere: bin/minisphere
@@ -67,9 +61,6 @@ spherun: bin/minisphere bin/spherun
 
 .PHONY: cell
 cell: bin/cell
-
-.PHONY: majin
-majin: bin/majin
 
 .PHONY: ssj
 ssj: bin/ssj
@@ -99,7 +90,7 @@ install: all
 	mkdir -p $(installdir)/share/mime/packages
 	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/pixmaps
-	cp bin/minisphere bin/spherun bin/cell bin/majin bin/ssj $(installdir)/bin
+	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
 	cp -r bin/system $(installdir)/share/minisphere
 	gzip docs/sphere2-core-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-core-api.gz
 	gzip docs/sphere2-hl-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-hl-api.gz
@@ -134,10 +125,6 @@ bin/spherun:
 bin/cell:
 	mkdir -p bin
 	$(CC) -o bin/cell $(CFLAGS) -Isrc/shared $(cell_sources) $(cell_libs)
-
-bin/majin:
-	mkdir -p bin
-	$(CC) -o bin/majin $(CFLAGS) -Isrc/shared $(majin_sources) $(majin_libs)
 
 bin/ssj:
 	mkdir -p bin
