@@ -218,7 +218,7 @@ static duk_ret_t js_Dispatch_onRender          (duk_context* ctx);
 static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
 static duk_ret_t js_FS_createDirectory         (duk_context* ctx);
 static duk_ret_t js_FS_deleteFile              (duk_context* ctx);
-static duk_ret_t js_FS_exists                  (duk_context* ctx);
+static duk_ret_t js_FS_fileExists              (duk_context* ctx);
 static duk_ret_t js_FS_readFile                (duk_context* ctx);
 static duk_ret_t js_FS_rename                  (duk_context* ctx);
 static duk_ret_t js_FS_resolve                 (duk_context* ctx);
@@ -460,7 +460,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
-	api_define_function(ctx, "FS", "exists", js_FS_exists);
+	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
 	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
@@ -1533,7 +1533,7 @@ js_FS_deleteFile(duk_context* ctx)
 }
 
 static duk_ret_t
-js_FS_exists(duk_context* ctx)
+js_FS_fileExists(duk_context* ctx)
 {
 	const char* filename;
 
