@@ -15,8 +15,8 @@ CFLAGS=-O3
 endif
 
 engine_sources=src/minisphere/main.c \
-   src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
-   src/shared/dyad.c src/shared/lstring.c src/shared/md5.c src/shared/path.c \
+   src/shared/api.c src/shared/duktape.c src/shared/dyad.c \
+   src/shared/lstring.c src/shared/md5.c src/shared/path.c \
    src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
    src/minisphere/animation.c src/minisphere/async.c src/minisphere/atlas.c \
    src/minisphere/audio.c src/minisphere/byte_array.c src/minisphere/color.c \
@@ -36,9 +36,9 @@ engine_libs= \
    -lmng -lz -lm
 
 cell_sources=src/cell/main.c \
-   src/shared/api.c src/shared/duktape.c src/shared/duk_rubber.c \
-   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
-   src/shared/vector.c src/shared/xoroshiro.c \
+   src/shared/api.c src/shared/duktape.c src/shared/lstring.c \
+   src/shared/path.c src/shared/unicode.c src/shared/vector.c \
+   src/shared/xoroshiro.c \
    src/cell/build.c src/cell/fs.c src/cell/spk_writer.c src/cell/target.c \
    src/cell/tool.c src/cell/utility.c src/cell/visor.c
 cell_libs= \

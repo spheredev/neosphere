@@ -15,10 +15,10 @@ namespace miniSphere.Gdk
 {
     public class PluginMain : IPluginMain
     {
-        public string Name { get; } = "miniSphere GDK";
+        public string Name { get; } = "miniSphere Support";
         public string Author { get; } = "Fat Cerberus";
-        public string Description { get; } = "Provides support for the Sphere v2 toolchain.";
         public string Version { get; } = "X.X.X";
+        public string Description { get; } = "Provides support for the miniSphere toolchain.";
 
         internal PluginConf Conf { get; private set; }
         internal int Sessions { get; set; }
