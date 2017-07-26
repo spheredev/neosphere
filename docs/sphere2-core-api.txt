@@ -438,10 +438,25 @@ FS.deleteFile(filename);
 
     Deletes `filename` from the file system.
 
-FS.exists(filename);
+FS.fileExists(filename);
 
     Checks whether the specified file exists and returns true if it does.
     Otherwise, returns false.
+    
+    Note: If you pass the name of a directory, even if it exists, this will
+          return false.
+
+FS.fullPath(fileName);
+
+    Resolves a filename (which may contain relative path components) to its
+    full, canonical SphereFS representation.  This can be useful when data is
+    associated with individual assets, such as map files, and you need to
+    ensure the same data is pulled for a given file regardless of the path used
+    to access it.
+
+    The file referred to by the path doesn't need to exist.  As with other `FS`
+    methods, `FS.fullPath()` will throw an error if an absolute path is passed
+    in.
 
 FS.readFile(filename);
 
@@ -463,17 +478,6 @@ FS.rename(orig_name, new_name);
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full SphereFS paths.  This can also be used to move a file
     between directories; if so, the destination directory must already exist.
-
-FS.resolve(path);
-
-    Resolves a path (which may contain relative components) to its canonical
-    SphereFS representation.  This can be useful when data is associated with
-    individual assets, such as map files, and you need to ensure the same data
-    is pulled for a given file regardless of the path used to access it.
-
-    Note that the resource referred to by the path doesn't need to exist.  As
-    with other `FS` methods, `FS.resolve()` will throw an error if an absolute
-    path is passed in.
 
 FS.writeFile(filename, string);
 

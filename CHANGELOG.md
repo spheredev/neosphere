@@ -6,6 +6,7 @@ vX.X.X - TBD
 
 * Renames `FS.exists()` to `FS.fileExists()` since the function doesn't work
   for directories.
+* Renames `FS.resolve()` to `FS.fullPath()` to improve accessibility.
 * Renames `FileStream#size` to `FileStream#fileSize`.
 * Fixes an issue where chaining `Dispatch.now()` causes the engine to get stuck
   in an infinite loop of processing newly added jobs.

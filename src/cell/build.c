@@ -41,7 +41,7 @@ static duk_ret_t js_FS_deleteFile           (duk_context* ctx);
 static duk_ret_t js_FS_fileExists           (duk_context* ctx);
 static duk_ret_t js_FS_readFile             (duk_context* ctx);
 static duk_ret_t js_FS_rename               (duk_context* ctx);
-static duk_ret_t js_FS_resolve              (duk_context* ctx);
+static duk_ret_t js_FS_fullPath              (duk_context* ctx);
 static duk_ret_t js_FS_removeDirectory      (duk_context* ctx);
 static duk_ret_t js_FS_writeFile            (duk_context* ctx);
 static duk_ret_t js_new_FileStream          (duk_context* ctx);
@@ -133,10 +133,10 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
+	api_define_function(ctx, "FS", "fullPath", js_FS_fullPath);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
 	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
-	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
 	api_define_class(ctx, "FileStream", js_new_FileStream, js_FileStream_finalize);
 	api_define_property(ctx, "FileStream", "fileSize", js_FileStream_get_fileSize, NULL);
@@ -1124,6 +1124,17 @@ js_FS_fileExists(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FS_fullPath(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0);
+
+	duk_push_string(ctx, filename);
+	return 1;
+}
+
+static duk_ret_t
 js_FS_readFile(duk_context* ctx)
 {
 	build_t*    build;
@@ -1173,17 +1184,6 @@ js_FS_rename(duk_context* ctx)
 	if (!fs_rename(build->fs, name1, name2))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
-}
-
-static duk_ret_t
-js_FS_resolve(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0);
-
-	duk_push_string(ctx, filename);
-	return 1;
 }
 
 static duk_ret_t

@@ -221,7 +221,7 @@ static duk_ret_t js_FS_deleteFile              (duk_context* ctx);
 static duk_ret_t js_FS_fileExists              (duk_context* ctx);
 static duk_ret_t js_FS_readFile                (duk_context* ctx);
 static duk_ret_t js_FS_rename                  (duk_context* ctx);
-static duk_ret_t js_FS_resolve                 (duk_context* ctx);
+static duk_ret_t js_FS_fullPath                 (duk_context* ctx);
 static duk_ret_t js_FS_removeDirectory         (duk_context* ctx);
 static duk_ret_t js_FS_writeFile               (duk_context* ctx);
 static duk_ret_t js_new_FileStream             (duk_context* ctx);
@@ -461,10 +461,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
+	api_define_function(ctx, "FS", "fullPath", js_FS_fullPath);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
 	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
-	api_define_function(ctx, "FS", "resolve", js_FS_resolve);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
 	api_define_class(ctx, "IndexList", js_new_IndexList, js_IndexList_finalize);
 	api_define_class(ctx, "JobToken", NULL, js_JobToken_finalize);
@@ -1544,6 +1544,17 @@ js_FS_fileExists(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FS_fullPath(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, false, false);
+
+	duk_push_string(ctx, filename);
+	return 1;
+}
+
+static duk_ret_t
 js_FS_readFile(duk_context* ctx)
 {
 	lstring_t*  content;
@@ -1584,17 +1595,6 @@ js_FS_rename(duk_context* ctx)
 	if (!sfs_rename(g_fs, name1, name2, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
-}
-
-static duk_ret_t
-js_FS_resolve(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, NULL, false, false);
-
-	duk_push_string(ctx, filename);
-	return 1;
 }
 
 static duk_ret_t

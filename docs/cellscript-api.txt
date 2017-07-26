@@ -23,10 +23,10 @@ files from a different location, you can use one of the SphereFS prefixes:
         should NOT try to write anything here as doing so can damage the host
         miniSphere installation.
 
-As an example, the following will open the file `EatyPig.bin` in the root of
-the game package for writing in binary mode:
+As an example, the following will create a FileStream to write the file
+`EatyPig.bin` in the root of the game package:
 
-    var file = FS.open("@/EatyPig.bin", "wb");
+    var file = new FileStream("@/EatyPig.bin", FileOp.Write);
 
 Absolute paths are NOT allowed, and any attempt to circumvent the sandbox, e.g.
 "@/../maggie.fat", will be met with a sandbox violation error.
