@@ -23,7 +23,6 @@
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
 #include <duktape.h>
-#include <duk_rubber.h>
 #include <dyad.h>
 #include <zlib.h>
 

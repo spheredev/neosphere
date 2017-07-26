@@ -5,7 +5,6 @@
 
 #include <zlib.h>
 #include "duktape.h"
-#include "duk_rubber.h"
 #include "lstring.h"
 #include "path.h"
 #include "utility.h"

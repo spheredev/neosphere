@@ -347,7 +347,7 @@ initialize_vanilla_api(duk_context* ctx)
 
 	// set up a dictionary to track RequireScript() calls
 	duk_push_global_stash(ctx);
-	dukrub_push_bare_object(ctx);
+	duk_push_bare_object(ctx);
 	duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
 
@@ -1572,7 +1572,7 @@ js_Abort(duk_context* ctx)
 		? duk_to_string(ctx, 0)
 		: "some type of weird pig just ate your game\n\n\n...and you*munch*";
 
-	dukrub_inspect_callstack_entry(ctx, -2);
+	duk_inspect_callstack_entry(ctx, -2);
 	duk_get_prop_string(ctx, -1, "lineNumber");
 	duk_get_prop_string(ctx, -2, "function");
 	duk_get_prop_string(ctx, -1, "fileName");

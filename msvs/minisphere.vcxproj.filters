@@ -108,9 +108,6 @@
     <ClCompile Include="..\src\minisphere\audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\duk_rubber.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\xoroshiro.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -188,9 +185,6 @@
     <ClInclude Include="..\src\minisphere\debugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\minisphere\duk_custom.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\minisphere\font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -246,9 +240,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\audio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\duk_rubber.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\xoroshiro.h">

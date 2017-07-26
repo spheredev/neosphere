@@ -97,7 +97,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	// initialize the CommonJS cache and global require()
 	duk_push_global_stash(ctx);
-	dukrub_push_bare_object(ctx);
+	duk_push_bare_object(ctx);
 	duk_put_prop_string(ctx, -2, "moduleCache");
 	duk_pop(ctx);
 

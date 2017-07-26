@@ -39,7 +39,7 @@ struct sfs_file
 	spk_file_t*   spk_file;
 };
 
-static duk_ret_t duk_load_s2gm (duk_context* ctx);
+static duk_ret_t duk_load_s2gm (duk_context* ctx, void* udata);
 static bool      resolve_path  (const sandbox_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_sandbox_id = 0;
@@ -113,7 +113,7 @@ fs_new(const char* game_path)
 			fs->manifest = lstr_from_cp1252(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, fs);
 			duk_push_lstring_t(g_duk, fs->manifest);
-			if (dukrub_safe_call(g_duk, duk_load_s2gm, 2, 1) != DUK_EXEC_SUCCESS) {
+			if (duk_safe_call(g_duk, duk_load_s2gm, NULL, 2, 1) != DUK_EXEC_SUCCESS) {
 				console_log(0, "!!! %s", duk_to_string(g_duk, -1));
 				console_log(0, "   @ [game.json:?]");
 				duk_pop(g_duk);
@@ -609,7 +609,7 @@ sfs_unlink(sandbox_t* fs, const char* filename, const char* base_dir)
 }
 
 static duk_ret_t
-duk_load_s2gm(duk_context* ctx)
+duk_load_s2gm(duk_context* ctx, void* udata)
 {
 	// note: this whole thing needs to be cleaned up.  it's pretty bad when Duktape
 	//       does the JSON parsing for us yet the JSON manifest loader is STILL more

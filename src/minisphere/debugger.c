@@ -25,7 +25,7 @@ static const int TCP_DEBUG_PORT = 1208;
 
 static bool       do_attach_debugger   (void);
 static void       do_detach_debugger   (bool is_shutdown);
-static void       duk_cb_debug_detach  (void* udata);
+static void       duk_cb_debug_detach  (duk_context* ctx, void* udata);
 static duk_idx_t  duk_cb_debug_request (duk_context* ctx, void* udata, duk_idx_t nvalues);
 static duk_size_t duk_cb_debug_peek    (void* udata);
 static duk_size_t duk_cb_debug_read    (void* udata, char* buffer, duk_size_t bufsize);
@@ -119,7 +119,7 @@ debugger_update(void)
 			console_log(0, "connected to debug client at %s", socket_hostname(client));
 			s_socket = client;
 			duk_debugger_detach(g_duk);
-			dukrub_debugger_attach(g_duk,
+			duk_debugger_attach(g_duk,
 				duk_cb_debug_read,
 				duk_cb_debug_write,
 				duk_cb_debug_peek,
@@ -294,7 +294,7 @@ do_detach_debugger(bool is_shutdown)
 }
 
 static void
-duk_cb_debug_detach(void* udata)
+duk_cb_debug_detach(duk_context* ctx, void* udata)
 {
 	// note: if s_socket is null, a TCP reset was detected by one of the I/O callbacks.
 	// if this is the case, wait a bit for the client to reconnect.

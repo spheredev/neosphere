@@ -4,7 +4,6 @@
 #include "api.h"
 
 #include "duktape.h"
-#include "duk_rubber.h"
 
 void
 api_init(duk_context* ctx)
@@ -286,12 +285,12 @@ duk_error_blame(duk_context* ctx, int blame_offset, duk_errcode_t err_code, cons
 	int     line_number;
 
 	// get filename and line number from Duktape call stack
-	dukrub_inspect_callstack_entry(ctx, -1 + blame_offset);
+	duk_inspect_callstack_entry(ctx, -1 + blame_offset);
 	if (!duk_is_object(ctx, -1)) {
 		// note: the topmost call is assumed to be a Duktape/C activation.  that's
 		//       probably not what's responsible for the error, so blame the function
 		//       just below it if there's nobody else to blame.
-		dukrub_inspect_callstack_entry(ctx, -2);
+		duk_inspect_callstack_entry(ctx, -2);
 		duk_replace(ctx, -2);
 	}
 	duk_get_prop_string(ctx, -1, "lineNumber");

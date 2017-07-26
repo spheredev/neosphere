@@ -4,7 +4,7 @@
 #include "api.h"
 #include "md5.h"
 
-static duk_ret_t do_decode_json (duk_context* ctx);
+static duk_ret_t do_decode_json (duk_context* ctx, void* udata);
 
 const path_t*
 assets_path(void)
@@ -186,7 +186,7 @@ strnewf(const char* fmt, ...)
 duk_int_t
 duk_json_pdecode(duk_context* ctx)
 {
-	return dukrub_safe_call(ctx, do_decode_json, 1, 1);
+	return duk_safe_call(ctx, do_decode_json, NULL, 1, 1);
 }
 
 void
@@ -204,7 +204,7 @@ duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 	
 	duk_push_global_stash(ctx);
 	if (!duk_get_prop_string(ctx, -1, "refs")) {
-		dukrub_push_bare_object(ctx);
+		duk_push_bare_object(ctx);
 		duk_put_prop_string(ctx, -3, "refs");
 		duk_get_prop_string(ctx, -2, "refs");
 		duk_replace(ctx, -2);
@@ -225,7 +225,7 @@ duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 		/* [ stash refs undefined ] */
 
 		duk_push_sprintf(ctx, "%p", heapptr);
-		dukrub_push_bare_object(ctx);
+		duk_push_bare_object(ctx);
 		duk_push_number(ctx, 1.0);
 		duk_put_prop_string(ctx, -2, "refcount");
 		duk_push_heapptr(ctx, heapptr);
@@ -289,7 +289,7 @@ duk_unref_heapptr(duk_context* ctx, void* heapptr)
 
 	duk_push_global_stash(ctx);
 	if (!duk_get_prop_string(ctx, -1, "refs")) {
-		dukrub_push_bare_object(ctx);
+		duk_push_bare_object(ctx);
 		duk_put_prop_string(ctx, -3, "refs");
 		duk_get_prop_string(ctx, -2, "refs");
 		duk_replace(ctx, -2);
@@ -321,7 +321,7 @@ duk_unref_heapptr(duk_context* ctx, void* heapptr)
 }
 
 static duk_ret_t
-do_decode_json(duk_context* ctx)
+do_decode_json(duk_context* ctx, void* udata)
 {
 	duk_json_decode(ctx, -1);
 	return 1;

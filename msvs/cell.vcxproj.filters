@@ -39,9 +39,6 @@
     <ClCompile Include="..\src\cell\utility.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\duk_rubber.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\cell\target.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -103,9 +100,6 @@
     </ClInclude>
     <ClInclude Include="resource1.h">
       <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\duk_rubber.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\cell\target.h">
       <Filter>Header Files</Filter>
