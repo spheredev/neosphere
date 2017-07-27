@@ -1546,20 +1546,21 @@ js_FS_fileExists(duk_context* ctx)
 static duk_ret_t
 js_FS_fullPath(duk_context* ctx)
 {
-	const char* base_dir = "./";
+	// it's only by accident that this works at all.  the function relies on the
+	// fact that SphereFS canonicalization removes the `@/` prefix if it's present;
+	// it's therefore something of a hack, and in the future it'd be better to build
+	// this functionality into `fs_make_path()`.
+
+	const char* origin_path = NULL;
 	const char* filename;
 	int         num_args;
-	path_t*     path;
 
 	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, NULL, false, false);
 	if (num_args >= 2)
-		base_dir = duk_require_path(ctx, 1, NULL, false, false);
+		origin_path = duk_require_path(ctx, 1, NULL, false, false);
+	filename = duk_require_path(ctx, 0, origin_path, false, false);
 
-	path = path_new_dir(base_dir);
-	path_append(path, filename);
-	duk_push_string(ctx, path_cstr(path));
-	path_free(path);
+	duk_push_string(ctx, filename);
 	return 1;
 }
 

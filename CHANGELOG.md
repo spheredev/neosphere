@@ -6,9 +6,9 @@ vX.X.X - TBD
 
 * Adds a new `cell-runtime` master module for use in ES6 Cellscripts, as an
   analogue to `sphere-runtime`.
+* Renames `FS.resolve()` to `FS.fullPath()` and adds relative path support.
 * Renames `FS.exists()` to `FS.fileExists()` since the function doesn't work
   for directories.
-* Renames `FS.resolve()` to `FS.fullPath()` and adds relative path support.
 * Renames `FileStream#size` to `FileStream#fileSize`.
 * Fixes some inconsistencies between modules in the Cell Runtime and their
   Sphere Runtime equivalents.
