@@ -8,7 +8,7 @@ vX.X.X - TBD
   analogue to `sphere-runtime`.
 * Renames `FS.exists()` to `FS.fileExists()` since the function doesn't work
   for directories.
-* Renames `FS.resolve()` to `FS.fullPath()` to improve accessibility.
+* Renames `FS.resolve()` to `FS.fullPath()` and adds relative path support.
 * Renames `FileStream#size` to `FileStream#fileSize`.
 * Fixes some inconsistencies between modules in the Cell Runtime and their
   Sphere Runtime equivalents.

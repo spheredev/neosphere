@@ -1528,7 +1528,7 @@ js_FS_deleteFile(duk_context* ctx)
 	filename = duk_require_path(ctx, 0, NULL, false, true);
 
 	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unlink failed", filename);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file", filename);
 	return 0;
 }
 
@@ -1546,11 +1546,20 @@ js_FS_fileExists(duk_context* ctx)
 static duk_ret_t
 js_FS_fullPath(duk_context* ctx)
 {
+	const char* base_dir = "./";
 	const char* filename;
+	int         num_args;
+	path_t*     path;
 
+	num_args = duk_get_top(ctx);
 	filename = duk_require_path(ctx, 0, NULL, false, false);
+	if (num_args >= 2)
+		base_dir = duk_require_path(ctx, 1, NULL, false, false);
 
-	duk_push_string(ctx, filename);
+	path = path_new_dir(base_dir);
+	path_append(path, filename);
+	duk_push_string(ctx, path_cstr(path));
+	path_free(path);
 	return 1;
 }
 

@@ -446,17 +446,16 @@ FS.fileExists(filename);
     Note: If you pass the name of a directory, even if it exists, this will
           return false.
 
-FS.fullPath(fileName);
+FS.fullPath(fileName[, base_dir]);
 
-    Resolves a filename (which may contain relative path components) to its
-    full, canonical SphereFS representation.  This can be useful when data is
-    associated with individual assets, such as map files, and you need to
-    ensure the same data is pulled for a given file regardless of the path used
-    to access it.
-
-    The file referred to by the path doesn't need to exist.  As with other `FS`
-    methods, `FS.fullPath()` will throw an error if an absolute path is passed
-    in.
+    Resolves a filename (which may contain relative path components, or even be
+    relative itself) to its canonical SphereFS path.  `base_dir` is optional
+    and specifies a base directory for relative paths.  The file or directory
+    ultimately referred to doesn't need to exist.
+    
+    If `fileName` begins with a SphereFS prefix, it's resolved normally,
+    without regard to `base_dir`.  Otherwise, `fileName` is considered to be
+    relative to `base_dir`.
 
 FS.readFile(filename);
 
