@@ -75,7 +75,7 @@
             this.MainTabPage.Padding = new System.Windows.Forms.Padding(3);
             this.MainTabPage.Size = new System.Drawing.Size(568, 329);
             this.MainTabPage.TabIndex = 0;
-            this.MainTabPage.Text = "miniSphere GDK";
+            this.MainTabPage.Text = "Sphere GDK";
             this.MainTabPage.UseVisualStyleBackColor = true;
             // 
             // panel2
@@ -94,7 +94,7 @@
             this.ShowTraceCheckBox.AutoSize = true;
             this.ShowTraceCheckBox.Location = new System.Drawing.Point(12, 58);
             this.ShowTraceCheckBox.Name = "ShowTraceCheckBox";
-            this.ShowTraceCheckBox.Size = new System.Drawing.Size(283, 17);
+            this.ShowTraceCheckBox.Size = new System.Drawing.Size(280, 17);
             this.ShowTraceCheckBox.TabIndex = 4;
             this.ShowTraceCheckBox.Text = "Show output produced by `SSj.trace` while debugging";
             this.ShowTraceCheckBox.UseVisualStyleBackColor = true;
@@ -245,7 +245,7 @@
             this.editorLabel1.Name = "editorLabel1";
             this.editorLabel1.Size = new System.Drawing.Size(562, 23);
             this.editorLabel1.TabIndex = 0;
-            this.editorLabel1.Text = "Where is the miniSphere GDK installed?";
+            this.editorLabel1.Text = "Where is miniSphere installed? (GDK tools required)";
             this.editorLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SettingsPage

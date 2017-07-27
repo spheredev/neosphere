@@ -13,11 +13,11 @@ namespace miniSphere.Gdk.Plugins
 {
     class CellCompiler : IPackager
     {
-        private PluginMain _main;
+        private PluginMain m_main;
 
         public CellCompiler(PluginMain main)
         {
-            _main = main;
+            m_main = main;
         }
 
         public string SaveFileFilters
@@ -28,7 +28,7 @@ namespace miniSphere.Gdk.Plugins
         public bool Prep(IProject project, IConsole con)
         {
             con.Print("Installing project template... ");
-            CopyDirectory(Path.Combine(_main.Conf.GdkPath, "template"), project.RootPath);
+            CopyDirectory(Path.Combine(m_main.Conf.GdkPath, "template"), project.RootPath);
             con.Print("OK.\n");
 
             con.Print("Generating Cellscript.mjs... ");
@@ -68,7 +68,7 @@ namespace miniSphere.Gdk.Plugins
             string cellOptions = string.Format(@"--in-dir ""{0}"" --out-dir ""{0}/.staging"" --package ""{1}""",
                 project.RootPath.Replace(Path.DirectorySeparatorChar, '/'),
                 fileName.Replace(Path.DirectorySeparatorChar, '/'));
-            if (_main.Conf.MakeDebugPackages)
+            if (m_main.Conf.MakeDebugPackages)
                 cellOptions += " --debug";
             return await RunCell(cellOptions, con);
         }
@@ -105,7 +105,7 @@ namespace miniSphere.Gdk.Plugins
 
         private async Task<bool> RunCell(string options, IConsole con)
         {
-            string cellPath = Path.Combine(_main.Conf.GdkPath, "cell.exe");
+            string cellPath = Path.Combine(m_main.Conf.GdkPath, "cell.exe");
             if (!File.Exists(cellPath))
             {
                 con.Print("ERROR: no 'cell' executable was found, did Gohan kill Cell already?\n");
@@ -119,16 +119,15 @@ namespace miniSphere.Gdk.Plugins
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
             Process proc = Process.Start(psi);
-            await Task.Run(() =>
+            var lineCount = 0;
+            proc.OutputDataReceived += (sender, e) =>
             {
-                StreamReader stdout = proc.StandardOutput;
-                StreamReader stderr = proc.StandardError;
-                while (!stdout.EndOfStream || !stderr.EndOfStream)
-                {
-                    if (stderr.Peek() > 0) con.Print(stderr.ReadLine() + "\n");
-                    if (stdout.Peek() > 0) con.Print(stdout.ReadLine() + "\n");
-                }
-            });
+                var head = lineCount > 0 ? "\r\n" : "";
+                con.Print(head + (e.Data ?? ""));
+                ++lineCount;
+            };
+            proc.BeginOutputReadLine();
+            await proc.WaitForExitAsync();
             return proc.ExitCode == 0;
         }
     }

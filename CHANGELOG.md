@@ -14,6 +14,7 @@ vX.X.X - TBD
   Sphere Runtime equivalents.
 * Fixes an issue where chaining `Dispatch.now()` causes the engine to get stuck
   in an infinite loop of processing newly added jobs.
+* Fixes a bug where building a large project in Sphere Studio can hang Cell.
 * Fixes a bug where `DataReader` and `DataWriter` can't be imported by either
   `require()` or `import`.
 * Fixes a bug where constructors can be called without using `new`.

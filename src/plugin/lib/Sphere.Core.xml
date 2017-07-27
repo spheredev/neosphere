@@ -116,6 +116,11 @@
             Constructs a new instance of an EditorLabel.
             </summary>
         </member>
+        <member name="M:Sphere.Core.Editor.EditorLabel.OnCreateControl">
+            <summary>
+            Ensures the EditorLabel is styled properly upon creation.
+            </summary>
+        </member>
         <member name="M:Sphere.Core.Editor.EditorLabel.OnPaintBackground(System.Windows.Forms.PaintEventArgs)">
             <summary>
             Overrides the default background to draw a classy blue background.
@@ -717,14 +722,14 @@
         </member>
         <member name="T:Sphere.Core.IniFile">
             <summary>
-            Represents an .ini format settings file.
+            Represents an INI format settings file.
             </summary>
         </member>
         <member name="M:Sphere.Core.IniFile.#ctor(System.String,System.Boolean)">
             <summary>
             Constructs an IniFile object referencing the specified .ini file.
             </summary>
-            <param name="filepath">The fully qualified .ini file path.</param>
+            <param name="fileName">The fully qualified .ini file path.</param>
             <param name="autoSave">
             Whether to save the file automatically after a value is written. If this is false,
             Save() must be called to persist the changes.
@@ -750,14 +755,6 @@
             <param name="defValue">A default string to return if the key isn't found.</param>
             <returns>The value read from the INI file, or `defValue` if the key doesn't exist.</returns>
         </member>
-        <member name="M:Sphere.Core.IniFile.Write(System.String,System.String,System.String)">
-            <summary>
-            Writes a string to the INI file.
-            </summary>
-            <param name="section">The [section] to write.</param>
-            <param name="key">The name of the setting to write.</param>
-            <param name="value">The value of the setting.</param>
-        </member>
         <member name="M:Sphere.Core.IniFile.Save">
             <summary>
             Saves the current values to the INI file.
@@ -770,6 +767,14 @@
             </summary>
             <param name="filepath">The fully qualified path of the file to save.</param>
             <returns>true if the save succeeded, otherwise false.</returns>
+        </member>
+        <member name="M:Sphere.Core.IniFile.Write(System.String,System.String,System.String)">
+            <summary>
+            Writes a string to the INI file.
+            </summary>
+            <param name="section">The [section] to write.</param>
+            <param name="key">The name of the setting to write.</param>
+            <param name="value">The value of the setting.</param>
         </member>
         <member name="T:Sphere.Core.Layer">
             <summary>
@@ -1113,6 +1118,21 @@
             Describes a location (line and column) in a source file.
             </summary>
         </member>
+        <member name="F:Sphere.Core.CodeLocation.FileName">
+            <summary>
+            The file name of the source file.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.CodeLocation.Line">
+            <summary>
+            The line number within the code.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.CodeLocation.Column">
+            <summary>
+            The column number within the line.
+            </summary>
+        </member>
         <member name="T:Sphere.Core.SourceMapper">
             <summary>
             Facilitates debugging by translating code locations using a V3 source map.
@@ -1142,14 +1162,14 @@
             </summary>
             <param name="fileName">The filename of the transpiled target file.</param>
             <param name="lineNumber">A line number in the transpiled code.</param>
-            <returns>The corresponding line number in the original source file.</returns>
+            <returns>The corresponding line number in the original source code.</returns>
         </member>
         <member name="M:Sphere.Core.SourceMapper.LineInTarget(System.String,System.Int32)">
             <summary>
             Maps a source line number back to its line number in the transpiled code.
             </summary>
             <param name="fileName">The filename of the transpiled target file.</param>
-            <param name="lineNumber">A line number in the original source file.</param>
+            <param name="lineNumber">A line number in the original source code.</param>
             <returns>The corresponding line number in the transpiled code.</returns>
         </member>
         <member name="T:Sphere.Core.Spriteset">
@@ -1787,6 +1807,36 @@
             Grabs the area of this Line.
             </summary>
             <returns>A System.Drawing.Rectangle of the area of this Line.</returns>
+        </member>
+        <member name="T:Sphere.Core.Versioning">
+            <summary>
+            Provides version information for the Sphere Studio IDE.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Versioning.Name">
+            <summary>
+            The name of the IDE, "Sphere Studio".
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Versioning.Author">
+            <summary>
+            The name of the program's author or supporting company.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Versioning.Version">
+            <summary>
+            The version number of the IDE.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Versioning.Copyright">
+            <summary>
+            A string indicating the copyright holder and date of copyright.
+            </summary>
+        </member>
+        <member name="F:Sphere.Core.Versioning.Credits">
+            <summary>
+            A short description of the IDE along with a list of contributors.
+            </summary>
         </member>
         <member name="T:Sphere.Core.Windowstyle">
             <summary>

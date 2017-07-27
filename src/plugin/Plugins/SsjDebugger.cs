@@ -65,7 +65,6 @@ namespace miniSphere.Gdk.Plugins
             try
             {
                 await Connect("localhost", 1208);
-                ++plugin.Sessions;
                 return true;
             }
             catch (TimeoutException)
@@ -151,7 +150,6 @@ namespace miniSphere.Gdk.Plugins
 
                 focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
                 Detached?.Invoke(this, EventArgs.Empty);
-                --plugin.Sessions;
 
                 PluginManager.Core.Docking.Hide(Panes.Inspector);
                 PluginManager.Core.Docking.Activate(Panes.Console);

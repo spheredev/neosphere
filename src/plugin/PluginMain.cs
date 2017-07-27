@@ -16,37 +16,35 @@ namespace miniSphere.Gdk
     public class PluginMain : IPluginMain
     {
         public string Name { get; } = "miniSphere Support";
-        public string Author { get; } = "Fat Cerberus";
-        public string Version { get; } = "X.X.X";
         public string Description { get; } = "Provides support for the miniSphere toolchain.";
+        public string Version { get; } = "X.X.X";
+        public string Author { get; } = "Fat Cerberus";
 
         internal PluginConf Conf { get; private set; }
-        internal int Sessions { get; set; }
 
-        private ToolStripMenuItem _sphereApiRefCommand;
-        private ToolStripMenuItem _cellApiRefCommand;
-        private ToolStripMenuItem _miniRTApiRefCommand;
+        private ToolStripMenuItem m_sphereApiRefCommand;
+        private ToolStripMenuItem m_cellApiRefCommand;
+        private ToolStripMenuItem m_runtimeApiRefCommand;
 
         public void Initialize(ISettings conf)
         {
             Conf = new PluginConf(conf);
-            Sessions = 0;
 
             PluginManager.Register(this, new miniSphereStarter(this), "miniSphere");
             PluginManager.Register(this, new CellCompiler(this), "Cell");
-            PluginManager.Register(this, new SettingsPage(this), "miniSphere Setup");
+            PluginManager.Register(this, new SettingsPage(this), "Sphere GDK Setup");
 
             Panes.Initialize(this);
 
-            _sphereApiRefCommand = new ToolStripMenuItem("Sphere v2 Core API Reference", Resources.EvalIcon);
-            _sphereApiRefCommand.Click += sphereApiRefCommand_Click;
-            _miniRTApiRefCommand = new ToolStripMenuItem("Sphere Runtime API Reference", Resources.EvalIcon);
-            _miniRTApiRefCommand.Click += miniRTApiRefCommand_Click;
-            _cellApiRefCommand = new ToolStripMenuItem("Cellscript API Reference", Resources.EvalIcon);
-            _cellApiRefCommand.Click += cellApiRefCommand_Click;
-            PluginManager.Core.AddMenuItem("Help", _sphereApiRefCommand);
-            PluginManager.Core.AddMenuItem("Help", _miniRTApiRefCommand);
-            PluginManager.Core.AddMenuItem("Help", _cellApiRefCommand);
+            m_sphereApiRefCommand = new ToolStripMenuItem("Sphere v2 Core API Reference", Resources.EvalIcon);
+            m_sphereApiRefCommand.Click += sphereApiRefCommand_Click;
+            m_runtimeApiRefCommand = new ToolStripMenuItem("Sphere Runtime API Reference", Resources.EvalIcon);
+            m_runtimeApiRefCommand.Click += miniRTApiRefCommand_Click;
+            m_cellApiRefCommand = new ToolStripMenuItem("Cellscript API Reference", Resources.EvalIcon);
+            m_cellApiRefCommand.Click += cellApiRefCommand_Click;
+            PluginManager.Core.AddMenuItem("Help", m_sphereApiRefCommand);
+            PluginManager.Core.AddMenuItem("Help", m_runtimeApiRefCommand);
+            PluginManager.Core.AddMenuItem("Help", m_cellApiRefCommand);
 
             PluginManager.Core.UnloadProject += on_UnloadProject;
         }
@@ -54,9 +52,9 @@ namespace miniSphere.Gdk
         public void ShutDown()
         {
             PluginManager.Core.UnloadProject -= on_UnloadProject;
-            PluginManager.Core.RemoveMenuItem(_sphereApiRefCommand);
-            PluginManager.Core.RemoveMenuItem(_miniRTApiRefCommand);
-            PluginManager.Core.RemoveMenuItem(_cellApiRefCommand);
+            PluginManager.Core.RemoveMenuItem(m_sphereApiRefCommand);
+            PluginManager.Core.RemoveMenuItem(m_runtimeApiRefCommand);
+            PluginManager.Core.RemoveMenuItem(m_cellApiRefCommand);
             PluginManager.UnregisterAll(this);
         }
 
@@ -102,7 +100,7 @@ namespace miniSphere.Gdk
                     @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}_is1");
                 if (key != null)
                 {
-                    // miniSphere GDK is installed, get path from registry
+                    // miniSphere is installed, get path from registry
                     string defaultPath = (string)key.GetValue(@"InstallLocation") ?? "";
                     string path = Conf.GetString("gdkPath", defaultPath);
                     return !string.IsNullOrWhiteSpace(path) ? path : defaultPath;

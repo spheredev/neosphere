@@ -13,24 +13,24 @@ namespace miniSphere.Gdk.Plugins
 {
     class miniSphereStarter : IDebugStarter
     {
-        private PluginMain _main;
+        private PluginMain m_main;
 
         public miniSphereStarter(PluginMain main)
         {
-            _main = main;
+            m_main = main;
         }
 
         public bool CanConfigure { get { return false; } }
 
         public void Start(string gamePath, bool isPackage)
         {
-            string gdkPath = _main.Conf.GdkPath;
-            bool wantConsole = _main.Conf.AlwaysUseConsole;
-            bool wantWindow = _main.Conf.TestInWindow || wantConsole;
+            string gdkPath = m_main.Conf.GdkPath;
+            bool wantConsole = m_main.Conf.AlwaysUseConsole;
+            bool wantWindow = m_main.Conf.TestInWindow || wantConsole;
 
             string enginePath = Path.Combine(gdkPath, wantConsole ? "spherun.exe" : "minisphere.exe");
             string options = string.Format(@"{0} --verbose {1} ""{2}""",
-                wantWindow ? "--windowed" : "--fullscreen", _main.Conf.Verbosity, gamePath);
+                wantWindow ? "--windowed" : "--fullscreen", m_main.Conf.Verbosity, gamePath);
             Process.Start(enginePath, options);
         }
 
@@ -41,16 +41,16 @@ namespace miniSphere.Gdk.Plugins
 
         public IDebugger Debug(string gamePath, bool isPackage, IProject project)
         {
-            string gdkPath = _main.Conf.GdkPath;
+            string gdkPath = m_main.Conf.GdkPath;
 
             PluginManager.Core.Docking.Activate(Panes.Console);
             Panes.Console.Clear();
             PluginManager.Core.Docking.Show(Panes.Inspector);
             string enginePath = Path.Combine(gdkPath, "spherun.exe");
             string options = string.Format(@"--verbose {0} --debug ""{1}""",
-                _main.Conf.Verbosity, gamePath);
+                m_main.Conf.Verbosity, gamePath);
             Process engine = Process.Start(enginePath, options);
-            return new SsjDebugger(_main, gamePath, enginePath, engine, project);
+            return new SsjDebugger(m_main, gamePath, enginePath, engine, project);
         }
     }
 }
