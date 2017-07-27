@@ -1,14 +1,12 @@
 /**
- *  Cell Standard Library 'compiler' module
+ *  Cellscript Runtime: transpile() Function
  *  (c) 2017 Fat Cerberus
 **/
 
 'use strict';
-module.exports =
-{
-	__esModule: true,  // Babel interop
-	transpile: transpile,
-};
+exports = module.exports = transpile;
+exports.__esModule = true;
+exports.default = exports;
 
 const from  = require('from');
 const ts    = require('#/typescript');
@@ -18,7 +16,7 @@ const ScriptTool = makeTranspileTool(1.0);
 
 function transpile(dirName, sources)
 {
-	return stageTranspileJob(dirName, sources);
+	return stageTarget(dirName, sources);
 }
 
 function makeTranspileTool(apiVersion)
@@ -63,7 +61,7 @@ function makeTranspileTool(apiVersion)
 	}, "transpiling");
 }
 
-function stageTranspileJob(dirName, sources)
+function stageTarget(dirName, sources)
 {
 	var targets = [];
 	FS.createDirectory(dirName);
