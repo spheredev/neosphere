@@ -3712,10 +3712,12 @@ js_new_SoundStream(duk_context* ctx)
 	num_args = duk_get_top(ctx);
 	frequency = num_args >= 1 ? duk_require_int(ctx, 0) : 22050;
 	bits = num_args >= 2 ? duk_require_int(ctx, 1) : 8;
-	channels = num_args >= 3 ? duk_require_int(ctx, 1) : 1;
+	channels = num_args >= 3 ? duk_require_int(ctx, 2) : 1;
 	
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth", bits);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth");
+	if (channels < 1 || channels > 7)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid number of channels");
 	
 	if (!(stream = stream_new(frequency, bits, channels)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create stream");

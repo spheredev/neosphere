@@ -385,7 +385,7 @@ duk_cb_debug_peek(void* udata)
 	// if the JavaScript interpreter gets stuck in an infinite loop, the engine
 	// will be locked out of the event loop and SSj won't be able to communicate
 	// with us.  this works around the issue.
-	sockets_update();
+	sphere_run(false);
 
 	return socket_peek(s_socket);
 }
