@@ -4,6 +4,10 @@
 **/
 
 'use strict';
+exports = module.exports = DataWriter;
+exports.__esModule = true;
+exports.default = exports;
+
 const assert = require('assert');
 
 function DataWriter(stream)

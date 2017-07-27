@@ -4,6 +4,10 @@
 **/
 
 'use strict';
+exports = module.exports = DataReader;
+exports.__esModule = true;
+exports.default = exports;
+
 const assert = require('assert');
 
 function DataReader(stream)

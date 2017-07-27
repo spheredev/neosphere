@@ -161,7 +161,7 @@ v4.5.7 - March 14, 2017
   entities.
 * Changes `from#select()` to be lazy and removes `from#mapTo()` which is now
   redundant.  If you need to take a snapshot of the current query results,
-  `.toArray()` can now be used for that purpose. 
+  `.toArray()` can now be used for that purpose.
 * Fixes an issue where `.mjs` files are not renamed to `.js` when transpiling.
 * Fixes various bugs in the Sphere Studio project template.
 
