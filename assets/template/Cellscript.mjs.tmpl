@@ -8,7 +8,7 @@
 // through the Babel transpiler if needed, so it's okay to use ES 2015 syntax
 // in a Cellscript if you want.
 
-import {{ transpile }} from 'compiler';
+import {{ transpile }} from 'cell-runtime';
 
 
 // describe the game we're building.  everything in Sphere.Game gets written to
@@ -31,8 +31,8 @@ Object.assign(Sphere.Game, {{
 //       it takes a directory as its first argument rather than a filename.
 //       install() works similarly (see below).
 
-transpile('@/bin/', files('src/*.mjs'));
-transpile('@/bin/', files('src/*.js'));
+transpile('@/bin', files('src/*.mjs'));
+transpile('@/bin', files('src/*.js'));
 
 
 // this tells Cell which files to copy from the source tree when packaging the
@@ -45,6 +45,6 @@ transpile('@/bin/', files('src/*.js'));
 //       `path/to/file`, is relative to the location of the Cellscript, not the
 //       game's JSON manifest like in Sphere.
 
-install('@/images/', files('images/*.png', true));
-install('@/music/',  files('music/*.ogg', true));
-install('@/',        files('icon.png'));
+install('@/images', files('images/*.png', true));
+install('@/music',  files('music/*.ogg', true));
+install('@/',       files('icon.png'));
