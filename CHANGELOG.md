@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+No changes yet.
+
+
 v4.7.2 - July 28, 2017
 ----------------------
 
@@ -23,7 +29,6 @@ v4.7.2 - July 28, 2017
 * Fixes a bug where constructors can be called without using `new`.
 * Fixes a bug where stepping over a `Dispatch.now()` with SSj sometimes locks
   up the engine and prevents it from responding to further debugger commands.
-
 
 v4.7.1 - July 24, 2017
 ----------------------

@@ -8,7 +8,7 @@
 
 #define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "4.7.2"
+#define AppVersion3 "X.X.X"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -116,7 +116,7 @@ Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
 #ifdef HAVE_SPHERE_STUDIO
 Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\ide\Sphere Studio.exe"; Components: spherun/ide
 #endif
-Name: "{group}\Sphere Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun/cli
+Name: "{group}\Sphere GDK Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""; Components: spherun/cli
 Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cellscript-api.txt"; Components: spherun/cli
 Name: "{group}\Core API Reference"; Filename: "{app}\documentation\sphere2-core-api.txt"; Components: spherun
 Name: "{group}\Sphere Runtime API Reference"; Filename: "{app}\documentation\sphere2-hl-api.txt"; Components: spherun
