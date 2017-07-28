@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.7.2 - July 28, 2017
+----------------------
 
 * Adds a new `cell-runtime` master module for use in ES6 Cellscripts, as an
   analogue to `sphere-runtime`.
