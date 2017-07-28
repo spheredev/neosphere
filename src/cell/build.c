@@ -640,7 +640,7 @@ find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, 
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
-			path = fs_make_path(filename, NULL, false);
+			path = fs_make_path(filename, NULL);
 		}
 		else {
 			path = path_dup(origin_path);
@@ -1090,7 +1090,7 @@ js_FS_createDirectory(duk_context* ctx)
 
 	build = duk_get_heap_udata(ctx);
 
-	name = duk_require_path(ctx, 0);
+	name = duk_require_path(ctx, 0, NULL);
 
 	if (fs_mkdir(build->fs, name) != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory");
@@ -1105,7 +1105,7 @@ js_FS_deleteFile(duk_context* ctx)
 
 	build = duk_get_heap_udata(ctx);
 
-	filename = duk_require_path(ctx, 0);
+	filename = duk_require_path(ctx, 0, NULL);
 
 	if (!fs_unlink(build->fs, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file", filename);
@@ -1120,7 +1120,7 @@ js_FS_fileExists(duk_context* ctx)
 
 	build = duk_get_heap_udata(ctx);
 
-	filename = duk_require_path(ctx, 0);
+	filename = duk_require_path(ctx, 0, NULL);
 
 	duk_push_boolean(ctx, fs_fexist(build->fs, filename));
 	return 1;
@@ -1131,7 +1131,7 @@ js_FS_fullPath(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0);
+	filename = duk_require_path(ctx, 0, NULL);
 
 	duk_push_string(ctx, filename);
 	return 1;
@@ -1148,7 +1148,7 @@ js_FS_readFile(duk_context* ctx)
 
 	build = duk_get_heap_udata(ctx);
 
-	filename = duk_require_path(ctx, 0);
+	filename = duk_require_path(ctx, 0, NULL);
 
 	if (!(file_data = fs_fslurp(build->fs, filename, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
@@ -1165,7 +1165,7 @@ js_FS_removeDirectory(duk_context* ctx)
 
 	build = duk_get_heap_udata(ctx);
 
-	name = duk_require_path(ctx, 0);
+	name = duk_require_path(ctx, 0, NULL);
 
 	if (!fs_rmdir(build->fs, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed");
@@ -1181,8 +1181,8 @@ js_FS_rename(duk_context* ctx)
 
 	build = duk_get_heap_udata(ctx);
 
-	name1 = duk_require_path(ctx, 0);
-	name2 = duk_require_path(ctx, 1);
+	name1 = duk_require_path(ctx, 0, NULL);
+	name2 = duk_require_path(ctx, 1, NULL);
 
 	if (!fs_rename(build->fs, name1, name2))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
@@ -1200,7 +1200,7 @@ js_FS_writeFile(duk_context* ctx)
 
 	build = duk_get_heap_udata(ctx);
 
-	filename = duk_require_path(ctx, 0);
+	filename = duk_require_path(ctx, 0, NULL);
 
 	if (duk_is_string(ctx, 1)) {
 		text = duk_require_lstring_t(ctx, 1);
@@ -1234,7 +1234,7 @@ js_new_FileStream(duk_context* ctx)
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
 
-	filename = duk_require_path(ctx, 0);
+	filename = duk_require_path(ctx, 0, NULL);
 	if (file_op == FILE_OP_UPDATE && !fs_fexist(build->fs, filename))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"

@@ -26,18 +26,18 @@ enum map_script_type
 	MAP_SCRIPT_MAX
 };
 
-static struct map*         load_map               (const char* path);
-static void                free_map               (struct map* map);
-static bool                are_zones_at           (int x, int y, int layer, int* out_count);
-static struct map_trigger* get_trigger_at         (int x, int y, int layer, int* out_index);
-static struct map_zone*    get_zone_at            (int x, int y, int layer, int which, int* out_index);
-static bool                change_map             (const char* filename, bool preserve_persons);
-static int                 find_layer             (const char* name);
-static void                map_screen_to_layer    (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
-static void                map_screen_to_map      (int camera_x, int camera_y, int* inout_x, int* inout_y);
-static void                process_map_input      (void);
-static void                render_map             (void);
-static void                update_map_engine      (bool is_main_loop);
+static struct map*         load_map            (const char* path);
+static void                free_map            (struct map* map);
+static bool                are_zones_at        (int x, int y, int layer, int* out_count);
+static struct map_trigger* get_trigger_at      (int x, int y, int layer, int* out_index);
+static struct map_zone*    get_zone_at         (int x, int y, int layer, int which, int* out_index);
+static bool                change_map          (const char* filename, bool preserve_persons);
+static int                 find_layer          (const char* name);
+static void                map_screen_to_layer (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
+static void                map_screen_to_map   (int camera_x, int camera_y, int* inout_x, int* inout_y);
+static void                process_map_input   (void);
+static void                render_map          (void);
+static void                update_map_engine   (bool is_main_loop);
 
 static duk_ret_t js_MapEngine               (duk_context* ctx);
 static duk_ret_t js_AreZonesAt              (duk_context* ctx);
@@ -2842,7 +2842,7 @@ js_ChangeMap(duk_context* ctx)
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (!change_map(filename, false))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to load map `%s`", filename);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load map `%s`", filename);
 	return 0;
 }
 

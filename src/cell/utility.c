@@ -83,7 +83,7 @@ duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 }
 
 const char*
-duk_require_path(duk_context* ctx, duk_idx_t index)
+duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
 {
 	static int     s_index = 0;
 	static path_t* s_paths[10];
@@ -92,7 +92,7 @@ duk_require_path(duk_context* ctx, duk_idx_t index)
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
-	path = fs_make_path(pathname, NULL, false);
+	path = fs_make_path(pathname, origin_name);
 	if ((path_num_hops(path) > 0 && path_hop_cmp(path, 0, ".."))
 		|| path_is_rooted(path))
 	{

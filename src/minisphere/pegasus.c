@@ -1554,14 +1554,14 @@ js_FS_fullPath(duk_context* ctx)
 	// it's therefore something of a hack, and in the future it'd be better to build
 	// this functionality into `fs_make_path()`.
 
-	const char* origin_path = NULL;
+	const char* origin_pathname = NULL;
 	const char* filename;
 	int         num_args;
 
 	num_args = duk_get_top(ctx);
 	if (num_args >= 2)
-		origin_path = duk_require_path(ctx, 1, NULL, false, false);
-	filename = duk_require_path(ctx, 0, origin_path, false, false);
+		origin_pathname = duk_require_path(ctx, 1, NULL, false, false);
+	filename = duk_require_path(ctx, 0, origin_pathname, false, false);
 
 	duk_push_string(ctx, filename);
 	return 1;

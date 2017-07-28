@@ -174,7 +174,7 @@ fs_list_dir(const fs_t* fs, const char* dirname)
 }
 
 path_t*
-fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
+fs_make_path(const char* filename, const char* base_dir_name)
 {
 	// note: fs_make_path() collapses '../' path hops unconditionally, as per
 	//       SphereFS spec. this ensures an unpackaged game can't subvert the
@@ -187,11 +187,6 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 	path = path_new(filename);
 	if (path_is_rooted(path))  // absolute path?
 		return path;
-
-	if (legacy && path_num_hops(path) >= 1 && path_hop_cmp(path, 0, "~")) {
-		path_remove_hop(path, 0);
-		path_insert_hop(path, 0, "@");
-	}
 
 	base_path = path_new_dir(base_dir_name != NULL ? base_dir_name : "./");
 	if (path_num_hops(path) == 0)
