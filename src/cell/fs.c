@@ -189,8 +189,13 @@ fs_make_path(const char* filename, const char* base_dir_name)
 		return path;
 
 	base_path = path_new_dir(base_dir_name != NULL ? base_dir_name : "./");
-	if (path_num_hops(path) == 0)
+	if (path_num_hops(path) == 0) {
 		path_rebase(path, base_path);
+	}
+	else if (path_hop_cmp(path, 0, "$")) {
+		path_remove_hop(path, 0);
+		path_collapse(path, true);
+	}
 	else if (path_hop_cmp(path, 0, "#")
 		|| path_hop_cmp(path, 0, "~")
 		|| path_hop_cmp(path, 0, "@"))
@@ -201,8 +206,9 @@ fs_make_path(const char* filename, const char* base_dir_name)
 		path_insert_hop(path, 0, prefix);
 		free(prefix);
 	}
-	else
+	else {
 		path_rebase(path, base_path);
+	}
 	path_collapse(path, true);
 	path_free(base_path);
 	return path;
@@ -324,6 +330,10 @@ resolve(const fs_t* fs, const char* filename)
 
 	if (path_num_hops(path) == 0)
 		path_rebase(path, fs->root_path);
+	else if (path_hop_cmp(path, 0, "$")) {
+		path_remove_hop(path, 0);
+		path_rebase(path, fs->root_path);
+	}
 	else if (path_hop_cmp(path, 0, "@")) {
 		path_remove_hop(path, 0);
 		path_rebase(path, fs->game_path);
