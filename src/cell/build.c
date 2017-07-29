@@ -1130,8 +1130,13 @@ static duk_ret_t
 js_FS_fullPath(duk_context* ctx)
 {
 	const char* filename;
+	int         num_args;
+	const char* origin_pathname = NULL;
 
-	filename = duk_require_path(ctx, 0, NULL);
+	num_args = duk_get_top(ctx);
+	if (num_args >= 2)
+		origin_pathname = duk_require_path(ctx, 1, NULL);
+	filename = duk_require_path(ctx, 0, origin_pathname);
 
 	duk_push_string(ctx, filename);
 	return 1;
