@@ -639,7 +639,7 @@ find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, 
 
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
-		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
+		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
 			path = fs_make_path(filename, NULL);
 		}
 		else {

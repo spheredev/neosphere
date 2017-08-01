@@ -290,7 +290,7 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 		prefix = strdup(path_hop(path, 0));
 	else
 		prefix = strdup("");
-	if (!strpbrk(prefix, "@#~") || strlen(prefix) != 1) {
+	if (!strpbrk(prefix, "@#~$") || strlen(prefix) != 1) {
 		if (base_path != NULL)
 			path_rebase(path, base_path);
 		else
@@ -698,6 +698,16 @@ resolve_path(const sandbox_t* fs, const char* filename, const char* base_dir, pa
 		*out_path = path_new(filename + 2);
 		if (fs->type == SPHEREFS_LOCAL)
 			path_rebase(*out_path, fs->root_path);
+		*out_fs_type = fs->type;
+	}
+	else if (strlen(filename) >= 2 && memcmp(filename, "$/", 2) == 0) {
+		// the $/ prefix refers to the location of the game's startup script.
+		*out_path = path_new(filename + 2);
+		origin = path_strip(path_dup(fs_script_path(fs)));
+		path_rebase(*out_path, origin);
+		if (fs->type == SPHEREFS_LOCAL)
+			path_rebase(*out_path, fs->root_path);
+		path_free(origin);
 		*out_fs_type = fs->type;
 	}
 	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {
