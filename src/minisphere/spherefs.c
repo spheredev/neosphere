@@ -282,23 +282,26 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 		path_insert_hop(path, 0, "@");
 	}
 	
-	base_path = path_new_dir(base_dir_name != NULL ? base_dir_name : "./");
-	if (path_num_hops(path) == 0)
-		path_rebase(path, base_path);
-	else if (path_hop_cmp(path, 0, "@")) {
-		path_remove_hop(path, 0);
-		path_collapse(path, true);
+	if (base_dir_name != NULL) {
+		base_path = fs_make_path(base_dir_name, NULL, legacy);
+		path_to_dir(base_path);
 	}
-	else if (path_hop_cmp(path, 0, "#") || path_hop_cmp(path, 0, "~")) {
+	if (path_num_hops(path) > 0)
 		prefix = strdup(path_hop(path, 0));
-		path_remove_hop(path, 0);
-		path_collapse(path, true);
-		path_insert_hop(path, 0, prefix);
-		free(prefix);
-	}
 	else
-		path_rebase(path, base_path);
+		prefix = strdup("");
+	if (!strpbrk(prefix, "@#~") || strlen(prefix) != 1) {
+		if (base_path != NULL)
+			path_rebase(path, base_path);
+		else
+			path_insert_hop(path, 0, "@");
+		free(prefix);
+		prefix = strdup(path_hop(path, 0));
+	}
+	path_remove_hop(path, 0);
 	path_collapse(path, true);
+	path_insert_hop(path, 0, prefix);
+	free(prefix);
 	path_free(base_path);
 	return path;
 }
@@ -724,6 +727,8 @@ resolve_path(const sandbox_t* fs, const char* filename, const char* base_dir, pa
 		if (fs == NULL)
 			goto on_error;
 		*out_path = fs_make_path(filename, base_dir, false);
+		if (path_num_hops(*out_path) > 0 && path_hop_cmp(*out_path, 0, "@"))
+			path_remove_hop(*out_path, 0);
 		if (fs->type == SPHEREFS_LOCAL)  // convert to absolute path
 			path_rebase(*out_path, fs->root_path);
 		*out_fs_type = fs->type;

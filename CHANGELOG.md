@@ -4,7 +4,11 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-No changes yet.
+* Adds a new SphereFS prefix, `$/`, which resolves to the location of the
+  startup script in miniSphere, or `Cellscript.mjs` in Cell.
+* Fixes a bug in the SphereFS path resolver in which a path specified uplevel
+  from a SphereFS prefix, e.g. `@/../filename`, is not correctly detected as a
+  sandbox violation.
 
 
 v4.7.2 - July 28, 2017

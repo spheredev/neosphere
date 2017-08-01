@@ -221,7 +221,7 @@ static duk_ret_t js_FS_deleteFile              (duk_context* ctx);
 static duk_ret_t js_FS_fileExists              (duk_context* ctx);
 static duk_ret_t js_FS_readFile                (duk_context* ctx);
 static duk_ret_t js_FS_rename                  (duk_context* ctx);
-static duk_ret_t js_FS_fullPath                 (duk_context* ctx);
+static duk_ret_t js_FS_fullPath                (duk_context* ctx);
 static duk_ret_t js_FS_removeDirectory         (duk_context* ctx);
 static duk_ret_t js_FS_writeFile               (duk_context* ctx);
 static duk_ret_t js_new_FileStream             (duk_context* ctx);

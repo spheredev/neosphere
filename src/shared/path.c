@@ -290,6 +290,7 @@ path_cmp(const path_t* path1, const path_t* path2)
 path_t*
 path_collapse(path_t* path, bool collapse_uplevel)
 {
+	bool        collapse_ok = false;
 	const char* hop;
 	bool        is_rooted;
 	
@@ -298,9 +299,12 @@ path_collapse(path_t* path, bool collapse_uplevel)
 	is_rooted = path_is_rooted(path);
 	for (i = 0; i < path_num_hops(path); ++i) {
 		hop = path_hop(path, i);
+		collapse_ok = collapse_ok && i > 0;
+		if (strcmp(hop, "..") != 0)
+			collapse_ok = true;
 		if (strcmp(hop, ".") == 0)
 			path_remove_hop(path, i--);
-		else if (strcmp(hop, "..") == 0 && i > 0 && collapse_uplevel) {
+		else if (strcmp(hop, "..") == 0 && collapse_uplevel && collapse_ok) {
 			path_remove_hop(path, i--);
 			if (i > 0 || !is_rooted)  // don't strip the root directory
 				path_remove_hop(path, i--);
@@ -452,6 +456,13 @@ path_strip(path_t* path)
 	free(path->filename);
 	path->filename = NULL;
 	refresh_pathname(path);
+	return path;
+}
+
+path_t*
+path_to_dir(path_t* path)
+{
+	convert_to_directory(path);
 	return path;
 }
 

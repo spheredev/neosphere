@@ -88,16 +88,20 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
 	static int     s_index = 0;
 	static path_t* s_paths[10];
 
+	const char* first_hop = "";
 	const char* pathname;
 	path_t*     path;
+	const char* prefix;
 
 	pathname = duk_require_string(ctx, index);
 	path = fs_make_path(pathname, origin_name);
-	if ((path_num_hops(path) > 0 && path_hop_cmp(path, 0, ".."))
-		|| path_is_rooted(path))
-	{
+	prefix = path_hop(path, 0);  // note: fs_make_path() *always* prefixes
+	if (path_num_hops(path) > 1)
+		first_hop = path_hop(path, 1);
+	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
-	}
+	if (strcmp(prefix, "~") == 0)
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "no save directory in Cell");
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;

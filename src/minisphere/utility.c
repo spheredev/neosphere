@@ -261,19 +261,21 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	
 	const char* first_hop = "";
 	const char* pathname;
+	const char* prefix;
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
 	path = fs_make_path(pathname, origin_name, legacy);
-	if (path_num_hops(path) > 0)
-		first_hop = path_hop(path, 0);
+	prefix = path_hop(path, 0);  // note: fs_make_path() *always* prefixes
+	if (path_num_hops(path) > 1)
+		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
-	if (strcmp(first_hop, "~") == 0 && fs_save_id(g_fs) == NULL)
+	if (strcmp(prefix, "~") == 0 && fs_save_id(g_fs) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no save ID defined");
-	if (need_write && !legacy && strcmp(first_hop, "~") != 0)
+	if (need_write && !legacy && strcmp(prefix, "~") != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "directory is read-only");
-	if (need_write && strcmp(first_hop, "#") == 0)  // `system/` is always read-only
+	if (need_write && strcmp(prefix, "#") == 0)  // `system/` is always read-only
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "directory is read-only");
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);

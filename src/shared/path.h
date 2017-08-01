@@ -36,5 +36,6 @@ path_t*     path_resolve       (path_t* path, const path_t* relative_to);
 path_t*     path_set           (path_t* path, const char* pathname);
 path_t*     path_set_dir       (path_t* path, const char* pathname);
 path_t*     path_strip         (path_t* path);
+path_t*     path_to_dir        (path_t* path);
 
 #endif // FATCERBERUS__PATH_H__INCLUDED
