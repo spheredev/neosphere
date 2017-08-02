@@ -101,7 +101,7 @@
             // 
             // columnValue
             // 
-            this.columnValue.Text = "Thrown Value";
+            this.columnValue.Text = "Exception";
             this.columnValue.Width = 400;
             // 
             // columnScript

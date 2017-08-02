@@ -303,7 +303,6 @@ build_package(build_t* build, const char* filename)
 bool
 build_run(build_t* build, bool want_debug, bool rebuild_all)
 {
-	path_t*       dest_path;
 	const char*   filename;
 	vector_t*     filenames;
 	const char*   json;
@@ -383,11 +382,9 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 				continue;
 			if (!(source_path = target_source_path(*p_target)))
 				continue;
-			dest_path = path_remove_hop(path_dup(path), 0);
-			duk_push_string(build->js_context, path_cstr(dest_path));
+			duk_push_string(build->js_context, path_cstr(path));
 			duk_push_string(build->js_context, path_cstr(source_path));
 			duk_put_prop(build->js_context, -3);
-			path_free(dest_path);
 		}
 		duk_put_prop_string(build->js_context, -2, "fileMap");
 		duk_json_encode(build->js_context, -1);

@@ -25,6 +25,7 @@ namespace Sphere.Gdk.Components
         private bool haveError = false;
         private ConcurrentQueue<dynamic[]> replies = new ConcurrentQueue<dynamic[]>();
         private Timer focusTimer;
+        private string scriptPath;
         private string sourcePath;
         private Timer updateTimer;
         private bool expectDetach = false;
@@ -36,6 +37,7 @@ namespace Sphere.Gdk.Components
             plugin = main;
             sgmPath = gamePath;
             sourcePath = project.RootPath;
+            scriptPath = Path.GetDirectoryName(Path.Combine(sourcePath, project.MainScript));
             engineProcess = engine;
             this.enginePath = Path.GetDirectoryName(enginePath);
             focusTimer = new Timer(HandleFocusSwitch, this, Timeout.Infinite, Timeout.Infinite);
@@ -119,8 +121,8 @@ namespace Sphere.Gdk.Components
                 Panes.Inspector.Clear();
 
                 Panes.Console.Print(string.Format("SSj Blue " + plugin.Version + " Sphere JavaScript debugger"));
-                Panes.Console.Print(string.Format("a graphical stepping debugger for Sphere Studio"));
-                Panes.Console.Print(string.Format("(c) 2015-2016 Fat Cerberus"));
+                Panes.Console.Print(string.Format("the graphical symbolic JS debugger for Sphere"));
+                Panes.Console.Print(string.Format("(c) 2015-2017 Fat Cerberus"));
                 Panes.Console.Print("");
             }), null);
         }
@@ -288,6 +290,8 @@ namespace Sphere.Gdk.Components
                 return path.Replace('/', Path.DirectorySeparatorChar);
             if (path.StartsWith("@/"))
                 path = Path.Combine(sourcePath, path.Substring(2));
+            else if (path.StartsWith("$/"))
+                path = Path.Combine(scriptPath, path.Substring(2));
             else if (path.StartsWith("#/"))
                 path = Path.Combine(enginePath, "system", path.Substring(2));
             else if (path.StartsWith("~/"))

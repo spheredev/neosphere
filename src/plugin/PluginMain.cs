@@ -152,8 +152,8 @@ namespace Sphere.Gdk
     {
         public static void Initialize(PluginMain main)
         {
-            PluginManager.Register(main, Inspector = new InspectorPane(), "Debugger");
-            PluginManager.Register(main, Console = new ConsolePane(main.Conf), "SSj Blue");
+            PluginManager.Register(main, Inspector = new InspectorPane(), "Inspector");
+            PluginManager.Register(main, Console = new ConsolePane(main.Conf), "Debug Log");
         }
 
         public static ConsolePane Console { get; private set; }
