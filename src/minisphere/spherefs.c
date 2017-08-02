@@ -290,7 +290,20 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 		prefix = strdup(path_hop(path, 0));
 	else
 		prefix = strdup("");
-	if (!strpbrk(prefix, "@#~$") || strlen(prefix) != 1) {
+	
+	// canonicalize `$/` to `@/<scriptsDir>`.  this ensures each file has only
+	// one canonical name.
+	if (strcmp(prefix, "$") == 0) {
+		path_remove_hop(path, 0);
+		path_rebase(path, fs_script_path(g_fs));
+		path_insert_hop(path, 0, "@");
+		free(prefix);
+		prefix = strdup(path_hop(path, 0));
+	}
+	
+	// no need to check for a `$` prefix now, as the last step removes it
+	// from the equation.
+	if (!strpbrk(prefix, "@#~") || strlen(prefix) != 1) {
 		if (base_path != NULL)
 			path_rebase(path, base_path);
 		else
