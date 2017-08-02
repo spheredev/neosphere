@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-using Sphere.Plugins;
-using Sphere.Plugins.Interfaces;
+using SphereStudio;
+using SphereStudio.Base;
 
-namespace miniSphere.Gdk.Plugins
+namespace Sphere.Gdk.Components
 {
     class miniSphereStarter : IDebugStarter
     {
@@ -44,7 +40,7 @@ namespace miniSphere.Gdk.Plugins
             string gdkPath = m_main.Conf.GdkPath;
 
             PluginManager.Core.Docking.Activate(Panes.Console);
-            Panes.Console.Clear();
+            Panes.Console.ClearConsole();
             PluginManager.Core.Docking.Show(Panes.Inspector);
             string enginePath = Path.Combine(gdkPath, "spherun.exe");
             string options = string.Format(@"--verbose {0} --debug ""{1}""",

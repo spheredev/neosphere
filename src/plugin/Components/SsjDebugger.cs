@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -10,13 +9,13 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Sphere.Core;
-using Sphere.Plugins;
-using Sphere.Plugins.Interfaces;
+using SphereStudio;
+using SphereStudio.Base;
+using SphereStudio.Debugging;
 
-using miniSphere.Gdk.Debugger;
+using Sphere.Gdk.Debugger;
 
-namespace miniSphere.Gdk.Plugins
+namespace Sphere.Gdk.Components
 {
     class SsjDebugger : IDebugger, IDisposable
     {
@@ -112,11 +111,11 @@ namespace miniSphere.Gdk.Plugins
             {
                 Attached?.Invoke(this, EventArgs.Empty);
 
+                Panes.Console.Ssj = this;
+                Panes.Console.ClearConsole();
+                Panes.Console.ClearErrors();
                 Panes.Inspector.SSj = this;
-                Panes.Errors.Ssj = this;
                 Panes.Inspector.Enabled = false;
-                Panes.Console.Clear();
-                Panes.Errors.Clear();
                 Panes.Inspector.Clear();
 
                 Panes.Console.Print(string.Format("SSj Blue " + plugin.Version + " Sphere JavaScript debugger"));
@@ -163,11 +162,12 @@ namespace miniSphere.Gdk.Plugins
             {
                 await this.InternSourceFile(e.FileName);
                 var lineNumber = this.sourceMap.LineInSource(e.FileName, e.LineNumber);
-                Panes.Errors.Add(e.Message, e.IsFatal, e.FileName, lineNumber);
-                PluginManager.Core.Docking.Show(Panes.Errors);
-                PluginManager.Core.Docking.Activate(Panes.Errors);
-                if (e.IsFatal)
+                Panes.Console.AddError(e.Message, e.IsFatal, e.FileName, lineNumber);
+                if (e.IsFatal) {
+                    PluginManager.Core.Docking.Show(Panes.Console);
+                    PluginManager.Core.Docking.Activate(Panes.Console);
                     haveError = true;
+                }
             }), null);
         }
 
@@ -220,7 +220,7 @@ namespace miniSphere.Gdk.Plugins
                 {
                     focusTimer.Change(250, Timeout.Infinite);
                     updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                    Panes.Errors.ClearHighlight();
+                    Panes.Console.ClearErrorHighlight();
                 }
                 if (wantPause && Paused != null)
                 {

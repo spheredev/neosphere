@@ -1,4 +1,4 @@
-﻿namespace miniSphere.Gdk.DockPanes
+﻿namespace Sphere.Gdk.DockPanes
 {
     partial class InspectorPane
     {
@@ -30,15 +30,15 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(InspectorPane));
-            this.LocalsView = new System.Windows.Forms.ListView();
+            this.m_localsListView = new System.Windows.Forms.ListView();
             this.columnName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnValue = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.imagesVarList = new System.Windows.Forms.ImageList(this.components);
             this.splitter = new System.Windows.Forms.SplitContainer();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.ExprTextBox = new System.Windows.Forms.TextBox();
-            this.EvalButton = new System.Windows.Forms.Button();
-            this.CallsView = new System.Windows.Forms.ListView();
+            this.m_evalTextBox = new System.Windows.Forms.TextBox();
+            this.m_evalButton = new System.Windows.Forms.Button();
+            this.m_callsListView = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -49,26 +49,25 @@
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
-            // LocalsView
+            // m_localsListView
             // 
-            this.LocalsView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.m_localsListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnName,
             this.columnValue});
-            this.LocalsView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.LocalsView.FullRowSelect = true;
-            this.LocalsView.GridLines = true;
-            this.LocalsView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-            this.LocalsView.HideSelection = false;
-            this.LocalsView.Location = new System.Drawing.Point(0, 0);
-            this.LocalsView.MultiSelect = false;
-            this.LocalsView.Name = "LocalsView";
-            this.LocalsView.Size = new System.Drawing.Size(387, 333);
-            this.LocalsView.SmallImageList = this.imagesVarList;
-            this.LocalsView.Sorting = System.Windows.Forms.SortOrder.Ascending;
-            this.LocalsView.TabIndex = 0;
-            this.LocalsView.UseCompatibleStateImageBehavior = false;
-            this.LocalsView.View = System.Windows.Forms.View.Details;
-            this.LocalsView.DoubleClick += new System.EventHandler(this.LocalsView_DoubleClick);
+            this.m_localsListView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_localsListView.FullRowSelect = true;
+            this.m_localsListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.m_localsListView.HideSelection = false;
+            this.m_localsListView.Location = new System.Drawing.Point(0, 0);
+            this.m_localsListView.MultiSelect = false;
+            this.m_localsListView.Name = "m_localsListView";
+            this.m_localsListView.Size = new System.Drawing.Size(387, 333);
+            this.m_localsListView.SmallImageList = this.imagesVarList;
+            this.m_localsListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this.m_localsListView.TabIndex = 0;
+            this.m_localsListView.UseCompatibleStateImageBehavior = false;
+            this.m_localsListView.View = System.Windows.Forms.View.Details;
+            this.m_localsListView.DoubleClick += new System.EventHandler(this.LocalsView_DoubleClick);
             // 
             // columnName
             // 
@@ -96,11 +95,11 @@
             // splitter.Panel1
             // 
             this.splitter.Panel1.Controls.Add(this.panel1);
-            this.splitter.Panel1.Controls.Add(this.LocalsView);
+            this.splitter.Panel1.Controls.Add(this.m_localsListView);
             // 
             // splitter.Panel2
             // 
-            this.splitter.Panel2.Controls.Add(this.CallsView);
+            this.splitter.Panel2.Controls.Add(this.m_callsListView);
             this.splitter.Size = new System.Drawing.Size(387, 654);
             this.splitter.SplitterDistance = 333;
             this.splitter.SplitterWidth = 3;
@@ -108,59 +107,59 @@
             // 
             // panel1
             // 
-            this.panel1.Controls.Add(this.ExprTextBox);
-            this.panel1.Controls.Add(this.EvalButton);
+            this.panel1.Controls.Add(this.m_evalTextBox);
+            this.panel1.Controls.Add(this.m_evalButton);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel1.Location = new System.Drawing.Point(0, 310);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(387, 23);
             this.panel1.TabIndex = 3;
             // 
-            // ExprTextBox
+            // m_evalTextBox
             // 
-            this.ExprTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ExprTextBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.ExprTextBox.Location = new System.Drawing.Point(0, 0);
-            this.ExprTextBox.Name = "ExprTextBox";
-            this.ExprTextBox.Size = new System.Drawing.Size(323, 23);
-            this.ExprTextBox.TabIndex = 1;
-            this.ExprTextBox.TextChanged += new System.EventHandler(this.ExprTextBox_TextChanged);
-            this.ExprTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ExprTextBox_KeyDown);
+            this.m_evalTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_evalTextBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.m_evalTextBox.Location = new System.Drawing.Point(0, 0);
+            this.m_evalTextBox.Name = "m_evalTextBox";
+            this.m_evalTextBox.Size = new System.Drawing.Size(323, 23);
+            this.m_evalTextBox.TabIndex = 1;
+            this.m_evalTextBox.TextChanged += new System.EventHandler(this.ExprTextBox_TextChanged);
+            this.m_evalTextBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ExprTextBox_KeyDown);
             // 
-            // EvalButton
+            // m_evalButton
             // 
-            this.EvalButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.EvalButton.Enabled = false;
-            this.EvalButton.Image = global::miniSphere.Gdk.Properties.Resources.EvalIcon;
-            this.EvalButton.Location = new System.Drawing.Point(323, 0);
-            this.EvalButton.Name = "EvalButton";
-            this.EvalButton.Size = new System.Drawing.Size(64, 23);
-            this.EvalButton.TabIndex = 2;
-            this.EvalButton.Text = "&Eval";
-            this.EvalButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.EvalButton.UseVisualStyleBackColor = true;
-            this.EvalButton.Click += new System.EventHandler(this.EvalButton_Click);
+            this.m_evalButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this.m_evalButton.Enabled = false;
+            this.m_evalButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.m_evalButton.Image = global::Sphere.Gdk.Properties.Resources.EvalIcon;
+            this.m_evalButton.Location = new System.Drawing.Point(323, 0);
+            this.m_evalButton.Name = "m_evalButton";
+            this.m_evalButton.Size = new System.Drawing.Size(64, 23);
+            this.m_evalButton.TabIndex = 2;
+            this.m_evalButton.Text = "&Eval";
+            this.m_evalButton.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.m_evalButton.UseVisualStyleBackColor = true;
+            this.m_evalButton.Click += new System.EventHandler(this.EvalButton_Click);
             // 
-            // CallsView
+            // m_callsListView
             // 
-            this.CallsView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.m_callsListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
             this.columnHeader2,
             this.columnHeader3});
-            this.CallsView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.CallsView.FullRowSelect = true;
-            this.CallsView.GridLines = true;
-            this.CallsView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
-            this.CallsView.HideSelection = false;
-            this.CallsView.Location = new System.Drawing.Point(0, 0);
-            this.CallsView.MultiSelect = false;
-            this.CallsView.Name = "CallsView";
-            this.CallsView.ShowItemToolTips = true;
-            this.CallsView.Size = new System.Drawing.Size(387, 318);
-            this.CallsView.TabIndex = 1;
-            this.CallsView.UseCompatibleStateImageBehavior = false;
-            this.CallsView.View = System.Windows.Forms.View.Details;
-            this.CallsView.DoubleClick += new System.EventHandler(this.CallsView_DoubleClick);
+            this.m_callsListView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_callsListView.FullRowSelect = true;
+            this.m_callsListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.m_callsListView.HideSelection = false;
+            this.m_callsListView.Location = new System.Drawing.Point(0, 0);
+            this.m_callsListView.MultiSelect = false;
+            this.m_callsListView.Name = "m_callsListView";
+            this.m_callsListView.ShowItemToolTips = true;
+            this.m_callsListView.Size = new System.Drawing.Size(387, 318);
+            this.m_callsListView.TabIndex = 1;
+            this.m_callsListView.UseCompatibleStateImageBehavior = false;
+            this.m_callsListView.View = System.Windows.Forms.View.Details;
+            this.m_callsListView.DoubleClick += new System.EventHandler(this.CallsView_DoubleClick);
             // 
             // columnHeader1
             // 
@@ -200,15 +199,15 @@
 
         #endregion
 
-        private System.Windows.Forms.ListView LocalsView;
+        private System.Windows.Forms.ListView m_localsListView;
         private System.Windows.Forms.ColumnHeader columnName;
         private System.Windows.Forms.ColumnHeader columnValue;
         private System.Windows.Forms.SplitContainer splitter;
         private System.Windows.Forms.ImageList imagesVarList;
-        private System.Windows.Forms.TextBox ExprTextBox;
-        private System.Windows.Forms.Button EvalButton;
+        private System.Windows.Forms.TextBox m_evalTextBox;
+        private System.Windows.Forms.Button m_evalButton;
         private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.ListView CallsView;
+        private System.Windows.Forms.ListView m_callsListView;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ColumnHeader columnHeader3;

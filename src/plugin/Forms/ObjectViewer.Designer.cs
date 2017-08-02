@@ -1,4 +1,4 @@
-﻿namespace miniSphere.Gdk.Forms
+﻿namespace Sphere.Gdk.Forms
 {
     partial class ObjectViewer
     {
@@ -29,46 +29,48 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.OKButton = new System.Windows.Forms.Button();
-            this.PropTree = new System.Windows.Forms.TreeView();
+            this.m_okButton = new System.Windows.Forms.Button();
+            this.m_propListTreeView = new System.Windows.Forms.TreeView();
             this.TreeIconImageList = new System.Windows.Forms.ImageList(this.components);
-            this.ObjectNameTextBox = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.AccessorCheckBox = new System.Windows.Forms.CheckBox();
-            this.ConfigurableCheckBox = new System.Windows.Forms.CheckBox();
-            this.EnumerableCheckBox = new System.Windows.Forms.CheckBox();
-            this.WritableCheckBox = new System.Windows.Forms.CheckBox();
+            this.m_accessorCheckBox = new System.Windows.Forms.CheckBox();
+            this.m_configurableCheckBox = new System.Windows.Forms.CheckBox();
+            this.m_enumerableCheckBox = new System.Windows.Forms.CheckBox();
+            this.m_writableCheckBox = new System.Windows.Forms.CheckBox();
+            this.m_nameTextBox = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
-            // OKButton
+            // m_okButton
             // 
-            this.OKButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.OKButton.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.OKButton.Location = new System.Drawing.Point(485, 417);
-            this.OKButton.Name = "OKButton";
-            this.OKButton.Size = new System.Drawing.Size(80, 25);
-            this.OKButton.TabIndex = 2;
-            this.OKButton.Text = "&Close";
-            this.OKButton.UseVisualStyleBackColor = true;
+            this.m_okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.m_okButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.m_okButton.Location = new System.Drawing.Point(485, 417);
+            this.m_okButton.Name = "m_okButton";
+            this.m_okButton.Size = new System.Drawing.Size(80, 25);
+            this.m_okButton.TabIndex = 2;
+            this.m_okButton.Text = "&Close";
+            this.m_okButton.UseVisualStyleBackColor = true;
             // 
-            // PropTree
+            // m_propListTreeView
             // 
-            this.PropTree.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.m_propListTreeView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.PropTree.HideSelection = false;
-            this.PropTree.HotTracking = true;
-            this.PropTree.ImageIndex = 0;
-            this.PropTree.ImageList = this.TreeIconImageList;
-            this.PropTree.Location = new System.Drawing.Point(12, 41);
-            this.PropTree.Name = "PropTree";
-            this.PropTree.SelectedImageIndex = 0;
-            this.PropTree.Size = new System.Drawing.Size(553, 302);
-            this.PropTree.TabIndex = 0;
-            this.PropTree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.PropTree_BeforeExpand);
-            this.PropTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.PropTree_AfterSelect);
-            this.PropTree.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PropTree_MouseMove);
+            this.m_propListTreeView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.m_propListTreeView.HideSelection = false;
+            this.m_propListTreeView.HotTracking = true;
+            this.m_propListTreeView.ImageIndex = 0;
+            this.m_propListTreeView.ImageList = this.TreeIconImageList;
+            this.m_propListTreeView.Location = new System.Drawing.Point(12, 41);
+            this.m_propListTreeView.Name = "m_propListTreeView";
+            this.m_propListTreeView.SelectedImageIndex = 0;
+            this.m_propListTreeView.Size = new System.Drawing.Size(553, 302);
+            this.m_propListTreeView.TabIndex = 0;
+            this.m_propListTreeView.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.PropTree_BeforeExpand);
+            this.m_propListTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.PropTree_AfterSelect);
+            this.m_propListTreeView.MouseMove += new System.Windows.Forms.MouseEventHandler(this.PropTree_MouseMove);
             // 
             // TreeIconImageList
             // 
@@ -76,24 +78,14 @@
             this.TreeIconImageList.ImageSize = new System.Drawing.Size(16, 16);
             this.TreeIconImageList.TransparentColor = System.Drawing.Color.Transparent;
             // 
-            // ObjectNameTextBox
-            // 
-            this.ObjectNameTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.ObjectNameTextBox.Location = new System.Drawing.Point(12, 12);
-            this.ObjectNameTextBox.Name = "ObjectNameTextBox";
-            this.ObjectNameTextBox.ReadOnly = true;
-            this.ObjectNameTextBox.Size = new System.Drawing.Size(553, 23);
-            this.ObjectNameTextBox.TabIndex = 3;
-            // 
             // groupBox1
             // 
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.AccessorCheckBox);
-            this.groupBox1.Controls.Add(this.ConfigurableCheckBox);
-            this.groupBox1.Controls.Add(this.EnumerableCheckBox);
-            this.groupBox1.Controls.Add(this.WritableCheckBox);
+            this.groupBox1.Controls.Add(this.m_accessorCheckBox);
+            this.groupBox1.Controls.Add(this.m_configurableCheckBox);
+            this.groupBox1.Controls.Add(this.m_enumerableCheckBox);
+            this.groupBox1.Controls.Add(this.m_writableCheckBox);
             this.groupBox1.Location = new System.Drawing.Point(12, 349);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(553, 62);
@@ -101,62 +93,73 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Property Descriptor";
             // 
-            // AccessorCheckBox
+            // m_accessorCheckBox
             // 
-            this.AccessorCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.AccessorCheckBox.AutoCheck = false;
-            this.AccessorCheckBox.AutoSize = true;
-            this.AccessorCheckBox.Location = new System.Drawing.Point(424, 26);
-            this.AccessorCheckBox.Name = "AccessorCheckBox";
-            this.AccessorCheckBox.Size = new System.Drawing.Size(123, 19);
-            this.AccessorCheckBox.TabIndex = 3;
-            this.AccessorCheckBox.Text = "Accessor (Get/Set)";
-            this.AccessorCheckBox.UseVisualStyleBackColor = true;
+            this.m_accessorCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_accessorCheckBox.AutoCheck = false;
+            this.m_accessorCheckBox.AutoSize = true;
+            this.m_accessorCheckBox.Location = new System.Drawing.Point(424, 26);
+            this.m_accessorCheckBox.Name = "m_accessorCheckBox";
+            this.m_accessorCheckBox.Size = new System.Drawing.Size(123, 19);
+            this.m_accessorCheckBox.TabIndex = 3;
+            this.m_accessorCheckBox.Text = "Accessor (Get/Set)";
+            this.m_accessorCheckBox.UseVisualStyleBackColor = true;
             // 
-            // ConfigurableCheckBox
+            // m_configurableCheckBox
             // 
-            this.ConfigurableCheckBox.AutoCheck = false;
-            this.ConfigurableCheckBox.AutoSize = true;
-            this.ConfigurableCheckBox.Location = new System.Drawing.Point(186, 26);
-            this.ConfigurableCheckBox.Name = "ConfigurableCheckBox";
-            this.ConfigurableCheckBox.Size = new System.Drawing.Size(95, 19);
-            this.ConfigurableCheckBox.TabIndex = 2;
-            this.ConfigurableCheckBox.Text = "Configurable";
-            this.ConfigurableCheckBox.UseVisualStyleBackColor = true;
+            this.m_configurableCheckBox.AutoCheck = false;
+            this.m_configurableCheckBox.AutoSize = true;
+            this.m_configurableCheckBox.Location = new System.Drawing.Point(186, 26);
+            this.m_configurableCheckBox.Name = "m_configurableCheckBox";
+            this.m_configurableCheckBox.Size = new System.Drawing.Size(95, 19);
+            this.m_configurableCheckBox.TabIndex = 2;
+            this.m_configurableCheckBox.Text = "Configurable";
+            this.m_configurableCheckBox.UseVisualStyleBackColor = true;
             // 
-            // EnumerableCheckBox
+            // m_enumerableCheckBox
             // 
-            this.EnumerableCheckBox.AutoCheck = false;
-            this.EnumerableCheckBox.AutoSize = true;
-            this.EnumerableCheckBox.Location = new System.Drawing.Point(91, 26);
-            this.EnumerableCheckBox.Name = "EnumerableCheckBox";
-            this.EnumerableCheckBox.Size = new System.Drawing.Size(89, 19);
-            this.EnumerableCheckBox.TabIndex = 1;
-            this.EnumerableCheckBox.Text = "Enumerable";
-            this.EnumerableCheckBox.UseVisualStyleBackColor = true;
+            this.m_enumerableCheckBox.AutoCheck = false;
+            this.m_enumerableCheckBox.AutoSize = true;
+            this.m_enumerableCheckBox.Location = new System.Drawing.Point(91, 26);
+            this.m_enumerableCheckBox.Name = "m_enumerableCheckBox";
+            this.m_enumerableCheckBox.Size = new System.Drawing.Size(89, 19);
+            this.m_enumerableCheckBox.TabIndex = 1;
+            this.m_enumerableCheckBox.Text = "Enumerable";
+            this.m_enumerableCheckBox.UseVisualStyleBackColor = true;
             // 
-            // WritableCheckBox
+            // m_writableCheckBox
             // 
-            this.WritableCheckBox.AutoCheck = false;
-            this.WritableCheckBox.AutoSize = true;
-            this.WritableCheckBox.Location = new System.Drawing.Point(15, 26);
-            this.WritableCheckBox.Name = "WritableCheckBox";
-            this.WritableCheckBox.Size = new System.Drawing.Size(70, 19);
-            this.WritableCheckBox.TabIndex = 0;
-            this.WritableCheckBox.Text = "Writable";
-            this.WritableCheckBox.UseVisualStyleBackColor = true;
+            this.m_writableCheckBox.AutoCheck = false;
+            this.m_writableCheckBox.AutoSize = true;
+            this.m_writableCheckBox.Location = new System.Drawing.Point(15, 26);
+            this.m_writableCheckBox.Name = "m_writableCheckBox";
+            this.m_writableCheckBox.Size = new System.Drawing.Size(70, 19);
+            this.m_writableCheckBox.TabIndex = 0;
+            this.m_writableCheckBox.Text = "Writable";
+            this.m_writableCheckBox.UseVisualStyleBackColor = true;
+            // 
+            // m_nameTextBox
+            // 
+            this.m_nameTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.m_nameTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.m_nameTextBox.Location = new System.Drawing.Point(12, 12);
+            this.m_nameTextBox.Name = "m_nameTextBox";
+            this.m_nameTextBox.ReadOnly = true;
+            this.m_nameTextBox.Size = new System.Drawing.Size(553, 23);
+            this.m_nameTextBox.TabIndex = 3;
             // 
             // ObjectViewer
             // 
-            this.AcceptButton = this.OKButton;
+            this.AcceptButton = this.m_okButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.CancelButton = this.OKButton;
+            this.CancelButton = this.m_okButton;
             this.ClientSize = new System.Drawing.Size(577, 454);
             this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.ObjectNameTextBox);
-            this.Controls.Add(this.PropTree);
-            this.Controls.Add(this.OKButton);
+            this.Controls.Add(this.m_nameTextBox);
+            this.Controls.Add(this.m_propListTreeView);
+            this.Controls.Add(this.m_okButton);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -173,14 +176,14 @@
         }
 
         #endregion
-        private System.Windows.Forms.Button OKButton;
-        private System.Windows.Forms.TreeView PropTree;
-        private System.Windows.Forms.TextBox ObjectNameTextBox;
+        private System.Windows.Forms.Button m_okButton;
+        private System.Windows.Forms.TreeView m_propListTreeView;
         private System.Windows.Forms.ImageList TreeIconImageList;
         private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.CheckBox AccessorCheckBox;
-        private System.Windows.Forms.CheckBox ConfigurableCheckBox;
-        private System.Windows.Forms.CheckBox EnumerableCheckBox;
-        private System.Windows.Forms.CheckBox WritableCheckBox;
+        private System.Windows.Forms.CheckBox m_accessorCheckBox;
+        private System.Windows.Forms.CheckBox m_configurableCheckBox;
+        private System.Windows.Forms.CheckBox m_enumerableCheckBox;
+        private System.Windows.Forms.CheckBox m_writableCheckBox;
+        private System.Windows.Forms.TextBox m_nameTextBox;
     }
 }

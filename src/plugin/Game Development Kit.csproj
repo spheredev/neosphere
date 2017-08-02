@@ -7,7 +7,7 @@
     <ProjectGuid>{D242F8EF-7D85-4B6B-9446-6758B68A7F54}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>miniSphere.Gdk</RootNamespace>
+    <RootNamespace>Sphere.Gdk</RootNamespace>
     <AssemblyName>miniSphereGdkPlugin</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -35,13 +35,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Sphere.Core">
-      <HintPath>lib\Sphere.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Sphere.Plugins">
-      <HintPath>lib\Sphere.Plugins.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="SphereStudio.Base">
+      <HintPath>lib\SphereStudio.Base.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -64,7 +59,7 @@
     <Compile Include="Forms\ObjectViewer.Designer.cs">
       <DependentUpon>ObjectViewer.cs</DependentUpon>
     </Compile>
-    <Compile Include="Plugins\CellCompiler.cs" />
+    <Compile Include="Components\CellCompiler.cs" />
     <Compile Include="SettingsPages\SettingsPage.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -77,19 +72,13 @@
     <Compile Include="DockPanes\ConsolePane.Designer.cs">
       <DependentUpon>ConsolePane.cs</DependentUpon>
     </Compile>
-    <Compile Include="DockPanes\ErrorPane.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="DockPanes\ErrorPane.Designer.cs">
-      <DependentUpon>ErrorPane.cs</DependentUpon>
-    </Compile>
     <Compile Include="DockPanes\InspectorPane.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="DockPanes\InspectorPane.Designer.cs">
       <DependentUpon>InspectorPane.cs</DependentUpon>
     </Compile>
-    <Compile Include="Plugins\SsjDebugger.cs" />
+    <Compile Include="Components\SsjDebugger.cs" />
     <Compile Include="Debugger\Inferior.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="PluginMain.cs" />
@@ -100,7 +89,7 @@
     </Compile>
     <Compile Include="Extensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Plugins\minisphereStarter.cs" />
+    <Compile Include="Components\minisphereStarter.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Forms\ObjectViewer.resx">
@@ -111,9 +100,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="DockPanes\ConsolePane.resx">
       <DependentUpon>ConsolePane.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="DockPanes\ErrorPane.resx">
-      <DependentUpon>ErrorPane.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="DockPanes\InspectorPane.resx">
       <DependentUpon>InspectorPane.cs</DependentUpon>

@@ -3,15 +3,15 @@ using System.IO;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-using Sphere.Plugins;
-using Sphere.Plugins.Interfaces;
+using SphereStudio;
+using SphereStudio.Base;
 
-using miniSphere.Gdk.DockPanes;
-using miniSphere.Gdk.Plugins;
-using miniSphere.Gdk.SettingsPages;
-using miniSphere.Gdk.Properties;
+using Sphere.Gdk.Components;
+using Sphere.Gdk.DockPanes;
+using Sphere.Gdk.SettingsPages;
+using Sphere.Gdk.Properties;
 
-namespace miniSphere.Gdk
+namespace Sphere.Gdk
 {
     public class PluginMain : IPluginMain
     {
@@ -78,8 +78,8 @@ namespace miniSphere.Gdk
 
         private void on_UnloadProject(object sender, EventArgs e)
         {
-            Panes.Errors.Clear();
-            Panes.Console.Clear();
+            Panes.Console.ClearErrors();
+            Panes.Console.ClearConsole();
         }
     }
 
@@ -153,12 +153,10 @@ namespace miniSphere.Gdk
         public static void Initialize(PluginMain main)
         {
             PluginManager.Register(main, Inspector = new InspectorPane(), "Debugger");
-            PluginManager.Register(main, Console = new ConsolePane(main.Conf), "Console");
-            PluginManager.Register(main, Errors = new ErrorPane(), "Exceptions");
+            PluginManager.Register(main, Console = new ConsolePane(main.Conf), "SSj Blue");
         }
 
         public static ConsolePane Console { get; private set; }
-        public static ErrorPane Errors { get; private set; }
         public static InspectorPane Inspector { get; private set; }
     }
 }

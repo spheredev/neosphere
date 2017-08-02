@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace miniSphere.Gdk.Debugger
+namespace Sphere.Gdk.Debugger
 {
     enum DValueTag
     {

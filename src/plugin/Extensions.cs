@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace miniSphere.Gdk
+namespace Sphere.Gdk
 {
     static class Extensions
     {

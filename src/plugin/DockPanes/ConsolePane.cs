@@ -1,28 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Media;
 using System.Windows.Forms;
 
-using Sphere.Plugins;
-using Sphere.Plugins.Interfaces;
-using miniSphere.Gdk.Properties;
+using SphereStudio;
+using SphereStudio.Base;
+using SphereStudio.UI;
 
-namespace miniSphere.Gdk.DockPanes
+using Sphere.Gdk.Components;
+using Sphere.Gdk.Properties;
+
+namespace Sphere.Gdk.DockPanes
 {
-    partial class ConsolePane : UserControl, IDockPane
+    partial class ConsolePane : UserControl, IDockPane, IStyleable
     {
-        PluginConf _conf;
-        List<string> _lines = new List<string>();
+        PluginConf m_config;
+        List<string> m_lines = new List<string>();
 
-        public ConsolePane(PluginConf conf)
+        public ConsolePane(PluginConf config)
         {
             InitializeComponent();
-            _conf = conf;
+            Styler.AutoStyle(this);
+
+            m_config = config;
         }
 
         public bool ShowInViewMenu => true;
@@ -30,25 +31,83 @@ namespace miniSphere.Gdk.DockPanes
         public DockHint DockHint => DockHint.Bottom;
         public Bitmap DockIcon => Resources.ConsoleIcon;
 
-        public void Clear()
+        public SsjDebugger Ssj { get; set; }
+
+        public void AddError(string value, bool isFatal, string filename, int line)
         {
-            _lines.Clear();
-            PrintTimer.Start();
+            if (m_errorListView.Items.Count > 0) {
+                m_errorListView.Items[0].BackColor = m_errorListView.BackColor;
+                m_errorListView.Items[0].ForeColor = m_errorListView.ForeColor;
+            }
+            ListViewItem item = m_errorListView.Items.Insert(0, value, isFatal ? 1 : 0);
+            item.SubItems.Add(filename);
+            item.SubItems.Add(line.ToString());
+            if (isFatal) {
+                item.BackColor = Color.DarkRed;
+                item.ForeColor = Color.Yellow;
+            }
+        }
+
+        public void ApplyStyle(UIStyle style)
+        {
+            style.AsCodeView(m_textBox);
+            style.AsTextView(m_errorListView);
+        }
+
+        public void ClearConsole()
+        {
+            m_lines.Clear();
+            m_timer.Start();
+        }
+
+        public void ClearErrors()
+        {
+            m_errorListView.Items.Clear();
+        }
+
+        public void ClearErrorHighlight()
+        {
+            if (m_errorListView.Items.Count > 0) {
+                m_errorListView.Items[0].BackColor = m_errorListView.BackColor;
+                m_errorListView.Items[0].ForeColor = m_errorListView.ForeColor;
+            }
+        }
+
+        public void HideIfClean()
+        {
+            ClearErrorHighlight();
+            if (m_errorListView.Items.Count == 0) {
+                PluginManager.Core.Docking.Hide(this);
+            }
         }
 
         public void Print(string text)
         {
-            _lines.Add(text);
-            PrintTimer.Start();
+            m_lines.Add(text);
+            m_timer.Start();
         }
 
-        private void PrintTimer_Tick(object sender, EventArgs e)
+        private void errorListView_DoubleClick(object sender, EventArgs e)
         {
-            PrintTimer.Stop();
-            textOutput.Text = string.Join("\r\n", _lines) + "\r\n";
-            textOutput.SelectionStart = textOutput.Text.Length;
-            textOutput.SelectionLength = 0;
-            textOutput.ScrollToCaret();
+            if (m_errorListView.SelectedItems.Count > 0) {
+                ListViewItem item = m_errorListView.SelectedItems[0];
+                string filename = Ssj.ResolvePath(item.SubItems[1].Text);
+                int lineNumber = int.Parse(item.SubItems[2].Text);
+                ScriptView view = PluginManager.Core.OpenFile(filename) as ScriptView;
+                if (view == null)
+                    SystemSounds.Asterisk.Play();
+                else
+                    view.GoToLine(lineNumber);
+            }
+        }
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            m_timer.Stop();
+            m_textBox.Text = string.Join("\r\n", m_lines) + "\r\n";
+            m_textBox.SelectionStart = m_textBox.Text.Length;
+            m_textBox.SelectionLength = 0;
+            m_textBox.ScrollToCaret();
         }
     }
 }

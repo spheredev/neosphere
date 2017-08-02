@@ -1,17 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using Sphere.Plugins.Interfaces;
-using Sphere.Plugins;
+using SphereStudio.Base;
 
-namespace miniSphere.Gdk.SettingsPages
+namespace Sphere.Gdk.SettingsPages
 {
     partial class SettingsPage : UserControl, ISettingsPage
     {

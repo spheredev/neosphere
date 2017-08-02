@@ -1,4 +1,4 @@
-﻿namespace miniSphere.Gdk.SettingsPages
+﻿namespace Sphere.Gdk.SettingsPages
 {
     partial class SettingsPage
     {
@@ -34,17 +34,17 @@
             this.ShowTraceCheckBox = new System.Windows.Forms.CheckBox();
             this.TestInWindowCheckBox = new System.Windows.Forms.CheckBox();
             this.MakeDebugPackageCheckBox = new System.Windows.Forms.CheckBox();
-            this.editorLabel3 = new Sphere.Core.Editor.EditorLabel();
+            this.editorLabel3 = new SphereStudio.UI.DialogHeader();
             this.panel3 = new System.Windows.Forms.Panel();
             this.VerbosityComboBox = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.TestWithConsoleCheckBox = new System.Windows.Forms.CheckBox();
-            this.editorLabel2 = new Sphere.Core.Editor.EditorLabel();
+            this.editorLabel2 = new SphereStudio.UI.DialogHeader();
             this.panel1 = new System.Windows.Forms.Panel();
             this.BrowseButton = new System.Windows.Forms.Button();
             this.GdkPathTextBox = new System.Windows.Forms.TextBox();
             this.PathLabel = new System.Windows.Forms.Label();
-            this.editorLabel1 = new Sphere.Core.Editor.EditorLabel();
+            this.editorLabel1 = new SphereStudio.UI.DialogHeader();
             this.TabView.SuspendLayout();
             this.MainTabPage.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -206,7 +206,7 @@
             // BrowseButton
             // 
             this.BrowseButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.BrowseButton.Image = global::miniSphere.Gdk.Properties.Resources.FolderIcon;
+            this.BrowseButton.Image = global::Sphere.Gdk.Properties.Resources.FolderIcon;
             this.BrowseButton.Location = new System.Drawing.Point(469, 39);
             this.BrowseButton.Name = "BrowseButton";
             this.BrowseButton.Size = new System.Drawing.Size(80, 25);
@@ -275,13 +275,13 @@
         private System.Windows.Forms.Button BrowseButton;
         private System.Windows.Forms.TextBox GdkPathTextBox;
         private System.Windows.Forms.Label PathLabel;
-        private Sphere.Core.Editor.EditorLabel editorLabel1;
+        private SphereStudio.UI.DialogHeader editorLabel1;
         private System.Windows.Forms.Panel panel2;
         private System.Windows.Forms.CheckBox TestWithConsoleCheckBox;
-        private Sphere.Core.Editor.EditorLabel editorLabel2;
+        private SphereStudio.UI.DialogHeader editorLabel2;
         private System.Windows.Forms.CheckBox MakeDebugPackageCheckBox;
         private System.Windows.Forms.CheckBox TestInWindowCheckBox;
-        private Sphere.Core.Editor.EditorLabel editorLabel3;
+        private SphereStudio.UI.DialogHeader editorLabel3;
         private System.Windows.Forms.Panel panel3;
         private System.Windows.Forms.ComboBox VerbosityComboBox;
         private System.Windows.Forms.Label label2;

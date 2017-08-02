@@ -1,21 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using miniSphere.Gdk.Debugger;
-using miniSphere.Gdk.Plugins;
-using miniSphere.Gdk.Properties;
+using SphereStudio.UI;
 
-namespace miniSphere.Gdk.Forms
+using Sphere.Gdk.Debugger;
+using Sphere.Gdk.Properties;
+
+namespace Sphere.Gdk.Forms
 {
-    partial class ObjectViewer : Form
+    partial class ObjectViewer : Form, IStyleable
     {
         private Inferior _inferior;
         private DValue _value;
@@ -23,8 +17,9 @@ namespace miniSphere.Gdk.Forms
         public ObjectViewer(Inferior inferior, string objectName, DValue value)
         {
             InitializeComponent();
+            Styler.AutoStyle(this);
 
-            ObjectNameTextBox.Text = string.Format("eval('{0}') = {1};",
+            m_nameTextBox.Text = string.Format("eval('{0}') = {1};",
                 objectName.Replace(@"\", @"\\").Replace("'", @"\'").Replace("\n", @"\n").Replace("\r", @"\r"),
                 value.ToString());
             TreeIconImageList.Images.Add("object", Resources.StackIcon);
@@ -35,16 +30,29 @@ namespace miniSphere.Gdk.Forms
             _value = value;
         }
 
+        public void ApplyStyle(UIStyle style)
+        {
+            style.AsUIElement(this);
+            style.AsUIElement(m_writableCheckBox);
+            style.AsUIElement(m_enumerableCheckBox);
+            style.AsUIElement(m_configurableCheckBox);
+            style.AsUIElement(m_accessorCheckBox);
+            style.AsTextView(m_nameTextBox);
+            style.AsTextView(m_propListTreeView);
+            style.AsAccent(m_okButton);
+
+        }
+
         private async void this_Load(object sender, EventArgs e)
         {
-            PropTree.BeginUpdate();
-            PropTree.Nodes.Clear();
-            var trunk = PropTree.Nodes.Add(_value.ToString());
+            m_propListTreeView.BeginUpdate();
+            m_propListTreeView.Nodes.Clear();
+            var trunk = m_propListTreeView.Nodes.Add(_value.ToString());
             trunk.ImageKey = "object";
             if (_value.Tag == DValueTag.HeapPtr)
                 await PopulateTreeNode(trunk, (HeapPtr)_value);
             trunk.Expand();
-            PropTree.EndUpdate();
+            m_propListTreeView.EndUpdate();
         }
 
         private void PropTree_AfterSelect(object sender, TreeViewEventArgs e)
@@ -52,20 +60,20 @@ namespace miniSphere.Gdk.Forms
             if (e.Node.Tag != null)
             {
                 PropDesc desc = (PropDesc)e.Node.Tag;
-                WritableCheckBox.Enabled = !desc.Flags.HasFlag(PropFlags.Accessor);
-                EnumerableCheckBox.Enabled = true;
-                ConfigurableCheckBox.Enabled = true;
-                AccessorCheckBox.Enabled = true;
-                WritableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Writable);
-                EnumerableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Enumerable);
-                ConfigurableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Configurable);
-                AccessorCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Accessor);
+                m_writableCheckBox.Enabled = !desc.Flags.HasFlag(PropFlags.Accessor);
+                m_enumerableCheckBox.Enabled = true;
+                m_configurableCheckBox.Enabled = true;
+                m_accessorCheckBox.Enabled = true;
+                m_writableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Writable);
+                m_enumerableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Enumerable);
+                m_configurableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Configurable);
+                m_accessorCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Accessor);
             }
             else {
-                WritableCheckBox.Enabled = WritableCheckBox.Checked = false;
-                EnumerableCheckBox.Enabled = EnumerableCheckBox.Checked = false;
-                ConfigurableCheckBox.Enabled = ConfigurableCheckBox.Checked = false;
-                AccessorCheckBox.Enabled = AccessorCheckBox.Enabled = false;
+                m_writableCheckBox.Enabled = m_writableCheckBox.Checked = false;
+                m_enumerableCheckBox.Enabled = m_enumerableCheckBox.Checked = false;
+                m_configurableCheckBox.Enabled = m_configurableCheckBox.Checked = false;
+                m_accessorCheckBox.Enabled = m_accessorCheckBox.Enabled = false;
             }
         }
 
@@ -81,14 +89,14 @@ namespace miniSphere.Gdk.Forms
 
         private void PropTree_MouseMove(object sender, MouseEventArgs e)
         {
-            var ht = PropTree.HitTest(e.Location);
-            PropTree.Cursor = ht.Node != null && ht.Node.Bounds.Contains(e.Location)
+            var ht = m_propListTreeView.HitTest(e.Location);
+            m_propListTreeView.Cursor = ht.Node != null && ht.Node.Bounds.Contains(e.Location)
                 ? Cursors.Hand : Cursors.Default;
         }
 
         private async Task PopulateTreeNode(TreeNode node, HeapPtr ptr)
         {
-            PropTree.BeginUpdate();
+            m_propListTreeView.BeginUpdate();
             var props = await _inferior.GetObjPropDescRange(ptr, 0, int.MaxValue);
             foreach (var key in props.Keys) {
                 if (props[key].Flags.HasFlag(PropFlags.Accessor)) {
@@ -115,7 +123,7 @@ namespace miniSphere.Gdk.Forms
             }
             if (node.Nodes.Count > 0 && node.Nodes[0].Text == "")
                 node.Nodes.RemoveAt(0);
-            PropTree.EndUpdate();
+            m_propListTreeView.EndUpdate();
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace miniSphere.Gdk.Debugger
+namespace Sphere.Gdk.Debugger
 {
     struct PropDesc
     {

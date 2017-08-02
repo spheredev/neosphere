@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
-using Sphere.Plugins;
-using Sphere.Plugins.Interfaces;
+using SphereStudio.Base;
 
-namespace miniSphere.Gdk.Plugins
+namespace Sphere.Gdk.Components
 {
     class CellCompiler : IPackager
     {
