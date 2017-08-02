@@ -533,6 +533,10 @@ FileStream#fileName [read-only]
 
     Gets the full, canonical SphereFS filename of the underlying file.
 
+FileStream#fileSize [read-only]
+
+    Gets the size of the underlying file, in bytes.
+
 FileStream#position [read/write]
 
     Gets or sets the file position, which determines where in the file the next
@@ -541,10 +545,6 @@ FileStream#position [read/write]
     Note: For files opened for writing, it is valid to seek past the end of the
           stream.  In this case the next write will be at the new position and
           the intervening space filled with NUL bytes.
-
-FileStream#size [read-only]
-
-    Gets the size of the underlying file, in bytes.
 
 FileStream#read(num_bytes);
 
