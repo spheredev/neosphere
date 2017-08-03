@@ -85,7 +85,7 @@ utf8_decode_next(utf8_decode_t* cx, uint8_t byte, uint32_t *out_codepoint)
 			return UTF8_CODEPOINT;
 		}
 		else if (byte >= 0xc2 && byte <= 0xdf) {
-			cx->bytes_needed = 2;
+			cx->bytes_needed = 1;
 			cx->codepoint = byte & 0x1f;
 			return UTF8_CONTINUE;
 		}
