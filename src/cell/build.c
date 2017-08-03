@@ -38,6 +38,7 @@ static duk_ret_t js_Sphere_get_Platform     (duk_context* ctx);
 static duk_ret_t js_Sphere_get_Version      (duk_context* ctx);
 static duk_ret_t js_FS_createDirectory      (duk_context* ctx);
 static duk_ret_t js_FS_deleteFile           (duk_context* ctx);
+static duk_ret_t js_FS_directoryExists      (duk_context* ctx);
 static duk_ret_t js_FS_fileExists           (duk_context* ctx);
 static duk_ret_t js_FS_fullPath             (duk_context* ctx);
 static duk_ret_t js_FS_readFile             (duk_context* ctx);
@@ -132,6 +133,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
+	api_define_function(ctx, "FS", "directoryExists", js_FS_directoryExists);
 	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
 	api_define_function(ctx, "FS", "fullPath", js_FS_fullPath);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
@@ -1107,6 +1109,20 @@ js_FS_deleteFile(duk_context* ctx)
 	if (!fs_unlink(build->fs, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file", filename);
 	return 0;
+}
+
+static duk_ret_t
+js_FS_directoryExists(duk_context* ctx)
+{
+	build_t*    build;
+	const char* dirname;
+
+	build = duk_get_heap_udata(ctx);
+
+	dirname = duk_require_path(ctx, 0, NULL);
+
+	duk_push_boolean(ctx, fs_dir_exists(build->fs, dirname));
+	return 1;
 }
 
 static duk_ret_t

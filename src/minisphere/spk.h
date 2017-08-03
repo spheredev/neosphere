@@ -17,6 +17,7 @@ spk_t*      ref_spk            (spk_t* spk);
 void        free_spk           (spk_t* spk);
 vector_t*   list_spk_filenames (spk_t* spk, const char* dirname, bool want_dirs);
 
+bool        spk_dir_exists (const spk_t* spk, const char* dirname);
 spk_file_t* spk_fopen  (spk_t* spk, const char* path, const char* mode);
 void        spk_fclose (spk_file_t* file);
 int         spk_fputc  (int ch, spk_file_t* file);

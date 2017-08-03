@@ -33,6 +33,7 @@ void             fs_get_resolution (const sandbox_t* fs, int *out_width, int *ou
 vector_t*        fs_list_dir       (const sandbox_t* fs, const char* dirname, const char* base_dir, bool want_dirs);
 path_t*          fs_make_path      (const char* filename, const char* base_dir_name, bool legacy);
 
+bool        sfs_dir_exists (const sandbox_t* fs, const char* dirname, const char* base_dir);
 sfs_file_t* sfs_fopen  (sandbox_t* fs, const char* path, const char* base_dir, const char* mode);
 void        sfs_fclose (sfs_file_t* file);
 bool        sfs_fexist (sandbox_t* fs, const char* filename, const char* base_dir);

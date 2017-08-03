@@ -419,6 +419,33 @@ sfs_fclose(sfs_file_t* file)
 }
 
 bool
+sfs_dir_exists(const sandbox_t* fs, const char* dirname, const char* base_dir)
+{
+	path_t*      dir_path = NULL;
+	enum fs_type fs_type;
+	struct stat  stats;
+
+	if (!resolve_path(fs, dirname, base_dir, &dir_path, &fs_type))
+		goto on_error;
+	switch (fs_type) {
+	case SPHEREFS_LOCAL:
+		if (stat(path_cstr(dir_path), &stats) != 0)
+			goto on_error;
+		path_free(dir_path);
+		return (stats.st_mode & S_IFDIR) == S_IFDIR;
+	case SPHEREFS_SPK:
+		if (!spk_dir_exists(fs->spk, path_cstr(dir_path)))
+			goto on_error;
+		path_free(dir_path);
+		return true;
+	}
+
+on_error:
+	path_free(dir_path);
+	return false;
+}
+
+bool
 sfs_fexist(sandbox_t* fs, const char* filename, const char* base_dir)
 {
 	sfs_file_t*   file;

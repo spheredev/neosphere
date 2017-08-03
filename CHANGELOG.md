@@ -6,8 +6,9 @@ vX.X.X - TBD
 
 * Adds a new SphereFS prefix, `$/`, which resolves to the location of the
   startup script in miniSphere, or `Cellscript.mjs` in Cell.
-* Fixes a bug where Cell's `FS.writeFile()` can accept a buffer object as its
-  second argument.
+* Adds `FS.directoryExists()` for checking whether a directory exists.
+* Fixes a bug where Cell `FS.writeFile()` can accept a buffer object as input.
+* Fixes a bug in Cell `FS.fileExists()` where it returns true for directories.
 * Fixes a bug in the SphereFS path resolver in which a path specified uplevel
   from a SphereFS prefix, e.g. `@/../filename`, is not correctly detected as a
   sandbox violation.

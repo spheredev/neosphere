@@ -49,6 +49,16 @@ fs_free(fs_t* fs)
 	free(fs);
 }
 
+bool
+fs_dir_exists(const fs_t* fs, const char* dirname)
+{
+	struct stat sb;
+
+	if (fs_stat(fs, dirname, &sb) != 0)
+		return false;
+	return (sb.st_mode & S_IFDIR) == S_IFDIR;
+}
+
 int
 fs_fcopy(const fs_t* fs, const char* destination, const char* source, int overwrite)
 {
@@ -74,7 +84,9 @@ fs_fexist(const fs_t* fs, const char* filename)
 {
 	struct stat sb;
 
-	return fs_stat(fs, filename, &sb) == 0;
+	if (fs_stat(fs, filename, &sb) != 0)
+		return false;
+	return (sb.st_mode & S_IFREG) == S_IFREG;
 }
 
 FILE*

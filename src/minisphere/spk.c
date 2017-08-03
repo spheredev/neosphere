@@ -122,6 +122,31 @@ free_spk(spk_t* spk)
 	free(spk);
 }
 
+bool
+spk_dir_exists(const spk_t* spk, const char* dirname)
+{
+	struct spk_entry* entry;
+	path_t*           path;
+	const char*       pathname;
+
+	iter_t iter;
+
+	path = path_new_dir(dirname);
+	pathname = path_cstr(path);
+	iter = vector_enum(spk->index);
+	while (entry = vector_next(&iter)) {
+		// SPK doesn't really have directories, so we fake it by checking
+		// if any of the stored filenames begin with the directory path as a
+		// prefix.
+		if (strstr(entry->file_path, pathname) == entry->file_path) {
+			path_free(path);
+			return true;
+		}
+	}
+	path_free(path);
+	return false;
+}
+
 spk_file_t*
 spk_fopen(spk_t* spk, const char* path, const char* mode)
 {
@@ -294,7 +319,7 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 	// HERE BE DRAGONS!
 	// this function is kind of a monstrosity because the SPK format doesn't have
 	// any real concept of a directory - each asset is stored with its full path
-	// as its filename. as such we have to do some ugly parsing and de-duplication,
+	// as its filename.  as such we have to do some ugly parsing and de-duplication,
 	// particularly in the case of directories.
 	
 	lstring_t*        filename;

@@ -218,6 +218,7 @@ static duk_ret_t js_Dispatch_onRender          (duk_context* ctx);
 static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
 static duk_ret_t js_FS_createDirectory         (duk_context* ctx);
 static duk_ret_t js_FS_deleteFile              (duk_context* ctx);
+static duk_ret_t js_FS_directoryExists         (duk_context* ctx);
 static duk_ret_t js_FS_fileExists              (duk_context* ctx);
 static duk_ret_t js_FS_readFile                (duk_context* ctx);
 static duk_ret_t js_FS_rename                  (duk_context* ctx);
@@ -460,6 +461,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Font", "wordWrap", js_Font_wordWrap);
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
+	api_define_function(ctx, "FS", "directoryExists", js_FS_directoryExists);
 	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
 	api_define_function(ctx, "FS", "fullPath", js_FS_fullPath);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
@@ -1533,6 +1535,17 @@ js_FS_deleteFile(duk_context* ctx)
 	if (!sfs_unlink(g_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file", filename);
 	return 0;
+}
+
+static duk_ret_t
+js_FS_directoryExists(duk_context* ctx)
+{
+	const char* dirname;
+
+	dirname = duk_require_path(ctx, 0, NULL, false, false);
+
+	duk_push_boolean(ctx, sfs_dir_exists(g_fs, dirname, NULL));
+	return 1;
 }
 
 static duk_ret_t
