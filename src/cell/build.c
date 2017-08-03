@@ -1195,24 +1195,15 @@ static duk_ret_t
 js_FS_writeFile(duk_context* ctx)
 {
 	build_t*    build;
-	const void* file_data;
-	size_t      file_size;
 	const char* filename;
 	lstring_t*  text = NULL;
 
 	build = duk_get_heap_udata(ctx);
 
 	filename = duk_require_path(ctx, 0, NULL);
-
-	if (duk_is_string(ctx, 1)) {
-		text = duk_require_lstring_t(ctx, 1);
-		file_data = lstr_cstr(text);
-		file_size = lstr_len(text);
-	}
-	else {
-		file_data = duk_require_buffer_data(ctx, 1, &file_size);
-	}
-	if (!fs_fspew(build->fs, filename, file_data, file_size))
+	text = duk_require_lstring_t(ctx, 1);
+	
+	if (!fs_fspew(build->fs, filename, lstr_cstr(text), lstr_len(text)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
 	return 0;
@@ -1244,7 +1235,7 @@ js_new_FileStream(duk_context* ctx)
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
 	if (!(file = fs_fopen(build->fs, filename, mode)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to open file");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't open file `%s`", filename);
 	if (file_op == FILE_OP_UPDATE)
 		fseek(file, 0, SEEK_END);
 	duk_push_this(ctx);
