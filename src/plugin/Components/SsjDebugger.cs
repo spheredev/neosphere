@@ -19,36 +19,36 @@ namespace Sphere.Gdk.Components
 {
     class SsjDebugger : IDebugger, IDisposable
     {
-        private string sgmPath;
-        private Process engineProcess;
-        private string enginePath;
-        private bool haveError = false;
-        private ConcurrentQueue<dynamic[]> replies = new ConcurrentQueue<dynamic[]>();
-        private Timer focusTimer;
-        private string scriptPath;
-        private string sourcePath;
-        private Timer updateTimer;
-        private bool expectDetach = false;
-        private PluginMain plugin;
-        private SourceMapper sourceMap = new SourceMapper();
+        private string m_gamePath;
+        private Process m_engineProcess;
+        private string m_enginePath;
+        private bool m_expectDetach = false;
+        private Timer m_focusTimer;
+        private bool m_haveError = false;
+        private PluginMain m_plugin;
+        private ConcurrentQueue<dynamic[]> m_replies = new ConcurrentQueue<dynamic[]>();
+        private string m_scriptPath;
+        private SourceMapper m_sourceMap = new SourceMapper();
+        private string m_sourcePath;
+        private Timer m_updateTimer;
 
         public SsjDebugger(PluginMain main, string gamePath, string enginePath, Process engine, IProject project)
         {
-            plugin = main;
-            sgmPath = gamePath;
-            sourcePath = project.RootPath;
-            scriptPath = Path.GetDirectoryName(Path.Combine(sourcePath, project.MainScript));
-            engineProcess = engine;
-            this.enginePath = Path.GetDirectoryName(enginePath);
-            focusTimer = new Timer(HandleFocusSwitch, this, Timeout.Infinite, Timeout.Infinite);
-            updateTimer = new Timer(UpdateDebugViews, this, Timeout.Infinite, Timeout.Infinite);
+            m_plugin = main;
+            m_gamePath = gamePath;
+            m_sourcePath = project.RootPath;
+            m_scriptPath = Path.GetDirectoryName(Path.Combine(m_sourcePath, project.MainScript));
+            m_engineProcess = engine;
+            m_enginePath = Path.GetDirectoryName(enginePath);
+            m_focusTimer = new Timer(HandleFocusSwitch, this, Timeout.Infinite, Timeout.Infinite);
+            m_updateTimer = new Timer(UpdateDebugViews, this, Timeout.Infinite, Timeout.Infinite);
         }
 
         public void Dispose()
         {
             Inferior.Dispose();
-            focusTimer.Dispose();
-            updateTimer.Dispose();
+            m_focusTimer.Dispose();
+            m_updateTimer.Dispose();
         }
 
         public Inferior Inferior { get; private set; }
@@ -76,7 +76,7 @@ namespace Sphere.Gdk.Components
 
         public async Task Detach()
         {
-            expectDetach = true;
+            m_expectDetach = true;
             await Inferior.Detach();
             Dispose();
         }
@@ -120,7 +120,7 @@ namespace Sphere.Gdk.Components
                 Panes.Inspector.Enabled = false;
                 Panes.Inspector.Clear();
 
-                Panes.Console.Print(string.Format("SSj Blue " + plugin.Version + " Sphere JavaScript debugger"));
+                Panes.Console.Print(string.Format("SSj Blue " + m_plugin.Version + " Sphere JavaScript debugger"));
                 Panes.Console.Print(string.Format("the graphical symbolic JS debugger for Sphere"));
                 Panes.Console.Print(string.Format("(c) 2015-2017 Fat Cerberus"));
                 Panes.Console.Print("");
@@ -131,10 +131,10 @@ namespace Sphere.Gdk.Components
         {
             PluginManager.Core.Invoke(new Action(async () =>
             {
-                if (!expectDetach)
+                if (!m_expectDetach)
                 {
                     await Task.Delay(1000);
-                    if (!engineProcess.HasExited)
+                    if (!m_engineProcess.HasExited)
                     {
                         try
                         {
@@ -149,7 +149,7 @@ namespace Sphere.Gdk.Components
                     }
                 }
 
-                focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                m_focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
                 Detached?.Invoke(this, EventArgs.Empty);
 
                 PluginManager.Core.Docking.Hide(Panes.Inspector);
@@ -162,13 +162,13 @@ namespace Sphere.Gdk.Components
         {
             PluginManager.Core.Invoke(new Action(async () =>
             {
-                await this.InternSourceFile(e.FileName);
-                var lineNumber = this.sourceMap.LineInSource(e.FileName, e.LineNumber);
+                await InternSourceFile(e.FileName);
+                var lineNumber = m_sourceMap.LineInSource(e.FileName, e.LineNumber);
                 Panes.Console.AddError(e.Message, e.IsFatal, e.FileName, lineNumber);
                 if (e.IsFatal) {
                     PluginManager.Core.Docking.Show(Panes.Console);
                     PluginManager.Core.Docking.Activate(Panes.Console);
-                    haveError = true;
+                    m_haveError = true;
                 }
             }), null);
         }
@@ -177,7 +177,7 @@ namespace Sphere.Gdk.Components
         {
             PluginManager.Core.Invoke(new Action(() =>
             {
-                if (e.Text.StartsWith("trace: ") && !plugin.Conf.ShowTraceInfo)
+                if (e.Text.StartsWith("trace: ") && !m_plugin.Conf.ShowTraceInfo)
                     return;
                 Panes.Console.Print(e.Text);
             }), null);
@@ -192,10 +192,10 @@ namespace Sphere.Gdk.Components
                 Running = Inferior.Running;
                 if (wantPause)
                 {
-                    focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                    await this.InternSourceFile(Inferior.FileName);
+                    m_focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                    await InternSourceFile(Inferior.FileName);
                     FileName = ResolvePath(Inferior.FileName);
-                    LineNumber = sourceMap.LineInSource(Inferior.FileName, Inferior.LineNumber);
+                    LineNumber = m_sourceMap.LineInSource(Inferior.FileName, Inferior.LineNumber);
                     if (!File.Exists(FileName))
                     {
                         // filename reported by Duktape doesn't exist; walk callstack for a
@@ -203,8 +203,8 @@ namespace Sphere.Gdk.Components
                         var callStack = await Inferior.GetCallStack();
                         foreach (var frame in callStack)
                         {
-                            await this.InternSourceFile(frame.FileName);
-                            frame.LineNumber = this.sourceMap.LineInSource(frame.FileName, frame.LineNumber);
+                            await InternSourceFile(frame.FileName);
+                            frame.LineNumber = m_sourceMap.LineInSource(frame.FileName, frame.LineNumber);
                         }
                         var topJSFrame = callStack.First(entry => entry.LineNumber != 0);
                         var callIndex = Array.IndexOf(callStack, topJSFrame);
@@ -215,19 +215,19 @@ namespace Sphere.Gdk.Components
                     }
                     else
                     {
-                        updateTimer.Change(500, Timeout.Infinite);
+                        m_updateTimer.Change(500, Timeout.Infinite);
                     }
                 }
                 if (wantResume && Inferior.Running)
                 {
-                    focusTimer.Change(250, Timeout.Infinite);
-                    updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
+                    m_focusTimer.Change(250, Timeout.Infinite);
+                    m_updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
                     Panes.Console.ClearErrorHighlight();
                 }
                 if (wantPause && Paused != null)
                 {
-                    PauseReason reason = haveError ? PauseReason.Exception : PauseReason.Breakpoint;
-                    haveError = false;
+                    PauseReason reason = m_haveError ? PauseReason.Exception : PauseReason.Breakpoint;
+                    m_haveError = false;
                     Paused(this, new PausedEventArgs(reason));
                 }
                 if (wantResume && Resumed != null)
@@ -237,9 +237,9 @@ namespace Sphere.Gdk.Components
 
         public async Task SetBreakpoint(string fileName, int lineNumber)
         {
-            fileName = this.UnresolvePath(fileName);
-            await this.InternSourceFile(fileName);
-            lineNumber = this.sourceMap.LineInTarget(fileName, lineNumber);
+            fileName = UnresolvePath(fileName);
+            await InternSourceFile(fileName);
+            lineNumber = m_sourceMap.LineInTarget(fileName, lineNumber);
             await Inferior.AddBreak(fileName, lineNumber);
         }
 
@@ -289,17 +289,17 @@ namespace Sphere.Gdk.Components
             if (Path.IsPathRooted(path))
                 return path.Replace('/', Path.DirectorySeparatorChar);
             if (path.StartsWith("@/"))
-                path = Path.Combine(sourcePath, path.Substring(2));
+                path = Path.Combine(m_sourcePath, path.Substring(2));
             else if (path.StartsWith("$/"))
-                path = Path.Combine(scriptPath, path.Substring(2));
+                path = Path.Combine(m_scriptPath, path.Substring(2));
             else if (path.StartsWith("#/"))
-                path = Path.Combine(enginePath, "system", path.Substring(2));
+                path = Path.Combine(m_enginePath, "system", path.Substring(2));
             else if (path.StartsWith("~/"))
                 path = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                     "miniSphere", path.Substring(2));
             else
-                path = Path.Combine(sourcePath, path);
+                path = Path.Combine(m_sourcePath, path);
             return path.Replace('/', Path.DirectorySeparatorChar);
         }
 
@@ -310,7 +310,7 @@ namespace Sphere.Gdk.Components
                 SsjDebugger me = (SsjDebugger)state;
                 try
                 {
-                    NativeMethods.SetForegroundWindow(me.engineProcess.MainWindowHandle);
+                    NativeMethods.SetForegroundWindow(me.m_engineProcess.MainWindowHandle);
                     Panes.Inspector.Enabled = false;
                     Panes.Inspector.Clear();
                 }
@@ -331,7 +331,7 @@ namespace Sphere.Gdk.Components
                 foreach (var frame in callStack)
                 {
                     await me.InternSourceFile(frame.FileName);
-                    frame.LineNumber = me.sourceMap.LineInSource(frame.FileName, frame.LineNumber);
+                    frame.LineNumber = me.m_sourceMap.LineInSource(frame.FileName, frame.LineNumber);
                 }
                 if (!me.Running)
                 {
@@ -344,7 +344,7 @@ namespace Sphere.Gdk.Components
 
         private async Task InternSourceFile(string fileName)
         {
-            if (!sourceMap.Contains(fileName))
+            if (!m_sourceMap.Contains(fileName))
             {
                 var sourceCode = await Inferior.GetSource(fileName);
                 if (sourceCode == null)
@@ -355,7 +355,7 @@ namespace Sphere.Gdk.Components
                 {
                     var jsonData = Convert.FromBase64String(match.Groups[1].Value);
                     var mapJson = Encoding.UTF8.GetString(jsonData);
-                    sourceMap.AddSource(fileName, mapJson);
+                    m_sourceMap.AddSource(fileName, mapJson);
                 }
             }
         }
@@ -363,9 +363,9 @@ namespace Sphere.Gdk.Components
         private string UnresolvePath(string path)
         {
             var pathSep = Path.DirectorySeparatorChar.ToString();
-            var sourceRoot = this.sourcePath.EndsWith(pathSep)
-                ? this.sourcePath : this.sourcePath + pathSep;
-            var systemPath = Path.Combine(this.enginePath, @"system") + pathSep;
+            var sourceRoot = m_sourcePath.EndsWith(pathSep)
+                ? m_sourcePath : m_sourcePath + pathSep;
+            var systemPath = Path.Combine(m_enginePath, @"system") + pathSep;
 
             if (path.StartsWith(systemPath))
                 path = string.Format("#/{0}", path.Substring(systemPath.Length).Replace(pathSep, "/"));

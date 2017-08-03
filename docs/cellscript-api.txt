@@ -10,11 +10,14 @@ SphereFS File System
 --------------------
 
 Cell, like miniSphere, uses the SphereFS standard for file paths.  Under
-SphereFS, when a relative path is used in an API call, it will be resolved
-relative to the entrypoint (in Cell, the location of Cellscript.js).  To load
-files from a different location, you can use one of the SphereFS prefixes:
+SphereFS, when a relative path is used in an API call, it will usually be
+resolved relative to the entrypoint (in Cell, the location of Cellscript.js).
+To load files from a different location, you can use one of the SphereFS
+prefixes:
 
     @/: The root of the game package being compiled.
+    $/: The root of the source tree; in other words, the directory containing
+        the Cellscript.
     ~/: The current user's save data directory, guaranteed to be writable.
         This prefix is meaningless in Cell and using it will cause a sandboxing
         violation error.
@@ -143,19 +146,19 @@ Tool#stage(filename, sources);
     object representing the target file.
 
 
-`compiler` Module
-------------------
+`transpile` Function
+--------------------
 
-This module allows you to use ECMAScript 2015 features such as destructuring
+This function allows you to use ECMAScript 2015 features such as destructuring
 assignment and arrow functions in Sphere games.  These syntax features are not
 natively supported by Duktape (the JavaScript engine used in miniSphere), but
-can be used by translating the ES 2015 scripts to ES5 first.
+can be used by transpiling the ES 2015 scripts to ES5 first.
 
-To use the `transpile()` function exposed by this module, add one (and only
-one!) of the following lines to the top of your Cellscript:
+To use the `transpile()` function, add one (and only one!) of the following
+lines to the top of your Cellscript:
 
-    import { transpile } from 'compiler';  // .mjs only
-    const transpile = require('compiler').transpile;
+    import { transpile } from 'cell-runtime';  // .mjs only!
+    const transpile = require('transpile');
 
 transpile(targetPath, sources);
 
@@ -166,23 +169,3 @@ transpile(targetPath, sources);
 
     Note: `import` and `export` keywords are supported only in ES2015 modules.
           Using them in a normal script will produce a SyntaxError.
-
-
-`minify` Module
----------------
-
-`minify` allows you to minify scripts, which may allow them to compress better
-when packaged in a SPK and also serves to obfuscate your game's source code
-(note, however, that minification can be reversed, at least partially, with the
-proper tools).
-
-To use this module, add one of the following lines to the top of your
-Cellscript:
-
-    import minify from 'minify';  // .mjs only
-    const minify = require('minify');
-
-minify(targetPath, sources);
-
-    Stages a build that runs each Target in `sources` through a JS minifier and
-    places the resulting scripts in the directory named by `targetPath`.

@@ -4,16 +4,14 @@ using System.Drawing;
 using System.Media;
 using System.Windows.Forms;
 
-using SphereStudio;
 using SphereStudio.Base;
-using SphereStudio.UI;
 
 using Sphere.Gdk.Components;
 using Sphere.Gdk.Properties;
 
 namespace Sphere.Gdk.DockPanes
 {
-    partial class ConsolePane : UserControl, IDockPane, IStyleable
+    partial class ConsolePane : UserControl, IDockPane, IStyleAware
     {
         PluginConf m_config;
         List<string> m_lines = new List<string>();
@@ -21,7 +19,7 @@ namespace Sphere.Gdk.DockPanes
         public ConsolePane(PluginConf config)
         {
             InitializeComponent();
-            Styler.AutoStyle(this);
+            StyleManager.AutoStyle(this);
 
             m_config = config;
         }

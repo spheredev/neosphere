@@ -2,14 +2,14 @@
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using SphereStudio.UI;
+using SphereStudio.Base;
 
 using Sphere.Gdk.Debugger;
 using Sphere.Gdk.Properties;
 
 namespace Sphere.Gdk.Forms
 {
-    partial class ObjectViewer : Form, IStyleable
+    partial class ObjectViewer : Form, IStyleAware
     {
         private Inferior _inferior;
         private DValue _value;
@@ -17,7 +17,7 @@ namespace Sphere.Gdk.Forms
         public ObjectViewer(Inferior inferior, string objectName, DValue value)
         {
             InitializeComponent();
-            Styler.AutoStyle(this);
+            StyleManager.AutoStyle(this);
 
             m_nameTextBox.Text = string.Format("eval('{0}') = {1};",
                 objectName.Replace(@"\", @"\\").Replace("'", @"\'").Replace("\n", @"\n").Replace("\r", @"\r"),

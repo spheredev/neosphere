@@ -5,9 +5,7 @@ using System.Media;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using SphereStudio;
 using SphereStudio.Base;
-using SphereStudio.UI;
 
 using Sphere.Gdk.Components;
 using Sphere.Gdk.Forms;
@@ -16,7 +14,7 @@ using Sphere.Gdk.Debugger;
 
 namespace Sphere.Gdk.DockPanes
 {
-    partial class InspectorPane : UserControl, IDockPane, IStyleable
+    partial class InspectorPane : UserControl, IDockPane, IStyleAware
     {
         private const string ValueBoxHint = "Select a variable from the list above to see what it contains.";
 
@@ -27,14 +25,14 @@ namespace Sphere.Gdk.DockPanes
         public InspectorPane()
         {
             InitializeComponent();
-            Styler.AutoStyle(this);
+            StyleManager.AutoStyle(this);
 
             Enabled = false;
         }
 
         public bool ShowInViewMenu => false;
         public Control Control => this;
-        public DockHint DockHint => DockHint.Right;
+        public DockHint DockHint => DockHint.Left;
         public Bitmap DockIcon => Resources.VisibleIcon;
 
         public SsjDebugger SSj { get; set; }
