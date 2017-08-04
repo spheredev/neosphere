@@ -516,7 +516,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\minisphere\logger.c" />
     <ClCompile Include="..\src\minisphere\map_engine.c" />
     <ClCompile Include="..\src\minisphere\obstruction.c" />
-    <ClCompile Include="..\src\minisphere\persons.c" />
     <ClCompile Include="..\src\minisphere\script.c" />
     <ClCompile Include="..\src\minisphere\sockets.c" />
     <ClCompile Include="..\src\minisphere\spherefs.c" />
@@ -561,7 +560,6 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\minisphere\map_engine.h" />
     <ClInclude Include="..\src\minisphere\galileo.h" />
     <ClInclude Include="..\src\minisphere\obstruction.h" />
-    <ClInclude Include="..\src\minisphere\persons.h" />
     <ClInclude Include="..\src\minisphere\script.h" />
     <ClInclude Include="..\src\minisphere\sockets.h" />
     <ClInclude Include="..\src\minisphere\spherefs.h" />

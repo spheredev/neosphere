@@ -75,9 +75,6 @@
     <ClCompile Include="..\src\minisphere\map_engine.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\minisphere\persons.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\minisphere\script.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -204,9 +201,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\map_engine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\minisphere\persons.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\script.h">
