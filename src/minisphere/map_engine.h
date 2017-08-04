@@ -32,6 +32,18 @@ enum command_op
 } command_op_t;
 
 typedef
+enum map_script
+{
+	MAP_SCRIPT_ON_ENTER,
+	MAP_SCRIPT_ON_LEAVE,
+	MAP_SCRIPT_ON_LEAVE_NORTH,
+	MAP_SCRIPT_ON_LEAVE_EAST,
+	MAP_SCRIPT_ON_LEAVE_SOUTH,
+	MAP_SCRIPT_ON_LEAVE_WEST,
+	MAP_SCRIPT_MAX
+} map_script_t;
+
+typedef
 enum person_script
 {
 	PERSON_SCRIPT_ON_CREATE,

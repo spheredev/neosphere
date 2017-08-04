@@ -15,40 +15,6 @@
 
 #define MAX_PLAYERS 4
 
-enum map_script_type
-{
-	MAP_SCRIPT_ON_ENTER,
-	MAP_SCRIPT_ON_LEAVE,
-	MAP_SCRIPT_ON_LEAVE_NORTH,
-	MAP_SCRIPT_ON_LEAVE_EAST,
-	MAP_SCRIPT_ON_LEAVE_SOUTH,
-	MAP_SCRIPT_ON_LEAVE_WEST,
-	MAP_SCRIPT_MAX
-};
-
-static bool                are_zones_at         (int x, int y, int layer, int* out_count);
-static bool                change_map           (const char* filename, bool preserve_persons);
-static void                command_person       (person_t* person, int command);
-static int                 compare_persons      (const void* a, const void* b);
-static bool                does_person_exist    (const person_t* person);
-static bool                enlarge_step_history (person_t* person, int new_size);
-static int                 find_layer           (const char* name);
-static void                free_map             (struct map* map);
-static void                free_person          (person_t* person);
-static struct map_trigger* get_trigger_at       (int x, int y, int layer, int* out_index);
-static struct map_zone*    get_zone_at          (int x, int y, int layer, int which, int* out_index);
-static struct map*         load_map             (const char* path);
-static void                map_screen_to_layer  (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
-static void                map_screen_to_map    (int camera_x, int camera_y, int* inout_x, int* inout_y);
-static void                process_map_input    (void);
-static void                record_step          (person_t* person);
-static void                render_map           (void);
-static void                set_person_direction (person_t* person, const char* direction);
-static void                set_person_name      (person_t* person, const char* name);
-static void                sort_persons         (void);
-static void                update_map_engine    (bool is_main_loop);
-static void                update_person        (person_t* person, bool* out_has_moved);
-
 static duk_ret_t js_AddTrigger                   (duk_context* ctx);
 static duk_ret_t js_AddZone                      (duk_context* ctx);
 static duk_ret_t js_AreZonesAt                   (duk_context* ctx);
@@ -436,6 +402,29 @@ struct rmp_zone_header
 	uint8_t  reserved[4];
 };
 #pragma pack(pop)
+
+static bool                are_zones_at         (int x, int y, int layer, int* out_count);
+static bool                change_map           (const char* filename, bool preserve_persons);
+static void                command_person       (person_t* person, int command);
+static int                 compare_persons      (const void* a, const void* b);
+static bool                does_person_exist    (const person_t* person);
+static bool                enlarge_step_history (person_t* person, int new_size);
+static int                 find_layer           (const char* name);
+static void                free_map             (struct map* map);
+static void                free_person          (person_t* person);
+static struct map_trigger* get_trigger_at       (int x, int y, int layer, int* out_index);
+static struct map_zone*    get_zone_at          (int x, int y, int layer, int which, int* out_index);
+static struct map*         load_map             (const char* path);
+static void                map_screen_to_layer  (int layer, int camera_x, int camera_y, int* inout_x, int* inout_y);
+static void                map_screen_to_map    (int camera_x, int camera_y, int* inout_x, int* inout_y);
+static void                process_map_input    (void);
+static void                record_step          (person_t* person);
+static void                render_map           (void);
+static void                set_person_direction (person_t* person, const char* direction);
+static void                set_person_name      (person_t* person, const char* name);
+static void                sort_persons         (void);
+static void                update_map_engine    (bool is_main_loop);
+static void                update_person        (person_t* person, bool* out_has_moved);
 
 void
 maps_init(void)
