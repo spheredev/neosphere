@@ -416,7 +416,7 @@ initialize_engine(void)
 	initialize_input();
 	sockets_init();
 	spritesets_init();
-	maps_init();
+	map_engine_init();
 	scripts_init();
 
 	return true;
@@ -437,7 +437,7 @@ shutdown_engine(void)
 	debugger_uninit();
 #endif
 
-	maps_uninit();
+	map_engine_uninit();
 	shutdown_input();
 	scripts_uninit();
 	sockets_uninit();
