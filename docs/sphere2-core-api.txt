@@ -108,8 +108,8 @@ from a different location, you can use one of the SphereFS prefixes:
         is read-only; trying to save or modify anything here will throw a
         TypeError.
 	$/: The directory containing the startup script.  This is mostly provided
-	    for convenience in specifying module names when using `require()` or
-	   `import`.
+	    as a convenience for specifying module names for `require()` and
+	    `import`.
     #/: The engine's system directory.  This contains assets included with the
         engine.  As with `@/`, this is read-only to Sphere games.
     ~/: The current user's save data directory (note: requires a save ID; refer
@@ -441,13 +441,15 @@ FS.deleteFile(filename);
 
     Deletes `filename` from the file system.
 
+FS.directoryExists(dir_name);
+
+    Checks whether the specified directory exists and returns true if it does.
+    Otherwise, returns false.
+
 FS.fileExists(filename);
 
     Checks whether the specified file exists and returns true if it does.
     Otherwise, returns false.
-    
-    Note: If you pass the name of a directory, even if it exists, this will
-          return false.
 
 FS.fullPath(fileName[, base_dir]);
 

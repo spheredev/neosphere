@@ -132,7 +132,7 @@ static void set_person_name      (person_t* person, const char* name);
 static void command_person       (person_t* person, int command);
 static int  compare_persons      (const void* a, const void* b);
 static bool enlarge_step_history (person_t* person, int new_size);
-static bool follow_person        (person_t* person, person_t* leader, int distance);
+static bool person_follow        (person_t* person, person_t* leader, int distance);
 static void free_person          (person_t* person);
 static void record_step          (person_t* person);
 static void sort_persons         (void);
@@ -149,7 +149,7 @@ static unsigned int      s_queued_id = 0;
 static person_t*         *s_persons = NULL;
 
 void
-initialize_persons_manager(void)
+persons_init(void)
 {
 	console_log(1, "initializing persons manager");
 	
@@ -162,7 +162,7 @@ initialize_persons_manager(void)
 }
 
 void
-shutdown_persons_manager(void)
+persons_uninit(void)
 {
 	int i;
 	
@@ -175,8 +175,80 @@ shutdown_persons_manager(void)
 	free(s_persons);
 }
 
+void
+persons_draw_all(int layer, bool is_flipped, int cam_x, int cam_y)
+{
+	person_t*    person;
+	spriteset_t* sprite;
+	int          w, h;
+	double       x, y;
+	int          i;
+
+	for (i = 0; i < s_num_persons; ++i) {
+		person = s_persons[i];
+		if (!person->is_visible || person->layer != layer)
+			continue;
+		sprite = person->sprite;
+		w = spriteset_width(sprite);
+		h = spriteset_height(sprite);
+		person_get_xy(person, &x, &y, true);
+		x -= cam_x - person->x_offset;
+		y -= cam_y - person->y_offset;
+		spriteset_draw(sprite, person->mask, is_flipped, person->theta, person->scale_x, person->scale_y,
+			person->direction, x, y, person->frame);
+	}
+}
+
+void
+persons_reset(bool keep_existing)
+{
+	unsigned int id;
+	point3_t     map_origin;
+	person_t*    person;
+
+	int i, j;
+
+	map_origin = get_map_origin();
+	for (i = 0; i < s_num_persons; ++i) {
+		person = s_persons[i];
+		id = person->id;
+		if (!keep_existing)
+			person->num_commands = 0;
+		if (person->is_persistent || keep_existing) {
+			person->x = map_origin.x;
+			person->y = map_origin.y;
+			person->layer = map_origin.z;
+		}
+		else {
+			person_call_script(person, PERSON_SCRIPT_ON_DESTROY, true);
+			free_person(person);
+			--s_num_persons;
+			for (j = i; j < s_num_persons; ++j) s_persons[j] = s_persons[j + 1];
+			--i;
+		}
+	}
+	sort_persons();
+}
+
+void
+persons_update(void)
+{
+	bool has_moved;
+	bool is_sort_needed = false;
+
+	int i;
+
+	for (i = 0; i < s_num_persons; ++i) {
+		if (s_persons[i]->leader != NULL)
+			continue;  // skip followers for now
+		update_person(s_persons[i], &has_moved);
+		is_sort_needed |= has_moved;
+	}
+	if (is_sort_needed) sort_persons();
+}
+
 person_t*
-create_person(const char* name, spriteset_t* spriteset, bool is_persistent, script_t* create_script)
+person_new(const char* name, spriteset_t* spriteset, bool is_persistent, script_t* create_script)
 {
 	point3_t  map_origin = get_map_origin();
 	person_t* person;
@@ -201,20 +273,20 @@ create_person(const char* name, spriteset_t* spriteset, bool is_persistent, scri
 	person->mask = color_new(255, 255, 255, 255);
 	person->scale_x = person->scale_y = 1.0;
 	person->scripts[PERSON_SCRIPT_ON_CREATE] = create_script;
-	call_person_script(person, PERSON_SCRIPT_ON_CREATE, true);
+	person_call_script(person, PERSON_SCRIPT_ON_CREATE, true);
 	sort_persons();
 	return person;
 }
 
 void
-destroy_person(person_t* person)
+person_free(person_t* person)
 {
 	int i, j;
 
 	// call the person's destroy script *before* renouncing leadership.
 	// the destroy script may want to reassign followers (they will be orphaned otherwise), so
 	// we want to give it a chance to do so.
-	call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
+	person_call_script(person, PERSON_SCRIPT_ON_DESTROY, true);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader == person)
 			s_persons[i]->leader = NULL;
@@ -236,19 +308,13 @@ destroy_person(person_t* person)
 }
 
 bool
-has_person_moved(const person_t* person)
-{
-	return person->mv_x != 0 || person->mv_y != 0;
-}
-
-bool
-is_person_busy(const person_t* person)
+person_busy(const person_t* person)
 {
 	return person->num_commands > 0 || person->leader != NULL;
 }
 
 bool
-is_person_following(const person_t* person, const person_t* leader)
+person_following(const person_t* person, const person_t* leader)
 {
 	const person_t* node;
 
@@ -259,7 +325,13 @@ is_person_following(const person_t* person, const person_t* leader)
 }
 
 bool
-is_person_ignored(const person_t* person, const person_t* by_person)
+person_has_moved(const person_t* person)
+{
+	return person->mv_x != 0 || person->mv_y != 0;
+}
+
+bool
+person_ignoring(const person_t* person, const person_t* by_person)
 {
 	// note: commutative; if either person ignores the other, the function will return true
 
@@ -275,7 +347,7 @@ is_person_ignored(const person_t* person, const person_t* by_person)
 }
 
 bool
-is_person_obstructed_at(const person_t* person, double x, double y, person_t** out_obstructing_person, int* out_tile_index)
+person_obstructed_at(const person_t* person, double x, double y, person_t** out_obstructing_person, int* out_tile_index)
 {
 	rect_t           area;
 	rect_t           base, my_base;
@@ -289,8 +361,8 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 	int i, i_x, i_y;
 	
 	normalize_map_entity_xy(&x, &y, person->layer);
-	get_person_xyz(person, &cur_x, &cur_y, &layer, true);
-	my_base = translate_rect(get_person_base(person), x - cur_x, y - cur_y);
+	person_get_xyz(person, &cur_x, &cur_y, &layer, true);
+	my_base = translate_rect(person_get_base(person), x - cur_x, y - cur_y);
 	if (out_obstructing_person)
 		*out_obstructing_person = NULL;
 	if (out_tile_index)
@@ -303,10 +375,10 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 				continue;
 			if (s_persons[i]->layer != layer)
 				continue;  // ignore persons not on the same layer
-			if (is_person_following(s_persons[i], person))
+			if (person_following(s_persons[i], person))
 				continue;  // ignore own followers
-			base = get_person_base(s_persons[i]);
-			if (do_rects_intersect(my_base, base) && !is_person_ignored(person, s_persons[i])) {
+			base = person_get_base(s_persons[i]);
+			if (do_rects_intersect(my_base, base) && !person_ignoring(person, s_persons[i])) {
 				is_obstructed = true;
 				if (out_obstructing_person)
 					*out_obstructing_person = s_persons[i];
@@ -346,20 +418,20 @@ is_person_obstructed_at(const person_t* person, double x, double y, person_t** o
 }
 
 double
-get_person_angle(const person_t* person)
+person_get_angle(const person_t* person)
 {
 	return person->theta;
 }
 
 rect_t
-get_person_base(const person_t* person)
+person_get_base(const person_t* person)
 {
 	rect_t base_rect;
 	int    base_x, base_y;
 	double x, y;
 
 	base_rect = zoom_rect(spriteset_get_base(person->sprite), person->scale_x, person->scale_y);
-	get_person_xy(person, &x, &y, true);
+	person_get_xy(person, &x, &y, true);
 	base_x = x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
 	base_y = y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
 	base_rect.x1 += base_x; base_rect.x2 += base_x;
@@ -368,39 +440,39 @@ get_person_base(const person_t* person)
 }
 
 color_t
-get_person_mask(const person_t* person)
+person_get_color(const person_t* person)
 {
 	return person->mask;
 }
 
 const char*
-get_person_name(const person_t* person)
+person_get_name(const person_t* person)
 {
 	return person->name;
 }
 
 void
-get_person_scale(const person_t* person, double* out_scale_x, double* out_scale_y)
+person_get_scale(const person_t* person, double* out_scale_x, double* out_scale_y)
 {
 	*out_scale_x = person->scale_x;
 	*out_scale_y = person->scale_y;
 }
 
 void
-get_person_speed(const person_t* person, double* out_x_speed, double* out_y_speed)
+person_get_speed(const person_t* person, double* out_x_speed, double* out_y_speed)
 {
 	if (out_x_speed) *out_x_speed = person->speed_x;
 	if (out_y_speed) *out_y_speed = person->speed_y;
 }
 
 spriteset_t*
-get_person_spriteset(person_t* person)
+person_get_spriteset(person_t* person)
 {
 	return person->sprite;
 }
 
 void
-get_person_xy(const person_t* person, double* out_x, double* out_y, bool want_normalize)
+person_get_xy(const person_t* person, double* out_x, double* out_y, bool want_normalize)
 {
 	*out_x = person->x;
 	*out_y = person->y;
@@ -409,7 +481,7 @@ get_person_xy(const person_t* person, double* out_x, double* out_y, bool want_no
 }
 
 void
-get_person_xyz(const person_t* person, double* out_x, double* out_y, int* out_layer, bool want_normalize)
+person_get_xyz(const person_t* person, double* out_x, double* out_y, int* out_layer, bool want_normalize)
 {
 	*out_x = person->x;
 	*out_y = person->y;
@@ -419,40 +491,40 @@ get_person_xyz(const person_t* person, double* out_x, double* out_y, int* out_la
 }
 
 void
-set_person_angle(person_t* person, double theta)
+person_set_angle(person_t* person, double theta)
 {
 	person->theta = theta;
 }
 
 void
-set_person_mask(person_t* person, color_t mask)
+person_set_color(person_t* person, color_t mask)
 {
 	person->mask = mask;
 }
 
 void
-set_person_scale(person_t* person, double scale_x, double scale_y)
+person_set_scale(person_t* person, double scale_x, double scale_y)
 {
 	person->scale_x = scale_x;
 	person->scale_y = scale_y;
 }
 
 void
-set_person_script(person_t* person, int type, script_t* script)
+person_set_script(person_t* person, int type, script_t* script)
 {
 	script_free(person->scripts[type]);
 	person->scripts[type] = script;
 }
 
 void
-set_person_speed(person_t* person, double x_speed, double y_speed)
+person_set_speed(person_t* person, double x_speed, double y_speed)
 {
 	person->speed_x = x_speed;
 	person->speed_y = y_speed;
 }
 
 void
-set_person_spriteset(person_t* person, spriteset_t* spriteset)
+person_set_spriteset(person_t* person, spriteset_t* spriteset)
 {
 	spriteset_t* old_spriteset;
 	
@@ -464,7 +536,7 @@ set_person_spriteset(person_t* person, spriteset_t* spriteset)
 }
 
 void
-set_person_xyz(person_t* person, double x, double y, int layer)
+person_set_xyz(person_t* person, double x, double y, int layer)
 {
 	person->x = x;
 	person->y = y;
@@ -473,7 +545,7 @@ set_person_xyz(person_t* person, double x, double y, int layer)
 }
 
 bool
-call_person_script(const person_t* person, int type, bool use_default)
+person_call_script(const person_t* person, int type, bool use_default)
 {
 	const person_t* last_person;
 
@@ -488,13 +560,13 @@ call_person_script(const person_t* person, int type, bool use_default)
 }
 
 bool
-compile_person_script(person_t* person, int type, const lstring_t* codestring)
+person_compile_script(person_t* person, int type, const lstring_t* codestring)
 {
 	const char* person_name;
 	script_t*   script;
 	const char* script_name;
 
-	person_name = get_person_name(person);
+	person_name = person_get_name(person);
 	script_name = type == PERSON_SCRIPT_ON_CREATE ? "onCreate"
 		: type == PERSON_SCRIPT_ON_DESTROY ? "onDestroy"
 		: type == PERSON_SCRIPT_ON_TOUCH ? "onTouch"
@@ -503,12 +575,12 @@ compile_person_script(person_t* person, int type, const lstring_t* codestring)
 		: NULL;
 	if (script_name == NULL) return false;
 	script = script_new(codestring, "%s/%s/%s.js", get_map_name(), person_name, script_name);
-	set_person_script(person, type, script);
+	person_set_script(person, type, script);
 	return true;
 }
 
 person_t*
-find_person(const char* name)
+person_find(const char* name)
 {
 	int i;
 
@@ -520,7 +592,7 @@ find_person(const char* name)
 }
 
 bool
-follow_person(person_t* person, person_t* leader, int distance)
+person_follow(person_t* person, person_t* leader, int distance)
 {
 	const person_t* node;
 
@@ -544,27 +616,27 @@ follow_person(person_t* person, person_t* leader, int distance)
 }
 
 bool
-queue_person_command(person_t* person, int command, bool is_immediate)
+person_queue_command(person_t* person, int command, bool is_immediate)
 {
 	struct command* commands;
 	bool            is_aok = true;
 	
 	switch (command) {
 	case COMMAND_MOVE_NORTHEAST:
-		is_aok &= queue_person_command(person, COMMAND_MOVE_NORTH, true);
-		is_aok &= queue_person_command(person, COMMAND_MOVE_EAST, is_immediate);
+		is_aok &= person_queue_command(person, COMMAND_MOVE_NORTH, true);
+		is_aok &= person_queue_command(person, COMMAND_MOVE_EAST, is_immediate);
 		return is_aok;
 	case COMMAND_MOVE_SOUTHEAST:
-		is_aok &= queue_person_command(person, COMMAND_MOVE_SOUTH, true);
-		is_aok &= queue_person_command(person, COMMAND_MOVE_EAST, is_immediate);
+		is_aok &= person_queue_command(person, COMMAND_MOVE_SOUTH, true);
+		is_aok &= person_queue_command(person, COMMAND_MOVE_EAST, is_immediate);
 		return is_aok;
 	case COMMAND_MOVE_SOUTHWEST:
-		is_aok &= queue_person_command(person, COMMAND_MOVE_SOUTH, true);
-		is_aok &= queue_person_command(person, COMMAND_MOVE_WEST, is_immediate);
+		is_aok &= person_queue_command(person, COMMAND_MOVE_SOUTH, true);
+		is_aok &= person_queue_command(person, COMMAND_MOVE_WEST, is_immediate);
 		return is_aok;
 	case COMMAND_MOVE_NORTHWEST:
-		is_aok &= queue_person_command(person, COMMAND_MOVE_NORTH, true);
-		is_aok &= queue_person_command(person, COMMAND_MOVE_WEST, is_immediate);
+		is_aok &= person_queue_command(person, COMMAND_MOVE_NORTH, true);
+		is_aok &= person_queue_command(person, COMMAND_MOVE_WEST, is_immediate);
 		return is_aok;
 	default:
 		++person->num_commands;
@@ -582,7 +654,7 @@ queue_person_command(person_t* person, int command, bool is_immediate)
 }
 
 bool
-queue_person_script(person_t* person, script_t* script, bool is_immediate)
+person_queue_script(person_t* person, script_t* script, bool is_immediate)
 {
 	++person->num_commands;
 	if (person->num_commands > person->max_commands) {
@@ -597,62 +669,7 @@ queue_person_script(person_t* person, script_t* script, bool is_immediate)
 }
 
 void
-render_persons(int layer, bool is_flipped, int cam_x, int cam_y)
-{
-	person_t*    person;
-	spriteset_t* sprite;
-	int          w, h;
-	double       x, y;
-	int          i;
-
-	for (i = 0; i < s_num_persons; ++i) {
-		person = s_persons[i];
-		if (!person->is_visible || person->layer != layer)
-			continue;
-		sprite = person->sprite;
-		w = spriteset_width(sprite);
-		h = spriteset_height(sprite);
-		get_person_xy(person, &x, &y, true);
-		x -= cam_x - person->x_offset;
-		y -= cam_y - person->y_offset;
-		spriteset_draw(sprite, person->mask, is_flipped, person->theta, person->scale_x, person->scale_y,
-			person->direction, x, y, person->frame);
-	}
-}
-
-void
-reset_persons(bool keep_existing)
-{
-	unsigned int id;
-	point3_t     map_origin;
-	person_t*    person;
-	
-	int i, j;
-
-	map_origin = get_map_origin();
-	for (i = 0; i < s_num_persons; ++i) {
-		person = s_persons[i];
-		id = person->id;
-		if (!keep_existing)
-			person->num_commands = 0;
-		if (person->is_persistent || keep_existing) {
-			person->x = map_origin.x;
-			person->y = map_origin.y;
-			person->layer = map_origin.z;
-		}
-		else {
-			call_person_script(person, PERSON_SCRIPT_ON_DESTROY, true);
-			free_person(person);
-			--s_num_persons;
-			for (j = i; j < s_num_persons; ++j) s_persons[j] = s_persons[j + 1];
-			--i;
-		}
-	}
-	sort_persons();
-}
-
-void
-talk_person(const person_t* person)
+person_talk(const person_t* person)
 {
 	const person_t* last_active;
 	rect_t          map_rect;
@@ -662,36 +679,23 @@ talk_person(const person_t* person)
 	map_rect = get_map_bounds();
 	
 	// check if anyone else is within earshot
-	get_person_xy(person, &talk_x, &talk_y, true);
-	if (strstr(person->direction, "north")) talk_y -= s_talk_distance;
-	if (strstr(person->direction, "east")) talk_x += s_talk_distance;
-	if (strstr(person->direction, "south")) talk_y += s_talk_distance;
-	if (strstr(person->direction, "west")) talk_x -= s_talk_distance;
-	is_person_obstructed_at(person, talk_x, talk_y, &target_person, NULL);
-	
+	person_get_xy(person, &talk_x, &talk_y, true);
+	if (strstr(person->direction, "north"))
+		talk_y -= s_talk_distance;
+	if (strstr(person->direction, "east"))
+		talk_x += s_talk_distance;
+	if (strstr(person->direction, "south"))
+		talk_y += s_talk_distance;
+	if (strstr(person->direction, "west"))
+		talk_x -= s_talk_distance;
+	person_obstructed_at(person, talk_x, talk_y, &target_person, NULL);
+
 	// if so, call their talk script
 	last_active = s_acting_person;
 	s_acting_person = person;
 	if (target_person != NULL)
-		call_person_script(target_person, PERSON_SCRIPT_ON_TALK, true);
+		person_call_script(target_person, PERSON_SCRIPT_ON_TALK, true);
 	s_acting_person = last_active;
-}
-
-void
-update_persons(void)
-{
-	bool has_moved;
-	bool is_sort_needed = false;
-	
-	int i;
-
-	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i]->leader != NULL)
-			continue;  // skip followers for now
-		update_person(s_persons[i], &has_moved);
-		is_sort_needed |= has_moved;
-	}
-	if (is_sort_needed) sort_persons();
 }
 
 static bool
@@ -774,7 +778,7 @@ command_person(person_t* person, int command)
 	}
 	if (new_x != person->x || new_y != person->y) {
 		// person is trying to move, make sure the path is clear of obstructions
-		if (!is_person_obstructed_at(person, new_x, new_y, &person_to_touch, NULL)) {
+		if (!person_obstructed_at(person, new_x, new_y, &person_to_touch, NULL)) {
 			if (new_x != person->x)
 				person->mv_x = new_x > person->x ? 1 : -1;
 			if (new_y != person->y)
@@ -786,7 +790,7 @@ command_person(person_t* person, int command)
 			last_active = s_acting_person;
 			s_acting_person = person;
 			if (person_to_touch != NULL)
-				call_person_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH, true);
+				person_call_script(person_to_touch, PERSON_SCRIPT_ON_TOUCH, true);
 			s_acting_person = last_active;
 		}
 	}
@@ -801,14 +805,14 @@ compare_persons(const void* a, const void* b)
 	double x, y_p1, y_p2;
 	int    y_delta;
 
-	get_person_xy(p1, &x, &y_p1, true);
-	get_person_xy(p2, &x, &y_p2, true);
+	person_get_xy(p1, &x, &y_p1, true);
+	person_get_xy(p2, &x, &y_p2, true);
 	y_delta = (y_p1 + p1->y_offset) - (y_p2 + p2->y_offset);
 	if (y_delta != 0)
 		return y_delta;
-	else if (is_person_following(p1, p2))
+	else if (person_following(p1, p2))
 		return -1;
-	else if (is_person_following(p2, p1))
+	else if (person_following(p2, p1))
 		return 1;
 	else
 		return p1->id - p2->id;
@@ -898,7 +902,7 @@ update_person(person_t* person, bool* out_has_moved)
 	if (person->leader == NULL) {  // no leader; use command queue
 		// call the command generator if the queue is empty
 		if (person->num_commands == 0)
-			call_person_script(person, PERSON_SCRIPT_GENERATOR, true);
+			person_call_script(person, PERSON_SCRIPT_GENERATOR, true);
 
 		// run through the queue, stopping after the first non-immediate command
 		is_finished = !does_person_exist(person) || person->num_commands == 0;
@@ -950,7 +954,7 @@ update_person(person_t* person, bool* out_has_moved)
 		return;  // they probably got eaten by a hunger-pig or something.
 
 	// if the person's position changed, record it in their step history
-	*out_has_moved = has_person_moved(person);
+	*out_has_moved = person_has_moved(person);
 	if (*out_has_moved)
 		record_step(person);
 
@@ -1092,7 +1096,7 @@ js_CreatePerson(duk_context* ctx)
 	}
 
 	// create the person and its JS-side data object
-	person = create_person(name, spriteset, !destroy_with_map, NULL);
+	person = person_new(name, spriteset, !destroy_with_map, NULL);
 	spriteset_free(spriteset);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
@@ -1108,9 +1112,9 @@ js_DestroyPerson(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	destroy_person(person);
+	person_free(person);
 	return 0;
 }
 
@@ -1121,7 +1125,7 @@ js_IsCommandQueueEmpty(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_boolean(ctx, person->num_commands <= 0);
 	return 1;
@@ -1134,7 +1138,7 @@ js_IsIgnoringPersonObstructions(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_boolean(ctx, person->ignore_all_persons);
 	return 1;
@@ -1147,7 +1151,7 @@ js_IsIgnoringTileObstructions(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_boolean(ctx, person->ignore_all_tiles);
 	return 1;
@@ -1158,7 +1162,7 @@ js_DoesPersonExist(duk_context* ctx)
 {
 	const char* name = duk_require_string(ctx, 0);
 
-	duk_push_boolean(ctx, find_person(name) != NULL);
+	duk_push_boolean(ctx, person_find(name) != NULL);
 	return 1;
 }
 
@@ -1171,9 +1175,9 @@ js_IsPersonObstructed(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_boolean(ctx, is_person_obstructed_at(person, x, y, NULL, NULL));
+	duk_push_boolean(ctx, person_obstructed_at(person, x, y, NULL, NULL));
 	return 1;
 }
 
@@ -1184,7 +1188,7 @@ js_IsPersonVisible(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_boolean(ctx, person->is_visible);
 	return 1;
@@ -1195,7 +1199,7 @@ js_GetActingPerson(duk_context* ctx)
 {
 	if (s_acting_person == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "must be called from person activation script (touch/talk)");
-	duk_push_string(ctx, get_person_name(s_acting_person));
+	duk_push_string(ctx, person_get_name(s_acting_person));
 	return 1;
 }
 
@@ -1204,7 +1208,7 @@ js_GetCurrentPerson(duk_context* ctx)
 {
 	if (s_current_person == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "must be called from a person script");
-	duk_push_string(ctx, get_person_name(s_current_person));
+	duk_push_string(ctx, person_get_name(s_current_person));
 	return 1;
 }
 
@@ -1220,10 +1224,10 @@ js_GetObstructingPerson(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine must be running");
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	is_person_obstructed_at(person, x, y, &obs_person, NULL);
-	duk_push_string(ctx, obs_person != NULL ? get_person_name(obs_person) : "");
+	person_obstructed_at(person, x, y, &obs_person, NULL);
+	duk_push_string(ctx, obs_person != NULL ? person_get_name(obs_person) : "");
 	return 1;
 }
 
@@ -1239,9 +1243,9 @@ js_GetObstructingTile(duk_context* ctx)
 
 	if (!is_map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine must be running");
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	is_person_obstructed_at(person, x, y, NULL, &tile_index);
+	person_obstructed_at(person, x, y, NULL, &tile_index);
 	duk_push_int(ctx, tile_index);
 	return 1;
 }
@@ -1253,9 +1257,9 @@ js_GetPersonAngle(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_number(ctx, get_person_angle(person));
+	duk_push_number(ctx, person_get_angle(person));
 	return 1;
 }
 
@@ -1267,9 +1271,9 @@ js_GetPersonBase(duk_context* ctx)
 	rect_t    base;
 	person_t* person;
 
-	if (!(person = find_person(name)))
+	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	base = spriteset_get_base(get_person_spriteset(person));
+	base = spriteset_get_base(person_get_spriteset(person));
 	duk_push_object(ctx);
 	duk_push_int(ctx, base.x1); duk_put_prop_string(ctx, -2, "x1");
 	duk_push_int(ctx, base.y1); duk_put_prop_string(ctx, -2, "y1");
@@ -1289,7 +1293,7 @@ js_GetPersonData(duk_context* ctx)
 	spriteset_t* spriteset;
 	int          width, height;
 
-	if (!(person = find_person(name)))
+	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	spriteset = person->sprite;
 	width = spriteset_width(spriteset);
@@ -1315,7 +1319,7 @@ js_GetPersonDirection(duk_context* ctx)
 	
 	person_t*   person;
 
-	if (!(person = find_person(name)))
+	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_string(ctx, person->direction);
 	return 1;
@@ -1328,7 +1332,7 @@ js_GetPersonFollowDistance(duk_context* ctx)
 
 	person_t* person;
 
-	if (!(person = find_person(name)))
+	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (person->leader == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "person has no leader");
@@ -1346,7 +1350,7 @@ js_GetPersonFollowers(duk_context* ctx)
 
 	int i;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_array(ctx);
 	for (i = 0; i < s_num_persons; ++i) {
@@ -1366,7 +1370,7 @@ js_GetPersonFrame(duk_context* ctx)
 	int       num_frames;
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	num_frames = spriteset_num_frames(person->sprite, person->direction);
 	duk_push_int(ctx, person->frame % num_frames);
@@ -1380,7 +1384,7 @@ js_GetPersonFrameNext(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_int(ctx, person->anim_frames);
 	return 1;
@@ -1393,7 +1397,7 @@ js_GetPersonFrameRevert(duk_context* ctx)
 
 	person_t*   person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_int(ctx, person->revert_delay);
 	return 1;
@@ -1408,7 +1412,7 @@ js_GetPersonIgnoreList(duk_context* ctx)
 
 	int i;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_array(ctx);
 	for (i = 0; i < person->num_ignores; ++i) {
@@ -1425,7 +1429,7 @@ js_GetPersonLayer(duk_context* ctx)
 	
 	person_t*   person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_int(ctx, person->layer);
 	return 1;
@@ -1438,7 +1442,7 @@ js_GetPersonLeader(duk_context* ctx)
 
 	person_t*   person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_string(ctx, person->leader != NULL ? person->leader->name : "");
 	return 1;
@@ -1451,9 +1455,9 @@ js_GetPersonMask(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_sphere_color(ctx, get_person_mask(person));
+	duk_push_sphere_color(ctx, person_get_color(person));
 	return 1;
 }
 
@@ -1464,7 +1468,7 @@ js_GetPersonOffsetX(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_int(ctx, person->x_offset);
 	return 1;
@@ -1477,7 +1481,7 @@ js_GetPersonOffsetY(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_int(ctx, person->y_offset);
 	return 1;
@@ -1505,9 +1509,9 @@ js_GetPersonSpriteset(duk_context* ctx)
 
 	name = duk_require_string(ctx, 0);
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	spriteset = get_person_spriteset(person);
+	spriteset = person_get_spriteset(person);
 	duk_push_sphere_spriteset(ctx, spriteset);
 	return 1;
 }
@@ -1520,9 +1524,9 @@ js_GetPersonSpeedX(duk_context* ctx)
 	person_t*  person;
 	double     x_speed;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	get_person_speed(person, &x_speed, NULL);
+	person_get_speed(person, &x_speed, NULL);
 	duk_push_number(ctx, x_speed);
 	return 1;
 }
@@ -1535,9 +1539,9 @@ js_GetPersonSpeedY(duk_context* ctx)
 	person_t*  person;
 	double     y_speed;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	get_person_speed(person, NULL, &y_speed);
+	person_get_speed(person, NULL, &y_speed);
 	duk_push_number(ctx, y_speed);
 	return 1;
 }
@@ -1551,7 +1555,7 @@ js_GetPersonValue(duk_context* ctx)
 	person_t* person;
 
 	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
@@ -1574,9 +1578,9 @@ js_GetPersonX(duk_context* ctx)
 	person_t*   person;
 	double      x, y;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	get_person_xy(person, &x, &y, true);
+	person_get_xy(person, &x, &y, true);
 	duk_push_int(ctx, x);
 	return 1;
 }
@@ -1589,9 +1593,9 @@ js_GetPersonXFloat(duk_context* ctx)
 	person_t*   person;
 	double      x, y;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	get_person_xy(person, &x, &y, true);
+	person_get_xy(person, &x, &y, true);
 	duk_push_number(ctx, x);
 	return 1;
 }
@@ -1604,9 +1608,9 @@ js_GetPersonY(duk_context* ctx)
 	person_t*   person;
 	double      x, y;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	get_person_xy(person, &x, &y, true);
+	person_get_xy(person, &x, &y, true);
 	duk_push_int(ctx, y);
 	return 1;
 }
@@ -1619,9 +1623,9 @@ js_GetPersonYFloat(duk_context* ctx)
 	person_t*   person;
 	double      x, y;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	get_person_xy(person, &x, &y, true);
+	person_get_xy(person, &x, &y, true);
 	duk_push_number(ctx, y);
 	return 1;
 }
@@ -1660,9 +1664,9 @@ js_SetPersonAngle(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	set_person_angle(person, theta);
+	person_set_angle(person, theta);
 	return 0;
 }
 
@@ -1674,7 +1678,7 @@ js_SetPersonData(duk_context* ctx)
 	person_t* person;
 
 	duk_require_object_coercible(ctx, 1);
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
@@ -1690,7 +1694,7 @@ js_SetPersonDirection(duk_context* ctx)
 
 	person_t*   person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	set_person_direction(person, new_dir);
 	return 0;
@@ -1704,7 +1708,7 @@ js_SetPersonFollowDistance(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (person->leader == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "person has no leader");
@@ -1724,7 +1728,7 @@ js_SetPersonFrame(duk_context* ctx)
 	int       num_frames;
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	num_frames = spriteset_num_frames(person->sprite, person->direction);
 	person->frame = (frame_index % num_frames + num_frames) % num_frames;
@@ -1741,7 +1745,7 @@ js_SetPersonFrameNext(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (frames < 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid delay value");
@@ -1758,7 +1762,7 @@ js_SetPersonFrameRevert(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (frames < 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid delay value");
@@ -1778,7 +1782,7 @@ js_SetPersonIgnoreList(duk_context* ctx)
 	int i;
 
 	duk_require_object_coercible(ctx, 1);
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (!duk_is_array(ctx, 1))
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "ignore_list argument must be an array");
@@ -1806,7 +1810,7 @@ js_SetPersonLayer(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->layer = layer;
 	return 0;
@@ -1820,9 +1824,9 @@ js_SetPersonMask(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	set_person_mask(person, mask);
+	person_set_color(person, mask);
 	return 0;
 }
 
@@ -1834,7 +1838,7 @@ js_SetPersonOffsetX(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->x_offset = offset;
 	return 0;
@@ -1848,7 +1852,7 @@ js_SetPersonOffsetY(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->y_offset = offset;
 	return 0;
@@ -1866,14 +1870,14 @@ js_SetPersonScaleAbsolute(duk_context* ctx)
 	int          sprite_w;
 	spriteset_t* spriteset;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (width < 0 || height < 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid scale dimensions");
-	spriteset = get_person_spriteset(person);
+	spriteset = person_get_spriteset(person);
 	sprite_w = spriteset_width(spriteset);
 	sprite_h = spriteset_height(spriteset);
-	set_person_scale(person, width / sprite_w, height / sprite_h);
+	person_set_scale(person, width / sprite_w, height / sprite_h);
 	return 0;
 }
 
@@ -1886,11 +1890,11 @@ js_SetPersonScaleFactor(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (scale_x < 0.0 || scale_y < 0.0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "scale must be positive (got X: %f, Y: %f })", scale_x, scale_y);
-	set_person_scale(person, scale_x, scale_y);
+	person_set_scale(person, scale_x, scale_y);
 	return 0;
 }
 
@@ -1904,18 +1908,18 @@ js_SetPersonScript(duk_context* ctx)
 	person_t*  person;
 	script_t*  script;
 	
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
 	if (duk_is_string(ctx, 2)) {
 		codestring = duk_require_lstring_t(ctx, 2);
-		compile_person_script(person, type, codestring);
+		person_compile_script(person, type, codestring);
 		lstr_free(codestring);
 	}
 	else {
 		script = duk_require_sphere_script(ctx, 2, "[person script]");
-		set_person_script(person, type, script);
+		person_set_script(person, type, script);
 	}
 	return 0;
 }
@@ -1928,9 +1932,9 @@ js_SetPersonSpeed(duk_context* ctx)
 
 	person_t*  person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	set_person_speed(person, speed, speed);
+	person_set_speed(person, speed, speed);
 	return 0;
 }
 
@@ -1943,9 +1947,9 @@ js_SetPersonSpeedXY(duk_context* ctx)
 
 	person_t*  person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	set_person_speed(person, x_speed, y_speed);
+	person_set_speed(person, x_speed, y_speed);
 	return 0;
 }
 
@@ -1959,11 +1963,11 @@ js_SetPersonSpriteset(duk_context* ctx)
 	name = duk_require_string(ctx, 0);
 	spriteset = duk_require_sphere_spriteset(ctx, 1);
 	
-	if ((person = find_person(name)) == NULL) {
+	if ((person = person_find(name)) == NULL) {
 		spriteset_free(spriteset);
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	}
-	set_person_spriteset(person, spriteset);
+	person_set_spriteset(person, spriteset);
 	spriteset_free(spriteset);
 	return 0;
 }
@@ -1978,7 +1982,7 @@ js_SetPersonValue(duk_context* ctx)
 
 	duk_require_valid_index(ctx, 2);
 	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "person_data");
@@ -2001,7 +2005,7 @@ js_SetPersonVisible(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->is_visible = is_visible;
 	return 0;
@@ -2015,7 +2019,7 @@ js_SetPersonX(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->x = x;
 	return 0;
@@ -2030,7 +2034,7 @@ js_SetPersonXYFloat(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->x = x; person->y = y;
 	return 0;
@@ -2044,7 +2048,7 @@ js_SetPersonY(duk_context* ctx)
 	
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->y = y;
 	return 0;
@@ -2070,7 +2074,7 @@ js_CallDefaultPersonScript(duk_context* ctx)
 	const person_t* last_person;
 	person_t*       person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
@@ -2089,11 +2093,11 @@ js_CallPersonScript(duk_context* ctx)
 	
 	person_t*   person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
-	call_person_script(person, type, false);
+	person_call_script(person, type, false);
 	return 0;
 }
 
@@ -2104,7 +2108,7 @@ js_ClearPersonCommands(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->num_commands = 0;
 	return 0;
@@ -2120,13 +2124,13 @@ js_FollowPerson(duk_context* ctx)
 	person_t* leader = NULL;
 	person_t* person;
 
-	if (!(person = find_person(name)))
+	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (!(leader_name[0] == '\0' || (leader = find_person(leader_name))))
+	if (!(leader_name[0] == '\0' || (leader = person_find(leader_name))))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", leader_name);
 	if (distance <= 0 && leader_name[0] != '\0')
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid distance", distance);
-	if (!follow_person(person, leader, distance))
+	if (!person_follow(person, leader, distance))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "circular chain not allowed");
 	return 0;
 }
@@ -2139,7 +2143,7 @@ js_IgnorePersonObstructions(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->ignore_all_persons = is_ignoring;
 	return 0;
@@ -2153,7 +2157,7 @@ js_IgnoreTileObstructions(duk_context* ctx)
 
 	person_t* person;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person->ignore_all_tiles = is_ignoring;
 	return 0;
@@ -2169,15 +2173,15 @@ js_QueuePersonCommand(duk_context* ctx)
 
 	person_t* person;
 
-	if (!(person = find_person(name)))
+	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid command type constant");
 	if (command >= COMMAND_MOVE_NORTH && command <= COMMAND_MOVE_NORTHWEST) {
-		if (!queue_person_command(person, COMMAND_ANIMATE, true))
+		if (!person_queue_command(person, COMMAND_ANIMATE, true))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to queue command");
 	}
-	if (!queue_person_command(person, command, is_immediate))
+	if (!person_queue_command(person, command, is_immediate))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to queue command");
 	return 0;
 }
@@ -2194,9 +2198,9 @@ js_QueuePersonScript(duk_context* ctx)
 	person_t* person;
 
 	lstr_free(script_name);
-	if (!(person = find_person(name)))
+	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (!queue_person_script(person, script, is_immediate))
+	if (!person_queue_script(person, script, is_immediate))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to enqueue script");
 	return 0;
 }

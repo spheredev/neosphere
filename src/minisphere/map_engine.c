@@ -308,7 +308,7 @@ initialize_map_engine(void)
 	
 	console_log(1, "initializing map engine");
 	
-	initialize_persons_manager();
+	persons_init();
 	audio_init();
 	s_bgm_mixer = mixer_new(44100, 16, 2);
 	
@@ -349,7 +349,7 @@ shutdown_map_engine(void)
 	
 	mixer_free(s_bgm_mixer);
 	
-	shutdown_persons_manager();
+	persons_uninit();
 	audio_uninit();
 }
 
@@ -1069,7 +1069,7 @@ change_map(const char* filename, bool preserve_persons)
 		script_free(s_delay_scripts[i].script);
 	s_num_delay_scripts = 0;
 	s_map = map; s_map_filename = strdup(filename);
-	reset_persons(preserve_persons);
+	persons_reset(preserve_persons);
 
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
@@ -1079,20 +1079,20 @@ change_map(const char* filename, bool preserve_persons)
 		path_free(path);
 		if (spriteset == NULL)
 			goto on_error;
-		if (!(person = create_person(lstr_cstr(person_info->name), spriteset, false, NULL)))
+		if (!(person = person_new(lstr_cstr(person_info->name), spriteset, false, NULL)))
 			goto on_error;
 		spriteset_free(spriteset);
-		set_person_xyz(person, person_info->x, person_info->y, person_info->z);
-		compile_person_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
-		compile_person_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
-		compile_person_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
-		compile_person_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
-		compile_person_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
+		person_set_xyz(person, person_info->x, person_info->y, person_info->z);
+		person_compile_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
+		person_compile_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
+		person_compile_script(person, PERSON_SCRIPT_ON_TOUCH, person_info->touch_script);
+		person_compile_script(person, PERSON_SCRIPT_ON_TALK, person_info->talk_script);
+		person_compile_script(person, PERSON_SCRIPT_GENERATOR, person_info->command_script);
 		
-		// normally this is handled by create_person(), but since in this case the
+		// normally this is handled by person_new(), but since in this case the
 		// person-specific create script isn't compiled until after the person is created,
 		// the map engine gets the responsibility.
-		call_person_script(person, PERSON_SCRIPT_ON_CREATE, false);
+		person_call_script(person, PERSON_SCRIPT_ON_CREATE, false);
 	}
 
 	// set camera over starting position
@@ -1252,13 +1252,13 @@ process_map_input(void)
 				|| joy_is_button_down(i, s_talk_button))
 			{
 				if (s_players[i].is_talk_allowed)
-					talk_person(person);
+					person_talk(person);
 				s_players[i].is_talk_allowed = false;
 			}
 			else // allow talking again only after key is released
 				s_players[i].is_talk_allowed = true;
 			mv_x = 0; mv_y = 0;
-			if (!is_person_busy(person)) {  // allow player control only if input person is idle
+			if (!person_busy(person)) {  // allow player control only if input person is idle
 				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_UP)) || joy_position(i, 1) <= -0.5)
 					mv_y = -1;
 				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_RIGHT)) || joy_position(i, 0) >= 0.5)
@@ -1270,44 +1270,44 @@ process_map_input(void)
 			}
 			switch (mv_x + mv_y * 3) {
 			case -3: // north
-				queue_person_command(person, COMMAND_MOVE_NORTH, true);
-				queue_person_command(person, COMMAND_FACE_NORTH, true);
-				queue_person_command(person, COMMAND_ANIMATE, false);
+				person_queue_command(person, COMMAND_MOVE_NORTH, true);
+				person_queue_command(person, COMMAND_FACE_NORTH, true);
+				person_queue_command(person, COMMAND_ANIMATE, false);
 				break;
 			case -2: // northeast
-				queue_person_command(person, COMMAND_MOVE_NORTHEAST, true);
-				queue_person_command(person, COMMAND_FACE_NORTHEAST, true);
-				queue_person_command(person, COMMAND_ANIMATE, false);
+				person_queue_command(person, COMMAND_MOVE_NORTHEAST, true);
+				person_queue_command(person, COMMAND_FACE_NORTHEAST, true);
+				person_queue_command(person, COMMAND_ANIMATE, false);
 				break;
 			case 1: // east
-				queue_person_command(person, COMMAND_MOVE_EAST, true);
-				queue_person_command(person, COMMAND_FACE_EAST, true);
-				queue_person_command(person, COMMAND_ANIMATE, false);
+				person_queue_command(person, COMMAND_MOVE_EAST, true);
+				person_queue_command(person, COMMAND_FACE_EAST, true);
+				person_queue_command(person, COMMAND_ANIMATE, false);
 				break;
 			case 4: // southeast
-				queue_person_command(person, COMMAND_MOVE_SOUTHEAST, true);
-				queue_person_command(person, COMMAND_FACE_SOUTHEAST, true);
-				queue_person_command(person, COMMAND_ANIMATE, false);
+				person_queue_command(person, COMMAND_MOVE_SOUTHEAST, true);
+				person_queue_command(person, COMMAND_FACE_SOUTHEAST, true);
+				person_queue_command(person, COMMAND_ANIMATE, false);
 				break;
 			case 3: // south
-				queue_person_command(person, COMMAND_MOVE_SOUTH, true);
-				queue_person_command(person, COMMAND_FACE_SOUTH, true);
-				queue_person_command(person, COMMAND_ANIMATE, false);
+				person_queue_command(person, COMMAND_MOVE_SOUTH, true);
+				person_queue_command(person, COMMAND_FACE_SOUTH, true);
+				person_queue_command(person, COMMAND_ANIMATE, false);
 				break;
 			case 2: // southwest
-				queue_person_command(person, COMMAND_MOVE_SOUTHWEST, true);
-				queue_person_command(person, COMMAND_FACE_SOUTHWEST, true);
-				queue_person_command(person, COMMAND_ANIMATE, false);
+				person_queue_command(person, COMMAND_MOVE_SOUTHWEST, true);
+				person_queue_command(person, COMMAND_FACE_SOUTHWEST, true);
+				person_queue_command(person, COMMAND_ANIMATE, false);
 				break;
 			case -1: // west
-				queue_person_command(person, COMMAND_MOVE_WEST, true);
-				queue_person_command(person, COMMAND_FACE_WEST, true);
-				queue_person_command(person, COMMAND_ANIMATE, false);
+				person_queue_command(person, COMMAND_MOVE_WEST, true);
+				person_queue_command(person, COMMAND_FACE_WEST, true);
+				person_queue_command(person, COMMAND_ANIMATE, false);
 				break;
 			case -4: // northwest
-				queue_person_command(person, COMMAND_MOVE_NORTHWEST, true);
-				queue_person_command(person, COMMAND_FACE_NORTHWEST, true);
-				queue_person_command(person, COMMAND_ANIMATE, false);
+				person_queue_command(person, COMMAND_MOVE_NORTHWEST, true);
+				person_queue_command(person, COMMAND_FACE_NORTHWEST, true);
+				person_queue_command(person, COMMAND_ANIMATE, false);
 				break;
 			}
 		}
@@ -1353,10 +1353,10 @@ render_map(void)
 		if (layer->is_reflective) {
 			if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
 				for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
-					render_persons(z, true, off_x - x * layer_width, off_y - y * layer_height);
+					persons_draw_all(z, true, off_x - x * layer_width, off_y - y * layer_height);
 			}
 			else {
-				render_persons(z, true, off_x, off_y);
+				persons_draw_all(z, true, off_x, off_y);
 			}
 		}
 		
@@ -1377,10 +1377,10 @@ render_map(void)
 		// render persons
 		if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
 			for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
-				render_persons(z, false, off_x - x * layer_width, off_y - y * layer_height);
+				persons_draw_all(z, false, off_x - x * layer_width, off_y - y * layer_height);
 		}
 		else {
-			render_persons(z, false, off_x, off_y);
+			persons_draw_all(z, false, off_x, off_y);
 		}
 		al_hold_bitmap_drawing(false);
 
@@ -1420,8 +1420,8 @@ update_map_engine(bool in_main_loop)
 	tileset_update(s_map->tileset);
 
 	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL)
-		get_person_xy(s_players[i].person, &start_x[i], &start_y[i], false);
-	update_persons();
+		person_get_xy(s_players[i].person, &start_x[i], &start_y[i], false);
+	persons_update();
 
 	// update color mask fade level
 	if (s_fade_progress < s_fade_frames) {
@@ -1432,7 +1432,7 @@ update_map_engine(bool in_main_loop)
 	
 	// update camera
 	if (s_camera_person != NULL) {
-		get_person_xy(s_camera_person, &x, &y, true);
+		person_get_xy(s_camera_person, &x, &y, true);
 		s_camera_x = x; s_camera_y = y;
 	}
 
@@ -1453,7 +1453,7 @@ update_map_engine(bool in_main_loop)
 	// if there are any input persons, check for trigger activation
 	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL) {
 		// did we step on a trigger or move to a new one?
-		get_person_xyz(s_players[i].person, &x, &y, &layer, true);
+		person_get_xyz(s_players[i].person, &x, &y, &layer, true);
 		trigger = get_trigger_at(x, y, layer, &index);
 		if (trigger != s_on_trigger) {
 			last_trigger = s_current_trigger;
@@ -1469,7 +1469,7 @@ update_map_engine(bool in_main_loop)
 	// note: a zone's step count is in reality a pixel count, so a zone
 	//       may be updated multiple times in a single frame.
 	for (k = 0; k < MAX_PLAYERS; ++k) if (s_players[k].person != NULL) {
-		get_person_xy(s_players[k].person, &x, &y, false);
+		person_get_xy(s_players[k].person, &x, &y, false);
 		px = abs(x - start_x[k]);
 		py = abs(y - start_y[k]);
 		num_zone_steps = px > py ? px : py;
@@ -1687,7 +1687,7 @@ js_IsInputAttached(duk_context* ctx)
 		player = 0;
 	else if (duk_is_string(ctx, 0)) {
 		name = duk_get_string(ctx, 0);
-		if (!(person = find_person(name)))
+		if (!(person = person_find(name)))
 			duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "person `%s` doesn't exist", name);
 		player = -1;
 		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
@@ -1752,7 +1752,7 @@ js_GetCameraPerson(duk_context* ctx)
 {
 	if (s_camera_person == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid operation, camera not attached");
-	duk_push_string(ctx, get_person_name(s_camera_person));
+	duk_push_string(ctx, person_get_name(s_camera_person));
 	return 1;
 }
 
@@ -1831,7 +1831,7 @@ js_GetInputPerson(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
 	if (s_players[player].person == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "input not attached for player %d", player + 1);
-	duk_push_string(ctx, get_person_name(s_players[player].person));
+	duk_push_string(ctx, person_get_name(s_players[player].person));
 	return 1;
 }
 
@@ -2763,7 +2763,7 @@ js_AttachCamera(duk_context* ctx)
 	person_t*   person;
 
 	name = duk_to_string(ctx, 0);
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "person `%s` doesn't exist", name);
 	s_camera_person = person;
 	return 0;
@@ -2778,7 +2778,7 @@ js_AttachInput(duk_context* ctx)
 
 	int i;
 
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "person `%s` doesn't exist", name);
 	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
 		if (s_players[i].person == person) s_players[i].person = NULL;
@@ -2798,7 +2798,7 @@ js_AttachPlayerInput(duk_context* ctx)
 
 	if (player < 0 || player >= MAX_PLAYERS)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
-	if ((person = find_person(name)) == NULL)
+	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "person `%s` doesn't exist", name);
 	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
 		if (s_players[i].person == person) s_players[i].person = NULL;
@@ -2899,7 +2899,7 @@ js_DetachPlayerInput(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "player number or string expected as argument");
 	else if (duk_is_string(ctx, 0)) {
 		name = duk_get_string(ctx, 0);
-		if (!(person = find_person(name)))
+		if (!(person = person_find(name)))
 			duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "person `%s` doesn't exist", name);
 		player = -1;
 		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
@@ -3025,7 +3025,7 @@ js_MapEngine(duk_context* ctx)
 		render_map();
 		screen_flip(g_screen, s_framerate);
 	}
-	reset_persons(false);
+	persons_reset(false);
 	s_is_map_running = false;
 	return 0;
 }

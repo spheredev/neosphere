@@ -16,11 +16,9 @@ To load files from a different location, you can use one of the SphereFS
 prefixes:
 
     @/: The root of the game package being compiled.
-    $/: The root of the source tree; in other words, the directory containing
-        the Cellscript.
-    ~/: The current user's save data directory, guaranteed to be writable.
-        This prefix is meaningless in Cell and using it will cause a sandboxing
-        violation error.
+    $/: The source directory, i.e. the directory containing the Cellscript.
+    ~/: When used in a Sphere game, this specifies the current user's save data
+        directory.  In Cell, using this prefix is a sandboxing violation.
     #/: The Sphere system directory.  This contains assets included with the
         engine.  In most cases this directory is read-only.  Build scripts
         should NOT try to write anything here as doing so can damage the host
