@@ -448,8 +448,8 @@ map_engine_init(void)
 		s_players[i].is_talk_allowed = true;
 	s_current_trigger = -1;
 	s_current_zone = -1;
-	s_render_script = 0;
-	s_update_script = 0;
+	s_render_script = NULL;
+	s_update_script = NULL;
 	s_num_delay_scripts = s_max_delay_scripts = 0;
 	s_delay_scripts = NULL;
 	s_talk_button = 0;
@@ -518,7 +518,7 @@ map_bounds(void)
 }
 
 const char*
-map_name(void)
+map_filename(void)
 {
 	return s_map ? s_map_filename : NULL;
 }
@@ -562,10 +562,13 @@ map_origin(void)
 }
 
 int
-map_tile_index(int x, int y, int layer)
+map_tile_at(int x, int y, int layer)
 {
-	int layer_h = s_map->layers[layer].height;
-	int layer_w = s_map->layers[layer].width;
+	int layer_h;
+	int layer_w;
+
+	layer_w = s_map->layers[layer].width;
+	layer_h = s_map->layers[layer].height;
 
 	if (s_map->is_repeating || s_map->layers[layer].is_parallax) {
 		x = (x % layer_w + layer_w) % layer_w;
@@ -606,28 +609,35 @@ map_trigger_at(int x, int y, int layer)
 	return -1;
 }
 
-bool
-map_zones_at(int x, int y, int layer, int* out_count)
+int
+map_zone_at(int x, int y, int layer, int which)
 {
-	int              count = 0;
 	struct map_zone* zone;
-	bool             zone_found;
 
 	iter_t iter;
 
-	zone_found = false;
 	iter = vector_enum(s_map->zones);
 	while (zone = vector_next(&iter)) {
 		if (zone->layer != layer && false)  // layer ignored for compatibility
 			continue;
-		if (is_point_in_rect(x, y, zone->bounds)) {
-			zone_found = true;
-			++count;
-		}
+		if (is_point_in_rect(x, y, zone->bounds) && --which < 0)
+			return iter.index;
 	}
-	if (out_count != NULL)
-		*out_count = count;
-	return zone_found;
+	return -1;
+}
+
+void
+map_on_render(script_t* script)
+{
+	script_free(s_render_script);
+	s_render_script = script_ref(script);
+}
+
+void
+map_on_update(script_t* script)
+{
+	script_free(s_update_script);
+	s_update_script = script_ref(script);
 }
 
 bool
@@ -873,18 +883,18 @@ person_has_moved(const person_t* person)
 }
 
 bool
-person_ignoring(const person_t* person, const person_t* by_person)
+person_ignored_by(const person_t* person, const person_t* other)
 {
 	// note: commutative; if either person ignores the other, the function will return true
 
 	int i;
 
-	if (by_person->ignore_all_persons || person->ignore_all_persons)
+	if (other->ignore_all_persons || person->ignore_all_persons)
 		return true;
-	for (i = 0; i < by_person->num_ignores; ++i)
-		if (strcmp(by_person->ignores[i], person->name) == 0) return true;
+	for (i = 0; i < other->num_ignores; ++i)
+		if (strcmp(other->ignores[i], person->name) == 0) return true;
 	for (i = 0; i < person->num_ignores; ++i)
-		if (strcmp(person->ignores[i], by_person->name) == 0) return true;
+		if (strcmp(person->ignores[i], other->name) == 0) return true;
 	return false;
 }
 
@@ -926,7 +936,7 @@ person_obstructed_at(const person_t* person, double x, double y, person_t** out_
 			if (person_following(s_persons[i], person))
 				continue;  // ignore own followers
 			base = person_get_base(s_persons[i]);
-			if (do_rects_intersect(my_base, base) && !person_ignoring(person, s_persons[i])) {
+			if (do_rects_intersect(my_base, base) && !person_ignored_by(person, s_persons[i])) {
 				is_obstructed = true;
 				if (out_obstructing_person)
 					*out_obstructing_person = s_persons[i];
@@ -952,11 +962,11 @@ person_obstructed_at(const person_t* person, double x, double y, person_t** out_
 		area.y2 = area.y1 + (my_base.y2 - my_base.y1) / tile_h + 2;
 		for (i_x = area.x1; i_x < area.x2; ++i_x) for (i_y = area.y1; i_y < area.y2; ++i_y) {
 			base = translate_rect(my_base, -(i_x * tile_w), -(i_y * tile_h));
-			obsmap = tileset_obsmap(tileset, map_tile_index(i_x, i_y, layer));
+			obsmap = tileset_obsmap(tileset, map_tile_at(i_x, i_y, layer));
 			if (obsmap != NULL && obsmap_test_rect(obsmap, base)) {
 				is_obstructed = true;
 				if (out_tile_index)
-					*out_tile_index = map_tile_index(i_x, i_y, layer);
+					*out_tile_index = map_tile_at(i_x, i_y, layer);
 				break;
 			}
 		}
@@ -1014,21 +1024,21 @@ person_get_spriteset(person_t* person)
 }
 
 void
-person_get_xy(const person_t* person, double* out_x, double* out_y, bool want_normalize)
+person_get_xy(const person_t* person, double* out_x, double* out_y, bool normalize)
 {
 	*out_x = person->x;
 	*out_y = person->y;
-	if (want_normalize)
+	if (normalize)
 		map_normalize_xy(out_x, out_y, person->layer);
 }
 
 void
-person_get_xyz(const person_t* person, double* out_x, double* out_y, int* out_layer, bool want_normalize)
+person_get_xyz(const person_t* person, double* out_x, double* out_y, int* out_layer, bool normalize)
 {
 	*out_x = person->x;
 	*out_y = person->y;
 	*out_layer = person->layer;
-	if (want_normalize)
+	if (normalize)
 		map_normalize_xy(out_x, out_y, *out_layer);
 }
 
@@ -1101,6 +1111,12 @@ person_call_script(const person_t* person, person_op_t op, bool use_default)
 	return true;
 }
 
+void
+person_clear_queue(person_t* person)
+{
+	person->num_commands = 0;
+}
+
 bool
 person_compile_script(person_t* person, int type, const lstring_t* codestring)
 {
@@ -1115,7 +1131,7 @@ person_compile_script(person_t* person, int type, const lstring_t* codestring)
 		: NULL;
 	if (script_name == NULL)
 		return false;
-	script = script_new(codestring, "%s/%s/%s.js", map_name(), person->name, script_name);
+	script = script_new(codestring, "%s/%s/%s.js", map_filename(), person->name, script_name);
 	person_set_script(person, type, script);
 	return true;
 }
@@ -1362,6 +1378,19 @@ zone_set_steps(int zone_index, int interval)
 	zone = vector_get(s_map->zones, zone_index);
 	zone->interval = interval;
 	zone->steps_left = 0;
+}
+
+void
+zone_activate(int zone_index)
+{
+	int              last_zone;
+	struct map_zone* zone;
+	
+	zone = vector_get(s_map->zones, zone_index);
+	last_zone = s_current_zone;
+	s_current_zone = zone_index;
+	script_run(zone->script, true);
+	s_current_zone = last_zone;
 }
 
 static bool
@@ -2490,7 +2519,7 @@ update_person(person_t* person, bool* out_has_moved)
 	if (!does_person_exist(person))
 		return;  // they probably got eaten by a hunger-pig or something.
 
-				 // if the person's position changed, record it in their step history
+	// if the person's position changed, record it in their step history
 	*out_has_moved = person_has_moved(person);
 	if (*out_has_moved)
 		record_step(person);
@@ -2772,7 +2801,7 @@ js_AddTrigger(duk_context* ctx)
 	bounds = map_bounds();
 	if (x < bounds.x1 || y < bounds.y1 || x >= bounds.x2 || y >= bounds.y2)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "X/Y out of bounds");
-	script_name = lstr_newf("%s/trig%d", map_name(), map_num_triggers());
+	script_name = lstr_newf("%s/trig%d", map_filename(), map_num_triggers());
 	script = duk_require_sphere_script(ctx, 3, lstr_cstr(script_name));
 	if (!map_add_trigger(x, y, layer, script))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to add trigger to map");
@@ -2806,7 +2835,7 @@ js_AddZone(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone width/height");
 	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "zone out of bounds");
-	script_name = lstr_newf("%s/zone%d", map_name(), map_num_zones());
+	script_name = lstr_newf("%s/zone%d", map_filename(), map_num_zones());
 	script = duk_require_sphere_script(ctx, 5, lstr_cstr(script_name));
 	if (!map_add_zone(new_rect(x, y, width, height), layer, script, 8))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to add zone to map");
@@ -2826,7 +2855,7 @@ js_AreZonesAt(duk_context* ctx)
 	y = duk_to_int(ctx, 1);
 	layer = duk_require_map_layer(ctx, 2);
 
-	duk_push_boolean(ctx, map_zones_at(x, y, layer, NULL));
+	duk_push_boolean(ctx, map_zone_at(x, y, layer, 0) >= 0);
 	return 1;
 }
 
@@ -2883,8 +2912,13 @@ js_AttachPlayerInput(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range");
 	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "person `%s` doesn't exist", name);
-	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
-		if (s_players[i].person == person) s_players[i].person = NULL;
+	
+	// detach person from other players
+	for (i = 0; i < MAX_PLAYERS; ++i) {
+		if (s_players[i].person == person)
+			s_players[i].person = NULL;
+	}
+
 	s_players[player].person = person;
 	return 0;
 }
@@ -2892,7 +2926,9 @@ js_AttachPlayerInput(duk_context* ctx)
 static duk_ret_t
 js_CallDefaultMapScript(duk_context* ctx)
 {
-	int type = duk_to_int(ctx, 0);
+	int type;
+	
+	type = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
@@ -2905,11 +2941,13 @@ js_CallDefaultMapScript(duk_context* ctx)
 static duk_ret_t
 js_CallDefaultPersonScript(duk_context* ctx)
 {
-	const char* name = duk_require_string(ctx, 0);
-	int type = duk_require_int(ctx, 1);
-
 	const person_t* last_person;
+	const char*     name;
 	person_t*       person;
+	int             type;
+
+	name = duk_require_string(ctx, 0);
+	type = duk_require_int(ctx, 1);
 
 	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
@@ -2925,23 +2963,27 @@ js_CallDefaultPersonScript(duk_context* ctx)
 static duk_ret_t
 js_CallMapScript(duk_context* ctx)
 {
-	int type = duk_to_int(ctx, 0);
+	int type;
+	
+	type = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (type < 0 || type >= MAP_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid script type constant");
-	script_run(s_map->scripts[type], false);
+	map_call_script(type, false);
 	return 0;
 }
 
 static duk_ret_t
 js_CallPersonScript(duk_context* ctx)
 {
-	const char* name = duk_require_string(ctx, 0);
-	int type = duk_require_int(ctx, 1);
-
+	const char* name;
 	person_t*   person;
+	int         type;
+	
+	name = duk_require_string(ctx, 0);
+	type = duk_require_int(ctx, 1);
 
 	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
@@ -2961,7 +3003,7 @@ js_ClearPersonCommands(duk_context* ctx)
 
 	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->num_commands = 0;
+	person_clear_queue(person);
 	return 0;
 }
 
@@ -2991,10 +3033,11 @@ js_CreatePerson(duk_context* ctx)
 	name = duk_require_string(ctx, 0);
 	destroy_with_map = duk_to_boolean(ctx, 2);
 
-	if (duk_is_class_obj(ctx, 1, "ssSpriteset"))
+	if (duk_is_class_obj(ctx, 1, "ssSpriteset")) {
 		// ref the spriteset so we can safely free it later. this avoids
 		// having to check the argument type again.
 		spriteset = duk_require_sphere_spriteset(ctx, 1);
+	}
 	else {
 		filename = duk_require_path(ctx, 1, "spritesets", true, false);
 		if (!(spriteset = spriteset_load(filename)))
@@ -3068,7 +3111,7 @@ js_DetachPlayerInput(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "player number or string expected as argument");
 	}
 	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range");
 	s_players[player].person = NULL;
 	return 0;
 }
@@ -3106,9 +3149,7 @@ js_ExecuteTrigger(duk_context* ctx)
 static duk_ret_t
 js_ExecuteZoneScript(duk_context* ctx)
 {
-	int              last_zone;
-	struct map_zone* zone;
-	int              zone_index;
+	int zone_index;
 
 	zone_index = duk_to_int(ctx, 0);
 
@@ -3116,24 +3157,17 @@ js_ExecuteZoneScript(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-
-	zone = vector_get(s_map->zones, zone_index);
-	last_zone = s_current_zone;
-	s_current_zone = zone_index;
-	script_run(zone->script, true);
-	s_current_zone = last_zone;
+	zone_activate(zone_index);
 	return 0;
 }
 
 static duk_ret_t
 js_ExecuteZones(duk_context* ctx)
 {
-	int              index;
-	int              last_zone;
-	int              layer;
-	int              x;
-	int              y;
-	struct map_zone* zone;
+	int index;
+	int layer;
+	int x;
+	int y;
 
 	int i;
 
@@ -3144,12 +3178,8 @@ js_ExecuteZones(duk_context* ctx)
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	i = 0;
-	while (zone = get_zone_at(x, y, layer, i++, &index)) {
-		last_zone = s_current_zone;
-		s_current_zone = index;
-		script_run(zone->script, true);
-		s_current_zone = last_zone;
-	}
+	while ((index = map_zone_at(x, y, layer, i++)) >= 0)
+		zone_activate(index);
 	return 0;
 }
 
@@ -3222,7 +3252,7 @@ js_GetCameraY(duk_context* ctx)
 static duk_ret_t
 js_GetCurrentMap(duk_context* ctx)
 {
-	path_t* map_name;
+	path_t* map_path;
 	path_t* origin;
 	
 	if (!map_engine_running())
@@ -3230,14 +3260,14 @@ js_GetCurrentMap(duk_context* ctx)
 	
 	// GetCurrentMap() in Sphere 1.x returns the map path
 	// relative to the 'maps' directory.
-	map_name = path_new(s_map_filename);
-	if (!path_is_rooted(map_name)) {
-		origin = path_new("maps/");
-		path_relativize(map_name, origin);
+	map_path = path_new(map_filename());
+	if (!path_is_rooted(map_path)) {
+		origin = path_new("@/maps/");
+		path_relativize(map_path, origin);
 		path_free(origin);
 	}
-	duk_push_string(ctx, path_cstr(map_name));
-	path_free(map_name);
+	duk_push_string(ctx, path_cstr(map_path));
+	path_free(map_path);
 	return 1;
 }
 
@@ -3282,7 +3312,7 @@ js_GetInputPerson(duk_context* ctx)
 	player = num_args >= 1 ? duk_to_int(ctx, 0) : 0;
 
 	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range");
 	if (s_players[player].person == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "input not attached for player %d", player + 1);
 	duk_push_string(ctx, person_name(s_players[player].person));
@@ -3355,7 +3385,7 @@ js_GetNextAnimatedTile(duk_context* ctx)
 
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index %d", tile_index);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
 	duk_push_int(ctx, tileset_get_next(tileset, tile_index));
 	return 1;
 }
@@ -3841,7 +3871,7 @@ js_GetTalkActivationKey(duk_context* ctx)
 	int player = n_args >= 1 ? duk_to_int(ctx, 0) : 0;
 
 	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range");
 	duk_push_int(ctx, s_players[player].talk_key);
 	return 1;
 }
@@ -3856,72 +3886,88 @@ js_GetTalkDistance(duk_context* ctx)
 static duk_ret_t
 js_GetTile(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int layer = duk_require_map_layer(ctx, 2);
+	int layer;
+	int x;
+	int y;
 
-	int              layer_w, layer_h;
-	struct map_tile* tilemap;
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	layer_w = s_map->layers[layer].width;
-	layer_h = s_map->layers[layer].height;
-	tilemap = s_map->layers[layer].tilemap;
-	duk_push_int(ctx, tilemap[x + y * layer_w].tile_index);
+	duk_push_int(ctx, map_tile_at(x, y, layer));
 	return 1;
 }
 
 static duk_ret_t
 js_GetTileDelay(duk_context* ctx)
 {
-	int tile_index = duk_to_int(ctx, 0);
+	int        tile_index;
+	tileset_t* tileset;
+	
+	tile_index = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index %d", tile_index);
-	duk_push_int(ctx, tileset_get_delay(s_map->tileset, tile_index));
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	duk_push_int(ctx, tileset_get_delay(tileset, tile_index));
 	return 1;
 }
 
 static duk_ret_t
 js_GetTileHeight(duk_context* ctx)
 {
-	int w, h;
+	int        height;
+	tileset_t* tileset;
+	int        width;
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	tileset_get_size(s_map->tileset, &w, &h);
-	duk_push_int(ctx, h);
+
+	tileset = map_tileset();
+	tileset_get_size(tileset, &width, &height);
+	duk_push_int(ctx, height);
 	return 1;
 }
 
 static duk_ret_t
 js_GetTileImage(duk_context* ctx)
 {
-	int tile_index = duk_to_int(ctx, 0);
+	image_t*   image;
+	int        tile_index;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index %d", tile_index);
-	duk_push_class_obj(ctx, "ssImage", image_ref(tileset_get_image(s_map->tileset, tile_index)));
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
+	duk_push_class_obj(ctx, "ssImage", image);
 	return 1;
 }
 
 static duk_ret_t
 js_GetTileName(duk_context* ctx)
 {
-	int        tile_index = duk_to_int(ctx, 0);
-	
+	int              tile_index;
 	const lstring_t* tile_name;
+	tileset_t*       tileset;
+
+	tile_index = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index %d", tile_index);
-	tile_name = tileset_get_name(s_map->tileset, tile_index);
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	tile_name = tileset_get_name(tileset, tile_index);
 	duk_push_lstring_t(ctx, tile_name);
 	return 1;
 }
@@ -3929,15 +3975,18 @@ js_GetTileName(duk_context* ctx)
 static duk_ret_t
 js_GetTileSurface(duk_context* ctx)
 {
-	int tile_index = duk_to_int(ctx, 0);
-
-	image_t* image;
+	image_t*   image;
+	int        tile_index;
+	tileset_t* tileset;
+	
+	tile_index = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index %d", tile_index);
-	if ((image = image_clone(tileset_get_image(s_map->tileset, tile_index))) == NULL)
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
 	duk_push_class_obj(ctx, "ssSurface", image);
 	return 1;
@@ -3946,12 +3995,16 @@ js_GetTileSurface(duk_context* ctx)
 static duk_ret_t
 js_GetTileWidth(duk_context* ctx)
 {
-	int w, h;
-	
+	int        height;
+	tileset_t* tileset;
+	int        width;
+
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	tileset_get_size(s_map->tileset, &w, &h);
-	duk_push_int(ctx, w);
+
+	tileset = map_tileset();
+	tileset_get_size(tileset, &width, &height);
+	duk_push_int(ctx, width);
 	return 1;
 }
 
@@ -3964,8 +4017,8 @@ js_GetTriggerLayer(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (trigger_index < 0 || trigger_index >= (int)vector_len(s_map->triggers))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index %d", trigger_index);
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, NULL, NULL, &layer);
 	duk_push_int(ctx, layer);
 	return 1;
@@ -3980,8 +4033,8 @@ js_GetTriggerX(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (trigger_index < 0 || trigger_index >= (int)vector_len(s_map->triggers))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index %d", trigger_index);
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, &x, NULL, NULL);
 	duk_push_int(ctx, x);
 	return 1;
@@ -3996,8 +4049,8 @@ js_GetTriggerY(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (trigger_index < 0 || trigger_index >= (int)vector_len(s_map->triggers))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index %d", trigger_index);
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, NULL, &y, NULL);
 	duk_push_int(ctx, y);
 	return 1;
@@ -4006,14 +4059,15 @@ js_GetTriggerY(duk_context* ctx)
 static duk_ret_t
 js_GetZoneHeight(duk_context* ctx)
 {
-	int zone_index = duk_to_int(ctx, 0);
-
 	rect_t bounds;
+	int    zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index %d", zone_index);
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
 	duk_push_int(ctx, bounds.y2 - bounds.y1);
 	return 1;
@@ -4022,12 +4076,14 @@ js_GetZoneHeight(duk_context* ctx)
 static duk_ret_t
 js_GetZoneLayer(duk_context* ctx)
 {
-	int zone_index = duk_to_int(ctx, 0);
+	int zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index %d", zone_index);
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	duk_push_int(ctx, zone_get_layer(zone_index));
 	return 1;
 }
@@ -4035,12 +4091,14 @@ js_GetZoneLayer(duk_context* ctx)
 static duk_ret_t
 js_GetZoneSteps(duk_context* ctx)
 {
-	int zone_index = duk_to_int(ctx, 0);
+	int zone_index;
+	
+	zone_index = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index %d", zone_index);
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	duk_push_int(ctx, zone_get_steps(zone_index));
 	return 1;
 }
@@ -4048,14 +4106,15 @@ js_GetZoneSteps(duk_context* ctx)
 static duk_ret_t
 js_GetZoneWidth(duk_context* ctx)
 {
-	int zone_index = duk_to_int(ctx, 0);
-
 	rect_t bounds;
+	int    zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index %d", zone_index);
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
 	duk_push_int(ctx, bounds.x2 - bounds.x1);
 	return 1;
@@ -4070,8 +4129,8 @@ js_GetZoneX(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index %d", zone_index);
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
 	duk_push_int(ctx, bounds.x1);
 	return 1;
@@ -4086,8 +4145,8 @@ js_GetZoneY(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index %d", zone_index);
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
 	duk_push_int(ctx, bounds.y1);
 	return 1;
@@ -4195,7 +4254,7 @@ js_IsInputAttached(duk_context* ctx)
 	else
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "player number or string expected");
 	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range");
 	duk_push_boolean(ctx, s_players[player].person != NULL);
 	return 1;
 }
@@ -4260,11 +4319,15 @@ js_IsPersonVisible(duk_context* ctx)
 static duk_ret_t
 js_IsTriggerAt(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int layer = duk_require_map_layer(ctx, 2);
+	int x;
+	int y;
+	int layer;
+	
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
 
-	duk_push_boolean(ctx, get_trigger_at(x, y, layer, NULL) != NULL);
+	duk_push_boolean(ctx, map_trigger_at(x, y, layer) >= 0);
 	return 1;
 }
 
@@ -4303,10 +4366,12 @@ js_MapEngine(duk_context* ctx)
 static duk_ret_t
 js_MapToScreenX(duk_context* ctx)
 {
-	int layer = duk_require_map_layer(ctx, 0);
-	double x = duk_to_int(ctx, 1);
+	int    layer;
+	int    offset_x;
+	double x;
 
-	int offset_x;
+	layer = duk_require_map_layer(ctx, 0);
+	x = duk_to_int(ctx, 1);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
@@ -4319,10 +4384,12 @@ js_MapToScreenX(duk_context* ctx)
 static duk_ret_t
 js_MapToScreenY(duk_context* ctx)
 {
-	int layer = duk_require_map_layer(ctx, 0);
-	double y = duk_to_int(ctx, 1);
-
-	int offset_y;
+	int    layer;
+	int    offset_y;
+	double y;
+	
+	layer = duk_require_map_layer(ctx, 0);
+	y = duk_to_int(ctx, 1);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
@@ -4360,7 +4427,7 @@ js_QueuePersonScript(duk_context* ctx)
 {
 	int n_args = duk_get_top(ctx);
 	const char* name = duk_require_string(ctx, 0);
-	lstring_t* script_name = lstr_newf("%s/%s/queueScript.js", map_name(), name, s_queued_id++);
+	lstring_t* script_name = lstr_newf("%s/%s/queueScript.js", map_filename(), name, s_queued_id++);
 	script_t* script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	bool is_immediate = n_args >= 3 ? duk_to_boolean(ctx, 2) : false;
 
@@ -4381,8 +4448,8 @@ js_RemoveTrigger(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (trigger_index < 0 || trigger_index >= (int)vector_len(s_map->triggers))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index %d", trigger_index);
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
 	map_remove_trigger(trigger_index);
 	return 0;
 }
@@ -4394,8 +4461,8 @@ js_RemoveZone(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index %d", zone_index);
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	map_remove_zone(zone_index);
 	return 0;
 }
@@ -4424,9 +4491,9 @@ js_ReplaceTilesOnLayer(duk_context* ctx)
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (old_index < 0 || old_index >= tileset_len(s_map->tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "old invalid tile index %d", old_index);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "old invalid tile index");
 	if (new_index < 0 || new_index >= tileset_len(s_map->tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "new invalid tile index %d", new_index);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "new invalid tile index");
 	layer_w = s_map->layers[layer].width;
 	layer_h = s_map->layers[layer].height;
 	for (i_x = 0; i_x < layer_w; ++i_x) for (i_y = 0; i_y < layer_h; ++i_y) {
@@ -4517,12 +4584,12 @@ static duk_ret_t
 js_SetDefaultMapScript(duk_context* ctx)
 {
 	int script_type = duk_to_int(ctx, 0);
-	const char* script_name = (script_type == MAP_SCRIPT_ON_ENTER) ? "synth:onLoadMap.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE) ? "synth:onUnloadMap.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_NORTH) ? "synth:onLeaveMapNorth.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_EAST) ? "synth:onLeaveMapEast.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_SOUTH) ? "synth:onLeaveMapSouth.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_WEST) ? "synth:onLeaveMapWest.js"
+	const char* script_name = (script_type == MAP_SCRIPT_ON_ENTER) ? "%/onLoadMap.js"
+		: (script_type == MAP_SCRIPT_ON_LEAVE) ? "%/onUnloadMap.js"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_NORTH) ? "%/onLeaveMapNorth.js"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_EAST) ? "%/onLeaveMapEast.js"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_SOUTH) ? "%/onLeaveMapSouth.js"
+		: (script_type == MAP_SCRIPT_ON_LEAVE_WEST) ? "%/onLeaveMapWest.js"
 		: NULL;
 	script_t* script = duk_require_sphere_script(ctx, 1, script_name);
 
@@ -4537,11 +4604,11 @@ static duk_ret_t
 js_SetDefaultPersonScript(duk_context* ctx)
 {
 	int type = duk_require_int(ctx, 0);
-	const char* script_name = (type == PERSON_SCRIPT_ON_CREATE) ? "synth:onCreatePerson.js"
-		: (type == PERSON_SCRIPT_ON_DESTROY) ? "synth:onDestroyPerson.js"
-		: (type == PERSON_SCRIPT_ON_TALK) ? "synth:onTalk.js"
-		: (type == PERSON_SCRIPT_ON_TOUCH) ? "synth:onTouchPerson.js"
-		: (type == PERSON_SCRIPT_GENERATOR) ? "synth:onGenCommands.js"
+	const char* script_name = (type == PERSON_SCRIPT_ON_CREATE) ? "%/onCreatePerson.js"
+		: (type == PERSON_SCRIPT_ON_DESTROY) ? "%/onDestroyPerson.js"
+		: (type == PERSON_SCRIPT_ON_TALK) ? "%/onTalk.js"
+		: (type == PERSON_SCRIPT_ON_TOUCH) ? "%/onTouchPerson.js"
+		: (type == PERSON_SCRIPT_GENERATOR) ? "%/onGenCommands.js"
 		: NULL;
 	script_t* script = duk_require_sphere_script(ctx, 1, script_name);
 
@@ -4704,9 +4771,9 @@ js_SetNextAnimatedTile(duk_context* ctx)
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (tile_index < 0 || tile_index >= tileset_len(s_map->tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index %d", tile_index);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
 	if (next_index < 0 || next_index >= tileset_len(s_map->tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index for next tile (%d)", tile_index);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index for next tile");
 	tileset_set_next(s_map->tileset, tile_index, next_index);
 	return 0;
 }
@@ -5121,11 +5188,11 @@ static duk_ret_t
 js_SetRenderScript(duk_context* ctx)
 {
 	script_t* script;
-	
-	script = duk_require_sphere_script(ctx, 0, "default/renderScript");
 
-	script_free(s_render_script);
-	s_render_script = script;
+	script = duk_require_sphere_script(ctx, 0, "%/renderScript.js");
+
+	map_on_render(script);
+	script_free(script);
 	return 0;
 }
 
@@ -5318,7 +5385,7 @@ js_SetTriggerScript(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	script_name = lstr_newf("%s/trigger~%d/onStep", map_name(), trigger_index);
+	script_name = lstr_newf("%s/trigger~%d/onStep", map_filename(), trigger_index);
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	trigger_set_script(trigger_index, script);
 	script_free(script);
@@ -5348,10 +5415,12 @@ js_SetTriggerXY(duk_context* ctx)
 static duk_ret_t
 js_SetUpdateScript(duk_context* ctx)
 {
-	script_t* script = duk_require_sphere_script(ctx, 0, "default/updateScript");
+	script_t* script;
+	
+	script = duk_require_sphere_script(ctx, 0, "%/updateScript.js");
 
-	script_free(s_update_script);
-	s_update_script = script;
+	map_on_update(script);
+	script_free(script);
 	return 0;
 }
 
@@ -5363,8 +5432,8 @@ js_SetZoneLayer(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index %d", zone_index);
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	zone_set_layer(zone_index, layer);
 	return 0;
 }
@@ -5384,7 +5453,7 @@ js_SetZoneMetrics(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
+	if (zone_index < 0 || zone_index >= map_num_zones())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	bounds = map_bounds();
 	if (width <= 0 || height <= 0)
@@ -5407,9 +5476,9 @@ js_SetZoneScript(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
+	if (zone_index < 0 || zone_index >= map_num_zones())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index `%d`", zone_index);
-	if (!(script_name = lstr_newf("%s/zone%d", map_name(), zone_index)))
+	if (!(script_name = lstr_newf("%s/zone%d", map_filename(), zone_index)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "error compiling zone script");
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
@@ -5426,7 +5495,7 @@ js_SetZoneSteps(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
+	if (zone_index < 0 || zone_index >= map_num_zones())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index `%d`", zone_index);
 	if (steps <= 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "steps must be positive (got: %d)", steps);
