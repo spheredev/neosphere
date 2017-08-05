@@ -192,8 +192,8 @@ static color_t             s_color_mask;
 static const person_t*     s_current_person = NULL;
 static int                 s_current_trigger = -1;
 static int                 s_current_zone = -1;
+static script_t*           s_def_map_scripts[MAP_SCRIPT_MAX];
 static script_t*           s_def_person_scripts[PERSON_SCRIPT_MAX];
-static script_t*           s_def_scripts[MAP_SCRIPT_MAX];
 static bool                s_exiting = false;
 static color_t             s_fade_color_from;
 static color_t             s_fade_color_to;
@@ -428,6 +428,8 @@ static void                sort_persons         (void);
 static void                update_map_engine    (bool is_main_loop);
 static void                update_person        (person_t* person, bool* out_has_moved);
 
+static int                 duk_require_map_layer (duk_context* ctx, duk_idx_t index);
+
 void
 map_engine_init(void)
 {
@@ -438,7 +440,7 @@ map_engine_init(void)
 	audio_init();
 	s_bgm_mixer = mixer_new(44100, 16, 2);
 	
-	memset(s_def_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
+	memset(s_def_map_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
 	memset(s_def_person_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
 	s_map = NULL; s_map_filename = NULL;
 	s_camera_person = NULL;
@@ -474,7 +476,7 @@ map_engine_uninit(void)
 		script_free(s_delay_scripts[i].script);
 	free(s_delay_scripts);
 	for (i = 0; i < MAP_SCRIPT_MAX; ++i)
-		script_free(s_def_scripts[i]);
+		script_free(s_def_map_scripts[i]);
 	script_free(s_update_script);
 	script_free(s_render_script);
 	free_map(s_map);
@@ -583,6 +585,15 @@ map_add_zone(rect_t bounds, int layer, script_t* script, int steps)
 	zone.steps_left = 0;
 	if (!vector_push(s_map->zones, &zone))
 		return false;
+	return true;
+}
+
+bool
+map_call_script(map_op_t op, bool use_default)
+{
+	if (use_default)
+		script_run(s_def_map_scripts[op], false);
+	script_run(s_map->scripts[op], false);
 	return true;
 }
 
@@ -999,16 +1010,16 @@ person_set_xyz(person_t* person, double x, double y, int layer)
 }
 
 bool
-person_call_script(const person_t* person, int type, bool use_default)
+person_call_script(const person_t* person, person_op_t op, bool use_default)
 {
 	const person_t* last_person;
 
 	last_person = s_current_person;
 	s_current_person = person;
 	if (use_default)
-		script_run(s_def_person_scripts[type], false);
+		script_run(s_def_person_scripts[op], false);
 	if (does_person_exist(person))
-		script_run(person->scripts[type], false);
+		script_run(person->scripts[op], false);
 	s_current_person = last_person;
 	return true;
 }
@@ -1306,8 +1317,7 @@ change_map(const char* filename, bool preserve_persons)
 	if (map == NULL) return false;
 	if (s_map != NULL) {
 		// run map exit scripts first, before loading new map
-		script_run(s_def_scripts[MAP_SCRIPT_ON_LEAVE], false);
-		script_run(s_map->scripts[MAP_SCRIPT_ON_LEAVE], false);
+		map_call_script(MAP_SCRIPT_ON_LEAVE, true);
 	}
 
 	// close out old map and prep for new one
@@ -1368,8 +1378,7 @@ change_map(const char* filename, bool preserve_persons)
 	}
 
 	// run map entry scripts
-	script_run(s_def_scripts[MAP_SCRIPT_ON_ENTER], false);
-	script_run(s_map->scripts[MAP_SCRIPT_ON_ENTER], false);
+	map_call_script(MAP_SCRIPT_ON_ENTER, true);
 
 	s_frames = 0;
 	return true;
@@ -2281,10 +2290,8 @@ update_map_engine(bool in_main_loop)
 			: s_camera_y >= map_h ? MAP_SCRIPT_ON_LEAVE_SOUTH
 			: s_camera_x < 0 ? MAP_SCRIPT_ON_LEAVE_WEST
 			: MAP_SCRIPT_MAX;
-		if (script_type < MAP_SCRIPT_MAX) {
-			script_run(s_def_scripts[script_type], false);
-			script_run(s_map->scripts[script_type], false);
-		}
+		if (script_type < MAP_SCRIPT_MAX)
+			map_call_script(script_type, true);
 	}
 
 	// if there are any input persons, check for trigger activation
@@ -2459,10 +2466,12 @@ init_map_engine_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "ExecuteZones", js_ExecuteZones);
 	api_define_function(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
 	api_define_function(ctx, NULL, "FollowPerson", js_FollowPerson);
+	api_define_function(ctx, NULL, "GetActingPerson", js_GetActingPerson);
 	api_define_function(ctx, NULL, "GetCameraPerson", js_GetCameraPerson);
 	api_define_function(ctx, NULL, "GetCameraX", js_GetCameraX);
 	api_define_function(ctx, NULL, "GetCameraY", js_GetCameraY);
 	api_define_function(ctx, NULL, "GetCurrentMap", js_GetCurrentMap);
+	api_define_function(ctx, NULL, "GetCurrentPerson", js_GetCurrentPerson);
 	api_define_function(ctx, NULL, "GetCurrentTrigger", js_GetCurrentTrigger);
 	api_define_function(ctx, NULL, "GetCurrentZone", js_GetCurrentZone);
 	api_define_function(ctx, NULL, "GetInputPerson", js_GetInputPerson);
@@ -2476,8 +2485,35 @@ init_map_engine_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "GetNumTiles", js_GetNumTiles);
 	api_define_function(ctx, NULL, "GetNumTriggers", js_GetNumTriggers);
 	api_define_function(ctx, NULL, "GetNumZones", js_GetNumZones);
+	api_define_function(ctx, NULL, "GetObstructingPerson", js_GetObstructingPerson);
+	api_define_function(ctx, NULL, "GetObstructingTile", js_GetObstructingTile);
+	api_define_function(ctx, NULL, "GetPersonAngle", js_GetPersonAngle);
+	api_define_function(ctx, NULL, "GetPersonBase", js_GetPersonBase);
+	api_define_function(ctx, NULL, "GetPersonData", js_GetPersonData);
+	api_define_function(ctx, NULL, "GetPersonDirection", js_GetPersonDirection);
+	api_define_function(ctx, NULL, "GetPersonFollowDistance", js_GetPersonFollowDistance);
+	api_define_function(ctx, NULL, "GetPersonFollowers", js_GetPersonFollowers);
+	api_define_function(ctx, NULL, "GetPersonFrame", js_GetPersonFrame);
+	api_define_function(ctx, NULL, "GetPersonFrameNext", js_GetPersonFrameNext);
+	api_define_function(ctx, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
+	api_define_function(ctx, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
+	api_define_function(ctx, NULL, "GetPersonLayer", js_GetPersonLayer);
+	api_define_function(ctx, NULL, "GetPersonLeader", js_GetPersonLeader);
+	api_define_function(ctx, NULL, "GetPersonList", js_GetPersonList);
+	api_define_function(ctx, NULL, "GetPersonMask", js_GetPersonMask);
+	api_define_function(ctx, NULL, "GetPersonOffsetX", js_GetPersonOffsetX);
+	api_define_function(ctx, NULL, "GetPersonOffsetY", js_GetPersonOffsetY);
+	api_define_function(ctx, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
+	api_define_function(ctx, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
+	api_define_function(ctx, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
+	api_define_function(ctx, NULL, "GetPersonValue", js_GetPersonValue);
+	api_define_function(ctx, NULL, "GetPersonX", js_GetPersonX);
+	api_define_function(ctx, NULL, "GetPersonXFloat", js_GetPersonXFloat);
+	api_define_function(ctx, NULL, "GetPersonY", js_GetPersonY);
+	api_define_function(ctx, NULL, "GetPersonYFloat", js_GetPersonYFloat);
 	api_define_function(ctx, NULL, "GetTalkActivationButton", js_GetTalkActivationButton);
 	api_define_function(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
+	api_define_function(ctx, NULL, "GetTalkDistance", js_GetTalkDistance);
 	api_define_function(ctx, NULL, "GetTile", js_GetTile);
 	api_define_function(ctx, NULL, "GetTileDelay", js_GetTileDelay);
 	api_define_function(ctx, NULL, "GetTileImage", js_GetTileImage);
@@ -2522,6 +2558,7 @@ init_map_engine_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "SetCameraY", js_SetCameraY);
 	api_define_function(ctx, NULL, "SetColorMask", js_SetColorMask);
 	api_define_function(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
+	api_define_function(ctx, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
 	api_define_function(ctx, NULL, "SetDelayScript", js_SetDelayScript);
 	api_define_function(ctx, NULL, "SetLayerHeight", js_SetLayerHeight);
 	api_define_function(ctx, NULL, "SetLayerMask", js_SetLayerMask);
@@ -2532,54 +2569,6 @@ init_map_engine_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "SetLayerWidth", js_SetLayerWidth);
 	api_define_function(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
 	api_define_function(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
-	api_define_function(ctx, NULL, "SetRenderScript", js_SetRenderScript);
-	api_define_function(ctx, NULL, "SetTalkActivationButton", js_SetTalkActivationButton);
-	api_define_function(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
-	api_define_function(ctx, NULL, "SetTile", js_SetTile);
-	api_define_function(ctx, NULL, "SetTileDelay", js_SetTileDelay);
-	api_define_function(ctx, NULL, "SetTileImage", js_SetTileImage);
-	api_define_function(ctx, NULL, "SetTileName", js_SetTileName);
-	api_define_function(ctx, NULL, "SetTileSurface", js_SetTileSurface);
-	api_define_function(ctx, NULL, "SetTriggerLayer", js_SetTriggerLayer);
-	api_define_function(ctx, NULL, "SetTriggerScript", js_SetTriggerScript);
-	api_define_function(ctx, NULL, "SetTriggerXY", js_SetTriggerXY);
-	api_define_function(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
-	api_define_function(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
-	api_define_function(ctx, NULL, "SetZoneMetrics", js_SetZoneMetrics);
-	api_define_function(ctx, NULL, "SetZoneScript", js_SetZoneScript);
-	api_define_function(ctx, NULL, "SetZoneSteps", js_SetZoneSteps);
-	api_define_function(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
-
-	api_define_function(ctx, NULL, "GetActingPerson", js_GetActingPerson);
-	api_define_function(ctx, NULL, "GetCurrentPerson", js_GetCurrentPerson);
-	api_define_function(ctx, NULL, "GetObstructingPerson", js_GetObstructingPerson);
-	api_define_function(ctx, NULL, "GetObstructingTile", js_GetObstructingTile);
-	api_define_function(ctx, NULL, "GetPersonAngle", js_GetPersonAngle);
-	api_define_function(ctx, NULL, "GetPersonBase", js_GetPersonBase);
-	api_define_function(ctx, NULL, "GetPersonData", js_GetPersonData);
-	api_define_function(ctx, NULL, "GetPersonDirection", js_GetPersonDirection);
-	api_define_function(ctx, NULL, "GetPersonFollowDistance", js_GetPersonFollowDistance);
-	api_define_function(ctx, NULL, "GetPersonFollowers", js_GetPersonFollowers);
-	api_define_function(ctx, NULL, "GetPersonFrame", js_GetPersonFrame);
-	api_define_function(ctx, NULL, "GetPersonFrameNext", js_GetPersonFrameNext);
-	api_define_function(ctx, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
-	api_define_function(ctx, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
-	api_define_function(ctx, NULL, "GetPersonLayer", js_GetPersonLayer);
-	api_define_function(ctx, NULL, "GetPersonLeader", js_GetPersonLeader);
-	api_define_function(ctx, NULL, "GetPersonList", js_GetPersonList);
-	api_define_function(ctx, NULL, "GetPersonMask", js_GetPersonMask);
-	api_define_function(ctx, NULL, "GetPersonOffsetX", js_GetPersonOffsetX);
-	api_define_function(ctx, NULL, "GetPersonOffsetY", js_GetPersonOffsetY);
-	api_define_function(ctx, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
-	api_define_function(ctx, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
-	api_define_function(ctx, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
-	api_define_function(ctx, NULL, "GetPersonValue", js_GetPersonValue);
-	api_define_function(ctx, NULL, "GetPersonX", js_GetPersonX);
-	api_define_function(ctx, NULL, "GetPersonXFloat", js_GetPersonXFloat);
-	api_define_function(ctx, NULL, "GetPersonY", js_GetPersonY);
-	api_define_function(ctx, NULL, "GetPersonYFloat", js_GetPersonYFloat);
-	api_define_function(ctx, NULL, "GetTalkDistance", js_GetTalkDistance);
-	api_define_function(ctx, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
 	api_define_function(ctx, NULL, "SetPersonAngle", js_SetPersonAngle);
 	api_define_function(ctx, NULL, "SetPersonData", js_SetPersonData);
 	api_define_function(ctx, NULL, "SetPersonDirection", js_SetPersonDirection);
@@ -2603,7 +2592,24 @@ init_map_engine_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "SetPersonX", js_SetPersonX);
 	api_define_function(ctx, NULL, "SetPersonXYFloat", js_SetPersonXYFloat);
 	api_define_function(ctx, NULL, "SetPersonY", js_SetPersonY);
+	api_define_function(ctx, NULL, "SetRenderScript", js_SetRenderScript);
+	api_define_function(ctx, NULL, "SetTalkActivationButton", js_SetTalkActivationButton);
+	api_define_function(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
 	api_define_function(ctx, NULL, "SetTalkDistance", js_SetTalkDistance);
+	api_define_function(ctx, NULL, "SetTile", js_SetTile);
+	api_define_function(ctx, NULL, "SetTileDelay", js_SetTileDelay);
+	api_define_function(ctx, NULL, "SetTileImage", js_SetTileImage);
+	api_define_function(ctx, NULL, "SetTileName", js_SetTileName);
+	api_define_function(ctx, NULL, "SetTileSurface", js_SetTileSurface);
+	api_define_function(ctx, NULL, "SetTriggerLayer", js_SetTriggerLayer);
+	api_define_function(ctx, NULL, "SetTriggerScript", js_SetTriggerScript);
+	api_define_function(ctx, NULL, "SetTriggerXY", js_SetTriggerXY);
+	api_define_function(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
+	api_define_function(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
+	api_define_function(ctx, NULL, "SetZoneMetrics", js_SetZoneMetrics);
+	api_define_function(ctx, NULL, "SetZoneScript", js_SetZoneScript);
+	api_define_function(ctx, NULL, "SetZoneSteps", js_SetZoneSteps);
+	api_define_function(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
 	// map script types
 	api_define_const(ctx, NULL, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
@@ -2641,7 +2647,7 @@ init_map_engine_api(duk_context* ctx)
 	api_define_const(ctx, NULL, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 }
 
-int
+static int
 duk_require_map_layer(duk_context* ctx, duk_idx_t index)
 {
 	long        strtol_out;
@@ -2804,7 +2810,7 @@ js_CallDefaultMapScript(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
 	if (type < 0 || type >= MAP_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid script type constant");
-	script_run(s_def_scripts[type], false);
+	script_run(s_def_map_scripts[type], false);
 	return 0;
 }
 
@@ -2823,7 +2829,7 @@ js_CallDefaultPersonScript(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
 	last_person = s_current_person;
 	s_current_person = person;
-	script_run(s_def_scripts[type], false);
+	script_run(s_def_map_scripts[type], false);
 	s_current_person = last_person;
 	return 0;
 }
@@ -4412,8 +4418,8 @@ js_SetDefaultMapScript(duk_context* ctx)
 
 	if (script_type < 0 || script_type >= MAP_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid map script constant");
-	script_free(s_def_scripts[script_type]);
-	s_def_scripts[script_type] = script;
+	script_free(s_def_map_scripts[script_type]);
+	s_def_map_scripts[script_type] = script;
 	return 0;
 }
 
@@ -4431,8 +4437,8 @@ js_SetDefaultPersonScript(duk_context* ctx)
 
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
-	script_free(s_def_scripts[type]);
-	s_def_scripts[type] = script;
+	script_free(s_def_map_scripts[type]);
+	s_def_map_scripts[type] = script;
 	return 0;
 }
 

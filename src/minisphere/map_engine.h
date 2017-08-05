@@ -32,7 +32,7 @@ enum command_op
 } command_op_t;
 
 typedef
-enum map_script
+enum map_op
 {
 	MAP_SCRIPT_ON_ENTER,
 	MAP_SCRIPT_ON_LEAVE,
@@ -41,10 +41,10 @@ enum map_script
 	MAP_SCRIPT_ON_LEAVE_SOUTH,
 	MAP_SCRIPT_ON_LEAVE_WEST,
 	MAP_SCRIPT_MAX
-} map_script_t;
+} map_op_t;
 
 typedef
-enum person_script
+enum person_op
 {
 	PERSON_SCRIPT_ON_CREATE,
 	PERSON_SCRIPT_ON_DESTROY,
@@ -52,7 +52,7 @@ enum person_script
 	PERSON_SCRIPT_ON_TALK,
 	PERSON_SCRIPT_GENERATOR,
 	PERSON_SCRIPT_MAX
-} person_script_t;
+} person_op_t;
 
 void             map_engine_init       (void);
 void             map_engine_uninit     (void);
@@ -63,7 +63,9 @@ const obsmap_t*  map_obsmap            (int layer);
 point3_t         map_origin            (void);
 int              map_tile_index        (int x, int y, int layer);
 const tileset_t* map_tileset           (void);
+bool             map_add_trigger       (int x, int y, int layer, script_t* script);
 bool             map_add_zone          (rect_t bounds, int layer, script_t* script, int steps);
+bool             map_call_script       (map_op_t op, bool use_default);
 void             map_detach_person     (const person_t* person);
 void             map_normalize_xy      (double* inout_x, double* inout_y, int layer);
 void             map_remove_trigger    (int trigger_index);
@@ -78,7 +80,7 @@ bool             person_ignoring       (const person_t* person, const person_t* 
 bool             person_obstructed_at  (const person_t* person, double x, double y, person_t** out_obstructing_person, int* out_tile_index);
 double           person_get_angle      (const person_t* person);
 rect_t           person_get_base       (const person_t* person);
-color_t          person_get_color       (const person_t* person);
+color_t          person_get_color      (const person_t* person);
 const char*      person_get_name       (const person_t* person);
 void             person_get_scale      (const person_t*, double* out_scale_x, double* out_scale_y);
 void             person_get_speed      (const person_t* person, double* out_x_speed, double* out_y_speed);
@@ -86,13 +88,13 @@ spriteset_t*     person_get_spriteset  (person_t* person);
 void             person_get_xy         (const person_t* person, double* out_x, double* out_y, bool normalize);
 void             person_get_xyz        (const person_t* person, double* out_x, double* out_y, int* out_layer, bool want_normalize);
 void             person_set_angle      (person_t* person, double theta);
-void             person_set_color       (person_t* person, color_t mask);
+void             person_set_color      (person_t* person, color_t mask);
 void             person_set_scale      (person_t*, double scale_x, double scale_y);
 void             person_set_script     (person_t* person, int type, script_t* script);
 void             person_set_speed      (person_t* person, double x_speed, double y_speed);
 void             person_set_spriteset  (person_t* person, spriteset_t* spriteset);
 void             person_set_xyz        (person_t* person, double x, double y, int layer);
-bool             person_call_script    (const person_t* person, int type, bool use_default);
+bool             person_call_script    (const person_t* person, person_op_t op, bool use_default);
 bool             person_compile_script (person_t* person, int type, const lstring_t* codestring);
 person_t*        person_find           (const char* name);
 bool             person_follow         (person_t* person, person_t* leader, int distance);
@@ -111,7 +113,6 @@ void             zone_set_layer        (int zone_index, int layer);
 void             zone_set_script       (int zone_index, script_t* script);
 void             zone_set_steps        (int zone_index, int steps);
 
-void             init_map_engine_api   (duk_context* ctx);
-int              duk_require_map_layer (duk_context* ctx, duk_idx_t index);
+void init_map_engine_api (duk_context* ctx);
 
 #endif // MINISPHERE__MAP_ENGINE_H__INCLUDED
