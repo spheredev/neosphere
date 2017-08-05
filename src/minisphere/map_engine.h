@@ -68,6 +68,7 @@ const obsmap_t*  map_obsmap            (int layer);
 point3_t         map_origin            (void);
 int              map_tile_index        (int x, int y, int layer);
 tileset_t*       map_tileset           (void);
+int              map_trigger_at        (int x, int y, int layer);
 bool             map_zones_at          (int x, int y, int layer, int* out_count);
 bool             map_add_trigger       (int x, int y, int layer, script_t* script);
 bool             map_add_zone          (rect_t bounds, int layer, script_t* script, int steps);
@@ -111,6 +112,7 @@ void             trigger_get_xyz       (int trigger_index, int* out_x, int* out_
 void             trigger_set_layer     (int trigger_index, int layer);
 void             trigger_set_script    (int trigger_index, script_t* script);
 void             trigger_set_xy        (int trigger_index, int x, int y);
+void             trigger_activate      (int trigger_index);
 rect_t           zone_get_bounds       (int zone_index);
 int              zone_get_layer        (int zone_index);
 int              zone_get_steps        (int zone_index);

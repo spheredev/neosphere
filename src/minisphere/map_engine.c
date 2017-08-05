@@ -582,6 +582,30 @@ map_tileset(void)
 	return s_map->tileset;
 }
 
+int
+map_trigger_at(int x, int y, int layer)
+{
+	rect_t              bounds;
+	int                 tile_w, tile_h;
+	struct map_trigger* trigger;
+
+	iter_t iter;
+
+	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
+	iter = vector_enum(s_map->triggers);
+	while (trigger = vector_next(&iter)) {
+		if (trigger->z != layer && false)  // layer ignored for compatibility
+			continue;
+		bounds.x1 = trigger->x - tile_w / 2;
+		bounds.y1 = trigger->y - tile_h / 2;
+		bounds.x2 = bounds.x1 + tile_w;
+		bounds.y2 = bounds.y1 + tile_h;
+		if (is_point_in_rect(x, y, bounds))
+			return iter.index;
+	}
+	return -1;
+}
+
 bool
 map_zones_at(int x, int y, int layer, int* out_count)
 {
@@ -1221,8 +1245,10 @@ trigger_get_xyz(int trigger_index, int* out_x, int* out_y, int* out_layer)
 	struct map_trigger* trigger;
 
 	trigger = vector_get(s_map->triggers, trigger_index);
-	if (out_x) *out_x = trigger->x;
-	if (out_y) *out_y = trigger->y;
+	if (out_x != NULL)
+		*out_x = trigger->x;
+	if (out_y != NULL)
+		*out_y = trigger->y;
 	if (out_layer) *out_layer = trigger->z;
 }
 
@@ -1255,6 +1281,19 @@ trigger_set_xy(int trigger_index, int x, int y)
 	trigger = vector_get(s_map->triggers, trigger_index);
 	trigger->x = x;
 	trigger->y = y;
+}
+
+void
+trigger_activate(int trigger_index)
+{
+	int                 last_trigger;
+	struct map_trigger* trigger;
+
+	trigger = vector_get(s_map->triggers, trigger_index);
+	last_trigger = s_current_trigger;
+	s_current_trigger = trigger_index;
+	script_run(trigger->script, true);
+	s_current_trigger = last_trigger;
 }
 
 rect_t
@@ -1669,7 +1708,8 @@ get_trigger_at(int x, int y, int layer, int* out_index)
 		bounds.y2 = bounds.y1 + tile_h;
 		if (is_point_in_rect(x, y, bounds)) {
 			found_item = trigger;
-			if (out_index) *out_index = (int)iter.index;
+			if (out_index != NULL)
+				*out_index = (int)iter.index;
 			break;
 		}
 	}
@@ -2830,16 +2870,18 @@ js_AttachInput(duk_context* ctx)
 static duk_ret_t
 js_AttachPlayerInput(duk_context* ctx)
 {
-	const char* name = duk_require_string(ctx, 0);
-	int player = duk_to_int(ctx, 1);
-
+	const char* name;
 	person_t*   person;
+	int         player;
 
 	int i;
 
+	name = duk_require_string(ctx, 0);
+	player = duk_to_int(ctx, 1);
+
 	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
-	if ((person = person_find(name)) == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range");
+	if (!(person = person_find(name)))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "person `%s` doesn't exist", name);
 	for (i = 0; i < MAX_PLAYERS; ++i)  // detach person from other players
 		if (s_players[i].person == person) s_players[i].person = NULL;
@@ -2912,9 +2954,10 @@ js_CallPersonScript(duk_context* ctx)
 static duk_ret_t
 js_ClearPersonCommands(duk_context* ctx)
 {
-	const char* name = duk_require_string(ctx, 0);
+	const char* name;
+	person_t*   person;
 
-	person_t* person;
+	name = duk_require_string(ctx, 0);
 
 	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
@@ -2971,9 +3014,10 @@ js_CreatePerson(duk_context* ctx)
 static duk_ret_t
 js_DestroyPerson(duk_context* ctx)
 {
-	const char* name = duk_require_string(ctx, 0);
+	const char* name;
+	person_t*   person;
 
-	person_t* person;
+	name = duk_require_string(ctx, 0);
 
 	if ((person = person_find(name)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
@@ -3004,8 +3048,9 @@ js_DetachPlayerInput(duk_context* ctx)
 
 	int i;
 
-	if (duk_get_top(ctx) < 1)
+	if (duk_get_top(ctx) < 1) {
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "player number or string expected as argument");
+	}
 	else if (duk_is_string(ctx, 0)) {
 		name = duk_get_string(ctx, 0);
 		if (!(person = person_find(name)))
@@ -3016,10 +3061,12 @@ js_DetachPlayerInput(duk_context* ctx)
 		if (player == -1)
 			return 0;
 	}
-	else if (duk_is_number(ctx, 0))
+	else if (duk_is_number(ctx, 0)) {
 		player = duk_get_int(ctx, 0);
-	else
+	}
+	else {
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "player number or string expected as argument");
+	}
 	if (player < 0 || player >= MAX_PLAYERS)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player number out of range (%d)", player);
 	s_players[player].person = NULL;
@@ -3029,7 +3076,9 @@ js_DetachPlayerInput(duk_context* ctx)
 static duk_ret_t
 js_DoesPersonExist(duk_context* ctx)
 {
-	const char* name = duk_require_string(ctx, 0);
+	const char* name;
+	
+	name = duk_require_string(ctx, 0);
 
 	duk_push_boolean(ctx, person_find(name) != NULL);
 	return 1;
@@ -3038,22 +3087,19 @@ js_DoesPersonExist(duk_context* ctx)
 static duk_ret_t
 js_ExecuteTrigger(duk_context* ctx)
 {
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int layer = duk_require_map_layer(ctx, 2);
+	int index;
+	int layer;
+	int x;
+	int y;
 
-	int                 index;
-	int                 last_trigger;
-	struct map_trigger* trigger;
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (trigger = get_trigger_at(x, y, layer, &index)) {
-		last_trigger = s_current_trigger;
-		s_current_trigger = index;
-		script_run(trigger->script, true);
-		s_current_trigger = last_trigger;
-	}
+	if ((index = map_trigger_at(x, y, layer)) >= 0)
+		trigger_activate(index);
 	return 0;
 }
 
@@ -3068,7 +3114,7 @@ js_ExecuteZoneScript(duk_context* ctx)
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "map engine not running");
-	if (zone_index < 0 || zone_index >= (int)vector_len(s_map->zones))
+	if (zone_index < 0 || zone_index >= map_num_zones())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 
 	zone = vector_get(s_map->zones, zone_index);
