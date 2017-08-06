@@ -1,6 +1,37 @@
 #include "minisphere.h"
 #include "geometry.h"
 
+point2_t
+point2(int x, int y)
+{
+	point2_t point;
+
+	point.x = x;
+	point.y = y;
+	return point;
+}
+
+point3_t
+point3(int x, int y, int z)
+{
+	point3_t point;
+
+	point.x = x;
+	point.y = y;
+	point.z = z;
+	return point;
+}
+
+size2_t
+size2(int width, int height)
+{
+	size2_t size;
+
+	size.width = width;
+	size.height = height;
+	return size;
+}
+
 rect_t
 new_rect(int x1, int y1, int x2, int y2)
 {

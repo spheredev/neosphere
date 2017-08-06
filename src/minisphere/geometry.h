@@ -2,6 +2,14 @@
 #define MINISPHERE__GEOMETRY_H__INCLUDED
 
 typedef
+struct point2
+{
+	int x;
+	int y;
+	int z;
+} point2_t;
+
+typedef
 struct point3
 {
 	int x;
@@ -17,6 +25,12 @@ struct rect
 	int x2;
 	int y2;
 } rect_t;
+
+typedef struct size2
+{
+	int width;
+	int height;
+} size2_t;
 
 typedef
 struct float_rect

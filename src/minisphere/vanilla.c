@@ -17,6 +17,7 @@
 #include "input.h"
 #include "legacy.h"
 #include "logger.h"
+#include "map_engine.h"
 #include "spriteset.h"
 #include "windowstyle.h"
 
@@ -755,10 +756,10 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_const(ctx, NULL, "MOUSE_WHEEL_UP", MOUSE_KEY_WHEEL_UP);
 	api_define_const(ctx, NULL, "MOUSE_WHEEL_DOWN", MOUSE_KEY_WHEEL_DOWN);
 	
-	api_define_const(ctx, NULL, "PLAYER_1", 0);
-	api_define_const(ctx, NULL, "PLAYER_2", 1);
-	api_define_const(ctx, NULL, "PLAYER_3", 2);
-	api_define_const(ctx, NULL, "PLAYER_4", 3);
+	api_define_const(ctx, NULL, "PLAYER_1", PLAYER_1);
+	api_define_const(ctx, NULL, "PLAYER_2", PLAYER_2);
+	api_define_const(ctx, NULL, "PLAYER_3", PLAYER_3);
+	api_define_const(ctx, NULL, "PLAYER_4", PLAYER_4);
 
 	api_define_const(ctx, NULL, "PLAYER_KEY_MENU", PLAYER_KEY_MENU);
 	api_define_const(ctx, NULL, "PLAYER_KEY_UP", PLAYER_KEY_UP);
