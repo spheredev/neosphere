@@ -972,21 +972,17 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssWindowStyle", "setColorMask", js_WindowStyle_setColorMask);
 	api_define_method(ctx, "ssWindowStyle", "toString", js_WindowStyle_toString);
 
-	// map script types
-	api_define_const(ctx, NULL, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
-
-	// person script types
-	api_define_const(ctx, NULL, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
-	api_define_const(ctx, NULL, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
-	api_define_const(ctx, NULL, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
-	api_define_const(ctx, NULL, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
-	api_define_const(ctx, NULL, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
-
+	// blend modes for Surfaces
+	api_define_const(ctx, NULL, "BLEND", BLEND_BLEND);
+	api_define_const(ctx, NULL, "REPLACE", BLEND_REPLACE);
+	api_define_const(ctx, NULL, "RGB_ONLY", BLEND_RGB_ONLY);
+	api_define_const(ctx, NULL, "ALPHA_ONLY", BLEND_ALPHA_ONLY);
+	api_define_const(ctx, NULL, "ADD", BLEND_ADD);
+	api_define_const(ctx, NULL, "SUBTRACT", BLEND_SUBTRACT);
+	api_define_const(ctx, NULL, "MULTIPLY", BLEND_MULTIPLY);
+	api_define_const(ctx, NULL, "AVERAGE", BLEND_AVERAGE);
+	api_define_const(ctx, NULL, "INVERT", BLEND_INVERT);
+	
 	// person movement commands
 	api_define_const(ctx, NULL, "COMMAND_WAIT", COMMAND_WAIT);
 	api_define_const(ctx, NULL, "COMMAND_ANIMATE", COMMAND_ANIMATE);
@@ -1007,17 +1003,6 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_const(ctx, NULL, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
 	api_define_const(ctx, NULL, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 
-	// blend modes for Surfaces
-	api_define_const(ctx, NULL, "BLEND", BLEND_BLEND);
-	api_define_const(ctx, NULL, "REPLACE", BLEND_REPLACE);
-	api_define_const(ctx, NULL, "RGB_ONLY", BLEND_RGB_ONLY);
-	api_define_const(ctx, NULL, "ALPHA_ONLY", BLEND_ALPHA_ONLY);
-	api_define_const(ctx, NULL, "ADD", BLEND_ADD);
-	api_define_const(ctx, NULL, "SUBTRACT", BLEND_SUBTRACT);
-	api_define_const(ctx, NULL, "MULTIPLY", BLEND_MULTIPLY);
-	api_define_const(ctx, NULL, "AVERAGE", BLEND_AVERAGE);
-	api_define_const(ctx, NULL, "INVERT", BLEND_INVERT);
-	
 	// joystick axes
 	api_define_const(ctx, NULL, "JOYSTICK_AXIS_X", 0);
 	api_define_const(ctx, NULL, "JOYSTICK_AXIS_Y", 1);
@@ -1145,6 +1130,21 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_const(ctx, NULL, "PLAYER_KEY_B", PLAYER_KEY_B);
 	api_define_const(ctx, NULL, "PLAYER_KEY_X", PLAYER_KEY_X);
 	api_define_const(ctx, NULL, "PLAYER_KEY_Y", PLAYER_KEY_Y);
+
+	// map script types
+	api_define_const(ctx, NULL, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
+
+	// person script types
+	api_define_const(ctx, NULL, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
+	api_define_const(ctx, NULL, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
+	api_define_const(ctx, NULL, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
+	api_define_const(ctx, NULL, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
+	api_define_const(ctx, NULL, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
 
 	api_define_const(ctx, NULL, "SE_SINGLE", 0);
 	api_define_const(ctx, NULL, "SE_MULTIPLE", 1);

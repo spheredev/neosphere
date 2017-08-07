@@ -42,20 +42,23 @@ static void refresh_display (screen_t* screen);
 screen_t*
 screen_new(const char* title, image_t* icon, int x_size, int y_size, int frameskip, bool avoid_sleep)
 {
-	image_t*         backbuffer = NULL;
-	int              bitmap_flags;
-	ALLEGRO_DISPLAY* display;
-	ALLEGRO_BITMAP*  icon_bitmap;
-	screen_t*        screen;
-	int              x_scale;
-	int              y_scale;
+	image_t*             backbuffer = NULL;
+	int                  bitmap_flags;
+	ALLEGRO_DISPLAY*     display;
+	ALLEGRO_BITMAP*      icon_bitmap;
+	ALLEGRO_MONITOR_INFO desktop_info;
+	screen_t*            screen;
+	int                  x_scale;
+	int                  y_scale;
 
 	console_log(1, "initializing render context at %dx%d", x_size, y_size);
 
-	x_scale = x_size <= 400 && y_size <= 300 ? 2.0 : 1.0;
-	y_scale = x_scale;
 	al_set_new_window_title(title);
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
+	al_get_monitor_info(0, &desktop_info);
+	x_scale = ((desktop_info.x2 - desktop_info.x1) / 2) / x_size;
+	y_scale = ((desktop_info.y2 - desktop_info.y1) / 2) / y_size;
+	x_scale = y_scale = fmax(fmin(x_scale, y_scale), 1.0);
 	display = al_create_display(x_size * x_scale, y_size * y_scale);
 
 	// custom backbuffer: this allows pixel-perfect rendering regardless
@@ -403,7 +406,7 @@ screen_unskip_frame(screen_t* it)
 static void
 refresh_display(screen_t* screen)
 {
-	ALLEGRO_MONITOR_INFO monitor;
+	ALLEGRO_MONITOR_INFO desktop_info;
 	int                  real_width;
 	int                  real_height;
 
@@ -425,17 +428,17 @@ refresh_display(screen_t* screen)
 		}
 	}
 	else {
-		screen->x_scale = screen->x_size <= 400 && screen->y_size <= 300
-			? 2.0 : 1.0;
-		screen->y_scale = screen->x_scale;
+		al_get_monitor_info(0, &desktop_info);
+		screen->x_scale = ((desktop_info.x2 - desktop_info.x1) / 2) / screen->x_size;
+		screen->y_scale = ((desktop_info.y2 - desktop_info.y1) / 2) / screen->y_size;
+		screen->x_scale = screen->y_scale = fmax(fmin(screen->x_scale, screen->y_scale), 1.0);
 		screen->x_offset = screen->y_offset = 0.0;
 		
 		// size and recenter the window
 		al_resize_display(screen->display, screen->x_size * screen->x_scale, screen->y_size * screen->y_scale);
-		al_get_monitor_info(0, &monitor);
 		al_set_window_position(screen->display,
-			(monitor.x1 + monitor.x2) / 2 - screen->x_size * screen->x_scale / 2,
-			(monitor.y1 + monitor.y2) / 2 - screen->y_size * screen->y_scale / 2);
+			(desktop_info.x1 + desktop_info.x2) / 2 - screen->x_size * screen->x_scale / 2,
+			(desktop_info.y1 + desktop_info.y2) / 2 - screen->y_size * screen->y_scale / 2);
 	}
 	
 	image_render_to(screen->backbuffer, NULL);
