@@ -1206,7 +1206,7 @@ js_Sphere_abort(duk_context* ctx)
 	num_args = duk_get_top(ctx);
 	message = num_args >= 1
 		? duk_to_string(ctx, 0)
-		: "some type of weird pig just ate your game\n\n\n...and you*munch*";
+		: "some type of eaty pig just ate your game\n\n\n...and you*munch*";
 
 	duk_inspect_callstack_entry(ctx, -2);
 	duk_get_prop_string(ctx, -1, "lineNumber");

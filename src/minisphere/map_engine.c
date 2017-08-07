@@ -685,12 +685,6 @@ map_num_zones(void)
 	return vector_len(s_map->zones);
 }
 
-const obsmap_t*
-map_obsmap(int layer)
-{
-	return s_map->layers[layer].obsmap;
-}
-
 point3_t
 map_origin(void)
 {
@@ -893,6 +887,12 @@ layer_name(int layer)
 	return lstr_cstr(s_map->layers[layer].name);
 }
 
+const obsmap_t*
+layer_obsmap(int layer)
+{
+	return s_map->layers[layer].obsmap;
+}
+
 size2_t
 layer_size(int layer)
 {
@@ -900,18 +900,6 @@ layer_size(int layer)
 
 	layer_data = &s_map->layers[layer];
 	return size2(layer_data->width, layer_data->height);
-}
-
-point2_t
-layer_xy_from_screen(int layer, point2_t screen_xy)
-{
-	int x;
-	int y;
-
-	x = screen_xy.x;
-	y = screen_xy.y;
-	map_screen_to_layer(layer, s_camera_x, s_camera_y, &x, &y);
-	return point2(x, y);
 }
 
 color_t
@@ -1248,7 +1236,7 @@ person_obstructed_at(const person_t* person, double x, double y, person_t** out_
 	}
 
 	// no obstructing person, check map-defined obstructions
-	obsmap = map_obsmap(layer);
+	obsmap = layer_obsmap(layer);
 	if (obsmap_test_rect(obsmap, my_base))
 		is_obstructed = true;
 

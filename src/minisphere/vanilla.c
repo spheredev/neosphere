@@ -481,8 +481,7 @@ enum sound_effect_mode
 	SE_MULTIPLE,
 };
 
-static unsigned int   s_next_async_id = 1;
-static mixer_t*       s_sound_mixer;
+static mixer_t* s_sound_mixer;
 
 void
 initialize_vanilla_api(duk_context* ctx)
@@ -490,7 +489,7 @@ initialize_vanilla_api(duk_context* ctx)
 	console_log(1, "initializing Sphere v1 API (%s)", API_VERSION_STRING);
 
 	s_sound_mixer = mixer_new(44100, 16, 2);
-	
+
 	// set up a dictionary to track RequireScript() calls
 	duk_push_global_stash(ctx);
 	duk_push_bare_object(ctx);
@@ -960,7 +959,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_const(ctx, NULL, "MULTIPLY", BLEND_MULTIPLY);
 	api_define_const(ctx, NULL, "AVERAGE", BLEND_AVERAGE);
 	api_define_const(ctx, NULL, "INVERT", BLEND_INVERT);
-	
+
 	// person movement commands
 	api_define_const(ctx, NULL, "COMMAND_WAIT", COMMAND_WAIT);
 	api_define_const(ctx, NULL, "COMMAND_ANIMATE", COMMAND_ANIMATE);
@@ -988,7 +987,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_const(ctx, NULL, "JOYSTICK_AXIS_R", 3);
 	api_define_const(ctx, NULL, "JOYSTICK_AXIS_U", 4);
 	api_define_const(ctx, NULL, "JOYSTICK_AXIS_V", 5);
-	
+
 	// LineSeries() modes
 	api_define_const(ctx, NULL, "LINE_MULTIPLE", LINE_MULTIPLE);
 	api_define_const(ctx, NULL, "LINE_STRIP", LINE_STRIP);
@@ -1093,7 +1092,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_const(ctx, NULL, "MOUSE_RIGHT", MOUSE_BUTTON_RIGHT);
 	api_define_const(ctx, NULL, "MOUSE_WHEEL_UP", MOUSE_KEY_WHEEL_UP);
 	api_define_const(ctx, NULL, "MOUSE_WHEEL_DOWN", MOUSE_KEY_WHEEL_DOWN);
-	
+
 	api_define_const(ctx, NULL, "PLAYER_1", PLAYER_1);
 	api_define_const(ctx, NULL, "PLAYER_2", PLAYER_2);
 	api_define_const(ctx, NULL, "PLAYER_3", PLAYER_3);
@@ -1330,7 +1329,7 @@ duk_require_sphere_spriteset(duk_context* ctx, duk_idx_t index)
 	//       is rather inefficient, but consistent with Sphere 1.x behavior.  I assume
 	//       this was the easiest way to allow JS code to modify spritesets, as it
 	//       avoids the need to trap property accesses.
-	
+
 	rect_t       base;
 	int          delay;
 	image_t*     image;
@@ -1345,9 +1344,9 @@ duk_require_sphere_spriteset(duk_context* ctx, duk_idx_t index)
 
 	index = duk_require_normalize_index(ctx, index);
 	duk_require_class_obj(ctx, index, "ssSpriteset");
-	
+
 	spriteset = spriteset_new();
-	
+
 	duk_get_prop_string(ctx, index, "base");
 	duk_get_prop_string(ctx, -1, "x1");
 	base.x1 = duk_require_int(ctx, -1);
@@ -1459,6 +1458,30 @@ reset_blend_modes(void)
 }
 
 static duk_ret_t
+js_Abort(duk_context* ctx)
+{
+	const char* filename;
+	int         line_number;
+	const char* message;
+	int         num_args;
+	char*       text;
+
+	num_args = duk_get_top(ctx);
+	message = num_args >= 1
+		? duk_to_string(ctx, 0)
+		: "some type of eaty pig just ate your game\n\n\n...and you*munch*";
+
+	duk_inspect_callstack_entry(ctx, -2);
+	duk_get_prop_string(ctx, -1, "lineNumber");
+	duk_get_prop_string(ctx, -2, "function");
+	duk_get_prop_string(ctx, -1, "fileName");
+	filename = duk_get_string(ctx, -1);
+	line_number = duk_get_int(ctx, -2);
+	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
+	sphere_abort(text);
+}
+
+static duk_ret_t
 js_AddTrigger(duk_context* ctx)
 {
 	rect_t    bounds;
@@ -1514,6 +1537,28 @@ js_AddZone(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create zone");
 	duk_push_number(ctx, map_num_zones() - 1);
 	script_free(script);
+	return 1;
+}
+
+static duk_ret_t
+js_ApplyColorMask(duk_context* ctx)
+{
+	color_t color;
+
+	color = duk_require_sphere_color(ctx, 0);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, nativecolor(color));
+	return 0;
+}
+
+static duk_ret_t
+js_AreKeysLeft(duk_context* ctx)
+{
+	update_input();
+	duk_push_boolean(ctx, kb_queue_len() > 0);
 	return 1;
 }
 
@@ -1576,6 +1621,115 @@ js_AttachPlayerInput(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	map_engine_set_player(player, person);
 	return 0;
+}
+
+static duk_ret_t
+js_BezierCurve(duk_context* ctx)
+{
+	color_t         color;
+	float           cp[8];
+	bool            is_quadratic = true;
+	int             num_args;
+	int             num_points;
+	ALLEGRO_VERTEX* points;
+	double          step_size;
+	float           x1, x2, x3, x4;
+	float           y1, y2, y3, y4;
+
+	int i;
+
+	num_args = duk_get_top(ctx);
+	color = duk_require_sphere_color(ctx, 0);
+	step_size = duk_to_number(ctx, 1);
+	x1 = duk_to_number(ctx, 2);
+	y1 = duk_to_number(ctx, 3);
+	x2 = duk_to_number(ctx, 4);
+	y2 = duk_to_number(ctx, 5);
+	x3 = duk_to_number(ctx, 6);
+	y3 = duk_to_number(ctx, 7);
+	if (num_args >= 10) {
+		is_quadratic = false;
+		x4 = duk_to_number(ctx, 8);
+		y4 = duk_to_number(ctx, 9);
+	}
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	cp[0] = x1; cp[1] = y1;
+	cp[2] = x2; cp[3] = y2;
+	cp[4] = x3; cp[5] = y3;
+	cp[6] = x4; cp[7] = y4;
+	if (is_quadratic) {
+		// convert quadratic Bezier curve to cubic
+		cp[6] = x3; cp[7] = y3;
+		cp[2] = x1 + (2.0 / 3.0) * (x2 - x1);
+		cp[3] = y1 + (2.0 / 3.0) * (y2 - y1);
+		cp[4] = x3 + (2.0 / 3.0) * (x2 - x3);
+		cp[5] = y3 + (2.0 / 3.0) * (y2 - y3);
+	}
+	step_size = step_size < 0.001 ? 0.001 : step_size > 1.0 ? 1.0 : step_size;
+	num_points = 1.0 / step_size;
+	points = calloc(num_points, sizeof(ALLEGRO_VERTEX));
+	al_calculate_spline(&points[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
+	for (i = 0; i < num_points; ++i)
+		points[i].color = nativecolor(color);
+	galileo_reset();
+	al_draw_prim(points, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
+	free(points);
+	return 0;
+}
+
+static duk_ret_t
+js_BindJoystickButton(duk_context* ctx)
+{
+	int joy_index = duk_to_int(ctx, 0);
+	int button = duk_to_int(ctx, 1);
+	script_t* on_down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
+	script_t* on_up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
+
+	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick index `%d` out of range", joy_index);
+	if (button < 0 || button >= MAX_JOY_BUTTONS)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "button index `%d` out of range", button);
+	joy_bind_button(joy_index, button, on_down_script, on_up_script);
+	return 0;
+}
+
+static duk_ret_t
+js_BindKey(duk_context* ctx)
+{
+	int keycode = duk_to_int(ctx, 0);
+	script_t* on_down_script = duk_require_sphere_script(ctx, 1, "[key-down script]");
+	script_t* on_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
+
+	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid key constant");
+	kb_bind_key(keycode, on_down_script, on_up_script);
+	return 0;
+}
+
+static duk_ret_t
+js_BlendColors(duk_context* ctx)
+{
+	color_t color1;
+	color_t color2;
+	int     num_args;
+	float   w1 = 1.0;
+	float   w2 = 1.0;
+
+	num_args = duk_get_top(ctx);
+	color1 = duk_require_sphere_color(ctx, 0);
+	color2 = duk_require_sphere_color(ctx, 1);
+	if (num_args > 2) {
+		w1 = duk_to_number(ctx, 2);
+		w2 = duk_to_number(ctx, 3);
+	}
+
+	if (w1 < 0.0 || w2 < 0.0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid weight(s)", w1, w2);
+
+	duk_push_sphere_color(ctx, color_mix(color1, color2, w1, w2));
+	return 1;
 }
 
 static duk_ret_t
@@ -1651,6 +1805,20 @@ js_CallPersonScript(duk_context* ctx)
 }
 
 static duk_ret_t
+js_ChangeMap(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "maps", true, false);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (!map_engine_change_map(filename))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load map `%s`", filename);
+	return 0;
+}
+
+static duk_ret_t
 js_ClearPersonCommands(duk_context* ctx)
 {
 	const char* name;
@@ -1665,16 +1833,103 @@ js_ClearPersonCommands(duk_context* ctx)
 }
 
 static duk_ret_t
-js_ChangeMap(duk_context* ctx)
+js_CreateByteArray(duk_context* ctx)
 {
-	const char* filename;
+	bytearray_t* array;
+	int          size;
 
-	filename = duk_require_path(ctx, 0, "maps", true, false);
+	size = duk_to_int(ctx, 0);
 
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (!map_engine_change_map(filename))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load map `%s`", filename);
+	if (size < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid byte array size");
+	if (!(array = bytearray_new(size)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create byte array");
+	duk_push_sphere_bytearray(ctx, array);
+	bytearray_free(array);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateByteArrayFromString(duk_context* ctx)
+{
+	bytearray_t* array;
+	lstring_t*   string;
+
+	string = duk_require_lstring_t(ctx, 0);
+
+	if (!(array = bytearray_from_lstring(string)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create byte array");
+	lstr_free(string);
+	duk_push_sphere_bytearray(ctx, array);
+	bytearray_free(array);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateColor(duk_context* ctx)
+{
+	int num_args = duk_get_top(ctx);
+	int r = duk_to_int(ctx, 0);
+	int g = duk_to_int(ctx, 1);
+	int b = duk_to_int(ctx, 2);
+	int a = num_args >= 4 ? duk_to_int(ctx, 3) : 255;
+
+	// clamp components to 8-bit [0-255]
+	r = r < 0 ? 0 : r > 255 ? 255 : r;
+	g = g < 0 ? 0 : g > 255 ? 255 : g;
+	b = b < 0 ? 0 : b > 255 ? 255 : b;
+	a = a < 0 ? 0 : a > 255 ? 255 : a;
+
+	// construct a Color object
+	duk_push_class_obj(ctx, "ssColor", NULL);
+	duk_push_int(ctx, r); duk_put_prop_string(ctx, -2, "red");
+	duk_push_int(ctx, g); duk_put_prop_string(ctx, -2, "green");
+	duk_push_int(ctx, b); duk_put_prop_string(ctx, -2, "blue");
+	duk_push_int(ctx, a); duk_put_prop_string(ctx, -2, "alpha");
+	return 1;
+}
+
+static duk_ret_t
+js_CreateColorMatrix(duk_context* ctx)
+{
+	int rn = duk_to_int(ctx, 0);
+	int rr = duk_to_int(ctx, 1);
+	int rg = duk_to_int(ctx, 2);
+	int rb = duk_to_int(ctx, 3);
+	int gn = duk_to_int(ctx, 4);
+	int gr = duk_to_int(ctx, 5);
+	int gg = duk_to_int(ctx, 6);
+	int gb = duk_to_int(ctx, 7);
+	int bn = duk_to_int(ctx, 8);
+	int br = duk_to_int(ctx, 9);
+	int bg = duk_to_int(ctx, 10);
+	int bb = duk_to_int(ctx, 11);
+
+	// construct a ColorMatrix object
+	duk_push_class_obj(ctx, "ssColorMatrix", NULL);
+	duk_push_int(ctx, rn); duk_put_prop_string(ctx, -2, "rn");
+	duk_push_int(ctx, rr); duk_put_prop_string(ctx, -2, "rr");
+	duk_push_int(ctx, rg); duk_put_prop_string(ctx, -2, "rg");
+	duk_push_int(ctx, rb); duk_put_prop_string(ctx, -2, "rb");
+	duk_push_int(ctx, gn); duk_put_prop_string(ctx, -2, "gn");
+	duk_push_int(ctx, gr); duk_put_prop_string(ctx, -2, "gr");
+	duk_push_int(ctx, gg); duk_put_prop_string(ctx, -2, "gg");
+	duk_push_int(ctx, gb); duk_put_prop_string(ctx, -2, "gb");
+	duk_push_int(ctx, bn); duk_put_prop_string(ctx, -2, "bn");
+	duk_push_int(ctx, br); duk_put_prop_string(ctx, -2, "br");
+	duk_push_int(ctx, bg); duk_put_prop_string(ctx, -2, "bg");
+	duk_push_int(ctx, bb); duk_put_prop_string(ctx, -2, "bb");
+	return 1;
+}
+
+static duk_ret_t
+js_CreateDirectory(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_path(ctx, 0, "save", true, true);
+	if (!sfs_mkdir(g_fs, name, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
 	return 0;
 }
 
@@ -1708,6 +1963,127 @@ js_CreatePerson(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "personData");
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);
 	duk_pop_2(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_CreateSpriteset(duk_context* ctx)
+{
+	int          height;
+	image_t*     image;
+	int          num_frames;
+	int          num_images;
+	int          num_poses;
+	char         pose_name[32];
+	spriteset_t* spriteset;
+	int          width;
+
+	int i, j;
+
+	width = duk_to_int(ctx, 0);
+	height = duk_to_int(ctx, 1);
+	num_images = duk_to_int(ctx, 2);
+	num_poses = duk_to_int(ctx, 3);
+	num_frames = duk_to_int(ctx, 4);
+
+	spriteset = spriteset_new();
+	spriteset_set_base(spriteset, rect(0, 0, width, height));
+	image = image_new(width, height);
+	for (i = 0; i < num_images; ++i) {
+		// use the same image in all slots to save memory.  this works because
+		// images are read-only, so it doesn't matter that they all share the same
+		// pixel data.
+		spriteset_add_image(spriteset, image);
+	}
+	image_free(image);
+	for (i = 0; i < num_poses; ++i) {
+		sprintf(pose_name, "unnamed %d", i + 1);
+		spriteset_add_pose(spriteset, pose_name);
+		for (j = 0; j < num_frames; ++j)
+			spriteset_add_frame(spriteset, pose_name, 0, 8);
+	}
+	duk_push_sphere_spriteset(ctx, spriteset);
+	spriteset_free(spriteset);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateStringFromByteArray(duk_context* ctx)
+{
+	bytearray_t* array;
+	uint8_t*     buffer;
+	size_t       size;
+
+	array = duk_require_class_obj(ctx, 0, "ssByteArray");
+
+	buffer = bytearray_buffer(array);
+	size = bytearray_len(array);
+	duk_push_lstring(ctx, (char*)buffer, size);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateStringFromCode(duk_context* ctx)
+{
+	int  code;
+
+	code = duk_to_int(ctx, 0);
+
+	if (code < 0 || code > 255)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ASCII character code");
+
+	duk_push_sprintf(ctx, "%c", code);
+	return 1;
+}
+
+static duk_ret_t
+js_CreateSurface(duk_context* ctx)
+{
+	color_t     fill_color;
+	int         height;
+	image_t*    image;
+	int         num_args;
+	int         width;
+
+	num_args = duk_get_top(ctx);
+	width = duk_to_int(ctx, 0);
+	height = duk_to_int(ctx, 1);
+	fill_color = num_args >= 3 ? duk_require_sphere_color(ctx, 2) : color_new(0, 0, 0, 0);
+
+	if (!(image = image_new(width, height)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create surface");
+	image_fill(image, fill_color);
+	duk_push_class_obj(ctx, "ssSurface", image);
+	return 1;
+}
+
+static duk_ret_t
+js_DeflateByteArray(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	bytearray_t* array = duk_require_class_obj(ctx, 0, "ssByteArray");
+	int level = n_args >= 2 ? duk_to_int(ctx, 1) : -1;
+
+	bytearray_t* new_array;
+
+	if ((level < 0 || level > 9) && n_args >= 2)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid compression level");
+	if (!(new_array = bytearray_deflate(array, level)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't deflate byte array");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_Delay(duk_context* ctx)
+{
+	double timeout;
+
+	timeout = duk_to_number(ctx, 0);
+
+	if (timeout < 0.0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid delay timeout");
+	sphere_sleep(floor(timeout) / 1000);
 	return 0;
 }
 
@@ -1778,6 +2154,24 @@ js_DetachPlayerInput(duk_context* ctx)
 }
 
 static duk_ret_t
+js_DoEvents(duk_context* ctx)
+{
+	sphere_run(true);
+	duk_push_boolean(ctx, true);
+	return 1;
+}
+
+static duk_ret_t
+js_DoesFileExist(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, NULL, true, false);
+	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
+	return 1;
+}
+
+static duk_ret_t
 js_DoesPersonExist(duk_context* ctx)
 {
 	const char* name;
@@ -1786,6 +2180,57 @@ js_DoesPersonExist(duk_context* ctx)
 
 	duk_push_boolean(ctx, map_person_by_name(name) != NULL);
 	return 1;
+}
+
+static duk_ret_t
+js_EvaluateScript(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "scripts", true, false);
+	if (!sfs_fexist(g_fs, filename, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
+	if (!script_eval(filename, false))
+		duk_throw(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_EvaluateSystemScript(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+
+	char path[SPHERE_PATH_MAX];
+
+	sprintf(path, "scripts/lib/%s", filename);
+	if (!sfs_fexist(g_fs, path, NULL))
+		sprintf(path, "#/scripts/%s", filename);
+	if (!sfs_fexist(g_fs, path, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
+	if (!script_eval(path, false))
+		duk_throw(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_ExecuteGame(duk_context* ctx)
+{
+	path_t*     games_path;
+	const char* filename;
+
+	filename = duk_require_string(ctx, 0);
+
+	// store the old game path so we can relaunch when the chained game exits
+	g_last_game_path = path_dup(fs_path(g_fs));
+
+	// if the passed-in path is relative, resolve it relative to <engine>/games.
+	// this is done for compatibility with Sphere 1.x.
+	g_game_path = path_new(filename);
+	games_path = path_rebase(path_new("games/"), assets_path());
+	path_rebase(g_game_path, games_path);
+	path_free(games_path);
+
+	sphere_restart();
 }
 
 static duk_ret_t
@@ -1845,11 +2290,97 @@ js_ExecuteZones(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Exit(duk_context* ctx)
+{
+	sphere_exit(false);
+}
+
+static duk_ret_t
 js_ExitMapEngine(duk_context* ctx)
 {
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
 	map_engine_exit();
+	return 0;
+}
+
+static duk_ret_t
+js_FilledCircle(duk_context* ctx)
+{
+	static ALLEGRO_VERTEX s_vbuf[128];
+
+	int x = duk_to_number(ctx, 0);
+	int y = duk_to_number(ctx, 1);
+	int radius = duk_to_number(ctx, 2);
+	color_t color = duk_require_sphere_color(ctx, 3);
+
+	double phi;
+	int    vcount;
+
+	int i;
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	vcount = fmin(radius, 126);
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(color);
+	for (i = 0; i < vcount; ++i) {
+		phi = 2 * M_PI * i / vcount;
+		s_vbuf[i + 1].x = x + cos(phi) * radius;
+		s_vbuf[i + 1].y = y - sin(phi) * radius;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * radius;
+	s_vbuf[i + 1].y = y - sin(0) * radius;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(color);
+	galileo_reset();
+	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
+js_FilledEllipse(duk_context* ctx)
+{
+	static ALLEGRO_VERTEX s_vbuf[128];
+
+	int x = trunc(duk_to_number(ctx, 0));
+	int y = trunc(duk_to_number(ctx, 1));
+	int rx = trunc(duk_to_number(ctx, 2));
+	int ry = trunc(duk_to_number(ctx, 3));
+	color_t color = duk_require_sphere_color(ctx, 4);
+
+	double phi;
+	int    vcount;
+
+	int i;
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(color);
+	for (i = 0; i < vcount; ++i) {
+		phi = 2 * M_PI * i / vcount;
+		s_vbuf[i + 1].x = x + cos(phi) * rx;
+		s_vbuf[i + 1].y = y - sin(phi) * ry;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * rx;
+	s_vbuf[i + 1].y = y - sin(0) * ry;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(color);
+	galileo_reset();
+	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
+js_FlipScreen(duk_context* ctx)
+{
+	screen_flip(g_screen, g_framerate);
 	return 0;
 }
 
@@ -1880,10 +2411,18 @@ js_FollowPerson(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GarbageCollect(duk_context* ctx)
+{
+	duk_gc(ctx, 0x0);
+	duk_gc(ctx, 0x0);
+	return 0;
+}
+
+static duk_ret_t
 js_GetActingPerson(duk_context* ctx)
 {
 	const person_t* person;
-	
+
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
 	person = map_engine_acting_person();
@@ -1897,7 +2436,7 @@ static duk_ret_t
 js_GetCameraPerson(duk_context* ctx)
 {
 	person_t* subject;
-	
+
 	subject = map_engine_get_subject();
 	if (subject == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid operation, camera not attached");
@@ -1909,7 +2448,7 @@ static duk_ret_t
 js_GetCameraX(duk_context* ctx)
 {
 	point2_t position;
-	
+
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
 	position = map_get_camera_xy();
@@ -1926,6 +2465,20 @@ js_GetCameraY(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
 	position = map_get_camera_xy();
 	duk_push_int(ctx, position.y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetClippingRectangle(duk_context* ctx)
+{
+	rect_t clip;
+
+	clip = image_get_scissor(screen_backbuffer(g_screen));
+	duk_push_object(ctx);
+	duk_push_int(ctx, clip.x1); duk_put_prop_string(ctx, -2, "x");
+	duk_push_int(ctx, clip.y1); duk_put_prop_string(ctx, -2, "y");
+	duk_push_int(ctx, clip.x2 - clip.x1); duk_put_prop_string(ctx, -2, "width");
+	duk_push_int(ctx, clip.y2 - clip.y1); duk_put_prop_string(ctx, -2, "height");
 	return 1;
 }
 
@@ -1994,6 +2547,104 @@ js_GetCurrentZone(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetDirectoryList(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	const char* dirname = n_args >= 1
+		? duk_require_path(ctx, 0, NULL, true, false)
+		: "";
+
+	vector_t*  list;
+	lstring_t* *p_filename;
+
+	iter_t iter;
+
+	list = fs_list_dir(g_fs, dirname, NULL, true);
+	duk_push_array(ctx);
+	iter = vector_enum(list);
+	while (p_filename = vector_next(&iter)) {
+		duk_push_string(ctx, lstr_cstr(*p_filename));
+		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		lstr_free(*p_filename);
+	}
+	vector_free(list);
+	return 1;
+}
+
+static duk_ret_t
+js_GetFileList(duk_context* ctx)
+{
+	const char* directory_name;
+	vector_t*   list;
+	int         num_args;
+
+	iter_t iter;
+	lstring_t* *p_filename;
+
+	num_args = duk_get_top(ctx);
+	directory_name = num_args >= 1
+		? duk_require_path(ctx, 0, NULL, true, false)
+		: "save";
+
+	list = fs_list_dir(g_fs, directory_name, NULL, false);
+	duk_push_array(ctx);
+	iter = vector_enum(list);
+	while (p_filename = vector_next(&iter)) {
+		duk_push_string(ctx, lstr_cstr(*p_filename));
+		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		lstr_free(*p_filename);
+	}
+	vector_free(list);
+	return 1;
+}
+
+static duk_ret_t
+js_GetFrameRate(duk_context* ctx)
+{
+	duk_push_int(ctx, g_framerate);
+	return 1;
+}
+
+static duk_ret_t
+js_GetGameList(duk_context* ctx)
+{
+	ALLEGRO_FS_ENTRY* file_info;
+	ALLEGRO_FS_ENTRY* fse;
+	path_t*           path = NULL;
+	path_t*           paths[2];
+	sandbox_t*        sandbox;
+
+	int i, j = 0;
+
+	// build search paths
+	paths[0] = path_rebase(path_new("games/"), engine_path());
+	paths[1] = path_rebase(path_new("miniSphere/games/"), home_path());
+
+	// search for supported games
+	duk_push_array(ctx);
+	for (i = sizeof paths / sizeof(path_t*) - 1; i >= 0; --i) {
+		fse = al_create_fs_entry(path_cstr(paths[i]));
+		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
+			while (file_info = al_read_directory(fse)) {
+				path = path_new(al_get_fs_entry_name(file_info));
+				if (sandbox = fs_new(path_cstr(path))) {
+					duk_push_lstring_t(ctx, fs_manifest(sandbox));
+					duk_json_decode(ctx, -1);
+					duk_push_string(ctx, path_cstr(path));
+					duk_put_prop_string(ctx, -2, "directory");
+					duk_put_prop_index(ctx, -2, j++);
+					fs_free(sandbox);
+				}
+				path_free(path);
+			}
+		}
+		al_destroy_fs_entry(fse);
+		path_free(paths[i]);
+	}
+	return 1;
+}
+
+static duk_ret_t
 js_GetInputPerson(duk_context* ctx)
 {
 	int       num_args;
@@ -2010,6 +2661,90 @@ js_GetInputPerson(duk_context* ctx)
 	if (person == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "player %d not attached", player + 1);
 	duk_push_string(ctx, person_name(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetJoystickAxis(duk_context* ctx)
+{
+	int joy_index = duk_to_int(ctx, 0);
+	int axis_index = duk_to_int(ctx, 1);
+
+	duk_push_number(ctx, joy_position(joy_index, axis_index));
+	return 1;
+}
+
+static duk_ret_t
+js_GetKey(duk_context* ctx)
+{
+	while (kb_queue_len() == 0) {
+		sphere_sleep(0.05);
+		sphere_run(false);
+	}
+	duk_push_int(ctx, kb_get_key());
+	return 1;
+}
+
+static duk_ret_t
+js_GetKeyString(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	int keycode = duk_to_int(ctx, 0);
+	bool shift = n_args >= 2 ? duk_to_boolean(ctx, 1) : false;
+
+	switch (keycode) {
+	case ALLEGRO_KEY_A: duk_push_string(ctx, shift ? "A" : "a"); break;
+	case ALLEGRO_KEY_B: duk_push_string(ctx, shift ? "B" : "b"); break;
+	case ALLEGRO_KEY_C: duk_push_string(ctx, shift ? "C" : "c"); break;
+	case ALLEGRO_KEY_D: duk_push_string(ctx, shift ? "D" : "d"); break;
+	case ALLEGRO_KEY_E: duk_push_string(ctx, shift ? "E" : "e"); break;
+	case ALLEGRO_KEY_F: duk_push_string(ctx, shift ? "F" : "f"); break;
+	case ALLEGRO_KEY_G: duk_push_string(ctx, shift ? "G" : "g"); break;
+	case ALLEGRO_KEY_H: duk_push_string(ctx, shift ? "H" : "h"); break;
+	case ALLEGRO_KEY_I: duk_push_string(ctx, shift ? "I" : "i"); break;
+	case ALLEGRO_KEY_J: duk_push_string(ctx, shift ? "J" : "j"); break;
+	case ALLEGRO_KEY_K: duk_push_string(ctx, shift ? "K" : "k"); break;
+	case ALLEGRO_KEY_L: duk_push_string(ctx, shift ? "L" : "l"); break;
+	case ALLEGRO_KEY_M: duk_push_string(ctx, shift ? "M" : "m"); break;
+	case ALLEGRO_KEY_N: duk_push_string(ctx, shift ? "N" : "n"); break;
+	case ALLEGRO_KEY_O: duk_push_string(ctx, shift ? "O" : "o"); break;
+	case ALLEGRO_KEY_P: duk_push_string(ctx, shift ? "P" : "p"); break;
+	case ALLEGRO_KEY_Q: duk_push_string(ctx, shift ? "Q" : "q"); break;
+	case ALLEGRO_KEY_R: duk_push_string(ctx, shift ? "R" : "r"); break;
+	case ALLEGRO_KEY_S: duk_push_string(ctx, shift ? "S" : "s"); break;
+	case ALLEGRO_KEY_T: duk_push_string(ctx, shift ? "T" : "t"); break;
+	case ALLEGRO_KEY_U: duk_push_string(ctx, shift ? "U" : "u"); break;
+	case ALLEGRO_KEY_V: duk_push_string(ctx, shift ? "V" : "v"); break;
+	case ALLEGRO_KEY_W: duk_push_string(ctx, shift ? "W" : "w"); break;
+	case ALLEGRO_KEY_X: duk_push_string(ctx, shift ? "X" : "x"); break;
+	case ALLEGRO_KEY_Y: duk_push_string(ctx, shift ? "Y" : "y"); break;
+	case ALLEGRO_KEY_Z: duk_push_string(ctx, shift ? "Z" : "z"); break;
+	case ALLEGRO_KEY_1: duk_push_string(ctx, shift ? "!" : "1"); break;
+	case ALLEGRO_KEY_2: duk_push_string(ctx, shift ? "@" : "2"); break;
+	case ALLEGRO_KEY_3: duk_push_string(ctx, shift ? "#" : "3"); break;
+	case ALLEGRO_KEY_4: duk_push_string(ctx, shift ? "$" : "4"); break;
+	case ALLEGRO_KEY_5: duk_push_string(ctx, shift ? "%" : "5"); break;
+	case ALLEGRO_KEY_6: duk_push_string(ctx, shift ? "^" : "6"); break;
+	case ALLEGRO_KEY_7: duk_push_string(ctx, shift ? "&" : "7"); break;
+	case ALLEGRO_KEY_8: duk_push_string(ctx, shift ? "*" : "8"); break;
+	case ALLEGRO_KEY_9: duk_push_string(ctx, shift ? "(" : "9"); break;
+	case ALLEGRO_KEY_0: duk_push_string(ctx, shift ? ")" : "0"); break;
+	case ALLEGRO_KEY_BACKSLASH: duk_push_string(ctx, shift ? "|" : "\\"); break;
+	case ALLEGRO_KEY_FULLSTOP: duk_push_string(ctx, shift ? ">" : "."); break;
+	case ALLEGRO_KEY_CLOSEBRACE: duk_push_string(ctx, shift ? "}" : "]"); break;
+	case ALLEGRO_KEY_COMMA: duk_push_string(ctx, shift ? "<" : ","); break;
+	case ALLEGRO_KEY_EQUALS: duk_push_string(ctx, shift ? "+" : "="); break;
+	case ALLEGRO_KEY_MINUS: duk_push_string(ctx, shift ? "_" : "-"); break;
+	case ALLEGRO_KEY_QUOTE: duk_push_string(ctx, shift ? "\"" : "'"); break;
+	case ALLEGRO_KEY_OPENBRACE: duk_push_string(ctx, shift ? "{" : "["); break;
+	case ALLEGRO_KEY_SEMICOLON: duk_push_string(ctx, shift ? ":" : ";"); break;
+	case ALLEGRO_KEY_SLASH: duk_push_string(ctx, shift ? "?" : "/"); break;
+	case ALLEGRO_KEY_SPACE: duk_push_string(ctx, " "); break;
+	case ALLEGRO_KEY_TAB: duk_push_string(ctx, "\t"); break;
+	case ALLEGRO_KEY_TILDE: duk_push_string(ctx, shift ? "~" : "`"); break;
+	default:
+		duk_push_string(ctx, "");
+	}
 	return 1;
 }
 
@@ -2062,9 +2797,61 @@ js_GetLayerWidth(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetLocalAddress(duk_context* ctx)
+{
+	duk_push_string(ctx, "127.0.0.1");
+	return 1;
+}
+
+static duk_ret_t
+js_GetLocalName(duk_context* ctx)
+{
+	duk_push_string(ctx, "localhost");
+	return 1;
+}
+
+static duk_ret_t
 js_GetMapEngineFrameRate(duk_context* ctx)
 {
 	duk_push_int(ctx, map_engine_get_framerate());
+	return 1;
+}
+
+static duk_ret_t
+js_GetMouseWheelEvent(duk_context* ctx)
+{
+	mouse_event_t event;
+
+	do {
+		while (mouse_queue_len() == 0) {
+			sphere_sleep(0.05);
+			sphere_run(false);
+		}
+		event = mouse_get_event();
+	} while (event.key != MOUSE_KEY_WHEEL_UP && event.key != MOUSE_KEY_WHEEL_DOWN);
+	duk_push_int(ctx, event.key);
+	return 1;
+}
+
+static duk_ret_t
+js_GetMouseX(duk_context* ctx)
+{
+	int x;
+	int y;
+
+	screen_get_mouse_xy(g_screen, &x, &y);
+	duk_push_int(ctx, x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetMouseY(duk_context* ctx)
+{
+	int x;
+	int y;
+
+	screen_get_mouse_xy(g_screen, &x, &y);
+	duk_push_int(ctx, y);
 	return 1;
 }
 
@@ -2087,11 +2874,47 @@ js_GetNextAnimatedTile(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetNumJoysticks(duk_context* ctx)
+{
+	duk_push_int(ctx, joy_num_devices());
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumJoystickAxes(duk_context* ctx)
+{
+	int joy_index;
+
+	joy_index = duk_to_int(ctx, 0);
+
+	duk_push_int(ctx, joy_num_axes(joy_index));
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumJoystickButtons(duk_context* ctx)
+{
+	int joy_index;
+
+	joy_index = duk_to_int(ctx, 0);
+
+	duk_push_int(ctx, joy_num_buttons(joy_index));
+	return 1;
+}
+
+static duk_ret_t
 js_GetNumLayers(duk_context* ctx)
 {
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
 	duk_push_int(ctx, map_num_layers());
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumMouseWheelEvents(duk_context* ctx)
+{
+	duk_push_int(ctx, mouse_queue_len());
 	return 1;
 }
 
@@ -2228,7 +3051,7 @@ js_GetPersonData(duk_context* ctx)
 	height = spriteset_height(spriteset);
 	num_directions = spriteset_num_poses(spriteset);
 	num_frames = spriteset_num_frames(spriteset, person_get_pose(person));
-	
+
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "personData");
 	duk_get_prop_string(ctx, -1, name);
@@ -2449,7 +3272,7 @@ js_GetPersonList(duk_context* ctx)
 {
 	vector_t* all_persons;
 	person_t* person;
-	
+
 	iter_t iter;
 
 	all_persons = map_engine_persons();
@@ -2601,6 +3424,88 @@ js_GetPersonYFloat(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person_get_xy(person, &x, &y, true);
 	duk_push_number(ctx, y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPlayerKey(duk_context* ctx)
+{
+	int player;
+	int key_type;
+
+	player = duk_to_int(ctx, 0);
+	key_type = duk_to_int(ctx, 1);
+
+	if (player < 0 || player >= 4)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player index out of range");
+	if (key_type < 0 || key_type >= PLAYER_KEY_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid key type constant");
+	duk_push_int(ctx, get_player_key(player, key_type));
+	return 1;
+}
+
+static duk_ret_t
+js_GetScreenHeight(duk_context* ctx)
+{
+	duk_push_int(ctx, g_res_y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetScreenWidth(duk_context* ctx)
+{
+	duk_push_int(ctx, g_res_x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetSystemArrow(duk_context* ctx)
+{
+	image_t* image;
+
+	if (!(image = legacy_default_arrow_image()))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system arrow image");
+	duk_push_class_obj(ctx, "ssImage", image_ref(image));
+	return 1;
+}
+
+static duk_ret_t
+js_GetSystemDownArrow(duk_context* ctx)
+{
+	image_t* image;
+
+	if (!(image = legacy_default_arrow_down_image()))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system down arrow image");
+	duk_push_class_obj(ctx, "ssImage", image_ref(image));
+	return 1;
+}
+
+static duk_ret_t
+js_GetSystemFont(duk_context* ctx)
+{
+	duk_push_sphere_font(ctx, g_sys_font);
+	return 1;
+}
+
+static duk_ret_t
+js_GetSystemUpArrow(duk_context* ctx)
+{
+	image_t* image;
+
+	if (!(image = legacy_default_arrow_up_image()))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system up arrow image");
+	duk_push_class_obj(ctx, "ssImage", image_ref(image));
+	return 1;
+}
+
+static duk_ret_t
+js_GetSystemWindowStyle(duk_context* ctx)
+{
+	windowstyle_t* windowstyle;
+
+	if (!(windowstyle = legacy_default_windowstyle()))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system windowstyle");
+	duk_push_sphere_windowstyle(ctx, windowstyle);
 	return 1;
 }
 
@@ -2760,6 +3665,31 @@ js_GetTileWidth(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetTime(duk_context* ctx)
+{
+	duk_push_number(ctx, floor(al_get_time() * 1000));
+	return 1;
+}
+
+static duk_ret_t
+js_GetToggleState(duk_context* ctx)
+{
+	int keycode;
+
+	keycode = duk_to_int(ctx, 0);
+
+	if (keycode != ALLEGRO_KEY_CAPSLOCK
+		&& keycode != ALLEGRO_KEY_NUMLOCK
+		&& keycode != ALLEGRO_KEY_SCROLLLOCK)
+	{
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid toggle key constant");
+	}
+
+	duk_push_boolean(ctx, kb_is_toggled(keycode));
+	return 1;
+}
+
+static duk_ret_t
 js_GetTriggerLayer(duk_context* ctx)
 {
 	int layer;
@@ -2807,6 +3737,20 @@ js_GetTriggerY(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, NULL, &y, NULL);
 	duk_push_int(ctx, y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetVersion(duk_context* ctx)
+{
+	duk_push_number(ctx, API_VERSION);
+	return 1;
+}
+
+static duk_ret_t
+js_GetVersionString(duk_context* ctx)
+{
+	duk_push_string(ctx, API_VERSION_STRING);
 	return 1;
 }
 
@@ -2909,6 +3853,256 @@ js_GetZoneY(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GrabImage(duk_context* ctx)
+{
+	image_t* image;
+	int      height;
+	int      width;
+	int      x;
+	int      y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
+
+	if (!(image = screen_grab(g_screen, x, y, width, height)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't grab screen image");
+	duk_push_class_obj(ctx, "ssImage", image);
+	return 1;
+}
+
+static duk_ret_t
+js_GrabSurface(duk_context* ctx)
+{
+	image_t* image;
+	int      height;
+	int      width;
+	int      x;
+	int      y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
+
+	if (!(image = screen_grab(g_screen, x, y, width, height)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't grab screen image");
+	duk_push_class_obj(ctx, "ssSurface", image);
+	return 1;
+}
+
+static duk_ret_t
+js_GradientCircle(duk_context* ctx)
+{
+	static ALLEGRO_VERTEX s_vbuf[128];
+
+	color_t inner_color;
+	int     num_verts;
+	color_t outer_color;
+	double  phi;
+	float   radius;
+	float   x;
+	float   y;
+
+	int i;
+
+	x = trunc(duk_to_number(ctx, 0));
+	y = trunc(duk_to_number(ctx, 1));
+	radius = trunc(duk_to_number(ctx, 2));
+	inner_color = duk_require_sphere_color(ctx, 3);
+	outer_color = duk_require_sphere_color(ctx, 4);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	num_verts = fmin(radius, 126);
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(inner_color);
+	for (i = 0; i < num_verts; ++i) {
+		phi = 2 * M_PI * i / num_verts;
+		s_vbuf[i + 1].x = x + cos(phi) * radius;
+		s_vbuf[i + 1].y = y - sin(phi) * radius;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(outer_color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * radius;
+	s_vbuf[i + 1].y = y - sin(0) * radius;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(outer_color);
+	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
+js_GradientEllipse(duk_context* ctx)
+{
+	static ALLEGRO_VERTEX s_vbuf[128];
+
+	color_t inner_color;
+	int     num_verts;
+	color_t outer_color;
+	double  phi;
+	float   rx, ry;
+	float   x;
+	float   y;
+
+	int i;
+
+	x = trunc(duk_to_number(ctx, 0));
+	y = trunc(duk_to_number(ctx, 1));
+	rx = trunc(duk_to_number(ctx, 2));
+	ry = trunc(duk_to_number(ctx, 3));
+	inner_color = duk_require_sphere_color(ctx, 4);
+	outer_color = duk_require_sphere_color(ctx, 5);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	num_verts = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
+	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
+	s_vbuf[0].color = nativecolor(inner_color);
+	for (i = 0; i < num_verts; ++i) {
+		phi = 2 * M_PI * i / num_verts;
+		s_vbuf[i + 1].x = x + cos(phi) * rx;
+		s_vbuf[i + 1].y = y - sin(phi) * ry;
+		s_vbuf[i + 1].z = 0;
+		s_vbuf[i + 1].color = nativecolor(outer_color);
+	}
+	s_vbuf[i + 1].x = x + cos(0) * rx;
+	s_vbuf[i + 1].y = y - sin(0) * ry;
+	s_vbuf[i + 1].z = 0;
+	s_vbuf[i + 1].color = nativecolor(outer_color);
+	galileo_reset();
+	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
+js_GradientLine(duk_context* ctx)
+{
+	color_t color1;
+	color_t color2;
+	float   length;
+	float   tx, ty;
+	float   x1;
+	float   x2;
+	float   y1;
+	float   y2;
+
+	x1 = trunc(duk_to_number(ctx, 0)) + 0.5;
+	y1 = trunc(duk_to_number(ctx, 1)) + 0.5;
+	x2 = trunc(duk_to_number(ctx, 2)) + 0.5;
+	y2 = trunc(duk_to_number(ctx, 3)) + 0.5;
+	color1 = duk_require_sphere_color(ctx, 4);
+	color2 = duk_require_sphere_color(ctx, 5);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	length = hypotf(x2 - x1, y2 - y1);
+	tx = 0.5 * (y2 - y1) / length;
+	ty = 0.5 * -(x2 - x1) / length;
+	ALLEGRO_VERTEX verts[] = {
+		{ x1 + tx, y1 + ty, 0, 0, 0, nativecolor(color1) },
+		{ x1 - tx, y1 - ty, 0, 0, 0, nativecolor(color1) },
+		{ x2 - tx, y2 - ty, 0, 0, 0, nativecolor(color2) },
+		{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) },
+	};
+	galileo_reset();
+	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
+	return 0;
+}
+
+static duk_ret_t
+js_GradientRectangle(duk_context* ctx)
+{
+	color_t color_ul;
+	color_t color_ur;
+	color_t color_lr;
+	color_t color_ll;
+	float   x1, x2;
+	float   y1, y2;
+
+	x1 = trunc(duk_to_number(ctx, 0));
+	y1 = trunc(duk_to_number(ctx, 1));
+	x2 = x1 + trunc(duk_to_number(ctx, 2));
+	y2 = y1 + trunc(duk_to_number(ctx, 3));
+	color_ul = duk_require_sphere_color(ctx, 4);
+	color_ur = duk_require_sphere_color(ctx, 5);
+	color_lr = duk_require_sphere_color(ctx, 6);
+	color_ll = duk_require_sphere_color(ctx, 7);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	ALLEGRO_VERTEX verts[] = {
+		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
+		{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
+		{ x1, y2, 0, 0, 0, nativecolor(color_ll) },
+		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
+	};
+	galileo_reset();
+	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+	return 0;
+}
+
+static duk_ret_t
+js_GradientTriangle(duk_context* ctx)
+{
+	color_t color1, color2, color3;
+	float   x1, x2, x3;
+	float   y1, y2, y3;
+
+	x1 = trunc(duk_to_number(ctx, 0));
+	y1 = trunc(duk_to_number(ctx, 1));
+	x2 = trunc(duk_to_number(ctx, 2));
+	y2 = trunc(duk_to_number(ctx, 3));
+	x3 = trunc(duk_to_number(ctx, 4));
+	y3 = trunc(duk_to_number(ctx, 5));
+	color1 = duk_require_sphere_color(ctx, 6);
+	color2 = duk_require_sphere_color(ctx, 7);
+	color3 = duk_require_sphere_color(ctx, 8);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	ALLEGRO_VERTEX verts[] = {
+		{ x1, y1, 0, 0, 0, nativecolor(color1) },
+		{ x2, y2, 0, 0, 0, nativecolor(color2) },
+		{ x3, y3, 0, 0, 0, nativecolor(color3) },
+	};
+	galileo_reset();
+	al_draw_prim(verts, NULL, NULL, 0, 3, ALLEGRO_PRIM_TRIANGLE_LIST);
+	return 0;
+}
+
+static duk_ret_t
+js_HashByteArray(duk_context* ctx)
+{
+	bytearray_t* array;
+	void*        data;
+	size_t       size;
+
+	array = duk_require_class_obj(ctx, 0, "ssByteArray");
+
+	data = bytearray_buffer(array);
+	size = bytearray_len(array);
+	duk_push_string(ctx, md5sum(data, size));
+	return 1;
+}
+
+static duk_ret_t
+js_HashFromFile(duk_context* ctx)
+{
+	void*       data;
+	size_t      file_size;
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "other", true, false);
+
+	if (!(data = sfs_fslurp(g_fs, filename, NULL, &file_size)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file");
+	duk_push_string(ctx, md5sum(data, file_size));
+	return 1;
+}
+
+static duk_ret_t
 js_IgnorePersonObstructions(duk_context* ctx)
 {
 	bool        ignoring;
@@ -2938,6 +4132,33 @@ js_IgnoreTileObstructions(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	person_set_ignore_tiles(person, ignoring);
 	return 0;
+}
+
+static duk_ret_t
+js_InflateByteArray(duk_context* ctx)
+{
+	bytearray_t*  array;
+	int           max_size;
+	bytearray_t*  new_array;
+	int           num_args;
+
+	num_args = duk_get_top(ctx);
+	array = duk_require_class_obj(ctx, 0, "ssByteArray");
+	max_size = num_args >= 2 ? duk_to_int(ctx, 1) : 0;
+
+	if (max_size < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "negative buffer size");
+	if (!(new_array = bytearray_inflate(array, max_size)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't inflate byte array");
+	duk_push_sphere_bytearray(ctx, new_array);
+	return 1;
+}
+
+static duk_ret_t
+js_IsAnyKeyPressed(duk_context* ctx)
+{
+	duk_push_boolean(ctx, kb_is_any_key_down());
+	return 1;
 }
 
 static duk_ret_t
@@ -3030,6 +4251,25 @@ js_IsInputAttached(duk_context* ctx)
 }
 
 static duk_ret_t
+js_IsJoystickButtonPressed(duk_context* ctx)
+{
+	int joy_index = duk_to_int(ctx, 0);
+	int button = duk_to_int(ctx, 1);
+
+	duk_push_boolean(ctx, joy_is_button_down(joy_index, button));
+	return 1;
+}
+
+static duk_ret_t
+js_IsKeyPressed(duk_context* ctx)
+{
+	int keycode = duk_to_int(ctx, 0);
+
+	duk_push_boolean(ctx, kb_is_key_down(keycode));
+	return 1;
+}
+
+static duk_ret_t
 js_IsLayerReflective(duk_context* ctx)
 {
 	int layer;
@@ -3059,6 +4299,24 @@ static duk_ret_t
 js_IsMapEngineRunning(duk_context* ctx)
 {
 	duk_push_boolean(ctx, map_engine_running());
+	return 1;
+}
+
+static duk_ret_t
+js_IsMouseButtonPressed(duk_context* ctx)
+{
+	int                 button;
+	int                 button_id;
+	ALLEGRO_DISPLAY*    display;
+	ALLEGRO_MOUSE_STATE mouse_state;
+
+	button = duk_to_int(ctx, 0);
+	button_id = button == MOUSE_BUTTON_RIGHT ? 2
+		: button == MOUSE_BUTTON_MIDDLE ? 3
+		: 1;
+	al_get_mouse_state(&mouse_state);
+	display = screen_display(g_screen);
+	duk_push_boolean(ctx, mouse_state.display == display && al_mouse_button_down(&mouse_state, button_id));
 	return 1;
 }
 
@@ -3105,6 +4363,201 @@ js_IsTriggerAt(duk_context* ctx)
 	layer = duk_require_map_layer(ctx, 2);
 
 	duk_push_boolean(ctx, map_trigger_at(x, y, layer) >= 0);
+	return 1;
+}
+
+static duk_ret_t
+js_Line(duk_context* ctx)
+{
+	color_t color;
+	float   x1, x2;
+	float   y1, y2;
+
+	x1 = trunc(duk_to_number(ctx, 0)) + 0.5;
+	y1 = trunc(duk_to_number(ctx, 1)) + 0.5;
+	x2 = trunc(duk_to_number(ctx, 2)) + 0.5;
+	y2 = trunc(duk_to_number(ctx, 3)) + 0.5;
+	color = duk_require_sphere_color(ctx, 4);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
+	return 0;
+}
+
+static duk_ret_t
+js_LineSeries(duk_context* ctx)
+{
+	color_t         color;
+	int             num_args;
+	size_t          num_points;
+	int             type;
+	int             x, y;
+	ALLEGRO_VERTEX* vertices;
+	ALLEGRO_COLOR   vtx_color;
+
+	size_t i;
+
+	num_args = duk_get_top(ctx);
+	color = duk_require_sphere_color(ctx, 1);
+	type = num_args >= 3 ? duk_to_int(ctx, 2) : LINE_MULTIPLE;
+
+	if (!duk_is_array(ctx, 0))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
+	duk_get_prop_string(ctx, 0, "length");
+	num_points = duk_get_uint(ctx, -1);
+	duk_pop(ctx);
+	if (num_points < 2)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "two or more vertices required");
+	if (num_points > INT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices");
+	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate vertex buffer");
+	vtx_color = nativecolor(color);
+	for (i = 0; i < num_points; ++i) {
+		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
+		duk_get_prop_string(ctx, -1, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_pop(ctx);
+		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
+		vertices[i].color = vtx_color;
+	}
+	galileo_reset();
+	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
+		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
+		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
+		: ALLEGRO_PRIM_LINE_LIST
+	);
+	free(vertices);
+	return 0;
+}
+
+static duk_ret_t
+js_ListenOnPort(duk_context* ctx)
+{
+	int          port;
+	socket_v1_t* socket;
+
+	port = duk_to_int(ctx, 0);
+
+	if (socket = socket_v1_new_server(port))
+		duk_push_class_obj(ctx, "ssSocket", socket);
+	else
+		duk_push_null(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadAnimation(duk_context* ctx)
+{
+	animation_t* anim;
+	const char*  filename;
+
+	filename = duk_require_path(ctx, 0, "animations", true, false);
+	if (!(anim = animation_new(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load animation `%s`", filename);
+	duk_push_class_obj(ctx, "ssAnimation", anim);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadFont(duk_context* ctx)
+{
+	const char* filename;
+	font_t*     font;
+
+	filename = duk_require_path(ctx, 0, "fonts", true, false);
+	if (!(font = font_load(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
+	duk_push_sphere_font(ctx, font);
+	font_free(font);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadImage(duk_context* ctx)
+{
+	const char* filename;
+	image_t*    image;
+
+	filename = duk_require_path(ctx, 0, "images", true, false);
+	if (!(image = image_load(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
+	duk_push_class_obj(ctx, "ssImage", image);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadSound(duk_context* ctx)
+{
+	const char* filename;
+	sound_t*    sound;
+
+	filename = duk_require_path(ctx, 0, "sounds", true, false);
+
+	if (!(sound = sound_new(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
+	duk_push_class_obj(ctx, "ssSound", sound);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadSoundEffect(duk_context* ctx)
+{
+	const char* filename;
+	int         mode;
+	int         num_args;
+	sample_t*   sample;
+
+	num_args = duk_get_top(ctx);
+	filename = duk_require_path(ctx, 0, "sounds", true, false);
+	mode = num_args >= 2 ? duk_to_int(ctx, 1) : SE_SINGLE;
+
+	if (!(sample = sample_new(filename, mode == SE_MULTIPLE)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to load sound effect `%s`", filename);
+	duk_push_class_obj(ctx, "ssSoundEffect", sample);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadSpriteset(duk_context* ctx)
+{
+	const char*  filename;
+	spriteset_t* spriteset;
+
+	filename = duk_require_path(ctx, 0, "spritesets", true, false);
+	if ((spriteset = spriteset_load(filename)) == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load spriteset `%s`", filename);
+	duk_push_sphere_spriteset(ctx, spriteset);
+	spriteset_free(spriteset);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadSurface(duk_context* ctx)
+{
+	const char* filename;
+	image_t*    image;
+
+	filename = duk_require_path(ctx, 0, "images", true, false);
+	if (!(image = image_load(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
+	duk_push_class_obj(ctx, "ssSurface", image);
+	return 1;
+}
+
+static duk_ret_t
+js_LoadWindowStyle(duk_context* ctx)
+{
+	const char*    filename;
+	windowstyle_t* winstyle;
+
+	filename = duk_require_path(ctx, 0, "windowstyles", true, false);
+	if (!(winstyle = load_windowstyle(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load windowstyle `%s`", filename);
+	duk_push_sphere_windowstyle(ctx, winstyle);
+	free_windowstyle(winstyle);
 	return 1;
 }
 
@@ -3160,6 +4613,208 @@ js_MapToScreenY(duk_context* ctx)
 }
 
 static duk_ret_t
+js_OpenAddress(duk_context* ctx)
+{
+	const char*  hostname;
+	int          port;
+	socket_v1_t* socket;
+
+	hostname = duk_require_string(ctx, 0);
+	port = duk_to_int(ctx, 1);
+
+	if (socket = socket_v1_new_client(hostname, port))
+		duk_push_class_obj(ctx, "ssSocket", socket);
+	else
+		duk_push_null(ctx);
+	return 1;
+}
+
+static duk_ret_t
+js_OpenFile(duk_context* ctx)
+{
+	kev_file_t* file;
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "save", true, true);
+
+	if (!(file = kev_open(g_fs, filename, true)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s`", filename);
+	duk_push_class_obj(ctx, "ssFile", file);
+	return 1;
+}
+
+static duk_ret_t
+js_OpenLog(duk_context* ctx)
+{
+	const char* filename;
+	logger_t*   logger;
+
+	filename = duk_require_path(ctx, 0, "logs", true, true);
+	if (!(logger = logger_new(filename)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open log `%s`", filename);
+	duk_push_class_obj(ctx, "ssLogger", logger);
+	return 1;
+}
+
+static duk_ret_t
+js_OpenRawFile(duk_context* ctx)
+{
+	sfs_file_t* file;
+	const char* filename;
+	int         num_args;
+	bool        writable;
+
+	num_args = duk_get_top(ctx);
+	writable = num_args >= 2 ? duk_to_boolean(ctx, 1) : false;
+	filename = duk_require_path(ctx, 0, "other", true, writable);
+
+	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
+	if (file == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file for %s",
+			writable ? "write" : "read");
+	duk_push_class_obj(ctx, "ssRawFile", file);
+	return 1;
+}
+
+static duk_ret_t
+js_OutlinedCircle(duk_context* ctx)
+{
+	float x = trunc(duk_to_number(ctx, 0)) + 0.5;
+	float y = trunc(duk_to_number(ctx, 1)) + 0.5;
+	float radius = trunc(duk_to_number(ctx, 2));
+	color_t color = duk_require_sphere_color(ctx, 3);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
+	return 0;
+}
+
+static duk_ret_t
+js_OutlinedEllipse(duk_context* ctx)
+{
+	float x = duk_to_int(ctx, 0) + 0.5;
+	float y = duk_to_int(ctx, 1) + 0.5;
+	float rx = duk_to_int(ctx, 2);
+	float ry = duk_to_int(ctx, 3);
+	color_t color = duk_require_sphere_color(ctx, 4);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
+	return 0;
+}
+
+static duk_ret_t
+js_OutlinedRectangle(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	float x1 = duk_to_int(ctx, 0) + 0.5;
+	float y1 = duk_to_int(ctx, 1) + 0.5;
+	float x2 = x1 + duk_to_int(ctx, 2) - 1;
+	float y2 = y1 + duk_to_int(ctx, 3) - 1;
+	color_t color = duk_require_sphere_color(ctx, 4);
+	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
+	return 0;
+}
+
+static duk_ret_t
+js_OutlinedRoundRectangle(duk_context* ctx)
+{
+	int n_args = duk_get_top(ctx);
+	float x = duk_to_int(ctx, 0) + 0.5;
+	float y = duk_to_int(ctx, 1) + 0.5;
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
+	float radius = duk_to_number(ctx, 4);
+	color_t color = duk_require_sphere_color(ctx, 5);
+	int thickness = n_args >= 7 ? duk_to_int(ctx, 6) : 1;
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
+	return 0;
+}
+
+static duk_ret_t
+js_Point(duk_context* ctx)
+{
+	float x = duk_to_int(ctx, 0) + 0.5;
+	float y = duk_to_int(ctx, 1) + 0.5;
+	color_t color = duk_require_sphere_color(ctx, 2);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_pixel(x, y, nativecolor(color));
+	return 0;
+}
+
+static duk_ret_t
+js_PointSeries(duk_context* ctx)
+{
+	color_t color = duk_require_sphere_color(ctx, 1);
+
+	size_t          num_points;
+	int             x, y;
+	ALLEGRO_VERTEX* vertices;
+	ALLEGRO_COLOR   vtx_color;
+
+	size_t i;
+
+	if (!duk_is_array(ctx, 0))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
+	duk_get_prop_string(ctx, 0, "length");
+	num_points = duk_get_uint(ctx, -1);
+	duk_pop(ctx);
+	if (num_points < 1)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "one or more vertices required");
+	if (num_points > INT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices");
+	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate vertex buffer");
+	vtx_color = nativecolor(color);
+	for (i = 0; i < num_points; ++i) {
+		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
+		duk_get_prop_string(ctx, -1, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_get_prop_string(ctx, -1, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
+		duk_pop(ctx);
+		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
+		vertices[i].color = vtx_color;
+	}
+	galileo_reset();
+	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
+	free(vertices);
+	return 0;
+}
+
+static duk_ret_t
+js_Print(duk_context* ctx)
+{
+	int   num_items;
+	char* text;
+
+	num_items = duk_get_top(ctx);
+
+	// separate printed values with a space
+	duk_push_string(ctx, " ");
+	duk_insert(ctx, 0);
+	duk_join(ctx, num_items);
+
+	text = strnewf("%s", duk_get_string(ctx, -1));
+	debugger_log(text, PRINT_NORMAL, true);
+	return 0;
+}
+
+static duk_ret_t
 js_QueuePersonCommand(duk_context* ctx)
 {
 	int         command;
@@ -3210,6 +4865,44 @@ js_QueuePersonScript(duk_context* ctx)
 }
 
 static duk_ret_t
+js_Rectangle(duk_context* ctx)
+{
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
+	color_t color = duk_require_sphere_color(ctx, 4);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveDirectory(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_path(ctx, 0, "save", true, true);
+	if (!sfs_rmdir(g_fs, name, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveFile(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "save", true, true);
+	if (!sfs_unlink(g_fs, filename, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file `%s`", filename);
+	return 0;
+}
+
+static duk_ret_t
 js_RemoveTrigger(duk_context* ctx)
 {
 	int trigger_index;
@@ -3236,6 +4929,19 @@ js_RemoveZone(duk_context* ctx)
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
 	map_remove_zone(zone_index);
+	return 0;
+}
+
+static duk_ret_t
+js_Rename(duk_context* ctx)
+{
+	const char* name1;
+	const char* name2;
+
+	name1 = duk_require_path(ctx, 0, "save", true, true);
+	name2 = duk_require_path(ctx, 1, "save", true, true);
+	if (!sfs_rename(g_fs, name1, name2, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
 }
 
@@ -3268,6 +4974,82 @@ js_ReplaceTilesOnLayer(duk_context* ctx)
 	if (new_index < 0 || new_index >= tileset_len(tileset))
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid new tile index");
 	layer_replace_tiles(layer, old_index, new_index);
+	return 0;
+}
+
+static duk_ret_t
+js_RequireScript(duk_context* ctx)
+{
+	const char* filename;
+	bool        is_required;
+
+	filename = duk_require_path(ctx, 0, "scripts", true, false);
+	if (!sfs_fexist(g_fs, filename, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "RequireScript");
+	duk_get_prop_string(ctx, -1, filename);
+	is_required = duk_get_boolean(ctx, -1);
+	duk_pop(ctx);
+	if (!is_required) {
+		duk_push_true(ctx);
+		duk_put_prop_string(ctx, -2, filename);
+		if (!script_eval(filename, false))
+			duk_throw(ctx);
+	}
+	duk_pop_3(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_RequireSystemScript(duk_context* ctx)
+{
+	const char* filename = duk_require_string(ctx, 0);
+
+	bool is_required;
+	char path[SPHERE_PATH_MAX];
+
+	sprintf(path, "scripts/lib/%s", filename);
+	if (!sfs_fexist(g_fs, path, NULL))
+		sprintf(path, "#/scripts/%s", filename);
+	if (!sfs_fexist(g_fs, path, NULL))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
+
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "RequireScript");
+	duk_get_prop_string(ctx, -1, path);
+	is_required = duk_get_boolean(ctx, -1);
+	duk_pop(ctx);
+	if (!is_required) {
+		duk_push_true(ctx);
+		duk_put_prop_string(ctx, -2, path);
+		if (!script_eval(path, false))
+			duk_throw(ctx);
+	}
+	duk_pop_2(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_RestartGame(duk_context* ctx)
+{
+	sphere_restart();
+}
+
+static duk_ret_t
+js_RoundRectangle(duk_context* ctx)
+{
+	int x = duk_to_int(ctx, 0);
+	int y = duk_to_int(ctx, 1);
+	int w = duk_to_int(ctx, 2);
+	int h = duk_to_int(ctx, 3);
+	float radius = duk_to_number(ctx, 4);
+	color_t color = duk_require_sphere_color(ctx, 5);
+
+	if (screen_is_skipframe(g_screen))
+		return 0;
+	galileo_reset();
+	al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
 	return 0;
 }
 
@@ -3336,6 +5118,24 @@ js_SetCameraY(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetClippingRectangle(duk_context* ctx)
+{
+	int height;
+	int width;
+	int x;
+	int y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
+
+	image_set_scissor(screen_backbuffer(g_screen),
+		rect(x, y, x + width, y + height));
+	return 0;
+}
+
+static duk_ret_t
 js_SetColorMask(duk_context* ctx)
 {
 	color_t new_mask;
@@ -3375,7 +5175,7 @@ js_SetDefaultPersonScript(duk_context* ctx)
 {
 	int       person_op;
 	script_t* script;
-	
+
 	person_op = duk_require_int(ctx, 0);
 	script = duk_require_sphere_script(ctx, 1, "%/personScript.js");
 
@@ -3400,6 +5200,17 @@ js_SetDelayScript(duk_context* ctx)
 	if (num_frames < 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame count");
 	map_engine_defer(script, num_frames);
+	return 0;
+}
+
+static duk_ret_t
+js_SetFrameRate(duk_context* ctx)
+{
+	int framerate = duk_to_int(ctx, 0);
+
+	if (framerate < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
+	g_framerate = framerate;
 	return 0;
 }
 
@@ -3533,6 +5344,18 @@ js_SetMapEngineFrameRate(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
 
 	map_engine_set_framerate(framerate);
+	return 0;
+}
+
+static duk_ret_t
+js_SetMousePosition(duk_context* ctx)
+{
+	int x;
+	int y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	screen_set_mouse_xy(g_screen, x, y);
 	return 0;
 }
 
@@ -4019,7 +5842,7 @@ static duk_ret_t
 js_SetTalkActivationButton(duk_context* ctx)
 {
 	int button_id;
-	
+
 	button_id = duk_to_int(ctx, 0);
 
 	map_engine_set_talk_button(button_id);
@@ -4058,6 +5881,7 @@ js_SetTalkDistance(duk_context* ctx)
 	map_engine_set_talk_distance(pixels);
 	return 0;
 }
+
 static duk_ret_t
 js_SetTile(duk_context* ctx)
 {
@@ -4336,1839 +6160,6 @@ js_SetZoneSteps(duk_context* ctx)
 }
 
 static duk_ret_t
-js_UpdateMapEngine(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	map_engine_update();
-	return 0;
-}
-
-static duk_ret_t
-js_AreKeysLeft(duk_context* ctx)
-{
-	update_input();
-	duk_push_boolean(ctx, kb_queue_len() > 0);
-	return 1;
-}
-
-static duk_ret_t
-js_IsAnyKeyPressed(duk_context* ctx)
-{
-	duk_push_boolean(ctx, kb_is_any_key_down());
-	return 1;
-}
-
-static duk_ret_t
-js_IsJoystickButtonPressed(duk_context* ctx)
-{
-	int joy_index = duk_to_int(ctx, 0);
-	int button = duk_to_int(ctx, 1);
-
-	duk_push_boolean(ctx, joy_is_button_down(joy_index, button));
-	return 1;
-}
-
-static duk_ret_t
-js_IsKeyPressed(duk_context* ctx)
-{
-	int keycode = duk_to_int(ctx, 0);
-
-	duk_push_boolean(ctx, kb_is_key_down(keycode));
-	return 1;
-}
-
-static duk_ret_t
-js_IsMouseButtonPressed(duk_context* ctx)
-{
-	int                 button;
-	int                 button_id;
-	ALLEGRO_DISPLAY*    display;
-	ALLEGRO_MOUSE_STATE mouse_state;
-
-	button = duk_to_int(ctx, 0);
-	button_id = button == MOUSE_BUTTON_RIGHT ? 2
-		: button == MOUSE_BUTTON_MIDDLE ? 3
-		: 1;
-	al_get_mouse_state(&mouse_state);
-	display = screen_display(g_screen);
-	duk_push_boolean(ctx, mouse_state.display == display && al_mouse_button_down(&mouse_state, button_id));
-	return 1;
-}
-
-static duk_ret_t
-js_GetClippingRectangle(duk_context* ctx)
-{
-	rect_t clip;
-
-	clip = image_get_scissor(screen_backbuffer(g_screen));
-	duk_push_object(ctx);
-	duk_push_int(ctx, clip.x1); duk_put_prop_string(ctx, -2, "x");
-	duk_push_int(ctx, clip.y1); duk_put_prop_string(ctx, -2, "y");
-	duk_push_int(ctx, clip.x2 - clip.x1); duk_put_prop_string(ctx, -2, "width");
-	duk_push_int(ctx, clip.y2 - clip.y1); duk_put_prop_string(ctx, -2, "height");
-	return 1;
-}
-
-static duk_ret_t
-js_GetDirectoryList(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	const char* dirname = n_args >= 1
-		? duk_require_path(ctx, 0, NULL, true, false)
-		: "";
-
-	vector_t*  list;
-	lstring_t* *p_filename;
-
-	iter_t iter;
-
-	list = fs_list_dir(g_fs, dirname, NULL, true);
-	duk_push_array(ctx);
-	iter = vector_enum(list);
-	while (p_filename = vector_next(&iter)) {
-		duk_push_string(ctx, lstr_cstr(*p_filename));
-		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
-		lstr_free(*p_filename);
-	}
-	vector_free(list);
-	return 1;
-}
-
-static duk_ret_t
-js_GetFileList(duk_context* ctx)
-{
-	const char* directory_name;
-	vector_t*   list;
-	int         num_args;
-
-	iter_t iter;
-	lstring_t* *p_filename;
-
-	num_args = duk_get_top(ctx);
-	directory_name = num_args >= 1
-		? duk_require_path(ctx, 0, NULL, true, false)
-		: "save";
-
-	list = fs_list_dir(g_fs, directory_name, NULL, false);
-	duk_push_array(ctx);
-	iter = vector_enum(list);
-	while (p_filename = vector_next(&iter)) {
-		duk_push_string(ctx, lstr_cstr(*p_filename));
-		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
-		lstr_free(*p_filename);
-	}
-	vector_free(list);
-	return 1;
-}
-
-static duk_ret_t
-js_GetFrameRate(duk_context* ctx)
-{
-	duk_push_int(ctx, g_framerate);
-	return 1;
-}
-
-static duk_ret_t
-js_GetGameList(duk_context* ctx)
-{
-	ALLEGRO_FS_ENTRY* file_info;
-	ALLEGRO_FS_ENTRY* fse;
-	path_t*           path = NULL;
-	path_t*           paths[2];
-	sandbox_t*        sandbox;
-
-	int i, j = 0;
-
-	// build search paths
-	paths[0] = path_rebase(path_new("games/"), engine_path());
-	paths[1] = path_rebase(path_new("miniSphere/games/"), home_path());
-
-	// search for supported games
-	duk_push_array(ctx);
-	for (i = sizeof paths / sizeof(path_t*) - 1; i >= 0; --i) {
-		fse = al_create_fs_entry(path_cstr(paths[i]));
-		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
-			while (file_info = al_read_directory(fse)) {
-				path = path_new(al_get_fs_entry_name(file_info));
-				if (sandbox = fs_new(path_cstr(path))) {
-					duk_push_lstring_t(ctx, fs_manifest(sandbox));
-					duk_json_decode(ctx, -1);
-					duk_push_string(ctx, path_cstr(path));
-					duk_put_prop_string(ctx, -2, "directory");
-					duk_put_prop_index(ctx, -2, j++);
-					fs_free(sandbox);
-				}
-				path_free(path);
-			}
-		}
-		al_destroy_fs_entry(fse);
-		path_free(paths[i]);
-	}
-	return 1;
-}
-
-static duk_ret_t
-js_GetJoystickAxis(duk_context* ctx)
-{
-	int joy_index = duk_to_int(ctx, 0);
-	int axis_index = duk_to_int(ctx, 1);
-
-	duk_push_number(ctx, joy_position(joy_index, axis_index));
-	return 1;
-}
-
-static duk_ret_t
-js_GetKey(duk_context* ctx)
-{
-	while (kb_queue_len() == 0) {
-		sphere_sleep(0.05);
-		sphere_run(false);
-	}
-	duk_push_int(ctx, kb_get_key());
-	return 1;
-}
-
-static duk_ret_t
-js_GetKeyString(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	int keycode = duk_to_int(ctx, 0);
-	bool shift = n_args >= 2 ? duk_to_boolean(ctx, 1) : false;
-
-	switch (keycode) {
-	case ALLEGRO_KEY_A: duk_push_string(ctx, shift ? "A" : "a"); break;
-	case ALLEGRO_KEY_B: duk_push_string(ctx, shift ? "B" : "b"); break;
-	case ALLEGRO_KEY_C: duk_push_string(ctx, shift ? "C" : "c"); break;
-	case ALLEGRO_KEY_D: duk_push_string(ctx, shift ? "D" : "d"); break;
-	case ALLEGRO_KEY_E: duk_push_string(ctx, shift ? "E" : "e"); break;
-	case ALLEGRO_KEY_F: duk_push_string(ctx, shift ? "F" : "f"); break;
-	case ALLEGRO_KEY_G: duk_push_string(ctx, shift ? "G" : "g"); break;
-	case ALLEGRO_KEY_H: duk_push_string(ctx, shift ? "H" : "h"); break;
-	case ALLEGRO_KEY_I: duk_push_string(ctx, shift ? "I" : "i"); break;
-	case ALLEGRO_KEY_J: duk_push_string(ctx, shift ? "J" : "j"); break;
-	case ALLEGRO_KEY_K: duk_push_string(ctx, shift ? "K" : "k"); break;
-	case ALLEGRO_KEY_L: duk_push_string(ctx, shift ? "L" : "l"); break;
-	case ALLEGRO_KEY_M: duk_push_string(ctx, shift ? "M" : "m"); break;
-	case ALLEGRO_KEY_N: duk_push_string(ctx, shift ? "N" : "n"); break;
-	case ALLEGRO_KEY_O: duk_push_string(ctx, shift ? "O" : "o"); break;
-	case ALLEGRO_KEY_P: duk_push_string(ctx, shift ? "P" : "p"); break;
-	case ALLEGRO_KEY_Q: duk_push_string(ctx, shift ? "Q" : "q"); break;
-	case ALLEGRO_KEY_R: duk_push_string(ctx, shift ? "R" : "r"); break;
-	case ALLEGRO_KEY_S: duk_push_string(ctx, shift ? "S" : "s"); break;
-	case ALLEGRO_KEY_T: duk_push_string(ctx, shift ? "T" : "t"); break;
-	case ALLEGRO_KEY_U: duk_push_string(ctx, shift ? "U" : "u"); break;
-	case ALLEGRO_KEY_V: duk_push_string(ctx, shift ? "V" : "v"); break;
-	case ALLEGRO_KEY_W: duk_push_string(ctx, shift ? "W" : "w"); break;
-	case ALLEGRO_KEY_X: duk_push_string(ctx, shift ? "X" : "x"); break;
-	case ALLEGRO_KEY_Y: duk_push_string(ctx, shift ? "Y" : "y"); break;
-	case ALLEGRO_KEY_Z: duk_push_string(ctx, shift ? "Z" : "z"); break;
-	case ALLEGRO_KEY_1: duk_push_string(ctx, shift ? "!" : "1"); break;
-	case ALLEGRO_KEY_2: duk_push_string(ctx, shift ? "@" : "2"); break;
-	case ALLEGRO_KEY_3: duk_push_string(ctx, shift ? "#" : "3"); break;
-	case ALLEGRO_KEY_4: duk_push_string(ctx, shift ? "$" : "4"); break;
-	case ALLEGRO_KEY_5: duk_push_string(ctx, shift ? "%" : "5"); break;
-	case ALLEGRO_KEY_6: duk_push_string(ctx, shift ? "^" : "6"); break;
-	case ALLEGRO_KEY_7: duk_push_string(ctx, shift ? "&" : "7"); break;
-	case ALLEGRO_KEY_8: duk_push_string(ctx, shift ? "*" : "8"); break;
-	case ALLEGRO_KEY_9: duk_push_string(ctx, shift ? "(" : "9"); break;
-	case ALLEGRO_KEY_0: duk_push_string(ctx, shift ? ")" : "0"); break;
-	case ALLEGRO_KEY_BACKSLASH: duk_push_string(ctx, shift ? "|" : "\\"); break;
-	case ALLEGRO_KEY_FULLSTOP: duk_push_string(ctx, shift ? ">" : "."); break;
-	case ALLEGRO_KEY_CLOSEBRACE: duk_push_string(ctx, shift ? "}" : "]"); break;
-	case ALLEGRO_KEY_COMMA: duk_push_string(ctx, shift ? "<" : ","); break;
-	case ALLEGRO_KEY_EQUALS: duk_push_string(ctx, shift ? "+" : "="); break;
-	case ALLEGRO_KEY_MINUS: duk_push_string(ctx, shift ? "_" : "-"); break;
-	case ALLEGRO_KEY_QUOTE: duk_push_string(ctx, shift ? "\"" : "'"); break;
-	case ALLEGRO_KEY_OPENBRACE: duk_push_string(ctx, shift ? "{" : "["); break;
-	case ALLEGRO_KEY_SEMICOLON: duk_push_string(ctx, shift ? ":" : ";"); break;
-	case ALLEGRO_KEY_SLASH: duk_push_string(ctx, shift ? "?" : "/"); break;
-	case ALLEGRO_KEY_SPACE: duk_push_string(ctx, " "); break;
-	case ALLEGRO_KEY_TAB: duk_push_string(ctx, "\t"); break;
-	case ALLEGRO_KEY_TILDE: duk_push_string(ctx, shift ? "~" : "`"); break;
-	default:
-		duk_push_string(ctx, "");
-	}
-	return 1;
-}
-
-static duk_ret_t
-js_GetLocalAddress(duk_context* ctx)
-{
-	duk_push_string(ctx, "127.0.0.1");
-	return 1;
-}
-
-static duk_ret_t
-js_GetLocalName(duk_context* ctx)
-{
-	duk_push_string(ctx, "localhost");
-	return 1;
-}
-
-static duk_ret_t
-js_GetMouseWheelEvent(duk_context* ctx)
-{
-	mouse_event_t event;
-	
-	do {
-		while (mouse_queue_len() == 0) {
-			sphere_sleep(0.05);
-			sphere_run(false);
-		}
-		event = mouse_get_event();
-	} while (event.key != MOUSE_KEY_WHEEL_UP && event.key != MOUSE_KEY_WHEEL_DOWN);
-	duk_push_int(ctx, event.key);
-	return 1;
-}
-
-static duk_ret_t
-js_GetMouseX(duk_context* ctx)
-{
-	int x;
-	int y;
-
-	screen_get_mouse_xy(g_screen, &x, &y);
-	duk_push_int(ctx, x);
-	return 1;
-}
-
-static duk_ret_t
-js_GetMouseY(duk_context* ctx)
-{
-	int x;
-	int y;
-
-	screen_get_mouse_xy(g_screen, &x, &y);
-	duk_push_int(ctx, y);
-	return 1;
-}
-
-static duk_ret_t
-js_GetNumJoysticks(duk_context* ctx)
-{
-	duk_push_int(ctx, joy_num_devices());
-	return 1;
-}
-
-static duk_ret_t
-js_GetNumJoystickAxes(duk_context* ctx)
-{
-	int joy_index;
-	
-	joy_index = duk_to_int(ctx, 0);
-
-	duk_push_int(ctx, joy_num_axes(joy_index));
-	return 1;
-}
-
-static duk_ret_t
-js_GetNumJoystickButtons(duk_context* ctx)
-{
-	int joy_index;
-	
-	joy_index = duk_to_int(ctx, 0);
-
-	duk_push_int(ctx, joy_num_buttons(joy_index));
-	return 1;
-}
-
-static duk_ret_t
-js_GetNumMouseWheelEvents(duk_context* ctx)
-{
-	duk_push_int(ctx, mouse_queue_len());
-	return 1;
-}
-
-static duk_ret_t
-js_GetPlayerKey(duk_context* ctx)
-{
-	int player;
-	int key_type;
-
-	player = duk_to_int(ctx, 0);
-	key_type = duk_to_int(ctx, 1);
-
-	if (player < 0 || player >= 4)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "player index out of range");
-	if (key_type < 0 || key_type >= PLAYER_KEY_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid key type constant");
-	duk_push_int(ctx, get_player_key(player, key_type));
-	return 1;
-}
-
-static duk_ret_t
-js_GetScreenHeight(duk_context* ctx)
-{
-	duk_push_int(ctx, g_res_y);
-	return 1;
-}
-
-static duk_ret_t
-js_GetScreenWidth(duk_context* ctx)
-{
-	duk_push_int(ctx, g_res_x);
-	return 1;
-}
-
-static duk_ret_t
-js_GetSystemArrow(duk_context* ctx)
-{
-	image_t* image;
-	
-	if (!(image = legacy_default_arrow_image()))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system arrow image");
-	duk_push_class_obj(ctx, "ssImage", image_ref(image));
-	return 1;
-}
-
-static duk_ret_t
-js_GetSystemDownArrow(duk_context* ctx)
-{
-	image_t* image;
-
-	if (!(image = legacy_default_arrow_down_image()))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system down arrow image");
-	duk_push_class_obj(ctx, "ssImage", image_ref(image));
-	return 1;
-}
-
-static duk_ret_t
-js_GetSystemFont(duk_context* ctx)
-{
-	duk_push_sphere_font(ctx, g_sys_font);
-	return 1;
-}
-
-static duk_ret_t
-js_GetSystemUpArrow(duk_context* ctx)
-{
-	image_t* image;
-
-	if (!(image = legacy_default_arrow_up_image()))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system up arrow image");
-	duk_push_class_obj(ctx, "ssImage", image_ref(image));
-	return 1;
-}
-
-static duk_ret_t
-js_GetSystemWindowStyle(duk_context* ctx)
-{
-	windowstyle_t* windowstyle;
-
-	if (!(windowstyle = legacy_default_windowstyle()))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system windowstyle");
-	duk_push_sphere_windowstyle(ctx, windowstyle);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTime(duk_context* ctx)
-{
-	duk_push_number(ctx, floor(al_get_time() * 1000));
-	return 1;
-}
-
-static duk_ret_t
-js_GetToggleState(duk_context* ctx)
-{
-	int keycode;
-	
-	keycode = duk_to_int(ctx, 0);
-
-	if (keycode != ALLEGRO_KEY_CAPSLOCK
-		&& keycode != ALLEGRO_KEY_NUMLOCK
-		&& keycode != ALLEGRO_KEY_SCROLLLOCK)
-	{
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid toggle key constant");
-	}
-
-	duk_push_boolean(ctx, kb_is_toggled(keycode));
-	return 1;
-}
-
-static duk_ret_t
-js_GetVersion(duk_context* ctx)
-{
-	duk_push_number(ctx, API_VERSION);
-	return 1;
-}
-
-static duk_ret_t
-js_GetVersionString(duk_context* ctx)
-{
-	duk_push_string(ctx, API_VERSION_STRING);
-	return 1;
-}
-
-static duk_ret_t
-js_SetClippingRectangle(duk_context* ctx)
-{
-	int height;
-	int width;
-	int x;
-	int y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	width = duk_to_int(ctx, 2);
-	height = duk_to_int(ctx, 3);
-
-	image_set_scissor(screen_backbuffer(g_screen),
-		rect(x, y, x + width, y + height));
-	return 0;
-}
-
-static duk_ret_t
-js_SetFrameRate(duk_context* ctx)
-{
-	int framerate = duk_to_int(ctx, 0);
-
-	if (framerate < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
-	g_framerate = framerate;
-	return 0;
-}
-
-static duk_ret_t
-js_SetMousePosition(duk_context* ctx)
-{
-	int x;
-	int y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	screen_set_mouse_xy(g_screen, x, y);
-	return 0;
-}
-
-static duk_ret_t
-js_Abort(duk_context* ctx)
-{
-	const char* filename;
-	int         line_number;
-	const char* message;
-	int         num_args;
-	char*       text;
-
-	num_args = duk_get_top(ctx);
-	message = num_args >= 1
-		? duk_to_string(ctx, 0)
-		: "some type of weird pig just ate your game\n\n\n...and you*munch*";
-
-	duk_inspect_callstack_entry(ctx, -2);
-	duk_get_prop_string(ctx, -1, "lineNumber");
-	duk_get_prop_string(ctx, -2, "function");
-	duk_get_prop_string(ctx, -1, "fileName");
-	filename = duk_get_string(ctx, -1);
-	line_number = duk_get_int(ctx, -2);
-	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
-	sphere_abort(text);
-}
-
-static duk_ret_t
-js_ApplyColorMask(duk_context* ctx)
-{
-	color_t color;
-
-	color = duk_require_sphere_color(ctx, 0);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, nativecolor(color));
-	return 0;
-}
-
-static duk_ret_t
-js_BezierCurve(duk_context* ctx)
-{
-	color_t         color;
-	float           cp[8];
-	bool            is_quadratic = true;
-	int             num_args;
-	int             num_points;
-	ALLEGRO_VERTEX* points;
-	double          step_size;
-	float           x1, x2, x3, x4;
-	float           y1, y2, y3, y4;
-
-	int i;
-
-	num_args = duk_get_top(ctx);
-	color = duk_require_sphere_color(ctx, 0);
-	step_size = duk_to_number(ctx, 1);
-	x1 = duk_to_number(ctx, 2);
-	y1 = duk_to_number(ctx, 3);
-	x2 = duk_to_number(ctx, 4);
-	y2 = duk_to_number(ctx, 5);
-	x3 = duk_to_number(ctx, 6);
-	y3 = duk_to_number(ctx, 7);
-	if (num_args >= 10) {
-		is_quadratic = false;
-		x4 = duk_to_number(ctx, 8);
-		y4 = duk_to_number(ctx, 9);
-	}
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	cp[0] = x1; cp[1] = y1;
-	cp[2] = x2; cp[3] = y2;
-	cp[4] = x3; cp[5] = y3;
-	cp[6] = x4; cp[7] = y4;
-	if (is_quadratic) {
-		// convert quadratic Bezier curve to cubic
-		cp[6] = x3; cp[7] = y3;
-		cp[2] = x1 + (2.0 / 3.0) * (x2 - x1);
-		cp[3] = y1 + (2.0 / 3.0) * (y2 - y1);
-		cp[4] = x3 + (2.0 / 3.0) * (x2 - x3);
-		cp[5] = y3 + (2.0 / 3.0) * (y2 - y3);
-	}
-	step_size = step_size < 0.001 ? 0.001 : step_size > 1.0 ? 1.0 : step_size;
-	num_points = 1.0 / step_size;
-	points = calloc(num_points, sizeof(ALLEGRO_VERTEX));
-	al_calculate_spline(&points[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
-	for (i = 0; i < num_points; ++i)
-		points[i].color = nativecolor(color);
-	galileo_reset();
-	al_draw_prim(points, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
-	free(points);
-	return 0;
-}
-
-static duk_ret_t
-js_BindJoystickButton(duk_context* ctx)
-{
-	int joy_index = duk_to_int(ctx, 0);
-	int button = duk_to_int(ctx, 1);
-	script_t* on_down_script = duk_require_sphere_script(ctx, 2, "[button-down script]");
-	script_t* on_up_script = duk_require_sphere_script(ctx, 3, "[button-up script]");
-
-	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick index `%d` out of range", joy_index);
-	if (button < 0 || button >= MAX_JOY_BUTTONS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "button index `%d` out of range", button);
-	joy_bind_button(joy_index, button, on_down_script, on_up_script);
-	return 0;
-}
-
-static duk_ret_t
-js_BindKey(duk_context* ctx)
-{
-	int keycode = duk_to_int(ctx, 0);
-	script_t* on_down_script = duk_require_sphere_script(ctx, 1, "[key-down script]");
-	script_t* on_up_script = duk_require_sphere_script(ctx, 2, "[key-up script]");
-
-	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid key constant");
-	kb_bind_key(keycode, on_down_script, on_up_script);
-	return 0;
-}
-
-static duk_ret_t
-js_BlendColors(duk_context* ctx)
-{
-	color_t color1;
-	color_t color2;
-	int     num_args;
-	float   w1 = 1.0;
-	float   w2 = 1.0;
-
-	num_args = duk_get_top(ctx);
-	color1 = duk_require_sphere_color(ctx, 0);
-	color2 = duk_require_sphere_color(ctx, 1);
-	if (num_args > 2) {
-		w1 = duk_to_number(ctx, 2);
-		w2 = duk_to_number(ctx, 3);
-	}
-
-	if (w1 < 0.0 || w2 < 0.0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid weight(s)", w1, w2);
-
-	duk_push_sphere_color(ctx, color_mix(color1, color2, w1, w2));
-	return 1;
-}
-
-static duk_ret_t
-js_CreateByteArray(duk_context* ctx)
-{
-	bytearray_t* array;
-	int          size;
-
-	size = duk_to_int(ctx, 0);
-
-	if (size < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid byte array size");
-	if (!(array = bytearray_new(size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create byte array");
-	duk_push_sphere_bytearray(ctx, array);
-	bytearray_free(array);
-	return 1;
-}
-
-static duk_ret_t
-js_CreateByteArrayFromString(duk_context* ctx)
-{
-	bytearray_t* array;
-	lstring_t*   string;
-
-	string = duk_require_lstring_t(ctx, 0);
-
-	if (!(array = bytearray_from_lstring(string)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create byte array");
-	lstr_free(string);
-	duk_push_sphere_bytearray(ctx, array);
-	bytearray_free(array);
-	return 1;
-}
-
-static duk_ret_t
-js_CreateColor(duk_context* ctx)
-{
-	int num_args = duk_get_top(ctx);
-	int r = duk_to_int(ctx, 0);
-	int g = duk_to_int(ctx, 1);
-	int b = duk_to_int(ctx, 2);
-	int a = num_args >= 4 ? duk_to_int(ctx, 3) : 255;
-
-	// clamp components to 8-bit [0-255]
-	r = r < 0 ? 0 : r > 255 ? 255 : r;
-	g = g < 0 ? 0 : g > 255 ? 255 : g;
-	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	a = a < 0 ? 0 : a > 255 ? 255 : a;
-
-	// construct a Color object
-	duk_push_class_obj(ctx, "ssColor", NULL);
-	duk_push_int(ctx, r); duk_put_prop_string(ctx, -2, "red");
-	duk_push_int(ctx, g); duk_put_prop_string(ctx, -2, "green");
-	duk_push_int(ctx, b); duk_put_prop_string(ctx, -2, "blue");
-	duk_push_int(ctx, a); duk_put_prop_string(ctx, -2, "alpha");
-	return 1;
-}
-
-static duk_ret_t
-js_CreateColorMatrix(duk_context* ctx)
-{
-	int rn = duk_to_int(ctx, 0);
-	int rr = duk_to_int(ctx, 1);
-	int rg = duk_to_int(ctx, 2);
-	int rb = duk_to_int(ctx, 3);
-	int gn = duk_to_int(ctx, 4);
-	int gr = duk_to_int(ctx, 5);
-	int gg = duk_to_int(ctx, 6);
-	int gb = duk_to_int(ctx, 7);
-	int bn = duk_to_int(ctx, 8);
-	int br = duk_to_int(ctx, 9);
-	int bg = duk_to_int(ctx, 10);
-	int bb = duk_to_int(ctx, 11);
-
-	// construct a ColorMatrix object
-	duk_push_class_obj(ctx, "ssColorMatrix", NULL);
-	duk_push_int(ctx, rn); duk_put_prop_string(ctx, -2, "rn");
-	duk_push_int(ctx, rr); duk_put_prop_string(ctx, -2, "rr");
-	duk_push_int(ctx, rg); duk_put_prop_string(ctx, -2, "rg");
-	duk_push_int(ctx, rb); duk_put_prop_string(ctx, -2, "rb");
-	duk_push_int(ctx, gn); duk_put_prop_string(ctx, -2, "gn");
-	duk_push_int(ctx, gr); duk_put_prop_string(ctx, -2, "gr");
-	duk_push_int(ctx, gg); duk_put_prop_string(ctx, -2, "gg");
-	duk_push_int(ctx, gb); duk_put_prop_string(ctx, -2, "gb");
-	duk_push_int(ctx, bn); duk_put_prop_string(ctx, -2, "bn");
-	duk_push_int(ctx, br); duk_put_prop_string(ctx, -2, "br");
-	duk_push_int(ctx, bg); duk_put_prop_string(ctx, -2, "bg");
-	duk_push_int(ctx, bb); duk_put_prop_string(ctx, -2, "bb");
-	return 1;
-}
-
-static duk_ret_t
-js_CreateDirectory(duk_context* ctx)
-{
-	const char* name;
-
-	name = duk_require_path(ctx, 0, "save", true, true);
-	if (!sfs_mkdir(g_fs, name, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
-	return 0;
-}
-
-static duk_ret_t
-js_CreateSpriteset(duk_context* ctx)
-{
-	int          height;
-	image_t*     image;
-	int          num_frames;
-	int          num_images;
-	int          num_poses;
-	char         pose_name[32];
-	spriteset_t* spriteset;
-	int          width;
-
-	int i, j;
-
-	width = duk_to_int(ctx, 0);
-	height = duk_to_int(ctx, 1);
-	num_images = duk_to_int(ctx, 2);
-	num_poses = duk_to_int(ctx, 3);
-	num_frames = duk_to_int(ctx, 4);
-
-	spriteset = spriteset_new();
-	spriteset_set_base(spriteset, rect(0, 0, width, height));
-	image = image_new(width, height);
-	for (i = 0; i < num_images; ++i) {
-		// use the same image in all slots to save memory.  this works because
-		// images are read-only, so it doesn't matter that they all share the same
-		// pixel data.
-		spriteset_add_image(spriteset, image);
-	}
-	image_free(image);
-	for (i = 0; i < num_poses; ++i) {
-		sprintf(pose_name, "unnamed %d", i + 1);
-		spriteset_add_pose(spriteset, pose_name);
-		for (j = 0; j < num_frames; ++j)
-			spriteset_add_frame(spriteset, pose_name, 0, 8);
-	}
-	duk_push_sphere_spriteset(ctx, spriteset);
-	spriteset_free(spriteset);
-	return 1;
-}
-
-static duk_ret_t
-js_CreateStringFromByteArray(duk_context* ctx)
-{
-	bytearray_t* array;
-	uint8_t*     buffer;
-	size_t       size;
-
-	array = duk_require_class_obj(ctx, 0, "ssByteArray");
-
-	buffer = bytearray_buffer(array);
-	size = bytearray_len(array);
-	duk_push_lstring(ctx, (char*)buffer, size);
-	return 1;
-}
-
-static duk_ret_t
-js_CreateStringFromCode(duk_context* ctx)
-{
-	int  code;
-
-	code = duk_to_int(ctx, 0);
-
-	if (code < 0 || code > 255)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid ASCII character code");
-
-	duk_push_sprintf(ctx, "%c", code);
-	return 1;
-}
-
-static duk_ret_t
-js_CreateSurface(duk_context* ctx)
-{
-	color_t     fill_color;
-	int         height;
-	image_t*    image;
-	int         num_args;
-	int         width;
-
-	num_args = duk_get_top(ctx);
-	width = duk_to_int(ctx, 0);
-	height = duk_to_int(ctx, 1);
-	fill_color = num_args >= 3 ? duk_require_sphere_color(ctx, 2) : color_new(0, 0, 0, 0);
-
-	if (!(image = image_new(width, height)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create surface");
-	image_fill(image, fill_color);
-	duk_push_class_obj(ctx, "ssSurface", image);
-	return 1;
-}
-
-static duk_ret_t
-js_DeflateByteArray(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	bytearray_t* array = duk_require_class_obj(ctx, 0, "ssByteArray");
-	int level = n_args >= 2 ? duk_to_int(ctx, 1) : -1;
-
-	bytearray_t* new_array;
-
-	if ((level < 0 || level > 9) && n_args >= 2)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid compression level");
-	if (!(new_array = bytearray_deflate(array, level)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't deflate byte array");
-	duk_push_sphere_bytearray(ctx, new_array);
-	return 1;
-}
-
-static duk_ret_t
-js_Delay(duk_context* ctx)
-{
-	double timeout;
-	
-	timeout = duk_to_number(ctx, 0);
-
-	if (timeout < 0.0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid delay timeout");
-	sphere_sleep(floor(timeout) / 1000);
-	return 0;
-}
-
-static duk_ret_t
-js_DoEvents(duk_context* ctx)
-{
-	sphere_run(true);
-	duk_push_boolean(ctx, true);
-	return 1;
-}
-
-static duk_ret_t
-js_DoesFileExist(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, NULL, true, false);
-	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
-	return 1;
-}
-
-static duk_ret_t
-js_EvaluateScript(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, "scripts", true, false);
-	if (!sfs_fexist(g_fs, filename, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
-	if (!script_eval(filename, false))
-		duk_throw(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_EvaluateSystemScript(duk_context* ctx)
-{
-	const char* filename = duk_require_string(ctx, 0);
-
-	char path[SPHERE_PATH_MAX];
-
-	sprintf(path, "scripts/lib/%s", filename);
-	if (!sfs_fexist(g_fs, path, NULL))
-		sprintf(path, "#/scripts/%s", filename);
-	if (!sfs_fexist(g_fs, path, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
-	if (!script_eval(path, false))
-		duk_throw(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_ExecuteGame(duk_context* ctx)
-{
-	path_t*     games_path;
-	const char* filename;
-
-	filename = duk_require_string(ctx, 0);
-
-	// store the old game path so we can relaunch when the chained game exits
-	g_last_game_path = path_dup(fs_path(g_fs));
-
-	// if the passed-in path is relative, resolve it relative to <engine>/games.
-	// this is done for compatibility with Sphere 1.x.
-	g_game_path = path_new(filename);
-	games_path = path_rebase(path_new("games/"), assets_path());
-	path_rebase(g_game_path, games_path);
-	path_free(games_path);
-
-	sphere_restart();
-}
-
-static duk_ret_t
-js_Exit(duk_context* ctx)
-{
-	sphere_exit(false);
-}
-
-static duk_ret_t
-js_FilledCircle(duk_context* ctx)
-{
-	static ALLEGRO_VERTEX s_vbuf[128];
-
-	int x = duk_to_number(ctx, 0);
-	int y = duk_to_number(ctx, 1);
-	int radius = duk_to_number(ctx, 2);
-	color_t color = duk_require_sphere_color(ctx, 3);
-
-	double phi;
-	int    vcount;
-
-	int i;
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	vcount = fmin(radius, 126);
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(color);
-	for (i = 0; i < vcount; ++i) {
-		phi = 2 * M_PI * i / vcount;
-		s_vbuf[i + 1].x = x + cos(phi) * radius;
-		s_vbuf[i + 1].y = y - sin(phi) * radius;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(color);
-	}
-	s_vbuf[i + 1].x = x + cos(0) * radius;
-	s_vbuf[i + 1].y = y - sin(0) * radius;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(color);
-	galileo_reset();
-	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	return 0;
-}
-
-static duk_ret_t
-js_FilledEllipse(duk_context* ctx)
-{
-	static ALLEGRO_VERTEX s_vbuf[128];
-
-	int x = trunc(duk_to_number(ctx, 0));
-	int y = trunc(duk_to_number(ctx, 1));
-	int rx = trunc(duk_to_number(ctx, 2));
-	int ry = trunc(duk_to_number(ctx, 3));
-	color_t color = duk_require_sphere_color(ctx, 4);
-
-	double phi;
-	int    vcount;
-
-	int i;
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(color);
-	for (i = 0; i < vcount; ++i) {
-		phi = 2 * M_PI * i / vcount;
-		s_vbuf[i + 1].x = x + cos(phi) * rx;
-		s_vbuf[i + 1].y = y - sin(phi) * ry;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(color);
-	}
-	s_vbuf[i + 1].x = x + cos(0) * rx;
-	s_vbuf[i + 1].y = y - sin(0) * ry;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(color);
-	galileo_reset();
-	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	return 0;
-}
-
-static duk_ret_t
-js_FlipScreen(duk_context* ctx)
-{
-	screen_flip(g_screen, g_framerate);
-	return 0;
-}
-
-static duk_ret_t
-js_GarbageCollect(duk_context* ctx)
-{
-	duk_gc(ctx, 0x0);
-	duk_gc(ctx, 0x0);
-	return 0;
-}
-
-static duk_ret_t
-js_GrabImage(duk_context* ctx)
-{
-	image_t* image;
-	int      height;
-	int      width;
-	int      x;
-	int      y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	width = duk_to_int(ctx, 2);
-	height = duk_to_int(ctx, 3);
-
-	if (!(image = screen_grab(g_screen, x, y, width, height)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't grab screen image");
-	duk_push_class_obj(ctx, "ssImage", image);
-	return 1;
-}
-
-static duk_ret_t
-js_GrabSurface(duk_context* ctx)
-{
-	image_t* image;
-	int      height;
-	int      width;
-	int      x;
-	int      y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	width = duk_to_int(ctx, 2);
-	height = duk_to_int(ctx, 3);
-
-	if (!(image = screen_grab(g_screen, x, y, width, height)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't grab screen image");
-	duk_push_class_obj(ctx, "ssSurface", image);
-	return 1;
-}
-
-static duk_ret_t
-js_GradientCircle(duk_context* ctx)
-{
-	static ALLEGRO_VERTEX s_vbuf[128];
-
-	color_t inner_color;
-	int     num_verts;
-	color_t outer_color;
-	double  phi;
-	float   radius;
-	float   x;
-	float   y;
-
-	int i;
-
-	x = trunc(duk_to_number(ctx, 0));
-	y = trunc(duk_to_number(ctx, 1));
-	radius = trunc(duk_to_number(ctx, 2));
-	inner_color = duk_require_sphere_color(ctx, 3);
-	outer_color = duk_require_sphere_color(ctx, 4);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	num_verts = fmin(radius, 126);
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(inner_color);
-	for (i = 0; i < num_verts; ++i) {
-		phi = 2 * M_PI * i / num_verts;
-		s_vbuf[i + 1].x = x + cos(phi) * radius;
-		s_vbuf[i + 1].y = y - sin(phi) * radius;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(outer_color);
-	}
-	s_vbuf[i + 1].x = x + cos(0) * radius;
-	s_vbuf[i + 1].y = y - sin(0) * radius;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(outer_color);
-	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	return 0;
-}
-
-static duk_ret_t
-js_GradientEllipse(duk_context* ctx)
-{
-	static ALLEGRO_VERTEX s_vbuf[128];
-
-	color_t inner_color;
-	int     num_verts;
-	color_t outer_color;
-	double  phi;
-	float   rx, ry;
-	float   x;
-	float   y;
-
-	int i;
-
-	x = trunc(duk_to_number(ctx, 0));
-	y = trunc(duk_to_number(ctx, 1));
-	rx = trunc(duk_to_number(ctx, 2));
-	ry = trunc(duk_to_number(ctx, 3));
-	inner_color = duk_require_sphere_color(ctx, 4);
-	outer_color = duk_require_sphere_color(ctx, 5);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	num_verts = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(inner_color);
-	for (i = 0; i < num_verts; ++i) {
-		phi = 2 * M_PI * i / num_verts;
-		s_vbuf[i + 1].x = x + cos(phi) * rx;
-		s_vbuf[i + 1].y = y - sin(phi) * ry;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(outer_color);
-	}
-	s_vbuf[i + 1].x = x + cos(0) * rx;
-	s_vbuf[i + 1].y = y - sin(0) * ry;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(outer_color);
-	galileo_reset();
-	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	return 0;
-}
-
-static duk_ret_t
-js_GradientLine(duk_context* ctx)
-{
-	color_t color1;
-	color_t color2;
-	float   length;
-	float   tx, ty;
-	float   x1;
-	float   x2;
-	float   y1;
-	float   y2;
-	
-	x1 = trunc(duk_to_number(ctx, 0)) + 0.5;
-	y1 = trunc(duk_to_number(ctx, 1)) + 0.5;
-	x2 = trunc(duk_to_number(ctx, 2)) + 0.5;
-	y2 = trunc(duk_to_number(ctx, 3)) + 0.5;
-	color1 = duk_require_sphere_color(ctx, 4);
-	color2 = duk_require_sphere_color(ctx, 5);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	length = hypotf(x2 - x1, y2 - y1);
-	tx = 0.5 * (y2 - y1) / length;
-	ty = 0.5 * -(x2 - x1) / length;
-	ALLEGRO_VERTEX verts[] = {
-		{ x1 + tx, y1 + ty, 0, 0, 0, nativecolor(color1) },
-		{ x1 - tx, y1 - ty, 0, 0, 0, nativecolor(color1) },
-		{ x2 - tx, y2 - ty, 0, 0, 0, nativecolor(color2) },
-		{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) },
-	};
-	galileo_reset();
-	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
-	return 0;
-}
-
-static duk_ret_t
-js_GradientRectangle(duk_context* ctx)
-{
-	color_t color_ul;
-	color_t color_ur;
-	color_t color_lr;
-	color_t color_ll;
-	float   x1, x2;
-	float   y1, y2;
-	
-	x1 = trunc(duk_to_number(ctx, 0));
-	y1 = trunc(duk_to_number(ctx, 1));
-	x2 = x1 + trunc(duk_to_number(ctx, 2));
-	y2 = y1 + trunc(duk_to_number(ctx, 3));
-	color_ul = duk_require_sphere_color(ctx, 4);
-	color_ur = duk_require_sphere_color(ctx, 5);
-	color_lr = duk_require_sphere_color(ctx, 6);
-	color_ll = duk_require_sphere_color(ctx, 7);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	ALLEGRO_VERTEX verts[] = {
-		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
-		{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
-		{ x1, y2, 0, 0, 0, nativecolor(color_ll) },
-		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
-	};
-	galileo_reset();
-	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	return 0;
-}
-
-static duk_ret_t
-js_GradientTriangle(duk_context* ctx)
-{
-	color_t color1, color2, color3;
-	float   x1, x2, x3;
-	float   y1, y2, y3;
-
-	x1 = trunc(duk_to_number(ctx, 0));
-	y1 = trunc(duk_to_number(ctx, 1));
-	x2 = trunc(duk_to_number(ctx, 2));
-	y2 = trunc(duk_to_number(ctx, 3));
-	x3 = trunc(duk_to_number(ctx, 4));
-	y3 = trunc(duk_to_number(ctx, 5));
-	color1 = duk_require_sphere_color(ctx, 6);
-	color2 = duk_require_sphere_color(ctx, 7);
-	color3 = duk_require_sphere_color(ctx, 8);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	ALLEGRO_VERTEX verts[] = {
-		{ x1, y1, 0, 0, 0, nativecolor(color1) },
-		{ x2, y2, 0, 0, 0, nativecolor(color2) },
-		{ x3, y3, 0, 0, 0, nativecolor(color3) },
-	};
-	galileo_reset();
-	al_draw_prim(verts, NULL, NULL, 0, 3, ALLEGRO_PRIM_TRIANGLE_LIST);
-	return 0;
-}
-
-static duk_ret_t
-js_HashByteArray(duk_context* ctx)
-{
-	bytearray_t* array;
-	void*        data;
-	size_t       size;
-	
-	array = duk_require_class_obj(ctx, 0, "ssByteArray");
-
-	data = bytearray_buffer(array);
-	size = bytearray_len(array);
-	duk_push_string(ctx, md5sum(data, size));
-	return 1;
-}
-
-static duk_ret_t
-js_HashFromFile(duk_context* ctx)
-{
-	void*       data;
-	size_t      file_size;
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, "other", true, false);
-
-	if (!(data = sfs_fslurp(g_fs, filename, NULL, &file_size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file");
-	duk_push_string(ctx, md5sum(data, file_size));
-	return 1;
-}
-
-static duk_ret_t
-js_InflateByteArray(duk_context* ctx)
-{
-	bytearray_t*  array;
-	int           max_size;
-	bytearray_t*  new_array;
-	int           num_args;
-	
-	num_args = duk_get_top(ctx);
-	array = duk_require_class_obj(ctx, 0, "ssByteArray");
-	max_size = num_args >= 2 ? duk_to_int(ctx, 1) : 0;
-
-	if (max_size < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "negative buffer size");
-	if (!(new_array = bytearray_inflate(array, max_size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't inflate byte array");
-	duk_push_sphere_bytearray(ctx, new_array);
-	return 1;
-}
-
-static duk_ret_t
-js_Line(duk_context* ctx)
-{
-	color_t color;
-	float   x1, x2;
-	float   y1, y2;
-	
-	x1 = trunc(duk_to_number(ctx, 0)) + 0.5;
-	y1 = trunc(duk_to_number(ctx, 1)) + 0.5;
-	x2 = trunc(duk_to_number(ctx, 2)) + 0.5;
-	y2 = trunc(duk_to_number(ctx, 3)) + 0.5;
-	color = duk_require_sphere_color(ctx, 4);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
-	return 0;
-}
-
-static duk_ret_t
-js_LineSeries(duk_context* ctx)
-{
-	color_t         color;
-	int             num_args;
-	size_t          num_points;
-	int             type;
-	int             x, y;
-	ALLEGRO_VERTEX* vertices;
-	ALLEGRO_COLOR   vtx_color;
-
-	size_t i;
-
-	num_args = duk_get_top(ctx);
-	color = duk_require_sphere_color(ctx, 1);
-	type = num_args >= 3 ? duk_to_int(ctx, 2) : LINE_MULTIPLE;
-
-	if (!duk_is_array(ctx, 0))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
-	duk_get_prop_string(ctx, 0, "length");
-	num_points = duk_get_uint(ctx, -1);
-	duk_pop(ctx);
-	if (num_points < 2)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "two or more vertices required");
-	if (num_points > INT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices");
-	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate vertex buffer");
-	vtx_color = nativecolor(color);
-	for (i = 0; i < num_points; ++i) {
-		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
-		duk_get_prop_string(ctx, -1, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
-		duk_pop(ctx);
-		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
-		vertices[i].color = vtx_color;
-	}
-	galileo_reset();
-	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
-		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
-		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
-		: ALLEGRO_PRIM_LINE_LIST
-	);
-	free(vertices);
-	return 0;
-}
-
-static duk_ret_t
-js_ListenOnPort(duk_context* ctx)
-{
-	int          port;
-	socket_v1_t* socket;
-	
-	port = duk_to_int(ctx, 0);
-
-	if (socket = socket_v1_new_server(port))
-		duk_push_class_obj(ctx, "ssSocket", socket);
-	else
-		duk_push_null(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_LoadAnimation(duk_context* ctx)
-{
-	animation_t* anim;
-	const char*  filename;
-
-	filename = duk_require_path(ctx, 0, "animations", true, false);
-	if (!(anim = animation_new(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load animation `%s`", filename);
-	duk_push_class_obj(ctx, "ssAnimation", anim);
-	return 1;
-}
-
-static duk_ret_t
-js_LoadFont(duk_context* ctx)
-{
-	const char* filename;
-	font_t*     font;
-
-	filename = duk_require_path(ctx, 0, "fonts", true, false);
-	if (!(font = font_load(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
-	duk_push_sphere_font(ctx, font);
-	font_free(font);
-	return 1;
-}
-
-static duk_ret_t
-js_LoadImage(duk_context* ctx)
-{
-	const char* filename;
-	image_t*    image;
-
-	filename = duk_require_path(ctx, 0, "images", true, false);
-	if (!(image = image_load(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
-	duk_push_class_obj(ctx, "ssImage", image);
-	return 1;
-}
-
-static duk_ret_t
-js_LoadSound(duk_context* ctx)
-{
-	const char* filename;
-	sound_t*    sound;
-
-	filename = duk_require_path(ctx, 0, "sounds", true, false);
-
-	if (!(sound = sound_new(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
-	duk_push_class_obj(ctx, "ssSound", sound);
-	return 1;
-}
-
-static duk_ret_t
-js_LoadSoundEffect(duk_context* ctx)
-{
-	const char* filename;
-	int         mode;
-	int         num_args;
-	sample_t*   sample;
-
-	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "sounds", true, false);
-	mode = num_args >= 2 ? duk_to_int(ctx, 1) : SE_SINGLE;
-
-	if (!(sample = sample_new(filename, mode == SE_MULTIPLE)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to load sound effect `%s`", filename);
-	duk_push_class_obj(ctx, "ssSoundEffect", sample);
-	return 1;
-}
-
-static duk_ret_t
-js_LoadSpriteset(duk_context* ctx)
-{
-	const char*  filename;
-	spriteset_t* spriteset;
-
-	filename = duk_require_path(ctx, 0, "spritesets", true, false);
-	if ((spriteset = spriteset_load(filename)) == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load spriteset `%s`", filename);
-	duk_push_sphere_spriteset(ctx, spriteset);
-	spriteset_free(spriteset);
-	return 1;
-}
-
-static duk_ret_t
-js_LoadSurface(duk_context* ctx)
-{
-	const char* filename;
-	image_t*    image;
-
-	filename = duk_require_path(ctx, 0, "images", true, false);
-	if (!(image = image_load(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
-	duk_push_class_obj(ctx, "ssSurface", image);
-	return 1;
-}
-
-static duk_ret_t
-js_LoadWindowStyle(duk_context* ctx)
-{
-	const char*    filename;
-	windowstyle_t* winstyle;
-
-	filename = duk_require_path(ctx, 0, "windowstyles", true, false);
-	if (!(winstyle = load_windowstyle(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load windowstyle `%s`", filename);
-	duk_push_sphere_windowstyle(ctx, winstyle);
-	free_windowstyle(winstyle);
-	return 1;
-}
-
-static duk_ret_t
-js_OpenAddress(duk_context* ctx)
-{
-	const char*  hostname;
-	int          port;
-	socket_v1_t* socket;
-	
-	hostname = duk_require_string(ctx, 0);
-	port = duk_to_int(ctx, 1);
-	
-	if (socket = socket_v1_new_client(hostname, port))
-		duk_push_class_obj(ctx, "ssSocket", socket);
-	else
-		duk_push_null(ctx);
-	return 1;
-}
-
-static duk_ret_t
-js_OpenFile(duk_context* ctx)
-{
-	kev_file_t* file;
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, "save", true, true);
-
-	if (!(file = kev_open(g_fs, filename, true)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s`", filename);
-	duk_push_class_obj(ctx, "ssFile", file);
-	return 1;
-}
-
-static duk_ret_t
-js_OpenLog(duk_context* ctx)
-{
-	const char* filename;
-	logger_t*   logger;
-
-	filename = duk_require_path(ctx, 0, "logs", true, true);
-	if (!(logger = logger_new(filename)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open log `%s`", filename);
-	duk_push_class_obj(ctx, "ssLogger", logger);
-	return 1;
-}
-
-static duk_ret_t
-js_OpenRawFile(duk_context* ctx)
-{
-	sfs_file_t* file;
-	const char* filename;
-	int         num_args;
-	bool        writable;
-
-	num_args = duk_get_top(ctx);
-	writable = num_args >= 2 ? duk_to_boolean(ctx, 1) : false;
-	filename = duk_require_path(ctx, 0, "other", true, writable);
-
-	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
-	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file for %s",
-			writable ? "write" : "read");
-	duk_push_class_obj(ctx, "ssRawFile", file);
-	return 1;
-}
-
-static duk_ret_t
-js_OutlinedCircle(duk_context* ctx)
-{
-	float x = trunc(duk_to_number(ctx, 0)) + 0.5;
-	float y = trunc(duk_to_number(ctx, 1)) + 0.5;
-	float radius = trunc(duk_to_number(ctx, 2));
-	color_t color = duk_require_sphere_color(ctx, 3);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
-	return 0;
-}
-
-static duk_ret_t
-js_OutlinedEllipse(duk_context* ctx)
-{
-	float x = duk_to_int(ctx, 0) + 0.5;
-	float y = duk_to_int(ctx, 1) + 0.5;
-	float rx = duk_to_int(ctx, 2);
-	float ry = duk_to_int(ctx, 3);
-	color_t color = duk_require_sphere_color(ctx, 4);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
-	return 0;
-}
-
-static duk_ret_t
-js_OutlinedRectangle(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	float x1 = duk_to_int(ctx, 0) + 0.5;
-	float y1 = duk_to_int(ctx, 1) + 0.5;
-	float x2 = x1 + duk_to_int(ctx, 2) - 1;
-	float y2 = y1 + duk_to_int(ctx, 3) - 1;
-	color_t color = duk_require_sphere_color(ctx, 4);
-	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
-	return 0;
-}
-
-static duk_ret_t
-js_OutlinedRoundRectangle(duk_context* ctx)
-{
-	int n_args = duk_get_top(ctx);
-	float x = duk_to_int(ctx, 0) + 0.5;
-	float y = duk_to_int(ctx, 1) + 0.5;
-	int w = duk_to_int(ctx, 2);
-	int h = duk_to_int(ctx, 3);
-	float radius = duk_to_number(ctx, 4);
-	color_t color = duk_require_sphere_color(ctx, 5);
-	int thickness = n_args >= 7 ? duk_to_int(ctx, 6) : 1;
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
-	return 0;
-}
-
-static duk_ret_t
-js_Point(duk_context* ctx)
-{
-	float x = duk_to_int(ctx, 0) + 0.5;
-	float y = duk_to_int(ctx, 1) + 0.5;
-	color_t color = duk_require_sphere_color(ctx, 2);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_pixel(x, y, nativecolor(color));
-	return 0;
-}
-
-static duk_ret_t
-js_PointSeries(duk_context* ctx)
-{
-	color_t color = duk_require_sphere_color(ctx, 1);
-
-	size_t          num_points;
-	int             x, y;
-	ALLEGRO_VERTEX* vertices;
-	ALLEGRO_COLOR   vtx_color;
-
-	size_t i;
-
-	if (!duk_is_array(ctx, 0))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "first argument must be an array");
-	duk_get_prop_string(ctx, 0, "length");
-	num_points = duk_get_uint(ctx, -1);
-	duk_pop(ctx);
-	if (num_points < 1)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "one or more vertices required");
-	if (num_points > INT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "too many vertices");
-	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate vertex buffer");
-	vtx_color = nativecolor(color);
-	for (i = 0; i < num_points; ++i) {
-		duk_get_prop_index(ctx, 0, (duk_uarridx_t)i);
-		duk_get_prop_string(ctx, -1, "x"); x = duk_to_int(ctx, -1); duk_pop(ctx);
-		duk_get_prop_string(ctx, -1, "y"); y = duk_to_int(ctx, -1); duk_pop(ctx);
-		duk_pop(ctx);
-		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
-		vertices[i].color = vtx_color;
-	}
-	galileo_reset();
-	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
-	free(vertices);
-	return 0;
-}
-
-static duk_ret_t
-js_Print(duk_context* ctx)
-{
-	int   num_items;
-	char* text;
-
-	num_items = duk_get_top(ctx);
-
-	// separate printed values with a space
-	duk_push_string(ctx, " ");
-	duk_insert(ctx, 0);
-	duk_join(ctx, num_items);
-
-	text = strnewf("%s", duk_get_string(ctx, -1));
-	debugger_log(text, PRINT_NORMAL, true);
-	return 0;
-}
-
-static duk_ret_t
-js_Rectangle(duk_context* ctx)
-{
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int w = duk_to_int(ctx, 2);
-	int h = duk_to_int(ctx, 3);
-	color_t color = duk_require_sphere_color(ctx, 4);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
-	return 0;
-}
-
-static duk_ret_t
-js_RemoveDirectory(duk_context* ctx)
-{
-	const char* name;
-
-	name = duk_require_path(ctx, 0, "save", true, true);
-	if (!sfs_rmdir(g_fs, name, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
-	return 0;
-}
-
-static duk_ret_t
-js_RemoveFile(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, "save", true, true);
-	if (!sfs_unlink(g_fs, filename, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file `%s`", filename);
-	return 0;
-}
-
-static duk_ret_t
-js_Rename(duk_context* ctx)
-{
-	const char* name1;
-	const char* name2;
-
-	name1 = duk_require_path(ctx, 0, "save", true, true);
-	name2 = duk_require_path(ctx, 1, "save", true, true);
-	if (!sfs_rename(g_fs, name1, name2, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
-	return 0;
-}
-
-static duk_ret_t
-js_RequireScript(duk_context* ctx)
-{
-	const char* filename;
-	bool        is_required;
-
-	filename = duk_require_path(ctx, 0, "scripts", true, false);
-	if (!sfs_fexist(g_fs, filename, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "RequireScript");
-	duk_get_prop_string(ctx, -1, filename);
-	is_required = duk_get_boolean(ctx, -1);
-	duk_pop(ctx);
-	if (!is_required) {
-		duk_push_true(ctx);
-		duk_put_prop_string(ctx, -2, filename);
-		if (!script_eval(filename, false))
-			duk_throw(ctx);
-	}
-	duk_pop_3(ctx);
-	return 0;
-}
-
-static duk_ret_t
-js_RequireSystemScript(duk_context* ctx)
-{
-	const char* filename = duk_require_string(ctx, 0);
-
-	bool is_required;
-	char path[SPHERE_PATH_MAX];
-
-	sprintf(path, "scripts/lib/%s", filename);
-	if (!sfs_fexist(g_fs, path, NULL))
-		sprintf(path, "#/scripts/%s", filename);
-	if (!sfs_fexist(g_fs, path, NULL))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
-
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "RequireScript");
-	duk_get_prop_string(ctx, -1, path);
-	is_required = duk_get_boolean(ctx, -1);
-	duk_pop(ctx);
-	if (!is_required) {
-		duk_push_true(ctx);
-		duk_put_prop_string(ctx, -2, path);
-		if (!script_eval(path, false))
-			duk_throw(ctx);
-	}
-	duk_pop_2(ctx);
-	return 0;
-}
-
-static duk_ret_t
-js_RestartGame(duk_context* ctx)
-{
-	sphere_restart();
-}
-
-static duk_ret_t
-js_RoundRectangle(duk_context* ctx)
-{
-	int x = duk_to_int(ctx, 0);
-	int y = duk_to_int(ctx, 1);
-	int w = duk_to_int(ctx, 2);
-	int h = duk_to_int(ctx, 3);
-	float radius = duk_to_number(ctx, 4);
-	color_t color = duk_require_sphere_color(ctx, 5);
-
-	if (screen_is_skipframe(g_screen))
-		return 0;
-	galileo_reset();
-	al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
-	return 0;
-}
-
-static duk_ret_t
 js_Triangle(duk_context* ctx)
 {
 	int x1 = duk_to_int(ctx, 0);
@@ -6208,6 +6199,15 @@ js_UnbindKey(duk_context* ctx)
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid key constant");
 	kb_bind_key(keycode, NULL, NULL);
+	return 0;
+}
+
+static duk_ret_t
+js_UpdateMapEngine(duk_context* ctx)
+{
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	map_engine_update();
 	return 0;
 }
 
@@ -6398,7 +6398,7 @@ js_ByteArray_concat(duk_context* ctx)
 	duk_push_this(ctx);
 	array[0] = duk_require_class_obj(ctx, -1, "ssByteArray");
 	array[1] = duk_require_class_obj(ctx, 0, "ssByteArray");
-	
+
 	if (!(new_array = bytearray_concat(array[0], array[1])))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to concatenate byte arrays");
 	duk_push_sphere_bytearray(ctx, new_array);
@@ -6709,7 +6709,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 
 	if (screen_is_skipframe(g_screen))
 		return 0;
-	
+
 	// render the text to a texture so we can scale it up.  not the most
 	// efficient way to do it, sure, but it gets the job done.
 	width = font_get_width(font, text);
@@ -6719,7 +6719,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 	al_set_target_bitmap(bitmap);
 	font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
 	al_set_target_bitmap(old_target);
-	
+
 	galileo_reset();
 	al_draw_scaled_bitmap(bitmap, 0, 0, width, height, x, y, width * scale, height * scale, 0x0);
 	al_destroy_bitmap(bitmap);
@@ -6822,7 +6822,7 @@ js_Font_setColorMask(duk_context* ctx)
 	duk_push_this(ctx);
 	font = duk_require_class_obj(ctx, -1, "ssFont");
 	mask = duk_require_sphere_color(ctx, 0);
-	
+
 	duk_push_sphere_color(ctx, mask);
 	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 	return 0;
@@ -6924,7 +6924,7 @@ js_Image_blitMask(duk_context* ctx)
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssImage");
-	
+
 	if (screen_is_skipframe(g_screen))
 		return 0;
 	galileo_reset();
@@ -7214,7 +7214,7 @@ js_RawFile_close(duk_context* ctx)
 	file = duk_require_class_obj(ctx, -1, "ssRawFile");
 	if (file == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file already closed");
-	
+
 	duk_set_class_ptr(ctx, -1, NULL);
 	sfs_fclose(file);
 	return 0;
@@ -7355,7 +7355,7 @@ js_Socket_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
-	
+
 	duk_set_class_ptr(ctx, -1, NULL);
 	socket_v1_free(socket);
 	return 1;
@@ -8241,7 +8241,7 @@ js_Surface_filledEllipse(duk_context* ctx)
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1);
-	
+
 	image_render_to(image, NULL);
 	use_sphere_blend_mode(blend_mode);
 	al_draw_filled_ellipse(x, y, rx, ry, nativecolor(color));
@@ -8405,7 +8405,7 @@ js_Surface_gradientRectangle(duk_context* ctx)
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_get_prop_string(ctx, -1, "\xFF" "blend_mode");
 	blend_mode = duk_get_int(ctx, -1);
-	
+
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
 		{ x2, y1, 0, 0, 0, nativecolor(color_ur) },
@@ -9074,10 +9074,10 @@ static duk_ret_t
 js_WindowStyle_getColorMask(duk_context* ctx)
 {
 	windowstyle_t* style;
-	
+
 	duk_push_this(ctx);
 	style = duk_require_class_obj(ctx, -1, "ssWindowStyle");
-	
+
 	duk_get_prop_string(ctx, -2, "\xFF" "color_mask");
 	return 1;
 }
