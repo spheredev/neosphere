@@ -923,7 +923,7 @@ duk_safe_event_loop(duk_context* ctx, void* udata)
 {
 	while (async_busy()) {
 		screen_flip(g_screen, s_framerate);
-		image_set_scissor(screen_backbuffer(g_screen), new_rect(0, 0, g_res_x, g_res_y));
+		image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, g_res_x, g_res_y));
 	}
 	return 0;
 }
@@ -1129,7 +1129,7 @@ static duk_ret_t
 js_screen_flip(duk_context* ctx)
 {
 	screen_flip(g_screen, s_framerate);
-	image_set_scissor(screen_backbuffer(g_screen), new_rect(0, 0, g_res_x, g_res_y));
+	image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, g_res_x, g_res_y));
 	return 0;
 }
 
@@ -3951,7 +3951,7 @@ js_Surface_clipTo(duk_context* ctx)
 	width = duk_require_int(ctx, 2);
 	height = duk_require_int(ctx, 3);
 
-	image_set_scissor(image, new_rect(x, y, x + width, y + height));
+	image_set_scissor(image, rect(x, y, x + width, y + height));
 	return 0;
 }
 

@@ -329,7 +329,7 @@ screen_flip(screen_t* it, int framerate)
 	if (!it->skip_frame) {
 		// disable clipping so we can clear the whole backbuffer.
 		scissor = image_get_scissor(it->backbuffer);
-		image_set_scissor(it->backbuffer, new_rect(0, 0, it->x_size, it->y_size));
+		image_set_scissor(it->backbuffer, rect(0, 0, it->x_size, it->y_size));
 		image_render_to(it->backbuffer, NULL);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		image_set_scissor(it->backbuffer, scissor);

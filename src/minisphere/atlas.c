@@ -27,7 +27,7 @@ atlas_new(int num_images, int max_width, int max_height)
 	atlas->pitch = ceil(sqrt(num_images));
 	atlas->max_width = max_width;
 	atlas->max_height = max_height;
-	atlas->size = new_rect(0, 0, atlas->pitch * atlas->max_width, atlas->pitch * atlas->max_height);
+	atlas->size = rect(0, 0, atlas->pitch * atlas->max_width, atlas->pitch * atlas->max_height);
 	if (!(atlas->image = image_new(atlas->size.x2, atlas->size.y2)))
 		goto on_error;
 	

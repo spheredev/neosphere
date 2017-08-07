@@ -159,7 +159,7 @@ vector_resize(vector_t* vector, int min_items)
 	if (min_items > vector->max_items)  // is the buffer too small?
 		new_max = min_items * 2;
 	else if (min_items < vector->max_items / 4)  // if item count drops below 1/4 of peak size, shrink the buffer
-		new_max = min_items * 2;
+		new_max = min_items;
 	if (new_max != vector->max_items) {
 		if (!(new_buffer = realloc(vector->buffer, new_max * vector->pitch)) && new_max > 0)
 			return false;

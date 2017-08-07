@@ -40,7 +40,7 @@ image_new(int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = new_rect(0, 0, image->width, image->height);
+	image->scissor_box = rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -63,7 +63,7 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = image_ref(parent);
-	image->scissor_box = new_rect(0, 0, image->width, image->height);
+	image->scissor_box = rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -87,7 +87,7 @@ image_clone(const image_t* src_image)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = new_rect(0, 0, image->width, image->height);
+	image->scissor_box = rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
@@ -134,7 +134,7 @@ image_load(const char* filename)
 	free(slurp);
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = new_rect(0, 0, image->width, image->height);
+	image->scissor_box = rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
@@ -178,7 +178,7 @@ image_read(sfs_file_t* file, int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = new_rect(0, 0, image->width, image->height);
+	image->scissor_box = rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -294,12 +294,12 @@ image_set_scissor(image_t* it, rect_t value)
 	
 	it->scissor_box = value;
 	if (it == s_last_image) {
-		bounds = new_rect(0, 0, it->width, it->height);
+		bounds = rect(0, 0, it->width, it->height);
 		if (!do_rects_intersect(value, bounds)) {
 			// workaround for Allegro bug: setting the clipping rectangle completely
 			// out of bounds will cause a GL_INVALID_VALUE error, leading to mysterious
 			// failures later.
-			value = new_rect(0, 0, 0, 0);
+			value = rect(0, 0, 0, 0);
 		}
 		al_set_clipping_rectangle(value.x1, value.y1, value.x2 - value.x1, value.y2 - value.y1);
 	}
@@ -567,13 +567,13 @@ image_render_to(image_t* it, transform_t* transform)
 
 	if (it != s_last_image) {
 		al_set_target_bitmap(it->bitmap);
-		bounds = new_rect(0, 0, it->width, it->height);
+		bounds = rect(0, 0, it->width, it->height);
 		clipping = it->scissor_box;
 		if (!do_rects_intersect(clipping, bounds)) {
 			// workaround for Allegro bug: setting the clipping rectangle completely
 			// out of bounds will cause a GL_INVALID_VALUE error, leading to mysterious
 			// failures later.
-			clipping = new_rect(0, 0, 0, 0);
+			clipping = rect(0, 0, 0, 0);
 		}
 		al_set_clipping_rectangle(clipping.x1, clipping.y1, clipping.x2 - clipping.x1, clipping.y2 - clipping.y1);
 		al_use_projection_transform(transform_matrix(it->transform));

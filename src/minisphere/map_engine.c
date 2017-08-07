@@ -13,176 +13,6 @@
 #include "vanilla.h"
 #include "vector.h"
 
-#define MAX_PLAYERS 4
-
-static duk_ret_t js_AddTrigger                   (duk_context* ctx);
-static duk_ret_t js_AddZone                      (duk_context* ctx);
-static duk_ret_t js_AreZonesAt                   (duk_context* ctx);
-static duk_ret_t js_AttachCamera                 (duk_context* ctx);
-static duk_ret_t js_AttachInput                  (duk_context* ctx);
-static duk_ret_t js_AttachPlayerInput            (duk_context* ctx);
-static duk_ret_t js_CallDefaultMapScript         (duk_context* ctx);
-static duk_ret_t js_CallDefaultPersonScript      (duk_context* ctx);
-static duk_ret_t js_CallMapScript                (duk_context* ctx);
-static duk_ret_t js_CallPersonScript             (duk_context* ctx);
-static duk_ret_t js_ChangeMap                    (duk_context* ctx);
-static duk_ret_t js_ClearPersonCommands          (duk_context* ctx);
-static duk_ret_t js_CreatePerson                 (duk_context* ctx);
-static duk_ret_t js_DestroyPerson                (duk_context* ctx);
-static duk_ret_t js_DetachCamera                 (duk_context* ctx);
-static duk_ret_t js_DetachInput                  (duk_context* ctx);
-static duk_ret_t js_DetachPlayerInput            (duk_context* ctx);
-static duk_ret_t js_DoesPersonExist              (duk_context* ctx);
-static duk_ret_t js_ExecuteTrigger               (duk_context* ctx);
-static duk_ret_t js_ExecuteZoneScript            (duk_context* ctx);
-static duk_ret_t js_ExecuteZones                 (duk_context* ctx);
-static duk_ret_t js_ExitMapEngine                (duk_context* ctx);
-static duk_ret_t js_FollowPerson                 (duk_context* ctx);
-static duk_ret_t js_GetActingPerson              (duk_context* ctx);
-static duk_ret_t js_GetCameraPerson              (duk_context* ctx);
-static duk_ret_t js_GetCameraX                   (duk_context* ctx);
-static duk_ret_t js_GetCameraY                   (duk_context* ctx);
-static duk_ret_t js_GetCurrentMap                (duk_context* ctx);
-static duk_ret_t js_GetCurrentPerson             (duk_context* ctx);
-static duk_ret_t js_GetCurrentTrigger            (duk_context* ctx);
-static duk_ret_t js_GetCurrentZone               (duk_context* ctx);
-static duk_ret_t js_GetInputPerson               (duk_context* ctx);
-static duk_ret_t js_GetLayerHeight               (duk_context* ctx);
-static duk_ret_t js_GetLayerMask                 (duk_context* ctx);
-static duk_ret_t js_GetLayerName                 (duk_context* ctx);
-static duk_ret_t js_GetLayerWidth                (duk_context* ctx);
-static duk_ret_t js_GetMapEngineFrameRate        (duk_context* ctx);
-static duk_ret_t js_GetNextAnimatedTile          (duk_context* ctx);
-static duk_ret_t js_GetNumLayers                 (duk_context* ctx);
-static duk_ret_t js_GetNumTiles                  (duk_context* ctx);
-static duk_ret_t js_GetNumTriggers               (duk_context* ctx);
-static duk_ret_t js_GetNumZones                  (duk_context* ctx);
-static duk_ret_t js_GetObstructingPerson         (duk_context* ctx);
-static duk_ret_t js_GetObstructingTile           (duk_context* ctx);
-static duk_ret_t js_GetPersonAngle               (duk_context* ctx);
-static duk_ret_t js_GetPersonBase                (duk_context* ctx);
-static duk_ret_t js_GetPersonData                (duk_context* ctx);
-static duk_ret_t js_GetPersonDirection           (duk_context* ctx);
-static duk_ret_t js_GetPersonFollowDistance      (duk_context* ctx);
-static duk_ret_t js_GetPersonFollowers           (duk_context* ctx);
-static duk_ret_t js_GetPersonFrame               (duk_context* ctx);
-static duk_ret_t js_GetPersonFrameNext           (duk_context* ctx);
-static duk_ret_t js_GetPersonFrameRevert         (duk_context* ctx);
-static duk_ret_t js_GetPersonIgnoreList          (duk_context* ctx);
-static duk_ret_t js_GetPersonLayer               (duk_context* ctx);
-static duk_ret_t js_GetPersonLeader              (duk_context* ctx);
-static duk_ret_t js_GetPersonList                (duk_context* ctx);
-static duk_ret_t js_GetPersonMask                (duk_context* ctx);
-static duk_ret_t js_GetPersonOffsetX             (duk_context* ctx);
-static duk_ret_t js_GetPersonOffsetY             (duk_context* ctx);
-static duk_ret_t js_GetPersonSpeedX              (duk_context* ctx);
-static duk_ret_t js_GetPersonSpeedY              (duk_context* ctx);
-static duk_ret_t js_GetPersonSpriteset           (duk_context* ctx);
-static duk_ret_t js_GetPersonValue               (duk_context* ctx);
-static duk_ret_t js_GetPersonX                   (duk_context* ctx);
-static duk_ret_t js_GetPersonY                   (duk_context* ctx);
-static duk_ret_t js_GetPersonXFloat              (duk_context* ctx);
-static duk_ret_t js_GetPersonYFloat              (duk_context* ctx);
-static duk_ret_t js_GetTalkActivationButton      (duk_context* ctx);
-static duk_ret_t js_GetTalkActivationKey         (duk_context* ctx);
-static duk_ret_t js_GetTalkDistance              (duk_context* ctx);
-static duk_ret_t js_GetTile                      (duk_context* ctx);
-static duk_ret_t js_GetTileDelay                 (duk_context* ctx);
-static duk_ret_t js_GetTileHeight                (duk_context* ctx);
-static duk_ret_t js_GetTileImage                 (duk_context* ctx);
-static duk_ret_t js_GetTileName                  (duk_context* ctx);
-static duk_ret_t js_GetTileSurface               (duk_context* ctx);
-static duk_ret_t js_GetTileWidth                 (duk_context* ctx);
-static duk_ret_t js_GetTriggerLayer              (duk_context* ctx);
-static duk_ret_t js_GetTriggerX                  (duk_context* ctx);
-static duk_ret_t js_GetTriggerY                  (duk_context* ctx);
-static duk_ret_t js_GetZoneHeight                (duk_context* ctx);
-static duk_ret_t js_GetZoneLayer                 (duk_context* ctx);
-static duk_ret_t js_GetZoneSteps                 (duk_context* ctx);
-static duk_ret_t js_GetZoneWidth                 (duk_context* ctx);
-static duk_ret_t js_GetZoneX                     (duk_context* ctx);
-static duk_ret_t js_GetZoneY                     (duk_context* ctx);
-static duk_ret_t js_IgnorePersonObstructions     (duk_context* ctx);
-static duk_ret_t js_IgnoreTileObstructions       (duk_context* ctx);
-static duk_ret_t js_IsCameraAttached             (duk_context* ctx);
-static duk_ret_t js_IsCommandQueueEmpty          (duk_context* ctx);
-static duk_ret_t js_IsIgnoringPersonObstructions (duk_context* ctx);
-static duk_ret_t js_IsIgnoringTileObstructions   (duk_context* ctx);
-static duk_ret_t js_IsInputAttached              (duk_context* ctx);
-static duk_ret_t js_IsLayerReflective            (duk_context* ctx);
-static duk_ret_t js_IsLayerVisible               (duk_context* ctx);
-static duk_ret_t js_IsMapEngineRunning           (duk_context* ctx);
-static duk_ret_t js_IsPersonObstructed           (duk_context* ctx);
-static duk_ret_t js_IsPersonVisible              (duk_context* ctx);
-static duk_ret_t js_IsTriggerAt                  (duk_context* ctx);
-static duk_ret_t js_MapEngine                    (duk_context* ctx);
-static duk_ret_t js_MapToScreenX                 (duk_context* ctx);
-static duk_ret_t js_MapToScreenY                 (duk_context* ctx);
-static duk_ret_t js_QueuePersonCommand           (duk_context* ctx);
-static duk_ret_t js_QueuePersonScript            (duk_context* ctx);
-static duk_ret_t js_RemoveTrigger                (duk_context* ctx);
-static duk_ret_t js_RemoveZone                   (duk_context* ctx);
-static duk_ret_t js_RenderMap                    (duk_context* ctx);
-static duk_ret_t js_ReplaceTilesOnLayer          (duk_context* ctx);
-static duk_ret_t js_ScreenToMapX                 (duk_context* ctx);
-static duk_ret_t js_ScreenToMapY                 (duk_context* ctx);
-static duk_ret_t js_SetCameraX                   (duk_context* ctx);
-static duk_ret_t js_SetCameraY                   (duk_context* ctx);
-static duk_ret_t js_SetColorMask                 (duk_context* ctx);
-static duk_ret_t js_SetDefaultMapScript          (duk_context* ctx);
-static duk_ret_t js_SetDefaultPersonScript       (duk_context* ctx);
-static duk_ret_t js_SetDelayScript               (duk_context* ctx);
-static duk_ret_t js_SetLayerHeight               (duk_context* ctx);
-static duk_ret_t js_SetLayerMask                 (duk_context* ctx);
-static duk_ret_t js_SetLayerReflective           (duk_context* ctx);
-static duk_ret_t js_SetLayerRenderer             (duk_context* ctx);
-static duk_ret_t js_SetLayerSize                 (duk_context* ctx);
-static duk_ret_t js_SetLayerVisible              (duk_context* ctx);
-static duk_ret_t js_SetLayerWidth                (duk_context* ctx);
-static duk_ret_t js_SetMapEngineFrameRate        (duk_context* ctx);
-static duk_ret_t js_SetNextAnimatedTile          (duk_context* ctx);
-static duk_ret_t js_SetPersonAngle               (duk_context* ctx);
-static duk_ret_t js_SetPersonData                (duk_context* ctx);
-static duk_ret_t js_SetPersonDirection           (duk_context* ctx);
-static duk_ret_t js_SetPersonFollowDistance      (duk_context* ctx);
-static duk_ret_t js_SetPersonFrame               (duk_context* ctx);
-static duk_ret_t js_SetPersonFrameNext           (duk_context* ctx);
-static duk_ret_t js_SetPersonFrameRevert         (duk_context* ctx);
-static duk_ret_t js_SetPersonIgnoreList          (duk_context* ctx);
-static duk_ret_t js_SetPersonLayer               (duk_context* ctx);
-static duk_ret_t js_SetPersonMask                (duk_context* ctx);
-static duk_ret_t js_SetPersonOffsetX             (duk_context* ctx);
-static duk_ret_t js_SetPersonOffsetY             (duk_context* ctx);
-static duk_ret_t js_SetPersonScaleAbsolute       (duk_context* ctx);
-static duk_ret_t js_SetPersonScaleFactor         (duk_context* ctx);
-static duk_ret_t js_SetPersonScript              (duk_context* ctx);
-static duk_ret_t js_SetPersonSpeed               (duk_context* ctx);
-static duk_ret_t js_SetPersonSpeedXY             (duk_context* ctx);
-static duk_ret_t js_SetPersonSpriteset           (duk_context* ctx);
-static duk_ret_t js_SetPersonValue               (duk_context* ctx);
-static duk_ret_t js_SetPersonVisible             (duk_context* ctx);
-static duk_ret_t js_SetPersonX                   (duk_context* ctx);
-static duk_ret_t js_SetPersonXYFloat             (duk_context* ctx);
-static duk_ret_t js_SetPersonY                   (duk_context* ctx);
-static duk_ret_t js_SetRenderScript              (duk_context* ctx);
-static duk_ret_t js_SetTalkActivationButton      (duk_context* ctx);
-static duk_ret_t js_SetTalkActivationKey         (duk_context* ctx);
-static duk_ret_t js_SetTalkDistance              (duk_context* ctx);
-static duk_ret_t js_SetTile                      (duk_context* ctx);
-static duk_ret_t js_SetTileDelay                 (duk_context* ctx);
-static duk_ret_t js_SetTileImage                 (duk_context* ctx);
-static duk_ret_t js_SetTileName                  (duk_context* ctx);
-static duk_ret_t js_SetTileSurface               (duk_context* ctx);
-static duk_ret_t js_SetTriggerLayer              (duk_context* ctx);
-static duk_ret_t js_SetTriggerScript             (duk_context* ctx);
-static duk_ret_t js_SetTriggerXY                 (duk_context* ctx);
-static duk_ret_t js_SetUpdateScript              (duk_context* ctx);
-static duk_ret_t js_SetZoneDimensions            (duk_context* ctx);
-static duk_ret_t js_SetZoneLayer                 (duk_context* ctx);
-static duk_ret_t js_SetZoneScript                (duk_context* ctx);
-static duk_ret_t js_SetZoneSteps                 (duk_context* ctx);
-static duk_ret_t js_UpdateMapEngine              (duk_context* ctx);
-
 static const person_t*     s_acting_person;
 static mixer_t*            s_bgm_mixer = NULL;
 static person_t*           s_camera_person = NULL;
@@ -206,22 +36,23 @@ static lstring_t*          s_last_bgm_file = NULL;
 static struct map*         s_map = NULL;
 static sound_t*            s_map_bgm_stream = NULL;
 static char*               s_map_filename = NULL;
-static int                 s_max_delay_scripts = 0;
+static int                 s_max_deferreds = 0;
 static int                 s_max_persons = 0;
 static unsigned int        s_next_person_id = 0;
-static int                 s_num_delay_scripts = 0;
+static int                 s_num_deferreds = 0;
 static int                 s_num_persons = 0;
 static struct map_trigger* s_on_trigger = NULL;
 static unsigned int        s_queued_id = 0;
+static vector_t*           s_person_list = NULL;
 static struct player*      s_players;
 static script_t*           s_render_script = NULL;
 static int                 s_talk_button = 0;
 static int                 s_talk_distance = 8;
 static script_t*           s_update_script = NULL;
-static struct delay_script *s_delay_scripts = NULL;
+static struct deferred     *s_deferreds = NULL;
 static person_t*           *s_persons = NULL;
 
-struct delay_script
+struct deferred
 {
 	script_t* script;
 	int       frames_left;
@@ -305,6 +136,7 @@ struct person
 	int             frame;
 	bool            ignore_all_persons;
 	bool            ignore_all_tiles;
+	vector_t*       ignore_list;
 	bool            is_persistent;
 	bool            is_visible;
 	int             layer;
@@ -406,6 +238,7 @@ struct rmp_zone_header
 static bool                change_map           (const char* filename, bool preserve_persons);
 static void                command_person       (person_t* person, int command);
 static int                 compare_persons      (const void* a, const void* b);
+static void                detach_person        (const person_t* person);
 static bool                does_person_exist    (const person_t* person);
 static void                draw_persons         (int layer, bool is_flipped, int cam_x, int cam_y);
 static bool                enlarge_step_history (person_t* person, int new_size);
@@ -418,15 +251,11 @@ static void                map_screen_to_layer  (int layer, int camera_x, int ca
 static void                map_screen_to_map    (int camera_x, int camera_y, int* inout_x, int* inout_y);
 static void                process_map_input    (void);
 static void                record_step          (person_t* person);
-static void                render_map           (void);
 static void                reset_persons        (bool keep_existing);
-static void                set_person_direction (person_t* person, const char* direction);
 static void                set_person_name      (person_t* person, const char* name);
 static void                sort_persons         (void);
 static void                update_map_engine    (bool is_main_loop);
 static void                update_person        (person_t* person, bool* out_has_moved);
-
-static int duk_require_map_layer (duk_context* ctx, duk_idx_t index);
 
 void
 map_engine_init(void)
@@ -442,15 +271,15 @@ map_engine_init(void)
 	memset(s_def_person_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
 	s_map = NULL; s_map_filename = NULL;
 	s_camera_person = NULL;
-	s_players = calloc(MAX_PLAYERS, sizeof(struct player));
-	for (i = 0; i < MAX_PLAYERS; ++i)
+	s_players = calloc(PLAYER_MAX, sizeof(struct player));
+	for (i = 0; i < PLAYER_MAX; ++i)
 		s_players[i].is_talk_allowed = true;
 	s_current_trigger = -1;
 	s_current_zone = -1;
 	s_render_script = NULL;
 	s_update_script = NULL;
-	s_num_delay_scripts = s_max_delay_scripts = 0;
-	s_delay_scripts = NULL;
+	s_num_deferreds = s_max_deferreds = 0;
+	s_deferreds = NULL;
 	s_talk_button = 0;
 	s_is_map_running = false;
 	s_color_mask = color_new(0, 0, 0, 0);
@@ -470,9 +299,11 @@ map_engine_uninit(void)
 
 	console_log(1, "shutting down map engine subsystem");
 
-	for (i = 0; i < s_num_delay_scripts; ++i)
-		script_free(s_delay_scripts[i].script);
-	free(s_delay_scripts);
+	vector_free(s_person_list);
+	
+	for (i = 0; i < s_num_deferreds; ++i)
+		script_free(s_deferreds[i].script);
+	free(s_deferreds);
 	for (i = 0; i < MAP_SCRIPT_MAX; ++i)
 		script_free(s_def_map_scripts[i]);
 	script_free(s_update_script);
@@ -492,6 +323,26 @@ map_engine_uninit(void)
 }
 
 void
+map_engine_on_map_event(map_op_t op, script_t* script)
+{
+	script_t* old_script;
+
+	old_script = s_def_map_scripts[op];
+	s_def_map_scripts[op] = script_ref(script);
+	script_free(old_script);
+}
+
+void
+map_engine_on_person_event(person_op_t op, script_t* script)
+{
+	script_t* old_script;
+
+	old_script = s_def_person_scripts[op];
+	s_def_person_scripts[op] = script_ref(script);
+	script_free(old_script);
+}
+
+void
 map_engine_on_render(script_t* script)
 {
 	script_free(s_render_script);
@@ -503,6 +354,43 @@ map_engine_on_update(script_t* script)
 {
 	script_free(s_update_script);
 	s_update_script = script_ref(script);
+}
+
+const person_t*
+map_engine_acting_person(void)
+{
+	return s_acting_person;
+}
+
+const person_t*
+map_engine_active_person(void)
+{
+	return s_current_person;
+}
+
+int
+map_engine_active_trigger(void)
+{
+	return s_current_trigger;
+}
+
+int
+map_engine_active_zone(void)
+{
+	return s_current_zone;
+}
+
+vector_t*
+map_engine_persons(void)
+{
+	int i;
+	
+	if (s_person_list == NULL)
+		s_person_list = vector_new(sizeof(person_t*));
+	vector_clear(s_person_list);
+	for (i = 0; i < s_num_persons; ++i)
+		vector_push(s_person_list, &s_persons[i]);
+	return s_person_list;
 }
 
 bool
@@ -517,6 +405,36 @@ map_engine_get_framerate(void)
 	return s_framerate;
 }
 
+person_t*
+map_engine_get_player(player_id_t player_id)
+{
+	return s_players[player_id].person;
+}
+
+person_t*
+map_engine_get_subject(void)
+{
+	return s_camera_person;
+}
+
+int
+map_engine_get_talk_button(void)
+{
+	return s_talk_button;
+}
+
+int
+map_engine_get_talk_distance(void)
+{
+	return s_talk_distance;
+}
+
+int
+map_engine_get_talk_key(player_id_t player_id)
+{
+	return s_players[player_id].talk_key;
+}
+
 void
 map_engine_set_framerate(int framerate)
 {
@@ -524,23 +442,41 @@ map_engine_set_framerate(int framerate)
 }
 
 void
-map_engine_attach_camera(person_t* person)
+map_engine_set_player(player_id_t player_id, person_t* person)
+{
+	int i;
+
+	// detach person from any other players
+	for (i = 0; i < PLAYER_MAX; ++i) {
+		if (s_players[i].person == person)
+			s_players[i].person = NULL;
+	}
+
+	s_players[player_id].person = person;
+}
+
+void
+map_engine_set_subject(person_t* person)
 {
 	s_camera_person = person;
 }
 
 void
-map_engine_attach_player(player_id_t player, person_t* person)
+map_engine_set_talk_button(int button_id)
 {
-	int i;
-	
-	// detach person from any other players
-	for (i = 0; i < MAX_PLAYERS; ++i) {
-		if (s_players[i].person == person)
-			s_players[i].person = NULL;
-	}
-	
-	s_players[player].person = person;
+	s_talk_button = button_id;
+}
+
+void
+map_engine_set_talk_distance(int distance)
+{
+	s_talk_distance = distance;
+}
+
+void
+map_engine_set_talk_key(player_id_t player_id, int key)
+{
+	s_players[player_id].talk_key = key;
 }
 
 bool
@@ -550,9 +486,148 @@ map_engine_change_map(const char* filename)
 }
 
 void
+map_engine_defer(script_t* script, int num_frames)
+{
+	struct deferred* deferred;
+	
+	if (++s_num_deferreds > s_max_deferreds) {
+		s_max_deferreds = s_num_deferreds * 2;
+		s_deferreds = realloc(s_deferreds, s_max_deferreds * sizeof(struct deferred));
+	}
+	deferred = &s_deferreds[s_num_deferreds - 1];
+	deferred->script = script;
+	deferred->frames_left = num_frames;
+}
+
+void
+map_engine_draw_map(void)
+{
+	bool              is_repeating;
+	int               cell_x;
+	int               cell_y;
+	int               first_cell_x;
+	int               first_cell_y;
+	struct map_layer* layer;
+	int               layer_height;
+	int               layer_width;
+	ALLEGRO_COLOR     overlay_color;
+	int               tile_height;
+	int               tile_index;
+	int               tile_width;
+	int               off_x, off_y;
+
+	int x, y, z;
+
+	if (screen_is_skipframe(g_screen))
+		return;
+
+	// render map layers from bottom to top (+Z = up)
+	tileset_get_size(s_map->tileset, &tile_width, &tile_height);
+	for (z = 0; z < s_map->num_layers; ++z) {
+		layer = &s_map->layers[z];
+		is_repeating = s_map->is_repeating || layer->is_parallax;
+		layer_width = layer->width * tile_width;
+		layer_height = layer->height * tile_height;
+		off_x = 0; off_y = 0;
+		map_screen_to_layer(z, s_camera_x, s_camera_y, &off_x, &off_y);
+
+		// render person reflections if layer is reflective
+		al_hold_bitmap_drawing(true);
+		if (layer->is_reflective) {
+			if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
+				for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
+					draw_persons(z, true, off_x - x * layer_width, off_y - y * layer_height);
+			}
+			else {
+				draw_persons(z, true, off_x, off_y);
+			}
+		}
+
+		// render tiles, but only if the layer is visible
+		if (layer->is_visible) {
+			first_cell_x = off_x / tile_width;
+			first_cell_y = off_y / tile_height;
+			for (y = 0; y < g_res_y / tile_height + 2; ++y) for (x = 0; x < g_res_x / tile_width + 2; ++x) {
+				cell_x = is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
+				cell_y = is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
+				if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
+					continue;
+				tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
+				tileset_draw(s_map->tileset, layer->color_mask, x * tile_width - off_x % tile_width, y * tile_height - off_y % tile_height, tile_index);
+			}
+		}
+
+		// render persons
+		if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
+			for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
+				draw_persons(z, false, off_x - x * layer_width, off_y - y * layer_height);
+		}
+		else {
+			draw_persons(z, false, off_x, off_y);
+		}
+		al_hold_bitmap_drawing(false);
+
+		script_run(layer->render_script, false);
+	}
+
+	overlay_color = al_map_rgba(s_color_mask.r, s_color_mask.g, s_color_mask.b, s_color_mask.a);
+	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, overlay_color);
+	script_run(s_render_script, false);
+}
+
+void
 map_engine_exit(void)
 {
 	s_exiting = true;
+}
+
+void
+map_engine_fade_to(color_t color_mask, int num_frames)
+{
+	if (num_frames > 0) {
+		s_fade_color_to = color_mask;
+		s_fade_color_from = s_color_mask;
+		s_fade_frames = num_frames;
+		s_fade_progress = 0;
+	}
+	else {
+		s_color_mask = color_mask;
+		s_fade_color_to = s_fade_color_from = color_mask;
+		s_fade_progress = s_fade_frames = 0;
+	}
+}
+
+bool
+map_engine_start(const char* filename, int framerate)
+{
+	s_is_map_running = true;
+	s_exiting = false;
+	s_color_mask = color_new(0, 0, 0, 0);
+	s_fade_color_to = s_fade_color_from = s_color_mask;
+	s_fade_progress = s_fade_frames = 0;
+	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+	s_framerate = framerate;
+	if (!change_map(filename, true))
+		goto on_error;
+	while (!s_exiting) {
+		update_map_engine(true);
+		process_map_input();
+		map_engine_draw_map();
+		screen_flip(g_screen, s_framerate);
+	}
+	reset_persons(false);
+	s_is_map_running = false;
+	return true;
+
+on_error:
+	s_is_map_running = false;
+	return false;
+}
+
+void
+map_engine_update(void)
+{
+	update_map_engine(false);
 }
 
 rect_t
@@ -619,9 +694,8 @@ map_obsmap(int layer)
 point3_t
 map_origin(void)
 {
-	point3_t empty_point = { 0, 0, 0 };
-
-	return s_map ? s_map->origin : empty_point;
+	return s_map != NULL ? s_map->origin
+		: point3(0, 0, 0);
 }
 
 person_t*
@@ -684,6 +758,18 @@ map_trigger_at(int x, int y, int layer)
 	return -1;
 }
 
+point2_t
+map_xy_from_screen(point2_t screen_xy)
+{
+	int x;
+	int y;
+
+	x = screen_xy.x;
+	y = screen_xy.y;
+	map_screen_to_map(s_camera_x, s_camera_y, &x, &y);
+	return point2(x, y);
+}
+
 int
 map_zone_at(int x, int y, int layer, int which)
 {
@@ -701,13 +787,25 @@ map_zone_at(int x, int y, int layer, int which)
 	return -1;
 }
 
-bool
+point2_t
+map_get_camera_xy(void)
+{
+	return point2(s_camera_x, s_camera_y);
+}
+
+void
+map_set_camera_xy(point2_t where)
+{
+	s_camera_x = where.x;
+	s_camera_y = where.y;
+}
+
+void
 map_activate(map_op_t op, bool use_default)
 {
 	if (use_default)
 		script_run(s_def_map_scripts[op], false);
 	script_run(s_map->scripts[op], false);
-	return true;
 }
 
 bool
@@ -746,14 +844,9 @@ map_add_zone(rect_t bounds, int layer, script_t* script, int steps)
 }
 
 void
-map_detach_person(const person_t* person)
+map_call_default(map_op_t op)
 {
-	int i;
-
-	if (s_camera_person == person)
-		s_camera_person = NULL;
-	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person == person)
-		s_players[i].person = NULL;
+	script_run(s_def_map_scripts[op], false);
 }
 
 void
@@ -794,14 +887,43 @@ layer_on_render(int layer, script_t* script)
 	s_map->layers[layer].render_script = script_ref(script);
 }
 
+const char*
+layer_name(int layer)
+{
+	return lstr_cstr(s_map->layers[layer].name);
+}
+
 size2_t
 layer_size(int layer)
 {
-	size2_t size;
+	struct map_layer* layer_data;
 
-	size.width = s_map->layers[layer].width;
-	size.height = s_map->layers[layer].height;
-	return size;
+	layer_data = &s_map->layers[layer];
+	return size2(layer_data->width, layer_data->height);
+}
+
+point2_t
+layer_xy_from_screen(int layer, point2_t screen_xy)
+{
+	int x;
+	int y;
+
+	x = screen_xy.x;
+	y = screen_xy.y;
+	map_screen_to_layer(layer, s_camera_x, s_camera_y, &x, &y);
+	return point2(x, y);
+}
+
+color_t
+layer_get_color_mask(int layer)
+{
+	return s_map->layers[layer].color_mask;
+}
+
+bool
+layer_get_reflective(int layer)
+{
+	return s_map->layers[layer].is_reflective;
 }
 
 int
@@ -815,6 +937,24 @@ layer_get_tile(int layer, int x, int y)
 	return tile->tile_index;
 }
 
+bool
+layer_get_visible(int layer)
+{
+	return s_map->layers[layer].is_visible;
+}
+
+void
+layer_set_color_mask(int layer, color_t color)
+{
+	s_map->layers[layer].color_mask = color;
+}
+
+void
+layer_set_reflective(int layer, bool reflective)
+{
+	s_map->layers[layer].is_reflective = reflective;
+}
+
 void
 layer_set_tile(int layer, int x, int y, int tile_index)
 {
@@ -825,6 +965,30 @@ layer_set_tile(int layer, int x, int y, int tile_index)
 	tile = &s_map->layers[layer].tilemap[x + y * width];
 	tile->tile_index = tile_index;
 	tile->frames_left = tileset_get_delay(s_map->tileset, tile_index);
+}
+
+void
+layer_set_visible(int layer, bool visible)
+{
+	s_map->layers[layer].is_visible = visible;
+}
+
+void
+layer_replace_tiles(int layer, int old_index, int new_index)
+{
+	int              layer_h;
+	int              layer_w;
+	struct map_tile* tile;
+
+	int i_x, i_y;
+	
+	layer_w = s_map->layers[layer].width;
+	layer_h = s_map->layers[layer].height;
+	for (i_x = 0; i_x < layer_w; ++i_x) for (i_y = 0; i_y < layer_h; ++i_y) {
+		tile = &s_map->layers[layer].tilemap[i_x + i_y * layer_w];
+		if (tile->tile_index == old_index)
+			tile->tile_index = new_index;
+	}
 }
 
 bool
@@ -915,7 +1079,7 @@ person_new(const char* name, spriteset_t* spriteset, bool is_persistent, script_
 	person->id = s_next_person_id++;
 	person->sprite = spriteset_ref(spriteset);
 	set_person_name(person, name);
-	set_person_direction(person, spriteset_pose_name(spriteset, 0));
+	person_set_pose(person, spriteset_pose_name(spriteset, 0));
 	person->is_persistent = is_persistent;
 	person->is_visible = true;
 	person->x = origin.x;
@@ -947,7 +1111,7 @@ person_free(person_t* person)
 	}
 
 	// remove the person from the engine
-	map_detach_person(person);
+	detach_person(person);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i] == person) {
 			for (j = i; j < s_num_persons - 1; ++j)
@@ -957,14 +1121,28 @@ person_free(person_t* person)
 		}
 	}
 
+	vector_free(person->ignore_list);
+	
 	free_person(person);
 	sort_persons();
 }
 
-bool
-person_busy(const person_t* person)
+rect_t
+person_base(const person_t* person)
 {
-	return person->num_commands > 0 || person->leader != NULL;
+	rect_t base_rect;
+	int    base_x;
+	int    base_y;
+	double x;
+	double y;
+
+	base_rect = zoom_rect(spriteset_get_base(person->sprite), person->scale_x, person->scale_y);
+	person_get_xy(person, &x, &y, true);
+	base_x = x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
+	base_y = y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
+	base_rect.x1 += base_x; base_rect.x2 += base_x;
+	base_rect.y1 += base_y; base_rect.y2 += base_y;
+	return base_rect;
 }
 
 bool
@@ -984,6 +1162,22 @@ person_has_moved(const person_t* person)
 	return person->mv_x != 0 || person->mv_y != 0;
 }
 
+vector_t*
+person_ignore_list(person_t* person)
+{
+	// note: the returned vector is an array of C strings.  these should be treated
+	//       as const char*; in other words, don't free them!
+	
+	int i;
+
+	if (person->ignore_list != NULL)
+		person->ignore_list = vector_new(sizeof(const char*));
+	vector_clear(person->ignore_list);
+	for (i = 0; i < person->num_ignores; ++i)
+		vector_push(person->ignore_list, &person->ignores[i]);
+	return person->ignore_list;
+}
+
 bool
 person_ignored_by(const person_t* person, const person_t* other)
 {
@@ -1000,10 +1194,16 @@ person_ignored_by(const person_t* person, const person_t* other)
 	return false;
 }
 
+bool
+person_moving(const person_t* person)
+{
+	return person->num_commands > 0;
+}
+
 const char*
 person_name(const person_t* person)
 {
-	return person->name;
+	return person != NULL ? person->name : "";
 }
 
 bool
@@ -1022,7 +1222,7 @@ person_obstructed_at(const person_t* person, double x, double y, person_t** out_
 
 	map_normalize_xy(&x, &y, person->layer);
 	person_get_xyz(person, &cur_x, &cur_y, &layer, true);
-	my_base = translate_rect(person_get_base(person), x - cur_x, y - cur_y);
+	my_base = translate_rect(person_base(person), x - cur_x, y - cur_y);
 	if (out_obstructing_person != NULL)
 		*out_obstructing_person = NULL;
 	if (out_tile_index != NULL)
@@ -1037,7 +1237,7 @@ person_obstructed_at(const person_t* person, double x, double y, person_t** out_
 				continue;  // ignore persons not on the same layer
 			if (person_following(s_persons[i], person))
 				continue;  // ignore own followers
-			base = person_get_base(s_persons[i]);
+			base = person_base(s_persons[i]);
 			if (do_rects_intersect(my_base, base) && !person_ignored_by(person, s_persons[i])) {
 				is_obstructed = true;
 				if (out_obstructing_person)
@@ -1083,26 +1283,67 @@ person_get_angle(const person_t* person)
 	return person->theta;
 }
 
-rect_t
-person_get_base(const person_t* person)
-{
-	rect_t base_rect;
-	int    base_x, base_y;
-	double x, y;
-
-	base_rect = zoom_rect(spriteset_get_base(person->sprite), person->scale_x, person->scale_y);
-	person_get_xy(person, &x, &y, true);
-	base_x = x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
-	base_y = y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
-	base_rect.x1 += base_x; base_rect.x2 += base_x;
-	base_rect.y1 += base_y; base_rect.y2 += base_y;
-	return base_rect;
-}
-
 color_t
 person_get_color(const person_t* person)
 {
 	return person->mask;
+}
+
+int
+person_get_frame(const person_t* person)
+{
+	int num_frames;
+	
+	num_frames = spriteset_num_frames(person->sprite, person->direction);
+	return person->frame % num_frames;
+}
+
+int
+person_get_frame_delay(const person_t* person)
+{
+	return person->anim_frames;
+}
+
+bool
+person_get_ignore_persons(const person_t* person)
+{
+	return person->ignore_all_persons;
+}
+
+bool
+person_get_ignore_tiles(const person_t* person)
+{
+	return person->ignore_all_tiles;
+}
+
+int
+person_get_layer(const person_t* person)
+{
+	return person->layer;
+}
+
+person_t*
+person_get_leader(const person_t* person)
+{
+	return person->leader;
+}
+
+point2_t
+person_get_offset(const person_t* person)
+{
+	return point2(person->x_offset, person->y_offset);
+}
+
+const char*
+person_get_pose(const person_t* person)
+{
+	return person->direction;
+}
+
+int
+person_get_revert_delay(const person_t* person)
+{
+	return person->revert_delay;
 }
 
 void
@@ -1120,9 +1361,21 @@ person_get_speed(const person_t* person, double* out_x_speed, double* out_y_spee
 }
 
 spriteset_t*
-person_get_spriteset(person_t* person)
+person_get_spriteset(const person_t* person)
 {
 	return person->sprite;
+}
+
+int
+person_get_trailing(const person_t* person)
+{
+	return person->follow_distance;
+}
+
+bool
+person_get_visible(const person_t* person)
+{
+	return person->is_visible;
 }
 
 void
@@ -1157,17 +1410,92 @@ person_set_color(person_t* person, color_t mask)
 }
 
 void
+person_set_frame(person_t* person, int frame_index)
+{
+	int num_frames;
+	
+	num_frames = spriteset_num_frames(person->sprite, person->direction);
+	person->frame = (frame_index % num_frames + num_frames) % num_frames;
+	person->anim_frames = spriteset_frame_delay(person->sprite, person->direction, person->frame);
+	person->revert_frames = person->revert_delay;
+}
+
+void
+person_set_frame_delay(person_t* person, int num_frames)
+{
+	person->anim_frames = num_frames;
+	person->revert_frames = person->revert_delay;
+}
+
+void
+person_set_ignore_persons(person_t* person, bool ignoring)
+{
+	person->ignore_all_persons = ignoring;
+}
+
+void
+person_set_ignore_tiles (person_t* person, bool ignoring)
+{
+	person->ignore_all_tiles = ignoring;
+}
+
+void
+person_set_layer(person_t* person, int layer)
+{
+	person->layer = layer;
+}
+
+bool
+person_set_leader(person_t* person, person_t* leader, int distance)
+{
+	const person_t* node;
+
+	// prevent circular follower chains from forming
+	if (leader != NULL) {
+		node = leader;
+		do {
+			if (node == person)
+				return false;
+		} while (node = node->leader);
+	}
+
+	// add the person as a follower (or sever existing link if leader==NULL)
+	if (leader != NULL) {
+		if (!enlarge_step_history(leader, distance))
+			return false;
+		person->leader = leader;
+		person->follow_distance = distance;
+	}
+	person->leader = leader;
+	return true;
+}
+
+void
+person_set_offset(person_t* person, point2_t offset)
+{
+	person->x_offset = offset.x;
+	person->y_offset = offset.y;
+}
+
+void
+person_set_pose(person_t* person, const char* pose_name)
+{
+	person->direction = realloc(person->direction, (strlen(pose_name) + 1) * sizeof(char));
+	strcpy(person->direction, pose_name);
+}
+
+void
+person_set_revert_delay(person_t* person, int num_frames)
+{
+	person->revert_delay = num_frames;
+	person->revert_frames = num_frames;
+}
+
+void
 person_set_scale(person_t* person, double scale_x, double scale_y)
 {
 	person->scale_x = scale_x;
 	person->scale_y = scale_y;
-}
-
-void
-person_set_script(person_t* person, int type, script_t* script)
-{
-	script_free(person->scripts[type]);
-	person->scripts[type] = script;
 }
 
 void
@@ -1190,6 +1518,19 @@ person_set_spriteset(person_t* person, spriteset_t* spriteset)
 }
 
 void
+person_set_trailing(person_t* person, int distance)
+{
+	enlarge_step_history(person->leader, distance);
+	person->follow_distance = distance;
+}
+
+void
+person_set_visible(person_t* person, bool visible)
+{
+	person->is_visible = visible;
+}
+
+void
 person_set_xyz(person_t* person, double x, double y, int layer)
 {
 	person->x = x;
@@ -1198,7 +1539,14 @@ person_set_xyz(person_t* person, double x, double y, int layer)
 	sort_persons();
 }
 
-bool
+void
+person_on_event(person_t* person, int type, script_t* script)
+{
+	script_free(person->scripts[type]);
+	person->scripts[type] = script;
+}
+
+void
 person_activate(const person_t* person, person_op_t op, const person_t* acting_person, bool use_default)
 {
 	const person_t* last_acting;
@@ -1214,7 +1562,31 @@ person_activate(const person_t* person, person_op_t op, const person_t* acting_p
 		script_run(person->scripts[op], false);
 	s_acting_person = last_acting;
 	s_current_person = last_current;
-	return true;
+}
+
+void
+person_call_default(const person_t* person, person_op_t op, const person_t* acting_person)
+{
+	const person_t* last_acting;
+	const person_t* last_current;
+
+	last_acting = s_acting_person;
+	last_current = s_current_person;
+	s_acting_person = acting_person;
+	s_current_person = person;
+	script_run(s_def_person_scripts[op], false);
+	s_acting_person = last_acting;
+	s_current_person = last_current;
+}
+
+void
+person_clear_ignores(person_t* person)
+{
+	int i;
+
+	for (i = 0; i < person->num_ignores; ++i)
+		free(person->ignores[i]);
+	person->num_ignores = 0;
 }
 
 void
@@ -1238,33 +1610,18 @@ person_compile_script(person_t* person, int type, const lstring_t* codestring)
 	if (script_name == NULL)
 		return false;
 	script = script_new(codestring, "%s/%s/%s.js", map_filename(), person->name, script_name);
-	person_set_script(person, type, script);
+	person_on_event(person, type, script);
 	return true;
 }
 
-bool
-person_follow(person_t* person, person_t* leader, int distance)
+void
+person_ignore_name(person_t* person, const char* name)
 {
-	const person_t* node;
-
-	// prevent circular follower chains from forming
-	if (leader != NULL) {
-		node = leader;
-		do {
-			if (node == person)
-				return false;
-		} while (node = node->leader);
-	}
-
-	// add the person as a follower (or sever existing link if leader==NULL)
-	if (leader != NULL) {
-		if (!enlarge_step_history(leader, distance))
-			return false;
-		person->leader = leader;
-		person->follow_distance = distance;
-	}
-	person->leader = leader;
-	return true;
+	int index;
+	
+	index = person->num_ignores++;
+	person->ignores = realloc(person->ignores, person->num_ignores * sizeof(char*));
+	person->ignores[index] = strdup(name);
 }
 
 bool
@@ -1510,9 +1867,9 @@ change_map(const char* filename, bool preserve_persons)
 
 	// close out old map and prep for new one
 	free_map(s_map); free(s_map_filename);
-	for (i = 0; i < s_num_delay_scripts; ++i)
-		script_free(s_delay_scripts[i].script);
-	s_num_delay_scripts = 0;
+	for (i = 0; i < s_num_deferreds; ++i)
+		script_free(s_deferreds[i].script);
+	s_num_deferreds = 0;
 	s_map = map; s_map_filename = strdup(filename);
 	reset_persons(preserve_persons);
 
@@ -1595,28 +1952,28 @@ command_person(person_t* person, int command)
 		}
 		break;
 	case COMMAND_FACE_NORTH:
-		set_person_direction(person, "north");
+		person_set_pose(person, "north");
 		break;
 	case COMMAND_FACE_NORTHEAST:
-		set_person_direction(person, "northeast");
+		person_set_pose(person, "northeast");
 		break;
 	case COMMAND_FACE_EAST:
-		set_person_direction(person, "east");
+		person_set_pose(person, "east");
 		break;
 	case COMMAND_FACE_SOUTHEAST:
-		set_person_direction(person, "southeast");
+		person_set_pose(person, "southeast");
 		break;
 	case COMMAND_FACE_SOUTH:
-		set_person_direction(person, "south");
+		person_set_pose(person, "south");
 		break;
 	case COMMAND_FACE_SOUTHWEST:
-		set_person_direction(person, "southwest");
+		person_set_pose(person, "southwest");
 		break;
 	case COMMAND_FACE_WEST:
-		set_person_direction(person, "west");
+		person_set_pose(person, "west");
 		break;
 	case COMMAND_FACE_NORTHWEST:
-		set_person_direction(person, "northwest");
+		person_set_pose(person, "northwest");
 		break;
 	case COMMAND_MOVE_NORTH:
 		new_y = person->y - person->speed_y;
@@ -1669,6 +2026,19 @@ compare_persons(const void* a, const void* b)
 		return 1;
 	else
 		return p1->id - p2->id;
+}
+
+static void
+detach_person(const person_t* person)
+{
+	int i;
+
+	if (s_camera_person == person)
+		s_camera_person = NULL;
+	for (i = 0; i < PLAYER_MAX; ++i) {
+		if (s_players[i].person == person)
+			s_players[i].person = NULL;
+	}
 }
 
 static bool
@@ -1999,7 +2369,7 @@ load_map(const char* filename)
 			if (zone_hdr.layer < 0 || zone_hdr.layer >= rmp.num_layers)
 				zone_hdr.layer = 0;
 			zone.layer = zone_hdr.layer;
-			zone.bounds = new_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
+			zone.bounds = rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			zone.interval = zone_hdr.interval;
 			zone.steps_left = 0;
 			zone.script = script_new(script, "%s/zone%d", filename, vector_len(map->zones));
@@ -2095,7 +2465,7 @@ on_error:
 	return NULL;
 }
 
-static void
+void
 map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* inout_y)
 {
 	rect_t bounds;
@@ -2194,7 +2564,7 @@ process_map_input(void)
 	kb_clear_queue();
 
 	// check for player control of input persons, if there are any
-	for (i = 0; i < MAX_PLAYERS; ++i) {
+	for (i = 0; i < PLAYER_MAX; ++i) {
 		person = s_players[i].person;
 		if (person != NULL) {
 			if (kb_is_key_down(get_player_key(i, PLAYER_KEY_A))
@@ -2208,7 +2578,9 @@ process_map_input(void)
 			else // allow talking again only after key is released
 				s_players[i].is_talk_allowed = true;
 			mv_x = 0; mv_y = 0;
-			if (!person_busy(person)) {  // allow player control only if input person is idle
+			if (person->num_commands == 0 && person->leader == NULL) {
+				// allow player control only if the input person is idle and not being led around
+				// by someone else.
 				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_UP)) || joy_position(i, 1) <= -0.5)
 					mv_y = -1;
 				if (kb_is_key_down(get_player_key(i, PLAYER_KEY_RIGHT)) || joy_position(i, 0) >= 0.5)
@@ -2279,82 +2651,6 @@ record_step(person_t* person)
 	p_step->y = person->y;
 }
 
-static void
-render_map(void)
-{
-	bool              is_repeating;
-	int               cell_x;
-	int               cell_y;
-	int               first_cell_x;
-	int               first_cell_y;
-	struct map_layer* layer;
-	int               layer_height;
-	int               layer_width;
-	ALLEGRO_COLOR     overlay_color;
-	int               tile_height;
-	int               tile_index;
-	int               tile_width;
-	int               off_x, off_y;
-
-	int x, y, z;
-
-	if (screen_is_skipframe(g_screen))
-		return;
-
-	// render map layers from bottom to top (+Z = up)
-	tileset_get_size(s_map->tileset, &tile_width, &tile_height);
-	for (z = 0; z < s_map->num_layers; ++z) {
-		layer = &s_map->layers[z];
-		is_repeating = s_map->is_repeating || layer->is_parallax;
-		layer_width = layer->width * tile_width;
-		layer_height = layer->height * tile_height;
-		off_x = 0; off_y = 0;
-		map_screen_to_layer(z, s_camera_x, s_camera_y, &off_x, &off_y);
-
-		// render person reflections if layer is reflective
-		al_hold_bitmap_drawing(true);
-		if (layer->is_reflective) {
-			if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
-				for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
-					draw_persons(z, true, off_x - x * layer_width, off_y - y * layer_height);
-			}
-			else {
-				draw_persons(z, true, off_x, off_y);
-			}
-		}
-
-		// render tiles, but only if the layer is visible
-		if (layer->is_visible) {
-			first_cell_x = off_x / tile_width;
-			first_cell_y = off_y / tile_height;
-			for (y = 0; y < g_res_y / tile_height + 2; ++y) for (x = 0; x < g_res_x / tile_width + 2; ++x) {
-				cell_x = is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
-				cell_y = is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
-				if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
-					continue;
-				tile_index = layer->tilemap[cell_x + cell_y * layer->width].tile_index;
-				tileset_draw(s_map->tileset, layer->color_mask, x * tile_width - off_x % tile_width, y * tile_height - off_y % tile_height, tile_index);
-			}
-		}
-
-		// render persons
-		if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
-			for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
-				draw_persons(z, false, off_x - x * layer_width, off_y - y * layer_height);
-		}
-		else {
-			draw_persons(z, false, off_x, off_y);
-		}
-		al_hold_bitmap_drawing(false);
-
-		script_run(layer->render_script, false);
-	}
-
-	overlay_color = al_map_rgba(s_color_mask.r, s_color_mask.g, s_color_mask.b, s_color_mask.a);
-	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, overlay_color);
-	script_run(s_render_script, false);
-}
-
 void
 reset_persons(bool keep_existing)
 {
@@ -2388,13 +2684,6 @@ reset_persons(bool keep_existing)
 }
 
 static void
-set_person_direction(person_t* person, const char* direction)
-{
-	person->direction = realloc(person->direction, (strlen(direction) + 1) * sizeof(char));
-	strcpy(person->direction, direction);
-}
-
-static void
 set_person_name(person_t* person, const char* name)
 {
 	person->name = realloc(person->name, (strlen(name) + 1) * sizeof(char));
@@ -2420,8 +2709,8 @@ update_map_engine(bool in_main_loop)
 	int                 num_zone_steps;
 	script_t*           script_to_run;
 	int                 script_type;
-	double              start_x[MAX_PLAYERS];
-	double              start_y[MAX_PLAYERS];
+	double              start_x[PLAYER_MAX];
+	double              start_y[PLAYER_MAX];
 	int                 tile_w, tile_h;
 	struct map_trigger* trigger;
 	double              x, y, px, py;
@@ -2436,7 +2725,7 @@ update_map_engine(bool in_main_loop)
 
 	tileset_update(s_map->tileset);
 
-	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL)
+	for (i = 0; i < PLAYER_MAX; ++i) if (s_players[i].person != NULL)
 		person_get_xy(s_players[i].person, &start_x[i], &start_y[i], false);
 	for (i = 0; i < s_num_persons; ++i) {
 		if (s_persons[i]->leader != NULL)
@@ -2473,7 +2762,7 @@ update_map_engine(bool in_main_loop)
 	}
 
 	// if there are any input persons, check for trigger activation
-	for (i = 0; i < MAX_PLAYERS; ++i) if (s_players[i].person != NULL) {
+	for (i = 0; i < PLAYER_MAX; ++i) if (s_players[i].person != NULL) {
 		// did we step on a trigger or move to a new one?
 		person_get_xyz(s_players[i].person, &x, &y, &layer, true);
 		trigger = get_trigger_at(x, y, layer, &index);
@@ -2490,7 +2779,7 @@ update_map_engine(bool in_main_loop)
 	// update any zones occupied by the input person
 	// note: a zone's step count is in reality a pixel count, so a zone
 	//       may be updated multiple times in a single frame.
-	for (k = 0; k < MAX_PLAYERS; ++k) if (s_players[k].person != NULL) {
+	for (k = 0; k < PLAYER_MAX; ++k) if (s_players[k].person != NULL) {
 		person_get_xy(s_players[k].person, &x, &y, false);
 		px = abs(x - start_x[k]);
 		py = abs(y - start_y[k]);
@@ -2509,14 +2798,14 @@ update_map_engine(bool in_main_loop)
 		}
 	}
 
-	// check if there are any delay scripts due to run this frame
+	// check if there are any deferred scripts due to run this frame
 	// and run the ones that are
-	for (i = 0; i < s_num_delay_scripts; ++i) {
-		if (s_delay_scripts[i].frames_left-- <= 0) {
-			script_to_run = s_delay_scripts[i].script;
-			for (j = i; j < s_num_delay_scripts - 1; ++j)
-				s_delay_scripts[j] = s_delay_scripts[j + 1];
-			--s_num_delay_scripts;
+	for (i = 0; i < s_num_deferreds; ++i) {
+		if (s_deferreds[i].frames_left-- <= 0) {
+			script_to_run = s_deferreds[i].script;
+			for (j = i; j < s_num_deferreds - 1; ++j)
+				s_deferreds[j] = s_deferreds[j + 1];
+			--s_num_deferreds;
 			script_run(script_to_run, false);
 			script_free(script_to_run);
 			--i;
@@ -2597,7 +2886,7 @@ update_person(person_t* person, bool* out_has_moved)
 
 	// check that the person didn't mysteriously disappear...
 	if (!does_person_exist(person))
-		return;  // they probably got eaten by a hunger-pig or something.
+		return;  // they probably got eaten by a pig.
 
 	// if the person's position changed, record it in their step history
 	*out_has_moved = person_has_moved(person);
@@ -2611,3116 +2900,4 @@ update_person(person_t* person, bool* out_has_moved)
 		update_person(s_persons[i], &has_moved);
 		*out_has_moved |= has_moved;
 	}
-}
-
-void
-init_map_engine_api(duk_context* ctx)
-{
-	duk_push_global_stash(ctx);
-	duk_push_object(ctx);
-	duk_put_prop_string(ctx, -2, "personData");
-	duk_pop(ctx);
-
-	api_define_function(ctx, NULL, "AddTrigger", js_AddTrigger);
-	api_define_function(ctx, NULL, "AddZone", js_AddZone);
-	api_define_function(ctx, NULL, "AreZonesAt", js_AreZonesAt);
-	api_define_function(ctx, NULL, "AttachCamera", js_AttachCamera);
-	api_define_function(ctx, NULL, "AttachInput", js_AttachInput);
-	api_define_function(ctx, NULL, "AttachPlayerInput", js_AttachPlayerInput);
-	api_define_function(ctx, NULL, "CallDefaultMapScript", js_CallDefaultMapScript);
-	api_define_function(ctx, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
-	api_define_function(ctx, NULL, "CallMapScript", js_CallMapScript);
-	api_define_function(ctx, NULL, "CallPersonScript", js_CallPersonScript);
-	api_define_function(ctx, NULL, "ChangeMap", js_ChangeMap);
-	api_define_function(ctx, NULL, "ClearPersonCommands", js_ClearPersonCommands);
-	api_define_function(ctx, NULL, "CreatePerson", js_CreatePerson);
-	api_define_function(ctx, NULL, "DestroyPerson", js_DestroyPerson);
-	api_define_function(ctx, NULL, "DetachCamera", js_DetachCamera);
-	api_define_function(ctx, NULL, "DetachInput", js_DetachInput);
-	api_define_function(ctx, NULL, "DetachPlayerInput", js_DetachPlayerInput);
-	api_define_function(ctx, NULL, "DoesPersonExist", js_DoesPersonExist);
-	api_define_function(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
-	api_define_function(ctx, NULL, "ExecuteZoneScript", js_ExecuteZoneScript);
-	api_define_function(ctx, NULL, "ExecuteZones", js_ExecuteZones);
-	api_define_function(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
-	api_define_function(ctx, NULL, "FollowPerson", js_FollowPerson);
-	api_define_function(ctx, NULL, "GetActingPerson", js_GetActingPerson);
-	api_define_function(ctx, NULL, "GetCameraPerson", js_GetCameraPerson);
-	api_define_function(ctx, NULL, "GetCameraX", js_GetCameraX);
-	api_define_function(ctx, NULL, "GetCameraY", js_GetCameraY);
-	api_define_function(ctx, NULL, "GetCurrentMap", js_GetCurrentMap);
-	api_define_function(ctx, NULL, "GetCurrentPerson", js_GetCurrentPerson);
-	api_define_function(ctx, NULL, "GetCurrentTrigger", js_GetCurrentTrigger);
-	api_define_function(ctx, NULL, "GetCurrentZone", js_GetCurrentZone);
-	api_define_function(ctx, NULL, "GetInputPerson", js_GetInputPerson);
-	api_define_function(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
-	api_define_function(ctx, NULL, "GetLayerMask", js_GetLayerMask);
-	api_define_function(ctx, NULL, "GetLayerName", js_GetLayerName);
-	api_define_function(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
-	api_define_function(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
-	api_define_function(ctx, NULL, "GetNextAnimatedTile", js_GetNextAnimatedTile);
-	api_define_function(ctx, NULL, "GetNumLayers", js_GetNumLayers);
-	api_define_function(ctx, NULL, "GetNumTiles", js_GetNumTiles);
-	api_define_function(ctx, NULL, "GetNumTriggers", js_GetNumTriggers);
-	api_define_function(ctx, NULL, "GetNumZones", js_GetNumZones);
-	api_define_function(ctx, NULL, "GetObstructingPerson", js_GetObstructingPerson);
-	api_define_function(ctx, NULL, "GetObstructingTile", js_GetObstructingTile);
-	api_define_function(ctx, NULL, "GetPersonAngle", js_GetPersonAngle);
-	api_define_function(ctx, NULL, "GetPersonBase", js_GetPersonBase);
-	api_define_function(ctx, NULL, "GetPersonData", js_GetPersonData);
-	api_define_function(ctx, NULL, "GetPersonDirection", js_GetPersonDirection);
-	api_define_function(ctx, NULL, "GetPersonFollowDistance", js_GetPersonFollowDistance);
-	api_define_function(ctx, NULL, "GetPersonFollowers", js_GetPersonFollowers);
-	api_define_function(ctx, NULL, "GetPersonFrame", js_GetPersonFrame);
-	api_define_function(ctx, NULL, "GetPersonFrameNext", js_GetPersonFrameNext);
-	api_define_function(ctx, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
-	api_define_function(ctx, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
-	api_define_function(ctx, NULL, "GetPersonLayer", js_GetPersonLayer);
-	api_define_function(ctx, NULL, "GetPersonLeader", js_GetPersonLeader);
-	api_define_function(ctx, NULL, "GetPersonList", js_GetPersonList);
-	api_define_function(ctx, NULL, "GetPersonMask", js_GetPersonMask);
-	api_define_function(ctx, NULL, "GetPersonOffsetX", js_GetPersonOffsetX);
-	api_define_function(ctx, NULL, "GetPersonOffsetY", js_GetPersonOffsetY);
-	api_define_function(ctx, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
-	api_define_function(ctx, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
-	api_define_function(ctx, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
-	api_define_function(ctx, NULL, "GetPersonValue", js_GetPersonValue);
-	api_define_function(ctx, NULL, "GetPersonX", js_GetPersonX);
-	api_define_function(ctx, NULL, "GetPersonXFloat", js_GetPersonXFloat);
-	api_define_function(ctx, NULL, "GetPersonY", js_GetPersonY);
-	api_define_function(ctx, NULL, "GetPersonYFloat", js_GetPersonYFloat);
-	api_define_function(ctx, NULL, "GetTalkActivationButton", js_GetTalkActivationButton);
-	api_define_function(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
-	api_define_function(ctx, NULL, "GetTalkDistance", js_GetTalkDistance);
-	api_define_function(ctx, NULL, "GetTile", js_GetTile);
-	api_define_function(ctx, NULL, "GetTileDelay", js_GetTileDelay);
-	api_define_function(ctx, NULL, "GetTileImage", js_GetTileImage);
-	api_define_function(ctx, NULL, "GetTileHeight", js_GetTileHeight);
-	api_define_function(ctx, NULL, "GetTileName", js_GetTileName);
-	api_define_function(ctx, NULL, "GetTileSurface", js_GetTileSurface);
-	api_define_function(ctx, NULL, "GetTileWidth", js_GetTileWidth);
-	api_define_function(ctx, NULL, "GetTriggerLayer", js_GetTriggerLayer);
-	api_define_function(ctx, NULL, "GetTriggerX", js_GetTriggerX);
-	api_define_function(ctx, NULL, "GetTriggerY", js_GetTriggerY);
-	api_define_function(ctx, NULL, "GetZoneHeight", js_GetZoneHeight);
-	api_define_function(ctx, NULL, "GetZoneLayer", js_GetZoneLayer);
-	api_define_function(ctx, NULL, "GetZoneSteps", js_GetZoneSteps);
-	api_define_function(ctx, NULL, "GetZoneWidth", js_GetZoneWidth);
-	api_define_function(ctx, NULL, "GetZoneX", js_GetZoneX);
-	api_define_function(ctx, NULL, "GetZoneY", js_GetZoneY);
-	api_define_function(ctx, NULL, "IgnorePersonObstructions", js_IgnorePersonObstructions);
-	api_define_function(ctx, NULL, "IgnoreTileObstructions", js_IgnoreTileObstructions);
-	api_define_function(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
-	api_define_function(ctx, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
-	api_define_function(ctx, NULL, "IsIgnoringPersonObstructions", js_IsIgnoringPersonObstructions);
-	api_define_function(ctx, NULL, "IsIgnoringTileObstructions", js_IsIgnoringTileObstructions);
-	api_define_function(ctx, NULL, "IsInputAttached", js_IsInputAttached);
-	api_define_function(ctx, NULL, "IsLayerReflective", js_IsLayerReflective);
-	api_define_function(ctx, NULL, "IsLayerVisible", js_IsLayerVisible);
-	api_define_function(ctx, NULL, "IsMapEngineRunning", js_IsMapEngineRunning);
-	api_define_function(ctx, NULL, "IsPersonObstructed", js_IsPersonObstructed);
-	api_define_function(ctx, NULL, "IsPersonVisible", js_IsPersonVisible);
-	api_define_function(ctx, NULL, "IsTriggerAt", js_IsTriggerAt);
-	api_define_function(ctx, NULL, "MapEngine", js_MapEngine);
-	api_define_function(ctx, NULL, "MapToScreenX", js_MapToScreenX);
-	api_define_function(ctx, NULL, "MapToScreenY", js_MapToScreenY);
-	api_define_function(ctx, NULL, "QueuePersonCommand", js_QueuePersonCommand);
-	api_define_function(ctx, NULL, "QueuePersonScript", js_QueuePersonScript);
-	api_define_function(ctx, NULL, "RemoveTrigger", js_RemoveTrigger);
-	api_define_function(ctx, NULL, "RemoveZone", js_RemoveZone);
-	api_define_function(ctx, NULL, "RenderMap", js_RenderMap);
-	api_define_function(ctx, NULL, "ReplaceTilesOnLayer", js_ReplaceTilesOnLayer);
-	api_define_function(ctx, NULL, "ScreenToMapX", js_ScreenToMapX);
-	api_define_function(ctx, NULL, "ScreenToMapY", js_ScreenToMapY);
-	api_define_function(ctx, NULL, "SetCameraX", js_SetCameraX);
-	api_define_function(ctx, NULL, "SetCameraY", js_SetCameraY);
-	api_define_function(ctx, NULL, "SetColorMask", js_SetColorMask);
-	api_define_function(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
-	api_define_function(ctx, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
-	api_define_function(ctx, NULL, "SetDelayScript", js_SetDelayScript);
-	api_define_function(ctx, NULL, "SetLayerHeight", js_SetLayerHeight);
-	api_define_function(ctx, NULL, "SetLayerMask", js_SetLayerMask);
-	api_define_function(ctx, NULL, "SetLayerReflective", js_SetLayerReflective);
-	api_define_function(ctx, NULL, "SetLayerRenderer", js_SetLayerRenderer);
-	api_define_function(ctx, NULL, "SetLayerSize", js_SetLayerSize);
-	api_define_function(ctx, NULL, "SetLayerVisible", js_SetLayerVisible);
-	api_define_function(ctx, NULL, "SetLayerWidth", js_SetLayerWidth);
-	api_define_function(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
-	api_define_function(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
-	api_define_function(ctx, NULL, "SetPersonAngle", js_SetPersonAngle);
-	api_define_function(ctx, NULL, "SetPersonData", js_SetPersonData);
-	api_define_function(ctx, NULL, "SetPersonDirection", js_SetPersonDirection);
-	api_define_function(ctx, NULL, "SetPersonFollowDistance", js_SetPersonFollowDistance);
-	api_define_function(ctx, NULL, "SetPersonFrame", js_SetPersonFrame);
-	api_define_function(ctx, NULL, "SetPersonFrameNext", js_SetPersonFrameNext);
-	api_define_function(ctx, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
-	api_define_function(ctx, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
-	api_define_function(ctx, NULL, "SetPersonLayer", js_SetPersonLayer);
-	api_define_function(ctx, NULL, "SetPersonMask", js_SetPersonMask);
-	api_define_function(ctx, NULL, "SetPersonOffsetX", js_SetPersonOffsetX);
-	api_define_function(ctx, NULL, "SetPersonOffsetY", js_SetPersonOffsetY);
-	api_define_function(ctx, NULL, "SetPersonScaleAbsolute", js_SetPersonScaleAbsolute);
-	api_define_function(ctx, NULL, "SetPersonScaleFactor", js_SetPersonScaleFactor);
-	api_define_function(ctx, NULL, "SetPersonScript", js_SetPersonScript);
-	api_define_function(ctx, NULL, "SetPersonSpeed", js_SetPersonSpeed);
-	api_define_function(ctx, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
-	api_define_function(ctx, NULL, "SetPersonSpriteset", js_SetPersonSpriteset);
-	api_define_function(ctx, NULL, "SetPersonValue", js_SetPersonValue);
-	api_define_function(ctx, NULL, "SetPersonVisible", js_SetPersonVisible);
-	api_define_function(ctx, NULL, "SetPersonX", js_SetPersonX);
-	api_define_function(ctx, NULL, "SetPersonXYFloat", js_SetPersonXYFloat);
-	api_define_function(ctx, NULL, "SetPersonY", js_SetPersonY);
-	api_define_function(ctx, NULL, "SetRenderScript", js_SetRenderScript);
-	api_define_function(ctx, NULL, "SetTalkActivationButton", js_SetTalkActivationButton);
-	api_define_function(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
-	api_define_function(ctx, NULL, "SetTalkDistance", js_SetTalkDistance);
-	api_define_function(ctx, NULL, "SetTile", js_SetTile);
-	api_define_function(ctx, NULL, "SetTileDelay", js_SetTileDelay);
-	api_define_function(ctx, NULL, "SetTileImage", js_SetTileImage);
-	api_define_function(ctx, NULL, "SetTileName", js_SetTileName);
-	api_define_function(ctx, NULL, "SetTileSurface", js_SetTileSurface);
-	api_define_function(ctx, NULL, "SetTriggerLayer", js_SetTriggerLayer);
-	api_define_function(ctx, NULL, "SetTriggerScript", js_SetTriggerScript);
-	api_define_function(ctx, NULL, "SetTriggerXY", js_SetTriggerXY);
-	api_define_function(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
-	api_define_function(ctx, NULL, "SetZoneDimensions", js_SetZoneDimensions);
-	api_define_function(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
-	api_define_function(ctx, NULL, "SetZoneScript", js_SetZoneScript);
-	api_define_function(ctx, NULL, "SetZoneSteps", js_SetZoneSteps);
-	api_define_function(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
-
-	// map script types
-	api_define_const(ctx, NULL, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
-	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
-
-	// movement script specifier constants
-	api_define_const(ctx, NULL, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
-	api_define_const(ctx, NULL, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
-	api_define_const(ctx, NULL, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
-	api_define_const(ctx, NULL, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
-	api_define_const(ctx, NULL, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
-
-	// person movement commands
-	api_define_const(ctx, NULL, "COMMAND_WAIT", COMMAND_WAIT);
-	api_define_const(ctx, NULL, "COMMAND_ANIMATE", COMMAND_ANIMATE);
-	api_define_const(ctx, NULL, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
-	api_define_const(ctx, NULL, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
-	api_define_const(ctx, NULL, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
-	api_define_const(ctx, NULL, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
-	api_define_const(ctx, NULL, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
-	api_define_const(ctx, NULL, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
-	api_define_const(ctx, NULL, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
-	api_define_const(ctx, NULL, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
-	api_define_const(ctx, NULL, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
-	api_define_const(ctx, NULL, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
-	api_define_const(ctx, NULL, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
-	api_define_const(ctx, NULL, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
-	api_define_const(ctx, NULL, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
-	api_define_const(ctx, NULL, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
-	api_define_const(ctx, NULL, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
-	api_define_const(ctx, NULL, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
-}
-
-static int
-duk_require_map_layer(duk_context* ctx, duk_idx_t index)
-{
-	long        strtol_out;
-	int         layer_index;
-	const char* name;
-	char*       p_end;
-
-	duk_require_type_mask(ctx, index, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
-
-	if (duk_is_number(ctx, index)) {
-		layer_index = duk_get_int(ctx, index);
-		goto have_index;
-	}
-	else {
-		// don't anyone ever say I'm not dedicated to compatibility!  there are a few
-		// poorly written Sphere 1.5 games that pass layer IDs as strings.  usually this
-		// would fail because miniSphere supports named layers, but here I go out of my
-		// way to support it anyway.
-		name = duk_get_string(ctx, index);
-		strtol_out = strtol(name, &p_end, 0);
-		if ((layer_index = map_layer_by_name(name)) >= 0)
-			goto have_index;
-		else if (name[0] != '\0' && *p_end == '\0') {
-			layer_index = (int)strtol_out;
-			goto have_index;
-		}
-		else
-			duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "layer name does not exist '%s'", name);
-	}
-
-have_index:
-	if (layer_index < 0 || layer_index >= map_num_layers())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "layer index out of range");
-	return layer_index;
-}
-
-static duk_ret_t
-js_AddTrigger(duk_context* ctx)
-{
-	rect_t    bounds;
-	int       layer;
-	script_t* script;
-	int       x;
-	int       y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	layer = duk_require_map_layer(ctx, 2);
-	script = duk_require_sphere_script(ctx, 3, "%/triggerScript.js");
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	bounds = map_bounds();
-	if (x < bounds.x1 || y < bounds.y1 || x >= bounds.x2 || y >= bounds.y2)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "X/Y out of bounds");
-	
-	if (!map_add_trigger(x, y, layer, script))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create trigger");
-	duk_push_number(ctx, map_num_triggers() - 1);
-	return 1;
-}
-
-static duk_ret_t
-js_AddZone(duk_context* ctx)
-{
-	rect_t    bounds;
-	int       height;
-	int       layer;
-	script_t* script;
-	int       width;
-	int       x;
-	int       y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	width = duk_to_int(ctx, 2);
-	height = duk_to_int(ctx, 3);
-	layer = duk_require_map_layer(ctx, 4);
-	script = duk_require_sphere_script(ctx, 5, "%/zoneScript.js");
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	bounds = map_bounds();
-	if (width <= 0 || height <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone width/height");
-	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "zone out of bounds");
-
-	if (!map_add_zone(new_rect(x, y, width, height), layer, script, 8))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create zone");
-	duk_push_number(ctx, map_num_zones() - 1);
-	script_free(script);
-	return 1;
-}
-
-static duk_ret_t
-js_AreZonesAt(duk_context* ctx)
-{
-	int layer;
-	int x;
-	int y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	layer = duk_require_map_layer(ctx, 2);
-
-	duk_push_boolean(ctx, map_zone_at(x, y, layer, 0) >= 0);
-	return 1;
-}
-
-static duk_ret_t
-js_AttachCamera(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_to_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	map_engine_attach_camera(person);
-	return 0;
-}
-
-static duk_ret_t
-js_AttachInput(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	map_engine_attach_player(PLAYER_1, person);
-	return 0;
-}
-
-static duk_ret_t
-js_AttachPlayerInput(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	player_id_t player;
-
-	name = duk_require_string(ctx, 0);
-	player = duk_to_int(ctx, 1);
-
-	if (player < 0 || player >= PLAYER_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	map_engine_attach_player(player, person);
-	return 0;
-}
-
-static duk_ret_t
-js_CallDefaultMapScript(duk_context* ctx)
-{
-	int type;
-
-	type = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (type < 0 || type >= MAP_SCRIPT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid script type constant");
-	script_run(s_def_map_scripts[type], false);
-	return 0;
-}
-
-static duk_ret_t
-js_CallDefaultPersonScript(duk_context* ctx)
-{
-	const person_t* last_person;
-	const char*     name;
-	person_t*       person;
-	int             type;
-
-	name = duk_require_string(ctx, 0);
-	type = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (type < 0 || type >= PERSON_SCRIPT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
-	last_person = s_current_person;
-	s_current_person = person;
-	script_run(s_def_map_scripts[type], false);
-	s_current_person = last_person;
-	return 0;
-}
-
-static duk_ret_t
-js_CallMapScript(duk_context* ctx)
-{
-	int type;
-
-	type = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (type < 0 || type >= MAP_SCRIPT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid script type constant");
-	map_activate(type, false);
-	return 0;
-}
-
-static duk_ret_t
-js_CallPersonScript(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         type;
-
-	name = duk_require_string(ctx, 0);
-	type = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (type < 0 || type >= PERSON_SCRIPT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
-	if (type == PERSON_SCRIPT_ON_TALK || type == PERSON_SCRIPT_ON_TOUCH)
-		person_activate(person, type, person, false);
-	else
-		person_activate(person, type, NULL, false);
-	return 0;
-}
-
-static duk_ret_t
-js_ClearPersonCommands(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_clear_queue(person);
-	return 0;
-}
-
-static duk_ret_t
-js_ChangeMap(duk_context* ctx)
-{
-	const char* filename;
-
-	filename = duk_require_path(ctx, 0, "maps", true, false);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (!map_engine_change_map(filename))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load map `%s`", filename);
-	return 0;
-}
-
-static duk_ret_t
-js_CreatePerson(duk_context* ctx)
-{
-	bool         destroy_with_map;
-	const char*  filename;
-	const char*  name;
-	person_t*    person;
-	spriteset_t* spriteset;
-
-	name = duk_require_string(ctx, 0);
-	destroy_with_map = duk_to_boolean(ctx, 2);
-
-	if (duk_is_class_obj(ctx, 1, "ssSpriteset")) {
-		// ref the spriteset so we can safely free it later. this avoids
-		// having to check the argument type again.
-		spriteset = duk_require_sphere_spriteset(ctx, 1);
-	}
-	else {
-		filename = duk_require_path(ctx, 1, "spritesets", true, false);
-		if (!(spriteset = spriteset_load(filename)))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load spriteset `%s`", filename);
-	}
-
-	// create the person and its JS-side data object
-	person = person_new(name, spriteset, !destroy_with_map, NULL);
-	spriteset_free(spriteset);
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "personData");
-	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);
-	duk_pop_2(ctx);
-	return 0;
-}
-
-static duk_ret_t
-js_DestroyPerson(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_free(person);
-	return 0;
-}
-
-static duk_ret_t
-js_DetachCamera(duk_context* ctx)
-{
-	map_engine_attach_camera(NULL);
-	return 0;
-}
-
-static duk_ret_t
-js_DetachInput(duk_context* ctx)
-{
-	map_engine_attach_player(PLAYER_1, NULL);
-	return 0;
-}
-
-static duk_ret_t
-js_DetachPlayerInput(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         player;
-
-	int i;
-
-	if (duk_get_top(ctx) < 1) {
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not a number or string");
-	}
-	else if (duk_is_string(ctx, 0)) {
-		name = duk_get_string(ctx, 0);
-		if (!(person = map_person_by_name(name)))
-			duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-		player = -1;
-		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
-			player = s_players[i].person == person ? i : player;
-		if (player == -1)
-			return 0;
-	}
-	else if (duk_is_number(ctx, 0)) {
-		player = duk_get_int(ctx, 0);
-	}
-	else {
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not a number or string");
-	}
-	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
-	map_engine_attach_player(player, NULL);
-	return 0;
-}
-
-static duk_ret_t
-js_DoesPersonExist(duk_context* ctx)
-{
-	const char* name;
-
-	name = duk_require_string(ctx, 0);
-
-	duk_push_boolean(ctx, map_person_by_name(name) != NULL);
-	return 1;
-}
-
-static duk_ret_t
-js_ExecuteTrigger(duk_context* ctx)
-{
-	int index;
-	int layer;
-	int x;
-	int y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	layer = duk_require_map_layer(ctx, 2);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if ((index = map_trigger_at(x, y, layer)) >= 0)
-		trigger_activate(index);
-	return 0;
-}
-
-static duk_ret_t
-js_ExecuteZoneScript(duk_context* ctx)
-{
-	int zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	zone_activate(zone_index);
-	return 0;
-}
-
-static duk_ret_t
-js_ExecuteZones(duk_context* ctx)
-{
-	int index;
-	int layer;
-	int x;
-	int y;
-
-	int i;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	layer = duk_require_map_layer(ctx, 2);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	i = 0;
-	while ((index = map_zone_at(x, y, layer, i++)) >= 0)
-		zone_activate(index);
-	return 0;
-}
-
-static duk_ret_t
-js_ExitMapEngine(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	map_engine_exit();
-	return 0;
-}
-
-static duk_ret_t
-js_FollowPerson(duk_context* ctx)
-{
-	int         distance = 0;
-	person_t*   leader = NULL;
-	const char* leader_name = "";
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	if (!duk_is_null(ctx, 1))
-		leader_name = duk_require_string(ctx, 1);
-	if (leader_name[0] != '\0')
-		distance = duk_require_int(ctx, 2);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (!(leader_name[0] == '\0' || (leader = map_person_by_name(leader_name))))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", leader_name);
-	if (distance <= 0 && leader_name[0] != '\0')
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid distance");
-	if (!person_follow(person, leader, distance))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid circular follow chain");
-	return 0;
-}
-
-static duk_ret_t
-js_GetActingPerson(duk_context* ctx)
-{
-	if (s_acting_person == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no current person activation or actor unknown");
-	duk_push_string(ctx, person_name(s_acting_person));
-	return 1;
-}
-
-static duk_ret_t
-js_GetCameraPerson(duk_context* ctx)
-{
-	if (s_camera_person == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid operation, camera not attached");
-	duk_push_string(ctx, person_name(s_camera_person));
-	return 1;
-}
-
-static duk_ret_t
-js_GetCameraX(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_int(ctx, s_camera_x);
-	return 1;
-}
-
-static duk_ret_t
-js_GetCameraY(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_int(ctx, s_camera_y);
-	return 1;
-}
-
-static duk_ret_t
-js_GetCurrentMap(duk_context* ctx)
-{
-	path_t* map_path;
-	path_t* origin;
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-
-	// GetCurrentMap() in Sphere 1.x returns the map path
-	// relative to the 'maps' directory.
-	map_path = path_new(map_filename());
-	if (!path_is_rooted(map_path)) {
-		origin = path_new("@/maps/");
-		path_relativize(map_path, origin);
-		path_free(origin);
-	}
-	duk_push_string(ctx, path_cstr(map_path));
-	path_free(map_path);
-	return 1;
-}
-
-static duk_ret_t
-js_GetCurrentPerson(duk_context* ctx)
-{
-	if (s_current_person == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no current person activation");
-	duk_push_string(ctx, person_name(s_current_person));
-	return 1;
-}
-
-static duk_ret_t
-js_GetCurrentTrigger(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (s_current_trigger == -1)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no current trigger activation");
-	duk_push_int(ctx, s_current_trigger);
-	return 1;
-}
-
-static duk_ret_t
-js_GetCurrentZone(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (s_current_zone == -1)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no current zone activation");
-	duk_push_int(ctx, s_current_zone);
-	return 1;
-}
-
-static duk_ret_t
-js_GetInputPerson(duk_context* ctx)
-{
-	int num_args;
-	int player;
-
-	num_args = duk_get_top(ctx);
-	player = num_args >= 1 ? duk_to_int(ctx, 0) : 0;
-
-	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
-	if (s_players[player].person == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "input not attached for player %d", player + 1);
-	duk_push_string(ctx, person_name(s_players[player].person));
-	return 1;
-}
-
-static duk_ret_t
-js_GetLayerHeight(duk_context* ctx)
-{
-	int     layer;
-
-	layer = duk_require_map_layer(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_int(ctx, layer_size(layer).height);
-	return 1;
-}
-
-static duk_ret_t
-js_GetLayerMask(duk_context* ctx)
-{
-	int layer = duk_require_map_layer(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_sphere_color(ctx, s_map->layers[layer].color_mask);
-	return 1;
-}
-
-static duk_ret_t
-js_GetLayerName(duk_context* ctx)
-{
-	int layer = duk_require_map_layer(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_lstring_t(ctx, s_map->layers[layer].name);
-	return 1;
-}
-
-static duk_ret_t
-js_GetLayerWidth(duk_context* ctx)
-{
-	int layer;
-
-	layer = duk_require_map_layer(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_int(ctx, layer_size(layer).width);
-	return 1;
-}
-
-static duk_ret_t
-js_GetMapEngineFrameRate(duk_context* ctx)
-{
-	duk_push_int(ctx, map_engine_get_framerate());
-	return 1;
-}
-
-static duk_ret_t
-js_GetNextAnimatedTile(duk_context* ctx)
-{
-	int        tile_index;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	duk_push_int(ctx, tileset_get_next(tileset, tile_index));
-	return 1;
-}
-
-static duk_ret_t
-js_GetNumLayers(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_int(ctx, map_num_layers());
-	return 1;
-}
-
-static duk_ret_t
-js_GetNumTiles(duk_context* ctx)
-{
-	tileset_t* tileset;
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-
-	tileset = map_tileset();
-	duk_push_int(ctx, tileset_len(tileset));
-	return 1;
-}
-
-static duk_ret_t
-js_GetNumTriggers(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-
-	duk_push_number(ctx, map_num_triggers());
-	return 1;
-}
-
-static duk_ret_t
-js_GetNumZones(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-
-	duk_push_number(ctx, map_num_zones());
-	return 1;
-}
-
-static duk_ret_t
-js_GetObstructingPerson(duk_context* ctx)
-{
-	const char* name;
-	person_t*   obs_person;
-	person_t*   person;
-	int         x;
-	int         y;
-
-	name = duk_require_string(ctx, 0);
-	x = duk_require_int(ctx, 1);
-	y = duk_require_int(ctx, 2);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_obstructed_at(person, x, y, &obs_person, NULL);
-	duk_push_string(ctx, obs_person != NULL ? person_name(obs_person) : "");
-	return 1;
-}
-
-static duk_ret_t
-js_GetObstructingTile(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         tile_index;
-	int         x;
-	int         y;
-
-	name = duk_require_string(ctx, 0);
-	x = duk_require_int(ctx, 1);
-	y = duk_require_int(ctx, 2);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_obstructed_at(person, x, y, NULL, &tile_index);
-	duk_push_int(ctx, tile_index);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonAngle(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_number(ctx, person_get_angle(person));
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonBase(duk_context* ctx)
-{
-	rect_t      base;
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	base = spriteset_get_base(person_get_spriteset(person));
-	duk_push_object(ctx);
-	duk_push_int(ctx, base.x1); duk_put_prop_string(ctx, -2, "x1");
-	duk_push_int(ctx, base.y1); duk_put_prop_string(ctx, -2, "y1");
-	duk_push_int(ctx, base.x2); duk_put_prop_string(ctx, -2, "x2");
-	duk_push_int(ctx, base.y2); duk_put_prop_string(ctx, -2, "y2");
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonData(duk_context* ctx)
-{
-	int          height;
-	const char*  name;
-	int          num_directions;
-	int          num_frames;
-	person_t*    person;
-	spriteset_t* spriteset;
-	int          width;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	spriteset = person->sprite;
-	width = spriteset_width(spriteset);
-	height = spriteset_height(spriteset);
-	num_directions = spriteset_num_poses(spriteset);
-	num_frames = spriteset_num_frames(spriteset, person->direction);
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "personData");
-	duk_get_prop_string(ctx, -1, name);
-	duk_push_int(ctx, num_frames); duk_put_prop_string(ctx, -2, "num_frames");
-	duk_push_int(ctx, num_directions); duk_put_prop_string(ctx, -2, "num_directions");
-	duk_push_int(ctx, width); duk_put_prop_string(ctx, -2, "width");
-	duk_push_int(ctx, height); duk_put_prop_string(ctx, -2, "height");
-	duk_push_string(ctx, person->leader ? person->leader->name : ""); duk_put_prop_string(ctx, -2, "leader");
-	duk_remove(ctx, -2); duk_remove(ctx, -2);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonDirection(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_string(ctx, person->direction);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonFollowDistance(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (person->leader == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "not a follower");
-	duk_push_int(ctx, person->follow_distance);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonFollowers(duk_context* ctx)
-{
-	duk_uarridx_t index = 0;
-	const char*   name;
-	person_t*     person;
-
-	int i;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_array(ctx);
-	for (i = 0; i < s_num_persons; ++i) {
-		if (s_persons[i]->leader == person) {
-			duk_push_string(ctx, s_persons[i]->name);
-			duk_put_prop_index(ctx, -2, index++);
-		}
-	}
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonFrame(duk_context* ctx)
-{
-	const char* name;
-	int         num_frames;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	num_frames = spriteset_num_frames(person->sprite, person->direction);
-	duk_push_int(ctx, person->frame % num_frames);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonFrameNext(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_int(ctx, person->anim_frames);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonFrameRevert(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_int(ctx, person->revert_delay);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonIgnoreList(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	int i;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_array(ctx);
-	for (i = 0; i < person->num_ignores; ++i) {
-		duk_push_string(ctx, person->ignores[i]);
-		duk_put_prop_index(ctx, -2, i);
-	}
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonLayer(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_int(ctx, person->layer);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonLeader(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_string(ctx, person->leader != NULL ? person->leader->name : "");
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonMask(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_sphere_color(ctx, person_get_color(person));
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonOffsetX(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_int(ctx, person->x_offset);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonOffsetY(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_int(ctx, person->y_offset);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonList(duk_context* ctx)
-{
-	int i;
-
-	duk_push_array(ctx);
-	for (i = 0; i < s_num_persons; ++i) {
-		duk_push_string(ctx, s_persons[i]->name);
-		duk_put_prop_index(ctx, -2, i);
-	}
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonSpriteset(duk_context* ctx)
-{
-	const char*  name;
-	spriteset_t* spriteset;
-	person_t*    person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	spriteset = person_get_spriteset(person);
-	duk_push_sphere_spriteset(ctx, spriteset);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonSpeedX(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      x_speed;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_get_speed(person, &x_speed, NULL);
-	duk_push_number(ctx, x_speed);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonSpeedY(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      y_speed;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_get_speed(person, NULL, &y_speed);
-	duk_push_number(ctx, y_speed);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonValue(duk_context* ctx)
-{
-	const char* key;
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	key = duk_to_string(ctx, 1);
-
-	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "personData");
-	if (!duk_get_prop_string(ctx, -1, name)) {
-		duk_pop(ctx);
-		duk_push_object(ctx);
-		duk_put_prop_string(ctx, -2, name);
-		duk_get_prop_string(ctx, -1, name);
-	}
-	duk_get_prop_string(ctx, -1, key);
-	duk_remove(ctx, -2); duk_remove(ctx, -2); duk_remove(ctx, -2);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonX(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      x;
-	double      y;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_get_xy(person, &x, &y, true);
-	duk_push_int(ctx, x);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonXFloat(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      x;
-	double      y;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_get_xy(person, &x, &y, true);
-	duk_push_number(ctx, x);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonY(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      x;
-	double      y;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_get_xy(person, &x, &y, true);
-	duk_push_int(ctx, y);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonYFloat(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      x;
-	double      y;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_get_xy(person, &x, &y, true);
-	duk_push_number(ctx, y);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTalkActivationButton(duk_context* ctx)
-{
-	duk_push_int(ctx, s_talk_button);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTalkActivationKey(duk_context* ctx)
-{
-	int num_args;
-	int player = 0;
-
-	num_args = duk_get_top(ctx);
-	if (num_args >= 1)
-		player = duk_to_int(ctx, 0);
-
-	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
-	duk_push_int(ctx, s_players[player].talk_key);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTalkDistance(duk_context* ctx)
-{
-	duk_push_int(ctx, s_talk_distance);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTile(duk_context* ctx)
-{
-	int layer;
-	int x;
-	int y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	layer = duk_require_map_layer(ctx, 2);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_int(ctx, map_tile_at(x, y, layer));
-	return 1;
-}
-
-static duk_ret_t
-js_GetTileDelay(duk_context* ctx)
-{
-	int        tile_index;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	duk_push_int(ctx, tileset_get_delay(tileset, tile_index));
-	return 1;
-}
-
-static duk_ret_t
-js_GetTileHeight(duk_context* ctx)
-{
-	int        height;
-	tileset_t* tileset;
-	int        width;
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-
-	tileset = map_tileset();
-	tileset_get_size(tileset, &width, &height);
-	duk_push_int(ctx, height);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTileImage(duk_context* ctx)
-{
-	image_t*   image;
-	int        tile_index;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
-	duk_push_class_obj(ctx, "ssImage", image);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTileName(duk_context* ctx)
-{
-	int              tile_index;
-	const lstring_t* tile_name;
-	tileset_t*       tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	tile_name = tileset_get_name(tileset, tile_index);
-	duk_push_lstring_t(ctx, tile_name);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTileSurface(duk_context* ctx)
-{
-	image_t*   image;
-	int        tile_index;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
-	duk_push_class_obj(ctx, "ssSurface", image);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTileWidth(duk_context* ctx)
-{
-	int        height;
-	tileset_t* tileset;
-	int        width;
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-
-	tileset = map_tileset();
-	tileset_get_size(tileset, &width, &height);
-	duk_push_int(ctx, width);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTriggerLayer(duk_context* ctx)
-{
-	int layer;
-	int trigger_index;
-
-	trigger_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (trigger_index < 0 || trigger_index >= map_num_triggers())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	trigger_get_xyz(trigger_index, NULL, NULL, &layer);
-	duk_push_int(ctx, layer);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTriggerX(duk_context* ctx)
-{
-	int trigger_index;
-	int x;
-
-	trigger_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (trigger_index < 0 || trigger_index >= map_num_triggers())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	trigger_get_xyz(trigger_index, &x, NULL, NULL);
-	duk_push_int(ctx, x);
-	return 1;
-}
-
-static duk_ret_t
-js_GetTriggerY(duk_context* ctx)
-{
-	int trigger_index;
-	int y;
-
-	trigger_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (trigger_index < 0 || trigger_index >= map_num_triggers())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	trigger_get_xyz(trigger_index, NULL, &y, NULL);
-	duk_push_int(ctx, y);
-	return 1;
-}
-
-static duk_ret_t
-js_GetZoneHeight(duk_context* ctx)
-{
-	rect_t bounds;
-	int    zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	bounds = zone_get_bounds(zone_index);
-	duk_push_int(ctx, bounds.y2 - bounds.y1);
-	return 1;
-}
-
-static duk_ret_t
-js_GetZoneLayer(duk_context* ctx)
-{
-	int zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	duk_push_int(ctx, zone_get_layer(zone_index));
-	return 1;
-}
-
-static duk_ret_t
-js_GetZoneSteps(duk_context* ctx)
-{
-	int zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	duk_push_int(ctx, zone_get_steps(zone_index));
-	return 1;
-}
-
-static duk_ret_t
-js_GetZoneWidth(duk_context* ctx)
-{
-	rect_t bounds;
-	int    zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	bounds = zone_get_bounds(zone_index);
-	duk_push_int(ctx, bounds.x2 - bounds.x1);
-	return 1;
-}
-
-static duk_ret_t
-js_GetZoneX(duk_context* ctx)
-{
-	rect_t bounds;
-	int    zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	bounds = zone_get_bounds(zone_index);
-	duk_push_int(ctx, bounds.x1);
-	return 1;
-}
-
-static duk_ret_t
-js_GetZoneY(duk_context* ctx)
-{
-	rect_t bounds;
-	int    zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	bounds = zone_get_bounds(zone_index);
-	duk_push_int(ctx, bounds.y1);
-	return 1;
-}
-
-static duk_ret_t
-js_IgnorePersonObstructions(duk_context* ctx)
-{
-	bool        enable_it;
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	enable_it = duk_to_boolean(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->ignore_all_persons = enable_it;
-	return 0;
-}
-
-static duk_ret_t
-js_IgnoreTileObstructions(duk_context* ctx)
-{
-	bool        enable_it;
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	enable_it = duk_to_boolean(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->ignore_all_tiles = enable_it;
-	return 0;
-}
-
-static duk_ret_t
-js_IsCameraAttached(duk_context* ctx)
-{
-	duk_push_boolean(ctx, s_camera_person != NULL);
-	return 1;
-}
-
-static duk_ret_t
-js_IsCommandQueueEmpty(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_boolean(ctx, person->num_commands <= 0);
-	return 1;
-}
-
-static duk_ret_t
-js_IsIgnoringPersonObstructions(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_boolean(ctx, person->ignore_all_persons);
-	return 1;
-}
-
-static duk_ret_t
-js_IsIgnoringTileObstructions(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_boolean(ctx, person->ignore_all_tiles);
-	return 1;
-}
-
-static duk_ret_t
-js_IsInputAttached(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         player;
-
-	int i;
-
-	if (duk_get_top(ctx) < 1) {
-		player = 0;
-	}
-	else if (duk_is_string(ctx, 0)) {
-		name = duk_get_string(ctx, 0);
-		if (!(person = map_person_by_name(name)))
-			duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-		player = -1;
-		for (i = MAX_PLAYERS - 1; i >= 0; --i)  // ensures Sphere semantics
-			player = s_players[i].person == person ? i : player;
-		if (player == -1) {
-			duk_push_false(ctx);
-			return 1;
-		}
-	}
-	else if (duk_is_number(ctx, 0)) {
-		player = duk_get_int(ctx, 0);
-	}
-	else {
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "player number or string expected");
-	}
-	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
-	duk_push_boolean(ctx, s_players[player].person != NULL);
-	return 1;
-}
-
-static duk_ret_t
-js_IsLayerReflective(duk_context* ctx)
-{
-	int layer;
-
-	layer = duk_require_map_layer(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_boolean(ctx, s_map->layers[layer].is_reflective);
-	return 1;
-}
-
-static duk_ret_t
-js_IsLayerVisible(duk_context* ctx)
-{
-	int layer;
-
-	layer = duk_require_map_layer(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	duk_push_boolean(ctx, s_map->layers[layer].is_visible);
-	return 1;
-}
-
-static duk_ret_t
-js_IsMapEngineRunning(duk_context* ctx)
-{
-	duk_push_boolean(ctx, map_engine_running());
-	return 1;
-}
-
-static duk_ret_t
-js_IsPersonObstructed(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         x;
-	int         y;
-
-	name = duk_require_string(ctx, 0);
-	x = duk_require_int(ctx, 1);
-	y = duk_require_int(ctx, 2);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_boolean(ctx, person_obstructed_at(person, x, y, NULL, NULL));
-	return 1;
-}
-
-static duk_ret_t
-js_IsPersonVisible(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_boolean(ctx, person->is_visible);
-	return 1;
-}
-
-static duk_ret_t
-js_IsTriggerAt(duk_context* ctx)
-{
-	int x;
-	int y;
-	int layer;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	layer = duk_require_map_layer(ctx, 2);
-
-	duk_push_boolean(ctx, map_trigger_at(x, y, layer) >= 0);
-	return 1;
-}
-
-static duk_ret_t
-js_MapEngine(duk_context* ctx)
-{
-	const char* filename;
-	int         framerate;
-	int         num_args;
-
-	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "maps", true, false);
-	framerate = num_args >= 2 ? duk_to_int(ctx, 1)
-		: g_framerate;
-
-	s_is_map_running = true;
-	s_exiting = false;
-	s_color_mask = color_new(0, 0, 0, 0);
-	s_fade_color_to = s_fade_color_from = s_color_mask;
-	s_fade_progress = s_fade_frames = 0;
-	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	s_framerate = framerate;
-	if (!change_map(filename, true))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to load map `%s`", filename);
-	while (!s_exiting) {
-		update_map_engine(true);
-		process_map_input();
-		render_map();
-		screen_flip(g_screen, s_framerate);
-	}
-	reset_persons(false);
-	s_is_map_running = false;
-	return 0;
-}
-
-static duk_ret_t
-js_MapToScreenX(duk_context* ctx)
-{
-	int    layer;
-	int    offset_x;
-	double x;
-
-	layer = duk_require_map_layer(ctx, 0);
-	x = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	offset_x = 0;
-	map_screen_to_map(s_camera_x, s_camera_y, &offset_x, NULL);
-	duk_push_int(ctx, x - offset_x);
-	return 1;
-}
-
-static duk_ret_t
-js_MapToScreenY(duk_context* ctx)
-{
-	int    layer;
-	int    offset_y;
-	double y;
-
-	layer = duk_require_map_layer(ctx, 0);
-	y = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	offset_y = 0;
-	map_screen_to_map(s_camera_x, s_camera_y, NULL, &offset_y);
-	duk_push_int(ctx, y - offset_y);
-	return 1;
-}
-
-static duk_ret_t
-js_QueuePersonCommand(duk_context* ctx)
-{
-	int         command;
-	const char* name;
-	bool        immediate = false;
-	int         num_args;
-	person_t*   person;
-
-	num_args = duk_get_top(ctx);
-	name = duk_require_string(ctx, 0);
-	command = duk_require_int(ctx, 1);
-	if (num_args >= 3)
-		immediate = duk_to_boolean(ctx, 2);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid command type constant");
-	if (command >= COMMAND_MOVE_NORTH && command <= COMMAND_MOVE_NORTHWEST) {
-		if (!person_queue_command(person, COMMAND_ANIMATE, true))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to queue command");
-	}
-	if (!person_queue_command(person, command, immediate))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to queue command");
-	return 0;
-}
-
-static duk_ret_t
-js_QueuePersonScript(duk_context* ctx)
-{
-	bool        immediate = false;
-	int         num_args;
-	const char* name;
-	script_t*   script;
-	person_t*   person;
-
-	num_args = duk_get_top(ctx);
-	name = duk_require_string(ctx, 0);
-	script = duk_require_sphere_script(ctx, 1, "%/queueScript.js");
-	if (num_args >= 3)
-		immediate = duk_to_boolean(ctx, 2);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (!person_queue_script(person, script, immediate))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to enqueue script");
-	return 0;
-}
-
-static duk_ret_t
-js_RemoveTrigger(duk_context* ctx)
-{
-	int trigger_index;
-	
-	trigger_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (trigger_index < 0 || trigger_index >= map_num_triggers())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	map_remove_trigger(trigger_index);
-	return 0;
-}
-
-static duk_ret_t
-js_RemoveZone(duk_context* ctx)
-{
-	int zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	map_remove_zone(zone_index);
-	return 0;
-}
-
-static duk_ret_t
-js_RenderMap(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	render_map();
-	return 0;
-}
-
-static duk_ret_t
-js_ReplaceTilesOnLayer(duk_context* ctx)
-{
-	int              layer;
-	int              layer_w, layer_h;
-	int              new_index;
-	int              old_index;
-	struct map_tile* tile;
-	tileset_t*       tileset;
-
-	int i_x, i_y;
-
-	layer = duk_require_map_layer(ctx, 0);
-	old_index = duk_to_int(ctx, 1);
-	new_index = duk_to_int(ctx, 2);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (old_index < 0 || old_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid old tile index");
-	if (new_index < 0 || new_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid new tile index");
-	layer_w = s_map->layers[layer].width;
-	layer_h = s_map->layers[layer].height;
-	for (i_x = 0; i_x < layer_w; ++i_x) for (i_y = 0; i_y < layer_h; ++i_y) {
-		tile = &s_map->layers[layer].tilemap[i_x + i_y * layer_w];
-		if (tile->tile_index == old_index)
-			tile->tile_index = new_index;
-	}
-	return 0;
-}
-
-static duk_ret_t
-js_ScreenToMapX(duk_context* ctx)
-{
-	int layer;
-	int x;
-
-	layer = duk_require_map_layer(ctx, 0);
-	x = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	map_screen_to_map(s_camera_x, s_camera_y, &x, NULL);
-	duk_push_int(ctx, x);
-	return 1;
-}
-
-static duk_ret_t
-js_ScreenToMapY(duk_context* ctx)
-{
-	int layer;
-	int y;
-
-	layer = duk_require_map_layer(ctx, 0);
-	y = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	map_screen_to_map(s_camera_x, s_camera_y, NULL, &y);
-	duk_push_int(ctx, y);
-	return 1;
-}
-
-static duk_ret_t
-js_SetCameraX(duk_context* ctx)
-{
-	int new_x;
-
-	new_x = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	s_camera_x = new_x;
-	return 0;
-}
-
-static duk_ret_t
-js_SetCameraY(duk_context* ctx)
-{
-	int new_y;
-
-	new_y = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	s_camera_y = new_y;
-	return 0;
-}
-
-static duk_ret_t
-js_SetColorMask(duk_context* ctx)
-{
-	color_t new_mask;
-	int     num_args;
-	int     num_frames;
-
-	num_args = duk_get_top(ctx);
-	new_mask = duk_require_sphere_color(ctx, 0);
-	num_frames = num_args >= 2 ? duk_to_int(ctx, 1) : 0;
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (num_frames < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid number of frames");
-	if (num_frames > 0) {
-		s_fade_color_to = new_mask;
-		s_fade_color_from = s_color_mask;
-		s_fade_frames = num_frames;
-		s_fade_progress = 0;
-	}
-	else {
-		s_color_mask = new_mask;
-		s_fade_color_to = s_fade_color_from = new_mask;
-		s_fade_progress = s_fade_frames = 0;
-	}
-	return 0;
-}
-
-static duk_ret_t
-js_SetDefaultMapScript(duk_context* ctx)
-{
-	int script_type = duk_to_int(ctx, 0);
-	const char* script_name = (script_type == MAP_SCRIPT_ON_ENTER) ? "%/onLoadMap.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE) ? "%/onUnloadMap.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_NORTH) ? "%/onLeaveMapNorth.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_EAST) ? "%/onLeaveMapEast.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_SOUTH) ? "%/onLeaveMapSouth.js"
-		: (script_type == MAP_SCRIPT_ON_LEAVE_WEST) ? "%/onLeaveMapWest.js"
-		: NULL;
-	script_t* script = duk_require_sphere_script(ctx, 1, script_name);
-
-	if (script_type < 0 || script_type >= MAP_SCRIPT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid map script constant");
-	script_free(s_def_map_scripts[script_type]);
-	s_def_map_scripts[script_type] = script;
-	return 0;
-}
-
-static duk_ret_t
-js_SetDefaultPersonScript(duk_context* ctx)
-{
-	int type = duk_require_int(ctx, 0);
-	const char* script_name = (type == PERSON_SCRIPT_ON_CREATE) ? "%/onCreatePerson.js"
-		: (type == PERSON_SCRIPT_ON_DESTROY) ? "%/onDestroyPerson.js"
-		: (type == PERSON_SCRIPT_ON_TALK) ? "%/onTalk.js"
-		: (type == PERSON_SCRIPT_ON_TOUCH) ? "%/onTouchPerson.js"
-		: (type == PERSON_SCRIPT_GENERATOR) ? "%/onGenCommands.js"
-		: NULL;
-	script_t* script = duk_require_sphere_script(ctx, 1, script_name);
-
-	if (type < 0 || type >= PERSON_SCRIPT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
-	script_free(s_def_map_scripts[type]);
-	s_def_map_scripts[type] = script;
-	return 0;
-}
-
-static duk_ret_t
-js_SetDelayScript(duk_context* ctx)
-{
-	int frames = duk_to_int(ctx, 0);
-	script_t* script = duk_require_sphere_script(ctx, 1, "[delay script]");
-
-	struct delay_script* delay;
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (frames < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "frames must be positive");
-	if (++s_num_delay_scripts > s_max_delay_scripts) {
-		s_max_delay_scripts = s_num_delay_scripts * 2;
-		if (!(s_delay_scripts = realloc(s_delay_scripts, s_max_delay_scripts * sizeof(struct delay_script))))
-			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to enlarge delay script queue");
-	}
-	delay = &s_delay_scripts[s_num_delay_scripts - 1];
-	delay->script = script;
-	delay->frames_left = frames;
-	return 0;
-}
-
-static duk_ret_t
-js_SetLayerHeight(duk_context* ctx)
-{
-	int layer;
-	int new_height;
-
-	layer = duk_require_map_layer(ctx, 0);
-	new_height = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (new_height <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "height must be positive and nonzero (got: %d)", new_height);
-	if (!layer_resize(layer, s_map->layers[layer].width, new_height))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to resize layer %d", layer);
-	return 0;
-}
-
-static duk_ret_t
-js_SetLayerMask(duk_context* ctx)
-{
-	int layer = duk_require_map_layer(ctx, 0);
-	color_t mask = duk_require_sphere_color(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	s_map->layers[layer].color_mask = mask;
-	return 0;
-}
-
-static duk_ret_t
-js_SetLayerReflective(duk_context* ctx)
-{
-	int layer = duk_require_map_layer(ctx, 0);
-	bool is_reflective = duk_to_boolean(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	s_map->layers[layer].is_reflective = is_reflective;
-	return 0;
-}
-
-static duk_ret_t
-js_SetLayerRenderer(duk_context* ctx)
-{
-	int       layer;
-	char      script_name[50];
-	script_t* script;
-
-	layer = duk_require_map_layer(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	sprintf(script_name, "[layer %d render script]", layer);
-	script = duk_require_sphere_script(ctx, 1, script_name);
-	layer_on_render(layer, script);
-	script_free(script);
-	return 0;
-}
-
-static duk_ret_t
-js_SetLayerSize(duk_context* ctx)
-{
-	int layer;
-	int new_height;
-	int new_width;
-
-	layer = duk_require_map_layer(ctx, 0);
-	new_width = duk_to_int(ctx, 1);
-	new_height = duk_to_int(ctx, 2);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (new_width <= 0 || new_height <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid layer dimensions");
-	if (!layer_resize(layer, new_width, new_height))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't resize layer");
-	return 0;
-}
-
-static duk_ret_t
-js_SetLayerVisible(duk_context* ctx)
-{
-	bool is_visible;
-	int  layer;
-
-	layer = duk_require_map_layer(ctx, 0);
-	is_visible = duk_to_boolean(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	s_map->layers[layer].is_visible = is_visible;
-	return 0;
-}
-
-static duk_ret_t
-js_SetLayerWidth(duk_context* ctx)
-{
-	int layer;
-	int new_width;
-
-	layer = duk_require_map_layer(ctx, 0);
-	new_width = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (new_width <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "width must be positive and nonzero (got: %d)", new_width);
-	if (!layer_resize(layer, new_width, s_map->layers[layer].height))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to resize layer %d", layer);
-	return 0;
-}
-
-static duk_ret_t
-js_SetMapEngineFrameRate(duk_context* ctx)
-{
-	int framerate;
-	
-	framerate = duk_to_int(ctx, 0);
-
-	if (framerate < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
-	
-	map_engine_set_framerate(framerate);
-	return 0;
-}
-
-static duk_ret_t
-js_SetNextAnimatedTile(duk_context* ctx)
-{
-	int        next_index;
-	int        tile_index;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-	next_index = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	if (next_index < 0 || next_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index for next tile");
-	tileset_set_next(tileset, tile_index, next_index);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonAngle(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      theta;
-
-	name = duk_require_string(ctx, 0);
-	theta = duk_to_number(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_set_angle(person, theta);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonData(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-
-	duk_require_object_coercible(ctx, 1);
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "personData");
-	duk_dup(ctx, 1); duk_put_prop_string(ctx, -2, name);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonDirection(duk_context* ctx)
-{
-	const char* name;
-	const char* new_dir;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	new_dir = duk_require_string(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	set_person_direction(person, new_dir);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonFollowDistance(duk_context* ctx)
-{
-	int         distance;
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	distance = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (person->leader == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "person has no leader");
-	if (distance <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid distance");
-	enlarge_step_history(person->leader, distance);
-	person->follow_distance = distance;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonFrame(duk_context* ctx)
-{
-	int         frame_index;
-	const char* name;
-	int         num_frames;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	frame_index = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	num_frames = spriteset_num_frames(person->sprite, person->direction);
-	person->frame = (frame_index % num_frames + num_frames) % num_frames;
-	person->anim_frames = spriteset_frame_delay(person->sprite, person->direction, person->frame);
-	person->revert_frames = person->revert_delay;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonFrameNext(duk_context* ctx)
-{
-	const char* name;
-	int         num_frames;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	num_frames = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (num_frames < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame count");
-	person->anim_frames = num_frames;
-	person->revert_frames = person->revert_delay;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonFrameRevert(duk_context* ctx)
-{
-	const char* name;
-	int         num_frames;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	num_frames = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (num_frames < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame count");
-	person->revert_delay = num_frames;
-	person->revert_frames = person->revert_delay;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonIgnoreList(duk_context* ctx)
-{
-	size_t      list_size;
-	const char* name;
-	person_t*   person;
-
-	int i;
-
-	name = duk_require_string(ctx, 0);
-
-	duk_require_object_coercible(ctx, 1);
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (!duk_is_array(ctx, 1))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "ignore_list argument must be an array");
-	list_size = duk_get_length(ctx, 1);
-	if (list_size > INT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "list is too large");
-	for (i = 0; i < person->num_ignores; ++i) {
-		free(person->ignores[i]);
-	}
-	person->ignores = realloc(person->ignores, list_size * sizeof(char*));
-	person->num_ignores = (int)list_size;
-	for (i = 0; i < (int)list_size; ++i) {
-		duk_get_prop_index(ctx, 1, (duk_uarridx_t)i);
-		person->ignores[i] = strdup(duk_require_string(ctx, -1));
-		duk_pop(ctx);
-	}
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonLayer(duk_context* ctx)
-{
-	int         layer;
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	layer = duk_require_map_layer(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->layer = layer;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonMask(duk_context* ctx)
-{
-	color_t     color;
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	color = duk_require_sphere_color(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_set_color(person, color);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonOffsetX(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         x_offset;
-
-	name = duk_require_string(ctx, 0);
-	x_offset = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->x_offset = x_offset;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonOffsetY(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         y_offset;
-
-	name = duk_require_string(ctx, 0);
-	y_offset = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->y_offset = y_offset;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonScaleAbsolute(duk_context* ctx)
-{
-	int          height;
-	const char*  name;
-	person_t*    person;
-	int          sprite_h;
-	int          sprite_w;
-	spriteset_t* spriteset;
-	int          width;
-
-	name = duk_require_string(ctx, 0);
-	width = duk_require_int(ctx, 1);
-	height = duk_require_int(ctx, 2);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (width < 0 || height < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid scale dimensions");
-	spriteset = person_get_spriteset(person);
-	sprite_w = spriteset_width(spriteset);
-	sprite_h = spriteset_height(spriteset);
-	person_set_scale(person, width / sprite_w, height / sprite_h);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonScaleFactor(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      scale_x;
-	double      scale_y;
-
-	name = duk_require_string(ctx, 0);
-	scale_x = duk_to_number(ctx, 1);
-	scale_y = duk_to_number(ctx, 2);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (scale_x < 0.0 || scale_y < 0.0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid scale factor(s)");
-	person_set_scale(person, scale_x, scale_y);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonScript(duk_context* ctx)
-{
-	lstring_t*  codestring;
-	const char* name;
-	person_t*   person;
-	script_t*   script;
-	int         type;
-
-	name = duk_require_string(ctx, 0);
-	type = duk_require_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	if (type < 0 || type >= PERSON_SCRIPT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
-	if (duk_is_string(ctx, 2)) {
-		codestring = duk_require_lstring_t(ctx, 2);
-		person_compile_script(person, type, codestring);
-		lstr_free(codestring);
-	}
-	else {
-		script = duk_require_sphere_script(ctx, 2, "[person script]");
-		person_set_script(person, type, script);
-	}
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonSpeed(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      speed;
-
-	name = duk_require_string(ctx, 0);
-	speed = duk_to_number(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_set_speed(person, speed, speed);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonSpeedXY(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      x_speed;
-	double      y_speed;
-
-	name = duk_require_string(ctx, 0);
-	x_speed = duk_to_number(ctx, 1);
-	y_speed = duk_to_number(ctx, 2);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person_set_speed(person, x_speed, y_speed);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonSpriteset(duk_context* ctx)
-{
-	const char*  name;
-	person_t*    person;
-	spriteset_t* spriteset;
-
-	name = duk_require_string(ctx, 0);
-	spriteset = duk_require_sphere_spriteset(ctx, 1);
-
-	if (!(person = map_person_by_name(name))) {
-		spriteset_free(spriteset);
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	}
-	person_set_spriteset(person, spriteset);
-	spriteset_free(spriteset);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonValue(duk_context* ctx)
-{
-	const char* key;
-	const char* name;
-	person_t*   person;
-
-	name = duk_require_string(ctx, 0);
-	key = duk_to_string(ctx, 1);
-
-	duk_require_valid_index(ctx, 2);
-	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "personData");
-	if (!duk_get_prop_string(ctx, -1, name)) {
-		duk_pop(ctx);
-		duk_push_object(ctx);
-		duk_put_prop_string(ctx, -2, name);
-		duk_get_prop_string(ctx, -1, name);
-	}
-	duk_dup(ctx, 2); duk_put_prop_string(ctx, -2, key);
-	duk_pop_2(ctx);
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonVisible(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	bool        visible;
-
-	name = duk_require_string(ctx, 0);
-	visible = duk_to_boolean(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->is_visible = visible;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonX(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         x;
-
-	name = duk_require_string(ctx, 0);
-	x = duk_to_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->x = x;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonXYFloat(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	double      x;
-	double      y;
-
-	name = duk_require_string(ctx, 0);
-	x = duk_to_number(ctx, 1);
-	y = duk_to_number(ctx, 2);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->x = x;
-	person->y = y;
-	return 0;
-}
-
-static duk_ret_t
-js_SetPersonY(duk_context* ctx)
-{
-	const char* name;
-	person_t*   person;
-	int         y;
-
-	name = duk_require_string(ctx, 0);
-	y = duk_to_int(ctx, 1);
-
-	if (!(person = map_person_by_name(name)))
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
-	person->y = y;
-	return 0;
-}
-
-static duk_ret_t
-js_SetRenderScript(duk_context* ctx)
-{
-	script_t* script;
-
-	script = duk_require_sphere_script(ctx, 0, "%/renderScript.js");
-
-	map_engine_on_render(script);
-	script_free(script);
-	return 0;
-}
-
-static duk_ret_t
-js_SetTalkActivationButton(duk_context* ctx)
-{
-	int button = duk_to_int(ctx, 0);
-
-	s_talk_button = button;
-	return 0;
-}
-
-static duk_ret_t
-js_SetTalkActivationKey(duk_context* ctx)
-{
-	int key;
-	int num_args;
-	int player = 0;
-
-	num_args = duk_get_top(ctx);
-	key = duk_to_int(ctx, 0);
-	if (num_args >= 2)
-		player = duk_to_int(ctx, 1);
-
-	if (player < 0 || player >= MAX_PLAYERS)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
-
-	s_players[player].talk_key = key;
-	return 0;
-}
-
-static duk_ret_t
-js_SetTalkDistance(duk_context* ctx)
-{
-	int pixels;
-
-	pixels = duk_to_int(ctx, 0);
-
-	if (pixels < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid talk distance");
-
-	s_talk_distance = pixels;
-	return 0;
-}
-static duk_ret_t
-js_SetTile(duk_context* ctx)
-{
-	int        layer;
-	int        tile_index;
-	tileset_t* tileset;
-	int        x;
-	int        y;
-
-	x = duk_to_int(ctx, 0);
-	y = duk_to_int(ctx, 1);
-	layer = duk_require_map_layer(ctx, 2);
-	tile_index = duk_to_int(ctx, 3);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-
-	layer_set_tile(layer, x, y, tile_index);
-	return 0;
-}
-
-static duk_ret_t
-js_SetTileDelay(duk_context* ctx)
-{
-	int        delay;
-	int        tile_index;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-	delay = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	if (delay < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame count");
-	tileset_set_delay(tileset, tile_index, delay);
-	return 0;
-}
-
-static duk_ret_t
-js_SetTileImage(duk_context* ctx)
-{
-	image_t*   image;
-	int        image_h;
-	int        image_w;
-	int        tile_h;
-	int        tile_index;
-	int        tile_w;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-	image = duk_require_class_obj(ctx, 1, "ssImage");
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	tileset_get_size(tileset, &tile_w, &tile_h);
-	image_w = image_width(image);
-	image_h = image_height(image);
-	if (image_w != tile_w || image_h != tile_h)
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "image/tile size mismatch");
-	tileset_set_image(tileset, tile_index, image);
-	return 0;
-}
-
-static duk_ret_t
-js_SetTileName(duk_context* ctx)
-{
-	lstring_t* name;
-	int        tile_index;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-	name = duk_require_lstring_t(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	tileset_set_name(tileset, tile_index, name);
-	lstr_free(name);
-	return 0;
-}
-
-static duk_ret_t
-js_SetTileSurface(duk_context* ctx)
-{
-	image_t*   image;
-	int        image_h;
-	int        image_w;
-	int        tile_h;
-	int        tile_index;
-	int        tile_w;
-	tileset_t* tileset;
-
-	tile_index = duk_to_int(ctx, 0);
-	image = duk_require_class_obj(ctx, 1, "ssSurface");
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	tileset = map_tileset();
-	if (tile_index < 0 || tile_index >= tileset_len(tileset))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
-	tileset_get_size(tileset, &tile_w, &tile_h);
-	image_w = image_width(image);
-	image_h = image_height(image);
-	if (image_w != tile_w || image_h != tile_h)
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "surface/tile size mismatch");
-	tileset_set_image(tileset, tile_index, image);
-	return 0;
-}
-
-static duk_ret_t
-js_SetTriggerLayer(duk_context* ctx)
-{
-	int layer;
-	int trigger_index;
-
-	trigger_index = duk_to_int(ctx, 0);
-	layer = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (trigger_index < 0 || trigger_index >= map_num_triggers())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	trigger_set_layer(trigger_index, layer);
-	return 0;
-}
-
-static duk_ret_t
-js_SetTriggerScript(duk_context* ctx)
-{
-	script_t*  script;
-	lstring_t* script_name;
-	int        trigger_index;
-
-	trigger_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (trigger_index < 0 || trigger_index >= map_num_triggers())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	script_name = lstr_newf("%s/trigger~%d/onStep", map_filename(), trigger_index);
-	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
-	trigger_set_script(trigger_index, script);
-	script_free(script);
-	lstr_free(script_name);
-	return 0;
-}
-
-static duk_ret_t
-js_SetTriggerXY(duk_context* ctx)
-{
-	int trigger_index;
-	int x;
-	int y;
-
-	trigger_index = duk_to_int(ctx, 0);
-	x = duk_to_int(ctx, 1);
-	y = duk_to_int(ctx, 2);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (trigger_index < 0 || trigger_index >= map_num_triggers())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	trigger_set_xy(trigger_index, x, y);
-	return 0;
-}
-
-static duk_ret_t
-js_SetUpdateScript(duk_context* ctx)
-{
-	script_t* script;
-
-	script = duk_require_sphere_script(ctx, 0, "%/updateScript.js");
-
-	map_engine_on_update(script);
-	script_free(script);
-	return 0;
-}
-
-static duk_ret_t
-js_SetZoneDimensions(duk_context* ctx)
-{
-	rect_t bounds;
-	int    height;
-	int    width;
-	int    x;
-	int    y;
-	int    zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-	x = duk_to_int(ctx, 1);
-	y = duk_to_int(ctx, 2);
-	width = duk_to_int(ctx, 3);
-	height = duk_to_int(ctx, 4);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	bounds = map_bounds();
-	if (width <= 0 || height <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone size");
-	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "zone area out of bounds");
-	zone_set_bounds(zone_index, new_rect(x, y, x + width, y + height));
-	return 0;
-}
-
-static duk_ret_t
-js_SetZoneLayer(duk_context* ctx)
-{
-	int layer;
-	int zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-	layer = duk_require_map_layer(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	zone_set_layer(zone_index, layer);
-	return 0;
-}
-
-static duk_ret_t
-js_SetZoneScript(duk_context* ctx)
-{
-	script_t*  script;
-	lstring_t* script_name;
-	int        zone_index;
-
-	zone_index = duk_to_int(ctx, 0);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	if (!(script_name = lstr_newf("%s/zone%d", map_filename(), zone_index)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "error compiling zone script");
-	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
-	lstr_free(script_name);
-	zone_set_script(zone_index, script);
-	script_free(script);
-	return 0;
-}
-
-static duk_ret_t
-js_SetZoneSteps(duk_context* ctx)
-{
-	int zone_index;
-	int steps;
-
-	zone_index = duk_to_int(ctx, 0);
-	steps = duk_to_int(ctx, 1);
-
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	if (zone_index < 0 || zone_index >= map_num_zones())
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	if (steps <= 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "steps must be positive (got: %d)", steps);
-	zone_set_steps(zone_index, steps);
-	return 0;
-}
-
-static duk_ret_t
-js_UpdateMapEngine(duk_context* ctx)
-{
-	if (!map_engine_running())
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
-	update_map_engine(false);
-	return 0;
 }

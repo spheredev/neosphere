@@ -209,7 +209,6 @@ main(int argc, char* argv[])
 
 	api_init(g_duk);
 	initialize_vanilla_api(g_duk);
-	init_map_engine_api(g_duk);
 	initialize_pegasus_api(g_duk);
 
 	// attempt to locate and load system font
@@ -734,7 +733,7 @@ show_error_screen(const char* message)
 
 	// show error in-engine, Sphere 1.x style
 	screen_unskip_frame(g_screen);
-	image_set_scissor(screen_backbuffer(g_screen), new_rect(0, 0, g_res_x, g_res_y));
+	image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, g_res_x, g_res_y));
 	is_finished = false;
 	frames_till_close = 30;
 	while (!is_finished) {

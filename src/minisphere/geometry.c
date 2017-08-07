@@ -33,7 +33,7 @@ size2(int width, int height)
 }
 
 rect_t
-new_rect(int x1, int y1, int x2, int y2)
+rect(int x1, int y1, int x2, int y2)
 {
 	rect_t rectangle;
 
@@ -45,7 +45,7 @@ new_rect(int x1, int y1, int x2, int y2)
 }
 
 float_rect_t
-new_float_rect(float x1, float y1, float x2, float y2)
+rectf(float x1, float y1, float x2, float y2)
 {
 	float_rect_t rectangle;
 
@@ -102,35 +102,35 @@ normalize_rect(rect_t* inout_rect)
 }
 
 float_rect_t
-scale_float_rect(float_rect_t rect, float x_scale, float y_scale)
+scale_float_rect(float_rect_t in_rect, float x_scale, float y_scale)
 {
-	return new_float_rect(
-		rect.x1 * x_scale, rect.y1 * y_scale,
-		rect.x2 * x_scale, rect.y2 * y_scale);
+	return rectf(
+		in_rect.x1 * x_scale, in_rect.y1 * y_scale,
+		in_rect.x2 * x_scale, in_rect.y2 * y_scale);
 }
 
 rect_t
-translate_rect(rect_t rect, int x_offset, int y_offset)
+translate_rect(rect_t in_rect, int x_offset, int y_offset)
 {
-	return new_rect(
-		rect.x1 + x_offset, rect.y1 + y_offset,
-		rect.x2 + x_offset, rect.y2 + y_offset);
+	return rect(
+		in_rect.x1 + x_offset, in_rect.y1 + y_offset,
+		in_rect.x2 + x_offset, in_rect.y2 + y_offset);
 }
 
 float_rect_t
 translate_float_rect(float_rect_t rect, float x_offset, float y_offset)
 {
-	return new_float_rect(
+	return rectf(
 		rect.x1 + x_offset, rect.y1 + y_offset,
 		rect.x2 + x_offset, rect.y2 + y_offset);
 }
 
 rect_t
-zoom_rect(rect_t rect, double scale_x, double scale_y)
+zoom_rect(rect_t in_rect, double scale_x, double scale_y)
 {
-	return new_rect(
-		rect.x1 * scale_x, rect.y1 * scale_y,
-		rect.x2 * scale_x, rect.y2 * scale_y);
+	return rect(
+		in_rect.x1 * scale_x, in_rect.y1 * scale_y,
+		in_rect.x2 * scale_x, in_rect.y2 * scale_y);
 }
 
 bool

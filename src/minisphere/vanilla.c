@@ -24,49 +24,26 @@
 #define API_VERSION        2.0
 #define API_VERSION_STRING "v2.0"
 
-static duk_ret_t js_AreKeysLeft                      (duk_context* ctx);
-static duk_ret_t js_IsAnyKeyPressed                  (duk_context* ctx);
-static duk_ret_t js_IsJoystickButtonPressed          (duk_context* ctx);
-static duk_ret_t js_IsKeyPressed                     (duk_context* ctx);
-static duk_ret_t js_IsMouseButtonPressed             (duk_context* ctx);
-static duk_ret_t js_GetClippingRectangle             (duk_context* ctx);
-static duk_ret_t js_GetDirectoryList                 (duk_context* ctx);
-static duk_ret_t js_GetFileList                      (duk_context* ctx);
-static duk_ret_t js_GetFrameRate                     (duk_context* ctx);
-static duk_ret_t js_GetGameList                      (duk_context* ctx);
-static duk_ret_t js_GetLocalAddress                  (duk_context* ctx);
-static duk_ret_t js_GetLocalName                     (duk_context* ctx);
-static duk_ret_t js_GetJoystickAxis                  (duk_context* ctx);
-static duk_ret_t js_GetKey                           (duk_context* ctx);
-static duk_ret_t js_GetKeyString                     (duk_context* ctx);
-static duk_ret_t js_GetMouseWheelEvent               (duk_context* ctx);
-static duk_ret_t js_GetMouseX                        (duk_context* ctx);
-static duk_ret_t js_GetMouseY                        (duk_context* ctx);
-static duk_ret_t js_GetNumJoysticks                  (duk_context* ctx);
-static duk_ret_t js_GetNumJoystickAxes               (duk_context* ctx);
-static duk_ret_t js_GetNumJoystickButtons            (duk_context* ctx);
-static duk_ret_t js_GetNumMouseWheelEvents           (duk_context* ctx);
-static duk_ret_t js_GetPlayerKey                     (duk_context* ctx);
-static duk_ret_t js_GetScreenHeight                  (duk_context* ctx);
-static duk_ret_t js_GetScreenWidth                   (duk_context* ctx);
-static duk_ret_t js_GetSystemArrow                   (duk_context* ctx);
-static duk_ret_t js_GetSystemDownArrow               (duk_context* ctx);
-static duk_ret_t js_GetSystemFont                    (duk_context* ctx);
-static duk_ret_t js_GetSystemUpArrow                 (duk_context* ctx);
-static duk_ret_t js_GetSystemWindowStyle             (duk_context* ctx);
-static duk_ret_t js_GetTime                          (duk_context* ctx);
-static duk_ret_t js_GetToggleState                   (duk_context* ctx);
-static duk_ret_t js_GetVersion                       (duk_context* ctx);
-static duk_ret_t js_GetVersionString                 (duk_context* ctx);
-static duk_ret_t js_SetClippingRectangle             (duk_context* ctx);
-static duk_ret_t js_SetFrameRate                     (duk_context* ctx);
-static duk_ret_t js_SetMousePosition                 (duk_context* ctx);
 static duk_ret_t js_Abort                            (duk_context* ctx);
+static duk_ret_t js_AddTrigger                       (duk_context* ctx);
+static duk_ret_t js_AddZone                          (duk_context* ctx);
 static duk_ret_t js_ApplyColorMask                   (duk_context* ctx);
+static duk_ret_t js_AreKeysLeft                      (duk_context* ctx);
+static duk_ret_t js_AreZonesAt                       (duk_context* ctx);
+static duk_ret_t js_AttachCamera                     (duk_context* ctx);
+static duk_ret_t js_AttachInput                      (duk_context* ctx);
+static duk_ret_t js_AttachPlayerInput                (duk_context* ctx);
 static duk_ret_t js_BezierCurve                      (duk_context* ctx);
 static duk_ret_t js_BindJoystickButton               (duk_context* ctx);
 static duk_ret_t js_BindKey                          (duk_context* ctx);
 static duk_ret_t js_BlendColors                      (duk_context* ctx);
+static duk_ret_t js_CallDefaultMapScript             (duk_context* ctx);
+static duk_ret_t js_CallDefaultPersonScript          (duk_context* ctx);
+static duk_ret_t js_CallMapScript                    (duk_context* ctx);
+static duk_ret_t js_CallPersonScript                 (duk_context* ctx);
+static duk_ret_t js_ChangeMap                        (duk_context* ctx);
+static duk_ret_t js_ClearPersonCommands              (duk_context* ctx);
+static duk_ret_t js_CreatePerson                     (duk_context* ctx);
 static duk_ret_t js_CreateByteArray                  (duk_context* ctx);
 static duk_ret_t js_CreateByteArrayFromString        (duk_context* ctx);
 static duk_ret_t js_CreateColor                      (duk_context* ctx);
@@ -77,17 +54,120 @@ static duk_ret_t js_CreateStringFromByteArray        (duk_context* ctx);
 static duk_ret_t js_CreateStringFromCode             (duk_context* ctx);
 static duk_ret_t js_CreateSurface                    (duk_context* ctx);
 static duk_ret_t js_DeflateByteArray                 (duk_context* ctx);
+static duk_ret_t js_DestroyPerson                    (duk_context* ctx);
+static duk_ret_t js_DetachCamera                     (duk_context* ctx);
+static duk_ret_t js_DetachInput                      (duk_context* ctx);
+static duk_ret_t js_DetachPlayerInput                (duk_context* ctx);
 static duk_ret_t js_DoEvents                         (duk_context* ctx);
 static duk_ret_t js_DoesFileExist                    (duk_context* ctx);
+static duk_ret_t js_DoesPersonExist                  (duk_context* ctx);
 static duk_ret_t js_Delay                            (duk_context* ctx);
 static duk_ret_t js_EvaluateScript                   (duk_context* ctx);
 static duk_ret_t js_EvaluateSystemScript             (duk_context* ctx);
 static duk_ret_t js_ExecuteGame                      (duk_context* ctx);
+static duk_ret_t js_ExecuteTrigger                   (duk_context* ctx);
+static duk_ret_t js_ExecuteZoneScript                (duk_context* ctx);
+static duk_ret_t js_ExecuteZones                     (duk_context* ctx);
 static duk_ret_t js_Exit                             (duk_context* ctx);
+static duk_ret_t js_ExitMapEngine                    (duk_context* ctx);
 static duk_ret_t js_FilledCircle                     (duk_context* ctx);
 static duk_ret_t js_FilledEllipse                    (duk_context* ctx);
 static duk_ret_t js_FlipScreen                       (duk_context* ctx);
+static duk_ret_t js_FollowPerson                     (duk_context* ctx);
 static duk_ret_t js_GarbageCollect                   (duk_context* ctx);
+static duk_ret_t js_GetActingPerson                  (duk_context* ctx);
+static duk_ret_t js_GetCameraPerson                  (duk_context* ctx);
+static duk_ret_t js_GetCameraX                       (duk_context* ctx);
+static duk_ret_t js_GetCameraY                       (duk_context* ctx);
+static duk_ret_t js_GetClippingRectangle             (duk_context* ctx);
+static duk_ret_t js_GetCurrentMap                    (duk_context* ctx);
+static duk_ret_t js_GetCurrentPerson                 (duk_context* ctx);
+static duk_ret_t js_GetCurrentTrigger                (duk_context* ctx);
+static duk_ret_t js_GetCurrentZone                   (duk_context* ctx);
+static duk_ret_t js_GetDirectoryList                 (duk_context* ctx);
+static duk_ret_t js_GetFileList                      (duk_context* ctx);
+static duk_ret_t js_GetFrameRate                     (duk_context* ctx);
+static duk_ret_t js_GetGameList                      (duk_context* ctx);
+static duk_ret_t js_GetInputPerson                   (duk_context* ctx);
+static duk_ret_t js_GetJoystickAxis                  (duk_context* ctx);
+static duk_ret_t js_GetKey                           (duk_context* ctx);
+static duk_ret_t js_GetKeyString                     (duk_context* ctx);
+static duk_ret_t js_GetLayerHeight                   (duk_context* ctx);
+static duk_ret_t js_GetLayerMask                     (duk_context* ctx);
+static duk_ret_t js_GetLayerName                     (duk_context* ctx);
+static duk_ret_t js_GetLayerWidth                    (duk_context* ctx);
+static duk_ret_t js_GetLocalAddress                  (duk_context* ctx);
+static duk_ret_t js_GetLocalName                     (duk_context* ctx);
+static duk_ret_t js_GetMapEngineFrameRate            (duk_context* ctx);
+static duk_ret_t js_GetMouseWheelEvent               (duk_context* ctx);
+static duk_ret_t js_GetMouseX                        (duk_context* ctx);
+static duk_ret_t js_GetMouseY                        (duk_context* ctx);
+static duk_ret_t js_GetNextAnimatedTile              (duk_context* ctx);
+static duk_ret_t js_GetNumJoysticks                  (duk_context* ctx);
+static duk_ret_t js_GetNumJoystickAxes               (duk_context* ctx);
+static duk_ret_t js_GetNumJoystickButtons            (duk_context* ctx);
+static duk_ret_t js_GetNumLayers                     (duk_context* ctx);
+static duk_ret_t js_GetNumMouseWheelEvents           (duk_context* ctx);
+static duk_ret_t js_GetNumTiles                      (duk_context* ctx);
+static duk_ret_t js_GetNumTriggers                   (duk_context* ctx);
+static duk_ret_t js_GetNumZones                      (duk_context* ctx);
+static duk_ret_t js_GetObstructingPerson             (duk_context* ctx);
+static duk_ret_t js_GetObstructingTile               (duk_context* ctx);
+static duk_ret_t js_GetPersonAngle                   (duk_context* ctx);
+static duk_ret_t js_GetPersonBase                    (duk_context* ctx);
+static duk_ret_t js_GetPersonData                    (duk_context* ctx);
+static duk_ret_t js_GetPersonDirection               (duk_context* ctx);
+static duk_ret_t js_GetPersonFollowDistance          (duk_context* ctx);
+static duk_ret_t js_GetPersonFollowers               (duk_context* ctx);
+static duk_ret_t js_GetPersonFrame                   (duk_context* ctx);
+static duk_ret_t js_GetPersonFrameNext               (duk_context* ctx);
+static duk_ret_t js_GetPersonFrameRevert             (duk_context* ctx);
+static duk_ret_t js_GetPersonIgnoreList              (duk_context* ctx);
+static duk_ret_t js_GetPersonLayer                   (duk_context* ctx);
+static duk_ret_t js_GetPersonLeader                  (duk_context* ctx);
+static duk_ret_t js_GetPersonList                    (duk_context* ctx);
+static duk_ret_t js_GetPersonMask                    (duk_context* ctx);
+static duk_ret_t js_GetPersonOffsetX                 (duk_context* ctx);
+static duk_ret_t js_GetPersonOffsetY                 (duk_context* ctx);
+static duk_ret_t js_GetPersonSpeedX                  (duk_context* ctx);
+static duk_ret_t js_GetPersonSpeedY                  (duk_context* ctx);
+static duk_ret_t js_GetPersonSpriteset               (duk_context* ctx);
+static duk_ret_t js_GetPersonValue                   (duk_context* ctx);
+static duk_ret_t js_GetPersonX                       (duk_context* ctx);
+static duk_ret_t js_GetPersonY                       (duk_context* ctx);
+static duk_ret_t js_GetPersonXFloat                  (duk_context* ctx);
+static duk_ret_t js_GetPersonYFloat                  (duk_context* ctx);
+static duk_ret_t js_GetPlayerKey                     (duk_context* ctx);
+static duk_ret_t js_GetScreenHeight                  (duk_context* ctx);
+static duk_ret_t js_GetScreenWidth                   (duk_context* ctx);
+static duk_ret_t js_GetSystemArrow                   (duk_context* ctx);
+static duk_ret_t js_GetSystemDownArrow               (duk_context* ctx);
+static duk_ret_t js_GetSystemFont                    (duk_context* ctx);
+static duk_ret_t js_GetSystemUpArrow                 (duk_context* ctx);
+static duk_ret_t js_GetSystemWindowStyle             (duk_context* ctx);
+static duk_ret_t js_GetTalkActivationButton          (duk_context* ctx);
+static duk_ret_t js_GetTalkActivationKey             (duk_context* ctx);
+static duk_ret_t js_GetTalkDistance                  (duk_context* ctx);
+static duk_ret_t js_GetTile                          (duk_context* ctx);
+static duk_ret_t js_GetTileDelay                     (duk_context* ctx);
+static duk_ret_t js_GetTileHeight                    (duk_context* ctx);
+static duk_ret_t js_GetTileImage                     (duk_context* ctx);
+static duk_ret_t js_GetTileName                      (duk_context* ctx);
+static duk_ret_t js_GetTileSurface                   (duk_context* ctx);
+static duk_ret_t js_GetTileWidth                     (duk_context* ctx);
+static duk_ret_t js_GetTime                          (duk_context* ctx);
+static duk_ret_t js_GetToggleState                   (duk_context* ctx);
+static duk_ret_t js_GetTriggerLayer                  (duk_context* ctx);
+static duk_ret_t js_GetTriggerX                      (duk_context* ctx);
+static duk_ret_t js_GetTriggerY                      (duk_context* ctx);
+static duk_ret_t js_GetVersion                       (duk_context* ctx);
+static duk_ret_t js_GetVersionString                 (duk_context* ctx);
+static duk_ret_t js_GetZoneHeight                    (duk_context* ctx);
+static duk_ret_t js_GetZoneLayer                     (duk_context* ctx);
+static duk_ret_t js_GetZoneSteps                     (duk_context* ctx);
+static duk_ret_t js_GetZoneWidth                     (duk_context* ctx);
+static duk_ret_t js_GetZoneX                         (duk_context* ctx);
+static duk_ret_t js_GetZoneY                         (duk_context* ctx);
 static duk_ret_t js_GrabImage                        (duk_context* ctx);
 static duk_ret_t js_GrabSurface                      (duk_context* ctx);
 static duk_ret_t js_GradientCircle                   (duk_context* ctx);
@@ -97,7 +177,24 @@ static duk_ret_t js_GradientRectangle                (duk_context* ctx);
 static duk_ret_t js_GradientTriangle                 (duk_context* ctx);
 static duk_ret_t js_HashByteArray                    (duk_context* ctx);
 static duk_ret_t js_HashFromFile                     (duk_context* ctx);
+static duk_ret_t js_IgnorePersonObstructions         (duk_context* ctx);
+static duk_ret_t js_IgnoreTileObstructions           (duk_context* ctx);
 static duk_ret_t js_InflateByteArray                 (duk_context* ctx);
+static duk_ret_t js_IsAnyKeyPressed                  (duk_context* ctx);
+static duk_ret_t js_IsCameraAttached                 (duk_context* ctx);
+static duk_ret_t js_IsCommandQueueEmpty              (duk_context* ctx);
+static duk_ret_t js_IsIgnoringPersonObstructions     (duk_context* ctx);
+static duk_ret_t js_IsIgnoringTileObstructions       (duk_context* ctx);
+static duk_ret_t js_IsInputAttached                  (duk_context* ctx);
+static duk_ret_t js_IsJoystickButtonPressed          (duk_context* ctx);
+static duk_ret_t js_IsKeyPressed                     (duk_context* ctx);
+static duk_ret_t js_IsLayerReflective                (duk_context* ctx);
+static duk_ret_t js_IsLayerVisible                   (duk_context* ctx);
+static duk_ret_t js_IsMapEngineRunning               (duk_context* ctx);
+static duk_ret_t js_IsMouseButtonPressed             (duk_context* ctx);
+static duk_ret_t js_IsPersonObstructed               (duk_context* ctx);
+static duk_ret_t js_IsPersonVisible                  (duk_context* ctx);
+static duk_ret_t js_IsTriggerAt                      (duk_context* ctx);
 static duk_ret_t js_Line                             (duk_context* ctx);
 static duk_ret_t js_LineSeries                       (duk_context* ctx);
 static duk_ret_t js_ListenOnPort                     (duk_context* ctx);
@@ -109,6 +206,9 @@ static duk_ret_t js_LoadSoundEffect                  (duk_context* ctx);
 static duk_ret_t js_LoadSpriteset                    (duk_context* ctx);
 static duk_ret_t js_LoadSurface                      (duk_context* ctx);
 static duk_ret_t js_LoadWindowStyle                  (duk_context* ctx);
+static duk_ret_t js_MapEngine                        (duk_context* ctx);
+static duk_ret_t js_MapToScreenX                     (duk_context* ctx);
+static duk_ret_t js_MapToScreenY                     (duk_context* ctx);
 static duk_ret_t js_OpenAddress                      (duk_context* ctx);
 static duk_ret_t js_OpenFile                         (duk_context* ctx);
 static duk_ret_t js_OpenLog                          (duk_context* ctx);
@@ -120,17 +220,84 @@ static duk_ret_t js_OutlinedRoundRectangle           (duk_context* ctx);
 static duk_ret_t js_Point                            (duk_context* ctx);
 static duk_ret_t js_PointSeries                      (duk_context* ctx);
 static duk_ret_t js_Print                            (duk_context* ctx);
+static duk_ret_t js_QueuePersonCommand               (duk_context* ctx);
+static duk_ret_t js_QueuePersonScript                (duk_context* ctx);
 static duk_ret_t js_Rectangle                        (duk_context* ctx);
 static duk_ret_t js_RemoveDirectory                  (duk_context* ctx);
 static duk_ret_t js_RemoveFile                       (duk_context* ctx);
+static duk_ret_t js_RemoveTrigger                    (duk_context* ctx);
+static duk_ret_t js_RemoveZone                       (duk_context* ctx);
 static duk_ret_t js_Rename                           (duk_context* ctx);
+static duk_ret_t js_RenderMap                        (duk_context* ctx);
+static duk_ret_t js_ReplaceTilesOnLayer              (duk_context* ctx);
 static duk_ret_t js_RequireScript                    (duk_context* ctx);
 static duk_ret_t js_RequireSystemScript              (duk_context* ctx);
 static duk_ret_t js_RestartGame                      (duk_context* ctx);
 static duk_ret_t js_RoundRectangle                   (duk_context* ctx);
+static duk_ret_t js_ScreenToMapX                     (duk_context* ctx);
+static duk_ret_t js_ScreenToMapY                     (duk_context* ctx);
+static duk_ret_t js_SetCameraX                       (duk_context* ctx);
+static duk_ret_t js_SetCameraY                       (duk_context* ctx);
+static duk_ret_t js_SetClippingRectangle             (duk_context* ctx);
+static duk_ret_t js_SetColorMask                     (duk_context* ctx);
+static duk_ret_t js_SetDefaultMapScript              (duk_context* ctx);
+static duk_ret_t js_SetDefaultPersonScript           (duk_context* ctx);
+static duk_ret_t js_SetDelayScript                   (duk_context* ctx);
+static duk_ret_t js_SetFrameRate                     (duk_context* ctx);
+static duk_ret_t js_SetLayerHeight                   (duk_context* ctx);
+static duk_ret_t js_SetLayerMask                     (duk_context* ctx);
+static duk_ret_t js_SetLayerReflective               (duk_context* ctx);
+static duk_ret_t js_SetLayerRenderer                 (duk_context* ctx);
+static duk_ret_t js_SetLayerSize                     (duk_context* ctx);
+static duk_ret_t js_SetLayerVisible                  (duk_context* ctx);
+static duk_ret_t js_SetLayerWidth                    (duk_context* ctx);
+static duk_ret_t js_SetMapEngineFrameRate            (duk_context* ctx);
+static duk_ret_t js_SetMousePosition                 (duk_context* ctx);
+static duk_ret_t js_SetNextAnimatedTile              (duk_context* ctx);
+static duk_ret_t js_SetPersonAngle                   (duk_context* ctx);
+static duk_ret_t js_SetPersonData                    (duk_context* ctx);
+static duk_ret_t js_SetPersonDirection               (duk_context* ctx);
+static duk_ret_t js_SetPersonFollowDistance          (duk_context* ctx);
+static duk_ret_t js_SetPersonFrame                   (duk_context* ctx);
+static duk_ret_t js_SetPersonFrameNext               (duk_context* ctx);
+static duk_ret_t js_SetPersonFrameRevert             (duk_context* ctx);
+static duk_ret_t js_SetPersonIgnoreList              (duk_context* ctx);
+static duk_ret_t js_SetPersonLayer                   (duk_context* ctx);
+static duk_ret_t js_SetPersonMask                    (duk_context* ctx);
+static duk_ret_t js_SetPersonOffsetX                 (duk_context* ctx);
+static duk_ret_t js_SetPersonOffsetY                 (duk_context* ctx);
+static duk_ret_t js_SetPersonScaleAbsolute           (duk_context* ctx);
+static duk_ret_t js_SetPersonScaleFactor             (duk_context* ctx);
+static duk_ret_t js_SetPersonScript                  (duk_context* ctx);
+static duk_ret_t js_SetPersonSpeed                   (duk_context* ctx);
+static duk_ret_t js_SetPersonSpeedXY                 (duk_context* ctx);
+static duk_ret_t js_SetPersonSpriteset               (duk_context* ctx);
+static duk_ret_t js_SetPersonValue                   (duk_context* ctx);
+static duk_ret_t js_SetPersonVisible                 (duk_context* ctx);
+static duk_ret_t js_SetPersonX                       (duk_context* ctx);
+static duk_ret_t js_SetPersonXYFloat                 (duk_context* ctx);
+static duk_ret_t js_SetPersonY                       (duk_context* ctx);
+static duk_ret_t js_SetRenderScript                  (duk_context* ctx);
+static duk_ret_t js_SetTalkActivationButton          (duk_context* ctx);
+static duk_ret_t js_SetTalkActivationKey             (duk_context* ctx);
+static duk_ret_t js_SetTalkDistance                  (duk_context* ctx);
+static duk_ret_t js_SetTile                          (duk_context* ctx);
+static duk_ret_t js_SetTileDelay                     (duk_context* ctx);
+static duk_ret_t js_SetTileImage                     (duk_context* ctx);
+static duk_ret_t js_SetTileName                      (duk_context* ctx);
+static duk_ret_t js_SetTileSurface                   (duk_context* ctx);
+static duk_ret_t js_SetTriggerLayer                  (duk_context* ctx);
+static duk_ret_t js_SetTriggerScript                 (duk_context* ctx);
+static duk_ret_t js_SetTriggerXY                     (duk_context* ctx);
+static duk_ret_t js_SetUpdateScript                  (duk_context* ctx);
+static duk_ret_t js_SetZoneDimensions                (duk_context* ctx);
+static duk_ret_t js_SetZoneLayer                     (duk_context* ctx);
+static duk_ret_t js_SetZoneScript                    (duk_context* ctx);
+static duk_ret_t js_SetZoneSteps                     (duk_context* ctx);
 static duk_ret_t js_Triangle                         (duk_context* ctx);
 static duk_ret_t js_UnbindJoystickButton             (duk_context* ctx);
 static duk_ret_t js_UnbindKey                        (duk_context* ctx);
+static duk_ret_t js_UpdateMapEngine                  (duk_context* ctx);
 static duk_ret_t js_Animation_finalize               (duk_context* ctx);
 static duk_ret_t js_Animation_get_height             (duk_context* ctx);
 static duk_ret_t js_Animation_get_width              (duk_context* ctx);
@@ -352,22 +519,89 @@ initialize_vanilla_api(duk_context* ctx)
 	duk_put_prop_string(ctx, -2, "RequireScript");
 	duk_pop(ctx);
 
-	// register the absolutely massive Sphere 1.x API
+	// stashed person data (used by Get/SetPersonData() APIs)
+	duk_push_global_stash(ctx);
+	duk_push_object(ctx);
+	duk_put_prop_string(ctx, -2, "personData");
+	duk_pop(ctx);
+
+	// register the absolutely ginormous (and deprecated!) Sphere v1 API.
+	api_define_function(ctx, NULL, "Abort", js_Abort);
+	api_define_function(ctx, NULL, "AddTrigger", js_AddTrigger);
+	api_define_function(ctx, NULL, "AddZone", js_AddZone);
+	api_define_function(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
 	api_define_function(ctx, NULL, "AreKeysLeft", js_AreKeysLeft);
-	api_define_function(ctx, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
-	api_define_function(ctx, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
-	api_define_function(ctx, NULL, "IsKeyPressed", js_IsKeyPressed);
-	api_define_function(ctx, NULL, "IsMouseButtonPressed", js_IsMouseButtonPressed);
+	api_define_function(ctx, NULL, "AreZonesAt", js_AreZonesAt);
+	api_define_function(ctx, NULL, "AttachCamera", js_AttachCamera);
+	api_define_function(ctx, NULL, "AttachInput", js_AttachInput);
+	api_define_function(ctx, NULL, "AttachPlayerInput", js_AttachPlayerInput);
+	api_define_function(ctx, NULL, "BezierCurve", js_BezierCurve);
+	api_define_function(ctx, NULL, "BindJoystickButton", js_BindJoystickButton);
+	api_define_function(ctx, NULL, "BindKey", js_BindKey);
+	api_define_function(ctx, NULL, "BlendColors", js_BlendColors);
+	api_define_function(ctx, NULL, "BlendColorsWeighted", js_BlendColors);
+	api_define_function(ctx, NULL, "CallDefaultMapScript", js_CallDefaultMapScript);
+	api_define_function(ctx, NULL, "CallDefaultPersonScript", js_CallDefaultPersonScript);
+	api_define_function(ctx, NULL, "CallMapScript", js_CallMapScript);
+	api_define_function(ctx, NULL, "CallPersonScript", js_CallPersonScript);
+	api_define_function(ctx, NULL, "ChangeMap", js_ChangeMap);
+	api_define_function(ctx, NULL, "ClearPersonCommands", js_ClearPersonCommands);
+	api_define_function(ctx, NULL, "CreateByteArray", js_CreateByteArray);
+	api_define_function(ctx, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
+	api_define_function(ctx, NULL, "CreateColor", js_CreateColor);
+	api_define_function(ctx, NULL, "CreateColorMatrix", js_CreateColorMatrix);
+	api_define_function(ctx, NULL, "CreateDirectory", js_CreateDirectory);
+	api_define_function(ctx, NULL, "CreatePerson", js_CreatePerson);
+	api_define_function(ctx, NULL, "CreateSpriteset", js_CreateSpriteset);
+	api_define_function(ctx, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
+	api_define_function(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
+	api_define_function(ctx, NULL, "CreateSurface", js_CreateSurface);
+	api_define_function(ctx, NULL, "DeflateByteArray", js_DeflateByteArray);
+	api_define_function(ctx, NULL, "Delay", js_Delay);
+	api_define_function(ctx, NULL, "DestroyPerson", js_DestroyPerson);
+	api_define_function(ctx, NULL, "DetachCamera", js_DetachCamera);
+	api_define_function(ctx, NULL, "DetachInput", js_DetachInput);
+	api_define_function(ctx, NULL, "DetachPlayerInput", js_DetachPlayerInput);
+	api_define_function(ctx, NULL, "DoEvents", js_DoEvents);
+	api_define_function(ctx, NULL, "DoesFileExist", js_DoesFileExist);
+	api_define_function(ctx, NULL, "DoesPersonExist", js_DoesPersonExist);
+	api_define_function(ctx, NULL, "EvaluateScript", js_EvaluateScript);
+	api_define_function(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
+	api_define_function(ctx, NULL, "Exit", js_Exit);
+	api_define_function(ctx, NULL, "ExitMapEngine", js_ExitMapEngine);
+	api_define_function(ctx, NULL, "ExecuteGame", js_ExecuteGame);
+	api_define_function(ctx, NULL, "ExecuteTrigger", js_ExecuteTrigger);
+	api_define_function(ctx, NULL, "ExecuteZoneScript", js_ExecuteZoneScript);
+	api_define_function(ctx, NULL, "ExecuteZones", js_ExecuteZones);
+	api_define_function(ctx, NULL, "FilledCircle", js_FilledCircle);
+	api_define_function(ctx, NULL, "FilledEllipse", js_FilledEllipse);
+	api_define_function(ctx, NULL, "FlipScreen", js_FlipScreen);
+	api_define_function(ctx, NULL, "FollowPerson", js_FollowPerson);
+	api_define_function(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	api_define_function(ctx, NULL, "GetActingPerson", js_GetActingPerson);
+	api_define_function(ctx, NULL, "GetCameraPerson", js_GetCameraPerson);
+	api_define_function(ctx, NULL, "GetCameraX", js_GetCameraX);
+	api_define_function(ctx, NULL, "GetCameraY", js_GetCameraY);
 	api_define_function(ctx, NULL, "GetClippingRectangle", js_GetClippingRectangle);
+	api_define_function(ctx, NULL, "GetCurrentMap", js_GetCurrentMap);
+	api_define_function(ctx, NULL, "GetCurrentPerson", js_GetCurrentPerson);
+	api_define_function(ctx, NULL, "GetCurrentTrigger", js_GetCurrentTrigger);
+	api_define_function(ctx, NULL, "GetCurrentZone", js_GetCurrentZone);
 	api_define_function(ctx, NULL, "GetDirectoryList", js_GetDirectoryList);
 	api_define_function(ctx, NULL, "GetFileList", js_GetFileList);
 	api_define_function(ctx, NULL, "GetFrameRate", js_GetFrameRate);
 	api_define_function(ctx, NULL, "GetGameList", js_GetGameList);
+	api_define_function(ctx, NULL, "GetInputPerson", js_GetInputPerson);
 	api_define_function(ctx, NULL, "GetJoystickAxis", js_GetJoystickAxis);
 	api_define_function(ctx, NULL, "GetLocalAddress", js_GetLocalAddress);
 	api_define_function(ctx, NULL, "GetLocalName", js_GetLocalName);
 	api_define_function(ctx, NULL, "GetKey", js_GetKey);
 	api_define_function(ctx, NULL, "GetKeyString", js_GetKeyString);
+	api_define_function(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
+	api_define_function(ctx, NULL, "GetLayerMask", js_GetLayerMask);
+	api_define_function(ctx, NULL, "GetLayerName", js_GetLayerName);
+	api_define_function(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
+	api_define_function(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
 	api_define_function(ctx, NULL, "GetMouseWheelEvent", js_GetMouseWheelEvent);
 	api_define_function(ctx, NULL, "GetMouseX", js_GetMouseX);
 	api_define_function(ctx, NULL, "GetMouseY", js_GetMouseY);
@@ -375,6 +609,37 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "GetNumJoystickAxes", js_GetNumJoystickAxes);
 	api_define_function(ctx, NULL, "GetNumJoystickButtons", js_GetNumJoystickButtons);
 	api_define_function(ctx, NULL, "GetNumMouseWheelEvents", js_GetNumMouseWheelEvents);
+	api_define_function(ctx, NULL, "GetNextAnimatedTile", js_GetNextAnimatedTile);
+	api_define_function(ctx, NULL, "GetNumLayers", js_GetNumLayers);
+	api_define_function(ctx, NULL, "GetNumTiles", js_GetNumTiles);
+	api_define_function(ctx, NULL, "GetNumTriggers", js_GetNumTriggers);
+	api_define_function(ctx, NULL, "GetNumZones", js_GetNumZones);
+	api_define_function(ctx, NULL, "GetObstructingPerson", js_GetObstructingPerson);
+	api_define_function(ctx, NULL, "GetObstructingTile", js_GetObstructingTile);
+	api_define_function(ctx, NULL, "GetPersonAngle", js_GetPersonAngle);
+	api_define_function(ctx, NULL, "GetPersonBase", js_GetPersonBase);
+	api_define_function(ctx, NULL, "GetPersonData", js_GetPersonData);
+	api_define_function(ctx, NULL, "GetPersonDirection", js_GetPersonDirection);
+	api_define_function(ctx, NULL, "GetPersonFollowDistance", js_GetPersonFollowDistance);
+	api_define_function(ctx, NULL, "GetPersonFollowers", js_GetPersonFollowers);
+	api_define_function(ctx, NULL, "GetPersonFrame", js_GetPersonFrame);
+	api_define_function(ctx, NULL, "GetPersonFrameNext", js_GetPersonFrameNext);
+	api_define_function(ctx, NULL, "GetPersonFrameRevert", js_GetPersonFrameRevert);
+	api_define_function(ctx, NULL, "GetPersonIgnoreList", js_GetPersonIgnoreList);
+	api_define_function(ctx, NULL, "GetPersonLayer", js_GetPersonLayer);
+	api_define_function(ctx, NULL, "GetPersonLeader", js_GetPersonLeader);
+	api_define_function(ctx, NULL, "GetPersonList", js_GetPersonList);
+	api_define_function(ctx, NULL, "GetPersonMask", js_GetPersonMask);
+	api_define_function(ctx, NULL, "GetPersonOffsetX", js_GetPersonOffsetX);
+	api_define_function(ctx, NULL, "GetPersonOffsetY", js_GetPersonOffsetY);
+	api_define_function(ctx, NULL, "GetPersonSpeedX", js_GetPersonSpeedX);
+	api_define_function(ctx, NULL, "GetPersonSpeedY", js_GetPersonSpeedY);
+	api_define_function(ctx, NULL, "GetPersonSpriteset", js_GetPersonSpriteset);
+	api_define_function(ctx, NULL, "GetPersonValue", js_GetPersonValue);
+	api_define_function(ctx, NULL, "GetPersonX", js_GetPersonX);
+	api_define_function(ctx, NULL, "GetPersonXFloat", js_GetPersonXFloat);
+	api_define_function(ctx, NULL, "GetPersonY", js_GetPersonY);
+	api_define_function(ctx, NULL, "GetPersonYFloat", js_GetPersonYFloat);
 	api_define_function(ctx, NULL, "GetPlayerKey", js_GetPlayerKey);
 	api_define_function(ctx, NULL, "GetScreenHeight", js_GetScreenHeight);
 	api_define_function(ctx, NULL, "GetScreenWidth", js_GetScreenWidth);
@@ -383,41 +648,29 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "GetSystemFont", js_GetSystemFont);
 	api_define_function(ctx, NULL, "GetSystemUpArrow", js_GetSystemUpArrow);
 	api_define_function(ctx, NULL, "GetSystemWindowStyle", js_GetSystemWindowStyle);
+	api_define_function(ctx, NULL, "GetTalkActivationButton", js_GetTalkActivationButton);
+	api_define_function(ctx, NULL, "GetTalkActivationKey", js_GetTalkActivationKey);
+	api_define_function(ctx, NULL, "GetTalkDistance", js_GetTalkDistance);
+	api_define_function(ctx, NULL, "GetTile", js_GetTile);
+	api_define_function(ctx, NULL, "GetTileDelay", js_GetTileDelay);
+	api_define_function(ctx, NULL, "GetTileImage", js_GetTileImage);
+	api_define_function(ctx, NULL, "GetTileHeight", js_GetTileHeight);
+	api_define_function(ctx, NULL, "GetTileName", js_GetTileName);
+	api_define_function(ctx, NULL, "GetTileSurface", js_GetTileSurface);
+	api_define_function(ctx, NULL, "GetTileWidth", js_GetTileWidth);
 	api_define_function(ctx, NULL, "GetTime", js_GetTime);
 	api_define_function(ctx, NULL, "GetToggleState", js_GetToggleState);
+	api_define_function(ctx, NULL, "GetTriggerLayer", js_GetTriggerLayer);
+	api_define_function(ctx, NULL, "GetTriggerX", js_GetTriggerX);
+	api_define_function(ctx, NULL, "GetTriggerY", js_GetTriggerY);
 	api_define_function(ctx, NULL, "GetVersion", js_GetVersion);
 	api_define_function(ctx, NULL, "GetVersionString", js_GetVersionString);
-	api_define_function(ctx, NULL, "SetClippingRectangle", js_SetClippingRectangle);
-	api_define_function(ctx, NULL, "SetFrameRate", js_SetFrameRate);
-	api_define_function(ctx, NULL, "SetMousePosition", js_SetMousePosition);
-	api_define_function(ctx, NULL, "Abort", js_Abort);
-	api_define_function(ctx, NULL, "ApplyColorMask", js_ApplyColorMask);
-	api_define_function(ctx, NULL, "BezierCurve", js_BezierCurve);
-	api_define_function(ctx, NULL, "BindJoystickButton", js_BindJoystickButton);
-	api_define_function(ctx, NULL, "BindKey", js_BindKey);
-	api_define_function(ctx, NULL, "BlendColors", js_BlendColors);
-	api_define_function(ctx, NULL, "BlendColorsWeighted", js_BlendColors);
-	api_define_function(ctx, NULL, "CreateByteArray", js_CreateByteArray);
-	api_define_function(ctx, NULL, "CreateByteArrayFromString", js_CreateByteArrayFromString);
-	api_define_function(ctx, NULL, "CreateColor", js_CreateColor);
-	api_define_function(ctx, NULL, "CreateColorMatrix", js_CreateColorMatrix);
-	api_define_function(ctx, NULL, "CreateDirectory", js_CreateDirectory);
-	api_define_function(ctx, NULL, "CreateSpriteset", js_CreateSpriteset);
-	api_define_function(ctx, NULL, "CreateStringFromByteArray", js_CreateStringFromByteArray);
-	api_define_function(ctx, NULL, "CreateStringFromCode", js_CreateStringFromCode);
-	api_define_function(ctx, NULL, "CreateSurface", js_CreateSurface);
-	api_define_function(ctx, NULL, "DeflateByteArray", js_DeflateByteArray);
-	api_define_function(ctx, NULL, "Delay", js_Delay);
-	api_define_function(ctx, NULL, "DoEvents", js_DoEvents);
-	api_define_function(ctx, NULL, "DoesFileExist", js_DoesFileExist);
-	api_define_function(ctx, NULL, "EvaluateScript", js_EvaluateScript);
-	api_define_function(ctx, NULL, "EvaluateSystemScript", js_EvaluateSystemScript);
-	api_define_function(ctx, NULL, "Exit", js_Exit);
-	api_define_function(ctx, NULL, "ExecuteGame", js_ExecuteGame);
-	api_define_function(ctx, NULL, "FilledCircle", js_FilledCircle);
-	api_define_function(ctx, NULL, "FilledEllipse", js_FilledEllipse);
-	api_define_function(ctx, NULL, "FlipScreen", js_FlipScreen);
-	api_define_function(ctx, NULL, "GarbageCollect", js_GarbageCollect);
+	api_define_function(ctx, NULL, "GetZoneHeight", js_GetZoneHeight);
+	api_define_function(ctx, NULL, "GetZoneLayer", js_GetZoneLayer);
+	api_define_function(ctx, NULL, "GetZoneSteps", js_GetZoneSteps);
+	api_define_function(ctx, NULL, "GetZoneWidth", js_GetZoneWidth);
+	api_define_function(ctx, NULL, "GetZoneX", js_GetZoneX);
+	api_define_function(ctx, NULL, "GetZoneY", js_GetZoneY);
 	api_define_function(ctx, NULL, "GrabImage", js_GrabImage);
 	api_define_function(ctx, NULL, "GrabSurface", js_GrabSurface);
 	api_define_function(ctx, NULL, "GradientCircle", js_GradientCircle);
@@ -427,7 +680,24 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "GradientTriangle", js_GradientTriangle);
 	api_define_function(ctx, NULL, "HashByteArray", js_HashByteArray);
 	api_define_function(ctx, NULL, "HashFromFile", js_HashFromFile);
+	api_define_function(ctx, NULL, "IgnorePersonObstructions", js_IgnorePersonObstructions);
+	api_define_function(ctx, NULL, "IgnoreTileObstructions", js_IgnoreTileObstructions);
 	api_define_function(ctx, NULL, "InflateByteArray", js_InflateByteArray);
+	api_define_function(ctx, NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed);
+	api_define_function(ctx, NULL, "IsCameraAttached", js_IsCameraAttached);
+	api_define_function(ctx, NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty);
+	api_define_function(ctx, NULL, "IsIgnoringPersonObstructions", js_IsIgnoringPersonObstructions);
+	api_define_function(ctx, NULL, "IsIgnoringTileObstructions", js_IsIgnoringTileObstructions);
+	api_define_function(ctx, NULL, "IsInputAttached", js_IsInputAttached);
+	api_define_function(ctx, NULL, "IsJoystickButtonPressed", js_IsJoystickButtonPressed);
+	api_define_function(ctx, NULL, "IsKeyPressed", js_IsKeyPressed);
+	api_define_function(ctx, NULL, "IsLayerReflective", js_IsLayerReflective);
+	api_define_function(ctx, NULL, "IsLayerVisible", js_IsLayerVisible);
+	api_define_function(ctx, NULL, "IsMapEngineRunning", js_IsMapEngineRunning);
+	api_define_function(ctx, NULL, "IsMouseButtonPressed", js_IsMouseButtonPressed);
+	api_define_function(ctx, NULL, "IsPersonObstructed", js_IsPersonObstructed);
+	api_define_function(ctx, NULL, "IsPersonVisible", js_IsPersonVisible);
+	api_define_function(ctx, NULL, "IsTriggerAt", js_IsTriggerAt);
 	api_define_function(ctx, NULL, "Line", js_Line);
 	api_define_function(ctx, NULL, "LineSeries", js_LineSeries);
 	api_define_function(ctx, NULL, "ListenOnPort", js_ListenOnPort);
@@ -439,6 +709,9 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "LoadSpriteset", js_LoadSpriteset);
 	api_define_function(ctx, NULL, "LoadSurface", js_LoadSurface);
 	api_define_function(ctx, NULL, "LoadWindowStyle", js_LoadWindowStyle);
+	api_define_function(ctx, NULL, "MapEngine", js_MapEngine);
+	api_define_function(ctx, NULL, "MapToScreenX", js_MapToScreenX);
+	api_define_function(ctx, NULL, "MapToScreenY", js_MapToScreenY);
 	api_define_function(ctx, NULL, "OpenAddress", js_OpenAddress);
 	api_define_function(ctx, NULL, "OpenFile", js_OpenFile);
 	api_define_function(ctx, NULL, "OpenLog", js_OpenLog);
@@ -450,17 +723,84 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "Point", js_Point);
 	api_define_function(ctx, NULL, "PointSeries", js_PointSeries);
 	api_define_function(ctx, NULL, "Print", js_Print);
+	api_define_function(ctx, NULL, "QueuePersonCommand", js_QueuePersonCommand);
+	api_define_function(ctx, NULL, "QueuePersonScript", js_QueuePersonScript);
 	api_define_function(ctx, NULL, "Rectangle", js_Rectangle);
 	api_define_function(ctx, NULL, "RemoveDirectory", js_RemoveDirectory);
 	api_define_function(ctx, NULL, "RemoveFile", js_RemoveFile);
+	api_define_function(ctx, NULL, "RemoveTrigger", js_RemoveTrigger);
+	api_define_function(ctx, NULL, "RemoveZone", js_RemoveZone);
+	api_define_function(ctx, NULL, "RenderMap", js_RenderMap);
 	api_define_function(ctx, NULL, "Rename", js_Rename);
+	api_define_function(ctx, NULL, "ReplaceTilesOnLayer", js_ReplaceTilesOnLayer);
 	api_define_function(ctx, NULL, "RequireScript", js_RequireScript);
 	api_define_function(ctx, NULL, "RequireSystemScript", js_RequireSystemScript);
 	api_define_function(ctx, NULL, "RestartGame", js_RestartGame);
 	api_define_function(ctx, NULL, "RoundRectangle", js_RoundRectangle);
+	api_define_function(ctx, NULL, "ScreenToMapX", js_ScreenToMapX);
+	api_define_function(ctx, NULL, "ScreenToMapY", js_ScreenToMapY);
+	api_define_function(ctx, NULL, "SetCameraX", js_SetCameraX);
+	api_define_function(ctx, NULL, "SetCameraY", js_SetCameraY);
+	api_define_function(ctx, NULL, "SetClippingRectangle", js_SetClippingRectangle);
+	api_define_function(ctx, NULL, "SetColorMask", js_SetColorMask);
+	api_define_function(ctx, NULL, "SetDefaultMapScript", js_SetDefaultMapScript);
+	api_define_function(ctx, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
+	api_define_function(ctx, NULL, "SetDelayScript", js_SetDelayScript);
+	api_define_function(ctx, NULL, "SetFrameRate", js_SetFrameRate);
+	api_define_function(ctx, NULL, "SetLayerHeight", js_SetLayerHeight);
+	api_define_function(ctx, NULL, "SetLayerMask", js_SetLayerMask);
+	api_define_function(ctx, NULL, "SetLayerReflective", js_SetLayerReflective);
+	api_define_function(ctx, NULL, "SetLayerRenderer", js_SetLayerRenderer);
+	api_define_function(ctx, NULL, "SetLayerSize", js_SetLayerSize);
+	api_define_function(ctx, NULL, "SetLayerVisible", js_SetLayerVisible);
+	api_define_function(ctx, NULL, "SetLayerWidth", js_SetLayerWidth);
+	api_define_function(ctx, NULL, "SetMapEngineFrameRate", js_SetMapEngineFrameRate);
+	api_define_function(ctx, NULL, "SetMousePosition", js_SetMousePosition);
+	api_define_function(ctx, NULL, "SetNextAnimatedTile", js_SetNextAnimatedTile);
+	api_define_function(ctx, NULL, "SetPersonAngle", js_SetPersonAngle);
+	api_define_function(ctx, NULL, "SetPersonData", js_SetPersonData);
+	api_define_function(ctx, NULL, "SetPersonDirection", js_SetPersonDirection);
+	api_define_function(ctx, NULL, "SetPersonFollowDistance", js_SetPersonFollowDistance);
+	api_define_function(ctx, NULL, "SetPersonFrame", js_SetPersonFrame);
+	api_define_function(ctx, NULL, "SetPersonFrameNext", js_SetPersonFrameNext);
+	api_define_function(ctx, NULL, "SetPersonFrameRevert", js_SetPersonFrameRevert);
+	api_define_function(ctx, NULL, "SetPersonIgnoreList", js_SetPersonIgnoreList);
+	api_define_function(ctx, NULL, "SetPersonLayer", js_SetPersonLayer);
+	api_define_function(ctx, NULL, "SetPersonMask", js_SetPersonMask);
+	api_define_function(ctx, NULL, "SetPersonOffsetX", js_SetPersonOffsetX);
+	api_define_function(ctx, NULL, "SetPersonOffsetY", js_SetPersonOffsetY);
+	api_define_function(ctx, NULL, "SetPersonScaleAbsolute", js_SetPersonScaleAbsolute);
+	api_define_function(ctx, NULL, "SetPersonScaleFactor", js_SetPersonScaleFactor);
+	api_define_function(ctx, NULL, "SetPersonScript", js_SetPersonScript);
+	api_define_function(ctx, NULL, "SetPersonSpeed", js_SetPersonSpeed);
+	api_define_function(ctx, NULL, "SetPersonSpeedXY", js_SetPersonSpeedXY);
+	api_define_function(ctx, NULL, "SetPersonSpriteset", js_SetPersonSpriteset);
+	api_define_function(ctx, NULL, "SetPersonValue", js_SetPersonValue);
+	api_define_function(ctx, NULL, "SetPersonVisible", js_SetPersonVisible);
+	api_define_function(ctx, NULL, "SetPersonX", js_SetPersonX);
+	api_define_function(ctx, NULL, "SetPersonXYFloat", js_SetPersonXYFloat);
+	api_define_function(ctx, NULL, "SetPersonY", js_SetPersonY);
+	api_define_function(ctx, NULL, "SetRenderScript", js_SetRenderScript);
+	api_define_function(ctx, NULL, "SetTalkActivationButton", js_SetTalkActivationButton);
+	api_define_function(ctx, NULL, "SetTalkActivationKey", js_SetTalkActivationKey);
+	api_define_function(ctx, NULL, "SetTalkDistance", js_SetTalkDistance);
+	api_define_function(ctx, NULL, "SetTile", js_SetTile);
+	api_define_function(ctx, NULL, "SetTileDelay", js_SetTileDelay);
+	api_define_function(ctx, NULL, "SetTileImage", js_SetTileImage);
+	api_define_function(ctx, NULL, "SetTileName", js_SetTileName);
+	api_define_function(ctx, NULL, "SetTileSurface", js_SetTileSurface);
+	api_define_function(ctx, NULL, "SetTriggerLayer", js_SetTriggerLayer);
+	api_define_function(ctx, NULL, "SetTriggerScript", js_SetTriggerScript);
+	api_define_function(ctx, NULL, "SetTriggerXY", js_SetTriggerXY);
+	api_define_function(ctx, NULL, "SetUpdateScript", js_SetUpdateScript);
+	api_define_function(ctx, NULL, "SetZoneDimensions", js_SetZoneDimensions);
+	api_define_function(ctx, NULL, "SetZoneLayer", js_SetZoneLayer);
+	api_define_function(ctx, NULL, "SetZoneScript", js_SetZoneScript);
+	api_define_function(ctx, NULL, "SetZoneSteps", js_SetZoneSteps);
 	api_define_function(ctx, NULL, "Triangle", js_Triangle);
 	api_define_function(ctx, NULL, "UnbindJoystickButton", js_UnbindJoystickButton);
 	api_define_function(ctx, NULL, "UnbindKey", js_UnbindKey);
+	api_define_function(ctx, NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
 	api_define_class(ctx, "ssAnimation", NULL, js_Animation_finalize);
 	api_define_property(ctx, "ssAnimation", "width", js_Animation_get_width, NULL);
@@ -631,6 +971,41 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_method(ctx, "ssWindowStyle", "getColorMask", js_WindowStyle_getColorMask);
 	api_define_method(ctx, "ssWindowStyle", "setColorMask", js_WindowStyle_setColorMask);
 	api_define_method(ctx, "ssWindowStyle", "toString", js_WindowStyle_toString);
+
+	// map script types
+	api_define_const(ctx, NULL, "SCRIPT_ON_ENTER_MAP", MAP_SCRIPT_ON_ENTER);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP", MAP_SCRIPT_ON_LEAVE);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_NORTH", MAP_SCRIPT_ON_LEAVE_NORTH);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_EAST", MAP_SCRIPT_ON_LEAVE_EAST);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_SOUTH", MAP_SCRIPT_ON_LEAVE_SOUTH);
+	api_define_const(ctx, NULL, "SCRIPT_ON_LEAVE_MAP_WEST", MAP_SCRIPT_ON_LEAVE_WEST);
+
+	// person script types
+	api_define_const(ctx, NULL, "SCRIPT_ON_CREATE", PERSON_SCRIPT_ON_CREATE);
+	api_define_const(ctx, NULL, "SCRIPT_ON_DESTROY", PERSON_SCRIPT_ON_DESTROY);
+	api_define_const(ctx, NULL, "SCRIPT_ON_ACTIVATE_TOUCH", PERSON_SCRIPT_ON_TOUCH);
+	api_define_const(ctx, NULL, "SCRIPT_ON_ACTIVATE_TALK", PERSON_SCRIPT_ON_TALK);
+	api_define_const(ctx, NULL, "SCRIPT_COMMAND_GENERATOR", PERSON_SCRIPT_GENERATOR);
+
+	// person movement commands
+	api_define_const(ctx, NULL, "COMMAND_WAIT", COMMAND_WAIT);
+	api_define_const(ctx, NULL, "COMMAND_ANIMATE", COMMAND_ANIMATE);
+	api_define_const(ctx, NULL, "COMMAND_FACE_NORTH", COMMAND_FACE_NORTH);
+	api_define_const(ctx, NULL, "COMMAND_FACE_NORTHEAST", COMMAND_FACE_NORTHEAST);
+	api_define_const(ctx, NULL, "COMMAND_FACE_EAST", COMMAND_FACE_EAST);
+	api_define_const(ctx, NULL, "COMMAND_FACE_SOUTHEAST", COMMAND_FACE_SOUTHEAST);
+	api_define_const(ctx, NULL, "COMMAND_FACE_SOUTH", COMMAND_FACE_SOUTH);
+	api_define_const(ctx, NULL, "COMMAND_FACE_SOUTHWEST", COMMAND_FACE_SOUTHWEST);
+	api_define_const(ctx, NULL, "COMMAND_FACE_WEST", COMMAND_FACE_WEST);
+	api_define_const(ctx, NULL, "COMMAND_FACE_NORTHWEST", COMMAND_FACE_NORTHWEST);
+	api_define_const(ctx, NULL, "COMMAND_MOVE_NORTH", COMMAND_MOVE_NORTH);
+	api_define_const(ctx, NULL, "COMMAND_MOVE_NORTHEAST", COMMAND_MOVE_NORTHEAST);
+	api_define_const(ctx, NULL, "COMMAND_MOVE_EAST", COMMAND_MOVE_EAST);
+	api_define_const(ctx, NULL, "COMMAND_MOVE_SOUTHEAST", COMMAND_MOVE_SOUTHEAST);
+	api_define_const(ctx, NULL, "COMMAND_MOVE_SOUTH", COMMAND_MOVE_SOUTH);
+	api_define_const(ctx, NULL, "COMMAND_MOVE_SOUTHWEST", COMMAND_MOVE_SOUTHWEST);
+	api_define_const(ctx, NULL, "COMMAND_MOVE_WEST", COMMAND_MOVE_WEST);
+	api_define_const(ctx, NULL, "COMMAND_MOVE_NORTHWEST", COMMAND_MOVE_NORTHWEST);
 
 	// blend modes for Surfaces
 	api_define_const(ctx, NULL, "BLEND", BLEND_BLEND);
@@ -869,6 +1244,43 @@ duk_push_sphere_spriteset(duk_context* ctx, spriteset_t* spriteset)
 	duk_put_prop_string(ctx, -2, "directions");
 }
 
+static int
+duk_require_map_layer(duk_context* ctx, duk_idx_t index)
+{
+	long        strtol_out;
+	int         layer_index;
+	const char* name;
+	char*       p_end;
+
+	duk_require_type_mask(ctx, index, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
+
+	if (duk_is_number(ctx, index)) {
+		layer_index = duk_get_int(ctx, index);
+		goto have_index;
+	}
+	else {
+		// don't anyone ever say I'm not dedicated to compatibility!  there are a few
+		// poorly written Sphere 1.5 games that pass layer IDs as strings.  usually this
+		// would fail because miniSphere supports named layers, but here I go out of my
+		// way to support it anyway.
+		name = duk_get_string(ctx, index);
+		strtol_out = strtol(name, &p_end, 0);
+		if ((layer_index = map_layer_by_name(name)) >= 0)
+			goto have_index;
+		else if (name[0] != '\0' && *p_end == '\0') {
+			layer_index = (int)strtol_out;
+			goto have_index;
+		}
+		else
+			duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "layer name does not exist '%s'", name);
+	}
+
+have_index:
+	if (layer_index < 0 || layer_index >= map_num_layers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "layer index out of range");
+	return layer_index;
+}
+
 color_t
 duk_require_sphere_color(duk_context* ctx, duk_idx_t index)
 {
@@ -1066,6 +1478,2892 @@ static void
 reset_blend_modes(void)
 {
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+}
+
+static duk_ret_t
+js_AddTrigger(duk_context* ctx)
+{
+	rect_t    bounds;
+	int       layer;
+	script_t* script;
+	int       x;
+	int       y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
+	script = duk_require_sphere_script(ctx, 3, "%/triggerScript.js");
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	bounds = map_bounds();
+	if (x < bounds.x1 || y < bounds.y1 || x >= bounds.x2 || y >= bounds.y2)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "X/Y out of bounds");
+
+	if (!map_add_trigger(x, y, layer, script))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create trigger");
+	duk_push_number(ctx, map_num_triggers() - 1);
+	return 1;
+}
+
+static duk_ret_t
+js_AddZone(duk_context* ctx)
+{
+	rect_t    bounds;
+	int       height;
+	int       layer;
+	script_t* script;
+	int       width;
+	int       x;
+	int       y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	width = duk_to_int(ctx, 2);
+	height = duk_to_int(ctx, 3);
+	layer = duk_require_map_layer(ctx, 4);
+	script = duk_require_sphere_script(ctx, 5, "%/zoneScript.js");
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	bounds = map_bounds();
+	if (width <= 0 || height <= 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone width/height");
+	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "zone out of bounds");
+
+	if (!map_add_zone(rect(x, y, width, height), layer, script, 8))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create zone");
+	duk_push_number(ctx, map_num_zones() - 1);
+	script_free(script);
+	return 1;
+}
+
+static duk_ret_t
+js_AreZonesAt(duk_context* ctx)
+{
+	int layer;
+	int x;
+	int y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
+
+	duk_push_boolean(ctx, map_zone_at(x, y, layer, 0) >= 0);
+	return 1;
+}
+
+static duk_ret_t
+js_AttachCamera(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_to_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	map_engine_set_subject(person);
+	return 0;
+}
+
+static duk_ret_t
+js_AttachInput(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	map_engine_set_player(PLAYER_1, person);
+	return 0;
+}
+
+static duk_ret_t
+js_AttachPlayerInput(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	player_id_t player;
+
+	name = duk_require_string(ctx, 0);
+	player = duk_to_int(ctx, 1);
+
+	if (player < 0 || player >= PLAYER_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	map_engine_set_player(player, person);
+	return 0;
+}
+
+static duk_ret_t
+js_CallDefaultMapScript(duk_context* ctx)
+{
+	int map_op;
+
+	map_op = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (map_op < 0 || map_op >= MAP_SCRIPT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid script type constant");
+	map_call_default(map_op);
+	return 0;
+}
+
+static duk_ret_t
+js_CallDefaultPersonScript(duk_context* ctx)
+{
+	person_t*   actor = NULL;
+	const char* name;
+	person_t*   person;
+	int         type;
+
+	name = duk_require_string(ctx, 0);
+	type = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
+	if (type == PERSON_SCRIPT_ON_TALK || type == PERSON_SCRIPT_ON_TOUCH)
+		actor = person;
+	person_call_default(person, type, actor);
+	return 0;
+}
+
+static duk_ret_t
+js_CallMapScript(duk_context* ctx)
+{
+	int type;
+
+	type = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (type < 0 || type >= MAP_SCRIPT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid script type constant");
+	map_activate(type, false);
+	return 0;
+}
+
+static duk_ret_t
+js_CallPersonScript(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	int         type;
+
+	name = duk_require_string(ctx, 0);
+	type = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
+	if (type == PERSON_SCRIPT_ON_TALK || type == PERSON_SCRIPT_ON_TOUCH)
+		person_activate(person, type, person, false);
+	else
+		person_activate(person, type, NULL, false);
+	return 0;
+}
+
+static duk_ret_t
+js_ClearPersonCommands(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_clear_queue(person);
+	return 0;
+}
+
+static duk_ret_t
+js_ChangeMap(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_path(ctx, 0, "maps", true, false);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (!map_engine_change_map(filename))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load map `%s`", filename);
+	return 0;
+}
+
+static duk_ret_t
+js_CreatePerson(duk_context* ctx)
+{
+	bool         destroy_with_map;
+	const char*  filename;
+	const char*  name;
+	person_t*    person;
+	spriteset_t* spriteset;
+
+	name = duk_require_string(ctx, 0);
+	destroy_with_map = duk_to_boolean(ctx, 2);
+
+	if (duk_is_class_obj(ctx, 1, "ssSpriteset")) {
+		// ref the spriteset so we can safely free it later. this avoids
+		// having to check the argument type again.
+		spriteset = duk_require_sphere_spriteset(ctx, 1);
+	}
+	else {
+		filename = duk_require_path(ctx, 1, "spritesets", true, false);
+		if (!(spriteset = spriteset_load(filename)))
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load spriteset `%s`", filename);
+	}
+
+	// create the person and its JS-side data object
+	person = person_new(name, spriteset, !destroy_with_map, NULL);
+	spriteset_free(spriteset);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "personData");
+	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);
+	duk_pop_2(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_DestroyPerson(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_free(person);
+	return 0;
+}
+
+static duk_ret_t
+js_DetachCamera(duk_context* ctx)
+{
+	map_engine_set_subject(NULL);
+	return 0;
+}
+
+static duk_ret_t
+js_DetachInput(duk_context* ctx)
+{
+	map_engine_set_player(PLAYER_1, NULL);
+	return 0;
+}
+
+static duk_ret_t
+js_DetachPlayerInput(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	int         player;
+
+	int i;
+
+	if (duk_get_top(ctx) < 1) {
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not a number or string");
+	}
+	else if (duk_is_string(ctx, 0)) {
+		name = duk_get_string(ctx, 0);
+		if (!(person = map_person_by_name(name)))
+			duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+		player = -1;
+		for (i = PLAYER_1; i >= PLAYER_4; ++i) {
+			if (person == map_engine_get_player(i)) {
+				player = i;
+				break;
+			}
+		}
+		if (player == -1)
+			return 0;
+	}
+	else if (duk_is_number(ctx, 0)) {
+		player = duk_get_int(ctx, 0);
+	}
+	else {
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not a number or string");
+	}
+	if (player < 0 || player >= PLAYER_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
+	map_engine_set_player(player, NULL);
+	return 0;
+}
+
+static duk_ret_t
+js_DoesPersonExist(duk_context* ctx)
+{
+	const char* name;
+
+	name = duk_require_string(ctx, 0);
+
+	duk_push_boolean(ctx, map_person_by_name(name) != NULL);
+	return 1;
+}
+
+static duk_ret_t
+js_ExecuteTrigger(duk_context* ctx)
+{
+	int index;
+	int layer;
+	int x;
+	int y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if ((index = map_trigger_at(x, y, layer)) >= 0)
+		trigger_activate(index);
+	return 0;
+}
+
+static duk_ret_t
+js_ExecuteZoneScript(duk_context* ctx)
+{
+	int zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	zone_activate(zone_index);
+	return 0;
+}
+
+static duk_ret_t
+js_ExecuteZones(duk_context* ctx)
+{
+	int index;
+	int layer;
+	int x;
+	int y;
+
+	int i;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	i = 0;
+	while ((index = map_zone_at(x, y, layer, i++)) >= 0)
+		zone_activate(index);
+	return 0;
+}
+
+static duk_ret_t
+js_ExitMapEngine(duk_context* ctx)
+{
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	map_engine_exit();
+	return 0;
+}
+
+static duk_ret_t
+js_FollowPerson(duk_context* ctx)
+{
+	int         distance = 0;
+	person_t*   leader = NULL;
+	const char* leader_name = "";
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	if (!duk_is_null(ctx, 1))
+		leader_name = duk_require_string(ctx, 1);
+	if (leader_name[0] != '\0')
+		distance = duk_require_int(ctx, 2);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (!(leader_name[0] == '\0' || (leader = map_person_by_name(leader_name))))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", leader_name);
+	if (distance <= 0 && leader_name[0] != '\0')
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid distance");
+	if (!person_set_leader(person, leader, distance))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid circular follow chain");
+	return 0;
+}
+
+static duk_ret_t
+js_GetActingPerson(duk_context* ctx)
+{
+	const person_t* person;
+	
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	person = map_engine_acting_person();
+	if (person == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no current person activation or actor unknown");
+	duk_push_string(ctx, person_name(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetCameraPerson(duk_context* ctx)
+{
+	person_t* subject;
+	
+	subject = map_engine_get_subject();
+	if (subject == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid operation, camera not attached");
+	duk_push_string(ctx, person_name(subject));
+	return 1;
+}
+
+static duk_ret_t
+js_GetCameraX(duk_context* ctx)
+{
+	point2_t position;
+	
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	position = map_get_camera_xy();
+	duk_push_int(ctx, position.x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetCameraY(duk_context* ctx)
+{
+	point2_t position;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	position = map_get_camera_xy();
+	duk_push_int(ctx, position.y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetCurrentMap(duk_context* ctx)
+{
+	path_t* map_path;
+	path_t* origin;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+
+	// GetCurrentMap() in Sphere 1.x returns the map path
+	// relative to the 'maps' directory.
+	map_path = path_new(map_filename());
+	if (!path_is_rooted(map_path)) {
+		origin = path_new("@/maps/");
+		path_relativize(map_path, origin);
+		path_free(origin);
+	}
+	duk_push_string(ctx, path_cstr(map_path));
+	path_free(map_path);
+	return 1;
+}
+
+static duk_ret_t
+js_GetCurrentPerson(duk_context* ctx)
+{
+	const person_t* person;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	person = map_engine_active_person();
+	if (person == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no current person activation");
+	duk_push_string(ctx, person_name(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetCurrentTrigger(duk_context* ctx)
+{
+	int trigger;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	trigger = map_engine_active_trigger();
+	if (trigger == -1)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no current trigger activation");
+	duk_push_int(ctx, trigger);
+	return 1;
+}
+
+static duk_ret_t
+js_GetCurrentZone(duk_context* ctx)
+{
+	int zone;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	zone = map_engine_active_zone();
+	if (zone == -1)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no current zone activation");
+	duk_push_int(ctx, zone);
+	return 1;
+}
+
+static duk_ret_t
+js_GetInputPerson(duk_context* ctx)
+{
+	int       num_args;
+	person_t* person;
+	int       player = PLAYER_1;
+
+	num_args = duk_get_top(ctx);
+	if (num_args >= 1)
+		player = duk_to_int(ctx, 0);
+
+	if (player < 0 || player >= PLAYER_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
+	person = map_engine_get_player(player);
+	if (person == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "player %d not attached", player + 1);
+	duk_push_string(ctx, person_name(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetLayerHeight(duk_context* ctx)
+{
+	int     layer;
+
+	layer = duk_require_map_layer(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	duk_push_int(ctx, layer_size(layer).height);
+	return 1;
+}
+
+static duk_ret_t
+js_GetLayerMask(duk_context* ctx)
+{
+	int layer = duk_require_map_layer(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	duk_push_sphere_color(ctx, layer_get_color_mask(layer));
+	return 1;
+}
+
+static duk_ret_t
+js_GetLayerName(duk_context* ctx)
+{
+	int layer = duk_require_map_layer(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	duk_push_string(ctx, layer_name(layer));
+	return 1;
+}
+
+static duk_ret_t
+js_GetLayerWidth(duk_context* ctx)
+{
+	int layer;
+
+	layer = duk_require_map_layer(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	duk_push_int(ctx, layer_size(layer).width);
+	return 1;
+}
+
+static duk_ret_t
+js_GetMapEngineFrameRate(duk_context* ctx)
+{
+	duk_push_int(ctx, map_engine_get_framerate());
+	return 1;
+}
+
+static duk_ret_t
+js_GetNextAnimatedTile(duk_context* ctx)
+{
+	int        tile_index;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	duk_push_int(ctx, tileset_get_next(tileset, tile_index));
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumLayers(duk_context* ctx)
+{
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	duk_push_int(ctx, map_num_layers());
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumTiles(duk_context* ctx)
+{
+	tileset_t* tileset;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+
+	tileset = map_tileset();
+	duk_push_int(ctx, tileset_len(tileset));
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumTriggers(duk_context* ctx)
+{
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+
+	duk_push_number(ctx, map_num_triggers());
+	return 1;
+}
+
+static duk_ret_t
+js_GetNumZones(duk_context* ctx)
+{
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+
+	duk_push_number(ctx, map_num_zones());
+	return 1;
+}
+
+static duk_ret_t
+js_GetObstructingPerson(duk_context* ctx)
+{
+	const char* name;
+	person_t*   obs_person;
+	person_t*   person;
+	int         x;
+	int         y;
+
+	name = duk_require_string(ctx, 0);
+	x = duk_require_int(ctx, 1);
+	y = duk_require_int(ctx, 2);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_obstructed_at(person, x, y, &obs_person, NULL);
+	duk_push_string(ctx, obs_person != NULL ? person_name(obs_person) : "");
+	return 1;
+}
+
+static duk_ret_t
+js_GetObstructingTile(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	int         tile_index;
+	int         x;
+	int         y;
+
+	name = duk_require_string(ctx, 0);
+	x = duk_require_int(ctx, 1);
+	y = duk_require_int(ctx, 2);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_obstructed_at(person, x, y, NULL, &tile_index);
+	duk_push_int(ctx, tile_index);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonAngle(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_number(ctx, person_get_angle(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonBase(duk_context* ctx)
+{
+	rect_t      base;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	base = spriteset_get_base(person_get_spriteset(person));
+	duk_push_object(ctx);
+	duk_push_int(ctx, base.x1); duk_put_prop_string(ctx, -2, "x1");
+	duk_push_int(ctx, base.y1); duk_put_prop_string(ctx, -2, "y1");
+	duk_push_int(ctx, base.x2); duk_put_prop_string(ctx, -2, "x2");
+	duk_push_int(ctx, base.y2); duk_put_prop_string(ctx, -2, "y2");
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonData(duk_context* ctx)
+{
+	int          height;
+	person_t*    leader;
+	const char*  name;
+	int          num_directions;
+	int          num_frames;
+	person_t*    person;
+	spriteset_t* spriteset;
+	int          width;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	leader = person_get_leader(person);
+	spriteset = person_get_spriteset(person);
+	width = spriteset_width(spriteset);
+	height = spriteset_height(spriteset);
+	num_directions = spriteset_num_poses(spriteset);
+	num_frames = spriteset_num_frames(spriteset, person_get_pose(person));
+	
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "personData");
+	duk_get_prop_string(ctx, -1, name);
+	duk_push_int(ctx, num_frames);
+	duk_put_prop_string(ctx, -2, "num_frames");
+	duk_push_int(ctx, num_directions);
+	duk_put_prop_string(ctx, -2, "num_directions");
+	duk_push_int(ctx, width);
+	duk_put_prop_string(ctx, -2, "width");
+	duk_push_int(ctx, height);
+	duk_put_prop_string(ctx, -2, "height");
+	duk_push_string(ctx, person_name(leader));
+	duk_put_prop_string(ctx, -2, "leader");
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonDirection(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_string(ctx, person_get_pose(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFollowDistance(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (person_get_leader(person) == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "not a follower");
+	duk_push_int(ctx, person_get_trailing(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFollowers(duk_context* ctx)
+{
+	vector_t*     all_persons;
+	person_t*     candidate;
+	duk_uarridx_t index = 0;
+	const char*   name;
+	person_t*     person;
+
+	iter_t iter;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	all_persons = map_engine_persons();
+	duk_push_array(ctx);
+	iter = vector_enum(all_persons);
+	while (vector_next(&iter)) {
+		candidate = *(person_t**)iter.ptr;
+		if (person_get_leader(candidate) == person) {
+			duk_push_string(ctx, person_name(candidate));
+			duk_put_prop_index(ctx, -2, iter.index);
+		}
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFrame(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_int(ctx, person_get_frame(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFrameNext(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_int(ctx, person_get_frame_delay(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonFrameRevert(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_int(ctx, person_get_revert_delay(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonIgnoreList(duk_context* ctx)
+{
+	vector_t*   ignore_list;
+	const char* name;
+	person_t*   person;
+
+	iter_t iter;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	ignore_list = person_ignore_list(person);
+	iter = vector_enum(ignore_list);
+	duk_push_array(ctx);
+	while (vector_next(&iter)) {
+		duk_push_string(ctx, *(const char**)iter.ptr);
+		duk_put_prop_index(ctx, -2, iter.index);
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonLayer(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_int(ctx, person_get_layer(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonLeader(duk_context* ctx)
+{
+	person_t*   leader;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	leader = person_get_leader(person);
+	duk_push_string(ctx, person_name(leader));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonMask(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_sphere_color(ctx, person_get_color(person));
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonOffsetX(duk_context* ctx)
+{
+	const char* name;
+	point2_t    offset;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	offset = person_get_offset(person);
+	duk_push_int(ctx, offset.x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonOffsetY(duk_context* ctx)
+{
+	const char* name;
+	point2_t    offset;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	offset = person_get_offset(person);
+	duk_push_int(ctx, offset.y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonList(duk_context* ctx)
+{
+	vector_t* all_persons;
+	person_t* person;
+	
+	iter_t iter;
+
+	all_persons = map_engine_persons();
+	iter = vector_enum(all_persons);
+	duk_push_array(ctx);
+	while (vector_next(&iter)) {
+		person = *(person_t**)iter.ptr;
+		duk_push_string(ctx, person_name(person));
+		duk_put_prop_index(ctx, -2, iter.index);
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonSpriteset(duk_context* ctx)
+{
+	const char*  name;
+	spriteset_t* spriteset;
+	person_t*    person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	spriteset = person_get_spriteset(person);
+	duk_push_sphere_spriteset(ctx, spriteset);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonSpeedX(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      x_speed;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_get_speed(person, &x_speed, NULL);
+	duk_push_number(ctx, x_speed);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonSpeedY(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      y_speed;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_get_speed(person, NULL, &y_speed);
+	duk_push_number(ctx, y_speed);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonValue(duk_context* ctx)
+{
+	const char* key;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	key = duk_to_string(ctx, 1);
+
+	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "personData");
+	if (!duk_get_prop_string(ctx, -1, name)) {
+		duk_pop(ctx);
+		duk_push_object(ctx);
+		duk_put_prop_string(ctx, -2, name);
+		duk_get_prop_string(ctx, -1, name);
+	}
+	duk_get_prop_string(ctx, -1, key);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonX(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      x;
+	double      y;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_get_xy(person, &x, &y, true);
+	duk_push_int(ctx, x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonXFloat(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      x;
+	double      y;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_get_xy(person, &x, &y, true);
+	duk_push_number(ctx, x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonY(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      x;
+	double      y;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_get_xy(person, &x, &y, true);
+	duk_push_int(ctx, y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetPersonYFloat(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      x;
+	double      y;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_get_xy(person, &x, &y, true);
+	duk_push_number(ctx, y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTalkActivationButton(duk_context* ctx)
+{
+	duk_push_int(ctx, map_engine_get_talk_button());
+	return 1;
+}
+
+static duk_ret_t
+js_GetTalkActivationKey(duk_context* ctx)
+{
+	int num_args;
+	int player = PLAYER_1;
+
+	num_args = duk_get_top(ctx);
+	if (num_args >= 1)
+		player = duk_to_int(ctx, 0);
+
+	if (player < 0 || player >= PLAYER_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
+	duk_push_int(ctx, map_engine_get_talk_key(player));
+	return 1;
+}
+
+static duk_ret_t
+js_GetTalkDistance(duk_context* ctx)
+{
+	duk_push_int(ctx, map_engine_get_talk_distance());
+	return 1;
+}
+
+static duk_ret_t
+js_GetTile(duk_context* ctx)
+{
+	int layer;
+	int x;
+	int y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	duk_push_int(ctx, map_tile_at(x, y, layer));
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileDelay(duk_context* ctx)
+{
+	int        tile_index;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	duk_push_int(ctx, tileset_get_delay(tileset, tile_index));
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileHeight(duk_context* ctx)
+{
+	int        height;
+	tileset_t* tileset;
+	int        width;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+
+	tileset = map_tileset();
+	tileset_get_size(tileset, &width, &height);
+	duk_push_int(ctx, height);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileImage(duk_context* ctx)
+{
+	image_t*   image;
+	int        tile_index;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
+	duk_push_class_obj(ctx, "ssImage", image);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileName(duk_context* ctx)
+{
+	int              tile_index;
+	const lstring_t* tile_name;
+	tileset_t*       tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	tile_name = tileset_get_name(tileset, tile_index);
+	duk_push_lstring_t(ctx, tile_name);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileSurface(duk_context* ctx)
+{
+	image_t*   image;
+	int        tile_index;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create new surface image");
+	duk_push_class_obj(ctx, "ssSurface", image);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTileWidth(duk_context* ctx)
+{
+	int        height;
+	tileset_t* tileset;
+	int        width;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+
+	tileset = map_tileset();
+	tileset_get_size(tileset, &width, &height);
+	duk_push_int(ctx, width);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTriggerLayer(duk_context* ctx)
+{
+	int layer;
+	int trigger_index;
+
+	trigger_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
+	trigger_get_xyz(trigger_index, NULL, NULL, &layer);
+	duk_push_int(ctx, layer);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTriggerX(duk_context* ctx)
+{
+	int trigger_index;
+	int x;
+
+	trigger_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
+	trigger_get_xyz(trigger_index, &x, NULL, NULL);
+	duk_push_int(ctx, x);
+	return 1;
+}
+
+static duk_ret_t
+js_GetTriggerY(duk_context* ctx)
+{
+	int trigger_index;
+	int y;
+
+	trigger_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
+	trigger_get_xyz(trigger_index, NULL, &y, NULL);
+	duk_push_int(ctx, y);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneHeight(duk_context* ctx)
+{
+	rect_t bounds;
+	int    zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	bounds = zone_get_bounds(zone_index);
+	duk_push_int(ctx, bounds.y2 - bounds.y1);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneLayer(duk_context* ctx)
+{
+	int zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	duk_push_int(ctx, zone_get_layer(zone_index));
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneSteps(duk_context* ctx)
+{
+	int zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	duk_push_int(ctx, zone_get_steps(zone_index));
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneWidth(duk_context* ctx)
+{
+	rect_t bounds;
+	int    zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	bounds = zone_get_bounds(zone_index);
+	duk_push_int(ctx, bounds.x2 - bounds.x1);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneX(duk_context* ctx)
+{
+	rect_t bounds;
+	int    zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	bounds = zone_get_bounds(zone_index);
+	duk_push_int(ctx, bounds.x1);
+	return 1;
+}
+
+static duk_ret_t
+js_GetZoneY(duk_context* ctx)
+{
+	rect_t bounds;
+	int    zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	bounds = zone_get_bounds(zone_index);
+	duk_push_int(ctx, bounds.y1);
+	return 1;
+}
+
+static duk_ret_t
+js_IgnorePersonObstructions(duk_context* ctx)
+{
+	bool        ignoring;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	ignoring = duk_to_boolean(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_ignore_persons(person, ignoring);
+	return 0;
+}
+
+static duk_ret_t
+js_IgnoreTileObstructions(duk_context* ctx)
+{
+	bool        ignoring;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	ignoring = duk_to_boolean(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_ignore_tiles(person, ignoring);
+	return 0;
+}
+
+static duk_ret_t
+js_IsCameraAttached(duk_context* ctx)
+{
+	duk_push_boolean(ctx, map_engine_get_subject() != NULL);
+	return 1;
+}
+
+static duk_ret_t
+js_IsCommandQueueEmpty(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_boolean(ctx, !person_moving(person));
+	return 1;
+}
+
+static duk_ret_t
+js_IsIgnoringPersonObstructions(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_boolean(ctx, person_get_ignore_persons(person));
+	return 1;
+}
+
+static duk_ret_t
+js_IsIgnoringTileObstructions(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_boolean(ctx, person_get_ignore_tiles(person));
+	return 1;
+}
+
+static duk_ret_t
+js_IsInputAttached(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	int         player;
+
+	int i;
+
+	if (duk_get_top(ctx) < 1) {
+		player = PLAYER_1;
+	}
+	else if (duk_is_string(ctx, 0)) {
+		name = duk_get_string(ctx, 0);
+		if (!(person = map_person_by_name(name)))
+			duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+		player = -1;
+		for (i = PLAYER_1; i >= PLAYER_4; ++i) {
+			if (person == map_engine_get_player(i)) {
+				player = i;
+				break;
+			}
+		}
+		if (player == -1) {
+			duk_push_false(ctx);
+			return 1;
+		}
+	}
+	else if (duk_is_number(ctx, 0)) {
+		player = duk_get_int(ctx, 0);
+	}
+	else {
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "not a number or string");
+	}
+	if (player < 0 || player >= PLAYER_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
+	duk_push_boolean(ctx, map_engine_get_player(player) != NULL);
+	return 1;
+}
+
+static duk_ret_t
+js_IsLayerReflective(duk_context* ctx)
+{
+	int layer;
+
+	layer = duk_require_map_layer(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	duk_push_boolean(ctx, layer_get_reflective(layer));
+	return 1;
+}
+
+static duk_ret_t
+js_IsLayerVisible(duk_context* ctx)
+{
+	int layer;
+
+	layer = duk_require_map_layer(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	duk_push_boolean(ctx, layer_get_visible(layer));
+	return 1;
+}
+
+static duk_ret_t
+js_IsMapEngineRunning(duk_context* ctx)
+{
+	duk_push_boolean(ctx, map_engine_running());
+	return 1;
+}
+
+static duk_ret_t
+js_IsPersonObstructed(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	int         x;
+	int         y;
+
+	name = duk_require_string(ctx, 0);
+	x = duk_require_int(ctx, 1);
+	y = duk_require_int(ctx, 2);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_boolean(ctx, person_obstructed_at(person, x, y, NULL, NULL));
+	return 1;
+}
+
+static duk_ret_t
+js_IsPersonVisible(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_boolean(ctx, person_get_visible(person));	return 1;
+}
+
+static duk_ret_t
+js_IsTriggerAt(duk_context* ctx)
+{
+	int x;
+	int y;
+	int layer;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
+
+	duk_push_boolean(ctx, map_trigger_at(x, y, layer) >= 0);
+	return 1;
+}
+
+static duk_ret_t
+js_MapEngine(duk_context* ctx)
+{
+	const char* filename;
+	int         framerate;
+	int         num_args;
+
+	num_args = duk_get_top(ctx);
+	filename = duk_require_path(ctx, 0, "maps", true, false);
+	framerate = num_args >= 2 ? duk_to_int(ctx, 1)
+		: g_framerate;
+
+	if (!map_engine_start(filename, framerate))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load map `%s`", filename);
+	return 0;
+}
+
+static duk_ret_t
+js_MapToScreenX(duk_context* ctx)
+{
+	int      layer;
+	point2_t offset;
+	double   x;
+
+	layer = duk_require_map_layer(ctx, 0);
+	x = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	offset = map_xy_from_screen(point2(0, 0));
+	duk_push_int(ctx, x - offset.x);
+	return 1;
+}
+
+static duk_ret_t
+js_MapToScreenY(duk_context* ctx)
+{
+	int      layer;
+	point2_t offset;
+	double   y;
+
+	layer = duk_require_map_layer(ctx, 0);
+	y = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	offset = map_xy_from_screen(point2(0, 0));
+	duk_push_int(ctx, y - offset.y);
+	return 1;
+}
+
+static duk_ret_t
+js_QueuePersonCommand(duk_context* ctx)
+{
+	int         command;
+	const char* name;
+	bool        immediate = false;
+	int         num_args;
+	person_t*   person;
+
+	num_args = duk_get_top(ctx);
+	name = duk_require_string(ctx, 0);
+	command = duk_require_int(ctx, 1);
+	if (num_args >= 3)
+		immediate = duk_to_boolean(ctx, 2);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid command type constant");
+	if (command >= COMMAND_MOVE_NORTH && command <= COMMAND_MOVE_NORTHWEST) {
+		if (!person_queue_command(person, COMMAND_ANIMATE, true))
+			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to queue command");
+	}
+	if (!person_queue_command(person, command, immediate))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to queue command");
+	return 0;
+}
+
+static duk_ret_t
+js_QueuePersonScript(duk_context* ctx)
+{
+	bool        immediate = false;
+	int         num_args;
+	const char* name;
+	script_t*   script;
+	person_t*   person;
+
+	num_args = duk_get_top(ctx);
+	name = duk_require_string(ctx, 0);
+	script = duk_require_sphere_script(ctx, 1, "%/queueScript.js");
+	if (num_args >= 3)
+		immediate = duk_to_boolean(ctx, 2);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (!person_queue_script(person, script, immediate))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to enqueue script");
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveTrigger(duk_context* ctx)
+{
+	int trigger_index;
+
+	trigger_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
+	map_remove_trigger(trigger_index);
+	return 0;
+}
+
+static duk_ret_t
+js_RemoveZone(duk_context* ctx)
+{
+	int zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	map_remove_zone(zone_index);
+	return 0;
+}
+
+static duk_ret_t
+js_RenderMap(duk_context* ctx)
+{
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	map_engine_draw_map();
+	return 0;
+}
+
+static duk_ret_t
+js_ReplaceTilesOnLayer(duk_context* ctx)
+{
+	int        layer;
+	int        new_index;
+	int        old_index;
+	tileset_t* tileset;
+
+	layer = duk_require_map_layer(ctx, 0);
+	old_index = duk_to_int(ctx, 1);
+	new_index = duk_to_int(ctx, 2);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (old_index < 0 || old_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid old tile index");
+	if (new_index < 0 || new_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid new tile index");
+	layer_replace_tiles(layer, old_index, new_index);
+	return 0;
+}
+
+static duk_ret_t
+js_ScreenToMapX(duk_context* ctx)
+{
+	int      layer;
+	point2_t map_xy;
+	double   x;
+
+	layer = duk_require_map_layer(ctx, 0);
+	x = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	map_xy = map_xy_from_screen(point2(x, 0));
+	duk_push_int(ctx, map_xy.x);
+	return 1;
+}
+
+static duk_ret_t
+js_ScreenToMapY(duk_context* ctx)
+{
+	int      layer;
+	point2_t map_xy;
+	double   y;
+
+	layer = duk_require_map_layer(ctx, 0);
+	y = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	map_xy = map_xy_from_screen(point2(0, y));
+	duk_push_int(ctx, map_xy.y);
+	return 1;
+}
+
+static duk_ret_t
+js_SetCameraX(duk_context* ctx)
+{
+	int      new_x;
+	point2_t position;
+
+	new_x = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	position = map_get_camera_xy();
+	map_set_camera_xy(point2(new_x, position.y));
+	return 0;
+}
+
+static duk_ret_t
+js_SetCameraY(duk_context* ctx)
+{
+	int      new_y;
+	point2_t position;
+
+	new_y = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	position = map_get_camera_xy();
+	map_set_camera_xy(point2(position.x, new_y));
+	return 0;
+}
+
+static duk_ret_t
+js_SetColorMask(duk_context* ctx)
+{
+	color_t new_mask;
+	int     num_args;
+	int     num_frames;
+
+	num_args = duk_get_top(ctx);
+	new_mask = duk_require_sphere_color(ctx, 0);
+	num_frames = num_args >= 2 ? duk_to_int(ctx, 1) : 0;
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (num_frames < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid number of frames");
+	map_engine_fade_to(new_mask, num_frames);
+	return 0;
+}
+
+static duk_ret_t
+js_SetDefaultMapScript(duk_context* ctx)
+{
+	int         map_op;
+	script_t*   script;
+
+	map_op = duk_to_int(ctx, 0);
+	script = duk_require_sphere_script(ctx, 1, "%/mapScript.js");
+
+	if (map_op < 0 || map_op >= MAP_SCRIPT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid map script constant");
+	map_engine_on_map_event(map_op, script);
+	script_free(script);
+	return 0;
+}
+
+static duk_ret_t
+js_SetDefaultPersonScript(duk_context* ctx)
+{
+	int       person_op;
+	script_t* script;
+	
+	person_op = duk_require_int(ctx, 0);
+	script = duk_require_sphere_script(ctx, 1, "%/personScript.js");
+
+	if (person_op < 0 || person_op >= PERSON_SCRIPT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
+	map_engine_on_person_event(person_op, script);
+	script_free(script);
+	return 0;
+}
+
+static duk_ret_t
+js_SetDelayScript(duk_context* ctx)
+{
+	int num_frames;
+	script_t* script;
+
+	num_frames = duk_to_int(ctx, 0);
+	script = duk_require_sphere_script(ctx, 1, "%/delayScript.js");
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (num_frames < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame count");
+	map_engine_defer(script, num_frames);
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerHeight(duk_context* ctx)
+{
+	int layer;
+	int new_height;
+
+	layer = duk_require_map_layer(ctx, 0);
+	new_height = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (new_height <= 0)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "height must be positive and nonzero (got: %d)", new_height);
+	if (!layer_resize(layer, layer_size(layer).width, new_height))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to resize layer %d", layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerMask(duk_context* ctx)
+{
+	int     layer;
+	color_t mask;
+
+	layer = duk_require_map_layer(ctx, 0);
+	mask = duk_require_sphere_color(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	layer_set_color_mask(layer, mask);
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerReflective(duk_context* ctx)
+{
+	int layer;
+	bool reflective;
+
+	layer = duk_require_map_layer(ctx, 0);
+	reflective = duk_to_boolean(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	layer_set_reflective(layer, reflective);
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerRenderer(duk_context* ctx)
+{
+	int       layer;
+	char      script_name[50];
+	script_t* script;
+
+	layer = duk_require_map_layer(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	sprintf(script_name, "[layer %d render script]", layer);
+	script = duk_require_sphere_script(ctx, 1, script_name);
+	layer_on_render(layer, script);
+	script_free(script);
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerSize(duk_context* ctx)
+{
+	int layer;
+	int new_height;
+	int new_width;
+
+	layer = duk_require_map_layer(ctx, 0);
+	new_width = duk_to_int(ctx, 1);
+	new_height = duk_to_int(ctx, 2);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (new_width <= 0 || new_height <= 0)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid layer dimensions");
+	if (!layer_resize(layer, new_width, new_height))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't resize layer");
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerVisible(duk_context* ctx)
+{
+	bool visible;
+	int  layer;
+
+	layer = duk_require_map_layer(ctx, 0);
+	visible = duk_to_boolean(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	layer_set_visible(layer, visible);
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerWidth(duk_context* ctx)
+{
+	int layer;
+	int new_width;
+
+	layer = duk_require_map_layer(ctx, 0);
+	new_width = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (new_width <= 0)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "width must be positive and nonzero (got: %d)", new_width);
+	if (!layer_resize(layer, new_width, layer_size(layer).height))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to resize layer %d", layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetMapEngineFrameRate(duk_context* ctx)
+{
+	int framerate;
+
+	framerate = duk_to_int(ctx, 0);
+
+	if (framerate < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
+
+	map_engine_set_framerate(framerate);
+	return 0;
+}
+
+static duk_ret_t
+js_SetNextAnimatedTile(duk_context* ctx)
+{
+	int        next_index;
+	int        tile_index;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+	next_index = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	if (next_index < 0 || next_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index for next tile");
+	tileset_set_next(tileset, tile_index, next_index);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonAngle(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      theta;
+
+	name = duk_require_string(ctx, 0);
+	theta = duk_to_number(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_angle(person, theta);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonData(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+
+	duk_require_object_coercible(ctx, 1);
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "personData");
+	duk_dup(ctx, 1); duk_put_prop_string(ctx, -2, name);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonDirection(duk_context* ctx)
+{
+	const char* name;
+	const char* new_dir;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	new_dir = duk_require_string(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_pose(person, new_dir);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonFollowDistance(duk_context* ctx)
+{
+	int         distance;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	distance = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (person_get_leader(person) == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "person has no leader");
+	if (distance <= 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid distance");
+	person_set_trailing(person, distance);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonFrame(duk_context* ctx)
+{
+	int         frame_index;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	frame_index = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_frame(person, frame_index);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonFrameNext(duk_context* ctx)
+{
+	const char* name;
+	int         num_frames;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	num_frames = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (num_frames < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame count");
+	person_set_frame_delay(person, num_frames);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonFrameRevert(duk_context* ctx)
+{
+	const char* name;
+	int         num_frames;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	num_frames = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (num_frames < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame count");
+	person_set_revert_delay(person, num_frames);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonIgnoreList(duk_context* ctx)
+{
+	const char* name;
+	int         num_ignores;
+	person_t*   person;
+
+	int i;
+
+	name = duk_require_string(ctx, 0);
+
+	duk_require_object_coercible(ctx, 1);
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (!duk_is_array(ctx, 1))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "not an array");
+	person_clear_ignores(person);
+	num_ignores = (int)duk_get_length(ctx, 1);
+	for (i = 0; i < num_ignores; ++i) {
+		duk_get_prop_index(ctx, 1, i);
+		person_ignore_name(person, duk_require_string(ctx, -1));
+		duk_pop(ctx);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonLayer(duk_context* ctx)
+{
+	int         layer;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	layer = duk_require_map_layer(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_layer(person, layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonMask(duk_context* ctx)
+{
+	color_t     color;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	color = duk_require_sphere_color(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_color(person, color);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonOffsetX(duk_context* ctx)
+{
+	const char* name;
+	point2_t    offset;
+	person_t*   person;
+	int         new_x;
+
+	name = duk_require_string(ctx, 0);
+	new_x = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	offset = person_get_offset(person);
+	person_set_offset(person, point2(new_x, offset.y));
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonOffsetY(duk_context* ctx)
+{
+	const char* name;
+	point2_t    offset;
+	person_t*   person;
+	int         new_y;
+
+	name = duk_require_string(ctx, 0);
+	new_y = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	offset = person_get_offset(person);
+	person_set_offset(person, point2(offset.x, new_y));
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonScaleAbsolute(duk_context* ctx)
+{
+	int          height;
+	const char*  name;
+	person_t*    person;
+	int          sprite_h;
+	int          sprite_w;
+	spriteset_t* spriteset;
+	int          width;
+
+	name = duk_require_string(ctx, 0);
+	width = duk_require_int(ctx, 1);
+	height = duk_require_int(ctx, 2);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (width < 0 || height < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid scale dimensions");
+	spriteset = person_get_spriteset(person);
+	sprite_w = spriteset_width(spriteset);
+	sprite_h = spriteset_height(spriteset);
+	person_set_scale(person, width / sprite_w, height / sprite_h);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonScaleFactor(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      scale_x;
+	double      scale_y;
+
+	name = duk_require_string(ctx, 0);
+	scale_x = duk_to_number(ctx, 1);
+	scale_y = duk_to_number(ctx, 2);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (scale_x < 0.0 || scale_y < 0.0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid scale factor(s)");
+	person_set_scale(person, scale_x, scale_y);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonScript(duk_context* ctx)
+{
+	lstring_t*  codestring;
+	const char* name;
+	person_t*   person;
+	script_t*   script;
+	int         type;
+
+	name = duk_require_string(ctx, 0);
+	type = duk_require_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	if (type < 0 || type >= PERSON_SCRIPT_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
+	if (duk_is_string(ctx, 2)) {
+		codestring = duk_require_lstring_t(ctx, 2);
+		person_compile_script(person, type, codestring);
+		lstr_free(codestring);
+	}
+	else {
+		script = duk_require_sphere_script(ctx, 2, "[person script]");
+		person_on_event(person, type, script);
+	}
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonSpeed(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      speed;
+
+	name = duk_require_string(ctx, 0);
+	speed = duk_to_number(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_speed(person, speed, speed);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonSpeedXY(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	double      x_speed;
+	double      y_speed;
+
+	name = duk_require_string(ctx, 0);
+	x_speed = duk_to_number(ctx, 1);
+	y_speed = duk_to_number(ctx, 2);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_speed(person, x_speed, y_speed);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonSpriteset(duk_context* ctx)
+{
+	const char*  name;
+	person_t*    person;
+	spriteset_t* spriteset;
+
+	name = duk_require_string(ctx, 0);
+	spriteset = duk_require_sphere_spriteset(ctx, 1);
+
+	if (!(person = map_person_by_name(name))) {
+		spriteset_free(spriteset);
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	}
+	person_set_spriteset(person, spriteset);
+	spriteset_free(spriteset);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonValue(duk_context* ctx)
+{
+	const char* key;
+	const char* name;
+	person_t*   person;
+
+	name = duk_require_string(ctx, 0);
+	key = duk_to_string(ctx, 1);
+
+	duk_require_valid_index(ctx, 2);
+	duk_require_type_mask(ctx, 1, DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER);
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	duk_push_global_stash(ctx);
+	duk_get_prop_string(ctx, -1, "personData");
+	if (!duk_get_prop_string(ctx, -1, name)) {
+		duk_pop(ctx);
+		duk_push_object(ctx);
+		duk_put_prop_string(ctx, -2, name);
+		duk_get_prop_string(ctx, -1, name);
+	}
+	duk_dup(ctx, 2);
+	duk_put_prop_string(ctx, -2, key);
+	duk_pop_2(ctx);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonVisible(duk_context* ctx)
+{
+	const char* name;
+	person_t*   person;
+	bool        visible;
+
+	name = duk_require_string(ctx, 0);
+	visible = duk_to_boolean(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_set_visible(person, visible);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonX(duk_context* ctx)
+{
+	int         layer;
+	const char* name;
+	int         new_x;
+	person_t*   person;
+	double      x;
+	double      y;
+
+	name = duk_require_string(ctx, 0);
+	new_x = duk_to_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_get_xyz(person, &x, &y, &layer, false);
+	person_set_xyz(person, new_x, y, layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonXYFloat(duk_context* ctx)
+{
+	int         layer;
+	const char* name;
+	person_t*   person;
+	double      x;
+	double      y;
+
+	name = duk_require_string(ctx, 0);
+	x = duk_to_number(ctx, 1);
+	y = duk_to_number(ctx, 2);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	layer = person_get_layer(person);
+	person_set_xyz(person, x, y, layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetPersonY(duk_context* ctx)
+{
+	int         layer;
+	const char* name;
+	int         new_y;
+	person_t*   person;
+	double      x;
+	double      y;
+
+	name = duk_require_string(ctx, 0);
+	new_y = duk_to_int(ctx, 1);
+
+	if (!(person = map_person_by_name(name)))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
+	person_get_xyz(person, &x, &y, &layer, false);
+	person_set_xyz(person, x, new_y, layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetRenderScript(duk_context* ctx)
+{
+	script_t* script;
+
+	script = duk_require_sphere_script(ctx, 0, "%/renderScript.js");
+
+	map_engine_on_render(script);
+	script_free(script);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTalkActivationButton(duk_context* ctx)
+{
+	int button_id;
+	
+	button_id = duk_to_int(ctx, 0);
+
+	map_engine_set_talk_button(button_id);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTalkActivationKey(duk_context* ctx)
+{
+	int key;
+	int num_args;
+	int player = PLAYER_1;
+
+	num_args = duk_get_top(ctx);
+	key = duk_to_int(ctx, 0);
+	if (num_args >= 2)
+		player = duk_to_int(ctx, 1);
+
+	if (player < 0 || player >= PLAYER_MAX)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid player constant");
+
+	map_engine_set_talk_key(player, key);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTalkDistance(duk_context* ctx)
+{
+	int pixels;
+
+	pixels = duk_to_int(ctx, 0);
+
+	if (pixels < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid talk distance");
+
+	map_engine_set_talk_distance(pixels);
+	return 0;
+}
+static duk_ret_t
+js_SetTile(duk_context* ctx)
+{
+	int        layer;
+	int        tile_index;
+	tileset_t* tileset;
+	int        x;
+	int        y;
+
+	x = duk_to_int(ctx, 0);
+	y = duk_to_int(ctx, 1);
+	layer = duk_require_map_layer(ctx, 2);
+	tile_index = duk_to_int(ctx, 3);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+
+	layer_set_tile(layer, x, y, tile_index);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTileDelay(duk_context* ctx)
+{
+	int        delay;
+	int        tile_index;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+	delay = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	if (delay < 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame count");
+	tileset_set_delay(tileset, tile_index, delay);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTileImage(duk_context* ctx)
+{
+	image_t*   image;
+	int        image_h;
+	int        image_w;
+	int        tile_h;
+	int        tile_index;
+	int        tile_w;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+	image = duk_require_class_obj(ctx, 1, "ssImage");
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	tileset_get_size(tileset, &tile_w, &tile_h);
+	image_w = image_width(image);
+	image_h = image_height(image);
+	if (image_w != tile_w || image_h != tile_h)
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "image/tile size mismatch");
+	tileset_set_image(tileset, tile_index, image);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTileName(duk_context* ctx)
+{
+	lstring_t* name;
+	int        tile_index;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+	name = duk_require_lstring_t(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	tileset_set_name(tileset, tile_index, name);
+	lstr_free(name);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTileSurface(duk_context* ctx)
+{
+	image_t*   image;
+	int        image_h;
+	int        image_w;
+	int        tile_h;
+	int        tile_index;
+	int        tile_w;
+	tileset_t* tileset;
+
+	tile_index = duk_to_int(ctx, 0);
+	image = duk_require_class_obj(ctx, 1, "ssSurface");
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	tileset = map_tileset();
+	if (tile_index < 0 || tile_index >= tileset_len(tileset))
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid tile index");
+	tileset_get_size(tileset, &tile_w, &tile_h);
+	image_w = image_width(image);
+	image_h = image_height(image);
+	if (image_w != tile_w || image_h != tile_h)
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "surface/tile size mismatch");
+	tileset_set_image(tileset, tile_index, image);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTriggerLayer(duk_context* ctx)
+{
+	int layer;
+	int trigger_index;
+
+	trigger_index = duk_to_int(ctx, 0);
+	layer = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
+	trigger_set_layer(trigger_index, layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTriggerScript(duk_context* ctx)
+{
+	script_t*  script;
+	lstring_t* script_name;
+	int        trigger_index;
+
+	trigger_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
+	script_name = lstr_newf("%s/trigger~%d/onStep", map_filename(), trigger_index);
+	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
+	trigger_set_script(trigger_index, script);
+	script_free(script);
+	lstr_free(script_name);
+	return 0;
+}
+
+static duk_ret_t
+js_SetTriggerXY(duk_context* ctx)
+{
+	int trigger_index;
+	int x;
+	int y;
+
+	trigger_index = duk_to_int(ctx, 0);
+	x = duk_to_int(ctx, 1);
+	y = duk_to_int(ctx, 2);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (trigger_index < 0 || trigger_index >= map_num_triggers())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
+	trigger_set_xy(trigger_index, x, y);
+	return 0;
+}
+
+static duk_ret_t
+js_SetUpdateScript(duk_context* ctx)
+{
+	script_t* script;
+
+	script = duk_require_sphere_script(ctx, 0, "%/updateScript.js");
+
+	map_engine_on_update(script);
+	script_free(script);
+	return 0;
+}
+
+static duk_ret_t
+js_SetZoneDimensions(duk_context* ctx)
+{
+	rect_t bounds;
+	int    height;
+	int    width;
+	int    x;
+	int    y;
+	int    zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+	x = duk_to_int(ctx, 1);
+	y = duk_to_int(ctx, 2);
+	width = duk_to_int(ctx, 3);
+	height = duk_to_int(ctx, 4);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	bounds = map_bounds();
+	if (width <= 0 || height <= 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone size");
+	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "zone area out of bounds");
+	zone_set_bounds(zone_index, rect(x, y, x + width, y + height));
+	return 0;
+}
+
+static duk_ret_t
+js_SetZoneLayer(duk_context* ctx)
+{
+	int layer;
+	int zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+	layer = duk_require_map_layer(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	zone_set_layer(zone_index, layer);
+	return 0;
+}
+
+static duk_ret_t
+js_SetZoneScript(duk_context* ctx)
+{
+	script_t*  script;
+	lstring_t* script_name;
+	int        zone_index;
+
+	zone_index = duk_to_int(ctx, 0);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	if (!(script_name = lstr_newf("%s/zone%d", map_filename(), zone_index)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "error compiling zone script");
+	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
+	lstr_free(script_name);
+	zone_set_script(zone_index, script);
+	script_free(script);
+	return 0;
+}
+
+static duk_ret_t
+js_SetZoneSteps(duk_context* ctx)
+{
+	int zone_index;
+	int steps;
+
+	zone_index = duk_to_int(ctx, 0);
+	steps = duk_to_int(ctx, 1);
+
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	if (zone_index < 0 || zone_index >= map_num_zones())
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
+	if (steps <= 0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "steps must be positive (got: %d)", steps);
+	zone_set_steps(zone_index, steps);
+	return 0;
+}
+
+static duk_ret_t
+js_UpdateMapEngine(duk_context* ctx)
+{
+	if (!map_engine_running())
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
+	map_engine_update();
+	return 0;
 }
 
 static duk_ret_t
@@ -1532,7 +4830,7 @@ js_SetClippingRectangle(duk_context* ctx)
 	height = duk_to_int(ctx, 3);
 
 	image_set_scissor(screen_backbuffer(g_screen),
-		new_rect(x, y, x + width, y + height));
+		rect(x, y, x + width, y + height));
 	return 0;
 }
 
@@ -1828,7 +5126,7 @@ js_CreateSpriteset(duk_context* ctx)
 	num_frames = duk_to_int(ctx, 4);
 
 	spriteset = spriteset_new();
-	spriteset_set_base(spriteset, new_rect(0, 0, width, height));
+	spriteset_set_base(spriteset, rect(0, 0, width, height));
 	image = image_new(width, height);
 	for (i = 0; i < num_images; ++i) {
 		// use the same image in all slots to save memory.  this works because
@@ -3462,7 +6760,6 @@ js_Font_getColorMask(duk_context* ctx)
 {
 	duk_push_this(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
-	duk_remove(ctx, -2);
 	return 1;
 }
 
