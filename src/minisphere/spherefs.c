@@ -296,7 +296,6 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 	if (strcmp(prefix, "$") == 0) {
 		path_remove_hop(path, 0);
 		path_rebase(path, fs_script_path(g_fs));
-		path_insert_hop(path, 0, "@");
 		free(prefix);
 		prefix = strdup(path_hop(path, 0));
 	}
@@ -680,7 +679,7 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 	
 	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
-	fs->script_path = path_new(duk_get_string(g_duk, -1));
+	fs->script_path = fs_make_path(duk_get_string(g_duk, -1), NULL, false);
 
 	// game summary is optional, use a default summary if one is not provided.
 	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
