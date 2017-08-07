@@ -1,7 +1,7 @@
 #include "minisphere.h"
-#include "kevfile.h"
+#include "kev_file.h"
 
-struct kevfile
+struct kev_file
 {
 	unsigned int    id;
 	sandbox_t*      fs;
@@ -12,16 +12,16 @@ struct kevfile
 
 static unsigned int s_next_file_id = 0;
 
-kevfile_t*
+kev_file_t*
 kev_open(sandbox_t* fs, const char* filename, bool can_create)
 {
-	kevfile_t*    file;
+	kev_file_t*   file;
 	ALLEGRO_FILE* memfile = NULL;
 	void*         slurp;
 	size_t        slurp_size;
 	
 	console_log(2, "opening kevfile #%u as `%s`", s_next_file_id, filename);
-	file = calloc(1, sizeof(kevfile_t));
+	file = calloc(1, sizeof(kev_file_t));
 	if (slurp = sfs_fslurp(fs, filename, NULL, &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(file->conf = al_load_config_file_f(memfile)))
@@ -49,7 +49,7 @@ on_error:
 }
 
 void
-kev_close(kevfile_t* file)
+kev_close(kev_file_t* file)
 {
 	if (file == NULL)
 		return;
@@ -63,7 +63,7 @@ kev_close(kevfile_t* file)
 }
 
 int
-kev_num_keys(kevfile_t* file)
+kev_num_keys(kev_file_t* file)
 {
 	ALLEGRO_CONFIG_ENTRY* iter;
 	const char*           key;
@@ -79,7 +79,7 @@ kev_num_keys(kevfile_t* file)
 }
 
 const char*
-kev_get_key(kevfile_t* file, int index)
+kev_get_key(kev_file_t* file, int index)
 {
 	ALLEGRO_CONFIG_ENTRY* iter;
 	const char*           name;
@@ -97,10 +97,13 @@ kev_get_key(kevfile_t* file, int index)
 }
 
 bool
-kev_read_bool(kevfile_t* file, const char* key, bool def_value)
+kev_read_bool(kev_file_t* file, const char* key, bool def_value)
 {
 	const char* string;
 	bool        value;
+
+	if (file == NULL)
+		return def_value;
 
 	string = kev_read_string(file, key, def_value ? "true" : "false");
 	value = strcasecmp(string, "true") == 0;
@@ -108,11 +111,14 @@ kev_read_bool(kevfile_t* file, const char* key, bool def_value)
 }
 
 double
-kev_read_float(kevfile_t* file, const char* key, double def_value)
+kev_read_float(kev_file_t* file, const char* key, double def_value)
 {
 	char        def_string[500];
 	const char* string;
 	double      value;
+
+	if (file == NULL)
+		return def_value;
 
 	sprintf(def_string, "%g", def_value);
 	string = kev_read_string(file, key, def_string);
@@ -121,10 +127,13 @@ kev_read_float(kevfile_t* file, const char* key, double def_value)
 }
 
 const char*
-kev_read_string(kevfile_t* file, const char* key, const char* def_value)
+kev_read_string(kev_file_t* file, const char* key, const char* def_value)
 {
 	const char* value;
 	
+	if (file == NULL)
+		return def_value;
+
 	console_log(2, "reading key `%s` from kevfile #%u", key, file->id);
 	if (!(value = al_get_config_value(file->conf, NULL, key)))
 		value = def_value;
@@ -132,7 +141,7 @@ kev_read_string(kevfile_t* file, const char* key, const char* def_value)
 }
 
 bool
-kev_save(kevfile_t* file)
+kev_save(kev_file_t* file)
 {
 	void*         buffer = NULL;
 	size_t        file_size;
@@ -168,7 +177,7 @@ on_error:
 }
 
 void
-kev_write_bool(kevfile_t* file, const char* key, bool value)
+kev_write_bool(kev_file_t* file, const char* key, bool value)
 {
 	console_log(3, "writing boolean to kevfile #%u, key `%s`", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value ? "true" : "false");
@@ -176,7 +185,7 @@ kev_write_bool(kevfile_t* file, const char* key, bool value)
 }
 
 void
-kev_write_float(kevfile_t* file, const char* key, double value)
+kev_write_float(kev_file_t* file, const char* key, double value)
 {
 	char string[500];
 
@@ -187,7 +196,7 @@ kev_write_float(kevfile_t* file, const char* key, double value)
 }
 
 void
-kev_write_string(kevfile_t* file, const char* key, const char* value)
+kev_write_string(kev_file_t* file, const char* key, const char* value)
 {
 	console_log(3, "writing string to kevfile #%u, key `%s`", file->id, key);
 	al_set_config_value(file->conf, NULL, key, value);

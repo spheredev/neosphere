@@ -94,8 +94,8 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
 	const char* prefix;
 
 	pathname = duk_require_string(ctx, index);
-	path = fs_make_path(pathname, origin_name);
-	prefix = path_hop(path, 0);  // note: fs_make_path() *always* prefixes
+	path = fs_build_path(pathname, origin_name);
+	prefix = path_hop(path, 0);  // note: fs_build_path() *always* prefixes
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))

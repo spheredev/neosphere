@@ -2,7 +2,7 @@
 #include "input.h"
 
 #include "debugger.h"
-#include "kevfile.h"
+#include "kev_file.h"
 #include "vector.h"
 
 struct key_queue
@@ -345,7 +345,7 @@ kb_get_key(void)
 void
 kb_load_keymap(void)
 {
-	kevfile_t*     file;
+	kev_file_t* file;
 	const char* key_name;
 	char*       filename;
 	lstring_t*  setting;
@@ -376,7 +376,7 @@ kb_load_keymap(void)
 void
 kb_save_keymap(void)
 {
-	kevfile_t*     file;
+	kev_file_t* file;
 	const char* key_name;
 	lstring_t*  setting;
 

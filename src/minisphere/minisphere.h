@@ -26,19 +26,19 @@
 #include <dyad.h>
 #include <zlib.h>
 
-#include "version.h"
-
-#include "console.h"
-#include "spherefs.h"
-#include "kevfile.h"
-#include "font.h"
-#include "geometry.h"
-#include "screen.h"
 #include "lstring.h"
 #include "path.h"
+#include "vector.h"
+
+#include "version.h"
+#include "geometry.h"
+#include "console.h"
+#include "spherefs.h"
+#include "kev_file.h"
+#include "font.h"
+#include "screen.h"
 #include "script.h"
 #include "utility.h"
-#include "vector.h"
 
 #ifdef _MSC_VER
 #define strcasecmp stricmp
@@ -67,7 +67,6 @@ extern int                  g_framerate;
 extern path_t*              g_game_path;
 extern path_t*              g_last_game_path;
 extern screen_t*            g_screen;
-extern kevfile_t*           g_sys_conf;
 extern font_t*              g_sys_font;
 extern int                  g_res_x;
 extern int                  g_res_y;

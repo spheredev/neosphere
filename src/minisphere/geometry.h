@@ -55,7 +55,4 @@ rect_t       translate_rect       (rect_t rect, int x_offset, int y_offset);
 float_rect_t translate_float_rect (float_rect_t rect, float x_offset, float y_offset);
 rect_t       zoom_rect            (rect_t rect, double scale_x, double scale_y);
 
-bool fread_rect_16 (sfs_file_t* file, rect_t* out_rect);
-bool fread_rect_32 (sfs_file_t* file, rect_t* out_rect);
-
 #endif // MINISPHERE__GEOMETRY_H__INCLUDED

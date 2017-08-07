@@ -186,7 +186,7 @@ debugger_compiled_name(const char* source_name)
 const char*
 debugger_source_name(const char* compiled_name)
 {
-	// note: pathname must be canonicalized using fs_make_path() otherwise
+	// note: pathname must be canonicalized using fs_build_path() otherwise
 	//       the source map lookup will fail.
 
 	static char retval[SPHERE_PATH_MAX];
@@ -308,9 +308,8 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 	void*       file_data;
 	const char* name;
 	int         request_id;
+	size2_t     resolution;
 	size_t      size;
-	int         x_size;
-	int         y_size;
 
 	iter_t iter;
 	struct source* p_source;
@@ -324,12 +323,12 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
 	case APPREQ_GAME_INFO:
-		fs_get_resolution(g_fs, &x_size, &y_size);
+		resolution = fs_resolution(g_fs);
 		duk_push_string(ctx, fs_name(g_fs));
 		duk_push_string(ctx, fs_author(g_fs));
 		duk_push_string(ctx, fs_summary(g_fs));
-		duk_push_int(ctx, x_size);
-		duk_push_int(ctx, y_size);
+		duk_push_int(ctx, resolution.width);
+		duk_push_int(ctx, resolution.height);
 		return 5;
 	case APPREQ_SOURCE:
 		if (nvalues < 2) {

@@ -507,7 +507,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\minisphere\color.c" />
     <ClCompile Include="..\src\minisphere\console.c" />
     <ClCompile Include="..\src\minisphere\debugger.c" />
-    <ClCompile Include="..\src\minisphere\kevfile.c" />
+    <ClCompile Include="..\src\minisphere\kev_file.c" />
     <ClCompile Include="..\src\minisphere\font.c" />
     <ClCompile Include="..\src\minisphere\galileo.c" />
     <ClCompile Include="..\src\minisphere\geometry.c" />
@@ -551,7 +551,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\minisphere\color.h" />
     <ClInclude Include="..\src\minisphere\console.h" />
     <ClInclude Include="..\src\minisphere\debugger.h" />
-    <ClInclude Include="..\src\minisphere\kevfile.h" />
+    <ClInclude Include="..\src\minisphere\kev_file.h" />
     <ClInclude Include="..\src\minisphere\font.h" />
     <ClInclude Include="..\src\minisphere\geometry.h" />
     <ClInclude Include="..\src\minisphere\image.h" />

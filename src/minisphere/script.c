@@ -52,7 +52,7 @@ script_eval(const char* filename, bool as_module)
 		return true;
 	}
 	else {
-		path = fs_make_path(filename, NULL, false);
+		path = fs_build_path(filename, NULL, false);
 		source_name = debugger_source_name(path_cstr(path));
 		if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
 			goto on_error;

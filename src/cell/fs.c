@@ -186,9 +186,9 @@ fs_list_dir(const fs_t* fs, const char* dirname)
 }
 
 path_t*
-fs_make_path(const char* filename, const char* base_dir_name)
+fs_build_path(const char* filename, const char* base_dir_name)
 {
-	// note: fs_make_path() collapses '../' path hops unconditionally, as per
+	// note: fs_build_path() collapses '../' path hops unconditionally, as per
 	//       SphereFS spec. this ensures an unpackaged game can't subvert the
 	//       sandbox by navigating outside of its directory via a symbolic link.
 
@@ -201,7 +201,7 @@ fs_make_path(const char* filename, const char* base_dir_name)
 		return path;
 
 	if (base_dir_name != NULL) {
-		base_path = fs_make_path(base_dir_name, NULL);
+		base_path = fs_build_path(base_dir_name, NULL);
 		path_to_dir(base_path);
 	}
 	if (path_num_hops(path) > 0)

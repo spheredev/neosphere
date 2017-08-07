@@ -100,17 +100,6 @@ system_path(const char* filename)
 	return retval;
 }
 
-bool
-is_cpu_little_endian(void)
-{
-	uint8_t  lead_byte;
-	uint16_t value;
-
-	value = 812;
-	lead_byte = *(uint8_t*)&value;
-	return lead_byte == 44;
-}
-
 lstring_t*
 read_lstring(sfs_file_t* file, bool trim_null)
 {
@@ -265,8 +254,8 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
-	path = fs_make_path(pathname, origin_name, legacy);
-	prefix = path_hop(path, 0);  // note: fs_make_path() *always* prefixes
+	path = fs_build_path(pathname, origin_name, legacy);
+	prefix = path_hop(path, 0);  // note: fs_build_path() *always* prefixes
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
@@ -320,6 +309,34 @@ duk_unref_heapptr(duk_context* ctx, void* heapptr)
 
 		duk_pop_3(ctx);
 	}
+}
+
+bool
+fread_rect_16(sfs_file_t* file, rect_t* out_rect)
+{
+	int16_t x1, y1, x2, y2;
+
+	if (sfs_fread(&x1, 2, 1, file) != 1) return false;
+	if (sfs_fread(&y1, 2, 1, file) != 1) return false;
+	if (sfs_fread(&x2, 2, 1, file) != 1) return false;
+	if (sfs_fread(&y2, 2, 1, file) != 1) return false;
+	out_rect->x1 = x1; out_rect->y1 = y1;
+	out_rect->x2 = x2; out_rect->y2 = y2;
+	return true;
+}
+
+bool
+fread_rect_32(sfs_file_t* file, rect_t* out_rect)
+{
+	int32_t x1, y1, x2, y2;
+
+	if (sfs_fread(&x1, 4, 1, file) != 1) return false;
+	if (sfs_fread(&y1, 4, 1, file) != 1) return false;
+	if (sfs_fread(&x2, 4, 1, file) != 1) return false;
+	if (sfs_fread(&y2, 4, 1, file) != 1) return false;
+	out_rect->x1 = x1; out_rect->y1 = y1;
+	out_rect->x2 = x2; out_rect->y2 = y2;
+	return true;
 }
 
 static duk_ret_t

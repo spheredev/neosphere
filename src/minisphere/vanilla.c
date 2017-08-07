@@ -483,36 +483,14 @@ enum sound_effect_mode
 
 static unsigned int   s_next_async_id = 1;
 static mixer_t*       s_sound_mixer;
-static image_t*       s_sys_arrow = NULL;
-static image_t*       s_sys_dn_arrow = NULL;
-static image_t*       s_sys_up_arrow = NULL;
-static windowstyle_t* s_sys_winstyle;
 
 void
 initialize_vanilla_api(duk_context* ctx)
 {
-	const char* filename;
-	
 	console_log(1, "initializing Sphere v1 API (%s)", API_VERSION_STRING);
 
 	s_sound_mixer = mixer_new(44100, 16, 2);
 	
-	// load system-provided images
-	if (g_sys_conf != NULL) {
-		filename = kev_read_string(g_sys_conf, "Arrow", "pointer.png");
-		s_sys_arrow = image_load(system_path(filename));
-		filename = kev_read_string(g_sys_conf, "UpArrow", "up_arrow.png");
-		s_sys_up_arrow = image_load(system_path(filename));
-		filename = kev_read_string(g_sys_conf, "DownArrow", "down_arrow.png");
-		s_sys_dn_arrow = image_load(system_path(filename));
-	}
-
-	// load system window style
-	if (g_sys_conf != NULL) {
-		filename = kev_read_string(g_sys_conf, "ssWindowStyle", "system.rws");
-		s_sys_winstyle = load_windowstyle(system_path(filename));
-	}
-
 	// set up a dictionary to track RequireScript() calls
 	duk_push_global_stash(ctx);
 	duk_push_bare_object(ctx);
@@ -4736,18 +4714,22 @@ js_GetScreenWidth(duk_context* ctx)
 static duk_ret_t
 js_GetSystemArrow(duk_context* ctx)
 {
-	if (s_sys_arrow == NULL)
+	image_t* image;
+	
+	if (!(image = legacy_default_arrow_image()))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system arrow image");
-	duk_push_class_obj(ctx, "ssImage", image_ref(s_sys_arrow));
+	duk_push_class_obj(ctx, "ssImage", image_ref(image));
 	return 1;
 }
 
 static duk_ret_t
 js_GetSystemDownArrow(duk_context* ctx)
 {
-	if (s_sys_dn_arrow == NULL)
+	image_t* image;
+
+	if (!(image = legacy_default_arrow_down_image()))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system down arrow image");
-	duk_push_class_obj(ctx, "ssImage", image_ref(s_sys_dn_arrow));
+	duk_push_class_obj(ctx, "ssImage", image_ref(image));
 	return 1;
 }
 
@@ -4761,19 +4743,22 @@ js_GetSystemFont(duk_context* ctx)
 static duk_ret_t
 js_GetSystemUpArrow(duk_context* ctx)
 {
-	if (s_sys_up_arrow == NULL)
+	image_t* image;
+
+	if (!(image = legacy_default_arrow_up_image()))
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system up arrow image");
-	duk_push_class_obj(ctx, "ssImage", image_ref(s_sys_up_arrow));
+	duk_push_class_obj(ctx, "ssImage", image_ref(image));
 	return 1;
 }
 
 static duk_ret_t
 js_GetSystemWindowStyle(duk_context* ctx)
 {
-	if (s_sys_winstyle == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system windowstyle");
+	windowstyle_t* windowstyle;
 
-	duk_push_sphere_windowstyle(ctx, s_sys_winstyle);
+	if (!(windowstyle = legacy_default_windowstyle()))
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "missing system windowstyle");
+	duk_push_sphere_windowstyle(ctx, windowstyle);
 	return 1;
 }
 
@@ -5730,11 +5715,11 @@ static duk_ret_t
 js_ListenOnPort(duk_context* ctx)
 {
 	int          port;
-	v1_socket_t* socket;
+	socket_v1_t* socket;
 	
 	port = duk_to_int(ctx, 0);
 
-	if (socket = v1_socket_new_server(port))
+	if (socket = socket_v1_new_server(port))
 		duk_push_class_obj(ctx, "ssSocket", socket);
 	else
 		duk_push_null(ctx);
@@ -5859,12 +5844,12 @@ js_OpenAddress(duk_context* ctx)
 {
 	const char*  hostname;
 	int          port;
-	v1_socket_t* socket;
+	socket_v1_t* socket;
 	
 	hostname = duk_require_string(ctx, 0);
 	port = duk_to_int(ctx, 1);
 	
-	if (socket = v1_socket_new_client(hostname, port))
+	if (socket = socket_v1_new_client(hostname, port))
 		duk_push_class_obj(ctx, "ssSocket", socket);
 	else
 		duk_push_null(ctx);
@@ -5874,7 +5859,7 @@ js_OpenAddress(duk_context* ctx)
 static duk_ret_t
 js_OpenFile(duk_context* ctx)
 {
-	kevfile_t*  file;
+	kev_file_t* file;
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "save", true, true);
@@ -6483,7 +6468,7 @@ js_ColorMatrix_toString(duk_context* ctx)
 static duk_ret_t
 js_File_finalize(duk_context* ctx)
 {
-	kevfile_t* file;
+	kev_file_t* file;
 
 	file = duk_require_class_obj(ctx, 0, "ssFile");
 	kev_close(file);
@@ -6493,7 +6478,7 @@ js_File_finalize(duk_context* ctx)
 static duk_ret_t
 js_File_close(duk_context* ctx)
 {
-	kevfile_t* file;
+	kev_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssFile");
@@ -6506,7 +6491,7 @@ js_File_close(duk_context* ctx)
 static duk_ret_t
 js_File_flush(duk_context* ctx)
 {
-	kevfile_t* file;
+	kev_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssFile");
@@ -6522,7 +6507,7 @@ js_File_getKey(duk_context* ctx)
 {
 	int index = duk_to_int(ctx, 0);
 
-	kevfile_t*  file;
+	kev_file_t* file;
 	const char* key;
 
 	duk_push_this(ctx);
@@ -6540,7 +6525,7 @@ js_File_getKey(duk_context* ctx)
 static duk_ret_t
 js_File_getNumKeys(duk_context* ctx)
 {
-	kevfile_t* file;
+	kev_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssFile");
@@ -6559,7 +6544,7 @@ js_File_read(duk_context* ctx)
 	bool        def_bool;
 	double      def_num;
 	const char* def_string;
-	kevfile_t*  file;
+	kev_file_t* file;
 	const char* value;
 
 	duk_push_this(ctx);
@@ -6597,7 +6582,7 @@ js_File_write(duk_context* ctx)
 {
 	const char* key = duk_to_string(ctx, 0);
 
-	kevfile_t* file;
+	kev_file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssFile");
@@ -7356,52 +7341,52 @@ js_RawFile_write(duk_context* ctx)
 static duk_ret_t
 js_Socket_finalize(duk_context* ctx)
 {
-	v1_socket_t* socket;
+	socket_v1_t* socket;
 
 	socket = duk_require_class_obj(ctx, 0, "ssSocket");
-	v1_socket_free(socket);
+	socket_v1_free(socket);
 	return 1;
 }
 
 static duk_ret_t
 js_Socket_close(duk_context* ctx)
 {
-	v1_socket_t* socket;
+	socket_v1_t* socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
 	
 	duk_set_class_ptr(ctx, -1, NULL);
-	v1_socket_free(socket);
+	socket_v1_free(socket);
 	return 1;
 }
 
 static duk_ret_t
 js_Socket_getPendingReadSize(duk_context* ctx)
 {
-	v1_socket_t* socket;
+	socket_v1_t* socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
 
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
-	if (!v1_socket_connected(socket))
+	if (!socket_v1_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is not connected");
-	duk_push_uint(ctx, (duk_uint_t)v1_socket_peek(socket));
+	duk_push_uint(ctx, (duk_uint_t)socket_v1_peek(socket));
 	return 1;
 }
 
 static duk_ret_t
 js_Socket_isConnected(duk_context* ctx)
 {
-	v1_socket_t* socket;
+	socket_v1_t* socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
 
 	if (socket != NULL)
-		duk_push_boolean(ctx, v1_socket_connected(socket));
+		duk_push_boolean(ctx, socket_v1_connected(socket));
 	else
 		duk_push_false(ctx);
 	return 1;
@@ -7414,7 +7399,7 @@ js_Socket_read(duk_context* ctx)
 
 	bytearray_t* array;
 	void*        read_buffer;
-	v1_socket_t* socket;
+	socket_v1_t* socket;
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
@@ -7423,11 +7408,11 @@ js_Socket_read(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
-	if (!v1_socket_connected(socket))
+	if (!socket_v1_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is not connected");
 	if (!(read_buffer = malloc(length)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate read buffer");
-	v1_socket_read(socket, read_buffer, length);
+	socket_v1_read(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
@@ -7446,7 +7431,7 @@ js_Socket_write(duk_context* ctx)
 {
 	bytearray_t*   array;
 	const uint8_t* payload;
-	v1_socket_t*   socket;
+	socket_v1_t*   socket;
 	size_t         write_size;
 
 	duk_push_this(ctx);
@@ -7461,9 +7446,9 @@ js_Socket_write(duk_context* ctx)
 	}
 	if (socket == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket has been closed");
-	if (!v1_socket_connected(socket))
+	if (!socket_v1_connected(socket))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "socket is not connected");
-	v1_socket_write(socket, payload, write_size);
+	socket_v1_write(socket, payload, write_size);
 	return 0;
 }
 

@@ -13,7 +13,7 @@ bool      fs_fspew       (const fs_t* fs, const char* filename, const void* data
 void*     fs_fslurp      (const fs_t* fs, const char* filename, size_t* out_size);
 bool      fs_is_game_dir (const fs_t* fs, const char* dirname);
 vector_t* fs_list_dir    (const fs_t* fs, const char* dirname);
-path_t*   fs_make_path   (const char* filename, const char* base_dir_name);
+path_t*   fs_build_path  (const char* filename, const char* base_dir_name);
 int       fs_mkdir       (const fs_t* fs, const char* dirname);
 int       fs_rename      (const fs_t* fs, const char* old_name, const char* new_name);
 int       fs_rmdir       (const fs_t* fs, const char* dirname);

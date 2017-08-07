@@ -1,7 +1,7 @@
 #include "minisphere.h"
 #include "spherefs.h"
 
-#include "kevfile.h"
+#include "kev_file.h"
 #include "spk.h"
 
 enum fs_type
@@ -49,10 +49,9 @@ fs_new(const char* game_path)
 {
 	sandbox_t*  fs;
 	path_t*     path;
-	int         res_x;
-	int         res_y;
+	size2_t     resolution;
 	size_t      sgm_size;
-	kevfile_t*  sgm_file;
+	kev_file_t* sgm_file;
 	char*       sgm_text = NULL;
 	spk_t*      spk;
 	void*       sourcemap_data;
@@ -131,7 +130,7 @@ fs_new(const char* game_path)
 			fs->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
 			fs->res_x = kev_read_float(sgm_file, "screen_width", 320);
 			fs->res_y = kev_read_float(sgm_file, "screen_height", 240);
-			fs->script_path = fs_make_path(kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
+			fs->script_path = fs_build_path(kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
 			fs->fullscreen = true;
 			kev_close(sgm_file);
 
@@ -149,10 +148,10 @@ fs_new(const char* game_path)
 			goto on_error;
 	}
 
-	fs_get_resolution(fs, &res_x, &res_y);
+	resolution = fs_resolution(fs);
 	console_log(1, "         title: %s", fs_name(fs));
 	console_log(1, "        author: %s", fs_author(fs));
-	console_log(1, "    resolution: %dx%d", res_x, res_y);
+	console_log(1, "    resolution: %dx%d", resolution.width, resolution.height);
 	console_log(1, "       save ID: %s", fs_save_id(fs));
 
 	// load the source map
@@ -212,11 +211,10 @@ fs_path(const sandbox_t* fs)
 	return fs->root_path;
 }
 
-void
-fs_get_resolution(const sandbox_t* fs, int *out_width, int *out_height)
+size2_t
+fs_resolution(const sandbox_t* fs)
 {
-	*out_width = fs->res_x;
-	*out_height = fs->res_y;
+	return size2(fs->res_x, fs->res_y);
 }
 
 const char*
@@ -263,9 +261,9 @@ fs_version(const sandbox_t* fs)
 }
 
 path_t*
-fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
+fs_build_path(const char* filename, const char* base_dir_name, bool legacy)
 {
-	// note: fs_make_path() collapses '../' path hops unconditionally, as per
+	// note: fs_build_path() collapses '../' path hops unconditionally, as per
 	//       SphereFS spec. this ensures an unpackaged game can't subvert the
 	//       sandbox by navigating outside of its directory via a symbolic link.
 
@@ -283,7 +281,7 @@ fs_make_path(const char* filename, const char* base_dir_name, bool legacy)
 	}
 	
 	if (base_dir_name != NULL) {
-		base_path = fs_make_path(base_dir_name, NULL, legacy);
+		base_path = fs_build_path(base_dir_name, NULL, legacy);
 		path_to_dir(base_path);
 	}
 	if (path_num_hops(path) > 0)
@@ -679,7 +677,7 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 	
 	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
-	fs->script_path = fs_make_path(duk_get_string(g_duk, -1), NULL, false);
+	fs->script_path = fs_build_path(duk_get_string(g_duk, -1), NULL, false);
 
 	// game summary is optional, use a default summary if one is not provided.
 	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
@@ -775,7 +773,7 @@ resolve_path(const sandbox_t* fs, const char* filename, const char* base_dir, pa
 	else {  // default case: assume relative path
 		if (fs == NULL)
 			goto on_error;
-		*out_path = fs_make_path(filename, base_dir, false);
+		*out_path = fs_build_path(filename, base_dir, false);
 		if (path_num_hops(*out_path) > 0 && path_hop_cmp(*out_path, 0, "@"))
 			path_remove_hop(*out_path, 0);
 		if (fs->type == SPHEREFS_LOCAL)  // convert to absolute path
