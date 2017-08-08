@@ -64,7 +64,7 @@ void                   model_put_int          (model_t* it, const char* name, in
 void                   model_put_int_array    (model_t* it, const char* name, int values[], int size);
 void                   model_put_int_vector   (model_t* it, const char* name, int values[], int size);
 void                   model_put_matrix       (model_t* it, const char* name, const transform_t* transform);
-shader_t*              shader_new             (const char* vs_path, const char* fs_path);
+shader_t*              shader_new             (const char* vert_filename, const char* frag_filename);
 shader_t*              shader_ref             (shader_t* shader);
 void                   shader_free            (shader_t* shader);
 ALLEGRO_SHADER*        shader_program         (const shader_t* it);

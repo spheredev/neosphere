@@ -444,27 +444,27 @@ model_put_matrix(model_t* it, const char* name, const transform_t* matrix)
 }
 
 shader_t*
-shader_new(const char* vs_filename, const char* fs_filename)
+shader_new(const char* vert_filename, const char* frag_filename)
 {
-	char*      fs_source = NULL;
-	char*      vs_source = NULL;
+	char*      frag_source = NULL;
+	char*      vert_source = NULL;
 	shader_t*  shader;
 
 	shader = calloc(1, sizeof(shader_t));
 
 	console_log(2, "compiling new shader program #%u", s_next_shader_id);
 
-	if (!(vs_source = fs_read_file(g_game_fs, vs_filename, NULL, NULL)))
+	if (!(vert_source = game_read_file(g_game_fs, vert_filename, NULL, NULL)))
 		goto on_error;
-	if (!(fs_source = fs_read_file(g_game_fs, fs_filename, NULL, NULL)))
+	if (!(frag_source = game_read_file(g_game_fs, frag_filename, NULL, NULL)))
 		goto on_error;
 	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL)))
 		goto on_error;
-	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vs_source)) {
+	if (!al_attach_shader_source(shader->program, ALLEGRO_VERTEX_SHADER, vert_source)) {
 		fprintf(stderr, "\nvertex shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
-	if (!al_attach_shader_source(shader->program, ALLEGRO_PIXEL_SHADER, fs_source)) {
+	if (!al_attach_shader_source(shader->program, ALLEGRO_PIXEL_SHADER, frag_source)) {
 		fprintf(stderr, "\nfragment shader compile log:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
@@ -472,15 +472,15 @@ shader_new(const char* vs_filename, const char* fs_filename)
 		fprintf(stderr, "\nerror building shader program:\n%s\n", al_get_shader_log(shader->program));
 		goto on_error;
 	}
-	free(vs_source);
-	free(fs_source);
+	free(vert_source);
+	free(frag_source);
 
 	shader->id = s_next_shader_id++;
 	return shader_ref(shader);
 
 on_error:
-	free(vs_source);
-	free(fs_source);
+	free(vert_source);
+	free(frag_source);
 	if (shader->program != NULL)
 		al_destroy_shader(shader->program);
 	free(shader);

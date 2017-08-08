@@ -1928,7 +1928,7 @@ js_CreateDirectory(duk_context* ctx)
 	const char* name;
 
 	name = duk_require_path(ctx, 0, "save", true, true);
-	if (!fs_mkdir(g_game_fs, name, NULL))
+	if (!game_mkdir(g_game_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
 	return 0;
 }
@@ -2167,7 +2167,7 @@ js_DoesFileExist(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, NULL, true, false);
-	duk_push_boolean(ctx, fs_file_exists(g_game_fs, filename, NULL));
+	duk_push_boolean(ctx, game_file_exists(g_game_fs, filename, NULL));
 	return 1;
 }
 
@@ -2188,7 +2188,7 @@ js_EvaluateScript(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "scripts", true, false);
-	if (!fs_file_exists(g_game_fs, filename, NULL))
+	if (!game_file_exists(g_game_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	if (!script_eval(filename, false))
 		duk_throw(ctx);
@@ -2203,9 +2203,9 @@ js_EvaluateSystemScript(duk_context* ctx)
 	char path[SPHERE_PATH_MAX];
 
 	sprintf(path, "scripts/lib/%s", filename);
-	if (!fs_file_exists(g_game_fs, path, NULL))
+	if (!game_file_exists(g_game_fs, path, NULL))
 		sprintf(path, "#/scripts/%s", filename);
-	if (!fs_file_exists(g_game_fs, path, NULL))
+	if (!game_file_exists(g_game_fs, path, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
 	if (!script_eval(path, false))
 		duk_throw(ctx);
@@ -2221,7 +2221,7 @@ js_ExecuteGame(duk_context* ctx)
 	filename = duk_require_string(ctx, 0);
 
 	// store the old game path so we can relaunch when the chained game exits
-	g_last_game_path = path_dup(fs_path(g_game_fs));
+	g_last_game_path = path_dup(game_path(g_game_fs));
 
 	// if the passed-in path is relative, resolve it relative to <engine>/games.
 	// this is done for compatibility with Sphere 1.x.
@@ -2559,7 +2559,7 @@ js_GetDirectoryList(duk_context* ctx)
 
 	iter_t iter;
 
-	list = fs_list_dir(g_game_fs, dirname, NULL, true);
+	list = game_list_dir(g_game_fs, dirname, NULL, true);
 	duk_push_array(ctx);
 	iter = vector_enum(list);
 	while (p_filename = vector_next(&iter)) {
@@ -2586,7 +2586,7 @@ js_GetFileList(duk_context* ctx)
 		? duk_require_path(ctx, 0, NULL, true, false)
 		: "save";
 
-	list = fs_list_dir(g_game_fs, directory_name, NULL, false);
+	list = game_list_dir(g_game_fs, directory_name, NULL, false);
 	duk_push_array(ctx);
 	iter = vector_enum(list);
 	while (p_filename = vector_next(&iter)) {
@@ -2627,13 +2627,13 @@ js_GetGameList(duk_context* ctx)
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
 				path = path_new(al_get_fs_entry_name(file_info));
-				if (game = fs_open(path_cstr(path))) {
-					duk_push_lstring_t(ctx, fs_manifest(game));
+				if (game = game_open(path_cstr(path))) {
+					duk_push_lstring_t(ctx, game_manifest(game));
 					duk_json_decode(ctx, -1);
 					duk_push_string(ctx, path_cstr(path));
 					duk_put_prop_string(ctx, -2, "directory");
 					duk_put_prop_index(ctx, -2, j++);
-					fs_close(game);
+					game_free(game);
 				}
 				path_free(path);
 			}
@@ -4096,7 +4096,7 @@ js_HashFromFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "other", true, false);
 
-	if (!(data = fs_read_file(g_game_fs, filename, NULL, &file_size)))
+	if (!(data = game_read_file(g_game_fs, filename, NULL, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file");
 	duk_push_string(ctx, md5sum(data, file_size));
 	return 1;
@@ -4886,7 +4886,7 @@ js_RemoveDirectory(duk_context* ctx)
 	const char* name;
 
 	name = duk_require_path(ctx, 0, "save", true, true);
-	if (!fs_rmdir(g_game_fs, name, NULL))
+	if (!game_rmdir(g_game_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
 	return 0;
 }
@@ -4897,7 +4897,7 @@ js_RemoveFile(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "save", true, true);
-	if (!fs_unlink(g_game_fs, filename, NULL))
+	if (!game_unlink(g_game_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file `%s`", filename);
 	return 0;
 }
@@ -4940,7 +4940,7 @@ js_Rename(duk_context* ctx)
 
 	name1 = duk_require_path(ctx, 0, "save", true, true);
 	name2 = duk_require_path(ctx, 1, "save", true, true);
-	if (!fs_rename(g_game_fs, name1, name2, NULL))
+	if (!game_rename(g_game_fs, name1, name2, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
 }
@@ -4984,7 +4984,7 @@ js_RequireScript(duk_context* ctx)
 	bool        is_required;
 
 	filename = duk_require_path(ctx, 0, "scripts", true, false);
-	if (!fs_file_exists(g_game_fs, filename, NULL))
+	if (!game_file_exists(g_game_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
@@ -5010,9 +5010,9 @@ js_RequireSystemScript(duk_context* ctx)
 	char path[SPHERE_PATH_MAX];
 
 	sprintf(path, "scripts/lib/%s", filename);
-	if (!fs_file_exists(g_game_fs, path, NULL))
+	if (!game_file_exists(g_game_fs, path, NULL))
 		sprintf(path, "#/scripts/%s", filename);
-	if (!fs_file_exists(g_game_fs, path, NULL))
+	if (!game_file_exists(g_game_fs, path, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
 
 	duk_push_global_stash(ctx);

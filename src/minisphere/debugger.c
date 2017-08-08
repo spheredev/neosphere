@@ -45,7 +45,7 @@ debugger_init(bool want_attach, bool allow_remote)
 {
 	void*         data;
 	size_t        data_size;
-	const path_t* game_path;
+	const path_t* game_root;
 	const char*   hostname;
 
 	s_banner_text = lstr_new("debug");
@@ -56,17 +56,17 @@ debugger_init(bool want_attach, bool allow_remote)
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
 	duk_del_prop_string(g_duk, -1, "debugMap");
-	game_path = fs_path(g_game_fs);
-	if (data = fs_read_file(g_game_fs, "sourceMap.json", NULL, &data_size)) {
+	game_root = game_path(g_game_fs);
+	if (data = game_read_file(g_game_fs, "sourceMap.json", NULL, &data_size)) {
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
 		duk_put_prop_string(g_duk, -2, "debugMap");
 		free(data);
 		s_have_source_map = true;
 	}
-	else if (!path_is_file(game_path)) {
+	else if (!path_is_file(game_root)) {
 		duk_push_object(g_duk);
-		duk_push_string(g_duk, path_cstr(game_path));
+		duk_push_string(g_duk, path_cstr(game_root));
 		duk_put_prop_string(g_duk, -2, "origin");
 		duk_put_prop_string(g_duk, -2, "debugMap");
 	}
@@ -186,7 +186,7 @@ debugger_compiled_name(const char* source_name)
 const char*
 debugger_source_name(const char* compiled_name)
 {
-	// note: pathname must be canonicalized using fs_canonicalize() otherwise
+	// note: pathname must be canonicalized using game_canonicalize() otherwise
 	//       the source map lookup will fail.
 
 	static char retval[SPHERE_PATH_MAX];
@@ -323,10 +323,10 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
 	case APPREQ_GAME_INFO:
-		resolution = fs_resolution(g_game_fs);
-		duk_push_string(ctx, fs_name(g_game_fs));
-		duk_push_string(ctx, fs_author(g_game_fs));
-		duk_push_string(ctx, fs_summary(g_game_fs));
+		resolution = game_resolution(g_game_fs);
+		duk_push_string(ctx, game_name(g_game_fs));
+		duk_push_string(ctx, game_author(g_game_fs));
+		duk_push_string(ctx, game_summary(g_game_fs));
 		duk_push_int(ctx, resolution.width);
 		duk_push_int(ctx, resolution.height);
 		return 5;
@@ -349,7 +349,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		}
 		
 		// no cache entry, try loading the file via SphereFS
-		if ((file_data = fs_read_file(g_game_fs, name, NULL, &size))) {
+		if ((file_data = game_read_file(g_game_fs, name, NULL, &size))) {
 			duk_push_lstring(ctx, file_data, size);
 			free(file_data);
 			return 1;

@@ -20,8 +20,7 @@ struct game
 	bool         fullscreen;
 	lstring_t*   manifest;
 	lstring_t*   name;
-	int          res_x;
-	int          res_y;
+	size2_t      resolution;
 	path_t*      root_path;
 	lstring_t*   save_id;
 	path_t*      script_path;
@@ -41,12 +40,12 @@ struct file
 };
 
 static duk_ret_t duk_load_s2gm (duk_context* ctx, void* udata);
-static bool      resolve_path  (const game_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type);
+static bool      resolve_path  (const game_t* game, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_game_id = 1;
 
 game_t*
-fs_open(const char* game_path)
+game_open(const char* game_path)
 {
 	game_t*     game;
 	path_t*     path;
@@ -60,7 +59,7 @@ fs_open(const char* game_path)
 
 	console_log(1, "opening `%s` from game #%u", game_path, s_next_game_id);
 	
-	game = fs_ref(calloc(1, sizeof(game_t)));
+	game = game_ref(calloc(1, sizeof(game_t)));
 	
 	game->id = s_next_game_id;
 	path = path_new(game_path);
@@ -87,14 +86,18 @@ fs_open(const char* game_path)
 		game->name = lstr_new(path_filename(path));
 		game->author = lstr_new("Author Unknown");
 		game->summary = lstr_new(path_cstr(path));
-		game->res_x = 320; game->res_y = 240;
+		game->resolution = size2(320, 240);
 		game->script_path = path_insert_hop(path_new(path_filename(path)), 0, "@");
 		game->fullscreen = false;
 		duk_push_object(g_duk);
-		duk_push_lstring_t(g_duk, game->name); duk_put_prop_string(g_duk, -2, "name");
-		duk_push_lstring_t(g_duk, game->author); duk_put_prop_string(g_duk, -2, "author");
-		duk_push_lstring_t(g_duk, game->summary); duk_put_prop_string(g_duk, -2, "summary");
-		duk_push_sprintf(g_duk, "%dx%d", game->res_x, game->res_y); duk_put_prop_string(g_duk, -2, "resolution");
+		duk_push_lstring_t(g_duk, game->name);
+		duk_put_prop_string(g_duk, -2, "name");
+		duk_push_lstring_t(g_duk, game->author);
+		duk_put_prop_string(g_duk, -2, "author");
+		duk_push_lstring_t(g_duk, game->summary);
+		duk_put_prop_string(g_duk, -2, "summary");
+		duk_push_sprintf(g_duk, "%dx%d", game->resolution.width, game->resolution.height);
+		duk_put_prop_string(g_duk, -2, "resolution");
 		duk_push_string(g_duk, path_cstr(game->script_path)); duk_put_prop_string(g_duk, -2, "main");
 		game->manifest = lstr_new(duk_json_encode(g_duk, -1));
 		duk_pop(g_duk);
@@ -108,7 +111,7 @@ fs_open(const char* game_path)
 
 	// try to load the game manifest if one hasn't been synthesized already
 	if (game->name == NULL) {
-		if (sgm_text = fs_read_file(game, "game.json", NULL, &sgm_size)) {
+		if (sgm_text = game_read_file(game, "game.json", NULL, &sgm_size)) {
 			console_log(1, "parsing JSON manifest for game #%u", s_next_game_id);
 			game->manifest = lstr_from_cp1252(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, game);
@@ -129,19 +132,25 @@ fs_open(const char* game_path)
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			game->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
-			game->res_x = kev_read_float(sgm_file, "screen_width", 320);
-			game->res_y = kev_read_float(sgm_file, "screen_height", 240);
-			game->script_path = fs_canonicalize(kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
+			game->resolution = size2(
+				kev_read_float(sgm_file, "screen_width", 320),
+				kev_read_float(sgm_file, "screen_height", 240));
+			game->script_path = game_canonicalize(game, kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
 			game->fullscreen = true;
 			kev_close(sgm_file);
 
 			// generate a JSON manifest (used by, e.g., Sphere.Game)
 			duk_push_object(g_duk);
-			duk_push_lstring_t(g_duk, game->name); duk_put_prop_string(g_duk, -2, "name");
-			duk_push_lstring_t(g_duk, game->author); duk_put_prop_string(g_duk, -2, "author");
-			duk_push_lstring_t(g_duk, game->summary); duk_put_prop_string(g_duk, -2, "summary");
-			duk_push_sprintf(g_duk, "%dx%d", game->res_x, game->res_y); duk_put_prop_string(g_duk, -2, "resolution");
-			duk_push_string(g_duk, path_cstr(game->script_path)); duk_put_prop_string(g_duk, -2, "main");
+			duk_push_lstring_t(g_duk, game->name);
+			duk_put_prop_string(g_duk, -2, "name");
+			duk_push_lstring_t(g_duk, game->author);
+			duk_put_prop_string(g_duk, -2, "author");
+			duk_push_lstring_t(g_duk, game->summary);
+			duk_put_prop_string(g_duk, -2, "summary");
+			duk_push_sprintf(g_duk, "%dx%d", game->resolution.width, game->resolution.height);
+			duk_put_prop_string(g_duk, -2, "resolution");
+			duk_push_string(g_duk, path_cstr(game->script_path));
+			duk_put_prop_string(g_duk, -2, "main");
 			game->manifest = lstr_new(duk_json_encode(g_duk, -1));
 			duk_pop(g_duk);
 		}
@@ -149,14 +158,14 @@ fs_open(const char* game_path)
 			goto on_error;
 	}
 
-	resolution = fs_resolution(game);
-	console_log(1, "         title: %s", fs_name(game));
-	console_log(1, "        author: %s", fs_author(game));
+	resolution = game_resolution(game);
+	console_log(1, "         title: %s", game_name(game));
+	console_log(1, "        author: %s", game_author(game));
 	console_log(1, "    resolution: %dx%d", resolution.width, resolution.height);
-	console_log(1, "       save ID: %s", fs_save_id(game));
+	console_log(1, "       save ID: %s", game_save_id(game));
 
 	// load the source map
-	if (sourcemap_data = fs_read_file(game, "source.json", NULL, &sourcemap_size))
+	if (sourcemap_data = game_read_file(game, "source.json", NULL, &sourcemap_size))
 		game->sourcemap = lstr_from_cp1252(sourcemap_data, sourcemap_size);
 	free(sourcemap_data);
 
@@ -175,63 +184,45 @@ on_error:
 }
 
 game_t*
-fs_ref(game_t* fs)
+game_ref(game_t* game)
 {
-	if (fs == NULL)
+	if (game == NULL)
 		return NULL;
 
-	++fs->refcount;
-	return fs;
+	++game->refcount;
+	return game;
 }
 
 void
-fs_close(game_t* fs)
+game_free(game_t* game)
 {
-	if (fs == NULL || --fs->refcount > 0)
+	if (game == NULL || --game->refcount > 0)
 		return;
 
-	console_log(3, "disposing game #%u no longer in use", fs->id);
-	if (fs->type == SPHEREFS_SPK)
-		free_spk(fs->spk);
-	lstr_free(fs->sourcemap);
-	path_free(fs->script_path);
-	path_free(fs->root_path);
-	lstr_free(fs->manifest);
-	free(fs);
-}
-
-const lstring_t*
-fs_manifest(const game_t* fs)
-{
-	return fs->manifest;
-}
-
-const path_t*
-fs_path(const game_t* fs)
-{
-	return fs->root_path;
-}
-
-size2_t
-fs_resolution(const game_t* fs)
-{
-	return size2(fs->res_x, fs->res_y);
+	console_log(3, "disposing game #%u no longer in use", game->id);
+	if (game->type == SPHEREFS_SPK)
+		free_spk(game->spk);
+	lstr_free(game->sourcemap);
+	path_free(game->script_path);
+	path_free(game->root_path);
+	lstr_free(game->manifest);
+	free(game);
 }
 
 const char*
-fs_author(const game_t* fs)
+game_author(const game_t* game)
 {
-	return lstr_cstr(fs->author);
+	return lstr_cstr(game->author);
 }
 
 bool
-fs_dir_exists(const game_t* fs, const char* dirname, const char* base_dir)
+game_dir_exists(const game_t* game, const char* dirname, const char* base_dir)
 {
 	path_t*      dir_path = NULL;
 	enum fs_type fs_type;
 	struct stat  stats;
 
-	if (!resolve_path(fs, dirname, base_dir, &dir_path, &fs_type))
+	if (!resolve_path(game, dirname, base_dir, &dir_path, &fs_type))
 		goto on_error;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
@@ -240,7 +231,7 @@ fs_dir_exists(const game_t* fs, const char* dirname, const char* base_dir)
 		path_free(dir_path);
 		return (stats.st_mode & S_IFDIR) == S_IFDIR;
 	case SPHEREFS_SPK:
-		if (!spk_dir_exists(fs->spk, path_cstr(dir_path)))
+		if (!spk_dir_exists(game->spk, path_cstr(dir_path)))
 			goto on_error;
 		path_free(dir_path);
 		return true;
@@ -252,57 +243,75 @@ on_error:
 }
 
 bool
-fs_file_exists(game_t* fs, const char* filename, const char* base_dir)
+game_file_exists(game_t* game, const char* filename, const char* base_dir)
 {
 	file_t* file;
 
-	if (!(file = file_open(fs, filename, base_dir, "rb")))
+	if (!(file = file_open(game, filename, base_dir, "rb")))
 		return false;
 	file_close(file);
 	return true;
 }
 
 bool
-fs_fullscreen(const game_t* fs)
+game_fullscreen(const game_t* game)
 {
-	return fs->fullscreen;
+	return game->fullscreen;
+}
+
+const lstring_t*
+game_manifest(const game_t* game)
+{
+	return game->manifest;
 }
 
 const char*
-fs_name(const game_t* fs)
+game_name(const game_t* game)
 {
-	return lstr_cstr(fs->name);
-}
-
-const char*
-fs_save_id(const game_t* fs)
-{
-	return fs->save_id != NULL ? lstr_cstr(fs->save_id)
-		: NULL;
-}
-
-const char*
-fs_summary(const game_t* fs)
-{
-	return lstr_cstr(fs->summary);
+	return lstr_cstr(game->name);
 }
 
 const path_t*
-fs_script_path(const game_t* fs)
+game_path(const game_t* game)
 {
-	return fs->script_path;
+	return game->root_path;
+}
+
+size2_t
+game_resolution(const game_t* game)
+{
+	return game->resolution;
+}
+
+const char*
+game_save_id(const game_t* game)
+{
+	return game->save_id != NULL ? lstr_cstr(game->save_id)
+		: NULL;
+}
+
+const path_t*
+game_script_path(const game_t* game)
+{
+	return game->script_path;
+}
+
+const char*
+game_summary(const game_t* game)
+{
+	return lstr_cstr(game->summary);
 }
 
 int
-fs_version(const game_t* fs)
+game_version(const game_t* game)
 {
-	return fs->version;
+	return game->version;
 }
 
 path_t*
-fs_canonicalize(const char* filename, const char* base_dir_name, bool legacy)
+game_canonicalize(const game_t* game, const char* filename, const char* base_dir_name, bool legacy)
 {
-	// note: fs_canonicalize() collapses '../' path hops unconditionally, as per
+	// note: game_canonicalize() collapses '../' path hops unconditionally, as per
 	//       SphereFS spec. this ensures an unpackaged game can't subvert the
 	//       sandbox by navigating outside of its directory via a symbolic link.
 
@@ -320,7 +329,7 @@ fs_canonicalize(const char* filename, const char* base_dir_name, bool legacy)
 	}
 	
 	if (base_dir_name != NULL) {
-		base_path = fs_canonicalize(base_dir_name, NULL, legacy);
+		base_path = game_canonicalize(game, base_dir_name, NULL, legacy);
 		path_to_dir(base_path);
 	}
 	if (path_num_hops(path) > 0)
@@ -332,7 +341,7 @@ fs_canonicalize(const char* filename, const char* base_dir_name, bool legacy)
 	// one canonical name.
 	if (strcmp(prefix, "$") == 0) {
 		path_remove_hop(path, 0);
-		path_rebase(path, fs_script_path(g_game_fs));
+		path_rebase(path, game_script_path(game));
 		free(prefix);
 		prefix = strdup(path_hop(path, 0));
 	}
@@ -356,7 +365,7 @@ fs_canonicalize(const char* filename, const char* base_dir_name, bool legacy)
 }
 
 vector_t*
-fs_list_dir(const game_t* fs, const char* dirname, const char* base_dir, bool want_dirs)
+game_list_dir(const game_t* game, const char* dirname, const char* base_dir, bool want_dirs)
 {
 	path_t*           dir_path;
 	ALLEGRO_FS_ENTRY* file_info;
@@ -367,7 +376,7 @@ fs_list_dir(const game_t* fs, const char* dirname, const char* base_dir, bool wa
 	vector_t*         list = NULL;
 	int               type_flag;
 
-	if (!resolve_path(fs, dirname, base_dir, &dir_path, &fs_type))
+	if (!resolve_path(game, dirname, base_dir, &dir_path, &fs_type))
 		goto on_error;
 	if (!(list = vector_new(sizeof(lstring_t*))))
 		goto on_error;
@@ -388,7 +397,7 @@ fs_list_dir(const game_t* fs, const char* dirname, const char* base_dir, bool wa
 		al_destroy_fs_entry(fse);
 		break;
 	case SPHEREFS_SPK:
-		list = list_spk_filenames(fs->spk, path_cstr(dir_path), want_dirs);
+		list = list_spk_filenames(game->spk, path_cstr(dir_path), want_dirs);
 		break;
 	}
 	path_free(dir_path);
@@ -402,12 +411,12 @@ on_error:
 }
 
 bool
-fs_mkdir(game_t* fs, const char* dirname, const char* base_dir)
+game_mkdir(game_t* game, const char* dirname, const char* base_dir)
 {
 	enum fs_type  fs_type;
 	path_t*       path;
 
-	if (!resolve_path(fs, dirname, base_dir, &path, &fs_type))
+	if (!resolve_path(game, dirname, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
@@ -420,13 +429,13 @@ fs_mkdir(game_t* fs, const char* dirname, const char* base_dir)
 }
 
 void*
-fs_read_file(game_t* fs, const char* filename, const char* base_dir, size_t *out_size)
+game_read_file(game_t* game, const char* filename, const char* base_dir, size_t *out_size)
 {
 	size_t  data_size;
 	file_t* file = NULL;
 	void*   slurp;
 
-	if (!(file = file_open(fs, filename, base_dir, "rb")))
+	if (!(file = file_open(game, filename, base_dir, "rb")))
 		goto on_error;
 	file_seek(file, 0, WHENCE_END);
 	data_size = file_position(file);
@@ -446,15 +455,15 @@ on_error:
 }
 
 bool
-fs_rename(game_t* fs, const char* name1, const char* name2, const char* base_dir)
+game_rename(game_t* game, const char* name1, const char* name2, const char* base_dir)
 {
 	enum fs_type fs_type;
 	path_t*      path1;
 	path_t*      path2;
 
-	if (!resolve_path(fs, name1, base_dir, &path1, &fs_type))
+	if (!resolve_path(game, name1, base_dir, &path1, &fs_type))
 		return false;
-	if (!resolve_path(fs, name2, base_dir, &path2, &fs_type))
+	if (!resolve_path(game, name2, base_dir, &path2, &fs_type))
 		return false;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
@@ -467,12 +476,12 @@ fs_rename(game_t* fs, const char* name1, const char* name2, const char* base_dir
 }
 
 bool
-fs_rmdir(game_t* fs, const char* dirname, const char* base_dir)
+game_rmdir(game_t* game, const char* dirname, const char* base_dir)
 {
 	enum fs_type fs_type;
 	path_t*      path;
 
-	if (!resolve_path(fs, dirname, base_dir, &path, &fs_type))
+	if (!resolve_path(game, dirname, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
@@ -485,11 +494,11 @@ fs_rmdir(game_t* fs, const char* dirname, const char* base_dir)
 }
 
 bool
-fs_write_file(game_t* fs, const char* filename, const char* base_dir, const void* buf, size_t size)
+game_write_file(game_t* game, const char* filename, const char* base_dir, const void* buf, size_t size)
 {
 	file_t* file = NULL;
 
-	if (!(file = file_open(fs, filename, base_dir, "wb")))
+	if (!(file = file_open(game, filename, base_dir, "wb")))
 		return false;
 	file_write(buf, size, 1, file);
 	file_close(file);
@@ -497,12 +506,12 @@ fs_write_file(game_t* fs, const char* filename, const char* base_dir, const void
 }
 
 bool
-fs_unlink(game_t* fs, const char* filename, const char* base_dir)
+game_unlink(game_t* game, const char* filename, const char* base_dir)
 {
 	enum fs_type fs_type;
 	path_t*      path;
 
-	if (!resolve_path(fs, filename, base_dir, &path, &fs_type))
+	if (!resolve_path(game, filename, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case SPHEREFS_LOCAL:
@@ -515,7 +524,7 @@ fs_unlink(game_t* fs, const char* filename, const char* base_dir)
 }
 
 file_t*
-file_open(game_t* fs, const char* filename, const char* base_dir, const char* mode)
+file_open(game_t* game, const char* filename, const char* base_dir, const char* mode)
 {
 	path_t* dir_path;
 	file_t* file;
@@ -524,7 +533,7 @@ file_open(game_t* fs, const char* filename, const char* base_dir, const char* mo
 	file = calloc(1, sizeof(file_t));
 	file->path = strdup(filename);
 	
-	if (!resolve_path(fs, filename, base_dir, &file_path, &file->fs_type))
+	if (!resolve_path(game, filename, base_dir, &file_path, &file->fs_type))
 		goto on_error;
 	switch (file->fs_type) {
 	case SPHEREFS_LOCAL:
@@ -538,7 +547,7 @@ file_open(game_t* fs, const char* filename, const char* base_dir, const char* mo
 			goto on_error;
 		break;
 	case SPHEREFS_SPK:
-		if (!(file->spk_file = spk_fopen(fs->spk, path_cstr(file_path), mode)))
+		if (!(file->spk_file = spk_fopen(game->spk, path_cstr(file_path), mode)))
 			goto on_error;
 		break;
 	}
@@ -568,13 +577,13 @@ file_close(file_t* file)
 }
 
 const char*
-file_pathname(file_t* file)
+file_pathname(const file_t* file)
 {
 	return file->path;
 }
 
 long long
-file_position(file_t* file)
+file_position(const file_t* file)
 {
 	switch (file->fs_type) {
 	case SPHEREFS_LOCAL:
@@ -661,6 +670,8 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 	
 	game_t*    game;
 	duk_idx_t  json_idx;
+	int        res_x;
+	int        res_y;
 	
 	game = duk_get_pointer(ctx, -2);
 	json_idx = duk_normalize_index(ctx, -1);
@@ -674,11 +685,12 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 	
 	if (!duk_get_prop_string(g_duk, -2, "resolution") || !duk_is_string(g_duk, -1))
 		goto on_error;
-	sscanf(duk_get_string(g_duk, -1), "%dx%d", &game->res_x, &game->res_y);
+	sscanf(duk_get_string(g_duk, -1), "%dx%d", &res_x, &res_y);
+	game->resolution = size2(res_x, res_y);
 	
 	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
-	game->script_path = fs_canonicalize(duk_get_string(g_duk, -1), NULL, false);
+	game->script_path = game_canonicalize(game, duk_get_string(g_duk, -1), NULL, false);
 
 	// game summary is optional, use a default summary if one is not provided.
 	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
@@ -711,7 +723,7 @@ on_error:
 }
 
 static bool
-resolve_path(const game_t* fs, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type)
+resolve_path(const game_t* game, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type)
 {
 	// the path resolver is the core of SphereFS. it handles all canonization of paths
 	// so that the game doesn't have to care whether it's running from a local directory,
@@ -731,22 +743,22 @@ resolve_path(const game_t* fs, const char* filename, const char* base_dir, path_
 	if (strlen(filename) >= 2 && memcmp(filename, "@/", 2) == 0) {
 		// the @/ prefix is an alias for the game directory.  it is used in contexts
 		// where a bare SphereFS filename may be ambiguous, e.g. in a require() call.
-		if (fs == NULL)
+		if (game == NULL)
 			goto on_error;
 		*out_path = path_new(filename + 2);
-		if (fs->type == SPHEREFS_LOCAL)
-			path_rebase(*out_path, fs->root_path);
-		*out_fs_type = fs->type;
+		if (game->type == SPHEREFS_LOCAL)
+			path_rebase(*out_path, game->root_path);
+		*out_fs_type = game->type;
 	}
 	else if (strlen(filename) >= 2 && memcmp(filename, "$/", 2) == 0) {
 		// the $/ prefix refers to the location of the game's startup script.
 		*out_path = path_new(filename + 2);
-		origin = path_strip(path_dup(fs_script_path(fs)));
+		origin = path_strip(path_dup(game_script_path(game)));
 		path_rebase(*out_path, origin);
-		if (fs->type == SPHEREFS_LOCAL)
-			path_rebase(*out_path, fs->root_path);
+		if (game->type == SPHEREFS_LOCAL)
+			path_rebase(*out_path, game->root_path);
 		path_free(origin);
-		*out_fs_type = fs->type;
+		*out_fs_type = game->type;
 	}
 	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {
 		// the ~/ prefix refers to the game's save data directory.  to improve sandboxing and
@@ -754,7 +766,7 @@ resolve_path(const game_t* fs, const char* filename, const char* base_dir, path_
 		// directory.
 		*out_path = path_new(filename + 2);
 		origin = path_rebase(path_new("miniSphere/Save Data/"), home_path());
-		path_append_dir(origin, fs_save_id(fs));
+		path_append_dir(origin, game_save_id(game));
 		path_rebase(*out_path, origin);
 		path_free(origin);
 		*out_fs_type = SPHEREFS_LOCAL;
@@ -772,14 +784,14 @@ resolve_path(const game_t* fs, const char* filename, const char* base_dir, path_
 		*out_fs_type = SPHEREFS_LOCAL;
 	}
 	else {  // default case: assume relative path
-		if (fs == NULL)
+		if (game == NULL)
 			goto on_error;
-		*out_path = fs_canonicalize(filename, base_dir, false);
+		*out_path = game_canonicalize(game, filename, base_dir, false);
 		if (path_num_hops(*out_path) > 0 && path_hop_cmp(*out_path, 0, "@"))
 			path_remove_hop(*out_path, 0);
-		if (fs->type == SPHEREFS_LOCAL)  // convert to absolute path
-			path_rebase(*out_path, fs->root_path);
-		*out_fs_type = fs->type;
+		if (game->type == SPHEREFS_LOCAL)  // convert to absolute path
+			path_rebase(*out_path, game->root_path);
+		*out_fs_type = game->type;
 	}
 
 	return true;

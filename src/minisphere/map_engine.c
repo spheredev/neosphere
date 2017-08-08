@@ -1864,7 +1864,7 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		path = fs_canonicalize(lstr_cstr(person_info->spriteset), "spritesets", true);
+		path = game_canonicalize(g_game_fs, lstr_cstr(person_info->spriteset), "spritesets", true);
 		spriteset = spriteset_load(path_cstr(path));
 		path_free(path);
 		if (spriteset == NULL)
@@ -1902,7 +1902,7 @@ change_map(const char* filename, bool preserve_persons)
 		sound_free(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
-		path = fs_canonicalize(lstr_cstr(s_map->bgm_file), "sounds", true);
+		path = game_canonicalize(g_game_fs, lstr_cstr(s_map->bgm_file), "sounds", true);
 		if (s_map_bgm_stream = sound_new(path_cstr(path))) {
 			sound_set_repeat(s_map_bgm_stream, true);
 			sound_play(s_map_bgm_stream, s_bgm_mixer);

@@ -22,7 +22,7 @@ kev_open(game_t* game, const char* filename, bool can_create)
 	
 	console_log(2, "opening kevfile #%u as `%s`", s_next_file_id, filename);
 	file = calloc(1, sizeof(kev_file_t));
-	if (slurp = fs_read_file(game, filename, NULL, &slurp_size)) {
+	if (slurp = game_read_file(game, filename, NULL, &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(file->conf = al_load_config_file_f(memfile)))
 			goto on_error;
@@ -34,7 +34,7 @@ kev_open(game_t* game, const char* filename, bool can_create)
 		if (!can_create || !(file->conf = al_create_config()))
 			goto on_error;
 	}
-	file->game = fs_ref(game);
+	file->game = game_ref(game);
 	file->filename = strdup(filename);
 	file->id = s_next_file_id++;
 	return file;
@@ -58,7 +58,7 @@ kev_close(kev_file_t* file)
 	if (file->is_dirty)
 		kev_save(file);
 	al_destroy_config(file->conf);
-	fs_close(file->game);
+	game_free(file->game);
 	free(file);
 }
 

@@ -768,7 +768,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 
 	console_log(1, "initializing JS module `%s`", filename);
 
-	source = fs_read_file(g_game_fs, filename, NULL, &source_size);
+	source = game_read_file(g_game_fs, filename, NULL, &source_size);
 	code_string = lstr_from_cp1252(source, source_size);
 	free(source);
 
@@ -958,7 +958,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
-			path = fs_canonicalize(filename, NULL, false);
+			path = game_canonicalize(g_game_fs, filename, NULL, false);
 		}
 		else {
 			path = path_dup(origin_path);
@@ -967,14 +967,14 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 			path_collapse(path, true);
 		}
 		free(filename);
-		if (fs_file_exists(g_game_fs, path_cstr(path), NULL)) {
+		if (game_file_exists(g_game_fs, path_cstr(path), NULL)) {
 			if (strcmp(path_filename(path), "package.json") != 0) {
 				return path;
 			}
 			else {
 				if (!(main_path = load_package_json(path_cstr(path))))
 					goto next_filename;
-				if (fs_file_exists(g_game_fs, path_cstr(main_path), NULL)) {
+				if (game_file_exists(g_game_fs, path_cstr(main_path), NULL)) {
 					path_free(path);
 					return main_path;
 				}
@@ -1018,7 +1018,7 @@ load_package_json(const char* filename)
 	path_t*   path;
 
 	duk_top = duk_get_top(g_duk);
-	if (!(json = fs_read_file(g_game_fs, filename, NULL, &json_size)))
+	if (!(json = game_read_file(g_game_fs, filename, NULL, &json_size)))
 		goto on_error;
 	duk_push_lstring(g_duk, json, json_size);
 	free(json);
@@ -1032,7 +1032,7 @@ load_package_json(const char* filename)
 	path = path_strip(path_new(filename));
 	path_append(path, duk_get_string(g_duk, -1));
 	path_collapse(path, true);
-	if (!fs_file_exists(g_game_fs, path_cstr(path), NULL))
+	if (!game_file_exists(g_game_fs, path_cstr(path), NULL))
 		goto on_error;
 	return path;
 
@@ -1165,7 +1165,7 @@ js_Sphere_get_APILevel(duk_context* ctx)
 static duk_ret_t
 js_Sphere_get_Game(duk_context* ctx)
 {
-	duk_push_lstring_t(ctx, fs_manifest(g_game_fs));
+	duk_push_lstring_t(ctx, game_manifest(g_game_fs));
 	duk_json_decode(ctx, -1);
 
 	duk_push_this(ctx);
@@ -1520,7 +1520,7 @@ js_FS_createDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!fs_mkdir(g_game_fs, name, NULL))
+	if (!game_mkdir(g_game_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
 	return 0;
 }
@@ -1532,7 +1532,7 @@ js_FS_deleteFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!fs_unlink(g_game_fs, filename, NULL))
+	if (!game_unlink(g_game_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file", filename);
 	return 0;
 }
@@ -1544,7 +1544,7 @@ js_FS_directoryExists(duk_context* ctx)
 
 	dirname = duk_require_path(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, fs_dir_exists(g_game_fs, dirname, NULL));
+	duk_push_boolean(ctx, game_dir_exists(g_game_fs, dirname, NULL));
 	return 1;
 }
 
@@ -1555,7 +1555,7 @@ js_FS_fileExists(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, fs_file_exists(g_game_fs, filename, NULL));
+	duk_push_boolean(ctx, game_file_exists(g_game_fs, filename, NULL));
 	return 1;
 }
 
@@ -1565,7 +1565,7 @@ js_FS_fullPath(duk_context* ctx)
 	// it's only by accident that this works at all.  the function relies on the
 	// fact that SphereFS canonicalization removes the `@/` prefix if it's present;
 	// it's therefore something of a hack, and in the future it'd be better to build
-	// this functionality into `fs_canonicalize()`.
+	// this functionality into `game_canonicalize()`.
 
 	const char* origin_pathname = NULL;
 	const char* filename;
@@ -1590,7 +1590,7 @@ js_FS_readFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	if (!(file_data = fs_read_file(g_game_fs, filename, NULL, &file_size)))
+	if (!(file_data = game_read_file(g_game_fs, filename, NULL, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
 	content = lstr_from_cp1252(file_data, file_size);
 	duk_push_lstring_t(ctx, content);
@@ -1604,7 +1604,7 @@ js_FS_removeDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!fs_rmdir(g_game_fs, name, NULL))
+	if (!game_rmdir(g_game_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
 	return 0;
 }
@@ -1618,7 +1618,7 @@ js_FS_rename(duk_context* ctx)
 	name1 = duk_require_path(ctx, 0, NULL, false, true);
 	name2 = duk_require_path(ctx, 1, NULL, false, true);
 
-	if (!fs_rename(g_game_fs, name1, name2, NULL))
+	if (!game_rename(g_game_fs, name1, name2, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
 }
@@ -1636,7 +1636,7 @@ js_FS_writeFile(duk_context* ctx)
 	
 	file_data = lstr_cstr(text);
 	file_size = lstr_len(text);
-	if (!fs_write_file(g_game_fs, filename, NULL, file_data, file_size))
+	if (!game_write_file(g_game_fs, filename, NULL, file_data, file_size))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
 	return 0;
@@ -1659,7 +1659,7 @@ js_new_FileStream(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
 
 	filename = duk_require_path(ctx, 0, NULL, false, file_op != FILE_OP_READ);
-	if (file_op == FILE_OP_UPDATE && !fs_file_exists(g_game_fs, filename, NULL))
+	if (file_op == FILE_OP_UPDATE && !game_file_exists(g_game_fs, filename, NULL))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
 		: file_op == FILE_OP_WRITE ? "w+b"
@@ -3121,7 +3121,7 @@ js_Shader_get_Default(duk_context* ctx)
 static duk_ret_t
 js_new_Shader(duk_context* ctx)
 {
-	const char* fs_filename;
+	const char* game_filename;
 	const char* vs_filename;
 	shader_t*   shader;
 
@@ -3139,9 +3139,9 @@ js_new_Shader(duk_context* ctx)
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
 	vs_filename = duk_require_path(ctx, -2, NULL, false, false);
-	fs_filename = duk_require_path(ctx, -1, NULL, false, false);
+	game_filename = duk_require_path(ctx, -1, NULL, false, false);
 	duk_pop_2(ctx);
-	if (!(shader = shader_new(vs_filename, fs_filename)))
+	if (!(shader = shader_new(vs_filename, game_filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile shader program");
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "Shader", shader);

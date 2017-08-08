@@ -150,7 +150,7 @@ main(int argc, char* argv[])
 		find_startup_game(&g_game_path);
 	if (g_game_path != NULL)
 		// user provided a path or startup game was found, attempt to load it
-		g_game_fs = fs_open(path_cstr(g_game_path));
+		g_game_fs = game_open(path_cstr(g_game_path));
 	else {
 		// no game path provided and no startup game, let user find one
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", ENGINE_NAME);
@@ -162,7 +162,7 @@ main(int argc, char* argv[])
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
 			path_free(g_game_path);
 			g_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
-			g_game_fs = fs_open(path_cstr(g_game_path));
+			g_game_fs = game_open(path_cstr(g_game_path));
 			al_destroy_native_file_dialog(file_dlg);
 		}
 		else {
@@ -189,12 +189,12 @@ main(int argc, char* argv[])
 	}
 
 	// set up the render context ("screen") so we can draw stuff
-	resolution = fs_resolution(g_game_fs);
+	resolution = game_resolution(g_game_fs);
 	g_res_x = resolution.width;
 	g_res_y = resolution.height;
 	if (!(icon = image_load("icon.png")))
 		icon = image_load("#/icon.png");
-	g_screen = screen_new(fs_name(g_game_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
+	g_screen = screen_new(game_name(g_game_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere was unable to create a render context.",
 			"Your hardware may be too old to run miniSphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
@@ -229,7 +229,7 @@ main(int argc, char* argv[])
 	screen_show_mouse(g_screen, false);
 
 	// load the core-js polyfill (ES2015+ builtins)
-	if (fs_file_exists(g_game_fs, "#/shim.js", NULL) && !script_eval("#/shim.js", false))
+	if (game_file_exists(g_game_fs, "#/shim.js", NULL) && !script_eval("#/shim.js", false))
 		goto on_js_error;
 
 	// enable the SSj debug server, wait for a connection if requested.
@@ -244,11 +244,11 @@ main(int argc, char* argv[])
 #endif
 
 	// execute the main script
-	script_path = fs_script_path(g_game_fs);
-	if (!script_eval(path_cstr(script_path), fs_version(g_game_fs) >= 2))
+	script_path = game_script_path(g_game_fs);
+	if (!script_eval(path_cstr(script_path), game_version(g_game_fs) >= 2))
 		goto on_js_error;
 
-	if (fs_version(g_game_fs) >= 2) {
+	if (game_version(g_game_fs) >= 2) {
 		// modular mode (Sv2).  check for an exported Game class and instantiate it,
 		// then call game.start().
 		duk_get_prop_string(g_duk, -1, "default");
@@ -454,7 +454,7 @@ shutdown_engine(void)
 	if (g_events != NULL)
 		al_destroy_event_queue(g_events);
 	g_events = NULL;
-	fs_close(g_game_fs);
+	game_free(g_game_fs);
 	g_game_fs = NULL;
 	al_uninstall_system();
 }

@@ -196,7 +196,7 @@ duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 		/* [ stash refs ref_obj ] */
 
 		duk_get_prop_string(ctx, -1, "refcount");
-		duk_push_number(ctx, duk_get_number(ctx, -1) + 1);
+		duk_push_number(ctx, duk_get_number(ctx, -1) + 1.0);
 		duk_put_prop_string(ctx, -3, "refcount");
 		duk_pop_n(ctx, 4);
 	}
@@ -244,13 +244,13 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
-	path = fs_canonicalize(pathname, origin_name, legacy);
-	prefix = path_hop(path, 0);  // note: fs_canonicalize() *always* prefixes
+	path = game_canonicalize(g_game_fs, pathname, origin_name, legacy);
+	prefix = path_hop(path, 0);  // note: game_canonicalize() *always* prefixes
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
-	if (strcmp(prefix, "~") == 0 && fs_save_id(g_game_fs) == NULL)
+	if (strcmp(prefix, "~") == 0 && game_save_id(g_game_fs) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no save ID defined");
 	if (need_write && !legacy && strcmp(prefix, "~") != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "directory is read-only");
@@ -304,28 +304,40 @@ duk_unref_heapptr(duk_context* ctx, void* heapptr)
 bool
 fread_rect16(file_t* file, rect_t* out_rect)
 {
-	int16_t x1, y1, x2, y2;
+	int16_t x1;
+	int16_t x2;
+	int16_t y1;
+	int16_t y2;
 
-	if (file_read(&x1, 2, 1, file) != 1) return false;
-	if (file_read(&y1, 2, 1, file) != 1) return false;
-	if (file_read(&x2, 2, 1, file) != 1) return false;
-	if (file_read(&y2, 2, 1, file) != 1) return false;
-	out_rect->x1 = x1; out_rect->y1 = y1;
-	out_rect->x2 = x2; out_rect->y2 = y2;
+	if (file_read(&x1, 2, 1, file) != 1)
+		return false;
+	if (file_read(&y1, 2, 1, file) != 1)
+		return false;
+	if (file_read(&x2, 2, 1, file) != 1)
+		return false;
+	if (file_read(&y2, 2, 1, file) != 1)
+		return false;
+	*out_rect = rect(x1, y1, x2, y2);
 	return true;
 }
 
 bool
 fread_rect32(file_t* file, rect_t* out_rect)
 {
-	int32_t x1, y1, x2, y2;
+	int32_t x1;
+	int32_t x2;
+	int32_t y1;
+	int32_t y2;
 
-	if (file_read(&x1, 4, 1, file) != 1) return false;
-	if (file_read(&y1, 4, 1, file) != 1) return false;
-	if (file_read(&x2, 4, 1, file) != 1) return false;
-	if (file_read(&y2, 4, 1, file) != 1) return false;
-	out_rect->x1 = x1; out_rect->y1 = y1;
-	out_rect->x2 = x2; out_rect->y2 = y2;
+	if (file_read(&x1, 4, 1, file) != 1)
+		return false;
+	if (file_read(&y1, 4, 1, file) != 1)
+		return false;
+	if (file_read(&x2, 4, 1, file) != 1)
+		return false;
+	if (file_read(&y2, 4, 1, file) != 1)
+		return false;
+	*out_rect = rect(x1, y1, x2, y2);
 	return true;
 }
 
