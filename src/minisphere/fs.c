@@ -88,7 +88,7 @@ fs_open(const char* game_path)
 		game->author = lstr_new("Author Unknown");
 		game->summary = lstr_new(path_cstr(path));
 		game->res_x = 320; game->res_y = 240;
-		game->script_path = path_new(path_filename(path));
+		game->script_path = path_insert_hop(path_new(path_filename(path)), 0, "@");
 		game->fullscreen = false;
 		duk_push_object(g_duk);
 		duk_push_lstring_t(g_duk, game->name); duk_put_prop_string(g_duk, -2, "name");
