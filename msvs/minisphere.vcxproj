@@ -518,7 +518,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClCompile Include="..\src\minisphere\obstruction.c" />
     <ClCompile Include="..\src\minisphere\script.c" />
     <ClCompile Include="..\src\minisphere\sockets.c" />
-    <ClCompile Include="..\src\minisphere\spherefs.c" />
+    <ClCompile Include="..\src\minisphere\fs.c" />
     <ClCompile Include="..\src\minisphere\spk.c" />
     <ClCompile Include="..\src\minisphere\spriteset.c" />
     <ClCompile Include="..\src\minisphere\tileset.c" />
@@ -562,7 +562,7 @@ xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"</Command>
     <ClInclude Include="..\src\minisphere\obstruction.h" />
     <ClInclude Include="..\src\minisphere\script.h" />
     <ClInclude Include="..\src\minisphere\sockets.h" />
-    <ClInclude Include="..\src\minisphere\spherefs.h" />
+    <ClInclude Include="..\src\minisphere\fs.h" />
     <ClInclude Include="..\src\minisphere\spk.h" />
     <ClInclude Include="..\src\minisphere\spriteset.h" />
     <ClInclude Include="..\src\minisphere\tileset.h" />

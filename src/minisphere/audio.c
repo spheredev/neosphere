@@ -269,7 +269,7 @@ sample_new(const char* path, bool polyphonic)
 
 	console_log(2, "loading sample #%u from `%s`", s_next_sample_id, path);
 
-	if (!(file_data = sfs_fslurp(g_fs, path, NULL, &file_size)))
+	if (!(file_data = fs_read_file(g_game_fs, path, NULL, &file_size)))
 		goto on_error;
 	file = al_open_memfile(file_data, file_size, "rb");
 	al_sample = al_load_sample_f(file, strrchr(path, '.'));
@@ -402,7 +402,7 @@ sound_new(const char* path)
 	sound = calloc(1, sizeof(sound_t));
 	sound->path = strdup(path);
 
-	if (!(sound->file_data = sfs_fslurp(g_fs, sound->path, NULL, &sound->file_size)))
+	if (!(sound->file_data = fs_read_file(g_game_fs, sound->path, NULL, &sound->file_size)))
 		goto on_error;
 	sound->gain = 1.0;
 	sound->pan = 0.0;

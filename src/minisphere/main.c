@@ -38,7 +38,7 @@ static void show_error_screen   (const char* message);
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
 int                  g_framerate = 0;
-sandbox_t*           g_fs = NULL;
+game_t*              g_game_fs = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;
 screen_t*            g_screen = NULL;
@@ -143,14 +143,14 @@ main(int argc, char* argv[])
 
 	// locate the game manifest
 	console_log(1, "searching for a game to launch");
-	games_path = path_rebase(path_new("miniSphere/games/"), home_path());
+	games_path = path_rebase(path_new("miniSphere/Games/"), home_path());
 	path_mkdir(games_path);
 	if (g_game_path == NULL)
 		// no game specified on command line, see if we have a startup game
 		find_startup_game(&g_game_path);
 	if (g_game_path != NULL)
 		// user provided a path or startup game was found, attempt to load it
-		g_fs = fs_new(path_cstr(g_game_path));
+		g_game_fs = fs_open(path_cstr(g_game_path));
 	else {
 		// no game path provided and no startup game, let user find one
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", ENGINE_NAME);
@@ -162,7 +162,7 @@ main(int argc, char* argv[])
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
 			path_free(g_game_path);
 			g_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
-			g_fs = fs_new(path_cstr(g_game_path));
+			g_game_fs = fs_open(path_cstr(g_game_path));
 			al_destroy_native_file_dialog(file_dlg);
 		}
 		else {
@@ -175,8 +175,8 @@ main(int argc, char* argv[])
 	}
 	path_free(games_path);
 
-	if (g_fs == NULL) {
-		// if after all that, we still don't have a valid sandbox pointer, bail out;
+	if (g_game_fs == NULL) {
+		// if after all that, we still don't have a valid game pointer, bail out;
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
@@ -189,12 +189,12 @@ main(int argc, char* argv[])
 	}
 
 	// set up the render context ("screen") so we can draw stuff
-	resolution = fs_resolution(g_fs);
+	resolution = fs_resolution(g_game_fs);
 	g_res_x = resolution.width;
 	g_res_y = resolution.height;
 	if (!(icon = image_load("icon.png")))
 		icon = image_load("#/icon.png");
-	g_screen = screen_new(fs_name(g_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
+	g_screen = screen_new(fs_name(g_game_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere was unable to create a render context.",
 			"Your hardware may be too old to run miniSphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
@@ -229,7 +229,7 @@ main(int argc, char* argv[])
 	screen_show_mouse(g_screen, false);
 
 	// load the core-js polyfill (ES2015+ builtins)
-	if (sfs_fexist(g_fs, "#/shim.js", NULL) && !script_eval("#/shim.js", false))
+	if (fs_file_exists(g_game_fs, "#/shim.js", NULL) && !script_eval("#/shim.js", false))
 		goto on_js_error;
 
 	// enable the SSj debug server, wait for a connection if requested.
@@ -244,11 +244,11 @@ main(int argc, char* argv[])
 #endif
 
 	// execute the main script
-	script_path = fs_script_path(g_fs);
-	if (!script_eval(path_cstr(script_path), fs_version(g_fs) >= 2))
+	script_path = fs_script_path(g_game_fs);
+	if (!script_eval(path_cstr(script_path), fs_version(g_game_fs) >= 2))
 		goto on_js_error;
 
-	if (fs_version(g_fs) >= 2) {
+	if (fs_version(g_game_fs) >= 2) {
 		// modular mode (Sv2).  check for an exported Game class and instantiate it,
 		// then call game.start().
 		duk_get_prop_string(g_duk, -1, "default");
@@ -454,8 +454,8 @@ shutdown_engine(void)
 	if (g_events != NULL)
 		al_destroy_event_queue(g_events);
 	g_events = NULL;
-	fs_free(g_fs);
-	g_fs = NULL;
+	fs_close(g_game_fs);
+	g_game_fs = NULL;
 	al_uninstall_system();
 }
 

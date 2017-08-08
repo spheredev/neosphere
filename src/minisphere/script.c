@@ -31,13 +31,13 @@ scripts_uninit(void)
 bool
 script_eval(const char* filename, bool as_module)
 {
-	duk_idx_t      duk_top;
-	sfs_file_t*    file = NULL;
-	path_t*        path = NULL;
-	const char*    source_name;
-	lstring_t*     source_text = NULL;
-	char*          slurp;
-	size_t         size;
+	duk_idx_t   duk_top;
+	file_t*     file = NULL;
+	path_t*     path = NULL;
+	const char* source_name;
+	lstring_t*  source_text = NULL;
+	char*       slurp;
+	size_t      size;
 
 	duk_top = duk_get_top(g_duk);
 	
@@ -45,16 +45,16 @@ script_eval(const char* filename, bool as_module)
 		// the existence check here is needed because eval_module() will segfault if the
 		// file doesn't exist.  it's an ugly hack, but a proper fix needs some refactoring
 		// that I'm not up for right now.
-		if (!sfs_fexist(g_fs, filename, NULL))
+		if (!fs_file_exists(g_game_fs, filename, NULL))
 			goto on_error;
 		if (!duk_pegasus_eval_module(g_duk, filename))
 			goto on_error;
 		return true;
 	}
 	else {
-		path = fs_build_path(filename, NULL, false);
+		path = fs_canonicalize(filename, NULL, false);
 		source_name = debugger_source_name(path_cstr(path));
-		if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &size)))
+		if (!(slurp = fs_read_file(g_game_fs, filename, NULL, &size)))
 			goto on_error;
 		source_text = lstr_from_cp1252(slurp, size);
 		free(slurp);

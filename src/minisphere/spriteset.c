@@ -140,7 +140,7 @@ spriteset_load(const char* filename)
 	char                extra_pose_name[32];
 	struct rss_frame_v2 frame_v2;
 	struct rss_frame_v3 frame_v3;
-	sfs_file_t*         file = NULL;
+	file_t*             file = NULL;
 	image_t*            image;
 	int                 image_index;
 	int                 max_height = 0;
@@ -174,9 +174,9 @@ spriteset_load(const char* filename)
 	// filename not in load cache, load the spriteset
 	console_log(2, "loading spriteset #%u as `%s`", s_next_spriteset_id, filename);
 	spriteset = spriteset_new();
-	if (!(file = sfs_fopen(g_fs, filename, NULL, "rb")))
+	if (!(file = file_open(g_game_fs, filename, NULL, "rb")))
 		goto on_error;
-	if (sfs_fread(&rss, sizeof(struct rss_header), 1, file) != 1)
+	if (file_read(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0)
 		goto on_error;
@@ -210,23 +210,23 @@ spriteset_load(const char* filename)
 		//       to give up the sprite atlas.  the problem is that we don't know how
 		//       many images there are without actually reading the direction headers,
 		//       so we can't allocate the atlas yet.
-		v2_data_offset = sfs_ftell(file);
+		v2_data_offset = file_position(file);
 		num_images = 0;
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (sfs_fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
+			if (file_read(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			sprintf(extra_pose_name, "extra %d", i);
 			pose_name = i < 8 ? DEFAULT_POSE_NAMES[i] : extra_pose_name;
 			spriteset_add_pose(spriteset, pose_name);
 			for (j = 0; j < dir_v2.num_frames; ++j) {  // skip over frame and image data
-				if (sfs_fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
+				if (file_read(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
 				max_width = fmax(rss.frame_width != 0 ? rss.frame_width : frame_v2.width, max_width);
 				max_height = fmax(rss.frame_height != 0 ? rss.frame_height : frame_v2.height, max_height);
 				skip_size = (rss.frame_width != 0 ? rss.frame_width : frame_v2.width)
 					* (rss.frame_height != 0 ? rss.frame_height : frame_v2.height)
 					* 4;
-				sfs_fseek(file, skip_size, SFS_SEEK_CUR);
+				file_seek(file, skip_size, WHENCE_CUR);
 				++num_images;
 			}
 		}
@@ -234,15 +234,15 @@ spriteset_load(const char* filename)
 		// pass 2 - load images and frame data
 		if (!(atlas = atlas_new(num_images, max_width, max_height)))
 			goto on_error;
-		sfs_fseek(file, v2_data_offset, SFS_SEEK_SET);
+		file_seek(file, v2_data_offset, WHENCE_SET);
 		image_index = 0;
 		atlas_lock(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (sfs_fread(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
+			if (file_read(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
 				goto on_error;
 			pose_name = lstr_cstr(((struct pose*)vector_get(spriteset->poses, i))->name);
 			for (j = 0; j < dir_v2.num_frames; ++j) {
-				if (sfs_fread(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
+				if (file_read(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
 					goto on_error;
 				image = atlas_load(atlas, file, image_index,
 					rss.frame_width != 0 ? rss.frame_width : frame_v2.width,
@@ -269,13 +269,13 @@ spriteset_load(const char* filename)
 		atlas_unlock(atlas);
 		atlas_free(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (sfs_fread(&dir_v3, sizeof(struct rss_dir_v3), 1, file) != 1)
+			if (file_read(&dir_v3, sizeof(struct rss_dir_v3), 1, file) != 1)
 				goto on_error;
 			if (!(name = read_lstring(file, true)))
 				goto on_error;
 			spriteset_add_pose(spriteset, lstr_cstr(name));
 			for (j = 0; j < dir_v3.num_frames; ++j) {
-				if (sfs_fread(&frame_v3, sizeof(struct rss_frame_v3), 1, file) != 1)
+				if (file_read(&frame_v3, sizeof(struct rss_frame_v3), 1, file) != 1)
 					goto on_error;
 				spriteset_add_frame(spriteset, lstr_cstr(name), frame_v3.image_idx, frame_v3.delay);
 			}
@@ -285,7 +285,7 @@ spriteset_load(const char* filename)
 	default: // invalid RSS version
 		goto on_error;
 	}
-	sfs_fclose(file);
+	file_close(file);
 
 	if (s_load_cache != NULL) {
 		while (vector_len(s_load_cache) >= 10) {
@@ -302,7 +302,7 @@ on_error:
 	console_log(2, "couldn't load spriteset #%u", spriteset->id);
 	spriteset_free(spriteset);
 	if (file != NULL)
-		sfs_fclose(file);
+		file_close(file);
 	if (atlas != NULL) {
 		atlas_unlock(atlas);
 		atlas_free(atlas);
@@ -535,7 +535,7 @@ spriteset_draw(const spriteset_t* it, color_t mask, bool is_flipped, double thet
 bool
 spriteset_save(const spriteset_t* it, const char* filename)
 {
-	sfs_file_t*         file;
+	file_t*             file;
 	struct frame*       frame;
 	struct rss_frame_v3 frame_data;
 	image_t*            image;
@@ -545,7 +545,7 @@ spriteset_save(const spriteset_t* it, const char* filename)
 
 	int i, j;
 	
-	file = sfs_fopen(g_fs, filename, NULL, "wb");
+	file = file_open(g_game_fs, filename, NULL, "wb");
 	
 	// write out the RSS header	first
 	image = spriteset_image(it, 0);
@@ -559,7 +559,7 @@ spriteset_save(const spriteset_t* it, const char* filename)
 	header.base_y2 = it->base.y2;
 	header.num_images = vector_len(it->images);
 	header.num_directions = vector_len(it->poses);
-	if (sfs_fwrite(&header, sizeof(struct rss_header), 1, file) != 1)
+	if (file_write(&header, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
 
 	for (i = 0; i < vector_len(it->images); ++i) {
@@ -570,23 +570,23 @@ spriteset_save(const spriteset_t* it, const char* filename)
 	for (i = 0; i < vector_len(it->poses); ++i) {
 		pose = vector_get(it->poses, i);
 		pose_data.num_frames = vector_len(pose->frames);
-		if (sfs_fwrite(&pose_data, sizeof(struct rss_dir_v3), 1, file) != 1)
+		if (file_write(&pose_data, sizeof(struct rss_dir_v3), 1, file) != 1)
 			goto on_error;
 		write_lstring(file, pose->name, true);
 		for (j = 0; j < vector_len(pose->frames); ++j) {
 			frame = vector_get(pose->frames, j);
 			frame_data.image_idx = frame->image_idx;
 			frame_data.delay = frame->delay;
-			if (sfs_fwrite(&frame_data, sizeof(struct rss_frame_v3), 1, file) != 1)
+			if (file_write(&frame_data, sizeof(struct rss_frame_v3), 1, file) != 1)
 				goto on_error;
 		}
 	}
 	
-	sfs_fclose(file);
+	file_close(file);
 	return true;
 
 on_error:
-	sfs_fclose(file);
+	file_close(file);
 	return false;
 }
 

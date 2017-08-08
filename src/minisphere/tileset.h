@@ -8,7 +8,7 @@
 typedef struct tileset tileset_t;
 
 tileset_t*       tileset_new       (const char* filename);
-tileset_t*       tileset_read      (sfs_file_t* file);
+tileset_t*       tileset_read      (file_t* file);
 void             tileset_free      (tileset_t* tileset);
 int              tileset_len       (const tileset_t* tileset);
 const obsmap_t*  tileset_obsmap    (const tileset_t* tileset, int tile_index);

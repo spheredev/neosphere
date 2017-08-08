@@ -62,15 +62,15 @@ static unsigned int s_next_tileset_id = 0;
 tileset_t*
 tileset_new(const char* filename)
 {
-	sfs_file_t* file;
-	tileset_t*  tileset;
+	file_t*    file;
+	tileset_t* tileset;
 
 	console_log(2, "loading tileset #%u as `%s`", s_next_tileset_id, filename);
 
-	if ((file = sfs_fopen(g_fs, filename, NULL, "rb")) == NULL)
+	if ((file = file_open(g_game_fs, filename, NULL, "rb")) == NULL)
 		goto on_error;
 	tileset = tileset_read(file);
-	sfs_fclose(file);
+	file_close(file);
 	return tileset;
 
 on_error:
@@ -79,7 +79,7 @@ on_error:
 }
 
 tileset_t*
-tileset_read(sfs_file_t* file)
+tileset_read(file_t* file)
 {
 	atlas_t*               atlas = NULL;
 	long                   file_pos;
@@ -96,9 +96,9 @@ tileset_read(sfs_file_t* file)
 	console_log(2, "reading tileset #%u from open file", s_next_tileset_id);
 
 	if (file == NULL) goto on_error;
-	file_pos = sfs_ftell(file);
+	file_pos = file_position(file);
 	if ((tileset = calloc(1, sizeof(tileset_t))) == NULL) goto on_error;
-	if (sfs_fread(&rts, sizeof(struct rts_header), 1, file) != 1)
+	if (file_read(&rts, sizeof(struct rts_header), 1, file) != 1)
 		goto on_error;
 	if (memcmp(rts.signature, ".rts", 4) != 0 || rts.version < 1 || rts.version > 1)
 		goto on_error;
@@ -117,7 +117,7 @@ tileset_read(sfs_file_t* file)
 
 	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
-		if (sfs_fread(&tilehdr, sizeof(struct rts_tile_header), 1, file) != 1)
+		if (file_read(&tilehdr, sizeof(struct rts_tile_header), 1, file) != 1)
 			goto on_error;
 		tiles[i].name = read_lstring_raw(file, tilehdr.name_length, true);
 		tiles[i].next_index = tilehdr.animated ? tilehdr.next_tile : i;
@@ -127,13 +127,13 @@ tileset_read(sfs_file_t* file)
 		if (rts.has_obstructions) {
 			switch (tilehdr.obsmap_type) {
 			case 1:  // pixel-perfect obstruction (no longer supported)
-				sfs_fseek(file, rts.tile_width * rts.tile_height, SFS_SEEK_CUR);
+				file_seek(file, rts.tile_width * rts.tile_height, WHENCE_CUR);
 				break;
 			case 2:  // line segment-based obstruction
 				tiles[i].num_obs_lines = tilehdr.num_segments;
 				if ((tiles[i].obsmap = obsmap_new()) == NULL) goto on_error;
 				for (j = 0; j < tilehdr.num_segments; ++j) {
-					if (!fread_rect_16(file, &segment))
+					if (!fread_rect16(file, &segment))
 						goto on_error;
 					obsmap_add_line(tiles[i].obsmap, segment);
 				}
@@ -155,7 +155,7 @@ tileset_read(sfs_file_t* file)
 on_error:  // oh no!
 	console_log(2, "failed to read tileset #%u", s_next_tileset_id);
 	if (file != NULL)
-		sfs_fseek(file, file_pos, SFS_SEEK_SET);
+		file_seek(file, file_pos, WHENCE_SET);
 	if (tiles != NULL) {
 		for (i = 0; i < rts.num_tiles; ++i) {
 			lstr_free(tiles[i].name);

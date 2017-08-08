@@ -90,41 +90,31 @@ md5sum(const void* data, size_t size)
 	return output;
 }
 
-const char*
-system_path(const char* filename)
-{
-	static char retval[SPHERE_PATH_MAX];
-
-	retval[SPHERE_PATH_MAX - 1] = '\0';
-	snprintf(retval, SPHERE_PATH_MAX - 1, "#/%s", filename);
-	return retval;
-}
-
 lstring_t*
-read_lstring(sfs_file_t* file, bool trim_null)
+read_lstring(file_t* file, bool trim_null)
 {
 	long     file_pos;
 	uint16_t length;
 
-	file_pos = sfs_ftell(file);
-	if (sfs_fread(&length, 2, 1, file) != 1) goto on_error;
+	file_pos = file_position(file);
+	if (file_read(&length, 2, 1, file) != 1) goto on_error;
 	return read_lstring_raw(file, length, trim_null);
 
 on_error:
-	sfs_fseek(file, file_pos, SEEK_CUR);
+	file_seek(file, file_pos, WHENCE_CUR);
 	return NULL;
 }
 
 lstring_t*
-read_lstring_raw(sfs_file_t* file, size_t length, bool trim_null)
+read_lstring_raw(file_t* file, size_t length, bool trim_null)
 {
 	char*      buffer = NULL;
 	long       file_pos;
 	lstring_t* string;
 
-	file_pos = sfs_ftell(file);
+	file_pos = file_position(file);
 	if (!(buffer = malloc(length + 1))) goto on_error;
-	if (sfs_fread(buffer, 1, length, file) != length) goto on_error;
+	if (file_read(buffer, 1, length, file) != length) goto on_error;
 	buffer[length] = '\0';
 	if (trim_null)
 		length = strchr(buffer, '\0') - buffer;
@@ -134,21 +124,21 @@ read_lstring_raw(sfs_file_t* file, size_t length, bool trim_null)
 
 on_error:
 	free(buffer);
-	sfs_fseek(file, file_pos, SEEK_CUR);
+	file_seek(file, file_pos, WHENCE_CUR);
 	return NULL;
 }
 
 bool
-write_lstring(sfs_file_t* file, const lstring_t* string, bool include_nul)
+write_lstring(file_t* file, const lstring_t* string, bool include_nul)
 {
 	uint16_t length;
 
 	length = (uint16_t)lstr_len(string);
 	if (include_nul)
 		++length;
-	if (sfs_fwrite(&length, 2, 1, file) != 1)
+	if (file_write(&length, 2, 1, file) != 1)
 		return false;
-	if (sfs_fwrite(lstr_cstr(string), length, 1, file) != 1)
+	if (file_write(lstr_cstr(string), length, 1, file) != 1)
 		return false;
 	return true;
 }
@@ -254,13 +244,13 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
-	path = fs_build_path(pathname, origin_name, legacy);
-	prefix = path_hop(path, 0);  // note: fs_build_path() *always* prefixes
+	path = fs_canonicalize(pathname, origin_name, legacy);
+	prefix = path_hop(path, 0);  // note: fs_canonicalize() *always* prefixes
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
-	if (strcmp(prefix, "~") == 0 && fs_save_id(g_fs) == NULL)
+	if (strcmp(prefix, "~") == 0 && fs_save_id(g_game_fs) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no save ID defined");
 	if (need_write && !legacy && strcmp(prefix, "~") != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "directory is read-only");
@@ -312,28 +302,28 @@ duk_unref_heapptr(duk_context* ctx, void* heapptr)
 }
 
 bool
-fread_rect_16(sfs_file_t* file, rect_t* out_rect)
+fread_rect16(file_t* file, rect_t* out_rect)
 {
 	int16_t x1, y1, x2, y2;
 
-	if (sfs_fread(&x1, 2, 1, file) != 1) return false;
-	if (sfs_fread(&y1, 2, 1, file) != 1) return false;
-	if (sfs_fread(&x2, 2, 1, file) != 1) return false;
-	if (sfs_fread(&y2, 2, 1, file) != 1) return false;
+	if (file_read(&x1, 2, 1, file) != 1) return false;
+	if (file_read(&y1, 2, 1, file) != 1) return false;
+	if (file_read(&x2, 2, 1, file) != 1) return false;
+	if (file_read(&y2, 2, 1, file) != 1) return false;
 	out_rect->x1 = x1; out_rect->y1 = y1;
 	out_rect->x2 = x2; out_rect->y2 = y2;
 	return true;
 }
 
 bool
-fread_rect_32(sfs_file_t* file, rect_t* out_rect)
+fread_rect32(file_t* file, rect_t* out_rect)
 {
 	int32_t x1, y1, x2, y2;
 
-	if (sfs_fread(&x1, 4, 1, file) != 1) return false;
-	if (sfs_fread(&y1, 4, 1, file) != 1) return false;
-	if (sfs_fread(&x2, 4, 1, file) != 1) return false;
-	if (sfs_fread(&y2, 4, 1, file) != 1) return false;
+	if (file_read(&x1, 4, 1, file) != 1) return false;
+	if (file_read(&y1, 4, 1, file) != 1) return false;
+	if (file_read(&x2, 4, 1, file) != 1) return false;
+	if (file_read(&y2, 4, 1, file) != 1) return false;
 	out_rect->x1 = x1; out_rect->y1 = y1;
 	out_rect->x2 = x2; out_rect->y2 = y2;
 	return true;

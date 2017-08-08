@@ -33,7 +33,7 @@
 #include "version.h"
 #include "geometry.h"
 #include "console.h"
-#include "spherefs.h"
+#include "fs.h"
 #include "kev_file.h"
 #include "font.h"
 #include "screen.h"
@@ -62,8 +62,8 @@
 // I've been too lazy to try to refactor them away.
 extern duk_context*         g_duk;
 extern ALLEGRO_EVENT_QUEUE* g_events;
-extern sandbox_t*           g_fs;
 extern int                  g_framerate;
+extern game_t*              g_game_fs;
 extern path_t*              g_game_path;
 extern path_t*              g_last_game_path;
 extern screen_t*            g_screen;

@@ -1,11 +1,11 @@
 #ifndef MINISPHERE__FILE_H__INCLUDED
 #define MINISPHERE__FILE_H__INCLUDED
 
-#include "spherefs.h"
+#include "fs.h"
 
 typedef struct kev_file kev_file_t;
 
-kev_file_t*  kev_open         (sandbox_t* fs, const char* filename, bool can_create);
+kev_file_t*  kev_open         (game_t* game, const char* filename, bool can_create);
 void         kev_close        (kev_file_t* file);
 int          kev_num_keys     (kev_file_t* file);
 const char*  kev_get_key      (kev_file_t* file, int index);

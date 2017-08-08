@@ -57,7 +57,7 @@ font_load(const char* filename)
 	image_t*                atlas = NULL;
 	int                     atlas_x, atlas_y;
 	int                     atlas_size_x, atlas_size_y;
-	sfs_file_t*             file;
+	file_t*                 file;
 	font_t*                 font = NULL;
 	struct font_glyph*      glyph;
 	struct rfn_glyph_header glyph_hdr;
@@ -78,23 +78,23 @@ font_load(const char* filename)
 
 	memset(&rfn, 0, sizeof(struct rfn_header));
 
-	if ((file = sfs_fopen(g_fs, filename, NULL, "rb")) == NULL)
+	if ((file = file_open(g_game_fs, filename, NULL, "rb")) == NULL)
 		goto on_error;
 	if (!(font = calloc(1, sizeof(font_t))))
 		goto on_error;
-	if (sfs_fread(&rfn, sizeof(struct rfn_header), 1, file) != 1)
+	if (file_read(&rfn, sizeof(struct rfn_header), 1, file) != 1)
 		goto on_error;
 	pixel_size = (rfn.version == 1) ? 1 : 4;
 	if (!(font->glyphs = calloc(rfn.num_chars, sizeof(struct font_glyph))))
 		goto on_error;
 
 	// pass 1: load glyph headers and find largest glyph
-	glyph_start = sfs_ftell(file);
+	glyph_start = file_position(file);
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
-		if (sfs_fread(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
+		if (file_read(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
 			goto on_error;
-		sfs_fseek(file, glyph_hdr.width * glyph_hdr.height * pixel_size, SFS_SEEK_CUR);
+		file_seek(file, glyph_hdr.width * glyph_hdr.height * pixel_size, WHENCE_CUR);
 		max_x = fmax(glyph_hdr.width, max_x);
 		max_y = fmax(glyph_hdr.height, max_y);
 		min_width = fmin(min_width, glyph_hdr.width);
@@ -114,11 +114,11 @@ font_load(const char* filename)
 		goto on_error;
 
 	// pass 2: load glyph data
-	sfs_fseek(file, glyph_start, SFS_SEEK_SET);
+	file_seek(file, glyph_start, WHENCE_SET);
 	if (!(lock = image_lock(atlas))) goto on_error;
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
-		if (sfs_fread(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
+		if (file_read(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
 			goto on_error;
 		atlas_x = i % n_glyphs_per_row * max_x;
 		atlas_y = i / n_glyphs_per_row * max_y;
@@ -127,7 +127,7 @@ font_load(const char* filename)
 			if (!(glyph->image = image_new_slice(atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
 				goto on_error;
 			grayscale = malloc(glyph_hdr.width * glyph_hdr.height);
-			if (sfs_fread(grayscale, glyph_hdr.width * glyph_hdr.height, 1, file) != 1)
+			if (file_read(grayscale, glyph_hdr.width * glyph_hdr.height, 1, file) != 1)
 				goto on_error;
 			psrc = grayscale;
 			pdest = lock->pixels + atlas_x + atlas_y * lock->pitch;
@@ -145,7 +145,7 @@ font_load(const char* filename)
 		}
 	}
 	image_unlock(atlas, lock);
-	sfs_fclose(file);
+	file_close(file);
 	image_free(atlas);
 
 	font->path = strdup(filename);
@@ -154,7 +154,7 @@ font_load(const char* filename)
 
 on_error:
 	console_log(2, "failed to load font #%u", s_next_font_id++);
-	sfs_fclose(file);
+	file_close(file);
 	if (font != NULL) {
 		for (i = 0; i < rfn.num_chars; ++i) {
 			if (font->glyphs[i].image != NULL) image_free(font->glyphs[i].image);

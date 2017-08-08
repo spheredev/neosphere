@@ -254,11 +254,11 @@ screen_flip(screen_t* it, int framerate)
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 			snapshot = al_clone_bitmap(image_bitmap(it->backbuffer));
 			al_restore_state(&old_state);
-			game_path = fs_path(g_fs);
+			game_path = fs_path(g_game_fs);
 			game_filename = path_is_file(game_path)
 				? path_filename(game_path)
 				: path_hop(game_path, path_num_hops(game_path) - 1);
-			path = path_rebase(path_new("miniSphere/screenshots/"), home_path());
+			path = path_rebase(path_new("miniSphere/Screenshots/"), home_path());
 			path_mkdir(path);
 			time(&now);
 			strftime(timestamp, 100, "%Y%m%d", localtime(&now));

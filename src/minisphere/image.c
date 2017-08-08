@@ -111,7 +111,7 @@ image_load(const char* filename)
 	console_log(2, "loading image #%u as `%s`", s_next_image_id, filename);
 	
 	image = calloc(1, sizeof(image_t));
-	if (!(slurp = sfs_fslurp(g_fs, filename, NULL, &file_size)))
+	if (!(slurp = fs_read_file(g_game_fs, filename, NULL, &file_size)))
 		goto on_error;
 	al_file = al_open_memfile(slurp, file_size, "rb");
 
@@ -152,7 +152,7 @@ on_error:
 }
 
 image_t*
-image_read(sfs_file_t* file, int width, int height)
+image_read(file_t* file, int width, int height)
 {
 	long                   file_pos;
 	image_t*               image;
@@ -164,14 +164,14 @@ image_read(sfs_file_t* file, int width, int height)
 
 	console_log(3, "reading %dx%d image #%u from open file", width, height, s_next_image_id);
 	image = calloc(1, sizeof(image_t));
-	file_pos = sfs_ftell(file);
+	file_pos = file_position(file);
 	if (!(image->bitmap = al_create_bitmap(width, height))) goto on_error;
 	if (!(lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)))
 		goto on_error;
 	line_size = width * 4;
 	for (i_y = 0; i_y < height; ++i_y) {
 		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
-		if (sfs_fread(line_ptr, line_size, 1, file) != 1)
+		if (file_read(line_ptr, line_size, 1, file) != 1)
 			goto on_error;
 	}
 	al_unlock_bitmap(image->bitmap);
@@ -185,7 +185,7 @@ image_read(sfs_file_t* file, int width, int height)
 
 on_error:
 	console_log(3, "    failed!");
-	sfs_fseek(file, file_pos, SEEK_SET);
+	file_seek(file, file_pos, WHENCE_SET);
 	if (lock != NULL) al_unlock_bitmap(image->bitmap);
 	if (image != NULL) {
 		if (image->bitmap != NULL) al_destroy_bitmap(image->bitmap);
@@ -195,7 +195,7 @@ on_error:
 }
 
 image_t*
-image_read_slice(sfs_file_t* file, image_t* parent, int x, int y, int width, int height)
+image_read_slice(file_t* file, image_t* parent, int x, int y, int width, int height)
 {
 	long          file_pos;
 	image_t*      image;
@@ -204,21 +204,21 @@ image_read_slice(sfs_file_t* file, image_t* parent, int x, int y, int width, int
 
 	int i_y;
 
-	file_pos = sfs_ftell(file);
+	file_pos = file_position(file);
 	if (!(image = image_new_slice(parent, x, y, width, height)))
 		goto on_error;
 	if (!(lock = image_lock(parent)))
 		goto on_error;
 	for (i_y = 0; i_y < height; ++i_y) {
 		pline = lock->pixels + x + (i_y + y) * lock->pitch;
-		if (sfs_fread(pline, width * 4, 1, file) != 1)
+		if (file_read(pline, width * 4, 1, file) != 1)
 			goto on_error;
 	}
 	image_unlock(parent, lock);
 	return image;
 
 on_error:
-	sfs_fseek(file, file_pos, SEEK_SET);
+	file_seek(file, file_pos, WHENCE_SET);
 	if (lock != NULL)
 		image_unlock(parent, lock);
 	image_free(image);
@@ -666,7 +666,7 @@ image_save(image_t* image, const char* filename)
 		is_eof = al_feof(memfile);
 		al_fclose(memfile);
 	} while (is_eof);
-	result = sfs_fspew(g_fs, filename, NULL, buffer, file_size);
+	result = fs_write_file(g_game_fs, filename, NULL, buffer, file_size);
 	free(buffer);
 	return result;
 }
@@ -697,7 +697,7 @@ image_unlock(image_t* image, image_lock_t* lock)
 }
 
 bool
-image_write(image_t* it, sfs_file_t* file)
+image_write(image_t* it, file_t* file)
 {
 	color_t*      line_ptr;
 	size_t        line_size;
@@ -711,7 +711,7 @@ image_write(image_t* it, sfs_file_t* file)
 	line_size = it->width * 4;
 	for (i_y = 0; i_y < it->height; ++i_y) {
 		line_ptr = lock->pixels + i_y * lock->pitch;
-		if (sfs_fwrite(line_ptr, line_size, 1, file) != 1)
+		if (file_write(line_ptr, line_size, 1, file) != 1)
 			goto on_error;
 	}
 	image_unlock(it, lock);

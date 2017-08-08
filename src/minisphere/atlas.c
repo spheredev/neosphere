@@ -108,7 +108,7 @@ atlas_unlock(atlas_t* atlas)
 }
 
 image_t*
-atlas_load(atlas_t* atlas, sfs_file_t* file, int index, int width, int height)
+atlas_load(atlas_t* atlas, file_t* file, int index, int width, int height)
 {
 	int off_x, off_y;
 	

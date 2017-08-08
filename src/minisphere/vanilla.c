@@ -1928,7 +1928,7 @@ js_CreateDirectory(duk_context* ctx)
 	const char* name;
 
 	name = duk_require_path(ctx, 0, "save", true, true);
-	if (!sfs_mkdir(g_fs, name, NULL))
+	if (!fs_mkdir(g_game_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
 	return 0;
 }
@@ -2167,7 +2167,7 @@ js_DoesFileExist(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, NULL, true, false);
-	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
+	duk_push_boolean(ctx, fs_file_exists(g_game_fs, filename, NULL));
 	return 1;
 }
 
@@ -2188,7 +2188,7 @@ js_EvaluateScript(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "scripts", true, false);
-	if (!sfs_fexist(g_fs, filename, NULL))
+	if (!fs_file_exists(g_game_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	if (!script_eval(filename, false))
 		duk_throw(ctx);
@@ -2203,9 +2203,9 @@ js_EvaluateSystemScript(duk_context* ctx)
 	char path[SPHERE_PATH_MAX];
 
 	sprintf(path, "scripts/lib/%s", filename);
-	if (!sfs_fexist(g_fs, path, NULL))
+	if (!fs_file_exists(g_game_fs, path, NULL))
 		sprintf(path, "#/scripts/%s", filename);
-	if (!sfs_fexist(g_fs, path, NULL))
+	if (!fs_file_exists(g_game_fs, path, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
 	if (!script_eval(path, false))
 		duk_throw(ctx);
@@ -2221,7 +2221,7 @@ js_ExecuteGame(duk_context* ctx)
 	filename = duk_require_string(ctx, 0);
 
 	// store the old game path so we can relaunch when the chained game exits
-	g_last_game_path = path_dup(fs_path(g_fs));
+	g_last_game_path = path_dup(fs_path(g_game_fs));
 
 	// if the passed-in path is relative, resolve it relative to <engine>/games.
 	// this is done for compatibility with Sphere 1.x.
@@ -2559,7 +2559,7 @@ js_GetDirectoryList(duk_context* ctx)
 
 	iter_t iter;
 
-	list = fs_list_dir(g_fs, dirname, NULL, true);
+	list = fs_list_dir(g_game_fs, dirname, NULL, true);
 	duk_push_array(ctx);
 	iter = vector_enum(list);
 	while (p_filename = vector_next(&iter)) {
@@ -2586,7 +2586,7 @@ js_GetFileList(duk_context* ctx)
 		? duk_require_path(ctx, 0, NULL, true, false)
 		: "save";
 
-	list = fs_list_dir(g_fs, directory_name, NULL, false);
+	list = fs_list_dir(g_game_fs, directory_name, NULL, false);
 	duk_push_array(ctx);
 	iter = vector_enum(list);
 	while (p_filename = vector_next(&iter)) {
@@ -2610,15 +2610,15 @@ js_GetGameList(duk_context* ctx)
 {
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_FS_ENTRY* fse;
+	game_t*           game;
 	path_t*           path = NULL;
 	path_t*           paths[2];
-	sandbox_t*        sandbox;
 
 	int i, j = 0;
 
 	// build search paths
 	paths[0] = path_rebase(path_new("games/"), engine_path());
-	paths[1] = path_rebase(path_new("miniSphere/games/"), home_path());
+	paths[1] = path_rebase(path_new("miniSphere/Games/"), home_path());
 
 	// search for supported games
 	duk_push_array(ctx);
@@ -2627,13 +2627,13 @@ js_GetGameList(duk_context* ctx)
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
 				path = path_new(al_get_fs_entry_name(file_info));
-				if (sandbox = fs_new(path_cstr(path))) {
-					duk_push_lstring_t(ctx, fs_manifest(sandbox));
+				if (game = fs_open(path_cstr(path))) {
+					duk_push_lstring_t(ctx, fs_manifest(game));
 					duk_json_decode(ctx, -1);
 					duk_push_string(ctx, path_cstr(path));
 					duk_put_prop_string(ctx, -2, "directory");
 					duk_put_prop_index(ctx, -2, j++);
-					fs_free(sandbox);
+					fs_close(game);
 				}
 				path_free(path);
 			}
@@ -4096,7 +4096,7 @@ js_HashFromFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "other", true, false);
 
-	if (!(data = sfs_fslurp(g_fs, filename, NULL, &file_size)))
+	if (!(data = fs_read_file(g_game_fs, filename, NULL, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file");
 	duk_push_string(ctx, md5sum(data, file_size));
 	return 1;
@@ -4637,7 +4637,7 @@ js_OpenFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "save", true, true);
 
-	if (!(file = kev_open(g_fs, filename, true)))
+	if (!(file = kev_open(g_game_fs, filename, true)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s`", filename);
 	duk_push_class_obj(ctx, "ssFile", file);
 	return 1;
@@ -4659,7 +4659,7 @@ js_OpenLog(duk_context* ctx)
 static duk_ret_t
 js_OpenRawFile(duk_context* ctx)
 {
-	sfs_file_t* file;
+	file_t*     file;
 	const char* filename;
 	int         num_args;
 	bool        writable;
@@ -4668,7 +4668,7 @@ js_OpenRawFile(duk_context* ctx)
 	writable = num_args >= 2 ? duk_to_boolean(ctx, 1) : false;
 	filename = duk_require_path(ctx, 0, "other", true, writable);
 
-	file = sfs_fopen(g_fs, filename, NULL, writable ? "w+b" : "rb");
+	file = file_open(g_game_fs, filename, NULL, writable ? "w+b" : "rb");
 	if (file == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file for %s",
 			writable ? "write" : "read");
@@ -4886,7 +4886,7 @@ js_RemoveDirectory(duk_context* ctx)
 	const char* name;
 
 	name = duk_require_path(ctx, 0, "save", true, true);
-	if (!sfs_rmdir(g_fs, name, NULL))
+	if (!fs_rmdir(g_game_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
 	return 0;
 }
@@ -4897,7 +4897,7 @@ js_RemoveFile(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "save", true, true);
-	if (!sfs_unlink(g_fs, filename, NULL))
+	if (!fs_unlink(g_game_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file `%s`", filename);
 	return 0;
 }
@@ -4940,7 +4940,7 @@ js_Rename(duk_context* ctx)
 
 	name1 = duk_require_path(ctx, 0, "save", true, true);
 	name2 = duk_require_path(ctx, 1, "save", true, true);
-	if (!sfs_rename(g_fs, name1, name2, NULL))
+	if (!fs_rename(g_game_fs, name1, name2, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
 }
@@ -4984,7 +4984,7 @@ js_RequireScript(duk_context* ctx)
 	bool        is_required;
 
 	filename = duk_require_path(ctx, 0, "scripts", true, false);
-	if (!sfs_fexist(g_fs, filename, NULL))
+	if (!fs_file_exists(g_game_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
@@ -5010,9 +5010,9 @@ js_RequireSystemScript(duk_context* ctx)
 	char path[SPHERE_PATH_MAX];
 
 	sprintf(path, "scripts/lib/%s", filename);
-	if (!sfs_fexist(g_fs, path, NULL))
+	if (!fs_file_exists(g_game_fs, path, NULL))
 		sprintf(path, "#/scripts/%s", filename);
-	if (!sfs_fexist(g_fs, path, NULL))
+	if (!fs_file_exists(g_game_fs, path, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
 
 	duk_push_global_stash(ctx);
@@ -7198,17 +7198,17 @@ js_Logger_write(duk_context* ctx)
 static duk_ret_t
 js_RawFile_finalize(duk_context* ctx)
 {
-	sfs_file_t* file;
+	file_t* file;
 
 	file = duk_require_class_obj(ctx, 0, "ssRawFile");
-	if (file != NULL) sfs_fclose(file);
+	if (file != NULL) file_close(file);
 	return 0;
 }
 
 static duk_ret_t
 js_RawFile_close(duk_context* ctx)
 {
-	sfs_file_t* file;
+	file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssRawFile");
@@ -7216,39 +7216,39 @@ js_RawFile_close(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file already closed");
 
 	duk_set_class_ptr(ctx, -1, NULL);
-	sfs_fclose(file);
+	file_close(file);
 	return 0;
 }
 
 static duk_ret_t
 js_RawFile_getPosition(duk_context* ctx)
 {
-	sfs_file_t* file;
+	file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
-	duk_push_int(ctx, sfs_ftell(file));
+	duk_push_int(ctx, file_position(file));
 	return 1;
 }
 
 static duk_ret_t
 js_RawFile_getSize(duk_context* ctx)
 {
-	sfs_file_t* file;
-	long  file_pos;
+	file_t* file;
+	long    file_pos;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "RawFile:size: file was closed");
-	file_pos = sfs_ftell(file);
-	sfs_fseek(file, 0, SEEK_END);
-	duk_push_int(ctx, sfs_ftell(file));
-	sfs_fseek(file, file_pos, SEEK_SET);
+	file_pos = file_position(file);
+	file_seek(file, 0, WHENCE_END);
+	duk_push_int(ctx, file_position(file));
+	file_seek(file, file_pos, WHENCE_SET);
 	return 1;
 }
 
@@ -7259,7 +7259,7 @@ js_RawFile_read(duk_context* ctx)
 	long num_bytes = n_args >= 1 ? duk_to_int(ctx, 0) : 0;
 
 	bytearray_t* array;
-	sfs_file_t*        file;
+	file_t*      file;
 	long         pos;
 	void*        read_buffer;
 
@@ -7269,17 +7269,17 @@ js_RawFile_read(duk_context* ctx)
 	if (file == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file was closed");
 	if (n_args < 1) {  // if no arguments, read entire file back to front
-		pos = sfs_ftell(file);
-		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
-		sfs_fseek(file, 0, SEEK_SET);
+		pos = file_position(file);
+		num_bytes = (file_seek(file, 0, WHENCE_END), file_position(file));
+		file_seek(file, 0, WHENCE_SET);
 	}
 	if (num_bytes <= 0 || num_bytes > INT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "read size out of range (%u)", num_bytes);
 	if (!(read_buffer = malloc(num_bytes)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate buffer for file read");
-	num_bytes = (long)sfs_fread(read_buffer, 1, num_bytes, file);
+	num_bytes = (long)file_read(read_buffer, 1, num_bytes, file);
 	if (n_args < 1)  // reset file position after whole-file read
-		sfs_fseek(file, pos, SEEK_SET);
+		file_seek(file, pos, WHENCE_SET);
 	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
 	duk_push_sphere_bytearray(ctx, array);
@@ -7291,14 +7291,14 @@ js_RawFile_setPosition(duk_context* ctx)
 {
 	int new_pos = duk_to_int(ctx, 0);
 
-	sfs_file_t* file;
+	file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssRawFile");
 	duk_pop(ctx);
 	if (file == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
-	if (!sfs_fseek(file, new_pos, SEEK_SET))
+	if (!file_seek(file, new_pos, WHENCE_SET))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "RawFile:position: Failed to set read/write position");
 	return 0;
 }
@@ -7315,7 +7315,7 @@ js_RawFile_write(duk_context* ctx)
 {
 	bytearray_t* array;
 	const void*  data;
-	sfs_file_t*  file;
+	file_t*      file;
 	duk_size_t   write_size;
 
 	duk_push_this(ctx);
@@ -7333,7 +7333,7 @@ js_RawFile_write(duk_context* ctx)
 	else {
 		data = duk_require_buffer_data(ctx, 0, &write_size);
 	}
-	if (sfs_fwrite(data, 1, write_size, file) != write_size)
+	if (file_write(data, 1, write_size, file) != write_size)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "error writing to file");
 	return 0;
 }

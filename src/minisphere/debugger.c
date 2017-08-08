@@ -56,8 +56,8 @@ debugger_init(bool want_attach, bool allow_remote)
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
 	duk_del_prop_string(g_duk, -1, "debugMap");
-	game_path = fs_path(g_fs);
-	if (data = sfs_fslurp(g_fs, "sourceMap.json", NULL, &data_size)) {
+	game_path = fs_path(g_game_fs);
+	if (data = fs_read_file(g_game_fs, "sourceMap.json", NULL, &data_size)) {
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
 		duk_put_prop_string(g_duk, -2, "debugMap");
@@ -186,7 +186,7 @@ debugger_compiled_name(const char* source_name)
 const char*
 debugger_source_name(const char* compiled_name)
 {
-	// note: pathname must be canonicalized using fs_build_path() otherwise
+	// note: pathname must be canonicalized using fs_canonicalize() otherwise
 	//       the source map lookup will fail.
 
 	static char retval[SPHERE_PATH_MAX];
@@ -323,10 +323,10 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
 	case APPREQ_GAME_INFO:
-		resolution = fs_resolution(g_fs);
-		duk_push_string(ctx, fs_name(g_fs));
-		duk_push_string(ctx, fs_author(g_fs));
-		duk_push_string(ctx, fs_summary(g_fs));
+		resolution = fs_resolution(g_game_fs);
+		duk_push_string(ctx, fs_name(g_game_fs));
+		duk_push_string(ctx, fs_author(g_game_fs));
+		duk_push_string(ctx, fs_summary(g_game_fs));
 		duk_push_int(ctx, resolution.width);
 		duk_push_int(ctx, resolution.height);
 		return 5;
@@ -349,7 +349,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		}
 		
 		// no cache entry, try loading the file via SphereFS
-		if ((file_data = sfs_fslurp(g_fs, name, NULL, &size))) {
+		if ((file_data = fs_read_file(g_game_fs, name, NULL, &size))) {
 			duk_push_lstring(ctx, file_data, size);
 			free(file_data);
 			return 1;

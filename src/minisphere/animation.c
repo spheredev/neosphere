@@ -20,7 +20,7 @@ struct animation
 	unsigned int  refcount;
 	unsigned int  id;
 	int           delay;
-	sfs_file_t*   file;
+	file_t*       file;
 	image_t*      frame;
 	bool          is_frame_ready;
 	image_lock_t* lock;
@@ -49,7 +49,7 @@ animation_new(const char* path)
 	mng_setcb_readdata(anim->stream, mng_cb_readdata);
 	mng_setcb_refresh(anim->stream, mng_cb_refresh);
 	mng_setcb_settimer(anim->stream, mng_cb_settimer);
-	if (!(anim->file = sfs_fopen(g_fs, path, NULL, "rb")))
+	if (!(anim->file = file_open(g_game_fs, path, NULL, "rb")))
 		goto on_error;
 	if (mng_read(anim->stream) != MNG_NOERROR) goto on_error;
 	anim->id = s_next_animation_id++;
@@ -63,7 +63,7 @@ on_error:
 	console_log(2, "failed to load animation #%u", s_next_animation_id++);
 	if (anim != NULL) {
 		if (anim->stream != NULL) mng_cleanup(&anim->stream);
-		if (anim->file != NULL) sfs_fclose(anim->file);
+		if (anim->file != NULL) file_close(anim->file);
 		if (anim->frame != NULL) {
 			image_free(anim->frame);
 		}
@@ -88,7 +88,7 @@ animation_free(animation_t* animation)
 	console_log(3, "disposing animation #%u no longer in use",
 		animation->id);
 	mng_cleanup(&animation->stream);
-	sfs_fclose(animation->file);
+	file_close(animation->file);
 	image_free(animation->frame);
 	free(animation);
 }
@@ -197,7 +197,7 @@ mng_cb_readdata(mng_handle stream, mng_ptr buf, mng_uint32 n_bytes, mng_uint32p 
 {
 	animation_t* anim = mng_get_userdata(stream);
 
-	*p_readsize = (mng_uint32)sfs_fread(buf, 1, n_bytes, anim->file);
+	*p_readsize = (mng_uint32)file_read(buf, 1, n_bytes, anim->file);
 	return MNG_TRUE;
 }
 

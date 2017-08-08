@@ -768,7 +768,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 
 	console_log(1, "initializing JS module `%s`", filename);
 
-	source = sfs_fslurp(g_fs, filename, NULL, &source_size);
+	source = fs_read_file(g_game_fs, filename, NULL, &source_size);
 	code_string = lstr_from_cp1252(source, source_size);
 	free(source);
 
@@ -958,7 +958,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
-			path = fs_build_path(filename, NULL, false);
+			path = fs_canonicalize(filename, NULL, false);
 		}
 		else {
 			path = path_dup(origin_path);
@@ -967,14 +967,14 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 			path_collapse(path, true);
 		}
 		free(filename);
-		if (sfs_fexist(g_fs, path_cstr(path), NULL)) {
+		if (fs_file_exists(g_game_fs, path_cstr(path), NULL)) {
 			if (strcmp(path_filename(path), "package.json") != 0) {
 				return path;
 			}
 			else {
 				if (!(main_path = load_package_json(path_cstr(path))))
 					goto next_filename;
-				if (sfs_fexist(g_fs, path_cstr(main_path), NULL)) {
+				if (fs_file_exists(g_game_fs, path_cstr(main_path), NULL)) {
 					path_free(path);
 					return main_path;
 				}
@@ -1018,7 +1018,7 @@ load_package_json(const char* filename)
 	path_t*   path;
 
 	duk_top = duk_get_top(g_duk);
-	if (!(json = sfs_fslurp(g_fs, filename, NULL, &json_size)))
+	if (!(json = fs_read_file(g_game_fs, filename, NULL, &json_size)))
 		goto on_error;
 	duk_push_lstring(g_duk, json, json_size);
 	free(json);
@@ -1032,7 +1032,7 @@ load_package_json(const char* filename)
 	path = path_strip(path_new(filename));
 	path_append(path, duk_get_string(g_duk, -1));
 	path_collapse(path, true);
-	if (!sfs_fexist(g_fs, path_cstr(path), NULL))
+	if (!fs_file_exists(g_game_fs, path_cstr(path), NULL))
 		goto on_error;
 	return path;
 
@@ -1165,7 +1165,7 @@ js_Sphere_get_APILevel(duk_context* ctx)
 static duk_ret_t
 js_Sphere_get_Game(duk_context* ctx)
 {
-	duk_push_lstring_t(ctx, fs_manifest(g_fs));
+	duk_push_lstring_t(ctx, fs_manifest(g_game_fs));
 	duk_json_decode(ctx, -1);
 
 	duk_push_this(ctx);
@@ -1520,7 +1520,7 @@ js_FS_createDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!sfs_mkdir(g_fs, name, NULL))
+	if (!fs_mkdir(g_game_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
 	return 0;
 }
@@ -1532,7 +1532,7 @@ js_FS_deleteFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!sfs_unlink(g_fs, filename, NULL))
+	if (!fs_unlink(g_game_fs, filename, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file", filename);
 	return 0;
 }
@@ -1544,7 +1544,7 @@ js_FS_directoryExists(duk_context* ctx)
 
 	dirname = duk_require_path(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, sfs_dir_exists(g_fs, dirname, NULL));
+	duk_push_boolean(ctx, fs_dir_exists(g_game_fs, dirname, NULL));
 	return 1;
 }
 
@@ -1555,7 +1555,7 @@ js_FS_fileExists(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, sfs_fexist(g_fs, filename, NULL));
+	duk_push_boolean(ctx, fs_file_exists(g_game_fs, filename, NULL));
 	return 1;
 }
 
@@ -1565,7 +1565,7 @@ js_FS_fullPath(duk_context* ctx)
 	// it's only by accident that this works at all.  the function relies on the
 	// fact that SphereFS canonicalization removes the `@/` prefix if it's present;
 	// it's therefore something of a hack, and in the future it'd be better to build
-	// this functionality into `fs_build_path()`.
+	// this functionality into `fs_canonicalize()`.
 
 	const char* origin_pathname = NULL;
 	const char* filename;
@@ -1590,7 +1590,7 @@ js_FS_readFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	if (!(file_data = sfs_fslurp(g_fs, filename, NULL, &file_size)))
+	if (!(file_data = fs_read_file(g_game_fs, filename, NULL, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
 	content = lstr_from_cp1252(file_data, file_size);
 	duk_push_lstring_t(ctx, content);
@@ -1604,7 +1604,7 @@ js_FS_removeDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!sfs_rmdir(g_fs, name, NULL))
+	if (!fs_rmdir(g_game_fs, name, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
 	return 0;
 }
@@ -1618,7 +1618,7 @@ js_FS_rename(duk_context* ctx)
 	name1 = duk_require_path(ctx, 0, NULL, false, true);
 	name2 = duk_require_path(ctx, 1, NULL, false, true);
 
-	if (!sfs_rename(g_fs, name1, name2, NULL))
+	if (!fs_rename(g_game_fs, name1, name2, NULL))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
 }
@@ -1636,7 +1636,7 @@ js_FS_writeFile(duk_context* ctx)
 	
 	file_data = lstr_cstr(text);
 	file_size = lstr_len(text);
-	if (!sfs_fspew(g_fs, filename, NULL, file_data, file_size))
+	if (!fs_write_file(g_game_fs, filename, NULL, file_data, file_size))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
 	return 0;
@@ -1645,7 +1645,7 @@ js_FS_writeFile(duk_context* ctx)
 static duk_ret_t
 js_new_FileStream(duk_context* ctx)
 {
-	sfs_file_t*  file;
+	file_t*      file;
 	enum file_op file_op;
 	const char*  filename;
 	const char*  mode;
@@ -1659,16 +1659,16 @@ js_new_FileStream(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
 
 	filename = duk_require_path(ctx, 0, NULL, false, file_op != FILE_OP_READ);
-	if (file_op == FILE_OP_UPDATE && !sfs_fexist(g_fs, filename, NULL))
+	if (file_op == FILE_OP_UPDATE && !fs_file_exists(g_game_fs, filename, NULL))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
 		: file_op == FILE_OP_WRITE ? "w+b"
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
-	if (!(file = sfs_fopen(g_fs, filename, NULL, mode)))
+	if (!(file = file_open(g_game_fs, filename, NULL, mode)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to open file");
 	if (file_op == FILE_OP_UPDATE)
-		sfs_fseek(file, 0, SFS_SEEK_END);
+		file_seek(file, 0, WHENCE_END);
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "FileStream", file);
 	return 0;
@@ -1677,82 +1677,82 @@ js_new_FileStream(duk_context* ctx)
 static duk_ret_t
 js_FileStream_finalize(duk_context* ctx)
 {
-	sfs_file_t* file;
+	file_t* file;
 
 	file = duk_require_class_obj(ctx, 0, "FileStream");
 
-	sfs_fclose(file);
+	file_close(file);
 	return 0;
 }
 
 static duk_ret_t
 js_FileStream_get_fileName(duk_context* ctx)
 {
-	sfs_file_t* file;
+	file_t* file;
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
-	duk_push_string(ctx, sfs_fpath(file));
+	duk_push_string(ctx, file_pathname(file));
 	return 1;
 }
 
 static duk_ret_t
 js_FileStream_get_fileSize(duk_context* ctx)
 {
-	sfs_file_t* file;
-	long        file_pos;
+	file_t* file;
+	long    file_pos;
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
-	file_pos = sfs_ftell(file);
-	sfs_fseek(file, 0, SEEK_END);
-	duk_push_number(ctx, sfs_ftell(file));
-	sfs_fseek(file, file_pos, SEEK_SET);
+	file_pos = file_position(file);
+	file_seek(file, 0, WHENCE_END);
+	duk_push_number(ctx, file_position(file));
+	file_seek(file, file_pos, WHENCE_SET);
 	return 1;
 }
 
 static duk_ret_t
 js_FileStream_get_position(duk_context* ctx)
 {
-	sfs_file_t* file;
+	file_t* file;
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
-	duk_push_number(ctx, sfs_ftell(file));
+	duk_push_number(ctx, file_position(file));
 	return 1;
 }
 
 static duk_ret_t
 js_FileStream_set_position(duk_context* ctx)
 {
-	sfs_file_t* file;
-	long long   new_pos;
+	file_t*   file;
+	long long new_pos;
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
 	new_pos = duk_require_number(ctx, 0);
-	sfs_fseek(file, new_pos, SFS_SEEK_SET);
+	file_seek(file, new_pos, WHENCE_SET);
 	return 0;
 }
 
 static duk_ret_t
 js_FileStream_dispose(duk_context* ctx)
 {
-	sfs_file_t* file;
+	file_t* file;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "FileStream");
 
 	duk_set_class_ptr(ctx, -1, NULL);
-	sfs_fclose(file);
+	file_close(file);
 	return 0;
 }
 
@@ -1765,11 +1765,11 @@ js_FileStream_read(duk_context* ctx)
 	//     numBytes: Optional. The number of bytes to read. If not provided, the
 	//               entire file is read.
 
-	int          argc;
-	void*        buffer;
-	sfs_file_t*  file;
-	int          num_bytes;
-	long         pos;
+	int     argc;
+	void*   buffer;
+	file_t* file;
+	int     num_bytes;
+	long    pos;
 
 	argc = duk_get_top(ctx);
 	duk_push_this(ctx);
@@ -1780,14 +1780,14 @@ js_FileStream_read(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
 
 	if (argc < 1) {  // if no arguments, read entire file back to front
-		pos = sfs_ftell(file);
-		num_bytes = (sfs_fseek(file, 0, SEEK_END), sfs_ftell(file));
-		sfs_fseek(file, 0, SEEK_SET);
+		pos = file_position(file);
+		num_bytes = (file_seek(file, 0, WHENCE_END), file_position(file));
+		file_seek(file, 0, WHENCE_SET);
 	}
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
-	num_bytes = (int)sfs_fread(buffer, 1, num_bytes, file);
+	num_bytes = (int)file_read(buffer, 1, num_bytes, file);
 	if (argc < 1)  // reset file position after whole-file read
-		sfs_fseek(file, pos, SEEK_SET);
+		file_seek(file, pos, WHENCE_SET);
 	duk_push_buffer_object(ctx, -1, 0, num_bytes, DUK_BUFOBJ_ARRAYBUFFER);
 	return 1;
 }
@@ -1796,7 +1796,7 @@ static duk_ret_t
 js_FileStream_write(duk_context* ctx)
 {
 	const void* data;
-	sfs_file_t* file;
+	file_t*     file;
 	duk_size_t  num_bytes;
 
 	duk_require_stack_top(ctx, 1);
@@ -1806,7 +1806,7 @@ js_FileStream_write(duk_context* ctx)
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
-	if (sfs_fwrite(data, 1, num_bytes, file) != num_bytes)
+	if (file_write(data, 1, num_bytes, file) != num_bytes)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to write to file");
 	return 0;
 }

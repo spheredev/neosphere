@@ -4,7 +4,7 @@
 struct kev_file
 {
 	unsigned int    id;
-	sandbox_t*      fs;
+	game_t*         game;
 	ALLEGRO_CONFIG* conf;
 	char*           filename;
 	bool            is_dirty;
@@ -13,7 +13,7 @@ struct kev_file
 static unsigned int s_next_file_id = 0;
 
 kev_file_t*
-kev_open(sandbox_t* fs, const char* filename, bool can_create)
+kev_open(game_t* game, const char* filename, bool can_create)
 {
 	kev_file_t*   file;
 	ALLEGRO_FILE* memfile = NULL;
@@ -22,7 +22,7 @@ kev_open(sandbox_t* fs, const char* filename, bool can_create)
 	
 	console_log(2, "opening kevfile #%u as `%s`", s_next_file_id, filename);
 	file = calloc(1, sizeof(kev_file_t));
-	if (slurp = sfs_fslurp(fs, filename, NULL, &slurp_size)) {
+	if (slurp = fs_read_file(game, filename, NULL, &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(file->conf = al_load_config_file_f(memfile)))
 			goto on_error;
@@ -34,7 +34,7 @@ kev_open(sandbox_t* fs, const char* filename, bool can_create)
 		if (!can_create || !(file->conf = al_create_config()))
 			goto on_error;
 	}
-	file->fs = fs_ref(fs);
+	file->game = fs_ref(game);
 	file->filename = strdup(filename);
 	file->id = s_next_file_id++;
 	return file;
@@ -58,7 +58,7 @@ kev_close(kev_file_t* file)
 	if (file->is_dirty)
 		kev_save(file);
 	al_destroy_config(file->conf);
-	fs_free(file->fs);
+	fs_close(file->game);
 	free(file);
 }
 
@@ -148,7 +148,7 @@ kev_save(kev_file_t* file)
 	bool          is_aok = false;
 	ALLEGRO_FILE* memfile;
 	size_t        next_buf_size;
-	sfs_file_t*   sfs_file = NULL;
+	file_t*       sfs_file = NULL;
 
 	console_log(3, "saving kevfile #%u as `%s`", file->id, file->filename);
 	next_buf_size = 4096;
@@ -161,17 +161,17 @@ kev_save(kev_file_t* file)
 		file_size = al_ftell(memfile);
 		al_fclose(memfile); memfile = NULL;
 	}
-	if (!(sfs_file = sfs_fopen(file->fs, file->filename, NULL, "wt")))
+	if (!(sfs_file = file_open(file->game, file->filename, NULL, "wt")))
 		goto on_error;
-	sfs_fwrite(buffer, file_size, 1, sfs_file);
-	sfs_fclose(sfs_file);
+	file_write(buffer, file_size, 1, sfs_file);
+	file_close(sfs_file);
 	free(buffer);
 	return true;
 
 on_error:
 	if (memfile != NULL)
 		al_fclose(memfile);
-	sfs_fclose(sfs_file);
+	file_close(sfs_file);
 	free(buffer);
 	return false;
 }

@@ -18,8 +18,8 @@ image_t*        image_new                (int width, int height);
 image_t*        image_new_slice          (image_t* parent, int x, int y, int width, int height);
 image_t*        image_clone              (const image_t* image);
 image_t*        image_load               (const char* filename);
-image_t*        image_read               (sfs_file_t* file, int width, int height);
-image_t*        image_read_slice         (sfs_file_t* file, image_t* parent, int x, int y, int width, int height);
+image_t*        image_read               (file_t* file, int width, int height);
+image_t*        image_read_slice         (file_t* file, image_t* parent, int x, int y, int width, int height);
 image_t*        image_ref                (image_t* image);
 void            image_free               (image_t* image);
 ALLEGRO_BITMAP* image_bitmap             (image_t* image);
@@ -50,6 +50,6 @@ bool            image_rescale            (image_t* image, int width, int height)
 bool            image_save               (image_t* image, const char* filename);
 void            image_set_pixel          (image_t* image, int x, int y, color_t color);
 void            image_unlock             (image_t* image, image_lock_t* lock);
-bool            image_write              (image_t* it, sfs_file_t* file);
+bool            image_write              (image_t* it, file_t* file);
 
 #endif // MINISPHERE__IMAGE_H__INCLUDED

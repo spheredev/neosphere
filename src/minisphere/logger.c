@@ -3,19 +3,19 @@
 
 #include "lstring.h"
 
-struct logger
-{
-	unsigned int      refcount;
-	unsigned int      id;
-	sfs_file_t*       file;
-	int               num_blocks;
-	int               max_blocks;
-	struct log_block* blocks;
-};
-
-struct log_block
+struct block
 {
 	lstring_t* name;
+};
+
+struct logger
+{
+	unsigned int  refcount;
+	unsigned int  id;
+	file_t*       file;
+	int           num_blocks;
+	int           max_blocks;
+	struct block* blocks;
 };
 
 static unsigned int s_next_logger_id = 0;
@@ -31,12 +31,12 @@ logger_new(const char* filename)
 	console_log(2, "creating logger #%u for `%s`", s_next_logger_id, filename);
 	
 	logger = calloc(1, sizeof(logger_t));
-	if (!(logger->file = sfs_fopen(g_fs, filename, NULL, "a")))
+	if (!(logger->file = file_open(g_game_fs, filename, NULL, "a")))
 		goto on_error;
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_newf("LOG OPENED: %s\n", timestamp);
-	sfs_fputs(lstr_cstr(log_entry), logger->file);
+	file_puts(lstr_cstr(log_entry), logger->file);
 	lstr_free(log_entry);
 	
 	logger->id = s_next_logger_id++;
@@ -68,18 +68,18 @@ logger_free(logger_t* logger)
 	console_log(3, "disposing logger #%u no longer in use", logger->id);
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_newf("LOG CLOSED: %s\n\n", timestamp);
-	sfs_fputs(lstr_cstr(log_entry), logger->file);
+	file_puts(lstr_cstr(log_entry), logger->file);
 	lstr_free(log_entry);
-	sfs_fclose(logger->file);
+	file_close(logger->file);
 	free(logger);
 }
 
 bool
 logger_begin_block(logger_t* logger, const char* title)
 {
-	lstring_t*        block_name;
-	struct log_block* blocks;
-	int               new_count;
+	lstring_t*    block_name;
+	struct block* blocks;
+	int           new_count;
 	
 	new_count = logger->num_blocks + 1;
 	if (new_count > logger->max_blocks) {
@@ -115,13 +115,13 @@ logger_write(logger_t* logger, const char* prefix, const char* text)
 	
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S -- ", localtime(&now));
-	sfs_fputs(timestamp, logger->file);
+	file_puts(timestamp, logger->file);
 	for (i = 0; i < logger->num_blocks; ++i)
-		sfs_fputc('\t', logger->file);
+		file_putc('\t', logger->file);
 	if (prefix != NULL) {
-		sfs_fputs(prefix, logger->file);
-		sfs_fputc(' ', logger->file);
+		file_puts(prefix, logger->file);
+		file_putc(' ', logger->file);
 	}
-	sfs_fputs(text, logger->file);
-	sfs_fputc('\n', logger->file);
+	file_puts(text, logger->file);
+	file_putc('\n', logger->file);
 }
