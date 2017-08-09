@@ -4,15 +4,13 @@
 #include "color.h"
 #include "image.h"
 
-static windowstyle_t* s_sys_winstyle = NULL;
-
-enum wstyle_bg_type
+enum back_mode
 {
-	WSTYLE_BG_TILE,
-	WSTYLE_BG_STRETCH,
-	WSTYLE_BG_GRADIENT,
-	WSTYLE_BG_TILE_GRADIENT,
-	WSTYLE_BG_STRETCH_GRADIENT
+	BG_TILE,
+	BG_STRETCH,
+	BG_GRADIENT,
+	BG_TILE_GRADIENT,
+	BG_STRETCH_GRADIENT
 };
 
 struct windowstyle
@@ -24,25 +22,20 @@ struct windowstyle
 };
 
 #pragma pack(push, 1)
-struct rws_rgba
-{
-	uint8_t r, g, b, a;
-};
-
 struct rws_header
 {
-	uint8_t         signature[4];
-	int16_t         version;
-	uint8_t         edge_w_h;
-	uint8_t         background_mode;
-	struct rws_rgba corner_colors[4];
-	uint8_t         edge_offsets[4];
-	uint8_t         reserved[36];
+	uint8_t signature[4];
+	int16_t version;
+	uint8_t edge_w_h;
+	uint8_t background_mode;
+	color_t corner_colors[4];
+	uint8_t edge_offsets[4];
+	uint8_t reserved[36];
 };
 #pragma pack(pop)
 
 windowstyle_t*
-load_windowstyle(const char* filename)
+winstyle_load(const char* filename)
 {
 	file_t*           file;
 	image_t*          image;
@@ -51,11 +44,14 @@ load_windowstyle(const char* filename)
 	windowstyle_t*    winstyle = NULL;
 	int               i;
 
-	if (!(file = file_open(g_game_fs, filename, NULL, "rb"))) goto on_error;
-	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL) goto on_error;
+	if (!(file = file_open(g_game_fs, filename, NULL, "rb")))
+		goto on_error;
+	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL)
+		goto on_error;
 	if (file_read(&rws, sizeof(struct rws_header), 1, file) != 1)
 		goto on_error;
-	if (memcmp(rws.signature, ".rws", 4) != 0) goto on_error;
+	if (memcmp(rws.signature, ".rws", 4) != 0)
+		goto on_error;
 	switch (rws.version) {
 	case 1:
 		for (i = 0; i < 9; ++i) {
@@ -68,7 +64,8 @@ load_windowstyle(const char* filename)
 		for (i = 0; i < 9; ++i) {
 			if (file_read(&w, 2, 1, file) != 1 || file_read(&h, 2, 1, file) != 1)
 				goto on_error;
-			if (!(image = image_read(file, w, h))) goto on_error;
+			if (!(image = image_read(file, w, h)))
+				goto on_error;
 			winstyle->images[i] = image;
 		}
 		break;
@@ -77,14 +74,9 @@ load_windowstyle(const char* filename)
 	}
 	file_close(file);
 	winstyle->bg_style = rws.background_mode;
-	for (i = 0; i < 4; ++i) {
-		winstyle->gradient[i] = color_new(
-			rws.corner_colors[i].r,
-			rws.corner_colors[i].g,
-			rws.corner_colors[i].b,
-			rws.corner_colors[i].a);
-	}
-	return ref_windowstyle(winstyle);
+	for (i = 0; i < 4; ++i)
+		winstyle->gradient[i] = rws.corner_colors[i];
+	return winstyle_ref(winstyle);
 
 on_error:
 	if (file != NULL) file_close(file);
@@ -97,14 +89,14 @@ on_error:
 }
 
 windowstyle_t*
-ref_windowstyle(windowstyle_t* winstyle)
+winstyle_ref(windowstyle_t* winstyle)
 {
 	++winstyle->refcount;
 	return winstyle;
 }
 
 void
-free_windowstyle(windowstyle_t* winstyle)
+winstyle_unref(windowstyle_t* winstyle)
 {
 	int i;
 
@@ -117,7 +109,7 @@ free_windowstyle(windowstyle_t* winstyle)
 }
 
 void
-draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int height)
+winstyle_draw(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int height)
 {
 	color_t gradient[4];
 	int     w[9], h[9];
@@ -152,20 +144,20 @@ draw_window(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int 
 	};
 	
 	switch (winstyle->bg_style) {
-	case WSTYLE_BG_TILE:
+	case BG_TILE:
 		image_draw_tiled_masked(winstyle->images[8], mask, x, y, width, height);
 		break;
-	case WSTYLE_BG_STRETCH:
+	case BG_STRETCH:
 		image_draw_scaled_masked(winstyle->images[8], mask, x, y, width, height);
 		break;
-	case WSTYLE_BG_GRADIENT:
+	case BG_GRADIENT:
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
-	case WSTYLE_BG_TILE_GRADIENT:
+	case BG_TILE_GRADIENT:
 		image_draw_tiled_masked(winstyle->images[8], mask, x, y, width, height);
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
-	case WSTYLE_BG_STRETCH_GRADIENT:
+	case BG_STRETCH_GRADIENT:
 		image_draw_scaled_masked(winstyle->images[8], mask, x, y, width, height);
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;

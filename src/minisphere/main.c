@@ -454,7 +454,7 @@ shutdown_engine(void)
 	if (g_events != NULL)
 		al_destroy_event_queue(g_events);
 	g_events = NULL;
-	game_free(g_game_fs);
+	game_unref(g_game_fs);
 	g_game_fs = NULL;
 	al_uninstall_system();
 }

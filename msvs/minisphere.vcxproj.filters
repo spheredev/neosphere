@@ -221,9 +221,6 @@
     <ClInclude Include="..\src\minisphere\utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\minisphere\windowstyle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
@@ -264,6 +261,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\fs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minisphere\windowstyle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

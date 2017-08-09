@@ -1397,7 +1397,7 @@ duk_require_sphere_spriteset(duk_context* ctx, duk_idx_t index)
 static void
 duk_push_sphere_windowstyle(duk_context* ctx, windowstyle_t* winstyle)
 {
-	duk_push_class_obj(ctx, "ssWindowStyle", ref_windowstyle(winstyle));
+	duk_push_class_obj(ctx, "ssWindowStyle", winstyle_ref(winstyle));
 	duk_push_sphere_color(ctx, color_new(255, 255, 255, 255));
 	duk_put_prop_string(ctx, -2, "\xFF" "color_mask");
 }
@@ -2633,7 +2633,7 @@ js_GetGameList(duk_context* ctx)
 					duk_push_string(ctx, path_cstr(path));
 					duk_put_prop_string(ctx, -2, "directory");
 					duk_put_prop_index(ctx, -2, j++);
-					game_free(game);
+					game_unref(game);
 				}
 				path_free(path);
 			}
@@ -4554,10 +4554,10 @@ js_LoadWindowStyle(duk_context* ctx)
 	windowstyle_t* winstyle;
 
 	filename = duk_require_path(ctx, 0, "windowstyles", true, false);
-	if (!(winstyle = load_windowstyle(filename)))
+	if (!(winstyle = winstyle_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load windowstyle `%s`", filename);
 	duk_push_sphere_windowstyle(ctx, winstyle);
-	free_windowstyle(winstyle);
+	winstyle_unref(winstyle);
 	return 1;
 }
 
@@ -9040,10 +9040,10 @@ js_Surface_zoomBlitSurface(duk_context* ctx)
 static duk_ret_t
 js_WindowStyle_finalize(duk_context* ctx)
 {
-	windowstyle_t* style;
+	windowstyle_t* winstyle;
 
-	style = duk_require_class_obj(ctx, 0, "ssWindowStyle");
-	free_windowstyle(style);
+	winstyle = duk_require_class_obj(ctx, 0, "ssWindowStyle");
+	winstyle_unref(winstyle);
 	return 0;
 }
 
@@ -9066,17 +9066,17 @@ js_WindowStyle_drawWindow(duk_context* ctx)
 	width = duk_to_int(ctx, 2);
 	height = duk_to_int(ctx, 3);
 
-	draw_window(winstyle, mask, x, y, width, height);
+	winstyle_draw(winstyle, mask, x, y, width, height);
 	return 0;
 }
 
 static duk_ret_t
 js_WindowStyle_getColorMask(duk_context* ctx)
 {
-	windowstyle_t* style;
+	windowstyle_t* winstyle;
 
 	duk_push_this(ctx);
-	style = duk_require_class_obj(ctx, -1, "ssWindowStyle");
+	winstyle = duk_require_class_obj(ctx, -1, "ssWindowStyle");
 
 	duk_get_prop_string(ctx, -2, "\xFF" "color_mask");
 	return 1;
@@ -9086,10 +9086,10 @@ static duk_ret_t
 js_WindowStyle_setColorMask(duk_context* ctx)
 {
 	color_t        mask;
-	windowstyle_t* style;
+	windowstyle_t* winstyle;
 
 	duk_push_this(ctx);
-	style = duk_require_class_obj(ctx, -1, "ssWindowStyle");
+	winstyle = duk_require_class_obj(ctx, -1, "ssWindowStyle");
 	mask = duk_require_sphere_color(ctx, 0);
 
 	duk_push_sphere_color(ctx, mask);

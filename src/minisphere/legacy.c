@@ -41,7 +41,7 @@ legacy_init(void)
 	path = game_canonicalize(NULL,
 		kev_read_string(system_ini, "WindowStyle", "system.rws"),
 		"#/", true);
-	s_default_windowstyle = load_windowstyle(path_cstr(path));
+	s_default_windowstyle = winstyle_load(path_cstr(path));
 	path_free(path);
 
 	// system default pointer image

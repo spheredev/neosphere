@@ -58,7 +58,7 @@ kev_close(kev_file_t* file)
 	if (file->is_dirty)
 		kev_save(file);
 	al_destroy_config(file->conf);
-	game_free(file->game);
+	game_unref(file->game);
 	free(file);
 }
 

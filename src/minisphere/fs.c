@@ -194,7 +194,7 @@ game_ref(game_t* game)
 }
 
 void
-game_free(game_t* game)
+game_unref(game_t* game)
 {
 	if (game == NULL || --game->refcount > 0)
 		return;

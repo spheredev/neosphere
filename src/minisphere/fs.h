@@ -16,7 +16,7 @@ enum whence
 
 game_t*          game_open         (const char* game_path);
 game_t*          game_ref          (game_t* game);
-void             game_free         (game_t* game);
+void             game_unref        (game_t* game);
 const char*      game_author       (const game_t* game);
 bool             game_dir_exists   (const game_t* game, const char* dirname, const char* base_dir);
 bool             game_file_exists  (game_t* game, const char* filename, const char* base_dir);
