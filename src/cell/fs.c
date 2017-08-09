@@ -147,7 +147,7 @@ fs_is_game_dir(const fs_t* fs, const char* dirname)
 	if (!(resolved_name = resolve(fs, dirname)))
 		return false;
 	full_path = path_new_dir(resolved_name);
-	retval = path_cmp(full_path, fs->game_path);
+	retval = path_is(full_path, fs->game_path);
 	path_free(full_path);
 	return retval;
 }
@@ -340,19 +340,19 @@ resolve(const fs_t* fs, const char* filename)
 
 	if (path_num_hops(path) == 0)
 		path_rebase(path, fs->root_path);
-	else if (path_hop_cmp(path, 0, "$")) {
+	else if (path_hop_is(path, 0, "$")) {
 		path_remove_hop(path, 0);
 		path_rebase(path, fs->root_path);
 	}
-	else if (path_hop_cmp(path, 0, "@")) {
+	else if (path_hop_is(path, 0, "@")) {
 		path_remove_hop(path, 0);
 		path_rebase(path, fs->game_path);
 	}
-	else if (path_hop_cmp(path, 0, "#")) {
+	else if (path_hop_is(path, 0, "#")) {
 		path_remove_hop(path, 0);
 		path_rebase(path, fs->system_path);
 	}
-	else if (path_hop_cmp(path, 0, "~"))
+	else if (path_hop_is(path, 0, "~"))
 		if (fs->user_path == NULL)
 			// no user directory set, ~/ is a sandbox violation.
 			goto on_error;

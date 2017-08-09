@@ -181,7 +181,7 @@ path_num_hops(const path_t* path)
 }
 
 bool
-path_filename_cmp(const path_t* path, const char* name)
+path_filename_is(const path_t* path, const char* name)
 {
 	if (path->filename == NULL)
 		return false;
@@ -189,7 +189,7 @@ path_filename_cmp(const path_t* path, const char* name)
 }
 
 bool
-path_hop_cmp(const path_t* path, size_t idx, const char* name)
+path_hop_is(const path_t* path, size_t idx, const char* name)
 {
 	return strcmp(path->hops[idx], name) == 0;
 }
@@ -273,7 +273,7 @@ path_change_name(path_t* path, const char* filename)
 }
 
 bool
-path_cmp(const path_t* path1, const path_t* path2)
+path_is(const path_t* path1, const path_t* path2)
 {
 	bool    retval;
 	path_t* cmp1;

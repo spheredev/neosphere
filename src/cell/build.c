@@ -286,7 +286,7 @@ build_package(build_t* build, const char* filename)
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
 		in_path = target_path(*p_target);
-		if (path_num_hops(in_path) == 0 || !path_hop_cmp(in_path, 0, "@"))
+		if (path_num_hops(in_path) == 0 || !path_hop_is(in_path, 0, "@"))
 			continue;
 		out_path = path_dup(target_path(*p_target));
 		path_remove_hop(out_path, 0);
@@ -348,7 +348,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
 		path = target_path(*p_target);
-		if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
+		if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
 			continue;
 		target_build(*p_target, build->visor, rebuild_all);
 	}
@@ -380,7 +380,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		iter = vector_enum(build->targets);
 		while (p_target = vector_next(&iter)) {
 			path = target_path(*p_target);
-			if (path_num_hops(path) == 0 || !path_hop_cmp(path, 0, "@"))
+			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
 				continue;
 			if (!(source_path = target_source_path(*p_target)))
 				continue;
@@ -750,7 +750,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	while (p_path = vector_next(&iter)) {
 		ignore_dir = fs_is_game_dir(fs, path_cstr(*p_path))
 			&& path_num_hops(path) > 0
-			&& !path_hop_cmp(path, 0, "@");
+			&& !path_hop_is(path, 0, "@");
 		if (!path_is_file(*p_path) && !ignore_dir && recursive) {
 			name = path_new_dir(path_hop(*p_path, path_num_hops(*p_path) - 1));
 			file_path = path_dup(*p_path);

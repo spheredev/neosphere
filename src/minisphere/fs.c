@@ -70,7 +70,7 @@ game_open(const char* game_path)
 		game->root_path = path_dup(path);
 		game->spk = spk;
 	}
-	else if (path_has_extension(path, ".sgm") || path_filename_cmp(path, "game.json")) {  // game manifest
+	else if (path_has_extension(path, ".sgm") || path_filename_is(path, "game.json")) {  // game manifest
 		game->type = SPHEREFS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 	}
@@ -323,7 +323,7 @@ game_canonicalize(const game_t* game, const char* filename, const char* base_dir
 	if (path_is_rooted(path))  // absolute path?
 		return path;
 
-	if (legacy && path_num_hops(path) >= 1 && path_hop_cmp(path, 0, "~")) {
+	if (legacy && path_num_hops(path) >= 1 && path_hop_is(path, 0, "~")) {
 		path_remove_hop(path, 0);
 		path_insert_hop(path, 0, "@");
 	}
@@ -457,19 +457,29 @@ on_error:
 bool
 game_rename(game_t* game, const char* name1, const char* name2, const char* base_dir)
 {
-	enum fs_type fs_type;
+	enum fs_type fs_type_1;
+	enum fs_type fs_type_2;
 	path_t*      path1;
 	path_t*      path2;
 
-	if (!resolve_path(game, name1, base_dir, &path1, &fs_type))
+	if (!resolve_path(game, name1, base_dir, &path1, &fs_type_1))
 		return false;
-	if (!resolve_path(game, name2, base_dir, &path2, &fs_type))
+	if (!resolve_path(game, name2, base_dir, &path2, &fs_type_2))
 		return false;
-	switch (fs_type) {
+	if (fs_type_2 != fs_type_1)
+		return false;  // can't cross file system boundaries
+	switch (fs_type_1) {
 	case SPHEREFS_LOCAL:
+		// here's where we have to be careful.  on some platforms rename() with the same
+		// filename for old and new will delete the file (!), and it will also happily overwrite
+		// any existing file with the same name.
+		if (path_is(path1, path2))
+			return true;  // avoid rename() deleting file if name1 == name2
+		if (game_file_exists(game, name2, NULL) || game_dir_exists(game, name2, NULL))
+			return false; // don't overwrite existing file
 		return rename(path_cstr(path1), path_cstr(path2)) == 0;
 	case SPHEREFS_SPK:
-		return false;
+		return false;  // SPK packages are not writable
 	default:
 		return false;
 	}
@@ -550,6 +560,8 @@ file_open(game_t* game, const char* filename, const char* base_dir, const char* 
 		if (!(file->spk_file = spk_fopen(game->spk, path_cstr(file_path), mode)))
 			goto on_error;
 		break;
+	default:
+		goto on_error;
 	}
 	path_free(file_path);
 	return file;
@@ -787,7 +799,7 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 		if (game == NULL)
 			goto on_error;
 		*out_path = game_canonicalize(game, filename, base_dir, false);
-		if (path_num_hops(*out_path) > 0 && path_hop_cmp(*out_path, 0, "@"))
+		if (path_num_hops(*out_path) > 0 && path_hop_is(*out_path, 0, "@"))
 			path_remove_hop(*out_path, 0);
 		if (game->type == SPHEREFS_LOCAL)  // convert to absolute path
 			path_rebase(*out_path, game->root_path);
