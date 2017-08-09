@@ -228,7 +228,7 @@ main(int argc, char* argv[])
 	screen_show_mouse(g_screen, false);
 
 	// load the core-js polyfill (ES2015+ builtins)
-	if (game_file_exists(g_game_fs, "#/shim.js", NULL) && !script_eval("#/shim.js", false))
+	if (game_file_exists(g_game_fs, "#/shim.js") && !script_eval("#/shim.js", false))
 		goto on_js_error;
 
 	// enable the SSj debug server, wait for a connection if requested.

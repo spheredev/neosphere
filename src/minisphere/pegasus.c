@@ -768,7 +768,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 
 	console_log(1, "initializing JS module `%s`", filename);
 
-	source = game_read_file(g_game_fs, filename, NULL, &source_size);
+	source = game_read_file(g_game_fs, filename, &source_size);
 	code_string = lstr_from_cp1252(source, source_size);
 	free(source);
 
@@ -967,14 +967,14 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 			path_collapse(path, true);
 		}
 		free(filename);
-		if (game_file_exists(g_game_fs, path_cstr(path), NULL)) {
+		if (game_file_exists(g_game_fs, path_cstr(path))) {
 			if (strcmp(path_filename(path), "package.json") != 0) {
 				return path;
 			}
 			else {
 				if (!(main_path = load_package_json(path_cstr(path))))
 					goto next_filename;
-				if (game_file_exists(g_game_fs, path_cstr(main_path), NULL)) {
+				if (game_file_exists(g_game_fs, path_cstr(main_path))) {
 					path_free(path);
 					return main_path;
 				}
@@ -1018,7 +1018,7 @@ load_package_json(const char* filename)
 	path_t*   path;
 
 	duk_top = duk_get_top(g_duk);
-	if (!(json = game_read_file(g_game_fs, filename, NULL, &json_size)))
+	if (!(json = game_read_file(g_game_fs, filename, &json_size)))
 		goto on_error;
 	duk_push_lstring(g_duk, json, json_size);
 	free(json);
@@ -1032,7 +1032,7 @@ load_package_json(const char* filename)
 	path = path_strip(path_new(filename));
 	path_append(path, duk_get_string(g_duk, -1));
 	path_collapse(path, true);
-	if (!game_file_exists(g_game_fs, path_cstr(path), NULL))
+	if (!game_file_exists(g_game_fs, path_cstr(path)))
 		goto on_error;
 	return path;
 
@@ -1520,7 +1520,7 @@ js_FS_createDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!game_mkdir(g_game_fs, name, NULL))
+	if (!game_mkdir(g_game_fs, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
 	return 0;
 }
@@ -1532,7 +1532,7 @@ js_FS_deleteFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!game_unlink(g_game_fs, filename, NULL))
+	if (!game_unlink(g_game_fs, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file", filename);
 	return 0;
 }
@@ -1544,7 +1544,7 @@ js_FS_directoryExists(duk_context* ctx)
 
 	dirname = duk_require_path(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, game_dir_exists(g_game_fs, dirname, NULL));
+	duk_push_boolean(ctx, game_dir_exists(g_game_fs, dirname));
 	return 1;
 }
 
@@ -1555,7 +1555,7 @@ js_FS_fileExists(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, game_file_exists(g_game_fs, filename, NULL));
+	duk_push_boolean(ctx, game_file_exists(g_game_fs, filename));
 	return 1;
 }
 
@@ -1590,7 +1590,7 @@ js_FS_readFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	if (!(file_data = game_read_file(g_game_fs, filename, NULL, &file_size)))
+	if (!(file_data = game_read_file(g_game_fs, filename, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
 	content = lstr_from_cp1252(file_data, file_size);
 	duk_push_lstring_t(ctx, content);
@@ -1604,7 +1604,7 @@ js_FS_removeDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!game_rmdir(g_game_fs, name, NULL))
+	if (!game_rmdir(g_game_fs, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
 	return 0;
 }
@@ -1618,7 +1618,7 @@ js_FS_rename(duk_context* ctx)
 	name1 = duk_require_path(ctx, 0, NULL, false, true);
 	name2 = duk_require_path(ctx, 1, NULL, false, true);
 
-	if (!game_rename(g_game_fs, name1, name2, NULL))
+	if (!game_rename(g_game_fs, name1, name2))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
 }
@@ -1636,7 +1636,7 @@ js_FS_writeFile(duk_context* ctx)
 
 	file_data = lstr_cstr(text);
 	file_size = lstr_len(text);
-	if (!game_write_file(g_game_fs, filename, NULL, file_data, file_size))
+	if (!game_write_file(g_game_fs, filename, file_data, file_size))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
 	return 0;
@@ -1659,13 +1659,13 @@ js_new_FileStream(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
 
 	filename = duk_require_path(ctx, 0, NULL, false, file_op != FILE_OP_READ);
-	if (file_op == FILE_OP_UPDATE && !game_file_exists(g_game_fs, filename, NULL))
+	if (file_op == FILE_OP_UPDATE && !game_file_exists(g_game_fs, filename))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
 		: file_op == FILE_OP_WRITE ? "w+b"
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
-	if (!(file = file_open(g_game_fs, filename, NULL, mode)))
+	if (!(file = file_open(g_game_fs, filename, mode)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to open file");
 	if (file_op == FILE_OP_UPDATE)
 		file_seek(file, 0, WHENCE_END);

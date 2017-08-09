@@ -41,7 +41,7 @@ struct file
 };
 
 static duk_ret_t duk_load_s2gm (duk_context* ctx, void* udata);
-static bool      resolve_path  (const game_t* game, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type);
+static bool      resolve_path  (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_game_id = 1;
 
@@ -112,7 +112,7 @@ game_open(const char* game_path)
 
 	// try to load the game manifest if one hasn't been synthesized already
 	if (game->name == NULL) {
-		if (sgm_text = game_read_file(game, "game.json", NULL, &sgm_size)) {
+		if (sgm_text = game_read_file(game, "game.json", &sgm_size)) {
 			console_log(1, "parsing JSON manifest for game #%u", s_next_game_id);
 			game->manifest = lstr_from_cp1252(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, game);
@@ -166,7 +166,7 @@ game_open(const char* game_path)
 	console_log(1, "       save ID: %s", game_save_id(game));
 
 	// load the source map
-	if (sourcemap_data = game_read_file(game, "source.json", NULL, &sourcemap_size))
+	if (sourcemap_data = game_read_file(game, "source.json", &sourcemap_size))
 		game->sourcemap = lstr_from_cp1252(sourcemap_data, sourcemap_size);
 	free(sourcemap_data);
 
@@ -217,13 +217,13 @@ game_author(const game_t* game)
 }
 
 bool
-game_dir_exists(const game_t* game, const char* dirname, const char* base_dir)
+game_dir_exists(const game_t* game, const char* dirname)
 {
 	path_t*      dir_path = NULL;
 	enum fs_type fs_type;
 	struct stat  stats;
 
-	if (!resolve_path(game, dirname, base_dir, &dir_path, &fs_type))
+	if (!resolve_path(game, dirname, &dir_path, &fs_type))
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -244,11 +244,11 @@ on_error:
 }
 
 bool
-game_file_exists(game_t* game, const char* filename, const char* base_dir)
+game_file_exists(game_t* game, const char* filename)
 {
 	file_t* file;
 
-	if (!(file = file_open(game, filename, base_dir, "rb")))
+	if (!(file = file_open(game, filename, "rb")))
 		return false;
 	file_close(file);
 	return true;
@@ -366,7 +366,7 @@ game_canonicalize(const game_t* game, const char* filename, const char* base_dir
 }
 
 vector_t*
-game_list_dir(const game_t* game, const char* dirname, const char* base_dir, bool want_dirs)
+game_list_dir(const game_t* game, const char* dirname, bool want_dirs)
 {
 	path_t*           dir_path;
 	ALLEGRO_FS_ENTRY* file_info;
@@ -377,7 +377,7 @@ game_list_dir(const game_t* game, const char* dirname, const char* base_dir, boo
 	vector_t*         list = NULL;
 	int               type_flag;
 
-	if (!resolve_path(game, dirname, base_dir, &dir_path, &fs_type))
+	if (!resolve_path(game, dirname, &dir_path, &fs_type))
 		goto on_error;
 	if (!(list = vector_new(sizeof(lstring_t*))))
 		goto on_error;
@@ -412,12 +412,12 @@ on_error:
 }
 
 bool
-game_mkdir(game_t* game, const char* dirname, const char* base_dir)
+game_mkdir(game_t* game, const char* dirname)
 {
 	enum fs_type  fs_type;
 	path_t*       path;
 
-	if (!resolve_path(game, dirname, base_dir, &path, &fs_type))
+	if (!resolve_path(game, dirname, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -430,13 +430,13 @@ game_mkdir(game_t* game, const char* dirname, const char* base_dir)
 }
 
 void*
-game_read_file(game_t* game, const char* filename, const char* base_dir, size_t *out_size)
+game_read_file(game_t* game, const char* filename, size_t *out_size)
 {
 	size_t  data_size;
 	file_t* file = NULL;
 	void*   slurp;
 
-	if (!(file = file_open(game, filename, base_dir, "rb")))
+	if (!(file = file_open(game, filename, "rb")))
 		goto on_error;
 	file_seek(file, 0, WHENCE_END);
 	data_size = file_position(file);
@@ -456,16 +456,16 @@ on_error:
 }
 
 bool
-game_rename(game_t* game, const char* name1, const char* name2, const char* base_dir)
+game_rename(game_t* game, const char* name1, const char* name2)
 {
 	enum fs_type fs_type_1;
 	enum fs_type fs_type_2;
 	path_t*      path1;
 	path_t*      path2;
 
-	if (!resolve_path(game, name1, base_dir, &path1, &fs_type_1))
+	if (!resolve_path(game, name1, &path1, &fs_type_1))
 		return false;
-	if (!resolve_path(game, name2, base_dir, &path2, &fs_type_2))
+	if (!resolve_path(game, name2, &path2, &fs_type_2))
 		return false;
 	if (fs_type_2 != fs_type_1)
 		return false;  // can't cross file system boundaries
@@ -476,7 +476,7 @@ game_rename(game_t* game, const char* name1, const char* name2, const char* base
 		// any existing file with the same name.
 		if (path_is(path1, path2))
 			return true;  // avoid rename() deleting file if name1 == name2
-		if (game_file_exists(game, name2, NULL) || game_dir_exists(game, name2, NULL))
+		if (game_file_exists(game, name2) || game_dir_exists(game, name2))
 			return false; // don't overwrite existing file
 		return rename(path_cstr(path1), path_cstr(path2)) == 0;
 	case FS_SPK:
@@ -487,12 +487,12 @@ game_rename(game_t* game, const char* name1, const char* name2, const char* base
 }
 
 bool
-game_rmdir(game_t* game, const char* dirname, const char* base_dir)
+game_rmdir(game_t* game, const char* dirname)
 {
 	enum fs_type fs_type;
 	path_t*      path;
 
-	if (!resolve_path(game, dirname, base_dir, &path, &fs_type))
+	if (!resolve_path(game, dirname, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -505,11 +505,11 @@ game_rmdir(game_t* game, const char* dirname, const char* base_dir)
 }
 
 bool
-game_write_file(game_t* game, const char* filename, const char* base_dir, const void* buf, size_t size)
+game_write_file(game_t* game, const char* filename, const void* buf, size_t size)
 {
 	file_t* file = NULL;
 
-	if (!(file = file_open(game, filename, base_dir, "wb")))
+	if (!(file = file_open(game, filename, "wb")))
 		return false;
 	file_write(buf, size, 1, file);
 	file_close(file);
@@ -517,12 +517,12 @@ game_write_file(game_t* game, const char* filename, const char* base_dir, const 
 }
 
 bool
-game_unlink(game_t* game, const char* filename, const char* base_dir)
+game_unlink(game_t* game, const char* filename)
 {
 	enum fs_type fs_type;
 	path_t*      path;
 
-	if (!resolve_path(game, filename, base_dir, &path, &fs_type))
+	if (!resolve_path(game, filename, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -535,7 +535,7 @@ game_unlink(game_t* game, const char* filename, const char* base_dir)
 }
 
 file_t*
-file_open(game_t* game, const char* filename, const char* base_dir, const char* mode)
+file_open(game_t* game, const char* filename, const char* mode)
 {
 	path_t* dir_path;
 	file_t* file;
@@ -543,7 +543,7 @@ file_open(game_t* game, const char* filename, const char* base_dir, const char* 
 
 	file = calloc(1, sizeof(file_t));
 
-	if (!resolve_path(game, filename, base_dir, &file_path, &file->fs_type))
+	if (!resolve_path(game, filename, &file_path, &file->fs_type))
 		goto on_error;
 	switch (file->fs_type) {
 	case FS_LOCAL:
@@ -739,7 +739,7 @@ on_error:
 }
 
 static bool
-resolve_path(const game_t* game, const char* filename, const char* base_dir, path_t* *out_path, enum fs_type *out_fs_type)
+resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type)
 {
 	// the path resolver is the core of SphereFS. it handles all canonization of paths
 	// so that the game doesn't have to care whether it's running from a local directory,
@@ -799,10 +799,13 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 		path_free(origin);
 		*out_fs_type = FS_LOCAL;
 	}
-	else {  // default case: assume relative path
+	else {  // no prefix: relative to `@/`
+		// note: this shouldn't actually happen, since `game_canonicalize()` always adds a prefix.
+		//       however, there might still be some places internally where an unqualified path is
+		//       used, so better to handle it here.
 		if (game == NULL)
 			goto on_error;
-		*out_path = game_canonicalize(game, filename, base_dir, false);
+		*out_path = game_canonicalize(game, filename, NULL, false);
 		if (path_num_hops(*out_path) > 0 && path_hop_is(*out_path, 0, "@"))
 			path_remove_hop(*out_path, 0);
 		if (game->type == FS_LOCAL)  // convert to absolute path

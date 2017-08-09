@@ -67,7 +67,7 @@ tileset_new(const char* filename)
 
 	console_log(2, "loading tileset #%u as `%s`", s_next_tileset_id, filename);
 
-	if ((file = file_open(g_game_fs, filename, NULL, "rb")) == NULL)
+	if ((file = file_open(g_game_fs, filename, "rb")) == NULL)
 		goto on_error;
 	tileset = tileset_read(file);
 	file_close(file);

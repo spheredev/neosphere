@@ -174,7 +174,7 @@ spriteset_load(const char* filename)
 	// filename not in load cache, load the spriteset
 	console_log(2, "loading spriteset #%u as `%s`", s_next_spriteset_id, filename);
 	spriteset = spriteset_new();
-	if (!(file = file_open(g_game_fs, filename, NULL, "rb")))
+	if (!(file = file_open(g_game_fs, filename, "rb")))
 		goto on_error;
 	if (file_read(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
@@ -545,7 +545,7 @@ spriteset_save(const spriteset_t* it, const char* filename)
 
 	int i, j;
 
-	file = file_open(g_game_fs, filename, NULL, "wb");
+	file = file_open(g_game_fs, filename, "wb");
 
 	// write out the RSS header	first
 	image = spriteset_image(it, 0);

@@ -45,7 +45,7 @@ script_eval(const char* filename, bool as_module)
 		// the existence check here is needed because eval_module() will segfault if the
 		// file doesn't exist.  it's an ugly hack, but a proper fix needs some refactoring
 		// that I'm not up for right now.
-		if (!game_file_exists(g_game_fs, filename, NULL))
+		if (!game_file_exists(g_game_fs, filename))
 			goto on_error;
 		if (!duk_pegasus_eval_module(g_duk, filename))
 			goto on_error;
@@ -54,7 +54,7 @@ script_eval(const char* filename, bool as_module)
 	else {
 		path = game_canonicalize(g_game_fs, filename, NULL, false);
 		source_name = debugger_source_name(path_cstr(path));
-		if (!(slurp = game_read_file(g_game_fs, filename, NULL, &size)))
+		if (!(slurp = game_read_file(g_game_fs, filename, &size)))
 			goto on_error;
 		source_text = lstr_from_cp1252(slurp, size);
 		free(slurp);

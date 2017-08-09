@@ -2241,7 +2241,7 @@ load_map(const char* filename)
 
 	memset(&rmp, 0, sizeof(struct rmp_header));
 
-	if (!(file = file_open(g_game_fs, filename, NULL, "rb")))
+	if (!(file = file_open(g_game_fs, filename, "rb")))
 		goto on_error;
 	map = calloc(1, sizeof(struct map));
 	if (file_read(&rmp, sizeof(struct rmp_header), 1, file) != 1)
