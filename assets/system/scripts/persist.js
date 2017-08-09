@@ -15,7 +15,7 @@
 	with the existing world without breaking some things.
 */
 
-var analogue = (function() {
+var persist = (function() {
 	var mapEvents = [{fn:'enter',      event:SCRIPT_ON_ENTER_MAP},
 					 {fn:'leave',      event:SCRIPT_ON_LEAVE_MAP},
 					 {fn:'leaveNorth', event:SCRIPT_ON_LEAVE_MAP_NORTH},
@@ -98,9 +98,9 @@ var analogue = (function() {
 	
 	function BindMapEvents() {
 		for (var i = 0; i < mapEvents.length; ++i) {
-			SetDefaultMapScript(mapEvents[i].event, "analogue.runMapEvent(GetCurrentMap(), '" + mapEvents[i].fn + "');");
+			SetDefaultMapScript(mapEvents[i].event, "persist.runMapEvent(GetCurrentMap(), '" + mapEvents[i].fn + "');");
 		}
-		SetDefaultMapScript(SCRIPT_ON_ENTER_MAP, "analogue.initMap();");
+		SetDefaultMapScript(SCRIPT_ON_ENTER_MAP, "persist.initMap();");
 	}
 	
 	/* Person Layer */
@@ -119,7 +119,7 @@ var analogue = (function() {
 		for (var i = 0, list = GetPersonList(); i < list.length; ++i) {
 			if (list[i] == "" || (IsInputAttached() && list[i] == GetInputPerson())) continue;
 			for (var j = 0; j < personEvents.length; ++j) {
-				SetPersonScript(list[i], personEvents[j].event, "analogue.runPersonEvent(GetCurrentMap(), '" + list[i] + "', '" + personEvents[j].fn + "');");
+				SetPersonScript(list[i], personEvents[j].event, "persist.runPersonEvent(GetCurrentMap(), '" + list[i] + "', '" + personEvents[j].fn + "');");
 			}
 		}
 	}
