@@ -25,11 +25,11 @@ legacy_init(void)
 {
 	path_t*     path;
 	kev_file_t* system_ini;
-	
+
 	console_log(1, "initializing legacy subsystem");
 
 	system_ini = kev_open(NULL, "#/system.ini", false);
-	
+
 	// system default font
 	path = game_canonicalize(NULL,
 		kev_read_string(system_ini, "Font", "system.rfn"),

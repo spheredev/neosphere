@@ -213,7 +213,7 @@ do_command_line(session_t* obj)
 	buffer[idx] = '\0';
 	if (!(command = command_parse(buffer)))
 		goto finished;
-	
+
 	// if the command line is empty, this is a cue from the user that we should
 	// repeat the last command.  the implementation of this is a bit hacky and would benefit
 	// from some refactoring in the future.
@@ -309,7 +309,7 @@ resolve_command(command_t* command)
 
 	if (command_len(command) < 1)
 		return NULL;
-	
+
 	if (!(verb = find_verb(command_get_string(command, 0), &pattern)))
 		return NULL;
 	return validate_args(command, verb, pattern)
@@ -517,7 +517,7 @@ static void
 handle_help(session_t* obj, command_t* cmd)
 {
 	const char* verb;
-	
+
 	if (command_len(cmd) > 1) {
 		if (!(verb = find_verb(command_get_string(cmd, 1), NULL)))
 			return;

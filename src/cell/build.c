@@ -156,7 +156,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_property(ctx, "Target", "name", js_Target_get_name, NULL);
 	api_define_class(ctx, "Tool", js_new_Tool, js_Tool_finalize);
 	api_define_method(ctx, "Tool", "stage", js_Tool_stage);
-	
+
 	api_define_const(ctx, "FileOp", "Read", FILE_OP_READ);
 	api_define_const(ctx, "FileOp", "Write", FILE_OP_WRITE);
 	api_define_const(ctx, "FileOp", "Update", FILE_OP_UPDATE);
@@ -166,7 +166,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	duk_push_object(ctx);
 	duk_put_prop_string(ctx, -2, "descriptor");
 	duk_pop(ctx);
-	
+
 	// create a Tool for the install() function to use
 	duk_push_global_stash(ctx);
 	duk_push_c_function(ctx, install_target, DUK_VARARGS);
@@ -237,7 +237,7 @@ build_eval(build_t* build, const char* filename)
 
 	if (fs_stat(build->fs, filename, &stats) != 0)
 		return false;
-	
+
 	visor_begin_op(build->visor, "evaluating '%s'", filename);
 	build->timestamp = stats.st_mtime;
 	path = path_new(filename);
@@ -343,7 +343,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		visor_end_op(build->visor);
 		goto finished;
 	}
-	
+
 	// build all relevant targets
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
@@ -398,7 +398,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	else {
 		fs_unlink(build->fs, "@/sourceMap.json");
 	}
-	
+
 	filenames = visor_filenames(build->visor);
 	duk_push_array(build->js_context);
 	iter = vector_enum(filenames);
@@ -704,7 +704,7 @@ load_package_json(duk_context* ctx, const char* filename)
 	path_t*     path;
 
 	build = duk_get_heap_udata(ctx);
-	
+
 	duk_top = duk_get_top(ctx);
 	if (!(json = fs_fslurp(build->fs, filename, &json_size)))
 		goto on_error;
@@ -745,7 +745,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 
 	if (!(list = fs_list_dir(fs, path_cstr(path))))
 		return;
-	
+
 	iter = vector_enum(list);
 	while (p_path = vector_next(&iter)) {
 		ignore_dir = fs_is_game_dir(fs, path_cstr(*p_path))
@@ -802,7 +802,7 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 {
 	const target_t* a;
 	const target_t* b;
-	
+
 	a = *(const target_t**)p_a;
 	b = *(const target_t**)p_b;
 	return strcmp(path_cstr(target_path(a)), path_cstr(target_path(b)));
@@ -821,9 +821,9 @@ write_manifests(build_t* build)
 	int          width;
 
 	ctx = build->js_context;
-	
+
 	visor_begin_op(build->visor, "writing Sphere manifest files");
-	
+
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "descriptor");
 
@@ -847,7 +847,7 @@ write_manifests(build_t* build)
 		duk_push_string(ctx, "No summary provided.");
 		duk_remove(ctx, -2);
 	}
-	
+
 	// note: SGMv1 encodes the resolution width and height as separate fields.
 	duk_get_prop_string(ctx, -4, "resolution");
 	if (!duk_is_string(ctx, -1)
@@ -973,7 +973,7 @@ js_install(duk_context* ctx)
 	duk_uarridx_t i;
 
 	build = duk_get_heap_udata(ctx);
-	
+
 	// retrieve the Install tool from the stash
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "installTool");
@@ -981,7 +981,7 @@ js_install(duk_context* ctx)
 	duk_pop(ctx);
 
 	dest_path = path_new_dir(duk_require_string(ctx, 0));
-	
+
 	if (duk_is_array(ctx, 1)) {
 		length = (duk_uarridx_t)duk_get_length(ctx, 1);
 		for (i = 0; i < length; ++i) {
@@ -1218,7 +1218,7 @@ js_FS_writeFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL);
 	text = duk_require_lstring_t(ctx, 1);
-	
+
 	if (!fs_fspew(build->fs, filename, lstr_cstr(text), lstr_len(text)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
@@ -1563,7 +1563,7 @@ js_Tool_stage(duk_context* ctx)
 	duk_uarridx_t i;
 
 	build = duk_get_heap_udata(ctx);
-	
+
 	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
 	tool = duk_require_class_obj(ctx, -1, "Tool");

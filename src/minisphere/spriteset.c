@@ -89,7 +89,7 @@ spritesets_uninit(void)
 {
 	iter_t        iter;
 	spriteset_t** p_spriteset;
-	
+
 	console_log(1, "shutting down spriteset manager");
 	console_log(2, "    objects created: %u", s_next_spriteset_id);
 	console_log(2, "    cache hits: %u", s_num_cache_hits);
@@ -109,10 +109,10 @@ spriteset_new(void)
 	spriteset_t* spriteset;
 
 	console_log(2, "constructing new spriteset #%u", s_next_spriteset_id);
-	
+
 	images = vector_new(sizeof(image_t*));
 	poses = vector_new(sizeof(struct pose));
-	
+
 	spriteset = calloc(1, sizeof(spriteset_t));
 	spriteset->id = s_next_spriteset_id++;
 	spriteset->images = images;
@@ -316,12 +316,12 @@ spriteset_clone(const spriteset_t* it)
 	spriteset_t*  dolly;
 	struct frame* frame;
 	struct pose*  pose;
-	
+
 	iter_t iter, iter2;
 
 	console_log(2, "cloning new spriteset from source spriteset #%u",
 		s_next_spriteset_id, it->id);
-	
+
 	dolly = spriteset_new();
 	dolly->filename = strdup(it->filename);
 	dolly->base = it->base;
@@ -356,7 +356,7 @@ spriteset_unref(spriteset_t* it)
 
 	if (it == NULL || --it->refcount > 0)
 		return;
-	
+
 	console_log(3, "disposing spriteset #%u no longer in use", it->id);
 	iter = vector_enum(it->images);
 	while (vector_next(&iter))
@@ -454,7 +454,7 @@ int
 spriteset_width(const spriteset_t* it)
 {
 	image_t* image;
-	
+
 	image = *(image_t**)vector_get(it->images, 0);
 	return image_width(image);
 }
@@ -544,9 +544,9 @@ spriteset_save(const spriteset_t* it, const char* filename)
 	struct rss_dir_v3   pose_data;
 
 	int i, j;
-	
+
 	file = file_open(g_game_fs, filename, NULL, "wb");
-	
+
 	// write out the RSS header	first
 	image = spriteset_image(it, 0);
 	memcpy(header.signature, ".rss", 4);
@@ -581,7 +581,7 @@ spriteset_save(const spriteset_t* it, const char* filename)
 				goto on_error;
 		}
 	}
-	
+
 	file_close(file);
 	return true;
 
@@ -617,7 +617,7 @@ find_pose_by_name(const spriteset_t* spriteset, const char* pose_name)
 		else
 			goto search_over;
 	}
-	
+
 search_over:
 	return pose != NULL ? pose : vector_get(spriteset->poses, 0);
 }

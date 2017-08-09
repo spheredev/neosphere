@@ -69,7 +69,7 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 		fprintf(stderr, "FATAL: couldn't initialize render context");
 		return NULL;
 	}
-	
+
 	if (icon != NULL) {
 		bitmap_flags = al_get_new_bitmap_flags();
 		al_set_new_bitmap_flags(
@@ -107,7 +107,7 @@ screen_free(screen_t* it)
 {
 	if (it == NULL)
 		return;
-	
+
 	console_log(1, "shutting down render context");
 	image_unref(it->backbuffer);
 	al_destroy_display(it->display);
@@ -370,7 +370,7 @@ screen_resize(screen_t* it, int x_size, int y_size)
 {
 	it->x_size = x_size;
 	it->y_size = y_size;
-	
+
 	refresh_display(it);
 }
 
@@ -433,13 +433,13 @@ refresh_display(screen_t* screen)
 		screen->y_scale = ((desktop_info.y2 - desktop_info.y1) / 2) / screen->y_size;
 		screen->x_scale = screen->y_scale = fmax(fmin(screen->x_scale, screen->y_scale), 1.0);
 		screen->x_offset = screen->y_offset = 0.0;
-		
+
 		// size and recenter the window
 		al_resize_display(screen->display, screen->x_size * screen->x_scale, screen->y_size * screen->y_scale);
 		al_set_window_position(screen->display,
 			(desktop_info.x1 + desktop_info.x2) / 2 - screen->x_size * screen->x_scale / 2,
 			(desktop_info.y1 + desktop_info.y2) / 2 - screen->y_size * screen->y_scale / 2);
 	}
-	
+
 	image_render_to(screen->backbuffer, NULL);
 }

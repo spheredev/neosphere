@@ -138,7 +138,7 @@ dvalue_free(dvalue_t* obj)
 {
 	if (obj == NULL)
 		return;
-	
+
 	if (obj->tag == DVALUE_STRING || obj->tag == DVALUE_BUFFER)
 		free(obj->buffer.data);
 	free(obj);

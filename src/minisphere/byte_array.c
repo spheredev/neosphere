@@ -127,7 +127,7 @@ bytearray_t*
 bytearray_deflate(bytearray_t* array, int level)
 {
 	static const int CHUNK_SIZE = 65536;
-	
+
 	uint8_t*     buffer = NULL;
 	int          flush_flag;
 	int          result;

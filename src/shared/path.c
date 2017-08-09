@@ -93,10 +93,10 @@ void
 path_free(path_t* path)
 {
 	size_t i;
-	
+
 	if (path == NULL)
 		return;
-	
+
 	for (i = 0; i < path->num_hops; ++i)
 		free(path->hops[i]);
 	free(path->hops);
@@ -120,7 +120,7 @@ const char*
 path_extension(const path_t* path)
 {
 	char* p;
-	
+
 	if (path->filename == NULL)
 		return NULL;
 	else {
@@ -240,7 +240,7 @@ path_append(path_t* path, const char* pathname)
 		token = strtok_r(NULL, "/", &p);
 	}
 	free(parse);
-	
+
 	path_collapse(path, false);
 	refresh_pathname(path);
 	return path;
@@ -293,7 +293,7 @@ path_collapse(path_t* path, bool collapse_uplevel)
 	bool        collapse_ok = false;
 	const char* hop;
 	bool        is_rooted;
-	
+
 	size_t i;
 
 	is_rooted = path_is_rooted(path);
@@ -318,7 +318,7 @@ path_t*
 path_insert_hop(path_t* path, size_t idx, const char* name)
 {
 	size_t i;
-	
+
 	for (i = path->num_hops; i > idx; --i)
 		path->hops[i] = path->hops[i - 1];
 	++path->num_hops;
@@ -332,7 +332,7 @@ path_mkdir(const path_t* path)
 {
 	bool    is_ok = true;
 	path_t* parent_path;
-	
+
 	size_t i;
 
 	// appending an empty string to a path is a no-op, so we have to
@@ -340,7 +340,7 @@ path_mkdir(const path_t* path)
 	// path manually.
 	parent_path = path_num_hops(path) > 0 && strcmp(path_hop(path, 0), "") == 0
 		? path_new("/") : path_new("./");
-	
+
 	// create directories recursively, starting from the rootmost
 	// ancestor and working our way down.
 	for (i = 0; i < path->num_hops; ++i) {
@@ -359,7 +359,7 @@ path_rebase(path_t* path, const path_t* root)
 	size_t num_root_hops;
 
 	size_t i;
-	
+
 	if (path_is_rooted(path))
 		return path;
 	new_hops = malloc(PATH_MAX_HOPS * sizeof(char*));
@@ -371,7 +371,7 @@ path_rebase(path_t* path, const path_t* root)
 	free(path->hops);
 	path->hops = new_hops;
 	path->num_hops += num_root_hops;
-	
+
 	path_collapse(path, false);
 	return path;
 }

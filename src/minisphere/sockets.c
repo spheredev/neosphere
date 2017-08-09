@@ -231,7 +231,7 @@ void
 server_unref(server_t* it)
 {
 	int i;
-	
+
 	if (it == NULL || --it->refcount > 0)
 		return;
 	console_log(3, "disposing server #%u no longer in use", it->id);

@@ -30,7 +30,7 @@ command_parse(const char* string)
 	const char   *p_ch;
 	char         *p_tail;
 	struct token *tokens;
-	
+
 	tokens = malloc(array_len * sizeof(struct token));
 	p_ch = string;
 	while (*p_ch != '\0') {
@@ -88,10 +88,10 @@ command_parse(const char* string)
 		}
 		++index;
 	}
-	
+
 	if (index > 0 && tokens[0].tag != TOK_STRING)
 		goto syntax_error;
-	
+
 	obj = calloc(1, sizeof(command_t));
 	obj->num_tokens = index;
 	obj->tokens = tokens;
@@ -109,7 +109,7 @@ command_free(command_t* obj)
 
 	if (obj == NULL)
 		return;
-	
+
 	for (i = 0; i < obj->num_tokens; ++i)
 		free(obj->tokens[i].string);
 	free(obj->tokens);

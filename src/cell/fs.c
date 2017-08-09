@@ -248,7 +248,7 @@ fs_rename(const fs_t* fs, const char* old_name, const char* new_name)
 	char* resolved_old;
 	char* resolved_new;
 	int   retval;
-	
+
 	resolved_old = resolve(fs, old_name);
 	resolved_new = resolve(fs, new_name);
 	if (resolved_old == NULL || resolved_new == NULL)
@@ -333,7 +333,7 @@ resolve(const fs_t* fs, const char* filename)
 {
 	char*   resolved_name;
 	path_t* path;
-	
+
 	path = path_new(filename);
 	if (path_is_rooted(path))
 		goto on_error;
@@ -362,7 +362,7 @@ resolve(const fs_t* fs, const char* filename)
 		}
 	else
 		path_rebase(path, fs->root_path);
-	
+
 	resolved_name = strdup(path_cstr(path));
 	path_free(path);
 	return resolved_name;

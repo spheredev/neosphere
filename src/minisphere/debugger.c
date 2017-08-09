@@ -51,7 +51,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
 	s_sources = vector_new(sizeof(struct source));
-	
+
 	// load the source map, if one is available
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
@@ -71,7 +71,7 @@ debugger_init(bool want_attach, bool allow_remote)
 		duk_put_prop_string(g_duk, -2, "debugMap");
 	}
 	duk_pop(g_duk);
-	
+
 	// listen for SSj connection on TCP port 1208. the listening socket will remain active
 	// for the duration of the session, allowing a debugger to be attached at any time.
 	console_log(1, "listening for debugger on TCP port %d", TCP_DEBUG_PORT);
@@ -90,10 +90,10 @@ debugger_uninit()
 {
 	iter_t iter;
 	struct source* p_source;
-	
+
 	do_detach_debugger(true);
 	server_unref(s_server);
-	
+
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
 		while (p_source = vector_next(&iter)) {
@@ -277,7 +277,7 @@ do_detach_debugger(bool is_shutdown)
 {
 	if (!s_is_attached)
 		return;
-	
+
 	// detach the debugger
 	console_log(1, "detaching debug session");
 	s_is_attached = false;
@@ -313,13 +313,13 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 
 	iter_t iter;
 	struct source* p_source;
-	
+
 	// the first atom must be a request ID number
 	if (nvalues < 1 || !duk_is_number(ctx, -nvalues + 0)) {
 		duk_push_string(ctx, "missing AppRequest command number");
 		return -1;
 	}
-	
+
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
 	case APPREQ_GAME_INFO:
@@ -335,7 +335,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 			duk_push_string(ctx, "missing filename for Source request");
 			return -1;
 		}
-		
+
 		name = duk_get_string(ctx, -nvalues + 1);
 		name = debugger_compiled_name(name);
 
@@ -347,14 +347,14 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 				return 1;
 			}
 		}
-		
+
 		// no cache entry, try loading the file via SphereFS
 		if ((file_data = game_read_file(g_game_fs, name, NULL, &size))) {
 			duk_push_lstring(ctx, file_data, size);
 			free(file_data);
 			return 1;
 		}
-		
+
 		duk_push_sprintf(ctx, "no source available for `%s`", name);
 		return -1;
 	case APPREQ_WATERMARK:

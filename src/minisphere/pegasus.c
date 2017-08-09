@@ -1120,7 +1120,7 @@ js_screen_set_fullScreen(duk_context* ctx)
 	bool fullscreen;
 
 	fullscreen = duk_require_boolean(ctx, 0);
-	
+
 	screen_set_fullscreen(g_screen, fullscreen);
 	return 0;
 }
@@ -1260,7 +1260,7 @@ js_Color_get_Color(duk_context* ctx)
 	duk_push_current_function(ctx);
 	duk_get_prop_string(ctx, -1, "\xFF" "index");
 	index = duk_get_int(ctx, -1);
-	
+
 	data = &COLORS[index];
 	duk_pegasus_push_color(ctx, color_new(data->r, data->g, data->b, data->a));
 	return 1;
@@ -1633,7 +1633,7 @@ js_FS_writeFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, true);
 	text = duk_require_lstring_t(ctx, 1);
-	
+
 	file_data = lstr_cstr(text);
 	file_size = lstr_len(text);
 	if (!game_write_file(g_game_fs, filename, NULL, file_data, file_size))
@@ -1652,7 +1652,7 @@ js_new_FileStream(duk_context* ctx)
 
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
-	
+
 	duk_require_string(ctx, 0);
 	file_op = duk_require_int(ctx, 1);
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
@@ -1994,7 +1994,7 @@ js_new_IndexList(duk_context* ctx)
 	int      num_entries;
 
 	int i;
-	
+
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
@@ -2049,7 +2049,7 @@ static duk_ret_t
 js_Joystick_get_Null(duk_context* ctx)
 {
 	int* device;
-	
+
 	device = malloc(sizeof(int));
 	*device = -1;
 	duk_push_class_obj(ctx, "Joystick", device);
@@ -2113,7 +2113,7 @@ js_Joystick_get_numAxes(duk_context* ctx)
 
 	duk_push_this(ctx);
 	device = duk_require_class_obj(ctx, -1, "Joystick");
-	
+
 	if (*device != -1)
 		duk_push_int(ctx, joy_num_axes(*device));
 	else
@@ -2128,7 +2128,7 @@ js_Joystick_get_numButtons(duk_context* ctx)
 
 	duk_push_this(ctx);
 	device = duk_require_class_obj(ctx, -1, "Joystick");
-	
+
 	if (*device != -1)
 		duk_push_int(ctx, joy_num_buttons(*device));
 	else
@@ -2145,7 +2145,7 @@ js_Joystick_getPosition(duk_context* ctx)
 	duk_push_this(ctx);
 	device = duk_require_class_obj(ctx, -1, "Joystick");
 	index = duk_require_int(ctx, 0);
-	
+
 	if (*device != -1 && (index < 0 || index >= joy_num_axes(*device)))
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "joystick axis ID out of range");
 
@@ -2192,7 +2192,7 @@ js_Keyboard_get_capsLock(duk_context* ctx)
 {
 	duk_push_this(ctx);
 	duk_require_class_obj(ctx, -1, "Keyboard");
-	
+
 	duk_push_boolean(ctx, kb_is_toggled(ALLEGRO_KEY_CAPSLOCK));
 	return 1;
 }
@@ -2621,7 +2621,7 @@ js_Model_setFloatVector(duk_context* ctx)
 	name = duk_require_string(ctx, 0);
 	if (!duk_is_array(ctx, 1))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array was expected here");
-	
+
 	size = (int)duk_get_length(ctx, 1);
 	if (size < 2 || size > 4)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid number of components");
@@ -2749,7 +2749,7 @@ js_Mouse_get_x(duk_context* ctx)
 
 	duk_push_this(ctx);
 	duk_require_class_obj(ctx, -1, "Mouse");
-	
+
 	screen_get_mouse_xy(g_screen, &x, &y);
 	duk_push_int(ctx, x);
 	return 1;
@@ -2825,7 +2825,7 @@ js_RNG_fromSeed(duk_context* ctx)
 	xoro_t*  xoro;
 
 	seed = duk_require_number(ctx, 0);
-	
+
 	xoro = xoro_new(seed);
 	duk_push_class_obj(ctx, "RNG", xoro);
 	return 1;
@@ -2852,10 +2852,10 @@ static duk_ret_t
 js_new_RNG(duk_context* ctx)
 {
 	xoro_t* xoro;
-	
+
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
-	
+
 	xoro = xoro_new((uint64_t)(al_get_time() * 1000000));
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "RNG", xoro);
@@ -2881,7 +2881,7 @@ js_RNG_get_state(duk_context* ctx)
 
 	duk_push_this(ctx);
 	xoro = duk_require_class_obj(ctx, -1, "RNG");
-	
+
 	xoro_get_state(xoro, state);
 	duk_push_string(ctx, state);
 	return 1;
@@ -3421,7 +3421,7 @@ js_Socket_close(duk_context* ctx)
 
 	duk_push_this(ctx);
 	socket = duk_require_class_obj(ctx, -1, "Socket");
-	
+
 	duk_set_class_ptr(ctx, -1, NULL);
 	socket_unref(socket);
 	return 0;
@@ -3734,17 +3734,17 @@ js_new_SoundStream(duk_context* ctx)
 
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
-	
+
 	num_args = duk_get_top(ctx);
 	frequency = num_args >= 1 ? duk_require_int(ctx, 0) : 22050;
 	bits = num_args >= 2 ? duk_require_int(ctx, 1) : 8;
 	channels = num_args >= 3 ? duk_require_int(ctx, 2) : 1;
-	
+
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid audio bit depth");
 	if (channels < 1 || channels > 7)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid number of channels");
-	
+
 	if (!(stream = stream_new(frequency, bits, channels)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create stream");
 	duk_push_this(ctx);
@@ -4146,7 +4146,7 @@ js_Transform_get_matrix(duk_context* ctx)
 			}
 			duk_def_prop(ctx, -3, DUK_DEFPROP_SET_ENUMERABLE | DUK_DEFPROP_HAVE_VALUE);
 		}
-		
+
 		// store the generated object so we don't have to keep generating it on
 		// every access
 		duk_push_this(ctx);

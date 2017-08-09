@@ -28,7 +28,7 @@ objview_new(void)
 	objview_t* obj;
 
 	array = malloc(array_size * sizeof(struct entry));
-	
+
 	obj = calloc(1, sizeof(objview_t));
 	obj->props = array;
 	obj->array_size = array_size;
@@ -42,7 +42,7 @@ objview_free(objview_t* obj)
 
 	if (obj == NULL)
 		return;
-	
+
 	for (i = 0; i < obj->num_props; ++i) {
 		free(obj->props[i].key);
 		dvalue_free(obj->props[i].value);

@@ -201,7 +201,7 @@ main(int argc, char* argv[])
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
-	
+
 	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
@@ -505,7 +505,7 @@ find_startup_game(path_t* *out_path)
 		return true;
 	path_free(*out_path);
 	*out_path = NULL;
-	
+
 	// if we reached this point, no suitable startup game was found.
 	path_free(*out_path);
 	*out_path = NULL;
@@ -616,7 +616,7 @@ parse_command_line(
 		return false;
 	}
 #endif
-	
+
 	return true;
 
 missing_argument:

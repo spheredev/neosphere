@@ -35,9 +35,9 @@ socket_new_client(const char* hostname, int port, double timeout)
 	bool      is_connected;
 	socket_t* obj;
 	int       state;
-	
+
 	obj = calloc(1, sizeof(socket_t));
-	
+
 	obj->stream = dyad_newStream();
 	dyad_addListener(obj->stream, DYAD_EVENT_DATA, dyad_on_stream_recv, obj);
 	dyad_setNoDelay(obj->stream, true);

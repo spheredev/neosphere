@@ -61,7 +61,7 @@ open_spk(const char* path)
 	uint32_t i;
 
 	console_log(2, "opening SPK #%u as `%s`", s_next_spk_id, path);
-	
+
 	spk = calloc(1, sizeof(spk_t));
 
 	if (!(spk->file = al_fopen(path, "rb"))) goto on_error;
@@ -69,7 +69,7 @@ open_spk(const char* path)
 		goto on_error;
 	if (memcmp(spk_hdr.signature, ".spk", 4) != 0) goto on_error;
 	if (spk_hdr.version != 1) goto on_error;
-	
+
 	spk->path = path_new(path);
 
 	// load the package index
@@ -115,7 +115,7 @@ unref_spk(spk_t* spk)
 {
 	if (spk == NULL || --spk->refcount > 0)
 		return;
-	
+
 	console_log(4, "disposing SPK #%u no longer in use", spk->id);
 	vector_free(spk->index);
 	al_fclose(spk->file);
@@ -159,13 +159,13 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	path_t*       local_path;
 
 	console_log(4, "opening `%s` (%s) from SPK #%u", path, mode, spk->id);
-	
+
 	// get path to local cache file
 	cache_path = path_rebase(path_new("miniSphere/.spkCache/"), home_path());
 	path_append_dir(cache_path, path_filename(spk->path));
 	local_path = path_rebase(path_new(path), cache_path);
 	path_free(cache_path);
-	
+
 	// ensure all subdirectories exist
 	local_filename = path_cstr(local_path);
 	if (mode[0] == 'w' || mode[0] == 'a' || strchr(mode, '+'))
@@ -173,9 +173,9 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 
 	if (!(file = calloc(1, sizeof(spk_file_t))))
 		goto on_error;
-	
+
 	if (al_filename_exists(local_filename)) {
-		// local cache file already exists, open it	directly	
+		// local cache file already exists, open it	directly
 		console_log(4, "using locally cached file for #%u:`%s`", spk->id, path);
 		if (!(al_file = al_fopen(local_filename, mode)))
 			goto on_error;
@@ -206,7 +206,7 @@ spk_fopen(spk_t* spk, const char* path, const char* mode)
 	}
 
 	path_free(local_path);
-	
+
 	file->buffer = buffer;
 	file->filename = strdup(path);
 	file->handle = al_file;
@@ -283,7 +283,7 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 	iter_t iter;
 
 	console_log(3, "unpacking `%s` from SPK #%u", path, spk->id);
-	
+
 	iter = vector_enum(spk->index);
 	while (fileinfo = vector_next(&iter)) {
 		if (strcasecmp(path, fileinfo->file_path) == 0)
@@ -302,7 +302,7 @@ spk_fslurp(spk_t* spk, const char* path, size_t *out_size)
 		goto on_error;
 	*((char*)unpacked + unpack_size) = '\0';
 	free(packdata);
-	
+
 	*out_size = unpack_size;
 	return unpacked;
 
@@ -321,7 +321,7 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 	// any real concept of a directory - each asset is stored with its full path
 	// as its filename.  as such we have to do some ugly parsing and de-duplication,
 	// particularly in the case of directories.
-	
+
 	lstring_t*        filename;
 	char*             found_dirname;
 	bool              is_in_set;
@@ -330,10 +330,10 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 	const char*       maybe_filename;
 	const char*       match;
 	struct spk_entry* p_entry;
-	
+
 	iter_t iter, iter2;
 	lstring_t** item;
-	
+
 	list = vector_new(sizeof(lstring_t*));
 	iter = vector_enum(spk->index);
 	while (p_entry = vector_next(&iter)) {
@@ -349,7 +349,7 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 			}
 			if (strchr(maybe_filename, '/'))
 				continue;  // ignore files in subdirectories
-			
+
 			// if we got to this point, we have a valid filename
 			filename = lstr_newf("%s", maybe_filename);
 			vector_push(list, &filename);

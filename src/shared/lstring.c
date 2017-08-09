@@ -334,7 +334,7 @@ lstr_from_cp1252(const char* text, size_t length)
 	size_t i;
 
 	input = (uint8_t*)text;
-	
+
 	// check that the string isn't already properly encoded
 	utf8 = utf8_decode_start(false);
 	p_in = input;
@@ -389,7 +389,7 @@ int
 lstr_cmp(const lstring_t* string1, const lstring_t* string2)
 {
 	size_t length;
-	
+
 	// the fake NUL terminator comes in REALLY handy here, as we can just
 	// include it in the comparison, saving us an extra check at the end.
 	length = string1->length < string2->length

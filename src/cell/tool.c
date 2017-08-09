@@ -20,7 +20,7 @@ tool_new(duk_context* ctx, const char* verb)
 
 	callback_ptr = duk_ref_heapptr(ctx, -1);
 	duk_pop(ctx);
-	
+
 	tool = calloc(1, sizeof(tool_t));
 	tool->verb = strdup(verb);
 	tool->js_ctx = ctx;
@@ -42,7 +42,7 @@ tool_free(tool_t* tool)
 {
 	if (tool == NULL || --tool->refcount > 0)
 		return;
-	
+
 	duk_unref_heapptr(tool->js_ctx, tool->callback_ptr);
 	free(tool->verb);
 	free(tool);

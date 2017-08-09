@@ -22,7 +22,7 @@ atlas_new(int num_images, int max_width, int max_height)
 
 	console_log(4, "creating atlas #%u at %dx%d per image", s_next_atlas_id,
 		max_width, max_height);
-	
+
 	atlas = calloc(1, sizeof(atlas_t));
 	atlas->pitch = ceil(sqrt(num_images));
 	atlas->max_width = max_width;
@@ -30,7 +30,7 @@ atlas_new(int num_images, int max_width, int max_height)
 	atlas->size = rect(0, 0, atlas->pitch * atlas->max_width, atlas->pitch * atlas->max_height);
 	if (!(atlas->image = image_new(atlas->size.x2, atlas->size.y2)))
 		goto on_error;
-	
+
 	atlas->id = s_next_atlas_id++;
 	return atlas;
 
@@ -47,7 +47,7 @@ void
 atlas_free(atlas_t* atlas)
 {
 	console_log(4, "disposing atlas #%u no longer in use", atlas->id);
-	
+
 	if (atlas->lock != NULL)
 		image_unlock(atlas->image, atlas->lock);
 	image_unref(atlas->image);
@@ -66,7 +66,7 @@ atlas_uv(const atlas_t* atlas, int image_index)
 	float        atlas_height;
 	float        atlas_width;
 	float_rect_t uv;
-	
+
 	atlas_width = image_width(atlas->image);
 	atlas_height = image_height(atlas->image);
 	uv.x1 = (image_index % atlas->pitch) * atlas->max_width;
@@ -111,7 +111,7 @@ image_t*
 atlas_load(atlas_t* atlas, file_t* file, int index, int width, int height)
 {
 	int off_x, off_y;
-	
+
 	if (width > atlas->max_width || height > atlas->max_height)
 		return NULL;
 	if (index >= atlas->pitch * atlas->pitch) return NULL;

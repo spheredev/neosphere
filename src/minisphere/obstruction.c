@@ -17,7 +17,7 @@ obsmap_new(void)
 	obsmap_t* obsmap = NULL;
 
 	console_log(4, "creating new obstruction map #%u", s_next_obsmap_id);
-	
+
 	obsmap = calloc(1, sizeof(obsmap_t));
 	obsmap->max_lines = 0;
 	obsmap->num_lines = 0;
@@ -41,10 +41,10 @@ obsmap_add_line(obsmap_t* obsmap, rect_t line)
 {
 	int    new_size;
 	rect_t *line_list;
-	
+
 	console_log(4, "adding line segment (%d,%d)-(%d,%d) to obstruction map #%u",
 		line.x1, line.y1, line.x2, line.y2, obsmap->id);
-	
+
 	if (obsmap->num_lines + 1 > obsmap->max_lines) {
 		new_size = (obsmap->num_lines + 1) * 2;
 		if ((line_list = realloc(obsmap->lines, new_size * sizeof(rect_t))) == NULL)

@@ -36,7 +36,7 @@ main(int argc, char* argv[])
 	handleMode |= 0x0004;  // ENABLE_VIRTUAL_TERMINAL_PROCESSING
 	SetConsoleMode(hStdOut, handleMode);
 #endif
-	
+
 	if (!(cmdline = parse_cmdline(argc, argv, &retval)))
 		return retval;
 
@@ -97,7 +97,7 @@ launch_minisphere(path_t* game_path)
 	char        pathname[PATH_MAX];
 	ssize_t     pathname_len;
 	struct stat stat_buf;
-	
+
 	printf("starting %s... ", path_cstr(game_path));
 	fflush(stdout);
 	memset(pathname, 0, sizeof pathname);

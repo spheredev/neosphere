@@ -80,7 +80,7 @@ api_define_class(duk_context* ctx, const char* name, duk_c_function constructor,
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
-	
+
 	// construct a prototype for the new class, leaving it on the
 	// value stack afterwards.
 	duk_push_object(ctx);
@@ -107,7 +107,7 @@ api_define_class(duk_context* ctx, const char* name, duk_c_function constructor,
 		duk_push_string(ctx, "prototype");
 		duk_dup(ctx, -3);
 		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_WRITABLE);
-		
+
 		duk_push_global_object(ctx);
 		duk_push_string(ctx, name);
 		duk_dup(ctx, -3);
@@ -116,7 +116,7 @@ api_define_class(duk_context* ctx, const char* name, duk_c_function constructor,
 			| DUK_DEFPROP_SET_CONFIGURABLE);
 		duk_pop_2(ctx);
 	}
-	
+
 	duk_pop(ctx);
 }
 
@@ -335,7 +335,7 @@ duk_push_class_obj(duk_context* ctx, const char* class_name, void* udata)
 {
 	duk_push_object(ctx);
 	duk_to_class_obj(ctx, -1, class_name, udata);
-	
+
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "prototypes");
 	duk_get_prop_string(ctx, -1, class_name);
@@ -350,7 +350,7 @@ duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* class_name)
 
 	index = duk_require_normalize_index(ctx, index);
 	if (!duk_is_class_obj(ctx, index, class_name))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "%s object required", class_name);
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "not a %s object", class_name);
 	duk_get_prop_string(ctx, index, "\xFF" "udata");
 	udata = duk_get_pointer(ctx, -1);
 	duk_pop(ctx);
@@ -360,7 +360,7 @@ duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* class_name)
 void
 duk_set_class_ptr(duk_context* ctx, duk_idx_t index, void* udata)
 {
-	index = duk_require_normalize_index(ctx, index);	
+	index = duk_require_normalize_index(ctx, index);
 	duk_push_pointer(ctx, udata);
 	duk_put_prop_string(ctx, index, "\xFF" "udata");
 }

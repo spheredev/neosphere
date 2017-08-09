@@ -80,7 +80,7 @@ image_clone(const image_t* src_image)
 
 	console_log(3, "cloning image #%u from source image #%u",
 		s_next_image_id, src_image->id);
-	
+
 	image = calloc(1, sizeof(image_t));
 	if (!(image->bitmap = al_clone_bitmap(src_image->bitmap)))
 		goto on_error;
@@ -109,7 +109,7 @@ image_load(const char* filename)
 	void*         slurp = NULL;
 
 	console_log(2, "loading image #%u as `%s`", s_next_image_id, filename);
-	
+
 	image = calloc(1, sizeof(image_t));
 	if (!(slurp = game_read_file(g_game_fs, filename, NULL, &file_size)))
 		goto on_error;
@@ -228,7 +228,7 @@ on_error:
 image_t*
 image_ref(image_t* image)
 {
-	
+
 	if (image != NULL)
 		++image->refcount;
 	return image;
@@ -239,7 +239,7 @@ image_unref(image_t* image)
 {
 	if (image == NULL || --image->refcount > 0)
 		return;
-	
+
 	console_log(3, "disposing image #%u no longer in use",
 		image->id);
 	uncache_pixels(image);
@@ -291,7 +291,7 @@ void
 image_set_scissor(image_t* it, rect_t value)
 {
 	rect_t bounds;
-	
+
 	it->scissor_box = value;
 	if (it == s_last_image) {
 		bounds = rect(0, 0, it->width, it->height);
@@ -341,7 +341,7 @@ image_apply_colormat_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_ma
 	// is, however, much easier to follow than the one in Sphere. basically what it
 	// boils down to is bilinear interpolation, but with matrices. it's much more
 	// straightforward than it sounds.
-	
+
 	int           i1, i2;
 	image_lock_t* lock;
 	colormatrix_t mat_1, mat_2, mat_3;
@@ -747,7 +747,7 @@ cache_pixels(image_t* image)
 	image->pixel_cache = cache;
 	image->cache_hits = 0;
 	return;
-	
+
 on_error:
 	if (lock != NULL)
 		al_unlock_bitmap(image->bitmap);

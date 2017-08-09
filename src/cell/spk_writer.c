@@ -40,7 +40,7 @@ spk_create(const char* filename)
 	if (!(writer->file = fopen(filename, "wb")))
 		return NULL;
 	fseek(writer->file, sizeof(struct spk_header), SEEK_SET);
-	
+
 	writer->index = vector_new(sizeof(struct spk_entry));
 	return writer;
 }
@@ -59,7 +59,7 @@ spk_close(spk_writer_t* writer)
 
 	if (writer == NULL)
 		return;
-	
+
 	// write package index
 	idx_offset = ftell(writer->file);
 	iter = vector_enum(writer->index);
@@ -68,7 +68,7 @@ spk_close(spk_writer_t* writer)
 		// in the filename. this, despite the fact that there is an explicit length
 		// field in the header...
 		path_size = (uint16_t)strlen(p_entry->pathname) + 1;
-		
+
 		fwrite(&VERSION, sizeof(uint16_t), 1, writer->file);
 		fwrite(&path_size, sizeof(uint16_t), 1, writer->file);
 		fwrite(&p_entry->offset, sizeof(uint32_t), 1, writer->file);

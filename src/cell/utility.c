@@ -33,7 +33,7 @@ duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 	void* heapptr;
 
 	heapptr = duk_require_heapptr(ctx, idx);
-	
+
 	duk_push_global_stash(ctx);
 	if (!duk_get_prop_string(ctx, -1, "refs")) {
 		duk_push_bare_object(ctx);
@@ -43,11 +43,11 @@ duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 	}
 
 	/* [ ... stash refs ] */
-	
+
 	duk_push_sprintf(ctx, "%p", heapptr);
 	if (duk_get_prop(ctx, -2)) {
 		/* [ stash refs ref_obj ] */
-		
+
 		duk_get_prop_string(ctx, -1, "refcount");
 		duk_push_number(ctx, duk_get_number(ctx, -1) + 1);
 		duk_put_prop_string(ctx, -3, "refcount");

@@ -54,7 +54,7 @@ initialize_input(void)
 	int i;
 
 	console_log(1, "initializing input subsystem");
-	
+
 	al_install_keyboard();
 	if (!(s_have_mouse = al_install_mouse()))
 		console_log(1, "  mouse initialization failed");
@@ -127,7 +127,7 @@ shutdown_input(void)
 {
 	struct bound_button* pbutton;
 	struct bound_key*    pkey;
-	
+
 	iter_t iter;
 
 	// save player key mappings
@@ -435,7 +435,7 @@ mouse_is_key_down(mouse_key_t key)
 {
 	ALLEGRO_DISPLAY*    display;
 	ALLEGRO_MOUSE_STATE state;
-	
+
 	display = screen_display(g_screen);
 	al_get_mouse_state(&state);
 	if (state.display != display)
@@ -478,7 +478,7 @@ update_bound_keys(bool use_map_keys)
 	struct bound_button* button;
 	struct bound_key*    key;
 	bool                 is_down;
-	
+
 	iter_t iter;
 
 	// check bound keyboard keys
@@ -512,7 +512,7 @@ update_input(void)
 	ALLEGRO_EVENT          event;
 	int                    keycode;
 	ALLEGRO_MOUSE_STATE    mouse_state;
-	
+
 	// process Allegro input events
 	while (al_get_next_event(s_events, &event)) {
 		switch (event.type) {
@@ -524,7 +524,7 @@ update_input(void)
 		case ALLEGRO_EVENT_KEY_DOWN:
 			keycode = event.keyboard.keycode;
 			s_key_state[keycode] = true;
-			
+
 			// queue Ctrl/Alt/Shift keys (Sphere compatibility hack)
 			if (keycode == ALLEGRO_KEY_LCTRL || keycode == ALLEGRO_KEY_RCTRL
 				|| keycode == ALLEGRO_KEY_ALT || keycode == ALLEGRO_KEY_ALTGR
@@ -537,7 +537,7 @@ update_input(void)
 				if (keycode == ALLEGRO_KEY_LSHIFT || keycode == ALLEGRO_KEY_RSHIFT)
 					queue_key(ALLEGRO_KEY_LSHIFT);
 			}
-			
+
 			break;
 		case ALLEGRO_EVENT_KEY_UP:
 			s_key_state[event.keyboard.keycode] = false;
@@ -573,7 +573,7 @@ update_input(void)
 			}
 		}
 	}
-	
+
 	if (s_have_mouse) {
 		// check for mouse wheel movement
 		al_get_mouse_state(&mouse_state);
@@ -582,7 +582,7 @@ update_input(void)
 		if (mouse_state.z < s_last_wheel_pos)
 			queue_mouse_event(MOUSE_KEY_WHEEL_DOWN, mouse_state.x, mouse_state.y);
 		s_last_wheel_pos = mouse_state.z;
-		
+
 		// check for mouse clicks.  clicks are queued in order of left->right->middle.
 		if (mouse_state.display == screen_display(g_screen)) {
 			if (al_mouse_button_down(&mouse_state, 1))
@@ -644,7 +644,7 @@ static void
 queue_mouse_event(mouse_key_t key, int x, int y)
 {
 	mouse_event_t* p_event;
-	
+
 	if (s_num_mouse_events < 255) {
 		p_event = &s_mouse_queue[s_num_mouse_events];
 		p_event->key = key;

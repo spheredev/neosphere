@@ -255,7 +255,7 @@ void
 font_set_glyph(font_t* font, uint32_t cp, image_t* image)
 {
 	image_t* old_image;
-	
+
 	old_image = font->glyphs[cp].image;
 	font->glyphs[cp].image = image_ref(image);
 	image_unref(old_image);

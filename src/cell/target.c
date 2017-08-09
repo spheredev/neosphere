@@ -74,7 +74,7 @@ const path_t*
 target_source_path(const target_t* target)
 {
 	target_t* source;
-	
+
 	if (vector_len(target->sources) != 1)
 		return NULL;
 	source = *(target_t**)vector_get(target->sources, 0);

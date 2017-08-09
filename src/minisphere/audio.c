@@ -103,7 +103,7 @@ audio_uninit(void)
 		return;
 
 	console_log(1, "shutting down audio subsystem");
-	
+
 	iter = vector_enum(s_active_sounds);
 	while (p_sound = vector_next(&iter))
 		sound_unref(*p_sound);
@@ -171,7 +171,7 @@ audio_update(void)
 		mixer_unref(p_sample->mixer);
 		iter_remove(&iter);
 	}
-	
+
 	iter = vector_enum(s_active_sounds);
 	while (p_sound = vector_next(&iter)) {
 		if (sound_playing(*p_sound))
@@ -356,7 +356,7 @@ sample_play(sample_t* sample, mixer_t* mixer)
 {
 	struct sample_instance   instance;
 	ALLEGRO_SAMPLE_INSTANCE* stream_ptr;
-	
+
 	console_log(2, "playing sample #%u on mixer #%u", sample->id, mixer->id);
 
 	if (!sample->polyphonic)
@@ -367,7 +367,7 @@ sample_play(sample_t* sample, mixer_t* mixer)
 	al_set_sample_instance_pan(stream_ptr, sample->pan);
 	al_attach_sample_instance_to_mixer(stream_ptr, mixer->ptr);
 	al_play_sample_instance(stream_ptr);
-	
+
 	instance.sample = sample_ref(sample);
 	instance.mixer = mixer_ref(mixer);
 	instance.ptr = stream_ptr;

@@ -88,7 +88,7 @@ void
 normalize_rect(rect_t* inout_rect)
 {
 	int tmp;
-	
+
 	if (inout_rect->x1 > inout_rect->x2) {
 		tmp = inout_rect->x1;
 		inout_rect->x1 = inout_rect->x2;

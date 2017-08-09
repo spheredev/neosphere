@@ -113,9 +113,9 @@ winstyle_draw(windowstyle_t* winstyle, color_t mask, int x, int y, int width, in
 {
 	color_t gradient[4];
 	int     w[9], h[9];
-	
+
 	int i;
-	
+
 	// 0 - upper left
 	// 1 - top
 	// 2 - upper right
@@ -142,7 +142,7 @@ winstyle_draw(windowstyle_t* winstyle, color_t mask, int x, int y, int width, in
 		{ x, y + height, 0, 0, 0, nativecolor(gradient[2]) },
 		{ x + width, y + height, 0, 0, 0, nativecolor(gradient[3]) },
 	};
-	
+
 	switch (winstyle->bg_style) {
 	case BG_TILE:
 		image_draw_tiled_masked(winstyle->images[8], mask, x, y, width, height);

@@ -434,8 +434,13 @@ damage to the system.
 
 FS.createDirectory(dir_name);
 
-    Creates the specified directory and any of its parent directories that
-    don't already exist.
+    Creates a directory and any of its parent directories that don't already
+    exist.  If the directory already exists, this function does nothing.
+
+    Note: As indicated above, `FS.createDirectory()` is safe to call even if
+          the specified directory already exists; no error will be thrown in
+          that case.  This allows you to call it to ensure a directory exists
+          before you access it, without needing an explicit check beforehand.
 
 FS.deleteFile(filename);
 
@@ -457,7 +462,7 @@ FS.fullPath(fileName[, base_dir]);
     relative itself) to its canonical SphereFS path.  `base_dir` is optional
     and specifies a base directory for relative paths.  The file or directory
     ultimately referred to doesn't need to exist.
-    
+
     If `fileName` begins with a SphereFS prefix, it's resolved normally,
     without regard to `base_dir`.  Otherwise, `fileName` is considered to be
     relative to `base_dir`.
@@ -918,7 +923,7 @@ Model#setIntArray(name, values);
     Sets the values of a GLSL array uniform.  `values` should be an array
     containing a number of values equal to the size of the array, otherwise
     the uniform will not be set.
-    
+
     Note: Only `float` and `int` types are currently supported.
 
 Model#setFloatVector(name, values);

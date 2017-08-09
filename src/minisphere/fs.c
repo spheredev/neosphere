@@ -59,9 +59,9 @@ game_open(const char* game_path)
 	size_t      sourcemap_size;
 
 	console_log(1, "opening `%s` from game #%u", game_path, s_next_game_id);
-	
+
 	game = game_ref(calloc(1, sizeof(game_t)));
-	
+
 	game->id = s_next_game_id;
 	path = path_new(game_path);
 	if (!path_resolve(path, NULL))
@@ -328,7 +328,7 @@ game_canonicalize(const game_t* game, const char* filename, const char* base_dir
 		path_remove_hop(path, 0);
 		path_insert_hop(path, 0, "@");
 	}
-	
+
 	if (base_dir_name != NULL) {
 		base_path = game_canonicalize(game, base_dir_name, NULL, legacy);
 		path_to_dir(base_path);
@@ -337,7 +337,7 @@ game_canonicalize(const game_t* game, const char* filename, const char* base_dir
 		prefix = strdup(path_hop(path, 0));
 	else
 		prefix = strdup("");
-	
+
 	// canonicalize `$/` to `@/<scriptsDir>`.  this ensures each file has only
 	// one canonical name.
 	if (strcmp(prefix, "$") == 0) {
@@ -346,7 +346,7 @@ game_canonicalize(const game_t* game, const char* filename, const char* base_dir
 		free(prefix);
 		prefix = strdup(path_hop(path, 0));
 	}
-	
+
 	// no need to check for a `$` prefix now, as the last step removes it
 	// from the equation.
 	if (!strpbrk(prefix, "@#~") || strlen(prefix) != 1) {
@@ -542,7 +542,7 @@ file_open(game_t* game, const char* filename, const char* base_dir, const char* 
 	path_t* file_path = NULL;
 
 	file = calloc(1, sizeof(file_t));
-	
+
 	if (!resolve_path(game, filename, base_dir, &file_path, &file->fs_type))
 		goto on_error;
 	switch (file->fs_type) {
@@ -564,7 +564,7 @@ file_open(game_t* game, const char* filename, const char* base_dir, const char* 
 		goto on_error;
 	}
 	path_free(file_path);
-	
+
 	file->game = game_ref(game);
 	file->path = strdup(filename);
 	return file;
@@ -680,30 +680,30 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 	// note: this whole thing needs to be cleaned up.  it's pretty bad when Duktape
 	//       does the JSON parsing for us yet the JSON manifest loader is STILL more
 	//       complicated than the game.sgm loader.
-	
+
 	// arguments: -2 = game_t* game (pointer)
 	//            -1 = game.json text (string)
-	
+
 	game_t*    game;
 	duk_idx_t  json_idx;
 	int        res_x;
 	int        res_y;
-	
+
 	game = duk_get_pointer(ctx, -2);
 	json_idx = duk_normalize_index(ctx, -1);
-	
+
 	// load required entries
 	duk_dup(ctx, json_idx);
 	duk_json_decode(ctx, -1);
 	if (!duk_get_prop_string(g_duk, -1, "name") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	game->name = lstr_new(duk_get_string(g_duk, -1));
-	
+
 	if (!duk_get_prop_string(g_duk, -2, "resolution") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	sscanf(duk_get_string(g_duk, -1), "%dx%d", &res_x, &res_y);
 	game->resolution = size2(res_x, res_y);
-	
+
 	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	game->script_path = game_canonicalize(game, duk_get_string(g_duk, -1), NULL, false);
@@ -713,17 +713,17 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 		game->version = duk_get_number(g_duk, -1);
 	else
 		game->version = 2;
-	
+
 	if (duk_get_prop_string(g_duk, -5, "author") && duk_is_string(g_duk, -1))
 		game->author = lstr_new(duk_get_string(g_duk, -1));
 	else
 		game->author = lstr_new("Author Unknown");
-	
+
 	if (duk_get_prop_string(g_duk, -6, "summary") && duk_is_string(g_duk, -1))
 		game->summary = lstr_new(duk_get_string(g_duk, -1));
 	else
 		game->summary = lstr_new("No information available.");
-	
+
 	if (duk_get_prop_string(g_duk, -7, "saveID") && duk_is_string(g_duk, -1))
 		game->save_id = lstr_new(duk_get_string(g_duk, -1));
 

@@ -30,7 +30,7 @@ backtrace_free(backtrace_t* obj)
 
 	if (obj == NULL)
 		return;
-	
+
 	for (i = 0; i < obj->num_frames; ++i) {
 		free(obj->frames[i].name);
 		free(obj->frames[i].filename);
@@ -67,7 +67,7 @@ void
 backtrace_add(backtrace_t* obj, const char* call_name, const char* filename, int line_no)
 {
 	int index;
-	
+
 	index = obj->num_frames++;
 	obj->frames = realloc(obj->frames, obj->num_frames * sizeof(struct frame));
 	obj->frames[index].name = strdup(call_name);

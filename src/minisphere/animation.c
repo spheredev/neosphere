@@ -36,7 +36,7 @@ animation_new(const char* path)
 	animation_t* anim;
 
 	console_log(2, "loading animation #%u as `%s`", s_next_animation_id, path);
-	
+
 	if (!(anim = calloc(1, sizeof(animation_t))))
 		goto on_error;
 	if (!(anim->stream = mng_initialize(anim, mng_cb_malloc, mng_cb_free, NULL)))
@@ -53,10 +53,10 @@ animation_new(const char* path)
 		goto on_error;
 	if (mng_read(anim->stream) != MNG_NOERROR) goto on_error;
 	anim->id = s_next_animation_id++;
-	
+
 	if (!animation_update(anim))
 		goto on_error;
-	
+
 	return animation_ref(anim);
 
 on_error:
@@ -84,7 +84,7 @@ animation_unref(animation_t* animation)
 {
 	if (animation == NULL || --animation->refcount > 0)
 		return;
-	
+
 	console_log(3, "disposing animation #%u no longer in use",
 		animation->id);
 	mng_cleanup(&animation->stream);

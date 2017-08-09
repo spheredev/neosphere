@@ -140,7 +140,7 @@ void
 iter_remove(iter_t* iter)
 {
 	vector_t* vector;
-	
+
 	vector = iter->vector;
 	vector_remove(vector, iter->index);
 	--iter->index;
@@ -154,7 +154,7 @@ vector_resize(vector_t* vector, int min_items)
 {
 	uint8_t* new_buffer;
 	int      new_max;
-	
+
 	new_max = vector->max_items;
 	if (min_items > vector->max_items)  // is the buffer too small?
 		new_max = min_items * 2;

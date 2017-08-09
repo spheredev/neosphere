@@ -28,7 +28,7 @@ main(int argc, char* argv[])
 
 	print_banner(true, false);
 	printf("\n");
-	
+
 	build = build_new(s_in_path, s_out_path);
 	if (!build_eval(build, "Cellscript.mjs") && !build_eval(build, "Cellscript.js"))
 		goto shutdown;
@@ -67,7 +67,7 @@ parse_cmdline(int argc, char* argv[])
 	s_want_clean = false;
 	s_want_rebuild = false;
 	s_want_source_map = false;
-	
+
 	// validate and parse the command line
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
@@ -169,11 +169,11 @@ parse_cmdline(int argc, char* argv[])
 			return false;
 		}
 	}
-	
+
 	// validate command line
 	if (s_out_path == NULL)
 		s_out_path = path_new("dist/");
-	
+
 	// check if a Cellscript exists
 	mjs_path = path_rebase(path_new("Cellscript.mjs"), s_in_path);
 	js_path = path_rebase(path_new("Cellscript.js"), s_in_path);
@@ -186,7 +186,7 @@ parse_cmdline(int argc, char* argv[])
 			print_usage();
 		return false;
 	}
-	
+
 	path_free(mjs_path);
 	path_free(js_path);
 	return true;

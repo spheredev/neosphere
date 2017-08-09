@@ -40,7 +40,7 @@ script_eval(const char* filename, bool as_module)
 	size_t      size;
 
 	duk_top = duk_get_top(g_duk);
-	
+
 	if (as_module) {
 		// the existence check here is needed because eval_module() will segfault if the
 		// file doesn't exist.  it's an ugly hack, but a proper fix needs some refactoring
@@ -87,14 +87,14 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	void*      heapptr;
 	lstring_t* name;
 	script_t*  script;
-	
+
 	va_start(ap, fmt_name);
 	name = lstr_vnewf(fmt_name, ap);
 	va_end(ap);
 	script = calloc(1, sizeof(script_t));
 
 	console_log(3, "compiling script #%u as `%s`", s_next_script_id, lstr_cstr(name));
-	
+
 	// compile the source.  Duktape gives us a function back; save its heap pointer so
 	// we can call the script later.
 	duk_push_lstring_t(g_duk, source);
@@ -140,7 +140,7 @@ script_unref(script_t* script)
 {
 	if (script == NULL || --script->refcount > 0)
 		return;
-	
+
 	console_log(3, "disposing script #%u no longer in use", script->id);
 
 	duk_unref_heapptr(g_duk, script->heapptr);
@@ -154,7 +154,7 @@ script_run(script_t* script, bool allow_reentry)
 
 	if (script == NULL)  // NULL is allowed, it's a no-op
 		return;
-	
+
 	// check whether an instance of the script is already running.
 	// if it is, but the script is reentrant, allow it.  otherwise, return early
 	// to prevent multiple invocation.
@@ -169,7 +169,7 @@ script_run(script_t* script, bool allow_reentry)
 	// ref the script in case it gets freed during execution.  the owner
 	// may be destroyed in the process and we don't want to end up crashing.
 	script_ref(script);
-	
+
 	// execute the script!
 	script->is_in_use = true;
 	duk_push_heapptr(g_duk, script->heapptr);

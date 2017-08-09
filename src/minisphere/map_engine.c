@@ -300,7 +300,7 @@ map_engine_uninit(void)
 	console_log(1, "shutting down map engine subsystem");
 
 	vector_free(s_person_list);
-	
+
 	for (i = 0; i < s_num_deferreds; ++i)
 		script_unref(s_deferreds[i].script);
 	free(s_deferreds);
@@ -384,7 +384,7 @@ vector_t*
 map_engine_persons(void)
 {
 	int i;
-	
+
 	if (s_person_list == NULL)
 		s_person_list = vector_new(sizeof(person_t*));
 	vector_clear(s_person_list);
@@ -489,7 +489,7 @@ void
 map_engine_defer(script_t* script, int num_frames)
 {
 	struct deferred* deferred;
-	
+
 	if (++s_num_deferreds > s_max_deferreds) {
 		s_max_deferreds = s_num_deferreds * 2;
 		s_deferreds = realloc(s_deferreds, s_max_deferreds * sizeof(struct deferred));
@@ -969,7 +969,7 @@ layer_replace_tiles(int layer, int old_index, int new_index)
 	struct map_tile* tile;
 
 	int i_x, i_y;
-	
+
 	layer_w = s_map->layers[layer].width;
 	layer_h = s_map->layers[layer].height;
 	for (i_x = 0; i_x < layer_w; ++i_x) for (i_y = 0; i_y < layer_h; ++i_y) {
@@ -1110,7 +1110,7 @@ person_free(person_t* person)
 	}
 
 	vector_free(person->ignore_list);
-	
+
 	free_person(person);
 	sort_persons();
 }
@@ -1155,7 +1155,7 @@ person_ignore_list(person_t* person)
 {
 	// note: the returned vector is an array of C strings.  these should be treated
 	//       as const char*; in other words, don't free them!
-	
+
 	int i;
 
 	if (person->ignore_list != NULL)
@@ -1281,7 +1281,7 @@ int
 person_get_frame(const person_t* person)
 {
 	int num_frames;
-	
+
 	num_frames = spriteset_num_frames(person->sprite, person->direction);
 	return person->frame % num_frames;
 }
@@ -1401,7 +1401,7 @@ void
 person_set_frame(person_t* person, int frame_index)
 {
 	int num_frames;
-	
+
 	num_frames = spriteset_num_frames(person->sprite, person->direction);
 	person->frame = (frame_index % num_frames + num_frames) % num_frames;
 	person->anim_frames = spriteset_frame_delay(person->sprite, person->direction, person->frame);
@@ -1606,7 +1606,7 @@ void
 person_ignore_name(person_t* person, const char* name)
 {
 	int index;
-	
+
 	index = person->num_ignores++;
 	person->ignores = realloc(person->ignores, person->num_ignores * sizeof(char*));
 	person->ignores[index] = strdup(name);

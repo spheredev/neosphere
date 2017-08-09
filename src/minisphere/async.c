@@ -78,13 +78,13 @@ async_cancel(int64_t token)
 		if ((*p_job)->token == token)
 			(*p_job)->finished = true;
 	}
-	
+
 	iter = vector_enum(s_recurring);
 	while (p_job = vector_next(&iter)) {
 		if ((*p_job)->token == token)
 			(*p_job)->finished = true;
 	}
-	
+
 	s_need_sort = true;
 }
 

@@ -92,7 +92,7 @@ tileset_read(file_t* file)
 	int i, j;
 
 	memset(&rts, 0, sizeof(struct rts_header));
-	
+
 	console_log(2, "reading tileset #%u from open file", s_next_tileset_id);
 
 	if (file == NULL) goto on_error;
@@ -104,7 +104,7 @@ tileset_read(file_t* file)
 		goto on_error;
 	if (rts.tile_bpp != 32) goto on_error;
 	if (!(tiles = calloc(rts.num_tiles, sizeof(struct tile)))) goto on_error;
-	
+
 	// read in all the tile bitmaps (use atlasing)
 	if (!(atlas = atlas_new(rts.num_tiles, rts.tile_width, rts.tile_height)))
 		goto on_error;
@@ -190,7 +190,7 @@ int
 tileset_get_next(const tileset_t* tileset, int tile_index)
 {
 	int next_index;
-	
+
 	next_index = tileset->tiles[tile_index].next_index;
 	return next_index >= 0 && next_index < tileset->num_tiles
 		? next_index : tile_index;
@@ -254,13 +254,13 @@ tileset_set_image(tileset_t* tileset, int tile_index, image_t* image)
 	// CAUTION: the new tile image is assumed to be the same same size as the tile it
 	//     replaces.  if it's not, the engine won't crash, but it may cause graphical
 	//     glitches.
-	
+
 	image_t* texture;
 	rect_t   xy;
-	
+
 	xy = atlas_xy(tileset->atlas, tile_index);
 	texture = atlas_image(tileset->atlas);
-	
+
 	// we could just swap out the tile image pointer which would be faster than
 	// blitting, but then we'd lose all the benefits of the tile atlas.
 	image_blit(image, texture, xy.x1, xy.y1);
@@ -282,7 +282,7 @@ void
 tileset_update(tileset_t* tileset)
 {
 	struct tile* tile;
-	
+
 	int i;
 
 	for (i = 0; i < tileset->num_tiles; ++i) {

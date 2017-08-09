@@ -19,7 +19,7 @@ kev_open(game_t* game, const char* filename, bool can_create)
 	ALLEGRO_FILE* memfile = NULL;
 	void*         slurp;
 	size_t        slurp_size;
-	
+
 	console_log(2, "opening kevfile #%u as `%s`", s_next_file_id, filename);
 	file = calloc(1, sizeof(kev_file_t));
 	if (slurp = game_read_file(game, filename, NULL, &slurp_size)) {
@@ -53,7 +53,7 @@ kev_close(kev_file_t* file)
 {
 	if (file == NULL)
 		return;
-	
+
 	console_log(3, "disposing kevfile #%u no longer in use", file->id);
 	if (file->is_dirty)
 		kev_save(file);
@@ -130,7 +130,7 @@ const char*
 kev_read_string(kev_file_t* file, const char* key, const char* def_value)
 {
 	const char* value;
-	
+
 	if (file == NULL)
 		return def_value;
 

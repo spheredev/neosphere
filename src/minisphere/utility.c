@@ -180,7 +180,7 @@ duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
 	void* heapptr;
 
 	heapptr = duk_require_heapptr(ctx, idx);
-	
+
 	duk_push_global_stash(ctx);
 	if (!duk_get_prop_string(ctx, -1, "refs")) {
 		duk_push_bare_object(ctx);
@@ -234,10 +234,10 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 {
 	// note: for compatibility with Sphere 1.x, if `legacy` is true, then the game package
 	//       is treated as writable.
-	
+
 	static int     s_index = 0;
 	static path_t* s_paths[10];
-	
+
 	const char* first_hop = "";
 	const char* pathname;
 	const char* prefix;

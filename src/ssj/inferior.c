@@ -127,7 +127,7 @@ inferior_update(inferior_t* obj)
 
 	if (obj->is_detached)
 		return false;
-	
+
 	if (!(msg = dmessage_recv(obj->socket)))
 		goto detached;
 	if (!handle_notify(obj, msg))
@@ -324,7 +324,7 @@ inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
 {
 	int        handle;
 	dmessage_t* msg;
-	
+
 	msg = dmessage_new(MESSAGE_REQ);
 	dmessage_add_int(msg, REQ_ADDBREAK);
 	dmessage_add_string(msg, filename);
