@@ -21,7 +21,7 @@ image_t*        image_load               (const char* filename);
 image_t*        image_read               (file_t* file, int width, int height);
 image_t*        image_read_slice         (file_t* file, image_t* parent, int x, int y, int width, int height);
 image_t*        image_ref                (image_t* image);
-void            image_free               (image_t* image);
+void            image_unref              (image_t* image);
 ALLEGRO_BITMAP* image_bitmap             (image_t* image);
 int             image_height             (const image_t* image);
 const char*     image_path               (const image_t* image);

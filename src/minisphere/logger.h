@@ -5,7 +5,7 @@ typedef struct logger logger_t;
 
 logger_t* logger_new         (const char* filename);
 logger_t* logger_ref         (logger_t* logger);
-void      logger_free        (logger_t* logger);
+void      logger_unref       (logger_t* logger);
 bool      logger_begin_block (logger_t* logger, const char* title);
 void      logger_end_block   (logger_t* logger);
 void      logger_write       (logger_t* logger, const char* prefix, const char* text);

@@ -5,7 +5,7 @@ typedef struct animation animation_t;
 
 animation_t* animation_new        (const char* path);
 animation_t* animation_ref        (animation_t* anim);
-void         animation_free       (animation_t* anim);
+void         animation_unref      (animation_t* anim);
 int          animation_delay      (const animation_t* anim);
 image_t*     animation_frame      (const animation_t* anim);
 int          animation_height     (const animation_t* anim);

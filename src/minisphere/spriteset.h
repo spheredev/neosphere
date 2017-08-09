@@ -11,7 +11,7 @@ spriteset_t* spriteset_new               (void);
 spriteset_t* spriteset_load              (const char* filename);
 spriteset_t* spriteset_clone             (const spriteset_t* it);
 spriteset_t* spriteset_ref               (spriteset_t* it);
-void         spriteset_free              (spriteset_t* it);
+void         spriteset_unref             (spriteset_t* it);
 int          spriteset_frame_delay       (const spriteset_t* it, const char* pose_name, int frame_index);
 int          spriteset_frame_image_index (const spriteset_t* it, const char* pose_name, int frame_index);
 int          spriteset_height            (const spriteset_t* it);

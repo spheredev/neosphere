@@ -146,7 +146,7 @@ font_load(const char* filename)
 	}
 	image_unlock(atlas, lock);
 	file_close(file);
-	image_free(atlas);
+	image_unref(atlas);
 
 	font->path = strdup(filename);
 	font->id = s_next_font_id++;
@@ -157,13 +157,13 @@ on_error:
 	file_close(file);
 	if (font != NULL) {
 		for (i = 0; i < rfn.num_chars; ++i) {
-			if (font->glyphs[i].image != NULL) image_free(font->glyphs[i].image);
+			if (font->glyphs[i].image != NULL) image_unref(font->glyphs[i].image);
 		}
 		free(font->glyphs);
 		free(font);
 	}
 	if (lock != NULL) image_unlock(atlas, lock);
-	if (atlas != NULL) image_free(atlas);
+	if (atlas != NULL) image_unref(atlas);
 	return NULL;
 }
 
@@ -203,7 +203,7 @@ on_error:
 	if (font != NULL) {
 		for (i = 0; i < font->num_glyphs; ++i) {
 			if (font->glyphs[i].image != NULL)
-				image_free(font->glyphs[i].image);
+				image_unref(font->glyphs[i].image);
 		}
 		free(font->glyphs);
 		free(font);
@@ -219,7 +219,7 @@ font_ref(font_t* font)
 }
 
 void
-font_free(font_t* font)
+font_unref(font_t* font)
 {
 	uint32_t i;
 
@@ -228,7 +228,7 @@ font_free(font_t* font)
 
 	console_log(3, "disposing font #%u no longer in use", font->id);
 	for (i = 0; i < font->num_glyphs; ++i)
-		image_free(font->glyphs[i].image);
+		image_unref(font->glyphs[i].image);
 	free(font->glyphs);
 	free(font);
 }
@@ -258,7 +258,7 @@ font_set_glyph(font_t* font, uint32_t cp, image_t* image)
 	
 	old_image = font->glyphs[cp].image;
 	font->glyphs[cp].image = image_ref(image);
-	image_free(old_image);
+	image_unref(old_image);
 }
 
 void

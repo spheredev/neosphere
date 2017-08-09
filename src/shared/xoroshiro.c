@@ -46,7 +46,7 @@ xoro_ref(xoro_t* xoro)
 }
 
 void
-xoro_free(xoro_t* xoro)
+xoro_unref(xoro_t* xoro)
 {
 	if (--xoro->refcount > 0)
 		return;

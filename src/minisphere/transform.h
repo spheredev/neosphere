@@ -6,7 +6,7 @@ typedef struct transform transform_t;
 transform_t*             transform_new          (void);
 transform_t*             transform_clone        (const transform_t* it);
 transform_t*             transform_ref          (transform_t* it);
-void                     transform_free         (transform_t* it);
+void                     transform_unref        (transform_t* it);
 const ALLEGRO_TRANSFORM* transform_matrix       (const transform_t* it);
 float*                   transform_values       (transform_t* it);
 void                     transform_compose      (transform_t* it, const transform_t* other);

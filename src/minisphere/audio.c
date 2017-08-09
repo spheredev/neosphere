@@ -106,13 +106,13 @@ audio_uninit(void)
 	
 	iter = vector_enum(s_active_sounds);
 	while (p_sound = vector_next(&iter))
-		sound_free(*p_sound);
+		sound_unref(*p_sound);
 	vector_free(s_active_sounds);
 	iter = vector_enum(s_active_samples);
 	while (p_sample = vector_next(&iter)) {
 		al_destroy_sample_instance(p_sample->ptr);
-		sample_free(p_sample->sample);
-		mixer_free(p_sample->mixer);
+		sample_unref(p_sample->sample);
+		mixer_unref(p_sample->mixer);
 	}
 	vector_free(s_active_samples);
 	vector_free(s_active_streams);
@@ -167,8 +167,8 @@ audio_update(void)
 		if (al_get_sample_instance_playing(p_sample->ptr))
 			continue;
 		al_destroy_sample_instance(p_sample->ptr);
-		sample_free(p_sample->sample);
-		mixer_free(p_sample->mixer);
+		sample_unref(p_sample->sample);
+		mixer_unref(p_sample->mixer);
 		iter_remove(&iter);
 	}
 	
@@ -176,7 +176,7 @@ audio_update(void)
 	while (p_sound = vector_next(&iter)) {
 		if (sound_playing(*p_sound))
 			continue;
-		sound_free(*p_sound);
+		sound_unref(*p_sound);
 		iter_remove(&iter);
 	}
 }
@@ -235,7 +235,7 @@ mixer_ref(mixer_t* mixer)
 }
 
 void
-mixer_free(mixer_t* mixer)
+mixer_unref(mixer_t* mixer)
 {
 	if (mixer == NULL || --mixer->refcount > 0)
 		return;
@@ -299,7 +299,7 @@ sample_ref(sample_t* sample)
 }
 
 void
-sample_free(sample_t* sample)
+sample_unref(sample_t* sample)
 {
 	if (sample == NULL || --sample->refcount > 0)
 		return;
@@ -386,8 +386,8 @@ sample_stop_all(sample_t* sample)
 		if (p_instance->sample != sample)
 			continue;
 		al_destroy_sample_instance(p_instance->ptr);
-		sample_free(p_instance->sample);
-		mixer_free(p_instance->mixer);
+		sample_unref(p_instance->sample);
+		mixer_unref(p_instance->mixer);
 		iter_remove(&iter);
 	}
 }
@@ -429,7 +429,7 @@ sound_ref(sound_t* sound)
 }
 
 void
-sound_free(sound_t* sound)
+sound_unref(sound_t* sound)
 {
 	if (sound == NULL || --sound->refcount > 0)
 		return;
@@ -438,7 +438,7 @@ sound_free(sound_t* sound)
 	free(sound->file_data);
 	if (sound->stream != NULL)
 		al_destroy_audio_stream(sound->stream);
-	mixer_free(sound->mixer);
+	mixer_unref(sound->mixer);
 	free(sound->path);
 	free(sound);
 }
@@ -557,7 +557,7 @@ sound_play(sound_t* sound, mixer_t* mixer)
 	if (sound->stream != NULL) {
 		old_mixer = sound->mixer;
 		sound->mixer = mixer_ref(mixer);
-		mixer_free(old_mixer);
+		mixer_unref(old_mixer);
 		al_rewind_audio_stream(sound->stream);
 		al_attach_audio_stream_to_mixer(sound->stream, sound->mixer->ptr);
 		al_set_audio_stream_playing(sound->stream, true);
@@ -581,7 +581,7 @@ sound_stop(sound_t* sound)
 		return;
 	al_set_audio_stream_playing(sound->stream, false);
 	al_rewind_audio_stream(sound->stream);
-	mixer_free(sound->mixer);
+	mixer_unref(sound->mixer);
 	sound->mixer = NULL;
 }
 
@@ -643,7 +643,7 @@ stream_ref(stream_t* stream)
 }
 
 void
-stream_free(stream_t* stream)
+stream_unref(stream_t* stream)
 {
 	stream_t* *p_stream;
 
@@ -655,7 +655,7 @@ stream_free(stream_t* stream)
 	console_log(3, "disposing stream #%u no longer in use", stream->id);
 	al_drain_audio_stream(stream->ptr);
 	al_destroy_audio_stream(stream->ptr);
-	mixer_free(stream->mixer);
+	mixer_unref(stream->mixer);
 	free(stream->buffer);
 	free(stream);
 	iter = vector_enum(s_active_streams);
@@ -718,7 +718,7 @@ stream_play(stream_t* stream, mixer_t* mixer)
 
 	old_mixer = stream->mixer;
 	stream->mixer = mixer_ref(mixer);
-	mixer_free(old_mixer);
+	mixer_unref(old_mixer);
 
 	al_detach_audio_stream(stream->ptr);
 	al_attach_audio_stream_to_mixer(stream->ptr, stream->mixer->ptr);
@@ -729,7 +729,7 @@ void
 stream_stop(stream_t* stream)
 {
 	al_drain_audio_stream(stream->ptr);
-	mixer_free(stream->mixer);
+	mixer_unref(stream->mixer);
 	stream->mixer = NULL;
 	free(stream->buffer); stream->buffer = NULL;
 	stream->feed_size = 0;

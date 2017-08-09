@@ -17,7 +17,7 @@ image_t*       legacy_default_arrow_up_image   (void);
 socket_v1_t*   socket_v1_new_client            (const char* hostname, int port);
 socket_v1_t*   socket_v1_new_server            (int port);
 socket_v1_t*   socket_v1_ref                   (socket_v1_t* it);
-void           socket_v1_free                  (socket_v1_t* it);
+void           socket_v1_unref                 (socket_v1_t* it);
 bool           socket_v1_connected             (socket_v1_t* it);
 void           socket_v1_close                 (socket_v1_t* it);
 size_t         socket_v1_peek                  (const socket_v1_t* it);

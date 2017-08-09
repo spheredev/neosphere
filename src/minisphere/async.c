@@ -144,7 +144,7 @@ async_run_jobs(async_hint_t hint)
 		if (job->hint == hint && !job->finished)
 			script_run(job->script, true);
 		if (job->finished) {
-			script_free(job->script);
+			script_unref(job->script);
 			iter_remove(&iter);
 		}
 	}
@@ -166,7 +166,7 @@ async_run_jobs(async_hint_t hint)
 				job->finished = true;
 			}
 			if (job->finished) {
-				script_free(job->script);
+				script_unref(job->script);
 				iter_remove(&iter);
 			}
 		}

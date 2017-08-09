@@ -18,7 +18,7 @@ enum text_align
 font_t*     font_load        (const char* path);
 font_t*     font_clone       (const font_t* font);
 font_t*     font_ref         (font_t* font);
-void        font_free        (font_t* font);
+void        font_unref       (font_t* font);
 image_t*    font_glyph       (const font_t* font, uint32_t cp);
 int         font_height      (const font_t* font);
 const char* font_path        (const font_t* font);

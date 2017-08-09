@@ -96,7 +96,7 @@ spritesets_uninit(void)
 	if (s_load_cache != NULL) {
 		iter = vector_enum(s_load_cache);
 		while (p_spriteset = vector_next(&iter))
-			spriteset_free(*p_spriteset);
+			spriteset_unref(*p_spriteset);
 		vector_free(s_load_cache);
 	}
 }
@@ -194,7 +194,7 @@ spriteset_load(const char* filename)
 		for (i = 0; i < rss.num_images; ++i) {
 			image = atlas_load(atlas, file, i, rss.frame_width, rss.frame_height);
 			spriteset_add_image(spriteset, image);
-			image_free(image);
+			image_unref(image);
 		}
 		atlas_unlock(atlas);
 		atlas_free(atlas);
@@ -249,7 +249,7 @@ spriteset_load(const char* filename)
 					rss.frame_height != 0 ? rss.frame_height : frame_v2.height);
 				spriteset_add_image(spriteset, image);
 				spriteset_add_frame(spriteset, pose_name, image_index, frame_v2.delay);
-				image_free(image);
+				image_unref(image);
 				++image_index;
 			}
 		}
@@ -264,7 +264,7 @@ spriteset_load(const char* filename)
 			if (!(image = atlas_load(atlas, file, i, rss.frame_width, rss.frame_height)))
 				goto on_error;
 			spriteset_add_image(spriteset, image);
-			image_free(image);
+			image_unref(image);
 		}
 		atlas_unlock(atlas);
 		atlas_free(atlas);
@@ -290,7 +290,7 @@ spriteset_load(const char* filename)
 	if (s_load_cache != NULL) {
 		while (vector_len(s_load_cache) >= 10) {
 			p_spriteset = vector_get(s_load_cache, 0);
-			spriteset_free(*p_spriteset);
+			spriteset_unref(*p_spriteset);
 			vector_remove(s_load_cache, 0);
 		}
 		spriteset_ref(spriteset);
@@ -300,7 +300,7 @@ spriteset_load(const char* filename)
 
 on_error:
 	console_log(2, "couldn't load spriteset #%u", spriteset->id);
-	spriteset_free(spriteset);
+	spriteset_unref(spriteset);
 	if (file != NULL)
 		file_close(file);
 	if (atlas != NULL) {
@@ -349,7 +349,7 @@ spriteset_ref(spriteset_t* it)
 }
 
 void
-spriteset_free(spriteset_t* it)
+spriteset_unref(spriteset_t* it)
 {
 	iter_t iter;
 	struct pose* pose;
@@ -360,7 +360,7 @@ spriteset_free(spriteset_t* it)
 	console_log(3, "disposing spriteset #%u no longer in use", it->id);
 	iter = vector_enum(it->images);
 	while (vector_next(&iter))
-		image_free(*(image_t**)iter.ptr);
+		image_unref(*(image_t**)iter.ptr);
 	vector_free(it->images);
 	iter = vector_enum(it->poses);
 	while (vector_next(&iter)) {

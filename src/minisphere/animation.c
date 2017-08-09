@@ -65,7 +65,7 @@ on_error:
 		if (anim->stream != NULL) mng_cleanup(&anim->stream);
 		if (anim->file != NULL) file_close(anim->file);
 		if (anim->frame != NULL) {
-			image_free(anim->frame);
+			image_unref(anim->frame);
 		}
 		free(anim);
 	}
@@ -80,7 +80,7 @@ animation_ref(animation_t* animation)
 }
 
 void
-animation_free(animation_t* animation)
+animation_unref(animation_t* animation)
 {
 	if (animation == NULL || --animation->refcount > 0)
 		return;
@@ -89,7 +89,7 @@ animation_free(animation_t* animation)
 		animation->id);
 	mng_cleanup(&animation->stream);
 	file_close(animation->file);
-	image_free(animation->frame);
+	image_unref(animation->frame);
 	free(animation);
 }
 
@@ -181,14 +181,14 @@ mng_cb_processheader(mng_handle stream, mng_uint32 width, mng_uint32 height)
 	animation_t* anim = mng_get_userdata(stream);
 
 	anim->w = width; anim->h = height;
-	image_free(anim->frame);
+	image_unref(anim->frame);
 	if (!(anim->frame = image_new(anim->w, anim->h)))
 		goto on_error;
 	mng_set_canvasstyle(stream, MNG_CANVAS_RGBA8);
 	return MNG_TRUE;
 
 on_error:
-	image_free(anim->frame);
+	image_unref(anim->frame);
 	return MNG_FALSE;
 }
 

@@ -111,7 +111,7 @@ ref_spk(spk_t* spk)
 }
 
 void
-free_spk(spk_t* spk)
+unref_spk(spk_t* spk)
 {
 	if (spk == NULL || --spk->refcount > 0)
 		return;
@@ -232,7 +232,7 @@ spk_fclose(spk_file_t* file)
 	al_fclose(file->handle);
 	free(file->buffer);
 	free(file->filename);
-	free_spk(file->spk);
+	unref_spk(file->spk);
 	free(file);
 }
 

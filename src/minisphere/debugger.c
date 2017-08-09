@@ -92,7 +92,7 @@ debugger_uninit()
 	struct source* p_source;
 	
 	do_detach_debugger(true);
-	server_free(s_server);
+	server_unref(s_server);
 	
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
@@ -113,7 +113,7 @@ debugger_update(void)
 		if (s_socket != NULL) {
 			console_log(2, "rejected debug connection from %s, already attached",
 				socket_hostname(client));
-			socket_free(client);
+			socket_unref(client);
 		}
 		else {
 			console_log(0, "connected to debug client at %s", socket_hostname(client));
@@ -287,7 +287,7 @@ do_detach_debugger(bool is_shutdown)
 		while (socket_connected(s_socket))
 			sphere_sleep(0.05);
 	}
-	socket_free(s_socket);
+	socket_unref(s_socket);
 	s_socket = NULL;
 	if (s_want_attach && !is_shutdown)
 		sphere_exit(true);  // clean detach, exit
@@ -402,7 +402,7 @@ duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
 	while (!(n_bytes = socket_peek(s_socket))) {
 		if (!socket_connected(s_socket)) {  // did a pig eat it?
 			console_log(1, "TCP connection reset while debugging");
-			socket_free(s_socket);
+			socket_unref(s_socket);
 			s_socket = NULL;
 			return 0;  // stupid pig
 		}
@@ -427,7 +427,7 @@ duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
 	// make sure we're still connected
 	if (!socket_connected(s_socket)) {
 		console_log(1, "TCP connection reset while debugging");
-		socket_free(s_socket);
+		socket_unref(s_socket);
 		s_socket = NULL;
 		return 0;  // stupid pig!
 	}

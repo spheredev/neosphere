@@ -136,7 +136,7 @@ script_ref(script_t* script)
 }
 
 void
-script_free(script_t* script)
+script_unref(script_t* script)
 {
 	if (script == NULL || --script->refcount > 0)
 		return;
@@ -177,5 +177,5 @@ script_run(script_t* script, bool allow_reentry)
 	duk_pop(g_duk);
 	script->is_in_use = was_in_use;
 
-	script_free(script);
+	script_unref(script);
 }

@@ -1852,7 +1852,7 @@ js_Font_finalize(duk_context* ctx)
 	font_t* font;
 
 	font = duk_require_class_obj(ctx, 0, "Font");
-	font_free(font);
+	font_unref(font);
 	return 0;
 }
 
@@ -2009,14 +2009,14 @@ js_new_IndexList(duk_context* ctx)
 		duk_get_prop_index(ctx, 0, i);
 		index = duk_require_int(ctx, -1);
 		if (index < 0 || index > UINT16_MAX) {
-			ibo_free(ibo);
+			ibo_unref(ibo);
 			duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "index value out of range");
 		}
 		ibo_add_index(ibo, index);
 		duk_pop(ctx);
 	}
 	if (!ibo_upload(ibo)) {
-		ibo_free(ibo);
+		ibo_unref(ibo);
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
 	}
 	duk_push_this(ctx);
@@ -2030,7 +2030,7 @@ js_IndexList_finalize(duk_context* ctx)
 	ibo_t* ibo;
 
 	ibo = duk_require_class_obj(ctx, 0, "IndexList");
-	ibo_free(ibo);
+	ibo_unref(ibo);
 	return 0;
 }
 
@@ -2375,7 +2375,7 @@ js_Mixer_finalize(duk_context* ctx)
 	mixer_t* mixer;
 
 	mixer = duk_require_class_obj(ctx, 0, "Mixer");
-	mixer_free(mixer);
+	mixer_unref(mixer);
 	return 0;
 }
 
@@ -2446,7 +2446,7 @@ js_Model_finalize(duk_context* ctx)
 	model_t* group;
 
 	group = duk_require_class_obj(ctx, 0, "Model");
-	model_free(group);
+	model_unref(group);
 	return 0;
 }
 
@@ -2841,7 +2841,7 @@ js_RNG_fromState(duk_context* ctx)
 
 	xoro = xoro_new(0);
 	if (!xoro_set_state(xoro, state)) {
-		xoro_free(xoro);
+		xoro_unref(xoro);
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
 	}
 	duk_push_class_obj(ctx, "RNG", xoro);
@@ -2869,7 +2869,7 @@ js_RNG_finalize(duk_context* ctx)
 
 	xoro = duk_require_class_obj(ctx, 0, "RNG");
 
-	xoro_free(xoro);
+	xoro_unref(xoro);
 	return 0;
 }
 
@@ -2968,7 +2968,7 @@ js_Sample_finalize(duk_context* ctx)
 	sample_t* sample;
 
 	sample = duk_require_class_obj(ctx, 0, "Sample");
-	sample_free(sample);
+	sample_unref(sample);
 	return 0;
 }
 
@@ -3061,7 +3061,7 @@ js_Server_finalize(duk_context* ctx)
 	server_t* server;
 
 	server = duk_require_class_obj(ctx, 0, "Server");
-	server_free(server);
+	server_unref(server);
 	return 0;
 }
 
@@ -3093,7 +3093,7 @@ js_Server_close(duk_context* ctx)
 	server = duk_require_class_obj(ctx, -1, "Server");
 
 	duk_set_class_ptr(ctx, -1, NULL);
-	server_free(server);
+	server_unref(server);
 	return 0;
 }
 
@@ -3153,7 +3153,7 @@ js_Shader_finalize(duk_context* ctx)
 {
 	shader_t* shader = duk_require_class_obj(ctx, 0, "Shader");
 
-	shader_free(shader);
+	shader_unref(shader);
 	return 0;
 }
 
@@ -3199,7 +3199,7 @@ js_Shape_finalize(duk_context* ctx)
 	shape_t* shape;
 
 	shape = duk_require_class_obj(ctx, 0, "Shape");
-	shape_free(shape);
+	shape_unref(shape);
 	return 0;
 }
 
@@ -3349,7 +3349,7 @@ js_Socket_finalize(duk_context* ctx)
 
 	socket = duk_require_class_obj(ctx, 0, "Socket");
 
-	socket_free(socket);
+	socket_unref(socket);
 	return 0;
 }
 
@@ -3423,7 +3423,7 @@ js_Socket_close(duk_context* ctx)
 	socket = duk_require_class_obj(ctx, -1, "Socket");
 	
 	duk_set_class_ptr(ctx, -1, NULL);
-	socket_free(socket);
+	socket_unref(socket);
 	return 0;
 }
 
@@ -3509,7 +3509,7 @@ js_Sound_finalize(duk_context* ctx)
 	sound_t* sound;
 
 	sound = duk_require_class_obj(ctx, 0, "Sound");
-	sound_free(sound);
+	sound_unref(sound);
 	return 0;
 }
 
@@ -3758,7 +3758,7 @@ js_SoundStream_finalize(duk_context* ctx)
 	stream_t* stream;
 
 	stream = duk_require_class_obj(ctx, 0, "SoundStream");
-	stream_free(stream);
+	stream_unref(stream);
 	return 0;
 }
 
@@ -3881,7 +3881,7 @@ js_Surface_finalize(duk_context* ctx)
 	image_t* image;
 
 	image = duk_require_class_obj(ctx, 0, "Surface");
-	image_free(image);
+	image_unref(image);
 	return 0;
 }
 
@@ -4009,7 +4009,7 @@ js_new_Texture(duk_context* ctx)
 		if (!(image = image_new(width, height)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image creation failed");
 		if (!(lock = image_lock(image))) {
-			image_free(image);
+			image_unref(image);
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "image lock failed");
 		}
 		p_line = lock->pixels;
@@ -4042,7 +4042,7 @@ js_Texture_finalize(duk_context* ctx)
 	image_t* image;
 
 	image = duk_require_class_obj(ctx, 0, "Texture");
-	image_free(image);
+	image_unref(image);
 	return 0;
 }
 
@@ -4107,7 +4107,7 @@ js_Transform_finalize(duk_context* ctx)
 
 	transform = duk_require_class_obj(ctx, 0, "Transform");
 
-	transform_free(transform);
+	transform_unref(transform);
 	return 0;
 }
 
@@ -4372,7 +4372,7 @@ js_new_VertexList(duk_context* ctx)
 		duk_pop_n(ctx, 7);
 	}
 	if (!vbo_upload(vbo)) {
-		vbo_free(vbo);
+		vbo_unref(vbo);
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "upload to GPU failed");
 	}
 	duk_push_this(ctx);
@@ -4386,6 +4386,6 @@ js_VertexList_finalize(duk_context* ctx)
 	vbo_t* vbo;
 
 	vbo = duk_require_class_obj(ctx, 0, "VertexList");
-	vbo_free(vbo);
+	vbo_unref(vbo);
 	return 0;
 }

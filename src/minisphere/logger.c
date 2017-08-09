@@ -56,7 +56,7 @@ logger_ref(logger_t* logger)
 }
 
 void
-logger_free(logger_t* logger)
+logger_unref(logger_t* logger)
 {
 	lstring_t* log_entry;
 	time_t     now;

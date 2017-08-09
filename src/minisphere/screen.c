@@ -109,7 +109,7 @@ screen_free(screen_t* it)
 		return;
 	
 	console_log(1, "shutting down render context");
-	image_free(it->backbuffer);
+	image_unref(it->backbuffer);
 	al_destroy_display(it->display);
 	free(it);
 }
@@ -355,7 +355,7 @@ screen_grab(screen_t* it, int x, int y, int width, int height)
 	return image;
 
 on_error:
-	image_free(image);
+	image_unref(image);
 	return NULL;
 }
 

@@ -221,7 +221,7 @@ on_error:
 	file_seek(file, file_pos, WHENCE_SET);
 	if (lock != NULL)
 		image_unlock(parent, lock);
-	image_free(image);
+	image_unref(image);
 	return NULL;
 }
 
@@ -235,7 +235,7 @@ image_ref(image_t* image)
 }
 
 void
-image_free(image_t* image)
+image_unref(image_t* image)
 {
 	if (image == NULL || --image->refcount > 0)
 		return;
@@ -244,9 +244,9 @@ image_free(image_t* image)
 		image->id);
 	uncache_pixels(image);
 	al_destroy_bitmap(image->bitmap);
-	image_free(image->parent);
+	image_unref(image->parent);
 	free(image->path);
-	transform_free(image->transform);
+	transform_unref(image->transform);
 	free(image);
 }
 
@@ -312,7 +312,7 @@ image_set_transform(image_t* image, transform_t* transform)
 
 	old_value = image->transform;
 	image->transform = transform_ref(transform);
-	transform_free(old_value);
+	transform_unref(old_value);
 }
 
 bool
@@ -693,7 +693,7 @@ image_unlock(image_t* image, image_lock_t* lock)
 	if (image->lock_count == 0 || --image->lock_count > 0)
 		return;
 	al_unlock_bitmap(image->bitmap);
-	image_free(image);
+	image_unref(image);
 }
 
 bool

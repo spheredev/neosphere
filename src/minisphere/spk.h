@@ -14,7 +14,7 @@ enum spk_seek_origin
 
 spk_t*      open_spk           (const char* path);
 spk_t*      ref_spk            (spk_t* spk);
-void        free_spk           (spk_t* spk);
+void        unref_spk          (spk_t* spk);
 vector_t*   list_spk_filenames (spk_t* spk, const char* dirname, bool want_dirs);
 
 bool        spk_dir_exists (const spk_t* spk, const char* dirname);

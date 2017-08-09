@@ -302,22 +302,22 @@ map_engine_uninit(void)
 	vector_free(s_person_list);
 	
 	for (i = 0; i < s_num_deferreds; ++i)
-		script_free(s_deferreds[i].script);
+		script_unref(s_deferreds[i].script);
 	free(s_deferreds);
 	for (i = 0; i < MAP_SCRIPT_MAX; ++i)
-		script_free(s_def_map_scripts[i]);
-	script_free(s_update_script);
-	script_free(s_render_script);
+		script_unref(s_def_map_scripts[i]);
+	script_unref(s_update_script);
+	script_unref(s_render_script);
 	free_map(s_map);
 	free(s_players);
 
 	for (i = 0; i < s_num_persons; ++i)
 		free_person(s_persons[i]);
 	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
-		script_free(s_def_person_scripts[i]);
+		script_unref(s_def_person_scripts[i]);
 	free(s_persons);
 
-	mixer_free(s_bgm_mixer);
+	mixer_unref(s_bgm_mixer);
 
 	audio_uninit();
 }
@@ -329,7 +329,7 @@ map_engine_on_map_event(map_op_t op, script_t* script)
 
 	old_script = s_def_map_scripts[op];
 	s_def_map_scripts[op] = script_ref(script);
-	script_free(old_script);
+	script_unref(old_script);
 }
 
 void
@@ -339,20 +339,20 @@ map_engine_on_person_event(person_op_t op, script_t* script)
 
 	old_script = s_def_person_scripts[op];
 	s_def_person_scripts[op] = script_ref(script);
-	script_free(old_script);
+	script_unref(old_script);
 }
 
 void
 map_engine_on_render(script_t* script)
 {
-	script_free(s_render_script);
+	script_unref(s_render_script);
 	s_render_script = script_ref(script);
 }
 
 void
 map_engine_on_update(script_t* script)
 {
-	script_free(s_update_script);
+	script_unref(s_update_script);
 	s_update_script = script_ref(script);
 }
 
@@ -877,7 +877,7 @@ map_remove_zone(int zone_index)
 void
 layer_on_render(int layer, script_t* script)
 {
-	script_free(s_map->layers[layer].render_script);
+	script_unref(s_map->layers[layer].render_script);
 	s_map->layers[layer].render_script = script_ref(script);
 }
 
@@ -1502,7 +1502,7 @@ person_set_spriteset(person_t* person, spriteset_t* spriteset)
 	person->sprite = spriteset_ref(spriteset);
 	person->anim_frames = spriteset_frame_delay(person->sprite, person->direction, 0);
 	person->frame = 0;
-	spriteset_free(old_spriteset);
+	spriteset_unref(old_spriteset);
 }
 
 void
@@ -1530,7 +1530,7 @@ person_set_xyz(person_t* person, double x, double y, int layer)
 void
 person_on_event(person_t* person, int type, script_t* script)
 {
-	script_free(person->scripts[type]);
+	script_unref(person->scripts[type]);
 	person->scripts[type] = script;
 }
 
@@ -1722,7 +1722,7 @@ trigger_set_script(int trigger_index, script_t* script)
 	trigger = vector_get(s_map->triggers, trigger_index);
 	old_script = trigger->script;
 	trigger->script = script_ref(script);
-	script_free(old_script);
+	script_unref(old_script);
 }
 
 void
@@ -1803,7 +1803,7 @@ zone_set_script(int zone_index, script_t* script)
 	zone = vector_get(s_map->zones, zone_index);
 	old_script = zone->script;
 	zone->script = script_ref(script);
-	script_free(old_script);
+	script_unref(old_script);
 }
 
 void
@@ -1856,7 +1856,7 @@ change_map(const char* filename, bool preserve_persons)
 	// close out old map and prep for new one
 	free_map(s_map); free(s_map_filename);
 	for (i = 0; i < s_num_deferreds; ++i)
-		script_free(s_deferreds[i].script);
+		script_unref(s_deferreds[i].script);
 	s_num_deferreds = 0;
 	s_map = map; s_map_filename = strdup(filename);
 	reset_persons(preserve_persons);
@@ -1871,7 +1871,7 @@ change_map(const char* filename, bool preserve_persons)
 			goto on_error;
 		if (!(person = person_new(lstr_cstr(person_info->name), spriteset, false, NULL)))
 			goto on_error;
-		spriteset_free(spriteset);
+		spriteset_unref(spriteset);
 		person_set_xyz(person, person_info->x, person_info->y, person_info->z);
 		person_compile_script(person, PERSON_SCRIPT_ON_CREATE, person_info->create_script);
 		person_compile_script(person, PERSON_SCRIPT_ON_DESTROY, person_info->destroy_script);
@@ -1891,7 +1891,7 @@ change_map(const char* filename, bool preserve_persons)
 
 	// start up map BGM (if same as previous, leave alone)
 	if (s_map->bgm_file == NULL && s_map_bgm_stream != NULL) {
-		sound_free(s_map_bgm_stream);
+		sound_unref(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_map_bgm_stream = NULL;
 		s_last_bgm_file = NULL;
@@ -1899,7 +1899,7 @@ change_map(const char* filename, bool preserve_persons)
 	else if (s_map->bgm_file != NULL
 		&& (s_last_bgm_file == NULL || lstr_cmp(s_map->bgm_file, s_last_bgm_file) != 0))
 	{
-		sound_free(s_map_bgm_stream);
+		sound_unref(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
 		path = game_canonicalize(g_game_fs, lstr_cstr(s_map->bgm_file), "sounds", true);
@@ -1917,7 +1917,7 @@ change_map(const char* filename, bool preserve_persons)
 	return true;
 
 on_error:
-	spriteset_free(spriteset);
+	spriteset_unref(spriteset);
 	free_map(s_map);
 	return false;
 }
@@ -2105,9 +2105,9 @@ free_map(struct map* map)
 	if (map == NULL)
 		return;
 	for (i = 0; i < MAP_SCRIPT_MAX; ++i)
-		script_free(map->scripts[i]);
+		script_unref(map->scripts[i]);
 	for (i = 0; i < map->num_layers; ++i) {
-		script_free(map->layers[i].render_script);
+		script_unref(map->layers[i].render_script);
 		lstr_free(map->layers[i].name);
 		free(map->layers[i].tilemap);
 		obsmap_free(map->layers[i].obsmap);
@@ -2123,10 +2123,10 @@ free_map(struct map* map)
 	}
 	iter = vector_enum(s_map->triggers);
 	while (trigger = vector_next(&iter))
-		script_free(trigger->script);
+		script_unref(trigger->script);
 	iter = vector_enum(s_map->zones);
 	while (zone = vector_next(&iter))
-		script_free(zone->script);
+		script_unref(zone->script);
 	lstr_free(s_map->bgm_file);
 	tileset_free(map->tileset);
 	free(map->layers);
@@ -2143,8 +2143,8 @@ free_person(person_t* person)
 
 	free(person->steps);
 	for (i = 0; i < PERSON_SCRIPT_MAX; ++i)
-		script_free(person->scripts[i]);
-	spriteset_free(person->sprite);
+		script_unref(person->scripts[i]);
+	spriteset_unref(person->sprite);
 	free(person->commands);
 	free(person->name);
 	free(person->direction);
@@ -2795,7 +2795,7 @@ update_map_engine(bool in_main_loop)
 				s_deferreds[j] = s_deferreds[j + 1];
 			--s_num_deferreds;
 			script_run(script_to_run, false);
-			script_free(script_to_run);
+			script_unref(script_to_run);
 			--i;
 		}
 	}
@@ -2841,7 +2841,7 @@ update_person(person_t* person, bool* out_has_moved)
 			else
 				script_run(command.script, false);
 			s_current_person = last_person;
-			script_free(command.script);
+			script_unref(command.script);
 			is_finished = !does_person_exist(person)  // stop if person was destroyed
 				|| !command.is_immediate || person->num_commands == 0;
 		}

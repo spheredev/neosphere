@@ -1,6 +1,8 @@
 #ifndef MINISPHERE__MAP_ENGINE_H__INCLUDED
 #define MINISPHERE__MAP_ENGINE_H__INCLUDED
 
+#include "color.h"
+#include "geometry.h"
 #include "obstruction.h"
 #include "spriteset.h"
 #include "tileset.h"

@@ -160,7 +160,7 @@ on_error:  // oh no!
 		for (i = 0; i < rts.num_tiles; ++i) {
 			lstr_free(tiles[i].name);
 			obsmap_free(tiles[i].obsmap);
-			image_free(tiles[i].image);
+			image_unref(tiles[i].image);
 		}
 		free(tileset->tiles);
 	}
@@ -178,7 +178,7 @@ tileset_free(tileset_t* tileset)
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		lstr_free(tileset->tiles[i].name);
-		image_free(tileset->tiles[i].image);
+		image_unref(tileset->tiles[i].image);
 		obsmap_free(tileset->tiles[i].obsmap);
 	}
 	atlas_free(tileset->atlas);

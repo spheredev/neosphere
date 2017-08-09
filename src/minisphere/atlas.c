@@ -37,7 +37,7 @@ atlas_new(int num_images, int max_width, int max_height)
 on_error:
 	console_log(4, "failed to create atlas #%u", s_next_atlas_id++);
 	if (atlas != NULL) {
-		image_free(atlas->image);
+		image_unref(atlas->image);
 		free(atlas);
 	}
 	return NULL;
@@ -50,7 +50,7 @@ atlas_free(atlas_t* atlas)
 	
 	if (atlas->lock != NULL)
 		image_unlock(atlas->image, atlas->lock);
-	image_free(atlas->image);
+	image_unref(atlas->image);
 	free(atlas);
 }
 

@@ -92,7 +92,7 @@ void
 galileo_uninit(void)
 {
 	console_log(1, "shutting down Galileo subsystem");
-	shader_free(s_def_shader);
+	shader_unref(s_def_shader);
 }
 
 shader_t*
@@ -138,7 +138,7 @@ ibo_ref(ibo_t* it)
 }
 
 void
-ibo_free(ibo_t* it)
+ibo_unref(ibo_t* it)
 {
 	if (it == NULL || --it->refcount > 0)
 		return;
@@ -226,7 +226,7 @@ model_ref(model_t* it)
 }
 
 void
-model_free(model_t* it)
+model_unref(model_t* it)
 {
 	shape_t** i_shape;
 
@@ -239,10 +239,10 @@ model_free(model_t* it)
 
 	iter = vector_enum(it->shapes);
 	while (i_shape = vector_next(&iter))
-		shape_free(*i_shape);
+		shape_unref(*i_shape);
 	vector_free(it->shapes);
-	shader_free(it->shader);
-	transform_free(it->transform);
+	shader_unref(it->shader);
+	transform_unref(it->transform);
 	vector_free(it->uniforms);
 	free(it);
 }
@@ -266,7 +266,7 @@ model_set_shader(model_t* it, shader_t* shader)
 
 	old_shader = it->shader;
 	it->shader = shader_ref(shader);
-	shader_free(old_shader);
+	shader_unref(old_shader);
 }
 
 void
@@ -276,7 +276,7 @@ model_set_transform(model_t* it, transform_t* transform)
 
 	old_transform = it->transform;
 	it->transform = transform_ref(transform);
-	transform_free(old_transform);
+	transform_unref(old_transform);
 }
 
 bool
@@ -497,7 +497,7 @@ shader_ref(shader_t* shader)
 }
 
 void
-shader_free(shader_t* shader)
+shader_unref(shader_t* shader)
 {
 	if (shader == NULL || --shader->refcount > 0)
 		return;
@@ -567,14 +567,14 @@ shape_ref(shape_t* it)
 }
 
 void
-shape_free(shape_t* it)
+shape_unref(shape_t* it)
 {
 	if (it == NULL || --it->refcount > 0)
 		return;
 	console_log(4, "disposing shape #%u no longer in use", it->id);
-	image_free(it->texture);
-	vbo_free(it->vbo);
-	ibo_free(it->ibo);
+	image_unref(it->texture);
+	vbo_unref(it->vbo);
+	ibo_unref(it->ibo);
 	free(it);
 }
 
@@ -603,7 +603,7 @@ shape_set_ibo(shape_t* it, ibo_t* ibo)
 
 	old_ibo = it->ibo;
 	it->ibo = ibo_ref(ibo);
-	ibo_free(old_ibo);
+	ibo_unref(old_ibo);
 }
 
 void
@@ -613,7 +613,7 @@ shape_set_texture(shape_t* it, image_t* texture)
 
 	old_texture = it->texture;
 	it->texture = image_ref(texture);
-	image_free(old_texture);
+	image_unref(old_texture);
 }
 
 void
@@ -623,7 +623,7 @@ shape_set_vbo(shape_t* it, vbo_t* vbo)
 
 	old_vbo = it->vbo;
 	it->vbo = vbo_ref(vbo);
-	vbo_free(old_vbo);
+	vbo_unref(old_vbo);
 }
 
 void
@@ -652,7 +652,7 @@ vbo_ref(vbo_t* it)
 }
 
 void
-vbo_free(vbo_t* it)
+vbo_unref(vbo_t* it)
 {
 	if (it == NULL || --it->refcount > 0)
 		return;

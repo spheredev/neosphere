@@ -87,7 +87,7 @@ socket_ref(socket_t* it)
 }
 
 void
-socket_free(socket_t* it)
+socket_unref(socket_t* it)
 {
 	if (it == NULL || --it->refcount > 0)
 		return;
@@ -228,7 +228,7 @@ server_ref(server_t* it)
 }
 
 void
-server_free(server_t* it)
+server_unref(server_t* it)
 {
 	int i;
 	

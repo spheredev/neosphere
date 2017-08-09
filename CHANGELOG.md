@@ -9,6 +9,8 @@ vX.X.X - TBD
 * Adds `FS.directoryExists()` for checking whether a directory exists.
 * Improves windowed mode scaling behavior when miniSphere is run on a HiDPI/4K
   display.
+* Fixes several issues in the implementation of `FS.rename()` that could cause
+  the function to behave destructively on some platforms.
 * Fixes a bug where Cell `FS.writeFile()` can accept a buffer object as input.
 * Fixes a bug in Cell `FS.fileExists()` where it returns true for directories.
 * Fixes a bug in which a path specified uplevel from a SphereFS prefix, e.g.

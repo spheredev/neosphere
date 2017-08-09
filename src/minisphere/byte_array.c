@@ -71,7 +71,7 @@ bytearray_ref(bytearray_t* array)
 }
 
 void
-bytearray_free(bytearray_t* array)
+bytearray_unref(bytearray_t* array)
 {
 	if (array == NULL || --array->refcount > 0)
 		return;

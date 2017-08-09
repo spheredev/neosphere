@@ -33,6 +33,20 @@ color_mix(color_t color, color_t other, float w1, float w2)
 	return blend;
 }
 
+color_t
+color_transform(color_t color, colormatrix_t mat)
+{
+	int r, g, b;
+
+	r = mat.rn + (mat.rr * color.r + mat.rg * color.g + mat.rb * color.b) / 255;
+	g = mat.gn + (mat.gr * color.r + mat.gg * color.g + mat.gb * color.b) / 255;
+	b = mat.bn + (mat.br * color.r + mat.bg * color.g + mat.bb * color.b) / 255;
+	r = r < 0 ? 0 : r > 255 ? 255 : r;
+	g = g < 0 ? 0 : g > 255 ? 255 : g;
+	b = b < 0 ? 0 : b > 255 ? 255 : b;
+	return color_new(r, g, b, color.a);
+}
+
 colormatrix_t
 colormatrix_new(int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int bn, int br, int bg, int bb)
 {
@@ -64,18 +78,4 @@ colormatrix_lerp(colormatrix_t mat, colormatrix_t other, int w1, int w2)
 	blend.bg = (mat.bg * w1 + other.bg * w2) / sigma;
 	blend.bb = (mat.bb * w1 + other.bb * w2) / sigma;
 	return blend;
-}
-
-color_t
-color_transform(color_t color, colormatrix_t mat)
-{
-	int r, g, b;
-	
-	r = mat.rn + (mat.rr * color.r + mat.rg * color.g + mat.rb * color.b) / 255;
-	g = mat.gn + (mat.gr * color.r + mat.gg * color.g + mat.gb * color.b) / 255;
-	b = mat.bn + (mat.br * color.r + mat.bg * color.g + mat.bb * color.b) / 255;
-	r = r < 0 ? 0 : r > 255 ? 255 : r;
-	g = g < 0 ? 0 : g > 255 ? 255 : g;
-	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	return color_new(r, g, b, color.a);
 }

@@ -136,13 +136,13 @@ shutdown_input(void)
 	// free bound key scripts
 	iter = vector_enum(s_bound_buttons);
 	while (pbutton = vector_next(&iter)) {
-		script_free(pbutton->on_down_script);
-		script_free(pbutton->on_up_script);
+		script_unref(pbutton->on_down_script);
+		script_unref(pbutton->on_up_script);
 	}
 	iter = vector_enum(s_bound_keys);
 	while (pkey = vector_next(&iter)) {
-		script_free(pkey->on_down_script);
-		script_free(pkey->on_up_script);
+		script_unref(pkey->on_down_script);
+		script_unref(pkey->on_up_script);
 	}
 	vector_free(s_bound_buttons);
 	vector_free(s_bound_keys);
@@ -259,9 +259,9 @@ joy_bind_button(int joy_index, int button, script_t* on_down_script, script_t* o
 			old_up_script = bound->on_up_script;
 			memcpy(bound, &new_binding, sizeof(struct bound_button));
 			if (old_down_script != bound->on_down_script)
-				script_free(old_down_script);
+				script_unref(old_down_script);
 			if (old_up_script != bound->on_up_script)
-				script_free(old_up_script);
+				script_unref(old_up_script);
 			is_new_entry = false;
 		}
 	}
@@ -618,9 +618,9 @@ kb_bind_key(int keycode, script_t* on_down_script, script_t* on_up_script)
 			old_up_script = key->on_up_script;
 			memcpy(key, &new_binding, sizeof(struct bound_key));
 			if (old_down_script != key->on_down_script)
-				script_free(old_down_script);
+				script_unref(old_down_script);
 			if (old_up_script != key->on_up_script)
-				script_free(old_up_script);
+				script_unref(old_up_script);
 			is_new_key = false;
 		}
 	}

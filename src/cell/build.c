@@ -1409,7 +1409,7 @@ js_RNG_fromState(duk_context* ctx)
 
 	xoro = xoro_new(0);
 	if (!xoro_set_state(xoro, state)) {
-		xoro_free(xoro);
+		xoro_unref(xoro);
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
 	}
 	duk_push_class_obj(ctx, "RNG", xoro);
@@ -1436,7 +1436,7 @@ js_RNG_finalize(duk_context* ctx)
 
 	xoro = duk_require_class_obj(ctx, 0, "RNG");
 
-	xoro_free(xoro);
+	xoro_unref(xoro);
 	return 0;
 }
 

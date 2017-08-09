@@ -7,7 +7,7 @@ bytearray_t*   bytearray_new          (int size);
 bytearray_t*   bytearray_from_buffer  (const void* buffer, int size);
 bytearray_t*   bytearray_from_lstring (const lstring_t* string);
 bytearray_t*   bytearray_ref          (bytearray_t* array);
-void           bytearray_free         (bytearray_t* array);
+void           bytearray_unref        (bytearray_t* array);
 uint8_t*       bytearray_buffer       (bytearray_t* array);
 int            bytearray_len          (bytearray_t* array);
 bytearray_t*   bytearray_concat       (bytearray_t* array1, bytearray_t* array2);

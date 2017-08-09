@@ -1536,7 +1536,7 @@ js_AddZone(duk_context* ctx)
 	if (!map_add_zone(rect(x, y, width, height), layer, script, 8))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create zone");
 	duk_push_number(ctx, map_num_zones() - 1);
-	script_free(script);
+	script_unref(script);
 	return 1;
 }
 
@@ -1845,7 +1845,7 @@ js_CreateByteArray(duk_context* ctx)
 	if (!(array = bytearray_new(size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create byte array");
 	duk_push_sphere_bytearray(ctx, array);
-	bytearray_free(array);
+	bytearray_unref(array);
 	return 1;
 }
 
@@ -1861,7 +1861,7 @@ js_CreateByteArrayFromString(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create byte array");
 	lstr_free(string);
 	duk_push_sphere_bytearray(ctx, array);
-	bytearray_free(array);
+	bytearray_unref(array);
 	return 1;
 }
 
@@ -1958,7 +1958,7 @@ js_CreatePerson(duk_context* ctx)
 
 	// create the person and its JS-side data object
 	person = person_new(name, spriteset, !destroy_with_map, NULL);
-	spriteset_free(spriteset);
+	spriteset_unref(spriteset);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "personData");
 	duk_push_object(ctx); duk_put_prop_string(ctx, -2, name);
@@ -1995,7 +1995,7 @@ js_CreateSpriteset(duk_context* ctx)
 		// pixel data.
 		spriteset_add_image(spriteset, image);
 	}
-	image_free(image);
+	image_unref(image);
 	for (i = 0; i < num_poses; ++i) {
 		sprintf(pose_name, "unnamed %d", i + 1);
 		spriteset_add_pose(spriteset, pose_name);
@@ -2003,7 +2003,7 @@ js_CreateSpriteset(duk_context* ctx)
 			spriteset_add_frame(spriteset, pose_name, 0, 8);
 	}
 	duk_push_sphere_spriteset(ctx, spriteset);
-	spriteset_free(spriteset);
+	spriteset_unref(spriteset);
 	return 1;
 }
 
@@ -4471,7 +4471,7 @@ js_LoadFont(duk_context* ctx)
 	if (!(font = font_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
 	duk_push_sphere_font(ctx, font);
-	font_free(font);
+	font_unref(font);
 	return 1;
 }
 
@@ -4530,7 +4530,7 @@ js_LoadSpriteset(duk_context* ctx)
 	if ((spriteset = spriteset_load(filename)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load spriteset `%s`", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
-	spriteset_free(spriteset);
+	spriteset_unref(spriteset);
 	return 1;
 }
 
@@ -5166,7 +5166,7 @@ js_SetDefaultMapScript(duk_context* ctx)
 	if (map_op < 0 || map_op >= MAP_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid map script constant");
 	map_engine_on_map_event(map_op, script);
-	script_free(script);
+	script_unref(script);
 	return 0;
 }
 
@@ -5182,7 +5182,7 @@ js_SetDefaultPersonScript(duk_context* ctx)
 	if (person_op < 0 || person_op >= PERSON_SCRIPT_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "invalid script type constant");
 	map_engine_on_person_event(person_op, script);
-	script_free(script);
+	script_unref(script);
 	return 0;
 }
 
@@ -5276,7 +5276,7 @@ js_SetLayerRenderer(duk_context* ctx)
 	sprintf(script_name, "[layer %d render script]", layer);
 	script = duk_require_sphere_script(ctx, 1, script_name);
 	layer_on_render(layer, script);
-	script_free(script);
+	script_unref(script);
 	return 0;
 }
 
@@ -5714,11 +5714,11 @@ js_SetPersonSpriteset(duk_context* ctx)
 	spriteset = duk_require_sphere_spriteset(ctx, 1);
 
 	if (!(person = map_person_by_name(name))) {
-		spriteset_free(spriteset);
+		spriteset_unref(spriteset);
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	}
 	person_set_spriteset(person, spriteset);
-	spriteset_free(spriteset);
+	spriteset_unref(spriteset);
 	return 0;
 }
 
@@ -5834,7 +5834,7 @@ js_SetRenderScript(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 0, "%/renderScript.js");
 
 	map_engine_on_render(script);
-	script_free(script);
+	script_unref(script);
 	return 0;
 }
 
@@ -6036,7 +6036,7 @@ js_SetTriggerScript(duk_context* ctx)
 	script_name = lstr_newf("%s/trigger~%d/onStep", map_filename(), trigger_index);
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	trigger_set_script(trigger_index, script);
-	script_free(script);
+	script_unref(script);
 	lstr_free(script_name);
 	return 0;
 }
@@ -6068,7 +6068,7 @@ js_SetUpdateScript(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 0, "%/updateScript.js");
 
 	map_engine_on_update(script);
-	script_free(script);
+	script_unref(script);
 	return 0;
 }
 
@@ -6136,7 +6136,7 @@ js_SetZoneScript(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
 	zone_set_script(zone_index, script);
-	script_free(script);
+	script_unref(script);
 	return 0;
 }
 
@@ -6217,7 +6217,7 @@ js_Animation_finalize(duk_context* ctx)
 	animation_t* anim;
 
 	anim = duk_require_class_obj(ctx, 0, "ssAnimation");
-	animation_free(anim);
+	animation_unref(anim);
 	return 0;
 }
 
@@ -6326,7 +6326,7 @@ js_ByteArray_finalize(duk_context* ctx)
 	bytearray_t* array;
 
 	array = duk_require_class_obj(ctx, 0, "ssByteArray");
-	bytearray_free(array);
+	bytearray_unref(array);
 	return 0;
 }
 
@@ -6599,7 +6599,7 @@ js_Font_finalize(duk_context* ctx)
 	font_t* font;
 
 	font = duk_require_class_obj(ctx, 0, "ssFont");
-	font_free(font);
+	font_unref(font);
 	return 0;
 }
 
@@ -6867,7 +6867,7 @@ js_Image_finalize(duk_context* ctx)
 	image_t* image;
 
 	image = duk_require_class_obj(ctx, 0, "ssImage");
-	image_free(image);
+	image_unref(image);
 	return 0;
 }
 
@@ -7146,7 +7146,7 @@ js_Logger_finalize(duk_context* ctx)
 	logger_t* logger;
 
 	logger = duk_require_class_obj(ctx, 0, "ssLogger");
-	logger_free(logger);
+	logger_unref(logger);
 	return 0;
 }
 
@@ -7344,7 +7344,7 @@ js_Socket_finalize(duk_context* ctx)
 	socket_v1_t* socket;
 
 	socket = duk_require_class_obj(ctx, 0, "ssSocket");
-	socket_v1_free(socket);
+	socket_v1_unref(socket);
 	return 1;
 }
 
@@ -7357,7 +7357,7 @@ js_Socket_close(duk_context* ctx)
 	socket = duk_require_class_obj(ctx, -1, "ssSocket");
 
 	duk_set_class_ptr(ctx, -1, NULL);
-	socket_v1_free(socket);
+	socket_v1_unref(socket);
 	return 1;
 }
 
@@ -7458,7 +7458,7 @@ js_Sound_finalize(duk_context* ctx)
 	sound_t* sound;
 
 	sound = duk_require_class_obj(ctx, 0, "ssSound");
-	sound_free(sound);
+	sound_unref(sound);
 	return 0;
 }
 
@@ -7698,7 +7698,7 @@ js_SoundEffect_finalize(duk_context* ctx)
 
 	sample = duk_require_class_obj(ctx, 0, "ssSoundEffect");
 
-	sample_free(sample);
+	sample_unref(sample);
 	return 0;
 }
 
@@ -7818,7 +7818,7 @@ js_Spriteset_finalize(duk_context* ctx)
 
 	spriteset = duk_require_class_obj(ctx, 0, "ssSpriteset");
 
-	spriteset_free(spriteset);
+	spriteset_unref(spriteset);
 	return 0;
 }
 
@@ -7846,7 +7846,7 @@ js_Spriteset_clone(duk_context* ctx)
 	if ((new_spriteset = spriteset_clone(spriteset)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't clone spriteset");
 	duk_push_sphere_spriteset(ctx, new_spriteset);
-	spriteset_free(new_spriteset);
+	spriteset_unref(new_spriteset);
 	return 1;
 }
 
@@ -7862,7 +7862,7 @@ js_Spriteset_save(duk_context* ctx)
 
 	if (!spriteset_save(spriteset, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't save spriteset");
-	spriteset_free(spriteset);
+	spriteset_unref(spriteset);
 	return 0;
 }
 
@@ -7879,7 +7879,7 @@ js_Surface_finalize(duk_context* ctx)
 	image_t* image;
 
 	image = duk_require_class_obj(ctx, 0, "ssSurface");
-	image_free(image);
+	image_unref(image);
 	return 0;
 }
 
@@ -8719,7 +8719,7 @@ js_Surface_rotate(duk_context* ctx)
 
 	// swap out the image pointer and free old image
 	duk_set_class_ptr(ctx, -1, new_image);
-	image_free(image);
+	image_unref(image);
 	return 1;
 }
 

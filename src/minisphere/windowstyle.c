@@ -82,7 +82,7 @@ on_error:
 	if (file != NULL) file_close(file);
 	if (winstyle != NULL) {
 		for (i = 0; i < 9; ++i)
-			image_free(winstyle->images[i]);
+			image_unref(winstyle->images[i]);
 		free(winstyle);
 	}
 	return NULL;
@@ -103,7 +103,7 @@ winstyle_unref(windowstyle_t* winstyle)
 	if (winstyle == NULL || --winstyle->refcount > 0)
 		return;
 	for (i = 0; i < 9; ++i) {
-		image_free(winstyle->images[i]);
+		image_unref(winstyle->images[i]);
 	}
 	free(winstyle);
 }

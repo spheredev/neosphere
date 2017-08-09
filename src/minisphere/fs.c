@@ -177,7 +177,7 @@ on_error:
 	path_free(path);
 	free(sgm_text);
 	if (game != NULL) {
-		free_spk(game->spk);
+		unref_spk(game->spk);
 		free(game);
 	}
 	return NULL;
@@ -201,7 +201,7 @@ game_unref(game_t* game)
 
 	console_log(3, "disposing game #%u no longer in use", game->id);
 	if (game->type == SPHEREFS_SPK)
-		free_spk(game->spk);
+		unref_spk(game->spk);
 	lstr_free(game->sourcemap);
 	path_free(game->script_path);
 	path_free(game->root_path);

@@ -121,7 +121,7 @@ socket_v1_new_client(const char* hostname, int port)
 	return socket_v1_ref(socket);
 
 on_error:
-	socket_free(client);
+	socket_unref(client);
 	return NULL;
 }
 
@@ -146,12 +146,12 @@ socket_v1_ref(socket_v1_t* it)
 }
 
 void
-socket_v1_free(socket_v1_t* it)
+socket_v1_unref(socket_v1_t* it)
 {
 	if (it == NULL || --it->refcount > 0)
 		return;
-	socket_free(it->client);
-	server_free(it->server);
+	socket_unref(it->client);
+	server_unref(it->server);
 	free(it);
 }
 
@@ -165,7 +165,7 @@ socket_v1_connected(socket_v1_t* it)
 		//       automatically transform into normal client sockets upon first connection.
 		if (client = server_accept(it->server)) {
 			it->client = client;
-			server_free(it->server);
+			server_unref(it->server);
 			it->server = NULL;
 		}
 	}
