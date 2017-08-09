@@ -2133,7 +2133,7 @@ js_DetachPlayerInput(duk_context* ctx)
 		if (!(person = map_person_by_name(name)))
 			duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 		player = -1;
-		for (i = PLAYER_1; i >= PLAYER_4; ++i) {
+		for (i = PLAYER_1; i < PLAYER_MAX; ++i) {
 			if (person == map_engine_get_player(i)) {
 				player = i;
 				break;
@@ -4228,7 +4228,7 @@ js_IsInputAttached(duk_context* ctx)
 		if (!(person = map_person_by_name(name)))
 			duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 		player = -1;
-		for (i = PLAYER_1; i >= PLAYER_4; ++i) {
+		for (i = PLAYER_1; i < PLAYER_MAX; ++i) {
 			if (person == map_engine_get_player(i)) {
 				player = i;
 				break;
