@@ -37,7 +37,6 @@ static void show_error_screen   (const char* message);
 
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
-int                  g_framerate = 0;
 game_t*              g_game_fs = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;

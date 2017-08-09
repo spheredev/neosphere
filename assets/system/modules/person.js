@@ -51,11 +51,11 @@ function GeneratePersonObjects(arr, ignore) {
 	var objects = [];
 	var personlist = GetPersonList();
 	if(ignore) {
-		for(let person of personlist)
+		for(var person in personlist)
 			if(arr.indexOf(person) == -1)
 				objects.push(new Person(person, "", true, true));
 	} else {
-		for(let person of personlist)
+		for(var person in personlist)
 			if(arr.indexOf(person) > -1)
 				objects.push(new Person(person, "", true, true));
 	}
@@ -63,7 +63,7 @@ function GeneratePersonObjects(arr, ignore) {
 }
 
 exports.Person = Person;
-var Person = function(name,spriteset,destroy_with_map, force) {
+function Person(name,spriteset,destroy_with_map, force) {
 	if(DoesPersonExist(name)) {
 		if(!force) throw "\"" + name + "\" already exists. Duplicate names are not allowed.";
 		else Console.log("WARNING: \"" + name + "\" already exists, this might cause trouble");

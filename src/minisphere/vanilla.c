@@ -481,6 +481,7 @@ enum sound_effect_mode
 	SE_MULTIPLE,
 };
 
+static int      s_frame_rate = 0;
 static mixer_t* s_sound_mixer;
 
 void
@@ -2380,7 +2381,7 @@ js_FilledEllipse(duk_context* ctx)
 static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
-	screen_flip(g_screen, g_framerate);
+	screen_flip(g_screen, s_frame_rate);
 	return 0;
 }
 
@@ -2601,7 +2602,7 @@ js_GetFileList(duk_context* ctx)
 static duk_ret_t
 js_GetFrameRate(duk_context* ctx)
 {
-	duk_push_int(ctx, g_framerate);
+	duk_push_int(ctx, s_frame_rate);
 	return 1;
 }
 
@@ -3120,7 +3121,7 @@ js_GetPersonFollowers(duk_context* ctx)
 		candidate = *(person_t**)iter.ptr;
 		if (person_get_leader(candidate) == person) {
 			duk_push_string(ctx, person_name(candidate));
-			duk_put_prop_index(ctx, -2, iter.index);
+			duk_put_prop_index(ctx, -2, index++);
 		}
 	}
 	return 1;
@@ -3222,6 +3223,25 @@ js_GetPersonLeader(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetPersonList(duk_context* ctx)
+{
+	vector_t* all_persons;
+	person_t* person;
+
+	iter_t iter;
+
+	all_persons = map_engine_persons();
+	iter = vector_enum(all_persons);
+	duk_push_array(ctx);
+	while (vector_next(&iter)) {
+		person = *(person_t**)iter.ptr;
+		duk_push_string(ctx, person_name(person));
+		duk_put_prop_index(ctx, -2, iter.index);
+	}
+	return 1;
+}
+
+static duk_ret_t
 js_GetPersonMask(duk_context* ctx)
 {
 	const char* name;
@@ -3264,25 +3284,6 @@ js_GetPersonOffsetY(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no such person `%s`", name);
 	offset = person_get_offset(person);
 	duk_push_int(ctx, offset.y);
-	return 1;
-}
-
-static duk_ret_t
-js_GetPersonList(duk_context* ctx)
-{
-	vector_t* all_persons;
-	person_t* person;
-
-	iter_t iter;
-
-	all_persons = map_engine_persons();
-	iter = vector_enum(all_persons);
-	duk_push_array(ctx);
-	while (vector_next(&iter)) {
-		person = *(person_t**)iter.ptr;
-		duk_push_string(ctx, person_name(person));
-		duk_put_prop_index(ctx, -2, iter.index);
-	}
 	return 1;
 }
 
@@ -4571,7 +4572,7 @@ js_MapEngine(duk_context* ctx)
 	num_args = duk_get_top(ctx);
 	filename = duk_require_path(ctx, 0, "maps", true, false);
 	framerate = num_args >= 2 ? duk_to_int(ctx, 1)
-		: g_framerate;
+		: s_frame_rate;
 
 	if (!map_engine_start(filename, framerate))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load map `%s`", filename);
@@ -5210,7 +5211,7 @@ js_SetFrameRate(duk_context* ctx)
 
 	if (framerate < 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid frame rate");
-	g_framerate = framerate;
+	s_frame_rate = framerate;
 	return 0;
 }
 
