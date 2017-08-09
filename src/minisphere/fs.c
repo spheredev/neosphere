@@ -7,9 +7,9 @@
 
 enum fs_type
 {
-	SPHEREFS_UNKNOWN,
-	SPHEREFS_LOCAL,
-	SPHEREFS_SPK,
+	FS_UNKNOWN,
+	FS_LOCAL,
+	FS_SPK,
 };
 
 struct game
@@ -33,6 +33,7 @@ struct game
 
 struct file
 {
+	game_t*       game;
 	enum fs_type  fs_type;
 	ALLEGRO_FILE* handle;
 	const char*   path;
@@ -66,16 +67,16 @@ game_open(const char* game_path)
 	if (!path_resolve(path, NULL))
 		goto on_error;
 	if (spk = open_spk(path_cstr(path))) {  // Sphere Package (.spk)
-		game->type = SPHEREFS_SPK;
+		game->type = FS_SPK;
 		game->root_path = path_dup(path);
 		game->spk = spk;
 	}
 	else if (path_has_extension(path, ".sgm") || path_filename_is(path, "game.json")) {  // game manifest
-		game->type = SPHEREFS_LOCAL;
+		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 	}
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
-		game->type = SPHEREFS_LOCAL;
+		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
@@ -103,7 +104,7 @@ game_open(const char* game_path)
 		duk_pop(g_duk);
 	}
 	else {  // default case, unpacked game folder
-		game->type = SPHEREFS_LOCAL;
+		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 	}
 	path_free(path);
@@ -200,7 +201,7 @@ game_unref(game_t* game)
 		return;
 
 	console_log(3, "disposing game #%u no longer in use", game->id);
-	if (game->type == SPHEREFS_SPK)
+	if (game->type == FS_SPK)
 		unref_spk(game->spk);
 	lstr_free(game->sourcemap);
 	path_free(game->script_path);
@@ -225,12 +226,12 @@ game_dir_exists(const game_t* game, const char* dirname, const char* base_dir)
 	if (!resolve_path(game, dirname, base_dir, &dir_path, &fs_type))
 		goto on_error;
 	switch (fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		if (stat(path_cstr(dir_path), &stats) != 0)
 			goto on_error;
 		path_free(dir_path);
 		return (stats.st_mode & S_IFDIR) == S_IFDIR;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		if (!spk_dir_exists(game->spk, path_cstr(dir_path)))
 			goto on_error;
 		path_free(dir_path);
@@ -381,7 +382,7 @@ game_list_dir(const game_t* game, const char* dirname, const char* base_dir, boo
 	if (!(list = vector_new(sizeof(lstring_t*))))
 		goto on_error;
 	switch (fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		type_flag = want_dirs ? ALLEGRO_FILEMODE_ISDIR : ALLEGRO_FILEMODE_ISFILE;
 		fse = al_create_fs_entry(path_cstr(dir_path));
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
@@ -396,7 +397,7 @@ game_list_dir(const game_t* game, const char* dirname, const char* base_dir, boo
 		}
 		al_destroy_fs_entry(fse);
 		break;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		list = list_spk_filenames(game->spk, path_cstr(dir_path), want_dirs);
 		break;
 	}
@@ -419,9 +420,9 @@ game_mkdir(game_t* game, const char* dirname, const char* base_dir)
 	if (!resolve_path(game, dirname, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return path_mkdir(path);
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return false;
 	default:
 		return false;
@@ -469,7 +470,7 @@ game_rename(game_t* game, const char* name1, const char* name2, const char* base
 	if (fs_type_2 != fs_type_1)
 		return false;  // can't cross file system boundaries
 	switch (fs_type_1) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		// here's where we have to be careful.  on some platforms rename() with the same
 		// filename for old and new will delete the file (!), and it will also happily overwrite
 		// any existing file with the same name.
@@ -478,7 +479,7 @@ game_rename(game_t* game, const char* name1, const char* name2, const char* base
 		if (game_file_exists(game, name2, NULL) || game_dir_exists(game, name2, NULL))
 			return false; // don't overwrite existing file
 		return rename(path_cstr(path1), path_cstr(path2)) == 0;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return false;  // SPK packages are not writable
 	default:
 		return false;
@@ -494,9 +495,9 @@ game_rmdir(game_t* game, const char* dirname, const char* base_dir)
 	if (!resolve_path(game, dirname, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return rmdir(path_cstr(path)) == 0;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return false;
 	default:
 		return false;
@@ -524,9 +525,9 @@ game_unlink(game_t* game, const char* filename, const char* base_dir)
 	if (!resolve_path(game, filename, base_dir, &path, &fs_type))
 		return false;
 	switch (fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return unlink(path_cstr(path)) == 0;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return false;
 	default:
 		return false;
@@ -541,12 +542,11 @@ file_open(game_t* game, const char* filename, const char* base_dir, const char* 
 	path_t* file_path = NULL;
 
 	file = calloc(1, sizeof(file_t));
-	file->path = strdup(filename);
 	
 	if (!resolve_path(game, filename, base_dir, &file_path, &file->fs_type))
 		goto on_error;
 	switch (file->fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		if (strchr(mode, 'w') || strchr(mode, '+') || strchr(mode, 'a')) {
 			// write access requested, ensure directory exists
 			dir_path = path_strip(path_dup(file_path));
@@ -556,7 +556,7 @@ file_open(game_t* game, const char* filename, const char* base_dir, const char* 
 		if (!(file->handle = al_fopen(path_cstr(file_path), mode)))
 			goto on_error;
 		break;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		if (!(file->spk_file = spk_fopen(game->spk, path_cstr(file_path), mode)))
 			goto on_error;
 		break;
@@ -564,6 +564,9 @@ file_open(game_t* game, const char* filename, const char* base_dir, const char* 
 		goto on_error;
 	}
 	path_free(file_path);
+	
+	file->game = game_ref(game);
+	file->path = strdup(filename);
 	return file;
 
 on_error:
@@ -578,13 +581,14 @@ file_close(file_t* file)
 	if (file == NULL)
 		return;
 	switch (file->fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		al_fclose(file->handle);
 		break;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		spk_fclose(file->spk_file);
 		break;
 	}
+	game_unref(file->game);
 	free(file);
 }
 
@@ -598,9 +602,9 @@ long long
 file_position(const file_t* file)
 {
 	switch (file->fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return al_ftell(file->handle);
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return spk_ftell(file->spk_file);
 	}
 	return -1;
@@ -610,9 +614,9 @@ int
 file_putc(int ch, file_t* file)
 {
 	switch (file->fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return al_fputc(file->handle, ch);
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return spk_fputc(ch, file->spk_file);
 	default:
 		return EOF;
@@ -623,9 +627,9 @@ int
 file_puts(const char* string, file_t* file)
 {
 	switch (file->fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return al_fputs(file->handle, string);
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return spk_fputs(string, file->spk_file);
 	default:
 		return false;
@@ -636,9 +640,9 @@ size_t
 file_read(void* buf, size_t size, size_t count, file_t* file)
 {
 	switch (file->fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return al_fread(file->handle, buf, size * count) / size;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return spk_fread(buf, size, count, file->spk_file);
 	default:
 		return 0;
@@ -649,9 +653,9 @@ bool
 file_seek(file_t* file, long long offset, whence_t whence)
 {
 	switch (file->fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return al_fseek(file->handle, offset, whence) == 0;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return spk_fseek(file->spk_file, offset, whence);
 	}
 	return false;
@@ -661,9 +665,9 @@ size_t
 file_write(const void* buf, size_t size, size_t count, file_t* file)
 {
 	switch (file->fs_type) {
-	case SPHEREFS_LOCAL:
+	case FS_LOCAL:
 		return al_fwrite(file->handle, buf, size * count) / size;
-	case SPHEREFS_SPK:
+	case FS_SPK:
 		return spk_fwrite(buf, size, count, file->spk_file);
 	default:
 		return 0;
@@ -745,7 +749,7 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 
 	*out_path = path_new(filename);
 	if (path_is_rooted(*out_path)) {  // absolute path
-		*out_fs_type = SPHEREFS_LOCAL;
+		*out_fs_type = FS_LOCAL;
 		return true;
 	}
 	path_free(*out_path);
@@ -758,7 +762,7 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 		if (game == NULL)
 			goto on_error;
 		*out_path = path_new(filename + 2);
-		if (game->type == SPHEREFS_LOCAL)
+		if (game->type == FS_LOCAL)
 			path_rebase(*out_path, game->root_path);
 		*out_fs_type = game->type;
 	}
@@ -767,7 +771,7 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 		*out_path = path_new(filename + 2);
 		origin = path_strip(path_dup(game_script_path(game)));
 		path_rebase(*out_path, origin);
-		if (game->type == SPHEREFS_LOCAL)
+		if (game->type == FS_LOCAL)
 			path_rebase(*out_path, game->root_path);
 		path_free(origin);
 		*out_fs_type = game->type;
@@ -781,7 +785,7 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 		path_append_dir(origin, game_save_id(game));
 		path_rebase(*out_path, origin);
 		path_free(origin);
-		*out_fs_type = SPHEREFS_LOCAL;
+		*out_fs_type = FS_LOCAL;
 	}
 	else if (strlen(filename) >= 2 && memcmp(filename, "#/", 2) == 0) {
 		// the #/ prefix refers to the engine's "system" directory.
@@ -793,7 +797,7 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 		}
 		path_rebase(*out_path, origin);
 		path_free(origin);
-		*out_fs_type = SPHEREFS_LOCAL;
+		*out_fs_type = FS_LOCAL;
 	}
 	else {  // default case: assume relative path
 		if (game == NULL)
@@ -801,7 +805,7 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 		*out_path = game_canonicalize(game, filename, base_dir, false);
 		if (path_num_hops(*out_path) > 0 && path_hop_is(*out_path, 0, "@"))
 			path_remove_hop(*out_path, 0);
-		if (game->type == SPHEREFS_LOCAL)  // convert to absolute path
+		if (game->type == FS_LOCAL)  // convert to absolute path
 			path_rebase(*out_path, game->root_path);
 		*out_fs_type = game->type;
 	}
@@ -811,6 +815,6 @@ resolve_path(const game_t* game, const char* filename, const char* base_dir, pat
 on_error:
 	path_free(*out_path);
 	*out_path = NULL;
-	*out_fs_type = SPHEREFS_UNKNOWN;
+	*out_fs_type = FS_UNKNOWN;
 	return false;
 }
