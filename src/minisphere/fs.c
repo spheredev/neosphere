@@ -30,10 +30,18 @@ struct game
 	int          version;
 };
 
+struct directory
+{
+	vector_t* entries;
+	game_t*   game;
+	int       position;
+	path_t*   path;
+};
+
 struct file
 {
-	game_t*       game;
 	enum fs_type  fs_type;
+	game_t*       game;
 	ALLEGRO_FILE* handle;
 	const char*   path;
 	spk_file_t*   spk_file;
@@ -523,6 +531,127 @@ game_unlink(game_t* game, const char* filename)
 	default:
 		return false;
 	}
+}
+
+directory_t*
+directory_open(game_t* game, const char* dirname)
+{
+	directory_t* directory;
+
+	directory = calloc(1, sizeof(directory_t));
+	directory->game = game_ref(game);
+	directory->path = path_new_dir(dirname);
+
+	return directory;
+}
+
+void
+directory_close(directory_t* it)
+{
+	iter_t iter;
+	
+	if (it->entries != NULL) {
+		iter = vector_enum(it->entries);
+		while (vector_next(&iter)) {
+			path_free(*(path_t**)iter.ptr);
+		}
+		vector_free(it->entries);
+	}
+	path_free(it->path);
+	game_unref(it->game);
+	free(it);
+}
+
+int
+directory_num_files(directory_t* it)
+{
+	if (it->entries == NULL)
+		directory_rewind(it);
+	return vector_len(it->entries);
+}
+
+const char*
+directory_pathname(const directory_t* it)
+{
+	return path_cstr(it->path);
+}
+
+int
+directory_position(const directory_t* it)
+{
+	return it->position;
+}
+
+const path_t*
+directory_next(directory_t* it)
+{
+	path_t* path;
+
+	if (it->entries == NULL)
+		directory_rewind(it);
+	
+	if (it->position >= vector_len(it->entries))
+		return NULL;
+	path = *(path_t**)vector_get(it->entries, it->position++);
+	return path;
+}
+
+void
+directory_rewind(directory_t* it)
+{
+	vector_t*  dir_list;
+	lstring_t* entry_name;
+	path_t*    entry_path;
+	vector_t*  file_list;
+	vector_t*  path_list;
+
+	iter_t iter;
+	
+	path_list = vector_new(sizeof(path_t*));
+
+	file_list = game_list_dir(it->game, path_cstr(it->path), false);
+	iter = vector_enum(file_list);
+	while (vector_next(&iter)) {
+		entry_name = *(lstring_t**)iter.ptr;
+		entry_path = path_new(lstr_cstr(entry_name));
+		path_rebase(entry_path, it->path);
+		vector_push(path_list, &entry_path);
+		lstr_free(entry_name);
+	}
+	vector_free(file_list);
+
+	dir_list = game_list_dir(it->game, path_cstr(it->path), true);
+	iter = vector_enum(dir_list);
+	while (vector_next(&iter)) {
+		entry_name = *(lstring_t**)iter.ptr;
+		entry_path = path_new_dir(lstr_cstr(entry_name));
+		path_rebase(entry_path, it->path);
+		vector_push(path_list, &entry_path);
+		lstr_free(entry_name);
+	}
+	vector_free(dir_list);
+
+	if (it->entries != NULL) {
+		iter = vector_enum(it->entries);
+		while (vector_next(&iter)) {
+			path_free(*(path_t**)iter.ptr);
+		}
+		vector_free(it->entries);
+	}
+	it->entries = path_list;
+	it->position = 0;
+}
+
+bool
+directory_seek(directory_t* it, int position)
+{
+	if (it->entries == NULL)
+		directory_rewind(it);
+
+	if (position > vector_len(it->entries))
+		return false;
+	it->position = position;
+	return true;
 }
 
 file_t*

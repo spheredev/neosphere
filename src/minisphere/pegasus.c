@@ -183,202 +183,210 @@ COLORS[] =
 	{ NULL, 0, 0, 0, 0 }
 };
 
-static duk_ret_t js_require                    (duk_context* ctx);
-static duk_ret_t js_screen_get_frameRate       (duk_context* ctx);
-static duk_ret_t js_screen_get_frameSkip       (duk_context* ctx);
-static duk_ret_t js_screen_get_fullScreen      (duk_context* ctx);
-static duk_ret_t js_screen_set_frameRate       (duk_context* ctx);
-static duk_ret_t js_screen_set_frameSkip       (duk_context* ctx);
-static duk_ret_t js_screen_set_fullScreen      (duk_context* ctx);
-static duk_ret_t js_screen_flip                (duk_context* ctx);
-static duk_ret_t js_screen_now                 (duk_context* ctx);
-static duk_ret_t js_screen_resize              (duk_context* ctx);
-static duk_ret_t js_Sphere_get_APILevel        (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Game            (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Platform        (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Version         (duk_context* ctx);
-static duk_ret_t js_Sphere_abort               (duk_context* ctx);
-static duk_ret_t js_Sphere_exit                (duk_context* ctx);
-static duk_ret_t js_Sphere_restart             (duk_context* ctx);
-static duk_ret_t js_Sphere_run                 (duk_context* ctx);
-static duk_ret_t js_Sphere_sleep               (duk_context* ctx);
-static duk_ret_t js_Color_get_Color            (duk_context* ctx);
-static duk_ret_t js_Color_is                   (duk_context* ctx);
-static duk_ret_t js_Color_mix                  (duk_context* ctx);
-static duk_ret_t js_Color_of                   (duk_context* ctx);
-static duk_ret_t js_new_Color                  (duk_context* ctx);
-static duk_ret_t js_Color_get_name             (duk_context* ctx);
-static duk_ret_t js_Color_clone                (duk_context* ctx);
-static duk_ret_t js_Color_fade                 (duk_context* ctx);
-static duk_ret_t js_Dispatch_cancel            (duk_context* ctx);
-static duk_ret_t js_Dispatch_cancelAll         (duk_context* ctx);
-static duk_ret_t js_Dispatch_later             (duk_context* ctx);
-static duk_ret_t js_Dispatch_now               (duk_context* ctx);
-static duk_ret_t js_Dispatch_onRender          (duk_context* ctx);
-static duk_ret_t js_Dispatch_onUpdate          (duk_context* ctx);
-static duk_ret_t js_FS_createDirectory         (duk_context* ctx);
-static duk_ret_t js_FS_deleteFile              (duk_context* ctx);
-static duk_ret_t js_FS_directoryExists         (duk_context* ctx);
-static duk_ret_t js_FS_fileExists              (duk_context* ctx);
-static duk_ret_t js_FS_readFile                (duk_context* ctx);
-static duk_ret_t js_FS_rename                  (duk_context* ctx);
-static duk_ret_t js_FS_fullPath                (duk_context* ctx);
-static duk_ret_t js_FS_removeDirectory         (duk_context* ctx);
-static duk_ret_t js_FS_writeFile               (duk_context* ctx);
-static duk_ret_t js_new_FileStream             (duk_context* ctx);
-static duk_ret_t js_FileStream_finalize        (duk_context* ctx);
-static duk_ret_t js_FileStream_dispose         (duk_context* ctx);
-static duk_ret_t js_FileStream_get_fileName    (duk_context* ctx);
-static duk_ret_t js_FileStream_get_fileSize    (duk_context* ctx);
-static duk_ret_t js_FileStream_get_position    (duk_context* ctx);
-static duk_ret_t js_FileStream_set_position    (duk_context* ctx);
-static duk_ret_t js_FileStream_read            (duk_context* ctx);
-static duk_ret_t js_FileStream_write           (duk_context* ctx);
-static duk_ret_t js_Font_get_Default           (duk_context* ctx);
-static duk_ret_t js_new_Font                   (duk_context* ctx);
-static duk_ret_t js_Font_finalize              (duk_context* ctx);
-static duk_ret_t js_Font_get_fileName          (duk_context* ctx);
-static duk_ret_t js_Font_get_height            (duk_context* ctx);
-static duk_ret_t js_Font_drawText              (duk_context* ctx);
-static duk_ret_t js_Font_getTextSize           (duk_context* ctx);
-static duk_ret_t js_Font_wordWrap              (duk_context* ctx);
-static duk_ret_t js_new_IndexList              (duk_context* ctx);
-static duk_ret_t js_IndexList_finalize         (duk_context* ctx);
-static duk_ret_t js_JobToken_finalize          (duk_context* ctx);
-static duk_ret_t js_Joystick_get_Null          (duk_context* ctx);
-static duk_ret_t js_Joystick_getDevices        (duk_context* ctx);
-static duk_ret_t js_Joystick_finalize          (duk_context* ctx);
-static duk_ret_t js_Joystick_get_name          (duk_context* ctx);
-static duk_ret_t js_Joystick_get_numAxes       (duk_context* ctx);
-static duk_ret_t js_Joystick_get_numButtons    (duk_context* ctx);
-static duk_ret_t js_Joystick_getPosition       (duk_context* ctx);
-static duk_ret_t js_Joystick_isPressed         (duk_context* ctx);
-static duk_ret_t js_Keyboard_get_Default       (duk_context* ctx);
-static duk_ret_t js_Keyboard_get_capsLock      (duk_context* ctx);
-static duk_ret_t js_Keyboard_get_numLock       (duk_context* ctx);
-static duk_ret_t js_Keyboard_get_scrollLock    (duk_context* ctx);
-static duk_ret_t js_Keyboard_clearQueue        (duk_context* ctx);
-static duk_ret_t js_Keyboard_getChar           (duk_context* ctx);
-static duk_ret_t js_Keyboard_getKey            (duk_context* ctx);
-static duk_ret_t js_Keyboard_isPressed         (duk_context* ctx);
-static duk_ret_t js_Mixer_get_Default          (duk_context* ctx);
-static duk_ret_t js_new_Mixer                  (duk_context* ctx);
-static duk_ret_t js_Mixer_finalize             (duk_context* ctx);
-static duk_ret_t js_Mixer_get_volume           (duk_context* ctx);
-static duk_ret_t js_Mixer_set_volume           (duk_context* ctx);
-static duk_ret_t js_new_Model                  (duk_context* ctx);
-static duk_ret_t js_Model_finalize             (duk_context* ctx);
-static duk_ret_t js_Model_get_shader           (duk_context* ctx);
-static duk_ret_t js_Model_get_transform        (duk_context* ctx);
-static duk_ret_t js_Model_set_shader           (duk_context* ctx);
-static duk_ret_t js_Model_set_transform        (duk_context* ctx);
-static duk_ret_t js_Model_draw                 (duk_context* ctx);
-static duk_ret_t js_Model_setBoolean           (duk_context* ctx);
-static duk_ret_t js_Model_setColorVector       (duk_context* ctx);
-static duk_ret_t js_Model_setFloat             (duk_context* ctx);
-static duk_ret_t js_Model_setFloatArray        (duk_context* ctx);
-static duk_ret_t js_Model_setFloatVector       (duk_context* ctx);
-static duk_ret_t js_Model_setInt               (duk_context* ctx);
-static duk_ret_t js_Model_setIntArray          (duk_context* ctx);
-static duk_ret_t js_Model_setIntVector         (duk_context* ctx);
-static duk_ret_t js_Model_setMatrix            (duk_context* ctx);
-static duk_ret_t js_Mouse_get_Default          (duk_context* ctx);
-static duk_ret_t js_Mouse_get_x                (duk_context* ctx);
-static duk_ret_t js_Mouse_get_y                (duk_context* ctx);
-static duk_ret_t js_Mouse_clearQueue           (duk_context* ctx);
-static duk_ret_t js_Mouse_getEvent             (duk_context* ctx);
-static duk_ret_t js_Mouse_isPressed            (duk_context* ctx);
-static duk_ret_t js_RNG_fromSeed               (duk_context* ctx);
-static duk_ret_t js_RNG_fromState              (duk_context* ctx);
-static duk_ret_t js_new_RNG                    (duk_context* ctx);
-static duk_ret_t js_RNG_finalize               (duk_context* ctx);
-static duk_ret_t js_RNG_get_state              (duk_context* ctx);
-static duk_ret_t js_RNG_set_state              (duk_context* ctx);
-static duk_ret_t js_RNG_next                   (duk_context* ctx);
-static duk_ret_t js_SSj_log                    (duk_context* ctx);
-static duk_ret_t js_SSj_trace                  (duk_context* ctx);
-static duk_ret_t js_new_Sample                 (duk_context* ctx);
-static duk_ret_t js_Sample_finalize            (duk_context* ctx);
-static duk_ret_t js_Sample_get_fileName        (duk_context* ctx);
-static duk_ret_t js_Sample_play                (duk_context* ctx);
-static duk_ret_t js_Sample_stopAll             (duk_context* ctx);
-static duk_ret_t js_new_Server                 (duk_context* ctx);
-static duk_ret_t js_Server_finalize            (duk_context* ctx);
-static duk_ret_t js_Server_close               (duk_context* ctx);
-static duk_ret_t js_Server_accept              (duk_context* ctx);
-static duk_ret_t js_Shader_get_Default         (duk_context* ctx);
-static duk_ret_t js_new_Shader                 (duk_context* ctx);
-static duk_ret_t js_Shader_finalize            (duk_context* ctx);
-static duk_ret_t js_new_Shape                  (duk_context* ctx);
-static duk_ret_t js_Shape_finalize             (duk_context* ctx);
-static duk_ret_t js_Shape_get_indexList        (duk_context* ctx);
-static duk_ret_t js_Shape_get_texture          (duk_context* ctx);
-static duk_ret_t js_Shape_get_vertexList       (duk_context* ctx);
-static duk_ret_t js_Shape_set_indexList        (duk_context* ctx);
-static duk_ret_t js_Shape_set_texture          (duk_context* ctx);
-static duk_ret_t js_Shape_set_vertexList       (duk_context* ctx);
-static duk_ret_t js_Shape_draw                 (duk_context* ctx);
-static duk_ret_t js_new_Socket                 (duk_context* ctx);
-static duk_ret_t js_Socket_finalize            (duk_context* ctx);
-static duk_ret_t js_Socket_get_bytesPending    (duk_context* ctx);
-static duk_ret_t js_Socket_get_connected       (duk_context* ctx);
-static duk_ret_t js_Socket_get_remoteAddress   (duk_context* ctx);
-static duk_ret_t js_Socket_get_remotePort      (duk_context* ctx);
-static duk_ret_t js_Socket_close               (duk_context* ctx);
-static duk_ret_t js_Socket_connectTo           (duk_context* ctx);
-static duk_ret_t js_Socket_read                (duk_context* ctx);
-static duk_ret_t js_Socket_write               (duk_context* ctx);
-static duk_ret_t js_new_Sound                  (duk_context* ctx);
-static duk_ret_t js_Sound_finalize             (duk_context* ctx);
-static duk_ret_t js_Sound_get_fileName         (duk_context* ctx);
-static duk_ret_t js_Sound_get_length           (duk_context* ctx);
-static duk_ret_t js_Sound_get_pan              (duk_context* ctx);
-static duk_ret_t js_Sound_get_playing          (duk_context* ctx);
-static duk_ret_t js_Sound_get_position         (duk_context* ctx);
-static duk_ret_t js_Sound_get_repeat           (duk_context* ctx);
-static duk_ret_t js_Sound_get_speed            (duk_context* ctx);
-static duk_ret_t js_Sound_get_volume           (duk_context* ctx);
-static duk_ret_t js_Sound_set_pan              (duk_context* ctx);
-static duk_ret_t js_Sound_set_position         (duk_context* ctx);
-static duk_ret_t js_Sound_set_repeat           (duk_context* ctx);
-static duk_ret_t js_Sound_set_speed            (duk_context* ctx);
-static duk_ret_t js_Sound_set_volume           (duk_context* ctx);
-static duk_ret_t js_Sound_pause                (duk_context* ctx);
-static duk_ret_t js_Sound_play                 (duk_context* ctx);
-static duk_ret_t js_Sound_stop                 (duk_context* ctx);
-static duk_ret_t js_new_SoundStream            (duk_context* ctx);
-static duk_ret_t js_SoundStream_finalize       (duk_context* ctx);
-static duk_ret_t js_SoundStream_get_bufferSize (duk_context* ctx);
-static duk_ret_t js_SoundStream_buffer         (duk_context* ctx);
-static duk_ret_t js_SoundStream_play           (duk_context* ctx);
-static duk_ret_t js_SoundStream_pause          (duk_context* ctx);
-static duk_ret_t js_SoundStream_stop           (duk_context* ctx);
-static duk_ret_t js_new_Surface                (duk_context* ctx);
-static duk_ret_t js_Surface_finalize           (duk_context* ctx);
-static duk_ret_t js_Surface_get_height         (duk_context* ctx);
-static duk_ret_t js_Surface_get_transform      (duk_context* ctx);
-static duk_ret_t js_Surface_get_width          (duk_context* ctx);
-static duk_ret_t js_Surface_set_transform      (duk_context* ctx);
-static duk_ret_t js_Surface_clipTo             (duk_context* ctx);
-static duk_ret_t js_Surface_toTexture          (duk_context* ctx);
-static duk_ret_t js_new_Texture                (duk_context* ctx);
-static duk_ret_t js_Texture_finalize           (duk_context* ctx);
-static duk_ret_t js_Texture_get_fileName       (duk_context* ctx);
-static duk_ret_t js_Texture_get_height         (duk_context* ctx);
-static duk_ret_t js_Texture_get_width          (duk_context* ctx);
-static duk_ret_t js_new_Transform              (duk_context* ctx);
-static duk_ret_t js_Transform_finalize         (duk_context* ctx);
-static duk_ret_t js_Transform_get_matrix       (duk_context* ctx);
-static duk_ret_t js_Transform_set_matrix       (duk_context* ctx);
-static duk_ret_t js_Transform_compose          (duk_context* ctx);
-static duk_ret_t js_Transform_identity         (duk_context* ctx);
-static duk_ret_t js_Transform_project2D        (duk_context* ctx);
-static duk_ret_t js_Transform_project3D        (duk_context* ctx);
-static duk_ret_t js_Transform_rotate           (duk_context* ctx);
-static duk_ret_t js_Transform_scale            (duk_context* ctx);
-static duk_ret_t js_Transform_translate        (duk_context* ctx);
-static duk_ret_t js_new_VertexList             (duk_context* ctx);
-static duk_ret_t js_VertexList_finalize        (duk_context* ctx);
+static duk_ret_t js_require                       (duk_context* ctx);
+static duk_ret_t js_screen_get_frameRate          (duk_context* ctx);
+static duk_ret_t js_screen_get_frameSkip          (duk_context* ctx);
+static duk_ret_t js_screen_get_fullScreen         (duk_context* ctx);
+static duk_ret_t js_screen_set_frameRate          (duk_context* ctx);
+static duk_ret_t js_screen_set_frameSkip          (duk_context* ctx);
+static duk_ret_t js_screen_set_fullScreen         (duk_context* ctx);
+static duk_ret_t js_screen_flip                   (duk_context* ctx);
+static duk_ret_t js_screen_now                    (duk_context* ctx);
+static duk_ret_t js_screen_resize                 (duk_context* ctx);
+static duk_ret_t js_Sphere_get_APILevel           (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Game               (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Platform           (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Version            (duk_context* ctx);
+static duk_ret_t js_Sphere_abort                  (duk_context* ctx);
+static duk_ret_t js_Sphere_exit                   (duk_context* ctx);
+static duk_ret_t js_Sphere_restart                (duk_context* ctx);
+static duk_ret_t js_Sphere_run                    (duk_context* ctx);
+static duk_ret_t js_Sphere_sleep                  (duk_context* ctx);
+static duk_ret_t js_Color_get_Color               (duk_context* ctx);
+static duk_ret_t js_Color_is                      (duk_context* ctx);
+static duk_ret_t js_Color_mix                     (duk_context* ctx);
+static duk_ret_t js_Color_of                      (duk_context* ctx);
+static duk_ret_t js_new_Color                     (duk_context* ctx);
+static duk_ret_t js_Color_get_name                (duk_context* ctx);
+static duk_ret_t js_Color_clone                   (duk_context* ctx);
+static duk_ret_t js_Color_fade                    (duk_context* ctx);
+static duk_ret_t js_new_DirectoryStream           (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_finalize      (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_get_fileCount (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_get_fileName  (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_get_position  (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_set_position  (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_next          (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_rewind        (duk_context* ctx);
+static duk_ret_t js_Dispatch_cancel               (duk_context* ctx);
+static duk_ret_t js_Dispatch_cancelAll            (duk_context* ctx);
+static duk_ret_t js_Dispatch_later                (duk_context* ctx);
+static duk_ret_t js_Dispatch_now                  (duk_context* ctx);
+static duk_ret_t js_Dispatch_onRender             (duk_context* ctx);
+static duk_ret_t js_Dispatch_onUpdate             (duk_context* ctx);
+static duk_ret_t js_FS_createDirectory            (duk_context* ctx);
+static duk_ret_t js_FS_deleteFile                 (duk_context* ctx);
+static duk_ret_t js_FS_directoryExists            (duk_context* ctx);
+static duk_ret_t js_FS_fileExists                 (duk_context* ctx);
+static duk_ret_t js_FS_readFile                   (duk_context* ctx);
+static duk_ret_t js_FS_rename                     (duk_context* ctx);
+static duk_ret_t js_FS_fullPath                   (duk_context* ctx);
+static duk_ret_t js_FS_removeDirectory            (duk_context* ctx);
+static duk_ret_t js_FS_writeFile                  (duk_context* ctx);
+static duk_ret_t js_new_FileStream                (duk_context* ctx);
+static duk_ret_t js_FileStream_finalize           (duk_context* ctx);
+static duk_ret_t js_FileStream_dispose            (duk_context* ctx);
+static duk_ret_t js_FileStream_get_fileName       (duk_context* ctx);
+static duk_ret_t js_FileStream_get_fileSize       (duk_context* ctx);
+static duk_ret_t js_FileStream_get_position       (duk_context* ctx);
+static duk_ret_t js_FileStream_set_position       (duk_context* ctx);
+static duk_ret_t js_FileStream_read               (duk_context* ctx);
+static duk_ret_t js_FileStream_write              (duk_context* ctx);
+static duk_ret_t js_Font_get_Default              (duk_context* ctx);
+static duk_ret_t js_new_Font                      (duk_context* ctx);
+static duk_ret_t js_Font_finalize                 (duk_context* ctx);
+static duk_ret_t js_Font_get_fileName             (duk_context* ctx);
+static duk_ret_t js_Font_get_height               (duk_context* ctx);
+static duk_ret_t js_Font_drawText                 (duk_context* ctx);
+static duk_ret_t js_Font_getTextSize              (duk_context* ctx);
+static duk_ret_t js_Font_wordWrap                 (duk_context* ctx);
+static duk_ret_t js_new_IndexList                 (duk_context* ctx);
+static duk_ret_t js_IndexList_finalize            (duk_context* ctx);
+static duk_ret_t js_JobToken_finalize             (duk_context* ctx);
+static duk_ret_t js_Joystick_get_Null             (duk_context* ctx);
+static duk_ret_t js_Joystick_getDevices           (duk_context* ctx);
+static duk_ret_t js_Joystick_finalize             (duk_context* ctx);
+static duk_ret_t js_Joystick_get_name             (duk_context* ctx);
+static duk_ret_t js_Joystick_get_numAxes          (duk_context* ctx);
+static duk_ret_t js_Joystick_get_numButtons       (duk_context* ctx);
+static duk_ret_t js_Joystick_getPosition          (duk_context* ctx);
+static duk_ret_t js_Joystick_isPressed            (duk_context* ctx);
+static duk_ret_t js_Keyboard_get_Default          (duk_context* ctx);
+static duk_ret_t js_Keyboard_get_capsLock         (duk_context* ctx);
+static duk_ret_t js_Keyboard_get_numLock          (duk_context* ctx);
+static duk_ret_t js_Keyboard_get_scrollLock       (duk_context* ctx);
+static duk_ret_t js_Keyboard_clearQueue           (duk_context* ctx);
+static duk_ret_t js_Keyboard_getChar              (duk_context* ctx);
+static duk_ret_t js_Keyboard_getKey               (duk_context* ctx);
+static duk_ret_t js_Keyboard_isPressed            (duk_context* ctx);
+static duk_ret_t js_Mixer_get_Default             (duk_context* ctx);
+static duk_ret_t js_new_Mixer                     (duk_context* ctx);
+static duk_ret_t js_Mixer_finalize                (duk_context* ctx);
+static duk_ret_t js_Mixer_get_volume              (duk_context* ctx);
+static duk_ret_t js_Mixer_set_volume              (duk_context* ctx);
+static duk_ret_t js_new_Model                     (duk_context* ctx);
+static duk_ret_t js_Model_finalize                (duk_context* ctx);
+static duk_ret_t js_Model_get_shader              (duk_context* ctx);
+static duk_ret_t js_Model_get_transform           (duk_context* ctx);
+static duk_ret_t js_Model_set_shader              (duk_context* ctx);
+static duk_ret_t js_Model_set_transform           (duk_context* ctx);
+static duk_ret_t js_Model_draw                    (duk_context* ctx);
+static duk_ret_t js_Model_setBoolean              (duk_context* ctx);
+static duk_ret_t js_Model_setColorVector          (duk_context* ctx);
+static duk_ret_t js_Model_setFloat                (duk_context* ctx);
+static duk_ret_t js_Model_setFloatArray           (duk_context* ctx);
+static duk_ret_t js_Model_setFloatVector          (duk_context* ctx);
+static duk_ret_t js_Model_setInt                  (duk_context* ctx);
+static duk_ret_t js_Model_setIntArray             (duk_context* ctx);
+static duk_ret_t js_Model_setIntVector            (duk_context* ctx);
+static duk_ret_t js_Model_setMatrix               (duk_context* ctx);
+static duk_ret_t js_Mouse_get_Default             (duk_context* ctx);
+static duk_ret_t js_Mouse_get_x                   (duk_context* ctx);
+static duk_ret_t js_Mouse_get_y                   (duk_context* ctx);
+static duk_ret_t js_Mouse_clearQueue              (duk_context* ctx);
+static duk_ret_t js_Mouse_getEvent                (duk_context* ctx);
+static duk_ret_t js_Mouse_isPressed               (duk_context* ctx);
+static duk_ret_t js_RNG_fromSeed                  (duk_context* ctx);
+static duk_ret_t js_RNG_fromState                 (duk_context* ctx);
+static duk_ret_t js_new_RNG                       (duk_context* ctx);
+static duk_ret_t js_RNG_finalize                  (duk_context* ctx);
+static duk_ret_t js_RNG_get_state                 (duk_context* ctx);
+static duk_ret_t js_RNG_set_state                 (duk_context* ctx);
+static duk_ret_t js_RNG_next                      (duk_context* ctx);
+static duk_ret_t js_SSj_log                       (duk_context* ctx);
+static duk_ret_t js_SSj_trace                     (duk_context* ctx);
+static duk_ret_t js_new_Sample                    (duk_context* ctx);
+static duk_ret_t js_Sample_finalize               (duk_context* ctx);
+static duk_ret_t js_Sample_get_fileName           (duk_context* ctx);
+static duk_ret_t js_Sample_play                   (duk_context* ctx);
+static duk_ret_t js_Sample_stopAll                (duk_context* ctx);
+static duk_ret_t js_new_Server                    (duk_context* ctx);
+static duk_ret_t js_Server_finalize               (duk_context* ctx);
+static duk_ret_t js_Server_close                  (duk_context* ctx);
+static duk_ret_t js_Server_accept                 (duk_context* ctx);
+static duk_ret_t js_Shader_get_Default            (duk_context* ctx);
+static duk_ret_t js_new_Shader                    (duk_context* ctx);
+static duk_ret_t js_Shader_finalize               (duk_context* ctx);
+static duk_ret_t js_new_Shape                     (duk_context* ctx);
+static duk_ret_t js_Shape_finalize                (duk_context* ctx);
+static duk_ret_t js_Shape_get_indexList           (duk_context* ctx);
+static duk_ret_t js_Shape_get_texture             (duk_context* ctx);
+static duk_ret_t js_Shape_get_vertexList          (duk_context* ctx);
+static duk_ret_t js_Shape_set_indexList           (duk_context* ctx);
+static duk_ret_t js_Shape_set_texture             (duk_context* ctx);
+static duk_ret_t js_Shape_set_vertexList          (duk_context* ctx);
+static duk_ret_t js_Shape_draw                    (duk_context* ctx);
+static duk_ret_t js_new_Socket                    (duk_context* ctx);
+static duk_ret_t js_Socket_finalize               (duk_context* ctx);
+static duk_ret_t js_Socket_get_bytesPending       (duk_context* ctx);
+static duk_ret_t js_Socket_get_connected          (duk_context* ctx);
+static duk_ret_t js_Socket_get_remoteAddress      (duk_context* ctx);
+static duk_ret_t js_Socket_get_remotePort         (duk_context* ctx);
+static duk_ret_t js_Socket_close                  (duk_context* ctx);
+static duk_ret_t js_Socket_connectTo              (duk_context* ctx);
+static duk_ret_t js_Socket_read                   (duk_context* ctx);
+static duk_ret_t js_Socket_write                  (duk_context* ctx);
+static duk_ret_t js_new_Sound                     (duk_context* ctx);
+static duk_ret_t js_Sound_finalize                (duk_context* ctx);
+static duk_ret_t js_Sound_get_fileName            (duk_context* ctx);
+static duk_ret_t js_Sound_get_length              (duk_context* ctx);
+static duk_ret_t js_Sound_get_pan                 (duk_context* ctx);
+static duk_ret_t js_Sound_get_playing             (duk_context* ctx);
+static duk_ret_t js_Sound_get_position            (duk_context* ctx);
+static duk_ret_t js_Sound_get_repeat              (duk_context* ctx);
+static duk_ret_t js_Sound_get_speed               (duk_context* ctx);
+static duk_ret_t js_Sound_get_volume              (duk_context* ctx);
+static duk_ret_t js_Sound_set_pan                 (duk_context* ctx);
+static duk_ret_t js_Sound_set_position            (duk_context* ctx);
+static duk_ret_t js_Sound_set_repeat              (duk_context* ctx);
+static duk_ret_t js_Sound_set_speed               (duk_context* ctx);
+static duk_ret_t js_Sound_set_volume              (duk_context* ctx);
+static duk_ret_t js_Sound_pause                   (duk_context* ctx);
+static duk_ret_t js_Sound_play                    (duk_context* ctx);
+static duk_ret_t js_Sound_stop                    (duk_context* ctx);
+static duk_ret_t js_new_SoundStream               (duk_context* ctx);
+static duk_ret_t js_SoundStream_finalize          (duk_context* ctx);
+static duk_ret_t js_SoundStream_get_bufferSize    (duk_context* ctx);
+static duk_ret_t js_SoundStream_buffer            (duk_context* ctx);
+static duk_ret_t js_SoundStream_play              (duk_context* ctx);
+static duk_ret_t js_SoundStream_pause             (duk_context* ctx);
+static duk_ret_t js_SoundStream_stop              (duk_context* ctx);
+static duk_ret_t js_new_Surface                   (duk_context* ctx);
+static duk_ret_t js_Surface_finalize              (duk_context* ctx);
+static duk_ret_t js_Surface_get_height            (duk_context* ctx);
+static duk_ret_t js_Surface_get_transform         (duk_context* ctx);
+static duk_ret_t js_Surface_get_width             (duk_context* ctx);
+static duk_ret_t js_Surface_set_transform         (duk_context* ctx);
+static duk_ret_t js_Surface_clipTo                (duk_context* ctx);
+static duk_ret_t js_Surface_toTexture             (duk_context* ctx);
+static duk_ret_t js_new_Texture                   (duk_context* ctx);
+static duk_ret_t js_Texture_finalize              (duk_context* ctx);
+static duk_ret_t js_Texture_get_fileName          (duk_context* ctx);
+static duk_ret_t js_Texture_get_height            (duk_context* ctx);
+static duk_ret_t js_Texture_get_width             (duk_context* ctx);
+static duk_ret_t js_new_Transform                 (duk_context* ctx);
+static duk_ret_t js_Transform_finalize            (duk_context* ctx);
+static duk_ret_t js_Transform_get_matrix          (duk_context* ctx);
+static duk_ret_t js_Transform_set_matrix          (duk_context* ctx);
+static duk_ret_t js_Transform_compose             (duk_context* ctx);
+static duk_ret_t js_Transform_identity            (duk_context* ctx);
+static duk_ret_t js_Transform_project2D           (duk_context* ctx);
+static duk_ret_t js_Transform_project3D           (duk_context* ctx);
+static duk_ret_t js_Transform_rotate              (duk_context* ctx);
+static duk_ret_t js_Transform_scale               (duk_context* ctx);
+static duk_ret_t js_Transform_translate           (duk_context* ctx);
+static duk_ret_t js_new_VertexList                (duk_context* ctx);
+static duk_ret_t js_VertexList_finalize           (duk_context* ctx);
 
 static void      duk_pegasus_push_color     (duk_context* ctx, color_t color);
 static void      duk_pegasus_push_job_token (duk_context* ctx, int64_t token);
@@ -439,6 +447,12 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
+	api_define_class(ctx, "DirectoryStream", js_new_DirectoryStream, js_DirectoryStream_finalize);
+	api_define_property(ctx, "DirectoryStream", "fileCount", js_DirectoryStream_get_fileCount, NULL);
+	api_define_property(ctx, "DirectoryStream", "fileName", js_DirectoryStream_get_fileName, NULL);
+	api_define_property(ctx, "DirectoryStream", "position", js_DirectoryStream_get_position, js_DirectoryStream_set_position);
+	api_define_method(ctx, "DirectoryStream", "next", js_DirectoryStream_next);
+	api_define_method(ctx, "DirectoryStream", "rewind", js_DirectoryStream_rewind);
 	api_define_function(ctx, "Dispatch", "cancel", js_Dispatch_cancel);
 	api_define_function(ctx, "Dispatch", "cancelAll", js_Dispatch_cancelAll);
 	api_define_function(ctx, "Dispatch", "later", js_Dispatch_later);
@@ -1425,6 +1439,126 @@ js_Color_fade(duk_context* ctx)
 	color.a = fmin(fmax(color.a * a, 0), 255);
 	duk_pegasus_push_color(ctx, color);
 	return 1;
+}
+
+static duk_ret_t
+js_new_DirectoryStream(duk_context* ctx)
+{
+	const char*  pathname;
+	directory_t* stream;
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+	
+	pathname = duk_require_path(ctx, 0, NULL, false, false);
+	
+	stream = directory_open(g_game, pathname);
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "DirectoryStream", stream);
+	return 0;
+}
+
+static duk_ret_t
+js_DirectoryStream_finalize(duk_context* ctx)
+{
+	directory_t* stream;
+
+	stream = duk_require_class_obj(ctx, 0, "DirectoryStream");
+	directory_close(stream);
+	return 0;
+}
+
+static duk_ret_t
+js_DirectoryStream_get_fileCount(duk_context* ctx)
+{
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	duk_push_int(ctx, directory_num_files(stream));
+	return 1;
+}
+
+static duk_ret_t
+js_DirectoryStream_get_fileName(duk_context* ctx)
+{
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	duk_push_string(ctx, directory_pathname(stream));
+	return 1;
+}
+
+static duk_ret_t
+js_DirectoryStream_get_position(duk_context* ctx)
+{
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	duk_push_int(ctx, directory_position(stream));
+	return 1;
+}
+
+static duk_ret_t
+js_DirectoryStream_set_position(duk_context* ctx)
+{
+	int          position;
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	position = duk_require_int(ctx, 0);
+
+	if (!directory_seek(stream, position))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't set stream position");
+	return 0;
+}
+
+static duk_ret_t
+js_DirectoryStream_next(duk_context* ctx)
+{
+	const path_t* entry_path;
+	directory_t*  stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	entry_path = directory_next(stream);
+	duk_push_object(ctx);
+	if (entry_path != NULL) {
+		duk_push_boolean(ctx, false);
+		duk_put_prop_string(ctx, -2, "done");
+		duk_push_object(ctx);
+		duk_push_string(ctx, path_filename(entry_path));
+		duk_put_prop_string(ctx, -2, "fileName");
+		duk_push_string(ctx, path_cstr(entry_path));
+		duk_put_prop_string(ctx, -2, "fullPath");
+		duk_push_boolean(ctx, !path_is_file(entry_path));
+		duk_put_prop_string(ctx, -2, "isDirectory");
+		duk_put_prop_string(ctx, -2, "value");
+	}
+	else {
+		duk_push_boolean(ctx, true);
+		duk_put_prop_string(ctx, -2, "done");
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_DirectoryStream_rewind(duk_context* ctx)
+{
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	directory_rewind(stream);
+	return 0;
 }
 
 static duk_ret_t
