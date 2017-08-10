@@ -29,7 +29,7 @@ const char*      game_save_id      (const game_t* game);
 const path_t*    game_script_path  (const game_t* game);
 const char*      game_summary      (const game_t* game);
 int              game_version      (const game_t* game);
-path_t*          game_canonicalize (const game_t* game, const char* filename, const char* base_dir_name, bool legacy);
+path_t*          game_build_path   (const game_t* game, const char* filename, const char* base_dir_name, bool legacy);
 vector_t*        game_list_dir     (const game_t* game, const char* dirname, bool want_dirs);
 bool             game_mkdir        (game_t* game, const char* dirname);
 void*            game_read_file    (game_t* game, const char* filename, size_t *out_size);

@@ -186,7 +186,7 @@ debugger_compiled_name(const char* source_name)
 const char*
 debugger_source_name(const char* compiled_name)
 {
-	// note: pathname must be canonicalized using game_canonicalize() otherwise
+	// note: pathname must be canonicalized using game_build_path() otherwise
 	//       the source map lookup will fail.
 
 	static char retval[SPHERE_PATH_MAX];

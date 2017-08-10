@@ -958,7 +958,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
-			path = game_canonicalize(g_game, filename, NULL, false);
+			path = game_build_path(g_game, filename, NULL, false);
 		}
 		else {
 			path = path_dup(origin_path);
@@ -1565,7 +1565,7 @@ js_FS_fullPath(duk_context* ctx)
 	// it's only by accident that this works at all.  the function relies on the
 	// fact that SphereFS canonicalization removes the `@/` prefix if it's present;
 	// it's therefore something of a hack, and in the future it'd be better to build
-	// this functionality into `game_canonicalize()`.
+	// this functionality into `game_build_path()`.
 
 	const char* origin_pathname = NULL;
 	const char* filename;

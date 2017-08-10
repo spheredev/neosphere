@@ -26,40 +26,40 @@ legacy_init(void)
 	path_t*     path;
 	kev_file_t* system_ini;
 
-	console_log(1, "initializing legacy subsystem");
+	console_log(1, "initializing legacy support module");
 
 	system_ini = kev_open(NULL, "#/system.ini", false);
 
 	// system default font
-	path = game_canonicalize(NULL,
+	path = game_build_path(NULL,
 		kev_read_string(system_ini, "Font", "system.rfn"),
 		"#/", true);
 	s_default_font = font_load(path_cstr(path));
 	path_free(path);
 
 	// system default windowstyle
-	path = game_canonicalize(NULL,
+	path = game_build_path(NULL,
 		kev_read_string(system_ini, "WindowStyle", "system.rws"),
 		"#/", true);
 	s_default_windowstyle = winstyle_load(path_cstr(path));
 	path_free(path);
 
 	// system default pointer image
-	path = game_canonicalize(NULL,
+	path = game_build_path(NULL,
 		kev_read_string(system_ini, "Arrow", "pointer.png"),
 		"#/", true);
 	s_default_arrow = image_load(path_cstr(path));
 	path_free(path);
 
 	// system default up arrow image
-	path = game_canonicalize(NULL,
+	path = game_build_path(NULL,
 		kev_read_string(system_ini, "UpArrow", "up_arrow.png"),
 		"#/", true);
 	s_default_arrow_up = image_load(path_cstr(path));
 	path_free(path);
 
 	// system default down arrow image
-	path = game_canonicalize(NULL,
+	path = game_build_path(NULL,
 		kev_read_string(system_ini, "DownArrow", "down_arrow.png"),
 		"#/", true);
 	s_default_arrow_down = image_load(path_cstr(path));
@@ -72,7 +72,7 @@ legacy_init(void)
 void
 legacy_uninit(void)
 {
-	console_log(1, "shutting down legacy subsystem");
+	console_log(1, "shutting down legacy support");
 }
 
 image_t*

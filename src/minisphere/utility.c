@@ -244,8 +244,8 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
-	path = game_canonicalize(g_game, pathname, origin_name, legacy);
-	prefix = path_hop(path, 0);  // note: game_canonicalize() *always* prefixes
+	path = game_build_path(g_game, pathname, origin_name, legacy);
+	prefix = path_hop(path, 0);  // note: game_build_path() *always* prefixes
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))

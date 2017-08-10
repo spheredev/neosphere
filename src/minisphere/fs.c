@@ -136,7 +136,7 @@ game_open(const char* game_path)
 			game->resolution = size2(
 				kev_read_float(sgm_file, "screen_width", 320),
 				kev_read_float(sgm_file, "screen_height", 240));
-			game->script_path = game_canonicalize(game, kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
+			game->script_path = game_build_path(game, kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
 			game->fullscreen = true;
 			kev_close(sgm_file);
 
@@ -310,9 +310,9 @@ game_version(const game_t* game)
 }
 
 path_t*
-game_canonicalize(const game_t* game, const char* filename, const char* base_dir_name, bool legacy)
+game_build_path(const game_t* game, const char* filename, const char* base_dir_name, bool legacy)
 {
-	// note: game_canonicalize() collapses '../' path hops unconditionally, as per
+	// note: game_build_path() collapses '../' path hops unconditionally, as per
 	//       SphereFS spec. this ensures an unpackaged game can't subvert the
 	//       sandbox by navigating outside of its directory via a symbolic link.
 
@@ -330,7 +330,7 @@ game_canonicalize(const game_t* game, const char* filename, const char* base_dir
 	}
 
 	if (base_dir_name != NULL) {
-		base_path = game_canonicalize(game, base_dir_name, NULL, legacy);
+		base_path = game_build_path(game, base_dir_name, NULL, legacy);
 		path_to_dir(base_path);
 	}
 	if (path_num_hops(path) > 0)
@@ -706,7 +706,7 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 
 	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
-	game->script_path = game_canonicalize(game, duk_get_string(g_duk, -1), NULL, false);
+	game->script_path = game_build_path(game, duk_get_string(g_duk, -1), NULL, false);
 
 	// game summary is optional, use a default summary if one is not provided.
 	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
@@ -800,12 +800,12 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 		*out_fs_type = FS_LOCAL;
 	}
 	else {  // no prefix: relative to `@/`
-		// note: this shouldn't actually happen, since `game_canonicalize()` always adds a prefix.
+		// note: this shouldn't actually happen, since `game_build_path()` always adds a prefix.
 		//       however, there might still be some places internally where an unqualified path is
 		//       used, so better to handle it here.
 		if (game == NULL)
 			goto on_error;
-		*out_path = game_canonicalize(game, filename, NULL, false);
+		*out_path = game_build_path(game, filename, NULL, false);
 		if (path_num_hops(*out_path) > 0 && path_hop_is(*out_path, 0, "@"))
 			path_remove_hop(*out_path, 0);
 		if (game->type == FS_LOCAL)  // convert to absolute path
