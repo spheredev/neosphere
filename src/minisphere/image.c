@@ -424,7 +424,7 @@ image_draw(image_t* image, int x, int y)
 void
 image_draw_masked(image_t* image, color_t mask, int x, int y)
 {
-	al_draw_tinted_bitmap(image->bitmap, al_map_rgba(mask.r, mask.g, mask.b, mask.a), x, y, 0x0);
+	al_draw_tinted_bitmap(image->bitmap, nativecolor(mask), x, y, 0x0);
 }
 
 void
@@ -499,7 +499,7 @@ image_fill(image_t* image, color_t color)
 	al_reset_clipping_rectangle();
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(image->bitmap);
-	al_clear_to_color(al_map_rgba(color.r, color.g, color.b, color.a));
+	al_clear_to_color(nativecolor(color));
 	al_set_target_bitmap(old_target);
 	al_set_clipping_rectangle(clip_x, clip_y, clip_width, clip_height);
 }

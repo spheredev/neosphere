@@ -6935,7 +6935,7 @@ js_Image_blitMask(duk_context* ctx)
 	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
-	al_draw_tinted_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a), x, y, 0x0);
+	al_draw_tinted_bitmap(image_bitmap(image), nativecolor(mask), x, y, 0x0);
 	return 0;
 }
 
@@ -7003,7 +7003,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	al_draw_tinted_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a),
+	al_draw_tinted_rotated_bitmap(image_bitmap(image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
 	return 0;
 }

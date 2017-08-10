@@ -301,5 +301,5 @@ tileset_draw(const tileset_t* tileset, color_t mask, float x, float y, int tile_
 		return;
 	tile_index = tileset->tiles[tile_index].image_index;
 	al_draw_tinted_bitmap(image_bitmap(tileset->tiles[tile_index].image),
-		al_map_rgba(mask.r, mask.g, mask.b, mask.a), x, y, 0x0);
+		nativecolor(mask), x, y, 0x0);
 }
