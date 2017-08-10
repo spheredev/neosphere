@@ -9,6 +9,7 @@ vX.X.X - TBD
 * Adds a new SphereFS prefix, `$/`, which resolves to the directory containing
   the startup script for miniSphere, or the root of the source tree for Cell.
 * Adds `FS.directoryExists()` for checking whether a directory exists.
+* Adds support for enumerating live iterators in `from.iterable()`.
 * Improves windowed mode scaling behavior when miniSphere is run on a HiDPI/4K
   display.
 * Improves the maintainability of the codebase with extensive refactoring.  Any
