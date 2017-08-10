@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+vX.X.X - August 12, 2017
+------------------------
 
 * Adds a new `DirectoryStream` built-in class which allows you to enumerate the
   contents of a directory.  Works in both miniSphere and Cell!
