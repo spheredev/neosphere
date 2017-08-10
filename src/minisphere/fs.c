@@ -24,7 +24,6 @@ struct game
 	path_t*      root_path;
 	lstring_t*   save_id;
 	path_t*      script_path;
-	lstring_t*   sourcemap;
 	spk_t*       spk;
 	lstring_t*   summary;
 	int          type;
@@ -55,8 +54,6 @@ game_open(const char* game_path)
 	kev_file_t* sgm_file;
 	char*       sgm_text = NULL;
 	spk_t*      spk;
-	void*       sourcemap_data;
-	size_t      sourcemap_size;
 
 	console_log(1, "opening `%s` from game #%u", game_path, s_next_game_id);
 
@@ -165,11 +162,6 @@ game_open(const char* game_path)
 	console_log(1, "    resolution: %dx%d", resolution.width, resolution.height);
 	console_log(1, "       save ID: %s", game_save_id(game));
 
-	// load the source map
-	if (sourcemap_data = game_read_file(game, "source.json", &sourcemap_size))
-		game->sourcemap = lstr_from_cp1252(sourcemap_data, sourcemap_size);
-	free(sourcemap_data);
-
 	s_next_game_id++;
 	return game;
 
@@ -203,7 +195,6 @@ game_unref(game_t* game)
 	console_log(3, "disposing game #%u no longer in use", game->id);
 	if (game->type == FS_SPK)
 		unref_spk(game->spk);
-	lstr_free(game->sourcemap);
 	path_free(game->script_path);
 	path_free(game->root_path);
 	lstr_free(game->manifest);

@@ -38,7 +38,7 @@ tool_ref(tool_t* tool)
 }
 
 void
-tool_free(tool_t* tool)
+tool_unref(tool_t* tool)
 {
 	if (tool == NULL || --tool->refcount > 0)
 		return;

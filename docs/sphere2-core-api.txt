@@ -501,11 +501,11 @@ FS.writeFile(filename, string);
 `FileStream` Object
 -------------------
 
-new FileStream(filename, op);
+new FileStream(filename, file_op);
 
     Constructs a FileStream that provides access to the contents of a specified
-    file.  `op` specifies the file operation requested and must be one of the
-    following:
+    file.  `file_op` specifies the file operation requested and must be one of
+    the following:
 
         FileOp.Read
 

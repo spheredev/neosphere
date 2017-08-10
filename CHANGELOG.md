@@ -9,6 +9,8 @@ vX.X.X - TBD
 * Adds `FS.directoryExists()` for checking whether a directory exists.
 * Improves windowed mode scaling behavior when miniSphere is run on a HiDPI/4K
   display.
+* Improves the maintainability of the codebase with extensive refactoring.  Any
+  bugs, let me know!
 * Renames the `analogue.js` system script to `persist.js` to improve
   compatibility with Sphere 1.x.
 * Fixes several issues in the implementation of `FS.rename()` that could cause

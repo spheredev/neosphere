@@ -57,7 +57,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	duk_push_global_stash(g_duk);
 	duk_del_prop_string(g_duk, -1, "debugMap");
 	game_root = game_path(g_game);
-	if (data = game_read_file(g_game, "sourceMap.json", &data_size)) {
+	if (data = game_read_file(g_game, "sources.json", &data_size)) {
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
 		duk_put_prop_string(g_duk, -2, "debugMap");

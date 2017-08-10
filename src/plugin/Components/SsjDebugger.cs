@@ -368,7 +368,7 @@ namespace Sphere.Gdk.Components
             var systemPath = Path.Combine(m_enginePath, @"system") + pathSep;
 
             if (path.StartsWith(systemPath))
-                path = string.Format("#/{0}", path.Substring(systemPath.Length).Replace(pathSep, "/"));
+                path = $"#/{path.Substring(systemPath.Length).Replace(pathSep, "/")}";
             else if (path.StartsWith(sourceRoot))
                 path = path.Substring(sourceRoot.Length).Replace(pathSep, "/");
             return path;

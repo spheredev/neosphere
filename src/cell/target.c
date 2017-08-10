@@ -53,7 +53,7 @@ target_free(target_t* target)
 	while (p = vector_next(&iter))
 		target_free(*p);
 	vector_free(target->sources);
-	tool_free(target->tool);
+	tool_unref(target->tool);
 	path_free(target->name);
 	free(target);
 }

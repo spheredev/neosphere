@@ -282,7 +282,7 @@ build_package(build_t* build, const char* filename)
 	spk = spk_create(filename);
 	spk_add_file(spk, build->fs, "@/game.json", "game.json");
 	spk_add_file(spk, build->fs, "@/game.sgm", "game.sgm");
-	spk_add_file(spk, build->fs, "@/sourceMap.json", "sourceMap.json");
+	spk_add_file(spk, build->fs, "@/sources.json", "sources.json");
 	iter = vector_enum(build->targets);
 	while (p_target = vector_next(&iter)) {
 		in_path = target_path(*p_target);
@@ -391,12 +391,12 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		duk_put_prop_string(build->js_context, -2, "fileMap");
 		duk_json_encode(build->js_context, -1);
 		json = duk_get_lstring(build->js_context, -1, &json_size);
-		fs_fspew(build->fs, "@/sourceMap.json", json, json_size);
+		fs_fspew(build->fs, "@/sources.json", json, json_size);
 		duk_pop(build->js_context);
 		visor_end_op(build->visor);
 	}
 	else {
-		fs_unlink(build->fs, "@/sourceMap.json");
+		fs_unlink(build->fs, "@/sources.json");
 	}
 
 	filenames = visor_filenames(build->visor);
@@ -1544,7 +1544,7 @@ js_Tool_finalize(duk_context* ctx)
 
 	tool = duk_require_class_obj(ctx, 0, "Tool");
 
-	tool_free(tool);
+	tool_unref(tool);
 	return 0;
 }
 
