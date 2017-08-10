@@ -49,7 +49,7 @@ animation_new(const char* path)
 	mng_setcb_readdata(anim->stream, mng_cb_readdata);
 	mng_setcb_refresh(anim->stream, mng_cb_refresh);
 	mng_setcb_settimer(anim->stream, mng_cb_settimer);
-	if (!(anim->file = file_open(g_game_fs, path, "rb")))
+	if (!(anim->file = file_open(g_game, path, "rb")))
 		goto on_error;
 	if (mng_read(anim->stream) != MNG_NOERROR) goto on_error;
 	anim->id = s_next_animation_id++;

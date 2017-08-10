@@ -1,6 +1,7 @@
-// note: due to Allegro's architecture, this is far from a perfect abstraction. avoid the
-//       temptation to create multiple screen objects for any reason as this will not work properly
-//       and will almost certainly blow up in your face. :o)
+// IMPORTANT!
+// due to Allegro's architecture, this is far from a perfect abstraction.  once a screen
+// object has been constructed, treat it as a singleton: creating multiple screen objects is
+// undefined behavior and will probably blow up in your face. :o)
 
 #include "minisphere.h"
 #include "screen.h"
@@ -40,7 +41,7 @@ struct screen
 static void refresh_display (screen_t* screen);
 
 screen_t*
-screen_new(const char* title, image_t* icon, int x_size, int y_size, int frameskip, bool avoid_sleep)
+screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, bool avoid_sleep)
 {
 	image_t*             backbuffer = NULL;
 	int                  bitmap_flags;
@@ -51,20 +52,20 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	int                  x_scale;
 	int                  y_scale;
 
-	console_log(1, "initializing render context at %dx%d", x_size, y_size);
+	console_log(1, "initializing render context at %dx%d", resolution.width, resolution.height);
 
 	al_set_new_window_title(title);
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	al_get_monitor_info(0, &desktop_info);
-	x_scale = ((desktop_info.x2 - desktop_info.x1) / 2) / x_size;
-	y_scale = ((desktop_info.y2 - desktop_info.y1) / 2) / y_size;
+	x_scale = ((desktop_info.x2 - desktop_info.x1) / 2) / resolution.width;
+	y_scale = ((desktop_info.y2 - desktop_info.y1) / 2) / resolution.height;
 	x_scale = y_scale = fmax(fmin(x_scale, y_scale), 1.0);
-	display = al_create_display(x_size * x_scale, y_size * y_scale);
+	display = al_create_display(resolution.width * x_scale, resolution.height * y_scale);
 
 	// custom backbuffer: this allows pixel-perfect rendering regardless
 	// of the actual window size.
 	if (display != NULL)
-		backbuffer = image_new(x_size, y_size);
+		backbuffer = image_new(resolution.width, resolution.height);
 	if (backbuffer == NULL) {
 		fprintf(stderr, "FATAL: couldn't initialize render context");
 		return NULL;
@@ -85,8 +86,8 @@ screen_new(const char* title, image_t* icon, int x_size, int y_size, int framesk
 	screen = calloc(1, sizeof(screen_t));
 	screen->display = display;
 	screen->backbuffer = backbuffer;
-	screen->x_size = x_size;
-	screen->y_size = y_size;
+	screen->x_size = resolution.width;
+	screen->y_size = resolution.height;
 	screen->max_skips = frameskip;
 	screen->avoid_sleep = avoid_sleep;
 
@@ -120,6 +121,12 @@ screen_backbuffer(const screen_t* it)
 	return it->backbuffer;
 }
 
+rect_t
+screen_bounds(const screen_t* it)
+{
+	return rect(0, 0, it->x_size, it->y_size);
+}
+
 ALLEGRO_DISPLAY*
 screen_display(const screen_t* it)
 {
@@ -127,13 +134,19 @@ screen_display(const screen_t* it)
 }
 
 bool
-screen_fullscreen(const screen_t* it)
+screen_get_fullscreen(const screen_t* it)
 {
 	return it->fullscreen;
 }
 
+size2_t
+screen_size(const screen_t* it)
+{
+	return size2(it->x_size, it->y_size);
+}
+
 bool
-screen_is_skipframe(const screen_t* it)
+screen_skip_frame(const screen_t* it)
 {
 	return it->skip_frame;
 }
@@ -254,7 +267,7 @@ screen_flip(screen_t* it, int framerate)
 			al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 			snapshot = al_clone_bitmap(image_bitmap(it->backbuffer));
 			al_restore_state(&old_state);
-			game_root = game_path(g_game_fs);
+			game_root = game_path(g_game);
 			game_filename = path_is_file(game_root)
 				? path_filename(game_root)
 				: path_hop(game_root, path_num_hops(game_root) - 1);

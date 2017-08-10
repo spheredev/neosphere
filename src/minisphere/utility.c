@@ -244,13 +244,13 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
-	path = game_canonicalize(g_game_fs, pathname, origin_name, legacy);
+	path = game_canonicalize(g_game, pathname, origin_name, legacy);
 	prefix = path_hop(path, 0);  // note: game_canonicalize() *always* prefixes
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
-	if (strcmp(prefix, "~") == 0 && game_save_id(g_game_fs) == NULL)
+	if (strcmp(prefix, "~") == 0 && game_save_id(g_game) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no save ID defined");
 	if (need_write && !legacy && strcmp(prefix, "~") != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "directory is read-only");

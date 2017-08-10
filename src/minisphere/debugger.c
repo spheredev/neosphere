@@ -56,8 +56,8 @@ debugger_init(bool want_attach, bool allow_remote)
 	s_have_source_map = false;
 	duk_push_global_stash(g_duk);
 	duk_del_prop_string(g_duk, -1, "debugMap");
-	game_root = game_path(g_game_fs);
-	if (data = game_read_file(g_game_fs, "sourceMap.json", &data_size)) {
+	game_root = game_path(g_game);
+	if (data = game_read_file(g_game, "sourceMap.json", &data_size)) {
 		duk_push_lstring(g_duk, data, data_size);
 		duk_json_decode(g_duk, -1);
 		duk_put_prop_string(g_duk, -2, "debugMap");
@@ -323,10 +323,10 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 	request_id = duk_get_int(ctx, -nvalues + 0);
 	switch (request_id) {
 	case APPREQ_GAME_INFO:
-		resolution = game_resolution(g_game_fs);
-		duk_push_string(ctx, game_name(g_game_fs));
-		duk_push_string(ctx, game_author(g_game_fs));
-		duk_push_string(ctx, game_summary(g_game_fs));
+		resolution = game_resolution(g_game);
+		duk_push_string(ctx, game_name(g_game));
+		duk_push_string(ctx, game_author(g_game));
+		duk_push_string(ctx, game_summary(g_game));
 		duk_push_int(ctx, resolution.width);
 		duk_push_int(ctx, resolution.height);
 		return 5;
@@ -349,7 +349,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 		}
 
 		// no cache entry, try loading the file via SphereFS
-		if ((file_data = game_read_file(g_game_fs, name, &size))) {
+		if ((file_data = game_read_file(g_game, name, &size))) {
 			duk_push_lstring(ctx, file_data, size);
 			free(file_data);
 			return 1;

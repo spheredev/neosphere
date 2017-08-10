@@ -78,7 +78,7 @@ font_load(const char* filename)
 
 	memset(&rfn, 0, sizeof(struct rfn_header));
 
-	if ((file = file_open(g_game_fs, filename, "rb")) == NULL)
+	if ((file = file_open(g_game, filename, "rb")) == NULL)
 		goto on_error;
 	if (!(font = calloc(1, sizeof(font_t))))
 		goto on_error;

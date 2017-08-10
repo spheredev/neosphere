@@ -1545,13 +1545,16 @@ static duk_ret_t
 js_ApplyColorMask(duk_context* ctx)
 {
 	color_t color;
+	size2_t resolution;
 
 	color = duk_require_sphere_color(ctx, 0);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
-	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, nativecolor(color));
+	resolution = screen_size(g_screen);
+	al_draw_filled_rectangle(0, 0, resolution.width, resolution.height,
+		nativecolor(color));
 	return 0;
 }
 
@@ -1654,7 +1657,7 @@ js_BezierCurve(duk_context* ctx)
 		y4 = duk_to_number(ctx, 9);
 	}
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	cp[0] = x1; cp[1] = y1;
 	cp[2] = x2; cp[3] = y2;
@@ -1930,7 +1933,7 @@ js_CreateDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, "save", true, true);
 
-	if (!game_mkdir(g_game_fs, name))
+	if (!game_mkdir(g_game, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
 	return 0;
 }
@@ -2170,7 +2173,7 @@ js_DoesFileExist(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, true, false);
 
-	duk_push_boolean(ctx, game_file_exists(g_game_fs, filename));
+	duk_push_boolean(ctx, game_file_exists(g_game, filename));
 	return 1;
 }
 
@@ -2192,7 +2195,7 @@ js_EvaluateScript(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "scripts", true, false);
 
-	if (!game_file_exists(g_game_fs, filename))
+	if (!game_file_exists(g_game, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	if (!script_eval(filename, false))
 		duk_throw(ctx);
@@ -2207,9 +2210,9 @@ js_EvaluateSystemScript(duk_context* ctx)
 	char path[SPHERE_PATH_MAX];
 
 	sprintf(path, "@/scripts/lib/%s", filename);
-	if (!game_file_exists(g_game_fs, path))
+	if (!game_file_exists(g_game, path))
 		sprintf(path, "#/scripts/%s", filename);
-	if (!game_file_exists(g_game_fs, path))
+	if (!game_file_exists(g_game, path))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
 	if (!script_eval(path, false))
 		duk_throw(ctx);
@@ -2225,7 +2228,7 @@ js_ExecuteGame(duk_context* ctx)
 	filename = duk_require_string(ctx, 0);
 
 	// store the old game path so we can relaunch when the chained game exits
-	g_last_game_path = path_dup(game_path(g_game_fs));
+	g_last_game_path = path_dup(game_path(g_game));
 
 	// if the passed-in path is relative, resolve it relative to <engine>/games.
 	// this is done for compatibility with Sphere 1.x.
@@ -2323,7 +2326,7 @@ js_FilledCircle(duk_context* ctx)
 
 	int i;
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	vcount = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -2360,7 +2363,7 @@ js_FilledEllipse(duk_context* ctx)
 
 	int i;
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -2563,7 +2566,7 @@ js_GetDirectoryList(duk_context* ctx)
 
 	iter_t iter;
 
-	list = game_list_dir(g_game_fs, dirname, true);
+	list = game_list_dir(g_game, dirname, true);
 	duk_push_array(ctx);
 	iter = vector_enum(list);
 	while (p_filename = vector_next(&iter)) {
@@ -2590,7 +2593,7 @@ js_GetFileList(duk_context* ctx)
 		? duk_require_path(ctx, 0, NULL, true, false)
 		: "save";
 
-	list = game_list_dir(g_game_fs, directory_name, false);
+	list = game_list_dir(g_game, directory_name, false);
 	duk_push_array(ctx);
 	iter = vector_enum(list);
 	while (p_filename = vector_next(&iter)) {
@@ -3451,14 +3454,14 @@ js_GetPlayerKey(duk_context* ctx)
 static duk_ret_t
 js_GetScreenHeight(duk_context* ctx)
 {
-	duk_push_int(ctx, g_res_y);
+	duk_push_int(ctx, screen_size(g_screen).height);
 	return 1;
 }
 
 static duk_ret_t
 js_GetScreenWidth(duk_context* ctx)
 {
-	duk_push_int(ctx, g_res_x);
+	duk_push_int(ctx, screen_size(g_screen).width);
 	return 1;
 }
 
@@ -3487,7 +3490,7 @@ js_GetSystemDownArrow(duk_context* ctx)
 static duk_ret_t
 js_GetSystemFont(duk_context* ctx)
 {
-	duk_push_sphere_font(ctx, g_sys_font);
+	duk_push_sphere_font(ctx, legacy_default_font());
 	return 1;
 }
 
@@ -3917,7 +3920,7 @@ js_GradientCircle(duk_context* ctx)
 	inner_color = duk_require_sphere_color(ctx, 3);
 	outer_color = duk_require_sphere_color(ctx, 4);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	num_verts = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -3959,7 +3962,7 @@ js_GradientEllipse(duk_context* ctx)
 	inner_color = duk_require_sphere_color(ctx, 4);
 	outer_color = duk_require_sphere_color(ctx, 5);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	num_verts = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -3999,7 +4002,7 @@ js_GradientLine(duk_context* ctx)
 	color1 = duk_require_sphere_color(ctx, 4);
 	color2 = duk_require_sphere_color(ctx, 5);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	length = hypotf(x2 - x1, y2 - y1);
 	tx = 0.5 * (y2 - y1) / length;
@@ -4034,7 +4037,7 @@ js_GradientRectangle(duk_context* ctx)
 	color_lr = duk_require_sphere_color(ctx, 6);
 	color_ll = duk_require_sphere_color(ctx, 7);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
@@ -4064,7 +4067,7 @@ js_GradientTriangle(duk_context* ctx)
 	color2 = duk_require_sphere_color(ctx, 7);
 	color3 = duk_require_sphere_color(ctx, 8);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color1) },
@@ -4100,7 +4103,7 @@ js_HashFromFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "other", true, false);
 
-	if (!(data = game_read_file(g_game_fs, filename, &file_size)))
+	if (!(data = game_read_file(g_game, filename, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file");
 	duk_push_string(ctx, md5sum(data, file_size));
 	return 1;
@@ -4383,7 +4386,7 @@ js_Line(duk_context* ctx)
 	y2 = trunc(duk_to_number(ctx, 3)) + 0.5;
 	color = duk_require_sphere_color(ctx, 4);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
@@ -4641,7 +4644,7 @@ js_OpenFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, "save", true, true);
 
-	if (!(file = kev_open(g_game_fs, filename, true)))
+	if (!(file = kev_open(g_game, filename, true)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s`", filename);
 	duk_push_class_obj(ctx, "ssFile", file);
 	return 1;
@@ -4672,7 +4675,7 @@ js_OpenRawFile(duk_context* ctx)
 	writable = num_args >= 2 ? duk_to_boolean(ctx, 1) : false;
 	filename = duk_require_path(ctx, 0, "other", true, writable);
 
-	file = file_open(g_game_fs, filename, writable ? "w+b" : "rb");
+	file = file_open(g_game, filename, writable ? "w+b" : "rb");
 	if (file == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot open file for %s",
 			writable ? "write" : "read");
@@ -4688,7 +4691,7 @@ js_OutlinedCircle(duk_context* ctx)
 	float radius = trunc(duk_to_number(ctx, 2));
 	color_t color = duk_require_sphere_color(ctx, 3);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
@@ -4704,7 +4707,7 @@ js_OutlinedEllipse(duk_context* ctx)
 	float ry = duk_to_int(ctx, 3);
 	color_t color = duk_require_sphere_color(ctx, 4);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
@@ -4722,7 +4725,7 @@ js_OutlinedRectangle(duk_context* ctx)
 	color_t color = duk_require_sphere_color(ctx, 4);
 	int thickness = n_args >= 6 ? duk_to_int(ctx, 5) : 1;
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
@@ -4741,7 +4744,7 @@ js_OutlinedRoundRectangle(duk_context* ctx)
 	color_t color = duk_require_sphere_color(ctx, 5);
 	int thickness = n_args >= 7 ? duk_to_int(ctx, 6) : 1;
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
@@ -4755,7 +4758,7 @@ js_Point(duk_context* ctx)
 	float y = duk_to_int(ctx, 1) + 0.5;
 	color_t color = duk_require_sphere_color(ctx, 2);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_pixel(x, y, nativecolor(color));
@@ -4877,7 +4880,7 @@ js_Rectangle(duk_context* ctx)
 	int h = duk_to_int(ctx, 3);
 	color_t color = duk_require_sphere_color(ctx, 4);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
@@ -4890,7 +4893,7 @@ js_RemoveDirectory(duk_context* ctx)
 	const char* name;
 
 	name = duk_require_path(ctx, 0, "save", true, true);
-	if (!game_rmdir(g_game_fs, name))
+	if (!game_rmdir(g_game, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
 	return 0;
 }
@@ -4901,7 +4904,7 @@ js_RemoveFile(duk_context* ctx)
 	const char* filename;
 
 	filename = duk_require_path(ctx, 0, "save", true, true);
-	if (!game_unlink(g_game_fs, filename))
+	if (!game_unlink(g_game, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file `%s`", filename);
 	return 0;
 }
@@ -4944,7 +4947,7 @@ js_Rename(duk_context* ctx)
 
 	name1 = duk_require_path(ctx, 0, "save", true, true);
 	name2 = duk_require_path(ctx, 1, "save", true, true);
-	if (!game_rename(g_game_fs, name1, name2))
+	if (!game_rename(g_game, name1, name2))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
 }
@@ -4988,7 +4991,7 @@ js_RequireScript(duk_context* ctx)
 	bool        is_required;
 
 	filename = duk_require_path(ctx, 0, "scripts", true, false);
-	if (!game_file_exists(g_game_fs, filename))
+	if (!game_file_exists(g_game, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	duk_push_global_stash(ctx);
 	duk_get_prop_string(ctx, -1, "RequireScript");
@@ -5014,9 +5017,9 @@ js_RequireSystemScript(duk_context* ctx)
 	char path[SPHERE_PATH_MAX];
 
 	sprintf(path, "@/scripts/lib/%s", filename);
-	if (!game_file_exists(g_game_fs, path))
+	if (!game_file_exists(g_game, path))
 		sprintf(path, "#/scripts/%s", filename);
-	if (!game_file_exists(g_game_fs, path))
+	if (!game_file_exists(g_game, path))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "system script `%s` not found", filename);
 
 	duk_push_global_stash(ctx);
@@ -5050,7 +5053,7 @@ js_RoundRectangle(duk_context* ctx)
 	float radius = duk_to_number(ctx, 4);
 	color_t color = duk_require_sphere_color(ctx, 5);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
@@ -6174,7 +6177,7 @@ js_Triangle(duk_context* ctx)
 	int y3 = duk_to_int(ctx, 5);
 	color_t color = duk_require_sphere_color(ctx, 6);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_filled_triangle(x1, y1, x2, y2, x3, y3, nativecolor(color));
@@ -6637,7 +6640,7 @@ js_Font_drawText(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
 	mask = duk_require_sphere_color(ctx, -1);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	font_draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
@@ -6667,7 +6670,7 @@ js_Font_drawTextBox(duk_context* ctx)
 	duk_get_prop_string(ctx, -1, "\xFF" "color_mask");
 	mask = duk_require_sphere_color(ctx, -1);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	duk_push_c_function(ctx, js_Font_wordWrapString, DUK_VARARGS);
 	duk_push_this(ctx);
@@ -6711,7 +6714,7 @@ js_Font_drawZoomedText(duk_context* ctx)
 	scale = duk_to_number(ctx, 2);
 	text = duk_to_string(ctx, 3);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 
 	// render the text to a texture so we can scale it up.  not the most
@@ -6910,7 +6913,7 @@ js_Image_blit(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssImage");
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
@@ -6929,7 +6932,7 @@ js_Image_blitMask(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssImage");
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_tinted_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a), x, y, 0x0);
@@ -6967,7 +6970,7 @@ js_Image_rotateBlit(duk_context* ctx)
 	y = duk_to_int(ctx, 1);
 	angle = duk_to_number(ctx, 2);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	width = image_width(image);
 	height = image_height(image);
@@ -6995,7 +6998,7 @@ js_Image_rotateBlitMask(duk_context* ctx)
 	angle = duk_to_number(ctx, 2);
 	mask = duk_require_sphere_color(ctx, 3);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	width = image_width(image);
 	height = image_height(image);
@@ -7044,7 +7047,7 @@ js_Image_transformBlit(duk_context* ctx)
 		{ x4 + 0.5, y4 + 0.5, 0, 0, height, mask },
 		{ x3 + 0.5, y3 + 0.5, 0, width, height, mask }
 	};
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
@@ -7083,7 +7086,7 @@ js_Image_transformBlitMask(duk_context* ctx)
 		{ x4 + 0.5, y4 + 0.5, 0, 0, height, nativecolor(mask) },
 		{ x3 + 0.5, y3 + 0.5, 0, width, height, nativecolor(mask) }
 	};
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
@@ -7106,7 +7109,7 @@ js_Image_zoomBlit(duk_context* ctx)
 	y = duk_to_int(ctx, 1);
 	scale = duk_to_number(ctx, 2);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	width = image_width(image);
 	height = image_height(image);
@@ -7134,7 +7137,7 @@ js_Image_zoomBlitMask(duk_context* ctx)
 	scale = duk_to_number(ctx, 2);
 	mask = duk_require_sphere_color(ctx, 3);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	width = image_width(image);
 	height = image_height(image);
@@ -7898,7 +7901,7 @@ js_Surface_get_height(duk_context* ctx)
 	if (image != NULL)
 		duk_push_int(ctx, image_height(image));
 	else
-		duk_push_int(ctx, g_res_y);
+		duk_push_int(ctx, screen_size(g_screen).height);
 	return 1;
 }
 
@@ -7913,7 +7916,7 @@ js_Surface_get_width(duk_context* ctx)
 	if (image != NULL)
 		duk_push_int(ctx, image_width(image));
 	else
-		duk_push_int(ctx, g_res_x);
+		duk_push_int(ctx, screen_size(g_screen).width);
 	return 1;
 }
 
@@ -8069,7 +8072,7 @@ js_Surface_blit(duk_context* ctx)
 	x = duk_to_int(ctx, 0);
 	y = duk_to_int(ctx, 1);
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return 0;
 	galileo_reset();
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);

@@ -768,7 +768,7 @@ duk_pegasus_eval_module(duk_context* ctx, const char* filename)
 
 	console_log(1, "initializing JS module `%s`", filename);
 
-	source = game_read_file(g_game_fs, filename, &source_size);
+	source = game_read_file(g_game, filename, &source_size);
 	code_string = lstr_from_cp1252(source, source_size);
 	free(source);
 
@@ -923,7 +923,7 @@ duk_safe_event_loop(duk_context* ctx, void* udata)
 {
 	while (async_busy()) {
 		screen_flip(g_screen, s_framerate);
-		image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, g_res_x, g_res_y));
+		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
 	}
 	return 0;
 }
@@ -958,7 +958,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
-			path = game_canonicalize(g_game_fs, filename, NULL, false);
+			path = game_canonicalize(g_game, filename, NULL, false);
 		}
 		else {
 			path = path_dup(origin_path);
@@ -967,14 +967,14 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 			path_collapse(path, true);
 		}
 		free(filename);
-		if (game_file_exists(g_game_fs, path_cstr(path))) {
+		if (game_file_exists(g_game, path_cstr(path))) {
 			if (strcmp(path_filename(path), "package.json") != 0) {
 				return path;
 			}
 			else {
 				if (!(main_path = load_package_json(path_cstr(path))))
 					goto next_filename;
-				if (game_file_exists(g_game_fs, path_cstr(main_path))) {
+				if (game_file_exists(g_game, path_cstr(main_path))) {
 					path_free(path);
 					return main_path;
 				}
@@ -1018,7 +1018,7 @@ load_package_json(const char* filename)
 	path_t*   path;
 
 	duk_top = duk_get_top(g_duk);
-	if (!(json = game_read_file(g_game_fs, filename, &json_size)))
+	if (!(json = game_read_file(g_game, filename, &json_size)))
 		goto on_error;
 	duk_push_lstring(g_duk, json, json_size);
 	free(json);
@@ -1032,7 +1032,7 @@ load_package_json(const char* filename)
 	path = path_strip(path_new(filename));
 	path_append(path, duk_get_string(g_duk, -1));
 	path_collapse(path, true);
-	if (!game_file_exists(g_game_fs, path_cstr(path)))
+	if (!game_file_exists(g_game, path_cstr(path)))
 		goto on_error;
 	return path;
 
@@ -1110,7 +1110,7 @@ js_screen_set_frameSkip(duk_context* ctx)
 static duk_ret_t
 js_screen_get_fullScreen(duk_context* ctx)
 {
-	duk_push_boolean(ctx, screen_fullscreen(g_screen));
+	duk_push_boolean(ctx, screen_get_fullscreen(g_screen));
 	return 1;
 }
 
@@ -1129,7 +1129,7 @@ static duk_ret_t
 js_screen_flip(duk_context* ctx)
 {
 	screen_flip(g_screen, s_framerate);
-	image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, g_res_x, g_res_y));
+	image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
 	return 0;
 }
 
@@ -1165,7 +1165,7 @@ js_Sphere_get_APILevel(duk_context* ctx)
 static duk_ret_t
 js_Sphere_get_Game(duk_context* ctx)
 {
-	duk_push_lstring_t(ctx, game_manifest(g_game_fs));
+	duk_push_lstring_t(ctx, game_manifest(g_game));
 	duk_json_decode(ctx, -1);
 
 	duk_push_this(ctx);
@@ -1520,7 +1520,7 @@ js_FS_createDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!game_mkdir(g_game_fs, name))
+	if (!game_mkdir(g_game, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
 	return 0;
 }
@@ -1532,7 +1532,7 @@ js_FS_deleteFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!game_unlink(g_game_fs, filename))
+	if (!game_unlink(g_game, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file", filename);
 	return 0;
 }
@@ -1544,7 +1544,7 @@ js_FS_directoryExists(duk_context* ctx)
 
 	dirname = duk_require_path(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, game_dir_exists(g_game_fs, dirname));
+	duk_push_boolean(ctx, game_dir_exists(g_game, dirname));
 	return 1;
 }
 
@@ -1555,7 +1555,7 @@ js_FS_fileExists(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, game_file_exists(g_game_fs, filename));
+	duk_push_boolean(ctx, game_file_exists(g_game, filename));
 	return 1;
 }
 
@@ -1590,7 +1590,7 @@ js_FS_readFile(duk_context* ctx)
 
 	filename = duk_require_path(ctx, 0, NULL, false, false);
 
-	if (!(file_data = game_read_file(g_game_fs, filename, &file_size)))
+	if (!(file_data = game_read_file(g_game, filename, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
 	content = lstr_from_cp1252(file_data, file_size);
 	duk_push_lstring_t(ctx, content);
@@ -1604,7 +1604,7 @@ js_FS_removeDirectory(duk_context* ctx)
 
 	name = duk_require_path(ctx, 0, NULL, false, true);
 
-	if (!game_rmdir(g_game_fs, name))
+	if (!game_rmdir(g_game, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
 	return 0;
 }
@@ -1618,7 +1618,7 @@ js_FS_rename(duk_context* ctx)
 	name1 = duk_require_path(ctx, 0, NULL, false, true);
 	name2 = duk_require_path(ctx, 1, NULL, false, true);
 
-	if (!game_rename(g_game_fs, name1, name2))
+	if (!game_rename(g_game, name1, name2))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
 	return 0;
 }
@@ -1636,7 +1636,7 @@ js_FS_writeFile(duk_context* ctx)
 
 	file_data = lstr_cstr(text);
 	file_size = lstr_len(text);
-	if (!game_write_file(g_game_fs, filename, file_data, file_size))
+	if (!game_write_file(g_game, filename, file_data, file_size))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
 	return 0;
@@ -1659,13 +1659,13 @@ js_new_FileStream(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
 
 	filename = duk_require_path(ctx, 0, NULL, false, file_op != FILE_OP_READ);
-	if (file_op == FILE_OP_UPDATE && !game_file_exists(g_game_fs, filename))
+	if (file_op == FILE_OP_UPDATE && !game_file_exists(g_game, filename))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
 		: file_op == FILE_OP_WRITE ? "w+b"
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
-	if (!(file = file_open(g_game_fs, filename, mode)))
+	if (!(file = file_open(g_game, filename, mode)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to open file");
 	if (file_op == FILE_OP_UPDATE)
 		file_seek(file, 0, WHENCE_END);
@@ -1907,7 +1907,7 @@ js_Font_drawText(duk_context* ctx)
 		: color_new(255, 255, 255, 255);
 	width = num_args >= 6 ? duk_require_int(ctx, 5) : 0;
 
-	if (surface == screen_backbuffer(g_screen) && screen_is_skipframe(g_screen))
+	if (surface == screen_backbuffer(g_screen) && screen_skip_frame(g_screen))
 		return 0;
 	else {
 		image_render_to(surface, NULL);
@@ -2519,7 +2519,7 @@ js_Model_draw(duk_context* ctx)
 	surface = num_args >= 1 ? duk_require_class_obj(ctx, 0, "Surface")
 		: screen_backbuffer(g_screen);
 
-	if (!screen_is_skipframe(g_screen))
+	if (!screen_skip_frame(g_screen))
 		model_draw(group, surface);
 	return 0;
 }

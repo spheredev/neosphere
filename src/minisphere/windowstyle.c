@@ -44,7 +44,7 @@ winstyle_load(const char* filename)
 	windowstyle_t*    winstyle = NULL;
 	int               i;
 
-	if (!(file = file_open(g_game_fs, filename, "rb")))
+	if (!(file = file_open(g_game, filename, "rb")))
 		goto on_error;
 	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL)
 		goto on_error;

@@ -31,7 +31,7 @@ logger_new(const char* filename)
 	console_log(2, "creating logger #%u for `%s`", s_next_logger_id, filename);
 
 	logger = calloc(1, sizeof(logger_t));
-	if (!(logger->file = file_open(g_game_fs, filename, "a")))
+	if (!(logger->file = file_open(g_game, filename, "a")))
 		goto on_error;
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));

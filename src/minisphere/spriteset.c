@@ -174,7 +174,7 @@ spriteset_load(const char* filename)
 	// filename not in load cache, load the spriteset
 	console_log(2, "loading spriteset #%u as `%s`", s_next_spriteset_id, filename);
 	spriteset = spriteset_new();
-	if (!(file = file_open(g_game_fs, filename, "rb")))
+	if (!(file = file_open(g_game, filename, "rb")))
 		goto on_error;
 	if (file_read(&rss, sizeof(struct rss_header), 1, file) != 1)
 		goto on_error;
@@ -525,8 +525,6 @@ spriteset_draw(const spriteset_t* it, color_t mask, bool is_flipped, double thet
 	image_h = image_height(image);
 	scale_w = image_w * scale_x;
 	scale_h = image_h * scale_y;
-	if (x + scale_w <= 0 || x >= g_res_x || y + scale_h <= 0 || y >= g_res_y)
-		return;
 	al_draw_tinted_scaled_rotated_bitmap(image_bitmap(image), al_map_rgba(mask.r, mask.g, mask.b, mask.a),
 		(float)image_w / 2, (float)image_h / 2, x + scale_w / 2, y + scale_h / 2,
 		scale_x, scale_y, theta, is_flipped ? ALLEGRO_FLIP_VERTICAL : 0x0);
@@ -545,7 +543,7 @@ spriteset_save(const spriteset_t* it, const char* filename)
 
 	int i, j;
 
-	file = file_open(g_game_fs, filename, "wb");
+	file = file_open(g_game, filename, "wb");
 
 	// write out the RSS header	first
 	image = spriteset_image(it, 0);

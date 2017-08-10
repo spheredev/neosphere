@@ -510,32 +510,36 @@ map_engine_draw_map(void)
 	struct map_layer* layer;
 	int               layer_height;
 	int               layer_width;
-	ALLEGRO_COLOR     overlay_color;
+	size2_t           resolution;
 	int               tile_height;
 	int               tile_index;
 	int               tile_width;
-	int               off_x, off_y;
+	int               off_x;
+	int               off_y;
 
 	int x, y, z;
 
-	if (screen_is_skipframe(g_screen))
+	if (screen_skip_frame(g_screen))
 		return;
 
-	// render map layers from bottom to top (+Z = up)
+	resolution = screen_size(g_screen);
 	tileset_get_size(s_map->tileset, &tile_width, &tile_height);
+
+	// render map layers from bottom to top (+Z = up)
 	for (z = 0; z < s_map->num_layers; ++z) {
 		layer = &s_map->layers[z];
 		is_repeating = s_map->is_repeating || layer->is_parallax;
 		layer_width = layer->width * tile_width;
 		layer_height = layer->height * tile_height;
-		off_x = 0; off_y = 0;
+		off_x = 0;
+		off_y = 0;
 		map_screen_to_layer(z, s_camera_x, s_camera_y, &off_x, &off_y);
 
 		// render person reflections if layer is reflective
 		al_hold_bitmap_drawing(true);
 		if (layer->is_reflective) {
 			if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
-				for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
+				for (y = 0; y < resolution.height / layer_height + 2; ++y) for (x = 0; x < resolution.width / layer_width + 2; ++x)
 					draw_persons(z, true, off_x - x * layer_width, off_y - y * layer_height);
 			}
 			else {
@@ -547,7 +551,7 @@ map_engine_draw_map(void)
 		if (layer->is_visible) {
 			first_cell_x = off_x / tile_width;
 			first_cell_y = off_y / tile_height;
-			for (y = 0; y < g_res_y / tile_height + 2; ++y) for (x = 0; x < g_res_x / tile_width + 2; ++x) {
+			for (y = 0; y < resolution.height / tile_height + 2; ++y) for (x = 0; x < resolution.width / tile_width + 2; ++x) {
 				cell_x = is_repeating ? (x + first_cell_x) % layer->width : x + first_cell_x;
 				cell_y = is_repeating ? (y + first_cell_y) % layer->height : y + first_cell_y;
 				if (cell_x < 0 || cell_x >= layer->width || cell_y < 0 || cell_y >= layer->height)
@@ -559,7 +563,7 @@ map_engine_draw_map(void)
 
 		// render persons
 		if (is_repeating) {  // for small repeating maps, persons need to be repeated as well
-			for (y = 0; y < g_res_y / layer_height + 2; ++y) for (x = 0; x < g_res_x / layer_width + 2; ++x)
+			for (y = 0; y < resolution.height / layer_height + 2; ++y) for (x = 0; x < resolution.width / layer_width + 2; ++x)
 				draw_persons(z, false, off_x - x * layer_width, off_y - y * layer_height);
 		}
 		else {
@@ -570,8 +574,7 @@ map_engine_draw_map(void)
 		script_run(layer->render_script, false);
 	}
 
-	overlay_color = al_map_rgba(s_color_mask.r, s_color_mask.g, s_color_mask.b, s_color_mask.a);
-	al_draw_filled_rectangle(0, 0, g_res_x, g_res_y, overlay_color);
+	al_draw_filled_rectangle(0, 0, resolution.width, resolution.height, nativecolor(s_color_mask));
 	script_run(s_render_script, false);
 }
 
@@ -1864,7 +1867,7 @@ change_map(const char* filename, bool preserve_persons)
 	// populate persons
 	for (i = 0; i < s_map->num_persons; ++i) {
 		person_info = &s_map->persons[i];
-		path = game_canonicalize(g_game_fs, lstr_cstr(person_info->spriteset), "spritesets", true);
+		path = game_canonicalize(g_game, lstr_cstr(person_info->spriteset), "spritesets", true);
 		spriteset = spriteset_load(path_cstr(path));
 		path_free(path);
 		if (spriteset == NULL)
@@ -1902,7 +1905,7 @@ change_map(const char* filename, bool preserve_persons)
 		sound_unref(s_map_bgm_stream);
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
-		path = game_canonicalize(g_game_fs, lstr_cstr(s_map->bgm_file), "sounds", true);
+		path = game_canonicalize(g_game, lstr_cstr(s_map->bgm_file), "sounds", true);
 		if (s_map_bgm_stream = sound_new(path_cstr(path))) {
 			sound_set_repeat(s_map_bgm_stream, true);
 			sound_play(s_map_bgm_stream, s_bgm_mixer);
@@ -2241,7 +2244,7 @@ load_map(const char* filename)
 
 	memset(&rmp, 0, sizeof(struct rmp_header));
 
-	if (!(file = file_open(g_game_fs, filename, "rb")))
+	if (!(file = file_open(g_game, filename, "rb")))
 		goto on_error;
 	map = calloc(1, sizeof(struct map));
 	if (file_read(&rmp, sizeof(struct rmp_header), 1, file) != 1)
@@ -2456,19 +2459,26 @@ on_error:
 void
 map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* inout_y)
 {
-	rect_t bounds;
-	int    center_x, center_y;
-	int    layer_w, layer_h;
-	float  plx_offset_x = 0.0, plx_offset_y = 0.0;
-	int    tile_w, tile_h;
-	int    x_offset, y_offset;
+	rect_t  bounds;
+	int     center_x;
+	int     center_y;
+	int     layer_h;
+	int     layer_w;
+	float   plx_offset_x = 0.0;
+	int     plx_offset_y = 0.0;
+	size2_t resolution;
+	int     tile_w;
+	int     tile_h;
+	int     x_offset;
+	int     y_offset;
 
 	// get layer and screen metrics
+	resolution = screen_size(g_screen);
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	layer_w = s_map->layers[layer].width * tile_w;
 	layer_h = s_map->layers[layer].height * tile_h;
-	center_x = g_res_x / 2;
-	center_y = g_res_y / 2;
+	center_x = resolution.width / 2;
+	center_y = resolution.height / 2;
 
 	// initial camera correction
 	if (!s_map->is_repeating) {
@@ -2486,11 +2496,15 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 	y_offset = camera_y - center_y - plx_offset_y;
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax) {
 		// if the map is smaller than the screen, windowbox it
-		if (layer_w < g_res_x) x_offset = -(g_res_x - layer_w) / 2;
-		if (layer_h < g_res_y) y_offset = -(g_res_y - layer_h) / 2;
+		if (layer_w < resolution.width)
+			x_offset = -(resolution.width - layer_w) / 2;
+		if (layer_h < resolution.height)
+			y_offset = -(resolution.height - layer_h) / 2;
 	}
-	if (inout_x) *inout_x += x_offset;
-	if (inout_y) *inout_y += y_offset;
+	if (inout_x != NULL)
+		*inout_x += x_offset;
+	if (inout_y != NULL)
+		*inout_y += y_offset;
 
 	// normalize coordinates. this simplifies rendering calculations.
 	if (s_map->is_repeating || s_map->layers[layer].is_parallax) {
@@ -2502,18 +2516,24 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 static void
 map_screen_to_map(int camera_x, int camera_y, int* inout_x, int* inout_y)
 {
-	rect_t bounds;
-	int    center_x, center_y;
-	int    map_w, map_h;
-	int    tile_w, tile_h;
-	int    x_offset, y_offset;
+	rect_t  bounds;
+	int     center_x;
+	int     center_y;
+	int     map_h;
+	int     map_w;
+	size2_t resolution;
+	int     tile_h;
+	int     tile_w;
+	int     x_offset;
+	int     y_offset;
 
 	// get layer and screen metrics
+	resolution = screen_size(g_screen);
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	map_w = s_map->width * tile_w;
 	map_h = s_map->height * tile_h;
-	center_x = g_res_x / 2;
-	center_y = g_res_y / 2;
+	center_x = resolution.width / 2;
+	center_y = resolution.height / 2;
 
 	// initial camera correction
 	if (!s_map->is_repeating) {
@@ -2527,11 +2547,15 @@ map_screen_to_map(int camera_x, int camera_y, int* inout_x, int* inout_y)
 	y_offset = camera_y - center_y;
 	if (!s_map->is_repeating) {
 		// if the map is smaller than the screen, windowbox it
-		if (map_w < g_res_x) x_offset = -(g_res_x - map_w) / 2;
-		if (map_h < g_res_y) y_offset = -(g_res_y - map_h) / 2;
+		if (map_w < resolution.width)
+			x_offset = -(resolution.width - map_w) / 2;
+		if (map_h < resolution.height)
+			y_offset = -(resolution.height - map_h) / 2;
 	}
-	if (inout_x) *inout_x += x_offset;
-	if (inout_y) *inout_y += y_offset;
+	if (inout_x != NULL)
+		*inout_x += x_offset;
+	if (inout_y != NULL)
+		*inout_y += y_offset;
 
 	// normalize coordinates
 	if (s_map->is_repeating) {

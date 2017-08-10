@@ -37,13 +37,11 @@ static void show_error_screen   (const char* message);
 
 duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
-game_t*              g_game_fs = NULL;
+game_t*              g_game = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;
 screen_t*            g_screen = NULL;
 font_t*              g_sys_font = NULL;
-int                  g_res_x;
-int                  g_res_y;
 
 static jmp_buf s_jmp_exit;
 static jmp_buf s_jmp_restart;
@@ -120,7 +118,7 @@ main(int argc, char* argv[])
 	if (setjmp(s_jmp_exit)) {
 		// user closed window, script called Exit(), etc.
 		if (g_screen != NULL)
-			use_fullscreen = screen_fullscreen(g_screen);
+			use_fullscreen = screen_get_fullscreen(g_screen);
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
 			initialize_engine();
@@ -133,7 +131,7 @@ main(int argc, char* argv[])
 	}
 	if (setjmp(s_jmp_restart)) {
 		// script called RestartGame() or ExecuteGame()
-		use_fullscreen = screen_fullscreen(g_screen);
+		use_fullscreen = screen_get_fullscreen(g_screen);
 		shutdown_engine();
 		console_log(1, "\nrestarting to launch new game");
 		console_log(1, "    path: %s", path_cstr(g_game_path));
@@ -149,7 +147,7 @@ main(int argc, char* argv[])
 		find_startup_game(&g_game_path);
 	if (g_game_path != NULL)
 		// user provided a path or startup game was found, attempt to load it
-		g_game_fs = game_open(path_cstr(g_game_path));
+		g_game = game_open(path_cstr(g_game_path));
 	else {
 		// no game path provided and no startup game, let user find one
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", ENGINE_NAME);
@@ -161,7 +159,7 @@ main(int argc, char* argv[])
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
 			path_free(g_game_path);
 			g_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
-			g_game_fs = game_open(path_cstr(g_game_path));
+			g_game = game_open(path_cstr(g_game_path));
 			al_destroy_native_file_dialog(file_dlg);
 		}
 		else {
@@ -174,7 +172,7 @@ main(int argc, char* argv[])
 	}
 	path_free(games_path);
 
-	if (g_game_fs == NULL) {
+	if (g_game == NULL) {
 		// if after all that, we still don't have a valid game pointer, bail out;
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
@@ -188,12 +186,10 @@ main(int argc, char* argv[])
 	}
 
 	// set up the render context ("screen") so we can draw stuff
-	resolution = game_resolution(g_game_fs);
-	g_res_x = resolution.width;
-	g_res_y = resolution.height;
+	resolution = game_resolution(g_game);
 	if (!(icon = image_load("icon.png")))
 		icon = image_load("#/icon.png");
-	g_screen = screen_new(game_name(g_game_fs), icon, g_res_x, g_res_y, use_frameskip, !use_conserve_cpu);
+	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere was unable to create a render context.",
 			"Your hardware may be too old to run miniSphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
@@ -228,7 +224,7 @@ main(int argc, char* argv[])
 	screen_show_mouse(g_screen, false);
 
 	// load the core-js polyfill (ES2015+ builtins)
-	if (game_file_exists(g_game_fs, "#/shim.js") && !script_eval("#/shim.js", false))
+	if (game_file_exists(g_game, "#/shim.js") && !script_eval("#/shim.js", false))
 		goto on_js_error;
 
 	// enable the SSj debug server, wait for a connection if requested.
@@ -243,11 +239,11 @@ main(int argc, char* argv[])
 #endif
 
 	// execute the main script
-	script_path = game_script_path(g_game_fs);
-	if (!script_eval(path_cstr(script_path), game_version(g_game_fs) >= 2))
+	script_path = game_script_path(g_game);
+	if (!script_eval(path_cstr(script_path), game_version(g_game) >= 2))
 		goto on_js_error;
 
-	if (game_version(g_game_fs) >= 2) {
+	if (game_version(g_game) >= 2) {
 		// modular mode (Sv2).  check for an exported Game class and instantiate it,
 		// then call game.start().
 		duk_get_prop_string(g_duk, -1, "default");
@@ -453,8 +449,8 @@ shutdown_engine(void)
 	if (g_events != NULL)
 		al_destroy_event_queue(g_events);
 	g_events = NULL;
-	game_unref(g_game_fs);
-	g_game_fs = NULL;
+	game_unref(g_game);
+	g_game = NULL;
 	al_uninstall_system();
 }
 
@@ -702,6 +698,7 @@ show_error_screen(const char* message)
 	ALLEGRO_KEYBOARD_STATE keyboard;
 	const char*            line_text;
 	int                    num_lines;
+	size2_t                resolution;
 	const char*            subtitle;
 	const char*            title;
 	int                    title_index;
@@ -719,32 +716,34 @@ show_error_screen(const char* message)
 		goto show_error_box;
 
 	// create wraptext from error message
-	if (!(error_info = wraptext_new(message, g_sys_font, g_res_x - 84)))
+	resolution = screen_size(g_screen);
+	if (!(error_info = wraptext_new(message, g_sys_font, resolution.width - 84)))
 		goto show_error_box;
 	num_lines = wraptext_len(error_info);
 
 	// show error in-engine, Sphere 1.x style
 	screen_unskip_frame(g_screen);
-	image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, g_res_x, g_res_y));
+	image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, resolution.width, resolution.height));
 	is_finished = false;
 	frames_till_close = 30;
 	while (!is_finished) {
-		al_draw_filled_rounded_rectangle(32, 48, g_res_x - 32, g_res_y - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
-		font_draw_text(g_sys_font, color_new(0, 0, 0, 255), g_res_x / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
-		font_draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, 10, TEXT_ALIGN_CENTER, title);
-		font_draw_text(g_sys_font, color_new(0, 0, 0, 255), g_res_x / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
-		font_draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, 22, TEXT_ALIGN_CENTER, subtitle);
+		al_draw_filled_rounded_rectangle(32, 48, resolution.width - 32, resolution.height - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
+		font_draw_text(g_sys_font, color_new(0, 0, 0, 255), resolution.width / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
+		font_draw_text(g_sys_font, color_new(255, 255, 255, 255), resolution.width / 2, 10, TEXT_ALIGN_CENTER, title);
+		font_draw_text(g_sys_font, color_new(0, 0, 0, 255), resolution.width / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
+		font_draw_text(g_sys_font, color_new(255, 255, 255, 255), resolution.width / 2, 22, TEXT_ALIGN_CENTER, subtitle);
 		for (i = 0; i < num_lines; ++i) {
 			line_text = wraptext_line(error_info, i);
 			font_draw_text(g_sys_font, color_new(0, 0, 0, 255),
-				g_res_x / 2 + 1, 59 + i * font_height(g_sys_font),
+				resolution.width / 2 + 1, 59 + i * font_height(g_sys_font),
 				TEXT_ALIGN_CENTER, line_text);
 			font_draw_text(g_sys_font, color_new(192, 192, 192, 255),
-				g_res_x / 2, 58 + i * font_height(g_sys_font),
+				resolution.width / 2, 58 + i * font_height(g_sys_font),
 				TEXT_ALIGN_CENTER, line_text);
 		}
 		if (frames_till_close <= 0) {
-			font_draw_text(g_sys_font, color_new(255, 255, 255, 255), g_res_x / 2, g_res_y - 10 - font_height(g_sys_font),
+			font_draw_text(g_sys_font, color_new(255, 255, 255, 255),
+				resolution.width / 2, resolution.height - 10 - font_height(g_sys_font),
 				TEXT_ALIGN_CENTER,
 				is_copied ? "[Space]/[Esc] to close" : "[Ctrl+C] to copy, [Space]/[Esc] to close");
 		}

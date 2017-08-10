@@ -111,7 +111,7 @@ image_load(const char* filename)
 	console_log(2, "loading image #%u as `%s`", s_next_image_id, filename);
 
 	image = calloc(1, sizeof(image_t));
-	if (!(slurp = game_read_file(g_game_fs, filename, &file_size)))
+	if (!(slurp = game_read_file(g_game, filename, &file_size)))
 		goto on_error;
 	al_file = al_open_memfile(slurp, file_size, "rb");
 
@@ -666,7 +666,7 @@ image_save(image_t* image, const char* filename)
 		is_eof = al_feof(memfile);
 		al_fclose(memfile);
 	} while (is_eof);
-	result = game_write_file(g_game_fs, filename, buffer, file_size);
+	result = game_write_file(g_game, filename, buffer, file_size);
 	free(buffer);
 	return result;
 }

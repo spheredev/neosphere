@@ -454,9 +454,9 @@ shader_new(const char* vert_filename, const char* frag_filename)
 
 	console_log(2, "compiling new shader program #%u", s_next_shader_id);
 
-	if (!(vert_source = game_read_file(g_game_fs, vert_filename, NULL)))
+	if (!(vert_source = game_read_file(g_game, vert_filename, NULL)))
 		goto on_error;
-	if (!(frag_source = game_read_file(g_game_fs, frag_filename, NULL)))
+	if (!(frag_source = game_read_file(g_game, frag_filename, NULL)))
 		goto on_error;
 	if (!(shader->program = al_create_shader(ALLEGRO_SHADER_GLSL)))
 		goto on_error;

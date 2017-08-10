@@ -31,6 +31,7 @@
 #include "vector.h"
 
 #include "version.h"
+
 #include "geometry.h"
 #include "console.h"
 #include "fs.h"
@@ -62,13 +63,11 @@
 // I've been too lazy to try to refactor them away.
 extern duk_context*         g_duk;
 extern ALLEGRO_EVENT_QUEUE* g_events;
-extern game_t*              g_game_fs;
+extern game_t*              g_game;
 extern path_t*              g_game_path;
 extern path_t*              g_last_game_path;
 extern screen_t*            g_screen;
 extern font_t*              g_sys_font;
-extern int                  g_res_x;
-extern int                  g_res_y;
 
 no_return sphere_abort   (const char* message);
 no_return sphere_exit    (bool shutting_down);
