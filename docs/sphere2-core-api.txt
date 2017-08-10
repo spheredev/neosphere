@@ -362,6 +362,71 @@ Color#fade(alpha);
         var translucentBlue = Color.Blue.fade(0.5);
 
 
+`DirectoryStream` Object
+------------------------
+
+The `DirectoryStream` object allows you to read the contents of a directory.
+This works a lot like reading data from a `FileStream` (see below) in that you
+read directory entries one at a time.  `DirectoryStream` also implements the
+JavaScript ES6 iterator protocol, so you can use it in a `from()` query.
+
+new DirectoryStream(dir_name);
+
+    Constructs a new DirectoryStream which reads entries from `dir_name`.  If
+    the directory named by `dir_name` doesn't exist, throws an error.
+
+Directory#fileCount [read-only]
+
+    Gets the number of entries (both files and directories) in the directory
+    listing.
+
+Directory#fileName [read-only]
+
+    Gets the full SphereFS path of the directory whose entries are being
+	enumerated.
+	
+	Note: Under SphereFS canonicalization rules, the path of a directory always
+	      ends in a slash (`/`).
+
+DirectoryStream#position [read/write]
+
+    Gets or sets the position within the stream.  This is an index into the
+    directory specifying which entry will be read next.
+
+DirectoryStream#next();
+
+    Reads the next entry from the directory and advances the stream position.
+    This returns an object.  If there are no entries remaining, the object's
+    `done` property is set to `true`; otherwise, `done` is `false` and `value`
+    is an object with the following properties:
+    
+        value.isDirectory
+		
+		    `true` if the entry is for a subdirectory, otherwise `false`.
+		
+		value.fileName
+		
+		    The file or directory name of the entry.  Directory names always
+		    end in a slash (`/`).
+		
+		value.fullPath
+		
+		    The full SphereFS path of the entry.  As with `value.fileName`,
+		    directory paths end in a slash (`/`) per SphereFS canonicalization
+		    rules.
+	
+	Note: This method is compatible with the JavaScript ES6 iterator protocol,
+	      allowing you to use the DirectoryStream as input to a `from()` query.
+	      Refer to the Sphere Runtime API documentation for more information
+	      about `from()`.
+
+DirectoryStream#rewind();
+
+    Rewinds the stream and resets the position to 0.  If the directory contents
+    have changed, rewinding the DirectoryStream will allow you to enumerate the
+    new entries without creating a new stream.
+
+
 `Dispatch` Namespace
 --------------------
 
