@@ -15,6 +15,14 @@ struct fs
 	path_t* user_path;
 };
 
+struct directory
+{
+	vector_t* entries;
+	fs_t*     fs;
+	int       position;
+	path_t*   path;
+};
+
 static char* resolve (const fs_t* fs, const char* filename);
 
 fs_t*
@@ -326,6 +334,102 @@ fs_utime(const fs_t* fs, const char* filename, struct utimbuf* in_times)
 	result = utime(resolved_name, in_times);
 	free(resolved_name);
 	return result;
+}
+
+directory_t*
+directory_open(fs_t* fs, const char* dirname)
+{
+	directory_t* directory;
+
+	if (!fs_dir_exists(fs, dirname))
+		return NULL;
+
+	directory = calloc(1, sizeof(directory_t));
+	directory->fs = fs;
+	directory->path = path_new_dir(dirname);
+	return directory;
+}
+
+void
+directory_close(directory_t* it)
+{
+	iter_t iter;
+
+	if (it->entries != NULL) {
+		iter = vector_enum(it->entries);
+		while (vector_next(&iter)) {
+			path_free(*(path_t**)iter.ptr);
+		}
+		vector_free(it->entries);
+	}
+	path_free(it->path);
+	free(it);
+}
+
+int
+directory_num_files(directory_t* it)
+{
+	if (it->entries == NULL)
+		directory_rewind(it);
+	return vector_len(it->entries);
+}
+
+const char*
+directory_pathname(const directory_t* it)
+{
+	return path_cstr(it->path);
+}
+
+int
+directory_position(const directory_t* it)
+{
+	return it->position;
+}
+
+const path_t*
+directory_next(directory_t* it)
+{
+	path_t* path;
+
+	if (it->entries == NULL)
+		directory_rewind(it);
+
+	if (it->position >= vector_len(it->entries))
+		return NULL;
+	path = *(path_t**)vector_get(it->entries, it->position++);
+	return path;
+}
+
+void
+directory_rewind(directory_t* it)
+{
+	vector_t*  path_list;
+
+	iter_t iter;
+
+	path_list = fs_list_dir(it->fs, path_cstr(it->path));
+
+	if (it->entries != NULL) {
+		iter = vector_enum(it->entries);
+		while (vector_next(&iter)) {
+			path_free(*(path_t**)iter.ptr);
+		}
+		vector_free(it->entries);
+	}
+	it->entries = path_list;
+	it->position = 0;
+}
+
+bool
+directory_seek(directory_t* it, int position)
+{
+	if (it->entries == NULL)
+		directory_rewind(it);
+
+	if (position > vector_len(it->entries))
+		return false;
+	it->position = position;
+	return true;
 }
 
 static char*

@@ -1452,7 +1452,8 @@ js_new_DirectoryStream(duk_context* ctx)
 	
 	pathname = duk_require_path(ctx, 0, NULL, false, false);
 	
-	stream = directory_open(g_game, pathname);
+	if (!(stream = directory_open(g_game, pathname)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't open directory");
 	duk_push_this(ctx);
 	duk_to_class_obj(ctx, -1, "DirectoryStream", stream);
 	return 0;

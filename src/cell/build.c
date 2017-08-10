@@ -28,48 +28,56 @@ enum file_op
 	FILE_OP_MAX,
 };
 
-static duk_ret_t js_require                 (duk_context* ctx);
-static duk_ret_t js_error                   (duk_context* ctx);
-static duk_ret_t js_files                   (duk_context* ctx);
-static duk_ret_t js_install                 (duk_context* ctx);
-static duk_ret_t js_warn                    (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Game         (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Platform     (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Version      (duk_context* ctx);
-static duk_ret_t js_FS_createDirectory      (duk_context* ctx);
-static duk_ret_t js_FS_deleteFile           (duk_context* ctx);
-static duk_ret_t js_FS_directoryExists      (duk_context* ctx);
-static duk_ret_t js_FS_fileExists           (duk_context* ctx);
-static duk_ret_t js_FS_fullPath             (duk_context* ctx);
-static duk_ret_t js_FS_readFile             (duk_context* ctx);
-static duk_ret_t js_FS_rename               (duk_context* ctx);
-static duk_ret_t js_FS_removeDirectory      (duk_context* ctx);
-static duk_ret_t js_FS_writeFile            (duk_context* ctx);
-static duk_ret_t js_new_FileStream          (duk_context* ctx);
-static duk_ret_t js_FileStream_finalize     (duk_context* ctx);
-static duk_ret_t js_FileStream_dispose      (duk_context* ctx);
-static duk_ret_t js_FileStream_get_fileSize (duk_context* ctx);
-static duk_ret_t js_FileStream_get_position (duk_context* ctx);
-static duk_ret_t js_FileStream_set_position (duk_context* ctx);
-static duk_ret_t js_FileStream_read         (duk_context* ctx);
-static duk_ret_t js_FileStream_write        (duk_context* ctx);
-static duk_ret_t js_RNG_fromSeed            (duk_context* ctx);
-static duk_ret_t js_RNG_fromState           (duk_context* ctx);
-static duk_ret_t js_new_RNG                 (duk_context* ctx);
-static duk_ret_t js_RNG_finalize            (duk_context* ctx);
-static duk_ret_t js_RNG_get_state           (duk_context* ctx);
-static duk_ret_t js_RNG_set_state           (duk_context* ctx);
-static duk_ret_t js_RNG_next                (duk_context* ctx);
-static duk_ret_t js_new_Tool                (duk_context* ctx);
-static duk_ret_t js_Tool_finalize           (duk_context* ctx);
-static duk_ret_t js_Tool_stage              (duk_context* ctx);
-static duk_ret_t js_Target_finalize         (duk_context* ctx);
-static duk_ret_t js_Target_get_fileName     (duk_context* ctx);
-static duk_ret_t js_Target_get_name         (duk_context* ctx);
+static duk_ret_t js_require                       (duk_context* ctx);
+static duk_ret_t js_error                         (duk_context* ctx);
+static duk_ret_t js_files                         (duk_context* ctx);
+static duk_ret_t js_install                       (duk_context* ctx);
+static duk_ret_t js_warn                          (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Game               (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Platform           (duk_context* ctx);
+static duk_ret_t js_Sphere_get_Version            (duk_context* ctx);
+static duk_ret_t js_new_DirectoryStream           (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_finalize      (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_get_fileCount (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_get_fileName  (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_get_position  (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_set_position  (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_next          (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_rewind        (duk_context* ctx);
+static duk_ret_t js_FS_createDirectory            (duk_context* ctx);
+static duk_ret_t js_FS_deleteFile                 (duk_context* ctx);
+static duk_ret_t js_FS_directoryExists            (duk_context* ctx);
+static duk_ret_t js_FS_fileExists                 (duk_context* ctx);
+static duk_ret_t js_FS_fullPath                   (duk_context* ctx);
+static duk_ret_t js_FS_readFile                   (duk_context* ctx);
+static duk_ret_t js_FS_rename                     (duk_context* ctx);
+static duk_ret_t js_FS_removeDirectory            (duk_context* ctx);
+static duk_ret_t js_FS_writeFile                  (duk_context* ctx);
+static duk_ret_t js_new_FileStream                (duk_context* ctx);
+static duk_ret_t js_FileStream_finalize           (duk_context* ctx);
+static duk_ret_t js_FileStream_dispose            (duk_context* ctx);
+static duk_ret_t js_FileStream_get_fileSize       (duk_context* ctx);
+static duk_ret_t js_FileStream_get_position       (duk_context* ctx);
+static duk_ret_t js_FileStream_set_position       (duk_context* ctx);
+static duk_ret_t js_FileStream_read               (duk_context* ctx);
+static duk_ret_t js_FileStream_write              (duk_context* ctx);
+static duk_ret_t js_RNG_fromSeed                  (duk_context* ctx);
+static duk_ret_t js_RNG_fromState                 (duk_context* ctx);
+static duk_ret_t js_new_RNG                       (duk_context* ctx);
+static duk_ret_t js_RNG_finalize                  (duk_context* ctx);
+static duk_ret_t js_RNG_get_state                 (duk_context* ctx);
+static duk_ret_t js_RNG_set_state                 (duk_context* ctx);
+static duk_ret_t js_RNG_next                      (duk_context* ctx);
+static duk_ret_t js_new_Tool                      (duk_context* ctx);
+static duk_ret_t js_Tool_finalize                 (duk_context* ctx);
+static duk_ret_t js_Tool_stage                    (duk_context* ctx);
+static duk_ret_t js_Target_finalize               (duk_context* ctx);
+static duk_ret_t js_Target_get_fileName           (duk_context* ctx);
+static duk_ret_t js_Target_get_name               (duk_context* ctx);
 
 static void       clean_old_artifacts  (build_t* build, bool keep_targets);
-static duk_bool_t eval_cjs_module      (duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs);
-static path_t*    find_cjs_module      (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
+static duk_bool_t eval_cjs_module            (duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs);
+static path_t*    find_cjs_module            (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static duk_ret_t  install_target       (duk_context* ctx);
 static path_t*    load_package_json    (duk_context* ctx, const char* filename);
 static void       make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
@@ -131,6 +139,12 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_static_prop(ctx, "Sphere", "Game", js_Sphere_get_Game, NULL);
 	api_define_static_prop(ctx, "Sphere", "Platform", js_Sphere_get_Platform, NULL);
 	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
+	api_define_class(ctx, "DirectoryStream", js_new_DirectoryStream, js_DirectoryStream_finalize);
+	api_define_property(ctx, "DirectoryStream", "fileCount", js_DirectoryStream_get_fileCount, NULL);
+	api_define_property(ctx, "DirectoryStream", "fileName", js_DirectoryStream_get_fileName, NULL);
+	api_define_property(ctx, "DirectoryStream", "position", js_DirectoryStream_get_position, js_DirectoryStream_set_position);
+	api_define_method(ctx, "DirectoryStream", "next", js_DirectoryStream_next);
+	api_define_method(ctx, "DirectoryStream", "rewind", js_DirectoryStream_rewind);
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(ctx, "FS", "directoryExists", js_FS_directoryExists);
@@ -1079,6 +1093,129 @@ js_Sphere_get_Version(duk_context* ctx)
 {
 	duk_push_int(ctx, 2);
 	return 1;
+}
+
+static duk_ret_t
+js_new_DirectoryStream(duk_context* ctx)
+{
+	build_t*     build;
+	const char*  pathname;
+	directory_t* stream;
+
+	if (!duk_is_constructor_call(ctx))
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+
+	build = duk_get_heap_udata(ctx);
+	pathname = duk_require_path(ctx, 0, NULL);
+
+	if (!(stream = directory_open(build->fs, pathname)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't open directory");
+	duk_push_this(ctx);
+	duk_to_class_obj(ctx, -1, "DirectoryStream", stream);
+	return 0;
+}
+
+static duk_ret_t
+js_DirectoryStream_finalize(duk_context* ctx)
+{
+	directory_t* stream;
+
+	stream = duk_require_class_obj(ctx, 0, "DirectoryStream");
+	directory_close(stream);
+	return 0;
+}
+
+static duk_ret_t
+js_DirectoryStream_get_fileCount(duk_context* ctx)
+{
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	duk_push_int(ctx, directory_num_files(stream));
+	return 1;
+}
+
+static duk_ret_t
+js_DirectoryStream_get_fileName(duk_context* ctx)
+{
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	duk_push_string(ctx, directory_pathname(stream));
+	return 1;
+}
+
+static duk_ret_t
+js_DirectoryStream_get_position(duk_context* ctx)
+{
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	duk_push_int(ctx, directory_position(stream));
+	return 1;
+}
+
+static duk_ret_t
+js_DirectoryStream_set_position(duk_context* ctx)
+{
+	int          position;
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	position = duk_require_int(ctx, 0);
+
+	if (!directory_seek(stream, position))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't set stream position");
+	return 0;
+}
+
+static duk_ret_t
+js_DirectoryStream_next(duk_context* ctx)
+{
+	const path_t* entry_path;
+	directory_t*  stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	entry_path = directory_next(stream);
+	duk_push_object(ctx);
+	if (entry_path != NULL) {
+		duk_push_boolean(ctx, false);
+		duk_put_prop_string(ctx, -2, "done");
+		duk_push_object(ctx);
+		duk_push_string(ctx, path_filename(entry_path));
+		duk_put_prop_string(ctx, -2, "fileName");
+		duk_push_string(ctx, path_cstr(entry_path));
+		duk_put_prop_string(ctx, -2, "fullPath");
+		duk_push_boolean(ctx, !path_is_file(entry_path));
+		duk_put_prop_string(ctx, -2, "isDirectory");
+		duk_put_prop_string(ctx, -2, "value");
+	}
+	else {
+		duk_push_boolean(ctx, true);
+		duk_put_prop_string(ctx, -2, "done");
+	}
+	return 1;
+}
+
+static duk_ret_t
+js_DirectoryStream_rewind(duk_context* ctx)
+{
+	directory_t* stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+
+	directory_rewind(stream);
+	return 0;
 }
 
 static duk_ret_t

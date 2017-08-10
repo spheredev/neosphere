@@ -5,7 +5,7 @@ vX.X.X - TBD
 ------------
 
 * Adds a new `DirectoryStream` built-in class which allows you to enumerate the
-  contents of a directory.
+  contents of a directory.  Works in both miniSphere and Cell!
 * Adds a new SphereFS prefix, `$/`, which resolves to the directory containing
   the startup script for miniSphere, or the root of the source tree for Cell.
 * Adds `FS.directoryExists()` for checking whether a directory exists.

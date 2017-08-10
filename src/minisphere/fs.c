@@ -538,10 +538,12 @@ directory_open(game_t* game, const char* dirname)
 {
 	directory_t* directory;
 
+	if (!game_dir_exists(game, dirname))
+		return NULL;
+
 	directory = calloc(1, sizeof(directory_t));
 	directory->game = game_ref(game);
 	directory->path = path_new_dir(dirname);
-
 	return directory;
 }
 

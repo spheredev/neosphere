@@ -26,7 +26,7 @@ function from(target/*, ...*/)
 	target = Object(target);
 	if (typeof target.length === 'number')
 		return fromArray(target);
-	else if (typeof target[Symbol.iterator] === 'function')
+	else if (typeof target[Symbol.iterator] === 'function' || typeof target.next === 'function')
 		return fromIterable(target);
 	else
 		return fromObject(target);
@@ -53,7 +53,7 @@ from.iterable = fromIterable;
 function fromIterable(target)
 {
 	target = Object(target);
-	if (typeof target[Symbol.iterator] !== 'function')
+	if (typeof target[Symbol.iterator] !== 'function' && typeof target.next !== 'function')
 		throw new TypeError("object is not iterable");
 	var itemSource = new IterableSource(target);
 	return new FromQuery(itemSource);
@@ -179,7 +179,10 @@ function IterableSource(target)
 	this.init =
 	function init()
 	{
-		m_iter = target[Symbol.iterator]();
+		if (typeof target[Symbol.iterator] === 'function')
+			m_iter = target[Symbol.iterator]();
+		else
+			m_iter = target;
 	};
 
 	this.next =
