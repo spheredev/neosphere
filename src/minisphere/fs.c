@@ -645,7 +645,7 @@ file_seek(file_t* file, long long offset, whence_t whence)
 {
 	switch (file->fs_type) {
 	case FS_LOCAL:
-		return al_fseek(file->handle, offset, whence) == 0;
+		return al_fseek(file->handle, offset, whence);
 	case FS_SPK:
 		return spk_fseek(file->spk_file, offset, whence);
 	}
