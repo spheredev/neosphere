@@ -1535,7 +1535,10 @@ js_DirectoryStream_next(duk_context* ctx)
 		duk_push_boolean(ctx, false);
 		duk_put_prop_string(ctx, -2, "done");
 		duk_push_object(ctx);
-		duk_push_string(ctx, path_filename(entry_path));
+		if (path_is_file(entry_path))
+			duk_push_string(ctx, path_filename(entry_path));
+		else
+			duk_push_sprintf(ctx, "%s/", path_hop(entry_path, path_num_hops(entry_path) - 1));
 		duk_put_prop_string(ctx, -2, "fileName");
 		duk_push_string(ctx, path_cstr(entry_path));
 		duk_put_prop_string(ctx, -2, "fullPath");
