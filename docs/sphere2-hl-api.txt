@@ -611,8 +611,12 @@ is often very useful for debugging purposes.
 
 new Logger(filename);
 
-    Opens the given file for logging.  If the file cannot be opened for
+    Opens the specified file for logging.  If the file cannot be opened for
     writing, an error is thrown.
+
+    Note: `fileName` is relative to `~/logFiles` unless it includes a SphereFS
+		  prefix.  If it doesn't include a prefix, ".log" is appended to the
+		  filename automatically.
 
 Logger#beginGroup(text);
 
