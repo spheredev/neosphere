@@ -8,10 +8,16 @@ vX.X.X - August 12, 2017
   contents of a directory.  Works in both miniSphere and Cell!
 * Adds a new SphereFS prefix, `$/`, which resolves to the directory containing
   the startup script for miniSphere, or the root of the source tree for Cell.
+* Adds a new `Image` class to the Sphere Runtime which allows working directly
+  with images, like in Sphere v1 code.
 * Adds `FS.directoryExists()` for checking whether a directory exists.
 * Adds support for enumerating live iterators in `from.iterable()`.
 * Improves windowed mode scaling behavior when miniSphere is run on a HiDPI/4K
   display.
+* Improves the Music and Logger modules by giving them default base directories
+  (like in Sphere 1.x) and making the file extension optional.
+* Improves Sphere 1.x compatibility by avoiding clearing the backbuffer between
+  frames during a `MapEngine()` call.
 * Improves the maintainability of the codebase with extensive refactoring.  Any
   bugs, let me know!
 * Renames the `analogue.js` system script to `persist.js` to improve
