@@ -1,6 +1,37 @@
 Release Notes
 =============
 
+miniSphere X.X
+--------------
+
+* The Core API includes a new class, `DirectoryStream`, which lets you game
+  enumerate the contents of a directory, seek within the list, etc., much like
+  you would read data from a file using `FileStream`.  DirectoryStream objects
+  are also compatible with the ES6 iterator protocol so you can use them in
+  `from()` query.  Refer to the API documentation for details.
+
+* SphereFS now supports a new prefix, `$/`, which maps to the directory
+  containing the startup script.  This should make importing local modules
+  easier.
+
+* `from()` can now enumerate live ES6 iterator objects (i.e. with a compatible
+  `.next()` method), not just those with a `[Symbol.iterator]` method.
+
+* The `Music` and `Logger` modules now have designated base directories and
+  providing file extensions is optional.  See the API documentation for more
+  details.
+
+* A new `Image` class in the Sphere Runtime makes it easier to work directly
+  with raster images, like you could in Sphere 1.x.  For now only basic
+  blitting (like `Prim.blit()`) is supported; more features will be added going
+  forward.
+
+* The backbuffer is no longer cleared between frames during map engine
+  processing, to improve compatibility with many Sphere 1.x games that relied
+  on this bug.  There may be unintended fallout (graphical glitches) from this,
+  so keep an eye out.
+
+
 miniSphere 4.7
 --------------
 
