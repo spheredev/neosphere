@@ -561,8 +561,11 @@ Shape, Model, and Transform objects.
 
 new Image(fileName);
 
-    Constructs an Image object from the specified image file.  `fileName` is
-    relative to `@/images` unless it includes a SphereFS prefix.
+    Constructs an Image object from the specified image file.
+
+    Note: `fileName` is relative to `@/images` unless it includes a SphereFS
+          prefix.  The file extension is optional; if no extension is included,
+          Sphere will find an appropriate file automatically.
 
 Image#blitTo(surface, x, y[, tint_color);
 
@@ -656,36 +659,46 @@ Music.adjustVolume(newVolume, time);
     between 0 and 1, where 0 is silent and 1 is full volume.  `time` is the
     amount of game time the adjustment should take, in frames.
 
-Music.override(path[, fadeTime]);
+Music.override(fileName[, fadeTime]);
 
-    Overrides the BGM stack by playing the song specified by `path` at all
-    times.  This may be useful in RPGs, for example to override the battle music
-    during an important storyline event.
+    Overrides the BGM stack by playing the track specified by `fileName` at all
+    times.  One example use is in RPGs, e.g. to override the battle music
+    during an important storyline event.  `fadeTime` is the amount of crossfade
+    to apply, in frames.
 
-    `fadeTime` is the amount of crossfade to apply, in frames.
+    Overriding the BGM doesn't prevent music stack tracking.  Once the override
+    is cancelled (by calling `reset()`), the song on top of the stack at that
+    time will resume playback.
 
-    Note that overriding the BGM doesn't prevent music stack tracking.  So once
-    the override is lifted (by calling reset()), the song on top of the stack at
-    that time will play.
+    Note: `fileName` is relative to `@/music` unless it includes a SphereFS
+          prefix.  The file extension is optional; if no extension is included,
+          Sphere will find an appropriate file automatically.
 
-Music.play(path[, fadeTime]);
+Music.play(fileName[, fadeTime]);
 
-    Replaces the song on top of the music stack with the track named by `path`.
-    This is not the same as an override; if play() or push() is called
-    afterwards, the BGM will change.
+    Replaces the song on top of the music stack with the track named by
+    `fileName`.  This is not an override; if `play()` or `push()` is called
+    afterwards, the BGM will change.  `fadeTime` is the amount of crossfade to
+    apply, in frames.
 
-    `fadeTime` is the amount of crossfade to apply, in frames.
+    Note: `fileName` is relative to `@/music` unless it includes a SphereFS
+          prefix.  The file extension is optional; if no extension is included,
+          Sphere will find an appropriate file to play automatically.
 
 Music.pop([fadeTime]);
 
     Pops the topmost song off the music stack.  This will resume playing
     whatever song was playing when the corresponding push() was done.
 
-Music.push(path[, fadeTime]);
+Music.push(fileName[, fadeTime]);
 
     Pushes a new song to the music stack.  If pop() is called later, the
     previous BGM will resume from where it left off.  `fadeTime` is the amount
     of crossfade to apply, in frames.
+
+    Note: `fileName` is relative to `@/music` unless it includes a SphereFS
+          prefix.  The file extension is optional; if no extension is included,
+          Sphere will find an appropriate file to play automatically.
 
 Music.reset([fadeTime]);
 

@@ -224,7 +224,7 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 }
 
 void
-screen_flip(screen_t* it, int framerate)
+screen_flip(screen_t* it, int framerate, bool need_clear)
 {
 	char*             filename;
 	char              fps_text[20];
@@ -342,7 +342,7 @@ screen_flip(screen_t* it, int framerate)
 		it->next_frame_time = al_get_time();
 	}
 	++it->num_frames;
-	if (!it->skip_frame) {
+	if (!it->skip_frame && need_clear) {
 		// disable clipping so we can clear the whole backbuffer.
 		scissor = image_get_scissor(it->backbuffer);
 		image_set_scissor(it->backbuffer, rect(0, 0, it->x_size, it->y_size));

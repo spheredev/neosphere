@@ -2387,7 +2387,7 @@ js_FilledEllipse(duk_context* ctx)
 static duk_ret_t
 js_FlipScreen(duk_context* ctx)
 {
-	screen_flip(g_screen, s_frame_rate);
+	screen_flip(g_screen, s_frame_rate, true);
 	return 0;
 }
 

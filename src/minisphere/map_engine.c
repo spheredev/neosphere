@@ -616,7 +616,7 @@ map_engine_start(const char* filename, int framerate)
 		update_map_engine(true);
 		process_map_input();
 		map_engine_draw_map();
-		screen_flip(g_screen, s_framerate);
+		screen_flip(g_screen, s_framerate, false);
 	}
 	reset_persons(false);
 	s_is_map_running = false;

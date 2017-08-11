@@ -936,7 +936,7 @@ static duk_ret_t
 duk_safe_event_loop(duk_context* ctx, void* udata)
 {
 	while (async_busy()) {
-		screen_flip(g_screen, s_framerate);
+		screen_flip(g_screen, s_framerate, true);
 		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
 	}
 	return 0;
@@ -1142,7 +1142,7 @@ js_screen_set_fullScreen(duk_context* ctx)
 static duk_ret_t
 js_screen_flip(duk_context* ctx)
 {
-	screen_flip(g_screen, s_framerate);
+	screen_flip(g_screen, s_framerate, true);
 	image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
 	return 0;
 }

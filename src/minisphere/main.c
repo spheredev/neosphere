@@ -747,7 +747,7 @@ show_error_screen(const char* message)
 				TEXT_ALIGN_CENTER,
 				is_copied ? "[Space]/[Esc] to close" : "[Ctrl+C] to copy, [Space]/[Esc] to close");
 		}
-		screen_flip(g_screen, 30);
+		screen_flip(g_screen, 30, true);
 		if (frames_till_close <= 0) {
 			al_get_keyboard_state(&keyboard);
 			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
