@@ -37,10 +37,14 @@ exports.default = exports;
 
 function Logger(fileName)
 {
+	var fullPath = FS.fullPath(fileName, '~/logFiles');
+	if (fullPath.substr(0, 2) != fileName.substr(0, 2))  // SphereFS prefix?
+		fullPath += '.log';
+
 	this.utf8 = new TextEncoder();
-	this.stream = new FileStream(fileName, FileOp.Update);
+	this.stream = new FileStream(fullPath, FileOp.Update);
 	this.groups = [];
-	
+
 	var timestamp = new Date().toISOString();
 	var logLine = "LOG FILE OPENED: " + timestamp;
 	this.stream.write(this.utf8.encode("\n" + logLine + "\n"));
@@ -53,13 +57,13 @@ Logger.prototype.beginGroup = function beginGroup(text)
 	this.write("BEGIN: " + text);
 	this.groups.push(text);
 };
-	
+
 Logger.prototype.endGroup = function endGroup()
 {
 	var groupName = this.groups.pop();
 	this.write("END: " + groupName);
 };
-	
+
 Logger.prototype.write = function write(text)
 {
 	text = text.toString();

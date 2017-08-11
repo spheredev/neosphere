@@ -57,9 +57,8 @@ var commands = [];
 var entry = "";
 var cursorColor = Color.Gold;
 var fps = screen.frameRate;
-var logger = 'logPath' in Sphere.Game
-    ? new Logger(Sphere.Game.logPath)
-    : null;
+var logger = 'saveID' in Sphere.Game ? new Logger('consoleOutput')
+	: null;
 new Scene()
 	.doWhile(function() { return true; })
 		.tween(cursorColor, 0.25 * fps, 'easeInSine', { alpha: 255 })
