@@ -78,16 +78,16 @@ function adjustVolume(newVolume, frames)
 };
 
 exports.override = override;
-function override(path, frames)
+function override(fileName, frames)
 {
-	_crossfade(path, frames, true);
+	_crossfade(fileName, frames, true);
 	haveOverride = true;
 };
 
 exports.play = play;
-function play(path, fadeTime)
+function play(fileName, fadeTime)
 {
-	topmostSound = _crossfade(path, fadeTime, false);
+	topmostSound = _crossfade(fileName, fadeTime, false);
 };
 
 exports.pop = pop;
@@ -113,10 +113,10 @@ function pop(fadeTime)
 }
 
 exports.push = push;
-function push(path, fadeTime)
+function push(fileName, fadeTime)
 {
 	var oldSound = topmostSound;
-	play(path, fadeTime);
+	play(fileName, fadeTime);
 	oldSounds.push(oldSound);
 };
 
@@ -143,7 +143,7 @@ function reset(fadeTime)
 	}
 };
 
-function _crossfade(path, frames, forceChange)
+function _crossfade(fileName, frames, forceChange)
 {
 	frames = frames !== undefined ? Math.trunc(frames) : 0;
 
@@ -154,8 +154,14 @@ function _crossfade(path, frames, forceChange)
 			.tween(currentSound.stream, frames, 'linear', { volume: 0.0 })
 			.run();
 	}
-	if (path !== null) {
-		var stream = new Sound(path);
+	if (fileName !== null) {
+		var fullPath = FS.fullPath(fileName, '@/music');
+		fullPath = from([ '', 'ogg', 'mp3', 'it', 'mod', 's3m', 'xm', 'flac' ])
+			.select(function(it) { return fullPath + '.' + it; })
+			.first(function(it) { return FS.fileExists(it); })
+		if (fullPath === undefined)
+			throw new Error("couldn't find music '" + fileName + "'");
+		var stream = new Sound(fullPath);
 		stream.repeat = true;
 		stream.volume = 0.0;
 		stream.play(mixer);

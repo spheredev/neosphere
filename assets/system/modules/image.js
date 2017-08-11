@@ -39,11 +39,13 @@ const from = require('from');
 
 function Image(fileName)
 {
-	fileName = FS.fullPath(fileName, '@/images');
-	fileName = from([ '', 'png', 'jpg', 'bmp' ])
-		.select(function(it) { return fileName + '.' + it; })
+	var fullPath = FS.fullPath(fileName, '@/images');
+	fullPath = from([ '', 'png', 'jpg', 'bmp' ])
+		.select(function(it) { return fullPath + '.' + it; })
 		.first(function(it) { return FS.fileExists(it); })
-	this.texture = new Texture(fileName);
+	if (fullPath === undefined)
+		throw new Error("couldn't find image '" + fileName + "'");
+	this.texture = new Texture(fullPath);
 	var shape = new Shape(ShapeType.TriStrip, this.texture,
 		new VertexList([
 			{ x: 0, y: 0, u: 0, v: 1 },
