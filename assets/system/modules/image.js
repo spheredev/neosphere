@@ -1,5 +1,5 @@
 /**
- *  miniSphere JavaScript game engine
+ *  Sphere Runtime for Sphere games
  *  Copyright (c) 2015-2017, Fat Cerberus
  *  All rights reserved.
  *
@@ -30,19 +30,41 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-// texture and transformation parameters courtesy of Allegro
-attribute vec4 al_color;
-attribute vec4 al_pos;
-attribute vec2 al_texcoord;
-uniform mat4 al_projview_matrix;
+'use strict';
+exports = module.exports = Image;
+exports.__esModule = true;
+exports.default = exports;
 
-// input to fragment shader
-varying vec4 varying_color;
-varying vec2 varying_texcoord;
+const from = require('from');
 
-void main()
+function Image(fileName)
 {
-	gl_Position = al_projview_matrix * al_pos;
-	varying_color = al_color;
-	varying_texcoord = al_texcoord;
+	fileName = FS.fullPath(fileName, '@/images');
+	fileName = from([ '', 'png', 'jpg', 'bmp' ])
+		.select(function(it) { return fileName + '.' + it; })
+		.first(function(it) { return FS.fileExists(it); })
+	this.texture = new Texture(fileName);
+	var shape = new Shape(ShapeType.TriStrip, this.texture,
+		new VertexList([
+			{ x: 0, y: 0, u: 0, v: 1 },
+			{ x: 1, y: 0, u: 1, v: 1 },
+			{ x: 0, y: 1, u: 0, v: 0 },
+			{ x: 1, y: 1, u: 1, v: 0 },
+		]));
+	var tintShader = new Shader({
+		fragment: '#/shaders/tintedImage.frag.glsl',
+		vertex:   '#/shaders/tintedImage.vert.glsl',
+	});
+	this.model = new Model([ shape ], tintShader);
+}
+
+Image.prototype.blitTo = function blitTo(surface, x, y, tintColor)
+{
+	tintColor = tintColor || Color.White;
+
+	this.model.transform = new Transform()
+		.scale(this.texture.width, this.texture.height)
+		.translate(x, y);
+	this.model.setColorVector('tintColor', tintColor);
+	this.model.draw(surface);
 }

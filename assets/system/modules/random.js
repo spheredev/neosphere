@@ -24,14 +24,14 @@ exports.default = exports;
 
 const assert = require('assert');
 
-var rng = new RNG();
+var s_RNG = new RNG();
 
 exports.chance = chance;
 function chance(odds)
 {
 	assert.ok(typeof odds === 'number', "odds must be a number");
 
-	return odds > rng.next();
+	return odds > s_RNG.next();
 }
 
 exports.discrete = discrete;
@@ -44,7 +44,7 @@ function discrete(min, max)
 	max >>= 0;
 	var range = Math.abs(max - min) + 1;
 	min = min < max ? min : max;
-	return min + Math.floor(rng.next() * range);
+	return min + Math.floor(s_RNG.next() * range);
 }
 
 exports.normal = normal;
@@ -59,8 +59,8 @@ function normal(mean, sigma)
 	var x, u, v, w;
 	if (normal.memo === undefined) {
 		do {
-			u = 2.0 * rng.next() - 1.0;
-			v = 2.0 * rng.next() - 1.0;
+			u = 2.0 * s_RNG.next() - 1.0;
+			v = 2.0 * s_RNG.next() - 1.0;
 			w = u * u + v * v;
 		} while (w >= 1.0);
 		w = Math.sqrt(-2.0 * Math.log(w) / w);
@@ -108,6 +108,6 @@ function uniform(mean, variance)
 	assert.ok(typeof mean === 'number', "mean must be a number");
 	assert.ok(typeof variance === 'number', "variance must be a number");
 
-	var error = variance * 2.0 * (0.5 - rng.next());
+	var error = variance * 2.0 * (0.5 - s_RNG.next());
 	return mean + error;
 }

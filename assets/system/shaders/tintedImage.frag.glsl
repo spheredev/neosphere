@@ -1,5 +1,5 @@
 /**
- *  miniSphere JavaScript game engine
+ *  Sphere Runtime for Sphere games
  *  Copyright (c) 2015-2017, Fat Cerberus
  *  All rights reserved.
  *
@@ -30,19 +30,24 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-// texture and transformation parameters courtesy of Allegro
-attribute vec4 al_color;
-attribute vec4 al_pos;
-attribute vec2 al_texcoord;
-uniform mat4 al_projview_matrix;
+#ifdef GL_ES
+precision mediump float;
+#endif
 
-// input to fragment shader
+// texturing parameters courtesy of Allegro
+uniform sampler2D al_tex;
+uniform bool al_use_tex;
+
+// Sphere-specific uniforms
+uniform vec4 tintColor;
+
+// input from vertex shader
 varying vec4 varying_color;
 varying vec2 varying_texcoord;
 
 void main()
 {
-	gl_Position = al_projview_matrix * al_pos;
-	varying_color = al_color;
-	varying_texcoord = al_texcoord;
+	gl_FragColor = (al_use_tex
+		? varying_color * texture2D(al_tex, varying_texcoord)
+        : varying_color) * tintColor;
 }
