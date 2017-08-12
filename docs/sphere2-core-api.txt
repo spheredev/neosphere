@@ -107,9 +107,9 @@ from a different location, you can use one of the SphereFS prefixes:
         filename is ambiguous, for example in a require() call.  This directory
         is read-only; trying to save or modify anything here will throw a
         TypeError.
-	$/: The directory containing the startup script.  This is mostly provided
-	    as a convenience for specifying module names for `require()` and
-	    `import`.
+    $/: The directory containing the startup script.  This is mostly provided
+        as a convenience for specifying module names for `require()` and
+        `import`.
     #/: The engine's system directory.  This contains assets included with the
         engine.  As with `@/`, this is read-only to Sphere games.
     ~/: The current user's save data directory (note: requires a save ID; refer
@@ -383,10 +383,10 @@ DirectoryStream#fileCount [read-only]
 DirectoryStream#fileName [read-only]
 
     Gets the full SphereFS pathname of the directory whose entries are being
-	enumerated.
-	
-	Note: Under SphereFS canonicalization rules, the pathname of a directory
-	      always ends in a slash (`/`).
+    enumerated.
+
+    Note: Under SphereFS canonicalization rules, the pathname of a directory
+          always ends in a slash (`/`).
 
 DirectoryStream#position [read/write]
 
@@ -399,26 +399,26 @@ DirectoryStream#next();
     This returns an object.  If there are no entries remaining, the object's
     `done` property is set to `true`; otherwise, `done` is `false` and `value`
     is an object with the following properties:
-    
+
         value.isDirectory
-		
-		    `true` if the entry is for a subdirectory, otherwise `false`.
-		
-		value.fileName
-		
-		    The file or directory name of the entry.  Directory names always
-		    end in a slash (`/`).
-		
-		value.fullPath
-		
-		    The full SphereFS pathname of the entry.  As with `value.fileName`,
-		    directory paths end in a slash (`/`) per SphereFS canonicalization
-		    rules.
-	
-	Note: This method is compatible with the JavaScript ES6 iterator protocol,
-	      allowing you to use the DirectoryStream as input to a `from()` query.
-	      Refer to the Sphere Runtime API documentation for more information
-	      about `from()`.
+
+            `true` if the entry is for a subdirectory, otherwise `false`.
+
+        value.fileName
+
+            The file or directory name of the entry.  Directory names always
+            end in a slash (`/`).
+
+        value.fullPath
+
+            The full SphereFS pathname of the entry.  As with `value.fileName`,
+            directory paths end in a slash (`/`) per SphereFS canonicalization
+            rules.
+
+    Note: This method is compatible with the JavaScript ES6 iterator protocol,
+          allowing you to use the DirectoryStream as input to a `from()` query.
+          Refer to the Sphere Runtime API documentation for more information
+          about `from()`.
 
 DirectoryStream#rewind();
 
@@ -1275,7 +1275,7 @@ new Shape(type[, texture], vertexList[, indexList]);
 
     Constructs a primitive shape from a vertex list and optional index list,
     textured with a specified `Texture` image.  `type` specifies the type of
-	primitive to draw (see `ShapeType` above).
+    primitive to draw (see `ShapeType` above).
 
     `vertexList` is a `VertexList` containing vertices for the shape, while
     `indexList`, if provided, is an `IndexList` specifying which vertices from
@@ -1466,12 +1466,6 @@ SoundStream#bufferSize [read-only]
 
     Gets the total number of samples in the stream's buffer.
 
-SoundStream#buffer(data);
-
-    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
-    TypedArray or DataView containing the data to write.  While a stream is
-    playing, audio data should be fed into it continuously to prevent skipping.
-
 SoundStream#pause();
 
     Pauses playback of the stream.  Has no effect if the stream is already
@@ -1490,6 +1484,12 @@ SoundStream#stop();
     Stops playback of the stream and frees its buffer.  This should be called
     when you are done using a stream.  The stream may be reused after a stop()
     call, but you will have to feed new audio data.
+
+SoundStream#write(data);
+
+    Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
+    TypedArray or DataView containing the data to write.  While a stream is
+    playing, audio data should be fed into it continuously to prevent skipping.
 
 
 `Surface` Object

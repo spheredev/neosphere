@@ -389,10 +389,10 @@ static duk_ret_t js_Sound_stop                    (duk_context* ctx);
 static duk_ret_t js_new_SoundStream               (duk_context* ctx);
 static duk_ret_t js_SoundStream_finalize          (duk_context* ctx);
 static duk_ret_t js_SoundStream_get_bufferSize    (duk_context* ctx);
-static duk_ret_t js_SoundStream_buffer            (duk_context* ctx);
 static duk_ret_t js_SoundStream_play              (duk_context* ctx);
 static duk_ret_t js_SoundStream_pause             (duk_context* ctx);
 static duk_ret_t js_SoundStream_stop              (duk_context* ctx);
+static duk_ret_t js_SoundStream_write             (duk_context* ctx);
 static duk_ret_t js_new_Surface                   (duk_context* ctx);
 static duk_ret_t js_Surface_finalize              (duk_context* ctx);
 static duk_ret_t js_Surface_get_height            (duk_context* ctx);
@@ -468,10 +468,10 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "Sphere", "sleep", js_Sphere_sleep);
 	api_define_class(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
 	api_define_property(ctx, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
-	api_define_method(ctx, "SoundStream", "buffer", js_SoundStream_buffer);
 	api_define_method(ctx, "SoundStream", "pause", js_SoundStream_pause);
 	api_define_method(ctx, "SoundStream", "play", js_SoundStream_play);
 	api_define_method(ctx, "SoundStream", "stop", js_SoundStream_stop);
+	api_define_method(ctx, "SoundStream", "write", js_SoundStream_write);
 	api_define_class(ctx, "Color", js_new_Color, NULL);
 	api_define_function(ctx, "Color", "is", js_Color_is);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
@@ -3945,26 +3945,6 @@ js_SoundStream_get_bufferSize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SoundStream_buffer(duk_context* ctx)
-{
-	// SoundStream:buffer(data);
-	// Arguments:
-	//     data: An ArrayBuffer or TypedArray containing the audio data
-	//           to feed into the stream buffer.
-
-	const void* data;
-	duk_size_t  size;
-	stream_t*   stream;
-
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "SoundStream");
-
-	data = duk_require_buffer_data(ctx, 0, &size);
-	stream_buffer(stream, data, size);
-	return 0;
-}
-
-static duk_ret_t
 js_SoundStream_pause(duk_context* ctx)
 {
 	stream_t* stream;
@@ -4005,6 +3985,21 @@ js_SoundStream_stop(duk_context* ctx)
 	stream = duk_require_class_obj(ctx, -1, "SoundStream");
 
 	stream_stop(stream);
+	return 0;
+}
+
+static duk_ret_t
+js_SoundStream_write(duk_context* ctx)
+{
+	const void* data;
+	duk_size_t  size;
+	stream_t*   stream;
+
+	duk_push_this(ctx);
+	stream = duk_require_class_obj(ctx, -1, "SoundStream");
+
+	data = duk_require_buffer_data(ctx, 0, &size);
+	stream_buffer(stream, data, size);
 	return 0;
 }
 

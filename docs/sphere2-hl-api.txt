@@ -615,8 +615,8 @@ new Logger(filename);
     writing, an error is thrown.
 
     Note: `fileName` is relative to `~/logFiles` unless it includes a SphereFS
-		  prefix.  If it doesn't include a prefix, ".log" is appended to the
-		  filename automatically.
+          prefix.  If it doesn't include a prefix, ".log" is appended to the
+          filename automatically.
 
 Logger#beginGroup(text);
 

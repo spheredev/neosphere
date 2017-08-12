@@ -4,7 +4,7 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-No changes yet.
+* Renames `SoundStream#buffer()` to `SoundStream#write()`.
 
 
 v4.8.0 - August 12, 2017
