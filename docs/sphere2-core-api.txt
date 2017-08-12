@@ -375,18 +375,18 @@ new DirectoryStream(dir_name);
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
 
-Directory#fileCount [read-only]
+DirectoryStream#fileCount [read-only]
 
     Gets the number of entries (both files and directories) in the directory
     listing.
 
-Directory#fileName [read-only]
+DirectoryStream#fileName [read-only]
 
-    Gets the full SphereFS path of the directory whose entries are being
+    Gets the full SphereFS pathname of the directory whose entries are being
 	enumerated.
 	
-	Note: Under SphereFS canonicalization rules, the path of a directory always
-	      ends in a slash (`/`).
+	Note: Under SphereFS canonicalization rules, the pathname of a directory
+	      always ends in a slash (`/`).
 
 DirectoryStream#position [read/write]
 
@@ -411,7 +411,7 @@ DirectoryStream#next();
 		
 		value.fullPath
 		
-		    The full SphereFS path of the entry.  As with `value.fileName`,
+		    The full SphereFS pathname of the entry.  As with `value.fileName`,
 		    directory paths end in a slash (`/`) per SphereFS canonicalization
 		    rules.
 	
@@ -524,9 +524,9 @@ FS.fileExists(filename);
 FS.fullPath(fileName[, base_dir]);
 
     Resolves a filename (which may contain relative path components, or even be
-    relative itself) to its canonical SphereFS path.  `base_dir` is optional
-    and specifies a base directory for relative paths.  The file or directory
-    ultimately referred to doesn't need to exist.
+    relative itself) to its full, canonical SphereFS pathname.  `base_dir` is
+    optional and specifies a base directory for relative paths.  The file or
+    directory ultimately referred to doesn't need to exist.
 
     If `fileName` begins with a SphereFS prefix, it's resolved normally,
     without regard to `base_dir`.  Otherwise, `fileName` is considered to be
@@ -550,8 +550,8 @@ FS.removeDirectory(dir_name);
 FS.rename(orig_name, new_name);
 
     Renames the file named by `orig_name` to `new_name`, both of which are
-    assumed to be full SphereFS paths.  This can also be used to move a file
-    between directories; if so, the destination directory must already exist.
+    assumed to be full paths.  This can also be used to move a file between
+    directories; if so, the destination directory must already exist.
 
 FS.writeFile(filename, string);
 
@@ -606,7 +606,7 @@ FileStream#dispose();
 
 FileStream#fileName [read-only]
 
-    Gets the full, canonical SphereFS filename of the underlying file.
+    Gets the full SphereFS pathname of the underlying file.
 
 FileStream#fileSize [read-only]
 
@@ -651,8 +651,8 @@ new Font(filename);
 
 Font#fileName [read-only]
 
-    Gets the full, canonical SphereFS filename of the file used to construct
-    this Font object.
+    Gets the full SphereFS pathname of the file used to construct this Font
+    object.
 
 Font#height [read-only]
 
@@ -1159,8 +1159,8 @@ new Sample(filename);
 
 Sample#fileName [read-only]
 
-    Gets the full, canonical SphereFS path of the audio file used to construct
-    this sample.
+    Gets the full SphereFS pathname of the audio file used to construct this
+    Sample object.
 
 Sample#play(mixer[, options]);
 
@@ -1391,8 +1391,8 @@ new Sound(filename);
 
 Sound#fileName [read-only]
 
-    Gets the full, canonical SphereFS filename of the file used to construct
-    this Sound object.
+    Gets the full SphereFS pathname of the file used to construct this Sound
+    object.
 
 Sound#length [read-only]
 
@@ -1577,8 +1577,9 @@ new Texture(width, height, pixels);
 
 Texture#fileName [read-only]
 
-    Gets the full, canonical SphereFS filename of the file used to construct
-    this Texture object.  For synthesized textures, returns null.
+    Gets the full SphereFS pathname of the file used to construct this Texture
+    object.  For synthesized textures, e.g. those created from a surface, this
+    is `null`.
 
 Texture#width [read-only]
 Texture#height [read-only]
