@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+miniSphere X.X
+--------------
+
+No breaking changes yet.
+
+
 miniSphere 4.8
 --------------
 

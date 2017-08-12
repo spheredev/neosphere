@@ -103,6 +103,7 @@ static duk_ret_t js_ExecuteZones                     (duk_context* ctx);
 static duk_ret_t js_Exit                             (duk_context* ctx);
 static duk_ret_t js_ExitMapEngine                    (duk_context* ctx);
 static duk_ret_t js_FilledCircle                     (duk_context* ctx);
+static duk_ret_t js_FilledComplex                    (duk_context* ctx);
 static duk_ret_t js_FilledEllipse                    (duk_context* ctx);
 static duk_ret_t js_FlipScreen                       (duk_context* ctx);
 static duk_ret_t js_FollowPerson                     (duk_context* ctx);
@@ -124,12 +125,14 @@ static duk_ret_t js_GetInputPerson                   (duk_context* ctx);
 static duk_ret_t js_GetJoystickAxis                  (duk_context* ctx);
 static duk_ret_t js_GetKey                           (duk_context* ctx);
 static duk_ret_t js_GetKeyString                     (duk_context* ctx);
+static duk_ret_t js_GetLayerAngle                    (duk_context* ctx);
 static duk_ret_t js_GetLayerHeight                   (duk_context* ctx);
 static duk_ret_t js_GetLayerMask                     (duk_context* ctx);
 static duk_ret_t js_GetLayerName                     (duk_context* ctx);
 static duk_ret_t js_GetLayerWidth                    (duk_context* ctx);
 static duk_ret_t js_GetLocalAddress                  (duk_context* ctx);
 static duk_ret_t js_GetLocalName                     (duk_context* ctx);
+static duk_ret_t js_GetMapEngine                     (duk_context* ctx);
 static duk_ret_t js_GetMapEngineFrameRate            (duk_context* ctx);
 static duk_ret_t js_GetMouseWheelEvent               (duk_context* ctx);
 static duk_ret_t js_GetMouseX                        (duk_context* ctx);
@@ -203,6 +206,7 @@ static duk_ret_t js_GetZoneY                         (duk_context* ctx);
 static duk_ret_t js_GrabImage                        (duk_context* ctx);
 static duk_ret_t js_GrabSurface                      (duk_context* ctx);
 static duk_ret_t js_GradientCircle                   (duk_context* ctx);
+static duk_ret_t js_GradientComplex                  (duk_context* ctx);
 static duk_ret_t js_GradientEllipse                  (duk_context* ctx);
 static duk_ret_t js_GradientLine                     (duk_context* ctx);
 static duk_ret_t js_GradientRectangle                (duk_context* ctx);
@@ -246,11 +250,13 @@ static duk_ret_t js_OpenFile                         (duk_context* ctx);
 static duk_ret_t js_OpenLog                          (duk_context* ctx);
 static duk_ret_t js_OpenRawFile                      (duk_context* ctx);
 static duk_ret_t js_OutlinedCircle                   (duk_context* ctx);
+static duk_ret_t js_OutlinedComplex                  (duk_context* ctx);
 static duk_ret_t js_OutlinedEllipse                  (duk_context* ctx);
 static duk_ret_t js_OutlinedRectangle                (duk_context* ctx);
 static duk_ret_t js_OutlinedRoundRectangle           (duk_context* ctx);
 static duk_ret_t js_Point                            (duk_context* ctx);
 static duk_ret_t js_PointSeries                      (duk_context* ctx);
+static duk_ret_t js_Polygon                          (duk_context* ctx);
 static duk_ret_t js_Print                            (duk_context* ctx);
 static duk_ret_t js_QueuePersonCommand               (duk_context* ctx);
 static duk_ret_t js_QueuePersonScript                (duk_context* ctx);
@@ -276,10 +282,13 @@ static duk_ret_t js_SetDefaultMapScript              (duk_context* ctx);
 static duk_ret_t js_SetDefaultPersonScript           (duk_context* ctx);
 static duk_ret_t js_SetDelayScript                   (duk_context* ctx);
 static duk_ret_t js_SetFrameRate                     (duk_context* ctx);
+static duk_ret_t js_SetLayerAngle                    (duk_context* ctx);
 static duk_ret_t js_SetLayerHeight                   (duk_context* ctx);
 static duk_ret_t js_SetLayerMask                     (duk_context* ctx);
 static duk_ret_t js_SetLayerReflective               (duk_context* ctx);
 static duk_ret_t js_SetLayerRenderer                 (duk_context* ctx);
+static duk_ret_t js_SetLayerScaleFactorX             (duk_context* ctx);
+static duk_ret_t js_SetLayerScaleFactorY             (duk_context* ctx);
 static duk_ret_t js_SetLayerSize                     (duk_context* ctx);
 static duk_ret_t js_SetLayerVisible                  (duk_context* ctx);
 static duk_ret_t js_SetLayerWidth                    (duk_context* ctx);
@@ -584,6 +593,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "ExecuteZoneScript", js_ExecuteZoneScript);
 	api_define_function(ctx, NULL, "ExecuteZones", js_ExecuteZones);
 	api_define_function(ctx, NULL, "FilledCircle", js_FilledCircle);
+	api_define_function(ctx, NULL, "FilledComplex", js_FilledComplex);
 	api_define_function(ctx, NULL, "FilledEllipse", js_FilledEllipse);
 	api_define_function(ctx, NULL, "FlipScreen", js_FlipScreen);
 	api_define_function(ctx, NULL, "FollowPerson", js_FollowPerson);
@@ -607,10 +617,12 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "GetLocalName", js_GetLocalName);
 	api_define_function(ctx, NULL, "GetKey", js_GetKey);
 	api_define_function(ctx, NULL, "GetKeyString", js_GetKeyString);
+	api_define_function(ctx, NULL, "GetLayerAngle", js_GetLayerAngle);
 	api_define_function(ctx, NULL, "GetLayerHeight", js_GetLayerHeight);
 	api_define_function(ctx, NULL, "GetLayerMask", js_GetLayerMask);
 	api_define_function(ctx, NULL, "GetLayerName", js_GetLayerName);
 	api_define_function(ctx, NULL, "GetLayerWidth", js_GetLayerWidth);
+	api_define_function(ctx, NULL, "GetMapEngine", js_GetMapEngine);
 	api_define_function(ctx, NULL, "GetMapEngineFrameRate", js_GetMapEngineFrameRate);
 	api_define_function(ctx, NULL, "GetMouseWheelEvent", js_GetMouseWheelEvent);
 	api_define_function(ctx, NULL, "GetMouseX", js_GetMouseX);
@@ -684,6 +696,7 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "GrabImage", js_GrabImage);
 	api_define_function(ctx, NULL, "GrabSurface", js_GrabSurface);
 	api_define_function(ctx, NULL, "GradientCircle", js_GradientCircle);
+	api_define_function(ctx, NULL, "GradientComplex", js_GradientComplex);
 	api_define_function(ctx, NULL, "GradientEllipse", js_GradientEllipse);
 	api_define_function(ctx, NULL, "GradientLine", js_GradientLine);
 	api_define_function(ctx, NULL, "GradientRectangle", js_GradientRectangle);
@@ -727,11 +740,13 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "OpenLog", js_OpenLog);
 	api_define_function(ctx, NULL, "OpenRawFile", js_OpenRawFile);
 	api_define_function(ctx, NULL, "OutlinedCircle", js_OutlinedCircle);
+	api_define_function(ctx, NULL, "OutlinedComplex", js_OutlinedComplex);
 	api_define_function(ctx, NULL, "OutlinedEllipse", js_OutlinedEllipse);
 	api_define_function(ctx, NULL, "OutlinedRectangle", js_OutlinedRectangle);
 	api_define_function(ctx, NULL, "OutlinedRoundRectangle", js_OutlinedRoundRectangle);
 	api_define_function(ctx, NULL, "Point", js_Point);
 	api_define_function(ctx, NULL, "PointSeries", js_PointSeries);
+	api_define_function(ctx, NULL, "Polygon", js_Polygon);
 	api_define_function(ctx, NULL, "Print", js_Print);
 	api_define_function(ctx, NULL, "QueuePersonCommand", js_QueuePersonCommand);
 	api_define_function(ctx, NULL, "QueuePersonScript", js_QueuePersonScript);
@@ -757,10 +772,13 @@ initialize_vanilla_api(duk_context* ctx)
 	api_define_function(ctx, NULL, "SetDefaultPersonScript", js_SetDefaultPersonScript);
 	api_define_function(ctx, NULL, "SetDelayScript", js_SetDelayScript);
 	api_define_function(ctx, NULL, "SetFrameRate", js_SetFrameRate);
+	api_define_function(ctx, NULL, "SetLayerAngle", js_SetLayerAngle);
 	api_define_function(ctx, NULL, "SetLayerHeight", js_SetLayerHeight);
 	api_define_function(ctx, NULL, "SetLayerMask", js_SetLayerMask);
 	api_define_function(ctx, NULL, "SetLayerReflective", js_SetLayerReflective);
 	api_define_function(ctx, NULL, "SetLayerRenderer", js_SetLayerRenderer);
+	api_define_function(ctx, NULL, "SetLayerScaleFactorX", js_SetLayerScaleFactorX);
+	api_define_function(ctx, NULL, "SetLayerScaleFactorY", js_SetLayerScaleFactorY);
 	api_define_function(ctx, NULL, "SetLayerSize", js_SetLayerSize);
 	api_define_function(ctx, NULL, "SetLayerVisible", js_SetLayerVisible);
 	api_define_function(ctx, NULL, "SetLayerWidth", js_SetLayerWidth);
@@ -2380,6 +2398,13 @@ js_FilledCircle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_FilledComplex(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
+	return 0;
+}
+
+static duk_ret_t
 js_FilledEllipse(duk_context* ctx)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
@@ -2788,6 +2813,13 @@ js_GetKeyString(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GetLayerAngle(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
+	return 0;
+}
+
+static duk_ret_t
 js_GetLayerHeight(duk_context* ctx)
 {
 	int     layer;
@@ -2846,6 +2878,13 @@ static duk_ret_t
 js_GetLocalName(duk_context* ctx)
 {
 	duk_push_string(ctx, "localhost");
+	return 1;
+}
+
+static duk_ret_t
+js_GetMapEngine(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
 	return 1;
 }
 
@@ -3973,6 +4012,13 @@ js_GradientCircle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_GradientComplex(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
+	return 0;
+}
+
+static duk_ret_t
 js_GradientEllipse(duk_context* ctx)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
@@ -4731,6 +4777,13 @@ js_OutlinedCircle(duk_context* ctx)
 }
 
 static duk_ret_t
+js_OutlinedComplex(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
+	return 0;
+}
+
+static duk_ret_t
 js_OutlinedEllipse(duk_context* ctx)
 {
 	float x = duk_to_int(ctx, 0) + 0.5;
@@ -4832,6 +4885,13 @@ js_PointSeries(duk_context* ctx)
 	galileo_reset();
 	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
 	free(vertices);
+	return 0;
+}
+
+static duk_ret_t
+js_Polygon(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
 	return 0;
 }
 
@@ -5254,6 +5314,13 @@ js_SetFrameRate(duk_context* ctx)
 }
 
 static duk_ret_t
+js_SetLayerAngle(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
+	return 0;
+}
+
+static duk_ret_t
 js_SetLayerHeight(duk_context* ctx)
 {
 	int layer;
@@ -5316,6 +5383,20 @@ js_SetLayerRenderer(duk_context* ctx)
 	script = duk_require_sphere_script(ctx, 1, script_name);
 	layer_on_render(layer, script);
 	script_unref(script);
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerScaleFactorX(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
+	return 0;
+}
+
+static duk_ret_t
+js_SetLayerScaleFactorY(duk_context* ctx)
+{
+	duk_error_blame(ctx, -1, DUK_ERR_ERROR, "not implemented");
 	return 0;
 }
 

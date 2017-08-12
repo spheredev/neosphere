@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+No changes yet.
+
+
 v4.8.0 - August 12, 2017
 ------------------------
 
