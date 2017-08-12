@@ -1,6 +1,6 @@
 /**
  *  Sphere Runtime for Sphere games
- *  Copyright (c) 2015-2017, Fat Cerberus
+ *  Copyright (c) 2015-2017, Eggbert & Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,7 @@ function NewToLegacyColor(n) {
     return CreateColor(n.r * 255, n.g * 255, n.b * 255, n.a * 255);
 }
 
-exports.GeneratePersonObjects = GeneratePersonObjects;
-function GeneratePersonObjects(arr, ignore) {
+Person.generatePersonObjects = function fromMap(arr, ignore) {
 	// if ignore, arr = list of people not to use
 	var objects = [];
 	var personlist = GetPersonList();
@@ -63,7 +62,6 @@ function GeneratePersonObjects(arr, ignore) {
 	return objects;
 }
 
-exports.Person = Person;
 function Person(name,spriteset,destroy_with_map, force) {
 	if(DoesPersonExist(name)) {
 		if(!force) throw "\"" + name + "\" already exists. Duplicate names are not allowed.";

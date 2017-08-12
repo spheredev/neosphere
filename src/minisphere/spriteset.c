@@ -641,6 +641,8 @@ find_pose_by_name(const spriteset_t* spriteset, const char* pose_name)
 			pose = iter.ptr;
 			if (strcasecmp(lstr_cstr(pose->name), name_to_find) == 0)
 				goto search_over;
+			else
+				pose = NULL;
 		}
 		if (name_to_find != alt_name)
 			name_to_find = alt_name;

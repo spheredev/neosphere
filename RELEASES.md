@@ -1,7 +1,7 @@
 Release Notes
 =============
 
-miniSphere X.X
+miniSphere 4.8
 --------------
 
 * The Core API includes a new class, `DirectoryStream`, which lets you game

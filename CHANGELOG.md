@@ -1,7 +1,7 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - August 12, 2017
+v4.8.0 - August 12, 2017
 ------------------------
 
 * Adds a new `DirectoryStream` built-in class which allows you to enumerate the
@@ -12,6 +12,8 @@ vX.X.X - August 12, 2017
   with images, like in Sphere v1 code.
 * Adds `FS.directoryExists()` for checking whether a directory exists.
 * Adds support for enumerating live iterators in `from.iterable()`.
+* Adds a new experimental Person class to the Sphere Runtime which makes it
+  easier to work with map engine persons.
 * Improves windowed mode scaling behavior when miniSphere is run on a HiDPI/4K
   display.
 * Improves the Music and Logger modules by giving them default base directories

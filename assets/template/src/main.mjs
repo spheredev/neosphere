@@ -3,7 +3,7 @@
  *  (c) <year> <whoever made the game>
  */
 
-import { Music, Prim, Thread } from 'sphere-runtime';
+import { Image, Music, Prim, Thread } from 'sphere-runtime';
 
 export default
 class MyNewGame extends Thread
@@ -20,14 +20,14 @@ class MyNewGame extends Thread
 		 */
 
 		// initialize data for our session
-		this.image = new Texture('images/justSaiyan.png');
+		this.image = new Image('justSaiyan');
 		this.x = 0;
 		this.y = 0;
 		this.xVel = 1;
 		this.yVel = 1;
 
 		// avoid boredom by playing some background music!
-		Music.play('music/vegeta.ogg');
+		Music.play('vegeta');
 	}
 
 	on_update()
@@ -76,7 +76,7 @@ class MyNewGame extends Thread
 			screen.width / 4, screen.height / 4,
 			Color.Black);
 
-		Prim.blit(screen, this.x, this.y, this.image);
+		this.image.blitTo(screen, this.x, this.y);
 		Prim.drawRectangle(screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
 	}
 }

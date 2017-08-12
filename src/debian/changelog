@@ -1,24 +1,55 @@
+minisphere (4.8.0) zesty; urgency=low
+
+  * Adds a new `DirectoryStream` built-in class which allows you to enumerate the
+    contents of a directory.  Works in both miniSphere and Cell!
+  * Adds a new SphereFS prefix, `$/`, which resolves to the directory containing
+    the startup script for miniSphere, or the root of the source tree for Cell.
+  * Adds a new `Image` class to the Sphere Runtime which allows working directly
+    with images, like in Sphere v1 code.
+  * Adds `FS.directoryExists()` for checking whether a directory exists.
+  * Adds support for enumerating live iterators in `from.iterable()`.
+  * Adds a new experimental Person class to the Sphere Runtime which makes it
+    easier to work with map engine persons.
+  * Improves windowed mode scaling behavior when miniSphere is run on a HiDPI/4K
+    display.
+  * Improves the Music and Logger modules by giving them default base directories
+    (like in Sphere 1.x) and making the file extension optional.
+  * Improves Sphere 1.x compatibility by avoiding clearing the backbuffer between
+    frames during a `MapEngine()` call.
+  * Improves the maintainability of the codebase with extensive refactoring.  Any
+    bugs, let me know!
+  * Renames the `analogue.js` system script to `persist.js` to improve
+    compatibility with Sphere 1.x.
+  * Fixes several issues in the implementation of `FS.rename()` that could cause
+    the function to behave destructively on some platforms.
+  * Fixes a bug where Cell `FS.writeFile()` can accept a buffer object as input.
+  * Fixes a bug in Cell `FS.fileExists()` where it returns true for directories.
+  * Fixes a bug in which a path specified uplevel from a SphereFS prefix, e.g.
+    `@/../filename`, is not correctly detected as a sandbox violation.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 12 Aug 2017 00:00:00 -0500
+
 minisphere (4.7.2) zesty; urgency=low
 
-* Adds a new `cell-runtime` master module for use in ES6 Cellscripts, as an
-  analogue to `sphere-runtime`.
-* Renames `FS.resolve()` to `FS.fullPath()` and adds relative path support.
-* Renames `FS.exists()` to `FS.fileExists()` since the function doesn't work
-  for directories.
-* Renames `FileStream#size` to `FileStream#fileSize`.
-* Fixes some inconsistencies between modules in the Cell Runtime and their
-  Sphere Runtime equivalents.
-* Fixes an issue where chaining `Dispatch.now()` causes the engine to get stuck
-  in an infinite loop of processing newly added jobs.
-* Fixes a bug where `require()` doesn't canonicalize module filenames properly,
-  causing SSj Blue to sometimes not be able to find the source file.
-* Fixes a bug where building a large project in Sphere Studio can hang Cell.
-* Fixes a bug where `SoundStream` streams are always created in mono mode.
-* Fixes a bug where `DataReader` and `DataWriter` can't be imported by either
-  `require()` or `import`.
-* Fixes a bug where constructors can be called without using `new`.
-* Fixes a bug where stepping over a `Dispatch.now()` with SSj sometimes locks
-  up the engine and prevents it from responding to further debugger commands.
+  * Adds a new `cell-runtime` master module for use in ES6 Cellscripts, as an
+    analogue to `sphere-runtime`.
+  * Renames `FS.resolve()` to `FS.fullPath()` and adds relative path support.
+  * Renames `FS.exists()` to `FS.fileExists()` since the function doesn't work
+    for directories.
+  * Renames `FileStream#size` to `FileStream#fileSize`.
+  * Fixes some inconsistencies between modules in the Cell Runtime and their
+    Sphere Runtime equivalents.
+  * Fixes an issue where chaining `Dispatch.now()` causes the engine to get stuck
+    in an infinite loop of processing newly added jobs.
+  * Fixes a bug where `require()` doesn't canonicalize module filenames properly,
+    causing SSj Blue to sometimes not be able to find the source file.
+  * Fixes a bug where building a large project in Sphere Studio can hang Cell.
+  * Fixes a bug where `SoundStream` streams are always created in mono mode.
+  * Fixes a bug where `DataReader` and `DataWriter` can't be imported by either
+    `require()` or `import`.
+  * Fixes a bug where constructors can be called without using `new`.
+  * Fixes a bug where stepping over a `Dispatch.now()` with SSj sometimes locks
+    up the engine and prevents it from responding to further debugger commands.
 
  -- Bruce Pascoe <fatcerberus@icloud.com>  Fri, 28 Jul 2017 00:00:00 -0500
 
