@@ -372,7 +372,8 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 		if (!want_dirs) {  // list files
 			if (!(match = strstr(p_entry->file_path, dirname)))
 				continue;
-			if (match != p_entry->file_path) continue;
+			if (match != p_entry->file_path)
+				continue;
 			maybe_filename = match + strlen(dirname);
 			if (dirname[strlen(dirname) - 1] != '/') {
 				if (maybe_filename[0] != '/')
@@ -389,7 +390,8 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 		else {  // list directories
 			if (!(match = strstr(p_entry->file_path, dirname)))
 				continue;
-			if (match != p_entry->file_path) continue;
+			if (match != p_entry->file_path)
+				continue;
 			maybe_dirname = match + strlen(dirname);
 			if (dirname[strlen(dirname) - 1] != '/') {
 				if (maybe_dirname[0] != '/')
@@ -407,9 +409,8 @@ list_spk_filenames(spk_t* spk, const char* dirname, bool want_dirs)
 			filename = lstr_newf("%s", found_dirname);
 			iter2 = vector_enum(list);
 			is_in_set = false;
-			while (item = vector_next(&iter2)) {
+			while (item = vector_next(&iter2))
 				is_in_set |= lstr_cmp(filename, *item) == 0;
-			}
 			if (!is_in_set)  // avoid duplicate listings
 				vector_push(list, &filename);
 			free(found_dirname);

@@ -645,8 +645,14 @@ map_engine_start(const char* filename, int framerate)
 	if (!change_map(filename, true))
 		goto on_error;
 	while (!s_exiting) {
+		// order of operations matches Sphere 1.x.  yes, we check for input AFTER we
+		// do the update.  for some reason.
 		update_map_engine(true);
 		process_map_input();
+		
+		// draw the map, then flip the backbuffer without clearing it.  the Sphere 1.x
+		// map engine has a bug where it doesn't clear the backbuffer between frames; as
+		// it turns out, a good deal of of Sphere v1 code relies on that.
 		map_engine_draw_map();
 		screen_flip(g_screen, s_framerate, false);
 	}
