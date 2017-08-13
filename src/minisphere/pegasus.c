@@ -244,6 +244,7 @@ static duk_ret_t js_Color_clone                   (duk_context* ctx);
 static duk_ret_t js_Color_fade                    (duk_context* ctx);
 static duk_ret_t js_new_DirectoryStream           (duk_context* ctx);
 static duk_ret_t js_DirectoryStream_finalize      (duk_context* ctx);
+static duk_ret_t js_DirectoryStream_dispose       (duk_context* ctx);
 static duk_ret_t js_DirectoryStream_get_fileCount (duk_context* ctx);
 static duk_ret_t js_DirectoryStream_get_fileName  (duk_context* ctx);
 static duk_ret_t js_DirectoryStream_get_position  (duk_context* ctx);
@@ -480,6 +481,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
 	api_define_method(ctx, "Color", "fade", js_Color_fade);
 	api_define_class(ctx, "DirectoryStream", js_new_DirectoryStream, js_DirectoryStream_finalize);
+	api_define_method(ctx, "DirectoryStream", "dispose", js_DirectoryStream_dispose);
 	api_define_property(ctx, "DirectoryStream", "fileCount", js_DirectoryStream_get_fileCount, NULL);
 	api_define_property(ctx, "DirectoryStream", "fileName", js_DirectoryStream_get_fileName, NULL);
 	api_define_property(ctx, "DirectoryStream", "position", js_DirectoryStream_get_position, js_DirectoryStream_set_position);
@@ -1502,52 +1504,69 @@ js_DirectoryStream_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_DirectoryStream_get_fileCount(duk_context* ctx)
+js_DirectoryStream_dispose(duk_context* ctx)
 {
-	directory_t* stream;
+	directory_t* directory;
 
 	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	directory = duk_require_class_obj(ctx, -1, "DirectoryStream");
 
-	duk_push_int(ctx, directory_num_files(stream));
+	duk_set_class_ptr(ctx, -1, NULL);
+	directory_close(directory);
+	return 0;
+}
+
+static duk_ret_t
+js_DirectoryStream_get_fileCount(duk_context* ctx)
+{
+	directory_t* directory;
+
+	duk_push_this(ctx);
+	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
+
+	duk_push_int(ctx, directory_num_files(directory));
 	return 1;
 }
 
 static duk_ret_t
 js_DirectoryStream_get_fileName(duk_context* ctx)
 {
-	directory_t* stream;
+	directory_t* directory;
 
 	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
 
-	duk_push_string(ctx, directory_pathname(stream));
+	duk_push_string(ctx, directory_pathname(directory));
 	return 1;
 }
 
 static duk_ret_t
 js_DirectoryStream_get_position(duk_context* ctx)
 {
-	directory_t* stream;
+	directory_t* directory;
 
 	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
 
-	duk_push_int(ctx, directory_position(stream));
+	duk_push_int(ctx, directory_position(directory));
 	return 1;
 }
 
 static duk_ret_t
 js_DirectoryStream_set_position(duk_context* ctx)
 {
+	directory_t* directory;
 	int          position;
-	directory_t* stream;
 
 	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
 	position = duk_require_int(ctx, 0);
 
-	if (!directory_seek(stream, position))
+	if (!directory_seek(directory, position))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't set stream position");
 	return 0;
 }
@@ -1555,13 +1574,14 @@ js_DirectoryStream_set_position(duk_context* ctx)
 static duk_ret_t
 js_DirectoryStream_next(duk_context* ctx)
 {
+	directory_t*  directory;
 	const path_t* entry_path;
-	directory_t*  stream;
 
 	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
 
-	entry_path = directory_next(stream);
+	entry_path = directory_next(directory);
 	duk_push_object(ctx);
 	if (entry_path != NULL) {
 		duk_push_boolean(ctx, false);
@@ -1588,12 +1608,13 @@ js_DirectoryStream_next(duk_context* ctx)
 static duk_ret_t
 js_DirectoryStream_rewind(duk_context* ctx)
 {
-	directory_t* stream;
+	directory_t* directory;
 
 	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
 
-	directory_rewind(stream);
+	directory_rewind(directory);
 	return 0;
 }
 
@@ -1930,7 +1951,7 @@ static duk_ret_t
 js_FileStream_read(duk_context* ctx)
 {
 	// FileStream:read([numBytes]);
-	// Reads data from the stream, returning it in an ArrayBuffer.
+	// Reads data from the directory, returning it in an ArrayBuffer.
 	// Arguments:
 	//     numBytes: Optional. The number of bytes to read. If not provided, the
 	//               entire file is read.
