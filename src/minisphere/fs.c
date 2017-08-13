@@ -79,8 +79,9 @@ struct file
 	spk_file_t*   spk_file;
 };
 
-static duk_ret_t duk_load_s2gm (duk_context* ctx, void* udata);
-static bool      resolve_path  (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
+static duk_ret_t duk_load_s2gm  (duk_context* ctx, void* udata);
+static vector_t* read_directory (const game_t* it, const char* dirname, bool want_dirs);
+static bool      resolve_path   (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_game_id = 1;
 
@@ -396,52 +397,6 @@ game_build_path(const game_t* it, const char* filename, const char* base_dir_nam
 	return path;
 }
 
-vector_t*
-game_list_dir(const game_t* it, const char* dirname, bool want_dirs)
-{
-	path_t*           dir_path;
-	ALLEGRO_FS_ENTRY* file_info;
-	path_t*           file_path;
-	lstring_t*        filename;
-	enum fs_type      fs_type;
-	ALLEGRO_FS_ENTRY* fse = NULL;
-	vector_t*         list = NULL;
-	int               type_flag;
-
-	if (!resolve_path(it, dirname, &dir_path, &fs_type))
-		goto on_error;
-	if (!(list = vector_new(sizeof(lstring_t*))))
-		goto on_error;
-	switch (fs_type) {
-	case FS_LOCAL:
-		type_flag = want_dirs ? ALLEGRO_FILEMODE_ISDIR : ALLEGRO_FILEMODE_ISFILE;
-		fse = al_create_fs_entry(path_cstr(dir_path));
-		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
-			while (file_info = al_read_directory(fse)) {
-				file_path = path_new(al_get_fs_entry_name(file_info));
-				filename = lstr_new(path_filename(file_path));
-				if (al_get_fs_entry_mode(file_info) & type_flag)
-					vector_push(list, &filename);
-				path_free(file_path);
-				al_destroy_fs_entry(file_info);
-			}
-		}
-		al_destroy_fs_entry(fse);
-		break;
-	case FS_SPK:
-		list = list_spk_filenames(it->spk, path_cstr(dir_path), want_dirs);
-		break;
-	}
-	path_free(dir_path);
-	return list;
-
-on_error:
-	al_destroy_fs_entry(fse);
-	path_free(dir_path);
-	vector_free(list);
-	return NULL;
-}
-
 bool
 game_mkdir(game_t* it, const char* dirname)
 {
@@ -644,7 +599,7 @@ directory_rewind(directory_t* it)
 
 	path_list = vector_new(sizeof(path_t*));
 
-	file_list = game_list_dir(it->game, path_cstr(it->path), false);
+	file_list = read_directory(it->game, path_cstr(it->path), false);
 	iter = vector_enum(file_list);
 	while (vector_next(&iter)) {
 		entry_name = *(lstring_t**)iter.ptr;
@@ -655,7 +610,7 @@ directory_rewind(directory_t* it)
 	}
 	vector_free(file_list);
 
-	dir_list = game_list_dir(it->game, path_cstr(it->path), true);
+	dir_list = read_directory(it->game, path_cstr(it->path), true);
 	iter = vector_enum(dir_list);
 	while (vector_next(&iter)) {
 		entry_name = *(lstring_t**)iter.ptr;
@@ -878,6 +833,52 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 
 on_error:
 	return -1;
+}
+
+static vector_t*
+read_directory(const game_t* game, const char* dirname, bool want_dirs)
+{
+	path_t*           dir_path;
+	ALLEGRO_FS_ENTRY* file_info;
+	path_t*           file_path;
+	lstring_t*        filename;
+	enum fs_type      fs_type;
+	ALLEGRO_FS_ENTRY* fse = NULL;
+	vector_t*         list = NULL;
+	int               type_flag;
+
+	if (!resolve_path(game, dirname, &dir_path, &fs_type))
+		goto on_error;
+	if (!(list = vector_new(sizeof(lstring_t*))))
+		goto on_error;
+	switch (fs_type) {
+	case FS_LOCAL:
+		type_flag = want_dirs ? ALLEGRO_FILEMODE_ISDIR : ALLEGRO_FILEMODE_ISFILE;
+		fse = al_create_fs_entry(path_cstr(dir_path));
+		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
+			while (file_info = al_read_directory(fse)) {
+				file_path = path_new(al_get_fs_entry_name(file_info));
+				filename = lstr_new(path_filename(file_path));
+				if (al_get_fs_entry_mode(file_info) & type_flag)
+					vector_push(list, &filename);
+				path_free(file_path);
+				al_destroy_fs_entry(file_info);
+			}
+		}
+		al_destroy_fs_entry(fse);
+		break;
+	case FS_SPK:
+		list = list_spk_filenames(game->spk, path_cstr(dir_path), want_dirs);
+		break;
+	}
+	path_free(dir_path);
+	return list;
+
+on_error:
+	al_destroy_fs_entry(fse);
+	path_free(dir_path);
+	vector_free(list);
+	return NULL;
 }
 
 static bool

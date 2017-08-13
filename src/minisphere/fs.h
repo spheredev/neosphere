@@ -63,7 +63,6 @@ const path_t*    game_script_path    (const game_t* it);
 const char*      game_summary        (const game_t* it);
 int              game_version        (const game_t* it);
 path_t*          game_build_path     (const game_t* it, const char* filename, const char* base_dir_name, bool legacy);
-vector_t*        game_list_dir       (const game_t* it, const char* dirname, bool want_dirs);
 bool             game_mkdir          (game_t* it, const char* dirname);
 void*            game_read_file      (game_t* it, const char* filename, size_t *out_size);
 bool             game_rename         (game_t* it, const char* filename1, const char* filename2);

@@ -2613,52 +2613,52 @@ js_GetCurrentZone(duk_context* ctx)
 static duk_ret_t
 js_GetDirectoryList(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	const char* dirname = n_args >= 1
-		? duk_require_path(ctx, 0, NULL, true, false)
-		: "";
+	directory_t*  dir;
+	const char*   dir_name = "@/";
+	const path_t* entry;
+	duk_uarridx_t index = 0;
+	int           num_args;
 
-	vector_t*  list;
-	lstring_t* *p_filename;
+	num_args = duk_get_top(ctx);
+	if (num_args >= 1)
+		dir_name = duk_require_path(ctx, 0, NULL, true, false);
 
-	iter_t iter;
-
-	list = game_list_dir(g_game, dirname, true);
 	duk_push_array(ctx);
-	iter = vector_enum(list);
-	while (p_filename = vector_next(&iter)) {
-		duk_push_string(ctx, lstr_cstr(*p_filename));
-		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
-		lstr_free(*p_filename);
+	if (!(dir = directory_open(g_game, dir_name)))
+		return 1;
+	while (entry = directory_next(dir)) {
+		if (path_is_file(entry))
+			continue;
+		duk_push_string(ctx, path_hop(entry, path_num_hops(entry) - 1));
+		duk_put_prop_index(ctx, -2, index++);
 	}
-	vector_free(list);
+	directory_close(dir);
 	return 1;
 }
 
 static duk_ret_t
 js_GetFileList(duk_context* ctx)
 {
-	const char* directory_name;
-	vector_t*   list;
-	int         num_args;
-
-	iter_t iter;
-	lstring_t* *p_filename;
+	directory_t*  dir;
+	const char*   dir_name = "@/save";
+	const path_t* entry;
+	duk_uarridx_t index = 0;
+	int           num_args;
 
 	num_args = duk_get_top(ctx);
-	directory_name = num_args >= 1
-		? duk_require_path(ctx, 0, NULL, true, false)
-		: "save";
+	if (num_args >= 1)
+		dir_name = duk_require_path(ctx, 0, NULL, true, false);
 
-	list = game_list_dir(g_game, directory_name, false);
 	duk_push_array(ctx);
-	iter = vector_enum(list);
-	while (p_filename = vector_next(&iter)) {
-		duk_push_string(ctx, lstr_cstr(*p_filename));
-		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
-		lstr_free(*p_filename);
+	if (!(dir = directory_open(g_game, dir_name)))
+		return 1;
+	while (entry = directory_next(dir)) {
+		if (!path_is_file(entry))
+			continue;
+		duk_push_string(ctx, path_filename(entry));
+		duk_put_prop_index(ctx, -2, index++);
 	}
-	vector_free(list);
+	directory_close(dir);
 	return 1;
 }
 
