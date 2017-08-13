@@ -173,7 +173,7 @@ game_open(const char* game_path)
 			game->resolution = size2(
 				kev_read_float(sgm_file, "screen_width", 320),
 				kev_read_float(sgm_file, "screen_height", 240));
-			game->script_path = game_build_path(game, kev_read_string(sgm_file, "script", "main.js"), "scripts", true);
+			game->script_path = game_build_path(game, kev_read_string(sgm_file, "script", "main.js"), "@/scripts", true);
 			game->fullscreen = true;
 			kev_close(sgm_file);
 
@@ -217,44 +217,44 @@ on_error:
 }
 
 game_t*
-game_ref(game_t* game)
+game_ref(game_t* it)
 {
-	if (game == NULL)
+	if (it == NULL)
 		return NULL;
 
-	++game->refcount;
-	return game;
+	++it->refcount;
+	return it;
 }
 
 void
-game_unref(game_t* game)
+game_unref(game_t* it)
 {
-	if (game == NULL || --game->refcount > 0)
+	if (it == NULL || --it->refcount > 0)
 		return;
 
-	console_log(3, "disposing game #%u no longer in use", game->id);
-	if (game->type == FS_SPK)
-		unref_spk(game->spk);
-	path_free(game->script_path);
-	path_free(game->root_path);
-	lstr_free(game->manifest);
-	free(game);
+	console_log(3, "disposing game #%u no longer in use", it->id);
+	if (it->type == FS_SPK)
+		unref_spk(it->spk);
+	path_free(it->script_path);
+	path_free(it->root_path);
+	lstr_free(it->manifest);
+	free(it);
 }
 
 const char*
-game_author(const game_t* game)
+game_author(const game_t* it)
 {
-	return lstr_cstr(game->author);
+	return lstr_cstr(it->author);
 }
 
 bool
-game_dir_exists(const game_t* game, const char* dirname)
+game_dir_exists(const game_t* it, const char* dirname)
 {
 	path_t*      dir_path = NULL;
 	enum fs_type fs_type;
 	struct stat  stats;
 
-	if (!resolve_path(game, dirname, &dir_path, &fs_type))
+	if (!resolve_path(it, dirname, &dir_path, &fs_type))
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -263,7 +263,7 @@ game_dir_exists(const game_t* game, const char* dirname)
 		path_free(dir_path);
 		return (stats.st_mode & S_IFDIR) == S_IFDIR;
 	case FS_SPK:
-		if (!spk_dir_exists(game->spk, path_cstr(dir_path)))
+		if (!spk_dir_exists(it->spk, path_cstr(dir_path)))
 			goto on_error;
 		path_free(dir_path);
 		return true;
@@ -275,73 +275,73 @@ on_error:
 }
 
 bool
-game_file_exists(game_t* game, const char* filename)
+game_file_exists(game_t* it, const char* filename)
 {
 	file_t* file;
 
-	if (!(file = file_open(game, filename, "rb")))
+	if (!(file = file_open(it, filename, "rb")))
 		return false;
 	file_close(file);
 	return true;
 }
 
 bool
-game_fullscreen(const game_t* game)
+game_fullscreen(const game_t* it)
 {
-	return game->fullscreen;
+	return it->fullscreen;
 }
 
 const lstring_t*
-game_manifest(const game_t* game)
+game_manifest(const game_t* it)
 {
-	return game->manifest;
+	return it->manifest;
 }
 
 const char*
-game_name(const game_t* game)
+game_name(const game_t* it)
 {
-	return lstr_cstr(game->name);
+	return lstr_cstr(it->name);
 }
 
 const path_t*
-game_path(const game_t* game)
+game_path(const game_t* it)
 {
-	return game->root_path;
+	return it->root_path;
 }
 
 size2_t
-game_resolution(const game_t* game)
+game_resolution(const game_t* it)
 {
-	return game->resolution;
+	return it->resolution;
 }
 
 const char*
-game_save_id(const game_t* game)
+game_save_id(const game_t* it)
 {
-	return game->save_id != NULL ? lstr_cstr(game->save_id)
+	return it->save_id != NULL ? lstr_cstr(it->save_id)
 		: NULL;
 }
 
 const path_t*
-game_script_path(const game_t* game)
+game_script_path(const game_t* it)
 {
-	return game->script_path;
+	return it->script_path;
 }
 
 const char*
-game_summary(const game_t* game)
+game_summary(const game_t* it)
 {
-	return lstr_cstr(game->summary);
+	return lstr_cstr(it->summary);
 }
 
 int
-game_version(const game_t* game)
+game_version(const game_t* it)
 {
-	return game->version;
+	return it->version;
 }
 
 path_t*
-game_build_path(const game_t* game, const char* filename, const char* base_dir_name, bool legacy)
+game_build_path(const game_t* it, const char* filename, const char* base_dir_name, bool legacy)
 {
 	// note: game_build_path() collapses '../' path hops unconditionally, as per
 	//       SphereFS spec. this ensures an unpackaged game can't subvert the
@@ -361,7 +361,7 @@ game_build_path(const game_t* game, const char* filename, const char* base_dir_n
 	}
 
 	if (base_dir_name != NULL) {
-		base_path = game_build_path(game, base_dir_name, NULL, legacy);
+		base_path = game_build_path(it, base_dir_name, NULL, legacy);
 		path_to_dir(base_path);
 	}
 	if (path_num_hops(path) > 0)
@@ -373,7 +373,7 @@ game_build_path(const game_t* game, const char* filename, const char* base_dir_n
 	// one canonical name.
 	if (strcmp(prefix, "$") == 0) {
 		path_remove_hop(path, 0);
-		path_rebase(path, game_script_path(game));
+		path_rebase(path, game_script_path(it));
 		free(prefix);
 		prefix = strdup(path_hop(path, 0));
 	}
@@ -397,7 +397,7 @@ game_build_path(const game_t* game, const char* filename, const char* base_dir_n
 }
 
 vector_t*
-game_list_dir(const game_t* game, const char* dirname, bool want_dirs)
+game_list_dir(const game_t* it, const char* dirname, bool want_dirs)
 {
 	path_t*           dir_path;
 	ALLEGRO_FS_ENTRY* file_info;
@@ -408,7 +408,7 @@ game_list_dir(const game_t* game, const char* dirname, bool want_dirs)
 	vector_t*         list = NULL;
 	int               type_flag;
 
-	if (!resolve_path(game, dirname, &dir_path, &fs_type))
+	if (!resolve_path(it, dirname, &dir_path, &fs_type))
 		goto on_error;
 	if (!(list = vector_new(sizeof(lstring_t*))))
 		goto on_error;
@@ -429,7 +429,7 @@ game_list_dir(const game_t* game, const char* dirname, bool want_dirs)
 		al_destroy_fs_entry(fse);
 		break;
 	case FS_SPK:
-		list = list_spk_filenames(game->spk, path_cstr(dir_path), want_dirs);
+		list = list_spk_filenames(it->spk, path_cstr(dir_path), want_dirs);
 		break;
 	}
 	path_free(dir_path);
@@ -443,12 +443,12 @@ on_error:
 }
 
 bool
-game_mkdir(game_t* game, const char* dirname)
+game_mkdir(game_t* it, const char* dirname)
 {
 	enum fs_type  fs_type;
 	path_t*       path;
 
-	if (!resolve_path(game, dirname, &path, &fs_type))
+	if (!resolve_path(it, dirname, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -461,25 +461,26 @@ game_mkdir(game_t* game, const char* dirname)
 }
 
 void*
-game_read_file(game_t* game, const char* filename, size_t *out_size)
+game_read_file(game_t* it, const char* filename, size_t *out_size)
 {
+	char*   data;
 	size_t  data_size;
 	file_t* file = NULL;
-	void*   slurp;
 
-	if (!(file = file_open(game, filename, "rb")))
+	if (!(file = file_open(it, filename, "rb")))
 		goto on_error;
 	file_seek(file, 0, WHENCE_END);
 	data_size = file_position(file);
-	if (!(slurp = malloc(data_size + 1)))
+	if (!(data = malloc(data_size + 1)))
 		goto on_error;
 	file_seek(file, 0, WHENCE_SET);
-	file_read(slurp, data_size, 1, file);
+	file_read(file, data, 1, data_size);
 	file_close(file);
-	*((char*)slurp + data_size) = '\0';  // nifty NUL terminator
+	data[data_size] = '\0';  // nifty NUL terminator
 
-	if (out_size) *out_size = data_size;
-	return slurp;
+	if (out_size != NULL)
+		*out_size = data_size;
+	return data;
 
 on_error:
 	file_close(file);
@@ -487,16 +488,16 @@ on_error:
 }
 
 bool
-game_rename(game_t* game, const char* name1, const char* name2)
+game_rename(game_t* it, const char* name1, const char* name2)
 {
 	enum fs_type fs_type_1;
 	enum fs_type fs_type_2;
 	path_t*      path1;
 	path_t*      path2;
 
-	if (!resolve_path(game, name1, &path1, &fs_type_1))
+	if (!resolve_path(it, name1, &path1, &fs_type_1))
 		return false;
-	if (!resolve_path(game, name2, &path2, &fs_type_2))
+	if (!resolve_path(it, name2, &path2, &fs_type_2))
 		return false;
 	if (fs_type_2 != fs_type_1)
 		return false;  // can't cross file system boundaries
@@ -507,7 +508,7 @@ game_rename(game_t* game, const char* name1, const char* name2)
 		// any existing file with the same name.
 		if (path_is(path1, path2))
 			return true;  // avoid rename() deleting file if name1 == name2
-		if (game_file_exists(game, name2) || game_dir_exists(game, name2))
+		if (game_file_exists(it, name2) || game_dir_exists(it, name2))
 			return false; // don't overwrite existing file
 		return rename(path_cstr(path1), path_cstr(path2)) == 0;
 	case FS_SPK:
@@ -518,12 +519,12 @@ game_rename(game_t* game, const char* name1, const char* name2)
 }
 
 bool
-game_rmdir(game_t* game, const char* dirname)
+game_rmdir(game_t* it, const char* dirname)
 {
 	enum fs_type fs_type;
 	path_t*      path;
 
-	if (!resolve_path(game, dirname, &path, &fs_type))
+	if (!resolve_path(it, dirname, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -536,24 +537,24 @@ game_rmdir(game_t* game, const char* dirname)
 }
 
 bool
-game_write_file(game_t* game, const char* filename, const void* buf, size_t size)
+game_write_file(game_t* it, const char* filename, const void* buf, size_t size)
 {
 	file_t* file = NULL;
 
-	if (!(file = file_open(game, filename, "wb")))
+	if (!(file = file_open(it, filename, "wb")))
 		return false;
-	file_write(buf, size, 1, file);
+	file_write(file, buf, 1, size);
 	file_close(file);
 	return true;
 }
 
 bool
-game_unlink(game_t* game, const char* filename)
+game_unlink(game_t* it, const char* filename)
 {
 	enum fs_type fs_type;
 	path_t*      path;
 
-	if (!resolve_path(game, filename, &path, &fs_type))
+	if (!resolve_path(it, filename, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -730,99 +731,86 @@ on_error:
 }
 
 void
-file_close(file_t* file)
+file_close(file_t* it)
 {
-	if (file == NULL)
+	if (it == NULL)
 		return;
-	switch (file->fs_type) {
+	switch (it->fs_type) {
 	case FS_LOCAL:
-		al_fclose(file->handle);
+		al_fclose(it->handle);
 		break;
 	case FS_SPK:
-		spk_fclose(file->spk_file);
+		spk_fclose(it->spk_file);
 		break;
 	}
-	game_unref(file->game);
-	free(file);
+	game_unref(it->game);
+	free(it);
 }
 
 const char*
-file_pathname(const file_t* file)
+file_pathname(const file_t* it)
 {
-	return file->path;
+	return it->path;
 }
 
 long long
-file_position(const file_t* file)
+file_position(const file_t* it)
 {
-	switch (file->fs_type) {
+	switch (it->fs_type) {
 	case FS_LOCAL:
-		return al_ftell(file->handle);
+		return al_ftell(it->handle);
 	case FS_SPK:
-		return spk_ftell(file->spk_file);
+		return spk_ftell(it->spk_file);
 	}
 	return -1;
 }
 
 int
-file_putc(int ch, file_t* file)
+file_puts(file_t* it, const char* string)
 {
-	switch (file->fs_type) {
+	switch (it->fs_type) {
 	case FS_LOCAL:
-		return al_fputc(file->handle, ch);
+		return al_fputs(it->handle, string);
 	case FS_SPK:
-		return spk_fputc(ch, file->spk_file);
-	default:
-		return EOF;
-	}
-}
-
-int
-file_puts(const char* string, file_t* file)
-{
-	switch (file->fs_type) {
-	case FS_LOCAL:
-		return al_fputs(file->handle, string);
-	case FS_SPK:
-		return spk_fputs(string, file->spk_file);
+		return spk_fputs(string, it->spk_file);
 	default:
 		return false;
 	}
 }
 
 size_t
-file_read(void* buf, size_t size, size_t count, file_t* file)
+file_read(file_t* it, void* buf, size_t count, size_t size)
 {
-	switch (file->fs_type) {
+	switch (it->fs_type) {
 	case FS_LOCAL:
-		return al_fread(file->handle, buf, size * count) / size;
+		return al_fread(it->handle, buf, size * count) / size;
 	case FS_SPK:
-		return spk_fread(buf, size, count, file->spk_file);
+		return spk_fread(buf, size, count, it->spk_file);
 	default:
 		return 0;
 	}
 }
 
 bool
-file_seek(file_t* file, long long offset, whence_t whence)
+file_seek(file_t* it, long long offset, whence_t whence)
 {
-	switch (file->fs_type) {
+	switch (it->fs_type) {
 	case FS_LOCAL:
-		return al_fseek(file->handle, offset, whence);
+		return al_fseek(it->handle, offset, whence);
 	case FS_SPK:
-		return spk_fseek(file->spk_file, offset, whence);
+		return spk_fseek(it->spk_file, offset, whence);
 	}
 	return false;
 }
 
 size_t
-file_write(const void* buf, size_t size, size_t count, file_t* file)
+file_write(file_t* it, const void* buf, size_t count, size_t size)
 {
-	switch (file->fs_type) {
+	switch (it->fs_type) {
 	case FS_LOCAL:
-		return al_fwrite(file->handle, buf, size * count) / size;
+		return al_fwrite(it->handle, buf, size * count) / size;
 	case FS_SPK:
-		return spk_fwrite(buf, size, count, file->spk_file);
+		return spk_fwrite(buf, size, count, it->spk_file);
 	default:
 		return 0;
 	}

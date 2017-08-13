@@ -208,7 +208,7 @@ spriteset_load(const char* filename)
 	spriteset = spriteset_new();
 	if (!(file = file_open(g_game, filename, "rb")))
 		goto on_error;
-	if (file_read(&rss, sizeof(struct rss_header), 1, file) != 1)
+	if (file_read(file, &rss, 1, sizeof(struct rss_header)) != 1)
 		goto on_error;
 	if (memcmp(rss.signature, ".rss", 4) != 0)
 		goto on_error;
@@ -245,13 +245,13 @@ spriteset_load(const char* filename)
 		v2_data_offset = file_position(file);
 		num_images = 0;
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (file_read(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
+			if (file_read(file, &dir_v2, 1, sizeof(struct rss_dir_v2)) != 1)
 				goto on_error;
 			sprintf(extra_pose_name, "extra %d", i);
 			pose_name = i < 8 ? DEFAULT_POSE_NAMES[i] : extra_pose_name;
 			spriteset_add_pose(spriteset, pose_name);
 			for (j = 0; j < dir_v2.num_frames; ++j) {  // skip over frame and image data
-				if (file_read(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
+				if (file_read(file, &frame_v2, 1, sizeof(struct rss_frame_v2)) != 1)
 					goto on_error;
 				max_width = fmax(rss.frame_width != 0 ? rss.frame_width : frame_v2.width, max_width);
 				max_height = fmax(rss.frame_height != 0 ? rss.frame_height : frame_v2.height, max_height);
@@ -270,11 +270,11 @@ spriteset_load(const char* filename)
 		image_index = 0;
 		atlas_lock(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (file_read(&dir_v2, sizeof(struct rss_dir_v2), 1, file) != 1)
+			if (file_read(file, &dir_v2, 1, sizeof(struct rss_dir_v2)) != 1)
 				goto on_error;
 			pose_name = lstr_cstr(((struct pose*)vector_get(spriteset->poses, i))->name);
 			for (j = 0; j < dir_v2.num_frames; ++j) {
-				if (file_read(&frame_v2, sizeof(struct rss_frame_v2), 1, file) != 1)
+				if (file_read(file, &frame_v2, 1, sizeof(struct rss_frame_v2)) != 1)
 					goto on_error;
 				image = atlas_load(atlas, file, image_index,
 					rss.frame_width != 0 ? rss.frame_width : frame_v2.width,
@@ -301,13 +301,13 @@ spriteset_load(const char* filename)
 		atlas_unlock(atlas);
 		atlas_free(atlas);
 		for (i = 0; i < rss.num_directions; ++i) {
-			if (file_read(&dir_v3, sizeof(struct rss_dir_v3), 1, file) != 1)
+			if (file_read(file, &dir_v3, 1, sizeof(struct rss_dir_v3)) != 1)
 				goto on_error;
 			if (!(name = read_lstring(file, true)))
 				goto on_error;
 			spriteset_add_pose(spriteset, lstr_cstr(name));
 			for (j = 0; j < dir_v3.num_frames; ++j) {
-				if (file_read(&frame_v3, sizeof(struct rss_frame_v3), 1, file) != 1)
+				if (file_read(file, &frame_v3, 1, sizeof(struct rss_frame_v3)) != 1)
 					goto on_error;
 				spriteset_add_frame(spriteset, lstr_cstr(name), frame_v3.image_idx, frame_v3.delay);
 			}
@@ -589,7 +589,7 @@ spriteset_save(const spriteset_t* it, const char* filename)
 	header.base_y2 = it->base.y2;
 	header.num_images = vector_len(it->images);
 	header.num_directions = vector_len(it->poses);
-	if (file_write(&header, sizeof(struct rss_header), 1, file) != 1)
+	if (file_write(file, &header, 1, sizeof(struct rss_header)) != 1)
 		goto on_error;
 
 	for (i = 0; i < vector_len(it->images); ++i) {
@@ -600,14 +600,14 @@ spriteset_save(const spriteset_t* it, const char* filename)
 	for (i = 0; i < vector_len(it->poses); ++i) {
 		pose = vector_get(it->poses, i);
 		pose_data.num_frames = vector_len(pose->frames);
-		if (file_write(&pose_data, sizeof(struct rss_dir_v3), 1, file) != 1)
+		if (file_write(file, &pose_data, 1, sizeof(struct rss_dir_v3)) != 1)
 			goto on_error;
 		write_lstring(file, pose->name, true);
 		for (j = 0; j < vector_len(pose->frames); ++j) {
 			frame = vector_get(pose->frames, j);
 			frame_data.image_idx = frame->image_idx;
 			frame_data.delay = frame->delay;
-			if (file_write(&frame_data, sizeof(struct rss_frame_v3), 1, file) != 1)
+			if (file_write(file, &frame_data, 1, sizeof(struct rss_frame_v3)) != 1)
 				goto on_error;
 		}
 	}

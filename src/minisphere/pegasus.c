@@ -1955,7 +1955,7 @@ js_FileStream_read(duk_context* ctx)
 		file_seek(file, 0, WHENCE_SET);
 	}
 	buffer = duk_push_fixed_buffer(ctx, num_bytes);
-	num_bytes = (int)file_read(buffer, 1, num_bytes, file);
+	num_bytes = (int)file_read(file, buffer, num_bytes, 1);
 	if (argc < 1)  // reset file position after whole-file read
 		file_seek(file, pos, WHENCE_SET);
 	duk_push_buffer_object(ctx, -1, 0, num_bytes, DUK_BUFOBJ_ARRAYBUFFER);
@@ -1976,8 +1976,8 @@ js_FileStream_write(duk_context* ctx)
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
 
-	if (file_write(data, 1, num_bytes, file) != num_bytes)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to write to file");
+	if (file_write(file, data, num_bytes, 1) != num_bytes)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write to file");
 	return 0;
 }
 

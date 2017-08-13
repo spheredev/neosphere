@@ -2279,7 +2279,7 @@ load_map(const char* filename)
 	if (!(file = file_open(g_game, filename, "rb")))
 		goto on_error;
 	map = calloc(1, sizeof(struct map));
-	if (file_read(&rmp, sizeof(struct rmp_header), 1, file) != 1)
+	if (file_read(file, &rmp, 1, sizeof(struct rmp_header)) != 1)
 		goto on_error;
 	if (memcmp(rmp.signature, ".rmp", 4) != 0) goto on_error;
 	if (rmp.num_strings != 3 && rmp.num_strings != 5 && rmp.num_strings < 9)
@@ -2303,7 +2303,7 @@ load_map(const char* filename)
 
 		// load layers
 		for (i = 0; i < rmp.num_layers; ++i) {
-			if (file_read(&layer_hdr, sizeof(struct rmp_layer_header), 1, file) != 1)
+			if (file_read(file, &layer_hdr, 1, sizeof(struct rmp_layer_header)) != 1)
 				goto on_error;
 			layer = &map->layers[i];
 			layer->is_parallax = (layer_hdr.flags & 2) != 0x0;
@@ -2327,7 +2327,7 @@ load_map(const char* filename)
 			num_tiles = layer_hdr.width * layer_hdr.height;
 			if ((tile_data = malloc(num_tiles * 2)) == NULL)
 				goto on_error;
-			if (file_read(tile_data, 2, num_tiles, file) != num_tiles)
+			if (file_read(file, tile_data, num_tiles, 2) != num_tiles)
 				goto on_error;
 			for (j = 0; j < num_tiles; ++j)
 				layer->tilemap[j].tile_index = tile_data[j];
@@ -2346,7 +2346,7 @@ load_map(const char* filename)
 		// load entities
 		map->num_persons = 0;
 		for (i = 0; i < rmp.num_entities; ++i) {
-			if (file_read(&entity_hdr, sizeof(struct rmp_entity_header), 1, file) != 1)
+			if (file_read(file, &entity_hdr, 1, sizeof(struct rmp_entity_header)) != 1)
 				goto on_error;
 			if (entity_hdr.z < 0 || entity_hdr.z >= rmp.num_layers)
 				entity_hdr.z = 0;
@@ -2355,10 +2355,13 @@ load_map(const char* filename)
 				++map->num_persons;
 				person = &map->persons[map->num_persons - 1];
 				memset(person, 0, sizeof(struct map_person));
-				if (!(person->name = read_lstring(file, true))) goto on_error;
-				if (!(person->spriteset = read_lstring(file, true))) goto on_error;
+				if (!(person->name = read_lstring(file, true)))
+					goto on_error;
+				if (!(person->spriteset = read_lstring(file, true)))
+					goto on_error;
 				person->x = entity_hdr.x; person->y = entity_hdr.y; person->z = entity_hdr.z;
-				if (file_read(&count, 2, 1, file) != 1 || count < 5) goto on_error;
+				if (file_read(file, &count, 1, 2) != 1 || count < 5)
+					goto on_error;
 				person->create_script = read_lstring(file, false);
 				person->destroy_script = read_lstring(file, false);
 				person->touch_script = read_lstring(file, false);
@@ -2386,7 +2389,7 @@ load_map(const char* filename)
 
 		// load zones
 		for (i = 0; i < rmp.num_zones; ++i) {
-			if (file_read(&zone_hdr, sizeof(struct rmp_zone_header), 1, file) != 1)
+			if (file_read(file, &zone_hdr, 1, sizeof(struct rmp_zone_header)) != 1)
 				goto on_error;
 			if ((script = read_lstring(file, false)) == NULL) goto on_error;
 			if (zone_hdr.layer < 0 || zone_hdr.layer >= rmp.num_layers)

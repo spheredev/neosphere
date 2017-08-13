@@ -7375,33 +7375,36 @@ js_RawFile_getSize(duk_context* ctx)
 static duk_ret_t
 js_RawFile_read(duk_context* ctx)
 {
-	int n_args = duk_get_top(ctx);
-	long num_bytes = n_args >= 1 ? duk_to_int(ctx, 0) : 0;
-
 	bytearray_t* array;
 	file_t*      file;
-	long         pos;
+	int          num_args;
+	long long    num_bytes = 0;
+	long long    pos;
 	void*        read_buffer;
 
+	num_args = duk_get_top(ctx);
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssRawFile");
-	duk_pop(ctx);
+	if (num_args >= 1)
+		num_bytes = duk_to_int(ctx, 0);
+
 	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file was closed");
-	if (n_args < 1) {  // if no arguments, read entire file back to front
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file is already closed");
+
+	if (num_args < 1) {  // if no arguments, read entire file back to front
 		pos = file_position(file);
 		num_bytes = (file_seek(file, 0, WHENCE_END), file_position(file));
 		file_seek(file, 0, WHENCE_SET);
 	}
 	if (num_bytes <= 0 || num_bytes > INT_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "read size out of range (%u)", num_bytes);
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
 	if (!(read_buffer = malloc(num_bytes)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to allocate buffer for file read");
-	num_bytes = (long)file_read(read_buffer, 1, num_bytes, file);
-	if (n_args < 1)  // reset file position after whole-file read
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read from file");
+	num_bytes = (long)file_read(file, read_buffer, num_bytes, 1);
+	if (num_args < 1)  // reset file position after whole-file read
 		file_seek(file, pos, WHENCE_SET);
 	if (!(array = bytearray_from_buffer(read_buffer, (int)num_bytes)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create byte array");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read from file");
 	duk_push_sphere_bytearray(ctx, array);
 	return 1;
 }
@@ -7409,15 +7412,16 @@ js_RawFile_read(duk_context* ctx)
 static duk_ret_t
 js_RawFile_setPosition(duk_context* ctx)
 {
-	int new_pos = duk_to_int(ctx, 0);
-
-	file_t* file;
+	file_t*   file;
+	long long new_pos;
 
 	duk_push_this(ctx);
 	file = duk_require_class_obj(ctx, -1, "ssRawFile");
-	duk_pop(ctx);
+	new_pos = duk_to_int(ctx, 0);
+
 	if (file == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "RawFile:position: file was closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file is already closed");
+
 	if (!file_seek(file, new_pos, WHENCE_SET))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "RawFile:position: Failed to set read/write position");
 	return 0;
@@ -7453,8 +7457,8 @@ js_RawFile_write(duk_context* ctx)
 	else {
 		data = duk_require_buffer_data(ctx, 0, &write_size);
 	}
-	if (file_write(data, 1, write_size, file) != write_size)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "error writing to file");
+	if (file_write(file, data, write_size, 1) != write_size)
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write to file");
 	return 0;
 }
 

@@ -80,7 +80,7 @@ winstyle_load(const char* filename)
 		goto on_error;
 	if ((winstyle = calloc(1, sizeof(windowstyle_t))) == NULL)
 		goto on_error;
-	if (file_read(&rws, sizeof(struct rws_header), 1, file) != 1)
+	if (file_read(file, &rws, 1, sizeof(struct rws_header)) != 1)
 		goto on_error;
 	if (memcmp(rws.signature, ".rws", 4) != 0)
 		goto on_error;
@@ -94,7 +94,7 @@ winstyle_load(const char* filename)
 		break;
 	case 2:
 		for (i = 0; i < 9; ++i) {
-			if (file_read(&w, 2, 1, file) != 1 || file_read(&h, 2, 1, file) != 1)
+			if (file_read(file, &w, 1, 2) != 1 || file_read(file, &h, 1, 2) != 1)
 				goto on_error;
 			if (!(image = image_read(file, w, h)))
 				goto on_error;
@@ -111,7 +111,7 @@ winstyle_load(const char* filename)
 	return winstyle_ref(winstyle);
 
 on_error:
-	if (file != NULL) file_close(file);
+	file_close(file);
 	if (winstyle != NULL) {
 		for (i = 0; i < 9; ++i)
 			image_unref(winstyle->images[i]);

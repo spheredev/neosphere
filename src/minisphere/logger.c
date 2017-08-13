@@ -68,7 +68,7 @@ logger_new(const char* filename)
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_newf("LOG OPENED: %s\n", timestamp);
-	file_puts(lstr_cstr(log_entry), logger->file);
+	file_puts(logger->file, lstr_cstr(log_entry));
 	lstr_free(log_entry);
 
 	logger->id = s_next_logger_id++;
@@ -100,7 +100,7 @@ logger_unref(logger_t* logger)
 	console_log(3, "disposing logger #%u no longer in use", logger->id);
 	time(&now); strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S", localtime(&now));
 	log_entry = lstr_newf("LOG CLOSED: %s\n\n", timestamp);
-	file_puts(lstr_cstr(log_entry), logger->file);
+	file_puts(logger->file, lstr_cstr(log_entry));
 	lstr_free(log_entry);
 	file_close(logger->file);
 	free(logger);
@@ -147,13 +147,13 @@ logger_write(logger_t* logger, const char* prefix, const char* text)
 
 	time(&now);
 	strftime(timestamp, 100, "%a %Y %b %d %H:%M:%S -- ", localtime(&now));
-	file_puts(timestamp, logger->file);
+	file_puts(logger->file, timestamp);
 	for (i = 0; i < logger->num_blocks; ++i)
-		file_putc('\t', logger->file);
+		file_puts(logger->file, "\t");
 	if (prefix != NULL) {
-		file_puts(prefix, logger->file);
-		file_putc(' ', logger->file);
+		file_puts(logger->file, prefix);
+		file_puts(logger->file, " ");
 	}
-	file_puts(text, logger->file);
-	file_putc('\n', logger->file);
+	file_puts(logger->file, text);
+	file_puts(logger->file, "\n");
 }

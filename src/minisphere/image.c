@@ -203,7 +203,7 @@ image_read(file_t* file, int width, int height)
 	line_size = width * 4;
 	for (i_y = 0; i_y < height; ++i_y) {
 		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
-		if (file_read(line_ptr, line_size, 1, file) != 1)
+		if (file_read(file, line_ptr, 1, line_size) != 1)
 			goto on_error;
 	}
 	al_unlock_bitmap(image->bitmap);
@@ -232,7 +232,7 @@ image_read_slice(file_t* file, image_t* parent, int x, int y, int width, int hei
 	long          file_pos;
 	image_t*      image;
 	image_lock_t* lock = NULL;
-	color_t       *pline;
+	color_t       *p_line;
 
 	int i_y;
 
@@ -242,8 +242,8 @@ image_read_slice(file_t* file, image_t* parent, int x, int y, int width, int hei
 	if (!(lock = image_lock(parent)))
 		goto on_error;
 	for (i_y = 0; i_y < height; ++i_y) {
-		pline = lock->pixels + x + (i_y + y) * lock->pitch;
-		if (file_read(pline, width * 4, 1, file) != 1)
+		p_line = lock->pixels + x + (i_y + y) * lock->pitch;
+		if (file_read(file, p_line, 1, width * 4) != 1)
 			goto on_error;
 	}
 	image_unlock(parent, lock);
@@ -743,7 +743,7 @@ image_write(image_t* it, file_t* file)
 	line_size = it->width * 4;
 	for (i_y = 0; i_y < it->height; ++i_y) {
 		line_ptr = lock->pixels + i_y * lock->pitch;
-		if (file_write(line_ptr, line_size, 1, file) != 1)
+		if (file_write(file, line_ptr, 1, line_size) != 1)
 			goto on_error;
 	}
 	image_unlock(it, lock);

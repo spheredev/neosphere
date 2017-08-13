@@ -114,7 +114,7 @@ font_load(const char* filename)
 		goto on_error;
 	if (!(font = calloc(1, sizeof(font_t))))
 		goto on_error;
-	if (file_read(&rfn, sizeof(struct rfn_header), 1, file) != 1)
+	if (file_read(file, &rfn, 1, sizeof(struct rfn_header)) != 1)
 		goto on_error;
 	pixel_size = (rfn.version == 1) ? 1 : 4;
 	if (!(font->glyphs = calloc(rfn.num_chars, sizeof(struct font_glyph))))
@@ -124,7 +124,7 @@ font_load(const char* filename)
 	glyph_start = file_position(file);
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
-		if (file_read(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
+		if (file_read(file, &glyph_hdr, 1, sizeof(struct rfn_glyph_header)) != 1)
 			goto on_error;
 		file_seek(file, glyph_hdr.width * glyph_hdr.height * pixel_size, WHENCE_CUR);
 		max_x = fmax(glyph_hdr.width, max_x);
@@ -150,7 +150,7 @@ font_load(const char* filename)
 	if (!(lock = image_lock(atlas))) goto on_error;
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
-		if (file_read(&glyph_hdr, sizeof(struct rfn_glyph_header), 1, file) != 1)
+		if (file_read(file, &glyph_hdr, 1, sizeof(struct rfn_glyph_header)) != 1)
 			goto on_error;
 		atlas_x = i % n_glyphs_per_row * max_x;
 		atlas_y = i / n_glyphs_per_row * max_y;
@@ -159,7 +159,7 @@ font_load(const char* filename)
 			if (!(glyph->image = image_new_slice(atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
 				goto on_error;
 			grayscale = malloc(glyph_hdr.width * glyph_hdr.height);
-			if (file_read(grayscale, glyph_hdr.width * glyph_hdr.height, 1, file) != 1)
+			if (file_read(file, grayscale, 1, glyph_hdr.width * glyph_hdr.height) != 1)
 				goto on_error;
 			psrc = grayscale;
 			pdest = lock->pixels + atlas_x + atlas_y * lock->pitch;

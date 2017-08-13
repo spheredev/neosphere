@@ -60,7 +60,7 @@ struct animation
 	unsigned int  w, h;
 };
 
-static unsigned int s_next_animation_id = 0;
+static unsigned int s_next_animation_id = 1;
 
 animation_t*
 animation_new(const char* path)
@@ -83,7 +83,8 @@ animation_new(const char* path)
 	mng_setcb_settimer(anim->stream, mng_cb_settimer);
 	if (!(anim->file = file_open(g_game, path, "rb")))
 		goto on_error;
-	if (mng_read(anim->stream) != MNG_NOERROR) goto on_error;
+	if (mng_read(anim->stream) != MNG_NOERROR)
+		goto on_error;
 	anim->id = s_next_animation_id++;
 
 	if (!animation_update(anim))
@@ -92,13 +93,14 @@ animation_new(const char* path)
 	return animation_ref(anim);
 
 on_error:
-	console_log(2, "failed to load animation #%u", s_next_animation_id++);
+	console_log(2, "couldn't load animation #%u", s_next_animation_id++);
 	if (anim != NULL) {
-		if (anim->stream != NULL) mng_cleanup(&anim->stream);
-		if (anim->file != NULL) file_close(anim->file);
-		if (anim->frame != NULL) {
+		if (anim->stream != NULL)
+			mng_cleanup(&anim->stream);
+		if (anim->file != NULL)
+			file_close(anim->file);
+		if (anim->frame != NULL)
 			image_unref(anim->frame);
-		}
 		free(anim);
 	}
 	return NULL;
@@ -196,8 +198,9 @@ mng_cb_closestream(mng_handle stream)
 static mng_ptr
 mng_cb_getcanvasline(mng_handle stream, mng_uint32 line_num)
 {
-	animation_t* anim = mng_get_userdata(stream);
-
+	animation_t* anim;
+	
+	anim = mng_get_userdata(stream);
 	return anim->lock->pixels + line_num * anim->lock->pitch;
 }
 
@@ -210,9 +213,11 @@ mng_cb_gettickcount(mng_handle stream)
 static mng_bool
 mng_cb_processheader(mng_handle stream, mng_uint32 width, mng_uint32 height)
 {
-	animation_t* anim = mng_get_userdata(stream);
-
-	anim->w = width; anim->h = height;
+	animation_t* anim;
+	
+	anim = mng_get_userdata(stream);
+	anim->w = width;
+	anim->h = height;
 	image_unref(anim->frame);
 	if (!(anim->frame = image_new(anim->w, anim->h)))
 		goto on_error;
@@ -225,11 +230,14 @@ on_error:
 }
 
 static mng_bool
-mng_cb_readdata(mng_handle stream, mng_ptr buf, mng_uint32 n_bytes, mng_uint32p p_readsize)
+mng_cb_readdata(mng_handle stream, mng_ptr buf, mng_uint32 n_bytes, mng_uint32p out_readsize)
 {
-	animation_t* anim = mng_get_userdata(stream);
-
-	*p_readsize = (mng_uint32)file_read(buf, 1, n_bytes, anim->file);
+	animation_t* anim;
+	mng_uint32   read_size;
+	
+	anim = mng_get_userdata(stream);
+	read_size = (mng_uint32)file_read(anim->file, buf, n_bytes, 1);
+	*out_readsize = read_size;
 	return MNG_TRUE;
 }
 
@@ -242,8 +250,9 @@ mng_cb_refresh(mng_handle stream, mng_uint32 x, mng_uint32 y, mng_uint32 width, 
 static mng_bool
 mng_cb_settimer(mng_handle stream, mng_uint32 msecs)
 {
-	animation_t* anim = mng_get_userdata(stream);
-
+	animation_t* anim;
+	
+	anim = mng_get_userdata(stream);
 	anim->delay = msecs;
 	return MNG_TRUE;
 }

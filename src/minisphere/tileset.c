@@ -130,7 +130,7 @@ tileset_read(file_t* file)
 	if (file == NULL) goto on_error;
 	file_pos = file_position(file);
 	if ((tileset = calloc(1, sizeof(tileset_t))) == NULL) goto on_error;
-	if (file_read(&rts, sizeof(struct rts_header), 1, file) != 1)
+	if (file_read(file, &rts, 1, sizeof(struct rts_header)) != 1)
 		goto on_error;
 	if (memcmp(rts.signature, ".rts", 4) != 0 || rts.version < 1 || rts.version > 1)
 		goto on_error;
@@ -149,7 +149,7 @@ tileset_read(file_t* file)
 
 	// read in tile headers and obstruction maps
 	for (i = 0; i < rts.num_tiles; ++i) {
-		if (file_read(&tilehdr, sizeof(struct rts_tile_header), 1, file) != 1)
+		if (file_read(file, &tilehdr, 1, sizeof(struct rts_tile_header)) != 1)
 			goto on_error;
 		tiles[i].name = read_lstring_raw(file, tilehdr.name_length, true);
 		tiles[i].next_index = tilehdr.animated ? tilehdr.next_tile : i;

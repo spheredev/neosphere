@@ -129,7 +129,8 @@ read_lstring(file_t* file, bool trim_null)
 	uint16_t length;
 
 	file_pos = file_position(file);
-	if (file_read(&length, 2, 1, file) != 1) goto on_error;
+	if (file_read(file, &length, 1, 2) != 1)
+		goto on_error;
 	return read_lstring_raw(file, length, trim_null);
 
 on_error:
@@ -145,8 +146,10 @@ read_lstring_raw(file_t* file, size_t length, bool trim_null)
 	lstring_t* string;
 
 	file_pos = file_position(file);
-	if (!(buffer = malloc(length + 1))) goto on_error;
-	if (file_read(buffer, 1, length, file) != length) goto on_error;
+	if (!(buffer = malloc(length + 1)))
+		goto on_error;
+	if (file_read(file, buffer, length, 1) != length)
+		goto on_error;
 	buffer[length] = '\0';
 	if (trim_null)
 		length = strchr(buffer, '\0') - buffer;
@@ -168,9 +171,9 @@ write_lstring(file_t* file, const lstring_t* string, bool include_nul)
 	length = (uint16_t)lstr_len(string);
 	if (include_nul)
 		++length;
-	if (file_write(&length, 2, 1, file) != 1)
+	if (file_write(file, &length, 1, 2) != 1)
 		return false;
-	if (file_write(lstr_cstr(string), length, 1, file) != 1)
+	if (file_write(file, lstr_cstr(string), 1, length) != 1)
 		return false;
 	return true;
 }
@@ -341,13 +344,13 @@ fread_rect16(file_t* file, rect_t* out_rect)
 	int16_t y1;
 	int16_t y2;
 
-	if (file_read(&x1, 2, 1, file) != 1)
+	if (file_read(file, &x1, 1, 2) != 1)
 		return false;
-	if (file_read(&y1, 2, 1, file) != 1)
+	if (file_read(file, &y1, 1, 2) != 1)
 		return false;
-	if (file_read(&x2, 2, 1, file) != 1)
+	if (file_read(file, &x2, 1, 2) != 1)
 		return false;
-	if (file_read(&y2, 2, 1, file) != 1)
+	if (file_read(file, &y2, 1, 2) != 1)
 		return false;
 	*out_rect = rect(x1, y1, x2, y2);
 	return true;
@@ -361,13 +364,13 @@ fread_rect32(file_t* file, rect_t* out_rect)
 	int32_t y1;
 	int32_t y2;
 
-	if (file_read(&x1, 4, 1, file) != 1)
+	if (file_read(file, &x1, 1, 4) != 1)
 		return false;
-	if (file_read(&y1, 4, 1, file) != 1)
+	if (file_read(file, &y1, 1, 4) != 1)
 		return false;
-	if (file_read(&x2, 4, 1, file) != 1)
+	if (file_read(file, &x2, 1, 4) != 1)
 		return false;
-	if (file_read(&y2, 4, 1, file) != 1)
+	if (file_read(file, &y2, 1, 4) != 1)
 		return false;
 	*out_rect = rect(x1, y1, x2, y2);
 	return true;
