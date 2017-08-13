@@ -150,7 +150,7 @@ game_open(const char* game_path)
 
 	// try to load the game manifest if one hasn't been synthesized already
 	if (game->name == NULL) {
-		if (sgm_text = game_read_file(game, "game.json", &sgm_size)) {
+		if (sgm_text = game_read_file(game, "@/game.json", &sgm_size)) {
 			console_log(1, "parsing JSON manifest for game #%u", s_next_game_id);
 			game->manifest = lstr_from_cp1252(sgm_text, sgm_size);
 			duk_push_pointer(g_duk, game);
@@ -165,7 +165,7 @@ game_open(const char* game_path)
 			free(sgm_text);
 			sgm_text = NULL;
 		}
-		else if (sgm_file = kev_open(game, "game.sgm", false)) {
+		else if (sgm_file = kev_open(game, "@/game.sgm", false)) {
 			console_log(1, "parsing SGM manifest for game #%u", s_next_game_id);
 			game->version = 1;
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
