@@ -1,12 +1,18 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Fixes a bug in the internal audio streaming logic which corrupted the output
+  of SoundStreams with more than one channel and made them sound choppy.
+
+
 v4.8.1 - August 14, 2017
 ------------------------
 
 * Adds `DirectoryStream#dispose()` to the API, for closing an open directory.
 * Renames `SoundStream#buffer()` to `SoundStream#write()`.
-
 
 v4.8.0 - August 12, 2017
 ------------------------

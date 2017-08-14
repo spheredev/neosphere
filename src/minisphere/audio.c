@@ -642,7 +642,7 @@ stream_new(int frequency, int bits, int channels)
 		: channels == 6 ? ALLEGRO_CHANNEL_CONF_6_1
 		: channels == 7 ? ALLEGRO_CHANNEL_CONF_7_1
 		: ALLEGRO_CHANNEL_CONF_1;
-	if (!(stream->ptr = al_create_audio_stream(4, 1024, frequency, depth_flag, conf)))
+	if (!(stream->ptr = al_create_audio_stream(8, 1024, frequency, depth_flag, conf)))
 		goto on_error;
 	al_set_audio_stream_playing(stream->ptr, false);
 	al_register_event_source(g_events, al_get_audio_stream_event_source(stream->ptr));
@@ -653,7 +653,7 @@ stream_new(int frequency, int bits, int channels)
 		: bits == 24 ? 3
 		: bits == 32 ? 4
 		: 0;
-	stream->fragment_size = 1024 * sample_size;
+	stream->fragment_size = 1024 * sample_size * al_get_channel_count(conf);
 	stream->buffer_size = frequency * sample_size;  // 1 second
 	stream->buffer = malloc(stream->buffer_size);
 
@@ -662,7 +662,7 @@ stream_new(int frequency, int bits, int channels)
 	return stream_ref(stream);
 
 on_error:
-	console_log(2, "failed to create stream #%u", s_next_stream_id);
+	console_log(2, "couldn't create stream #%u", s_next_stream_id++);
 	free(stream);
 	return NULL;
 }
@@ -807,7 +807,8 @@ update_stream(stream_t* stream)
 {
 	void*  buffer;
 
-	if (stream->feed_size <= stream->fragment_size) return;
+	if (stream->feed_size < stream->fragment_size)
+		return;
 	if (!(buffer = al_get_audio_stream_fragment(stream->ptr)))
 		return;
 	memcpy(buffer, stream->buffer, stream->fragment_size);
