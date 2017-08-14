@@ -41,7 +41,7 @@ duk_int_t   duk_json_pdecode      (duk_context* ctx);
 void        duk_push_lstring_t    (duk_context* ctx, const lstring_t* string);
 void*       duk_ref_heapptr       (duk_context* ctx, duk_idx_t idx);
 lstring_t*  duk_require_lstring_t (duk_context* ctx, duk_idx_t index);
-const char* duk_require_path      (duk_context* ctx, duk_idx_t index, const char* origin_name, bool legacy, bool need_write);
+const char* duk_require_pathname  (duk_context* ctx, duk_idx_t index, const char* origin_name, bool legacy_mode, bool need_write);
 void        duk_unref_heapptr     (duk_context* ctx, void* heapptr);
 bool        fread_rect16          (file_t* file, rect_t* out_rect);
 bool        fread_rect32          (file_t* file, rect_t* out_rect);

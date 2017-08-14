@@ -265,9 +265,9 @@ duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 }
 
 const char*
-duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, bool legacy, bool need_write)
+duk_require_pathname(duk_context* ctx, duk_idx_t index, const char* origin_name, bool legacy_mode, bool need_write)
 {
-	// note: for compatibility with Sphere 1.x, if `legacy` is true, then the game package
+	// note: for compatibility with Sphere 1.x, if `legacy_mode` is true, then the game package
 	//       is treated as writable.
 
 	static int     s_index = 0;
@@ -279,7 +279,7 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 	path_t*     path;
 
 	pathname = duk_require_string(ctx, index);
-	path = game_build_path(g_game, pathname, origin_name, legacy);
+	path = game_build_path(g_game, pathname, origin_name, legacy_mode);
 	prefix = path_hop(path, 0);  // note: game_build_path() *always* prefixes
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
@@ -287,7 +287,7 @@ duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name, boo
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
 	if (strcmp(prefix, "~") == 0 && game_save_id(g_game) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no save ID defined");
-	if (need_write && !legacy && strcmp(prefix, "~") != 0)
+	if (need_write && !legacy_mode && strcmp(prefix, "~") != 0)
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "directory is read-only");
 	if (need_write && strcmp(prefix, "#") == 0)  // `system/` is always read-only
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "directory is read-only");

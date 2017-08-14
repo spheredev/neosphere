@@ -1486,7 +1486,7 @@ js_new_DirectoryStream(duk_context* ctx)
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
-	pathname = duk_require_path(ctx, 0, NULL, false, false);
+	pathname = duk_require_pathname(ctx, 0, NULL, false, false);
 
 	if (!(stream = directory_open(g_game, pathname)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't open directory");
@@ -1498,10 +1498,10 @@ js_new_DirectoryStream(duk_context* ctx)
 static duk_ret_t
 js_DirectoryStream_finalize(duk_context* ctx)
 {
-	directory_t* stream;
+	directory_t* directory;
 
-	stream = duk_require_class_obj(ctx, 0, "DirectoryStream");
-	directory_close(stream);
+	directory = duk_require_class_obj(ctx, 0, "DirectoryStream");
+	directory_close(directory);
 	return 0;
 }
 
@@ -1525,7 +1525,7 @@ js_DirectoryStream_get_fileCount(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	duk_push_int(ctx, directory_num_files(directory));
 	return 1;
@@ -1538,7 +1538,7 @@ js_DirectoryStream_get_fileName(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	duk_push_string(ctx, directory_pathname(directory));
 	return 1;
@@ -1551,7 +1551,7 @@ js_DirectoryStream_get_position(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	duk_push_int(ctx, directory_position(directory));
 	return 1;
@@ -1565,7 +1565,7 @@ js_DirectoryStream_set_position(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 	position = duk_require_int(ctx, 0);
 
 	if (!directory_seek(directory, position))
@@ -1581,7 +1581,7 @@ js_DirectoryStream_next(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	entry_path = directory_next(directory);
 	duk_push_object(ctx);
@@ -1614,7 +1614,7 @@ js_DirectoryStream_rewind(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(directory = duk_require_class_obj(ctx, -1, "DirectoryStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory already closed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	directory_rewind(directory);
 	return 0;
@@ -1709,46 +1709,46 @@ js_Dispatch_onUpdate(duk_context* ctx)
 static duk_ret_t
 js_FS_createDirectory(duk_context* ctx)
 {
-	const char* name;
+	const char* pathname;
 
-	name = duk_require_path(ctx, 0, NULL, false, true);
+	pathname = duk_require_pathname(ctx, 0, NULL, false, true);
 
-	if (!game_mkdir(g_game, name))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory creation failed");
+	if (!game_mkdir(g_game, pathname))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create directory '%s'", pathname);
 	return 0;
 }
 
 static duk_ret_t
 js_FS_deleteFile(duk_context* ctx)
 {
-	const char* filename;
+	const char* pathname;
 
-	filename = duk_require_path(ctx, 0, NULL, false, true);
+	pathname = duk_require_pathname(ctx, 0, NULL, false, true);
 
-	if (!game_unlink(g_game, filename))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file", filename);
+	if (!game_unlink(g_game, pathname))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file '%s'", pathname);
 	return 0;
 }
 
 static duk_ret_t
 js_FS_directoryExists(duk_context* ctx)
 {
-	const char* dirname;
+	const char* pathname;
 
-	dirname = duk_require_path(ctx, 0, NULL, false, false);
+	pathname = duk_require_pathname(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, game_dir_exists(g_game, dirname));
+	duk_push_boolean(ctx, game_dir_exists(g_game, pathname));
 	return 1;
 }
 
 static duk_ret_t
 js_FS_fileExists(duk_context* ctx)
 {
-	const char* filename;
+	const char* pathname;
 
-	filename = duk_require_path(ctx, 0, NULL, false, false);
+	pathname = duk_require_pathname(ctx, 0, NULL, false, false);
 
-	duk_push_boolean(ctx, game_file_exists(g_game, filename));
+	duk_push_boolean(ctx, game_file_exists(g_game, pathname));
 	return 1;
 }
 
@@ -1760,16 +1760,16 @@ js_FS_fullPath(duk_context* ctx)
 	// it's therefore something of a hack, and in the future it'd be better to build
 	// this functionality into `game_build_path()`.
 
-	const char* origin_pathname = NULL;
-	const char* filename;
 	int         num_args;
+	const char* origin_pathname = NULL;
+	const char* pathname;
 
 	num_args = duk_get_top(ctx);
 	if (num_args >= 2)
-		origin_pathname = duk_require_path(ctx, 1, NULL, false, false);
-	filename = duk_require_path(ctx, 0, origin_pathname, false, false);
+		origin_pathname = duk_require_pathname(ctx, 1, NULL, false, false);
+	pathname = duk_require_pathname(ctx, 0, origin_pathname, false, false);
 
-	duk_push_string(ctx, filename);
+	duk_push_string(ctx, pathname);
 	return 1;
 }
 
@@ -1779,12 +1779,12 @@ js_FS_readFile(duk_context* ctx)
 	lstring_t*  content;
 	void*       file_data;
 	size_t      file_size;
-	const char* filename;
+	const char* pathname;
 
-	filename = duk_require_path(ctx, 0, NULL, false, false);
+	pathname = duk_require_pathname(ctx, 0, NULL, false, false);
 
-	if (!(file_data = game_read_file(g_game, filename, &file_size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
+	if (!(file_data = game_read_file(g_game, pathname, &file_size)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", pathname);
 	content = lstr_from_cp1252(file_data, file_size);
 	duk_push_lstring_t(ctx, content);
 	return 1;
@@ -1793,26 +1793,26 @@ js_FS_readFile(duk_context* ctx)
 static duk_ret_t
 js_FS_removeDirectory(duk_context* ctx)
 {
-	const char* name;
+	const char* pathname;
 
-	name = duk_require_path(ctx, 0, NULL, false, true);
+	pathname = duk_require_pathname(ctx, 0, NULL, false, true);
 
-	if (!game_rmdir(g_game, name))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed", name);
+	if (!game_rmdir(g_game, pathname))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't remove directory '%s'", pathname);
 	return 0;
 }
 
 static duk_ret_t
 js_FS_rename(duk_context* ctx)
 {
-	const char* name1;
-	const char* name2;
+	const char* new_pathname;
+	const char* old_pathname;
 
-	name1 = duk_require_path(ctx, 0, NULL, false, true);
-	name2 = duk_require_path(ctx, 1, NULL, false, true);
+	old_pathname = duk_require_pathname(ctx, 0, NULL, false, true);
+	new_pathname = duk_require_pathname(ctx, 1, NULL, false, true);
 
-	if (!game_rename(g_game, name1, name2))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
+	if (!game_rename(g_game, old_pathname, new_pathname))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't rename file '%s'", old_pathname);
 	return 0;
 }
 
@@ -1821,16 +1821,16 @@ js_FS_writeFile(duk_context* ctx)
 {
 	const void* file_data;
 	size_t      file_size;
-	const char* filename;
+	const char* pathname;
 	lstring_t*  text = NULL;
 
-	filename = duk_require_path(ctx, 0, NULL, false, true);
+	pathname = duk_require_pathname(ctx, 0, NULL, false, true);
 	text = duk_require_lstring_t(ctx, 1);
 
 	file_data = lstr_cstr(text);
 	file_size = lstr_len(text);
-	if (!game_write_file(g_game, filename, file_data, file_size))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
+	if (!game_write_file(g_game, pathname, file_data, file_size))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", pathname);
 	lstr_free(text);
 	return 0;
 }
@@ -1840,8 +1840,8 @@ js_new_FileStream(duk_context* ctx)
 {
 	file_t*      file;
 	enum file_op file_op;
-	const char*  filename;
 	const char*  mode;
+	const char*  pathname;
 
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
@@ -1851,15 +1851,15 @@ js_new_FileStream(duk_context* ctx)
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
 
-	filename = duk_require_path(ctx, 0, NULL, false, file_op != FILE_OP_READ);
-	if (file_op == FILE_OP_UPDATE && !game_file_exists(g_game, filename))
+	pathname = duk_require_pathname(ctx, 0, NULL, false, file_op != FILE_OP_READ);
+	if (file_op == FILE_OP_UPDATE && !game_file_exists(g_game, pathname))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
 		: file_op == FILE_OP_WRITE ? "w+b"
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
-	if (!(file = file_open(g_game, filename, mode)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to open file");
+	if (!(file = file_open(g_game, pathname, mode)))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't open file '%s'", pathname);
 	if (file_op == FILE_OP_UPDATE)
 		file_seek(file, 0, WHENCE_END);
 	duk_push_this(ctx);
@@ -1885,7 +1885,7 @@ js_FileStream_get_fileName(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	duk_push_string(ctx, file_pathname(file));
 	return 1;
@@ -1899,7 +1899,7 @@ js_FileStream_get_fileSize(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	file_pos = file_position(file);
 	file_seek(file, 0, WHENCE_END);
@@ -1915,7 +1915,7 @@ js_FileStream_get_position(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	duk_push_number(ctx, file_position(file));
 	return 1;
@@ -1929,7 +1929,7 @@ js_FileStream_set_position(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	new_pos = duk_require_number(ctx, 0);
 	file_seek(file, new_pos, WHENCE_SET);
@@ -1967,7 +1967,7 @@ js_FileStream_read(duk_context* ctx)
 	argc = duk_get_top(ctx);
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 	num_bytes = argc >= 1 ? duk_require_int(ctx, 0) : 0;
 	if (num_bytes < 0)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
@@ -1997,7 +1997,7 @@ js_FileStream_write(duk_context* ctx)
 
 	duk_push_this(ctx);
 	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "object is disposed");
 
 	if (file_write(file, data, num_bytes, 1) != num_bytes)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write to file");
@@ -2030,7 +2030,7 @@ js_new_Font(duk_context* ctx)
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
-	filename = duk_require_path(ctx, 0, NULL, false, false);
+	filename = duk_require_pathname(ctx, 0, NULL, false, false);
 
 	if (!(font = font_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load font `%s`", filename);
@@ -3146,7 +3146,7 @@ js_new_Sample(duk_context* ctx)
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
-	filename = duk_require_path(ctx, 0, NULL, false, false);
+	filename = duk_require_pathname(ctx, 0, NULL, false, false);
 
 	if (!(sample = sample_new(filename, true)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load sample `%s`", filename);
@@ -3331,8 +3331,8 @@ js_new_Shader(duk_context* ctx)
 
 	duk_get_prop_string(ctx, 0, "vertex");
 	duk_get_prop_string(ctx, 0, "fragment");
-	vs_filename = duk_require_path(ctx, -2, NULL, false, false);
-	game_filename = duk_require_path(ctx, -1, NULL, false, false);
+	vs_filename = duk_require_pathname(ctx, -2, NULL, false, false);
+	game_filename = duk_require_pathname(ctx, -1, NULL, false, false);
 	duk_pop_2(ctx);
 	if (!(shader = shader_new(vs_filename, game_filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't compile shader program");
@@ -3687,7 +3687,7 @@ js_new_Sound(duk_context* ctx)
 	if (!duk_is_constructor_call(ctx))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
 
-	filename = duk_require_path(ctx, 0, NULL, false, false);
+	filename = duk_require_pathname(ctx, 0, NULL, false, false);
 
 	if (!(sound = sound_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load sound `%s`", filename);
@@ -4054,7 +4054,7 @@ js_new_Surface(duk_context* ctx)
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create surface");
 	}
 	else {
-		filename = duk_require_path(ctx, 0, NULL, false, false);
+		filename = duk_require_pathname(ctx, 0, NULL, false, false);
 		if (!(image = image_load(filename)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
 	}
@@ -4215,7 +4215,7 @@ js_new_Texture(duk_context* ctx)
 	}
 	else {
 		// create an Image by loading an image file
-		filename = duk_require_path(ctx, 0, NULL, false, false);
+		filename = duk_require_pathname(ctx, 0, NULL, false, false);
 		if (!(image = image_load(filename)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load image `%s`", filename);
 	}

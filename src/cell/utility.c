@@ -115,7 +115,7 @@ duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
 }
 
 const char*
-duk_require_path(duk_context* ctx, duk_idx_t index, const char* origin_name)
+duk_require_pathname(duk_context* ctx, duk_idx_t index, const char* origin_name)
 {
 	static int     s_index = 0;
 	static path_t* s_paths[10];

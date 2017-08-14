@@ -384,7 +384,7 @@ kb_load_keymap(void)
 
 	int i, j;
 
-	filename = g_game != NULL ? "keymap.kev" : "#/miniSphere.conf";
+	filename = g_game != NULL ? "@/keymap.conf" : "#/miniSphere.conf";
 	if (!(file = kev_open(g_game, filename, true)))
 		return;
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
@@ -417,7 +417,7 @@ kb_save_keymap(void)
 	if (!s_has_keymap_changed || g_game_path == NULL)
 		return;
 	console_log(1, "saving player key mappings");
-	file = kev_open(g_game, "keymap.kev", true);
+	file = kev_open(g_game, "@/keymap.conf", true);
 	for (i = 0; i < 4; ++i) for (j = 0; j < PLAYER_KEY_MAX; ++j) {
 		key_name = j == PLAYER_KEY_UP ? "UP"
 			: j == PLAYER_KEY_DOWN ? "DOWN"

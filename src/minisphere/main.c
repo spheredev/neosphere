@@ -174,12 +174,14 @@ main(int argc, char* argv[])
 	console_log(1, "searching for a game to launch");
 	games_path = path_rebase(path_new("miniSphere/Games/"), home_path());
 	path_mkdir(games_path);
-	if (g_game_path == NULL)
+	if (g_game_path == NULL) {
 		// no game specified on command line, see if we have a startup game
 		find_startup_game(&g_game_path);
-	if (g_game_path != NULL)
+	}
+	if (g_game_path != NULL) {
 		// user provided a path or startup game was found, attempt to load it
 		g_game = game_open(path_cstr(g_game_path));
+	}
 	else {
 		// no game path provided and no startup game, let user find one
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", ENGINE_NAME);

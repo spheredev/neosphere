@@ -1863,7 +1863,7 @@ js_ChangeMap(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "maps", true, false);
+	filename = duk_require_pathname(ctx, 0, "maps", true, false);
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
@@ -1981,7 +1981,7 @@ js_CreateDirectory(duk_context* ctx)
 {
 	const char* name;
 
-	name = duk_require_path(ctx, 0, "save", true, true);
+	name = duk_require_pathname(ctx, 0, "save", true, true);
 
 	if (!game_mkdir(g_game, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory `%s`", name);
@@ -2006,7 +2006,7 @@ js_CreatePerson(duk_context* ctx)
 		spriteset = duk_require_sphere_spriteset(ctx, 1);
 	}
 	else {
-		filename = duk_require_path(ctx, 1, "spritesets", true, false);
+		filename = duk_require_pathname(ctx, 1, "spritesets", true, false);
 		if (!(spriteset = spriteset_load(filename)))
 			duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't load spriteset `%s`", filename);
 	}
@@ -2221,7 +2221,7 @@ js_DoesFileExist(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, NULL, true, false);
+	filename = duk_require_pathname(ctx, 0, NULL, true, false);
 
 	duk_push_boolean(ctx, game_file_exists(g_game, filename));
 	return 1;
@@ -2243,7 +2243,7 @@ js_EvaluateScript(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "scripts", true, false);
+	filename = duk_require_pathname(ctx, 0, "scripts", true, false);
 
 	if (!game_file_exists(g_game, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
@@ -2621,7 +2621,7 @@ js_GetDirectoryList(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	if (num_args >= 1)
-		dir_name = duk_require_path(ctx, 0, NULL, true, false);
+		dir_name = duk_require_pathname(ctx, 0, NULL, true, false);
 
 	duk_push_array(ctx);
 	if (!(dir = directory_open(g_game, dir_name)))
@@ -2647,7 +2647,7 @@ js_GetFileList(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	if (num_args >= 1)
-		dir_name = duk_require_path(ctx, 0, NULL, true, false);
+		dir_name = duk_require_pathname(ctx, 0, NULL, true, false);
 
 	duk_push_array(ctx);
 	if (!(dir = directory_open(g_game, dir_name)))
@@ -4179,7 +4179,7 @@ js_HashFromFile(duk_context* ctx)
 	size_t      file_size;
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "other", true, false);
+	filename = duk_require_pathname(ctx, 0, "other", true, false);
 
 	if (!(data = game_read_file(g_game, filename, &file_size)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file");
@@ -4539,7 +4539,7 @@ js_LoadAnimation(duk_context* ctx)
 	animation_t* anim;
 	const char*  filename;
 
-	filename = duk_require_path(ctx, 0, "animations", true, false);
+	filename = duk_require_pathname(ctx, 0, "animations", true, false);
 	if (!(anim = animation_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load animation `%s`", filename);
 	duk_push_class_obj(ctx, "ssAnimation", anim);
@@ -4552,7 +4552,7 @@ js_LoadFont(duk_context* ctx)
 	const char* filename;
 	font_t*     font;
 
-	filename = duk_require_path(ctx, 0, "fonts", true, false);
+	filename = duk_require_pathname(ctx, 0, "fonts", true, false);
 	if (!(font = font_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load font `%s`", filename);
 	duk_push_sphere_font(ctx, font);
@@ -4566,7 +4566,7 @@ js_LoadImage(duk_context* ctx)
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_path(ctx, 0, "images", true, false);
+	filename = duk_require_pathname(ctx, 0, "images", true, false);
 	if (!(image = image_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	duk_push_class_obj(ctx, "ssImage", image);
@@ -4579,7 +4579,7 @@ js_LoadSound(duk_context* ctx)
 	const char* filename;
 	sound_t*    sound;
 
-	filename = duk_require_path(ctx, 0, "sounds", true, false);
+	filename = duk_require_pathname(ctx, 0, "sounds", true, false);
 
 	if (!(sound = sound_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load sound `%s`", filename);
@@ -4596,7 +4596,7 @@ js_LoadSoundEffect(duk_context* ctx)
 	sample_t*   sample;
 
 	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "sounds", true, false);
+	filename = duk_require_pathname(ctx, 0, "sounds", true, false);
 	mode = num_args >= 2 ? duk_to_int(ctx, 1) : SE_SINGLE;
 
 	if (!(sample = sample_new(filename, mode == SE_MULTIPLE)))
@@ -4611,7 +4611,7 @@ js_LoadSpriteset(duk_context* ctx)
 	const char*  filename;
 	spriteset_t* spriteset;
 
-	filename = duk_require_path(ctx, 0, "spritesets", true, false);
+	filename = duk_require_pathname(ctx, 0, "spritesets", true, false);
 	if ((spriteset = spriteset_load(filename)) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load spriteset `%s`", filename);
 	duk_push_sphere_spriteset(ctx, spriteset);
@@ -4625,7 +4625,7 @@ js_LoadSurface(duk_context* ctx)
 	const char* filename;
 	image_t*    image;
 
-	filename = duk_require_path(ctx, 0, "images", true, false);
+	filename = duk_require_pathname(ctx, 0, "images", true, false);
 	if (!(image = image_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load image `%s`", filename);
 	duk_push_class_obj(ctx, "ssSurface", image);
@@ -4638,7 +4638,7 @@ js_LoadWindowStyle(duk_context* ctx)
 	const char*    filename;
 	windowstyle_t* winstyle;
 
-	filename = duk_require_path(ctx, 0, "windowstyles", true, false);
+	filename = duk_require_pathname(ctx, 0, "windowstyles", true, false);
 	if (!(winstyle = winstyle_load(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "cannot load windowstyle `%s`", filename);
 	duk_push_sphere_windowstyle(ctx, winstyle);
@@ -4654,7 +4654,7 @@ js_MapEngine(duk_context* ctx)
 	int         num_args;
 
 	num_args = duk_get_top(ctx);
-	filename = duk_require_path(ctx, 0, "maps", true, false);
+	filename = duk_require_pathname(ctx, 0, "maps", true, false);
 	framerate = num_args >= 2 ? duk_to_int(ctx, 1)
 		: s_frame_rate;
 
@@ -4720,7 +4720,7 @@ js_OpenFile(duk_context* ctx)
 	kev_file_t* file;
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "save", true, true);
+	filename = duk_require_pathname(ctx, 0, "save", true, true);
 
 	if (!(file = kev_open(g_game, filename, true)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open file `%s`", filename);
@@ -4734,7 +4734,7 @@ js_OpenLog(duk_context* ctx)
 	const char* filename;
 	logger_t*   logger;
 
-	filename = duk_require_path(ctx, 0, "logs", true, true);
+	filename = duk_require_pathname(ctx, 0, "logs", true, true);
 	if (!(logger = logger_new(filename)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to open log `%s`", filename);
 	duk_push_class_obj(ctx, "ssLogger", logger);
@@ -4751,7 +4751,7 @@ js_OpenRawFile(duk_context* ctx)
 
 	num_args = duk_get_top(ctx);
 	writable = num_args >= 2 ? duk_to_boolean(ctx, 1) : false;
-	filename = duk_require_path(ctx, 0, "other", true, writable);
+	filename = duk_require_pathname(ctx, 0, "other", true, writable);
 
 	file = file_open(g_game, filename, writable ? "w+b" : "rb");
 	if (file == NULL)
@@ -4984,7 +4984,7 @@ js_RemoveDirectory(duk_context* ctx)
 {
 	const char* name;
 
-	name = duk_require_path(ctx, 0, "save", true, true);
+	name = duk_require_pathname(ctx, 0, "save", true, true);
 	if (!game_rmdir(g_game, name))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to remove directory `%s`", name);
 	return 0;
@@ -4995,7 +4995,7 @@ js_RemoveFile(duk_context* ctx)
 {
 	const char* filename;
 
-	filename = duk_require_path(ctx, 0, "save", true, true);
+	filename = duk_require_pathname(ctx, 0, "save", true, true);
 	if (!game_unlink(g_game, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file `%s`", filename);
 	return 0;
@@ -5037,8 +5037,8 @@ js_Rename(duk_context* ctx)
 	const char* name1;
 	const char* name2;
 
-	name1 = duk_require_path(ctx, 0, "save", true, true);
-	name2 = duk_require_path(ctx, 1, "save", true, true);
+	name1 = duk_require_pathname(ctx, 0, "save", true, true);
+	name2 = duk_require_pathname(ctx, 1, "save", true, true);
 	if (!game_rename(g_game, name1, name2))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
 	return 0;
@@ -5082,7 +5082,7 @@ js_RequireScript(duk_context* ctx)
 	const char* filename;
 	bool        is_required;
 
-	filename = duk_require_path(ctx, 0, "scripts", true, false);
+	filename = duk_require_pathname(ctx, 0, "scripts", true, false);
 	if (!game_file_exists(g_game, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "file `%s` not found", filename);
 	duk_push_global_stash(ctx);
@@ -7982,7 +7982,7 @@ js_Spriteset_save(duk_context* ctx)
 
 	duk_push_this(ctx);
 	spriteset = duk_require_sphere_spriteset(ctx, -1);
-	filename = duk_require_path(ctx, 0, "spritesets", true, true);
+	filename = duk_require_pathname(ctx, 0, "spritesets", true, true);
 
 	if (!spriteset_save(spriteset, filename))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't save spriteset");
@@ -8944,7 +8944,7 @@ js_Surface_save(duk_context* ctx)
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "ssSurface");
 	duk_pop(ctx);
-	filename = duk_require_path(ctx, 0, "images", true, false);
+	filename = duk_require_pathname(ctx, 0, "images", true, false);
 	image_save(image, filename);
 	return 1;
 }

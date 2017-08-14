@@ -95,13 +95,11 @@ static void update_stream (stream_t* stream);
 static vector_t*            s_active_samples;
 static vector_t*            s_active_sounds;
 static vector_t*            s_active_streams;
-static ALLEGRO_AUDIO_DEPTH  s_bit_depth;
-static ALLEGRO_CHANNEL_CONF s_channel_conf;
 static bool                 s_have_sound;
-static unsigned int         s_next_mixer_id = 0;
-static unsigned int         s_next_sample_id = 0;
-static unsigned int         s_next_sound_id = 0;
-static unsigned int         s_next_stream_id = 0;
+static unsigned int         s_next_mixer_id = 1;
+static unsigned int         s_next_sample_id = 1;
+static unsigned int         s_next_sound_id = 1;
+static unsigned int         s_next_stream_id = 1;
 static unsigned int         s_num_refs = 0;
 
 void
