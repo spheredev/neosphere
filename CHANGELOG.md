@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.8.1 - August 14, 2017
+------------------------
 
 * Adds `DirectoryStream#dispose()` to the API, for closing an open directory.
 * Renames `SoundStream#buffer()` to `SoundStream#write()`.

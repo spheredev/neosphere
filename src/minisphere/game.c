@@ -342,11 +342,11 @@ game_version(const game_t* it)
 }
 
 path_t*
-game_build_path(const game_t* it, const char* filename, const char* base_dir_name, bool legacy)
+game_build_path(const game_t* it, const char* filename, const char* base_dir_name, bool legacy_mode)
 {
-	// note: game_build_path() collapses '../' path hops unconditionally, as per
-	//       SphereFS spec. this ensures an unpackaged game can't subvert the
-	//       sandbox by navigating outside of its directory via a symbolic link.
+	// note: '../' path hops are collapsed unconditionally, per SphereFS specification.
+	//       this ensures the game can't subvert its sandbox by navigating outside through
+	//       a symbolic link.
 
 	path_t* base_path = NULL;
 	path_t* path;
@@ -355,14 +355,8 @@ game_build_path(const game_t* it, const char* filename, const char* base_dir_nam
 	path = path_new(filename);
 	if (path_is_rooted(path))  // absolute path?
 		return path;
-
-	if (legacy && path_num_hops(path) >= 1 && path_hop_is(path, 0, "~")) {
-		path_remove_hop(path, 0);
-		path_insert_hop(path, 0, "@");
-	}
-
 	if (base_dir_name != NULL) {
-		base_path = game_build_path(it, base_dir_name, NULL, legacy);
+		base_path = game_build_path(it, base_dir_name, NULL, legacy_mode);
 		path_to_dir(base_path);
 	}
 	if (path_num_hops(path) > 0)
@@ -370,8 +364,13 @@ game_build_path(const game_t* it, const char* filename, const char* base_dir_nam
 	else
 		prefix = strdup("");
 
-	// canonicalize `$/` to `@/<scriptsDir>`.  this ensures each file has only
-	// one canonical name.
+	// in legacy contexts only: `~/` is an alias for `@/`.
+	if (legacy_mode && strcmp(prefix, "~") == 0) {
+		path_remove_hop(path, 0);
+		path_insert_hop(path, 0, "@");
+	}
+
+	// `$/` is not a first-class prefix but an alias for `@/<scriptsDir>`.
 	if (strcmp(prefix, "$") == 0) {
 		path_remove_hop(path, 0);
 		path_rebase(path, game_script_path(it));
@@ -379,8 +378,7 @@ game_build_path(const game_t* it, const char* filename, const char* base_dir_nam
 		prefix = strdup(path_hop(path, 0));
 	}
 
-	// no need to check for a `$` prefix now, as the last step removes it
-	// from the equation.
+	// no need to check for `$/` prefix here, the previous step handled it.
 	if (!strpbrk(prefix, "@#~") || strlen(prefix) != 1) {
 		if (base_path != NULL)
 			path_rebase(path, base_path);

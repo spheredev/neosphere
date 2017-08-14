@@ -1,3 +1,10 @@
+minisphere (4.8.1) zesty; urgency=low
+
+  * Adds `DirectoryStream#dispose()` to the API, for closing an open directory.
+  * Renames `SoundStream#buffer()` to `SoundStream#write()`.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Mon, 14 Aug 2017 00:00:00 -0500
+
 minisphere (4.8.0) zesty; urgency=low
 
   * Adds a new `DirectoryStream` built-in class which allows you to enumerate the

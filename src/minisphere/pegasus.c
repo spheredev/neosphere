@@ -261,9 +261,9 @@ static duk_ret_t js_FS_createDirectory            (duk_context* ctx);
 static duk_ret_t js_FS_deleteFile                 (duk_context* ctx);
 static duk_ret_t js_FS_directoryExists            (duk_context* ctx);
 static duk_ret_t js_FS_fileExists                 (duk_context* ctx);
+static duk_ret_t js_FS_fullPath                   (duk_context* ctx);
 static duk_ret_t js_FS_readFile                   (duk_context* ctx);
 static duk_ret_t js_FS_rename                     (duk_context* ctx);
-static duk_ret_t js_FS_fullPath                   (duk_context* ctx);
 static duk_ret_t js_FS_removeDirectory            (duk_context* ctx);
 static duk_ret_t js_FS_writeFile                  (duk_context* ctx);
 static duk_ret_t js_new_FileStream                (duk_context* ctx);
@@ -996,12 +996,14 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 
 	int i;
 
-	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0)
+	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0) {
 		// resolve module relative to calling module
 		origin_path = path_new(origin != NULL ? origin : "./");
-	else
+	}
+	else {
 		// resolve module from designated module repository
 		origin_path = path_new(sys_origin);
+	}
 
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);

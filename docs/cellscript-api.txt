@@ -75,7 +75,7 @@ Sphere.Game [non-replaceable]
 Sphere.Platform [read-only]
 
     A string specifying the name and version number of the compiler.  For
-    example, "Cell X.X.X".
+    example, "Cell 4.8.1".
 
 Sphere.Version [read-only]
 
