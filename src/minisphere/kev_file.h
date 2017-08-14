@@ -33,7 +33,7 @@
 #ifndef MINISPHERE__FILE_H__INCLUDED
 #define MINISPHERE__FILE_H__INCLUDED
 
-#include "fs.h"
+#include "game.h"
 
 typedef struct kev_file kev_file_t;
 

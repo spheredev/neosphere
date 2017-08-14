@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__SPHEREFS_H__INCLUDED
-#define MINISPHERE__SPHEREFS_H__INCLUDED
+#ifndef MINISPHERE__GAME_H__INCLUDED
+#define MINISPHERE__GAME_H__INCLUDED
 
 #include "geometry.h"
 
@@ -86,4 +86,4 @@ size_t           file_read           (file_t* it, void* buf, size_t count, size_
 bool             file_seek           (file_t* it, long long offset, whence_t whence);
 size_t           file_write          (file_t* it, const void* buf, size_t count, size_t size);
 
-#endif // MINISPHERE__SPHEREFS_H__INCLUDED
+#endif // MINISPHERE__GAME_H__INCLUDED

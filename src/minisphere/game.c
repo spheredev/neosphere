@@ -31,7 +31,7 @@
 **/
 
 #include "minisphere.h"
-#include "fs.h"
+#include "game.h"
 
 #include "geometry.h"
 #include "kev_file.h"
@@ -80,7 +80,7 @@ struct file
 };
 
 static duk_ret_t duk_load_s2gm  (duk_context* ctx, void* udata);
-static vector_t* read_directory (const game_t* it, const char* dirname, bool want_dirs);
+static vector_t* read_directory (const game_t* game, const char* dirname, bool want_dirs);
 static bool      resolve_path   (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
 
 static unsigned int s_next_game_id = 1;

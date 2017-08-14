@@ -21,7 +21,7 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/animation.c src/minisphere/async.c src/minisphere/atlas.c \
    src/minisphere/audio.c src/minisphere/byte_array.c src/minisphere/color.c \
    src/minisphere/console.c src/minisphere/debugger.c src/minisphere/font.c \
-   src/minisphere/fs.c src/minisphere/galileo.c src/minisphere/geometry.c \
+   src/minisphere/galileo.c src/minisphere/game.c src/minisphere/geometry.c \
    src/minisphere/image.c src/minisphere/input.c src/minisphere/kev_file.c \
    src/minisphere/legacy.c src/minisphere/logger.c \
    src/minisphere/map_engine.c src/minisphere/obstruction.c \

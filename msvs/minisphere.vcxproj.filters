@@ -132,7 +132,7 @@
     <ClCompile Include="..\src\minisphere\kev_file.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\minisphere\fs.c">
+    <ClCompile Include="..\src\minisphere\game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -260,10 +260,10 @@
     <ClInclude Include="..\src\minisphere\kev_file.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\minisphere\fs.h">
+    <ClInclude Include="..\src\minisphere\windowstyle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\minisphere\windowstyle.h">
+    <ClInclude Include="..\src\minisphere\game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
