@@ -1,3 +1,13 @@
+minisphere (4.8.2) zesty; urgency=low
+
+  * Fixes a bug in the internal audio streaming logic which corrupted the output
+    of SoundStreams with more than one channel and made them sound choppy.
+  * Fixes a bug where legacy `Spriteset#filename` includes a SphereFS prefix.
+  * Fixes a bug where Cell will write an invalid script path to `game.sgm` if the
+    script filename includes the `@/` prefix.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Wed, 16 Aug 2017 00:00:00 -0500
+
 minisphere (4.8.1) zesty; urgency=low
 
   * Adds `DirectoryStream#dispose()` to the API, for closing an open directory.
