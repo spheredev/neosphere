@@ -117,9 +117,9 @@ audio_init(void)
 		return;
 	}
 	al_init_acodec_addon();
-	s_active_streams = vector_new(sizeof(stream_t*));
 	s_active_samples = vector_new(sizeof(struct sample_instance));
 	s_active_sounds = vector_new(sizeof(sound_t*));
+	s_active_streams = vector_new(sizeof(stream_t*));
 }
 
 void

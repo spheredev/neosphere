@@ -4,9 +4,11 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* Fixes a bug where legacy `Spriteset#filename` includes a SphereFS prefix.
 * Fixes a bug in the internal audio streaming logic which corrupted the output
   of SoundStreams with more than one channel and made them sound choppy.
+* Fixes a bug where legacy `Spriteset#filename` includes a SphereFS prefix.
+* Fixes a bug where Cell will write an invalid script path to `game.sgm` if the
+  script filename includes the `@/` prefix.
 
 
 v4.8.1 - August 14, 2017
