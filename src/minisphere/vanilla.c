@@ -2549,22 +2549,22 @@ js_GetClippingRectangle(duk_context* ctx)
 static duk_ret_t
 js_GetCurrentMap(duk_context* ctx)
 {
-	path_t* map_path;
-	path_t* origin;
+	path_t* base_path;
+	path_t* path;
 
 	if (!map_engine_running())
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
 
-	// GetCurrentMap() in Sphere 1.x returns the map path
-	// relative to the 'maps' directory.
-	map_path = path_new(map_filename());
-	if (!path_is_rooted(map_path)) {
-		origin = path_new("@/maps/");
-		path_relativize(map_path, origin);
-		path_free(origin);
+	// GetCurrentMap() in Sphere 1.x returns the map path relative to the
+	// 'maps' directory.
+	path = path_new(map_pathname());
+	if (!path_is_rooted(path)) {
+		base_path = path_new("@/maps/");
+		path_relativize(path, base_path);
+		path_free(base_path);
 	}
-	duk_push_string(ctx, path_cstr(map_path));
-	path_free(map_path);
+	duk_push_string(ctx, path_cstr(path));
+	path_free(path);
 	return 1;
 }
 
@@ -6153,7 +6153,7 @@ js_SetTriggerScript(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid trigger index");
-	script_name = lstr_newf("%s/trigger~%d/onStep", map_filename(), trigger_index);
+	script_name = lstr_newf("%s/trigger~%d/onStep", map_pathname(), trigger_index);
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	trigger_set_script(trigger_index, script);
 	script_unref(script);
@@ -6251,7 +6251,7 @@ js_SetZoneScript(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "no active map engine");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid zone index");
-	if (!(script_name = lstr_newf("%s/zone%d", map_filename(), zone_index)))
+	if (!(script_name = lstr_newf("%s/zone%d", map_pathname(), zone_index)))
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "error compiling zone script");
 	script = duk_require_sphere_script(ctx, 1, lstr_cstr(script_name));
 	lstr_free(script_name);
@@ -7949,12 +7949,25 @@ js_Spriteset_finalize(duk_context* ctx)
 static duk_ret_t
 js_Spriteset_get_filename(duk_context* ctx)
 {
+	path_t*      base_path;
+	path_t*      path;
 	spriteset_t* spriteset;
 
 	duk_push_this(ctx);
 	spriteset = duk_require_class_obj(ctx, -1, "ssSpriteset");
 
-	duk_push_string(ctx, spriteset_path(spriteset));
+	// returned filename is relative to `@/`, even though Spriteset#save() is
+	// rooted at `@/spritesets`.  I suspect this to be a bug in Sphere 1.x, but fixing
+	// it here would break existing workarounds.
+	path = path_new(spriteset_pathname(spriteset));
+	if (!path_is_rooted(path)) {
+		base_path = path_new("@/");
+		path_relativize(path, base_path);
+		path_free(base_path);
+	}
+
+	duk_push_string(ctx, path_cstr(path));
+	path_free(path);
 	return 1;
 }
 

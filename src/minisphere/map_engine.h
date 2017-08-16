@@ -130,13 +130,13 @@ void             map_engine_fade_to           (color_t mask_color, int num_frame
 bool             map_engine_start             (const char* filename, int framerate);
 void             map_engine_update            (void);
 rect_t           map_bounds                   (void);
-const char*      map_filename                 (void);
 int              map_layer_by_name            (const char* name);
 int              map_num_layers               (void);
 int              map_num_persons              (void);
 int              map_num_triggers             (void);
 int              map_num_zones                (void);
 point3_t         map_origin                   (void);
+const char*      map_pathname                 (void);
 person_t*        map_person_by_name           (const char* name);
 int              map_tile_at                  (int x, int y, int layer);
 tileset_t*       map_tileset                  (void);

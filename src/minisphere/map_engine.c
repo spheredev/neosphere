@@ -684,12 +684,6 @@ map_bounds(void)
 	return bounds;
 }
 
-const char*
-map_filename(void)
-{
-	return s_map ? s_map_filename : NULL;
-}
-
 int
 map_layer_by_name(const char* name)
 {
@@ -731,6 +725,12 @@ map_origin(void)
 {
 	return s_map != NULL ? s_map->origin
 		: point3(0, 0, 0);
+}
+
+const char*
+map_pathname(void)
+{
+	return s_map ? s_map_filename : NULL;
 }
 
 person_t*
@@ -1638,7 +1638,7 @@ person_compile_script(person_t* person, int type, const lstring_t* codestring)
 		: NULL;
 	if (script_name == NULL)
 		return false;
-	script = script_new(codestring, "%s/%s/%s.js", map_filename(), person->name, script_name);
+	script = script_new(codestring, "%s/%s/%s.js", map_pathname(), person->name, script_name);
 	person_on_event(person, type, script);
 	return true;
 }

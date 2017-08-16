@@ -4,6 +4,7 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Fixes a bug where legacy `Spriteset#filename` includes a SphereFS prefix.
 * Fixes a bug in the internal audio streaming logic which corrupted the output
   of SoundStreams with more than one channel and made them sound choppy.
 

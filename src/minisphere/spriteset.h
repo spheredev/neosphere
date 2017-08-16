@@ -51,7 +51,7 @@ image_t*     spriteset_image             (const spriteset_t* it, int index);
 int          spriteset_num_frames        (const spriteset_t* it, const char* pose_name);
 int          spriteset_num_images        (const spriteset_t* it);
 int          spriteset_num_poses         (const spriteset_t* it);
-const char*  spriteset_path              (const spriteset_t* it);
+const char*  spriteset_pathname          (const spriteset_t* it);
 const char*  spriteset_pose_name         (const spriteset_t* it, int index);
 int          spriteset_width             (const spriteset_t* it);
 rect_t       spriteset_get_base          (const spriteset_t* it);

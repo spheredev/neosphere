@@ -468,7 +468,7 @@ spriteset_num_poses(const spriteset_t* it)
 }
 
 const char*
-spriteset_path(const spriteset_t* it)
+spriteset_pathname(const spriteset_t* it)
 {
 	return it->filename;
 }
