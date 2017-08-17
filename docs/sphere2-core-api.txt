@@ -531,7 +531,7 @@ FS.fileExists(filename);
     Checks whether the specified file exists and returns true if it does.
     Otherwise, returns false.
 
-FS.fullPath(fileName[, base_dir]);
+FS.fullPath(filename[, base_dir]);
 
     Resolves a filename (which may contain relative path components, or even be
     relative itself) to its full, canonical SphereFS pathname.  `base_dir` is
@@ -551,6 +551,12 @@ FS.readFile(filename);
     Note: This performs UTF-8 decoding, making it unsuitable for use with
           binary data.  To work with binary files, use a FileStream object
           instead.
+
+FS.relativePath(filename, base_dir);
+
+    Abbreviates a full SphereFS pathname by returning its path relative to
+    `base_dir`.  This can be useful when logging filenames or displaying track
+    names, for example.
 
 FS.removeDirectory(dir_name);
 

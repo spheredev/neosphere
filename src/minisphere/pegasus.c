@@ -1757,14 +1757,14 @@ js_FS_fileExists(duk_context* ctx)
 static duk_ret_t
 js_FS_fullPath(duk_context* ctx)
 {
+	const char* base_pathname = NULL;
 	int         num_args;
-	const char* origin_pathname = NULL;
 	const char* pathname;
 
 	num_args = duk_get_top(ctx);
 	if (num_args >= 2)
-		origin_pathname = duk_require_pathname(ctx, 1, NULL, false, false);
-	pathname = duk_require_pathname(ctx, 0, origin_pathname, false, false);
+		base_pathname = duk_require_pathname(ctx, 1, NULL, false, false);
+	pathname = duk_require_pathname(ctx, 0, base_pathname, false, false);
 
 	duk_push_string(ctx, pathname);
 	return 1;
