@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Adds a new `FS.relativePath()` API for extracting a partial path from a full
+  SphereFS pathname.
+
+
 v4.8.2 - August 16, 2017
 ------------------------
 

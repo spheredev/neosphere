@@ -2538,11 +2538,16 @@ js_GetClippingRectangle(duk_context* ctx)
 	rect_t clip;
 
 	clip = image_get_scissor(screen_backbuffer(g_screen));
+
 	duk_push_object(ctx);
-	duk_push_int(ctx, clip.x1); duk_put_prop_string(ctx, -2, "x");
-	duk_push_int(ctx, clip.y1); duk_put_prop_string(ctx, -2, "y");
-	duk_push_int(ctx, clip.x2 - clip.x1); duk_put_prop_string(ctx, -2, "width");
-	duk_push_int(ctx, clip.y2 - clip.y1); duk_put_prop_string(ctx, -2, "height");
+	duk_push_int(ctx, clip.x1);
+	duk_put_prop_string(ctx, -2, "x");
+	duk_push_int(ctx, clip.y1);
+	duk_put_prop_string(ctx, -2, "y");
+	duk_push_int(ctx, clip.x2 - clip.x1);
+	duk_put_prop_string(ctx, -2, "width");
+	duk_push_int(ctx, clip.y2 - clip.y1);
+	duk_put_prop_string(ctx, -2, "height");
 	return 1;
 }
 

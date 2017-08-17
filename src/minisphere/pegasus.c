@@ -263,6 +263,7 @@ static duk_ret_t js_FS_directoryExists            (duk_context* ctx);
 static duk_ret_t js_FS_fileExists                 (duk_context* ctx);
 static duk_ret_t js_FS_fullPath                   (duk_context* ctx);
 static duk_ret_t js_FS_readFile                   (duk_context* ctx);
+static duk_ret_t js_FS_relativePath               (duk_context* ctx);
 static duk_ret_t js_FS_rename                     (duk_context* ctx);
 static duk_ret_t js_FS_removeDirectory            (duk_context* ctx);
 static duk_ret_t js_FS_writeFile                  (duk_context* ctx);
@@ -513,6 +514,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
 	api_define_function(ctx, "FS", "fullPath", js_FS_fullPath);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
+	api_define_function(ctx, "FS", "relativePath", js_FS_relativePath);
 	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
@@ -1755,11 +1757,6 @@ js_FS_fileExists(duk_context* ctx)
 static duk_ret_t
 js_FS_fullPath(duk_context* ctx)
 {
-	// it's only by accident that this works at all.  the function relies on the
-	// fact that SphereFS canonicalization removes the `@/` prefix if it's present;
-	// it's therefore something of a hack, and in the future it'd be better to build
-	// this functionality into `game_build_path()`.
-
 	int         num_args;
 	const char* origin_pathname = NULL;
 	const char* pathname;
@@ -1787,6 +1784,30 @@ js_FS_readFile(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", pathname);
 	content = lstr_from_cp1252(file_data, file_size);
 	duk_push_lstring_t(ctx, content);
+	return 1;
+}
+
+static duk_ret_t
+js_FS_relativePath(duk_context* ctx)
+{
+	path_t*     base_path;
+	const char* base_pathname = NULL;
+	path_t*     path;
+	const char* pathname;
+
+	pathname = duk_require_pathname(ctx, 0, NULL, false, false);
+	base_pathname = duk_require_pathname(ctx, 1, NULL, false, false);
+
+	path = path_new(pathname);
+	base_path = path_new_dir(base_pathname);
+	if (path_hop_is(path, 0, path_hop(base_path, 0))) {
+		// only relativize if SphereFS prefixes match
+		path_relativize(path, base_path);
+	}
+	duk_push_string(ctx, path_cstr(path));
+	path_free(path);
+	path_free(base_path);
+	return 1;
 	return 1;
 }
 
