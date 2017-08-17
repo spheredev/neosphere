@@ -1004,7 +1004,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	}
 	else {
 		// resolve module from designated module repository
-		origin_path = path_new(sys_origin);
+		origin_path = path_new_dir(sys_origin);
 	}
 
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
@@ -1096,9 +1096,18 @@ on_error:
 static duk_ret_t
 js_require(duk_context* ctx)
 {
+	const char* const PATHS[] =
+	{
+		"@/lib",
+		"#/game_modules",
+		"#/runtime",
+	};
+	
 	const char* id;
 	const char* parent_id = NULL;
 	path_t*     path;
+
+	int i;
 
 	duk_push_current_function(ctx);
 	if (duk_get_prop_string(ctx, -1, "id"))
@@ -1107,7 +1116,11 @@ js_require(duk_context* ctx)
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
-	if (!(path = find_module(id, parent_id, "lib/")) && !(path = find_module(id, parent_id, "#/modules/")))
+	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
+		if (path = find_module(id, parent_id, PATHS[i]))
+			break;  // short-circuit
+	}
+	if (path == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
 	if (!duk_pegasus_eval_module(ctx, path_cstr(path)))
 		duk_throw(ctx);

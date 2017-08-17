@@ -680,7 +680,7 @@ find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, 
 		origin_path = path_new(origin != NULL ? origin : "./");
 	else
 		// resolve module from designated module repository
-		origin_path = path_new(sys_origin);
+		origin_path = path_new_dir(sys_origin);
 
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
@@ -1055,11 +1055,20 @@ js_install(duk_context* ctx)
 static duk_ret_t
 js_require(duk_context* ctx)
 {
+	const char* const PATHS[] =
+	{
+		"$/lib",
+		"#/cell_modules",
+		"#/runtime",
+	};
+
 	build_t*    build;
 	const char* id;
 	bool        is_mjs;
 	const char* parent_id = NULL;
 	path_t*     path;
+
+	int i;
 
 	build = duk_get_heap_udata(ctx);
 
@@ -1070,11 +1079,13 @@ js_require(duk_context* ctx)
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
-	if (!(path = find_cjs_module(ctx, build->fs, id, parent_id, "lib/"))
-		&& !(path = find_cjs_module(ctx, build->fs, id, parent_id, "#/cell_modules/")))
-	{
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found `%s`", id);
+
+	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
+		if (path = find_cjs_module(ctx, build->fs, id, parent_id, PATHS[i]))
+			break;  // short-circuit
 	}
+	if (path == NULL)
+		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found '%s'", id);
 	is_mjs = path_has_extension(path, ".mjs");
 	if (!eval_cjs_module(ctx, build->fs, path_cstr(path), is_mjs))
 		duk_throw(ctx);
