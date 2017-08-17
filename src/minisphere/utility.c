@@ -284,7 +284,7 @@ duk_require_pathname(duk_context* ctx, duk_idx_t index, const char* origin_name,
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
+		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "illegal path '%s'", pathname);
 	if (strcmp(prefix, "~") == 0 && game_save_id(g_game) == NULL)
 		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "no save ID defined");
 	if (need_write && !legacy_mode && strcmp(prefix, "~") != 0)
