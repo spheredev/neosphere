@@ -7,6 +7,8 @@ vX.X.X - TBD
 * Adds a new `FS.relativePath()` API for computing partial file and directory
   paths for debugging and display purposes.
 * Reorganizes the Sphere Runtime to avoid duplicating modules shared with Cell.
+* Fixes a bug where changes to a surface's projection matrix are sometimes
+  ignored.
 * Fixes a bug where calling `Shape#draw()` with no arguments causes a segfault.
 * Fixes some bugs in the Sphere v1 implementation where a nonsensical relative
   pathname can be returned from certain API functions, e.g. `GetCurrentMap()`.

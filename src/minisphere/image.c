@@ -106,15 +106,15 @@ on_error:
 }
 
 image_t*
-image_clone(const image_t* src_image)
+image_clone(const image_t* it)
 {
 	image_t* image;
 
 	console_log(3, "cloning image #%u from source image #%u",
-		s_next_image_id, src_image->id);
+		s_next_image_id, it->id);
 
 	image = calloc(1, sizeof(image_t));
-	if (!(image->bitmap = al_clone_bitmap(src_image->bitmap)))
+	if (!(image->bitmap = al_clone_bitmap(it->bitmap)))
 		goto on_error;
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
@@ -258,53 +258,53 @@ on_error:
 }
 
 image_t*
-image_ref(image_t* image)
+image_ref(image_t* it)
 {
 
-	if (image != NULL)
-		++image->refcount;
-	return image;
+	if (it != NULL)
+		++it->refcount;
+	return it;
 }
 
 void
-image_unref(image_t* image)
+image_unref(image_t* it)
 {
-	if (image == NULL || --image->refcount > 0)
+	if (it == NULL || --it->refcount > 0)
 		return;
 
 	console_log(3, "disposing image #%u no longer in use",
-		image->id);
-	uncache_pixels(image);
-	al_destroy_bitmap(image->bitmap);
-	image_unref(image->parent);
-	free(image->path);
-	transform_unref(image->transform);
-	free(image);
+		it->id);
+	uncache_pixels(it);
+	al_destroy_bitmap(it->bitmap);
+	image_unref(it->parent);
+	free(it->path);
+	transform_unref(it->transform);
+	free(it);
 }
 
 ALLEGRO_BITMAP*
-image_bitmap(image_t* image)
+image_bitmap(image_t* it)
 {
-	uncache_pixels(image);
-	return image->bitmap;
+	uncache_pixels(it);
+	return it->bitmap;
 }
 
 int
-image_height(const image_t* image)
+image_height(const image_t* it)
 {
-	return image->height;
+	return it->height;
 }
 
 const char*
-image_path(const image_t* image)
+image_path(const image_t* it)
 {
-	return image->path;
+	return it->path;
 }
 
 int
-image_width(const image_t* image)
+image_width(const image_t* it)
 {
-	return image->width;
+	return it->width;
 }
 
 rect_t
@@ -338,36 +338,38 @@ image_set_scissor(image_t* it, rect_t value)
 }
 
 void
-image_set_transform(image_t* image, transform_t* transform)
+image_set_transform(image_t* it, transform_t* transform)
 {
 	transform_t* old_value;
 
-	old_value = image->transform;
-	image->transform = transform_ref(transform);
+	old_value = it->transform;
+	it->transform = transform_ref(transform);
 	transform_unref(old_value);
+	if (it == s_last_image)
+		al_use_projection_transform(transform_matrix(it->transform));
 }
 
 bool
-image_apply_colormat(image_t* image, colormatrix_t matrix, int x, int y, int width, int height)
+image_apply_colormat(image_t* it, colormatrix_t matrix, int x, int y, int width, int height)
 {
 	image_lock_t* lock;
 	color_t*      pixel;
 
 	int i_x, i_y;
 
-	if (!(lock = image_lock(image)))
+	if (!(lock = image_lock(it)))
 		return false;
-	uncache_pixels(image);
+	uncache_pixels(it);
 	for (i_x = x; i_x < x + width; ++i_x) for (i_y = y; i_y < y + height; ++i_y) {
 		pixel = &lock->pixels[i_x + i_y * lock->pitch];
 		*pixel = color_transform(*pixel, matrix);
 	}
-	image_unlock(image, lock);
+	image_unlock(it, lock);
 	return true;
 }
 
 bool
-image_apply_colormat_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_mat, colormatrix_t ll_mat, colormatrix_t lr_mat, int x, int y, int w, int h)
+image_apply_colormat_4(image_t* it, colormatrix_t ul_mat, colormatrix_t ur_mat, colormatrix_t ll_mat, colormatrix_t lr_mat, int x, int y, int w, int h)
 {
 	// this function might be difficult to understand at first. the implementation
 	// is, however, much easier to follow than the one in Sphere. basically what it
@@ -381,9 +383,9 @@ image_apply_colormat_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_ma
 
 	int i_x, i_y;
 
-	if (!(lock = image_lock(image)))
+	if (!(lock = image_lock(it)))
 		return false;
-	uncache_pixels(image);
+	uncache_pixels(it);
 	for (i_y = y; i_y < y + h; ++i_y) {
 		// thankfully, we don't have to do a full bilinear interpolation every frame.
 		// two thirds of the work is done in the outer loop, giving us two color matrices
@@ -403,14 +405,14 @@ image_apply_colormat_4(image_t* image, colormatrix_t ul_mat, colormatrix_t ur_ma
 
 		}
 	}
-	image_unlock(image, lock);
+	image_unlock(it, lock);
 	return true;
 }
 
 bool
-image_apply_lookup(image_t* image, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256])
+image_apply_lookup(image_t* it, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256])
 {
-	ALLEGRO_BITMAP*        bitmap = image_bitmap(image);
+	ALLEGRO_BITMAP*        bitmap = image_bitmap(it);
 	uint8_t*               pixel;
 	ALLEGRO_LOCKED_REGION* lock;
 
@@ -418,7 +420,7 @@ image_apply_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 
 	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE)) == NULL)
 		return false;
-	uncache_pixels(image);
+	uncache_pixels(it);
 	for (i_x = x; i_x < x + width; ++i_x) for (i_y = y; i_y < y + height; ++i_y) {
 		pixel = (uint8_t*)lock->data + i_x * 4 + i_y * lock->pitch;
 		pixel[0] = red_lu[pixel[0]];
@@ -431,7 +433,7 @@ image_apply_lookup(image_t* image, int x, int y, int width, int height, uint8_t 
 }
 
 void
-image_blit(image_t* image, image_t* target_image, int x, int y)
+image_blit(image_t* it, image_t* target_image, int x, int y)
 {
 	int             blend_mode_dest;
 	int             blend_mode_src;
@@ -442,47 +444,47 @@ image_blit(image_t* image, image_t* target_image, int x, int y)
 	al_set_target_bitmap(image_bitmap(target_image));
 	al_get_blender(&blend_op, &blend_mode_src, &blend_mode_dest);
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
+	al_draw_bitmap(image_bitmap(it), x, y, 0x0);
 	al_set_blender(blend_op, blend_mode_src, blend_mode_dest);
 	al_set_target_bitmap(old_target);
 }
 
 void
-image_draw(image_t* image, int x, int y)
+image_draw(image_t* it, int x, int y)
 {
-	al_draw_bitmap(image->bitmap, x, y, 0x0);
+	al_draw_bitmap(it->bitmap, x, y, 0x0);
 }
 
 void
-image_draw_masked(image_t* image, color_t mask, int x, int y)
+image_draw_masked(image_t* it, color_t mask, int x, int y)
 {
-	al_draw_tinted_bitmap(image->bitmap, nativecolor(mask), x, y, 0x0);
+	al_draw_tinted_bitmap(it->bitmap, nativecolor(mask), x, y, 0x0);
 }
 
 void
-image_draw_scaled(image_t* image, int x, int y, int width, int height)
+image_draw_scaled(image_t* it, int x, int y, int width, int height)
 {
-	al_draw_scaled_bitmap(image->bitmap,
-		0, 0, al_get_bitmap_width(image->bitmap), al_get_bitmap_height(image->bitmap),
+	al_draw_scaled_bitmap(it->bitmap,
+		0, 0, al_get_bitmap_width(it->bitmap), al_get_bitmap_height(it->bitmap),
 		x, y, width, height, 0x0);
 }
 
 void
-image_draw_scaled_masked(image_t* image, color_t mask, int x, int y, int width, int height)
+image_draw_scaled_masked(image_t* it, color_t mask, int x, int y, int width, int height)
 {
-	al_draw_tinted_scaled_bitmap(image->bitmap, nativecolor(mask),
-		0, 0, al_get_bitmap_width(image->bitmap), al_get_bitmap_height(image->bitmap),
+	al_draw_tinted_scaled_bitmap(it->bitmap, nativecolor(mask),
+		0, 0, al_get_bitmap_width(it->bitmap), al_get_bitmap_height(it->bitmap),
 		x, y, width, height, 0x0);
 }
 
 void
-image_draw_tiled(image_t* image, int x, int y, int width, int height)
+image_draw_tiled(image_t* it, int x, int y, int width, int height)
 {
-	image_draw_tiled_masked(image, color_new(255, 255, 255, 255), x, y, width, height);
+	image_draw_tiled_masked(it, color_new(255, 255, 255, 255), x, y, width, height);
 }
 
 void
-image_draw_tiled_masked(image_t* image, color_t mask, int x, int y, int width, int height)
+image_draw_tiled_masked(image_t* it, color_t mask, int x, int y, int width, int height)
 {
 	ALLEGRO_COLOR native_mask = nativecolor(mask);
 	int           img_w, img_h;
@@ -491,7 +493,7 @@ image_draw_tiled_masked(image_t* image, color_t mask, int x, int y, int width, i
 
 	int i_x, i_y;
 
-	img_w = image->width; img_h = image->height;
+	img_w = it->width; img_h = it->height;
 	if (img_w >= 16 && img_h >= 16) {
 		// tile in hardware whenever possible
 		ALLEGRO_VERTEX vbuf[] = {
@@ -500,7 +502,7 @@ image_draw_tiled_masked(image_t* image, color_t mask, int x, int y, int width, i
 			{ x, y + height, 0, 0, height, native_mask },
 			{ x + width, y + height, 0, width, height, native_mask }
 		};
-		al_draw_prim(vbuf, NULL, image->bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
+		al_draw_prim(vbuf, NULL, it->bitmap, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	}
 	else {
 		// texture smaller than 16x16, tile it in software (Allegro pads it)
@@ -509,7 +511,7 @@ image_draw_tiled_masked(image_t* image, color_t mask, int x, int y, int width, i
 		for (i_x = width / img_w; i_x >= 0; --i_x) for (i_y = height / img_h; i_y >= 0; --i_y) {
 			tile_w = i_x == width / img_w ? width % img_w : img_w;
 			tile_h = i_y == height / img_h ? height % img_h : img_h;
-			al_draw_tinted_bitmap_region(image->bitmap, native_mask,
+			al_draw_tinted_bitmap_region(it->bitmap, native_mask,
 				0, 0, tile_w, tile_h,
 				x + i_x * img_w, y + i_y * img_h, 0x0);
 		}
@@ -518,7 +520,7 @@ image_draw_tiled_masked(image_t* image, color_t mask, int x, int y, int width, i
 }
 
 void
-image_fill(image_t* image, color_t color)
+image_fill(image_t* it, color_t color)
 {
 	int             clip_height;
 	int             clip_width;
@@ -526,18 +528,18 @@ image_fill(image_t* image, color_t color)
 	int             clip_y;
 	ALLEGRO_BITMAP* old_target;
 
-	uncache_pixels(image);
+	uncache_pixels(it);
 	al_get_clipping_rectangle(&clip_x, &clip_y, &clip_width, &clip_height);
 	al_reset_clipping_rectangle();
 	old_target = al_get_target_bitmap();
-	al_set_target_bitmap(image->bitmap);
+	al_set_target_bitmap(it->bitmap);
 	al_clear_to_color(nativecolor(color));
 	al_set_target_bitmap(old_target);
 	al_set_clipping_rectangle(clip_x, clip_y, clip_width, clip_height);
 }
 
 bool
-image_flip(image_t* image, bool is_h_flip, bool is_v_flip)
+image_flip(image_t* it, bool is_h_flip, bool is_v_flip)
 {
 	int             draw_flags = 0x0;
 	ALLEGRO_BITMAP* new_bitmap;
@@ -545,8 +547,8 @@ image_flip(image_t* image, bool is_h_flip, bool is_v_flip)
 
 	if (!is_h_flip && !is_v_flip)  // this really shouldn't happen...
 		return true;
-	uncache_pixels(image);
-	if (!(new_bitmap = al_create_bitmap(image->width, image->height)))
+	uncache_pixels(it);
+	if (!(new_bitmap = al_create_bitmap(it->width, it->height)))
 		return false;
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(new_bitmap);
@@ -554,40 +556,40 @@ image_flip(image_t* image, bool is_h_flip, bool is_v_flip)
 		draw_flags |= ALLEGRO_FLIP_HORIZONTAL;
 	if (is_v_flip)
 		draw_flags |= ALLEGRO_FLIP_VERTICAL;
-	al_draw_bitmap(image->bitmap, 0, 0, draw_flags);
+	al_draw_bitmap(it->bitmap, 0, 0, draw_flags);
 	al_set_target_bitmap(old_target);
-	al_destroy_bitmap(image->bitmap);
-	image->bitmap = new_bitmap;
+	al_destroy_bitmap(it->bitmap);
+	it->bitmap = new_bitmap;
 	return true;
 }
 
 color_t
-image_get_pixel(image_t* image, int x, int y)
+image_get_pixel(image_t* it, int x, int y)
 {
-	if (image->pixel_cache == NULL) {
-		console_log(4, "image_get_pixel() cache miss for image #%u", image->id);
-		cache_pixels(image);
+	if (it->pixel_cache == NULL) {
+		console_log(4, "image_get_pixel() cache miss for image #%u", it->id);
+		cache_pixels(it);
 	}
 	else
-		++image->cache_hits;
-	return image->pixel_cache[x + y * image->width];
+		++it->cache_hits;
+	return it->pixel_cache[x + y * it->width];
 }
 
 image_lock_t*
-image_lock(image_t* image)
+image_lock(image_t* it)
 {
 	ALLEGRO_LOCKED_REGION* ll_lock;
 
-	if (image->lock_count == 0) {
-		if (!(ll_lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READWRITE)))
+	if (it->lock_count == 0) {
+		if (!(ll_lock = al_lock_bitmap(it->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, ALLEGRO_LOCK_READWRITE)))
 			return NULL;
-		image_ref(image);
-		image->lock.pixels = ll_lock->data;
-		image->lock.pitch = ll_lock->pitch / 4;
-		image->lock.num_lines = image->height;
+		image_ref(it);
+		it->lock.pixels = ll_lock->data;
+		it->lock.pitch = ll_lock->pitch / 4;
+		it->lock.num_lines = it->height;
 	}
-	++image->lock_count;
-	return &image->lock;
+	++it->lock_count;
+	return &it->lock;
 }
 
 void
@@ -622,7 +624,7 @@ image_render_to(image_t* it, transform_t* transform)
 }
 
 bool
-image_replace_color(image_t* image, color_t color, color_t new_color)
+image_replace_color(image_t* it, color_t color, color_t new_color)
 {
 	ALLEGRO_BITMAP*        bitmap;
 	uint8_t*               pixel;
@@ -631,10 +633,10 @@ image_replace_color(image_t* image, color_t color, color_t new_color)
 
 	int i_x, i_y;
 
-	bitmap = image_bitmap(image);
+	bitmap = image_bitmap(it);
 	if ((lock = al_lock_bitmap(bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_READWRITE)) == NULL)
 		return false;
-	uncache_pixels(image);
+	uncache_pixels(it);
 	w = al_get_bitmap_width(bitmap);
 	h = al_get_bitmap_height(bitmap);
 	for (i_x = 0; i_x < w; ++i_x) for (i_y = 0; i_y < h; ++i_y) {
@@ -655,31 +657,31 @@ image_replace_color(image_t* image, color_t color, color_t new_color)
 }
 
 bool
-image_rescale(image_t* image, int width, int height)
+image_rescale(image_t* it, int width, int height)
 {
 	ALLEGRO_BITMAP* new_bitmap;
 	ALLEGRO_BITMAP* old_target;
 
-	if (width == image->width && height == image->height)
+	if (width == it->width && height == it->height)
 		return true;
 	if (!(new_bitmap = al_create_bitmap(width, height)))
 		return false;
-	uncache_pixels(image);
+	uncache_pixels(it);
 	old_target = al_get_target_bitmap();
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
 	al_set_target_bitmap(new_bitmap);
-	al_draw_scaled_bitmap(image->bitmap, 0, 0, image->width, image->height, 0, 0, width, height, 0x0);
+	al_draw_scaled_bitmap(it->bitmap, 0, 0, it->width, it->height, 0, 0, width, height, 0x0);
 	al_set_target_bitmap(old_target);
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-	al_destroy_bitmap(image->bitmap);
-	image->bitmap = new_bitmap;
-	image->width = al_get_bitmap_width(image->bitmap);
-	image->height = al_get_bitmap_height(image->bitmap);
+	al_destroy_bitmap(it->bitmap);
+	it->bitmap = new_bitmap;
+	it->width = al_get_bitmap_width(it->bitmap);
+	it->height = al_get_bitmap_height(it->bitmap);
 	return true;
 }
 
 bool
-image_save(image_t* image, const char* filename)
+image_save(image_t* it, const char* filename)
 {
 	void*         buffer = NULL;
 	size_t        file_size;
@@ -693,7 +695,7 @@ image_save(image_t* image, const char* filename)
 		buffer = realloc(buffer, next_buf_size);
 		memfile = al_open_memfile(buffer, next_buf_size, "wb");
 		next_buf_size *= 2;
-		al_save_bitmap_f(memfile, strrchr(filename, '.'), image->bitmap);
+		al_save_bitmap_f(memfile, strrchr(filename, '.'), it->bitmap);
 		file_size = al_ftell(memfile);
 		is_eof = al_feof(memfile);
 		al_fclose(memfile);
@@ -704,28 +706,28 @@ image_save(image_t* image, const char* filename)
 }
 
 void
-image_set_pixel(image_t* image, int x, int y, color_t color)
+image_set_pixel(image_t* it, int x, int y, color_t color)
 {
 	ALLEGRO_BITMAP* old_target;
 
-	uncache_pixels(image);
+	uncache_pixels(it);
 	old_target = al_get_target_bitmap();
-	al_set_target_bitmap(image->bitmap);
+	al_set_target_bitmap(it->bitmap);
 	al_draw_pixel(x + 0.5, y + 0.5, nativecolor(color));
 	al_set_target_bitmap(old_target);
 }
 
 void
-image_unlock(image_t* image, image_lock_t* lock)
+image_unlock(image_t* it, image_lock_t* lock)
 {
 	// if the caller provides the wrong lock pointer, the image
 	// won't be unlocked. this prevents accidental unlocking.
-	if (lock != &image->lock) return;
+	if (lock != &it->lock) return;
 
-	if (image->lock_count == 0 || --image->lock_count > 0)
+	if (it->lock_count == 0 || --it->lock_count > 0)
 		return;
-	al_unlock_bitmap(image->bitmap);
-	image_unref(image);
+	al_unlock_bitmap(it->bitmap);
+	image_unref(it);
 }
 
 bool
