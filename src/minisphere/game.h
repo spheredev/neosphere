@@ -52,7 +52,7 @@ game_t*          game_ref            (game_t* it);
 void             game_unref          (game_t* it);
 const char*      game_author         (const game_t* it);
 bool             game_dir_exists     (const game_t* it, const char* dirname);
-bool             game_file_exists    (game_t* it, const char* filename);
+bool             game_file_exists    (const game_t* it, const char* filename);
 path_t*          game_full_path      (const game_t* it, const char* filename, const char* base_dir_name, bool legacy_mode);
 bool             game_fullscreen     (const game_t* it);
 const lstring_t* game_manifest       (const game_t* it);

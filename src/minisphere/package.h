@@ -30,11 +30,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__SPK_H__INCLUDED
-#define MINISPHERE__SPK_H__INCLUDED
+#ifndef MINISPHERE__PACKAGE_H__INCLUDED
+#define MINISPHERE__PACKAGE_H__INCLUDED
 
-typedef struct spk      spk_t;
-typedef struct spk_file spk_file_t;
+typedef struct asset    asset_t;
+typedef struct package  package_t;
 
 typedef
 enum spk_seek_origin
@@ -44,20 +44,20 @@ enum spk_seek_origin
 	SPK_SEEK_END
 } spk_seek_origin_t;
 
-spk_t*      open_spk           (const char* path);
-spk_t*      ref_spk            (spk_t* spk);
-void        unref_spk          (spk_t* spk);
-vector_t*   list_spk_filenames (spk_t* spk, const char* dirname, bool want_dirs);
+package_t*  package_open        (const char* filename);
+package_t*  package_ref         (package_t* it);
+void        package_unref       (package_t* it);
+bool        package_dir_exists  (const package_t* it, const char* dirname);
+bool        package_file_exists (const package_t* it, const char* filename);
+vector_t*   package_list_dir    (package_t* it, const char* dirname, bool want_dirs);
+asset_t*    asset_fopen         (package_t* package, const char* path, const char* mode);
+void        asset_fclose        (asset_t* file);
+int         asset_fputc         (int ch, asset_t* file);
+int         asset_fputs         (const char* string, asset_t* file);
+size_t      asset_fread         (void* buf, size_t size, size_t count, asset_t* file);
+bool        asset_fseek         (asset_t* file, long long offset, spk_seek_origin_t origin);
+void*       asset_fslurp        (package_t* it, const char* path, size_t *out_size);
+long long   asset_ftell         (asset_t* file);
+size_t      asset_fwrite        (const void* buf, size_t size, size_t count, asset_t* file);
 
-bool        spk_dir_exists (const spk_t* spk, const char* dirname);
-spk_file_t* spk_fopen  (spk_t* spk, const char* path, const char* mode);
-void        spk_fclose (spk_file_t* file);
-int         spk_fputc  (int ch, spk_file_t* file);
-int         spk_fputs  (const char* string, spk_file_t* file);
-size_t      spk_fread  (void* buf, size_t size, size_t count, spk_file_t* file);
-bool        spk_fseek  (spk_file_t* file, long long offset, spk_seek_origin_t origin);
-void*       spk_fslurp (spk_t* spk, const char* path, size_t *out_size);
-long long   spk_ftell  (spk_file_t* file);
-size_t      spk_fwrite (const void* buf, size_t size, size_t count, spk_file_t* file);
-
-#endif // MINISPHERE__SPK_H__INCLUDED
+#endif // MINISPHERE__PACKAGE_H__INCLUDED

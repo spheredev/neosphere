@@ -25,11 +25,11 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/image.c src/minisphere/input.c src/minisphere/kev_file.c \
    src/minisphere/legacy.c src/minisphere/logger.c \
    src/minisphere/map_engine.c src/minisphere/obstruction.c \
-   src/minisphere/pegasus.c src/minisphere/screen.c src/minisphere/script.c \
-   src/minisphere/sockets.c src/minisphere/spk.c src/minisphere/spriteset.c \
-   src/minisphere/tileset.c src/minisphere/transform.c \
-   src/minisphere/utility.c src/minisphere/vanilla.c \
-   src/minisphere/windowstyle.c
+   src/minisphere/package.c src/minisphere/pegasus.c src/minisphere/screen.c \
+   src/minisphere/script.c src/minisphere/sockets.c \
+   src/minisphere/spriteset.c src/minisphere/tileset.c \
+   src/minisphere/transform.c src/minisphere/utility.c \
+   src/minisphere/vanilla.c src/minisphere/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \

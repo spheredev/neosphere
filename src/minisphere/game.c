@@ -35,13 +35,13 @@
 
 #include "geometry.h"
 #include "kev_file.h"
-#include "spk.h"
+#include "package.h"
 
 enum fs_type
 {
 	FS_UNKNOWN,
 	FS_LOCAL,
-	FS_SPK,
+	FS_PACKAGE,
 };
 
 struct game
@@ -56,7 +56,7 @@ struct game
 	path_t*      root_path;
 	lstring_t*   save_id;
 	path_t*      script_path;
-	spk_t*       spk;
+	package_t*   package;
 	lstring_t*   summary;
 	int          type;
 	int          version;
@@ -72,11 +72,11 @@ struct directory
 
 struct file
 {
+	asset_t*      asset;
 	enum fs_type  fs_type;
 	game_t*       game;
 	ALLEGRO_FILE* handle;
 	const char*   path;
-	spk_file_t*   spk_file;
 };
 
 static duk_ret_t duk_load_s2gm  (duk_context* ctx, void* udata);
@@ -89,12 +89,12 @@ game_t*
 game_open(const char* game_path)
 {
 	game_t*     game;
+	package_t*  package;
 	path_t*     path;
 	size2_t     resolution;
 	size_t      sgm_size;
 	kev_file_t* sgm_file;
 	char*       sgm_text = NULL;
-	spk_t*      spk;
 
 	console_log(1, "opening `%s` from game #%u", game_path, s_next_game_id);
 
@@ -104,10 +104,10 @@ game_open(const char* game_path)
 	path = path_new(game_path);
 	if (!path_resolve(path, NULL))
 		goto on_error;
-	if (spk = open_spk(path_cstr(path))) {  // Sphere Package (.spk)
-		game->type = FS_SPK;
+	if (package = package_open(path_cstr(path))) {  // Sphere Package (.spk)
+		game->type = FS_PACKAGE;
 		game->root_path = path_dup(path);
-		game->spk = spk;
+		game->package = package;
 	}
 	else if (path_has_extension(path, ".sgm") || path_filename_is(path, "game.json")) {  // game manifest
 		game->type = FS_LOCAL;
@@ -212,7 +212,7 @@ on_error:
 	path_free(path);
 	free(sgm_text);
 	if (game != NULL) {
-		unref_spk(game->spk);
+		package_unref(game->package);
 		free(game);
 	}
 	return NULL;
@@ -235,8 +235,8 @@ game_unref(game_t* it)
 		return;
 
 	console_log(3, "disposing game #%u no longer in use", it->id);
-	if (it->type == FS_SPK)
-		unref_spk(it->spk);
+	if (it->type == FS_PACKAGE)
+		package_unref(it->package);
 	path_free(it->script_path);
 	path_free(it->root_path);
 	lstr_free(it->manifest);
@@ -264,8 +264,8 @@ game_dir_exists(const game_t* it, const char* dirname)
 			goto on_error;
 		path_free(dir_path);
 		return (stats.st_mode & S_IFDIR) == S_IFDIR;
-	case FS_SPK:
-		if (!spk_dir_exists(it->spk, path_cstr(dir_path)))
+	case FS_PACKAGE:
+		if (!package_dir_exists(it->package, path_cstr(dir_path)))
 			goto on_error;
 		path_free(dir_path);
 		return true;
@@ -277,14 +277,30 @@ on_error:
 }
 
 bool
-game_file_exists(game_t* it, const char* filename)
+game_file_exists(const game_t* it, const char* filename)
 {
-	file_t* file;
+	enum fs_type fs_type;
+	path_t*      path = NULL;
+	struct stat  stats;
 
-	if (!(file = file_open(it, filename, "rb")))
-		return false;
-	file_close(file);
-	return true;
+	if (!resolve_path(it, filename, &path, &fs_type))
+		goto on_error;
+	switch (fs_type) {
+	case FS_LOCAL:
+		if (stat(path_cstr(path), &stats) != 0)
+			goto on_error;
+		path_free(path);
+		return (stats.st_mode & S_IFREG) == S_IFREG;
+	case FS_PACKAGE:
+		if (!package_file_exists(it->package, path_cstr(path)))
+			goto on_error;
+		path_free(path);
+		return true;
+	}
+
+on_error:
+	path_free(path);
+	return false;
 }
 
 path_t*
@@ -424,7 +440,7 @@ game_mkdir(game_t* it, const char* dirname)
 	switch (fs_type) {
 	case FS_LOCAL:
 		return path_mkdir(path);
-	case FS_SPK:
+	case FS_PACKAGE:
 		return false;
 	default:
 		return false;
@@ -482,7 +498,7 @@ game_rename(game_t* it, const char* name1, const char* name2)
 		if (game_file_exists(it, name2) || game_dir_exists(it, name2))
 			return false; // don't overwrite existing file
 		return rename(path_cstr(path1), path_cstr(path2)) == 0;
-	case FS_SPK:
+	case FS_PACKAGE:
 		return false;  // SPK packages are not writable
 	default:
 		return false;
@@ -500,7 +516,7 @@ game_rmdir(game_t* it, const char* dirname)
 	switch (fs_type) {
 	case FS_LOCAL:
 		return rmdir(path_cstr(path)) == 0;
-	case FS_SPK:
+	case FS_PACKAGE:
 		return false;
 	default:
 		return false;
@@ -530,7 +546,7 @@ game_unlink(game_t* it, const char* filename)
 	switch (fs_type) {
 	case FS_LOCAL:
 		return unlink(path_cstr(path)) == 0;
-	case FS_SPK:
+	case FS_PACKAGE:
 		return false;
 	default:
 		return false;
@@ -682,8 +698,8 @@ file_open(game_t* game, const char* filename, const char* mode)
 		if (!(file->handle = al_fopen(path_cstr(file_path), mode)))
 			goto on_error;
 		break;
-	case FS_SPK:
-		if (!(file->spk_file = spk_fopen(game->spk, path_cstr(file_path), mode)))
+	case FS_PACKAGE:
+		if (!(file->asset = asset_fopen(game->package, path_cstr(file_path), mode)))
 			goto on_error;
 		break;
 	default:
@@ -710,8 +726,8 @@ file_close(file_t* it)
 	case FS_LOCAL:
 		al_fclose(it->handle);
 		break;
-	case FS_SPK:
-		spk_fclose(it->spk_file);
+	case FS_PACKAGE:
+		asset_fclose(it->asset);
 		break;
 	}
 	game_unref(it->game);
@@ -730,8 +746,8 @@ file_position(const file_t* it)
 	switch (it->fs_type) {
 	case FS_LOCAL:
 		return al_ftell(it->handle);
-	case FS_SPK:
-		return spk_ftell(it->spk_file);
+	case FS_PACKAGE:
+		return asset_ftell(it->asset);
 	}
 	return -1;
 }
@@ -742,8 +758,8 @@ file_puts(file_t* it, const char* string)
 	switch (it->fs_type) {
 	case FS_LOCAL:
 		return al_fputs(it->handle, string);
-	case FS_SPK:
-		return spk_fputs(string, it->spk_file);
+	case FS_PACKAGE:
+		return asset_fputs(string, it->asset);
 	default:
 		return false;
 	}
@@ -755,8 +771,8 @@ file_read(file_t* it, void* buf, size_t count, size_t size)
 	switch (it->fs_type) {
 	case FS_LOCAL:
 		return al_fread(it->handle, buf, size * count) / size;
-	case FS_SPK:
-		return spk_fread(buf, size, count, it->spk_file);
+	case FS_PACKAGE:
+		return asset_fread(buf, size, count, it->asset);
 	default:
 		return 0;
 	}
@@ -768,8 +784,8 @@ file_seek(file_t* it, long long offset, whence_t whence)
 	switch (it->fs_type) {
 	case FS_LOCAL:
 		return al_fseek(it->handle, offset, whence);
-	case FS_SPK:
-		return spk_fseek(it->spk_file, offset, whence);
+	case FS_PACKAGE:
+		return asset_fseek(it->asset, offset, whence);
 	}
 	return false;
 }
@@ -780,8 +796,8 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 	switch (it->fs_type) {
 	case FS_LOCAL:
 		return al_fwrite(it->handle, buf, size * count) / size;
-	case FS_SPK:
-		return spk_fwrite(buf, size, count, it->spk_file);
+	case FS_PACKAGE:
+		return asset_fwrite(buf, size, count, it->asset);
 	default:
 		return 0;
 	}
@@ -883,8 +899,8 @@ read_directory(const game_t* game, const char* dirname, bool want_dirs)
 		}
 		al_destroy_fs_entry(fse);
 		break;
-	case FS_SPK:
-		list = list_spk_filenames(game->spk, path_cstr(dir_path), want_dirs);
+	case FS_PACKAGE:
+		list = package_list_dir(game->package, path_cstr(dir_path), want_dirs);
 		break;
 	}
 	path_free(dir_path);
