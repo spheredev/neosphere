@@ -4,8 +4,8 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* Adds a new `FS.relativePath()` API for extracting a partial path from a full
-  SphereFS pathname.
+* Adds a new `FS.relativePath()` API for computing partial file and directory
+  paths for debugging and display purposes.
 * Reorganizes the Sphere Runtime to avoid duplicating modules shared with Cell.
 * Fixes a bug where calling `Shape#draw()` with no arguments causes a segfault.
 * Fixes some bugs in the Sphere v1 implementation where a nonsensical relative

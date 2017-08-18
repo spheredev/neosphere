@@ -82,6 +82,7 @@ static duk_ret_t js_FS_directoryExists            (duk_context* ctx);
 static duk_ret_t js_FS_fileExists                 (duk_context* ctx);
 static duk_ret_t js_FS_fullPath                   (duk_context* ctx);
 static duk_ret_t js_FS_readFile                   (duk_context* ctx);
+static duk_ret_t js_FS_relativePath               (duk_context* ctx);
 static duk_ret_t js_FS_rename                     (duk_context* ctx);
 static duk_ret_t js_FS_removeDirectory            (duk_context* ctx);
 static duk_ret_t js_FS_writeFile                  (duk_context* ctx);
@@ -108,8 +109,8 @@ static duk_ret_t js_Target_get_fileName           (duk_context* ctx);
 static duk_ret_t js_Target_get_name               (duk_context* ctx);
 
 static void       clean_old_artifacts  (build_t* build, bool keep_targets);
-static duk_bool_t eval_cjs_module            (duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs);
-static path_t*    find_cjs_module            (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
+static duk_bool_t eval_cjs_module      (duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs);
+static path_t*    find_cjs_module      (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static duk_ret_t  install_target       (duk_context* ctx);
 static path_t*    load_package_json    (duk_context* ctx, const char* filename);
 static void       make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
@@ -183,6 +184,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
 	api_define_function(ctx, "FS", "fullPath", js_FS_fullPath);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
+	api_define_function(ctx, "FS", "relativePath", js_FS_relativePath);
 	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function(ctx, "FS", "rename", js_FS_rename);
 	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
@@ -1351,6 +1353,22 @@ js_FS_readFile(duk_context* ctx)
 		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
 	content = lstr_from_cp1252(file_data, file_size);
 	duk_push_lstring_t(ctx, content);
+	return 1;
+}
+
+static duk_ret_t
+js_FS_relativePath(duk_context* ctx)
+{
+	const char* base_pathname;
+	path_t*     path;
+	const char* pathname;
+
+	pathname = duk_require_pathname(ctx, 0, NULL);
+	base_pathname = duk_require_pathname(ctx, 1, NULL);
+
+	path = fs_relative_path(pathname, base_pathname);
+	duk_push_string(ctx, path_cstr(path));
+	path_free(path);
 	return 1;
 }
 
