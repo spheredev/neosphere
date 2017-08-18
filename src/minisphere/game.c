@@ -137,7 +137,8 @@ game_open(const char* game_path)
 		duk_put_prop_string(g_duk, -2, "summary");
 		duk_push_sprintf(g_duk, "%dx%d", game->resolution.width, game->resolution.height);
 		duk_put_prop_string(g_duk, -2, "resolution");
-		duk_push_string(g_duk, path_cstr(game->script_path)); duk_put_prop_string(g_duk, -2, "main");
+		duk_push_string(g_duk, path_cstr(game->script_path));
+		duk_put_prop_string(g_duk, -2, "main");
 		game->manifest = lstr_new(duk_json_encode(g_duk, -1));
 		duk_pop(g_duk);
 	}
