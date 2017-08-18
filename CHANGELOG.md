@@ -7,6 +7,7 @@ vX.X.X - TBD
 * Adds a new `FS.relativePath()` API for extracting a partial path from a full
   SphereFS pathname.
 * Reorganizes the Sphere Runtime to avoid duplicating modules shared with Cell.
+* Fixes a bug where calling `Shape#draw()` with no arguments causes a segfault.
 
 
 v4.8.2 - August 16, 2017

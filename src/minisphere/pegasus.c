@@ -468,12 +468,6 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "Sphere", "restart", js_Sphere_restart);
 	api_define_function(ctx, "Sphere", "run", js_Sphere_run);
 	api_define_function(ctx, "Sphere", "sleep", js_Sphere_sleep);
-	api_define_class(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
-	api_define_property(ctx, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
-	api_define_method(ctx, "SoundStream", "pause", js_SoundStream_pause);
-	api_define_method(ctx, "SoundStream", "play", js_SoundStream_play);
-	api_define_method(ctx, "SoundStream", "stop", js_SoundStream_stop);
-	api_define_method(ctx, "SoundStream", "write", js_SoundStream_write);
 	api_define_class(ctx, "Color", js_new_Color, NULL);
 	api_define_function(ctx, "Color", "is", js_Color_is);
 	api_define_function(ctx, "Color", "mix", js_Color_mix);
@@ -602,6 +596,12 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Sound", "pause", js_Sound_pause);
 	api_define_method(ctx, "Sound", "play", js_Sound_play);
 	api_define_method(ctx, "Sound", "stop", js_Sound_stop);
+	api_define_class(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
+	api_define_property(ctx, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
+	api_define_method(ctx, "SoundStream", "pause", js_SoundStream_pause);
+	api_define_method(ctx, "SoundStream", "play", js_SoundStream_play);
+	api_define_method(ctx, "SoundStream", "stop", js_SoundStream_stop);
+	api_define_method(ctx, "SoundStream", "write", js_SoundStream_write);
 	api_define_class(ctx, "Surface", js_new_Surface, js_Surface_finalize);
 	api_define_property(ctx, "Surface", "height", js_Surface_get_height, NULL);
 	api_define_property(ctx, "Surface", "transform", js_Surface_get_transform, js_Surface_set_transform);
@@ -3531,8 +3531,8 @@ js_Shape_draw(duk_context* ctx)
 	duk_push_this(ctx);
 	num_args = duk_get_top(ctx) - 1;
 	shape = duk_require_class_obj(ctx, -1, "Shape");
-	if (num_args >= 1)
-		surface = duk_require_class_obj(ctx, 0, "Surface");
+	surface = num_args >= 1 ? duk_require_class_obj(ctx, 0, "Surface")
+		: screen_backbuffer(g_screen);
 	if (num_args >= 2)
 		transform = duk_require_class_obj(ctx, 1, "Transform");
 

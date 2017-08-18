@@ -975,11 +975,11 @@ Model#transform [read/write]
 
     Gets or sets the transformation matrix to use when drawing this model.
 
-Model#draw(surface);
+Model#draw([surface]);
 
-    Draws the model on `surface`.  Any transformations defined for the model
-    (see below) are applied as if all the shapes comprising it were a single
-    primitive.
+    Draws the model on `surface`, or the backbuffer if no surface is specified.
+    Any transformations defined for the model (see below) are applied as if all
+    the shapes comprising it were a single object.
 
 Model#setBoolean(name, value);
 
@@ -1312,11 +1312,10 @@ Shape#vertexList [read/write]
 
     Gets or sets the vertex list containing vertices for this shape.
 
-Shape#draw(surface[, transform]);
+Shape#draw([surface[, transform]]);
 
-    Draws the shape.  `transform` is the Transform to use, and `surface` is the
-    Surface to draw on.  If `surface` is omitted, the shape is drawn on the
-    backbuffer.
+    Draws the shape onto `surface`, or the backbuffer if no surface is
+    specified.  `transform` is the Transform to use.
 
     Note: If the shape's current index list is larger than its vertex list, a
           RangeError will be thrown.
