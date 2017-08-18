@@ -1010,7 +1010,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
-			path = game_build_path(g_game, filename, NULL, false);
+			path = game_full_path(g_game, filename, NULL, false);
 		}
 		else {
 			path = path_dup(origin_path);
@@ -1803,24 +1803,16 @@ js_FS_readFile(duk_context* ctx)
 static duk_ret_t
 js_FS_relativePath(duk_context* ctx)
 {
-	path_t*     base_path;
-	const char* base_pathname = NULL;
+	const char* base_pathname;
 	path_t*     path;
 	const char* pathname;
 
 	pathname = duk_require_pathname(ctx, 0, NULL, false, false);
 	base_pathname = duk_require_pathname(ctx, 1, NULL, false, false);
 
-	path = path_new(pathname);
-	base_path = path_new_dir(base_pathname);
-	if (path_hop_is(path, 0, path_hop(base_path, 0))) {
-		// only relativize if SphereFS prefixes match
-		path_relativize(path, base_path);
-	}
+	path = game_relative_path(g_game, pathname, base_pathname);
 	duk_push_string(ctx, path_cstr(path));
 	path_free(path);
-	path_free(base_path);
-	return 1;
 	return 1;
 }
 

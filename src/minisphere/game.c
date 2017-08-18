@@ -174,7 +174,7 @@ game_open(const char* game_path)
 			game->resolution = size2(
 				kev_read_float(sgm_file, "screen_width", 320),
 				kev_read_float(sgm_file, "screen_height", 240));
-			game->script_path = game_build_path(game, kev_read_string(sgm_file, "script", "main.js"), "@/scripts", true);
+			game->script_path = game_full_path(game, kev_read_string(sgm_file, "script", "main.js"), "@/scripts", true);
 			game->fullscreen = true;
 			kev_close(sgm_file);
 
@@ -286,63 +286,8 @@ game_file_exists(game_t* it, const char* filename)
 	return true;
 }
 
-bool
-game_fullscreen(const game_t* it)
-{
-	return it->fullscreen;
-}
-
-const lstring_t*
-game_manifest(const game_t* it)
-{
-	return it->manifest;
-}
-
-const char*
-game_name(const game_t* it)
-{
-	return lstr_cstr(it->name);
-}
-
-const path_t*
-game_path(const game_t* it)
-{
-	return it->root_path;
-}
-
-size2_t
-game_resolution(const game_t* it)
-{
-	return it->resolution;
-}
-
-const char*
-game_save_id(const game_t* it)
-{
-	return it->save_id != NULL ? lstr_cstr(it->save_id)
-		: NULL;
-}
-
-const path_t*
-game_script_path(const game_t* it)
-{
-	return it->script_path;
-}
-
-const char*
-game_summary(const game_t* it)
-{
-	return lstr_cstr(it->summary);
-}
-
-int
-game_version(const game_t* it)
-{
-	return it->version;
-}
-
 path_t*
-game_build_path(const game_t* it, const char* filename, const char* base_dir_name, bool legacy_mode)
+game_full_path(const game_t* it, const char* filename, const char* base_dir_name, bool legacy_mode)
 {
 	// note: '../' path hops are collapsed unconditionally, per SphereFS specification.
 	//       this ensures the game can't subvert its sandbox by navigating outside through
@@ -356,7 +301,7 @@ game_build_path(const game_t* it, const char* filename, const char* base_dir_nam
 	if (path_is_rooted(path))  // absolute path?
 		return path;
 	if (base_dir_name != NULL) {
-		base_path = game_build_path(it, base_dir_name, NULL, legacy_mode);
+		base_path = game_full_path(it, base_dir_name, NULL, legacy_mode);
 		path_to_dir(base_path);
 	}
 	if (path_num_hops(path) > 0)
@@ -393,6 +338,78 @@ game_build_path(const game_t* it, const char* filename, const char* base_dir_nam
 	free(prefix);
 	path_free(base_path);
 	return path;
+}
+
+bool
+game_fullscreen(const game_t* it)
+{
+	return it->fullscreen;
+}
+
+const lstring_t*
+game_manifest(const game_t* it)
+{
+	return it->manifest;
+}
+
+const char*
+game_name(const game_t* it)
+{
+	return lstr_cstr(it->name);
+}
+
+const path_t*
+game_path(const game_t* it)
+{
+	return it->root_path;
+}
+
+path_t*
+game_relative_path(const game_t* it, const char* filename, const char* base_dir_name)
+{
+	path_t* base_path;
+	path_t* path;
+
+	path = game_full_path(it, filename, NULL, false);
+	if (path_is_rooted(path))
+		return path;
+	base_path = game_full_path(it, base_dir_name, NULL, false);
+	path_to_dir(base_path);
+	if (path_hop_is(path, 0, path_hop(base_path, 0)))
+		path_relativize(path, base_path);
+	path_free(base_path);
+	return path;
+}
+
+size2_t
+game_resolution(const game_t* it)
+{
+	return it->resolution;
+}
+
+const char*
+game_save_id(const game_t* it)
+{
+	return it->save_id != NULL ? lstr_cstr(it->save_id)
+		: NULL;
+}
+
+const path_t*
+game_script_path(const game_t* it)
+{
+	return it->script_path;
+}
+
+const char*
+game_summary(const game_t* it)
+{
+	return lstr_cstr(it->summary);
+}
+
+int
+game_version(const game_t* it)
+{
+	return it->version;
 }
 
 bool
@@ -801,7 +818,7 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 
 	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
-	game->script_path = game_build_path(game, duk_get_string(g_duk, -1), NULL, false);
+	game->script_path = game_full_path(game, duk_get_string(g_duk, -1), NULL, false);
 
 	// game summary is optional, use a default summary if one is not provided.
 	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
@@ -941,12 +958,12 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 		*out_fs_type = FS_LOCAL;
 	}
 	else {  // no prefix: relative to `@/`
-		// note: this shouldn't actually happen, since `game_build_path()` always adds a prefix.
+		// note: this shouldn't actually happen, since `game_full_path()` always adds a prefix.
 		//       however, there might still be some places internally where an unqualified path is
 		//       used, so better to handle it here.
 		if (game == NULL)
 			goto on_error;
-		*out_path = game_build_path(game, filename, NULL, false);
+		*out_path = game_full_path(game, filename, NULL, false);
 		if (path_num_hops(*out_path) > 0 && path_hop_is(*out_path, 0, "@"))
 			path_remove_hop(*out_path, 0);
 		if (game->type == FS_LOCAL)  // convert to absolute path

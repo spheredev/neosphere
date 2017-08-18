@@ -685,7 +685,7 @@ find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, 
 	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
 		filename = strnewf(filenames[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
-			path = fs_build_path(filename, NULL);
+			path = fs_full_path(filename, NULL);
 		}
 		else {
 			path = path_dup(origin_path);
@@ -857,7 +857,6 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 static bool
 write_manifests(build_t* build)
 {
-	path_t*      base_path;
 	duk_context* ctx;
 	FILE*        file;
 	int          height;
@@ -914,10 +913,7 @@ write_manifests(build_t* build)
 		visor_end_op(build->visor);
 		return false;
 	}
-	script_path = fs_build_path(duk_to_string(ctx, -1), "@/");
-	base_path = path_new("@/scripts/");
-	path_relativize(script_path, base_path);
-	path_free(base_path);
+	script_path = fs_relative_path(duk_to_string(ctx, -1), "@/scripts");
 
 	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");

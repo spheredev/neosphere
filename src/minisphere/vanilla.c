@@ -2554,7 +2554,6 @@ js_GetClippingRectangle(duk_context* ctx)
 static duk_ret_t
 js_GetCurrentMap(duk_context* ctx)
 {
-	path_t* base_path;
 	path_t* path;
 
 	if (!map_engine_running())
@@ -2562,12 +2561,7 @@ js_GetCurrentMap(duk_context* ctx)
 
 	// GetCurrentMap() in Sphere 1.x returns the map path relative to the
 	// 'maps' directory.
-	path = path_new(map_pathname());
-	if (!path_is_rooted(path)) {
-		base_path = path_new("@/maps/");
-		path_relativize(path, base_path);
-		path_free(base_path);
-	}
+	path = game_relative_path(g_game, map_pathname(), "@/maps");
 	duk_push_string(ctx, path_cstr(path));
 	path_free(path);
 	return 1;
@@ -7954,7 +7948,6 @@ js_Spriteset_finalize(duk_context* ctx)
 static duk_ret_t
 js_Spriteset_get_filename(duk_context* ctx)
 {
-	path_t*      base_path;
 	path_t*      path;
 	spriteset_t* spriteset;
 
@@ -7964,13 +7957,7 @@ js_Spriteset_get_filename(duk_context* ctx)
 	// returned filename is relative to `@/`, even though Spriteset#save() is
 	// rooted at `@/spritesets`.  I suspect this to be a bug in Sphere 1.x, but fixing
 	// it here would break existing workarounds.
-	path = path_new(spriteset_pathname(spriteset));
-	if (!path_is_rooted(path)) {
-		base_path = path_new("@/");
-		path_relativize(path, base_path);
-		path_free(base_path);
-	}
-
+	path = game_relative_path(g_game, spriteset_pathname(spriteset), "@/");
 	duk_push_string(ctx, path_cstr(path));
 	path_free(path);
 	return 1;

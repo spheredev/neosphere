@@ -63,35 +63,35 @@ legacy_init(void)
 	system_ini = kev_open(NULL, "#/system.ini", false);
 
 	// system default font
-	path = game_build_path(NULL,
+	path = game_full_path(NULL,
 		kev_read_string(system_ini, "Font", "system.rfn"),
 		"#/", true);
 	s_default_font = font_load(path_cstr(path));
 	path_free(path);
 
 	// system default windowstyle
-	path = game_build_path(NULL,
+	path = game_full_path(NULL,
 		kev_read_string(system_ini, "WindowStyle", "system.rws"),
 		"#/", true);
 	s_default_windowstyle = winstyle_load(path_cstr(path));
 	path_free(path);
 
 	// system default pointer image
-	path = game_build_path(NULL,
+	path = game_full_path(NULL,
 		kev_read_string(system_ini, "Arrow", "pointer.png"),
 		"#/", true);
 	s_default_arrow = image_load(path_cstr(path));
 	path_free(path);
 
 	// system default up arrow image
-	path = game_build_path(NULL,
+	path = game_full_path(NULL,
 		kev_read_string(system_ini, "UpArrow", "up_arrow.png"),
 		"#/", true);
 	s_default_arrow_up = image_load(path_cstr(path));
 	path_free(path);
 
 	// system default down arrow image
-	path = game_build_path(NULL,
+	path = game_full_path(NULL,
 		kev_read_string(system_ini, "DownArrow", "down_arrow.png"),
 		"#/", true);
 	s_default_arrow_down = image_load(path_cstr(path));

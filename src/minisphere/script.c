@@ -84,7 +84,7 @@ script_eval(const char* filename, bool as_module)
 		return true;
 	}
 	else {
-		path = game_build_path(g_game, filename, NULL, false);
+		path = game_full_path(g_game, filename, NULL, false);
 		source_name = debugger_source_name(path_cstr(path));
 		if (!(slurp = game_read_file(g_game, filename, &size)))
 			goto on_error;

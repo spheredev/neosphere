@@ -99,6 +99,62 @@ fs_dir_exists(const fs_t* fs, const char* dirname)
 	return (sb.st_mode & S_IFDIR) == S_IFDIR;
 }
 
+path_t*
+fs_full_path(const char* filename, const char* base_dir_name)
+{
+	// note: fs_full_path() collapses '../' path hops unconditionally, as per
+	//       SphereFS spec. this ensures an unpackaged game can't subvert the
+	//       sandbox by navigating outside of its directory via a symbolic link.
+
+	path_t* base_path = NULL;
+	path_t* path;
+	char*   prefix;
+
+	path = path_new(filename);
+	if (path_is_rooted(path))  // absolute path?
+		return path;
+
+	if (base_dir_name != NULL) {
+		base_path = fs_full_path(base_dir_name, NULL);
+		path_to_dir(base_path);
+	}
+	if (path_num_hops(path) > 0)
+		prefix = strdup(path_hop(path, 0));
+	else
+		prefix = strdup("");
+	if (!strpbrk(prefix, "@#~$") || strlen(prefix) != 1) {
+		if (base_path != NULL)
+			path_rebase(path, base_path);
+		else
+			path_insert_hop(path, 0, "$");
+		free(prefix);
+		prefix = strdup(path_hop(path, 0));
+	}
+	path_remove_hop(path, 0);
+	path_collapse(path, true);
+	path_insert_hop(path, 0, prefix);
+	free(prefix);
+	path_free(base_path);
+	return path;
+}
+
+path_t*
+fs_relative_path(const char* filename, const char* base_dir_name)
+{
+	path_t* base_path;
+	path_t* path;
+
+	path = fs_full_path(filename, NULL);
+	if (path_is_rooted(path))
+		return path;
+	base_path = fs_full_path(base_dir_name, NULL);
+	path_to_dir(base_path);
+	if (path_hop_is(path, 0, path_hop(base_path, 0)))
+		path_relativize(path, base_path);
+	path_free(base_path);
+	return path;
+}
+
 int
 fs_fcopy(const fs_t* fs, const char* destination, const char* source, int overwrite)
 {
@@ -223,45 +279,6 @@ fs_list_dir(const fs_t* fs, const char* dirname)
 	path_free(origin_path);
 	free(resolved_name);
 	return list;
-}
-
-path_t*
-fs_build_path(const char* filename, const char* base_dir_name)
-{
-	// note: fs_build_path() collapses '../' path hops unconditionally, as per
-	//       SphereFS spec. this ensures an unpackaged game can't subvert the
-	//       sandbox by navigating outside of its directory via a symbolic link.
-
-	path_t* base_path = NULL;
-	path_t* path;
-	char*   prefix;
-
-	path = path_new(filename);
-	if (path_is_rooted(path))  // absolute path?
-		return path;
-
-	if (base_dir_name != NULL) {
-		base_path = fs_build_path(base_dir_name, NULL);
-		path_to_dir(base_path);
-	}
-	if (path_num_hops(path) > 0)
-		prefix = strdup(path_hop(path, 0));
-	else
-		prefix = strdup("");
-	if (!strpbrk(prefix, "@#~$") || strlen(prefix) != 1) {
-		if (base_path != NULL)
-			path_rebase(path, base_path);
-		else
-			path_insert_hop(path, 0, "$");
-		free(prefix);
-		prefix = strdup(path_hop(path, 0));
-	}
-	path_remove_hop(path, 0);
-	path_collapse(path, true);
-	path_insert_hop(path, 0, prefix);
-	free(prefix);
-	path_free(base_path);
-	return path;
 }
 
 int
