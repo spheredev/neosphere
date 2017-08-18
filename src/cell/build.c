@@ -864,6 +864,7 @@ write_manifests(build_t* build)
 	int          height;
 	size_t       json_size;
 	const char*  json_text;
+	path_t*      main_path;
 	path_t*      script_path;
 	int          width;
 
@@ -906,19 +907,24 @@ write_manifests(build_t* build)
 		return false;
 	}
 
-	// note: SGMv1 requires the main script path to be relative to scripts/.
-	//       this differs from v2 (game.json), where it's relative to the manifest.
+	// note: SGMv1 requires the main script path to be relative to `@/scripts`.
+	//       this differs from a Sv2 manifest (game.json), where it's relative to
+	//       `@/`.
 	duk_get_prop_string(ctx, -5, "main");
-	if (!duk_is_string(ctx, -1)) {
+	if (duk_is_string(ctx, -1)) {
+		// rebase onto `@/`, as Cell assumes `$/` by default.
+		main_path = fs_full_path(duk_to_string(ctx, -1), "@/");
+	}
+	else {
 		visor_error(build->visor, "missing or invalid 'main' field");
 		duk_pop_n(ctx, 7);
 		visor_end_op(build->visor);
 		return false;
 	}
-	script_path = fs_relative_path(duk_to_string(ctx, -1), "@/scripts");
 
 	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
+	script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
 	fprintf(file, "name=%s\n", duk_to_string(ctx, -5));
 	fprintf(file, "author=%s\n", duk_to_string(ctx, -4));
 	fprintf(file, "description=%s\n", duk_to_string(ctx, -3));
@@ -936,6 +942,7 @@ write_manifests(build_t* build)
 	duk_pop_2(ctx);
 
 	visor_end_op(build->visor);
+	path_free(main_path);
 	return true;
 }
 
