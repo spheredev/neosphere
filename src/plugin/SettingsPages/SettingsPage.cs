@@ -5,37 +5,46 @@ using SphereStudio.Base;
 
 namespace Sphere.Gdk.SettingsPages
 {
-    partial class SettingsPage : UserControl, ISettingsPage
+    partial class SettingsPage : UserControl, ISettingsPage, IStyleAware
     {
-        private PluginMain _main;
+        private PluginMain m_main;
 
         public SettingsPage(PluginMain main)
         {
             InitializeComponent();
-            _main = main;
+            StyleManager.AutoStyle(this);
+            m_main = main;
         }
 
         public Control Control { get { return this; } }
 
+        public void ApplyStyle(UIStyle style)
+        {
+            style.AsUIElement(MainTabPage);
+            style.AsTextView(GdkPathTextBox);
+            style.AsTextView(VerbosityComboBox);
+            style.AsAccent(BrowseButton);
+        }
+
         public bool Apply()
         {
-            _main.Conf.GdkPath = GdkPathTextBox.Text;
-            _main.Conf.MakeDebugPackages = MakeDebugPackageCheckBox.Checked;
-            _main.Conf.AlwaysUseConsole = TestWithConsoleCheckBox.Checked;
-            _main.Conf.ShowTraceInfo = ShowTraceCheckBox.Checked;
-            _main.Conf.TestInWindow = TestInWindowCheckBox.Checked;
-            _main.Conf.Verbosity = VerbosityComboBox.SelectedIndex;
+            m_main.Conf.GdkPath = GdkPathTextBox.Text;
+            m_main.Conf.MakeDebugPackages = MakeDebugPackageCheckBox.Checked;
+            m_main.Conf.AlwaysUseConsole = TestWithConsoleCheckBox.Checked;
+            m_main.Conf.ShowTraceInfo = ShowTraceCheckBox.Checked;
+            m_main.Conf.TestInWindow = TestInWindowCheckBox.Checked;
+            m_main.Conf.Verbosity = VerbosityComboBox.SelectedIndex;
             return true;
         }
 
         protected override void OnLoad(EventArgs e)
         {
-            GdkPathTextBox.Text = _main.Conf.GdkPath;
-            MakeDebugPackageCheckBox.Checked = _main.Conf.MakeDebugPackages;
-            ShowTraceCheckBox.Checked = _main.Conf.ShowTraceInfo;
-            TestWithConsoleCheckBox.Checked = _main.Conf.AlwaysUseConsole;
-            TestInWindowCheckBox.Checked = _main.Conf.TestInWindow;
-            VerbosityComboBox.SelectedIndex = _main.Conf.Verbosity;
+            GdkPathTextBox.Text = m_main.Conf.GdkPath;
+            MakeDebugPackageCheckBox.Checked = m_main.Conf.MakeDebugPackages;
+            ShowTraceCheckBox.Checked = m_main.Conf.ShowTraceInfo;
+            TestWithConsoleCheckBox.Checked = m_main.Conf.AlwaysUseConsole;
+            TestInWindowCheckBox.Checked = m_main.Conf.TestInWindow;
+            VerbosityComboBox.SelectedIndex = m_main.Conf.Verbosity;
             base.OnLoad(e);
         }
 

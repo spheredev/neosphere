@@ -216,7 +216,7 @@ methods for managing execution.
 Sphere.Platform [read-only]
 
     A string specifying the name and version number of the engine.  For
-    example, "miniSphere X.X.X".
+    example, "miniSphere 4.8.3".
 
 Sphere.Version [read-only]
 Sphere.APILevel [read-only]

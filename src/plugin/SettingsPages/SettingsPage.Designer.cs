@@ -92,19 +92,21 @@
             // ShowTraceCheckBox
             // 
             this.ShowTraceCheckBox.AutoSize = true;
+            this.ShowTraceCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.ShowTraceCheckBox.Location = new System.Drawing.Point(12, 58);
             this.ShowTraceCheckBox.Name = "ShowTraceCheckBox";
-            this.ShowTraceCheckBox.Size = new System.Drawing.Size(280, 17);
+            this.ShowTraceCheckBox.Size = new System.Drawing.Size(277, 17);
             this.ShowTraceCheckBox.TabIndex = 4;
-            this.ShowTraceCheckBox.Text = "Show output produced by `SSj.trace` while debugging";
+            this.ShowTraceCheckBox.Text = "Show output produced by SSj.trace() while debugging";
             this.ShowTraceCheckBox.UseVisualStyleBackColor = true;
             // 
             // TestInWindowCheckBox
             // 
             this.TestInWindowCheckBox.AutoSize = true;
+            this.TestInWindowCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.TestInWindowCheckBox.Location = new System.Drawing.Point(12, 35);
             this.TestInWindowCheckBox.Name = "TestInWindowCheckBox";
-            this.TestInWindowCheckBox.Size = new System.Drawing.Size(365, 17);
+            this.TestInWindowCheckBox.Size = new System.Drawing.Size(362, 17);
             this.TestInWindowCheckBox.TabIndex = 3;
             this.TestInWindowCheckBox.Text = "Force the engine to start in windowed mode when clicking \"Test Game\"";
             this.TestInWindowCheckBox.UseVisualStyleBackColor = true;
@@ -112,9 +114,10 @@
             // MakeDebugPackageCheckBox
             // 
             this.MakeDebugPackageCheckBox.AutoSize = true;
+            this.MakeDebugPackageCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.MakeDebugPackageCheckBox.Location = new System.Drawing.Point(12, 12);
             this.MakeDebugPackageCheckBox.Name = "MakeDebugPackageCheckBox";
-            this.MakeDebugPackageCheckBox.Size = new System.Drawing.Size(324, 17);
+            this.MakeDebugPackageCheckBox.Size = new System.Drawing.Size(321, 17);
             this.MakeDebugPackageCheckBox.TabIndex = 2;
             this.MakeDebugPackageCheckBox.Text = "Include source maps when building an SPK package using Cell";
             this.MakeDebugPackageCheckBox.UseVisualStyleBackColor = true;
@@ -147,6 +150,7 @@
             // 
             this.VerbosityComboBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.VerbosityComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.VerbosityComboBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.VerbosityComboBox.FormattingEnabled = true;
             this.VerbosityComboBox.Items.AddRange(new object[] {
             "V0 - game output only",
@@ -172,11 +176,12 @@
             // TestWithConsoleCheckBox
             // 
             this.TestWithConsoleCheckBox.AutoSize = true;
+            this.TestWithConsoleCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.TestWithConsoleCheckBox.Location = new System.Drawing.Point(12, 12);
             this.TestWithConsoleCheckBox.Name = "TestWithConsoleCheckBox";
-            this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(221, 17);
+            this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(196, 17);
             this.TestWithConsoleCheckBox.TabIndex = 0;
-            this.TestWithConsoleCheckBox.Text = "Use miniSphere &Console for \"Test Game\"";
+            this.TestWithConsoleCheckBox.Text = "\"Test Game\" using SpheRun engine";
             this.TestWithConsoleCheckBox.UseVisualStyleBackColor = true;
             // 
             // editorLabel2
@@ -189,7 +194,7 @@
             this.editorLabel2.Name = "editorLabel2";
             this.editorLabel2.Size = new System.Drawing.Size(562, 23);
             this.editorLabel2.TabIndex = 2;
-            this.editorLabel2.Text = "miniSphere Console settings";
+            this.editorLabel2.Text = "SpheRun (terminal mode) settings";
             this.editorLabel2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // panel1
@@ -206,6 +211,7 @@
             // BrowseButton
             // 
             this.BrowseButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.BrowseButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BrowseButton.Image = global::Sphere.Gdk.Properties.Resources.FolderIcon;
             this.BrowseButton.Location = new System.Drawing.Point(469, 39);
             this.BrowseButton.Name = "BrowseButton";
@@ -220,6 +226,7 @@
             // 
             this.GdkPathTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.GdkPathTextBox.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.GdkPathTextBox.Location = new System.Drawing.Point(64, 13);
             this.GdkPathTextBox.Name = "GdkPathTextBox";
             this.GdkPathTextBox.ReadOnly = true;

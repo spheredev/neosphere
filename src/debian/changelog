@@ -1,3 +1,21 @@
+minisphere (4.8.3) zesty; urgency=low
+
+  * Adds a new `FS.relativePath()` API for computing partial file and directory
+    paths for debugging and display purposes.
+  * Changes `Transform#rotate()` to use degrees instead of radians.
+  * Improves game manifest validation by disallowing SphereFS prefixes other than
+    `@/` in the startup script path.
+  * Improves the organization of the Sphere Runtime to avoid duplicating modules
+    shared between miniSphere and Cell.
+  * Fixes a bug where accessing Surface#transform can cause a segfault.
+  * Fixes a bug where changes to a surface's projection matrix are sometimes
+    ignored.
+  * Fixes a bug where calling `Shape#draw()` with no arguments causes a segfault.
+  * Fixes some bugs in the Sphere v1 implementation where a nonsensical relative
+    pathname can be returned from certain API functions, e.g. `GetCurrentMap()`.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 19 Aug 2017 00:00:00 -0500
+
 minisphere (4.8.2) zesty; urgency=low
 
   * Fixes a bug in the internal audio streaming logic which corrupted the output

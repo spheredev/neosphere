@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.8.3 - August 19, 2017
+------------------------
 
 * Adds a new `FS.relativePath()` API for computing partial file and directory
   paths for debugging and display purposes.
@@ -14,10 +14,11 @@ vX.X.X - TBD
 * Fixes a bug where accessing Surface#transform can cause a segfault.
 * Fixes a bug where changes to a surface's projection matrix are sometimes
   ignored.
+* Fixes a bug where the screen's current projection matrix is used to display
+  the fatal exception screen.
 * Fixes a bug where calling `Shape#draw()` with no arguments causes a segfault.
 * Fixes some bugs in the Sphere v1 implementation where a nonsensical relative
   pathname can be returned from certain API functions, e.g. `GetCurrentMap()`.
-
 
 v4.8.2 - August 16, 2017
 ------------------------

@@ -222,12 +222,12 @@ main(int argc, char* argv[])
 
 	// set up the render context ("screen") so we can draw stuff
 	resolution = game_resolution(g_game);
-	if (!(icon = image_load("icon.png")))
+	if (!(icon = image_load("@/icon.png")))
 		icon = image_load("#/icon.png");
 	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere was unable to create a render context.",
-			"Your hardware may be too old to run miniSphere, or there is a driver problem on this system.  Check that your graphics drivers are installed and up-to-date.",
+			"Your hardware may be too old to run miniSphere, or there could be a problem with the drivers on this system.  Check that your graphics drivers in particular are installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
@@ -733,6 +733,7 @@ show_error_screen(const char* message)
 	ALLEGRO_KEYBOARD_STATE keyboard;
 	const char*            line_text;
 	int                    num_lines;
+	transform_t*           projection;
 	size2_t                resolution;
 	const char*            subtitle;
 	const char*            title;
@@ -750,15 +751,23 @@ show_error_screen(const char* message)
 	if (g_sys_font == NULL)
 		goto show_error_box;
 
-	// create wraptext from error message
+	// word-wrap the error message to fit inside the error box
 	resolution = screen_size(g_screen);
 	if (!(error_info = wraptext_new(message, g_sys_font, resolution.width - 84)))
 		goto show_error_box;
 	num_lines = wraptext_len(error_info);
 
-	// show error in-engine, Sphere 1.x style
+	// reset the projection to pixel-perfect orthographic and disable clipping.
+	// it's assumed that JavaScript execution won't continue after this point, so we shouldn't
+	// step on any toes by doing this.
 	screen_unskip_frame(g_screen);
+	image_render_to(screen_backbuffer(g_screen), NULL);
 	image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, resolution.width, resolution.height));
+	projection = transform_new();
+	transform_orthographic(projection, 0, 0, resolution.width, resolution.height, -1.0f, 1.0f);
+	image_set_transform(screen_backbuffer(g_screen), projection);
+	transform_unref(projection);
+	
 	is_finished = false;
 	frames_till_close = 30;
 	while (!is_finished) {
