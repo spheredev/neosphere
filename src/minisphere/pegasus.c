@@ -4114,12 +4114,14 @@ js_Surface_get_height(duk_context* ctx)
 static duk_ret_t
 js_Surface_get_transform(duk_context* ctx)
 {
-	image_t* image;
+	image_t*     image;
+	transform_t* transform;
 
 	duk_push_this(ctx);
 	image = duk_require_class_obj(ctx, -1, "Surface");
 
-	duk_push_class_obj(ctx, "Transform", image_get_transform(image));
+	transform = image_get_transform(image);
+	duk_push_class_obj(ctx, "Transform", transform_ref(transform));
 	return 1;
 }
 

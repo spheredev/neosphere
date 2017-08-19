@@ -345,8 +345,6 @@ image_set_transform(image_t* it, transform_t* transform)
 	old_value = it->transform;
 	it->transform = transform_ref(transform);
 	transform_unref(old_value);
-	if (it == s_last_image)
-		al_use_projection_transform(transform_matrix(it->transform));
 }
 
 bool
@@ -596,23 +594,23 @@ void
 image_render_to(image_t* it, transform_t* transform)
 {
 	rect_t            bounds;
-	rect_t            clipping;
 	ALLEGRO_TRANSFORM matrix;
+	rect_t            scissor;
 
 	if (it != s_last_image) {
 		al_set_target_bitmap(it->bitmap);
-		bounds = rect(0, 0, it->width, it->height);
-		clipping = it->scissor_box;
-		if (!do_rects_intersect(clipping, bounds)) {
-			// workaround for Allegro bug: setting the clipping rectangle completely
-			// out of bounds will cause a GL_INVALID_VALUE error, leading to mysterious
-			// failures later.
-			clipping = rect(0, 0, 0, 0);
-		}
-		al_set_clipping_rectangle(clipping.x1, clipping.y1, clipping.x2 - clipping.x1, clipping.y2 - clipping.y1);
-		al_use_projection_transform(transform_matrix(it->transform));
 		shader_use(NULL, true);
 	}
+	bounds = rect(0, 0, it->width, it->height);
+	scissor = it->scissor_box;
+	if (!do_rects_intersect(scissor, bounds)) {
+		// workaround for Allegro bug: setting the clipping rectangle completely
+		// out of bounds will cause a GL_INVALID_VALUE error, leading to mysterious
+		// failures later.
+		scissor = rect(0, 0, 0, 0);
+	}
+	al_set_clipping_rectangle(scissor.x1, scissor.y1, scissor.x2 - scissor.x1, scissor.y2 - scissor.y1);
+	al_use_projection_transform(transform_matrix(it->transform));
 	if (transform != NULL) {
 		al_use_transform(transform_matrix(transform));
 	}

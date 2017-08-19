@@ -10,6 +10,7 @@ vX.X.X - TBD
   `@/` in the startup script path.
 * Improves the organization of the Sphere Runtime to avoid duplicating modules
   shared between miniSphere and Cell.
+* Fixes a bug where accessing Surface#transform can cause a segfault.
 * Fixes a bug where changes to a surface's projection matrix are sometimes
   ignored.
 * Fixes a bug where calling `Shape#draw()` with no arguments causes a segfault.
