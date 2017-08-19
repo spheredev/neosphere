@@ -282,9 +282,9 @@ asset_t*
 asset_fopen(package_t* package, const char* path, const char* mode)
 {
 	ALLEGRO_FILE* al_file = NULL;
+	asset_t*      asset = NULL;
 	void*         buffer = NULL;
 	path_t*       cache_path;
-	asset_t*   file = NULL;
 	size_t        file_size;
 	const char*   local_filename;
 	path_t*       local_path;
@@ -302,7 +302,7 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 	if (mode[0] == 'w' || mode[0] == 'a' || strchr(mode, '+'))
 		path_mkdir(local_path);
 
-	if (!(file = calloc(1, sizeof(asset_t))))
+	if (!(asset = calloc(1, sizeof(asset_t))))
 		goto on_error;
 
 	if (al_filename_exists(local_filename)) {
@@ -338,11 +338,11 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 
 	path_free(local_path);
 
-	file->buffer = buffer;
-	file->filename = strdup(path);
-	file->handle = al_file;
-	file->package = package_ref(package);
-	return file;
+	asset->buffer = buffer;
+	asset->filename = strdup(path);
+	asset->handle = al_file;
+	asset->package = package_ref(package);
+	return asset;
 
 on_error:
 	console_log(4, "failed to open `%s` from package #%u", path, package->id);
@@ -350,7 +350,7 @@ on_error:
 	if (al_file != NULL)
 		al_fclose(al_file);
 	free(buffer);
-	free(file);
+	free(asset);
 	return NULL;
 }
 

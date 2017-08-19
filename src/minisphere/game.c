@@ -157,8 +157,8 @@ game_open(const char* game_path)
 			duk_push_pointer(g_duk, game);
 			duk_push_lstring_t(g_duk, game->manifest);
 			if (duk_safe_call(g_duk, duk_load_s2gm, NULL, 2, 1) != DUK_EXEC_SUCCESS) {
-				console_log(0, "!!! %s", duk_to_string(g_duk, -1));
-				console_log(0, "   @ [game.json:?]");
+				console_log(0, "%s", duk_to_string(g_duk, -1));
+				console_log(0, "   @ [@/game.json:0]");
 				duk_pop(g_duk);
 				goto on_error;
 			}
@@ -332,16 +332,18 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 		path_insert_hop(path, 0, "@");
 	}
 
-	// `$/` is not a first-class prefix but an alias for `@/<scriptsDir>`.
-	if (strcmp(prefix, "$") == 0) {
+	// `$/` is not a first-class prefix but an alias for `@/<scriptsDir>`, so that's
+	// what we want to canonicalize to if possible.
+	if (strcmp(prefix, "$") == 0 && it->script_path != NULL) {
 		path_remove_hop(path, 0);
-		path_rebase(path, game_script_path(it));
+		path_rebase(path, it->script_path);
 		free(prefix);
 		prefix = strdup(path_hop(path, 0));
 	}
 
-	// no need to check for `$/` prefix here, the previous step handled it.
-	if (!strpbrk(prefix, "@#~") || strlen(prefix) != 1) {
+	// if the path doesn't contain a SphereFS prefix, it's relative and we need
+	// to rebase it.
+	if (!strpbrk(prefix, "@#~$") || strlen(prefix) != 1) {
 		if (base_path != NULL)
 			path_rebase(path, base_path);
 		else
@@ -836,6 +838,10 @@ duk_load_s2gm(duk_context* ctx, void* udata)
 	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
 		goto on_error;
 	game->script_path = game_full_path(game, duk_get_string(g_duk, -1), NULL, false);
+	if (!path_hop_is(game->script_path, 0, "@")) {
+		duk_error(g_duk, DUK_ERR_TYPE_ERROR, "illegal SphereFS prefix '%s/' in '%s'", path_hop(game->script_path, 0),
+			path_cstr(game->script_path));
+	}
 
 	// game summary is optional, use a default summary if one is not provided.
 	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))

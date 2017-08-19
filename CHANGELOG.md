@@ -6,8 +6,8 @@ vX.X.X - TBD
 
 * Adds a new `FS.relativePath()` API for computing partial file and directory
   paths for debugging and display purposes.
-* Improves `main` path handling in Cell by disallowing SphereFS prefixes other
-  than `@/` in the startup script path.
+* Improves game manifest validation by disallowing SphereFS prefixes other than
+  `@/` in the startup script path.
 * Improves the organization of the Sphere Runtime to avoid duplicating modules
   shared between miniSphere and Cell.
 * Fixes a bug where changes to a surface's projection matrix are sometimes
