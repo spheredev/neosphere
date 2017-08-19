@@ -4500,6 +4500,7 @@ js_Transform_rotate(duk_context* ctx)
 		vz = duk_require_number(ctx, 3);
 	}
 
+	theta *= M_PI / 180.0;  // convert to radians
 	transform_rotate(transform, theta, vx, vy, vz);
 	return 1;
 }

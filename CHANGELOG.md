@@ -6,6 +6,7 @@ vX.X.X - TBD
 
 * Adds a new `FS.relativePath()` API for computing partial file and directory
   paths for debugging and display purposes.
+* Changes `Transform#rotate()` to use degrees instead of radians.
 * Improves game manifest validation by disallowing SphereFS prefixes other than
   `@/` in the startup script path.
 * Improves the organization of the Sphere Runtime to avoid duplicating modules

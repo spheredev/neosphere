@@ -1642,21 +1642,23 @@ Transform#project3D(fov, aspect, near, far);
     match the aspect ratio of the game.  For example, if the game resolution
     is 1280x720, then `aspect` would usually be (16 / 9).
 
-Transform#rotate(theta[, vx, vy, vz]);
+Transform#rotate(angle[, vx, vy, vz]);
 
-    Applies a rotation transformation to this matrix.  `theta` is the angle of
-    rotation, in radians.  (vx, vy, vz) is the vector to rotate about.  For
-    example the default is (0, 0, 1) which rotates about the Z axis.
+    Applies a rotation transformation to this matrix.  `angle` is the amount of
+    rotation to apply, in degrees.  (vx, vy, vz) is the vector to rotate about.
+    For example, the default is (0, 0, 1) which rotates about the Z axis.
 
-Transform#scale(sx, sy);
+Transform#scale(sx, sy[, sz]);
 
-    Applies a scaling transformation to this matrix.  `sx` and `sy` are the
-    horizontal and vertical scaling factors, respectively.
+    Applies a scaling transformation to this matrix.  `sx`, `sy`, and `sz` are
+    the scaling factors for each axis.  If `sz` is omitted, it defaults to 1.0
+    and the Z axis is not scaled.
 
-Transform#translate(tx, ty);
+Transform#translate(tx, ty[, tz]);
 
-    Applies a translation transformation to this matrix.  `tx` and `ty` are the
-    horizontal and vertical translations, respectively.
+    Applies a translation transformation to this matrix.  `tx`, `ty`, and `tz`
+    are the amount of translation to apply along each axis.  If `tz` is
+    omitted, it defaults to 0.0 and the Z axis is not translated.
 
 
 `VertexList` Object
