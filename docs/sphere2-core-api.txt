@@ -1641,6 +1641,10 @@ Transform#project3D(fov, aspect, near, far);
     is the size of the vertical field of view, in degrees.  `aspect` should
     match the aspect ratio of the game.  For example, if the game resolution
     is 1280x720, then `aspect` would usually be (16 / 9).
+    
+    `near` and `far` define the distances in front of the "camera" beyond which
+    objects will be clipped.  They must be nonzero and positive, or an error
+    will be thrown.
 
 Transform#rotate(angle[, vx, vy, vz]);
 

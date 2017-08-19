@@ -4474,6 +4474,9 @@ js_Transform_project3D(duk_context* ctx)
 	z1 = duk_require_number(ctx, 2);
 	z2 = duk_require_number(ctx, 3);
 
+	if (z1 <= 0.0 || z2 <= 0.0 || z1 > z2)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid near/far range [%g,%g]", z1, z2);
+
 	fh = tan(fov / 360 * M_PI) * z1;
 	fw = fh * aspect;
 	transform_perspective(transform, -fw, -fh, fw, fh, z1, z2);
