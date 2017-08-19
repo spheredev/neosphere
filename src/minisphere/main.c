@@ -104,9 +104,9 @@ main(int argc, char* argv[])
 
 	lstring_t*           dialog_name;
 	duk_errcode_t        err_code;
+	const char*          err_filename = NULL;
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
-	const char*          filename;
 	path_t*              games_path;
 	image_t*             icon;
 	int                  line_num;
@@ -313,16 +313,18 @@ on_js_error:
 	duk_dup(g_duk, -1);
 	err_msg = duk_safe_to_string(g_duk, -1);
 	screen_show_mouse(g_screen, true);
-	duk_get_prop_string(g_duk, -2, "lineNumber");
-	line_num = duk_get_int(g_duk, -1);
-	duk_pop(g_duk);
-	duk_get_prop_string(g_duk, -2, "fileName");
-	filename = duk_get_string(g_duk, -1);
-	if (filename != NULL) {
+	if (duk_is_object_coercible(g_duk, -2)) {
+		duk_get_prop_string(g_duk, -2, "lineNumber");
+		line_num = duk_get_int(g_duk, -1);
+		duk_pop(g_duk);
+		duk_get_prop_string(g_duk, -2, "fileName");
+		err_filename = duk_get_string(g_duk, -1);
+	}
+	if (err_filename != NULL) {
 		fprintf(stderr, "%s\n", err_msg);
-		fprintf(stderr, "   @ [%s:%d]\n", filename, line_num);
+		fprintf(stderr, "   @ [%s:%d]\n", err_filename, line_num);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duk, "%s:%d\n\n%s\n ", filename, line_num, err_msg);
+			duk_push_sprintf(g_duk, "%s:%d\n\n%s\n ", err_filename, line_num, err_msg);
 		else
 			duk_push_sprintf(g_duk, "%s\n ", err_msg);
 	}

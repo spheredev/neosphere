@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Fixes a bug where throwing either `null` or `undefined` causes a segfault.
+
+
 v4.8.3 - August 19, 2017
 ------------------------
 
