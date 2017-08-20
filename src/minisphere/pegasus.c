@@ -4474,10 +4474,14 @@ js_Transform_project3D(duk_context* ctx)
 	z1 = duk_require_number(ctx, 2);
 	z2 = duk_require_number(ctx, 3);
 
-	if (z1 <= 0.0 || z2 <= 0.0 || z1 > z2)
+	if (fov >= 180.0 || fov <= 0.0)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid field of view angle '%g'", fov);
+	if (aspect <= 0.0 || aspect == INFINITY)
+		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid aspect ratio '%g'", aspect);
+	if (z1 <= 0.0 || z2 <= 0.0 || z2 < z1)
 		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid near/far range [%g,%g]", z1, z2);
 
-	fh = tan(fov / 360 * M_PI) * z1;
+	fh = tan(fov * M_PI / 360) * z1;
 	fw = fh * aspect;
 	transform_perspective(transform, -fw, -fh, fw, fh, z1, z2);
 	return 1;
@@ -4503,7 +4507,7 @@ js_Transform_rotate(duk_context* ctx)
 		vz = duk_require_number(ctx, 3);
 	}
 
-	theta *= M_PI / 180.0;  // convert to radians
+	theta *= M_PI / 180;  // convert to radians
 	transform_rotate(transform, theta, vx, vy, vz);
 	return 1;
 }
