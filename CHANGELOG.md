@@ -6,6 +6,8 @@ vX.X.X - TBD
 
 * Improves Cell game manifest generation to produce an error if the file named
   by `Sphere.Game.main` doesn't exist at the end of a build.
+* Fixes an issue where running "Package Game" in Sphere Studio would build the
+  game in `$/.staging` instead of the project's usual build directory.
 * Fixes a bug where throwing either `null` or `undefined` causes a segfault.
 * Fixes a bug where `Transform#project3D()` will accept negative or zero values
   for `near` and `far` parameters.
