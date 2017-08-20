@@ -907,14 +907,18 @@ write_manifests(build_t* build)
 		return false;
 	}
 
-	// note: SGMv1 requires the main script path to be relative to `@/scripts`.
-	//       this differs from Sv2 (game.json), where it's relative to `@/`.
 	duk_get_prop_string(ctx, -5, "main");
 	if (duk_is_string(ctx, -1)) {
-		// rebase onto `@/`, as Cell assumes `$/` by default.
+		// explicitly rebase onto `@/`, as Cell uses `$/` by default.
 		main_path = fs_full_path(duk_to_string(ctx, -1), "@/");
 		if (!path_hop_is(main_path, 0, "@")) {
-			visor_error(build->visor, "illegal prefix '%s/' in 'main' field", path_hop(main_path, 0));
+			visor_error(build->visor, "'main': illegal prefix '%s/' in filename", path_hop(main_path, 0));
+			duk_pop_n(ctx, 7);
+			visor_end_op(build->visor);
+			return false;
+		}
+		if (!fs_fexist(build->fs, path_cstr(main_path))) {
+			visor_error(build->visor, "'main': file not found '%s'", path_cstr(main_path));
 			duk_pop_n(ctx, 7);
 			visor_end_op(build->visor);
 			return false;
@@ -930,6 +934,8 @@ write_manifests(build_t* build)
 	}
 
 	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
+	// note: SGMv1 requires the main script path to be relative to `@/scripts`.
+	//       this differs from Sv2 (game.json), where it's relative to `@/`.
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
 	script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
 	fprintf(file, "name=%s\n", duk_to_string(ctx, -5));
