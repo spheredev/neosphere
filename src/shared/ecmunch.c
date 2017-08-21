@@ -77,6 +77,7 @@ on_error:
 void
 js_uninit(void)
 {
+	JsSetCurrentContext(JS_INVALID_REFERENCE);
 	JsDisposeRuntime(s_runtime);
 }
 
@@ -84,10 +85,15 @@ void
 js_define_global(const char* name, js_value_t* value)
 {
 	JsValueRef      global_ref;
+	const wchar_t*  name_wstr;
+	size_t          name_len;
+	JsValueRef      name_ref;
 	JsPropertyIdRef prop_ref;
-	
+
 	JsGetGlobalObject(&global_ref);
-	JsGetPropertyIdFromName(L"test812", &prop_ref);
+	JsCreateString(name, strlen(name), &name_ref);
+	JsStringToPointer(name_ref, &name_wstr, &name_len);
+	JsGetPropertyIdFromName(name_wstr, &prop_ref);
 	JsSetProperty(global_ref, prop_ref, value->ref, false);
 }
 
@@ -304,6 +310,7 @@ do_native_call(JsValueRef callee, bool using_new, JsValueRef argv[], unsigned sh
 		js_value_unref(arguments[i]);
 	free(arguments);
 	if (retval != NULL) {
+		js_value_unref(retval);
 		return retval->ref;
 	}
 	else {
@@ -316,6 +323,8 @@ static js_value_t*
 value_from_ref(JsValueRef ref)
 {
 	js_value_t* value;
+
+	JsAddRef(ref, NULL);
 
 	value = calloc(1, sizeof(js_value_t));
 	value->ref = ref;
