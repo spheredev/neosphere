@@ -54,16 +54,21 @@ static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool using_
 static js_value_t*                value_from_ref (JsValueRef ref);
 
 JsContextRef    s_context;
+js_value_t*     s_global;
 JsRuntimeHandle s_runtime = NULL;
 
 bool
 js_init(void)
 {
+	JsValueRef global_ref;
+	
 	if (JsCreateRuntime(JsRuntimeAttributeDispatchSetExceptionsToDebugger, NULL, &s_runtime) != JsNoError)
 		goto on_error;
 	if (JsCreateContext(s_runtime, &s_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_context);
+	JsGetGlobalObject(&global_ref);
+	s_global = value_from_ref(global_ref);
 	return true;
 
 on_error:
@@ -77,24 +82,15 @@ on_error:
 void
 js_uninit(void)
 {
+	js_value_unref(s_global);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
 	JsDisposeRuntime(s_runtime);
 }
 
-void
-js_define_global(const char* name, js_value_t* value)
+js_value_t*
+js_global_object(void)
 {
-	JsValueRef      global_ref;
-	const wchar_t*  name_wstr;
-	size_t          name_len;
-	JsValueRef      name_ref;
-	JsPropertyIdRef prop_ref;
-
-	JsGetGlobalObject(&global_ref);
-	JsCreateString(name, strlen(name), &name_ref);
-	JsStringToPointer(name_ref, &name_wstr, &name_len);
-	JsGetPropertyIdFromName(name_wstr, &prop_ref);
-	JsSetProperty(global_ref, prop_ref, value->ref, false);
+	return s_global;
 }
 
 js_value_t*
@@ -280,6 +276,39 @@ js_value_is_string(const js_value_t* it)
 
 	JsGetValueType(it->ref, &type);
 	return type == JsString;
+}
+
+js_value_t*
+js_value_get(js_value_t* it, const char* name)
+{
+	size_t          name_len;
+	JsValueRef      name_ref;
+	const wchar_t*  name_wstr;
+	JsPropertyIdRef prop_ref;
+	JsValueRef      value_ref;
+
+	JsCreateString(name, strlen(name), &name_ref);
+	JsStringToPointer(name_ref, &name_wstr, &name_len);
+	JsGetPropertyIdFromName(name_wstr, &prop_ref);
+	if (JsGetProperty(it->ref, prop_ref, &value_ref) != JsNoError)
+		return NULL;
+	return value_from_ref(value_ref);
+}
+
+bool
+js_value_set(js_value_t* it, const char* name, js_value_t* value)
+{
+	size_t          name_len;
+	JsValueRef      name_ref;
+	const wchar_t*  name_wstr;
+	JsPropertyIdRef prop_ref;
+
+	JsCreateString(name, strlen(name), &name_ref);
+	JsStringToPointer(name_ref, &name_wstr, &name_len);
+	JsGetPropertyIdFromName(name_wstr, &prop_ref);
+	if (JsSetProperty(it->ref, prop_ref, value->ref, true) != JsNoError)
+		return false;
+	return true;
 }
 
 static JsValueRef CHAKRA_CALLBACK

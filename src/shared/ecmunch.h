@@ -44,7 +44,7 @@ typedef js_value_t* (* js_c_function_t) (js_value_t* this, int num_args, js_valu
 
 bool        js_init               (void);
 void        js_uninit             (void);
-void        js_define_global      (const char* name, js_value_t* value);
+js_value_t* js_global_object      (void);
 js_value_t* js_get_exception      (void);
 void        js_set_exception      (js_value_t* value);
 js_value_t* js_value_new_error    (const char* message);
@@ -62,5 +62,7 @@ bool        js_value_is_function  (const js_value_t* it);
 bool        js_value_is_number    (const js_value_t* it);
 bool        js_value_is_object    (const js_value_t* it);
 bool        js_value_is_string    (const js_value_t* it);
+js_value_t* js_value_get          (js_value_t* it, const char* name);
+bool        js_value_set          (js_value_t* it, const char* name, js_value_t* value);
 
 #endif // FATCERBERUS__ECMUNCH_H__INCLUDED
