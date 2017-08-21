@@ -54,6 +54,7 @@
 #include <allegro5/allegro_memfile.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
+#include <ChakraCore.h>
 #include <duktape.h>
 #include <dyad.h>
 #include <zlib.h>
@@ -99,7 +100,7 @@ extern game_t*              g_game;
 extern path_t*              g_game_path;
 extern path_t*              g_last_game_path;
 extern screen_t*            g_screen;
-extern font_t*              g_sys_font;
+extern font_t*              g_system_font;
 
 no_return sphere_abort   (const char* message);
 no_return sphere_exit    (bool shutting_down);

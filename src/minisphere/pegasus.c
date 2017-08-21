@@ -2033,7 +2033,7 @@ js_FileStream_write(duk_context* ctx)
 static duk_ret_t
 js_Font_get_Default(duk_context* ctx)
 {
-	duk_push_class_obj(ctx, "Font", g_sys_font);
+	duk_push_class_obj(ctx, "Font", g_system_font);
 
 	duk_push_this(ctx);
 	duk_push_string(ctx, "Default");

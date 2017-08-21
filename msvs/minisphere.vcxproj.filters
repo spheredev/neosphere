@@ -135,6 +135,9 @@
     <ClCompile Include="..\src\minisphere\package.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shared\ecmunch.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\duktape.h">
@@ -264,6 +267,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\package.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\ecmunch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

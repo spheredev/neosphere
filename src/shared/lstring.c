@@ -373,6 +373,39 @@ lstr_from_cp1252(const char* text, size_t length)
 	return string;
 }
 
+lstring_t*
+lstr_from_wide(const wchar_t* text, size_t length)
+{
+	// create an lstring from plain text.  CP-1252 is assumed.  as Duktape
+	// expects JS code to be CESU-8 encoded, this functionality is needed for
+	// full compatibility with Sphere v1 scripts.
+
+	uint8_t*       buffer;
+	uint32_t       codepoint;
+	lstring_t*     string;
+	uint8_t        *p_out;
+	const wchar_t  *p_in;
+
+	size_t i;
+
+	// note: CESU-8 conversion may expand the string by up to 6x
+	if (!(string = malloc(sizeof(lstring_t) + length * 6 + 1)))
+		return NULL;
+	buffer = (char*)string + sizeof(lstring_t);
+	p_out = buffer;
+	p_in = text;
+	for (i = 0; i < length; ++i) {
+		codepoint = *p_in++;
+		cesu8_emit(codepoint, &p_out);
+	}
+	*p_out = '\0';  // NUL terminator
+	length = p_out - buffer;
+
+	string->cstr = (char*)buffer;
+	string->length = length;
+	return string;
+}
+
 void
 lstr_free(lstring_t* string)
 {

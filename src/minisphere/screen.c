@@ -238,8 +238,8 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 
 	screen_cx = al_get_display_width(it->display);
 	screen_cy = al_get_display_height(it->display);
-	width = font_get_width(g_sys_font, text) + 20;
-	height = font_height(g_sys_font) + 10;
+	width = font_get_width(g_system_font, text) + 20;
+	height = font_height(g_system_font) + 10;
 	bounds.x1 = 8 + it->x_offset;
 	bounds.y1 = screen_cy - it->y_offset - height - 8;
 	bounds.x2 = bounds.x1 + width;
@@ -248,9 +248,9 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 	al_set_target_backbuffer(it->display);
 	al_draw_filled_rounded_rectangle(bounds.x1, bounds.y1, bounds.x2, bounds.y2, 4, 4,
 		al_map_rgba(16, 16, 16, 192));
-	font_draw_text(g_sys_font, color_new(0, 0, 0, 255), (bounds.x1 + bounds.x2) / 2 + 1,
+	font_draw_text(g_system_font, color_new(0, 0, 0, 255), (bounds.x1 + bounds.x2) / 2 + 1,
 		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
-	font_draw_text(g_sys_font, color, (bounds.x2 + bounds.x1) / 2,
+	font_draw_text(g_system_font, color, (bounds.x2 + bounds.x1) / 2,
 		bounds.y1 + 5, TEXT_ALIGN_CENTER, text);
 	al_set_target_bitmap(old_target);
 }
@@ -337,8 +337,8 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			x = screen_cx - it->x_offset - 108;
 			y = screen_cy - it->y_offset - 24;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
-			font_draw_text(g_sys_font, color_new(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
-			font_draw_text(g_sys_font, color_new(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
+			font_draw_text(g_system_font, color_new(0, 0, 0, 255), x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
+			font_draw_text(g_system_font, color_new(255, 255, 255, 255), x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 		}
 		al_set_target_bitmap(old_target);
 		al_flip_display();
