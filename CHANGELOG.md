@@ -10,6 +10,7 @@ vX.X.X - TBD
   game in `$/.staging` instead of the project's usual build directory.
 * Fixes an issue in which a shape isn't allowed to have a vertex buffer smaller
   than its index buffer.
+* Fixes a bug in Console which prevented the command line cursor from flashing.
 * Fixes a bug where throwing either `null` or `undefined` causes a segfault.
 * Fixes a bug where `Transform#project3D()` will accept negative or zero values
   for `near` and `far` parameters.

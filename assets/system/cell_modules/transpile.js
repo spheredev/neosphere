@@ -31,15 +31,15 @@
 **/
 
 'use strict';
+const from  = require('from'),
+      ts    = require('#/typescript');
+
 exports = module.exports = transpile;
 exports.__esModule = true;
 exports.default = exports;
 
-const from  = require('from');
-const ts    = require('#/typescript');
-
-const ModuleTool = makeTranspileTool(2.0);
-const ScriptTool = makeTranspileTool(1.0);
+var moduleTool = makeTranspileTool(2.0),
+    scriptTool = makeTranspileTool(1.0);
 
 function transpile(dirName, sources)
 {
@@ -94,7 +94,7 @@ function stageTarget(dirName, sources)
 	FS.createDirectory(dirName);
 	for (var i = 0; i < sources.length; ++i) {
 		var fileName = FS.fullPath(dirName + '/' + sources[i].name);
-		var tool = fileName.endsWith('.mjs') ? ModuleTool : ScriptTool;
+		var tool = fileName.endsWith('.mjs') ? moduleTool : scriptTool;
 		if (fileName.endsWith('.mjs') || fileName.endsWith('.js'))
 			fileName = fileName.substring(0, fileName.lastIndexOf('.'));
 		fileName += '.js';

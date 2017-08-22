@@ -31,17 +31,14 @@
 **/
 
 'use strict';
+const assert = require('assert'),
+      Random = require('random');
+
 exports = module.exports = from;
 exports.__esModule = true;
 exports.default = exports;
 
-const assert = require('assert'),
-      Random = require('random');
-
-const PK =
-{
-	ItemSource: Symbol('itemSource'),
-};
+var symItemSource = Symbol('itemSource');
 
 function from(target/*, ...*/)
 {
@@ -94,7 +91,7 @@ function MAKEPOINT(sourceType, op)
 	return function(/*...*/)
 	{
 		// some more crazy witchcraft to emulate ES6 Reflect.construct().
-		var source = this[PK.ItemSource];
+		var source = this[symItemSource];
 		var boundArgs = [ null, source ].concat(makeArray(arguments));
 		var constructor = Function.prototype.bind.apply(sourceType, boundArgs);
 		var newSource = new constructor();
@@ -124,7 +121,7 @@ function PROPDESC(flags, valueOrGetter, setter)
 
 function FromQuery(source)
 {
-	this[PK.ItemSource] = source;
+	this[symItemSource] = source;
 }
 
 Object.defineProperties(FromQuery.prototype,
@@ -132,7 +129,7 @@ Object.defineProperties(FromQuery.prototype,
 	[Symbol.iterator]:
 	PROPDESC('wc', function enumerate(withKeys)
 	{
-		var source = this[PK.ItemSource];
+		var source = this[symItemSource];
 		source.init();
 		return { next: next };
 
