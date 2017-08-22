@@ -435,7 +435,8 @@ initialize_engine(void)
 	if (!(g_duk = duk_create_heap_default()))
 		goto on_error;
 
-
+	if (!js_init())
+		goto on_error;
 
 	// initialize engine components
 	async_init();
@@ -474,6 +475,7 @@ shutdown_engine(void)
 
 	console_log(1, "shutting down Duktape");
 	duk_destroy_heap(g_duk);
+	js_uninit();
 
 	console_log(1, "shutting down Dyad");
 	dyad_shutdown();

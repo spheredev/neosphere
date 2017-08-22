@@ -51,15 +51,8 @@ struct api_info
 	int             min_args;
 };
 
-struct module
-{
-	path_t*        path;
-	JsModuleRecord record;
-};
-
-static JsValueRef  CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool using_new, JsValueRef argv[], unsigned short argc, void* udata);
-static JsErrorCode CHAKRA_CALLBACK fetch_module   (JsModuleRecord parent, JsValueRef specifier, JsModuleRecord* out_record);
-static js_value_t*                 value_from_ref (JsValueRef ref);
+static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool using_new, JsValueRef argv[], unsigned short argc, void* udata);
+static js_value_t*                value_from_ref (JsValueRef ref);
 
 JsContextRef    s_context;
 js_value_t*     s_global;
@@ -119,6 +112,19 @@ js_set_exception(js_value_t* value)
 }
 
 js_value_t*
+js_value_new_error(const char* message)
+{
+	JsValueRef message_ref;
+	JsValueRef ref;
+
+	if (JsCreateString(message, strlen(message), &message_ref) != JsNoError)
+		return NULL;
+	if (JsCreateError(message_ref, &ref))
+		return NULL;
+	return value_from_ref(ref);
+}
+
+js_value_t*
 js_value_new_eval(const lstring_t* source)
 {
 	const wchar_t* codestring;
@@ -171,14 +177,11 @@ js_value_new_number(double value)
 }
 
 js_value_t*
-js_value_new_error(const char* message)
+js_value_new_object(void)
 {
-	JsValueRef message_ref;
 	JsValueRef ref;
 
-	if (JsCreateString(message, strlen(message), &message_ref) != JsNoError)
-		return NULL;
-	if (JsCreateError(message_ref, &ref))
+	if (JsCreateObject(&ref) != JsNoError)
 		return NULL;
 	return value_from_ref(ref);
 }
@@ -290,15 +293,10 @@ js_value_is_string(const js_value_t* it)
 js_value_t*
 js_value_get(js_value_t* it, const char* name)
 {
-	size_t          name_len;
-	JsValueRef      name_ref;
-	const wchar_t*  name_wstr;
 	JsPropertyIdRef prop_ref;
 	JsValueRef      value_ref;
 
-	JsCreateString(name, strlen(name), &name_ref);
-	JsStringToPointer(name_ref, &name_wstr, &name_len);
-	JsGetPropertyIdFromName(name_wstr, &prop_ref);
+	JsCreatePropertyId(name, strlen(name), &prop_ref);
 	if (JsGetProperty(it->ref, prop_ref, &value_ref) != JsNoError)
 		return NULL;
 	return value_from_ref(value_ref);
@@ -307,14 +305,9 @@ js_value_get(js_value_t* it, const char* name)
 bool
 js_value_set(js_value_t* it, const char* name, js_value_t* value)
 {
-	size_t          name_len;
-	JsValueRef      name_ref;
-	const wchar_t*  name_wstr;
 	JsPropertyIdRef prop_ref;
 
-	JsCreateString(name, strlen(name), &name_ref);
-	JsStringToPointer(name_ref, &name_wstr, &name_len);
-	JsGetPropertyIdFromName(name_wstr, &prop_ref);
+	JsCreatePropertyId(name, strlen(name), &prop_ref);
 	if (JsSetProperty(it->ref, prop_ref, value->ref, true) != JsNoError)
 		return false;
 	return true;
@@ -355,13 +348,6 @@ do_native_call(JsValueRef callee, bool using_new, JsValueRef argv[], unsigned sh
 		JsGetUndefinedValue(&undefined);
 		return undefined;
 	}
-}
-
-static JsErrorCode CHAKRA_CALLBACK
-fetch_module(JsModuleRecord parent, JsValueRef specifier, JsModuleRecord* out_record)
-{
-	*out_record = NULL;
-	return JsNoError;
 }
 
 static js_value_t*

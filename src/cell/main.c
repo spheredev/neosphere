@@ -33,6 +33,7 @@
 #include "cell.h"
 
 #include "build.h"
+#include "ecmunch.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_cell_quote (void);
@@ -42,9 +43,9 @@ static void print_usage      (void);
 static path_t* s_in_path;
 static path_t* s_out_path;
 static path_t* s_package_path;
-bool           s_want_clean;
-bool           s_want_rebuild;
-bool           s_want_source_map;
+static bool    s_want_clean;
+static bool    s_want_rebuild;
+static bool    s_want_source_map;
 
 int
 main(int argc, char* argv[])
@@ -53,6 +54,7 @@ main(int argc, char* argv[])
 	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
+	js_init();
 
 	// parse the command line
 	if (!parse_cmdline(argc, argv))
@@ -78,6 +80,7 @@ shutdown:
 	build_free(build);
 	path_free(s_in_path);
 	path_free(s_out_path);
+	js_uninit();
 	return retval;
 }
 

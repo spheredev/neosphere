@@ -67,6 +67,7 @@
 
 #include "geometry.h"
 #include "console.h"
+#include "ecmunch.h"
 #include "game.h"
 #include "kev_file.h"
 #include "font.h"

@@ -3,12 +3,13 @@
 
 #include "api.h"
 
-#include "duktape.h"
+#include "ecmunch.h"
 
 void
 api_init(duk_context* ctx)
 {
 	// JavaScript 'global' binding (like Node.js)
+	js_value_set(js_global_object(), "global", js_global_object());
 	duk_push_global_object(ctx);
 	duk_push_string(ctx, "global");
 	duk_push_global_object(ctx);

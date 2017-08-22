@@ -52,6 +52,7 @@ js_value_t* js_value_new_eval     (const lstring_t* source);
 js_value_t* js_value_new_function (const char* name, js_c_function_t callback, int min_args);
 js_value_t* js_value_new_int      (int value);
 js_value_t* js_value_new_number   (double value);
+js_value_t* js_value_new_object   (void);
 js_value_t* js_value_new_string   (const char* value);
 js_value_t* js_value_ref          (js_value_t* it);
 void        js_value_unref        (js_value_t* it);
