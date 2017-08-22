@@ -3528,9 +3528,6 @@ js_Shape_draw(duk_context* ctx)
 	if (num_args >= 2)
 		transform = duk_require_class_obj(ctx, 1, "Transform");
 
-	if (ibo_len(shape_get_ibo(shape)) > vbo_len(shape_get_vbo(shape)))
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "vertex list too small");
-
 	shape_draw(shape, surface, transform);
 	return 0;
 }

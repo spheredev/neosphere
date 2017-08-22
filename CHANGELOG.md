@@ -8,6 +8,8 @@ vX.X.X - TBD
   by `Sphere.Game.main` doesn't exist at the end of a build.
 * Fixes an issue where running "Package Game" in Sphere Studio would build the
   game in `$/.staging` instead of the project's usual build directory.
+* Fixes an issue in which a shape isn't allowed to have a vertex buffer smaller
+  than its index buffer.
 * Fixes a bug where throwing either `null` or `undefined` causes a segfault.
 * Fixes a bug where `Transform#project3D()` will accept negative or zero values
   for `near` and `far` parameters.
