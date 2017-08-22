@@ -119,15 +119,6 @@ main(int argc, char* argv[])
 	int                  use_verbosity;
 	bool                 want_debug;
 
-	js_init();
-	js_value_t* number = js_value_new_int(812);
-	js_value_set(js_global_object(), "pig", number);
-	js_value_t* res = js_value_new_eval(lstr_new("pig"));
-	printf("%d\n", js_value_as_int(res));
-	js_value_unref(number);
-	js_uninit();
-	return 0;
-	
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
 		&use_fullscreen, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))

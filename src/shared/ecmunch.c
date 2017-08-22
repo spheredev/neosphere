@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "path.h"
 
 #include <ChakraCore.h>
 
@@ -50,8 +51,15 @@ struct api_info
 	int             min_args;
 };
 
-static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool using_new, JsValueRef argv[], unsigned short argc, void* udata);
-static js_value_t*                value_from_ref (JsValueRef ref);
+struct module
+{
+	path_t*        path;
+	JsModuleRecord record;
+};
+
+static JsValueRef  CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool using_new, JsValueRef argv[], unsigned short argc, void* udata);
+static JsErrorCode CHAKRA_CALLBACK fetch_module   (JsModuleRecord parent, JsValueRef specifier, JsModuleRecord* out_record);
+static js_value_t*                 value_from_ref (JsValueRef ref);
 
 JsContextRef    s_context;
 js_value_t*     s_global;
@@ -69,6 +77,7 @@ js_init(void)
 	JsSetCurrentContext(s_context);
 	JsGetGlobalObject(&global_ref);
 	s_global = value_from_ref(global_ref);
+	
 	return true;
 
 on_error:
@@ -346,6 +355,13 @@ do_native_call(JsValueRef callee, bool using_new, JsValueRef argv[], unsigned sh
 		JsGetUndefinedValue(&undefined);
 		return undefined;
 	}
+}
+
+static JsErrorCode CHAKRA_CALLBACK
+fetch_module(JsModuleRecord parent, JsValueRef specifier, JsModuleRecord* out_record)
+{
+	*out_record = NULL;
+	return JsNoError;
 }
 
 static js_value_t*
