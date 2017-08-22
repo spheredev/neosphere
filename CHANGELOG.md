@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v4.8.4 - August 22, 2017
+------------------------
 
 * Improves Cell game manifest generation to produce an error if the file named
   by `Sphere.Game.main` doesn't exist at the end of a build.
