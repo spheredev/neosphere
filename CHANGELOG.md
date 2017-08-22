@@ -11,6 +11,8 @@ vX.X.X - TBD
 * Fixes a bug where throwing either `null` or `undefined` causes a segfault.
 * Fixes a bug where `Transform#project3D()` will accept negative or zero values
   for `near` and `far` parameters.
+* Fixes a bug where the `dataReader` and `dataWriter` modules can throw an
+  exception, caused by a forgotten import.
 
 v4.8.3 - August 19, 2017
 ------------------------
