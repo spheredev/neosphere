@@ -54,45 +54,44 @@ struct api_info
 static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool using_new, JsValueRef argv[], unsigned short argc, void* udata);
 static js_value_t*                value_from_ref (JsValueRef ref);
 
-JsContextRef    s_context;
-js_value_t*     s_global;
-JsRuntimeHandle s_runtime = NULL;
+static js_value_t*     s_global_object;
+static JsContextRef    s_js_context;
+static JsRuntimeHandle s_js_runtime = NULL;
 
 bool
 js_init(void)
 {
 	JsValueRef global_ref;
 	
-	if (JsCreateRuntime(JsRuntimeAttributeDispatchSetExceptionsToDebugger, NULL, &s_runtime) != JsNoError)
+	if (JsCreateRuntime(JsRuntimeAttributeDispatchSetExceptionsToDebugger, NULL, &s_js_runtime) != JsNoError)
 		goto on_error;
-	if (JsCreateContext(s_runtime, &s_context) != JsNoError)
+	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
-	JsSetCurrentContext(s_context);
+	JsSetCurrentContext(s_js_context);
+
 	JsGetGlobalObject(&global_ref);
-	s_global = value_from_ref(global_ref);
-	
+	s_global_object = value_from_ref(global_ref);
 	return true;
 
 on_error:
-	if (s_runtime != NULL)
-		JsDisposeRuntime(s_runtime);
-	s_context = NULL;
-	s_runtime = NULL;
+	if (s_js_runtime != NULL)
+		JsDisposeRuntime(s_js_runtime);
+	s_js_runtime = NULL;
 	return false;
 }
 
 void
 js_uninit(void)
 {
-	js_value_unref(s_global);
+	js_value_unref(s_global_object);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
-	JsDisposeRuntime(s_runtime);
+	JsDisposeRuntime(s_js_runtime);
 }
 
 js_value_t*
 js_global_object(void)
 {
-	return s_global;
+	return s_global_object;
 }
 
 js_value_t*
@@ -134,7 +133,7 @@ js_value_new_eval(const lstring_t* source)
 
 	JsCreateString(lstr_cstr(source), lstr_len(source), &source_ref);
 	JsStringToPointer(source_ref, &codestring, &codestring_len);
-	if (JsRunScript(codestring, JS_SOURCE_CONTEXT_NONE, L"inside the pig", &ref) != JsNoError)
+	if (JsRunScript(codestring, JS_SOURCE_CONTEXT_NONE, L"eval", &ref) != JsNoError)
 		return NULL;
 	return value_from_ref(ref);
 }
@@ -192,6 +191,19 @@ js_value_new_string(const char* value)
 	JsValueRef ref;
 
 	if (JsCreateString(value, strlen(value), &ref) != JsNoError)
+		return NULL;
+	return value_from_ref(ref);
+}
+
+js_value_t*
+js_value_new_symbol(const char* name)
+{
+	JsValueRef name_ref;
+	JsValueRef ref;
+
+	if (JsCreateString(name, strlen(name), &name_ref) != JsNoError)
+		return NULL;
+	if (JsCreateSymbol(name_ref, &ref) != JsNoError)
 		return NULL;
 	return value_from_ref(ref);
 }
@@ -288,6 +300,15 @@ js_value_is_string(const js_value_t* it)
 
 	JsGetValueType(it->ref, &type);
 	return type == JsString;
+}
+
+bool
+js_value_access(js_value_t* it, const char* name, js_callback_t getter, js_callback_t setter)
+{
+	JsPropertyIdRef prop_ref;
+
+	JsCreatePropertyId(name, strlen(name), &prop_ref);
+	return false;
 }
 
 js_value_t*

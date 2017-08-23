@@ -422,8 +422,6 @@ static duk_ret_t js_Transform_translate           (duk_context* ctx);
 static duk_ret_t js_new_VertexList                (duk_context* ctx);
 static duk_ret_t js_VertexList_finalize           (duk_context* ctx);
 
-static js_value_t* js_chakraTest (js_value_t* this, int num_args, js_value_t* args[], bool is_ctor);
-
 static void      duk_pegasus_push_color     (duk_context* ctx, color_t color);
 static void      duk_pegasus_push_job_token (duk_context* ctx, int64_t token);
 static void      duk_pegasus_push_require   (duk_context* ctx, const char* module_id);
@@ -445,11 +443,6 @@ initialize_pegasus_api(duk_context* ctx)
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
-
-	js_value_t* function = js_value_new_function("chakraTest", js_chakraTest, 0);
-	js_value_set(js_global_object(), "chakraTest", function);
-	js_value_set(js_global_object(), "animal", js_value_new_string("pig"));
-	js_value_new_eval(lstr_new("chakraTest(global.animal);"));
 
 	// initialize CommonJS cache and global require()
 	duk_push_global_stash(ctx);
@@ -4616,12 +4609,4 @@ js_VertexList_finalize(duk_context* ctx)
 	vbo = duk_require_class_obj(ctx, 0, "VertexList");
 	vbo_unref(vbo);
 	return 0;
-}
-
-static js_value_t*
-js_chakraTest(js_value_t* this, int num_args, js_value_t* args[], bool is_ctor)
-{
-	printf("something stupid happened and then you got eaten by a %s!\n",
-		js_value_as_string(args[0]));
-	return NULL;
 }

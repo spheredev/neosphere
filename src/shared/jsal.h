@@ -54,6 +54,7 @@ js_value_t* js_value_new_int      (int value);
 js_value_t* js_value_new_number   (double value);
 js_value_t* js_value_new_object   (void);
 js_value_t* js_value_new_string   (const char* value);
+js_value_t* js_value_new_symbol   (const char* name);
 js_value_t* js_value_ref          (js_value_t* it);
 void        js_value_unref        (js_value_t* it);
 int         js_value_as_int       (const js_value_t* it);
@@ -63,6 +64,7 @@ bool        js_value_is_function  (const js_value_t* it);
 bool        js_value_is_number    (const js_value_t* it);
 bool        js_value_is_object    (const js_value_t* it);
 bool        js_value_is_string    (const js_value_t* it);
+bool        js_value_access       (js_value_t* it, const char* name, js_callback_t getter, js_callback_t setter);
 js_value_t* js_value_get          (js_value_t* it, const char* name);
 bool        js_value_set          (js_value_t* it, const char* name, js_value_t* value);
 
