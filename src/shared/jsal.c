@@ -89,9 +89,13 @@ js_uninit(void)
 }
 
 js_value_t*
-js_global_object(void)
+js_get_global_object(void)
 {
-	return s_global_object;
+	// note: should be unref'd afterwards, just as a matter of principle.
+	//       in practice the global object lasts the lifetime of the program anyway,
+	//       so it really doesn't matter, but... you know, OCD and all...
+	
+	return js_value_ref(s_global_object);
 }
 
 js_value_t*
@@ -108,6 +112,16 @@ void
 js_set_exception(js_value_t* value)
 {
 	JsSetException(value->ref);
+}
+
+js_value_t*
+js_value_new_boolean(bool value)
+{
+	JsValueRef ref;
+
+	if (JsBoolToBoolean(value, &ref) != JsNoError)
+		return NULL;
+	return value_from_ref(ref);
 }
 
 js_value_t*
@@ -133,7 +147,7 @@ js_value_new_eval(const lstring_t* source)
 
 	JsCreateString(lstr_cstr(source), lstr_len(source), &source_ref);
 	JsStringToPointer(source_ref, &codestring, &codestring_len);
-	if (JsRunScript(codestring, JS_SOURCE_CONTEXT_NONE, L"eval", &ref) != JsNoError)
+	if (JsRunScript(codestring, JS_SOURCE_CONTEXT_NONE, L"evil", &ref) != JsNoError)
 		return NULL;
 	return value_from_ref(ref);
 }
@@ -305,10 +319,41 @@ js_value_is_string(const js_value_t* it)
 bool
 js_value_access(js_value_t* it, const char* name, js_callback_t getter, js_callback_t setter)
 {
+	js_value_t* getter_function;
+	js_value_t* propdesc;
+	js_value_t* setter_function;
+
+	propdesc = js_value_new_object();
+	if (getter != NULL) {
+		getter_function = js_value_new_function("get", getter, 0);
+		js_value_set(propdesc, "get", getter_function);
+	}
+	if (setter != NULL) {
+		setter_function = js_value_new_function("set", setter, 1);
+		js_value_set(propdesc, "set", setter_function);
+	}
+	js_value_set(propdesc, "configurable", js_value_new_boolean(true));
+	js_value_set(propdesc, "enumerable", js_value_new_boolean(false));
+	js_value_define(it, name, propdesc);
+	return false;
+}
+
+bool
+js_value_define(js_value_t* it, const char* name, js_value_t* descriptor)
+{
+	// note: `propdesc` is automatically unref'd after use.  if you need it afterwards,
+	//       call `js_value_ref()` on it before passing it in.
+
+	bool            is_ok;
 	JsPropertyIdRef prop_ref;
 
+	if (it == NULL)
+		it = s_global_object;
 	JsCreatePropertyId(name, strlen(name), &prop_ref);
-	return false;
+	if (JsDefineProperty(it->ref, prop_ref, descriptor->ref, &is_ok) != JsNoError)
+		return false;
+	js_value_unref(descriptor);
+	return true;
 }
 
 js_value_t*
@@ -317,6 +362,8 @@ js_value_get(js_value_t* it, const char* name)
 	JsPropertyIdRef prop_ref;
 	JsValueRef      value_ref;
 
+	if (it == NULL)
+		it = s_global_object;
 	JsCreatePropertyId(name, strlen(name), &prop_ref);
 	if (JsGetProperty(it->ref, prop_ref, &value_ref) != JsNoError)
 		return NULL;
@@ -326,16 +373,22 @@ js_value_get(js_value_t* it, const char* name)
 bool
 js_value_set(js_value_t* it, const char* name, js_value_t* value)
 {
+	// note: `value` is automatically unref'd after use.  if you need it afterwards,
+	//       call `js_value_ref()` on it before passing it in.
+
 	JsPropertyIdRef prop_ref;
 
+	if (it == NULL)
+		it = s_global_object;
 	JsCreatePropertyId(name, strlen(name), &prop_ref);
 	if (JsSetProperty(it->ref, prop_ref, value->ref, true) != JsNoError)
 		return false;
+	js_value_unref(value);
 	return true;
 }
 
 static JsValueRef CHAKRA_CALLBACK
-do_native_call(JsValueRef callee, bool using_new, JsValueRef argv[], unsigned short argc, void* udata)
+do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* udata)
 {
 	struct api_info* api_info;
 	js_value_t**     arguments;
@@ -356,7 +409,7 @@ do_native_call(JsValueRef callee, bool using_new, JsValueRef argv[], unsigned sh
 	arguments = malloc((argc - 1) * sizeof(js_value_t*));
 	for (i = 0; i < argc - 1; ++i)
 		arguments[i] = value_from_ref(argv[i + 1]);
-	retval = api_info->callback(this_value, argc - 1, arguments, using_new);
+	retval = api_info->callback(this_value, argc - 1, arguments, is_ctor);
 	js_value_unref(this_value);
 	for (i = 0; i < argc - 1; ++i)
 		js_value_unref(arguments[i]);

@@ -44,9 +44,10 @@ typedef js_value_t* (* js_callback_t) (js_value_t* this, int num_args, js_value_
 
 bool        js_init               (void);
 void        js_uninit             (void);
-js_value_t* js_global_object      (void);
 js_value_t* js_get_exception      (void);
+js_value_t* js_get_global_object  (void);
 void        js_set_exception      (js_value_t* value);
+js_value_t* js_value_new_boolean  (bool value);
 js_value_t* js_value_new_error    (const char* message);
 js_value_t* js_value_new_eval     (const lstring_t* source);
 js_value_t* js_value_new_function (const char* name, js_callback_t callback, int min_args);
@@ -65,6 +66,7 @@ bool        js_value_is_number    (const js_value_t* it);
 bool        js_value_is_object    (const js_value_t* it);
 bool        js_value_is_string    (const js_value_t* it);
 bool        js_value_access       (js_value_t* it, const char* name, js_callback_t getter, js_callback_t setter);
+bool        js_value_define       (js_value_t* it, const char* name, js_value_t* descriptor);
 js_value_t* js_value_get          (js_value_t* it, const char* name);
 bool        js_value_set          (js_value_t* it, const char* name, js_value_t* value);
 
