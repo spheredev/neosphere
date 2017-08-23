@@ -1,33 +1,33 @@
 /**
-*  miniSphere JavaScript game engine
-*  Copyright (c) 2015-2017, Fat Cerberus
-*  All rights reserved.
-*
-*  Redistribution and use in source and binary forms, with or without
-*  modification, are permitted provided that the following conditions are met:
-*
-*  * Redistributions of source code must retain the above copyright notice,
-*    this list of conditions and the following disclaimer.
-*
-*  * Redistributions in binary form must reproduce the above copyright notice,
-*    this list of conditions and the following disclaimer in the documentation
-*    and/or other materials provided with the distribution.
-*
-*  * Neither the name of miniSphere nor the names of its contributors may be
-*    used to endorse or promote products derived from this software without
-*    specific prior written permission.
-*
-*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-*  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-*  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-*  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-*  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-*  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-*  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-*  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-*  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-*  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-*  POSSIBILITY OF SUCH DAMAGE.
+ *  miniSphere JavaScript game engine
+ *  Copyright (c) 2015-2017, Fat Cerberus
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of miniSphere nor the names of its contributors may be
+ *    used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include "jsal.h"
@@ -35,9 +35,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "path.h"
 
 #include <ChakraCore.h>
+#include "path.h"
 
 struct js_value
 {
@@ -112,6 +112,7 @@ void
 js_set_exception(js_value_t* value)
 {
 	JsSetException(value->ref);
+	js_value_unref(value);
 }
 
 js_value_t*
@@ -125,14 +126,21 @@ js_value_new_boolean(bool value)
 }
 
 js_value_t*
-js_value_new_error(const char* message)
+js_value_new_error(const char* message, js_error_type_t type)
 {
-	JsValueRef message_ref;
-	JsValueRef ref;
+	JsErrorCode error_code;
+	JsValueRef  message_ref;
+	JsValueRef  ref;
 
 	if (JsCreateString(message, strlen(message), &message_ref) != JsNoError)
 		return NULL;
-	if (JsCreateError(message_ref, &ref))
+	error_code = type == JS_ERROR_RANGE ? JsCreateRangeError(message_ref, &ref)
+		: type == JS_ERROR_REF ? JsCreateReferenceError(message_ref, &ref)
+		: type == JS_ERROR_SYNTAX ? JsCreateSyntaxError(message_ref, &ref)
+		: type == JS_ERROR_TYPE ? JsCreateTypeError(message_ref, &ref)
+		: type == JS_ERROR_URI ? JsCreateURIError(message_ref, &ref)
+		: JsCreateError(message_ref, &ref);
+	if (error_code != JsNoError)
 		return NULL;
 	return value_from_ref(ref);
 }
@@ -145,8 +153,10 @@ js_value_new_eval(const lstring_t* source)
 	JsValueRef     ref;
 	JsValueRef     source_ref;
 
-	JsCreateString(lstr_cstr(source), lstr_len(source), &source_ref);
-	JsStringToPointer(source_ref, &codestring, &codestring_len);
+	if (JsCreateString(lstr_cstr(source), lstr_len(source), &source_ref) != JsNoError)
+		return NULL;
+	if (JsStringToPointer(source_ref, &codestring, &codestring_len) != JsNoError)
+		return NULL;
 	if (JsRunScript(codestring, JS_SOURCE_CONTEXT_NONE, L"evil", &ref) != JsNoError)
 		return NULL;
 	return value_from_ref(ref);
@@ -401,7 +411,7 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	api_info = udata;
 	
 	if (argc - 1 < api_info->min_args) {
-		js_set_exception(js_value_new_error("not enough arguments"));
+		js_set_exception(js_value_new_error("not enough arguments", JS_ERROR_TYPE));
 		return NULL;
 	}
 	

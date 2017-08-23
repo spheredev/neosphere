@@ -436,7 +436,7 @@ static mixer_t* s_def_mixer;
 static int      s_framerate = 60;
 
 static js_value_t*
-js2_Sphere_get_Platform(js_value_t* this, int num_args, js_value_t* args[], bool is_ctor)
+js2_Sphere_get_Platform(js_value_t* thisv, int argc, js_value_t* argv[], bool is_ctor)
 {
 	char*       platform_name;
 	js_value_t* retval;
@@ -448,7 +448,7 @@ js2_Sphere_get_Platform(js_value_t* this, int num_args, js_value_t* args[], bool
 }
 
 static js_value_t*
-js2_Sphere_get_Version(js_value_t* this, int num_args, js_value_t* args[], bool is_ctor)
+js2_Sphere_get_Version(js_value_t* thisv, int argc, js_value_t* argv[], bool is_ctor)
 {
 	return js_value_new_int(API_VERSION);
 }
