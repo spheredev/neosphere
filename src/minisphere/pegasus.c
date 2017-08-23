@@ -435,24 +435,6 @@ static path_t*   load_package_json          (const char* filename);
 static mixer_t* s_def_mixer;
 static int      s_framerate = 60;
 
-static js_value_t*
-js2_Sphere_get_Platform(js_value_t* thisv, int argc, js_value_t* argv[], bool is_ctor)
-{
-	char*       platform_name;
-	js_value_t* retval;
-
-	platform_name = strnewf("%s %s", ENGINE_NAME, VERSION_NAME);
-	retval = js_value_new_string(platform_name);
-	free(platform_name);
-	return retval;
-}
-
-static js_value_t*
-js2_Sphere_get_Version(js_value_t* thisv, int argc, js_value_t* argv[], bool is_ctor)
-{
-	return js_value_new_int(API_VERSION);
-}
-
 void
 initialize_pegasus_api(duk_context* ctx)
 {

@@ -9,7 +9,6 @@ void
 api_init(duk_context* ctx)
 {
 	// JavaScript 'global' binding (like Node.js)
-	js_value_set(NULL, "global", js_get_global_object());
 	duk_push_global_object(ctx);
 	duk_push_string(ctx, "global");
 	duk_push_global_object(ctx);

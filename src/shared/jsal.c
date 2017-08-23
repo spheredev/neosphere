@@ -38,12 +38,7 @@
 
 #include <ChakraCore.h>
 #include "path.h"
-
-struct js_value
-{
-	unsigned int refcount;
-	JsValueRef   ref;
-};
+#include "vector.h"
 
 struct api_info
 {
@@ -52,25 +47,24 @@ struct api_info
 };
 
 static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool using_new, JsValueRef argv[], unsigned short argc, void* udata);
-static js_value_t*                value_from_ref (JsValueRef ref);
+static JsValueRef                 get_js_value   (int stack_index);
+static JsValueRef                 pop_js_value   (void);
+static int                        push_js_value  (JsValueRef ref);
 
-static js_value_t*     s_global_object;
 static JsContextRef    s_js_context;
 static JsRuntimeHandle s_js_runtime = NULL;
+static vector_t*       s_value_stack;
 
 bool
 js_init(void)
 {
-	JsValueRef global_ref;
-	
 	if (JsCreateRuntime(JsRuntimeAttributeDispatchSetExceptionsToDebugger, NULL, &s_js_runtime) != JsNoError)
 		goto on_error;
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
 
-	JsGetGlobalObject(&global_ref);
-	s_global_object = value_from_ref(global_ref);
+	s_value_stack = vector_new(sizeof(JsValueRef));
 	return true;
 
 on_error:
@@ -83,365 +77,144 @@ on_error:
 void
 js_uninit(void)
 {
-	js_value_unref(s_global_object);
+	JsValueRef value_ref;
+	
+	iter_t iter;
+
+	iter = vector_enum(s_value_stack);
+	while (vector_next(&iter)) {
+		value_ref = *(JsValueRef*)iter.ptr;
+		JsRelease(value_ref, NULL);
+	}
+	vector_free(s_value_stack);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
 	JsDisposeRuntime(s_js_runtime);
 }
 
-js_value_t*
-js_get_global_object(void)
+int
+js_push_eval(const char* source, size_t len)
 {
-	// note: should be unref'd afterwards, just as a matter of principle.
-	//       in practice the global object lasts the lifetime of the program anyway,
-	//       so it really doesn't matter, but... you know, OCD and all...
+	const char* const SCRIPT_NAME = "eval";
 	
-	return js_value_ref(s_global_object);
-}
-
-js_value_t*
-js_get_exception(void)
-{
+	JsValueRef name_ref;
+	JsValueRef source_ref;
 	JsValueRef ref;
-	
-	if (JsGetAndClearException(&ref) != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
+
+	JsCreateString(source, len, &source_ref);
+	JsCreateString(SCRIPT_NAME, strlen(SCRIPT_NAME), &name_ref);
+	JsRun(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeNone, &ref);
+	return push_js_value(ref);
 }
 
-void
-js_set_exception(js_value_t* value)
-{
-	JsSetException(value->ref);
-	js_value_unref(value);
-}
-
-js_value_t*
-js_value_new_boolean(bool value)
+int
+js_push_global_object(void)
 {
 	JsValueRef ref;
 
-	if (JsBoolToBoolean(value, &ref) != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
+	JsGetGlobalObject(&ref);
+	return push_js_value(ref);
 }
 
-js_value_t*
-js_value_new_error(const char* message, js_error_type_t type)
+int
+js_push_int(int value)
 {
-	JsErrorCode error_code;
+	JsValueRef ref;
+
+	JsIntToNumber(value, &ref);
+	return push_js_value(ref);
+}
+
+int
+js_push_new_array(void)
+{
+	JsValueRef ref;
+
+	JsCreateArray(0, &ref);
+	return push_js_value(ref);
+}
+
+int
+js_push_new_error(const char* message, js_error_type_t type)
+{
 	JsValueRef  message_ref;
 	JsValueRef  ref;
+	JsErrorCode result;
 
-	if (JsCreateString(message, strlen(message), &message_ref) != JsNoError)
-		return NULL;
-	error_code = type == JS_ERROR_RANGE ? JsCreateRangeError(message_ref, &ref)
+	JsCreateString(message, strlen(message), &message_ref);
+	result = type == JS_ERROR_RANGE ? JsCreateRangeError(message_ref, &ref)
 		: type == JS_ERROR_REF ? JsCreateReferenceError(message_ref, &ref)
 		: type == JS_ERROR_SYNTAX ? JsCreateSyntaxError(message_ref, &ref)
 		: type == JS_ERROR_TYPE ? JsCreateTypeError(message_ref, &ref)
 		: type == JS_ERROR_URI ? JsCreateURIError(message_ref, &ref)
 		: JsCreateError(message_ref, &ref);
-	if (error_code != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
+	return push_js_value(ref);
 }
 
-js_value_t*
-js_value_new_eval(const lstring_t* source)
-{
-	const wchar_t* codestring;
-	size_t         codestring_len;
-	JsValueRef     ref;
-	JsValueRef     source_ref;
-
-	if (JsCreateString(lstr_cstr(source), lstr_len(source), &source_ref) != JsNoError)
-		return NULL;
-	if (JsStringToPointer(source_ref, &codestring, &codestring_len) != JsNoError)
-		return NULL;
-	if (JsRunScript(codestring, JS_SOURCE_CONTEXT_NONE, L"evil", &ref) != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
-}
-
-js_value_t*
-js_value_new_function(const char* name, js_callback_t callback, int min_args)
-{
-	struct api_info* api_info;
-	JsValueRef       name_ref;
-	JsValueRef       ref;
-
-	if (JsCreateString(name, strlen(name), &name_ref) != JsNoError)
-		return NULL;
-	api_info = calloc(1, sizeof(struct api_info));
-	api_info->callback = callback;
-	api_info->min_args = min_args;
-	if (JsCreateNamedFunction(name_ref, do_native_call, api_info, &ref))
-		return NULL;
-	return value_from_ref(ref);
-}
-
-js_value_t*
-js_value_new_int(int value)
+int
+js_push_new_object(void)
 {
 	JsValueRef ref;
 
-	if (JsIntToNumber(value, &ref) != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
+	JsCreateObject(&ref);
+	return push_js_value(ref);
 }
 
-js_value_t*
-js_value_new_number(double value)
-{
-	JsValueRef ref;
-	
-	if (JsDoubleToNumber(value, &ref) != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
-}
-
-js_value_t*
-js_value_new_object(void)
-{
-	JsValueRef ref;
-
-	if (JsCreateObject(&ref) != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
-}
-
-js_value_t*
-js_value_new_string(const char* value)
-{
-	JsValueRef ref;
-
-	if (JsCreateString(value, strlen(value), &ref) != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
-}
-
-js_value_t*
-js_value_new_symbol(const char* name)
+int
+js_push_new_symbol(const char* description)
 {
 	JsValueRef name_ref;
 	JsValueRef ref;
 
-	if (JsCreateString(name, strlen(name), &name_ref) != JsNoError)
-		return NULL;
-	if (JsCreateSymbol(name_ref, &ref) != JsNoError)
-		return NULL;
-	return value_from_ref(ref);
-}
-
-js_value_t*
-js_value_ref(js_value_t* it)
-{
-	++it->refcount;
-	return it;
-}
-
-void
-js_value_unref(js_value_t* it)
-{
-	if (it == NULL || --it->refcount > 0)
-		return;
-	JsRelease(it->ref, NULL);
-	free(it);
+	JsCreateString(description, strlen(description), &name_ref);
+	JsCreateSymbol(name_ref, &ref);
+	return push_js_value(ref);
 }
 
 int
-js_value_as_int(const js_value_t* it)
+js_push_number(double value)
 {
-	int value;
-
-	if (JsNumberToInt(it->ref, &value) != JsNoError)
-		return 0;
-	return value;
-}
-
-double
-js_value_as_number(const js_value_t* it)
-{
-	double value;
+	JsValueRef ref;
 	
-	if (JsNumberToDouble(it->ref, &value) != JsNoError)
-		return NAN;
-	return value;
+	JsDoubleToNumber(value, &ref);
+	return push_js_value(ref);
 }
 
-const char*
-js_value_as_string(const js_value_t* it)
+int
+js_push_string(const char* value)
 {
-	static lstring_t* retval = NULL;
+	JsValueRef ref;
 
-	const wchar_t* widestr;
-	size_t         widestr_len;
-
-	if (JsStringToPointer(it->ref, &widestr, &widestr_len) != JsNoError)
-		return NULL;
-	if (retval != NULL)
-		lstr_free(retval);
-	retval = lstr_from_wide(widestr, widestr_len);
-	return lstr_cstr(retval);
+	JsCreateString(value, strlen(value), &ref);
+	return push_js_value(ref);
 }
 
-bool
-js_value_is_function(const js_value_t* it)
+static JsValueRef
+get_js_value(int stack_index)
 {
-	JsValueType type;
+	JsValueRef ref;
 
-	JsGetValueType(it->ref, &type);
-	return type == JsFunction;
+	if (stack_index < 0)
+		stack_index += vector_len(s_value_stack);
+	ref = *(JsValueRef*)vector_get(s_value_stack, stack_index);
 }
 
-bool
-js_value_is_number(const js_value_t* it)
+static JsValueRef
+pop_js_value(void)
 {
-	JsValueType type;
-	
-	JsGetValueType(it->ref, &type);
-	return type == JsNumber;
+	int        index;
+	JsValueRef ref;
+
+	index = vector_len(s_value_stack) - 1;
+	ref = get_js_value(index);
+	vector_remove(s_value_stack, index);
+	JsRelease(ref, NULL);
+	return ref;
 }
 
-bool
-js_value_is_object(const js_value_t* it)
+static int
+push_js_value(JsValueRef ref)
 {
-	JsValueType type;
-
-	JsGetValueType(it->ref, &type);
-	return type == JsObject
-		|| type == JsArray
-		|| type == JsArrayBuffer
-		|| type == JsDataView
-		|| type == JsError
-		|| type == JsFunction
-		|| type == JsTypedArray;
-}
-
-bool
-js_value_is_string(const js_value_t* it)
-{
-	JsValueType type;
-
-	JsGetValueType(it->ref, &type);
-	return type == JsString;
-}
-
-bool
-js_value_access(js_value_t* it, const char* name, js_callback_t getter, js_callback_t setter)
-{
-	js_value_t* getter_function;
-	js_value_t* propdesc;
-	js_value_t* setter_function;
-
-	propdesc = js_value_new_object();
-	if (getter != NULL) {
-		getter_function = js_value_new_function("get", getter, 0);
-		js_value_set(propdesc, "get", getter_function);
-	}
-	if (setter != NULL) {
-		setter_function = js_value_new_function("set", setter, 1);
-		js_value_set(propdesc, "set", setter_function);
-	}
-	js_value_set(propdesc, "configurable", js_value_new_boolean(true));
-	js_value_set(propdesc, "enumerable", js_value_new_boolean(false));
-	js_value_define(it, name, propdesc);
-	return false;
-}
-
-bool
-js_value_define(js_value_t* it, const char* name, js_value_t* descriptor)
-{
-	// note: `propdesc` is automatically unref'd after use.  if you need it afterwards,
-	//       call `js_value_ref()` on it before passing it in.
-
-	bool            is_ok;
-	JsPropertyIdRef prop_ref;
-
-	if (it == NULL)
-		it = s_global_object;
-	JsCreatePropertyId(name, strlen(name), &prop_ref);
-	if (JsDefineProperty(it->ref, prop_ref, descriptor->ref, &is_ok) != JsNoError)
-		return false;
-	js_value_unref(descriptor);
-	return true;
-}
-
-js_value_t*
-js_value_get(js_value_t* it, const char* name)
-{
-	JsPropertyIdRef prop_ref;
-	JsValueRef      value_ref;
-
-	if (it == NULL)
-		it = s_global_object;
-	JsCreatePropertyId(name, strlen(name), &prop_ref);
-	if (JsGetProperty(it->ref, prop_ref, &value_ref) != JsNoError)
-		return NULL;
-	return value_from_ref(value_ref);
-}
-
-bool
-js_value_set(js_value_t* it, const char* name, js_value_t* value)
-{
-	// note: `value` is automatically unref'd after use.  if you need it afterwards,
-	//       call `js_value_ref()` on it before passing it in.
-
-	JsPropertyIdRef prop_ref;
-
-	if (it == NULL)
-		it = s_global_object;
-	JsCreatePropertyId(name, strlen(name), &prop_ref);
-	if (JsSetProperty(it->ref, prop_ref, value->ref, true) != JsNoError)
-		return false;
-	js_value_unref(value);
-	return true;
-}
-
-static JsValueRef CHAKRA_CALLBACK
-do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* udata)
-{
-	struct api_info* api_info;
-	js_value_t**     arguments;
-	js_value_t*      retval;
-	js_value_t*      this_value;
-	JsValueRef       undefined;
-
-	int i;
-
-	api_info = udata;
-	
-	if (argc - 1 < api_info->min_args) {
-		js_set_exception(js_value_new_error("not enough arguments", JS_ERROR_TYPE));
-		return NULL;
-	}
-	
-	this_value = value_from_ref(argv[0]);
-	arguments = malloc((argc - 1) * sizeof(js_value_t*));
-	for (i = 0; i < argc - 1; ++i)
-		arguments[i] = value_from_ref(argv[i + 1]);
-	retval = api_info->callback(this_value, argc - 1, arguments, is_ctor);
-	js_value_unref(this_value);
-	for (i = 0; i < argc - 1; ++i)
-		js_value_unref(arguments[i]);
-	free(arguments);
-	if (retval != NULL) {
-		js_value_unref(retval);
-		return retval->ref;
-	}
-	else {
-		JsGetUndefinedValue(&undefined);
-		return undefined;
-	}
-}
-
-static js_value_t*
-value_from_ref(JsValueRef ref)
-{
-	js_value_t* value;
-
 	JsAddRef(ref, NULL);
-
-	value = calloc(1, sizeof(js_value_t));
-	value->ref = ref;
-	return js_value_ref(value);
+	vector_push(s_value_stack, &ref);
+	return vector_len(s_value_stack) - 1;
 }

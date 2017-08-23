@@ -49,36 +49,18 @@ enum js_error_type
 	JS_ERROR_URI,
 } js_error_type_t;
 
-typedef struct js_value js_value_t;
+typedef int (* js_callback_t) (bool is_ctor);
 
-typedef js_value_t* (* js_callback_t) (js_value_t* thisv, int argc, js_value_t* argv[], bool is_ctor);
-
-bool        js_init               (void);
-void        js_uninit             (void);
-js_value_t* js_get_exception      (void);
-js_value_t* js_get_global_object  (void);
-void        js_set_exception      (js_value_t* value);
-js_value_t* js_value_new_boolean  (bool value);
-js_value_t* js_value_new_error    (const char* message, js_error_type_t type);
-js_value_t* js_value_new_eval     (const lstring_t* source);
-js_value_t* js_value_new_function (const char* name, js_callback_t callback, int min_args);
-js_value_t* js_value_new_int      (int value);
-js_value_t* js_value_new_number   (double value);
-js_value_t* js_value_new_object   (void);
-js_value_t* js_value_new_string   (const char* value);
-js_value_t* js_value_new_symbol   (const char* name);
-js_value_t* js_value_ref          (js_value_t* it);
-void        js_value_unref        (js_value_t* it);
-int         js_value_as_int       (const js_value_t* it);
-double      js_value_as_number    (const js_value_t* it);
-const char* js_value_as_string    (const js_value_t* it);
-bool        js_value_is_function  (const js_value_t* it);
-bool        js_value_is_number    (const js_value_t* it);
-bool        js_value_is_object    (const js_value_t* it);
-bool        js_value_is_string    (const js_value_t* it);
-bool        js_value_access       (js_value_t* it, const char* name, js_callback_t getter, js_callback_t setter);
-bool        js_value_define       (js_value_t* it, const char* name, js_value_t* descriptor);
-js_value_t* js_value_get          (js_value_t* it, const char* name);
-bool        js_value_set          (js_value_t* it, const char* name, js_value_t* value);
+bool js_init               (void);
+void js_uninit             (void);
+int  js_push_eval          (const char* source, size_t len);
+int  js_push_global_object (void);
+int  js_push_int           (int value);
+int  js_push_new_array     (void);
+int  js_push_new_error     (const char* message, js_error_type_t type);
+int  js_push_new_object    (void);
+int  js_push_new_symbol    (const char* description);
+int  js_push_number        (double value);
+int  js_push_string        (const char* value);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED
