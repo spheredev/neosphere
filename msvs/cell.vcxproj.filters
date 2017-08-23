@@ -60,7 +60,7 @@
     <ClCompile Include="..\src\shared\xoroshiro.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\ecmunch.c">
+    <ClCompile Include="..\src\shared\jsal.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -125,7 +125,7 @@
     <ClInclude Include="..\src\shared\xoroshiro.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\ecmunch.h">
+    <ClInclude Include="..\src\shared\jsal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

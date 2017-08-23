@@ -30,8 +30,8 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef FATCERBERUS__ECMUNCH_H__INCLUDED
-#define FATCERBERUS__ECMUNCH_H__INCLUDED
+#ifndef FATCERBERUS__JSAL_H__INCLUDED
+#define FATCERBERUS__JSAL_H__INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -40,7 +40,7 @@
 
 typedef struct js_value js_value_t;
 
-typedef js_value_t* (* js_c_function_t) (js_value_t* this, int num_args, js_value_t* args[], bool is_ctor);
+typedef js_value_t* (* js_callback_t) (js_value_t* this, int num_args, js_value_t* args[], bool is_ctor);
 
 bool        js_init               (void);
 void        js_uninit             (void);
@@ -49,7 +49,7 @@ js_value_t* js_get_exception      (void);
 void        js_set_exception      (js_value_t* value);
 js_value_t* js_value_new_error    (const char* message);
 js_value_t* js_value_new_eval     (const lstring_t* source);
-js_value_t* js_value_new_function (const char* name, js_c_function_t callback, int min_args);
+js_value_t* js_value_new_function (const char* name, js_callback_t callback, int min_args);
 js_value_t* js_value_new_int      (int value);
 js_value_t* js_value_new_number   (double value);
 js_value_t* js_value_new_object   (void);
@@ -66,4 +66,4 @@ bool        js_value_is_string    (const js_value_t* it);
 js_value_t* js_value_get          (js_value_t* it, const char* name);
 bool        js_value_set          (js_value_t* it, const char* name, js_value_t* value);
 
-#endif // FATCERBERUS__ECMUNCH_H__INCLUDED
+#endif // FATCERBERUS__JSAL_H__INCLUDED

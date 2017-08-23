@@ -30,7 +30,7 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include "ecmunch.h"
+#include "jsal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,8 +47,8 @@ struct js_value
 
 struct api_info
 {
-	js_c_function_t callback;
-	int             min_args;
+	js_callback_t callback;
+	int           min_args;
 };
 
 static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool using_new, JsValueRef argv[], unsigned short argc, void* udata);
@@ -140,7 +140,7 @@ js_value_new_eval(const lstring_t* source)
 }
 
 js_value_t*
-js_value_new_function(const char* name, js_c_function_t callback, int min_args)
+js_value_new_function(const char* name, js_callback_t callback, int min_args)
 {
 	struct api_info* api_info;
 	JsValueRef       name_ref;

@@ -33,7 +33,7 @@
 #include "cell.h"
 
 #include "build.h"
-#include "ecmunch.h"
+#include "jsal.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_cell_quote (void);

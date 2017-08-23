@@ -3,7 +3,7 @@
 
 #include "api.h"
 
-#include "ecmunch.h"
+#include "jsal.h"
 
 void
 api_init(duk_context* ctx)
