@@ -36,10 +36,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "lstring.h"
-
 typedef
-enum js_error_type
+enum jsal_error_type
 {
 	JS_ERROR,
 	JS_ERROR_RANGE,
@@ -47,20 +45,36 @@ enum js_error_type
 	JS_ERROR_SYNTAX,
 	JS_ERROR_TYPE,
 	JS_ERROR_URI,
-} js_error_type_t;
+} jsal_error_type_t;
 
-typedef int (* js_callback_t) (bool is_ctor);
+typedef int (* jsal_callback_t) (bool is_ctor);
 
-bool js_init               (void);
-void js_uninit             (void);
-int  js_push_eval          (const char* source, size_t len);
-int  js_push_global_object (void);
-int  js_push_int           (int value);
-int  js_push_new_array     (void);
-int  js_push_new_error     (const char* message, js_error_type_t type);
-int  js_push_new_object    (void);
-int  js_push_new_symbol    (const char* description);
-int  js_push_number        (double value);
-int  js_push_string        (const char* value);
+bool jsal_init               (void);
+void jsal_uninit             (void);
+bool jsal_call               (int num_args);
+bool jsal_is_array           (int stack_index);
+bool jsal_is_boolean         (int stack_index);
+bool jsal_is_buffer_object   (int stack_index);
+bool jsal_is_error           (int stack_index);
+bool jsal_is_number          (int stack_index);
+bool jsal_is_object          (int stack_index);
+bool jsal_is_string          (int stack_index);
+bool jsal_is_symbol          (int stack_index);
+void jsal_pop                (int num_values);
+int  jsal_push_boolean       (bool value);
+int  jsal_push_eval          (const char* source);
+int  jsal_push_global_object (void);
+int  jsal_push_int           (int value);
+int  jsal_push_known_symbol  (const char* name);
+int  jsal_push_new_array     (void);
+int  jsal_push_new_error     (const char* message, jsal_error_type_t type);
+int  jsal_push_new_object    (void);
+int  jsal_push_new_symbol    (const char* description);
+int  jsal_push_null          (void);
+int  jsal_push_number        (double value);
+int  jsal_push_sprintf       (const char* format, ...);
+int  jsal_push_string        (const char* value);
+int  jsal_push_undefined     (void);
+void jsal_throw              (void);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED
