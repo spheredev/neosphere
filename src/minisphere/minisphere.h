@@ -54,7 +54,6 @@
 #include <allegro5/allegro_memfile.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
-#include <ChakraCore.h>
 #include <duktape.h>
 #include <dyad.h>
 #include <zlib.h>

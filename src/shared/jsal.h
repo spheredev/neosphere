@@ -52,14 +52,18 @@ typedef int (* jsal_callback_t) (bool is_ctor);
 bool jsal_init               (void);
 void jsal_uninit             (void);
 bool jsal_call               (int num_args);
+bool jsal_get_property       (int object_index, const char* name);
+bool jsal_has_property       (int object_index, const char* name);
 bool jsal_is_array           (int stack_index);
 bool jsal_is_boolean         (int stack_index);
 bool jsal_is_buffer_object   (int stack_index);
 bool jsal_is_error           (int stack_index);
+bool jsal_is_null            (int stack_index);
 bool jsal_is_number          (int stack_index);
 bool jsal_is_object          (int stack_index);
 bool jsal_is_string          (int stack_index);
 bool jsal_is_symbol          (int stack_index);
+bool jsal_is_undefined       (int stack_index);
 void jsal_pop                (int num_values);
 int  jsal_push_boolean       (bool value);
 int  jsal_push_eval          (const char* source);
@@ -75,6 +79,7 @@ int  jsal_push_number        (double value);
 int  jsal_push_sprintf       (const char* format, ...);
 int  jsal_push_string        (const char* value);
 int  jsal_push_undefined     (void);
+bool jsal_set_property       (int object_index, const char* name);
 void jsal_throw              (void);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED

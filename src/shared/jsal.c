@@ -100,6 +100,8 @@ jsal_uninit(void)
 bool
 jsal_call(int num_args)
 {
+	/* [ ... function this arg1..argN ] -> [ .. retval ] */
+
 	JsValueRef* arguments;
 	JsValueRef  function_ref;
 	int         index;
@@ -117,6 +119,36 @@ jsal_call(int num_args)
 	jsal_pop(num_args + 1);
 	push_js_value(retval_ref);
 	return true;
+}
+
+bool
+jsal_get_property(int object_index, const char* name)
+{
+	/* [ ... ] -> [ ... value ] */
+
+	JsPropertyIdRef name_ref;
+	JsValueRef      object_ref;
+	JsValueRef      value_ref;
+
+	object_ref = get_js_value(object_index);
+	JsCreatePropertyId(name, strlen(name), &name_ref);
+	if (JsGetProperty(object_ref, name_ref, &value_ref) != JsNoError)
+		return false;
+	push_js_value(value_ref);
+	return !jsal_is_undefined(-1);
+}
+
+bool
+jsal_has_property(int object_index, const char* name)
+{
+	bool            has_property;
+	JsPropertyIdRef name_ref;
+	JsValueRef      object_ref;
+
+	object_ref = get_js_value(object_index);
+	JsCreatePropertyId(name, strlen(name), &name_ref);
+	JsHasProperty(object_ref, name_ref, &has_property);
+	return has_property;
 }
 
 bool
@@ -162,6 +194,17 @@ jsal_is_error(int stack_index)
 	ref = get_js_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsError;
+}
+
+bool
+jsal_is_null(int stack_index)
+{
+	JsValueRef  ref;
+	JsValueType type;
+
+	ref = get_js_value(stack_index);
+	JsGetValueType(ref, &type);
+	return type == JsNull;
 }
 
 bool
@@ -212,6 +255,17 @@ jsal_is_symbol(int stack_index)
 	ref = get_js_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsSymbol;
+}
+
+bool
+jsal_is_undefined(int stack_index)
+{
+	JsValueRef  ref;
+	JsValueType type;
+
+	ref = get_js_value(stack_index);
+	JsGetValueType(ref, &type);
+	return type == JsUndefined;
 }
 
 void
@@ -374,9 +428,29 @@ jsal_push_undefined(void)
 	return push_js_value(ref);
 }
 
+bool
+jsal_set_property(int object_index, const char* name)
+{
+	/* [ ... value ] -> [ ... ] */
+
+	JsPropertyIdRef name_ref;
+	JsValueRef      object_ref;
+	JsValueRef      value_ref;
+
+	object_ref = get_js_value(object_index);
+	value_ref = get_js_value(-1);
+	JsCreatePropertyId(name, strlen(name), &name_ref);
+	if (JsSetProperty(object_ref, name_ref, value_ref, false) != JsNoError)
+		return false;
+	jsal_pop(1);
+	return true;
+}
+
 void
 jsal_throw(void)
 {
+	/* [ ... exception ] -> [ ... ] */
+	
 	JsValueRef ref;
 
 	ref = pop_js_value();
