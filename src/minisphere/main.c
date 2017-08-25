@@ -95,6 +95,19 @@ static const char* const ERROR_TEXT[][2] =
 	{ "this game has OVER NINE THOUSAND errors.", "WHAT?! 9000?! no way that can be right!" },
 };
 
+static int
+js_foo(int num_args, bool is_ctor)
+{
+	const char* str;
+	int         num;
+	
+	printf("foo() called with %d args\n", num_args);
+	str = jsal_require_string(1);
+	num = jsal_require_int(2);
+	printf("%s\n", str);
+	return 0;
+}
+
 int
 main(int argc, char* argv[])
 {
@@ -120,9 +133,14 @@ main(int argc, char* argv[])
 	bool                 want_debug;
 
 	jsal_init();
-	jsal_push_number(812.88);
-	jsal_require_string(-1);
+	jsal_push_global_object();
+	jsal_push_function(js_foo, "foo", 0);
+	jsal_set_named_property(-2, "foo");
+	jsal_pop(1);
+	jsal_push_eval("foo('pigs!', '812');");
 	jsal_uninit();
+	return 0;
+	
 	
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
