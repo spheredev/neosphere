@@ -62,6 +62,7 @@ static JsValueRef                 get_ref        (int stack_index);
 static JsPropertyIdRef            key_to_prop_id (JsValueRef key_ref);
 static JsValueRef                 pop_ref        (void);
 static int                        push_ref       (JsValueRef ref);
+static void                       throw_if_error (void);
 static void                       throw_ref      (JsValueRef ref);
 
 static vector_t*       s_catch_stack;
@@ -115,8 +116,10 @@ jsal_call(int num_args)
 	/* [ ... function this arg1..argN ] -> [ .. retval ] */
 
 	JsValueRef* arguments;
+	JsValueRef  error_ref;
 	JsValueRef  function_ref;
 	int         index;
+	JsErrorCode result;
 	JsValueRef  retval_ref;
 
 	int i;
@@ -127,10 +130,23 @@ jsal_call(int num_args)
 	index = vector_len(s_stack) - num_args;
 	for (i = 0; i < num_args; ++i)
 		arguments[i] = get_ref(i + index);
-	JsCallFunction(function_ref, arguments, (unsigned short)num_args, &retval_ref);
+	result = JsCallFunction(function_ref, arguments, (unsigned short)num_args, &retval_ref);
 	jsal_pop(num_args + 1);
+	if (result == JsErrorScriptException) {
+		JsGetAndClearException(&error_ref);
+		throw_ref(error_ref);
+	}
 	push_ref(retval_ref);
 	return true;
+}
+
+int
+jsal_dup(int from_index)
+{
+	JsValueRef ref;
+
+	ref = get_ref(from_index);
+	return push_ref(ref);
 }
 
 int
@@ -373,10 +389,7 @@ jsal_normalize_index(int index)
 void
 jsal_pop(int num_values)
 {
-	int i;
-
-	for (i = 0; i < num_values; ++i)
-		vector_remove(s_stack, vector_len(s_stack) - 1);
+	vector_resize(s_stack, vector_len(s_stack) - num_values);
 }
 
 int
@@ -398,6 +411,7 @@ jsal_push_eval(const char* source)
 	JsCreateString(source, strlen(source), &source_ref);
 	JsCreateString("eval()", 6, &name_ref);
 	JsRun(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeNone, &ref);
+	throw_if_error();
 	return push_ref(ref);
 }
 
@@ -455,7 +469,7 @@ jsal_push_new_array(void)
 }
 
 int
-jsal_push_new_error(jsal_error_type_t type, const char* format, ...)
+jsal_push_new_error(jsal_error_t type, const char* format, ...)
 {
 	va_list     ap;
 	char*       message;
@@ -467,11 +481,11 @@ jsal_push_new_error(jsal_error_type_t type, const char* format, ...)
 	vasprintf(&message, format, ap);
 	JsCreateString(message, strlen(message), &message_ref);
 	va_end(ap);
-	result = type == JS_ERROR_RANGE ? JsCreateRangeError(message_ref, &ref)
-		: type == JS_ERROR_REF ? JsCreateReferenceError(message_ref, &ref)
-		: type == JS_ERROR_SYNTAX ? JsCreateSyntaxError(message_ref, &ref)
-		: type == JS_ERROR_TYPE ? JsCreateTypeError(message_ref, &ref)
-		: type == JS_ERROR_URI ? JsCreateURIError(message_ref, &ref)
+	result = type == JS_RANGE_ERROR ? JsCreateRangeError(message_ref, &ref)
+		: type == JS_REF_ERROR ? JsCreateReferenceError(message_ref, &ref)
+		: type == JS_SYNTAX_ERROR ? JsCreateSyntaxError(message_ref, &ref)
+		: type == JS_TYPE_ERROR ? JsCreateTypeError(message_ref, &ref)
+		: type == JS_URI_ERROR ? JsCreateURIError(message_ref, &ref)
 		: JsCreateError(message_ref, &ref);
 	return push_ref(ref);
 }
@@ -573,6 +587,29 @@ jsal_replace(int at_index)
 	return true;
 }
 
+const char*
+jsal_require_string(int index)
+{
+	static lstring_t* retval = NULL;
+
+	const wchar_t* value;
+	size_t         value_length;
+	JsValueRef     value_ref;
+
+	if (!jsal_is_string(index)) {
+		jsal_dup(-1);
+		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a string", jsal_to_string(-1));
+		jsal_remove(-2);
+		jsal_throw();
+	}
+	
+	value_ref = get_ref(index);
+	JsStringToPointer(value_ref, &value, &value_length);
+	lstr_free(retval);
+	retval = lstr_from_wide(value, value_length);
+	return lstr_cstr(retval);
+}
+
 bool
 jsal_set_property(int object_index)
 {
@@ -633,6 +670,19 @@ jsal_to_string(int at_index)
 	JsConvertValueToString(ref, &ref);
 	vector_put(s_stack, at_index, &ref);
 	return jsal_get_string(at_index);
+}
+
+static void
+throw_if_error(void)
+{
+	JsValueRef error_ref;
+	bool       has_exception;
+
+	JsHasException(&has_exception);
+	if (has_exception) {
+		JsGetAndClearException(&error_ref);
+		throw_ref(error_ref);
+	}
 }
 
 static JsValueRef
@@ -700,8 +750,8 @@ throw_ref(JsValueRef ref)
 		longjmp(label, 1);
 	}
 	else {
-		printf("JSAL exception in unguarded C code!\n");
-		printf("   : %s\n", jsal_to_string(-1));
+		printf("JSAL exception thrown from unguarded C code!\n");
+		printf("-> %s\n", jsal_to_string(-1));
 		exit(EXIT_FAILURE);
 	}
 }
@@ -756,7 +806,7 @@ vasprintf(char** out, const char* format, va_list ap)
 	buf_size = vsnprintf(NULL, 0, format, apc) + 1;
 	va_end(apc);
 	*out = malloc(buf_size);
-	vsnprintf(*out, buf_size, format, apc);
+	vsnprintf(*out, buf_size, format, ap);
 	return buf_size;
 }
 #endif

@@ -37,22 +37,23 @@
 #include <stdint.h>
 
 typedef
-enum jsal_error_type
+enum jsal_error
 {
 	JS_ERROR,
-	JS_ERROR_RANGE,
-	JS_ERROR_REF,
-	JS_ERROR_SYNTAX,
-	JS_ERROR_TYPE,
-	JS_ERROR_URI,
-} jsal_error_type_t;
+	JS_RANGE_ERROR,
+	JS_REF_ERROR,
+	JS_SYNTAX_ERROR,
+	JS_TYPE_ERROR,
+	JS_URI_ERROR,
+} jsal_error_t;
 
 typedef int (* jsal_callback_t) (bool is_ctor);
 
 bool        jsal_init               (void);
 void        jsal_uninit             (void);
 bool        jsal_call               (int num_args);
-void        jsal_error              (jsal_error_type_t type, const char* message, ...);
+int         jsal_dup                (int from_index);
+void        jsal_error              (jsal_error_t type, const char* message, ...);
 int         jsal_get_int            (int at_index);
 bool        jsal_get_property       (int object_index);
 bool        jsal_get_index_property (int object_index, int name);
@@ -80,7 +81,7 @@ int         jsal_push_global_object (void);
 int         jsal_push_int           (int value);
 int         jsal_push_known_symbol  (const char* name);
 int         jsal_push_new_array     (void);
-int         jsal_push_new_error     (jsal_error_type_t type, const char* format, ...);
+int         jsal_push_new_error     (jsal_error_t type, const char* format, ...);
 int         jsal_push_new_object    (void);
 int         jsal_push_new_symbol    (const char* description);
 int         jsal_push_null          (void);
@@ -90,6 +91,7 @@ int         jsal_push_string        (const char* value);
 int         jsal_push_undefined     (void);
 void        jsal_remove             (int at_index);
 bool        jsal_replace            (int at_index);
+const char* jsal_require_string     (int at_index);
 bool        jsal_set_property       (int object_index);
 bool        jsal_set_index_property (int object_index, int name);
 bool        jsal_set_named_property (int object_index, const char* name);

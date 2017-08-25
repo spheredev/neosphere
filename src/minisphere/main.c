@@ -120,8 +120,8 @@ main(int argc, char* argv[])
 	bool                 want_debug;
 
 	jsal_init();
-	jsal_push_eval("(() => 810 + 2)().toString()");
-	jsal_throw();
+	jsal_push_number(812.88);
+	jsal_require_string(-1);
 	jsal_uninit();
 	
 	// parse the command line
