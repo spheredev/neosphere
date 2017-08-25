@@ -93,5 +93,6 @@ bool        jsal_set_property       (int object_index);
 bool        jsal_set_index_property (int object_index, int name);
 bool        jsal_set_named_property (int object_index, const char* name);
 void        jsal_throw              (void);
+const char* jsal_to_string          (int at_index);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED

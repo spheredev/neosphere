@@ -121,7 +121,7 @@ main(int argc, char* argv[])
 
 	jsal_init();
 	jsal_push_eval("(() => 810 + 2)().toString()");
-	printf("%s\n", jsal_get_string(-1));
+	jsal_throw();
 	jsal_uninit();
 	
 	// parse the command line
