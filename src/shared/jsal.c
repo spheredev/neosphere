@@ -52,8 +52,13 @@ struct function
 	int             min_args;
 };
 
+#if defined(_WIN32)
+int asprintf  (char* *out, const char* format, ...);
+int vasprintf (char* *out, const char* format, va_list ap);
+#endif
+
 static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
-static JsValueRef                 get_ref     (int stack_index);
+static JsValueRef                 get_ref        (int stack_index);
 static JsPropertyIdRef            key_to_prop_id (JsValueRef key_ref);
 static JsValueRef                 pop_ref        (void);
 static int                        push_ref       (JsValueRef ref);
@@ -450,13 +455,18 @@ jsal_push_new_array(void)
 }
 
 int
-jsal_push_new_error(const char* message, jsal_error_type_t type)
+jsal_push_new_error(jsal_error_type_t type, const char* format, ...)
 {
+	va_list     ap;
+	char*       message;
 	JsValueRef  message_ref;
 	JsValueRef  ref;
 	JsErrorCode result;
 
+	va_start(ap, format);
+	vasprintf(&message, format, ap);
 	JsCreateString(message, strlen(message), &message_ref);
+	va_end(ap);
 	result = type == JS_ERROR_RANGE ? JsCreateRangeError(message_ref, &ref)
 		: type == JS_ERROR_REF ? JsCreateReferenceError(message_ref, &ref)
 		: type == JS_ERROR_SYNTAX ? JsCreateSyntaxError(message_ref, &ref)
@@ -507,15 +517,16 @@ jsal_push_number(double value)
 int
 jsal_push_sprintf(const char* format, ...)
 {
-	static char buffer[1024];
-
 	va_list ap;
+	int     index;
+	char*   string;
 
-	// FIXME: unwanted truncation
 	va_start(ap, format);
-	vsnprintf(buffer, 1024, format, ap);
+	vasprintf(&string, format, ap);
 	va_end(ap);
-	return jsal_push_string(buffer);
+	index = jsal_push_string(string);
+	free(string);
+	return index;
 }
 
 int
@@ -721,3 +732,31 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	s_stack_base = old_stack_base;
 	return retval_ref;
 }
+
+#if defined(_WIN32)
+int
+asprintf(char** out, const char* format, ...)
+{
+	va_list ap;
+	int     buf_size;
+
+	va_start(ap, format);
+	buf_size = vasprintf(out, format, ap);
+	va_end(ap);
+	return buf_size;
+}
+
+int
+vasprintf(char** out, const char* format, va_list ap)
+{
+	va_list apc;
+	int     buf_size;
+
+	va_copy(apc, ap);
+	buf_size = vsnprintf(NULL, 0, format, apc) + 1;
+	va_end(apc);
+	*out = malloc(buf_size);
+	vsnprintf(*out, buf_size, format, apc);
+	return buf_size;
+}
+#endif
