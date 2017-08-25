@@ -406,7 +406,7 @@ directory_close(directory_t* it)
 
 	if (it->entries != NULL) {
 		iter = vector_enum(it->entries);
-		while (vector_next(&iter)) {
+		while (iter_next(&iter)) {
 			path_free(*(path_t**)iter.ptr);
 		}
 		vector_free(it->entries);
@@ -460,7 +460,7 @@ directory_rewind(directory_t* it)
 
 	if (it->entries != NULL) {
 		iter = vector_enum(it->entries);
-		while (vector_next(&iter)) {
+		while (iter_next(&iter)) {
 			path_free(*(path_t**)iter.ptr);
 		}
 		vector_free(it->entries);

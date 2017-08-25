@@ -261,10 +261,10 @@ build_free(build_t* build)
 		visor_num_warns(build->visor));
 
 	iter = vector_enum(build->artifacts);
-	while (vector_next(&iter))
+	while (iter_next(&iter))
 		free(*(char**)iter.ptr);
 	iter = vector_enum(build->targets);
-	while (vector_next(&iter))
+	while (iter_next(&iter))
 		target_free(*(target_t**)iter.ptr);
 
 	duk_destroy_heap(build->js_context);
@@ -332,7 +332,7 @@ build_package(build_t* build, const char* filename)
 	spk_add_file(spk, build->fs, "@/game.sgm", "game.sgm");
 	spk_add_file(spk, build->fs, "@/sources.json", "sources.json");
 	iter = vector_enum(build->targets);
-	while (p_target = vector_next(&iter)) {
+	while (p_target = iter_next(&iter)) {
 		in_path = target_path(*p_target);
 		if (path_num_hops(in_path) == 0 || !path_hop_is(in_path, 0, "@"))
 			continue;
@@ -373,7 +373,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	sorted_targets = vector_dup(build->targets);
 	vector_sort(sorted_targets, sort_targets_by_path);
 	iter = vector_enum(sorted_targets);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		filename = path_cstr(target_path(*(target_t**)iter.ptr));
 		if (strcmp(filename, last_filename) == 0)
 			++num_matches;
@@ -394,7 +394,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 
 	// build all relevant targets
 	iter = vector_enum(build->targets);
-	while (p_target = vector_next(&iter)) {
+	while (p_target = iter_next(&iter)) {
 		path = target_path(*p_target);
 		if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
 			continue;
@@ -426,7 +426,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		duk_push_object(build->js_context);
 		duk_push_object(build->js_context);
 		iter = vector_enum(build->targets);
-		while (p_target = vector_next(&iter)) {
+		while (p_target = iter_next(&iter)) {
 			path = target_path(*p_target);
 			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
 				continue;
@@ -450,7 +450,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	filenames = visor_filenames(build->visor);
 	duk_push_array(build->js_context);
 	iter = vector_enum(filenames);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		duk_push_string(build->js_context, *(char**)iter.ptr);
 		duk_put_prop_index(build->js_context, -2, (duk_uarridx_t)iter.index);
 	}
@@ -473,11 +473,11 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 	visor_begin_op(build->visor, "cleaning up old build artifacts");
 	filenames = visor_filenames(build->visor);
 	iter_i = vector_enum(build->artifacts);
-	while (vector_next(&iter_i)) {
+	while (iter_next(&iter_i)) {
 		keep_file = false;
 		if (keep_targets) {
 			iter_j = vector_enum(filenames);
-			while (vector_next(&iter_j)) {
+			while (iter_next(&iter_j)) {
 				if (strcmp(*(char**)iter_j.ptr, *(char**)iter_i.ptr) == 0)
 					keep_file = true;
 			}
@@ -795,7 +795,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 		return;
 
 	iter = vector_enum(list);
-	while (p_path = vector_next(&iter)) {
+	while (p_path = iter_next(&iter)) {
 		ignore_dir = fs_is_game_dir(fs, path_cstr(*p_path))
 			&& path_num_hops(path) > 0
 			&& !path_hop_is(path, 0, "@");
@@ -821,7 +821,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	}
 
 	iter = vector_enum(list);
-	while (p_path = vector_next(&iter))
+	while (p_path = iter_next(&iter))
 		path_free(*p_path);
 	vector_free(list);
 }
@@ -1015,7 +1015,7 @@ js_files(duk_context* ctx)
 	// return all the newly constructed targets as an array.
 	duk_push_array(ctx);
 	iter = vector_enum(targets);
-	while (p = vector_next(&iter)) {
+	while (p = iter_next(&iter)) {
 		duk_push_class_obj(ctx, "Target", *p);
 		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
 	}

@@ -54,7 +54,7 @@ main(int argc, char* argv[])
 	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
-	js_init();
+	jsal_init();
 
 	// parse the command line
 	if (!parse_cmdline(argc, argv))
@@ -80,7 +80,7 @@ shutdown:
 	build_free(build);
 	path_free(s_in_path);
 	path_free(s_out_path);
-	js_uninit();
+	jsal_uninit();
 	return retval;
 }
 

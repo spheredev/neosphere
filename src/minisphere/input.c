@@ -167,12 +167,12 @@ shutdown_input(void)
 
 	// free bound key scripts
 	iter = vector_enum(s_bound_buttons);
-	while (pbutton = vector_next(&iter)) {
+	while (pbutton = iter_next(&iter)) {
 		script_unref(pbutton->on_down_script);
 		script_unref(pbutton->on_up_script);
 	}
 	iter = vector_enum(s_bound_keys);
-	while (pkey = vector_next(&iter)) {
+	while (pkey = iter_next(&iter)) {
 		script_unref(pkey->on_down_script);
 		script_unref(pkey->on_up_script);
 	}
@@ -284,7 +284,7 @@ joy_bind_button(int joy_index, int button, script_t* on_down_script, script_t* o
 	new_binding.on_down_script = on_down_script;
 	new_binding.on_up_script = on_up_script;
 	iter = vector_enum(s_bound_buttons);
-	while (bound = vector_next(&iter)) {
+	while (bound = iter_next(&iter)) {
 		if (bound->joystick_id == joy_index && bound->button == button) {
 			bound->is_pressed = false;
 			old_down_script = bound->on_down_script;
@@ -516,7 +516,7 @@ update_bound_keys(bool use_map_keys)
 	// check bound keyboard keys
 	if (use_map_keys) {
 		iter = vector_enum(s_bound_keys);
-		while (key = vector_next(&iter)) {
+		while (key = iter_next(&iter)) {
 			is_down = s_key_state[key->keycode];
 			if (is_down && !key->is_pressed)
 				script_run(key->on_down_script, false);
@@ -528,7 +528,7 @@ update_bound_keys(bool use_map_keys)
 
 	// check bound joystick buttons
 	iter = vector_enum(s_bound_buttons);
-	while (button = vector_next(&iter)) {
+	while (button = iter_next(&iter)) {
 		is_down = joy_is_button_down(button->joystick_id, button->button);
 		if (is_down && !button->is_pressed)
 			script_run(button->on_down_script, false);
@@ -643,7 +643,7 @@ kb_bind_key(int keycode, script_t* on_down_script, script_t* on_up_script)
 	new_binding.on_down_script = on_down_script;
 	new_binding.on_up_script = on_up_script;
 	iter = vector_enum(s_bound_keys);
-	while (key = vector_next(&iter)) {
+	while (key = iter_next(&iter)) {
 		if (key->keycode == keycode) {
 			key->is_pressed = false;
 			old_down_script = key->on_down_script;

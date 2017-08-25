@@ -576,7 +576,7 @@ directory_close(directory_t* it)
 
 	if (it->entries != NULL) {
 		iter = vector_enum(it->entries);
-		while (vector_next(&iter)) {
+		while (iter_next(&iter)) {
 			path_free(*(path_t**)iter.ptr);
 		}
 		vector_free(it->entries);
@@ -635,7 +635,7 @@ directory_rewind(directory_t* it)
 
 	file_list = read_directory(it->game, path_cstr(it->path), false);
 	iter = vector_enum(file_list);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		entry_name = *(lstring_t**)iter.ptr;
 		entry_path = path_new(lstr_cstr(entry_name));
 		path_rebase(entry_path, it->path);
@@ -646,7 +646,7 @@ directory_rewind(directory_t* it)
 
 	dir_list = read_directory(it->game, path_cstr(it->path), true);
 	iter = vector_enum(dir_list);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		entry_name = *(lstring_t**)iter.ptr;
 		entry_path = path_new_dir(lstr_cstr(entry_name));
 		path_rebase(entry_path, it->path);
@@ -657,7 +657,7 @@ directory_rewind(directory_t* it)
 
 	if (it->entries != NULL) {
 		iter = vector_enum(it->entries);
-		while (vector_next(&iter)) {
+		while (iter_next(&iter)) {
 			path_free(*(path_t**)iter.ptr);
 		}
 		vector_free(it->entries);

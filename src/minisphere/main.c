@@ -119,6 +119,11 @@ main(int argc, char* argv[])
 	int                  use_verbosity;
 	bool                 want_debug;
 
+	jsal_init();
+	jsal_push_eval("(() => 810 + 2)().toString()");
+	printf("%s\n", jsal_get_string(-1));
+	jsal_uninit();
+	
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
 		&use_fullscreen, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))
@@ -435,7 +440,7 @@ initialize_engine(void)
 	if (!(g_duk = duk_create_heap_default()))
 		goto on_error;
 
-	if (!js_init())
+	if (!jsal_init())
 		goto on_error;
 
 	// initialize engine components
@@ -475,7 +480,7 @@ shutdown_engine(void)
 
 	console_log(1, "shutting down Duktape");
 	duk_destroy_heap(g_duk);
-	js_uninit();
+	jsal_uninit();
 
 	console_log(1, "shutting down Dyad");
 	dyad_shutdown();

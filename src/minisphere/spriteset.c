@@ -127,7 +127,7 @@ spritesets_uninit(void)
 	console_log(2, "    cache hits: %u", s_num_cache_hits);
 	if (s_load_cache != NULL) {
 		iter = vector_enum(s_load_cache);
-		while (p_spriteset = vector_next(&iter))
+		while (p_spriteset = iter_next(&iter))
 			spriteset_unref(*p_spriteset);
 		vector_free(s_load_cache);
 	}
@@ -192,7 +192,7 @@ spriteset_load(const char* filename)
 	// check load cache to see if we loaded this file once already
 	if (s_load_cache != NULL) {
 		iter = vector_enum(s_load_cache);
-		while (p_spriteset = vector_next(&iter)) {
+		while (p_spriteset = iter_next(&iter)) {
 			if (strcmp(filename, (*p_spriteset)->filename) == 0) {
 				console_log(2, "using cached spriteset #%u for `%s`", (*p_spriteset)->id, filename);
 				++s_num_cache_hits;
@@ -358,14 +358,14 @@ spriteset_clone(const spriteset_t* it)
 	dolly->filename = strdup(it->filename);
 	dolly->base = it->base;
 	iter = vector_enum(it->images);
-	while (vector_next(&iter))
+	while (iter_next(&iter))
 		spriteset_add_image(dolly, *(image_t**)iter.ptr);
 	iter = vector_enum(it->poses);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		pose = iter.ptr;
 		spriteset_add_pose(dolly, lstr_cstr(pose->name));
 		iter2 = vector_enum(pose->frames);
-		while (vector_next(&iter2)) {
+		while (iter_next(&iter2)) {
 			frame = iter2.ptr;
 			spriteset_add_frame(dolly, lstr_cstr(pose->name), frame->image_idx, frame->delay);
 		}
@@ -391,11 +391,11 @@ spriteset_unref(spriteset_t* it)
 
 	console_log(3, "disposing spriteset #%u no longer in use", it->id);
 	iter = vector_enum(it->images);
-	while (vector_next(&iter))
+	while (iter_next(&iter))
 		image_unref(*(image_t**)iter.ptr);
 	vector_free(it->images);
 	iter = vector_enum(it->poses);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		pose = iter.ptr;
 		vector_free(pose->frames);
 		lstr_free(pose->name);
@@ -637,7 +637,7 @@ find_pose_by_name(const spriteset_t* spriteset, const char* pose_name)
 	name_to_find = pose_name;
 	while (pose == NULL) {
 		iter = vector_enum(spriteset->poses);
-		while (vector_next(&iter)) {
+		while (iter_next(&iter)) {
 			pose = iter.ptr;
 			if (strcasecmp(lstr_cstr(pose->name), name_to_find) == 0)
 				goto search_over;

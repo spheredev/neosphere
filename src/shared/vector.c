@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static bool vector_resize (vector_t* vector, int min_items);
+static bool ensure_space (vector_t* vector, int min_items);
 
 struct vector
 {
@@ -28,102 +28,124 @@ vector_new(size_t pitch)
 	if (!(vector = calloc(1, sizeof(vector_t))))
 		return NULL;
 	vector->pitch = pitch;
-	vector_resize(vector, 8);
+	ensure_space(vector, 8);
 	return vector;
 }
 
 vector_t*
-vector_dup(const vector_t* vector)
+vector_dup(const vector_t* it)
 {
 	vector_t* copy;
 
-	copy = vector_new(vector->pitch);
-	vector_resize(copy, vector->num_items);
-	memcpy(copy->buffer, vector->buffer, vector->pitch * vector->num_items);
-	copy->num_items = vector->num_items;
+	copy = vector_new(it->pitch);
+	ensure_space(copy, it->num_items);
+	memcpy(copy->buffer, it->buffer, it->pitch * it->num_items);
+	copy->num_items = it->num_items;
 	return copy;
 }
 
 void
-vector_free(vector_t* vector)
+vector_free(vector_t* it)
 {
-	if (vector == NULL)
+	if (it == NULL)
 		return;
-	free(vector->buffer);
-	free(vector);
-}
-
-void*
-vector_get(const vector_t* vector, int index)
-{
-	return vector->buffer + index * vector->pitch;
-}
-
-void
-vector_set(vector_t* vector, int index, const void* in_object)
-{
-	uint8_t* p_item;
-
-	p_item = vector->buffer + index * vector->pitch;
-	memcpy(p_item, in_object, vector->pitch);
+	free(it->buffer);
+	free(it);
 }
 
 int
-vector_len(const vector_t* vector)
+vector_len(const vector_t* it)
 {
-	return vector->num_items;
+	return it->num_items;
 }
 
 void
-vector_clear(vector_t* vector)
+vector_clear(vector_t* it)
 {
-	vector->num_items = 0;
-	vector_resize(vector, 8);
-}
-
-bool
-vector_push(vector_t* vector, const void* in_object)
-{
-	if (!vector_resize(vector, vector->num_items + 1))
-		return false;
-	memcpy(vector->buffer + vector->num_items * vector->pitch, in_object, vector->pitch);
-	++vector->num_items;
-	return true;
-}
-
-void
-vector_remove(vector_t* vector, int index)
-{
-	size_t   move_size;
-	uint8_t* p_item;
-
-	--vector->num_items;
-	move_size = (vector->num_items - index) * vector->pitch;
-	p_item = vector->buffer + index * vector->pitch;
-	memmove(p_item, p_item + vector->pitch, move_size);
-	vector_resize(vector, vector->num_items);
-}
-
-vector_t*
-vector_sort(vector_t* vector, int (*comparer)(const void* in_a, const void* in_b))
-{
-	qsort(vector->buffer, vector->num_items, vector->pitch, comparer);
-	return vector;
+	it->num_items = 0;
+	ensure_space(it, 8);
 }
 
 iter_t
-vector_enum(vector_t* vector)
+vector_enum(vector_t* it)
 {
 	iter_t iter;
 
-	iter.vector = vector;
+	iter.vector = it;
 	iter.ptr = NULL;
 	iter.index = -1;
 	return iter;
 }
 
 void*
-vector_next(iter_t* iter)
+vector_get(const vector_t* it, int index)
+{
+	return it->buffer + index * it->pitch;
+}
+
+bool
+vector_insert(vector_t* it, int index, const void* in_object)
+{
+	if (!ensure_space(it, it->num_items + 1))
+		return false;
+	memmove(it->buffer + (index + 1) * it->pitch,
+		it->buffer + index * it->pitch,
+		(it->num_items - index) * it->pitch);
+	memcpy(it->buffer + index * it->pitch, in_object, it->pitch);
+	++it->num_items;
+	return true;
+}
+
+bool
+vector_push(vector_t* it, const void* in_object)
+{
+	if (!ensure_space(it, it->num_items + 1))
+		return false;
+	memcpy(it->buffer + it->num_items * it->pitch, in_object, it->pitch);
+	++it->num_items;
+	return true;
+}
+
+void
+vector_put(vector_t* it, int index, const void* in_object)
+{
+	uint8_t* p_item;
+
+	p_item = it->buffer + index * it->pitch;
+	memcpy(p_item, in_object, it->pitch);
+}
+
+void
+vector_remove(vector_t* it, int index)
+{
+	size_t   move_size;
+	uint8_t* p_item;
+
+	--it->num_items;
+	move_size = (it->num_items - index) * it->pitch;
+	p_item = it->buffer + index * it->pitch;
+	memmove(p_item, p_item + it->pitch, move_size);
+	ensure_space(it, it->num_items);
+}
+
+bool
+vector_resize(vector_t* it, int new_size)
+{
+	if (!ensure_space(it, new_size))
+		return false;
+	it->num_items = new_size;
+	return true;
+}
+
+vector_t*
+vector_sort(vector_t* it, int (*comparer)(const void* in_a, const void* in_b))
+{
+	qsort(it->buffer, it->num_items, it->pitch, comparer);
+	return it;
+}
+
+void*
+iter_next(iter_t* iter)
 {
 	const vector_t* vector;
 	void*           p_tail;
@@ -150,7 +172,7 @@ iter_remove(iter_t* iter)
 }
 
 static bool
-vector_resize(vector_t* vector, int min_items)
+ensure_space(vector_t* vector, int min_items)
 {
 	uint8_t* new_buffer;
 	int      new_max;

@@ -166,7 +166,7 @@ package_dir_exists(const package_t* it, const char* dirname)
 	path = path_new_dir(dirname);
 	pathname = path_cstr(path);
 	iter = vector_enum(it->index);
-	while (entry = vector_next(&iter)) {
+	while (entry = iter_next(&iter)) {
 		// SPK doesn't really have directories, so we fake it by checking
 		// if any of the stored filenames begin with the directory path as a
 		// prefix.
@@ -191,7 +191,7 @@ package_file_exists(const package_t* it, const char* filename)
 	path = path_new(filename);
 	pathname = path_cstr(path);
 	iter = vector_enum(it->index);
-	while (entry = vector_next(&iter)) {
+	while (entry = iter_next(&iter)) {
 		// SPK doesn't really have directories, so we fake it by checking
 		// if any of the stored filenames begin with the directory path as a
 		// prefix.
@@ -227,7 +227,7 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs)
 
 	list = vector_new(sizeof(lstring_t*));
 	iter = vector_enum(package->index);
-	while (p_entry = vector_next(&iter)) {
+	while (p_entry = iter_next(&iter)) {
 		if (!want_dirs) {  // list files
 			if (!(match = strstr(p_entry->file_path, dirname)))
 				continue;
@@ -268,7 +268,7 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs)
 			filename = lstr_newf("%s", found_dirname);
 			iter2 = vector_enum(list);
 			is_in_set = false;
-			while (item = vector_next(&iter2))
+			while (item = iter_next(&iter2))
 				is_in_set |= lstr_cmp(filename, *item) == 0;
 			if (!is_in_set)  // avoid duplicate listings
 				vector_push(list, &filename);
@@ -404,7 +404,7 @@ asset_fslurp(package_t* package, const char* path, size_t *out_size)
 	console_log(3, "unpacking `%s` from package #%u", path, package->id);
 
 	iter = vector_enum(package->index);
-	while (entry = vector_next(&iter)) {
+	while (entry = iter_next(&iter)) {
 		if (strcasecmp(path, entry->file_path) == 0)
 			break;
 	}

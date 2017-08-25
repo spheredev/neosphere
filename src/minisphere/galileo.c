@@ -224,7 +224,7 @@ ibo_upload(ibo_t* it)
 		return false;
 	}
 	iter = vector_enum(it->indices);
-	while (vector_next(&iter))
+	while (iter_next(&iter))
 		entries[iter.index] = *(uint16_t*)iter.ptr;
 	al_unlock_index_buffer(buffer);
 
@@ -270,7 +270,7 @@ model_unref(model_t* it)
 	console_log(4, "disposing model #%u no longer in use", it->id);
 
 	iter = vector_enum(it->shapes);
-	while (i_shape = vector_next(&iter))
+	while (i_shape = iter_next(&iter))
 		shape_unref(*i_shape);
 	vector_free(it->shapes);
 	shader_unref(it->shader);
@@ -331,7 +331,7 @@ model_draw(const model_t* it, image_t* surface)
 
 	shader_use(it->shader != NULL ? it->shader : galileo_shader(), false);
 	iter = vector_enum(it->uniforms);
-	while (p = vector_next(&iter)) {
+	while (p = iter_next(&iter)) {
 		switch (p->type) {
 		case UNIFORM_BOOL:
 			al_set_shader_bool(p->name, p->bool_value);
@@ -361,7 +361,7 @@ model_draw(const model_t* it, image_t* surface)
 	}
 
 	iter = vector_enum(it->shapes);
-	while (vector_next(&iter))
+	while (iter_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
 }
 
@@ -736,7 +736,7 @@ vbo_upload(vbo_t* it)
 		return false;
 	}
 	iter = vector_enum(it->vertices);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		vertex = iter.ptr;
 		entries[iter.index].x = vertex->x;
 		entries[iter.index].y = vertex->y;
@@ -758,7 +758,7 @@ free_cached_uniform(model_t* group, const char* name)
 	struct uniform* p;
 
 	iter = vector_enum(group->uniforms);
-	while (p = vector_next(&iter)) {
+	while (p = iter_next(&iter)) {
 		if (strcmp(p->name, name) == 0)
 			iter_remove(&iter);
 	}

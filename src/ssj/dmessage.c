@@ -61,7 +61,7 @@ dmessage_free(dmessage_t* o)
 		return;
 
 	iter = vector_enum(o->dvalues);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		dvalue_t* dvalue = *(dvalue_t**)iter.ptr;
 		dvalue_free(dvalue);
 	}
@@ -196,7 +196,7 @@ dmessage_recv(socket_t* socket)
 lost_dvalue:
 	if (obj != NULL) {
 		iter = vector_enum(obj->dvalues);
-		while (dvalue = vector_next(&iter))
+		while (dvalue = iter_next(&iter))
 			dvalue_free(dvalue);
 		vector_free(obj->dvalues);
 		free(obj);
@@ -222,7 +222,7 @@ dmessage_send(const dmessage_t* o, socket_t* socket)
 	dvalue_send(dvalue, socket);
 	dvalue_free(dvalue);
 	iter = vector_enum(o->dvalues);
-	while (p_dvalue = vector_next(&iter))
+	while (p_dvalue = iter_next(&iter))
 		dvalue_send(*p_dvalue, socket);
 	dvalue = dvalue_new(DVALUE_EOM);
 	dvalue_send(dvalue, socket);
