@@ -46,6 +46,11 @@
 #include "lstring.h"
 #include "vector.h"
 
+struct js_ref
+{
+	JsValueRef value;
+};
+
 struct function
 {
 	jsal_callback_t callback;
@@ -58,12 +63,12 @@ int vasprintf (char* *out, const char* format, va_list ap);
 #endif
 
 static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
-static JsValueRef                 get_ref        (int stack_index);
-static JsPropertyIdRef            key_to_prop_id (JsValueRef key_ref);
-static JsValueRef                 pop_ref        (void);
-static int                        push_ref       (JsValueRef ref);
+static JsValueRef                 get_value      (int stack_index);
+static JsPropertyIdRef            make_property_id (JsValueRef key_value);
+static JsValueRef                 pop_value      (void);
+static int                        push_value     (JsValueRef value);
 static void                       throw_if_error (void);
-static void                       throw_ref      (JsValueRef ref);
+static void                       throw_value    (JsValueRef value);
 
 static vector_t*       s_catch_stack;
 static JsContextRef    s_js_context;
@@ -125,14 +130,14 @@ jsal_call(int num_args)
 
 	num_args += 1;  // treat `this` as first argument
 	arguments = malloc(num_args * sizeof(JsValueRef));
-	function_ref = get_ref(-num_args - 1);
+	function_ref = get_value(-num_args - 1);
 	index = vector_len(s_stack) - num_args;
 	for (i = 0; i < num_args; ++i)
-		arguments[i] = get_ref(i + index);
+		arguments[i] = get_value(i + index);
 	result = JsCallFunction(function_ref, arguments, (unsigned short)num_args, &retval_ref);
 	jsal_pop(num_args + 1);
 	throw_if_error();
-	push_ref(retval_ref);
+	push_value(retval_ref);
 	return true;
 }
 
@@ -145,11 +150,11 @@ jsal_compile(const char* filename)
 	JsValueRef name_ref;
 	JsValueRef source_ref;
 	
-	source_ref = pop_ref();
+	source_ref = pop_value();
 	JsCreateString(filename, strlen(filename), &name_ref);
 	JsParse(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeNone, &function_ref);
 	throw_if_error();
-	push_ref(function_ref);
+	push_value(function_ref);
 }
 
 int
@@ -157,12 +162,12 @@ jsal_dup(int from_index)
 {
 	JsValueRef ref;
 
-	ref = get_ref(from_index);
-	return push_ref(ref);
+	ref = get_value(from_index);
+	return push_value(ref);
 }
 
 void
-jsal_error(jsal_error_t type, const char* format, ...)
+jsal_error(js_error_t type, const char* format, ...)
 {
 	va_list ap;
 
@@ -172,7 +177,7 @@ jsal_error(jsal_error_t type, const char* format, ...)
 }
 
 void
-jsal_error_va(jsal_error_t type, const char* format, va_list ap)
+jsal_error_va(js_error_t type, const char* format, va_list ap)
 {
 	jsal_push_new_error_va(type, format, ap);
 	jsal_throw();
@@ -184,7 +189,7 @@ jsal_get_boolean(int index)
 	bool       value;
 	JsValueRef value_ref;
 
-	value_ref = get_ref(index);
+	value_ref = get_value(index);
 	if (JsBooleanToBool(value_ref, &value) != JsNoError)
 		return false;
 	return value;
@@ -198,7 +203,7 @@ jsal_get_buffer(int at_index, size_t *out_size)
 	ChakraBytePtr value;
 	JsValueRef    value_ref;
 
-	value_ref = get_ref(at_index);
+	value_ref = get_value(at_index);
 	JsGetValueType(value_ref, &type);
 	if (type == JsTypedArray)
 		JsGetTypedArrayStorage(value_ref, &value, &size, NULL, NULL);
@@ -216,7 +221,7 @@ jsal_get_int(int index)
 	int        value;
 	JsValueRef value_ref;
 
-	value_ref = get_ref(index);
+	value_ref = get_value(index);
 	if (JsNumberToInt(value_ref, &value) != JsNoError)
 		return 0;
 	return value;
@@ -228,7 +233,7 @@ jsal_get_number(int index)
 	double     value;
 	JsValueRef value_ref;
 
-	value_ref = get_ref(index);
+	value_ref = get_value(index);
 	if (JsNumberToDouble(value_ref, &value) != JsNoError)
 		return NAN;
 	return value;
@@ -243,10 +248,10 @@ jsal_get_property(int object_index)
 	JsValueRef      object_ref;
 	JsValueRef      value_ref;
 
-	object_ref = get_ref(object_index);
-	key_ref = key_to_prop_id(pop_ref());
+	object_ref = get_value(object_index);
+	key_ref = make_property_id(pop_value());
 	JsGetProperty(object_ref, key_ref, &value_ref);
-	push_ref(value_ref);
+	push_value(value_ref);
 	return !jsal_is_undefined(-1);
 }
 
@@ -279,7 +284,7 @@ jsal_get_string(int index)
 	size_t         value_length;
 	JsValueRef     value_ref;
 
-	value_ref = get_ref(index);
+	value_ref = get_value(index);
 	if (JsStringToPointer(value_ref, &value, &value_length) != JsNoError)
 		return NULL;
 	lstr_free(retval);
@@ -296,8 +301,8 @@ jsal_has_property(int object_index)
 	JsPropertyIdRef key_ref;
 	JsValueRef      object_ref;
 
-	object_ref = get_ref(object_index);
-	key_ref = key_to_prop_id(pop_ref());
+	object_ref = get_value(object_index);
+	key_ref = make_property_id(pop_value());
 	JsHasProperty(object_ref, key_ref, &has_property);
 	return has_property;
 }
@@ -329,7 +334,7 @@ jsal_insert(int at_index)
 
 	if (at_index == vector_len(s_stack) - 1)
 		return true;  // nop
-	ref = pop_ref();
+	ref = pop_value();
 	vector_insert(s_stack, at_index, &ref);
 	return true;
 }
@@ -340,7 +345,7 @@ jsal_is_array(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsArray;
 }
@@ -351,7 +356,7 @@ jsal_is_boolean(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsBoolean;
 }
@@ -362,7 +367,7 @@ jsal_is_buffer(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsArrayBuffer
 		|| type == JsTypedArray;
@@ -374,7 +379,7 @@ jsal_is_error(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsError;
 }
@@ -385,7 +390,7 @@ jsal_is_function(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsFunction;
 }
@@ -396,7 +401,7 @@ jsal_is_null(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsNull;
 }
@@ -407,7 +412,7 @@ jsal_is_number(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsNumber;
 }
@@ -418,7 +423,7 @@ jsal_is_object(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsObject
 		|| type == JsArray
@@ -442,7 +447,7 @@ jsal_is_string(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsString;
 }
@@ -453,7 +458,7 @@ jsal_is_symbol(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsSymbol;
 }
@@ -464,9 +469,23 @@ jsal_is_undefined(int stack_index)
 	JsValueRef  ref;
 	JsValueType type;
 
-	ref = get_ref(stack_index);
+	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsUndefined;
+}
+
+js_ref_t*
+jsal_ref(int at_index)
+{
+	js_ref_t*  ref;
+	JsValueRef value;
+
+	value = get_value(at_index);
+	JsAddRef(value, NULL);
+
+	ref = calloc(1, sizeof(js_ref_t));
+	ref->value = value;
+	return ref;
 }
 
 int
@@ -496,7 +515,7 @@ jsal_push_boolean(bool value)
 	JsValueRef ref;
 
 	JsBoolToBoolean(value, &ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -510,7 +529,7 @@ jsal_push_eval(const char* source)
 	JsCreateString("eval()", 6, &name_ref);
 	JsRun(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeNone, &ref);
 	throw_if_error();
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -525,7 +544,7 @@ jsal_push_function(jsal_callback_t callback, const char* name, int min_args)
 	function->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_ref);
 	JsCreateNamedFunction(name_ref, do_native_call, function, &ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -534,7 +553,7 @@ jsal_push_global_object(void)
 	JsValueRef ref;
 
 	JsGetGlobalObject(&ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -543,7 +562,7 @@ jsal_push_int(int value)
 	JsValueRef ref;
 
 	JsIntToNumber(value, &ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -563,11 +582,11 @@ jsal_push_new_array(void)
 	JsValueRef ref;
 
 	JsCreateArray(0, &ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
-jsal_push_new_error(jsal_error_t type, const char* format, ...)
+jsal_push_new_error(js_error_t type, const char* format, ...)
 {
 	va_list ap;
 	int     index;
@@ -579,7 +598,7 @@ jsal_push_new_error(jsal_error_t type, const char* format, ...)
 }
 
 int
-jsal_push_new_error_va(jsal_error_t type, const char* format, va_list ap)
+jsal_push_new_error_va(js_error_t type, const char* format, va_list ap)
 {
 	char*       message;
 	JsValueRef  message_ref;
@@ -594,7 +613,7 @@ jsal_push_new_error_va(jsal_error_t type, const char* format, va_list ap)
 		: type == JS_TYPE_ERROR ? JsCreateTypeError(message_ref, &ref)
 		: type == JS_URI_ERROR ? JsCreateURIError(message_ref, &ref)
 		: JsCreateError(message_ref, &ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -603,7 +622,7 @@ jsal_push_new_object(void)
 	JsValueRef ref;
 
 	JsCreateObject(&ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -614,7 +633,7 @@ jsal_push_new_symbol(const char* description)
 
 	JsCreateString(description, strlen(description), &name_ref);
 	JsCreateSymbol(name_ref, &ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -623,7 +642,7 @@ jsal_push_null(void)
 	JsValueRef ref;
 
 	JsGetNullValue(&ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -632,7 +651,13 @@ jsal_push_number(double value)
 	JsValueRef ref;
 	
 	JsDoubleToNumber(value, &ref);
-	return push_ref(ref);
+	return push_value(ref);
+}
+
+int
+jsal_push_ref(js_ref_t* ref)
+{
+	return push_value(ref->value);
 }
 
 int
@@ -656,7 +681,7 @@ jsal_push_string(const char* value)
 	JsValueRef ref;
 
 	JsCreateString(value, strlen(value), &ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 int
@@ -665,7 +690,7 @@ jsal_push_undefined(void)
 	JsValueRef ref;
 
 	JsGetUndefinedValue(&ref);
-	return push_ref(ref);
+	return push_value(ref);
 }
 
 void
@@ -689,7 +714,7 @@ jsal_replace(int at_index)
 
 	if (at_index == vector_len(s_stack) - 1)
 		return true;  // nop
-	ref = pop_ref();
+	ref = pop_value();
 	vector_put(s_stack, at_index, &ref);
 	return true;
 }
@@ -741,6 +766,17 @@ jsal_require_int(int at_index)
 	return jsal_get_int(at_index);
 }
 
+void
+jsal_require_null(int at_index)
+{
+	if (!jsal_is_null(at_index)) {
+		jsal_dup(at_index);
+		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not 'null'", jsal_to_string(-1));
+		jsal_remove(-2);
+		jsal_throw();
+	}
+}
+
 double
 jsal_require_number(int at_index)
 {
@@ -776,6 +812,17 @@ jsal_require_string(int at_index)
 	return jsal_get_string(at_index);
 }
 
+void
+jsal_require_undefined(int at_index)
+{
+	if (!jsal_is_null(at_index)) {
+		jsal_dup(at_index);
+		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not 'undefined'", jsal_to_string(-1));
+		jsal_remove(-2);
+		jsal_throw();
+	}
+}
+
 bool
 jsal_set_property(int object_index)
 {
@@ -785,9 +832,9 @@ jsal_set_property(int object_index)
 	JsValueRef      object_ref;
 	JsValueRef      value_ref;
 
-	object_ref = get_ref(object_index);
-	value_ref = pop_ref();
-	key_ref = key_to_prop_id(pop_ref());
+	object_ref = get_value(object_index);
+	value_ref = pop_value();
+	key_ref = make_property_id(pop_value());
 	if (JsSetProperty(object_ref, key_ref, value_ref, false) != JsNoError)
 		return false;
 	return true;
@@ -822,8 +869,8 @@ jsal_throw(void)
 
 	JsValueRef ref;
 
-	ref = pop_ref();
-	throw_ref(ref);
+	ref = pop_value();
+	throw_value(ref);
 }
 
 const char*
@@ -832,62 +879,69 @@ jsal_to_string(int at_index)
 	JsValueRef ref;
 
 	at_index = jsal_normalize_index(at_index);
-	ref = get_ref(at_index);
+	ref = get_value(at_index);
 	JsConvertValueToString(ref, &ref);
 	vector_put(s_stack, at_index, &ref);
 	return jsal_get_string(at_index);
 }
 
+void
+jsal_unref(js_ref_t* ref)
+{
+	JsRelease(ref->value, NULL);
+	free(ref);
+}
+
 static void
 throw_if_error(void)
 {
-	JsValueRef error_ref;
-	bool       has_exception;
+	JsValueRef  error_ref;
+	bool        has_exception;
 	JsErrorCode result;
 
 	JsHasException(&has_exception);
 	if (has_exception) {
 		result = JsGetAndClearException(&error_ref);
-		throw_ref(error_ref);
+		throw_value(error_ref);
 	}
 }
 
 static JsValueRef
-get_ref(int stack_index)
+get_value(int stack_index)
 {
-	JsValueRef ref;
+	JsValueRef value;
 
 	stack_index = jsal_normalize_index(stack_index);
-	ref = *(JsValueRef*)vector_get(s_stack, stack_index + s_stack_base);
-	return ref;
+	value = *(JsValueRef*)vector_get(s_stack, stack_index + s_stack_base);
+	return value;
 }
 
 static JsPropertyIdRef
-key_to_prop_id(JsValueRef key_ref)
+make_property_id(JsValueRef key)
 {
 	JsPropertyIdRef ref;
 	size_t          key_length;
 	const wchar_t*  key_string;
 	JsValueType     key_type;
 
-	JsGetValueType(key_ref, &key_type);
+	JsGetValueType(key, &key_type);
 	if (key_type == JsSymbol) {
-		JsGetPropertyIdFromSymbol(key_ref, &ref);
+		JsGetPropertyIdFromSymbol(key, &ref);
 	}
 	else {
-		JsStringToPointer(key_ref, &key_string, &key_length);
+		JsStringToPointer(key, &key_string, &key_length);
 		JsGetPropertyIdFromName(key_string, &ref);
 	}
 	return ref;
 }
 
 static JsValueRef
-pop_ref(void)
+pop_value(void)
 {
 	int        index;
 	JsValueRef ref;
 
-	ref = get_ref(-1);
+	ref = get_value(-1);
 	index = vector_len(s_stack) - 1;
 	vector_remove(s_stack, index);
 	JsRelease(ref, NULL);
@@ -895,23 +949,23 @@ pop_ref(void)
 }
 
 static int
-push_ref(JsValueRef ref)
+push_value(JsValueRef value)
 {
-	JsAddRef(ref, NULL);
-	vector_push(s_stack, &ref);
+	JsAddRef(value, NULL);
+	vector_push(s_stack, &value);
 	return vector_len(s_stack) - 1;
 }
 
 static void
-throw_ref(JsValueRef ref)
+throw_value(JsValueRef value)
 {
 	int     index;
 	jmp_buf label;
 
-	push_ref(ref);
+	push_value(value);
 	index = vector_len(s_catch_stack) - 1;
 	if (index >= 0) {
-		JsSetException(ref);
+		JsSetException(value);
 		memcpy(label, vector_get(s_catch_stack, index), sizeof(jmp_buf));
 		vector_remove(s_catch_stack, index);
 		longjmp(label, 1);
@@ -937,14 +991,14 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	old_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_stack);
 	for (i = 0; i < argc; ++i)
-		push_ref(argv[i]);
+		push_value(argv[i]);
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		if (function->callback(argc - 1, is_ctor) > 0)
-			retval_ref = pop_ref();
+			retval_ref = pop_value();
 	}
 	else {
-		retval_ref = pop_ref();
+		retval_ref = pop_value();
 	}
 	s_stack_base = old_stack_base;
 	return retval_ref;
