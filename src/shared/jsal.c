@@ -38,6 +38,9 @@
 #include "jsal.h"
 
 #include <stdlib.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <math.h>
 #include <setjmp.h>
@@ -57,18 +60,26 @@ struct function
 	int             min_args;
 };
 
+struct object
+{
+	void*           data;
+	jsal_callback_t finalizer;
+	JsValueRef      object;
+};
+
 #if defined(_WIN32)
 int asprintf  (char* *out, const char* format, ...);
 int vasprintf (char* *out, const char* format, va_list ap);
 #endif
 
-static JsValueRef CHAKRA_CALLBACK do_native_call (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
-static JsValueRef                 get_value      (int stack_index);
+static JsValueRef CHAKRA_CALLBACK do_native_call   (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
+static void CHAKRA_CALLBACK       finalize_object  (void* userdata);
+static JsValueRef                 get_value        (int stack_index);
 static JsPropertyIdRef            make_property_id (JsValueRef key_value);
-static JsValueRef                 pop_value      (void);
-static int                        push_value     (JsValueRef value);
-static void                       throw_if_error (void);
-static void                       throw_value    (JsValueRef value);
+static JsValueRef                 pop_value        (void);
+static int                        push_value       (JsValueRef value);
+static void                       throw_if_error   (void);
+static void                       throw_value      (JsValueRef value);
 
 static vector_t*       s_catch_stack;
 static JsContextRef    s_js_context;
@@ -87,7 +98,7 @@ jsal_init(void)
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
-	
+
 	// create the stash, used to store JS values behind the scenes
 	JsCreateObject(&s_stash);
 	JsGetNullValue(&null_value);
@@ -144,7 +155,6 @@ jsal_call_method(int num_args)
 	JsValueRef* arguments;
 	JsValueRef  function_ref;
 	int         index;
-	JsErrorCode result;
 	JsValueRef  retval_ref;
 
 	int i;
@@ -155,7 +165,30 @@ jsal_call_method(int num_args)
 	index = vector_len(s_stack) - num_args;
 	for (i = 0; i < num_args; ++i)
 		arguments[i] = get_value(i + index);
-	result = JsCallFunction(function_ref, arguments, (unsigned short)num_args, &retval_ref);
+	JsCallFunction(function_ref, arguments, (unsigned short)num_args, &retval_ref);
+	jsal_pop(num_args + 1);
+	throw_if_error();
+	push_value(retval_ref);
+}
+
+void
+jsal_call_new(int num_args)
+{
+	/* [ ... constructor arg1..argN ] -> [ .. retval ] */
+
+	JsValueRef* arguments;
+	JsValueRef  function_ref;
+	int         index;
+	JsValueRef  retval_ref;
+
+	int i;
+
+	arguments = malloc(num_args * sizeof(JsValueRef));
+	function_ref = get_value(-num_args - 1);
+	index = vector_len(s_stack) - num_args;
+	for (i = 0; i < num_args; ++i)
+		arguments[i] = get_value(i + index);
+	JsConstructObject(function_ref, arguments, (unsigned short)num_args, &retval_ref);
 	jsal_pop(num_args + 1);
 	throw_if_error();
 	push_value(retval_ref);
@@ -175,6 +208,45 @@ jsal_compile(const char* filename)
 	JsParse(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeNone, &function_ref);
 	throw_if_error();
 	push_value(function_ref);
+}
+
+void
+jsal_def_property(int object_index)
+{
+	/* [ ... key descriptor ] -> [ ... ] */
+
+	JsValueRef      descriptor;
+	JsPropertyIdRef key;
+	JsValueRef      object;
+	bool            result;
+
+	object = get_value(object_index);
+	descriptor = pop_value();
+	key = make_property_id(pop_value());
+	JsDefineProperty(object, key, descriptor, &result);
+	throw_if_error();
+}
+
+void
+jsal_def_index_property(int object_index, int name)
+{
+	/* [ ... descriptor ] -> [ ... ] */
+
+	object_index = jsal_normalize_index(object_index);
+	jsal_push_sprintf("%d", name);
+	jsal_insert(-2);
+	jsal_def_property(object_index);
+}
+
+void
+jsal_def_named_property(int object_index, const char* name)
+{
+	/* [ ... descriptor ] -> [ ... ] */
+
+	object_index = jsal_normalize_index(object_index);
+	jsal_push_string(name);
+	jsal_insert(-2);
+	jsal_def_property(object_index);
 }
 
 int
@@ -508,20 +580,6 @@ jsal_is_undefined(int stack_index)
 	return type == JsUndefined;
 }
 
-jsal_ref_t*
-jsal_ref(int at_index)
-{
-	jsal_ref_t*  ref;
-	JsValueRef value;
-
-	value = get_value(at_index);
-	JsAddRef(value, NULL);
-
-	ref = calloc(1, sizeof(jsal_ref_t));
-	ref->value = value;
-	return ref;
-}
-
 int
 jsal_normalize_index(int index)
 {
@@ -651,6 +709,22 @@ jsal_push_new_error_va(jsal_error_t type, const char* format, va_list ap)
 }
 
 int
+jsal_push_new_host_object(void* data, jsal_callback_t finalizer)
+{
+	JsValueRef     object;
+	struct object* object_info;
+
+	object_info = calloc(1, sizeof(struct object));
+	JsCreateExternalObject(object_info, NULL, &object);
+
+	object_info->data = data;
+	object_info->finalizer = finalizer;
+	object_info->object = object;
+	
+	return push_value(object);
+}
+
+int
 jsal_push_new_object(void)
 {
 	JsValueRef ref;
@@ -731,6 +805,20 @@ jsal_push_undefined(void)
 
 	JsGetUndefinedValue(&ref);
 	return push_value(ref);
+}
+
+jsal_ref_t*
+jsal_ref(int at_index)
+{
+	jsal_ref_t*  ref;
+	JsValueRef value;
+
+	value = get_value(at_index);
+	JsAddRef(value, NULL);
+
+	ref = calloc(1, sizeof(jsal_ref_t));
+	ref->value = value;
+	return ref;
 }
 
 void
@@ -1128,6 +1216,25 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	vector_resize(s_stack, s_stack_base);
 	s_stack_base = old_stack_base;
 	return retval;
+}
+
+static void CHAKRA_CALLBACK
+finalize_object(void* userdata)
+{
+	jmp_buf        label;
+	struct object* object_info;
+	int            old_stack_base;
+
+	object_info = userdata;
+	old_stack_base = s_stack_base;
+	s_stack_base = vector_len(s_stack);
+	push_value(object_info->object);
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		object_info->finalizer(0, false);
+	}
+	vector_resize(s_stack, s_stack_base);
+	s_stack_base = old_stack_base;
 }
 
 #if defined(_WIN32)
