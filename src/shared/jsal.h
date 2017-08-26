@@ -52,6 +52,7 @@ typedef int (* jsal_callback_t) (int num_args, bool is_ctor);
 bool        jsal_init                     (void);
 void        jsal_uninit                   (void);
 bool        jsal_call                     (int num_args);
+void        jsal_compile                  (const char* filename);
 int         jsal_dup                      (int from_index);
 void        jsal_error                    (jsal_error_t type, const char* message, ...);
 void        jsal_error_va                 (jsal_error_t type, const char* message, va_list ap);

@@ -40,7 +40,6 @@
 #include "debugger.h"
 #include "galileo.h"
 #include "input.h"
-#include "jsal.h"
 #include "legacy.h"
 #include "map_engine.h"
 #include "pegasus.h"
@@ -95,19 +94,6 @@ static const char* const ERROR_TEXT[][2] =
 	{ "this game has OVER NINE THOUSAND errors.", "WHAT?! 9000?! no way that can be right!" },
 };
 
-static int
-js_foo(int num_args, bool is_ctor)
-{
-	const char* str;
-	int         num;
-	
-	printf("foo() called with %d args\n", num_args);
-	str = jsal_require_string(1);
-	num = jsal_require_int(2);
-	printf("%s\n", str);
-	return 0;
-}
-
 int
 main(int argc, char* argv[])
 {
@@ -132,16 +118,6 @@ main(int argc, char* argv[])
 	int                  use_verbosity;
 	bool                 want_debug;
 
-	jsal_init();
-	jsal_push_global_object();
-	jsal_push_function(js_foo, "foo", 0);
-	jsal_set_named_property(-2, "foo");
-	jsal_pop(1);
-	jsal_push_eval("foo('pigs!', '812');");
-	jsal_uninit();
-	return 0;
-	
-	
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
 		&use_fullscreen, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))
@@ -458,9 +434,6 @@ initialize_engine(void)
 	if (!(g_duk = duk_create_heap_default()))
 		goto on_error;
 
-	if (!jsal_init())
-		goto on_error;
-
 	// initialize engine components
 	async_init();
 	galileo_init();
@@ -498,7 +471,6 @@ shutdown_engine(void)
 
 	console_log(1, "shutting down Duktape");
 	duk_destroy_heap(g_duk);
-	jsal_uninit();
 
 	console_log(1, "shutting down Dyad");
 	dyad_shutdown();

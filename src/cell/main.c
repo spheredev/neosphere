@@ -33,7 +33,6 @@
 #include "cell.h"
 
 #include "build.h"
-#include "jsal.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_cell_quote (void);
@@ -54,7 +53,6 @@ main(int argc, char* argv[])
 	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
-	jsal_init();
 
 	// parse the command line
 	if (!parse_cmdline(argc, argv))
@@ -80,7 +78,6 @@ shutdown:
 	build_free(build);
 	path_free(s_in_path);
 	path_free(s_out_path);
-	jsal_uninit();
 	return retval;
 }
 

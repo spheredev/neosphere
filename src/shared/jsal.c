@@ -116,7 +116,6 @@ jsal_call(int num_args)
 	/* [ ... function this arg1..argN ] -> [ .. retval ] */
 
 	JsValueRef* arguments;
-	JsValueRef  error_ref;
 	JsValueRef  function_ref;
 	int         index;
 	JsErrorCode result;
@@ -132,12 +131,25 @@ jsal_call(int num_args)
 		arguments[i] = get_ref(i + index);
 	result = JsCallFunction(function_ref, arguments, (unsigned short)num_args, &retval_ref);
 	jsal_pop(num_args + 1);
-	if (result == JsErrorScriptException) {
-		JsGetAndClearException(&error_ref);
-		throw_ref(error_ref);
-	}
+	throw_if_error();
 	push_ref(retval_ref);
 	return true;
+}
+
+void
+jsal_compile(const char* filename)
+{
+	/* [ ... source ] -> [ ... function ] */
+
+	JsValueRef function_ref;
+	JsValueRef name_ref;
+	JsValueRef source_ref;
+	
+	source_ref = pop_ref();
+	JsCreateString(filename, strlen(filename), &name_ref);
+	JsParse(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeNone, &function_ref);
+	throw_if_error();
+	push_ref(function_ref);
 }
 
 int
@@ -467,7 +479,7 @@ jsal_normalize_index(int index)
 	top = vector_len(s_stack);
 	if (real_index < 0)
 		real_index += top - s_stack_base;
-	if (real_index < 0 || real_index >= top)
+	if (real_index < 0 || real_index >= top - s_stack_base)
 		jsal_error(JS_REF_ERROR, "invalid stack index '%d'", index);
 	return real_index;
 }
@@ -831,10 +843,11 @@ throw_if_error(void)
 {
 	JsValueRef error_ref;
 	bool       has_exception;
+	JsErrorCode result;
 
 	JsHasException(&has_exception);
 	if (has_exception) {
-		JsGetAndClearException(&error_ref);
+		result = JsGetAndClearException(&error_ref);
 		throw_ref(error_ref);
 	}
 }
@@ -874,8 +887,8 @@ pop_ref(void)
 	int        index;
 	JsValueRef ref;
 
+	ref = get_ref(-1);
 	index = vector_len(s_stack) - 1;
-	ref = get_ref(index);
 	vector_remove(s_stack, index);
 	JsRelease(ref, NULL);
 	return ref;

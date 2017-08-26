@@ -3,8 +3,6 @@
 
 #include "api.h"
 
-#include "jsal.h"
-
 void
 api_init(duk_context* ctx)
 {
