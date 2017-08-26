@@ -73,17 +73,26 @@ static void                       throw_value    (JsValueRef value);
 static vector_t*       s_catch_stack;
 static JsContextRef    s_js_context;
 static JsRuntimeHandle s_js_runtime = NULL;
+static JsValueRef      s_stash;
 static vector_t*       s_stack;
 static int             s_stack_base;
 
 bool
 jsal_init(void)
 {
+	JsValueRef null_value;
+	
 	if (JsCreateRuntime(JsRuntimeAttributeDispatchSetExceptionsToDebugger, NULL, &s_js_runtime) != JsNoError)
 		goto on_error;
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
+	
+	// create the stash, used to store JS values behind the scenes
+	JsCreateObject(&s_stash);
+	JsGetNullValue(&null_value);
+	JsSetPrototype(s_stash, null_value);
+	JsAddRef(s_stash, NULL);
 
 	s_stack = vector_new(sizeof(JsValueRef));
 	s_catch_stack = vector_new(sizeof(jmp_buf));
@@ -111,6 +120,7 @@ jsal_uninit(void)
 	}
 	vector_free(s_stack);
 	vector_free(s_catch_stack);
+	JsRelease(s_stash, NULL);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
 	JsDisposeRuntime(s_js_runtime);
 }
@@ -283,6 +293,20 @@ jsal_get_named_property(int object_index, const char* name)
 	object_index = jsal_normalize_index(object_index);
 	jsal_push_string(name);
 	return jsal_get_property(object_index);
+}
+
+void
+jsal_get_prototype(int object_index)
+{
+	/* [ ... ] -> [ ... prototype ] */
+
+	JsValueRef object;
+	JsValueRef prototype;
+
+	object = get_value(object_index);
+	JsGetPrototype(object, &prototype);
+	throw_if_error();
+	push_value(prototype);
 }
 
 const char*
@@ -686,6 +710,12 @@ jsal_push_sprintf(const char* format, ...)
 }
 
 int
+jsal_push_stash(void)
+{
+	return push_value(s_stash);
+}
+
+int
 jsal_push_string(const char* value)
 {
 	JsValueRef ref;
@@ -891,6 +921,20 @@ jsal_set_named_property(int object_index, const char* name)
 	jsal_push_string(name);
 	jsal_insert(-2);
 	jsal_set_property(object_index);
+}
+
+void
+jsal_set_prototype(int object_index)
+{
+	/* [ ... prototype ] -> [ ... ] */
+
+	JsValueRef object;
+	JsValueRef prototype;
+
+	object = get_value(object_index);
+	prototype = pop_value();
+	JsSetPrototype(object, prototype);
+	throw_if_error();
 }
 
 void
