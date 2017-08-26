@@ -36,10 +36,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct js_ref js_ref_t;
+typedef struct jsal_ref jsal_ref_t;
 
 typedef
-enum js_error
+enum jsal_error
 {
 	JS_ERROR,
 	JS_RANGE_ERROR,
@@ -47,17 +47,19 @@ enum js_error
 	JS_SYNTAX_ERROR,
 	JS_TYPE_ERROR,
 	JS_URI_ERROR,
-} js_error_t;
+} jsal_error_t;
 
 typedef bool (* jsal_callback_t) (int num_args, bool is_ctor);
 
 bool        jsal_init                     (void);
 void        jsal_uninit                   (void);
-bool        jsal_call                     (int num_args);
+void        jsal_call                     (int num_args);
+void        jsal_call_method              (int num_args);
 void        jsal_compile                  (const char* filename);
 int         jsal_dup                      (int from_index);
-void        jsal_error                    (js_error_t type, const char* message, ...);
-void        jsal_error_va                 (js_error_t type, const char* message, va_list ap);
+void        jsal_error                    (jsal_error_t type, const char* message, ...);
+void        jsal_error_va                 (jsal_error_t type, const char* message, va_list ap);
+bool        jsal_get_boolean              (int at_index);
 void*       jsal_get_buffer               (int at_index, size_t *out_size);
 int         jsal_get_int                  (int at_index);
 double      jsal_get_number               (int at_index);
@@ -90,17 +92,17 @@ int         jsal_push_global_object       (void);
 int         jsal_push_int                 (int value);
 int         jsal_push_known_symbol        (const char* name);
 int         jsal_push_new_array           (void);
-int         jsal_push_new_error           (js_error_t type, const char* format, ...);
-int         jsal_push_new_error_va        (js_error_t type, const char* format, va_list ap);
+int         jsal_push_new_error           (jsal_error_t type, const char* format, ...);
+int         jsal_push_new_error_va        (jsal_error_t type, const char* format, va_list ap);
 int         jsal_push_new_object          (void);
 int         jsal_push_new_symbol          (const char* description);
 int         jsal_push_null                (void);
 int         jsal_push_number              (double value);
-int         jsal_push_ref                 (js_ref_t* ref);
+int         jsal_push_ref                 (jsal_ref_t* ref);
 int         jsal_push_sprintf             (const char* format, ...);
 int         jsal_push_string              (const char* value);
 int         jsal_push_undefined           (void);
-js_ref_t*   jsal_ref                      (int at_index);
+jsal_ref_t* jsal_ref                      (int at_index);
 void        jsal_remove                   (int at_index);
 bool        jsal_replace                  (int at_index);
 bool        jsal_require_boolean          (int at_index);
@@ -109,14 +111,20 @@ void        jsal_require_function         (int at_index);
 int         jsal_require_int              (int at_index);
 void        jsal_require_null             (int at_index);
 double      jsal_require_number           (int at_index);
+void        jsal_require_object           (int at_index);
 void        jsal_require_object_coercible (int at_index);
 const char* jsal_require_string           (int at_index);
+void        jsal_require_symbol           (int at_index);
 void        jsal_require_undefined        (int at_index);
-bool        jsal_set_property             (int object_index);
-bool        jsal_set_index_property       (int object_index, int name);
-bool        jsal_set_named_property       (int object_index, const char* name);
+void        jsal_set_property             (int object_index);
+void        jsal_set_index_property       (int object_index, int name);
+void        jsal_set_named_property       (int object_index, const char* name);
 void        jsal_throw                    (void);
+bool        jsal_to_boolean               (int at_index);
+int         jsal_to_int                   (int at_index);
+double      jsal_to_number                (int at_index);
+void        jsal_to_object                (int at_index);
 const char* jsal_to_string                (int at_index);
-void        jsal_unref                    (js_ref_t* ref);
+void        jsal_unref                    (jsal_ref_t* ref);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED
