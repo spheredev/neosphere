@@ -982,8 +982,9 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 {
 	struct function* function;
 	jmp_buf          label;
+	bool             has_return;
 	int              old_stack_base;
-	JsValueRef       retval_ref = JS_INVALID_REFERENCE;
+	JsValueRef       retval = JS_INVALID_REFERENCE;
 
 	int i;
 
@@ -994,14 +995,18 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 		push_value(argv[i]);
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
-		if (function->callback(argc - 1, is_ctor) > 0)
-			retval_ref = pop_value();
+		has_return = function->callback(argc - 1, is_ctor);
+		if (has_return)
+			retval = pop_value();
 	}
 	else {
-		retval_ref = pop_value();
+		// if an error gets thrown in C code, `jsal_throw()` leaves it on top
+		// of the value stack.
+		retval = pop_value();
 	}
+	vector_resize(s_stack, s_stack_base);
 	s_stack_base = old_stack_base;
-	return retval_ref;
+	return retval;
 }
 
 #if defined(_WIN32)

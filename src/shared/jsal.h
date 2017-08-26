@@ -49,7 +49,7 @@ enum js_error
 	JS_URI_ERROR,
 } js_error_t;
 
-typedef int (* jsal_callback_t) (int num_args, bool is_ctor);
+typedef bool (* jsal_callback_t) (int num_args, bool is_ctor);
 
 bool        jsal_init                     (void);
 void        jsal_uninit                   (void);
