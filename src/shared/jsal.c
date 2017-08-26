@@ -99,7 +99,7 @@ jsal_init(void)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
 
-	// create the stash, used to store JS values behind the scenes
+	// set up the stash, used to store JS values behind the scenes.
 	JsCreateObject(&s_stash);
 	JsGetNullValue(&null_value);
 	JsSetPrototype(s_stash, null_value);
@@ -307,6 +307,20 @@ jsal_get_buffer(int at_index, size_t *out_size)
 	return value;
 }
 
+void*
+jsal_get_host_data(int at_index)
+{
+	JsValueRef     object;
+	struct object* object_info;
+	void*          ptr;
+
+	object = get_value(at_index);
+	if (JsGetExternalData(object, &ptr) != JsNoError)
+		return NULL;
+	object_info = ptr;
+	return object_info->data;
+}
+
 int
 jsal_get_int(int index)
 {
@@ -316,6 +330,18 @@ jsal_get_int(int index)
 	value_ref = get_value(index);
 	if (JsNumberToInt(value_ref, &value) != JsNoError)
 		return 0;
+	return value;
+}
+
+int
+jsal_get_length(int at_index)
+{
+	int value;
+
+	if (!jsal_get_named_property(at_index, "length"))
+		return 0;
+	value = jsal_get_int(-1);
+	jsal_pop(1);
 	return value;
 }
 
@@ -649,6 +675,12 @@ jsal_push_global_object(void)
 }
 
 int
+jsal_push_hidden_stash(void)
+{
+	return push_value(s_stash);
+}
+
+int
 jsal_push_int(int value)
 {
 	JsValueRef ref;
@@ -675,6 +707,17 @@ jsal_push_new_array(void)
 
 	JsCreateArray(0, &ref);
 	return push_value(ref);
+}
+
+int
+jsal_push_new_bare_object(void)
+{
+	int index;
+
+	index = jsal_push_new_object();
+	jsal_push_null();
+	jsal_set_prototype(-2);
+	return index;
 }
 
 int
@@ -784,12 +827,6 @@ jsal_push_sprintf(const char* format, ...)
 }
 
 int
-jsal_push_stash(void)
-{
-	return push_value(s_stash);
-}
-
-int
 jsal_push_string(const char* value)
 {
 	JsValueRef ref;
@@ -805,6 +842,16 @@ jsal_push_undefined(void)
 
 	JsGetUndefinedValue(&ref);
 	return push_value(ref);
+}
+
+int
+jsal_pull(int from_index)
+{
+	JsValueRef value;
+
+	value = get_value(from_index);
+	jsal_remove(from_index);
+	return push_value(value);
 }
 
 jsal_ref_t*
@@ -971,6 +1018,34 @@ jsal_require_undefined(int at_index)
 		jsal_remove(-2);
 		jsal_throw();
 	}
+}
+
+void
+jsal_set_finalizer(int at_index, jsal_callback_t callback)
+{
+	JsValueRef     object;
+	struct object* object_info;
+	void*          ptr;
+
+	object = get_value(at_index);
+	if (JsGetExternalData(object, &ptr) != JsNoError)
+		return;
+	object_info = ptr;
+	object_info->finalizer = callback;
+}
+
+void
+jsal_set_host_data(int at_index, void* ptr)
+{
+	void*          data;
+	JsValueRef     object;
+	struct object* object_info;
+
+	object = get_value(at_index);
+	if (JsGetExternalData(object, &data) != JsNoError)
+		return;
+	object_info = data;
+	object_info->data = ptr;
 }
 
 void
@@ -1231,10 +1306,12 @@ finalize_object(void* userdata)
 	push_value(object_info->object);
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
-		object_info->finalizer(0, false);
+		if (object_info->finalizer != NULL)
+			object_info->finalizer(0, false);
 	}
 	vector_resize(s_stack, s_stack_base);
 	s_stack_base = old_stack_base;
+	free(object_info);
 }
 
 #if defined(_WIN32)
