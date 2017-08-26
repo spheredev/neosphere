@@ -1169,6 +1169,74 @@ jsal_to_string(int at_index)
 	return jsal_get_string(at_index);
 }
 
+bool
+jsal_try_call(int num_args)
+{
+	/* [ ... function arg1..argN ] -> [ .. retval ] */
+
+	jmp_buf label;
+
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		jsal_call(num_args);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool
+jsal_try_call_method(int num_args)
+{
+	/* [ ... function this arg1..argN ] -> [ .. retval ] */
+
+	jmp_buf label;
+
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		jsal_call_method(num_args);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool
+jsal_try_call_new(int num_args)
+{
+	/* [ ... constructor arg1..argN ] -> [ .. retval ] */
+
+	jmp_buf label;
+
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		jsal_call_new(num_args);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool
+jsal_try_compile(const char* filename)
+{
+	/* [ ... source ] -> [ .. function ] */
+
+	jmp_buf label;
+
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		jsal_compile(filename);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 void
 jsal_unref(jsal_ref_t* ref)
 {
