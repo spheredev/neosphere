@@ -97,6 +97,12 @@ vector_insert(vector_t* it, int index, const void* in_object)
 }
 
 bool
+vector_pop(vector_t* it, int num_items)
+{
+	return vector_resize(it, it->num_items - num_items);
+}
+
+bool
 vector_push(vector_t* it, const void* in_object)
 {
 	if (!ensure_space(it, it->num_items + 1))
