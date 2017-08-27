@@ -142,14 +142,14 @@ build_new(const path_t* source_path, const path_t* out_path)
 	// initialize the CommonJS cache and global require()
 	jsal_push_hidden_stash();
 	jsal_push_new_object();
-	jsal_put_prop_named(-2, "moduleCache");
+	jsal_put_prop_string(-2, "moduleCache");
 	jsal_pop(1);
 
 	jsal_push_global_object();
 	jsal_push_eval("({ enumerable: false, writable: true, configurable: true })");
 	push_require(NULL);
-	jsal_put_prop_named(-2, "value");
-	jsal_def_prop_named(-2, "require");
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, "require");
 	jsal_pop(1);
 
 	// prepare environment for ECMAScript 2015 support
@@ -158,7 +158,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	if (fs_fexist(fs, "#/babel-core.js")) {
 		jsal_push_hidden_stash();
 		if (eval_cjs_module(fs, "#/babel-core.js", false))
-			jsal_put_prop_named(-2, "Babel");
+			jsal_put_prop_string(-2, "Babel");
 		else
 			jsal_pop(1);
 		jsal_pop(1);
@@ -213,14 +213,14 @@ build_new(const path_t* source_path, const path_t* out_path)
 	// game manifest (gets JSON encoded at end of build)
 	jsal_push_hidden_stash();
 	jsal_push_new_object();
-	jsal_put_prop_named(-2, "descriptor");
+	jsal_put_prop_string(-2, "manifest");
 	jsal_pop(1);
 
 	// create a Tool for the install() function to use
 	jsal_push_hidden_stash();
 	jsal_push_function(install_target, "doInstall", 0);
 	jsal_push_class_obj("Tool", tool_new("installing"));
-	jsal_put_prop_named(-2, "installTool");
+	jsal_put_prop_string(-2, "installTool");
 	jsal_pop(1);
 
 	// load artifacts from previous build
@@ -231,7 +231,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 		if (jsal_try_parse(-1) && jsal_is_array(-1)) {
 			num_artifacts = jsal_get_length(-1);
 			for (i = 0; i < num_artifacts; ++i) {
-				jsal_get_prop_indexed(-1, i);
+				jsal_get_prop_index(-1, i);
 				filename = strdup(jsal_to_string(-1));
 				vector_push(artifacts, &filename);
 				jsal_pop(1);
@@ -295,9 +295,9 @@ build_eval(build_t* build, const char* filename)
 	path_free(path);
 	if (!eval_cjs_module(build->fs, filename, is_mjs)) {
 		is_ok = false;
-		jsal_get_prop_named(-1, "fileName");
+		jsal_get_prop_string(-1, "fileName");
 		err_filename = jsal_to_string(-1);
-		jsal_get_prop_named(-2, "lineNumber");
+		jsal_get_prop_string(-2, "lineNumber");
 		err_line = jsal_get_int(-1);
 		jsal_dup(-3);
 		jsal_to_string(-1);
@@ -438,7 +438,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 			jsal_push_string(path_cstr(source_path));
 			jsal_put_prop(-3);
 		}
-		jsal_put_prop_named(-2, "fileMap");
+		jsal_put_prop_string(-2, "fileMap");
 		jsal_stringify(-1);
 		json = jsal_get_lstring(-1, &json_size);
 		fs_fspew(build->fs, "@/sources.json", json, json_size);
@@ -454,7 +454,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	iter = vector_enum(filenames);
 	while (iter_next(&iter)) {
 		jsal_push_string(*(char**)iter.ptr);
-		jsal_put_prop_indexed(-2, iter.index);
+		jsal_put_prop_index(-2, iter.index);
 	}
 	jsal_stringify(-1);
 	json = jsal_get_lstring(-1, &json_size);
@@ -520,8 +520,8 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 
 	// is the requested module already in the cache?
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "moduleCache");
-	if (jsal_get_prop_named(-1, filename)) {
+	jsal_get_prop_string(-1, "moduleCache");
+	if (jsal_get_prop_string(-1, filename)) {
 		jsal_remove(-2);
 		jsal_remove(-2);
 		goto have_module;
@@ -537,21 +537,21 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 	// construct a module object for the new module
 	jsal_push_new_object();  // module object
 	jsal_push_new_object();
-	jsal_put_prop_named(-2, "exports");  // module.exports = {}
+	jsal_put_prop_string(-2, "exports");  // module.exports = {}
 	jsal_push_string(filename);
-	jsal_put_prop_named(-2, "filename");  // module.filename
+	jsal_put_prop_string(-2, "filename");  // module.filename
 	jsal_push_string(filename);
-	jsal_put_prop_named(-2, "id");  // module.id
+	jsal_put_prop_string(-2, "id");  // module.id
 	jsal_push_boolean(false);
-	jsal_put_prop_named(-2, "loaded");  // module.loaded = false
+	jsal_put_prop_string(-2, "loaded");  // module.loaded = false
 	push_require(filename);
-	jsal_put_prop_named(-2, "require");  // module.require
+	jsal_put_prop_string(-2, "require");  // module.require
 
 	// cache the module object in advance
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "moduleCache");
+	jsal_get_prop_string(-1, "moduleCache");
 	jsal_dup(-3);
-	jsal_put_prop_named(-2, filename);
+	jsal_put_prop_string(-2, filename);
 	jsal_pop(2);
 
 	if (strcmp(path_extension(file_path), ".json") == 0) {
@@ -560,7 +560,7 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 		lstr_free(code_string);
 		if (!jsal_try_parse(-1))
 			goto on_error;
-		jsal_put_prop_named(-2, "exports");
+		jsal_put_prop_string(-2, "exports");
 	}
 	else {
 		// synthesize a function to wrap the module code.  this is the simplest way to
@@ -578,12 +578,12 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 			// note: it might be better to eventually lift this functionality into a separate source file.
 			//       it's pretty involved due to Duktape's stack API and is kind of an eyesore here.
 			jsal_push_hidden_stash();
-			if (!jsal_has_prop_named(-1, "Babel")) {
+			if (!jsal_has_prop_string(-1, "Babel")) {
 				jsal_pop(1);
 				goto on_error;  // no ES 2015 support
 			}
-			jsal_get_prop_named(-1, "Babel");
-			jsal_get_prop_named(-1, "transform");
+			jsal_get_prop_string(-1, "Babel");
+			jsal_get_prop_string(-1, "transform");
 			jsal_pull(-2);
 			jsal_push_lstring_t(code_string);
 			if (as_mjs) {
@@ -600,7 +600,7 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 				jsal_remove(-2);
 				goto on_error;
 			}
-			jsal_get_prop_named(-1, "code");
+			jsal_get_prop_string(-1, "code");
 			lstr_free(code_string);
 			code_string = jsal_require_lstring_t(-1);
 			jsal_pop(4);
@@ -615,14 +615,14 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 		jsal_call(0);
 		jsal_push_new_object();
 		jsal_push_string("main");
-		jsal_put_prop_named(-2, "value");
-		jsal_def_prop_named(-2, "name");
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "name");
 		lstr_free(code_string);
 
 		// go, go, go!
 		jsal_dup(-2);                           // this = module
-		jsal_get_prop_named(-3, "exports");     // exports
-		jsal_get_prop_named(-4, "require");     // require
+		jsal_get_prop_string(-3, "exports");     // exports
+		jsal_get_prop_string(-4, "require");     // require
 		jsal_dup(-5);                           // module
 		jsal_push_string(filename);             // __filename
 		jsal_push_string(path_cstr(dir_path));  // __dirname
@@ -633,11 +633,11 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 
 	// module executed successfully, set `module.loaded` to true
 	jsal_push_boolean(true);
-	jsal_put_prop_named(-2, "loaded");
+	jsal_put_prop_string(-2, "loaded");
 
 have_module:
 	// `module` is on the stack, we need `module.exports`
-	jsal_get_prop_named(-1, "exports");
+	jsal_get_prop_string(-1, "exports");
 	jsal_remove(-2);
 	return true;
 
@@ -645,8 +645,8 @@ on_error:
 	// note: it's assumed that at this point, the only things left in our portion of the
 	//       value stack are the module object and the thrown error.
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "moduleCache");
-	jsal_del_prop_named(-1, filename);
+	jsal_get_prop_string(-1, "moduleCache");
+	jsal_del_prop_string(-1, filename);
 	jsal_pop(2);
 	jsal_remove(-2);  // leave the error on the stack
 	return false;
@@ -725,7 +725,7 @@ install_target(jsal_ref_t* me, int num_args, bool is_ctor)
 	const char* target_path;
 
 	target_path = jsal_require_string(1);
-	jsal_get_prop_indexed(2, 0);
+	jsal_get_prop_index(2, 0);
 	source_path = jsal_require_string(-1);
 
 	result = fs_fcopy(s_build->fs, target_path, source_path, true);
@@ -753,7 +753,7 @@ load_package_json(const char* filename)
 		goto on_error;
 	if (!jsal_is_object_coercible(-1))
 		goto on_error;
-	jsal_get_prop_named(-1, "main");
+	jsal_get_prop_string(-1, "main");
 	if (!jsal_is_string(-1))
 		goto on_error;
 	path = path_strip(path_new(filename));
@@ -821,20 +821,20 @@ static void
 push_require(const char* module_id)
 {
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "moduleCache");
+	jsal_get_prop_string(-1, "moduleCache");
 	jsal_remove(-2);
 
 	jsal_push_function(js_require, "require", 1);
 	jsal_push_new_object();
 	jsal_pull(-3);
-	jsal_put_prop_named(-2, "value");
-	jsal_def_prop_named(-2, "cache");  // require.cache
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, "cache");  // require.cache
 
 	if (module_id != NULL) {
 		jsal_push_new_object();
 		jsal_push_string(module_id);
-		jsal_put_prop_named(-2, "value");
-		jsal_def_prop_named(-2, "id");  // require.id
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "id");  // require.id
 	}
 }
 
@@ -863,31 +863,31 @@ write_manifests(build_t* build)
 	visor_begin_op(build->visor, "writing Sphere manifest files");
 
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "descriptor");
+	jsal_get_prop_string(-1, "manifest");
 
 	// validate game descriptor before writing manifests
-	jsal_get_prop_named(-1, "name");
+	jsal_get_prop_string(-1, "name");
 	if (!jsal_is_string(-1)) {
 		jsal_push_string("Untitled");
 		jsal_remove(-2);
 		visor_warn(build->visor, "missing or invalid 'name' field");
 	}
 
-	jsal_get_prop_named(-2, "author");
+	jsal_get_prop_string(-2, "author");
 	if (!jsal_is_string(-1)) {
 		jsal_push_string("Author Unknown");
 		jsal_remove(-2);
 		visor_warn(build->visor, "missing or invalid 'author' field");
 	}
 
-	jsal_get_prop_named(-3, "summary");
+	jsal_get_prop_string(-3, "summary");
 	if (!jsal_is_string(-1)) {
 		jsal_push_string("No summary provided.");
 		jsal_remove(-2);
 	}
 
 	// note: SGMv1 encodes the resolution width and height as separate fields.
-	jsal_get_prop_named(-4, "resolution");
+	jsal_get_prop_string(-4, "resolution");
 	if (!jsal_is_string(-1)
 		|| sscanf(jsal_to_string(-1), "%dx%d", &width, &height) != 2)
 	{
@@ -897,7 +897,7 @@ write_manifests(build_t* build)
 		return false;
 	}
 
-	jsal_get_prop_named(-5, "main");
+	jsal_get_prop_string(-5, "main");
 	if (jsal_is_string(-1)) {
 		// explicitly rebase onto `@/`, as Cell uses `$/` by default.
 		main_path = fs_full_path(jsal_to_string(-1), "@/");
@@ -914,7 +914,7 @@ write_manifests(build_t* build)
 			return false;
 		}
 		jsal_push_string(path_cstr(main_path));
-		jsal_put_prop_named(-7, "main");
+		jsal_put_prop_string(-7, "main");
 	}
 	else {
 		visor_error(build->visor, "missing or invalid 'main' field");
@@ -999,7 +999,7 @@ js_files(jsal_ref_t* me, int num_args, bool is_ctor)
 	iter = vector_enum(targets);
 	while (p = iter_next(&iter)) {
 		jsal_push_class_obj("Target", *p);
-		jsal_put_prop_indexed(-2, iter.index);
+		jsal_put_prop_index(-2, iter.index);
 	}
 	return true;
 }
@@ -1017,18 +1017,18 @@ js_install(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	int i;
 
+	dest_path = path_new_dir(jsal_require_string(1));
+
 	// retrieve the Install tool from the stash
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "installTool");
+	jsal_get_prop_string(-1, "installTool");
 	tool = jsal_require_class_obj(-1, "Tool");
 	jsal_pop(1);
-
-	dest_path = path_new_dir(jsal_require_string(1));
 
 	if (jsal_is_array(2)) {
 		length = jsal_get_length(2);
 		for (i = 0; i < length; ++i) {
-			jsal_get_prop_indexed(2, i);
+			jsal_get_prop_index(2, i);
 			source = jsal_require_class_obj(-1, "Target");
 			name = path_dup(target_name(source));
 			path = path_rebase(path_dup(name), dest_path);
@@ -1046,6 +1046,7 @@ js_install(jsal_ref_t* me, int num_args, bool is_ctor)
 		target_add_source(target, source);
 		vector_push(s_build->targets, &target);
 	}
+	path_free(dest_path);
 	return false;
 }
 
@@ -1059,27 +1060,29 @@ js_require(jsal_ref_t* me, int num_args, bool is_ctor)
 		"#/runtime",
 	};
 
-	const char* id;
 	bool        is_mjs;
+	const char* module_id;
 	const char* parent_id = NULL;
 	path_t*     path;
 
 	int i;
 
-	jsal_push_ref(me);
-	if (jsal_get_prop_named(-1, "id"))
-		parent_id = jsal_get_string(-1);
-	id = jsal_require_string(1);
+	module_id = jsal_require_string(1);
 
-	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
+	// get the calling module ID
+	jsal_push_ref(me);
+	if (jsal_get_prop_string(-1, "id"))
+		parent_id = jsal_get_string(-1);
+
+	if (parent_id == NULL && (strncmp(module_id, "./", 2) == 0 || strncmp(module_id, "../", 3) == 0))
 		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_cjs_module(s_build->fs, id, parent_id, PATHS[i]))
+		if (path = find_cjs_module(s_build->fs, module_id, parent_id, PATHS[i]))
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error_blame(-1, JS_REF_ERROR, "module not found '%s'", id);
+		jsal_error_blame(-1, JS_REF_ERROR, "module not found '%s'", module_id);
 	is_mjs = path_has_extension(path, ".mjs");
 	if (!eval_cjs_module(s_build->fs, path_cstr(path), is_mjs))
 		jsal_throw();
@@ -1101,12 +1104,12 @@ static bool
 js_Sphere_get_Game(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "descriptor");
+	jsal_get_prop_string(-1, "manifest");
 
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
 	jsal_dup(-2);
-	jsal_put_prop_named(-2, "value");
-	jsal_def_prop_named(0, "Game");
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(0, "Game");
 	
 	return true;
 }
@@ -1145,6 +1148,7 @@ js_DirectoryStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 	directory_t* stream;
 
 	stream = jsal_require_class_obj(0, "DirectoryStream");
+
 	directory_close(stream);
 	return false;
 }
@@ -1208,22 +1212,22 @@ js_DirectoryStream_next(jsal_ref_t* me, int num_args, bool is_ctor)
 	jsal_push_new_object();
 	if (entry_path != NULL) {
 		jsal_push_boolean(false);
-		jsal_put_prop_named(-2, "done");
+		jsal_put_prop_string(-2, "done");
 		jsal_push_new_object();
 		if (path_is_file(entry_path))
 			jsal_push_string(path_filename(entry_path));
 		else
 			jsal_push_sprintf("%s/", path_hop(entry_path, path_num_hops(entry_path) - 1));
-		jsal_put_prop_named(-2, "fileName");
+		jsal_put_prop_string(-2, "fileName");
 		jsal_push_string(path_cstr(entry_path));
-		jsal_put_prop_named(-2, "fullPath");
+		jsal_put_prop_string(-2, "fullPath");
 		jsal_push_boolean(!path_is_file(entry_path));
-		jsal_put_prop_named(-2, "isDirectory");
-		jsal_put_prop_named(-2, "value");
+		jsal_put_prop_string(-2, "isDirectory");
+		jsal_put_prop_string(-2, "value");
 	}
 	else {
 		jsal_push_boolean(true);
-		jsal_put_prop_named(-2, "done");
+		jsal_put_prop_string(-2, "done");
 	}
 	return true;
 }
@@ -1381,12 +1385,12 @@ js_new_FileStream(jsal_ref_t* me, int num_args, bool is_ctor)
 	const char*  filename;
 	const char*  mode;
 
-	jsal_require_string(1);
+	filename = jsal_require_pathname(1, NULL);
 	file_op = jsal_require_int(2);
+
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file-op constant");
 
-	filename = jsal_require_pathname(1, NULL);
 	if (file_op == FILE_OP_UPDATE && !fs_fexist(s_build->fs, filename))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
@@ -1450,7 +1454,7 @@ js_FileStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (!(file = jsal_require_class_obj(0, "FileStream")))
 		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
-	new_pos = jsal_require_int(0);
+	new_pos = jsal_require_int(1);
 
 	if (new_pos < 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file position");
@@ -1686,14 +1690,13 @@ js_Tool_stage(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	tool = jsal_require_class_obj(0, "Tool");
 	out_path = path_new(jsal_require_string(1));
-	if (!jsal_is_array(2))
-		jsal_error_blame(-1, JS_TYPE_ERROR, "expected an array");
+	jsal_require_array(2);
 	if (num_args >= 3)
 		jsal_require_object_coercible(3);
 
 	name = path_new(path_filename(out_path));
 	if (num_args >= 3) {
-		if (jsal_get_prop_named(3, "name")) {
+		if (jsal_get_prop_string(3, "name")) {
 			path_free(name);
 			name = path_new(jsal_require_string(-1));
 		}
@@ -1703,7 +1706,7 @@ js_Tool_stage(jsal_ref_t* me, int num_args, bool is_ctor)
 	target = target_new(name, s_build->fs, out_path, tool, s_build->timestamp, true);
 	length = jsal_get_length(2);
 	for (i = 0; i < length; ++i) {
-		jsal_get_prop_indexed(2, i);
+		jsal_get_prop_index(2, i);
 		source = jsal_require_class_obj(-1, "Target");
 		target_add_source(target, source);
 		jsal_pop(1);

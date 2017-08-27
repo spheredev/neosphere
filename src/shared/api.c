@@ -11,24 +11,22 @@ void
 api_init()
 {
 	// JavaScript 'global' binding (like Node.js)
+	// also map global `exports` to the global object, as TypeScript likes to add
+	// exports even when compiling scripts as program code.
 	jsal_push_global_object();
-	jsal_push_new_object();
+	jsal_push_eval("({ writable: true, enumerable: true, configurable: true })");
 	jsal_push_global_object();
-	jsal_put_prop_named(-2, "value");
-	jsal_push_boolean(true);
-	jsal_put_prop_named(-2, "writable");
-	jsal_push_boolean(true);
-	jsal_put_prop_named(-2, "enumerable");
+	jsal_put_prop_string(-2, "value");
 	jsal_dup(-1);
-	jsal_def_prop_named(-3, "global");
-	jsal_def_prop_named(-2, "exports");
+	jsal_def_prop_string(-3, "global");
+	jsal_def_prop_string(-2, "exports");
 	jsal_pop(1);
 
 	// set up a prototype stash.  this ensures the prototypes for built-in classes
 	// remain accessible internally even if their constructors are overwritten.
 	jsal_push_hidden_stash();
 	jsal_push_new_object();
-	jsal_put_prop_named(-2, "prototypes");
+	jsal_put_prop_string(-2, "prototypes");
 	jsal_pop(1);
 }
 
@@ -39,20 +37,20 @@ api_define_const(const char* enum_name, const char* name, double value)
 
 	// ensure the namespace object exists
 	if (enum_name != NULL) {
-		if (!jsal_get_prop_named(-1, enum_name)) {
+		if (!jsal_get_prop_string(-1, enum_name)) {
 			jsal_pop(1);
 			jsal_push_eval("({ enumerable: false, writable: true, configurable: true })");
 			jsal_push_new_object();
-			jsal_put_prop_named(-2, "value");
-			jsal_def_prop_named(-2, enum_name);
-			jsal_get_prop_named(-1, enum_name);
+			jsal_put_prop_string(-2, "value");
+			jsal_def_prop_string(-2, enum_name);
+			jsal_get_prop_string(-1, enum_name);
 		}
 	}
 
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
 	jsal_push_number(value);
-	jsal_put_prop_named(-2, "value");
-	jsal_def_prop_named(-2, name);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, name);
 	if (enum_name != NULL) {
 		// generate a TypeScript-style bidirectional enumeration:
 		//     enum[key] = value
@@ -61,7 +59,7 @@ api_define_const(const char* enum_name, const char* name, double value)
 		jsal_to_string(-1);
 		jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
 		jsal_push_string(name);
-		jsal_put_prop_named(-2, "value");
+		jsal_put_prop_string(-2, "value");
 		jsal_def_prop(-2);
 	}
 
@@ -80,18 +78,18 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 	// value stack afterwards.
 	jsal_push_new_object();
 	jsal_push_string(name);
-	jsal_put_prop_named(-2, "___ctor");
+	jsal_put_prop_string(-2, "___ctor");
 	if (finalizer != NULL) {
 		jsal_push_function(finalizer, "finalize", 0);
-		jsal_put_prop_named(-2, "___dtor");
+		jsal_put_prop_string(-2, "___dtor");
 	}
 
 	// save the prototype to the hidden stash.  this ensures it remains accessible
 	// internally even if the constructor is overwritten.
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "prototypes");
+	jsal_get_prop_string(-1, "prototypes");
 	jsal_dup(-3);
-	jsal_put_prop_named(-2, name);
+	jsal_put_prop_string(-2, name);
 	jsal_pop(2);
 
 	if (constructor != NULL) {
@@ -99,14 +97,14 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 		
 		jsal_push_new_object();
 		jsal_dup(-3);
-		jsal_put_prop_named(-2, "value");
-		jsal_def_prop_named(-2, "prototype");
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "prototype");
 
 		jsal_push_global_object();
 		jsal_push_eval("({ writable: true, configurable: true })");
 		jsal_pull(-3);
-		jsal_put_prop_named(-2, "value");
-		jsal_def_prop_named(-2, name);
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, name);
 		jsal_pop(1);
 	}
 
@@ -120,20 +118,20 @@ api_define_function(const char* namespace_name, const char* name, jsal_callback_
 
 	// ensure the namespace object exists
 	if (namespace_name != NULL) {
-		if (!jsal_get_prop_named(-1, namespace_name)) {
+		if (!jsal_get_prop_string(-1, namespace_name)) {
 			jsal_pop(1);
 			jsal_push_eval("({ writable: true, configurable: true })");
 			jsal_push_new_object();
-			jsal_put_prop_named(-2, "value");
-			jsal_def_prop_named(-2, namespace_name);
-			jsal_get_prop_named(-1, namespace_name);
+			jsal_put_prop_string(-2, "value");
+			jsal_def_prop_string(-2, namespace_name);
+			jsal_get_prop_string(-1, namespace_name);
 		}
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
 	jsal_push_function(callback, name, 0);
-	jsal_put_prop_named(-2, "value");
-	jsal_def_prop_named(-2, name);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, name);
 	
 	if (namespace_name != NULL)
 		jsal_pop(1);
@@ -147,14 +145,14 @@ api_define_method(const char* class_name, const char* name, jsal_callback_t call
 	if (class_name != NULL) {
 		// load the prototype from the prototype stash
 		jsal_push_hidden_stash();
-		jsal_get_prop_named(-1, "prototypes");
-		jsal_get_prop_named(-1, class_name);
+		jsal_get_prop_string(-1, "prototypes");
+		jsal_get_prop_string(-1, class_name);
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
 	jsal_push_function(callback, name, 0);
-	jsal_put_prop_named(-2, "value");
-	jsal_def_prop_named(-2, name);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, name);
 
 	if (class_name != NULL)
 		jsal_pop(3);
@@ -168,20 +166,20 @@ api_define_object(const char* namespace_name, const char* name, const char* clas
 
 	// ensure the namespace object exists
 	if (namespace_name != NULL) {
-		if (!jsal_get_prop_named(-1, namespace_name)) {
+		if (!jsal_get_prop_string(-1, namespace_name)) {
 			jsal_pop(1);
 			jsal_push_eval("({ writable: true, configurable: true })");
 			jsal_push_new_object();
-			jsal_put_prop_named(-2, "value");
-			jsal_def_prop_named(-2, namespace_name);
-			jsal_get_prop_named(-1, namespace_name);
+			jsal_put_prop_string(-2, "value");
+			jsal_def_prop_string(-2, namespace_name);
+			jsal_get_prop_string(-1, namespace_name);
 		}
 	}
 
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
 	jsal_push_class_obj(class_name, udata);
-	jsal_put_prop_named(-2, "value");
-	jsal_def_prop_named(-2, name);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, name);
 	if (namespace_name != NULL)
 		jsal_pop(1);
 	jsal_pop(1);
@@ -193,22 +191,22 @@ api_define_property(const char* class_name, const char* name, jsal_callback_t ge
 	jsal_push_global_object();
 	if (class_name != NULL) {
 		jsal_push_hidden_stash();
-		jsal_get_prop_named(-1, "prototypes");
-		jsal_get_prop_named(-1, class_name);
+		jsal_get_prop_string(-1, "prototypes");
+		jsal_get_prop_string(-1, class_name);
 	}
 
 	// populate the property descriptor
 	jsal_push_eval("({ configurable: true })");
 	if (getter != NULL) {
 		jsal_push_function(getter, "get", 0);
-		jsal_put_prop_named(-2, "get");
+		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
 		jsal_push_function(setter, "set", 0);
-		jsal_put_prop_named(-2, "set");
+		jsal_put_prop_string(-2, "set");
 	}
 	
-	jsal_def_prop_named(-2, name);
+	jsal_def_prop_string(-2, name);
 	if (class_name != NULL)
 		jsal_pop(3);
 	jsal_pop(1);
@@ -221,13 +219,13 @@ api_define_static_prop(const char* namespace_name, const char* name, jsal_callba
 
 	// ensure the namespace object exists
 	if (namespace_name != NULL) {
-		if (!jsal_get_prop_named(-1, namespace_name)) {
+		if (!jsal_get_prop_string(-1, namespace_name)) {
 			jsal_pop(1);
 			jsal_push_eval("({ writable: true, configurable: true })");
 			jsal_push_new_object();
-			jsal_put_prop_named(-2, "value");
-			jsal_def_prop_named(-2, namespace_name);
-			jsal_get_prop_named(-1, namespace_name);
+			jsal_put_prop_string(-2, "value");
+			jsal_def_prop_string(-2, namespace_name);
+			jsal_get_prop_string(-1, namespace_name);
 		}
 	}
 
@@ -235,13 +233,13 @@ api_define_static_prop(const char* namespace_name, const char* name, jsal_callba
 	jsal_push_eval("({ configurable: true })");
 	if (getter != NULL) {
 		jsal_push_function(getter, "get", 0);
-		jsal_put_prop_named(-2, "get");
+		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
 		jsal_push_function(setter, "set", 0);
-		jsal_put_prop_named(-2, "set");
+		jsal_put_prop_string(-2, "set");
 	}
-	jsal_def_prop_named(-2, name);
+	jsal_def_prop_string(-2, name);
 	if (namespace_name != NULL)
 		jsal_pop(1);
 	jsal_pop(1);
@@ -263,9 +261,9 @@ jsal_error_blame(int blame_offset, jsal_error_t type, const char* format, ...)
 		jsal_inspect_callstack_entry(-2);
 		jsal_replace(-2);
 	}
-	jsal_get_prop_named(-1, "lineNumber");
-	jsal_get_prop_named(-2, "function");
-	jsal_get_prop_named(-1, "fileName");
+	jsal_get_prop_string(-1, "lineNumber");
+	jsal_get_prop_string(-2, "function");
+	jsal_get_prop_string(-1, "fileName");
 	filename = strdup(jsal_to_string(-1));
 	line_number = jsal_to_int(-3);
 	jsal_pop(4);*/
@@ -278,9 +276,9 @@ jsal_error_blame(int blame_offset, jsal_error_t type, const char* format, ...)
 	jsal_push_new_error_va(type, format, ap);
 	va_end(ap);
 	jsal_push_string(filename);
-	jsal_put_prop_named(-2, "fileName");
+	jsal_put_prop_string(-2, "fileName");
 	jsal_push_int(line_number);
-	jsal_put_prop_named(-2, "lineNumber");
+	jsal_put_prop_string(-2, "lineNumber");
 	free(filename);
 
 	jsal_throw();
@@ -295,7 +293,7 @@ jsal_is_class_obj(int index, const char* class_name)
 	if (!jsal_is_object_coercible(index))
 		return false;
 
-	jsal_get_prop_named(index, "___ctor");
+	jsal_get_prop_string(index, "___ctor");
 	obj_class_name = jsal_to_string(-1);
 	result = strcmp(obj_class_name, class_name) == 0;
 	jsal_pop(1);
@@ -310,8 +308,8 @@ jsal_push_class_obj(const char* class_name, void* udata)
 	index = jsal_push_new_host_object(udata, NULL);
 
 	jsal_push_hidden_stash();
-	jsal_get_prop_named(-1, "prototypes");
-	jsal_get_prop_named(-1, class_name);
+	jsal_get_prop_string(-1, "prototypes");
+	jsal_get_prop_string(-1, class_name);
 	jsal_set_prototype(index);
 	jsal_pop(2);
 

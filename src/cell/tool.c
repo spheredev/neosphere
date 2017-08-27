@@ -114,13 +114,13 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	while (p_path = iter_next(&iter)) {
 		array_index = jsal_get_length(-1);
 		jsal_push_string(path_cstr(*p_path));
-		jsal_put_prop_indexed(-2, array_index);
+		jsal_put_prop_index(-2, array_index);
 	}
 	num_errors = visor_num_errors(visor);
 	if (!jsal_try_call(2)) {
-		jsal_get_prop_named(-1, "fileName");
+		jsal_get_prop_string(-1, "fileName");
 		filename = jsal_to_string(-1);
-		jsal_get_prop_named(-2, "lineNumber");
+		jsal_get_prop_string(-2, "lineNumber");
 		line_number = jsal_get_int(-1);
 		jsal_dup(-3);
 		jsal_to_string(-1);
