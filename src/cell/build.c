@@ -957,7 +957,7 @@ js_error(jsal_ref_t* me, int num_args, bool is_ctor)
 	message = jsal_require_string(1);
 
 	visor_error(s_build->visor, "%s", message);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1046,7 +1046,7 @@ js_install(jsal_ref_t* me, int num_args, bool is_ctor)
 		target_add_source(target, source);
 		vector_push(s_build->targets, &target);
 	}
-	return 0;
+	return false;
 }
 
 static bool
@@ -1115,14 +1115,14 @@ static bool
 js_Sphere_get_Platform(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	jsal_push_sprintf("%s %s", COMPILER_NAME, VERSION_NAME);
-	return 1;
+	return true;
 }
 
 static bool
 js_Sphere_get_Version(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	jsal_push_int(2);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1130,9 +1130,6 @@ js_new_DirectoryStream(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	const char*  pathname;
 	directory_t* stream;
-
-	if (!is_ctor)
-		jsal_error_blame(-1, JS_TYPE_ERROR, "constructor requires 'new'");
 
 	pathname = jsal_require_pathname(1, NULL);
 
@@ -1149,7 +1146,7 @@ js_DirectoryStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	stream = jsal_require_class_obj(0, "DirectoryStream");
 	directory_close(stream);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1160,7 +1157,7 @@ js_DirectoryStream_get_fileCount(jsal_ref_t* me, int num_args, bool is_ctor)
 	stream = jsal_require_class_obj(0, "DirectoryStream");
 
 	jsal_push_int(directory_num_files(stream));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1171,7 +1168,7 @@ js_DirectoryStream_get_fileName(jsal_ref_t* me, int num_args, bool is_ctor)
 	stream = jsal_require_class_obj(0, "DirectoryStream");
 
 	jsal_push_string(directory_pathname(stream));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1182,7 +1179,7 @@ js_DirectoryStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor)
 	stream = jsal_require_class_obj(0, "DirectoryStream");
 
 	jsal_push_int(directory_position(stream));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1196,7 +1193,7 @@ js_DirectoryStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (!directory_seek(stream, position))
 		jsal_error_blame(-1, JS_ERROR, "couldn't set stream position");
-	return 0;
+	return false;
 }
 
 static bool
@@ -1228,7 +1225,7 @@ js_DirectoryStream_next(jsal_ref_t* me, int num_args, bool is_ctor)
 		jsal_push_boolean(true);
 		jsal_put_prop_named(-2, "done");
 	}
-	return 1;
+	return true;
 }
 
 static bool
@@ -1239,7 +1236,7 @@ js_DirectoryStream_rewind(jsal_ref_t* me, int num_args, bool is_ctor)
 	stream = jsal_require_class_obj(0, "DirectoryStream");
 
 	directory_rewind(stream);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1251,7 +1248,7 @@ js_FS_createDirectory(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (fs_mkdir(s_build->fs, name) != 0)
 		jsal_error_blame(-1, JS_ERROR, "unable to create directory");
-	return 0;
+	return false;
 }
 
 static bool
@@ -1263,7 +1260,7 @@ js_FS_deleteFile(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (!fs_unlink(s_build->fs, filename))
 		jsal_error_blame(-1, JS_ERROR, "unable to delete file", filename);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1274,7 +1271,7 @@ js_FS_directoryExists(jsal_ref_t* me, int num_args, bool is_ctor)
 	dirname = jsal_require_pathname(1, NULL);
 
 	jsal_push_boolean(fs_dir_exists(s_build->fs, dirname));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1285,7 +1282,7 @@ js_FS_fileExists(jsal_ref_t* me, int num_args, bool is_ctor)
 	filename = jsal_require_pathname(1, NULL);
 
 	jsal_push_boolean(fs_fexist(s_build->fs, filename));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1299,7 +1296,7 @@ js_FS_fullPath(jsal_ref_t* me, int num_args, bool is_ctor)
 	filename = jsal_require_pathname(1, origin_pathname);
 
 	jsal_push_string(filename);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1316,7 +1313,7 @@ js_FS_readFile(jsal_ref_t* me, int num_args, bool is_ctor)
 		jsal_error_blame(-1, JS_ERROR, "couldn't read file '%s'", filename);
 	content = lstr_from_cp1252(file_data, file_size);
 	jsal_push_lstring_t(content);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1332,7 +1329,7 @@ js_FS_relativePath(jsal_ref_t* me, int num_args, bool is_ctor)
 	path = fs_relative_path(pathname, base_pathname);
 	jsal_push_string(path_cstr(path));
 	path_free(path);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1344,7 +1341,7 @@ js_FS_removeDirectory(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (!fs_rmdir(s_build->fs, name))
 		jsal_error_blame(-1, JS_ERROR, "directory removal failed");
-	return 0;
+	return false;
 }
 
 static bool
@@ -1358,7 +1355,7 @@ js_FS_rename(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (!fs_rename(s_build->fs, name1, name2))
 		jsal_error_blame(-1, JS_ERROR, "rename failed", name1, name2);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1373,7 +1370,7 @@ js_FS_writeFile(jsal_ref_t* me, int num_args, bool is_ctor)
 	if (!fs_fspew(s_build->fs, filename, lstr_cstr(text), lstr_len(text)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1383,9 +1380,6 @@ js_new_FileStream(jsal_ref_t* me, int num_args, bool is_ctor)
 	enum file_op file_op;
 	const char*  filename;
 	const char*  mode;
-
-	if (!is_ctor)
-		jsal_error_blame(-1, JS_TYPE_ERROR, "constructor requires 'new'");
 
 	jsal_require_string(1);
 	file_op = jsal_require_int(2);
@@ -1417,7 +1411,7 @@ js_FileStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (file != NULL)
 		fclose(file);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1429,7 +1423,7 @@ js_FileStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor)
 		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
 
 	jsal_push_number(ftell(file));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1445,7 +1439,7 @@ js_FileStream_get_fileSize(jsal_ref_t* me, int num_args, bool is_ctor)
 	fseek(file, 0, SEEK_END);
 	jsal_push_number(ftell(file));
 	fseek(file, file_pos, SEEK_SET);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1461,7 +1455,7 @@ js_FileStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
 	if (new_pos < 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file position");
 	fseek(file, new_pos, SEEK_SET);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1474,7 +1468,7 @@ js_FileStream_dispose(jsal_ref_t* me, int num_args, bool is_ctor)
 	jsal_set_host_data(0, NULL);
 	if (file != NULL)
 		fclose(file);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1509,7 +1503,7 @@ js_FileStream_read(jsal_ref_t* me, int num_args, bool is_ctor)
 	num_bytes = (int)fread(buffer, 1, num_bytes, file);
 	if (num_args < 1)  // reset file position after whole-file read
 		fseek(file, pos, SEEK_SET);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1525,7 +1519,7 @@ js_FileStream_write(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)
 		jsal_error_blame(-1, JS_ERROR, "failure to write to file");
-	return 0;
+	return false;
 }
 
 static bool
@@ -1538,7 +1532,7 @@ js_RNG_fromSeed(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	xoro = xoro_new(seed);
 	jsal_push_class_obj("RNG", xoro);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1555,7 +1549,7 @@ js_RNG_fromState(jsal_ref_t* me, int num_args, bool is_ctor)
 		jsal_error_blame(-1, JS_TYPE_ERROR, "invalid RNG state string");
 	}
 	jsal_push_class_obj("RNG", xoro);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1563,12 +1557,9 @@ js_new_RNG(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	xoro_t* xoro;
 
-	if (!is_ctor)
-		jsal_error_blame(-1, JS_TYPE_ERROR, "constructor requires 'new'");
-
 	xoro = xoro_new((uint64_t)clock());
 	jsal_push_class_obj("RNG", xoro);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1579,7 +1570,7 @@ js_RNG_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 	xoro = jsal_require_class_obj(0, "RNG");
 
 	xoro_unref(xoro);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1592,7 +1583,7 @@ js_RNG_get_state(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	xoro_get_state(xoro, state);
 	jsal_push_string(state);
-	return 1;
+	return true;
 }
 
 static bool
@@ -1606,7 +1597,7 @@ js_RNG_set_state(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	if (!xoro_set_state(xoro, state))
 		jsal_error_blame(-1, JS_TYPE_ERROR, "invalid RNG state string");
-	return 0;
+	return false;
 }
 
 static bool
@@ -1617,7 +1608,7 @@ js_RNG_next(jsal_ref_t* me, int num_args, bool is_ctor)
 	xoro = jsal_require_class_obj(0, "RNG");
 
 	jsal_push_number(xoro_gen_double(xoro));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1628,7 +1619,7 @@ js_Target_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 	target = jsal_require_class_obj(0, "Target");
 
 	target_free(target);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1639,7 +1630,7 @@ js_Target_get_fileName(jsal_ref_t* me, int num_args, bool is_ctor)
 	target = jsal_require_class_obj(0, "Target");
 
 	jsal_push_string(path_cstr(target_path(target)));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1650,7 +1641,7 @@ js_Target_get_name(jsal_ref_t* me, int num_args, bool is_ctor)
 	target = jsal_require_class_obj(0, "Target");
 
 	jsal_push_string(path_cstr(target_name(target)));
-	return 1;
+	return true;
 }
 
 static bool
@@ -1659,8 +1650,6 @@ js_new_Tool(jsal_ref_t* me, int num_args, bool is_ctor)
 	tool_t*     tool;
 	const char* verb = "building";
 
-	if (!is_ctor)
-		jsal_error_blame(-1, JS_TYPE_ERROR, "constructor requires 'new'");
 	jsal_require_function(1);
 	if (num_args >= 2)
 		verb = jsal_require_string(2);
@@ -1680,7 +1669,7 @@ js_Tool_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 	tool = jsal_require_class_obj(0, "Tool");
 
 	tool_unref(tool);
-	return 0;
+	return false;
 }
 
 static bool
@@ -1723,5 +1712,5 @@ js_Tool_stage(jsal_ref_t* me, int num_args, bool is_ctor)
 	vector_push(s_build->targets, &target);
 
 	jsal_push_class_obj("Target", target_ref(target));
-	return 1;
+	return true;
 }

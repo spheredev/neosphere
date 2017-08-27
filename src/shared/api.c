@@ -80,10 +80,10 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 	// value stack afterwards.
 	jsal_push_new_object();
 	jsal_push_string(name);
-	jsal_put_prop_named(-2, "\xFF" "ctor");
+	jsal_put_prop_named(-2, "___ctor");
 	if (finalizer != NULL) {
 		jsal_push_function(finalizer, "finalize", 0);
-		jsal_put_prop_named(-2, "\xFF" "dtor");
+		jsal_put_prop_named(-2, "___dtor");
 	}
 
 	// save the prototype to the hidden stash.  this ensures it remains accessible
@@ -95,7 +95,7 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 	jsal_pop(2);
 
 	if (constructor != NULL) {
-		jsal_push_function(constructor, name, 0);
+		jsal_push_constructor(constructor, name, 0);
 		
 		jsal_push_new_object();
 		jsal_dup(-3);
@@ -295,7 +295,7 @@ jsal_is_class_obj(int index, const char* class_name)
 	if (!jsal_is_object_coercible(index))
 		return false;
 
-	jsal_get_prop_named(index, "\xFF" "ctor");
+	jsal_get_prop_named(index, "___ctor");
 	obj_class_name = jsal_to_string(-1);
 	result = strcmp(obj_class_name, class_name) == 0;
 	jsal_pop(1);

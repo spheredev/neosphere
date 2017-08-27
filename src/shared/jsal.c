@@ -57,6 +57,7 @@ struct jsal_ref
 struct function
 {
 	jsal_callback_t callback;
+	bool            ctor_only;
 	int             min_args;
 };
 
@@ -74,8 +75,10 @@ int vasprintf (char* *out, const char* format, va_list ap);
 
 static JsValueRef CHAKRA_CALLBACK do_native_call   (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
 static void CHAKRA_CALLBACK       finalize_object  (void* userdata);
+static void                       free_ref         (jsal_ref_t* ref);
 static JsValueRef                 get_value        (int stack_index);
 static JsPropertyIdRef            make_property_id (JsValueRef key_value);
+static jsal_ref_t*                make_ref         (JsValueRef value);
 static JsValueRef                 pop_value        (void);
 static int                        push_value       (JsValueRef value);
 static void                       throw_if_error   (void);
@@ -704,6 +707,22 @@ jsal_push_boolean(bool value)
 
 	JsBoolToBoolean(value, &ref);
 	return push_value(ref);
+}
+
+int
+jsal_push_constructor(jsal_callback_t callback, const char* name, int min_args)
+{
+	JsValueRef       function;
+	struct function* function_data;
+	JsValueRef       name_string;
+
+	function_data = calloc(1, sizeof(struct function));
+	function_data->callback = callback;
+	function_data->ctor_only = true;
+	function_data->min_args = min_args;
+	JsCreateString(name, strlen(name), &name_string);
+	JsCreateNamedFunction(name_string, do_native_call, function_data, &function);
+	return push_value(function);
 }
 
 int
@@ -1406,6 +1425,13 @@ throw_if_error(void)
 	}
 }
 
+static void
+free_ref(jsal_ref_t* ref)
+{
+	JsRelease(ref->value, NULL);
+	free(ref);
+}
+
 static JsValueRef
 get_value(int stack_index)
 {
@@ -1432,6 +1458,18 @@ make_property_id(JsValueRef key)
 		JsStringToPointer(key, &key_string, &key_length);
 		JsGetPropertyIdFromName(key_string, &ref);
 	}
+	return ref;
+}
+
+jsal_ref_t*
+make_ref(JsValueRef value)
+{
+	jsal_ref_t* ref;
+	
+	JsAddRef(value, NULL);
+
+	ref = calloc(1, sizeof(jsal_ref_t));
+	ref->value = value;
 	return ref;
 }
 
@@ -1481,26 +1519,34 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 {
 	jsal_ref_t*      callee_ref;
 	JsValueRef       exception;
-	struct function* function;
-	jmp_buf          label;
+	struct function* function_data;
 	bool             has_return;
-	int              old_stack_base;
+	int              last_stack_base;
+	jmp_buf          label;
 	JsValueRef       retval = JS_INVALID_REFERENCE;
 
 	int i;
 
-	function = userdata;
-	old_stack_base = s_stack_base;
+	function_data = userdata;
+
+	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_stack);
+	callee_ref = make_ref(callee);
 	for (i = 0; i < argc; ++i)
 		push_value(argv[i]);
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
-		push_value(callee);
-		callee_ref = jsal_ref(-1);
-		jsal_pop(1);
-		has_return = function->callback(callee_ref, argc - 1, is_ctor);
-		jsal_unref(callee_ref);
+		if (!is_ctor && function_data->ctor_only) {
+			push_value(callee);  // note: gets popped during unwind
+			jsal_get_prop_named(-1, "name");
+			jsal_error(JS_TYPE_ERROR, "'%s()' requires 'new'", jsal_to_string(-1));
+		}
+		if (argc - 1 < function_data->min_args) {
+			push_value(callee);  // note: gets popped during unwind
+			jsal_get_prop_named(-1, "name");
+			jsal_error(JS_TYPE_ERROR, "too few arguments for '%s()'", jsal_to_string(-1));
+		}
+		has_return = function_data->callback(callee_ref, argc - 1, is_ctor);
 		if (has_return)
 			retval = pop_value();
 		vector_pop(s_catch_stack, 1);
@@ -1512,8 +1558,9 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 		JsSetException(exception);
 		retval = exception;
 	}
+	free_ref(callee_ref);
 	vector_resize(s_stack, s_stack_base);
-	s_stack_base = old_stack_base;
+	s_stack_base = last_stack_base;
 	return retval;
 }
 
