@@ -312,6 +312,12 @@ jsal_error_va(jsal_error_t type, const char* format, va_list ap)
 	jsal_throw();
 }
 
+void
+jsal_gc(void)
+{
+	JsCollectGarbage(s_js_runtime);
+}
+
 bool
 jsal_get_boolean(int at_index)
 {

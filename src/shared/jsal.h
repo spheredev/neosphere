@@ -66,6 +66,7 @@ bool        jsal_del_prop_string          (int object_index, const char* name);
 int         jsal_dup                      (int from_index);
 void        jsal_error                    (jsal_error_t type, const char* message, ...);
 void        jsal_error_va                 (jsal_error_t type, const char* message, va_list ap);
+void        jsal_gc                       (void);
 bool        jsal_get_boolean              (int at_index);
 void*       jsal_get_buffer               (int at_index, size_t *out_size);
 bool        jsal_get_global               (void);
