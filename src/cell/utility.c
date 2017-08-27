@@ -36,86 +36,26 @@
 #include "api.h"
 #include "fs.h"
 
-static duk_ret_t do_decode_json (duk_context* ctx, void* udata);
-
-void*
-duk_get_heap_udata(duk_context *ctx)
-{
-	duk_memory_functions mf;
-
-	duk_get_memory_functions(ctx, &mf);
-	return mf.udata;
-}
-
-duk_int_t
-duk_json_pdecode(duk_context* ctx)
-{
-	return duk_safe_call(ctx, do_decode_json, NULL, 1, 1);
-}
+static bool do_decode_json (void* udata);
 
 void
-duk_push_lstring_t(duk_context* ctx, const lstring_t* string)
+jsal_push_lstring_t(const lstring_t* string)
 {
-	duk_push_lstring(ctx, lstr_cstr(string), lstr_len(string));
-}
-
-void*
-duk_ref_heapptr(duk_context* ctx, duk_idx_t idx)
-{
-	void* heapptr;
-
-	heapptr = duk_require_heapptr(ctx, idx);
-
-	duk_push_global_stash(ctx);
-	if (!duk_get_prop_string(ctx, -1, "refs")) {
-		duk_push_bare_object(ctx);
-		duk_put_prop_string(ctx, -3, "refs");
-		duk_get_prop_string(ctx, -2, "refs");
-		duk_replace(ctx, -2);
-	}
-
-	/* [ ... stash refs ] */
-
-	duk_push_sprintf(ctx, "%p", heapptr);
-	if (duk_get_prop(ctx, -2)) {
-		/* [ stash refs ref_obj ] */
-
-		duk_get_prop_string(ctx, -1, "refcount");
-		duk_push_number(ctx, duk_get_number(ctx, -1) + 1);
-		duk_put_prop_string(ctx, -3, "refcount");
-		duk_pop_n(ctx, 4);
-	}
-	else {
-		/* [ stash refs undefined ] */
-
-		duk_push_sprintf(ctx, "%p", heapptr);
-		duk_push_bare_object(ctx);
-		duk_push_number(ctx, 1.0);
-		duk_put_prop_string(ctx, -2, "refcount");
-		duk_push_heapptr(ctx, heapptr);
-		duk_put_prop_string(ctx, -2, "value");
-
-		/* [ stash refs undefined key ref_obj ] */
-
-		duk_put_prop(ctx, -4);
-		duk_pop_3(ctx);
-	}
-
-	return heapptr;
+	jsal_push_lstring(lstr_cstr(string), lstr_len(string));
 }
 
 lstring_t*
-duk_require_lstring_t(duk_context* ctx, duk_idx_t index)
+jsal_require_lstring_t(int index)
 {
 	const char* buffer;
 	size_t      length;
 
-	buffer = duk_require_lstring(ctx, index, &length);
+	buffer = jsal_require_lstring(index, &length);
 	return lstr_from_cp1252(buffer, length);
 }
 
 const char*
-duk_require_pathname(duk_context* ctx, duk_idx_t index, const char* origin_name)
+jsal_require_pathname(int index, const char* origin_name)
 {
 	static int     s_index = 0;
 	static path_t* s_paths[10];
@@ -125,58 +65,20 @@ duk_require_pathname(duk_context* ctx, duk_idx_t index, const char* origin_name)
 	path_t*     path;
 	const char* prefix;
 
-	pathname = duk_require_string(ctx, index);
+	pathname = jsal_require_string(index);
 	path = fs_full_path(pathname, origin_name);
 	prefix = path_hop(path, 0);  // note: fs_full_path() *always* prefixes
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "FS sandboxing violation");
+		jsal_error_blame(-1, JS_TYPE_ERROR, "FS sandboxing violation");
 	if (strcmp(prefix, "~") == 0)
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "no save directory in Cell");
+		jsal_error_blame(-1, JS_TYPE_ERROR, "no save directory in Cell");
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;
 	s_index = (s_index + 1) % 10;
 	return path_cstr(path);
-}
-
-void
-duk_unref_heapptr(duk_context* ctx, void* heapptr)
-{
-	double refcount;
-
-	duk_push_global_stash(ctx);
-	if (!duk_get_prop_string(ctx, -1, "refs")) {
-		duk_push_bare_object(ctx);
-		duk_put_prop_string(ctx, -3, "refs");
-		duk_get_prop_string(ctx, -2, "refs");
-		duk_replace(ctx, -2);
-	}
-
-	/* [ ... stash refs ] */
-
-	duk_push_sprintf(ctx, "%p", heapptr);
-	if (duk_get_prop(ctx, -2)) {
-		/* [ stash refs ref_obj ] */
-
-		duk_get_prop_string(ctx, -1, "refcount");
-		refcount = duk_get_number(ctx, -1) - 1.0;
-		if (refcount > 0.0) {
-			duk_push_number(ctx, refcount);
-			duk_put_prop_string(ctx, -3, "refcount");
-		}
-		else {
-			duk_push_sprintf(ctx, "%p", heapptr);
-			duk_del_prop(ctx, -4);
-		}
-		duk_pop_n(ctx, 4);
-	}
-	else {
-		/* [ stash refs undefined ] */
-
-		duk_pop_3(ctx);
-	}
 }
 
 bool
@@ -272,11 +174,4 @@ wildcmp(const char* filename, const char* pattern)
 	while (*pattern == '*')
 		pattern++;
 	return *pattern == '\0';
-}
-
-static duk_ret_t
-do_decode_json(duk_context* ctx, void* udata)
-{
-	duk_json_decode(ctx, -1);
-	return 1;
 }

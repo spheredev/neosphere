@@ -34,28 +34,27 @@
 #include "tool.h"
 
 #include "fs.h"
+#include "jsal.h"
 #include "visor.h"
 
 struct tool
 {
 	unsigned int refcount;
-	duk_context* js_ctx;
 	void*        callback_ptr;
 	char*        verb;
 };
 
 tool_t*
-tool_new(duk_context* ctx, const char* verb)
+tool_new(const char* verb)
 {
-	void*   callback_ptr;
-	tool_t* tool;
+	jsal_ref_t* callback_ptr;
+	tool_t*     tool;
 
-	callback_ptr = duk_ref_heapptr(ctx, -1);
-	duk_pop(ctx);
+	callback_ptr = jsal_ref(-1);
+	jsal_pop(1);
 
 	tool = calloc(1, sizeof(tool_t));
 	tool->verb = strdup(verb);
-	tool->js_ctx = ctx;
 	tool->callback_ptr = callback_ptr;
 	return tool_ref(tool);
 }
@@ -75,7 +74,7 @@ tool_unref(tool_t* tool)
 	if (tool == NULL || --tool->refcount > 0)
 		return;
 
-	duk_unref_heapptr(tool->js_ctx, tool->callback_ptr);
+	jsal_unref(tool->callback_ptr);
 	free(tool->verb);
 	free(tool);
 }
@@ -83,11 +82,10 @@ tool_unref(tool_t* tool)
 bool
 tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, vector_t* in_paths)
 {
-	duk_uarridx_t array_index;
+	int           array_index;
 	path_t*       dir_path;
 	const char*   filename;
 	bool          is_outdated = false;
-	duk_context*  js_ctx;
 	time_t        last_mtime = 0;
 	int           line_number;
 	int           num_errors;
@@ -100,8 +98,6 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	if (tool == NULL)
 		return true;
 
-	js_ctx = tool->js_ctx;
-
 	visor_begin_op(visor, "%s '%s'", tool->verb, path_cstr(out_path));
 
 	// ensure the target directory exists
@@ -111,29 +107,29 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 
 	if (fs_stat(fs, path_cstr(out_path), &stats) == 0)
 		last_mtime = stats.st_mtime;
-	duk_push_heapptr(js_ctx, tool->callback_ptr);
-	duk_push_string(js_ctx, path_cstr(out_path));
-	duk_push_array(js_ctx);
+	jsal_push_ref(tool->callback_ptr);
+	jsal_push_string(path_cstr(out_path));
+	jsal_push_new_array();
 	iter = vector_enum(in_paths);
 	while (p_path = iter_next(&iter)) {
-		array_index = (duk_uarridx_t)duk_get_length(js_ctx, -1);
-		duk_push_string(js_ctx, path_cstr(*p_path));
-		duk_put_prop_index(js_ctx, -2, array_index);
+		array_index = jsal_get_length(-1);
+		jsal_push_string(path_cstr(*p_path));
+		jsal_put_prop_indexed(-2, array_index);
 	}
 	num_errors = visor_num_errors(visor);
-	if (duk_pcall(js_ctx, 2) != DUK_EXEC_SUCCESS) {
-		duk_get_prop_string(js_ctx, -1, "fileName");
-		filename = duk_safe_to_string(js_ctx, -1);
-		duk_get_prop_string(js_ctx, -2, "lineNumber");
-		line_number = duk_get_int(js_ctx, -1);
-		duk_dup(js_ctx, -3);
-		duk_to_string(js_ctx, -1);
-		visor_error(visor, "%s", duk_get_string(js_ctx, -1));
+	if (!jsal_try_call(2)) {
+		jsal_get_prop_named(-1, "fileName");
+		filename = jsal_to_string(-1);
+		jsal_get_prop_named(-2, "lineNumber");
+		line_number = jsal_get_int(-1);
+		jsal_dup(-3);
+		jsal_to_string(-1);
+		visor_error(visor, "%s", jsal_get_string(-1));
 		visor_print(visor, "@ [%s:%d]", filename, line_number);
-		duk_pop_3(js_ctx);
+		jsal_pop(3);
 		result_ok = false;
 	}
-	duk_pop(js_ctx);
+	jsal_pop(1);
 	if (visor_num_errors(visor) > num_errors)
 		result_ok = false;
 

@@ -33,6 +33,7 @@
 #include "cell.h"
 
 #include "build.h"
+#include "jsal.h"
 
 static bool parse_cmdline    (int argc, char* argv[]);
 static void print_cell_quote (void);
@@ -53,6 +54,7 @@ main(int argc, char* argv[])
 	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
+	jsal_init();
 
 	// parse the command line
 	if (!parse_cmdline(argc, argv))
@@ -78,6 +80,7 @@ shutdown:
 	build_free(build);
 	path_free(s_in_path);
 	path_free(s_out_path);
+	jsal_uninit();
 	return retval;
 }
 
@@ -261,9 +264,7 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("    Duktape: v%ld.%ld.%ld    zlib: v%s\n",
-			DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100,
-			zlibVersion());
+		printf("    zlib: v%s\n", zlibVersion());
 	}
 }
 

@@ -31,15 +31,15 @@
 **/
 
 'use strict';
-const from  = require('from'),
-      ts    = require('#/typescript');
+const Babel = require('#/babel-core'),
+      from  = require('from');
 
 exports = module.exports = transpile;
 exports.__esModule = true;
 exports.default = exports;
 
-var moduleTool = makeTranspileTool(2.0),
-    scriptTool = makeTranspileTool(1.0);
+var moduleTool = makeTranspileTool(2),
+    scriptTool = makeTranspileTool(1);
 
 function transpile(dirName, sources)
 {
@@ -48,43 +48,19 @@ function transpile(dirName, sources)
 
 function makeTranspileTool(apiVersion)
 {
-	return new Tool(function(outFileName, inFileNames) {
+	return new Tool((outFileName, inFileNames) => {
+		var sourceType = apiVersion >= 2 ? 'module' : 'script';
+		var modules = apiVersion >= 2 ? 'commonjs' : false;
 		var input = FS.readFile(inFileNames[0]);
-		var output = ts.transpileModule(input, {
-			fileName: inFileNames[0],
-			reportDiagnostics: true,
-			compilerOptions: {
-				target: ts.ScriptTarget.ES5,
-				module: ts.ModuleKind.CommonJS,
-				allowJs: true,
-				downlevelIteration: true,
-				newLine: ts.NewLineKind.LineFeed,
-				noImplicitUseStrict: apiVersion <= 1.0,
-				inlineSourceMap: true,
-				inlineSources: true,
-			},
+		var output = Babel.transform(input, {
+			filename: inFileNames[0],
+			presets: [
+				[ 'latest', { 'es2015': { modules } } ]
+			],
+			sourceMaps: 'inline',
+			sourceType,
 		});
-		if (from(output.diagnostics).all(function(v) { return v.category !== ts.DiagnosticCategory.Error; }))
-			FS.writeFile(outFileName, output.outputText);
-		from(output.diagnostics).each(function(diag) {
-			var message = ts.flattenDiagnosticMessageText(diag.messageText, '\n');
-			var errorCode = "TS" + diag.code;
-			if (diag.file !== undefined) {
-				var lineNumber = 1 + ts.getLineAndCharacterOfPosition(diag.file, diag.start).line;
-				message = errorCode + " [" + diag.file.fileName + ":" + lineNumber + "]: " + message;
-			}
-			else {
-				message = errorCode + ": " + message;
-			}
-			switch (diag.category) {
-				case ts.DiagnosticCategory.Error:
-					error(message);
-					break;
-				case ts.DiagnosticCategory.Warning:
-					warn(message);
-					break;
-			}
-		});
+		FS.writeFile(outFileName, output.code);
 	}, "transpiling");
 }
 

@@ -46,7 +46,6 @@ struct build
 {
 	vector_t*     artifacts;
 	fs_t*         fs;
-	duk_context*  js_context;
 	vector_t*     targets;
 	time_t        timestamp;
 	visor_t*      visor;
@@ -60,189 +59,193 @@ enum file_op
 	FILE_OP_MAX,
 };
 
-static duk_ret_t js_require                       (duk_context* ctx);
-static duk_ret_t js_error                         (duk_context* ctx);
-static duk_ret_t js_files                         (duk_context* ctx);
-static duk_ret_t js_install                       (duk_context* ctx);
-static duk_ret_t js_warn                          (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Game               (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Platform           (duk_context* ctx);
-static duk_ret_t js_Sphere_get_Version            (duk_context* ctx);
-static duk_ret_t js_new_DirectoryStream           (duk_context* ctx);
-static duk_ret_t js_DirectoryStream_finalize      (duk_context* ctx);
-static duk_ret_t js_DirectoryStream_get_fileCount (duk_context* ctx);
-static duk_ret_t js_DirectoryStream_get_fileName  (duk_context* ctx);
-static duk_ret_t js_DirectoryStream_get_position  (duk_context* ctx);
-static duk_ret_t js_DirectoryStream_set_position  (duk_context* ctx);
-static duk_ret_t js_DirectoryStream_next          (duk_context* ctx);
-static duk_ret_t js_DirectoryStream_rewind        (duk_context* ctx);
-static duk_ret_t js_FS_createDirectory            (duk_context* ctx);
-static duk_ret_t js_FS_deleteFile                 (duk_context* ctx);
-static duk_ret_t js_FS_directoryExists            (duk_context* ctx);
-static duk_ret_t js_FS_fileExists                 (duk_context* ctx);
-static duk_ret_t js_FS_fullPath                   (duk_context* ctx);
-static duk_ret_t js_FS_readFile                   (duk_context* ctx);
-static duk_ret_t js_FS_relativePath               (duk_context* ctx);
-static duk_ret_t js_FS_rename                     (duk_context* ctx);
-static duk_ret_t js_FS_removeDirectory            (duk_context* ctx);
-static duk_ret_t js_FS_writeFile                  (duk_context* ctx);
-static duk_ret_t js_new_FileStream                (duk_context* ctx);
-static duk_ret_t js_FileStream_finalize           (duk_context* ctx);
-static duk_ret_t js_FileStream_dispose            (duk_context* ctx);
-static duk_ret_t js_FileStream_get_fileSize       (duk_context* ctx);
-static duk_ret_t js_FileStream_get_position       (duk_context* ctx);
-static duk_ret_t js_FileStream_set_position       (duk_context* ctx);
-static duk_ret_t js_FileStream_read               (duk_context* ctx);
-static duk_ret_t js_FileStream_write              (duk_context* ctx);
-static duk_ret_t js_RNG_fromSeed                  (duk_context* ctx);
-static duk_ret_t js_RNG_fromState                 (duk_context* ctx);
-static duk_ret_t js_new_RNG                       (duk_context* ctx);
-static duk_ret_t js_RNG_finalize                  (duk_context* ctx);
-static duk_ret_t js_RNG_get_state                 (duk_context* ctx);
-static duk_ret_t js_RNG_set_state                 (duk_context* ctx);
-static duk_ret_t js_RNG_next                      (duk_context* ctx);
-static duk_ret_t js_new_Tool                      (duk_context* ctx);
-static duk_ret_t js_Tool_finalize                 (duk_context* ctx);
-static duk_ret_t js_Tool_stage                    (duk_context* ctx);
-static duk_ret_t js_Target_finalize               (duk_context* ctx);
-static duk_ret_t js_Target_get_fileName           (duk_context* ctx);
-static duk_ret_t js_Target_get_name               (duk_context* ctx);
+static bool js_require                       (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_error                         (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_files                         (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_install                       (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_warn                          (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_Sphere_get_Game               (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_Sphere_get_Platform           (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_Sphere_get_Version            (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_new_DirectoryStream           (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_DirectoryStream_finalize      (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_DirectoryStream_get_fileCount (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_DirectoryStream_get_fileName  (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_DirectoryStream_get_position  (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_DirectoryStream_set_position  (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_DirectoryStream_next          (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_DirectoryStream_rewind        (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_createDirectory            (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_deleteFile                 (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_directoryExists            (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_fileExists                 (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_fullPath                   (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_readFile                   (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_relativePath               (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_rename                     (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_removeDirectory            (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FS_writeFile                  (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_new_FileStream                (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FileStream_finalize           (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FileStream_dispose            (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FileStream_get_fileSize       (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FileStream_get_position       (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FileStream_set_position       (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FileStream_read               (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_FileStream_write              (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_RNG_fromSeed                  (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_RNG_fromState                 (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_new_RNG                       (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_RNG_finalize                  (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_RNG_get_state                 (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_RNG_set_state                 (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_RNG_next                      (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_new_Tool                      (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_Tool_finalize                 (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_Tool_stage                    (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_Target_finalize               (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_Target_get_fileName           (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_Target_get_name               (jsal_ref_t* me, int num_args, bool is_ctor);
 
-static void       clean_old_artifacts  (build_t* build, bool keep_targets);
-static duk_bool_t eval_cjs_module      (duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs);
-static path_t*    find_cjs_module      (duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin);
-static duk_ret_t  install_target       (duk_context* ctx);
-static path_t*    load_package_json    (duk_context* ctx, const char* filename);
-static void       make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
-static void       push_require         (duk_context* ctx, const char* module_id);
-static int        sort_targets_by_path (const void* p_a, const void* p_b);
-static bool       write_manifests      (build_t* build);
+static void    clean_old_artifacts  (build_t* build, bool keep_targets);
+static bool    eval_cjs_module      (fs_t* fs, const char* filename, bool as_mjs);
+static path_t* find_cjs_module      (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
+static bool    install_target       (jsal_ref_t* me, int num_args, bool is_ctor);
+static path_t* load_package_json    (const char* filename);
+static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
+static void    push_require         (const char* module_id);
+static int     sort_targets_by_path (const void* p_a, const void* p_b);
+static bool    write_manifests      (build_t* build);
+
+static build_t* s_build;
 
 build_t*
 build_new(const path_t* source_path, const path_t* out_path)
 {
 	vector_t*    artifacts;
 	build_t*     build;
-	duk_context* ctx;
 	char*        filename;
 	fs_t*        fs;
 	char*        json;
 	size_t       json_size;
+	int          num_artifacts;
 	visor_t*     visor;
+
+	int i;
 
 	build = calloc(1, sizeof(build_t));
 	visor = visor_new();
 	fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
-	ctx = duk_create_heap(NULL, NULL, NULL, build, NULL);
 
 	visor_begin_op(visor, "setting up Cellscript environment");
 
 	// initialize the CommonJS cache and global require()
-	duk_push_global_stash(ctx);
-	duk_push_bare_object(ctx);
-	duk_put_prop_string(ctx, -2, "moduleCache");
-	duk_pop(ctx);
+	jsal_push_hidden_stash();
+	jsal_push_new_object();
+	jsal_put_prop_named(-2, "moduleCache");
+	jsal_pop(1);
 
-	duk_push_global_object(ctx);
-	duk_push_string(ctx, "require");
-	push_require(ctx, NULL);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
+	jsal_push_global_object();
+	jsal_push_eval("({ enumerable: false, writable: true, configurable: true })");
+	push_require(NULL);
+	jsal_put_prop_named(-2, "value");
+	jsal_def_prop_named(-2, "require");
+	jsal_pop(1);
 
 	// prepare environment for ECMAScript 2015 support
-	if (fs_fexist(fs, "#/shim.js") && !eval_cjs_module(ctx, fs, "#/shim.js", false))
+	if (fs_fexist(fs, "#/shim.js") && !eval_cjs_module(fs, "#/shim.js", false))
 		return false;
-	if (fs_fexist(fs, "#/typescript.js")) {
-		duk_push_global_stash(ctx);
-		if (eval_cjs_module(ctx, fs, "#/typescript.js", false))
-			duk_put_prop_string(ctx, -2, "TypeScript");
+	if (fs_fexist(fs, "#/babel-core.js")) {
+		jsal_push_hidden_stash();
+		if (eval_cjs_module(fs, "#/babel-core.js", false))
+			jsal_put_prop_named(-2, "Babel");
 		else
-			duk_pop(ctx);
-		duk_pop(ctx);
+			jsal_pop(1);
+		jsal_pop(1);
 	}
 
 	// initialize the Cellscript API
-	api_init(ctx);
-	api_define_function(ctx, NULL, "error", js_error);
-	api_define_function(ctx, NULL, "files", js_files);
-	api_define_function(ctx, NULL, "install", js_install);
-	api_define_function(ctx, NULL, "warn", js_warn);
-	api_define_static_prop(ctx, "Sphere", "Game", js_Sphere_get_Game, NULL);
-	api_define_static_prop(ctx, "Sphere", "Platform", js_Sphere_get_Platform, NULL);
-	api_define_static_prop(ctx, "Sphere", "Version", js_Sphere_get_Version, NULL);
-	api_define_class(ctx, "DirectoryStream", js_new_DirectoryStream, js_DirectoryStream_finalize);
-	api_define_property(ctx, "DirectoryStream", "fileCount", js_DirectoryStream_get_fileCount, NULL);
-	api_define_property(ctx, "DirectoryStream", "fileName", js_DirectoryStream_get_fileName, NULL);
-	api_define_property(ctx, "DirectoryStream", "position", js_DirectoryStream_get_position, js_DirectoryStream_set_position);
-	api_define_method(ctx, "DirectoryStream", "next", js_DirectoryStream_next);
-	api_define_method(ctx, "DirectoryStream", "rewind", js_DirectoryStream_rewind);
-	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
-	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
-	api_define_function(ctx, "FS", "directoryExists", js_FS_directoryExists);
-	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
-	api_define_function(ctx, "FS", "fullPath", js_FS_fullPath);
-	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
-	api_define_function(ctx, "FS", "relativePath", js_FS_relativePath);
-	api_define_function(ctx, "FS", "removeDirectory", js_FS_removeDirectory);
-	api_define_function(ctx, "FS", "rename", js_FS_rename);
-	api_define_function(ctx, "FS", "writeFile", js_FS_writeFile);
-	api_define_class(ctx, "FileStream", js_new_FileStream, js_FileStream_finalize);
-	api_define_property(ctx, "FileStream", "fileSize", js_FileStream_get_fileSize, NULL);
-	api_define_property(ctx, "FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
-	api_define_method(ctx, "FileStream", "dispose", js_FileStream_dispose);
-	api_define_method(ctx, "FileStream", "read", js_FileStream_read);
-	api_define_method(ctx, "FileStream", "write", js_FileStream_write);
-	api_define_class(ctx, "RNG", js_new_RNG, js_RNG_finalize);
-	api_define_function(ctx, "RNG", "fromSeed", js_RNG_fromSeed);
-	api_define_function(ctx, "RNG", "fromState", js_RNG_fromState);
-	api_define_property(ctx, "RNG", "state", js_RNG_get_state, js_RNG_set_state);
-	api_define_method(ctx, "RNG", "next", js_RNG_next);
-	api_define_class(ctx, "Target", NULL, js_Target_finalize);
-	api_define_property(ctx, "Target", "fileName", js_Target_get_fileName, NULL);
-	api_define_property(ctx, "Target", "name", js_Target_get_name, NULL);
-	api_define_class(ctx, "Tool", js_new_Tool, js_Tool_finalize);
-	api_define_method(ctx, "Tool", "stage", js_Tool_stage);
+	api_init();
+	api_define_function(NULL, "error", js_error);
+	api_define_function(NULL, "files", js_files);
+	api_define_function(NULL, "install", js_install);
+	api_define_function(NULL, "warn", js_warn);
+	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL);
+	api_define_static_prop("Sphere", "Platform", js_Sphere_get_Platform, NULL);
+	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
+	api_define_class("DirectoryStream", js_new_DirectoryStream, js_DirectoryStream_finalize);
+	api_define_property("DirectoryStream", "fileCount", js_DirectoryStream_get_fileCount, NULL);
+	api_define_property("DirectoryStream", "fileName", js_DirectoryStream_get_fileName, NULL);
+	api_define_property("DirectoryStream", "position", js_DirectoryStream_get_position, js_DirectoryStream_set_position);
+	api_define_method("DirectoryStream", "next", js_DirectoryStream_next);
+	api_define_method("DirectoryStream", "rewind", js_DirectoryStream_rewind);
+	api_define_function("FS", "createDirectory", js_FS_createDirectory);
+	api_define_function("FS", "deleteFile", js_FS_deleteFile);
+	api_define_function("FS", "directoryExists", js_FS_directoryExists);
+	api_define_function("FS", "fileExists", js_FS_fileExists);
+	api_define_function("FS", "fullPath", js_FS_fullPath);
+	api_define_function("FS", "readFile", js_FS_readFile);
+	api_define_function("FS", "relativePath", js_FS_relativePath);
+	api_define_function("FS", "removeDirectory", js_FS_removeDirectory);
+	api_define_function("FS", "rename", js_FS_rename);
+	api_define_function("FS", "writeFile", js_FS_writeFile);
+	api_define_class("FileStream", js_new_FileStream, js_FileStream_finalize);
+	api_define_property("FileStream", "fileSize", js_FileStream_get_fileSize, NULL);
+	api_define_property("FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
+	api_define_method("FileStream", "dispose", js_FileStream_dispose);
+	api_define_method("FileStream", "read", js_FileStream_read);
+	api_define_method("FileStream", "write", js_FileStream_write);
+	api_define_class("RNG", js_new_RNG, js_RNG_finalize);
+	api_define_function("RNG", "fromSeed", js_RNG_fromSeed);
+	api_define_function("RNG", "fromState", js_RNG_fromState);
+	api_define_property("RNG", "state", js_RNG_get_state, js_RNG_set_state);
+	api_define_method("RNG", "next", js_RNG_next);
+	api_define_class("Target", NULL, js_Target_finalize);
+	api_define_property("Target", "fileName", js_Target_get_fileName, NULL);
+	api_define_property("Target", "name", js_Target_get_name, NULL);
+	api_define_class("Tool", js_new_Tool, js_Tool_finalize);
+	api_define_method("Tool", "stage", js_Tool_stage);
 
-	api_define_const(ctx, "FileOp", "Read", FILE_OP_READ);
-	api_define_const(ctx, "FileOp", "Write", FILE_OP_WRITE);
-	api_define_const(ctx, "FileOp", "Update", FILE_OP_UPDATE);
+	api_define_const("FileOp", "Read", FILE_OP_READ);
+	api_define_const("FileOp", "Write", FILE_OP_WRITE);
+	api_define_const("FileOp", "Update", FILE_OP_UPDATE);
 
 	// game manifest (gets JSON encoded at end of build)
-	duk_push_global_stash(ctx);
-	duk_push_object(ctx);
-	duk_put_prop_string(ctx, -2, "descriptor");
-	duk_pop(ctx);
+	jsal_push_hidden_stash();
+	jsal_push_new_object();
+	jsal_put_prop_named(-2, "descriptor");
+	jsal_pop(1);
 
 	// create a Tool for the install() function to use
-	duk_push_global_stash(ctx);
-	duk_push_c_function(ctx, install_target, DUK_VARARGS);
-	duk_push_class_obj(ctx, "Tool", tool_new(ctx, "installing"));
-	duk_put_prop_string(ctx, -2, "installTool");
-	duk_pop(ctx);
+	jsal_push_hidden_stash();
+	jsal_push_function(install_target, "doInstall", 0);
+	jsal_push_class_obj("Tool", tool_new("installing"));
+	jsal_put_prop_named(-2, "installTool");
+	jsal_pop(1);
 
 	// load artifacts from previous build
 	artifacts = vector_new(sizeof(char*));
 	if (json = fs_fslurp(fs, "@/artifacts.json", &json_size)) {
-		duk_push_lstring(ctx, json, json_size);
+		jsal_push_lstring(json, json_size);
 		free(json);
-		if (duk_json_pdecode(ctx) == DUK_EXEC_SUCCESS && duk_is_array(ctx, -1)) {
-			duk_enum(ctx, -1, DUK_ENUM_ARRAY_INDICES_ONLY);
-			while (duk_next(ctx, -1, true)) {
-				filename = strdup(duk_to_string(ctx, -1));
+		if (jsal_try_parse(-1) && jsal_is_array(-1)) {
+			num_artifacts = jsal_get_length(-1);
+			for (i = 0; i < num_artifacts; ++i) {
+				jsal_get_prop_indexed(-1, i);
+				filename = strdup(jsal_to_string(-1));
 				vector_push(artifacts, &filename);
-				duk_pop_2(ctx);
+				jsal_pop(1);
 			}
 		}
-		duk_pop(ctx);
+		jsal_pop(1);
 	}
 
 	visor_end_op(visor);
 
+	s_build = build;
+
 	build->visor = visor;
 	build->fs = fs;
-	build->js_context = ctx;
 	build->artifacts = artifacts;
 	build->targets = vector_new(sizeof(target_t*));
 	return build;
@@ -267,7 +270,6 @@ build_free(build_t* build)
 	while (iter_next(&iter))
 		target_free(*(target_t**)iter.ptr);
 
-	duk_destroy_heap(build->js_context);
 	fs_free(build->fs);
 	visor_free(build->visor);
 	free(build);
@@ -291,19 +293,19 @@ build_eval(build_t* build, const char* filename)
 	path = path_new(filename);
 	is_mjs = path_has_extension(path, ".mjs");
 	path_free(path);
-	if (!eval_cjs_module(build->js_context, build->fs, filename, is_mjs)) {
+	if (!eval_cjs_module(build->fs, filename, is_mjs)) {
 		is_ok = false;
-		duk_get_prop_string(build->js_context, -1, "fileName");
-		err_filename = duk_safe_to_string(build->js_context, -1);
-		duk_get_prop_string(build->js_context, -2, "lineNumber");
-		err_line = duk_get_int(build->js_context, -1);
-		duk_dup(build->js_context, -3);
-		duk_to_string(build->js_context, -1);
-		visor_error(build->visor, "%s", duk_get_string(build->js_context, -1));
+		jsal_get_prop_named(-1, "fileName");
+		err_filename = jsal_to_string(-1);
+		jsal_get_prop_named(-2, "lineNumber");
+		err_line = jsal_get_int(-1);
+		jsal_dup(-3);
+		jsal_to_string(-1);
+		visor_error(build->visor, "%s", jsal_get_string(-1));
 		visor_print(build->visor, "@ [%s:%d]", err_filename, err_line);
-		duk_pop_3(build->js_context);
+		jsal_pop(3);
 	}
-	duk_pop(build->js_context);
+	jsal_pop(1);
 	visor_end_op(build->visor);
 	return is_ok;
 }
@@ -423,8 +425,8 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	// generate the source map
 	if (want_debug) {
 		visor_begin_op(build->visor, "writing source map");
-		duk_push_object(build->js_context);
-		duk_push_object(build->js_context);
+		jsal_push_new_object();
+		jsal_push_new_object();
 		iter = vector_enum(build->targets);
 		while (p_target = iter_next(&iter)) {
 			path = target_path(*p_target);
@@ -432,15 +434,15 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 				continue;
 			if (!(source_path = target_source_path(*p_target)))
 				continue;
-			duk_push_string(build->js_context, path_cstr(path));
-			duk_push_string(build->js_context, path_cstr(source_path));
-			duk_put_prop(build->js_context, -3);
+			jsal_push_string(path_cstr(path));
+			jsal_push_string(path_cstr(source_path));
+			jsal_put_prop(-3);
 		}
-		duk_put_prop_string(build->js_context, -2, "fileMap");
-		duk_json_encode(build->js_context, -1);
-		json = duk_get_lstring(build->js_context, -1, &json_size);
+		jsal_put_prop_named(-2, "fileMap");
+		jsal_stringify(-1);
+		json = jsal_get_lstring(-1, &json_size);
 		fs_fspew(build->fs, "@/sources.json", json, json_size);
-		duk_pop(build->js_context);
+		jsal_pop(1);
 		visor_end_op(build->visor);
 	}
 	else {
@@ -448,14 +450,14 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	}
 
 	filenames = visor_filenames(build->visor);
-	duk_push_array(build->js_context);
+	jsal_push_new_array();
 	iter = vector_enum(filenames);
 	while (iter_next(&iter)) {
-		duk_push_string(build->js_context, *(char**)iter.ptr);
-		duk_put_prop_index(build->js_context, -2, (duk_uarridx_t)iter.index);
+		jsal_push_string(*(char**)iter.ptr);
+		jsal_put_prop_indexed(-2, iter.index);
 	}
-	duk_json_encode(build->js_context, -1);
-	json = duk_get_lstring(build->js_context, -1, &json_size);
+	jsal_stringify(-1);
+	json = jsal_get_lstring(-1, &json_size);
 	fs_fspew(build->fs, "@/artifacts.json", json, json_size);
 
 finished:
@@ -491,8 +493,8 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 	visor_end_op(build->visor);
 }
 
-static duk_bool_t
-eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
+static bool
+eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
@@ -517,15 +519,15 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
 	dir_path = path_strip(path_dup(file_path));
 
 	// is the requested module already in the cache?
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "moduleCache");
-	if (duk_get_prop_string(ctx, -1, filename)) {
-		duk_remove(ctx, -2);
-		duk_remove(ctx, -2);
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "moduleCache");
+	if (jsal_get_prop_named(-1, filename)) {
+		jsal_remove(-2);
+		jsal_remove(-2);
 		goto have_module;
 	}
 	else {
-		duk_pop_3(ctx);
+		jsal_pop(3);
 	}
 
 	source = fs_fslurp(fs, filename, &source_size);
@@ -533,130 +535,125 @@ eval_cjs_module(duk_context* ctx, fs_t* fs, const char* filename, bool as_mjs)
 	free(source);
 
 	// construct a module object for the new module
-	duk_push_object(ctx);  // module object
-	duk_push_object(ctx);
-	duk_put_prop_string(ctx, -2, "exports");  // module.exports = {}
-	duk_push_string(ctx, filename);
-	duk_put_prop_string(ctx, -2, "filename");  // module.filename
-	duk_push_string(ctx, filename);
-	duk_put_prop_string(ctx, -2, "id");  // module.id
-	duk_push_false(ctx);
-	duk_put_prop_string(ctx, -2, "loaded");  // module.loaded = false
-	push_require(ctx, filename);
-	duk_put_prop_string(ctx, -2, "require");  // module.require
+	jsal_push_new_object();  // module object
+	jsal_push_new_object();
+	jsal_put_prop_named(-2, "exports");  // module.exports = {}
+	jsal_push_string(filename);
+	jsal_put_prop_named(-2, "filename");  // module.filename
+	jsal_push_string(filename);
+	jsal_put_prop_named(-2, "id");  // module.id
+	jsal_push_boolean(false);
+	jsal_put_prop_named(-2, "loaded");  // module.loaded = false
+	push_require(filename);
+	jsal_put_prop_named(-2, "require");  // module.require
 
 	// cache the module object in advance
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "moduleCache");
-	duk_dup(ctx, -3);
-	duk_put_prop_string(ctx, -2, filename);
-	duk_pop_2(ctx);
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "moduleCache");
+	jsal_dup(-3);
+	jsal_put_prop_named(-2, filename);
+	jsal_pop(2);
 
 	if (strcmp(path_extension(file_path), ".json") == 0) {
 		// JSON file, decode to JavaScript object
-		duk_push_lstring_t(ctx, code_string);
+		jsal_push_lstring_t(code_string);
 		lstr_free(code_string);
-		if (duk_json_pdecode(ctx) != DUK_EXEC_SUCCESS)
+		if (!jsal_try_parse(-1))
 			goto on_error;
-		duk_put_prop_string(ctx, -2, "exports");
+		jsal_put_prop_named(-2, "exports");
 	}
 	else {
 		// synthesize a function to wrap the module code.  this is the simplest way to
 		// implement CommonJS semantics and matches the behavior of Node.js.
 		if (!as_mjs) {
-			duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) {");
-			duk_push_string(ctx, strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "");  // shebang
-			duk_push_lstring_t(ctx, code_string);
-			duk_push_string(ctx, "\n})");
-			duk_concat(ctx, 4);
-			duk_push_string(ctx, filename);
+			jsal_push_sprintf("(function(exports, require, module, __filename, __dirname) {%s%s\n})",
+				strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
+				lstr_cstr(code_string));
 		}
 		else {
-			duk_push_null(ctx);  // stack balancing
+			jsal_push_null();  // stack balancing
 		}
-		if (as_mjs || duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS) {
+		if (as_mjs || !jsal_try_compile(filename)) {
 			// potentially ES 2015+ code; try transpiling it.
 			// note: it might be better to eventually lift this functionality into a separate source file.
 			//       it's pretty involved due to Duktape's stack API and is kind of an eyesore here.
-			duk_push_global_stash(ctx);
-			if (!duk_has_prop_string(ctx, -1, "TypeScript")) {
-				duk_pop(ctx);
+			jsal_push_hidden_stash();
+			if (!jsal_has_prop_named(-1, "Babel")) {
+				jsal_pop(1);
 				goto on_error;  // no ES 2015 support
 			}
-			duk_get_prop_string(ctx, -1, "TypeScript");
-			duk_get_prop_string(ctx, -1, "transpileModule");
-			duk_swap_top(ctx, -2);
-			duk_push_lstring_t(ctx, code_string);
+			jsal_get_prop_named(-1, "Babel");
+			jsal_get_prop_named(-1, "transform");
+			jsal_pull(-2);
+			jsal_push_lstring_t(code_string);
 			if (as_mjs) {
-				duk_eval_string(ctx,
-					"({ target: 1, module: 1, allowJs: true, downlevelIteration: true, newLine: 1,"
-					"   noImplicitUseStrict: false })");
+				jsal_push_eval(
+					"({ presets: [ [ 'latest', { 'es2015': { modules: 'commonjs' } } ] ],"
+					"   sourceType: 'module', retainLines: true })");
 			}
 			else {
-				duk_eval_string(ctx,
-					"({ target: 1, module: 1, allowJs: true, downlevelIteration: true, newLine: 1,"
-					"   noImplicitUseStrict: true })");
+				jsal_push_eval(
+					"({ presets: [ [ 'latest', { 'es2015': { modules: false } } ] ],"
+					"   sourceType: 'script', retainLines: true })");
 			}
-			if (duk_pcall_method(ctx, 2) != DUK_EXEC_SUCCESS) {
-				duk_remove(ctx, -2);
+			if (!jsal_try_call_method(2)) {
+				jsal_remove(-2);
 				goto on_error;
 			}
-			duk_get_prop_string(ctx, -1, "outputText");
+			jsal_get_prop_named(-1, "code");
 			lstr_free(code_string);
-			code_string = duk_require_lstring_t(ctx, -1);
-			duk_pop_n(ctx, 4);
+			code_string = jsal_require_lstring_t(-1);
+			jsal_pop(4);
 
 			// try to compile it again.  if this attempt fails, it's a lost cause.
-			duk_push_string(ctx, "(function(exports, require, module, __filename, __dirname) { ");
-			duk_push_string(ctx, strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "");  // shebang
-			duk_push_lstring_t(ctx, code_string);
-			duk_push_string(ctx, " })");
-			duk_concat(ctx, 4);
-			duk_push_string(ctx, filename);
-			if (duk_pcompile(ctx, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+			jsal_push_sprintf("(function(exports, require, module, __filename, __dirname) {%s%s\n})",
+				strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
+				lstr_cstr(code_string));
+			if (!jsal_try_compile(filename))
 				goto on_error;
 		}
-		duk_call(ctx, 0);
-		duk_push_string(ctx, "name");
-		duk_push_string(ctx, "main");
-		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_FORCE);
+		jsal_call(0);
+		jsal_push_new_object();
+		jsal_push_string("main");
+		jsal_put_prop_named(-2, "value");
+		jsal_def_prop_named(-2, "name");
 		lstr_free(code_string);
 
 		// go, go, go!
-		duk_dup(ctx, -2);                           // this = module
-		duk_get_prop_string(ctx, -3, "exports");    // exports
-		duk_get_prop_string(ctx, -4, "require");    // require
-		duk_dup(ctx, -5);                           // module
-		duk_push_string(ctx, filename);             // __filename
-		duk_push_string(ctx, path_cstr(dir_path));  // __dirname
-		if (duk_pcall_method(ctx, 5) != DUK_EXEC_SUCCESS)
+		jsal_dup(-2);                           // this = module
+		jsal_get_prop_named(-3, "exports");     // exports
+		jsal_get_prop_named(-4, "require");     // require
+		jsal_dup(-5);                           // module
+		jsal_push_string(filename);             // __filename
+		jsal_push_string(path_cstr(dir_path));  // __dirname
+		if (!jsal_try_call_method(5))
 			goto on_error;
-		duk_pop(ctx);
+		jsal_pop(1);
 	}
 
 	// module executed successfully, set `module.loaded` to true
-	duk_push_true(ctx);
-	duk_put_prop_string(ctx, -2, "loaded");
+	jsal_push_boolean(true);
+	jsal_put_prop_named(-2, "loaded");
 
 have_module:
 	// `module` is on the stack, we need `module.exports`
-	duk_get_prop_string(ctx, -1, "exports");
-	duk_remove(ctx, -2);
-	return 1;
+	jsal_get_prop_named(-1, "exports");
+	jsal_remove(-2);
+	return true;
 
 on_error:
 	// note: it's assumed that at this point, the only things left in our portion of the
-	//       Duktape stack are the module object and the thrown error.
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "moduleCache");
-	duk_del_prop_string(ctx, -1, filename);
-	duk_pop_2(ctx);
-	duk_remove(ctx, -2);  // leave the error on the stack
-	return 0;
+	//       value stack are the module object and the thrown error.
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "moduleCache");
+	jsal_del_prop_named(-1, filename);
+	jsal_pop(2);
+	jsal_remove(-2);  // leave the error on the stack
+	return false;
 }
 
 static path_t*
-find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, const char* sys_origin)
+find_cjs_module(fs_t* fs, const char* id, const char* origin, const char* sys_origin)
 {
 	const char* const filenames[] =
 	{
@@ -701,7 +698,7 @@ find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, 
 				return path;
 			}
 			else {
-				if (!(main_path = load_package_json(ctx, path_cstr(path))))
+				if (!(main_path = load_package_json(path_cstr(path))))
 					goto next_filename;
 				if (fs_fexist(fs, path_cstr(main_path))) {
 					path_free(path);
@@ -717,63 +714,57 @@ find_cjs_module(duk_context* ctx, fs_t* fs, const char* id, const char* origin, 
 	return NULL;
 }
 
-static duk_ret_t
-install_target(duk_context* ctx)
+static bool
+install_target(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	// note: install targets never have more than one source because an individual
 	//       target is constructed for each file installed.
 
-	build_t*    build;
 	int         result;
 	const char* source_path;
 	const char* target_path;
 
-	build = duk_get_heap_udata(ctx);
+	target_path = jsal_require_string(1);
+	jsal_get_prop_indexed(2, 0);
+	source_path = jsal_require_string(-1);
 
-	target_path = duk_require_string(ctx, 0);
-	duk_get_prop_index(ctx, 1, 0);
-	source_path = duk_require_string(ctx, -1);
-
-	result = fs_fcopy(build->fs, target_path, source_path, true);
+	result = fs_fcopy(s_build->fs, target_path, source_path, true);
 	if (result == 0)
 		// touch file to prevent "target file unchanged" warning
-		fs_utime(build->fs, target_path, NULL);
-	duk_push_boolean(ctx, result == 0);
-	return 1;
+		fs_utime(s_build->fs, target_path, NULL);
+	jsal_push_boolean(result == 0);
+	return true;
 }
 
 static path_t*
-load_package_json(duk_context* ctx, const char* filename)
+load_package_json(const char* filename)
 {
-	build_t*    build;
-	duk_idx_t   duk_top;
 	char*       json;
 	size_t      json_size;
 	path_t*     path;
+	int         stack_top;
 
-	build = duk_get_heap_udata(ctx);
-
-	duk_top = duk_get_top(ctx);
-	if (!(json = fs_fslurp(build->fs, filename, &json_size)))
+	stack_top = jsal_get_top();
+	if (!(json = fs_fslurp(s_build->fs, filename, &json_size)))
 		goto on_error;
-	duk_push_lstring(ctx, json, json_size);
+	jsal_push_lstring(json, json_size);
 	free(json);
-	if (duk_json_pdecode(ctx) != DUK_EXEC_SUCCESS)
+	if (!jsal_try_parse(-1))
 		goto on_error;
-	if (!duk_is_object_coercible(ctx, -1))
+	if (!jsal_is_object_coercible(-1))
 		goto on_error;
-	duk_get_prop_string(ctx, -1, "main");
-	if (!duk_is_string(ctx, -1))
+	jsal_get_prop_named(-1, "main");
+	if (!jsal_is_string(-1))
 		goto on_error;
 	path = path_strip(path_new(filename));
-	path_append(path, duk_get_string(ctx, -1));
+	path_append(path, jsal_get_string(-1));
 	path_collapse(path, true);
-	if (!fs_fexist(build->fs, path_cstr(path)))
+	if (!fs_fexist(s_build->fs, path_cstr(path)))
 		goto on_error;
 	return path;
 
 on_error:
-	duk_set_top(ctx, duk_top);
+	jsal_set_top(stack_top);
 	return NULL;
 }
 
@@ -827,21 +818,23 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 }
 
 static void
-push_require(duk_context* ctx, const char* module_id)
+push_require(const char* module_id)
 {
-	duk_push_c_function(ctx, js_require, 1);
-	duk_push_string(ctx, "name");
-	duk_push_string(ctx, "require");
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.name
-	duk_push_string(ctx, "cache");
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "moduleCache");
-	duk_remove(ctx, -2);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.cache
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "moduleCache");
+	jsal_remove(-2);
+
+	jsal_push_function(js_require, "require", 1);
+	jsal_push_new_object();
+	jsal_pull(-3);
+	jsal_put_prop_named(-2, "value");
+	jsal_def_prop_named(-2, "cache");  // require.cache
+
 	if (module_id != NULL) {
-		duk_push_string(ctx, "id");
-		duk_push_string(ctx, module_id);
-		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);  // require.id
+		jsal_push_new_object();
+		jsal_push_string(module_id);
+		jsal_put_prop_named(-2, "value");
+		jsal_def_prop_named(-2, "id");  // require.id
 	}
 }
 
@@ -859,7 +852,6 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 static bool
 write_manifests(build_t* build)
 {
-	duk_context* ctx;
 	FILE*        file;
 	int          height;
 	size_t       json_size;
@@ -868,67 +860,65 @@ write_manifests(build_t* build)
 	path_t*      script_path;
 	int          width;
 
-	ctx = build->js_context;
-
 	visor_begin_op(build->visor, "writing Sphere manifest files");
 
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "descriptor");
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "descriptor");
 
 	// validate game descriptor before writing manifests
-	duk_get_prop_string(ctx, -1, "name");
-	if (!duk_is_string(ctx, -1)) {
-		duk_push_string(ctx, "Untitled");
-		duk_remove(ctx, -2);
+	jsal_get_prop_named(-1, "name");
+	if (!jsal_is_string(-1)) {
+		jsal_push_string("Untitled");
+		jsal_remove(-2);
 		visor_warn(build->visor, "missing or invalid 'name' field");
 	}
 
-	duk_get_prop_string(ctx, -2, "author");
-	if (!duk_is_string(ctx, -1)) {
-		duk_push_string(ctx, "Author Unknown");
-		duk_remove(ctx, -2);
+	jsal_get_prop_named(-2, "author");
+	if (!jsal_is_string(-1)) {
+		jsal_push_string("Author Unknown");
+		jsal_remove(-2);
 		visor_warn(build->visor, "missing or invalid 'author' field");
 	}
 
-	duk_get_prop_string(ctx, -3, "summary");
-	if (!duk_is_string(ctx, -1)) {
-		duk_push_string(ctx, "No summary provided.");
-		duk_remove(ctx, -2);
+	jsal_get_prop_named(-3, "summary");
+	if (!jsal_is_string(-1)) {
+		jsal_push_string("No summary provided.");
+		jsal_remove(-2);
 	}
 
 	// note: SGMv1 encodes the resolution width and height as separate fields.
-	duk_get_prop_string(ctx, -4, "resolution");
-	if (!duk_is_string(ctx, -1)
-		|| sscanf(duk_to_string(ctx, -1), "%dx%d", &width, &height) != 2)
+	jsal_get_prop_named(-4, "resolution");
+	if (!jsal_is_string(-1)
+		|| sscanf(jsal_to_string(-1), "%dx%d", &width, &height) != 2)
 	{
 		visor_error(build->visor, "missing or invalid 'resolution' field");
-		duk_pop_n(ctx, 6);
+		jsal_pop(6);
 		visor_end_op(build->visor);
 		return false;
 	}
 
-	duk_get_prop_string(ctx, -5, "main");
-	if (duk_is_string(ctx, -1)) {
+	jsal_get_prop_named(-5, "main");
+	if (jsal_is_string(-1)) {
 		// explicitly rebase onto `@/`, as Cell uses `$/` by default.
-		main_path = fs_full_path(duk_to_string(ctx, -1), "@/");
+		main_path = fs_full_path(jsal_to_string(-1), "@/");
 		if (!path_hop_is(main_path, 0, "@")) {
 			visor_error(build->visor, "'main': illegal prefix '%s/' in filename", path_hop(main_path, 0));
-			duk_pop_n(ctx, 7);
+			jsal_pop(7);
 			visor_end_op(build->visor);
 			return false;
 		}
 		if (!fs_fexist(build->fs, path_cstr(main_path))) {
 			visor_error(build->visor, "'main': file not found '%s'", path_cstr(main_path));
-			duk_pop_n(ctx, 7);
+			jsal_pop(7);
 			visor_end_op(build->visor);
 			return false;
 		}
-		duk_push_string(ctx, path_cstr(main_path));
-		duk_put_prop_string(ctx, -7, "main");
+		jsal_push_string(path_cstr(main_path));
+		jsal_put_prop_named(-7, "main");
 	}
 	else {
 		visor_error(build->visor, "missing or invalid 'main' field");
-		duk_pop_n(ctx, 7);
+		jsal_pop(7);
 		visor_end_op(build->visor);
 		return false;
 	}
@@ -938,46 +928,41 @@ write_manifests(build_t* build)
 	//       this differs from Sv2 (game.json), where it's relative to `@/`.
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
 	script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
-	fprintf(file, "name=%s\n", duk_to_string(ctx, -5));
-	fprintf(file, "author=%s\n", duk_to_string(ctx, -4));
-	fprintf(file, "description=%s\n", duk_to_string(ctx, -3));
+	fprintf(file, "name=%s\n", jsal_to_string(-5));
+	fprintf(file, "author=%s\n", jsal_to_string(-4));
+	fprintf(file, "description=%s\n", jsal_to_string(-3));
 	fprintf(file, "screen_width=%d\n", width);
 	fprintf(file, "screen_height=%d\n", height);
 	fprintf(file, "script=%s\n", path_cstr(script_path));
 	fclose(file);
 	path_free(script_path);
-	duk_pop_n(ctx, 5);
+	jsal_pop(5);
 
 	// write game.json (Sphere v2 JSON manifest)
-	duk_json_encode(ctx, -1);
-	json_text = duk_get_lstring(ctx, -1, &json_size);
+	jsal_stringify(-1);
+	json_text = jsal_get_lstring(-1, &json_size);
 	fs_fspew(build->fs, "@/game.json", json_text, json_size);
-	duk_pop_2(ctx);
+	jsal_pop(2);
 
 	visor_end_op(build->visor);
 	path_free(main_path);
 	return true;
 }
 
-static duk_ret_t
-js_error(duk_context* ctx)
+static bool
+js_error(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* message;
 
-	build = duk_get_heap_udata(ctx);
+	message = jsal_require_string(1);
 
-	message = duk_require_string(ctx, 0);
-
-	visor_error(build->visor, "%s", message);
+	visor_error(s_build->visor, "%s", message);
 	return 0;
 }
 
-static duk_ret_t
-js_files(duk_context* ctx)
+static bool
+js_files(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
-	int         num_args;
 	const char* pattern;
 	path_t*     path;
 	bool        recursive = false;
@@ -987,12 +972,9 @@ js_files(duk_context* ctx)
 	iter_t iter;
 	target_t* *p;
 
-	build = duk_get_heap_udata(ctx);
-
-	num_args = duk_get_top(ctx);
-	pattern = duk_require_string(ctx, 0);
+	pattern = jsal_require_string(1);
 	if (num_args >= 2)
-		recursive = duk_require_boolean(ctx, 1);
+		recursive = jsal_require_boolean(2);
 
 	// extract the wildcard, if any, from the given path
 	path = path_new(pattern);
@@ -1006,72 +988,69 @@ js_files(duk_context* ctx)
 	// this is potentially recursive, so we defer to make_file_targets() to construct
 	// the targets.  note: 'path' should always be a directory at this point.
 	targets = vector_new(sizeof(target_t*));
-	make_file_targets(build->fs, wildcard, path, NULL, targets, recursive, build->timestamp);
+	make_file_targets(s_build->fs, wildcard, path, NULL, targets, recursive, s_build->timestamp);
 	free(wildcard);
 
 	if (vector_len(targets) == 0)
-		visor_warn(build->visor, "no existing files match '%s'", pattern);
+		visor_warn(s_build->visor, "no existing files match '%s'", pattern);
 
 	// return all the newly constructed targets as an array.
-	duk_push_array(ctx);
+	jsal_push_new_array();
 	iter = vector_enum(targets);
 	while (p = iter_next(&iter)) {
-		duk_push_class_obj(ctx, "Target", *p);
-		duk_put_prop_index(ctx, -2, (duk_uarridx_t)iter.index);
+		jsal_push_class_obj("Target", *p);
+		jsal_put_prop_indexed(-2, iter.index);
 	}
-	return 1;
+	return true;
 }
 
-static duk_ret_t
-js_install(duk_context* ctx)
+static bool
+js_install(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*      build;
-	path_t*       dest_path;
-	duk_uarridx_t length;
-	target_t*     source;
-	path_t*       name;
-	path_t*       path;
-	target_t*     target;
-	tool_t*       tool;
+	path_t*   dest_path;
+	int       length;
+	target_t* source;
+	path_t*   name;
+	path_t*   path;
+	target_t* target;
+	tool_t*   tool;
 
-	duk_uarridx_t i;
-
-	build = duk_get_heap_udata(ctx);
+	int i;
 
 	// retrieve the Install tool from the stash
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "installTool");
-	tool = duk_require_class_obj(ctx, -1, "Tool");
-	duk_pop(ctx);
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "installTool");
+	tool = jsal_require_class_obj(-1, "Tool");
+	jsal_pop(1);
 
-	dest_path = path_new_dir(duk_require_string(ctx, 0));
+	dest_path = path_new_dir(jsal_require_string(1));
 
-	if (duk_is_array(ctx, 1)) {
-		length = (duk_uarridx_t)duk_get_length(ctx, 1);
+	if (jsal_is_array(2)) {
+		length = jsal_get_length(2);
 		for (i = 0; i < length; ++i) {
-			duk_get_prop_index(ctx, 1, i);
-			source = duk_require_class_obj(ctx, -1, "Target");
+			jsal_get_prop_indexed(2, i);
+			source = jsal_require_class_obj(-1, "Target");
 			name = path_dup(target_name(source));
 			path = path_rebase(path_dup(name), dest_path);
-			target = target_new(name, build->fs, path, tool, build->timestamp, true);
+			target = target_new(name, s_build->fs, path, tool, s_build->timestamp, true);
 			target_add_source(target, source);
-			vector_push(build->targets, &target);
-			duk_pop(ctx);
+			vector_push(s_build->targets, &target);
+			jsal_pop(1);
 		}
 	}
 	else {
-		source = duk_require_class_obj(ctx, 1, "Target");
+		source = jsal_require_class_obj(2, "Target");
 		name = path_dup(target_name(source));
 		path = path_rebase(path_dup(name), dest_path);
-		target = target_new(name, build->fs, path, tool, build->timestamp, true);
+		target = target_new(name, s_build->fs, path, tool, s_build->timestamp, true);
 		target_add_source(target, source);
-		vector_push(build->targets, &target);
+		vector_push(s_build->targets, &target);
 	}
 	return 0;
 }
 
-static duk_ret_t
-js_require(duk_context* ctx)
+static bool
+js_require(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	const char* const PATHS[] =
 	{
@@ -1080,7 +1059,6 @@ js_require(duk_context* ctx)
 		"#/runtime",
 	};
 
-	build_t*    build;
 	const char* id;
 	bool        is_mjs;
 	const char* parent_id = NULL;
@@ -1088,470 +1066,419 @@ js_require(duk_context* ctx)
 
 	int i;
 
-	build = duk_get_heap_udata(ctx);
-
-	duk_push_current_function(ctx);
-	if (duk_get_prop_string(ctx, -1, "id"))
-		parent_id = duk_get_string(ctx, -1);
-	id = duk_require_string(ctx, 0);
+	jsal_push_ref(me);
+	if (jsal_get_prop_named(-1, "id"))
+		parent_id = jsal_get_string(-1);
+	id = jsal_require_string(1);
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "relative require not allowed in global code");
+		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_cjs_module(ctx, build->fs, id, parent_id, PATHS[i]))
+		if (path = find_cjs_module(s_build->fs, id, parent_id, PATHS[i]))
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		duk_error_blame(ctx, -1, DUK_ERR_REFERENCE_ERROR, "module not found '%s'", id);
+		jsal_error_blame(-1, JS_REF_ERROR, "module not found '%s'", id);
 	is_mjs = path_has_extension(path, ".mjs");
-	if (!eval_cjs_module(ctx, build->fs, path_cstr(path), is_mjs))
-		duk_throw(ctx);
-	return 1;
+	if (!eval_cjs_module(s_build->fs, path_cstr(path), is_mjs))
+		jsal_throw();
+	return true;
 }
 
-static duk_ret_t
-js_warn(duk_context* ctx)
+static bool
+js_warn(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* message;
 
-	build = duk_get_heap_udata(ctx);
+	message = jsal_require_string(1);
 
-	message = duk_require_string(ctx, 0);
-
-	visor_warn(build->visor, "%s", message);
-	return 0;
+	visor_warn(s_build->visor, "%s", message);
+	return true;
 }
 
-static duk_ret_t
-js_Sphere_get_Game(duk_context* ctx)
+static bool
+js_Sphere_get_Game(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "descriptor");
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "descriptor");
 
-	duk_push_this(ctx);
-	duk_push_string(ctx, "Game");
-	duk_dup(ctx, -3);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_pop(ctx);
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_dup(-2);
+	jsal_put_prop_named(-2, "value");
+	jsal_def_prop_named(0, "Game");
+	
+	return true;
+}
 
+static bool
+js_Sphere_get_Platform(jsal_ref_t* me, int num_args, bool is_ctor)
+{
+	jsal_push_sprintf("%s %s", COMPILER_NAME, VERSION_NAME);
 	return 1;
 }
 
-static duk_ret_t
-js_Sphere_get_Platform(duk_context* ctx)
+static bool
+js_Sphere_get_Version(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	duk_push_sprintf(ctx, "%s %s", COMPILER_NAME, VERSION_NAME);
+	jsal_push_int(2);
 	return 1;
 }
 
-static duk_ret_t
-js_Sphere_get_Version(duk_context* ctx)
+static bool
+js_new_DirectoryStream(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	duk_push_int(ctx, 2);
-	return 1;
-}
-
-static duk_ret_t
-js_new_DirectoryStream(duk_context* ctx)
-{
-	build_t*     build;
 	const char*  pathname;
 	directory_t* stream;
 
-	if (!duk_is_constructor_call(ctx))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+	if (!is_ctor)
+		jsal_error_blame(-1, JS_TYPE_ERROR, "constructor requires 'new'");
 
-	build = duk_get_heap_udata(ctx);
-	pathname = duk_require_pathname(ctx, 0, NULL);
+	pathname = jsal_require_pathname(1, NULL);
 
-	if (!(stream = directory_open(build->fs, pathname)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't open directory");
-	duk_push_this(ctx);
-	duk_to_class_obj(ctx, -1, "DirectoryStream", stream);
-	return 0;
+	if (!(stream = directory_open(s_build->fs, pathname)))
+		jsal_error_blame(-1, JS_ERROR, "couldn't open directory");
+	jsal_push_class_obj("DirectoryStream", stream);
+	return true;
 }
 
-static duk_ret_t
-js_DirectoryStream_finalize(duk_context* ctx)
+static bool
+js_DirectoryStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	directory_t* stream;
 
-	stream = duk_require_class_obj(ctx, 0, "DirectoryStream");
+	stream = jsal_require_class_obj(0, "DirectoryStream");
 	directory_close(stream);
 	return 0;
 }
 
-static duk_ret_t
-js_DirectoryStream_get_fileCount(duk_context* ctx)
+static bool
+js_DirectoryStream_get_fileCount(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	directory_t* stream;
 
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	stream = jsal_require_class_obj(0, "DirectoryStream");
 
-	duk_push_int(ctx, directory_num_files(stream));
+	jsal_push_int(directory_num_files(stream));
 	return 1;
 }
 
-static duk_ret_t
-js_DirectoryStream_get_fileName(duk_context* ctx)
+static bool
+js_DirectoryStream_get_fileName(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	directory_t* stream;
 
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	stream = jsal_require_class_obj(0, "DirectoryStream");
 
-	duk_push_string(ctx, directory_pathname(stream));
+	jsal_push_string(directory_pathname(stream));
 	return 1;
 }
 
-static duk_ret_t
-js_DirectoryStream_get_position(duk_context* ctx)
+static bool
+js_DirectoryStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	directory_t* stream;
 
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	stream = jsal_require_class_obj(0, "DirectoryStream");
 
-	duk_push_int(ctx, directory_position(stream));
+	jsal_push_int(directory_position(stream));
 	return 1;
 }
 
-static duk_ret_t
-js_DirectoryStream_set_position(duk_context* ctx)
+static bool
+js_DirectoryStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	int          position;
 	directory_t* stream;
 
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
-	position = duk_require_int(ctx, 0);
+	stream = jsal_require_class_obj(0, "DirectoryStream");
+	position = jsal_require_int(1);
 
 	if (!directory_seek(stream, position))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't set stream position");
+		jsal_error_blame(-1, JS_ERROR, "couldn't set stream position");
 	return 0;
 }
 
-static duk_ret_t
-js_DirectoryStream_next(duk_context* ctx)
+static bool
+js_DirectoryStream_next(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	const path_t* entry_path;
 	directory_t*  stream;
 
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	stream = jsal_require_class_obj(0, "DirectoryStream");
 
 	entry_path = directory_next(stream);
-	duk_push_object(ctx);
+	jsal_push_new_object();
 	if (entry_path != NULL) {
-		duk_push_boolean(ctx, false);
-		duk_put_prop_string(ctx, -2, "done");
-		duk_push_object(ctx);
+		jsal_push_boolean(false);
+		jsal_put_prop_named(-2, "done");
+		jsal_push_new_object();
 		if (path_is_file(entry_path))
-			duk_push_string(ctx, path_filename(entry_path));
+			jsal_push_string(path_filename(entry_path));
 		else
-			duk_push_sprintf(ctx, "%s/", path_hop(entry_path, path_num_hops(entry_path) - 1));
-		duk_put_prop_string(ctx, -2, "fileName");
-		duk_push_string(ctx, path_cstr(entry_path));
-		duk_put_prop_string(ctx, -2, "fullPath");
-		duk_push_boolean(ctx, !path_is_file(entry_path));
-		duk_put_prop_string(ctx, -2, "isDirectory");
-		duk_put_prop_string(ctx, -2, "value");
+			jsal_push_sprintf("%s/", path_hop(entry_path, path_num_hops(entry_path) - 1));
+		jsal_put_prop_named(-2, "fileName");
+		jsal_push_string(path_cstr(entry_path));
+		jsal_put_prop_named(-2, "fullPath");
+		jsal_push_boolean(!path_is_file(entry_path));
+		jsal_put_prop_named(-2, "isDirectory");
+		jsal_put_prop_named(-2, "value");
 	}
 	else {
-		duk_push_boolean(ctx, true);
-		duk_put_prop_string(ctx, -2, "done");
+		jsal_push_boolean(true);
+		jsal_put_prop_named(-2, "done");
 	}
 	return 1;
 }
 
-static duk_ret_t
-js_DirectoryStream_rewind(duk_context* ctx)
+static bool
+js_DirectoryStream_rewind(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	directory_t* stream;
 
-	duk_push_this(ctx);
-	stream = duk_require_class_obj(ctx, -1, "DirectoryStream");
+	stream = jsal_require_class_obj(0, "DirectoryStream");
 
 	directory_rewind(stream);
 	return 0;
 }
 
-static duk_ret_t
-js_FS_createDirectory(duk_context* ctx)
+static bool
+js_FS_createDirectory(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* name;
 
-	build = duk_get_heap_udata(ctx);
+	name = jsal_require_pathname(1, NULL);
 
-	name = duk_require_pathname(ctx, 0, NULL);
-
-	if (fs_mkdir(build->fs, name) != 0)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory");
+	if (fs_mkdir(s_build->fs, name) != 0)
+		jsal_error_blame(-1, JS_ERROR, "unable to create directory");
 	return 0;
 }
 
-static duk_ret_t
-js_FS_deleteFile(duk_context* ctx)
+static bool
+js_FS_deleteFile(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* filename;
 
-	build = duk_get_heap_udata(ctx);
+	filename = jsal_require_pathname(1, NULL);
 
-	filename = duk_require_pathname(ctx, 0, NULL);
-
-	if (!fs_unlink(build->fs, filename))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file", filename);
+	if (!fs_unlink(s_build->fs, filename))
+		jsal_error_blame(-1, JS_ERROR, "unable to delete file", filename);
 	return 0;
 }
 
-static duk_ret_t
-js_FS_directoryExists(duk_context* ctx)
+static bool
+js_FS_directoryExists(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* dirname;
 
-	build = duk_get_heap_udata(ctx);
+	dirname = jsal_require_pathname(1, NULL);
 
-	dirname = duk_require_pathname(ctx, 0, NULL);
-
-	duk_push_boolean(ctx, fs_dir_exists(build->fs, dirname));
+	jsal_push_boolean(fs_dir_exists(s_build->fs, dirname));
 	return 1;
 }
 
-static duk_ret_t
-js_FS_fileExists(duk_context* ctx)
+static bool
+js_FS_fileExists(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* filename;
 
-	build = duk_get_heap_udata(ctx);
+	filename = jsal_require_pathname(1, NULL);
 
-	filename = duk_require_pathname(ctx, 0, NULL);
-
-	duk_push_boolean(ctx, fs_fexist(build->fs, filename));
+	jsal_push_boolean(fs_fexist(s_build->fs, filename));
 	return 1;
 }
 
-static duk_ret_t
-js_FS_fullPath(duk_context* ctx)
+static bool
+js_FS_fullPath(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	const char* filename;
-	int         num_args;
 	const char* origin_pathname = NULL;
 
-	num_args = duk_get_top(ctx);
 	if (num_args >= 2)
-		origin_pathname = duk_require_pathname(ctx, 1, NULL);
-	filename = duk_require_pathname(ctx, 0, origin_pathname);
+		origin_pathname = jsal_require_pathname(2, NULL);
+	filename = jsal_require_pathname(1, origin_pathname);
 
-	duk_push_string(ctx, filename);
+	jsal_push_string(filename);
 	return 1;
 }
 
-static duk_ret_t
-js_FS_readFile(duk_context* ctx)
+static bool
+js_FS_readFile(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	lstring_t*  content;
 	void*       file_data;
 	size_t      file_size;
 	const char* filename;
 
-	build = duk_get_heap_udata(ctx);
+	filename = jsal_require_pathname(1, NULL);
 
-	filename = duk_require_pathname(ctx, 0, NULL);
-
-	if (!(file_data = fs_fslurp(build->fs, filename, &file_size)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't read file '%s'", filename);
+	if (!(file_data = fs_fslurp(s_build->fs, filename, &file_size)))
+		jsal_error_blame(-1, JS_ERROR, "couldn't read file '%s'", filename);
 	content = lstr_from_cp1252(file_data, file_size);
-	duk_push_lstring_t(ctx, content);
+	jsal_push_lstring_t(content);
 	return 1;
 }
 
-static duk_ret_t
-js_FS_relativePath(duk_context* ctx)
+static bool
+js_FS_relativePath(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	const char* base_pathname;
 	path_t*     path;
 	const char* pathname;
 
-	pathname = duk_require_pathname(ctx, 0, NULL);
-	base_pathname = duk_require_pathname(ctx, 1, NULL);
+	pathname = jsal_require_pathname(1, NULL);
+	base_pathname = jsal_require_pathname(2, NULL);
 
 	path = fs_relative_path(pathname, base_pathname);
-	duk_push_string(ctx, path_cstr(path));
+	jsal_push_string(path_cstr(path));
 	path_free(path);
 	return 1;
 }
 
-static duk_ret_t
-js_FS_removeDirectory(duk_context* ctx)
+static bool
+js_FS_removeDirectory(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* name;
 
-	build = duk_get_heap_udata(ctx);
+	name = jsal_require_pathname(1, NULL);
 
-	name = duk_require_pathname(ctx, 0, NULL);
-
-	if (!fs_rmdir(build->fs, name))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed");
+	if (!fs_rmdir(s_build->fs, name))
+		jsal_error_blame(-1, JS_ERROR, "directory removal failed");
 	return 0;
 }
 
-static duk_ret_t
-js_FS_rename(duk_context* ctx)
+static bool
+js_FS_rename(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* name1;
 	const char* name2;
 
-	build = duk_get_heap_udata(ctx);
+	name1 = jsal_require_pathname(1, NULL);
+	name2 = jsal_require_pathname(2, NULL);
 
-	name1 = duk_require_pathname(ctx, 0, NULL);
-	name2 = duk_require_pathname(ctx, 1, NULL);
-
-	if (!fs_rename(build->fs, name1, name2))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
+	if (!fs_rename(s_build->fs, name1, name2))
+		jsal_error_blame(-1, JS_ERROR, "rename failed", name1, name2);
 	return 0;
 }
 
-static duk_ret_t
-js_FS_writeFile(duk_context* ctx)
+static bool
+js_FS_writeFile(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*    build;
 	const char* filename;
 	lstring_t*  text = NULL;
 
-	build = duk_get_heap_udata(ctx);
+	filename = jsal_require_pathname(1, NULL);
+	text = jsal_require_lstring_t(2);
 
-	filename = duk_require_pathname(ctx, 0, NULL);
-	text = duk_require_lstring_t(ctx, 1);
-
-	if (!fs_fspew(build->fs, filename, lstr_cstr(text), lstr_len(text)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't write file '%s'", filename);
+	if (!fs_fspew(s_build->fs, filename, lstr_cstr(text), lstr_len(text)))
+		jsal_error_blame(-1, JS_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
 	return 0;
 }
 
-static duk_ret_t
-js_new_FileStream(duk_context* ctx)
+static bool
+js_new_FileStream(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*     build;
 	FILE*        file;
 	enum file_op file_op;
 	const char*  filename;
 	const char*  mode;
 
-	if (!duk_is_constructor_call(ctx))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+	if (!is_ctor)
+		jsal_error_blame(-1, JS_TYPE_ERROR, "constructor requires 'new'");
 
-	build = duk_get_heap_udata(ctx);
-	duk_require_string(ctx, 0);
-	file_op = duk_require_int(ctx, 1);
+	jsal_require_string(1);
+	file_op = jsal_require_int(2);
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file-op constant");
+		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file-op constant");
 
-	filename = duk_require_pathname(ctx, 0, NULL);
-	if (file_op == FILE_OP_UPDATE && !fs_fexist(build->fs, filename))
+	filename = jsal_require_pathname(1, NULL);
+	if (file_op == FILE_OP_UPDATE && !fs_fexist(s_build->fs, filename))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
 		: file_op == FILE_OP_WRITE ? "w+b"
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
-	if (!(file = fs_fopen(build->fs, filename, mode)))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't open file `%s`", filename);
+	if (!(file = fs_fopen(s_build->fs, filename, mode)))
+		jsal_error_blame(-1, JS_ERROR, "couldn't open file `%s`", filename);
 	if (file_op == FILE_OP_UPDATE)
 		fseek(file, 0, SEEK_END);
-	duk_push_this(ctx);
-	duk_to_class_obj(ctx, -1, "FileStream", file);
-	return 0;
+
+	jsal_push_class_obj("FileStream", file);
+	return true;
 }
 
-static duk_ret_t
-js_FileStream_finalize(duk_context* ctx)
+static bool
+js_FileStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	FILE* file;
 
-	file = duk_require_class_obj(ctx, 0, "FileStream");
+	file = jsal_require_class_obj(0, "FileStream");
 
 	if (file != NULL)
 		fclose(file);
 	return 0;
 }
 
-static duk_ret_t
-js_FileStream_get_position(duk_context* ctx)
+static bool
+js_FileStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	FILE* file;
 
-	duk_push_this(ctx);
-	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+	if (!(file = jsal_require_class_obj(0, "FileStream")))
+		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
 
-	duk_push_number(ctx, ftell(file));
+	jsal_push_number(ftell(file));
 	return 1;
 }
 
-static duk_ret_t
-js_FileStream_get_fileSize(duk_context* ctx)
+static bool
+js_FileStream_get_fileSize(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	FILE* file;
 	long  file_pos;
 
-	duk_push_this(ctx);
-	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
+	if (!(file = jsal_require_class_obj(0, "FileStream")))
+		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
 
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
-	duk_push_number(ctx, ftell(file));
+	jsal_push_number(ftell(file));
 	fseek(file, file_pos, SEEK_SET);
 	return 1;
 }
 
-static duk_ret_t
-js_FileStream_set_position(duk_context* ctx)
+static bool
+js_FileStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	FILE* file;
 	long  new_pos;
 
-	duk_push_this(ctx);
-	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
-	new_pos = duk_require_int(ctx, 0);
+	if (!(file = jsal_require_class_obj(0, "FileStream")))
+		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
+	new_pos = jsal_require_int(0);
 
 	if (new_pos < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid file position");
+		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file position");
 	fseek(file, new_pos, SEEK_SET);
 	return 0;
 }
 
-static duk_ret_t
-js_FileStream_dispose(duk_context* ctx)
+static bool
+js_FileStream_dispose(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	FILE* file;
 
-	duk_push_this(ctx);
-	file = duk_require_class_obj(ctx, -1, "FileStream");
+	file = jsal_require_class_obj(0, "FileStream");
 
-	duk_push_pointer(ctx, NULL);
-	duk_put_prop_string(ctx, -2, "\xFF" "udata");
+	jsal_set_host_data(0, NULL);
 	if (file != NULL)
 		fclose(file);
 	return 0;
 }
 
-static duk_ret_t
-js_FileStream_read(duk_context* ctx)
+static bool
+js_FileStream_read(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	// FileStream:read([numBytes]);
 	// Reads data from the stream, returning it in an ArrayBuffer.
@@ -1559,257 +1486,242 @@ js_FileStream_read(duk_context* ctx)
 	//     numBytes: Optional. The number of bytes to read. If not provided, the
 	//               entire file is read.
 
-	int    argc;
 	void*  buffer;
 	FILE*  file;
-	int    num_bytes;
+	int    num_bytes = 0;
 	long   pos;
+	size_t size;
 
-	argc = duk_get_top(ctx);
-	num_bytes = argc >= 1 ? duk_require_int(ctx, 0) : 0;
+	if (num_args >= 1)
+		num_bytes = jsal_require_int(1);
 
-	duk_push_this(ctx);
-	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
-	if (argc < 1) {  // if no arguments, read entire file back to front
+	if (!(file = jsal_require_class_obj(0, "FileStream")))
+		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
+	if (num_args < 1) {  // if no arguments, read entire file back to front
 		pos = ftell(file);
 		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
 		fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes < 0)
-		duk_error_blame(ctx, -1, DUK_ERR_RANGE_ERROR, "invalid read size");
-	buffer = duk_push_fixed_buffer(ctx, num_bytes);
+		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
+	jsal_push_new_buffer(num_bytes);
+	buffer = jsal_get_buffer(-1, &size);
 	num_bytes = (int)fread(buffer, 1, num_bytes, file);
-	if (argc < 1)  // reset file position after whole-file read
+	if (num_args < 1)  // reset file position after whole-file read
 		fseek(file, pos, SEEK_SET);
-	duk_push_buffer_object(ctx, -1, 0, num_bytes, DUK_BUFOBJ_ARRAYBUFFER);
 	return 1;
 }
 
-static duk_ret_t
-js_FileStream_write(duk_context* ctx)
+static bool
+js_FileStream_write(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	const void* data;
 	FILE*       file;
-	duk_size_t  num_bytes;
+	size_t      num_bytes;
 
-	duk_push_this(ctx);
-	if (!(file = duk_require_class_obj(ctx, -1, "FileStream")))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "use of disposed object");
-	data = duk_require_buffer_data(ctx, 0, &num_bytes);
+	if (!(file = jsal_require_class_obj(0, "FileStream")))
+		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
+	data = jsal_require_buffer(1, &num_bytes);
 
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "failure to write to file");
+		jsal_error_blame(-1, JS_ERROR, "failure to write to file");
 	return 0;
 }
 
-static duk_ret_t
-js_RNG_fromSeed(duk_context* ctx)
+static bool
+js_RNG_fromSeed(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	uint64_t seed;
 	xoro_t*  xoro;
 
-	seed = (uint64_t)duk_require_number(ctx, 0);
+	seed = (uint64_t)jsal_require_number(1);
 
 	xoro = xoro_new(seed);
-	duk_push_class_obj(ctx, "RNG", xoro);
+	jsal_push_class_obj("RNG", xoro);
 	return 1;
 }
 
-static duk_ret_t
-js_RNG_fromState(duk_context* ctx)
+static bool
+js_RNG_fromState(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	const char* state;
 	xoro_t*     xoro;
 
-	state = duk_require_string(ctx, 0);
+	state = jsal_require_string(1);
 
 	xoro = xoro_new(0);
 	if (!xoro_set_state(xoro, state)) {
 		xoro_unref(xoro);
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+		jsal_error_blame(-1, JS_TYPE_ERROR, "invalid RNG state string");
 	}
-	duk_push_class_obj(ctx, "RNG", xoro);
+	jsal_push_class_obj("RNG", xoro);
 	return 1;
 }
 
-static duk_ret_t
-js_new_RNG(duk_context* ctx)
+static bool
+js_new_RNG(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	xoro_t* xoro;
 
-	if (!duk_is_constructor_call(ctx))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
+	if (!is_ctor)
+		jsal_error_blame(-1, JS_TYPE_ERROR, "constructor requires 'new'");
 
 	xoro = xoro_new((uint64_t)clock());
-	duk_push_class_obj(ctx, "RNG", xoro);
+	jsal_push_class_obj("RNG", xoro);
 	return 1;
 }
 
-static duk_ret_t
-js_RNG_finalize(duk_context* ctx)
+static bool
+js_RNG_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	xoro_t* xoro;
 
-	xoro = duk_require_class_obj(ctx, 0, "RNG");
+	xoro = jsal_require_class_obj(0, "RNG");
 
 	xoro_unref(xoro);
 	return 0;
 }
 
-static duk_ret_t
-js_RNG_get_state(duk_context* ctx)
+static bool
+js_RNG_get_state(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	char    state[33];
 	xoro_t* xoro;
 
-	duk_push_this(ctx);
-	xoro = duk_require_class_obj(ctx, -1, "RNG");
+	xoro = jsal_require_class_obj(0, "RNG");
 
 	xoro_get_state(xoro, state);
-	duk_push_string(ctx, state);
+	jsal_push_string(state);
 	return 1;
 }
 
-static duk_ret_t
-js_RNG_set_state(duk_context* ctx)
+static bool
+js_RNG_set_state(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	const char* state;
 	xoro_t*     xoro;
 
-	duk_push_this(ctx);
-	xoro = duk_require_class_obj(ctx, -1, "RNG");
-	state = duk_require_string(ctx, 0);
+	xoro = jsal_require_class_obj(0, "RNG");
+	state = jsal_require_string(1);
 
 	if (!xoro_set_state(xoro, state))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "invalid RNG state string");
+		jsal_error_blame(-1, JS_TYPE_ERROR, "invalid RNG state string");
 	return 0;
 }
 
-static duk_ret_t
-js_RNG_next(duk_context* ctx)
+static bool
+js_RNG_next(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	xoro_t*     xoro;
 
-	duk_push_this(ctx);
-	xoro = duk_require_class_obj(ctx, -1, "RNG");
+	xoro = jsal_require_class_obj(0, "RNG");
 
-	duk_push_number(ctx, xoro_gen_double(xoro));
+	jsal_push_number(xoro_gen_double(xoro));
 	return 1;
 }
 
-static duk_ret_t
-js_Target_finalize(duk_context* ctx)
+static bool
+js_Target_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	target_t* target;
 
-	target = duk_require_class_obj(ctx, 0, "Target");
+	target = jsal_require_class_obj(0, "Target");
 
 	target_free(target);
 	return 0;
 }
 
-static duk_ret_t
-js_Target_get_fileName(duk_context* ctx)
+static bool
+js_Target_get_fileName(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	target_t* target;
 
-	duk_push_this(ctx);
-	target = duk_require_class_obj(ctx, -1, "Target");
+	target = jsal_require_class_obj(0, "Target");
 
-	duk_push_string(ctx, path_cstr(target_path(target)));
+	jsal_push_string(path_cstr(target_path(target)));
 	return 1;
 }
 
-static duk_ret_t
-js_Target_get_name(duk_context* ctx)
+static bool
+js_Target_get_name(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	target_t* target;
 
-	duk_push_this(ctx);
-	target = duk_require_class_obj(ctx, -1, "Target");
+	target = jsal_require_class_obj(0, "Target");
 
-	duk_push_string(ctx, path_cstr(target_name(target)));
+	jsal_push_string(path_cstr(target_name(target)));
 	return 1;
 }
 
-static duk_ret_t
-js_new_Tool(duk_context* ctx)
+static bool
+js_new_Tool(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	int         num_args;
 	tool_t*     tool;
 	const char* verb = "building";
 
-	num_args = duk_get_top(ctx);
-	if (!duk_is_constructor_call(ctx))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "constructor requires 'new'");
-	duk_require_function(ctx, 0);
+	if (!is_ctor)
+		jsal_error_blame(-1, JS_TYPE_ERROR, "constructor requires 'new'");
+	jsal_require_function(1);
 	if (num_args >= 2)
-		verb = duk_require_string(ctx, 1);
+		verb = jsal_require_string(2);
 
-	duk_dup(ctx, 0);
-	tool = tool_new(ctx, verb);
-	duk_push_this(ctx);
-	duk_to_class_obj(ctx, -1, "Tool", tool);
-	return 1;
+	jsal_dup(1);
+	tool = tool_new(verb);
+	
+	jsal_push_class_obj("Tool", tool);
+	return true;
 }
 
-static duk_ret_t
-js_Tool_finalize(duk_context* ctx)
+static bool
+js_Tool_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 {
 	tool_t* tool;
 
-	tool = duk_require_class_obj(ctx, 0, "Tool");
+	tool = jsal_require_class_obj(0, "Tool");
 
 	tool_unref(tool);
 	return 0;
 }
 
-static duk_ret_t
-js_Tool_stage(duk_context* ctx)
+static bool
+js_Tool_stage(jsal_ref_t* me, int num_args, bool is_ctor)
 {
-	build_t*      build;
-	duk_uarridx_t length;
-	path_t*       name;
-	int           num_args;
-	path_t*       out_path;
-	target_t*     source;
-	target_t*     target;
-	tool_t*       tool;
+	int       length;
+	path_t*   name;
+	path_t*   out_path;
+	target_t* source;
+	target_t* target;
+	tool_t*   tool;
 
-	duk_uarridx_t i;
+	int i;
 
-	build = duk_get_heap_udata(ctx);
-
-	num_args = duk_get_top(ctx);
-	duk_push_this(ctx);
-	tool = duk_require_class_obj(ctx, -1, "Tool");
-	out_path = path_new(duk_require_string(ctx, 0));
-	if (!duk_is_array(ctx, 1))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "array required (argument #2)");
+	tool = jsal_require_class_obj(0, "Tool");
+	out_path = path_new(jsal_require_string(1));
+	if (!jsal_is_array(2))
+		jsal_error_blame(-1, JS_TYPE_ERROR, "expected an array");
 	if (num_args >= 3)
-		duk_require_object_coercible(ctx, 2);
+		jsal_require_object_coercible(3);
 
 	name = path_new(path_filename(out_path));
 	if (num_args >= 3) {
-		if (duk_get_prop_string(ctx, 2, "name")) {
+		if (jsal_get_prop_named(3, "name")) {
 			path_free(name);
-			name = path_new(duk_require_string(ctx, -1));
+			name = path_new(jsal_require_string(-1));
 		}
-		duk_pop_n(ctx, 1);
+		jsal_pop(1);
 	}
 
-	target = target_new(name, build->fs, out_path, tool, build->timestamp, true);
-	length = (duk_uarridx_t)duk_get_length(ctx, 1);
+	target = target_new(name, s_build->fs, out_path, tool, s_build->timestamp, true);
+	length = jsal_get_length(2);
 	for (i = 0; i < length; ++i) {
-		duk_get_prop_index(ctx, 1, i);
-		source = duk_require_class_obj(ctx, -1, "Target");
+		jsal_get_prop_indexed(2, i);
+		source = jsal_require_class_obj(-1, "Target");
 		target_add_source(target, source);
-		duk_pop(ctx);
+		jsal_pop(1);
 	}
 	path_free(out_path);
-	vector_push(build->targets, &target);
+	vector_push(s_build->targets, &target);
 
-	duk_push_class_obj(ctx, "Target", target_ref(target));
+	jsal_push_class_obj("Target", target_ref(target));
 	return 1;
 }

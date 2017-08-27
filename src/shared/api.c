@@ -3,380 +3,331 @@
 
 #include "api.h"
 
+#include <stdlib.h>
+#include <string.h>
+#include "jsal.h"
+
 void
-api_init(duk_context* ctx)
+api_init()
 {
 	// JavaScript 'global' binding (like Node.js)
-	duk_push_global_object(ctx);
-	duk_push_string(ctx, "global");
-	duk_push_global_object(ctx);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_push_string(ctx, "exports");
-	duk_push_global_object(ctx);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
-	duk_pop(ctx);
+	jsal_push_global_object();
+	jsal_push_new_object();
+	jsal_push_global_object();
+	jsal_put_prop_named(-2, "value");
+	jsal_push_boolean(true);
+	jsal_put_prop_named(-2, "writable");
+	jsal_push_boolean(true);
+	jsal_put_prop_named(-2, "enumerable");
+	jsal_dup(-1);
+	jsal_def_prop_named(-3, "global");
+	jsal_def_prop_named(-2, "exports");
+	jsal_pop(1);
 
 	// set up a prototype stash.  this ensures the prototypes for built-in classes
-	// remain accessible internally even if the constructors are overwritten.
-	duk_push_global_stash(ctx);
-	duk_push_object(ctx);
-	duk_put_prop_string(ctx, -2, "prototypes");
-	duk_pop(ctx);
+	// remain accessible internally even if their constructors are overwritten.
+	jsal_push_hidden_stash();
+	jsal_push_new_object();
+	jsal_put_prop_named(-2, "prototypes");
+	jsal_pop(1);
 }
 
 void
-api_define_const(duk_context* ctx, const char* enum_name, const char* name, double value)
+api_define_const(const char* enum_name, const char* name, double value)
 {
-	duk_push_global_object(ctx);
+	jsal_push_global_object();
 
 	// ensure the namespace object exists
 	if (enum_name != NULL) {
-		if (!duk_get_prop_string(ctx, -1, enum_name)) {
-			duk_pop(ctx);
-			duk_push_string(ctx, enum_name);
-			duk_push_object(ctx);
-			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-				| DUK_DEFPROP_CLEAR_ENUMERABLE
-				| DUK_DEFPROP_SET_WRITABLE
-				| DUK_DEFPROP_SET_CONFIGURABLE);
-			duk_get_prop_string(ctx, -1, enum_name);
+		if (!jsal_get_prop_named(-1, enum_name)) {
+			jsal_pop(1);
+			jsal_push_eval("({ enumerable: false, writable: true, configurable: true })");
+			jsal_push_new_object();
+			jsal_put_prop_named(-2, "value");
+			jsal_def_prop_named(-2, enum_name);
+			jsal_get_prop_named(-1, enum_name);
 		}
 	}
 
-	duk_push_string(ctx, name);
-	duk_push_number(ctx, value);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_push_number(value);
+	jsal_put_prop_named(-2, "value");
+	jsal_def_prop_named(-2, name);
 	if (enum_name != NULL) {
 		// generate a TypeScript-style bidirectional enumeration:
 		//     enum[key] = value
 		//     enum[value] = key
-		duk_push_number(ctx, value);
-		duk_to_string(ctx, -1);
-		duk_push_string(ctx, name);
-		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-			| DUK_DEFPROP_CLEAR_ENUMERABLE
-			| DUK_DEFPROP_CLEAR_WRITABLE
-			| DUK_DEFPROP_SET_CONFIGURABLE);
+		jsal_push_number(value);
+		jsal_to_string(-1);
+		jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+		jsal_push_string(name);
+		jsal_put_prop_named(-2, "value");
+		jsal_def_prop(-2);
 	}
 
 	if (enum_name != NULL)
-		duk_pop(ctx);
-	duk_pop(ctx);
+		jsal_pop(1);
+	jsal_pop(1);
 }
 
 void
-api_define_class(duk_context* ctx, const char* name, duk_c_function constructor, duk_c_function finalizer)
+api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t finalizer)
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
 
 	// construct a prototype for the new class, leaving it on the
 	// value stack afterwards.
-	duk_push_object(ctx);
-	duk_push_string(ctx, name);
-	duk_put_prop_string(ctx, -2, "\xFF" "ctor");
+	jsal_push_new_object();
+	jsal_push_string(name);
+	jsal_put_prop_named(-2, "\xFF" "ctor");
 	if (finalizer != NULL) {
-		duk_push_c_function(ctx, finalizer, DUK_VARARGS);
-		duk_put_prop_string(ctx, -2, "\xFF" "dtor");
+		jsal_push_function(finalizer, "finalize", 0);
+		jsal_put_prop_named(-2, "\xFF" "dtor");
 	}
 
-	// save the prototype to the Duktape global stash.  this ensures it remains
-	// accessible internally even if the constructor is overwritten.
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "prototypes");
-	duk_dup(ctx, -3);
-	duk_put_prop_string(ctx, -2, name);
-	duk_pop_2(ctx);
+	// save the prototype to the hidden stash.  this ensures it remains accessible
+	// internally even if the constructor is overwritten.
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "prototypes");
+	jsal_dup(-3);
+	jsal_put_prop_named(-2, name);
+	jsal_pop(2);
 
 	if (constructor != NULL) {
-		duk_push_c_function(ctx, constructor, DUK_VARARGS);
-		duk_push_string(ctx, "name");
-		duk_push_string(ctx, name);
-		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-		duk_push_string(ctx, "prototype");
-		duk_dup(ctx, -3);
-		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE | DUK_DEFPROP_SET_WRITABLE);
+		jsal_push_function(constructor, name, 0);
+		
+		jsal_push_new_object();
+		jsal_dup(-3);
+		jsal_put_prop_named(-2, "value");
+		jsal_def_prop_named(-2, "prototype");
 
-		duk_push_global_object(ctx);
-		duk_push_string(ctx, name);
-		duk_dup(ctx, -3);
-		duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-			| DUK_DEFPROP_SET_WRITABLE
-			| DUK_DEFPROP_SET_CONFIGURABLE);
-		duk_pop_2(ctx);
+		jsal_push_global_object();
+		jsal_push_eval("({ writable: true, configurable: true })");
+		jsal_pull(-3);
+		jsal_put_prop_named(-2, "value");
+		jsal_def_prop_named(-2, name);
+		jsal_pop(1);
 	}
 
-	duk_pop(ctx);
+	jsal_pop(1);
 }
 
 void
-api_define_function(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function fn)
+api_define_function(const char* namespace_name, const char* name, jsal_callback_t callback)
 {
-	duk_push_global_object(ctx);
+	jsal_push_global_object();
 
 	// ensure the namespace object exists
 	if (namespace_name != NULL) {
-		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
-			duk_pop(ctx);
-			duk_push_string(ctx, namespace_name);
-			duk_push_object(ctx);
-			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-				| DUK_DEFPROP_SET_WRITABLE
-				| DUK_DEFPROP_SET_CONFIGURABLE);
-			duk_get_prop_string(ctx, -1, namespace_name);
+		if (!jsal_get_prop_named(-1, namespace_name)) {
+			jsal_pop(1);
+			jsal_push_eval("({ writable: true, configurable: true })");
+			jsal_push_new_object();
+			jsal_put_prop_named(-2, "value");
+			jsal_def_prop_named(-2, namespace_name);
+			jsal_get_prop_named(-1, namespace_name);
 		}
 	}
 
-	duk_push_string(ctx, name);
-	duk_push_c_function(ctx, fn, DUK_VARARGS);
-	duk_push_string(ctx, "name");
-	duk_push_string(ctx, name);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
+	jsal_push_eval("({ writable: true, configurable: true })");
+	jsal_push_function(callback, name, 0);
+	jsal_put_prop_named(-2, "value");
+	jsal_def_prop_named(-2, name);
+	
 	if (namespace_name != NULL)
-		duk_pop(ctx);
-	duk_pop(ctx);
+		jsal_pop(1);
+	jsal_pop(1);
 }
 
 void
-api_define_method(duk_context* ctx, const char* class_name, const char* name, duk_c_function fn)
+api_define_method(const char* class_name, const char* name, jsal_callback_t callback)
 {
-	duk_push_global_object(ctx);
+	jsal_push_global_object();
 	if (class_name != NULL) {
 		// load the prototype from the prototype stash
-		duk_push_global_stash(ctx);
-		duk_get_prop_string(ctx, -1, "prototypes");
-		duk_get_prop_string(ctx, -1, class_name);
+		jsal_push_hidden_stash();
+		jsal_get_prop_named(-1, "prototypes");
+		jsal_get_prop_named(-1, class_name);
 	}
 
-	duk_push_c_function(ctx, fn, DUK_VARARGS);
-	duk_push_string(ctx, "name");
-	duk_push_string(ctx, name);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE);
-
-	// for a defprop, Duktape expects the key to be pushed first, then the value; however, since
-	// we have the value (the function being registered) on the stack already by this point, we
-	// need to shuffle things around to make everything work.
-	duk_push_string(ctx, name);
-	duk_insert(ctx, -2);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_SET_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
+	jsal_push_eval("({ writable: true, configurable: true })");
+	jsal_push_function(callback, name, 0);
+	jsal_put_prop_named(-2, "value");
+	jsal_def_prop_named(-2, name);
 
 	if (class_name != NULL)
-		duk_pop_3(ctx);
-	duk_pop(ctx);
+		jsal_pop(3);
+	jsal_pop(1);
 }
 
 void
-api_define_object(duk_context* ctx, const char* namespace_name, const char* name, const char* class_name, void* udata)
+api_define_object(const char* namespace_name, const char* name, const char* class_name, void* udata)
 {
-	duk_push_global_object(ctx);
+	jsal_push_global_object();
 
 	// ensure the namespace object exists
 	if (namespace_name != NULL) {
-		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
-			duk_pop(ctx);
-			duk_push_string(ctx, namespace_name);
-			duk_push_object(ctx);
-			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-				| DUK_DEFPROP_SET_WRITABLE
-				| DUK_DEFPROP_SET_CONFIGURABLE);
-			duk_get_prop_string(ctx, -1, namespace_name);
+		if (!jsal_get_prop_named(-1, namespace_name)) {
+			jsal_pop(1);
+			jsal_push_eval("({ writable: true, configurable: true })");
+			jsal_push_new_object();
+			jsal_put_prop_named(-2, "value");
+			jsal_def_prop_named(-2, namespace_name);
+			jsal_get_prop_named(-1, namespace_name);
 		}
 	}
 
-	duk_push_string(ctx, name);
-	duk_push_class_obj(ctx, class_name, udata);
-	duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-		| DUK_DEFPROP_CLEAR_ENUMERABLE
-		| DUK_DEFPROP_CLEAR_WRITABLE
-		| DUK_DEFPROP_SET_CONFIGURABLE);
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_push_class_obj(class_name, udata);
+	jsal_put_prop_named(-2, "value");
+	jsal_def_prop_named(-2, name);
 	if (namespace_name != NULL)
-		duk_pop(ctx);
-	duk_pop(ctx);
+		jsal_pop(1);
+	jsal_pop(1);
 }
 
 void
-api_define_property(duk_context* ctx, const char* class_name, const char* name, duk_c_function getter, duk_c_function setter)
+api_define_property(const char* class_name, const char* name, jsal_callback_t getter, jsal_callback_t setter)
 {
-	duk_uint_t flags;
-	int        obj_index;
-
-	duk_push_global_object(ctx);
+	jsal_push_global_object();
 	if (class_name != NULL) {
-		duk_push_global_stash(ctx);
-		duk_get_prop_string(ctx, -1, "prototypes");
-		duk_get_prop_string(ctx, -1, class_name);
+		jsal_push_hidden_stash();
+		jsal_get_prop_named(-1, "prototypes");
+		jsal_get_prop_named(-1, class_name);
 	}
-	obj_index = duk_normalize_index(ctx, -1);
-	duk_push_string(ctx, name);
-	flags = DUK_DEFPROP_SET_CONFIGURABLE;
+
+	// populate the property descriptor
+	jsal_push_eval("({ configurable: true })");
 	if (getter != NULL) {
-		duk_push_c_function(ctx, getter, DUK_VARARGS);
-		flags |= DUK_DEFPROP_HAVE_GETTER;
+		jsal_push_function(getter, "get", 0);
+		jsal_put_prop_named(-2, "get");
 	}
 	if (setter != NULL) {
-		duk_push_c_function(ctx, setter, DUK_VARARGS);
-		flags |= DUK_DEFPROP_HAVE_SETTER;
+		jsal_push_function(setter, "set", 0);
+		jsal_put_prop_named(-2, "set");
 	}
-	duk_def_prop(ctx, obj_index, flags);
+	
+	jsal_def_prop_named(-2, name);
 	if (class_name != NULL)
-		duk_pop_3(ctx);
-	duk_pop(ctx);
+		jsal_pop(3);
+	jsal_pop(1);
 }
 
 void
-api_define_static_prop(duk_context* ctx, const char* namespace_name, const char* name, duk_c_function getter, duk_c_function setter)
+api_define_static_prop(const char* namespace_name, const char* name, jsal_callback_t getter, jsal_callback_t setter)
 {
-	int       flags;
-	duk_idx_t obj_index;
-
-	duk_push_global_object(ctx);
+	jsal_push_global_object();
 
 	// ensure the namespace object exists
 	if (namespace_name != NULL) {
-		if (!duk_get_prop_string(ctx, -1, namespace_name)) {
-			duk_pop(ctx);
-			duk_push_string(ctx, namespace_name);
-			duk_push_object(ctx);
-			duk_def_prop(ctx, -3, DUK_DEFPROP_HAVE_VALUE
-				| DUK_DEFPROP_SET_WRITABLE
-				| DUK_DEFPROP_SET_CONFIGURABLE);
-			duk_get_prop_string(ctx, -1, namespace_name);
+		if (!jsal_get_prop_named(-1, namespace_name)) {
+			jsal_pop(1);
+			jsal_push_eval("({ writable: true, configurable: true })");
+			jsal_push_new_object();
+			jsal_put_prop_named(-2, "value");
+			jsal_def_prop_named(-2, namespace_name);
+			jsal_get_prop_named(-1, namespace_name);
 		}
 	}
 
-	obj_index = duk_normalize_index(ctx, -1);
-	duk_push_string(ctx, name);
-	flags = DUK_DEFPROP_SET_CONFIGURABLE;
+	// populate the property descriptor
+	jsal_push_eval("({ configurable: true })");
 	if (getter != NULL) {
-		duk_push_c_function(ctx, getter, DUK_VARARGS);
-		flags |= DUK_DEFPROP_HAVE_GETTER;
+		jsal_push_function(getter, "get", 0);
+		jsal_put_prop_named(-2, "get");
 	}
 	if (setter != NULL) {
-		duk_push_c_function(ctx, setter, DUK_VARARGS);
-		flags |= DUK_DEFPROP_HAVE_SETTER;
+		jsal_push_function(setter, "set", 0);
+		jsal_put_prop_named(-2, "set");
 	}
-	duk_def_prop(ctx, obj_index, flags);
+	jsal_def_prop_named(-2, name);
 	if (namespace_name != NULL)
-		duk_pop(ctx);
-	duk_pop(ctx);
+		jsal_pop(1);
+	jsal_pop(1);
 }
 
 void
-duk_error_blame(duk_context* ctx, int blame_offset, duk_errcode_t err_code, const char* fmt, ...)
+jsal_error_blame(int blame_offset, jsal_error_t type, const char* format, ...)
 {
 	va_list ap;
 	char*   filename;
 	int     line_number;
 
 	// get filename and line number from Duktape call stack
-	duk_inspect_callstack_entry(ctx, -1 + blame_offset);
-	if (!duk_is_object(ctx, -1)) {
+	/*jsal_inspect_callstack_entry(-1 + blame_offset);
+	if (!jsal_is_object(-1)) {
 		// note: the topmost call is assumed to be a Duktape/C activation.  that's
 		//       probably not what's responsible for the error, so blame the function
 		//       just below it if there's nobody else to blame.
-		duk_inspect_callstack_entry(ctx, -2);
-		duk_replace(ctx, -2);
+		jsal_inspect_callstack_entry(-2);
+		jsal_replace(-2);
 	}
-	duk_get_prop_string(ctx, -1, "lineNumber");
-	duk_get_prop_string(ctx, -2, "function");
-	duk_get_prop_string(ctx, -1, "fileName");
-	filename = strdup(duk_safe_to_string(ctx, -1));
-	line_number = duk_to_int(ctx, -3);
-	duk_pop_n(ctx, 4);
+	jsal_get_prop_named(-1, "lineNumber");
+	jsal_get_prop_named(-2, "function");
+	jsal_get_prop_named(-1, "fileName");
+	filename = strdup(jsal_to_string(-1));
+	line_number = jsal_to_int(-3);
+	jsal_pop(4);*/
+
+	filename = strdup("eatyPig.js");
+	line_number = 812;
 
 	// construct an Error object
-	va_start(ap, fmt);
-	duk_push_error_object_va(ctx, err_code, fmt, ap);
+	va_start(ap, format);
+	jsal_push_new_error_va(type, format, ap);
 	va_end(ap);
-	duk_push_string(ctx, filename);
-	duk_put_prop_string(ctx, -2, "fileName");
-	duk_push_int(ctx, line_number);
-	duk_put_prop_string(ctx, -2, "lineNumber");
+	jsal_push_string(filename);
+	jsal_put_prop_named(-2, "fileName");
+	jsal_push_int(line_number);
+	jsal_put_prop_named(-2, "lineNumber");
 	free(filename);
 
-	duk_throw(ctx);
+	jsal_throw();
 }
 
-duk_bool_t
-duk_is_class_obj(duk_context* ctx, duk_idx_t index, const char* class_name)
+bool
+jsal_is_class_obj(int index, const char* class_name)
 {
 	const char* obj_class_name;
-	duk_bool_t  result;
+	bool        result;
 
-	index = duk_require_normalize_index(ctx, index);
-	if (!duk_is_object_coercible(ctx, index))
-		return 0;
+	if (!jsal_is_object_coercible(index))
+		return false;
 
-	duk_get_prop_string(ctx, index, "\xFF" "ctor");
-	obj_class_name = duk_safe_to_string(ctx, -1);
+	jsal_get_prop_named(index, "\xFF" "ctor");
+	obj_class_name = jsal_to_string(-1);
 	result = strcmp(obj_class_name, class_name) == 0;
-	duk_pop(ctx);
+	jsal_pop(1);
 	return result;
 }
 
-void
-duk_push_class_obj(duk_context* ctx, const char* class_name, void* udata)
+int
+jsal_push_class_obj(const char* class_name, void* udata)
 {
-	duk_push_object(ctx);
-	duk_to_class_obj(ctx, -1, class_name, udata);
+	int index;
+	
+	index = jsal_push_new_host_object(udata, NULL);
 
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "prototypes");
-	duk_get_prop_string(ctx, -1, class_name);
-	duk_set_prototype(ctx, -4);
-	duk_pop_2(ctx);
+	jsal_push_hidden_stash();
+	jsal_get_prop_named(-1, "prototypes");
+	jsal_get_prop_named(-1, class_name);
+	jsal_set_prototype(index);
+	jsal_pop(2);
+
+	return index;
 }
 
 void*
-duk_require_class_obj(duk_context* ctx, duk_idx_t index, const char* class_name)
+jsal_require_class_obj(int index, const char* class_name)
 {
-	void* udata;
-
-	index = duk_require_normalize_index(ctx, index);
-	if (!duk_is_class_obj(ctx, index, class_name))
-		duk_error_blame(ctx, -1, DUK_ERR_TYPE_ERROR, "not a %s object", class_name);
-	duk_get_prop_string(ctx, index, "\xFF" "udata");
-	udata = duk_get_pointer(ctx, -1);
-	duk_pop(ctx);
-	return udata;
+	if (!jsal_is_class_obj(index, class_name))
+		jsal_error_blame(-1, JS_TYPE_ERROR, "'%s' object expected", class_name);
+	return jsal_get_host_data(index);
 }
 
 void
-duk_set_class_ptr(duk_context* ctx, duk_idx_t index, void* udata)
+jsal_set_class_ptr(int index, void* udata)
 {
-	index = duk_require_normalize_index(ctx, index);
-	duk_push_pointer(ctx, udata);
-	duk_put_prop_string(ctx, index, "\xFF" "udata");
-}
-
-void
-duk_to_class_obj(duk_context* ctx, duk_idx_t idx, const char* class_name, void* udata)
-{
-	idx = duk_require_normalize_index(ctx, idx);
-
-	duk_push_pointer(ctx, udata);
-	duk_put_prop_string(ctx, idx, "\xFF" "udata");
-
-	duk_push_global_stash(ctx);
-	duk_get_prop_string(ctx, -1, "prototypes");
-	duk_get_prop_string(ctx, -1, class_name);
-	if (duk_get_prop_string(ctx, -1, "\xFF" "dtor"))
-		duk_set_finalizer(ctx, idx);
-	else
-		duk_pop(ctx);
-	duk_pop_3(ctx);
+	jsal_set_host_data(index, udata);
 }

@@ -36,7 +36,6 @@
 #include "posix.h"
 
 #include <zlib.h>
-#include "duktape.h"
 #include "lstring.h"
 #include "path.h"
 #include "utility.h"
