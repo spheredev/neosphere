@@ -59,58 +59,58 @@ enum file_op
 	FILE_OP_MAX,
 };
 
-static bool js_require                       (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_error                         (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_files                         (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_install                       (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_warn                          (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_Sphere_get_Game               (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_Sphere_get_Platform           (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_Sphere_get_Version            (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_new_DirectoryStream           (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_DirectoryStream_finalize      (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_DirectoryStream_get_fileCount (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_DirectoryStream_get_fileName  (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_DirectoryStream_get_position  (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_DirectoryStream_set_position  (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_DirectoryStream_next          (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_DirectoryStream_rewind        (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_createDirectory            (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_deleteFile                 (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_directoryExists            (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_fileExists                 (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_fullPath                   (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_readFile                   (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_relativePath               (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_rename                     (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_removeDirectory            (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FS_writeFile                  (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_new_FileStream                (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FileStream_finalize           (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FileStream_dispose            (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FileStream_get_fileSize       (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FileStream_get_position       (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FileStream_set_position       (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FileStream_read               (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_FileStream_write              (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_RNG_fromSeed                  (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_RNG_fromState                 (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_new_RNG                       (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_RNG_finalize                  (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_RNG_get_state                 (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_RNG_set_state                 (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_RNG_next                      (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_new_Tool                      (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_Tool_finalize                 (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_Tool_stage                    (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_Target_finalize               (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_Target_get_fileName           (jsal_ref_t* me, int num_args, bool is_ctor);
-static bool js_Target_get_name               (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool js_require                       (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_error                         (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_files                         (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_install                       (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_warn                          (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_Game               (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_Platform           (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_Version            (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_new_DirectoryStream           (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_finalize      (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_get_fileCount (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_get_fileName  (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_get_position  (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_set_position  (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_next          (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_rewind        (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_createDirectory            (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_deleteFile                 (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_directoryExists            (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_fileExists                 (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_fullPath                   (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_readFile                   (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_relativePath               (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_rename                     (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_removeDirectory            (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_writeFile                  (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_new_FileStream                (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FileStream_finalize           (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FileStream_dispose            (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FileStream_get_fileSize       (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FileStream_get_position       (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FileStream_set_position       (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FileStream_read               (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FileStream_write              (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_RNG_fromSeed                  (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_RNG_fromState                 (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_new_RNG                       (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_RNG_finalize                  (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_RNG_get_state                 (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_RNG_set_state                 (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_RNG_next                      (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_new_Tool                      (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Tool_finalize                 (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Tool_stage                    (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Target_finalize               (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Target_get_fileName           (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Target_get_name               (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
 
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
 static bool    eval_cjs_module      (fs_t* fs, const char* filename, bool as_mjs);
 static path_t* find_cjs_module      (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
-static bool    install_target       (jsal_ref_t* me, int num_args, bool is_ctor);
+static bool    install_target       (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
 static path_t* load_package_json    (const char* filename);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void    push_require         (const char* module_id);
@@ -218,7 +218,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	// create a Tool for the install() function to use
 	jsal_push_hidden_stash();
-	jsal_push_function(install_target, "doInstall", 0);
+	jsal_push_function(install_target, "doInstall", 0, 0);
 	jsal_push_class_obj("Tool", tool_new("installing"));
 	jsal_put_prop_string(-2, "installTool");
 	jsal_pop(1);
@@ -715,7 +715,7 @@ find_cjs_module(fs_t* fs, const char* id, const char* origin, const char* sys_or
 }
 
 static bool
-install_target(jsal_ref_t* me, int num_args, bool is_ctor)
+install_target(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	// note: install targets never have more than one source because an individual
 	//       target is constructed for each file installed.
@@ -724,8 +724,8 @@ install_target(jsal_ref_t* me, int num_args, bool is_ctor)
 	const char* source_path;
 	const char* target_path;
 
-	target_path = jsal_require_string(1);
-	jsal_get_prop_index(2, 0);
+	target_path = jsal_require_string(0);
+	jsal_get_prop_index(1, 0);
 	source_path = jsal_require_string(-1);
 
 	result = fs_fcopy(s_build->fs, target_path, source_path, true);
@@ -824,7 +824,7 @@ push_require(const char* module_id)
 	jsal_get_prop_string(-1, "moduleCache");
 	jsal_remove(-2);
 
-	jsal_push_function(js_require, "require", 1);
+	jsal_push_function(js_require, "require", 1, 0);
 	jsal_push_new_object();
 	jsal_pull(-3);
 	jsal_put_prop_string(-2, "value");
@@ -950,18 +950,18 @@ write_manifests(build_t* build)
 }
 
 static bool
-js_error(jsal_ref_t* me, int num_args, bool is_ctor)
+js_error(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* message;
 
-	message = jsal_require_string(1);
+	message = jsal_require_string(0);
 
 	visor_error(s_build->visor, "%s", message);
 	return false;
 }
 
 static bool
-js_files(jsal_ref_t* me, int num_args, bool is_ctor)
+js_files(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* pattern;
 	path_t*     path;
@@ -972,9 +972,9 @@ js_files(jsal_ref_t* me, int num_args, bool is_ctor)
 	iter_t iter;
 	target_t* *p;
 
-	pattern = jsal_require_string(1);
+	pattern = jsal_require_string(0);
 	if (num_args >= 2)
-		recursive = jsal_require_boolean(2);
+		recursive = jsal_require_boolean(1);
 
 	// extract the wildcard, if any, from the given path
 	path = path_new(pattern);
@@ -1005,7 +1005,7 @@ js_files(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_install(jsal_ref_t* me, int num_args, bool is_ctor)
+js_install(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	path_t*   dest_path;
 	int       length;
@@ -1017,7 +1017,7 @@ js_install(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	int i;
 
-	dest_path = path_new_dir(jsal_require_string(1));
+	dest_path = path_new_dir(jsal_require_string(0));
 
 	// retrieve the Install tool from the stash
 	jsal_push_hidden_stash();
@@ -1025,10 +1025,10 @@ js_install(jsal_ref_t* me, int num_args, bool is_ctor)
 	tool = jsal_require_class_obj(-1, "Tool");
 	jsal_pop(1);
 
-	if (jsal_is_array(2)) {
-		length = jsal_get_length(2);
+	if (jsal_is_array(1)) {
+		length = jsal_get_length(1);
 		for (i = 0; i < length; ++i) {
-			jsal_get_prop_index(2, i);
+			jsal_get_prop_index(1, i);
 			source = jsal_require_class_obj(-1, "Target");
 			name = path_dup(target_name(source));
 			path = path_rebase(path_dup(name), dest_path);
@@ -1039,7 +1039,7 @@ js_install(jsal_ref_t* me, int num_args, bool is_ctor)
 		}
 	}
 	else {
-		source = jsal_require_class_obj(2, "Target");
+		source = jsal_require_class_obj(1, "Target");
 		name = path_dup(target_name(source));
 		path = path_rebase(path_dup(name), dest_path);
 		target = target_new(name, s_build->fs, path, tool, s_build->timestamp, true);
@@ -1051,7 +1051,7 @@ js_install(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_require(jsal_ref_t* me, int num_args, bool is_ctor)
+js_require(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* const PATHS[] =
 	{
@@ -1067,7 +1067,7 @@ js_require(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	int i;
 
-	module_id = jsal_require_string(1);
+	module_id = jsal_require_string(0);
 
 	// get the calling module ID
 	jsal_push_ref(me);
@@ -1090,18 +1090,18 @@ js_require(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_warn(jsal_ref_t* me, int num_args, bool is_ctor)
+js_warn(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* message;
 
-	message = jsal_require_string(1);
+	message = jsal_require_string(0);
 
 	visor_warn(s_build->visor, "%s", message);
 	return true;
 }
 
 static bool
-js_Sphere_get_Game(jsal_ref_t* me, int num_args, bool is_ctor)
+js_Sphere_get_Game(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "manifest");
@@ -1115,26 +1115,26 @@ js_Sphere_get_Game(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_Sphere_get_Platform(jsal_ref_t* me, int num_args, bool is_ctor)
+js_Sphere_get_Platform(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	jsal_push_sprintf("%s %s", COMPILER_NAME, VERSION_NAME);
 	return true;
 }
 
 static bool
-js_Sphere_get_Version(jsal_ref_t* me, int num_args, bool is_ctor)
+js_Sphere_get_Version(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(2);
 	return true;
 }
 
 static bool
-js_new_DirectoryStream(jsal_ref_t* me, int num_args, bool is_ctor)
+js_new_DirectoryStream(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char*  pathname;
 	directory_t* stream;
 
-	pathname = jsal_require_pathname(1, NULL);
+	pathname = jsal_require_pathname(0, NULL);
 
 	if (!(stream = directory_open(s_build->fs, pathname)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't open directory");
@@ -1143,57 +1143,62 @@ js_new_DirectoryStream(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_DirectoryStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
+js_DirectoryStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	directory_t* stream;
 
-	stream = jsal_require_class_obj(0, "DirectoryStream");
+	jsal_push_this();
+	stream = jsal_require_class_obj(-1, "DirectoryStream");
 
 	directory_close(stream);
 	return false;
 }
 
 static bool
-js_DirectoryStream_get_fileCount(jsal_ref_t* me, int num_args, bool is_ctor)
+js_DirectoryStream_get_fileCount(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	directory_t* stream;
 
-	stream = jsal_require_class_obj(0, "DirectoryStream");
+	jsal_push_this();
+	stream = jsal_require_class_obj(-1, "DirectoryStream");
 
 	jsal_push_int(directory_num_files(stream));
 	return true;
 }
 
 static bool
-js_DirectoryStream_get_fileName(jsal_ref_t* me, int num_args, bool is_ctor)
+js_DirectoryStream_get_fileName(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	directory_t* stream;
 
-	stream = jsal_require_class_obj(0, "DirectoryStream");
+	jsal_push_this();
+	stream = jsal_require_class_obj(-1, "DirectoryStream");
 
 	jsal_push_string(directory_pathname(stream));
 	return true;
 }
 
 static bool
-js_DirectoryStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor)
+js_DirectoryStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	directory_t* stream;
 
-	stream = jsal_require_class_obj(0, "DirectoryStream");
+	jsal_push_this();
+	stream = jsal_require_class_obj(-1, "DirectoryStream");
 
 	jsal_push_int(directory_position(stream));
 	return true;
 }
 
 static bool
-js_DirectoryStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
+js_DirectoryStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	int          position;
 	directory_t* stream;
 
-	stream = jsal_require_class_obj(0, "DirectoryStream");
-	position = jsal_require_int(1);
+	jsal_push_this();
+	stream = jsal_require_class_obj(-1, "DirectoryStream");
+	position = jsal_require_int(0);
 
 	if (!directory_seek(stream, position))
 		jsal_error_blame(-1, JS_ERROR, "couldn't set stream position");
@@ -1201,12 +1206,13 @@ js_DirectoryStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_DirectoryStream_next(jsal_ref_t* me, int num_args, bool is_ctor)
+js_DirectoryStream_next(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const path_t* entry_path;
 	directory_t*  stream;
 
-	stream = jsal_require_class_obj(0, "DirectoryStream");
+	jsal_push_this();
+	stream = jsal_require_class_obj(-1, "DirectoryStream");
 
 	entry_path = directory_next(stream);
 	jsal_push_new_object();
@@ -1233,22 +1239,23 @@ js_DirectoryStream_next(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_DirectoryStream_rewind(jsal_ref_t* me, int num_args, bool is_ctor)
+js_DirectoryStream_rewind(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	directory_t* stream;
 
-	stream = jsal_require_class_obj(0, "DirectoryStream");
+	jsal_push_this();
+	stream = jsal_require_class_obj(-1, "DirectoryStream");
 
 	directory_rewind(stream);
 	return false;
 }
 
 static bool
-js_FS_createDirectory(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_createDirectory(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 
-	name = jsal_require_pathname(1, NULL);
+	name = jsal_require_pathname(0, NULL);
 
 	if (fs_mkdir(s_build->fs, name) != 0)
 		jsal_error_blame(-1, JS_ERROR, "unable to create directory");
@@ -1256,11 +1263,11 @@ js_FS_createDirectory(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FS_deleteFile(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_deleteFile(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 
-	filename = jsal_require_pathname(1, NULL);
+	filename = jsal_require_pathname(0, NULL);
 
 	if (!fs_unlink(s_build->fs, filename))
 		jsal_error_blame(-1, JS_ERROR, "unable to delete file", filename);
@@ -1268,50 +1275,50 @@ js_FS_deleteFile(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FS_directoryExists(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_directoryExists(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* dirname;
 
-	dirname = jsal_require_pathname(1, NULL);
+	dirname = jsal_require_pathname(0, NULL);
 
 	jsal_push_boolean(fs_dir_exists(s_build->fs, dirname));
 	return true;
 }
 
 static bool
-js_FS_fileExists(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_fileExists(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 
-	filename = jsal_require_pathname(1, NULL);
+	filename = jsal_require_pathname(0, NULL);
 
 	jsal_push_boolean(fs_fexist(s_build->fs, filename));
 	return true;
 }
 
 static bool
-js_FS_fullPath(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_fullPath(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	const char* origin_pathname = NULL;
 
 	if (num_args >= 2)
-		origin_pathname = jsal_require_pathname(2, NULL);
-	filename = jsal_require_pathname(1, origin_pathname);
+		origin_pathname = jsal_require_pathname(1, NULL);
+	filename = jsal_require_pathname(0, origin_pathname);
 
 	jsal_push_string(filename);
 	return true;
 }
 
 static bool
-js_FS_readFile(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_readFile(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	lstring_t*  content;
 	void*       file_data;
 	size_t      file_size;
 	const char* filename;
 
-	filename = jsal_require_pathname(1, NULL);
+	filename = jsal_require_pathname(0, NULL);
 
 	if (!(file_data = fs_fslurp(s_build->fs, filename, &file_size)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't read file '%s'", filename);
@@ -1321,14 +1328,14 @@ js_FS_readFile(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FS_relativePath(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_relativePath(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* base_pathname;
 	path_t*     path;
 	const char* pathname;
 
-	pathname = jsal_require_pathname(1, NULL);
-	base_pathname = jsal_require_pathname(2, NULL);
+	pathname = jsal_require_pathname(0, NULL);
+	base_pathname = jsal_require_pathname(1, NULL);
 
 	path = fs_relative_path(pathname, base_pathname);
 	jsal_push_string(path_cstr(path));
@@ -1337,11 +1344,11 @@ js_FS_relativePath(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FS_removeDirectory(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_removeDirectory(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 
-	name = jsal_require_pathname(1, NULL);
+	name = jsal_require_pathname(0, NULL);
 
 	if (!fs_rmdir(s_build->fs, name))
 		jsal_error_blame(-1, JS_ERROR, "directory removal failed");
@@ -1349,13 +1356,13 @@ js_FS_removeDirectory(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FS_rename(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_rename(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* name1;
 	const char* name2;
 
-	name1 = jsal_require_pathname(1, NULL);
-	name2 = jsal_require_pathname(2, NULL);
+	name1 = jsal_require_pathname(0, NULL);
+	name2 = jsal_require_pathname(1, NULL);
 
 	if (!fs_rename(s_build->fs, name1, name2))
 		jsal_error_blame(-1, JS_ERROR, "rename failed", name1, name2);
@@ -1363,13 +1370,13 @@ js_FS_rename(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FS_writeFile(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FS_writeFile(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	lstring_t*  text = NULL;
 
-	filename = jsal_require_pathname(1, NULL);
-	text = jsal_require_lstring_t(2);
+	filename = jsal_require_pathname(0, NULL);
+	text = jsal_require_lstring_t(1);
 
 	if (!fs_fspew(s_build->fs, filename, lstr_cstr(text), lstr_len(text)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't write file '%s'", filename);
@@ -1378,15 +1385,15 @@ js_FS_writeFile(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_new_FileStream(jsal_ref_t* me, int num_args, bool is_ctor)
+js_new_FileStream(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	FILE*        file;
 	enum file_op file_op;
 	const char*  filename;
 	const char*  mode;
 
-	filename = jsal_require_pathname(1, NULL);
-	file_op = jsal_require_int(2);
+	filename = jsal_require_pathname(0, NULL);
+	file_op = jsal_require_int(1);
 
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file-op constant");
@@ -1407,11 +1414,12 @@ js_new_FileStream(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FileStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FileStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	FILE* file;
 
-	file = jsal_require_class_obj(0, "FileStream");
+	jsal_push_this();
+	file = jsal_require_class_obj(-1, "FileStream");
 
 	if (file != NULL)
 		fclose(file);
@@ -1419,11 +1427,12 @@ js_FileStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FileStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FileStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	FILE* file;
 
-	if (!(file = jsal_require_class_obj(0, "FileStream")))
+	jsal_push_this();
+	if (!(file = jsal_require_class_obj(-1, "FileStream")))
 		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
 
 	jsal_push_number(ftell(file));
@@ -1431,12 +1440,13 @@ js_FileStream_get_position(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FileStream_get_fileSize(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FileStream_get_fileSize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	FILE* file;
 	long  file_pos;
 
-	if (!(file = jsal_require_class_obj(0, "FileStream")))
+	jsal_push_this();
+	if (!(file = jsal_require_class_obj(-1, "FileStream")))
 		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
 
 	file_pos = ftell(file);
@@ -1447,14 +1457,15 @@ js_FileStream_get_fileSize(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FileStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FileStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	FILE* file;
 	long  new_pos;
 
-	if (!(file = jsal_require_class_obj(0, "FileStream")))
+	jsal_push_this();
+	if (!(file = jsal_require_class_obj(-1, "FileStream")))
 		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
-	new_pos = jsal_require_int(1);
+	new_pos = jsal_require_int(0);
 
 	if (new_pos < 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file position");
@@ -1463,11 +1474,12 @@ js_FileStream_set_position(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FileStream_dispose(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FileStream_dispose(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	FILE* file;
 
-	file = jsal_require_class_obj(0, "FileStream");
+	jsal_push_this();
+	file = jsal_require_class_obj(-1, "FileStream");
 
 	jsal_set_host_data(0, NULL);
 	if (file != NULL)
@@ -1476,15 +1488,9 @@ js_FileStream_dispose(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_FileStream_read(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FileStream_read(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	// FileStream:read([numBytes]);
-	// Reads data from the stream, returning it in an ArrayBuffer.
-	// Arguments:
-	//     numBytes: Optional. The number of bytes to read. If not provided, the
-	//               entire file is read.
-
-	void*  buffer;
+	void*  data_ptr;
 	FILE*  file;
 	int    num_bytes = 0;
 	long   pos;
@@ -1493,7 +1499,8 @@ js_FileStream_read(jsal_ref_t* me, int num_args, bool is_ctor)
 	if (num_args >= 1)
 		num_bytes = jsal_require_int(1);
 
-	if (!(file = jsal_require_class_obj(0, "FileStream")))
+	jsal_push_this();
+	if (!(file = jsal_require_class_obj(-1, "FileStream")))
 		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		pos = ftell(file);
@@ -1503,23 +1510,24 @@ js_FileStream_read(jsal_ref_t* me, int num_args, bool is_ctor)
 	if (num_bytes < 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
 	jsal_push_new_buffer(num_bytes);
-	buffer = jsal_get_buffer(-1, &size);
-	num_bytes = (int)fread(buffer, 1, num_bytes, file);
+	data_ptr = jsal_get_buffer_ptr(-1, &size);
+	num_bytes = (int)fread(data_ptr, 1, num_bytes, file);
 	if (num_args < 1)  // reset file position after whole-file read
 		fseek(file, pos, SEEK_SET);
 	return true;
 }
 
 static bool
-js_FileStream_write(jsal_ref_t* me, int num_args, bool is_ctor)
+js_FileStream_write(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const void* data;
 	FILE*       file;
 	size_t      num_bytes;
 
-	if (!(file = jsal_require_class_obj(0, "FileStream")))
+	jsal_push_this();
+	if (!(file = jsal_require_class_obj(-1, "FileStream")))
 		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
-	data = jsal_require_buffer(1, &num_bytes);
+	data = jsal_require_buffer_ptr(0, &num_bytes);
 
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)
 		jsal_error_blame(-1, JS_ERROR, "failure to write to file");
@@ -1527,12 +1535,12 @@ js_FileStream_write(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_RNG_fromSeed(jsal_ref_t* me, int num_args, bool is_ctor)
+js_RNG_fromSeed(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	uint64_t seed;
 	xoro_t*  xoro;
 
-	seed = (uint64_t)jsal_require_number(1);
+	seed = (uint64_t)jsal_require_number(0);
 
 	xoro = xoro_new(seed);
 	jsal_push_class_obj("RNG", xoro);
@@ -1540,12 +1548,12 @@ js_RNG_fromSeed(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_RNG_fromState(jsal_ref_t* me, int num_args, bool is_ctor)
+js_RNG_fromState(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* state;
 	xoro_t*     xoro;
 
-	state = jsal_require_string(1);
+	state = jsal_require_string(0);
 
 	xoro = xoro_new(0);
 	if (!xoro_set_state(xoro, state)) {
@@ -1557,7 +1565,7 @@ js_RNG_fromState(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_new_RNG(jsal_ref_t* me, int num_args, bool is_ctor)
+js_new_RNG(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	xoro_t* xoro;
 
@@ -1567,23 +1575,25 @@ js_new_RNG(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_RNG_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
+js_RNG_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	xoro_t* xoro;
 
-	xoro = jsal_require_class_obj(0, "RNG");
+	jsal_push_this();
+	xoro = jsal_require_class_obj(-1, "RNG");
 
 	xoro_unref(xoro);
 	return false;
 }
 
 static bool
-js_RNG_get_state(jsal_ref_t* me, int num_args, bool is_ctor)
+js_RNG_get_state(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	char    state[33];
 	xoro_t* xoro;
 
-	xoro = jsal_require_class_obj(0, "RNG");
+	jsal_push_this();
+	xoro = jsal_require_class_obj(-1, "RNG");
 
 	xoro_get_state(xoro, state);
 	jsal_push_string(state);
@@ -1591,13 +1601,14 @@ js_RNG_get_state(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_RNG_set_state(jsal_ref_t* me, int num_args, bool is_ctor)
+js_RNG_set_state(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	const char* state;
 	xoro_t*     xoro;
 
-	xoro = jsal_require_class_obj(0, "RNG");
-	state = jsal_require_string(1);
+	jsal_push_this();
+	xoro = jsal_require_class_obj(-1, "RNG");
+	state = jsal_require_string(0);
 
 	if (!xoro_set_state(xoro, state))
 		jsal_error_blame(-1, JS_TYPE_ERROR, "invalid RNG state string");
@@ -1605,60 +1616,64 @@ js_RNG_set_state(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_RNG_next(jsal_ref_t* me, int num_args, bool is_ctor)
+js_RNG_next(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	xoro_t*     xoro;
 
-	xoro = jsal_require_class_obj(0, "RNG");
+	jsal_push_this();
+	xoro = jsal_require_class_obj(-1, "RNG");
 
 	jsal_push_number(xoro_gen_double(xoro));
 	return true;
 }
 
 static bool
-js_Target_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
+js_Target_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	target_t* target;
 
-	target = jsal_require_class_obj(0, "Target");
+	jsal_push_this();
+	target = jsal_require_class_obj(-1, "Target");
 
 	target_free(target);
 	return false;
 }
 
 static bool
-js_Target_get_fileName(jsal_ref_t* me, int num_args, bool is_ctor)
+js_Target_get_fileName(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	target_t* target;
 
-	target = jsal_require_class_obj(0, "Target");
+	jsal_push_this();
+	target = jsal_require_class_obj(-1, "Target");
 
 	jsal_push_string(path_cstr(target_path(target)));
 	return true;
 }
 
 static bool
-js_Target_get_name(jsal_ref_t* me, int num_args, bool is_ctor)
+js_Target_get_name(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	target_t* target;
 
-	target = jsal_require_class_obj(0, "Target");
+	jsal_push_this();
+	target = jsal_require_class_obj(-1, "Target");
 
 	jsal_push_string(path_cstr(target_name(target)));
 	return true;
 }
 
 static bool
-js_new_Tool(jsal_ref_t* me, int num_args, bool is_ctor)
+js_new_Tool(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	tool_t*     tool;
 	const char* verb = "building";
 
-	jsal_require_function(1);
+	jsal_require_function(0);
 	if (num_args >= 2)
-		verb = jsal_require_string(2);
+		verb = jsal_require_string(1);
 
-	jsal_dup(1);
+	jsal_dup(0);
 	tool = tool_new(verb);
 	
 	jsal_push_class_obj("Tool", tool);
@@ -1666,18 +1681,19 @@ js_new_Tool(jsal_ref_t* me, int num_args, bool is_ctor)
 }
 
 static bool
-js_Tool_finalize(jsal_ref_t* me, int num_args, bool is_ctor)
+js_Tool_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	tool_t* tool;
 
-	tool = jsal_require_class_obj(0, "Tool");
+	jsal_push_this();
+	tool = jsal_require_class_obj(-1, "Tool");
 
 	tool_unref(tool);
 	return false;
 }
 
 static bool
-js_Tool_stage(jsal_ref_t* me, int num_args, bool is_ctor)
+js_Tool_stage(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	int       length;
 	path_t*   name;
@@ -1688,15 +1704,16 @@ js_Tool_stage(jsal_ref_t* me, int num_args, bool is_ctor)
 
 	int i;
 
-	tool = jsal_require_class_obj(0, "Tool");
-	out_path = path_new(jsal_require_string(1));
-	jsal_require_array(2);
+	jsal_push_this();
+	tool = jsal_require_class_obj(-1, "Tool");
+	out_path = path_new(jsal_require_string(0));
+	jsal_require_array(1);
 	if (num_args >= 3)
-		jsal_require_object_coercible(3);
+		jsal_require_object_coercible(2);
 
 	name = path_new(path_filename(out_path));
 	if (num_args >= 3) {
-		if (jsal_get_prop_string(3, "name")) {
+		if (jsal_get_prop_string(2, "name")) {
 			path_free(name);
 			name = path_new(jsal_require_string(-1));
 		}
@@ -1704,9 +1721,9 @@ js_Tool_stage(jsal_ref_t* me, int num_args, bool is_ctor)
 	}
 
 	target = target_new(name, s_build->fs, out_path, tool, s_build->timestamp, true);
-	length = jsal_get_length(2);
+	length = jsal_get_length(1);
 	for (i = 0; i < length; ++i) {
-		jsal_get_prop_index(2, i);
+		jsal_get_prop_index(1, i);
 		source = jsal_require_class_obj(-1, "Target");
 		target_add_source(target, source);
 		jsal_pop(1);

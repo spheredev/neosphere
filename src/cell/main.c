@@ -64,7 +64,7 @@ main(int argc, char* argv[])
 	printf("\n");
 
 	build = build_new(s_in_path, s_out_path);
-	if (!build_eval(build, "Cellscript.mjs") && !build_eval(build, "Cellscript.js"))
+	if (!build_eval(build, "$/Cellscript.mjs") && !build_eval(build, "$/Cellscript.js"))
 		goto shutdown;
 	if (s_want_clean)
 		build_clean(build);

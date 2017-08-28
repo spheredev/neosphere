@@ -153,7 +153,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-</Command>
+xcopy /y /d /e /f "lib64\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -175,7 +175,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-</Command>
+xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
@@ -206,7 +206,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-</Command>
+xcopy /y /d /e /f "lib64\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
@@ -237,7 +237,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-</Command>
+xcopy /y /d /e /f "lib64\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
@@ -268,7 +268,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-</Command>
+xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
@@ -299,7 +299,7 @@
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
-</Command>
+xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -58,6 +58,7 @@ struct function
 {
 	jsal_callback_t callback;
 	bool            ctor_only;
+	int             magic;
 	int             min_args;
 };
 
@@ -90,6 +91,7 @@ static JsRuntimeHandle s_js_runtime = NULL;
 static JsValueRef      s_stash;
 static vector_t*       s_stack;
 static int             s_stack_base;
+static JsValueRef      s_this_value = NULL;
 
 bool
 jsal_init(void)
@@ -331,7 +333,7 @@ jsal_get_boolean(int at_index)
 }
 
 void*
-jsal_get_buffer(int at_index, size_t *out_size)
+jsal_get_buffer_ptr(int at_index, size_t *out_size)
 {
 	unsigned int  size;
 	JsValueType   type;
@@ -346,7 +348,8 @@ jsal_get_buffer(int at_index, size_t *out_size)
 		JsGetArrayBufferStorage(value_ref, &value, &size);
 	else
 		return NULL;
-	*out_size = size;
+	if (out_size != NULL)
+		*out_size = size;
 	return value;
 }
 
@@ -742,7 +745,7 @@ jsal_push_boolean(bool value)
 }
 
 int
-jsal_push_constructor(jsal_callback_t callback, const char* name, int min_args)
+jsal_push_constructor(jsal_callback_t callback, const char* name, int min_args, int magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
@@ -751,6 +754,7 @@ jsal_push_constructor(jsal_callback_t callback, const char* name, int min_args)
 	function_data = calloc(1, sizeof(struct function));
 	function_data->callback = callback;
 	function_data->ctor_only = true;
+	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
 	JsCreateNamedFunction(name_string, do_native_call, function_data, &function);
@@ -772,7 +776,7 @@ jsal_push_eval(const char* source)
 }
 
 int
-jsal_push_function(jsal_callback_t callback, const char* name, int min_args)
+jsal_push_function(jsal_callback_t callback, const char* name, int min_args, int magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
@@ -780,6 +784,7 @@ jsal_push_function(jsal_callback_t callback, const char* name, int min_args)
 	
 	function_data = calloc(1, sizeof(struct function));
 	function_data->callback = callback;
+	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
 	JsCreateNamedFunction(name_string, do_native_call, function_data, &function);
@@ -975,6 +980,14 @@ jsal_push_string(const char* value)
 }
 
 int
+jsal_push_this(void)
+{
+	if (s_this_value == JS_INVALID_REFERENCE)
+		jsal_error(JS_REF_ERROR, "no known 'this' binding");
+	return push_value(s_this_value);
+}
+
+int
 jsal_push_undefined(void)
 {
 	JsValueRef ref;
@@ -1095,7 +1108,7 @@ jsal_require_boolean(int at_index)
 }
 
 void*
-jsal_require_buffer(int at_index, size_t *out_size)
+jsal_require_buffer_ptr(int at_index, size_t *out_size)
 {
 	if (!jsal_is_buffer(at_index)) {
 		jsal_dup(at_index);
@@ -1103,7 +1116,7 @@ jsal_require_buffer(int at_index, size_t *out_size)
 		jsal_remove(-2);
 		jsal_throw();
 	}
-	return jsal_get_buffer(at_index, out_size);
+	return jsal_get_buffer_ptr(at_index, out_size);
 }
 
 void
@@ -1360,6 +1373,35 @@ jsal_to_string(int at_index)
 }
 
 bool
+jsal_try(jsal_callback_t callback, int num_args)
+{
+	/* [ ... arg1..argN ] -> [ .. retval ] */
+
+	jmp_buf    label;
+	int        last_stack_base;
+	JsValueRef result;
+	bool       retval = true;
+
+	last_stack_base = s_stack_base;
+	s_stack_base = vector_len(s_stack) - num_args;
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		if (!callback(NULL, num_args, false, 0))
+			jsal_push_undefined();
+		result = pop_value();
+		vector_pop(s_catch_stack, 1);
+	}
+	else {
+		result = pop_value();
+		retval = false;
+	}
+	vector_resize(s_stack, s_stack_base);
+	s_stack_base = last_stack_base;
+	push_value(result);
+	return retval;
+}
+
+bool
 jsal_try_call(int num_args)
 {
 	/* [ ... function arg1..argN ] -> [ .. retval ] */
@@ -1565,6 +1607,7 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	struct function* function_data;
 	bool             has_return;
 	int              last_stack_base;
+	JsValueRef       last_this_value;
 	jmp_buf          label;
 	JsValueRef       retval = JS_INVALID_REFERENCE;
 
@@ -1573,9 +1616,11 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	function_data = userdata;
 
 	last_stack_base = s_stack_base;
+	last_this_value = s_this_value;
 	s_stack_base = vector_len(s_stack);
+	s_this_value = argv[0];
 	callee_ref = make_ref(callee);
-	for (i = 0; i < argc; ++i)
+	for (i = 1; i < argc; ++i)
 		push_value(argv[i]);
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
@@ -1589,7 +1634,7 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 			jsal_get_prop_string(-1, "name");
 			jsal_error(JS_TYPE_ERROR, "too few arguments for '%s()'", jsal_to_string(-1));
 		}
-		has_return = function_data->callback(callee_ref, argc - 1, is_ctor);
+		has_return = function_data->callback(callee_ref, argc - 1, is_ctor, function_data->magic);
 		if (has_return)
 			retval = pop_value();
 		vector_pop(s_catch_stack, 1);
@@ -1603,6 +1648,7 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	}
 	free_ref(callee_ref);
 	vector_resize(s_stack, s_stack_base);
+	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
 	return retval;
 }
@@ -1612,17 +1658,19 @@ finalize_object(void* userdata)
 {
 	JsValueRef	   exception;
 	jmp_buf        label;
+	int            last_stack_base;
+	JsValueRef     last_this_value;
 	struct object* object_info;
-	int            old_stack_base;
 
 	object_info = userdata;
-	old_stack_base = s_stack_base;
+	last_stack_base = s_stack_base;
+	last_this_value = s_this_value;
 	s_stack_base = vector_len(s_stack);
-	push_value(object_info->object);
+	s_this_value = object_info->object;
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		if (object_info->finalizer != NULL)
-			object_info->finalizer(NULL, 0, false);
+			object_info->finalizer(NULL, 0, false, 0);
 		vector_pop(s_catch_stack, 1);
 	}
 	else {
@@ -1630,7 +1678,8 @@ finalize_object(void* userdata)
 		JsSetException(exception);
 	}
 	vector_resize(s_stack, s_stack_base);
-	s_stack_base = old_stack_base;
+	s_this_value = last_this_value;
+	s_stack_base = last_stack_base;
 	free(object_info);
 }
 
