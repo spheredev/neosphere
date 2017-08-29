@@ -1493,7 +1493,9 @@ js_DirectoryStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magi
 {
 	directory_t* directory;
 
-	directory = jsal_require_class_obj(0, "DirectoryStream");
+	jsal_push_this();
+	directory = jsal_require_class_obj(-1, "DirectoryStream");
+
 	directory_close(directory);
 	return false;
 }
@@ -1866,7 +1868,8 @@ js_FileStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	file_t* file;
 
-	file = jsal_require_class_obj(0, "FileStream");
+	jsal_push_this();
+	file = jsal_require_class_obj(-1, "FileStream");
 
 	file_close(file);
 	return false;
@@ -2026,7 +2029,9 @@ js_Font_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	font_t* font;
 
-	font = jsal_require_class_obj(0, "Font");
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, "Font");
+
 	font_unref(font);
 	return false;
 }
@@ -2196,7 +2201,9 @@ js_IndexList_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	ibo_t* ibo;
 
-	ibo = jsal_require_class_obj(0, "IndexList");
+	jsal_push_this();
+	ibo = jsal_require_class_obj(-1, "IndexList");
+	
 	ibo_unref(ibo);
 	return false;
 }
@@ -2206,7 +2213,8 @@ js_JobToken_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	int64_t* token;
 
-	token = jsal_require_class_obj(0, "JobToken");
+	jsal_push_this();
+	token = jsal_require_class_obj(-1, "JobToken");
 
 	free(token);
 	return false;
@@ -2254,7 +2262,9 @@ js_Joystick_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	int* device;
 
-	device = jsal_require_class_obj(0, "Joystick");
+	jsal_push_this();
+	device = jsal_require_class_obj(-1, "Joystick");
+
 	free(device);
 	return false;
 }
@@ -2528,7 +2538,9 @@ js_Mixer_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	mixer_t* mixer;
 
-	mixer = jsal_require_class_obj(0, "Mixer");
+	jsal_push_this();
+	mixer = jsal_require_class_obj(-1, "Mixer");
+
 	mixer_unref(mixer);
 	return false;
 }
@@ -2563,7 +2575,7 @@ static bool
 js_new_Model(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	model_t*  group;
-	size_t    num_shapes;
+	int       num_shapes;
 	shader_t* shader;
 	shape_t*  shape;
 
@@ -2593,7 +2605,9 @@ js_Model_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	model_t* group;
 
-	group = jsal_require_class_obj(0, "Model");
+	jsal_push_this();
+	group = jsal_require_class_obj(-1, "Model");
+
 	model_unref(group);
 	return false;
 }
@@ -3007,7 +3021,8 @@ js_RNG_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	xoro_t* xoro;
 
-	xoro = jsal_require_class_obj(0, "RNG");
+	jsal_push_this();
+	xoro = jsal_require_class_obj(-1, "RNG");
 
 	xoro_unref(xoro);
 	return false;
@@ -3087,7 +3102,9 @@ js_Sample_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 
-	sample = jsal_require_class_obj(0, "Sample");
+	jsal_push_this();
+	sample = jsal_require_class_obj(-1, "Sample");
+
 	sample_unref(sample);
 	return false;
 }
@@ -3172,7 +3189,9 @@ js_Server_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	server_t* server;
 
-	server = jsal_require_class_obj(0, "Server");
+	jsal_push_this();
+	server = jsal_require_class_obj(-1, "Server");
+
 	server_unref(server);
 	return false;
 }
@@ -3257,7 +3276,10 @@ js_new_Shader(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Shader_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	shader_t* shader = jsal_require_class_obj(0, "Shader");
+	shader_t* shader;
+	
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, "Shader");
 
 	shader_unref(shader);
 	return false;
@@ -3298,7 +3320,9 @@ js_Shape_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	shape_t* shape;
 
-	shape = jsal_require_class_obj(0, "Shape");
+	jsal_push_this();
+	shape = jsal_require_class_obj(-1, "Shape");
+
 	shape_unref(shape);
 	return false;
 }
@@ -3436,7 +3460,8 @@ js_Socket_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	socket_t* socket;
 
-	socket = jsal_require_class_obj(0, "Socket");
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, "Socket");
 
 	socket_unref(socket);
 	return false;
@@ -3593,7 +3618,9 @@ js_Sound_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
-	sound = jsal_require_class_obj(0, "Sound");
+	jsal_push_this();
+	sound = jsal_require_class_obj(-1, "Sound");
+
 	sound_unref(sound);
 	return false;
 }
@@ -3834,7 +3861,9 @@ js_SoundStream_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	stream_t* stream;
 
-	stream = jsal_require_class_obj(0, "SoundStream");
+	jsal_push_this();
+	stream = jsal_require_class_obj(-1, "SoundStream");
+
 	stream_unref(stream);
 	return false;
 }
@@ -3946,7 +3975,9 @@ js_Surface_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
-	image = jsal_require_class_obj(0, "Surface");
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, "Surface");
+
 	image_unref(image);
 	return false;
 }
@@ -4103,7 +4134,9 @@ js_Texture_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
-	image = jsal_require_class_obj(0, "Texture");
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, "Texture");
+
 	image_unref(image);
 	return false;
 }
@@ -4163,7 +4196,8 @@ js_Transform_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	transform_t* transform;
 
-	transform = jsal_require_class_obj(0, "Transform");
+	jsal_push_this();
+	transform = jsal_require_class_obj(-1, "Transform");
 
 	transform_unref(transform);
 	return false;
@@ -4435,7 +4469,9 @@ js_VertexList_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	vbo_t* vbo;
 
-	vbo = jsal_require_class_obj(0, "VertexList");
+	jsal_push_this();
+	vbo = jsal_require_class_obj(-1, "VertexList");
+
 	vbo_unref(vbo);
 	return false;
 }

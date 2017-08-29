@@ -6,10 +6,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include "jsal.h"
+#include "vector.h"
+
+struct class_info
+{
+	jsal_callback_t finalizer;
+	char*           name;
+};
+
+static vector_t* s_classes;
 
 void
-api_init()
+api_init(void)
 {
+	s_classes = vector_new(sizeof(struct class_info));
+	
 	// JavaScript 'global' binding (like Node.js)
 	// also map global `exports` to the global object, as TypeScript likes to add
 	// exports even when compiling scripts as program code.
@@ -28,6 +39,21 @@ api_init()
 	jsal_push_new_object();
 	jsal_put_prop_string(-2, "prototypes");
 	jsal_pop(1);
+}
+
+void
+api_uninit(void)
+{
+	struct class_info* class_info;
+	
+	iter_t iter;
+
+	iter = vector_enum(s_classes);
+	while (iter_next(&iter)) {
+		class_info = iter.ptr;
+		free(class_info->name);
+	}
+	vector_free(s_classes);
 }
 
 void
@@ -74,6 +100,12 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
 
+	struct class_info class_info;
+
+	class_info.name = strdup(name);
+	class_info.finalizer = finalizer;
+	vector_push(s_classes, &class_info);
+
 	// construct a prototype for the new class, leaving it on the
 	// value stack afterwards.
 	jsal_push_new_object();
@@ -81,12 +113,6 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 	jsal_push_string(name);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, "___internalClass");
-	if (finalizer != NULL) {
-		jsal_push_eval("({ writable: false, enumerable: false, configurable: false })");
-		jsal_push_function(finalizer, "finalize", 0, 0);
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "___finalizer");
-	}
 
 	// save the prototype to the hidden stash.  this ensures it remains accessible
 	// internally even if the constructor is overwritten.
@@ -288,17 +314,6 @@ jsal_error_blame(int blame_offset, js_error_type_t type, const char* format, ...
 	jsal_throw();
 }
 
-int
-jsal_push_class_prototype(const char* class_name)
-{
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "prototypes");
-	jsal_get_prop_string(-1, class_name);
-	jsal_remove(-2);
-	jsal_remove(-2);
-	return jsal_get_top() - 1;
-}
-
 bool
 jsal_is_class_obj(int index, const char* class_name)
 {
@@ -318,9 +333,22 @@ jsal_is_class_obj(int index, const char* class_name)
 int
 jsal_push_class_obj(const char* class_name, void* udata)
 {
-	int index;
+	struct class_info* class_info;
+	jsal_callback_t    finalizer = NULL;
+	int                index;
+	
+	iter_t iter;
+
+	iter = vector_enum(s_classes);
+	while (iter_next(&iter)) {
+		class_info = iter.ptr;
+		if (strcmp(class_name, class_info->name) == 0)
+			finalizer = class_info->finalizer;
+	}
 	
 	index = jsal_push_new_host_object(udata, NULL);
+	if (finalizer != NULL)
+		jsal_set_finalizer(-1, finalizer);
 
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "prototypes");
@@ -329,6 +357,17 @@ jsal_push_class_obj(const char* class_name, void* udata)
 	jsal_pop(2);
 
 	return index;
+}
+
+int
+jsal_push_class_prototype(const char* class_name)
+{
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "prototypes");
+	jsal_get_prop_string(-1, class_name);
+	jsal_remove(-2);
+	jsal_remove(-2);
+	return jsal_get_top() - 1;
 }
 
 void*

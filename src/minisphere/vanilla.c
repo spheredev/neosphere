@@ -4464,7 +4464,7 @@ static bool
 js_LineSeries(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	color_t         color;
-	size_t          num_points;
+	int             num_points;
 	int             type;
 	int             x, y;
 	ALLEGRO_VERTEX* vertices;
@@ -6297,7 +6297,9 @@ js_Animation_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	animation_t* anim;
 
-	anim = jsal_require_class_obj(0, "ssAnimation");
+	jsal_push_this();
+	anim = jsal_require_class_obj(-1, "ssAnimation");
+
 	animation_unref(anim);
 	return false;
 }
@@ -6406,7 +6408,9 @@ js_ByteArray_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;
 
-	array = jsal_require_class_obj(0, "ssByteArray");
+	jsal_push_this();
+	array = jsal_require_class_obj(-1, "ssByteArray");
+
 	bytearray_unref(array);
 	return false;
 }
@@ -6551,7 +6555,9 @@ js_File_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	kev_file_t* file;
 
-	file = jsal_require_class_obj(0, "ssFile");
+	jsal_push_this();
+	file = jsal_require_class_obj(-1, "ssFile");
+
 	kev_close(file);
 	return false;
 }
@@ -6676,7 +6682,9 @@ js_Font_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	font_t* font;
 
-	font = jsal_require_class_obj(0, "ssFont");
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, "ssFont");
+
 	font_unref(font);
 	return false;
 }
@@ -6944,7 +6952,9 @@ js_Image_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
-	image = jsal_require_class_obj(0, "ssImage");
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, "ssImage");
+
 	image_unref(image);
 	return false;
 }
@@ -7223,7 +7233,9 @@ js_Logger_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	logger_t* logger;
 
-	logger = jsal_require_class_obj(0, "ssLogger");
+	jsal_push_this();
+	logger = jsal_require_class_obj(-1, "ssLogger");
+
 	logger_unref(logger);
 	return false;
 }
@@ -7278,8 +7290,11 @@ js_RawFile_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	file_t* file;
 
-	file = jsal_require_class_obj(0, "ssRawFile");
-	if (file != NULL) file_close(file);
+	jsal_push_this();
+	file = jsal_require_class_obj(-1, "ssRawFile");
+
+	if (file != NULL)
+		file_close(file);
 	return false;
 }
 
@@ -7423,7 +7438,9 @@ js_Socket_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	socket_v1_t* socket;
 
-	socket = jsal_require_class_obj(0, "ssSocket");
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, "ssSocket");
+
 	socket_v1_unref(socket);
 	return true;
 }
@@ -7537,7 +7554,9 @@ js_Sound_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
-	sound = jsal_require_class_obj(0, "ssSound");
+	jsal_push_this();
+	sound = jsal_require_class_obj(-1, "ssSound");
+
 	sound_unref(sound);
 	return false;
 }
@@ -7774,7 +7793,8 @@ js_SoundEffect_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 
-	sample = jsal_require_class_obj(0, "ssSoundEffect");
+	jsal_push_this();
+	sample = jsal_require_class_obj(-1, "ssSoundEffect");
 
 	sample_unref(sample);
 	return false;
@@ -7894,7 +7914,8 @@ js_Spriteset_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	spriteset_t* spriteset;
 
-	spriteset = jsal_require_class_obj(0, "ssSpriteset");
+	jsal_push_this();
+	spriteset = jsal_require_class_obj(-1, "ssSpriteset");
 
 	spriteset_unref(spriteset);
 	return false;
@@ -7962,7 +7983,9 @@ js_Surface_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
-	image = jsal_require_class_obj(0, "ssSurface");
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, "ssSurface");
+
 	image_unref(image);
 	return false;
 }
@@ -9118,7 +9141,9 @@ js_WindowStyle_finalize(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	windowstyle_t* winstyle;
 
-	winstyle = jsal_require_class_obj(0, "ssWindowStyle");
+	jsal_push_this();
+	winstyle = jsal_require_class_obj(-1, "ssWindowStyle");
+
 	winstyle_unref(winstyle);
 	return false;
 }

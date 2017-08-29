@@ -103,7 +103,6 @@ jsal_init(void)
 		goto on_error;
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
-	JsAddRef(s_js_context, NULL);
 	JsSetCurrentContext(s_js_context);
 
 	// set up the stash, used to store JS values behind the scenes.
@@ -136,12 +135,9 @@ jsal_uninit(void)
 		value = *(JsValueRef*)iter.ptr;
 		JsRelease(value, NULL);
 	}
+	JsRelease(s_stash, NULL);
 	vector_free(s_stack);
 	vector_free(s_catch_stack);
-	JsRelease(s_stash, NULL);
-	JsSetCurrentContext(JS_INVALID_REFERENCE);
-	JsRelease(s_js_context, NULL);
-	JsDisposeRuntime(s_js_runtime);
 }
 
 void
@@ -922,7 +918,7 @@ jsal_push_new_host_object(void* data, jsal_callback_t finalizer)
 	struct object* object_info;
 
 	object_info = calloc(1, sizeof(struct object));
-	JsCreateExternalObject(object_info, NULL, &object);
+	JsCreateExternalObject(object_info, finalize_object, &object);
 
 	object_info->data = data;
 	object_info->finalizer = finalizer;
@@ -995,7 +991,7 @@ jsal_push_string(const char* value)
 {
 	JsValueRef ref;
 
-	JsCreateString(value, strlen(value), &ref);
+	JsErrorCode ec = JsCreateString(value, strlen(value), &ref);
 	return push_value(ref);
 }
 
