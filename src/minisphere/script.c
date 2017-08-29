@@ -44,7 +44,7 @@ struct script
 	unsigned int  refcount;
 	unsigned int  id;
 	bool          is_in_use;
-	void*         function;
+	js_ref_t*     function;
 };
 
 static int s_next_script_id = 1;
@@ -115,10 +115,10 @@ on_error:
 script_t*
 script_new(const lstring_t* source, const char* fmt_name, ...)
 {
-	va_list     ap;
-	jsal_ref_t* function;
-	lstring_t*  name;
-	script_t*   script;
+	va_list    ap;
+	js_ref_t*  function;
+	lstring_t* name;
+	script_t*  script;
 
 	va_start(ap, fmt_name);
 	name = lstr_vnewf(fmt_name, ap);
@@ -145,8 +145,8 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 script_t*
 script_new_func(int idx)
 {
-	jsal_ref_t* function;
-	script_t*   script;
+	js_ref_t* function;
+	script_t* script;
 
 	idx = jsal_normalize_index(idx);
 	jsal_require_function(idx);

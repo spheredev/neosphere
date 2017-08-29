@@ -47,8 +47,8 @@ struct tool
 tool_t*
 tool_new(const char* verb)
 {
-	jsal_ref_t* callback_ptr;
-	tool_t*     tool;
+	js_ref_t* callback_ptr;
+	tool_t*   tool;
 
 	callback_ptr = jsal_ref(-1);
 	jsal_pop(1);

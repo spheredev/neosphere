@@ -49,7 +49,7 @@
 #include "lstring.h"
 #include "vector.h"
 
-struct jsal_ref
+struct js_ref
 {
 	JsValueRef value;
 };
@@ -76,10 +76,10 @@ int vasprintf (char* *out, const char* format, va_list ap);
 
 static JsValueRef CHAKRA_CALLBACK do_native_call   (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
 static void CHAKRA_CALLBACK       finalize_object  (void* userdata);
-static void                       free_ref         (jsal_ref_t* ref);
+static void                       free_ref         (js_ref_t* ref);
 static JsValueRef                 get_value        (int stack_index);
 static JsPropertyIdRef            make_property_id (JsValueRef key_value);
-static jsal_ref_t*                make_ref         (JsValueRef value);
+static js_ref_t*                make_ref         (JsValueRef value);
 static JsValueRef                 pop_value        (void);
 static int                        push_value       (JsValueRef value);
 static void                       resize_stack     (int new_size);
@@ -314,6 +314,35 @@ jsal_error_va(js_error_type_t type, const char* format, va_list ap)
 {
 	jsal_push_new_error_va(type, format, ap);
 	jsal_throw();
+}
+
+void
+jsal_eval_module(const char* filename)
+{
+	/* [ ... source ] -> [ .. exports ] */
+
+	JsErrorCode    error_code;
+	JsValueRef     exception;
+	JsModuleRecord module;
+	JsValueRef     result;
+	JsValueRef     source;
+	size_t         source_len;
+	const wchar_t* source_ptr;
+	JsValueRef     url_string;
+
+	source = pop_value();
+	JsStringToPointer(source, &source_ptr, &source_len);
+	JsCreateString(filename, strlen(filename), &url_string);
+	JsInitializeModuleRecord(NULL, url_string, &module);
+	error_code = JsParseModuleSource(module,
+		JS_SOURCE_CONTEXT_NONE, (BYTE*)source_ptr, (unsigned int)source_len,
+		JsParseModuleSourceFlags_DataIsUTF16LE, &exception);
+	if (error_code = JsErrorScriptCompile)
+		throw_value(exception);
+	JsModuleEvaluation(module, &result);
+	throw_if_error();
+
+	push_value(result);
 }
 
 void
@@ -966,7 +995,7 @@ jsal_push_number(double value)
 }
 
 int
-jsal_push_ref(jsal_ref_t* ref)
+jsal_push_ref(js_ref_t* ref)
 {
 	return push_value(ref->value);
 }
@@ -1063,16 +1092,16 @@ jsal_put_prop_string(int object_index, const char* name)
 	jsal_put_prop(object_index);
 }
 
-jsal_ref_t*
+js_ref_t*
 jsal_ref(int at_index)
 {
-	jsal_ref_t*  ref;
+	js_ref_t*  ref;
 	JsValueRef value;
 
 	value = get_value(at_index);
 	JsAddRef(value, NULL);
 
-	ref = calloc(1, sizeof(jsal_ref_t));
+	ref = calloc(1, sizeof(js_ref_t));
 	ref->value = value;
 	return ref;
 }
@@ -1489,6 +1518,24 @@ jsal_try_construct(int num_args)
 }
 
 bool
+jsal_try_eval_module(const char* filename)
+{
+	/* [ ... source ] -> [ .. exports ] */
+
+	jmp_buf label;
+
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		jsal_eval_module(filename);
+		vector_pop(s_catch_stack, 1);
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+bool
 jsal_try_parse(int at_index)
 {
 	jmp_buf label;
@@ -1505,7 +1552,7 @@ jsal_try_parse(int at_index)
 }
 
 void
-jsal_unref(jsal_ref_t* ref)
+jsal_unref(js_ref_t* ref)
 {
 	JsRelease(ref->value, NULL);
 	free(ref);
@@ -1526,7 +1573,7 @@ throw_if_error(void)
 }
 
 static void
-free_ref(jsal_ref_t* ref)
+free_ref(js_ref_t* ref)
 {
 	JsRelease(ref->value, NULL);
 	free(ref);
@@ -1561,14 +1608,14 @@ make_property_id(JsValueRef key)
 	return ref;
 }
 
-jsal_ref_t*
+js_ref_t*
 make_ref(JsValueRef value)
 {
-	jsal_ref_t* ref;
+	js_ref_t* ref;
 	
 	JsAddRef(value, NULL);
 
-	ref = calloc(1, sizeof(jsal_ref_t));
+	ref = calloc(1, sizeof(js_ref_t));
 	ref->value = value;
 	return ref;
 }
@@ -1643,7 +1690,7 @@ throw_value(JsValueRef value)
 static JsValueRef CHAKRA_CALLBACK
 do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
 {
-	jsal_ref_t*      callee_ref;
+	js_ref_t*      callee_ref;
 	JsValueRef       exception;
 	struct function* function_data;
 	bool             has_return;

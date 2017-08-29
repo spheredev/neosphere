@@ -36,7 +36,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-typedef struct jsal_ref jsal_ref_t;
+typedef struct js_module js_module_t;
+typedef struct js_ref    js_ref_t;
 
 typedef
 enum js_buffer_type
@@ -64,7 +65,7 @@ enum js_error_type
 	JS_URI_ERROR,
 } js_error_type_t;
 
-typedef bool (* jsal_callback_t) (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
+typedef bool (* jsal_callback_t) (js_ref_t* me, int num_args, bool is_ctor, int magic);
 
 bool        jsal_init                     (void);
 void        jsal_uninit                   (void);
@@ -81,6 +82,7 @@ bool        jsal_del_prop_string          (int object_index, const char* name);
 int         jsal_dup                      (int from_index);
 void        jsal_error                    (js_error_type_t type, const char* message, ...);
 void        jsal_error_va                 (js_error_type_t type, const char* message, va_list ap);
+void        jsal_eval_module              (const char* filename);
 void        jsal_gc                       (void);
 bool        jsal_get_boolean              (int at_index);
 void*       jsal_get_buffer_ptr           (int at_index, size_t *out_size);
@@ -135,7 +137,7 @@ int         jsal_push_new_object          (void);
 int         jsal_push_new_symbol          (const char* description);
 int         jsal_push_null                (void);
 int         jsal_push_number              (double value);
-int         jsal_push_ref                 (jsal_ref_t* ref);
+int         jsal_push_ref                 (js_ref_t* ref);
 int         jsal_push_sprintf             (const char* format, ...);
 int         jsal_push_string              (const char* value);
 int         jsal_push_this                (void);
@@ -144,7 +146,7 @@ int         jsal_pull                     (int from_index);
 void        jsal_put_prop                 (int object_index);
 void        jsal_put_prop_index           (int object_index, int name);
 void        jsal_put_prop_string          (int object_index, const char* name);
-jsal_ref_t* jsal_ref                      (int at_index);
+js_ref_t* jsal_ref                      (int at_index);
 void        jsal_remove                   (int at_index);
 bool        jsal_replace                  (int at_index);
 void        jsal_require_array            (int at_index);
@@ -176,7 +178,8 @@ bool        jsal_try_call                 (int num_args);
 bool        jsal_try_call_method          (int num_args);
 bool        jsal_try_compile              (const char* filename);
 bool        jsal_try_construct            (int num_args);
+bool        jsal_try_eval_module          (const char* filename);
 bool        jsal_try_parse                (int at_index);
-void        jsal_unref                    (jsal_ref_t* ref);
+void        jsal_unref                    (js_ref_t* ref);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED

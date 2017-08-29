@@ -774,9 +774,12 @@ file_puts(file_t* it, const char* string)
 size_t
 file_read(file_t* it, void* buf, size_t count, size_t size)
 {
+	size_t num_bytes;
+	
 	switch (it->fs_type) {
 	case FS_LOCAL:
-		return al_fread(it->handle, buf, size * count) / size;
+		num_bytes = al_fread(it->handle, buf, size * count);
+		return size > 0 ? num_bytes / size : 0;
 	case FS_PACKAGE:
 		return asset_fread(buf, size, count, it->asset);
 	default:
@@ -816,10 +819,10 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	//       does the JSON parsing for us yet the JSON manifest loader is STILL more
 	//       complicated than the game.sgm loader.
 
-	jsal_ref_t* error_ref;
-	int         res_x;
-	int         res_y;
-	int         stack_top;
+	js_ref_t* error_ref;
+	int       res_x;
+	int       res_y;
+	int       stack_top;
 
 	stack_top = jsal_get_top();
 
