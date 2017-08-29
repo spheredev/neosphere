@@ -35,6 +35,7 @@
 
 #include "api.h"
 #include "debugger.h"
+#include "jsal.h"
 #include "pegasus.h"
 #include "utility.h"
 
@@ -43,10 +44,10 @@ struct script
 	unsigned int  refcount;
 	unsigned int  id;
 	bool          is_in_use;
-	void*         heapptr;
+	void*         function;
 };
 
-static int s_next_script_id = 0;
+static int s_next_script_id = 1;
 
 void
 scripts_init(void)
@@ -63,15 +64,15 @@ scripts_uninit(void)
 bool
 script_eval(const char* filename, bool as_module)
 {
-	duk_idx_t   duk_top;
 	file_t*     file = NULL;
 	path_t*     path = NULL;
 	const char* source_name;
 	lstring_t*  source_text = NULL;
+	int         stack_top;
 	char*       slurp;
 	size_t      size;
 
-	duk_top = duk_get_top(g_duk);
+	stack_top = jsal_get_top();
 
 	if (as_module) {
 		// the existence check here is needed because eval_module() will segfault if the
@@ -79,7 +80,7 @@ script_eval(const char* filename, bool as_module)
 		// that I'm not up for right now.
 		if (!game_file_exists(g_game, filename))
 			goto on_error;
-		if (!duk_pegasus_eval_module(g_duk, filename))
+		if (!jsal_pegasus_eval_module(filename))
 			goto on_error;
 		return true;
 	}
@@ -92,11 +93,10 @@ script_eval(const char* filename, bool as_module)
 		free(slurp);
 
 		// ready for launch in T-10...9...*munch*
-		duk_push_lstring_t(g_duk, source_text);
-		duk_push_string(g_duk, source_name);
-		if (duk_pcompile(g_duk, DUK_COMPILE_EVAL) != DUK_EXEC_SUCCESS)
+		jsal_push_lstring_t(source_text);
+		if (!jsal_try_compile(source_name))
 			goto on_error;
-		if (duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
+		if (!jsal_try_call(0))
 			goto on_error;
 
 		lstr_free(source_text);
@@ -107,18 +107,18 @@ script_eval(const char* filename, bool as_module)
 on_error:
 	lstr_free(source_text);
 	path_free(path);
-	if (duk_get_top(g_duk) == duk_top)  // note: ugly hack, refactor
-		duk_push_error_object(g_duk, DUK_ERR_ERROR, "script not found `%s`\n", filename);
+	if (jsal_get_top() == stack_top)  // note: ugly hack, refactor
+		jsal_push_new_error(JS_REF_ERROR, "script not found `%s`\n", filename);
 	return false;
 }
 
 script_t*
 script_new(const lstring_t* source, const char* fmt_name, ...)
 {
-	va_list    ap;
-	void*      heapptr;
-	lstring_t* name;
-	script_t*  script;
+	va_list     ap;
+	jsal_ref_t* function;
+	lstring_t*  name;
+	script_t*   script;
 
 	va_start(ap, fmt_name);
 	name = lstr_vnewf(fmt_name, ap);
@@ -129,34 +129,33 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 
 	// compile the source.  Duktape gives us a function back; save its heap pointer so
 	// we can call the script later.
-	duk_push_lstring_t(g_duk, source);
-	duk_push_lstring_t(g_duk, name);
-	duk_compile(g_duk, 0x0);
-	heapptr = duk_ref_heapptr(g_duk, -1);
-	duk_pop(g_duk);
+	jsal_push_lstring_t(source);
+	jsal_compile(lstr_cstr(name));
+	function = jsal_ref(-1);
+	jsal_pop(1);
 
 	debugger_cache_source(lstr_cstr(name), source);
 	lstr_free(name);
 
 	script->id = s_next_script_id++;
-	script->heapptr = heapptr;
+	script->function = function;
 	return script_ref(script);
 }
 
 script_t*
-script_new_func(duk_context* ctx, duk_idx_t idx)
+script_new_func(int idx)
 {
-	void*     heapptr;
-	script_t* script;
+	jsal_ref_t* function;
+	script_t*   script;
 
-	idx = duk_require_normalize_index(ctx, idx);
-	duk_require_function(ctx, idx);
-	heapptr = duk_ref_heapptr(ctx, idx);
+	idx = jsal_normalize_index(idx);
+	jsal_require_function(idx);
+	function = jsal_ref(idx);
 
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;
 	script->id = s_next_script_id++;
-	script->heapptr = heapptr;
+	script->function = function;
 	return script_ref(script);
 }
 
@@ -175,7 +174,7 @@ script_unref(script_t* script)
 
 	console_log(3, "disposing script #%u no longer in use", script->id);
 
-	duk_unref_heapptr(g_duk, script->heapptr);
+	jsal_unref(script->function);
 	free(script);
 }
 
@@ -196,7 +195,7 @@ script_run(script_t* script, bool allow_reentry)
 	}
 	was_in_use = script->is_in_use;
 
-	console_log(4, "executing script #%u", script->id);
+	console_log(3, "executing script #%u", script->id);
 
 	// ref the script in case it gets freed during execution.  the owner
 	// may be destroyed in the process and we don't want to end up crashing.
@@ -204,9 +203,9 @@ script_run(script_t* script, bool allow_reentry)
 
 	// execute the script!
 	script->is_in_use = true;
-	duk_push_heapptr(g_duk, script->heapptr);
-	duk_call(g_duk, 0);
-	duk_pop(g_duk);
+	jsal_push_ref(script->function);
+	jsal_call(0);
+	jsal_pop(1);
 	script->is_in_use = was_in_use;
 
 	script_unref(script);

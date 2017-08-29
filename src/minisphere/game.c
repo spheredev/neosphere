@@ -34,6 +34,7 @@
 #include "game.h"
 
 #include "geometry.h"
+#include "jsal.h"
 #include "kev_file.h"
 #include "package.h"
 
@@ -79,9 +80,9 @@ struct file
 	const char*   path;
 };
 
-static duk_ret_t duk_load_s2gm  (duk_context* ctx, void* udata);
 static vector_t* read_directory (const game_t* game, const char* dirname, bool want_dirs);
 static bool      resolve_path   (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
+static bool      try_load_s2gm  (game_t* game, const lstring_t* json_text);
 
 static unsigned int s_next_game_id = 1;
 
@@ -128,19 +129,21 @@ game_open(const char* game_path)
 		game->resolution = size2(320, 240);
 		game->script_path = path_insert_hop(path_new(path_filename(path)), 0, "@");
 		game->fullscreen = false;
-		duk_push_object(g_duk);
-		duk_push_lstring_t(g_duk, game->name);
-		duk_put_prop_string(g_duk, -2, "name");
-		duk_push_lstring_t(g_duk, game->author);
-		duk_put_prop_string(g_duk, -2, "author");
-		duk_push_lstring_t(g_duk, game->summary);
-		duk_put_prop_string(g_duk, -2, "summary");
-		duk_push_sprintf(g_duk, "%dx%d", game->resolution.width, game->resolution.height);
-		duk_put_prop_string(g_duk, -2, "resolution");
-		duk_push_string(g_duk, path_cstr(game->script_path));
-		duk_put_prop_string(g_duk, -2, "main");
-		game->manifest = lstr_new(duk_json_encode(g_duk, -1));
-		duk_pop(g_duk);
+		jsal_push_new_object();
+		jsal_push_lstring_t(game->name);
+		jsal_put_prop_string(-2, "name");
+		jsal_push_lstring_t(game->author);
+		jsal_put_prop_string(-2, "author");
+		jsal_push_lstring_t(game->summary);
+		jsal_put_prop_string(-2, "summary");
+		jsal_push_sprintf("%dx%d", game->resolution.width, game->resolution.height);
+		jsal_put_prop_string(-2, "resolution");
+		jsal_push_string(path_cstr(game->script_path));
+		jsal_put_prop_string(-2, "main");
+		
+		jsal_stringify(-1);
+		game->manifest = lstr_new(jsal_get_string(-1));
+		jsal_pop(1);
 	}
 	else {  // default case, unpacked game folder
 		game->type = FS_LOCAL;
@@ -154,15 +157,12 @@ game_open(const char* game_path)
 		if (sgm_text = game_read_file(game, "@/game.json", &sgm_size)) {
 			console_log(1, "parsing JSON manifest for game #%u", s_next_game_id);
 			game->manifest = lstr_from_cp1252(sgm_text, sgm_size);
-			duk_push_pointer(g_duk, game);
-			duk_push_lstring_t(g_duk, game->manifest);
-			if (duk_safe_call(g_duk, duk_load_s2gm, NULL, 2, 1) != DUK_EXEC_SUCCESS) {
-				console_log(0, "%s", duk_to_string(g_duk, -1));
+			if (!try_load_s2gm(game, game->manifest)) {
+				console_log(0, "%s", jsal_to_string(-1));
 				console_log(0, "   @ [@/game.json:0]");
-				duk_pop(g_duk);
+				jsal_pop(1);
 				goto on_error;
 			}
-			duk_pop(g_duk);
 			free(sgm_text);
 			sgm_text = NULL;
 		}
@@ -180,19 +180,21 @@ game_open(const char* game_path)
 			kev_close(sgm_file);
 
 			// generate a JSON manifest (used by, e.g., Sphere.Game)
-			duk_push_object(g_duk);
-			duk_push_lstring_t(g_duk, game->name);
-			duk_put_prop_string(g_duk, -2, "name");
-			duk_push_lstring_t(g_duk, game->author);
-			duk_put_prop_string(g_duk, -2, "author");
-			duk_push_lstring_t(g_duk, game->summary);
-			duk_put_prop_string(g_duk, -2, "summary");
-			duk_push_sprintf(g_duk, "%dx%d", game->resolution.width, game->resolution.height);
-			duk_put_prop_string(g_duk, -2, "resolution");
-			duk_push_string(g_duk, path_cstr(game->script_path));
-			duk_put_prop_string(g_duk, -2, "main");
-			game->manifest = lstr_new(duk_json_encode(g_duk, -1));
-			duk_pop(g_duk);
+			jsal_push_new_object();
+			jsal_push_lstring_t(game->name);
+			jsal_put_prop_string(-2, "name");
+			jsal_push_lstring_t(game->author);
+			jsal_put_prop_string(-2, "author");
+			jsal_push_lstring_t(game->summary);
+			jsal_put_prop_string(-2, "summary");
+			jsal_push_sprintf("%dx%d", game->resolution.width, game->resolution.height);
+			jsal_put_prop_string(-2, "resolution");
+			jsal_push_string(path_cstr(game->script_path));
+			jsal_put_prop_string(-2, "main");
+			
+			jsal_stringify(-1);
+			game->manifest = lstr_new(jsal_get_string(-1));
+			jsal_pop(1);
 		}
 		else
 			goto on_error;
@@ -805,72 +807,79 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 	}
 }
 
-static duk_ret_t
-duk_load_s2gm(duk_context* ctx, void* udata)
+static bool
+try_load_s2gm(game_t* game, const lstring_t* json_text)
 {
-	// note: this whole thing needs to be cleaned up.  it's pretty bad when Duktape
+	// note: this whole thing needs to be cleaned up.  it's pretty bad when JSAL
 	//       does the JSON parsing for us yet the JSON manifest loader is STILL more
 	//       complicated than the game.sgm loader.
 
-	// arguments: -2 = game_t* game (pointer)
-	//            -1 = game.json text (string)
+	jsal_ref_t* error_ref;
+	int         res_x;
+	int         res_y;
+	int         stack_top;
 
-	game_t*    game;
-	duk_idx_t  json_idx;
-	int        res_x;
-	int        res_y;
-
-	game = duk_get_pointer(ctx, -2);
-	json_idx = duk_normalize_index(ctx, -1);
+	stack_top = jsal_get_top();
 
 	// load required entries
-	duk_dup(ctx, json_idx);
-	duk_json_decode(ctx, -1);
-	if (!duk_get_prop_string(g_duk, -1, "name") || !duk_is_string(g_duk, -1))
-		goto on_error;
-	game->name = lstr_new(duk_get_string(g_duk, -1));
+	jsal_push_lstring_t(json_text);
+	if (!jsal_try_parse(-1))
+		goto on_json_error;
 
-	if (!duk_get_prop_string(g_duk, -2, "resolution") || !duk_is_string(g_duk, -1))
+	if (!jsal_get_prop_string(-1, "name") || !jsal_is_string(-1))
 		goto on_error;
-	sscanf(duk_get_string(g_duk, -1), "%dx%d", &res_x, &res_y);
+	game->name = lstr_new(jsal_get_string(-1));
+
+	if (!jsal_get_prop_string(-2, "resolution") || !jsal_is_string(-1))
+		goto on_error;
+	sscanf(jsal_get_string(-1), "%dx%d", &res_x, &res_y);
 	game->resolution = size2(res_x, res_y);
 
-	if (!duk_get_prop_string(g_duk, -3, "main") || !duk_is_string(g_duk, -1))
+	if (!jsal_get_prop_string(-3, "main") || !jsal_is_string(-1))
 		goto on_error;
-	game->script_path = game_full_path(game, duk_get_string(g_duk, -1), NULL, false);
+	game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
 	if (!path_hop_is(game->script_path, 0, "@")) {
-		duk_error(g_duk, DUK_ERR_TYPE_ERROR, "illegal SphereFS prefix '%s/' in '%s'", path_hop(game->script_path, 0),
+		jsal_error(JS_TYPE_ERROR, "illegal SphereFS prefix '%s/' in '%s'", path_hop(game->script_path, 0),
 			path_cstr(game->script_path));
 	}
 
 	// game summary is optional, use a default summary if one is not provided.
-	if (duk_get_prop_string(g_duk, -4, "version") && duk_is_number(g_duk, -1))
-		game->version = duk_get_number(g_duk, -1);
+	if (jsal_get_prop_string(-4, "version") && jsal_is_number(-1))
+		game->version = jsal_get_number(-1);
 	else
 		game->version = 2;
 
-	if (duk_get_prop_string(g_duk, -5, "author") && duk_is_string(g_duk, -1))
-		game->author = lstr_new(duk_get_string(g_duk, -1));
+	if (jsal_get_prop_string(-5, "author") && jsal_is_string(-1))
+		game->author = lstr_new(jsal_get_string(-1));
 	else
 		game->author = lstr_new("Author Unknown");
 
-	if (duk_get_prop_string(g_duk, -6, "summary") && duk_is_string(g_duk, -1))
-		game->summary = lstr_new(duk_get_string(g_duk, -1));
+	if (jsal_get_prop_string(-6, "summary") && jsal_is_string(-1))
+		game->summary = lstr_new(jsal_get_string(-1));
 	else
 		game->summary = lstr_new("No information available.");
 
-	if (duk_get_prop_string(g_duk, -7, "saveID") && duk_is_string(g_duk, -1))
-		game->save_id = lstr_new(duk_get_string(g_duk, -1));
+	if (jsal_get_prop_string(-7, "saveID") && jsal_is_string(-1))
+		game->save_id = lstr_new(jsal_get_string(-1));
 
-	if (duk_get_prop_string(g_duk, -8, "fullScreen") && duk_is_boolean(g_duk, -1))
-		game->fullscreen = duk_get_boolean(g_duk, -1);
+	if (jsal_get_prop_string(-8, "fullScreen") && jsal_is_boolean(-1))
+		game->fullscreen = jsal_get_boolean(-1);
 	else
 		game->fullscreen = true;
 
-	return 0;
+	jsal_set_top(stack_top);
+	return true;
+
+on_json_error:
+	error_ref = jsal_ref(-1);
+	jsal_set_top(stack_top);
+	jsal_push_ref(error_ref);
+	return false;
 
 on_error:
-	return -1;
+	jsal_set_top(stack_top);
+	jsal_push_new_error(JS_ERROR, "couldn't load JSON manifest");
+	return false;
 }
 
 static vector_t*

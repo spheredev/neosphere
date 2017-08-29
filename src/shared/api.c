@@ -80,7 +80,7 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 	jsal_push_string(name);
 	jsal_put_prop_string(-2, "___ctor");
 	if (finalizer != NULL) {
-		jsal_push_function(finalizer, "finalize", 0);
+		jsal_push_function(finalizer, "finalize", 0, 0);
 		jsal_put_prop_string(-2, "___dtor");
 	}
 
@@ -93,7 +93,7 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 	jsal_pop(2);
 
 	if (constructor != NULL) {
-		jsal_push_constructor(constructor, name, 0);
+		jsal_push_constructor(constructor, name, 0, 0);
 		
 		jsal_push_new_object();
 		jsal_dup(-3);
@@ -129,7 +129,7 @@ api_define_function(const char* namespace_name, const char* name, jsal_callback_
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
-	jsal_push_function(callback, name, 0);
+	jsal_push_function(callback, name, 0, 0);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, name);
 	
@@ -150,7 +150,7 @@ api_define_method(const char* class_name, const char* name, jsal_callback_t call
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
-	jsal_push_function(callback, name, 0);
+	jsal_push_function(callback, name, 0, 0);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, name);
 
@@ -198,11 +198,11 @@ api_define_property(const char* class_name, const char* name, jsal_callback_t ge
 	// populate the property descriptor
 	jsal_push_eval("({ configurable: true })");
 	if (getter != NULL) {
-		jsal_push_function(getter, "get", 0);
+		jsal_push_function(getter, "get", 0, 0);
 		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
-		jsal_push_function(setter, "set", 0);
+		jsal_push_function(setter, "set", 0, 0);
 		jsal_put_prop_string(-2, "set");
 	}
 	
@@ -232,11 +232,11 @@ api_define_static_prop(const char* namespace_name, const char* name, jsal_callba
 	// populate the property descriptor
 	jsal_push_eval("({ configurable: true })");
 	if (getter != NULL) {
-		jsal_push_function(getter, "get", 0);
+		jsal_push_function(getter, "get", 0, 0);
 		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
-		jsal_push_function(setter, "set", 0);
+		jsal_push_function(setter, "set", 0, 0);
 		jsal_put_prop_string(-2, "set");
 	}
 	jsal_def_prop_string(-2, name);
@@ -319,8 +319,12 @@ jsal_push_class_obj(const char* class_name, void* udata)
 void*
 jsal_require_class_obj(int index, const char* class_name)
 {
-	if (!jsal_is_class_obj(index, class_name))
-		jsal_error_blame(-1, JS_TYPE_ERROR, "'%s' object expected", class_name);
+	if (!jsal_is_class_obj(index, class_name)) {
+		jsal_dup(index);
+		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a %s object", jsal_to_string(-1), class_name);
+		jsal_remove(-2);
+		jsal_throw();
+	}
 	return jsal_get_host_data(index);
 }
 

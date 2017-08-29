@@ -40,6 +40,7 @@
 #include "debugger.h"
 #include "galileo.h"
 #include "input.h"
+#include "jsal.h"
 #include "legacy.h"
 #include "map_engine.h"
 #include "pegasus.h"
@@ -67,7 +68,6 @@ static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
 static void show_error_screen   (const char* message);
 
-duk_context*         g_duk = NULL;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
 game_t*              g_game = NULL;
 path_t*              g_game_path = NULL;
@@ -103,7 +103,6 @@ main(int argc, char* argv[])
 	// attempting to edit it causes something to break. :o)
 
 	lstring_t*           dialog_name;
-	duk_errcode_t        err_code;
 	const char*          err_filename = NULL;
 	const char*          err_msg;
 	ALLEGRO_FILECHOOSER* file_dlg;
@@ -124,8 +123,9 @@ main(int argc, char* argv[])
 	{
 		console_init(use_verbosity);
 	}
-	else
+	else {
 		return EXIT_FAILURE;
+	}
 
 	print_banner(true, false);
 	printf("\n");
@@ -240,9 +240,9 @@ main(int argc, char* argv[])
 	attach_input_display();
 	kb_load_keymap();
 
-	api_init(g_duk);
-	initialize_vanilla_api(g_duk);
-	initialize_pegasus_api(g_duk);
+	api_init();
+	initialize_vanilla_api();
+	initialize_pegasus_api();
 
 	// attempt to locate and load system font
 	console_log(1, "loading system default font");
@@ -281,23 +281,23 @@ main(int argc, char* argv[])
 	if (game_version(g_game) >= 2) {
 		// modular mode (Sv2).  check for an exported Game class and instantiate it,
 		// then call game.start().
-		duk_get_prop_string(g_duk, -1, "default");
-		if (duk_is_function(g_duk, -1)) {
-			if (duk_pnew(g_duk, 0) != DUK_EXEC_SUCCESS)
+		jsal_get_prop_string(-1, "default");
+		if (jsal_is_function(-1)) {
+			if (!jsal_try_construct(0))
 				goto on_js_error;
-			duk_get_prop_string(g_duk, -1, "start");
-			duk_swap_top(g_duk, -2);
-			if (duk_is_callable(g_duk, -2) && duk_pcall_method(g_duk, 0) != DUK_EXEC_SUCCESS)
+			jsal_get_prop_string(-1, "start");
+			jsal_pull(-2);
+			if (jsal_is_function(-2) && !jsal_try_call_method(0))
 				goto on_js_error;
 		}
-		duk_pop_2(g_duk);
+		jsal_pop(2);
 	}
 	else {
 		// compatibility mode (Sv1), call game() function (if it exists)
-		duk_get_global_string(g_duk, "game");
-		if (duk_is_callable(g_duk, -1) && duk_pcall(g_duk, 0) != DUK_EXEC_SUCCESS)
+		jsal_get_global_string("game");
+		if (jsal_is_function(-1) && !jsal_try_call(0))
 			goto on_js_error;
-		duk_pop_2(g_duk);
+		jsal_pop(2);
 	}
 
 	// start the Sphere v2 frame loop.  note that this isn't contingent on the
@@ -309,30 +309,29 @@ main(int argc, char* argv[])
 	sphere_exit(false);
 
 on_js_error:
-	err_code = duk_get_error_code(g_duk, -1);
-	duk_dup(g_duk, -1);
-	err_msg = duk_safe_to_string(g_duk, -1);
+	jsal_dup(-1);
+	err_msg = jsal_to_string(-1);
 	screen_show_mouse(g_screen, true);
-	if (duk_is_object_coercible(g_duk, -2)) {
-		duk_get_prop_string(g_duk, -2, "lineNumber");
-		line_num = duk_get_int(g_duk, -1);
-		duk_pop(g_duk);
-		duk_get_prop_string(g_duk, -2, "fileName");
-		err_filename = duk_get_string(g_duk, -1);
+	if (jsal_is_object_coercible(-2)) {
+		jsal_get_prop_string(-2, "lineNumber");
+		line_num = jsal_get_int(-1);
+		jsal_pop(1);
+		jsal_get_prop_string(-2, "fileName");
+		err_filename = jsal_get_string(-1);
 	}
 	if (err_filename != NULL) {
 		fprintf(stderr, "%s\n", err_msg);
 		fprintf(stderr, "   @ [%s:%d]\n", err_filename, line_num);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
-			duk_push_sprintf(g_duk, "%s:%d\n\n%s\n ", err_filename, line_num, err_msg);
+			jsal_push_sprintf("%s:%d\n\n%s\n", err_filename, line_num, err_msg);
 		else
-			duk_push_sprintf(g_duk, "%s\n ", err_msg);
+			jsal_push_sprintf("%s\n", err_msg);
 	}
 	else {
 		fprintf(stderr, "%s\n", err_msg);
-		duk_push_string(g_duk, err_msg);
+		jsal_push_sprintf("internal error\n\n%s\n", err_msg);
 	}
-	show_error_screen(duk_get_string(g_duk, -1));
+	show_error_screen(jsal_get_string(-1));
 	sphere_exit(false);
 }
 
@@ -428,10 +427,8 @@ initialize_engine(void)
 	dyad_setUpdateTimeout(0.0);
 
 	// initialize JavaScript
-	console_log(1, "initializing Duktape %ld.%ld.%ld (%s)",
-		DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100,
-		DUK_GIT_DESCRIBE);
-	if (!(g_duk = duk_create_heap_default()))
+	console_log(1, "initializing JavaScript");
+	if (!jsal_init())
 		goto on_error;
 
 	// initialize engine components
@@ -469,8 +466,8 @@ shutdown_engine(void)
 	scripts_uninit();
 	sockets_uninit();
 
-	console_log(1, "shutting down Duktape");
-	duk_destroy_heap(g_duk);
+	console_log(1, "shutting down JavaScript");
+	jsal_uninit();
 
 	console_log(1, "shutting down Dyad");
 	dyad_shutdown();
@@ -675,7 +672,6 @@ print_banner(bool want_copyright, bool want_deps)
 		printf("\n");
 		printf("    Allegro: v%-8s   libmng: v%s\n", al_version, mng_version_text());
 		printf("     Dyad.c: v%-8s     zlib: v%s\n", dyad_getVersion(), zlibVersion());
-		printf("    Duktape: v%ld.%ld.%ld\n", DUK_VERSION / 10000, DUK_VERSION / 100 % 100, DUK_VERSION % 100);
 		free(al_version);
 	}
 }

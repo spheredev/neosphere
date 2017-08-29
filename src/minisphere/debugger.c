@@ -33,6 +33,7 @@
 #include "minisphere.h"
 #include "debugger.h"
 
+#include "jsal.h"
 #include "sockets.h"
 
 struct source
@@ -55,22 +56,11 @@ enum apprequest
 
 static const int TCP_DEBUG_PORT = 1208;
 
-static bool       do_attach_debugger   (void);
-static void       do_detach_debugger   (bool is_shutdown);
-static void       duk_cb_debug_detach  (duk_context* ctx, void* udata);
-static duk_idx_t  duk_cb_debug_request (duk_context* ctx, void* udata, duk_idx_t nvalues);
-static duk_size_t duk_cb_debug_peek    (void* udata);
-static duk_size_t duk_cb_debug_read    (void* udata, char* buffer, duk_size_t bufsize);
-static duk_size_t duk_cb_debug_write   (void* udata, const char* data, duk_size_t size);
-
 static bool       s_is_attached = false;
 static color_t    s_banner_color;
 static lstring_t* s_banner_text;
 static bool       s_have_source_map = false;
-static server_t*  s_server;
-static socket_t*  s_socket;
 static vector_t*  s_sources;
-static bool       s_want_attach;
 
 void
 debugger_init(bool want_attach, bool allow_remote)
@@ -78,7 +68,6 @@ debugger_init(bool want_attach, bool allow_remote)
 	void*         data;
 	size_t        data_size;
 	const path_t* game_root;
-	const char*   hostname;
 
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
@@ -86,51 +75,38 @@ debugger_init(bool want_attach, bool allow_remote)
 
 	// load the source map, if one is available
 	s_have_source_map = false;
-	duk_push_global_stash(g_duk);
-	duk_del_prop_string(g_duk, -1, "debugMap");
+	jsal_push_hidden_stash();
+	jsal_del_prop_string(-1, "debugMap");
 	game_root = game_path(g_game);
 	if (data = game_read_file(g_game, "sources.json", &data_size)) {
-		duk_push_lstring(g_duk, data, data_size);
-		duk_json_decode(g_duk, -1);
-		duk_put_prop_string(g_duk, -2, "debugMap");
+		jsal_push_lstring(data, data_size);
+		jsal_parse(-1);
+		jsal_put_prop_string(-2, "debugMap");
 		free(data);
 		s_have_source_map = true;
 	}
 	else if (!path_is_file(game_root)) {
-		duk_push_object(g_duk);
-		duk_push_string(g_duk, path_cstr(game_root));
-		duk_put_prop_string(g_duk, -2, "origin");
-		duk_put_prop_string(g_duk, -2, "debugMap");
+		jsal_push_new_object();
+		jsal_push_string(path_cstr(game_root));
+		jsal_put_prop_string(-2, "origin");
+		jsal_put_prop_string(-2, "debugMap");
 	}
-	duk_pop(g_duk);
-
-	// listen for SSj connection on TCP port 1208. the listening socket will remain active
-	// for the duration of the session, allowing a debugger to be attached at any time.
-	console_log(1, "listening for debugger on TCP port %d", TCP_DEBUG_PORT);
-	hostname = allow_remote ? NULL : "127.0.0.1";
-	s_server = server_new(hostname, TCP_DEBUG_PORT, 1024, 1);
-
-	// if the engine was started in debug mode, wait for a debugger to connect before
-	// beginning execution.
-	s_want_attach = want_attach;
-	if (s_want_attach && !do_attach_debugger())
-		sphere_exit(true);
+	jsal_pop(1);
 }
 
 void
 debugger_uninit()
 {
-	iter_t iter;
-	struct source* p_source;
+	struct source* source;
 
-	do_detach_debugger(true);
-	server_unref(s_server);
+	iter_t iter;
 
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
-		while (p_source = iter_next(&iter)) {
-			lstr_free(p_source->text);
-			free(p_source->name);
+		while (iter_next(&iter)) {
+			source = iter.ptr;
+			lstr_free(source->text);
+			free(source->name);
 		}
 		vector_free(s_sources);
 	}
@@ -139,30 +115,6 @@ debugger_uninit()
 void
 debugger_update(void)
 {
-	socket_t* client;
-
-	if (client = server_accept(s_server)) {
-		if (s_socket != NULL) {
-			console_log(2, "rejected debug connection from %s, already attached",
-				socket_hostname(client));
-			socket_unref(client);
-		}
-		else {
-			console_log(0, "connected to debug client at %s", socket_hostname(client));
-			s_socket = client;
-			duk_debugger_detach(g_duk);
-			duk_debugger_attach(g_duk,
-				duk_cb_debug_read,
-				duk_cb_debug_write,
-				duk_cb_debug_peek,
-				NULL,
-				NULL,
-				duk_cb_debug_request,
-				duk_cb_debug_detach,
-				NULL);
-			s_is_attached = true;
-		}
-	}
 }
 
 bool
@@ -192,25 +144,30 @@ debugger_compiled_name(const char* source_name)
 
 	static char retval[SPHERE_PATH_MAX];
 
+	int         num_files;
 	const char* this_source;
+
+	int i;
 
 	strncpy(retval, source_name, SPHERE_PATH_MAX - 1);
 	retval[SPHERE_PATH_MAX - 1] = '\0';
 	if (!s_have_source_map)
 		return retval;
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "debugMap");
-	if (!duk_get_prop_string(g_duk, -1, "fileMap"))
-		duk_pop_3(g_duk);
-	else {
-		duk_enum(g_duk, -1, DUK_ENUM_OWN_PROPERTIES_ONLY);
-		while (duk_next(g_duk, -1, true)) {
-			this_source = duk_get_string(g_duk, -1);
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "debugMap");
+	if (jsal_get_prop_string(-1, "fileMap")) {
+		num_files = jsal_get_length(-1);
+		for (i = 0; i < num_files; ++i) {
+			jsal_get_prop_index(-1, i);
+			this_source = jsal_get_string(-1);
 			if (strcmp(this_source, source_name) == 0)
-				strncpy(retval, duk_get_string(g_duk, -2), SPHERE_PATH_MAX - 1);
-			duk_pop_2(g_duk);
+				strncpy(retval, jsal_get_string(-2), SPHERE_PATH_MAX - 1);
+			jsal_pop(1);
 		}
-		duk_pop_n(g_duk, 4);
+		jsal_pop(3);
+	}
+	else {
+		jsal_pop(3);
 	}
 	return retval;
 }
@@ -227,15 +184,15 @@ debugger_source_name(const char* compiled_name)
 	retval[SPHERE_PATH_MAX - 1] = '\0';
 	if (!s_have_source_map)
 		return retval;
-	duk_push_global_stash(g_duk);
-	duk_get_prop_string(g_duk, -1, "debugMap");
-	if (!duk_get_prop_string(g_duk, -1, "fileMap"))
-		duk_pop_3(g_duk);
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "debugMap");
+	if (!jsal_get_prop_string(-1, "fileMap"))
+		jsal_pop(3);
 	else {
-		duk_get_prop_string(g_duk, -1, compiled_name);
-		if (duk_is_string(g_duk, -1))
-			strncpy(retval, duk_get_string(g_duk, -1), SPHERE_PATH_MAX - 1);
-		duk_pop_n(g_duk, 4);
+		jsal_get_prop_string(-1, compiled_name);
+		if (jsal_is_string(-1))
+			strncpy(retval, jsal_get_string(-1), SPHERE_PATH_MAX - 1);
+		jsal_pop(4);
 	}
 	return retval;
 }
@@ -270,11 +227,6 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 {
 	const char* heading;
 
-	duk_push_int(g_duk, APPNFY_DEBUG_PRINT);
-	duk_push_int(g_duk, (int)op);
-	duk_push_string(g_duk, text);
-	duk_debugger_notify(g_duk, 3);
-
 	if (use_console) {
 		heading = op == PRINT_ASSERT ? "ASSERT"
 			: op == PRINT_DEBUG ? "debug"
@@ -285,186 +237,4 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 			: "log";
 		console_log(0, "%s: %s", heading, text);
 	}
-}
-
-static bool
-do_attach_debugger(void)
-{
-	double timeout;
-
-	printf("waiting for connection from debug client...\n");
-	fflush(stdout);
-	timeout = al_get_time() + 30.0;
-	while (s_socket == NULL && al_get_time() < timeout) {
-		debugger_update();
-		sphere_sleep(0.05);
-	}
-	if (s_socket == NULL)  // did we time out?
-		printf("timed out waiting for debug client\n");
-	return s_socket != NULL;
-}
-
-static void
-do_detach_debugger(bool is_shutdown)
-{
-	if (!s_is_attached)
-		return;
-
-	// detach the debugger
-	console_log(1, "detaching debug session");
-	s_is_attached = false;
-	duk_debugger_detach(g_duk);
-	if (s_socket != NULL) {
-		socket_close(s_socket);
-		while (socket_connected(s_socket))
-			sphere_sleep(0.05);
-	}
-	socket_unref(s_socket);
-	s_socket = NULL;
-	if (s_want_attach && !is_shutdown)
-		sphere_exit(true);  // clean detach, exit
-}
-
-static void
-duk_cb_debug_detach(duk_context* ctx, void* udata)
-{
-	// note: if s_socket is null, a TCP reset was detected by one of the I/O callbacks.
-	// if this is the case, wait a bit for the client to reconnect.
-	if (s_socket != NULL || !do_attach_debugger())
-		do_detach_debugger(false);
-}
-
-static duk_idx_t
-duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
-{
-	void*       file_data;
-	const char* name;
-	int         request_id;
-	size2_t     resolution;
-	size_t      size;
-
-	iter_t iter;
-	struct source* p_source;
-
-	// the first atom must be a request ID number
-	if (nvalues < 1 || !duk_is_number(ctx, -nvalues + 0)) {
-		duk_push_string(ctx, "missing AppRequest command number");
-		return -1;
-	}
-
-	request_id = duk_get_int(ctx, -nvalues + 0);
-	switch (request_id) {
-	case APPREQ_GAME_INFO:
-		resolution = game_resolution(g_game);
-		duk_push_string(ctx, game_name(g_game));
-		duk_push_string(ctx, game_author(g_game));
-		duk_push_string(ctx, game_summary(g_game));
-		duk_push_int(ctx, resolution.width);
-		duk_push_int(ctx, resolution.height);
-		return 5;
-	case APPREQ_SOURCE:
-		if (nvalues < 2) {
-			duk_push_string(ctx, "missing filename for Source request");
-			return -1;
-		}
-
-		name = duk_get_string(ctx, -nvalues + 1);
-		name = debugger_compiled_name(name);
-
-		// check if the data is in the source cache
-		iter = vector_enum(s_sources);
-		while (p_source = iter_next(&iter)) {
-			if (strcmp(name, p_source->name) == 0) {
-				duk_push_lstring_t(ctx, p_source->text);
-				return 1;
-			}
-		}
-
-		// no cache entry, try loading the file via SphereFS
-		if ((file_data = game_read_file(g_game, name, &size))) {
-			duk_push_lstring(ctx, file_data, size);
-			free(file_data);
-			return 1;
-		}
-
-		duk_push_sprintf(ctx, "no source available for `%s`", name);
-		return -1;
-	case APPREQ_WATERMARK:
-		if (nvalues < 2 || !duk_is_string(ctx, -nvalues + 1)) {
-			duk_push_string(ctx, "missing or invalid debugger name string");
-			return -1;
-		}
-
-		s_banner_text = duk_require_lstring_t(ctx, -nvalues + 1);
-		if (nvalues >= 4) {
-			s_banner_color = color_new(
-				duk_get_int(ctx, -nvalues + 2),
-				duk_get_int(ctx, -nvalues + 3),
-				duk_get_int(ctx, -nvalues + 4),
-				255);
-		}
-		return 0;
-	default:
-		duk_push_sprintf(ctx, "invalid AppRequest command number `%d`", request_id);
-		return -1;
-	}
-}
-
-static duk_size_t
-duk_cb_debug_peek(void* udata)
-{
-	// if the JavaScript interpreter gets stuck in an infinite loop, the engine
-	// will be locked out of the event loop and SSj won't be able to communicate
-	// with us.  this works around the issue.
-	sphere_run(false);
-
-	return socket_peek(s_socket);
-}
-
-static duk_size_t
-duk_cb_debug_read(void* udata, char* buffer, duk_size_t bufsize)
-{
-	size_t n_bytes;
-
-	if (s_socket == NULL)
-		return 0;
-
-	// if we return zero, Duktape will drop the session. thus we're forced
-	// to block until we can read >= 1 byte.
-	while (!(n_bytes = socket_peek(s_socket))) {
-		if (!socket_connected(s_socket)) {  // did a pig eat it?
-			console_log(1, "TCP connection reset while debugging");
-			socket_unref(s_socket);
-			s_socket = NULL;
-			return 0;  // stupid pig
-		}
-
-		// so the system doesn't think we locked up...
-		sphere_sleep(0.05);
-	}
-
-	// let's not overflow the buffer, alright?
-	if (n_bytes > bufsize)
-		n_bytes = bufsize;
-	socket_read(s_socket, buffer, n_bytes);
-	return n_bytes;
-}
-
-static duk_size_t
-duk_cb_debug_write(void* udata, const char* data, duk_size_t size)
-{
-	if (s_socket == NULL)
-		return 0;
-
-	// make sure we're still connected
-	if (!socket_connected(s_socket)) {
-		console_log(1, "TCP connection reset while debugging");
-		socket_unref(s_socket);
-		s_socket = NULL;
-		return 0;  // stupid pig!
-	}
-
-	// send out the data
-	socket_write(s_socket, data, size);
-	return size;
 }

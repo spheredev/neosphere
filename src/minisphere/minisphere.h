@@ -54,7 +54,6 @@
 #include <allegro5/allegro_memfile.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
-#include <duktape.h>
 #include <dyad.h>
 #include <zlib.h>
 
@@ -67,7 +66,6 @@
 #include "geometry.h"
 #include "console.h"
 #include "game.h"
-#include "jsal.h"
 #include "kev_file.h"
 #include "font.h"
 #include "screen.h"
@@ -94,7 +92,6 @@
 // at some point some of these global variables need to get eaten, preferably by
 // an eaty pig.  they're a relic from the early stages of miniSphere development and
 // I've been too lazy to try to refactor them away.
-extern duk_context*         g_duk;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern game_t*              g_game;
 extern path_t*              g_game_path;
