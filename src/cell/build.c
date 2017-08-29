@@ -1509,7 +1509,7 @@ js_FileStream_read(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 	}
 	if (num_bytes < 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
-	jsal_push_new_buffer(num_bytes);
+	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
 	data_ptr = jsal_get_buffer_ptr(-1, &size);
 	num_bytes = (int)fread(data_ptr, 1, num_bytes, file);
 	if (num_args < 1)  // reset file position after whole-file read

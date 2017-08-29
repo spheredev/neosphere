@@ -1965,7 +1965,7 @@ js_FileStream_read(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 		file_seek(file, 0, WHENCE_SET);
 	}
 
-	jsal_push_new_buffer(num_bytes);
+	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
 	buffer = jsal_get_buffer_ptr(-1, &buffer_size);
 	num_bytes = (int)file_read(file, buffer, num_bytes, 1);
 	if (num_args < 1)  // reset file position after whole-file read
@@ -3549,7 +3549,7 @@ js_Socket_read(jsal_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error_blame(-1, JS_ERROR, "socket is closed");
 	if (!socket_connected(socket))
 		jsal_error_blame(-1, JS_ERROR, "socket disconnected");
-	jsal_push_new_buffer(num_bytes);
+	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
 	buffer = jsal_get_buffer_ptr(-1, NULL);
 	bytes_read = socket_read(socket, buffer, num_bytes);
 	return true;

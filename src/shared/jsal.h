@@ -39,7 +39,22 @@
 typedef struct jsal_ref jsal_ref_t;
 
 typedef
-enum jsal_error
+enum js_buffer_type
+{
+	JS_ARRAYBUFFER,
+	JS_INT8ARRAY,
+	JS_INT16ARRAY,
+	JS_INT32ARRAY,
+	JS_UINT8ARRAY,
+	JS_UINT8ARRAY_CLAMPED,
+	JS_UINT16ARRAY,
+	JS_UINT32ARRAY,
+	JS_FLOAT32ARRAY,
+	JS_FLOAT64ARRAY,
+} js_buffer_type_t;
+
+typedef
+enum js_error_type
 {
 	JS_ERROR,
 	JS_RANGE_ERROR,
@@ -47,7 +62,7 @@ enum jsal_error
 	JS_SYNTAX_ERROR,
 	JS_TYPE_ERROR,
 	JS_URI_ERROR,
-} jsal_error_t;
+} js_error_type_t;
 
 typedef bool (* jsal_callback_t) (jsal_ref_t* me, int num_args, bool is_ctor, int magic);
 
@@ -64,8 +79,8 @@ bool        jsal_del_prop                 (int object_index);
 bool        jsal_del_prop_index           (int object_index, int name);
 bool        jsal_del_prop_string          (int object_index, const char* name);
 int         jsal_dup                      (int from_index);
-void        jsal_error                    (jsal_error_t type, const char* message, ...);
-void        jsal_error_va                 (jsal_error_t type, const char* message, va_list ap);
+void        jsal_error                    (js_error_type_t type, const char* message, ...);
+void        jsal_error_va                 (js_error_type_t type, const char* message, va_list ap);
 void        jsal_gc                       (void);
 bool        jsal_get_boolean              (int at_index);
 void*       jsal_get_buffer_ptr           (int at_index, size_t *out_size);
@@ -112,9 +127,9 @@ int         jsal_push_known_symbol        (const char* name);
 int         jsal_push_lstring             (const char* value, size_t length);
 int         jsal_push_new_array           (void);
 int         jsal_push_new_bare_object     (void);
-int         jsal_push_new_buffer          (size_t size);
-int         jsal_push_new_error           (jsal_error_t type, const char* format, ...);
-int         jsal_push_new_error_va        (jsal_error_t type, const char* format, va_list ap);
+int         jsal_push_new_buffer          (js_buffer_type_t type, size_t length);
+int         jsal_push_new_error           (js_error_type_t type, const char* format, ...);
+int         jsal_push_new_error_va        (js_error_type_t type, const char* format, va_list ap);
 int         jsal_push_new_host_object     (void* data_ptr, jsal_callback_t finalizer);
 int         jsal_push_new_object          (void);
 int         jsal_push_new_symbol          (const char* description);

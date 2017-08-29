@@ -210,15 +210,15 @@ jsal_compile(const char* filename)
 {
 	/* [ ... source ] -> [ ... function ] */
 
-	JsValueRef function_ref;
-	JsValueRef name_ref;
-	JsValueRef source_ref;
+	JsValueRef function;
+	JsValueRef name_string;
+	JsValueRef source_string;
 	
-	source_ref = pop_value();
-	JsCreateString(filename, strlen(filename), &name_ref);
-	JsParse(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeNone, &function_ref);
+	source_string = pop_value();
+	JsCreateString(filename, strlen(filename), &name_string);
+	JsParse(source_string, JS_SOURCE_CONTEXT_NONE, name_string, JsParseScriptAttributeNone, &function);
 	throw_if_error();
-	push_value(function_ref);
+	push_value(function);
 }
 
 void
@@ -304,7 +304,7 @@ jsal_dup(int from_index)
 }
 
 void
-jsal_error(jsal_error_t type, const char* format, ...)
+jsal_error(js_error_type_t type, const char* format, ...)
 {
 	va_list ap;
 
@@ -314,7 +314,7 @@ jsal_error(jsal_error_t type, const char* format, ...)
 }
 
 void
-jsal_error_va(jsal_error_t type, const char* format, va_list ap)
+jsal_error_va(js_error_type_t type, const char* format, va_list ap)
 {
 	jsal_push_new_error_va(type, format, ap);
 	jsal_throw();
@@ -866,16 +866,26 @@ jsal_push_new_bare_object(void)
 }
 
 int
-jsal_push_new_buffer(size_t size)
+jsal_push_new_buffer(js_buffer_type_t type, size_t size)
 {
-	JsValueRef ref;
+	JsValueRef  buffer;
+	JsErrorCode result;
 
-	JsCreateArrayBuffer((unsigned int)size, &ref);
-	return push_value(ref);
+	result = type == JS_INT8ARRAY ? JsCreateTypedArray(JsArrayTypeInt8, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: type == JS_INT16ARRAY ? JsCreateTypedArray(JsArrayTypeInt16, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: type == JS_INT32ARRAY ? JsCreateTypedArray(JsArrayTypeInt32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: type == JS_UINT8ARRAY ? JsCreateTypedArray(JsArrayTypeUint8, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: type == JS_UINT8ARRAY_CLAMPED ? JsCreateTypedArray(JsArrayTypeUint8Clamped, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: type == JS_UINT16ARRAY ? JsCreateTypedArray(JsArrayTypeUint16, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: type == JS_UINT32ARRAY ? JsCreateTypedArray(JsArrayTypeUint32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: type == JS_FLOAT32ARRAY ? JsCreateTypedArray(JsArrayTypeFloat32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: type == JS_FLOAT64ARRAY ? JsCreateTypedArray(JsArrayTypeFloat64, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
+		: JsCreateArrayBuffer((unsigned int)size, &buffer);
+	return push_value(buffer);
 }
 
 int
-jsal_push_new_error(jsal_error_t type, const char* format, ...)
+jsal_push_new_error(js_error_type_t type, const char* format, ...)
 {
 	va_list ap;
 	int     index;
@@ -887,7 +897,7 @@ jsal_push_new_error(jsal_error_t type, const char* format, ...)
 }
 
 int
-jsal_push_new_error_va(jsal_error_t type, const char* format, va_list ap)
+jsal_push_new_error_va(js_error_type_t type, const char* format, va_list ap)
 {
 	char*       message;
 	JsValueRef  message_ref;

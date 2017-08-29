@@ -77,11 +77,15 @@ api_define_class(const char* name, jsal_callback_t constructor, jsal_callback_t 
 	// construct a prototype for the new class, leaving it on the
 	// value stack afterwards.
 	jsal_push_new_object();
+	jsal_push_eval("({ writable: false, enumerable: false, configurable: false })");
 	jsal_push_string(name);
-	jsal_put_prop_string(-2, "___ctor");
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, "___internalClass");
 	if (finalizer != NULL) {
+		jsal_push_eval("({ writable: false, enumerable: false, configurable: false })");
 		jsal_push_function(finalizer, "finalize", 0, 0);
-		jsal_put_prop_string(-2, "___dtor");
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "___finalizer");
 	}
 
 	// save the prototype to the hidden stash.  this ensures it remains accessible
@@ -246,7 +250,7 @@ api_define_static_prop(const char* namespace_name, const char* name, jsal_callba
 }
 
 void
-jsal_error_blame(int blame_offset, jsal_error_t type, const char* format, ...)
+jsal_error_blame(int blame_offset, js_error_type_t type, const char* format, ...)
 {
 	va_list ap;
 	char*   filename;
@@ -284,6 +288,17 @@ jsal_error_blame(int blame_offset, jsal_error_t type, const char* format, ...)
 	jsal_throw();
 }
 
+int
+jsal_push_class_prototype(const char* class_name)
+{
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "prototypes");
+	jsal_get_prop_string(-1, class_name);
+	jsal_remove(-2);
+	jsal_remove(-2);
+	return jsal_get_top() - 1;
+}
+
 bool
 jsal_is_class_obj(int index, const char* class_name)
 {
@@ -293,7 +308,7 @@ jsal_is_class_obj(int index, const char* class_name)
 	if (!jsal_is_object_coercible(index))
 		return false;
 
-	jsal_get_prop_string(index, "___ctor");
+	jsal_get_prop_string(index, "___internalClass");
 	obj_class_name = jsal_to_string(-1);
 	result = strcmp(obj_class_name, class_name) == 0;
 	jsal_pop(1);

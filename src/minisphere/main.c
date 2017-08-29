@@ -319,16 +319,17 @@ on_js_error:
 		jsal_get_prop_string(-2, "fileName");
 		err_filename = jsal_get_string(-1);
 	}
+	fprintf(stderr, "game crashed, uncaught JavaScript exception\n");
 	if (err_filename != NULL) {
-		fprintf(stderr, "%s\n", err_msg);
-		fprintf(stderr, "   @ [%s:%d]\n", err_filename, line_num);
+		fprintf(stderr, "-> %s\n", err_msg);
+		fprintf(stderr, "   [%s:%d]\n", err_filename, line_num);
 		if (err_msg[strlen(err_msg) - 1] != '\n')
 			jsal_push_sprintf("%s:%d\n\n%s\n", err_filename, line_num, err_msg);
 		else
 			jsal_push_sprintf("%s\n", err_msg);
 	}
 	else {
-		fprintf(stderr, "%s\n", err_msg);
+		fprintf(stderr, "-> %s\n", err_msg);
 		jsal_push_sprintf("internal error\n\n%s\n", err_msg);
 	}
 	show_error_screen(jsal_get_string(-1));
