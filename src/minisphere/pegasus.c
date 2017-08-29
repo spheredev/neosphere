@@ -423,6 +423,7 @@ static bool js_Transform_translate           (js_ref_t* me, int num_args, bool i
 static bool js_new_VertexList                (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_VertexList_finalize           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 
+static void      jsal_fetch_module           (void);
 static void      jsal_pegasus_push_color     (color_t color);
 static void      jsal_pegasus_push_job_token (int64_t token);
 static void      jsal_pegasus_push_require   (const char* module_id);
@@ -444,6 +445,7 @@ initialize_pegasus_api(void)
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
+	jsal_on_fetch_module(jsal_fetch_module);
 
 	// initialize CommonJS cache and global require()
 	jsal_push_hidden_stash();
@@ -776,6 +778,40 @@ pegasus_run(void)
 	}
 }
 
+static void
+jsal_fetch_module(void)
+{
+	const char* const PATHS[] =
+	{
+		"@/lib",
+		"#/game_modules",
+		"#/runtime",
+	};
+
+	const char* caller_id;
+	path_t*     path;
+	const char* source;
+	size_t      source_len;
+	const char* specifier;
+
+	int i;
+
+	specifier = jsal_require_string(0);
+	caller_id = jsal_require_string(1);
+
+	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
+		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
+	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
+		if (path = find_module(specifier, caller_id, PATHS[i]))
+			break;  // short-circuit
+	}
+	if (path == NULL)
+		jsal_error_blame(-1, JS_REF_ERROR, "module not found `%s`", specifier);
+	source = game_read_file(g_game, path_cstr(path), &source_len);
+	jsal_push_string(path_cstr(path));
+	jsal_push_lstring(source, source_len);
+}
+
 bool
 jsal_pegasus_eval_module(const char* filename)
 {
@@ -833,13 +869,13 @@ jsal_pegasus_eval_module(const char* filename)
 	jsal_put_prop_string(-2, "require");  // module.require
 
 	// evaluate .mjs scripts as ES6 modules
-	if (path_has_extension(file_path, ".mjs")) {
+	/*if (path_has_extension(file_path, ".mjs")) {
 		jsal_push_lstring_t(code_string);
 		if (!jsal_try_eval_module(filename))
 			goto on_error;
 		jsal_remove(-2);
 		return true;
-	}
+	}*/
 
 	// cache the module object in advance
 	jsal_push_hidden_stash();
@@ -993,7 +1029,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	const char* const filenames[] =
 	{
 		"%s",
-		"%s.mjs",
+		//"%s.mjs",
 		"%s.js",
 		"%s.json",
 		"%s/package.json",

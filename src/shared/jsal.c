@@ -56,17 +56,17 @@ struct js_ref
 
 struct function
 {
-	jsal_callback_t callback;
-	bool            ctor_only;
-	int             magic;
-	int             min_args;
+	js_callback_t callback;
+	bool          ctor_only;
+	int           magic;
+	int           min_args;
 };
 
 struct object
 {
-	void*           data;
-	jsal_callback_t finalizer;
-	JsValueRef      object;
+	void*         data;
+	js_callback_t finalizer;
+	JsValueRef    object;
 };
 
 #if defined(_WIN32)
@@ -74,25 +74,27 @@ int asprintf  (char* *out, const char* format, ...);
 int vasprintf (char* *out, const char* format, va_list ap);
 #endif
 
-static JsValueRef CHAKRA_CALLBACK do_native_call   (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
-static void CHAKRA_CALLBACK       finalize_object  (void* userdata);
-static void                       free_ref         (js_ref_t* ref);
-static JsValueRef                 get_value        (int stack_index);
-static JsPropertyIdRef            make_property_id (JsValueRef key_value);
-static js_ref_t*                make_ref         (JsValueRef value);
-static JsValueRef                 pop_value        (void);
-static int                        push_value       (JsValueRef value);
-static void                       resize_stack     (int new_size);
-static void                       throw_if_error   (void);
-static void                       throw_value      (JsValueRef value);
+static JsValueRef CHAKRA_CALLBACK  do_native_call   (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
+static JsErrorCode CHAKRA_CALLBACK fetch_module     (JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module);
+static void CHAKRA_CALLBACK        finalize_object  (void* userdata);
+static void                        free_ref         (js_ref_t* ref);
+static JsValueRef                  get_value        (int stack_index);
+static JsPropertyIdRef             make_property_id (JsValueRef key_value);
+static js_ref_t*                   make_ref         (JsValueRef value);
+static JsValueRef                  pop_value        (void);
+static int                         push_value       (JsValueRef value);
+static void                        resize_stack     (int new_size);
+static void                        throw_if_error   (void);
+static void                        throw_value      (JsValueRef value);
 
-static vector_t*       s_catch_stack;
-static JsContextRef    s_js_context;
-static JsRuntimeHandle s_js_runtime = NULL;
-static JsValueRef      s_stash;
-static vector_t*       s_stack;
-static int             s_stack_base;
-static JsValueRef      s_this_value = JS_INVALID_REFERENCE;
+static vector_t*           s_catch_stack;
+static JsContextRef        s_js_context;
+static JsRuntimeHandle     s_js_runtime = NULL;
+static js_module_fetch_t s_fetch_callback = NULL;
+static JsValueRef          s_stash;
+static vector_t*           s_stack;
+static int                 s_stack_base;
+static JsValueRef          s_this_value = JS_INVALID_REFERENCE;
 
 bool
 jsal_init(void)
@@ -138,6 +140,12 @@ jsal_uninit(void)
 	JsRelease(s_stash, NULL);
 	vector_free(s_stack);
 	vector_free(s_catch_stack);
+}
+
+void
+jsal_on_fetch_module(js_module_fetch_t callback)
+{
+	s_fetch_callback = callback;
 }
 
 void
@@ -325,18 +333,17 @@ jsal_eval_module(const char* filename)
 	JsValueRef     exception;
 	JsModuleRecord module;
 	JsValueRef     result;
-	JsValueRef     source;
+	const char*    source;
 	size_t         source_len;
-	const wchar_t* source_ptr;
 	JsValueRef     url_string;
 
-	source = pop_value();
-	JsStringToPointer(source, &source_ptr, &source_len);
+	source = jsal_require_lstring(-1, &source_len);
 	JsCreateString(filename, strlen(filename), &url_string);
 	JsInitializeModuleRecord(NULL, url_string, &module);
+	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, fetch_module);
 	error_code = JsParseModuleSource(module,
-		JS_SOURCE_CONTEXT_NONE, (BYTE*)source_ptr, (unsigned int)source_len,
-		JsParseModuleSourceFlags_DataIsUTF16LE, &exception);
+		JS_SOURCE_CONTEXT_NONE, (BYTE*)source, (unsigned int)source_len,
+		JsParseModuleSourceFlags_DataIsUTF8, &exception);
 	if (error_code = JsErrorScriptCompile)
 		throw_value(exception);
 	JsModuleEvaluation(module, &result);
@@ -780,7 +787,7 @@ jsal_push_boolean(bool value)
 }
 
 int
-jsal_push_constructor(jsal_callback_t callback, const char* name, int min_args, int magic)
+jsal_push_constructor(js_callback_t callback, const char* name, int min_args, int magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
@@ -811,7 +818,7 @@ jsal_push_eval(const char* source)
 }
 
 int
-jsal_push_function(jsal_callback_t callback, const char* name, int min_args, int magic)
+jsal_push_function(js_callback_t callback, const char* name, int min_args, int magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
@@ -941,7 +948,7 @@ jsal_push_new_error_va(js_error_type_t type, const char* format, va_list ap)
 }
 
 int
-jsal_push_new_host_object(void* data, jsal_callback_t finalizer)
+jsal_push_new_host_object(void* data, js_callback_t finalizer)
 {
 	JsValueRef     object;
 	struct object* object_info;
@@ -1282,7 +1289,7 @@ jsal_require_undefined(int at_index)
 }
 
 void
-jsal_set_finalizer(int at_index, jsal_callback_t callback)
+jsal_set_finalizer(int at_index, js_callback_t callback)
 {
 	JsValueRef     object;
 	struct object* object_info;
@@ -1417,7 +1424,7 @@ jsal_to_string(int at_index)
 }
 
 bool
-jsal_try(jsal_callback_t callback, int num_args)
+jsal_try(js_callback_t callback, int num_args)
 {
 	/* [ ... arg1..argN ] -> [ .. retval ] */
 
@@ -1690,7 +1697,7 @@ throw_value(JsValueRef value)
 static JsValueRef CHAKRA_CALLBACK
 do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
 {
-	js_ref_t*      callee_ref;
+	js_ref_t*        callee_ref;
 	JsValueRef       exception;
 	struct function* function_data;
 	bool             has_return;
@@ -1739,6 +1746,56 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
 	return retval;
+}
+
+static JsErrorCode CHAKRA_CALLBACK
+fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module)
+{
+	JsErrorCode    error_code;
+	JsValueRef     exception;
+	JsValueRef     exports;
+	JsValueRef     full_specifier;
+	jmp_buf        label;
+	int            last_stack_base;
+	JsModuleRecord module;
+	const char*    source;
+	size_t         source_len;
+	
+	if (s_fetch_callback == NULL)
+		return JsErrorInvalidArgument;
+	
+	last_stack_base = s_stack_base;
+	s_stack_base = vector_len(s_stack);
+	push_value(specifier);
+	jsal_push_string("@/bin/main.mjs");
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		s_fetch_callback();
+		if (jsal_get_top() < 2)
+			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
+		source = jsal_require_lstring(-1, &source_len);
+		full_specifier = get_value(-2);
+		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, fetch_module);
+		error_code = JsParseModuleSource(module, JS_SOURCE_CONTEXT_NONE, (BYTE*)source, (unsigned int)source_len,
+			JsParseModuleSourceFlags_DataIsUTF8, &exception);
+		if (error_code == JsErrorScriptCompile)
+			throw_value(exception);
+		JsModuleEvaluation(module, &exports);
+		throw_if_error();
+		vector_pop(s_catch_stack, 1);
+	}
+	else {
+		exception = pop_value();
+		JsSetException(exception);
+		resize_stack(s_stack_base);
+		s_stack_base = last_stack_base;
+		return JsErrorScriptCompile;
+	}
+	resize_stack(s_stack_base);
+	s_stack_base = last_stack_base;
+	*out_module = module;
+	return JsNoError;
 }
 
 static void CHAKRA_CALLBACK

@@ -36,8 +36,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-typedef struct js_module js_module_t;
-typedef struct js_ref    js_ref_t;
+typedef struct js_ref js_ref_t;
 
 typedef
 enum js_buffer_type
@@ -65,10 +64,12 @@ enum js_error_type
 	JS_URI_ERROR,
 } js_error_type_t;
 
-typedef bool (* jsal_callback_t) (js_ref_t* me, int num_args, bool is_ctor, int magic);
+typedef bool (* js_callback_t)     (js_ref_t* me, int num_args, bool is_ctor, int magic);
+typedef void (* js_module_fetch_t) (void);
 
 bool        jsal_init                     (void);
 void        jsal_uninit                   (void);
+void        jsal_on_fetch_module          (js_module_fetch_t callback);
 void        jsal_call                     (int num_args);
 void        jsal_call_method              (int num_args);
 void        jsal_compile                  (const char* filename);
@@ -119,9 +120,9 @@ int         jsal_normalize_index          (int index);
 void        jsal_parse                    (int at_index);
 void        jsal_pop                      (int num_values);
 int         jsal_push_boolean             (bool value);
-int         jsal_push_constructor         (jsal_callback_t callback, const char* name, int min_args, int magic);
+int         jsal_push_constructor         (js_callback_t callback, const char* name, int min_args, int magic);
 int         jsal_push_eval                (const char* source);
-int         jsal_push_function            (jsal_callback_t callback, const char* name, int min_args, int magic);
+int         jsal_push_function            (js_callback_t callback, const char* name, int min_args, int magic);
 int         jsal_push_global_object       (void);
 int         jsal_push_hidden_stash        (void);
 int         jsal_push_int                 (int value);
@@ -132,7 +133,7 @@ int         jsal_push_new_bare_object     (void);
 int         jsal_push_new_buffer          (js_buffer_type_t type, size_t length);
 int         jsal_push_new_error           (js_error_type_t type, const char* format, ...);
 int         jsal_push_new_error_va        (js_error_type_t type, const char* format, va_list ap);
-int         jsal_push_new_host_object     (void* data_ptr, jsal_callback_t finalizer);
+int         jsal_push_new_host_object     (void* data_ptr, js_callback_t finalizer);
 int         jsal_push_new_object          (void);
 int         jsal_push_new_symbol          (const char* description);
 int         jsal_push_null                (void);
@@ -162,7 +163,7 @@ void        jsal_require_object_coercible (int at_index);
 const char* jsal_require_string           (int at_index);
 void        jsal_require_symbol           (int at_index);
 void        jsal_require_undefined        (int at_index);
-void        jsal_set_finalizer            (int at_index, jsal_callback_t callback);
+void        jsal_set_finalizer            (int at_index, js_callback_t callback);
 void        jsal_set_host_data            (int at_index, void* ptr);
 void        jsal_set_prototype            (int object_index);
 void        jsal_set_top                  (int new_top);
@@ -173,7 +174,7 @@ int         jsal_to_int                   (int at_index);
 double      jsal_to_number                (int at_index);
 void        jsal_to_object                (int at_index);
 const char* jsal_to_string                (int at_index);
-bool        jsal_try                      (jsal_callback_t callback, int num_args);
+bool        jsal_try                      (js_callback_t callback, int num_args);
 bool        jsal_try_call                 (int num_args);
 bool        jsal_try_call_method          (int num_args);
 bool        jsal_try_compile              (const char* filename);
