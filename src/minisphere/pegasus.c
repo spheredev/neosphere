@@ -869,13 +869,13 @@ jsal_pegasus_eval_module(const char* filename)
 	jsal_put_prop_string(-2, "require");  // module.require
 
 	// evaluate .mjs scripts as ES6 modules
-	/*if (path_has_extension(file_path, ".mjs")) {
+	if (path_has_extension(file_path, ".mjs")) {
 		jsal_push_lstring_t(code_string);
 		if (!jsal_try_eval_module(filename))
 			goto on_error;
 		jsal_remove(-2);
 		return true;
-	}*/
+	}
 
 	// cache the module object in advance
 	jsal_push_hidden_stash();
@@ -1029,7 +1029,7 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 	const char* const filenames[] =
 	{
 		"%s",
-		//"%s.mjs",
+		"%s.mjs",
 		"%s.js",
 		"%s.json",
 		"%s/package.json",

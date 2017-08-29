@@ -84,6 +84,7 @@ static js_ref_t*                   make_ref         (JsValueRef value);
 static JsValueRef                  pop_value        (void);
 static int                         push_value       (JsValueRef value);
 static void                        resize_stack     (int new_size);
+static JsErrorCode CHAKRA_CALLBACK run_module       (JsModuleRecord module, JsValueRef exception);
 static void                        throw_if_error   (void);
 static void                        throw_value      (JsValueRef value);
 
@@ -341,6 +342,7 @@ jsal_eval_module(const char* filename)
 	JsCreateString(filename, strlen(filename), &url_string);
 	JsInitializeModuleRecord(NULL, url_string, &module);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, fetch_module);
+	JsSetModuleHostInfo(module, JsModuleHostInfo_NotifyModuleReadyCallback, run_module);
 	error_code = JsParseModuleSource(module,
 		JS_SOURCE_CONTEXT_NONE, (BYTE*)source, (unsigned int)source_len,
 		JsParseModuleSourceFlags_DataIsUTF8, &exception);
@@ -1753,7 +1755,6 @@ fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *
 {
 	JsErrorCode    error_code;
 	JsValueRef     exception;
-	JsValueRef     exports;
 	JsValueRef     full_specifier;
 	jmp_buf        label;
 	int            last_stack_base;
@@ -1777,12 +1778,11 @@ fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *
 		full_specifier = get_value(-2);
 		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, fetch_module);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_NotifyModuleReadyCallback, run_module);
 		error_code = JsParseModuleSource(module, JS_SOURCE_CONTEXT_NONE, (BYTE*)source, (unsigned int)source_len,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
 		if (error_code == JsErrorScriptCompile)
 			throw_value(exception);
-		JsModuleEvaluation(module, &exports);
-		throw_if_error();
 		vector_pop(s_catch_stack, 1);
 	}
 	else {
@@ -1826,6 +1826,14 @@ finalize_object(void* userdata)
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
 	free(object_info);
+}
+
+static JsErrorCode CHAKRA_CALLBACK
+run_module(JsModuleRecord module, JsValueRef exception)
+{
+	JsValueRef exports;
+	
+	return JsModuleEvaluation(module, &exports);
 }
 
 #if defined(_WIN32)
