@@ -15,9 +15,9 @@ CFLAGS=-O3
 endif
 
 engine_sources=src/minisphere/main.c \
-   src/shared/api.c src/shared/duktape.c src/shared/dyad.c \
-   src/shared/lstring.c src/shared/md5.c src/shared/path.c \
-   src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
+   src/shared/api.c src/shared/dyad.c src/shared/jsal.c src/shared/lstring.c \
+   src/shared/md5.c src/shared/path.c src/shared/unicode.c \
+   src/shared/vector.c src/shared/xoroshiro.c \
    src/minisphere/animation.c src/minisphere/async.c src/minisphere/atlas.c \
    src/minisphere/audio.c src/minisphere/byte_array.c src/minisphere/color.c \
    src/minisphere/console.c src/minisphere/debugger.c src/minisphere/font.c \
@@ -33,16 +33,15 @@ engine_sources=src/minisphere/main.c \
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
-   -lmng -lz -lm
+   -lChakraCore -lmng -lz -lm
 
 cell_sources=src/cell/main.c \
-   src/shared/api.c src/shared/duktape.c src/shared/lstring.c \
-   src/shared/path.c src/shared/unicode.c src/shared/vector.c \
-   src/shared/xoroshiro.c \
+   src/shared/api.c src/shared/jsal.c src/shared/lstring.c src/shared/path.c \
+   src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
    src/cell/build.c src/cell/fs.c src/cell/spk_writer.c src/cell/target.c \
    src/cell/tool.c src/cell/utility.c src/cell/visor.c
 cell_libs= \
-   -lz -lm
+   -lChakraCore -lz -lm
 
 ssj_sources=src/ssj/main.c \
    src/shared/dyad.c src/shared/path.c src/shared/vector.c \
@@ -91,6 +90,7 @@ install: all
 	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/pixmaps
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
+	cp dep/lib/libChakraCore.so $(installdir)/lib
 	cp -r bin/system $(installdir)/share/minisphere
 	gzip docs/sphere2-core-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-core-api.gz
 	gzip docs/sphere2-hl-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-hl-api.gz
@@ -111,14 +111,18 @@ clean:
 
 bin/minisphere:
 	mkdir -p bin
-	$(CC) -o bin/minisphere $(CFLAGS) -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/minisphere $(CFLAGS) \
+	      -Idep/include -Isrc/shared -Isrc/minisphere \
+	      -Ldep/lib \
 	      -DDUK_OPT_HAVE_CUSTOM_H \
 	      $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
 
 bin/spherun:
 	mkdir -p bin
-	$(CC) -o bin/spherun $(CFLAGS) -Isrc/shared -Isrc/minisphere \
+	$(CC) -o bin/spherun $(CFLAGS) \
+	      -Idep/include -Isrc/shared -Isrc/minisphere \
+	      -Ldep/lib \
 	      -DDUK_OPT_HAVE_CUSTOM_H -DMINISPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
 
