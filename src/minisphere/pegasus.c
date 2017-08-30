@@ -873,7 +873,7 @@ jsal_pegasus_eval_module(const char* filename)
 
 	// evaluate .mjs scripts as ES6 modules
 	if (path_has_extension(file_path, ".mjs")) {
-		jsal_push_sprintf("import * as Module from '%s'; global.___exports = Module;",
+		jsal_push_sprintf("import * as Module from \"%s\"; global.___exports = Module;",
 			filename);
 		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		is_module_loaded = jsal_try_eval_module(module_name);

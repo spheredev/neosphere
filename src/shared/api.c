@@ -25,7 +25,7 @@ api_init(void)
 	// also map global `exports` to the global object, as TypeScript likes to add
 	// exports even when compiling scripts as program code.
 	jsal_push_global_object();
-	jsal_push_eval("({ writable: true, enumerable: true, configurable: true })");
+	jsal_push_eval("({ writable: false, enumerable: false, configurable: false })");
 	jsal_push_global_object();
 	jsal_put_prop_string(-2, "value");
 	jsal_dup(-1);

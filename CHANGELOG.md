@@ -4,7 +4,11 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-No changes yet.
+* miniSphere and Cell both now use Microsoft's ChakraCore under the hood to
+  drive JavaScript code, vastly improving JS execution performance and bringing
+  long-overdue native support for ES2015 syntax and built-ins to Sphere--
+  including out-of-the-box support for ECMAScript modules--without the need for
+  any transpilation or polyfills.
 
 
 v4.8.4 - August 22, 2017
