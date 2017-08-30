@@ -283,6 +283,31 @@ jsal_def_prop_string(int object_index, const char* name)
 }
 
 bool
+jsal_del_global(void)
+{
+	/* [ ... key ] -> [ ... ] */
+
+	JsPropertyIdRef key_ref;
+	JsValueRef      object_ref;
+	JsValueRef      result;
+	bool            retval;
+
+	JsGetGlobalObject(&object_ref);
+	key_ref = make_property_id(pop_value());
+	JsDeleteProperty(object_ref, key_ref, true, &result);
+	throw_if_error();
+	JsBooleanToBool(result, &retval);
+	return retval;
+}
+
+bool
+jsal_del_global_string(const char* name)
+{
+	jsal_push_string(name);
+	return jsal_del_global();
+}
+
+bool
 jsal_del_prop(int object_index)
 {
 	/* [ ... key ] -> [ ... ] */

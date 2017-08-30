@@ -873,18 +873,16 @@ jsal_pegasus_eval_module(const char* filename)
 
 	// evaluate .mjs scripts as ES6 modules
 	if (path_has_extension(file_path, ".mjs")) {
-		jsal_push_sprintf(
-			"import Game from '%s';\n"
-			"let game;\n"
-			"if (typeof Game === 'function') game = new Game();"
-			"if (typeof game === 'object' && typeof game.start === 'function')\n"
-			"    game.start();", filename);
+		jsal_push_sprintf("import * as Module from '%s'; global.___exports = Module;",
+			filename);
 		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		is_module_loaded = jsal_try_eval_module(module_name);
 		free(module_name);
 		if (!is_module_loaded)
 			goto on_error;
-		jsal_remove(-2);
+		jsal_pop(2);
+		jsal_get_global_string("___exports");
+		jsal_del_global_string("___exports");
 		return true;
 	}
 
@@ -1037,9 +1035,10 @@ jsal_safe_event_loop(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static path_t*
 find_module(const char* id, const char* origin, const char* sys_origin, bool es6_mode)
 {
-	const char* const CJS_FILENAMES[] =
+	const char* const PATTERNS[] =
 	{
 		"%s",
+		"%s.mjs",
 		"%s.js",
 		"%s.json",
 		"%s/package.json",
@@ -1047,18 +1046,10 @@ find_module(const char* id, const char* origin, const char* sys_origin, bool es6
 		"%s/index.json",
 	};
 
-	const char* const ESM_FILENAMES[] =
-	{
-		"%s",
-		"%s.mjs",
-	};
-
 	path_t*      origin_path;
 	char*        filename;
 	path_t*      main_path;
-	int          num_candidates;
 	path_t*      path;
-	const char** patterns;
 
 	int i;
 
@@ -1071,16 +1062,8 @@ find_module(const char* id, const char* origin, const char* sys_origin, bool es6
 		origin_path = path_new_dir(sys_origin);
 	}
 
-	if (es6_mode) {
-		num_candidates = sizeof ESM_FILENAMES / sizeof ESM_FILENAMES[0];
-		patterns = ESM_FILENAMES;
-	}
-	else {
-		num_candidates = sizeof CJS_FILENAMES / sizeof CJS_FILENAMES[0];
-		patterns = CJS_FILENAMES;
-	}
-	for (i = 0; i < num_candidates; ++i) {
-		filename = strnewf(patterns[i], id);
+	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
+		filename = strnewf(PATTERNS[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
 			path = game_full_path(g_game, filename, NULL, false);
 		}

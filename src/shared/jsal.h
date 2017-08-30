@@ -80,6 +80,8 @@ void        jsal_construct                (int num_args);
 void        jsal_def_prop                 (int object_index);
 void        jsal_def_prop_index           (int object_index, int name);
 void        jsal_def_prop_string          (int object_index, const char* name);
+bool        jsal_del_global               (void);
+bool        jsal_del_global_string        (const char* name);
 bool        jsal_del_prop                 (int object_index);
 bool        jsal_del_prop_index           (int object_index, int name);
 bool        jsal_del_prop_string          (int object_index, const char* name);
