@@ -128,7 +128,10 @@ bin/spherun:
 
 bin/cell:
 	mkdir -p bin
-	$(CC) -o bin/cell $(CFLAGS) -Isrc/shared $(cell_sources) $(cell_libs)
+	$(CC) -o bin/cell $(CFLAGS) \
+	      -Idep/include -Isrc/shared \
+	      -Ldep/lib \
+	      $(cell_sources) $(cell_libs)
 
 bin/ssj:
 	mkdir -p bin
