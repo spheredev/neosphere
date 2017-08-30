@@ -94,7 +94,7 @@ static int asprintf  (char* *out, const char* format, ...);
 static int vasprintf (char* *out, const char* format, va_list ap);
 
 static vector_t*            s_catch_stack;
-static DWORD_PTR            s_source_cookie = 1;
+static JsSourceContext      s_source_cookie = 1;
 static js_module_callback_t s_fetch_callback = NULL;
 static JsContextRef         s_js_context;
 static JsRuntimeHandle      s_js_runtime = NULL;

@@ -430,7 +430,7 @@ static void      jsal_pegasus_push_require   (const char* module_id);
 static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
 static bool      jsal_safe_event_loop        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static path_t*   find_module                 (const char* id, const char* origin, const char* sys_origin);
+static path_t*   find_module                 (const char* id, const char* origin, const char* sys_origin, bool es6_mode);
 static void      load_joysticks              (void);
 static path_t*   load_package_json           (const char* filename);
 
@@ -803,7 +803,7 @@ jsal_fetch_module(void)
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
 		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module(specifier, caller_id, PATHS[i]))
+		if (path = find_module(specifier, caller_id, PATHS[i], true))
 			break;  // short-circuit
 	}
 	if (path == NULL)
@@ -1035,12 +1035,11 @@ jsal_safe_event_loop(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static path_t*
-find_module(const char* id, const char* origin, const char* sys_origin)
+find_module(const char* id, const char* origin, const char* sys_origin, bool es6_mode)
 {
-	const char* const filenames[] =
+	const char* const CJS_FILENAMES[] =
 	{
 		"%s",
-		"%s.mjs",
 		"%s.js",
 		"%s.json",
 		"%s/package.json",
@@ -1048,10 +1047,18 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 		"%s/index.json",
 	};
 
-	path_t*   origin_path;
-	char*     filename;
-	path_t*   main_path;
-	path_t*   path;
+	const char* const ESM_FILENAMES[] =
+	{
+		"%s",
+		"%s.mjs",
+	};
+
+	path_t*      origin_path;
+	char*        filename;
+	path_t*      main_path;
+	int          num_candidates;
+	path_t*      path;
+	const char** patterns;
 
 	int i;
 
@@ -1064,8 +1071,16 @@ find_module(const char* id, const char* origin, const char* sys_origin)
 		origin_path = path_new_dir(sys_origin);
 	}
 
-	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
-		filename = strnewf(filenames[i], id);
+	if (es6_mode) {
+		num_candidates = sizeof ESM_FILENAMES / sizeof ESM_FILENAMES[0];
+		patterns = ESM_FILENAMES;
+	}
+	else {
+		num_candidates = sizeof CJS_FILENAMES / sizeof CJS_FILENAMES[0];
+		patterns = CJS_FILENAMES;
+	}
+	for (i = 0; i < num_candidates; ++i) {
+		filename = strnewf(patterns[i], id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
 			path = game_full_path(g_game, filename, NULL, false);
 		}
@@ -1175,7 +1190,7 @@ js_require(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module(id, parent_id, PATHS[i]))
+		if (path = find_module(id, parent_id, PATHS[i], false))
 			break;  // short-circuit
 	}
 	if (path == NULL)
