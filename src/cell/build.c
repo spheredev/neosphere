@@ -153,8 +153,6 @@ build_new(const path_t* source_path, const path_t* out_path)
 	jsal_pop(1);
 
 	// prepare environment for ECMAScript 2015 support
-	if (fs_fexist(fs, "#/shim.js") && !eval_cjs_module(fs, "#/shim.js", false))
-		return false;
 	if (fs_fexist(fs, "#/babel-core.js")) {
 		jsal_push_hidden_stash();
 		if (eval_cjs_module(fs, "#/babel-core.js", false))
@@ -580,6 +578,10 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 			jsal_push_hidden_stash();
 			if (!jsal_has_prop_string(-1, "Babel")) {
 				jsal_pop(1);
+				if (!jsal_is_error(-1)) {
+					jsal_push_new_error(JS_ERROR, "couldn't load module '%s'", filename);
+					jsal_replace(-2);
+				}
 				goto on_error;  // no ES 2015 support
 			}
 			jsal_get_prop_string(-1, "Babel");

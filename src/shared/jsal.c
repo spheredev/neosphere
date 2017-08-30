@@ -74,6 +74,7 @@ int asprintf  (char* *out, const char* format, ...);
 int vasprintf (char* *out, const char* format, va_list ap);
 #endif
 
+static void CHAKRA_CALLBACK        dispatch_promise (JsValueRef function, void* userdata);
 static JsValueRef CHAKRA_CALLBACK  do_native_call   (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
 static JsErrorCode CHAKRA_CALLBACK fetch_module     (JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module);
 static void CHAKRA_CALLBACK        finalize_object  (void* userdata);
@@ -89,9 +90,10 @@ static void                        throw_if_error   (void);
 static void                        throw_value      (JsValueRef value);
 
 static vector_t*           s_catch_stack;
+static js_dispatch_t       s_dispatch_callback = NULL;
+static js_module_fetch_t   s_fetch_callback = NULL;
 static JsContextRef        s_js_context;
 static JsRuntimeHandle     s_js_runtime = NULL;
-static js_module_fetch_t s_fetch_callback = NULL;
 static JsValueRef          s_stash;
 static vector_t*           s_stack;
 static int                 s_stack_base;
@@ -107,6 +109,7 @@ jsal_init(void)
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
+	JsSetPromiseContinuationCallback(dispatch_promise, NULL);
 
 	// set up the stash, used to store JS values behind the scenes.
 	JsCreateObject(&s_stash);
@@ -144,6 +147,12 @@ jsal_uninit(void)
 }
 
 void
+jsal_on_dispatch(js_dispatch_t callback)
+{
+	s_dispatch_callback = callback;
+}
+
+void
 jsal_on_fetch_module(js_module_fetch_t callback)
 {
 	s_fetch_callback = callback;
@@ -152,7 +161,7 @@ jsal_on_fetch_module(js_module_fetch_t callback)
 void
 jsal_call(int num_args)
 {
-	/* [ ... function arg1..argN ] -> [ .. retval ] */
+	/* [ ... function arg1..argN ] -> [ ... retval ] */
 
 	jsal_push_undefined();
 	if (num_args > 0)
@@ -163,7 +172,7 @@ jsal_call(int num_args)
 void
 jsal_call_method(int num_args)
 {
-	/* [ ... function this arg1..argN ] -> [ .. retval ] */
+	/* [ ... function this arg1..argN ] -> [ ... retval ] */
 
 	JsValueRef* arguments;
 	JsValueRef  function_ref;
@@ -187,7 +196,7 @@ jsal_call_method(int num_args)
 void
 jsal_construct(int num_args)
 {
-	/* [ ... constructor arg1..argN ] -> [ .. retval ] */
+	/* [ ... constructor arg1..argN ] -> [ ... retval ] */
 
 	JsValueRef* arguments;
 	JsValueRef  function_ref;
@@ -328,7 +337,7 @@ jsal_error_va(js_error_type_t type, const char* format, va_list ap)
 void
 jsal_eval_module(const char* filename)
 {
-	/* [ ... source ] -> [ .. exports ] */
+	/* [ ... source ] -> [ ... exports ] */
 
 	JsErrorCode    error_code;
 	JsValueRef     exception;
@@ -342,7 +351,7 @@ jsal_eval_module(const char* filename)
 	JsCreateString(filename, strlen(filename), &url_string);
 	JsInitializeModuleRecord(NULL, url_string, &module);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, fetch_module);
-	JsSetModuleHostInfo(module, JsModuleHostInfo_NotifyModuleReadyCallback, run_module);
+	JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, url_string);
 	error_code = JsParseModuleSource(module,
 		JS_SOURCE_CONTEXT_NONE, (BYTE*)source, (unsigned int)source_len,
 		JsParseModuleSourceFlags_DataIsUTF8, &exception);
@@ -1428,7 +1437,7 @@ jsal_to_string(int at_index)
 bool
 jsal_try(js_callback_t callback, int num_args)
 {
-	/* [ ... arg1..argN ] -> [ .. retval ] */
+	/* [ ... arg1..argN ] -> [ ... retval ] */
 
 	jmp_buf    label;
 	int        last_stack_base;
@@ -1457,7 +1466,7 @@ jsal_try(js_callback_t callback, int num_args)
 bool
 jsal_try_call(int num_args)
 {
-	/* [ ... function arg1..argN ] -> [ .. retval ] */
+	/* [ ... function arg1..argN ] -> [ ... retval ] */
 
 	jmp_buf label;
 
@@ -1475,7 +1484,7 @@ jsal_try_call(int num_args)
 bool
 jsal_try_call_method(int num_args)
 {
-	/* [ ... function this arg1..argN ] -> [ .. retval ] */
+	/* [ ... function this arg1..argN ] -> [ ... retval ] */
 
 	jmp_buf label;
 
@@ -1493,7 +1502,7 @@ jsal_try_call_method(int num_args)
 bool
 jsal_try_compile(const char* filename)
 {
-	/* [ ... source ] -> [ .. function ] */
+	/* [ ... source ] -> [ ... function ] */
 
 	jmp_buf label;
 
@@ -1511,7 +1520,7 @@ jsal_try_compile(const char* filename)
 bool
 jsal_try_construct(int num_args)
 {
-	/* [ ... constructor arg1..argN ] -> [ .. retval ] */
+	/* [ ... constructor arg1..argN ] -> [ ... retval ] */
 
 	jmp_buf label;
 
@@ -1529,7 +1538,7 @@ jsal_try_construct(int num_args)
 bool
 jsal_try_eval_module(const char* filename)
 {
-	/* [ ... source ] -> [ .. exports ] */
+	/* [ ... source ] -> [ ... exports ] */
 
 	jmp_buf label;
 
@@ -1696,6 +1705,33 @@ throw_value(JsValueRef value)
 	}
 }
 
+static void CHAKRA_CALLBACK
+dispatch_promise(JsValueRef task, void* userdata)
+{
+	JsValueRef exception;
+	jmp_buf    label;
+	int        last_stack_base;
+	
+	last_stack_base = s_stack_base;
+	s_stack_base = vector_len(s_stack);
+	push_value(task);
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		if (s_dispatch_callback == NULL)
+			jsal_error(JS_ERROR, "no Promise task queue callback");
+		s_dispatch_callback();
+		vector_pop(s_catch_stack, 1);
+	}
+	else {
+		// if an error gets thrown into C code, `jsal_throw()` leaves it on top
+		// of the value stack.
+		exception = pop_value();
+		JsSetException(exception);
+	}
+	resize_stack(s_stack_base);
+	s_stack_base = last_stack_base;
+}
+
 static JsValueRef CHAKRA_CALLBACK
 do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
 {
@@ -1777,8 +1813,9 @@ fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *
 		source = jsal_require_lstring(-1, &source_len);
 		full_specifier = get_value(-2);
 		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
+		JsAddRef(module, NULL);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, fetch_module);
-		JsSetModuleHostInfo(module, JsModuleHostInfo_NotifyModuleReadyCallback, run_module);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
 		error_code = JsParseModuleSource(module, JS_SOURCE_CONTEXT_NONE, (BYTE*)source, (unsigned int)source_len,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
 		if (error_code == JsErrorScriptCompile)

@@ -61,6 +61,7 @@
 
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
+static void on_js_dispatch      (void);
 static bool find_startup_game   (path_t* *out_path);
 static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
 static void print_banner        (bool want_copyright, bool want_deps);
@@ -258,10 +259,6 @@ main(int argc, char* argv[])
 		screen_toggle_fullscreen(g_screen);
 	screen_show_mouse(g_screen, false);
 
-	// load the core-js polyfill (ES2015+ builtins)
-	if (game_file_exists(g_game, "#/shim.js") && !script_eval("#/shim.js", false))
-		goto on_js_error;
-
 	// enable the SSj debug server, wait for a connection if requested.
 #if defined(MINISPHERE_SPHERUN)
 	if (want_debug) {
@@ -431,6 +428,7 @@ initialize_engine(void)
 	console_log(1, "initializing JavaScript");
 	if (!jsal_init())
 		goto on_error;
+	jsal_on_dispatch(on_js_dispatch);
 
 	// initialize engine components
 	async_init();
@@ -487,6 +485,15 @@ shutdown_engine(void)
 	game_unref(g_game);
 	g_game = NULL;
 	al_uninstall_system();
+}
+
+static void
+on_js_dispatch(void)
+{
+	script_t* script;
+
+	script = script_new_func(0);
+	async_defer(script, 0, ASYNC_TICK);
 }
 
 static bool
