@@ -38,7 +38,7 @@ class Prim
 	blit(surface, x, y, texture, mask)
 	{
 		Prim.blitSection(surface, x, y, texture, 0, 0, texture.width, texture.height, mask);
-	};
+	}
 
 	static
 	blitSection(surface, x, y, texture, sx, sy, width, height, mask)
@@ -61,13 +61,13 @@ class Prim
 				{ x: x2, y: y2, u: u2, v: v2, color: mask },
 			]));
 		shape.draw(surface);
-	};
+	}
 
 	static
 	drawCircle(surface, x, y, radius, color)
 	{
 		Prim.drawEllipse(surface, x, y, radius, radius, color);
-	};
+	}
 
 	static
 	drawEllipse(surface, x, y, rx, ry, color)
@@ -90,13 +90,13 @@ class Prim
 		var vList = new VertexList(vertices);
 		var shape = new Shape(ShapeType.LineLoop, vList)
 		shape.draw(surface);
-	};
+	}
 
 	static
 	drawSolidCircle(surface, x, y, radius, color, color2)
 	{
 		Prim.drawSolidEllipse(surface, x, y, radius, radius, color, color2);
-	};
+	}
 
 	static
 	drawSolidEllipse(surface, x, y, rx, ry, color, color2)
@@ -127,7 +127,7 @@ class Prim
 		var vList = new VertexList(vertices);
 		var shape = new Shape(ShapeType.Fan, vList);
 		shape.draw(surface);
-	};
+	}
 
 	static
 	drawSolidRectangle(surface, x, y, width, height, color_ul, color_ur, color_lr, color_ll)
@@ -144,7 +144,7 @@ class Prim
 				{ x: x + width, y: y + height, color: color_lr },
 			]));
 		shape.draw(surface);
-	};
+	}
 
 	static
 	drawSolidTriangle(surface, x1, y1, x2, y2, x3, y3, color1, color2, color3)
@@ -158,7 +158,7 @@ class Prim
 				{ x: x2, y: y2, color: color2 },
 				{ x: x3, y: y3, color: color3 },
 			]));
-	};
+	}
 
 	static
 	drawLine(surface, x1, y1, x2, y2, thickness, color1, color2)
@@ -181,13 +181,13 @@ class Prim
 				{ x: x2 + tx, y: y2 + ty, color: color2 },
 			]));
 		shape.draw(surface);
-	};
+	}
 
 	static
 	drawPoint(surface, x, y, color)
 	{
 		Prim.drawSolidRectangle(surface, x, y, 1, 1, color);
-	};
+	}
 
 	static
 	drawRectangle(surface, x, y, width, height, thickness, color)
@@ -211,13 +211,13 @@ class Prim
 				{ x: x1 + t, y: y1 + t, color: color },
 			]));
 		shape.draw(surface);
-	};
+	}
 
 	static
 	fill(surface, color)
 	{
 		Prim.drawSolidRectangle(surface, 0, 0, surface.width, surface.height, color);
-	};
+	}
 }
 
 exports = module.exports = Prim;

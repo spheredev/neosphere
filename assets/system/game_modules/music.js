@@ -34,7 +34,8 @@
 exports.__esModule = true;
 exports.default = exports;
 
-const Console = require('console'),
+const from    = require('from'),
+      Console = require('console'),
       Scene   = require('scene');
 
 var adjuster = null;
@@ -157,10 +158,10 @@ function _crossfade(fileName, frames, forceChange)
 	if (fileName !== null) {
 		var fullPath = FS.fullPath(fileName, '@/music');
 		fullPath = from([ '', 'ogg', 'mp3', 'it', 'mod', 's3m', 'xm', 'flac' ])
-			.select(function(it) { return fullPath + '.' + it; })
-			.first(function(it) { return FS.fileExists(it); })
+			.select(it => `${fullPath}.${it}`)
+			.first(it => FS.fileExists(it))
 		if (fullPath === undefined)
-			throw new Error("couldn't find music '" + fileName + "'");
+			throw new Error(`couldn't find music '${fileName}'`);
 		var stream = new Sound(fullPath);
 		stream.repeat = true;
 		stream.volume = 0.0;
