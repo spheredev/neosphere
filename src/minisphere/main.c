@@ -104,12 +104,11 @@ main(int argc, char* argv[])
 	// attempting to edit it causes something to break. :o)
 
 	lstring_t*           dialog_name;
-	const char*          err_filename = NULL;
-	const char*          err_msg;
+	const char*          error_stack = NULL;
+	const char*          error_text;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	path_t*              games_path;
 	image_t*             icon;
-	int                  line_num;
 	size2_t              resolution;
 	const path_t*        script_path;
 	bool                 use_conserve_cpu;
@@ -307,27 +306,23 @@ main(int argc, char* argv[])
 
 on_js_error:
 	jsal_dup(-1);
-	err_msg = jsal_to_string(-1);
+	error_text = jsal_to_string(-1);
 	screen_show_mouse(g_screen, true);
 	if (jsal_is_object_coercible(-2)) {
-		jsal_get_prop_string(-2, "lineNumber");
-		line_num = jsal_get_int(-1);
-		jsal_pop(1);
-		jsal_get_prop_string(-2, "fileName");
-		err_filename = jsal_get_string(-1);
+		jsal_get_prop_string(-2, "stack");
+		error_stack = jsal_get_string(-1);
 	}
-	fprintf(stderr, "GAME CRASH! unhandled JavaScript exception\n");
-	if (err_filename != NULL) {
-		fprintf(stderr, "-> %s\n", err_msg);
-		fprintf(stderr, "   %s:%d\n", err_filename, line_num);
-		if (err_msg[strlen(err_msg) - 1] != '\n')
-			jsal_push_sprintf("%s:%d\n\n%s\n", err_filename, line_num, err_msg);
+	fprintf(stderr, "GAME CRASH: uncaught JavaScript exception.\n");
+	if (error_stack != NULL) {
+		fprintf(stderr, "%s\n", error_stack);
+		if (error_text[strlen(error_text) - 1] != '\n')
+			jsal_push_sprintf("JavaScript exception!\n\n%s\n", error_stack);
 		else
-			jsal_push_sprintf("%s\n", err_msg);
+			jsal_push_sprintf("%s\n", error_text);
 	}
 	else {
-		fprintf(stderr, "-> %s\n", err_msg);
-		jsal_push_sprintf("internal error\n\n%s\n", err_msg);
+		fprintf(stderr, "%s\n", error_text);
+		jsal_push_sprintf("JavaScript exception\n\n%s\n", error_text);
 	}
 	show_error_screen(jsal_get_string(-1));
 	sphere_exit(false);

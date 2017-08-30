@@ -238,7 +238,7 @@ jsal_compile(const char* filename)
 	
 	source_string = pop_value();
 	JsCreateString(filename, strlen(filename), &name_string);
-	JsParse(source_string, JS_SOURCE_CONTEXT_NONE, name_string, JsParseScriptAttributeNone, &function);
+	JsParse(source_string, s_source_cookie++, name_string, JsParseScriptAttributeNone, &function);
 	throw_if_error();
 	push_value(function);
 }
@@ -847,7 +847,7 @@ jsal_push_eval(const char* source)
 
 	JsCreateString(source, strlen(source), &source_ref);
 	JsCreateString("eval()", 6, &name_ref);
-	JsRun(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeNone, &ref);
+	JsRun(source_ref, s_source_cookie++, name_ref, JsParseScriptAttributeNone, &ref);
 	throw_if_error();
 	return push_value(ref);
 }

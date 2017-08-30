@@ -895,7 +895,7 @@ jsal_pegasus_eval_module(const char* filename)
 	else {
 		// synthesize a function to wrap the module code.  this is the simplest way to
 		// implement CommonJS semantics and matches the behavior of Node.js.
-		jsal_push_sprintf("(function(exports, require, module, __filename, __dirname) {%s%s\n})",
+		jsal_push_sprintf("(function (exports, require, module, __filename, __dirname) {%s%s\n})",
 			strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
 			lstr_cstr(code_string));
 		lstr_free(code_string);
@@ -908,7 +908,7 @@ jsal_pegasus_eval_module(const char* filename)
 		jsal_def_prop_string(-2, "name");
 		
 		// go, go, go!
-		jsal_dup(-2);                           // this = module
+		jsal_get_prop_string(-2, "exports");    // this = exports
 		jsal_get_prop_string(-3, "exports");    // exports
 		jsal_get_prop_string(-4, "require");    // require
 		jsal_dup(-5);                           // module
