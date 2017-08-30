@@ -436,6 +436,7 @@ static path_t*   load_package_json           (const char* filename);
 
 static mixer_t* s_def_mixer;
 static int      s_framerate = 60;
+static int      s_next_module_id = 1;
 
 void
 initialize_pegasus_api(void)
@@ -831,6 +832,8 @@ jsal_pegasus_eval_module(const char* filename)
 	lstring_t* code_string;
 	path_t*    dir_path;
 	path_t*    file_path;
+	bool       is_module_loaded;
+	char*      module_name;
 	size_t     source_size;
 	char*      source;
 
@@ -870,8 +873,16 @@ jsal_pegasus_eval_module(const char* filename)
 
 	// evaluate .mjs scripts as ES6 modules
 	if (path_has_extension(file_path, ".mjs")) {
-		jsal_push_lstring_t(code_string);
-		if (!jsal_try_eval_module(filename))
+		jsal_push_sprintf(
+			"import Game from '%s';\n"
+			"let game;\n"
+			"if (typeof Game === 'function') game = new Game();"
+			"if (typeof game === 'object' && typeof game.start === 'function')\n"
+			"    game.start();", filename);
+		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		is_module_loaded = jsal_try_eval_module(module_name);
+		free(module_name);
+		if (!is_module_loaded)
 			goto on_error;
 		jsal_remove(-2);
 		return true;

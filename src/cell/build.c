@@ -118,7 +118,8 @@ static void    push_require         (const char* module_id);
 static int     sort_targets_by_path (const void* p_a, const void* p_b);
 static bool    write_manifests      (build_t* build);
 
-static build_t* s_build;
+static build_t*     s_build;
+static unsigned int s_next_module_id = 1;
 
 build_t*
 build_new(const path_t* source_path, const path_t* out_path)
@@ -269,10 +270,11 @@ build_free(build_t* build)
 bool
 build_eval(build_t* build, const char* filename)
 {
-	const char* err_filename;
-	int         err_line;
+	int         column_number;
+	const char* error_stack = NULL;
 	bool        is_mjs;
 	bool        is_ok = true;
+	int         line_number;
 	path_t*     path;
 	struct stat stats;
 
@@ -286,18 +288,30 @@ build_eval(build_t* build, const char* filename)
 	path_free(path);
 	if (!eval_cjs_module(build->fs, filename, is_mjs)) {
 		is_ok = false;
-		jsal_get_prop_string(-1, "fileName");
-		err_filename = jsal_to_string(-1);
-		jsal_get_prop_string(-2, "lineNumber");
-		err_line = jsal_get_int(-1);
+		if (jsal_has_prop_string(-1, "stack")) {
+			jsal_get_prop_string(-1, "stack");
+			jsal_dup(-1);
+			error_stack = jsal_to_string(-1);
+		} else {
+			jsal_get_prop_string(-1, "line");
+			line_number = jsal_get_int(-1) + 1;
+			jsal_get_prop_string(-2, "column");
+			column_number = jsal_get_int(-1);
+		}
 		jsal_dup(-3);
 		jsal_to_string(-1);
 		visor_error(build->visor, "%s", jsal_get_string(-1));
-		visor_print(build->visor, "@ [%s:%d]", err_filename, err_line);
+		visor_end_op(build->visor);
+		visor_print(build->visor, "SCRIPT CRASH: uncaught JavaScript exception.");
+		if (error_stack != NULL)
+			visor_print(build->visor, "%s", error_stack);
+		else
+			visor_print(build->visor, "   at %d:%d", line_number, column_number);
 		jsal_pop(3);
 	}
 	jsal_pop(1);
-	visor_end_op(build->visor);
+	if (is_ok)
+		visor_end_op(build->visor);
 	return is_ok;
 }
 
@@ -503,6 +517,8 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 	lstring_t*  code_string;
 	path_t*     dir_path;
 	path_t*     file_path;
+	bool        is_module_loaded;
+	char*       module_name;
 	size_t      source_size;
 	char*       source;
 
@@ -540,8 +556,13 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 
 	// evaluate .mjs scripts as ES6 modules
 	if (path_has_extension(file_path, ".mjs")) {
-		jsal_push_lstring_t(code_string);
-		if (!jsal_try_eval_module(filename))
+		// work around a bug in ChakraCore where a top-level module with no imports
+		// produces a syntax error.
+		jsal_push_sprintf("import '%s';", filename);
+		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		is_module_loaded = jsal_try_eval_module(module_name);
+		free(module_name);
+		if (!is_module_loaded)
 			goto on_error;
 		jsal_remove(-2);
 		return true;

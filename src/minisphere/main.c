@@ -274,7 +274,7 @@ main(int argc, char* argv[])
 	if (!script_eval(path_cstr(script_path), game_version(g_game) >= 2))
 		goto on_js_error;
 
-	if (game_version(g_game) >= 2 && jsal_is_object_coercible(-1)) {
+	/*if (game_version(g_game) >= 2 && jsal_is_object_coercible(-1)) {
 		// modular mode (Sv2).  check for an exported Game class and instantiate it,
 		// then call game.start().
 		jsal_get_prop_string(-1, "default");
@@ -287,9 +287,10 @@ main(int argc, char* argv[])
 				goto on_js_error;
 		}
 		jsal_pop(2);
-	}
-	else if (game_version(g_game) <= 1) {
-		// compatibility mode (Sv1), call game() function (if it exists)
+	}*/
+
+	// in Sv1 mode only, call game() function (if it exists)
+	if (game_version(g_game) <= 1) {
 		jsal_get_global_string("game");
 		if (jsal_is_function(-1) && !jsal_try_call(0))
 			goto on_js_error;
