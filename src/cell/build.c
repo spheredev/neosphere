@@ -111,6 +111,7 @@ static void    clean_old_artifacts  (build_t* build, bool keep_targets);
 static bool    eval_cjs_module      (fs_t* fs, const char* filename, bool as_mjs);
 static path_t* find_cjs_module      (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static bool    install_target       (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static void    jsal_fetch_module    (void);
 static path_t* load_package_json    (const char* filename);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void    push_require         (const char* module_id);
@@ -139,6 +140,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	visor_begin_op(visor, "setting up Cellscript environment");
 
+	jsal_on_fetch_module(jsal_fetch_module);
+
 	// initialize the CommonJS cache and global require()
 	jsal_push_hidden_stash();
 	jsal_push_new_object();
@@ -151,16 +154,6 @@ build_new(const path_t* source_path, const path_t* out_path)
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, "require");
 	jsal_pop(1);
-
-	// prepare environment for ECMAScript 2015 support
-	if (fs_fexist(fs, "#/babel-core.js")) {
-		jsal_push_hidden_stash();
-		if (eval_cjs_module(fs, "#/babel-core.js", false))
-			jsal_put_prop_string(-2, "Babel");
-		else
-			jsal_pop(1);
-		jsal_pop(1);
-	}
 
 	// initialize the Cellscript API
 	api_init();
@@ -545,6 +538,15 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 	push_require(filename);
 	jsal_put_prop_string(-2, "require");  // module.require
 
+	// evaluate .mjs scripts as ES6 modules
+	if (path_has_extension(file_path, ".mjs")) {
+		jsal_push_lstring_t(code_string);
+		if (!jsal_try_eval_module(filename))
+			goto on_error;
+		jsal_remove(-2);
+		return true;
+	}
+
 	// cache the module object in advance
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "moduleCache");
@@ -552,7 +554,7 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 	jsal_put_prop_string(-2, filename);
 	jsal_pop(2);
 
-	if (strcmp(path_extension(file_path), ".json") == 0) {
+	if (path_has_extension(file_path, ".json")) {
 		// JSON file, decode to JavaScript object
 		jsal_push_lstring_t(code_string);
 		lstr_free(code_string);
@@ -563,57 +565,11 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 	else {
 		// synthesize a function to wrap the module code.  this is the simplest way to
 		// implement CommonJS semantics and matches the behavior of Node.js.
-		if (!as_mjs) {
-			jsal_push_sprintf("(function(exports, require, module, __filename, __dirname) {%s%s\n})",
-				strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
-				lstr_cstr(code_string));
-		}
-		else {
-			jsal_push_null();  // stack balancing
-		}
-		if (as_mjs || !jsal_try_compile(filename)) {
-			// potentially ES 2015+ code; try transpiling it.
-			// note: it might be better to eventually lift this functionality into a separate source file.
-			//       it's pretty involved due to Duktape's stack API and is kind of an eyesore here.
-			jsal_push_hidden_stash();
-			if (!jsal_has_prop_string(-1, "Babel")) {
-				jsal_pop(1);
-				if (!jsal_is_error(-1)) {
-					jsal_push_new_error(JS_ERROR, "couldn't load module '%s'", filename);
-					jsal_replace(-2);
-				}
-				goto on_error;  // no ES 2015 support
-			}
-			jsal_get_prop_string(-1, "Babel");
-			jsal_get_prop_string(-1, "transform");
-			jsal_pull(-2);
-			jsal_push_lstring_t(code_string);
-			if (as_mjs) {
-				jsal_push_eval(
-					"({ presets: [ [ 'latest', { 'es2015': { modules: 'commonjs' } } ] ],"
-					"   sourceType: 'module', retainLines: true })");
-			}
-			else {
-				jsal_push_eval(
-					"({ presets: [ [ 'latest', { 'es2015': { modules: false } } ] ],"
-					"   sourceType: 'script', retainLines: true })");
-			}
-			if (!jsal_try_call_method(2)) {
-				jsal_remove(-2);
-				goto on_error;
-			}
-			jsal_get_prop_string(-1, "code");
-			lstr_free(code_string);
-			code_string = jsal_require_lstring_t(-1);
-			jsal_pop(4);
-
-			// try to compile it again.  if this attempt fails, it's a lost cause.
-			jsal_push_sprintf("(function(exports, require, module, __filename, __dirname) {%s%s\n})",
-				strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
-				lstr_cstr(code_string));
-			if (!jsal_try_compile(filename))
-				goto on_error;
-		}
+		jsal_push_sprintf("(function (exports, require, module, __filename, __dirname) {%s%s\n})",
+			strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
+			lstr_cstr(code_string));
+		if (!jsal_try_compile(filename))
+			goto on_error;
 		jsal_call(0);
 		jsal_push_new_object();
 		jsal_push_string("main");
@@ -736,6 +692,40 @@ install_target(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		fs_utime(s_build->fs, target_path, NULL);
 	jsal_push_boolean(result == 0);
 	return true;
+}
+
+static void
+jsal_fetch_module(void)
+{
+	const char* const PATHS[] =
+	{
+		"$/lib",
+		"#/cell_modules",
+		"#/runtime",
+	};
+
+	const char* caller_id;
+	path_t*     path;
+	const char* source;
+	size_t      source_len;
+	const char* specifier;
+
+	int i;
+
+	specifier = jsal_require_string(0);
+	caller_id = jsal_require_string(1);
+
+	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
+		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
+	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
+		if (path = find_cjs_module(s_build->fs, specifier, caller_id, PATHS[i]))
+			break;  // short-circuit
+	}
+	if (path == NULL)
+		jsal_error_blame(-1, JS_REF_ERROR, "module not found `%s`", specifier);
+	source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
+	jsal_push_string(path_cstr(path));
+	jsal_push_lstring(source, source_len);
 }
 
 static path_t*

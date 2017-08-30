@@ -49,10 +49,10 @@ function transpile(dirName, sources)
 function makeTranspileTool(apiVersion)
 {
 	return new Tool((outFileName, inFileNames) => {
-		var sourceType = apiVersion >= 2 ? 'module' : 'script';
-		var modules = apiVersion >= 2 ? 'commonjs' : false;
-		var input = FS.readFile(inFileNames[0]);
-		var output = Babel.transform(input, {
+		let sourceType = apiVersion >= 2 ? 'module' : 'script';
+		let modules = apiVersion >= 2 ? 'commonjs' : false;
+		let input = FS.readFile(inFileNames[0]);
+		let output = Babel.transform(input, {
 			filename: inFileNames[0],
 			presets: [
 				[ 'latest', { 'es2015': { modules } } ]
@@ -66,18 +66,18 @@ function makeTranspileTool(apiVersion)
 
 function stageTarget(dirName, sources)
 {
-	var targets = [];
+	let targets = [];
 	FS.createDirectory(dirName);
-	for (var i = 0; i < sources.length; ++i) {
-		var fileName = FS.fullPath(dirName + '/' + sources[i].name);
-		var tool = fileName.endsWith('.mjs') ? moduleTool : scriptTool;
+	for (const source of sources) {
+		let fileName = FS.fullPath(source.name, dirName);
+		let tool = fileName.endsWith('.mjs') ? moduleTool : scriptTool;
 		if (fileName.endsWith('.mjs') || fileName.endsWith('.js'))
 			fileName = fileName.substring(0, fileName.lastIndexOf('.'));
 		fileName += '.js';
-		var target = tool.stage(fileName, [ sources[i] ], {
-			name: sources[i].name,
+		let target = tool.stage(fileName, [ source ], {
+			name: source.name,
 		});
-		targets[targets.length] = target;
+		targets.push(target);
 	}
 	return targets;
 }
