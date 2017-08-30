@@ -831,175 +831,175 @@ initialize_vanilla_api(void)
 	api_define_function(NULL, "UnbindKey", js_UnbindKey);
 	api_define_function(NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
-	api_define_class("ssAnimation", NULL, js_Animation_finalize);
-	api_define_property("ssAnimation", "width", js_Animation_get_width, NULL);
-	api_define_property("ssAnimation", "height", js_Animation_get_height, NULL);
-	api_define_method("ssAnimation", "getDelay", js_Animation_getDelay);
-	api_define_method("ssAnimation", "getNumFrames", js_Animation_getNumFrames);
-	api_define_method("ssAnimation", "drawFrame", js_Animation_drawFrame);
-	api_define_method("ssAnimation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
-	api_define_method("ssAnimation", "readNextFrame", js_Animation_readNextFrame);
+	api_define_class("v1Animation", NULL, js_Animation_finalize);
+	api_define_property("v1Animation", "width", js_Animation_get_width, NULL);
+	api_define_property("v1Animation", "height", js_Animation_get_height, NULL);
+	api_define_method("v1Animation", "getDelay", js_Animation_getDelay);
+	api_define_method("v1Animation", "getNumFrames", js_Animation_getNumFrames);
+	api_define_method("v1Animation", "drawFrame", js_Animation_drawFrame);
+	api_define_method("v1Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame);
+	api_define_method("v1Animation", "readNextFrame", js_Animation_readNextFrame);
 
-	api_define_class("ssByteArray", NULL, js_ByteArray_finalize);
-	api_define_property("ssByteArray", "length", js_ByteArray_get_length, NULL);
-	api_define_method("ssByteArray", "concat", js_ByteArray_concat);
-	api_define_method("ssByteArray", "slice", js_ByteArray_slice);
-	api_define_method("ssByteArray", "toString", js_ByteArray_toString);
+	api_define_class("v1ByteArray", NULL, js_ByteArray_finalize);
+	api_define_property("v1ByteArray", "length", js_ByteArray_get_length, NULL);
+	api_define_method("v1ByteArray", "concat", js_ByteArray_concat);
+	api_define_method("v1ByteArray", "slice", js_ByteArray_slice);
+	api_define_method("v1ByteArray", "toString", js_ByteArray_toString);
 
-	api_define_class("ssColor", NULL, NULL);
-	api_define_method("ssColor", "toString", js_Color_toString);
+	api_define_class("v1Color", NULL, NULL);
+	api_define_method("v1Color", "toString", js_Color_toString);
 
-	api_define_class("ssColorMatrix", NULL, NULL);
-	api_define_method("ssColorMatrix", "toString", js_ColorMatrix_toString);
+	api_define_class("v1ColorMatrix", NULL, NULL);
+	api_define_method("v1ColorMatrix", "toString", js_ColorMatrix_toString);
 
-	api_define_class("ssFile", NULL, js_File_finalize);
-	api_define_method("ssFile", "close", js_File_close);
-	api_define_method("ssFile", "flush", js_File_flush);
-	api_define_method("ssFile", "getKey", js_File_getKey);
-	api_define_method("ssFile", "getNumKeys", js_File_getNumKeys);
-	api_define_method("ssFile", "read", js_File_read);
-	api_define_method("ssFile", "toString", js_File_toString);
-	api_define_method("ssFile", "write", js_File_write);
+	api_define_class("v1File", NULL, js_File_finalize);
+	api_define_method("v1File", "close", js_File_close);
+	api_define_method("v1File", "flush", js_File_flush);
+	api_define_method("v1File", "getKey", js_File_getKey);
+	api_define_method("v1File", "getNumKeys", js_File_getNumKeys);
+	api_define_method("v1File", "read", js_File_read);
+	api_define_method("v1File", "toString", js_File_toString);
+	api_define_method("v1File", "write", js_File_write);
 
-	api_define_class("ssFont", NULL, js_Font_finalize);
-	api_define_method("ssFont", "clone", js_Font_clone);
-	api_define_method("ssFont", "drawText", js_Font_drawText);
-	api_define_method("ssFont", "drawTextBox", js_Font_drawTextBox);
-	api_define_method("ssFont", "drawZoomedText", js_Font_drawZoomedText);
-	api_define_method("ssFont", "getCharacterImage", js_Font_getCharacterImage);
-	api_define_method("ssFont", "getColorMask", js_Font_getColorMask);
-	api_define_method("ssFont", "getHeight", js_Font_getHeight);
-	api_define_method("ssFont", "getStringHeight", js_Font_getStringHeight);
-	api_define_method("ssFont", "getStringWidth", js_Font_getStringWidth);
-	api_define_method("ssFont", "setCharacterImage", js_Font_setCharacterImage);
-	api_define_method("ssFont", "setColorMask", js_Font_setColorMask);
-	api_define_method("ssFont", "toString", js_Font_toString);
-	api_define_method("ssFont", "wordWrapString", js_Font_wordWrapString);
+	api_define_class("v1Font", NULL, js_Font_finalize);
+	api_define_method("v1Font", "clone", js_Font_clone);
+	api_define_method("v1Font", "drawText", js_Font_drawText);
+	api_define_method("v1Font", "drawTextBox", js_Font_drawTextBox);
+	api_define_method("v1Font", "drawZoomedText", js_Font_drawZoomedText);
+	api_define_method("v1Font", "getCharacterImage", js_Font_getCharacterImage);
+	api_define_method("v1Font", "getColorMask", js_Font_getColorMask);
+	api_define_method("v1Font", "getHeight", js_Font_getHeight);
+	api_define_method("v1Font", "getStringHeight", js_Font_getStringHeight);
+	api_define_method("v1Font", "getStringWidth", js_Font_getStringWidth);
+	api_define_method("v1Font", "setCharacterImage", js_Font_setCharacterImage);
+	api_define_method("v1Font", "setColorMask", js_Font_setColorMask);
+	api_define_method("v1Font", "toString", js_Font_toString);
+	api_define_method("v1Font", "wordWrapString", js_Font_wordWrapString);
 
-	api_define_class("ssImage", NULL, js_Image_finalize);
-	api_define_property("ssImage", "height", js_Image_get_height, NULL);
-	api_define_property("ssImage", "width", js_Image_get_width, NULL);
-	api_define_method("ssImage", "blit", js_Image_blit);
-	api_define_method("ssImage", "blitMask", js_Image_blitMask);
-	api_define_method("ssImage", "createSurface", js_Image_createSurface);
-	api_define_method("ssImage", "rotateBlit", js_Image_rotateBlit);
-	api_define_method("ssImage", "rotateBlitMask", js_Image_rotateBlitMask);
-	api_define_method("ssImage", "toString", js_Image_toString);
-	api_define_method("ssImage", "transformBlit", js_Image_transformBlit);
-	api_define_method("ssImage", "transformBlitMask", js_Image_transformBlitMask);
-	api_define_method("ssImage", "zoomBlit", js_Image_zoomBlit);
-	api_define_method("ssImage", "zoomBlitMask", js_Image_zoomBlitMask);
+	api_define_class("v1Image", NULL, js_Image_finalize);
+	api_define_property("v1Image", "height", js_Image_get_height, NULL);
+	api_define_property("v1Image", "width", js_Image_get_width, NULL);
+	api_define_method("v1Image", "blit", js_Image_blit);
+	api_define_method("v1Image", "blitMask", js_Image_blitMask);
+	api_define_method("v1Image", "createSurface", js_Image_createSurface);
+	api_define_method("v1Image", "rotateBlit", js_Image_rotateBlit);
+	api_define_method("v1Image", "rotateBlitMask", js_Image_rotateBlitMask);
+	api_define_method("v1Image", "toString", js_Image_toString);
+	api_define_method("v1Image", "transformBlit", js_Image_transformBlit);
+	api_define_method("v1Image", "transformBlitMask", js_Image_transformBlitMask);
+	api_define_method("v1Image", "zoomBlit", js_Image_zoomBlit);
+	api_define_method("v1Image", "zoomBlitMask", js_Image_zoomBlitMask);
 
-	api_define_class("ssLogger", NULL, js_Logger_finalize);
-	api_define_method("ssLogger", "toString", js_Logger_toString);
-	api_define_method("ssLogger", "beginBlock", js_Logger_beginBlock);
-	api_define_method("ssLogger", "endBlock", js_Logger_endBlock);
-	api_define_method("ssLogger", "write", js_Logger_write);
+	api_define_class("v1Logger", NULL, js_Logger_finalize);
+	api_define_method("v1Logger", "toString", js_Logger_toString);
+	api_define_method("v1Logger", "beginBlock", js_Logger_beginBlock);
+	api_define_method("v1Logger", "endBlock", js_Logger_endBlock);
+	api_define_method("v1Logger", "write", js_Logger_write);
 
-	api_define_class("ssRawFile", NULL, js_RawFile_finalize);
-	api_define_method("ssRawFile", "close", js_RawFile_close);
-	api_define_method("ssRawFile", "getPosition", js_RawFile_getPosition);
-	api_define_method("ssRawFile", "getSize", js_RawFile_getSize);
-	api_define_method("ssRawFile", "read", js_RawFile_read);
-	api_define_method("ssRawFile", "setPosition", js_RawFile_setPosition);
-	api_define_method("ssRawFile", "toString", js_RawFile_toString);
-	api_define_method("ssRawFile", "write", js_RawFile_write);
+	api_define_class("v1RawFile", NULL, js_RawFile_finalize);
+	api_define_method("v1RawFile", "close", js_RawFile_close);
+	api_define_method("v1RawFile", "getPosition", js_RawFile_getPosition);
+	api_define_method("v1RawFile", "getSize", js_RawFile_getSize);
+	api_define_method("v1RawFile", "read", js_RawFile_read);
+	api_define_method("v1RawFile", "setPosition", js_RawFile_setPosition);
+	api_define_method("v1RawFile", "toString", js_RawFile_toString);
+	api_define_method("v1RawFile", "write", js_RawFile_write);
 
-	api_define_class("ssSocket", NULL, js_Socket_finalize);
-	api_define_method("ssSocket", "close", js_Socket_close);
-	api_define_method("ssSocket", "getPendingReadSize", js_Socket_getPendingReadSize);
-	api_define_method("ssSocket", "isConnected", js_Socket_isConnected);
-	api_define_method("ssSocket", "read", js_Socket_read);
-	api_define_method("ssSocket", "toString", js_Socket_toString);
-	api_define_method("ssSocket", "write", js_Socket_write);
+	api_define_class("v1Socket", NULL, js_Socket_finalize);
+	api_define_method("v1Socket", "close", js_Socket_close);
+	api_define_method("v1Socket", "getPendingReadSize", js_Socket_getPendingReadSize);
+	api_define_method("v1Socket", "isConnected", js_Socket_isConnected);
+	api_define_method("v1Socket", "read", js_Socket_read);
+	api_define_method("v1Socket", "toString", js_Socket_toString);
+	api_define_method("v1Socket", "write", js_Socket_write);
 
-	api_define_class("ssSound", NULL, js_Sound_finalize);
-	api_define_method("ssSound", "getLength", js_Sound_getLength);
-	api_define_method("ssSound", "getPan", js_Sound_getPan);
-	api_define_method("ssSound", "getPitch", js_Sound_getPitch);
-	api_define_method("ssSound", "getPosition", js_Sound_getPosition);
-	api_define_method("ssSound", "getRepeat", js_Sound_getRepeat);
-	api_define_method("ssSound", "getVolume", js_Sound_getVolume);
-	api_define_method("ssSound", "isPlaying", js_Sound_isPlaying);
-	api_define_method("ssSound", "isSeekable", js_Sound_isSeekable);
-	api_define_method("ssSound", "pause", js_Sound_pause);
-	api_define_method("ssSound", "play", js_Sound_play);
-	api_define_method("ssSound", "reset", js_Sound_reset);
-	api_define_method("ssSound", "setPan", js_Sound_setPan);
-	api_define_method("ssSound", "setPitch", js_Sound_setPitch);
-	api_define_method("ssSound", "setPosition", js_Sound_setPosition);
-	api_define_method("ssSound", "setRepeat", js_Sound_setRepeat);
-	api_define_method("ssSound", "setVolume", js_Sound_setVolume);
-	api_define_method("ssSound", "stop", js_Sound_stop);
-	api_define_method("ssSound", "toString", js_Sound_toString);
+	api_define_class("v1Sound", NULL, js_Sound_finalize);
+	api_define_method("v1Sound", "getLength", js_Sound_getLength);
+	api_define_method("v1Sound", "getPan", js_Sound_getPan);
+	api_define_method("v1Sound", "getPitch", js_Sound_getPitch);
+	api_define_method("v1Sound", "getPosition", js_Sound_getPosition);
+	api_define_method("v1Sound", "getRepeat", js_Sound_getRepeat);
+	api_define_method("v1Sound", "getVolume", js_Sound_getVolume);
+	api_define_method("v1Sound", "isPlaying", js_Sound_isPlaying);
+	api_define_method("v1Sound", "isSeekable", js_Sound_isSeekable);
+	api_define_method("v1Sound", "pause", js_Sound_pause);
+	api_define_method("v1Sound", "play", js_Sound_play);
+	api_define_method("v1Sound", "reset", js_Sound_reset);
+	api_define_method("v1Sound", "setPan", js_Sound_setPan);
+	api_define_method("v1Sound", "setPitch", js_Sound_setPitch);
+	api_define_method("v1Sound", "setPosition", js_Sound_setPosition);
+	api_define_method("v1Sound", "setRepeat", js_Sound_setRepeat);
+	api_define_method("v1Sound", "setVolume", js_Sound_setVolume);
+	api_define_method("v1Sound", "stop", js_Sound_stop);
+	api_define_method("v1Sound", "toString", js_Sound_toString);
 
-	api_define_class("ssSoundEffect", NULL, js_SoundEffect_finalize);
-	api_define_method("ssSoundEffect", "getPan", js_SoundEffect_getPan);
-	api_define_method("ssSoundEffect", "getPitch", js_SoundEffect_getPitch);
-	api_define_method("ssSoundEffect", "getVolume", js_SoundEffect_getVolume);
-	api_define_method("ssSoundEffect", "setPan", js_SoundEffect_setPan);
-	api_define_method("ssSoundEffect", "setPitch", js_SoundEffect_setPitch);
-	api_define_method("ssSoundEffect", "setVolume", js_SoundEffect_setVolume);
-	api_define_method("ssSoundEffect", "play", js_SoundEffect_play);
-	api_define_method("ssSoundEffect", "stop", js_SoundEffect_stop);
-	api_define_method("ssSoundEffect", "toString", js_SoundEffect_toString);
+	api_define_class("v1SoundEffect", NULL, js_SoundEffect_finalize);
+	api_define_method("v1SoundEffect", "getPan", js_SoundEffect_getPan);
+	api_define_method("v1SoundEffect", "getPitch", js_SoundEffect_getPitch);
+	api_define_method("v1SoundEffect", "getVolume", js_SoundEffect_getVolume);
+	api_define_method("v1SoundEffect", "setPan", js_SoundEffect_setPan);
+	api_define_method("v1SoundEffect", "setPitch", js_SoundEffect_setPitch);
+	api_define_method("v1SoundEffect", "setVolume", js_SoundEffect_setVolume);
+	api_define_method("v1SoundEffect", "play", js_SoundEffect_play);
+	api_define_method("v1SoundEffect", "stop", js_SoundEffect_stop);
+	api_define_method("v1SoundEffect", "toString", js_SoundEffect_toString);
 
-	api_define_class("ssSpriteset", NULL, js_Spriteset_finalize);
-	api_define_property("ssSpriteset", "filename", js_Spriteset_get_filename, NULL);
-	api_define_method("ssSpriteset", "clone", js_Spriteset_clone);
-	api_define_method("ssSpriteset", "save", js_Spriteset_save);
-	api_define_method("ssSpriteset", "toString", js_Spriteset_toString);
+	api_define_class("v1Spriteset", NULL, js_Spriteset_finalize);
+	api_define_property("v1Spriteset", "filename", js_Spriteset_get_filename, NULL);
+	api_define_method("v1Spriteset", "clone", js_Spriteset_clone);
+	api_define_method("v1Spriteset", "save", js_Spriteset_save);
+	api_define_method("v1Spriteset", "toString", js_Spriteset_toString);
 
-	api_define_class("ssSurface", NULL, js_Surface_finalize);
-	api_define_property("ssSurface", "height", js_Surface_get_height, NULL);
-	api_define_property("ssSurface", "width", js_Surface_get_width, NULL);
-	api_define_method("ssSurface", "applyColorFX", js_Surface_applyColorFX);
-	api_define_method("ssSurface", "applyColorFX4", js_Surface_applyColorFX4);
-	api_define_method("ssSurface", "applyLookup", js_Surface_applyLookup);
-	api_define_method("ssSurface", "bezierCurve", js_Surface_bezierCurve);
-	api_define_method("ssSurface", "blit", js_Surface_blit);
-	api_define_method("ssSurface", "blitMaskSurface", js_Surface_blitMaskSurface);
-	api_define_method("ssSurface", "blitSurface", js_Surface_blitSurface);
-	api_define_method("ssSurface", "clone", js_Surface_clone);
-	api_define_method("ssSurface", "cloneSection", js_Surface_cloneSection);
-	api_define_method("ssSurface", "createImage", js_Surface_createImage);
-	api_define_method("ssSurface", "drawText", js_Surface_drawText);
-	api_define_method("ssSurface", "filledCircle", js_Surface_filledCircle);
-	api_define_method("ssSurface", "filledEllipse", js_Surface_filledEllipse);
-	api_define_method("ssSurface", "flipHorizontally", js_Surface_flipHorizontally);
-	api_define_method("ssSurface", "flipVertically", js_Surface_flipVertically);
-	api_define_method("ssSurface", "getPixel", js_Surface_getPixel);
-	api_define_method("ssSurface", "gradientCircle", js_Surface_gradientCircle);
-	api_define_method("ssSurface", "gradientEllipse", js_Surface_gradientEllipse);
-	api_define_method("ssSurface", "gradientLine", js_Surface_gradientLine);
-	api_define_method("ssSurface", "gradientRectangle", js_Surface_gradientRectangle);
-	api_define_method("ssSurface", "line", js_Surface_line);
-	api_define_method("ssSurface", "lineSeries", js_Surface_lineSeries);
-	api_define_method("ssSurface", "outlinedCircle", js_Surface_outlinedCircle);
-	api_define_method("ssSurface", "outlinedEllipse", js_Surface_outlinedEllipse);
-	api_define_method("ssSurface", "outlinedRectangle", js_Surface_outlinedRectangle);
-	api_define_method("ssSurface", "pointSeries", js_Surface_pointSeries);
-	api_define_method("ssSurface", "rotate", js_Surface_rotate);
-	api_define_method("ssSurface", "rotateBlitMaskSurface", js_Surface_rotateBlitMaskSurface);
-	api_define_method("ssSurface", "rotateBlitSurface", js_Surface_rotateBlitSurface);
-	api_define_method("ssSurface", "rectangle", js_Surface_rectangle);
-	api_define_method("ssSurface", "replaceColor", js_Surface_replaceColor);
-	api_define_method("ssSurface", "rescale", js_Surface_rescale);
-	api_define_method("ssSurface", "save", js_Surface_save);
-	api_define_method("ssSurface", "setAlpha", js_Surface_setAlpha);
-	api_define_method("ssSurface", "setBlendMode", js_Surface_setBlendMode);
-	api_define_method("ssSurface", "setPixel", js_Surface_setPixel);
-	api_define_method("ssSurface", "toString", js_Surface_toString);
-	api_define_method("ssSurface", "transformBlitMaskSurface", js_Surface_transformBlitMaskSurface);
-	api_define_method("ssSurface", "transformBlitSurface", js_Surface_transformBlitSurface);
-	api_define_method("ssSurface", "zoomBlitMaskSurface", js_Surface_zoomBlitMaskSurface);
-	api_define_method("ssSurface", "zoomBlitSurface", js_Surface_zoomBlitSurface);
+	api_define_class("v1Surface", NULL, js_Surface_finalize);
+	api_define_property("v1Surface", "height", js_Surface_get_height, NULL);
+	api_define_property("v1Surface", "width", js_Surface_get_width, NULL);
+	api_define_method("v1Surface", "applyColorFX", js_Surface_applyColorFX);
+	api_define_method("v1Surface", "applyColorFX4", js_Surface_applyColorFX4);
+	api_define_method("v1Surface", "applyLookup", js_Surface_applyLookup);
+	api_define_method("v1Surface", "bezierCurve", js_Surface_bezierCurve);
+	api_define_method("v1Surface", "blit", js_Surface_blit);
+	api_define_method("v1Surface", "blitMaskSurface", js_Surface_blitMaskSurface);
+	api_define_method("v1Surface", "blitSurface", js_Surface_blitSurface);
+	api_define_method("v1Surface", "clone", js_Surface_clone);
+	api_define_method("v1Surface", "cloneSection", js_Surface_cloneSection);
+	api_define_method("v1Surface", "createImage", js_Surface_createImage);
+	api_define_method("v1Surface", "drawText", js_Surface_drawText);
+	api_define_method("v1Surface", "filledCircle", js_Surface_filledCircle);
+	api_define_method("v1Surface", "filledEllipse", js_Surface_filledEllipse);
+	api_define_method("v1Surface", "flipHorizontally", js_Surface_flipHorizontally);
+	api_define_method("v1Surface", "flipVertically", js_Surface_flipVertically);
+	api_define_method("v1Surface", "getPixel", js_Surface_getPixel);
+	api_define_method("v1Surface", "gradientCircle", js_Surface_gradientCircle);
+	api_define_method("v1Surface", "gradientEllipse", js_Surface_gradientEllipse);
+	api_define_method("v1Surface", "gradientLine", js_Surface_gradientLine);
+	api_define_method("v1Surface", "gradientRectangle", js_Surface_gradientRectangle);
+	api_define_method("v1Surface", "line", js_Surface_line);
+	api_define_method("v1Surface", "lineSeries", js_Surface_lineSeries);
+	api_define_method("v1Surface", "outlinedCircle", js_Surface_outlinedCircle);
+	api_define_method("v1Surface", "outlinedEllipse", js_Surface_outlinedEllipse);
+	api_define_method("v1Surface", "outlinedRectangle", js_Surface_outlinedRectangle);
+	api_define_method("v1Surface", "pointSeries", js_Surface_pointSeries);
+	api_define_method("v1Surface", "rotate", js_Surface_rotate);
+	api_define_method("v1Surface", "rotateBlitMaskSurface", js_Surface_rotateBlitMaskSurface);
+	api_define_method("v1Surface", "rotateBlitSurface", js_Surface_rotateBlitSurface);
+	api_define_method("v1Surface", "rectangle", js_Surface_rectangle);
+	api_define_method("v1Surface", "replaceColor", js_Surface_replaceColor);
+	api_define_method("v1Surface", "rescale", js_Surface_rescale);
+	api_define_method("v1Surface", "save", js_Surface_save);
+	api_define_method("v1Surface", "setAlpha", js_Surface_setAlpha);
+	api_define_method("v1Surface", "setBlendMode", js_Surface_setBlendMode);
+	api_define_method("v1Surface", "setPixel", js_Surface_setPixel);
+	api_define_method("v1Surface", "toString", js_Surface_toString);
+	api_define_method("v1Surface", "transformBlitMaskSurface", js_Surface_transformBlitMaskSurface);
+	api_define_method("v1Surface", "transformBlitSurface", js_Surface_transformBlitSurface);
+	api_define_method("v1Surface", "zoomBlitMaskSurface", js_Surface_zoomBlitMaskSurface);
+	api_define_method("v1Surface", "zoomBlitSurface", js_Surface_zoomBlitSurface);
 
-	api_define_class("ssWindowStyle", NULL, js_WindowStyle_finalize);
-	api_define_method("ssWindowStyle", "drawWindow", js_WindowStyle_drawWindow);
-	api_define_method("ssWindowStyle", "getColorMask", js_WindowStyle_getColorMask);
-	api_define_method("ssWindowStyle", "setColorMask", js_WindowStyle_setColorMask);
-	api_define_method("ssWindowStyle", "toString", js_WindowStyle_toString);
+	api_define_class("v1WindowStyle", NULL, js_WindowStyle_finalize);
+	api_define_method("v1WindowStyle", "drawWindow", js_WindowStyle_drawWindow);
+	api_define_method("v1WindowStyle", "getColorMask", js_WindowStyle_getColorMask);
+	api_define_method("v1WindowStyle", "setColorMask", js_WindowStyle_setColorMask);
+	api_define_method("v1WindowStyle", "toString", js_WindowStyle_toString);
 
 	// blend modes for Surfaces
 	api_define_const(NULL, "BLEND", BLEND_BLEND);
@@ -1184,7 +1184,7 @@ jsal_push_sphere_bytearray(bytearray_t* array)
 {
 	int obj_index;
 
-	jsal_push_class_obj("ssByteArray", bytearray_ref(array));
+	jsal_push_class_obj("v1ByteArray", bytearray_ref(array));
 	obj_index = jsal_normalize_index(-1);
 
 	// return proxy object so we can catch array accesses
@@ -1217,7 +1217,7 @@ jsal_push_sphere_color(color_t color)
 void
 jsal_push_sphere_font(font_t* font)
 {
-	jsal_push_class_obj("ssFont", font_ref(font));
+	jsal_push_class_obj("v1Font", font_ref(font));
 	jsal_push_sphere_color(color_new(255, 255, 255, 255));
 	jsal_put_prop_string(-2, "\xFF" "color_mask");
 }
@@ -1231,7 +1231,7 @@ jsal_push_sphere_spriteset(spriteset_t* spriteset)
 
 	int i, j;
 
-	jsal_push_class_obj("ssSpriteset", spriteset_ref(spriteset));
+	jsal_push_class_obj("v1Spriteset", spriteset_ref(spriteset));
 
 	// Spriteset:base
 	base = spriteset_get_base(spriteset);
@@ -1246,7 +1246,7 @@ jsal_push_sphere_spriteset(spriteset_t* spriteset)
 	jsal_push_new_array();
 	for (i = 0; i < spriteset_num_images(spriteset); ++i) {
 		image = spriteset_image(spriteset, i);
-		jsal_push_class_obj("ssImage", image_ref(image));
+		jsal_push_class_obj("v1Image", image_ref(image));
 		jsal_put_prop_index(-2, i);
 	}
 	jsal_put_prop_string(-2, "images");
@@ -1322,7 +1322,7 @@ jsal_require_sphere_color(int index)
 	int r, g, b;
 	int a;
 
-	jsal_require_class_obj(index, "ssColor");
+	jsal_require_class_obj(index, "v1Color");
 	jsal_get_prop_string(index, "red"); r = jsal_get_int(-1); jsal_pop(1);
 	jsal_get_prop_string(index, "green"); g = jsal_get_int(-1); jsal_pop(1);
 	jsal_get_prop_string(index, "blue"); b = jsal_get_int(-1); jsal_pop(1);
@@ -1339,7 +1339,7 @@ jsal_require_sphere_colormatrix(int index)
 {
 	colormatrix_t matrix;
 
-	jsal_require_class_obj(index, "ssColorMatrix");
+	jsal_require_class_obj(index, "v1ColorMatrix");
 	jsal_get_prop_string(index, "rn"); matrix.rn = jsal_get_int(-1); jsal_pop(1);
 	jsal_get_prop_string(index, "rr"); matrix.rr = jsal_get_int(-1); jsal_pop(1);
 	jsal_get_prop_string(index, "rg"); matrix.rg = jsal_get_int(-1); jsal_pop(1);
@@ -1401,7 +1401,7 @@ jsal_require_sphere_spriteset(int index)
 	int i, j;
 
 	index = jsal_normalize_index(index);
-	jsal_require_class_obj(index, "ssSpriteset");
+	jsal_require_class_obj(index, "v1Spriteset");
 
 	spriteset = spriteset_new();
 
@@ -1421,7 +1421,7 @@ jsal_require_sphere_spriteset(int index)
 	num_images = (int)jsal_get_length(-1);
 	for (i = 0; i < num_images; ++i) {
 		jsal_get_prop_index(-1, i);
-		image = jsal_require_class_obj(-1, "ssImage");
+		image = jsal_require_class_obj(-1, "v1Image");
 		spriteset_add_image(spriteset, image);
 		jsal_pop(1);
 	}
@@ -1455,7 +1455,7 @@ jsal_require_sphere_spriteset(int index)
 static void
 jsal_push_sphere_windowstyle(windowstyle_t* winstyle)
 {
-	jsal_push_class_obj("ssWindowStyle", winstyle_ref(winstyle));
+	jsal_push_class_obj("v1WindowStyle", winstyle_ref(winstyle));
 	jsal_push_sphere_color(color_new(255, 255, 255, 255));
 	jsal_put_prop_string(-2, "\xFF" "color_mask");
 }
@@ -1935,7 +1935,7 @@ js_CreateColor(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	a = a < 0 ? 0 : a > 255 ? 255 : a;
 
 	// construct a Color object
-	jsal_push_class_obj("ssColor", NULL);
+	jsal_push_class_obj("v1Color", NULL);
 	jsal_push_int(r); jsal_put_prop_string(-2, "red");
 	jsal_push_int(g); jsal_put_prop_string(-2, "green");
 	jsal_push_int(b); jsal_put_prop_string(-2, "blue");
@@ -1960,7 +1960,7 @@ js_CreateColorMatrix(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int bb = jsal_to_int(11);
 
 	// construct a ColorMatrix object
-	jsal_push_class_obj("ssColorMatrix", NULL);
+	jsal_push_class_obj("v1ColorMatrix", NULL);
 	jsal_push_int(rn); jsal_put_prop_string(-2, "rn");
 	jsal_push_int(rr); jsal_put_prop_string(-2, "rr");
 	jsal_push_int(rg); jsal_put_prop_string(-2, "rg");
@@ -2000,7 +2000,7 @@ js_CreatePerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 	destroy_with_map = jsal_to_boolean(2);
 
-	if (jsal_is_class_obj(1, "ssSpriteset")) {
+	if (jsal_is_class_obj(1, "v1Spriteset")) {
 		// ref the spriteset so we can safely free it later. this avoids
 		// having to check the argument type again.
 		spriteset = jsal_require_sphere_spriteset(1);
@@ -2069,7 +2069,7 @@ js_CreateStringFromByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic
 	uint8_t*     buffer;
 	size_t       size;
 
-	array = jsal_require_class_obj(0, "ssByteArray");
+	array = jsal_require_class_obj(0, "v1ByteArray");
 
 	buffer = bytearray_buffer(array);
 	size = bytearray_len(array);
@@ -2106,7 +2106,7 @@ js_CreateSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!(image = image_new(width, height)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't create surface");
 	image_fill(image, fill_color);
-	jsal_push_class_obj("ssSurface", image);
+	jsal_push_class_obj("v1Surface", image);
 	return true;
 }
 
@@ -2114,7 +2114,7 @@ static bool
 js_DeflateByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
-	bytearray_t* array = jsal_require_class_obj(0, "ssByteArray");
+	bytearray_t* array = jsal_require_class_obj(0, "v1ByteArray");
 	int level = n_args >= 2 ? jsal_to_int(1) : -1;
 
 	bytearray_t* new_array;
@@ -3536,7 +3536,7 @@ js_GetSystemArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = legacy_default_arrow_image()))
 		jsal_error_blame(-1, JS_REF_ERROR, "missing system arrow image");
-	jsal_push_class_obj("ssImage", image_ref(image));
+	jsal_push_class_obj("v1Image", image_ref(image));
 	return true;
 }
 
@@ -3547,7 +3547,7 @@ js_GetSystemDownArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = legacy_default_arrow_down_image()))
 		jsal_error_blame(-1, JS_REF_ERROR, "missing system down arrow image");
-	jsal_push_class_obj("ssImage", image_ref(image));
+	jsal_push_class_obj("v1Image", image_ref(image));
 	return true;
 }
 
@@ -3565,7 +3565,7 @@ js_GetSystemUpArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = legacy_default_arrow_up_image()))
 		jsal_error_blame(-1, JS_REF_ERROR, "missing system up arrow image");
-	jsal_push_class_obj("ssImage", image_ref(image));
+	jsal_push_class_obj("v1Image", image_ref(image));
 	return true;
 }
 
@@ -3674,7 +3674,7 @@ js_GetTileImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid tile index");
 	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
 		jsal_error_blame(-1, JS_ERROR, "unable to create new surface image");
-	jsal_push_class_obj("ssImage", image);
+	jsal_push_class_obj("v1Image", image);
 	return true;
 }
 
@@ -3713,7 +3713,7 @@ js_GetTileSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid tile index");
 	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
 		jsal_error_blame(-1, JS_ERROR, "unable to create new surface image");
-	jsal_push_class_obj("ssSurface", image);
+	jsal_push_class_obj("v1Surface", image);
 	return true;
 }
 
@@ -3937,7 +3937,7 @@ js_GrabImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = screen_grab(g_screen, x, y, width, height)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't grab screen image");
-	jsal_push_class_obj("ssImage", image);
+	jsal_push_class_obj("v1Image", image);
 	return true;
 }
 
@@ -3957,7 +3957,7 @@ js_GrabSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = screen_grab(g_screen, x, y, width, height)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't grab screen image");
-	jsal_push_class_obj("ssSurface", image);
+	jsal_push_class_obj("v1Surface", image);
 	return true;
 }
 
@@ -4155,7 +4155,7 @@ js_HashByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	void*        data;
 	size_t       size;
 
-	array = jsal_require_class_obj(0, "ssByteArray");
+	array = jsal_require_class_obj(0, "v1ByteArray");
 
 	data = bytearray_buffer(array);
 	size = bytearray_len(array);
@@ -4217,7 +4217,7 @@ js_InflateByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int           max_size;
 	bytearray_t*  new_array;
 
-	array = jsal_require_class_obj(0, "ssByteArray");
+	array = jsal_require_class_obj(0, "v1ByteArray");
 	max_size = num_args >= 2 ? jsal_to_int(1) : 0;
 
 	if (max_size < 0)
@@ -4512,7 +4512,7 @@ js_ListenOnPort(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	port = jsal_to_int(0);
 
 	if (socket = socket_v1_new_server(port))
-		jsal_push_class_obj("ssSocket", socket);
+		jsal_push_class_obj("v1Socket", socket);
 	else
 		jsal_push_null();
 	return true;
@@ -4527,7 +4527,7 @@ js_LoadAnimation(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "animations", true, false);
 	if (!(anim = animation_new(filename)))
 		jsal_error_blame(-1, JS_ERROR, "cannot load animation `%s`", filename);
-	jsal_push_class_obj("ssAnimation", anim);
+	jsal_push_class_obj("v1Animation", anim);
 	return true;
 }
 
@@ -4554,7 +4554,7 @@ js_LoadImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "images", true, false);
 	if (!(image = image_load(filename)))
 		jsal_error_blame(-1, JS_ERROR, "cannot load image `%s`", filename);
-	jsal_push_class_obj("ssImage", image);
+	jsal_push_class_obj("v1Image", image);
 	return true;
 }
 
@@ -4568,7 +4568,7 @@ js_LoadSound(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(sound = sound_new(filename)))
 		jsal_error_blame(-1, JS_ERROR, "cannot load sound `%s`", filename);
-	jsal_push_class_obj("ssSound", sound);
+	jsal_push_class_obj("v1Sound", sound);
 	return true;
 }
 
@@ -4584,7 +4584,7 @@ js_LoadSoundEffect(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(sample = sample_new(filename, mode == SE_MULTIPLE)))
 		jsal_error_blame(-1, JS_ERROR, "unable to load sound effect `%s`", filename);
-	jsal_push_class_obj("ssSoundEffect", sample);
+	jsal_push_class_obj("v1SoundEffect", sample);
 	return true;
 }
 
@@ -4611,7 +4611,7 @@ js_LoadSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "images", true, false);
 	if (!(image = image_load(filename)))
 		jsal_error_blame(-1, JS_ERROR, "cannot load image `%s`", filename);
-	jsal_push_class_obj("ssSurface", image);
+	jsal_push_class_obj("v1Surface", image);
 	return true;
 }
 
@@ -4689,7 +4689,7 @@ js_OpenAddress(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	port = jsal_to_int(1);
 
 	if (socket = socket_v1_new_client(hostname, port))
-		jsal_push_class_obj("ssSocket", socket);
+		jsal_push_class_obj("v1Socket", socket);
 	else
 		jsal_push_null();
 	return true;
@@ -4705,7 +4705,7 @@ js_OpenFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(file = kev_open(g_game, filename, true)))
 		jsal_error_blame(-1, JS_ERROR, "unable to open file `%s`", filename);
-	jsal_push_class_obj("ssFile", file);
+	jsal_push_class_obj("v1File", file);
 	return true;
 }
 
@@ -4718,7 +4718,7 @@ js_OpenLog(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "logs", true, true);
 	if (!(logger = logger_new(filename)))
 		jsal_error_blame(-1, JS_ERROR, "unable to open log `%s`", filename);
-	jsal_push_class_obj("ssLogger", logger);
+	jsal_push_class_obj("v1Logger", logger);
 	return true;
 }
 
@@ -4736,7 +4736,7 @@ js_OpenRawFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "cannot open file for %s",
 			writable ? "write" : "read");
-	jsal_push_class_obj("ssRawFile", file);
+	jsal_push_class_obj("v1RawFile", file);
 	return true;
 }
 
@@ -6020,7 +6020,7 @@ js_SetTileImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	tileset_t* tileset;
 
 	tile_index = jsal_to_int(0);
-	image = jsal_require_class_obj(1, "ssImage");
+	image = jsal_require_class_obj(1, "v1Image");
 
 	if (!map_engine_running())
 		jsal_error_blame(-1, JS_ERROR, "no active map engine");
@@ -6068,7 +6068,7 @@ js_SetTileSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	tileset_t* tileset;
 
 	tile_index = jsal_to_int(0);
-	image = jsal_require_class_obj(1, "ssSurface");
+	image = jsal_require_class_obj(1, "v1Surface");
 
 	if (!map_engine_running())
 		jsal_error_blame(-1, JS_ERROR, "no active map engine");
@@ -6298,7 +6298,7 @@ js_Animation_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	animation_t* anim;
 
 	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "ssAnimation");
+	anim = jsal_require_class_obj(-1, "v1Animation");
 
 	animation_unref(anim);
 	return false;
@@ -6310,7 +6310,7 @@ js_Animation_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	animation_t* anim;
 
 	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "ssAnimation");
+	anim = jsal_require_class_obj(-1, "v1Animation");
 
 	jsal_push_int(animation_height(anim));
 	return true;
@@ -6322,7 +6322,7 @@ js_Animation_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	animation_t* anim;
 
 	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "ssAnimation");
+	anim = jsal_require_class_obj(-1, "v1Animation");
 
 	jsal_push_int(animation_width(anim));
 	return true;
@@ -6337,7 +6337,7 @@ js_Animation_drawFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	animation_t* anim;
 
 	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "ssAnimation");
+	anim = jsal_require_class_obj(-1, "v1Animation");
 
 	image_draw(animation_frame(anim), x, y);
 	return false;
@@ -6354,7 +6354,7 @@ js_Animation_drawZoomedFrame(js_ref_t* me, int num_args, bool is_ctor, int magic
 	int          y;
 
 	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "ssAnimation");
+	anim = jsal_require_class_obj(-1, "v1Animation");
 	x = jsal_to_number(0);
 	y = jsal_to_number(1);
 	scale = jsal_to_number(2);
@@ -6373,7 +6373,7 @@ js_Animation_getDelay(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	animation_t* anim;
 
 	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "ssAnimation");
+	anim = jsal_require_class_obj(-1, "v1Animation");
 	jsal_pop(1);
 	jsal_push_int(animation_delay(anim));
 	return true;
@@ -6385,7 +6385,7 @@ js_Animation_getNumFrames(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	animation_t* anim;
 
 	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "ssAnimation");
+	anim = jsal_require_class_obj(-1, "v1Animation");
 
 	jsal_push_int(animation_num_frames(anim));
 	return true;
@@ -6397,7 +6397,7 @@ js_Animation_readNextFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	animation_t* anim;
 
 	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "ssAnimation");
+	anim = jsal_require_class_obj(-1, "v1Animation");
 	jsal_pop(1);
 	animation_update(anim);
 	return false;
@@ -6409,7 +6409,7 @@ js_ByteArray_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	bytearray_t* array;
 
 	jsal_push_this();
-	array = jsal_require_class_obj(-1, "ssByteArray");
+	array = jsal_require_class_obj(-1, "v1ByteArray");
 
 	bytearray_unref(array);
 	return false;
@@ -6422,7 +6422,7 @@ js_ByteArray_proxy_get(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int          index;
 	int          size;
 
-	array = jsal_require_class_obj(0, "ssByteArray");
+	array = jsal_require_class_obj(0, "v1ByteArray");
 	if (jsal_is_number(1)) {
 		index = jsal_to_int(1);
 		size = bytearray_len(array);
@@ -6445,7 +6445,7 @@ js_ByteArray_proxy_set(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int          index;
 	int          size;
 
-	array = jsal_require_class_obj(0, "ssByteArray");
+	array = jsal_require_class_obj(0, "v1ByteArray");
 	if (jsal_is_number(1)) {
 		index = jsal_to_int(1);
 		size = bytearray_len(array);
@@ -6468,7 +6468,7 @@ js_ByteArray_get_length(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	bytearray_t* array;
 
 	jsal_push_this();
-	array = jsal_require_class_obj(-1, "ssByteArray");
+	array = jsal_require_class_obj(-1, "v1ByteArray");
 	jsal_pop(1);
 	jsal_push_int(bytearray_len(array));
 	return true;
@@ -6481,8 +6481,8 @@ js_ByteArray_concat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	bytearray_t* new_array;
 
 	jsal_push_this();
-	array[0] = jsal_require_class_obj(-1, "ssByteArray");
-	array[1] = jsal_require_class_obj(0, "ssByteArray");
+	array[0] = jsal_require_class_obj(-1, "v1ByteArray");
+	array[1] = jsal_require_class_obj(0, "v1ByteArray");
 
 	if (!(new_array = bytearray_concat(array[0], array[1])))
 		jsal_error_blame(-1, JS_ERROR, "unable to concatenate byte arrays");
@@ -6503,7 +6503,7 @@ js_ByteArray_slice(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int          size;
 
 	jsal_push_this();
-	array = jsal_require_class_obj(-1, "ssByteArray");
+	array = jsal_require_class_obj(-1, "v1ByteArray");
 
 	size = bytearray_len(array);
 	end_norm = fmin(end >= 0 ? end : size + end, size);
@@ -6556,7 +6556,7 @@ js_File_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	kev_file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssFile");
+	file = jsal_require_class_obj(-1, "v1File");
 
 	kev_close(file);
 	return false;
@@ -6568,7 +6568,7 @@ js_File_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	kev_file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssFile");
+	file = jsal_require_class_obj(-1, "v1File");
 
 	jsal_set_class_ptr(-1, NULL);
 	kev_close(file);
@@ -6581,7 +6581,7 @@ js_File_flush(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	kev_file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssFile");
+	file = jsal_require_class_obj(-1, "v1File");
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "file is already closed");
@@ -6598,7 +6598,7 @@ js_File_getKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	const char* key;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssFile");
+	file = jsal_require_class_obj(-1, "v1File");
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "file is already closed");
@@ -6615,7 +6615,7 @@ js_File_getNumKeys(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	kev_file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssFile");
+	file = jsal_require_class_obj(-1, "v1File");
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "file is already closed");
@@ -6635,7 +6635,7 @@ js_File_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	const char* value;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, "ssFile")))
+	if (!(file = jsal_require_class_obj(-1, "v1File")))
 		jsal_error_blame(-1, JS_ERROR, "file is already closed");
 	
 	if (jsal_is_boolean(1)) {
@@ -6669,7 +6669,7 @@ js_File_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	kev_file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssFile");
+	file = jsal_require_class_obj(-1, "v1File");
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "file is already closed");
@@ -6683,7 +6683,7 @@ js_Font_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	font_t* font;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 
 	font_unref(font);
 	return false;
@@ -6696,7 +6696,7 @@ js_Font_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	font_t* font;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	jsal_pop(1);
 	if (!(dolly_font = font_clone(font)))
 		jsal_error_blame(-1, JS_ERROR, "unable to clone font");
@@ -6715,7 +6715,7 @@ js_Font_drawText(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	color_t mask;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	jsal_get_prop_string(-1, "\xFF" "color_mask");
 	mask = jsal_require_sphere_color(-1);
 
@@ -6745,7 +6745,7 @@ js_Font_drawTextBox(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	jsal_get_prop_string(-1, "\xFF" "color_mask");
 	mask = jsal_require_sphere_color(-1);
 
@@ -6785,7 +6785,7 @@ js_Font_drawZoomedText(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int             y;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	jsal_get_prop_string(-1, "\xFF" "color_mask");
 	mask = jsal_require_sphere_color(-1);
 	x = jsal_to_int(0);
@@ -6819,10 +6819,10 @@ js_Font_getCharacterImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	font_t*  font;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	cp = (uint32_t)jsal_require_number(0);
 
-	jsal_push_class_obj("ssImage", image_ref(font_glyph(font, cp)));
+	jsal_push_class_obj("v1Image", image_ref(font_glyph(font, cp)));
 	return true;
 }
 
@@ -6840,7 +6840,7 @@ js_Font_getHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	font_t* font;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	jsal_pop(1);
 	jsal_push_int(font_height(font));
 	return true;
@@ -6855,7 +6855,7 @@ js_Font_getStringHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int         width;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	text = jsal_to_string(0);
 	width = jsal_to_int(1);
 
@@ -6878,7 +6878,7 @@ js_Font_getStringWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	font_t* font;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	jsal_pop(1);
 	jsal_push_int(font_get_width(font, text));
 	return true;
@@ -6888,12 +6888,12 @@ static bool
 js_Font_setCharacterImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	int cp = jsal_to_int(0);
-	image_t* image = jsal_require_class_obj(1, "ssImage");
+	image_t* image = jsal_require_class_obj(1, "v1Image");
 
 	font_t* font;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 
 	font_set_glyph(font, cp, image);
 	return false;
@@ -6906,7 +6906,7 @@ js_Font_setColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	color_t mask;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	mask = jsal_require_sphere_color(0);
 
 	jsal_push_sphere_color(mask);
@@ -6934,7 +6934,7 @@ js_Font_wordWrapString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, "ssFont");
+	font = jsal_require_class_obj(-1, "v1Font");
 	jsal_pop(1);
 	wraptext = wraptext_new(text, font, width);
 	num_lines = wraptext_len(wraptext);
@@ -6953,7 +6953,7 @@ js_Image_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 
 	image_unref(image);
 	return false;
@@ -6965,7 +6965,7 @@ js_Image_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 	jsal_pop(1);
 	jsal_push_int(image_height(image));
 	return true;
@@ -6977,7 +6977,7 @@ js_Image_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 	jsal_pop(1);
 	jsal_push_int(image_width(image));
 	return true;
@@ -6992,7 +6992,7 @@ js_Image_blit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 
 	if (screen_skip_frame(g_screen))
 		return false;
@@ -7011,7 +7011,7 @@ js_Image_blitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 
 	if (screen_skip_frame(g_screen))
 		return false;
@@ -7027,11 +7027,11 @@ js_Image_createSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* new_image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 
 	if ((new_image = image_clone(image)) == NULL)
 		jsal_error_blame(-1, JS_ERROR, "unable to create new surface image");
-	jsal_push_class_obj("ssSurface", new_image);
+	jsal_push_class_obj("v1Surface", new_image);
 	return true;
 }
 
@@ -7046,7 +7046,7 @@ js_Image_rotateBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	angle = jsal_to_number(2);
@@ -7073,7 +7073,7 @@ js_Image_rotateBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	color_t  mask;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	angle = jsal_to_number(2);
@@ -7109,7 +7109,7 @@ js_Image_transformBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int           x4, y4;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 	x1 = jsal_to_int(0);
 	y1 = jsal_to_int(1);
 	x2 = jsal_to_int(2);
@@ -7148,7 +7148,7 @@ js_Image_transformBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      x4, y4;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 	x1 = jsal_to_int(0);
 	y1 = jsal_to_int(1);
 	x2 = jsal_to_int(2);
@@ -7185,7 +7185,7 @@ js_Image_zoomBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	scale = jsal_to_number(2);
@@ -7212,7 +7212,7 @@ js_Image_zoomBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssImage");
+	image = jsal_require_class_obj(-1, "v1Image");
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	scale = jsal_to_number(2);
@@ -7234,7 +7234,7 @@ js_Logger_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	logger_t* logger;
 
 	jsal_push_this();
-	logger = jsal_require_class_obj(-1, "ssLogger");
+	logger = jsal_require_class_obj(-1, "v1Logger");
 
 	logger_unref(logger);
 	return false;
@@ -7248,7 +7248,7 @@ js_Logger_beginBlock(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	logger_t* logger;
 
 	jsal_push_this();
-	logger = jsal_require_class_obj(-1, "ssLogger");
+	logger = jsal_require_class_obj(-1, "v1Logger");
 	if (!logger_begin_block(logger, title))
 		jsal_error_blame(-1, JS_ERROR, "unable to create new log block");
 	return false;
@@ -7260,7 +7260,7 @@ js_Logger_endBlock(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	logger_t* logger;
 
 	jsal_push_this();
-	logger = jsal_require_class_obj(-1, "ssLogger");
+	logger = jsal_require_class_obj(-1, "v1Logger");
 	logger_end_block(logger);
 	return false;
 }
@@ -7280,7 +7280,7 @@ js_Logger_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	logger_t* logger;
 
 	jsal_push_this();
-	logger = jsal_require_class_obj(-1, "ssLogger");
+	logger = jsal_require_class_obj(-1, "v1Logger");
 	logger_write(logger, NULL, text);
 	return false;
 }
@@ -7291,7 +7291,7 @@ js_RawFile_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssRawFile");
+	file = jsal_require_class_obj(-1, "v1RawFile");
 
 	if (file != NULL)
 		file_close(file);
@@ -7304,7 +7304,7 @@ js_RawFile_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssRawFile");
+	file = jsal_require_class_obj(-1, "v1RawFile");
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "file already closed");
 
@@ -7319,7 +7319,7 @@ js_RawFile_getPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssRawFile");
+	file = jsal_require_class_obj(-1, "v1RawFile");
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "file is already closed");
@@ -7334,7 +7334,7 @@ js_RawFile_getSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	long    file_pos;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssRawFile");
+	file = jsal_require_class_obj(-1, "v1RawFile");
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "file is already closed");
@@ -7355,7 +7355,7 @@ js_RawFile_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	void*        read_buffer;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssRawFile");
+	file = jsal_require_class_obj(-1, "v1RawFile");
 	if (num_args >= 1)
 		num_bytes = jsal_to_int(0);
 
@@ -7387,7 +7387,7 @@ js_RawFile_setPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	long long new_pos;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssRawFile");
+	file = jsal_require_class_obj(-1, "v1RawFile");
 	new_pos = jsal_to_int(0);
 
 	if (file == NULL)
@@ -7414,14 +7414,14 @@ js_RawFile_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	size_t       write_size;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "ssRawFile");
+	file = jsal_require_class_obj(-1, "v1RawFile");
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error_blame(-1, JS_ERROR, "file is already closed");
 	if (jsal_is_string(0))
 		data = jsal_get_lstring(0, &write_size);
-	else if (jsal_is_class_obj(0, "ssByteArray")) {
-		array = jsal_require_class_obj(0, "ssByteArray");
+	else if (jsal_is_class_obj(0, "v1ByteArray")) {
+		array = jsal_require_class_obj(0, "v1ByteArray");
 		data = bytearray_buffer(array);
 		write_size = bytearray_len(array);
 	}
@@ -7439,7 +7439,7 @@ js_Socket_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	socket_v1_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, "ssSocket");
+	socket = jsal_require_class_obj(-1, "v1Socket");
 
 	socket_v1_unref(socket);
 	return true;
@@ -7451,7 +7451,7 @@ js_Socket_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	socket_v1_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, "ssSocket");
+	socket = jsal_require_class_obj(-1, "v1Socket");
 
 	jsal_set_class_ptr(-1, NULL);
 	socket_v1_unref(socket);
@@ -7464,7 +7464,7 @@ js_Socket_getPendingReadSize(js_ref_t* me, int num_args, bool is_ctor, int magic
 	socket_v1_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, "ssSocket");
+	socket = jsal_require_class_obj(-1, "v1Socket");
 
 	if (socket == NULL)
 		jsal_error_blame(-1, JS_ERROR, "socket has been closed");
@@ -7480,7 +7480,7 @@ js_Socket_isConnected(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	socket_v1_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, "ssSocket");
+	socket = jsal_require_class_obj(-1, "v1Socket");
 
 	if (socket != NULL)
 		jsal_push_boolean(socket_v1_connected(socket));
@@ -7499,7 +7499,7 @@ js_Socket_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	socket_v1_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, "ssSocket");
+	socket = jsal_require_class_obj(-1, "v1Socket");
 
 	if (length <= 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid read size");
@@ -7532,12 +7532,12 @@ js_Socket_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	size_t         write_size;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, "ssSocket");
+	socket = jsal_require_class_obj(-1, "v1Socket");
 
 	if (jsal_is_string(0))
 		payload = (uint8_t*)jsal_get_lstring(0, &write_size);
 	else {
-		array = jsal_require_class_obj(0, "ssByteArray");
+		array = jsal_require_class_obj(0, "v1ByteArray");
 		payload = bytearray_buffer(array);
 		write_size = bytearray_len(array);
 	}
@@ -7555,7 +7555,7 @@ js_Sound_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	sound_unref(sound);
 	return false;
@@ -7567,7 +7567,7 @@ js_Sound_getLength(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	jsal_push_number(floor(sound_len(sound) * 1000000));
 	return true;
@@ -7579,7 +7579,7 @@ js_Sound_getPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	jsal_push_int(sound_pan(sound) * 255);
 	return true;
@@ -7591,7 +7591,7 @@ js_Sound_getPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	jsal_push_number(sound_speed(sound));
 	return true;
@@ -7603,7 +7603,7 @@ js_Sound_getPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	jsal_push_number(floor(sound_tell(sound) * 1000000));
 	return true;
@@ -7615,7 +7615,7 @@ js_Sound_getRepeat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	jsal_push_boolean(sound_repeat(sound));
 	return true;
@@ -7627,7 +7627,7 @@ js_Sound_getVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	jsal_push_int(sound_gain(sound) * 255);
 	return true;
@@ -7639,7 +7639,7 @@ js_Sound_isPlaying(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	jsal_push_boolean(sound_playing(sound));
 	return true;
@@ -7658,7 +7658,7 @@ js_Sound_pause(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	sound_pause(sound, true);
 	return false;
@@ -7670,7 +7670,7 @@ js_Sound_play(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	if (num_args >= 1) {
 		sound_set_repeat(sound, jsal_to_boolean(0));
@@ -7691,7 +7691,7 @@ js_Sound_reset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	sound_seek(sound, 0.0);
 	return false;
@@ -7704,7 +7704,7 @@ js_Sound_setPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 	new_pan = jsal_to_int(0);
 
 	sound_set_pan(sound, (float)new_pan / 255);
@@ -7718,7 +7718,7 @@ js_Sound_setPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 	new_pitch = jsal_to_number(0);
 
 	sound_set_speed(sound, new_pitch);
@@ -7732,7 +7732,7 @@ js_Sound_setPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 	new_pos = jsal_to_number(0);
 
 	sound_seek(sound, floor(new_pos) / 1000000);
@@ -7746,7 +7746,7 @@ js_Sound_setRepeat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 	is_looped = jsal_to_boolean(0);
 
 	sound_set_repeat(sound, is_looped);
@@ -7761,7 +7761,7 @@ js_Sound_setVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 	volume = jsal_to_int(0);
 
 	volume = volume < 0 ? 0 : volume > 255 ? 255 : volume;
@@ -7775,7 +7775,7 @@ js_Sound_stop(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "ssSound");
+	sound = jsal_require_class_obj(-1, "v1Sound");
 
 	sound_stop(sound);
 	return false;
@@ -7794,7 +7794,7 @@ js_SoundEffect_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sample_t* sample;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 
 	sample_unref(sample);
 	return false;
@@ -7806,7 +7806,7 @@ js_SoundEffect_getPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sample_t* sample;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 
 	jsal_push_number(sample_get_pan(sample) * 255.0);
 	return true;
@@ -7818,7 +7818,7 @@ js_SoundEffect_getPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sample_t* sample;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 
 	jsal_push_number(sample_get_speed(sample));
 	return true;
@@ -7830,7 +7830,7 @@ js_SoundEffect_getVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sample_t* sample;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 
 	jsal_push_number(sample_get_gain(sample) * 255.0);
 	return true;
@@ -7843,7 +7843,7 @@ js_SoundEffect_setPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	float     pan;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 	pan = jsal_to_number(0);
 
 	sample_set_pan(sample, pan / 255.0);
@@ -7857,7 +7857,7 @@ js_SoundEffect_setPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	float     pitch;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 	pitch = jsal_to_number(0);
 
 	sample_set_speed(sample, pitch);
@@ -7871,7 +7871,7 @@ js_SoundEffect_setVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	float     volume;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 	volume = jsal_to_number(0);
 
 	sample_set_gain(sample, volume / 255.0);
@@ -7884,7 +7884,7 @@ js_SoundEffect_play(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sample_t* sample;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 
 	sample_play(sample, s_sound_mixer);
 	return false;
@@ -7896,7 +7896,7 @@ js_SoundEffect_stop(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	sample_t* sample;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "ssSoundEffect");
+	sample = jsal_require_class_obj(-1, "v1SoundEffect");
 
 	sample_stop_all(sample);
 	return false;
@@ -7915,7 +7915,7 @@ js_Spriteset_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	spriteset_t* spriteset;
 
 	jsal_push_this();
-	spriteset = jsal_require_class_obj(-1, "ssSpriteset");
+	spriteset = jsal_require_class_obj(-1, "v1Spriteset");
 
 	spriteset_unref(spriteset);
 	return false;
@@ -7928,7 +7928,7 @@ js_Spriteset_get_filename(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	spriteset_t* spriteset;
 
 	jsal_push_this();
-	spriteset = jsal_require_class_obj(-1, "ssSpriteset");
+	spriteset = jsal_require_class_obj(-1, "v1Spriteset");
 
 	// returned filename is relative to `@/`, even though Spriteset#save() is
 	// rooted at `@/spritesets`.  I suspect this to be a bug in Sphere 1.x, but fixing
@@ -7946,7 +7946,7 @@ js_Spriteset_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	spriteset_t* spriteset;
 
 	jsal_push_this();
-	spriteset = jsal_require_class_obj(-1, "ssSpriteset");
+	spriteset = jsal_require_class_obj(-1, "v1Spriteset");
 
 	if ((new_spriteset = spriteset_clone(spriteset)) == NULL)
 		jsal_error_blame(-1, JS_ERROR, "couldn't clone spriteset");
@@ -7984,7 +7984,7 @@ js_Surface_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	image_unref(image);
 	return false;
@@ -7996,7 +7996,7 @@ js_Surface_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	if (image != NULL)
 		jsal_push_int(image_height(image));
@@ -8011,7 +8011,7 @@ js_Surface_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	if (image != NULL)
 		jsal_push_int(image_width(image));
@@ -8032,7 +8032,7 @@ js_Surface_applyColorFX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	width = jsal_to_int(2);
@@ -8061,7 +8061,7 @@ js_Surface_applyColorFX4(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
 		jsal_error_blame(-1, JS_RANGE_ERROR, "FX area of effect out of bounds");
@@ -8085,7 +8085,7 @@ js_Surface_applyLookup(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
 		jsal_error_blame(-1, JS_RANGE_ERROR, "FX area of effect out of bounds");
@@ -8115,7 +8115,7 @@ js_Surface_bezierCurve(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 	color = jsal_require_sphere_color(0);
@@ -8166,7 +8166,7 @@ js_Surface_blit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 
@@ -8180,7 +8180,7 @@ js_Surface_blit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Surface_blitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	image_t* src_image = jsal_require_class_obj(0, "ssSurface");
+	image_t* src_image = jsal_require_class_obj(0, "v1Surface");
 	int x = jsal_to_int(1);
 	int y = jsal_to_int(2);
 	color_t mask = jsal_require_sphere_color(3);
@@ -8189,7 +8189,7 @@ js_Surface_blitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1); jsal_pop(1);
 
@@ -8203,7 +8203,7 @@ js_Surface_blitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Surface_blitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	image_t* src_image = jsal_require_class_obj(0, "ssSurface");
+	image_t* src_image = jsal_require_class_obj(0, "v1Surface");
 	int x = jsal_to_int(1);
 	int y = jsal_to_int(2);
 
@@ -8211,7 +8211,7 @@ js_Surface_blitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8229,11 +8229,11 @@ js_Surface_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* new_image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	if ((new_image = image_clone(image)) == NULL)
 		jsal_error_blame(-1, JS_ERROR, "couldn't create new surface");
-	jsal_push_class_obj("ssSurface", new_image);
+	jsal_push_class_obj("v1Surface", new_image);
 	return true;
 }
 
@@ -8248,7 +8248,7 @@ js_Surface_cloneSection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	width = jsal_to_int(2);
@@ -8259,7 +8259,7 @@ js_Surface_cloneSection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
-	jsal_push_class_obj("ssSurface", new_image);
+	jsal_push_class_obj("v1Surface", new_image);
 	return true;
 }
 
@@ -8270,11 +8270,11 @@ js_Surface_createImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* new_image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	if ((new_image = image_clone(image)) == NULL)
 		jsal_error_blame(-1, JS_ERROR, "unable to create image");
-	jsal_push_class_obj("ssImage", new_image);
+	jsal_push_class_obj("v1Image", new_image);
 	return true;
 }
 
@@ -8290,10 +8290,10 @@ js_Surface_drawText(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int         y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
-	font = jsal_require_class_obj(0, "ssFont");
+	font = jsal_require_class_obj(0, "v1Font");
 	x = jsal_to_int(1);
 	y = jsal_to_int(2);
 	text = jsal_to_string(3);
@@ -8319,7 +8319,7 @@ js_Surface_filledCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8343,7 +8343,7 @@ js_Surface_filledEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8360,7 +8360,7 @@ js_Surface_flipHorizontally(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	image_flip(image, true, false);
 	return false;
@@ -8372,7 +8372,7 @@ js_Surface_flipVertically(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	image_flip(image, false, true);
 	return false;
@@ -8389,7 +8389,7 @@ js_Surface_getPixel(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 
@@ -8421,7 +8421,7 @@ js_Surface_gradientCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1); jsal_pop(1);
 	jsal_pop(1);
@@ -8466,7 +8466,7 @@ js_Surface_gradientEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8507,7 +8507,7 @@ js_Surface_gradientRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic
 	image_t*      image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8540,7 +8540,7 @@ js_Surface_gradientLine(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	float    y2;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 	x1 = jsal_to_int(0);
@@ -8579,7 +8579,7 @@ js_Surface_line(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8605,7 +8605,7 @@ js_Surface_lineSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 	color = jsal_require_sphere_color(1);
@@ -8653,7 +8653,7 @@ js_Surface_outlinedCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8677,7 +8677,7 @@ js_Surface_outlinedEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8703,7 +8703,7 @@ js_Surface_pointSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1); jsal_pop(1);
 	jsal_pop(1);
@@ -8745,7 +8745,7 @@ js_Surface_outlinedRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8765,7 +8765,7 @@ js_Surface_replaceColor(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_pop(1);
 	if (!image_replace_color(image, color, new_color))
 		jsal_error_blame(-1, JS_ERROR, "couldn't perform color replacement");
@@ -8781,7 +8781,7 @@ js_Surface_rescale(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_pop(1);
 	if (!image_rescale(image, width, height))
 		jsal_error_blame(-1, JS_ERROR, "couldn't rescale image");
@@ -8802,7 +8802,7 @@ js_Surface_rotate(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      w, h;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	w = new_w = image_width(image);
 	h = new_h = image_height(image);
@@ -8836,10 +8836,10 @@ js_Surface_rotateBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int m
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
-	source_image = jsal_require_class_obj(0, "ssSurface");
+	source_image = jsal_require_class_obj(0, "v1Surface");
 	x = jsal_to_int(1);
 	y = jsal_to_int(2);
 	angle = jsal_to_number(3);
@@ -8868,10 +8868,10 @@ js_Surface_rotateBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
-	source_image = jsal_require_class_obj(0, "ssSurface");
+	source_image = jsal_require_class_obj(0, "v1Surface");
 	x = jsal_to_int(1);
 	y = jsal_to_int(2);
 	angle = jsal_to_number(3);
@@ -8898,7 +8898,7 @@ js_Surface_rectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      blend_mode;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
 
@@ -8917,7 +8917,7 @@ js_Surface_save(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t*    image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_pop(1);
 	filename = jsal_require_pathname(0, "images", true, false);
 	image_save(image, filename);
@@ -8939,7 +8939,7 @@ js_Surface_setAlpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i_x, i_y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_pop(1);
 	if (!(lock = image_lock(image)))
 		jsal_error_blame(-1, JS_ERROR, "unable to lock surface");
@@ -8974,7 +8974,7 @@ js_Surface_setPixel(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 
 	image_set_pixel(image, x, y, color);
 	return false;
@@ -9000,10 +9000,10 @@ js_Surface_transformBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, in
 	int      y1, y2, y3, y4;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
-	source_image = jsal_require_class_obj(0, "ssSurface");
+	source_image = jsal_require_class_obj(0, "v1Surface");
 	x1 = jsal_to_int(1);
 	y1 = jsal_to_int(2);
 	x2 = jsal_to_int(3);
@@ -9041,10 +9041,10 @@ js_Surface_transformBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int ma
 	int      y1, y2, y3, y4;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
-	source_image = jsal_require_class_obj(0, "ssSurface");
+	source_image = jsal_require_class_obj(0, "v1Surface");
 	x1 = jsal_to_int(1);
 	y1 = jsal_to_int(2);
 	x2 = jsal_to_int(3);
@@ -9083,10 +9083,10 @@ js_Surface_zoomBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int mag
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
-	source_image = jsal_require_class_obj(0, "ssSurface");
+	source_image = jsal_require_class_obj(0, "v1Surface");
 	x = jsal_to_int(1);
 	y = jsal_to_int(2);
 	scale = jsal_to_number(3);
@@ -9117,10 +9117,10 @@ js_Surface_zoomBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, "ssSurface");
+	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
 	blend_mode = jsal_get_int(-1);
-	source_image = jsal_require_class_obj(0, "ssSurface");
+	source_image = jsal_require_class_obj(0, "v1Surface");
 	x = jsal_to_int(1);
 	y = jsal_to_int(2);
 	scale = jsal_to_number(3);
@@ -9142,7 +9142,7 @@ js_WindowStyle_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	windowstyle_t* winstyle;
 
 	jsal_push_this();
-	winstyle = jsal_require_class_obj(-1, "ssWindowStyle");
+	winstyle = jsal_require_class_obj(-1, "v1WindowStyle");
 
 	winstyle_unref(winstyle);
 	return false;
@@ -9159,7 +9159,7 @@ js_WindowStyle_drawWindow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int            y;
 
 	jsal_push_this();
-	winstyle = jsal_require_class_obj(-1, "ssWindowStyle");
+	winstyle = jsal_require_class_obj(-1, "v1WindowStyle");
 	jsal_get_prop_string(-1, "\xFF" "color_mask");
 	mask = jsal_require_sphere_color(-1);
 	x = jsal_to_int(0);
@@ -9177,7 +9177,7 @@ js_WindowStyle_getColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	windowstyle_t* winstyle;
 
 	jsal_push_this();
-	winstyle = jsal_require_class_obj(-1, "ssWindowStyle");
+	winstyle = jsal_require_class_obj(-1, "v1WindowStyle");
 
 	jsal_get_prop_string(-2, "\xFF" "color_mask");
 	return true;
@@ -9190,7 +9190,7 @@ js_WindowStyle_setColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	windowstyle_t* winstyle;
 
 	jsal_push_this();
-	winstyle = jsal_require_class_obj(-1, "ssWindowStyle");
+	winstyle = jsal_require_class_obj(-1, "v1WindowStyle");
 	mask = jsal_require_sphere_color(0);
 
 	jsal_push_sphere_color(mask);
