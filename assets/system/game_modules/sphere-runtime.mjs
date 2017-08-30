@@ -30,26 +30,20 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-exports.__esModule = true;
-
-Object.assign(exports,
-{
-	assert:     require('assert'),
-	from:       require('from'),
-	Console:    require('console'),
-	DataReader: require('dataReader'),
-	DataWriter: require('dataWriter'),
-	Delegate:   require('delegate'),
-	Image:      require('image'),
-	Joypad:     require('joypad'),
-	Logger:     require('logger'),
-	Music:      require('music'),
-	Person:     require('person'),
-	Prim:       require('prim'),
-	Random:     require('random'),
-	Scene:      require('scene'),
-	Test:       require('test'),
-	Thread:     require('thread'),
-	XML:        require('xml'),
-});
+export const assert     = require('assert'),
+             from       = require('from'),
+             Console    = require('console'),
+             DataReader = require('dataReader'),
+             DataWriter = require('dataWriter'),
+             Delegate   = require('delegate'),
+             Image      = require('image'),
+             Joypad     = require('joypad'),
+             Logger     = require('logger'),
+             Music      = require('music'),
+             Person     = require('person'),
+             Prim       = require('prim'),
+             Random     = require('random'),
+             Scene      = require('scene'),
+             Test       = require('test'),
+             Thread     = require('thread'),
+             XML        = require('xml');
