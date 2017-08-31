@@ -30,7 +30,7 @@ Build the Release
     - Run `git clean -xdf`, then build the following project configurations:
         + **minisphere:** x64 Redist, x64 Console, Win32 Redist, Win32 Console
         + **Cell:** x64 Console, Win32 Console
-        + **SSJ:** x64 Console, Win32 Console
+        + **SSj:** x64 Console, Win32 Console
         + **Plugin:** AnyCPU Release
     - Copy the latest Sphere Studio "Release" build into `msw/ide/`
     - Compile `setup/minisphere.iss` using the latest version of Inno Setup
