@@ -375,6 +375,7 @@ jsal_eval_module(const char* filename)
 	JsErrorCode        error_code;
 	JsValueRef         exception;
 	struct module_job* job;
+	char*              job_source;
 	JsModuleRecord     module;
 	JsValueRef         result;
 	const char*        source;
@@ -395,14 +396,15 @@ jsal_eval_module(const char* filename)
 	}
 	while (vector_len(s_module_jobs) > 0) {
 		job = vector_get(s_module_jobs, 0);
-		error_code = JsParseModuleSource(job->module,
+		job_source = job->source;
+		error_code = JsParseModuleSource(job->module,  // note: invalidates `job`
 			s_source_cookie++, (BYTE*)job->source, (unsigned int)job->source_size,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
+		free(job_source);
 		if (error_code == JsErrorScriptCompile) {
 			vector_clear(s_module_jobs);
 			throw_value(exception);
 		}
-		free(job->source);
 		vector_remove(s_module_jobs, 0);
 	}
 	JsModuleEvaluation(module, &result);
