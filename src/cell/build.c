@@ -727,7 +727,7 @@ jsal_fetch_module(void)
 
 	const char* caller_id;
 	path_t*     path;
-	const char* source;
+	char*       source;
 	size_t      source_len;
 	const char* specifier;
 
@@ -744,9 +744,17 @@ jsal_fetch_module(void)
 	}
 	if (path == NULL)
 		jsal_error_blame(-1, JS_REF_ERROR, "module not found `%s`", specifier);
-	source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
-	jsal_push_string(path_cstr(path));
-	jsal_push_lstring(source, source_len);
+	if (path_has_extension(path, ".mjs")) {
+		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
+		jsal_push_string(path_cstr(path));
+		jsal_push_lstring(source, source_len);
+		free(source);
+	}
+	else {
+		// ES module shim to allow `import` of CommonJS modules
+		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
+	}
 }
 
 static path_t*
