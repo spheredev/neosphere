@@ -46,7 +46,6 @@
 #include <setjmp.h>
 
 #include <ChakraCore.h>
-#include "lstring.h"
 #include "vector.h"
 
 struct js_ref
@@ -522,23 +521,25 @@ jsal_get_length(int at_index)
 const char*
 jsal_get_lstring(int index, size_t *out_length)
 {
-	static int        counter = 0;
-	static lstring_t* retval[25];
+	static int   counter = 0;
+	static char* retval[25];
 
-	lstring_t*     string_ptr;
-	const wchar_t* value;
-	size_t         value_length;
-	JsValueRef     value_ref;
+	char*       buffer;
+	size_t      length;
+	JsValueRef  value;
 
-	value_ref = get_value(index);
-	if (JsStringToPointer(value_ref, &value, &value_length) != JsNoError)
+	value = get_value(index);
+	if (JsCopyString(value, NULL, 0, NULL, &length) != JsNoError)
 		return NULL;
-	lstr_free(retval[counter]);
-	retval[counter] = lstr_from_utf16(value, value_length);
-	string_ptr = retval[counter];
+	buffer = malloc(length + 1);
+	JsCopyString(value, buffer, length, NULL, NULL);
+	buffer[length] = '\0';  // NUL terminator
+	free(retval[counter]);
+	retval[counter] = buffer;
 	counter = (counter + 1) % 25;
-	*out_length = lstr_len(string_ptr);
-	return lstr_cstr(string_ptr);
+	if (out_length != NULL)
+		*out_length = length;
+	return buffer;
 }
 
 double
@@ -608,9 +609,7 @@ jsal_get_prototype(int object_index)
 const char*
 jsal_get_string(int index)
 {
-	size_t length;
-	
-	return jsal_get_lstring(index, &length);
+	return jsal_get_lstring(index, NULL);
 }
 
 int
@@ -1661,20 +1660,23 @@ get_value(int stack_index)
 static JsPropertyIdRef
 make_property_id(JsValueRef key)
 {
-	JsPropertyIdRef ref;
+	char*           key_name;
 	size_t          key_length;
-	const wchar_t*  key_string;
 	JsValueType     key_type;
+	JsPropertyIdRef property_id;
 
 	JsGetValueType(key, &key_type);
 	if (key_type == JsSymbol) {
-		JsGetPropertyIdFromSymbol(key, &ref);
+		JsGetPropertyIdFromSymbol(key, &property_id);
 	}
 	else {
-		JsStringToPointer(key, &key_string, &key_length);
-		JsGetPropertyIdFromName(key_string, &ref);
+		JsCopyString(key, NULL, 0, NULL, &key_length);
+		key_name = malloc(key_length);
+		JsCopyString(key, key_name, key_length, NULL, NULL);
+		JsCreatePropertyId(key_name, key_length, &property_id);
+		free(key_name);
 	}
-	return ref;
+	return property_id;
 }
 
 js_ref_t*
