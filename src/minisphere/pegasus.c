@@ -801,7 +801,7 @@ jsal_fetch_module(void)
 	caller_id = jsal_require_string(1);
 
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
+		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require in global code or ES module is not allowed");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module(specifier, caller_id, PATHS[i], true))
 			break;  // short-circuit

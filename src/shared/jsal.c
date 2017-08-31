@@ -1840,6 +1840,7 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 static JsErrorCode CHAKRA_CALLBACK
 fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module)
 {
+	JsValueRef        caller_id;
 	JsValueRef        exception;
 	JsValueRef        full_specifier;
 	jmp_buf           label;
@@ -1854,8 +1855,9 @@ fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *
 	
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_stack);
+	JsGetModuleHostInfo(sourceModule, JsModuleHostInfo_HostDefined, &caller_id);
 	push_value(specifier);
-	jsal_push_string("@/bin/main.mjs");
+	push_value(caller_id);
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		s_fetch_callback();
