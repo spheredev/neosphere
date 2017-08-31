@@ -30,21 +30,64 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-export const assert     = require('assert'),
-             from       = require('from'),
-             Console    = require('console'),
-             DataReader = require('dataReader'),
-             DataWriter = require('dataWriter'),
-             Delegate   = require('delegate'),
-             Image      = require('image'),
-             Joypad     = require('joypad'),
-             Logger     = require('logger'),
-             Music      = require('music'),
-             Pact       = require('pact'),
-             Person     = require('person'),
-             Prim       = require('prim'),
-             Random     = require('random'),
-             Scene      = require('scene'),
-             Test       = require('test'),
-             Thread     = require('thread'),
-             XML        = require('xml');
+'use strict';
+
+class Pact
+{
+	constructor()
+	{
+		this.m_handlers = [];
+	}
+
+	get [Symbol.toStringTag]()
+	{
+		return 'Pact';
+	}
+
+	promise()
+	{
+		var handler;
+		var promise = new Promise(function(resolve, reject) {
+			handler = { resolve: resolve, reject: reject };
+		})
+		handler.that = promise;
+		this.m_handlers.push(handler);
+		return promise;
+	}
+
+	resolve(promise, value)
+	{
+		let handler = this.m_getHandler(promise);
+		handler.resolve(value);
+	}
+
+	reject(promise, reason)
+	{
+		let handler = this.m_getHandler(promise);
+		handler.reject(reason);
+	}
+
+	welsh(reason)
+	{
+		for (let i = this.m_handlers.length - 1; i >= 0; --i)
+			this.m_handlers[i].reject(reason);
+	}
+
+	m_getHandler(promise)
+	{
+		if (!(promise instanceof Promise))
+			throw new TypeError(`'${String(promise)}' is not a promise`);
+		for (var i = this.m_handlers.length - 1; i >= 0; --i) {
+			if (this.m_handlers[i].that == promise)
+				return this.m_handlers[i];
+		}
+		throw new TypeError("unrecognized promise");
+	}
+}
+
+exports = module.exports = Pact;
+Object.assign(exports, {
+	__esModule: true,
+	default:   Pact,
+	Pact:       Pact,
+});
