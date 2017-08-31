@@ -94,11 +94,11 @@ static int asprintf  (char* *out, const char* format, ...);
 static int vasprintf (char* *out, const char* format, va_list ap);
 
 static vector_t*            s_catch_stack;
-static JsSourceContext      s_source_cookie = 1;
 static js_module_callback_t s_fetch_callback = NULL;
 static JsContextRef         s_js_context;
 static JsRuntimeHandle      s_js_runtime = NULL;
 static vector_t*            s_module_jobs;
+static JsSourceContext      s_source_cookie = 1;
 static JsValueRef           s_stash;
 static vector_t*            s_stack;
 static int                  s_stack_base;
@@ -534,7 +534,7 @@ jsal_get_lstring(int index, size_t *out_length)
 	if (JsStringToPointer(value_ref, &value, &value_length) != JsNoError)
 		return NULL;
 	lstr_free(retval[counter]);
-	retval[counter] = lstr_from_wide(value, value_length);
+	retval[counter] = lstr_from_utf16(value, value_length);
 	string_ptr = retval[counter];
 	counter = (counter + 1) % 25;
 	*out_length = lstr_len(string_ptr);

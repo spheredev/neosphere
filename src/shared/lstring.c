@@ -374,7 +374,7 @@ lstr_from_cp1252(const char* text, size_t length)
 }
 
 lstring_t*
-lstr_from_wide(const wchar_t* text, size_t length)
+lstr_from_utf16(const uint16_t* text, size_t length)
 {
 	// create an lstring from plain text.  CP-1252 is assumed.  as Duktape
 	// expects JS code to be CESU-8 encoded, this functionality is needed for
@@ -383,8 +383,8 @@ lstr_from_wide(const wchar_t* text, size_t length)
 	uint8_t*       buffer;
 	uint32_t       codepoint;
 	lstring_t*     string;
+	const uint16_t *p_in;
 	uint8_t        *p_out;
-	const wchar_t  *p_in;
 
 	size_t i;
 
