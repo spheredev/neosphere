@@ -54,6 +54,8 @@ enum apprequest
 	APPREQ_WATERMARK = 0x03,
 };
 
+static js_step_t on_breakpoint_hit (void);
+
 static const int TCP_DEBUG_PORT = 1208;
 
 static bool       s_is_attached = false;
@@ -69,6 +71,9 @@ debugger_init(bool want_attach, bool allow_remote)
 	size_t        data_size;
 	const path_t* game_root;
 
+	jsal_on_breakpoint(on_breakpoint_hit);
+	debugger_attach();
+	
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
 	s_sources = vector_new(sizeof(struct source));
@@ -198,6 +203,13 @@ debugger_source_name(const char* compiled_name)
 }
 
 void
+debugger_attach(void)
+{
+	jsal_debug_attach();
+	s_is_attached = true;
+}
+
+void
 debugger_cache_source(const char* name, const lstring_t* text)
 {
 	struct source cache_entry;
@@ -223,6 +235,13 @@ debugger_cache_source(const char* name, const lstring_t* text)
 }
 
 void
+debugger_detach(void)
+{
+	s_is_attached = false;
+	jsal_debug_detach();
+}
+
+void
 debugger_log(const char* text, print_op_t op, bool use_console)
 {
 	const char* heading;
@@ -237,4 +256,18 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 			: "log";
 		console_log(0, "%s: %s", heading, text);
 	}
+}
+
+static js_step_t
+on_breakpoint_hit(void)
+{
+	const char* filename;
+	int         column;
+	int         line;
+
+	filename = jsal_get_string(0);
+	line = jsal_get_int(1) + 1;
+	column = jsal_get_int(2) + 1;
+	
+	return JS_STEP_CONTINUE;
 }

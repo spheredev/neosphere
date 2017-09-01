@@ -55,6 +55,22 @@ enum js_buffer_type
 } js_buffer_type_t;
 
 typedef
+enum js_debug_event
+{
+	JS_DEBUG_BREAKPOINT,
+	JS_DEBUG_THROW,
+} js_debug_event_t;
+
+typedef
+enum js_step
+{
+	JS_STEP_CONTINUE,
+	JS_STEP_IN,
+	JS_STEP_OUT,
+	JS_STEP_OVER,
+} js_step_t;
+
+typedef
 enum js_error_type
 {
 	JS_ERROR,
@@ -65,18 +81,22 @@ enum js_error_type
 	JS_URI_ERROR,
 } js_error_type_t;
 
-typedef bool (* js_callback_t)     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-typedef void (* js_task_callback_t)     (void);
-typedef void (* js_module_callback_t) (void);
+typedef bool      (* js_callback_t)        (js_ref_t* me, int num_args, bool is_ctor, int magic);
+typedef js_step_t (* js_break_callback_t)  (void);
+typedef void      (* js_task_callback_t)   (void);
+typedef void      (* js_module_callback_t) (void);
 
 bool        jsal_init                     (void);
 void        jsal_uninit                   (void);
+void        jsal_on_breakpoint            (js_break_callback_t callback);
 void        jsal_on_dispatch              (js_task_callback_t callback);
 void        jsal_on_fetch_module          (js_module_callback_t callback);
 void        jsal_call                     (int num_args);
 void        jsal_call_method              (int num_args);
 void        jsal_compile                  (const char* filename);
 void        jsal_construct                (int num_args);
+void        jsal_debug_attach             (void);
+void        jsal_debug_detach             (void);
 void        jsal_def_prop                 (int object_index);
 void        jsal_def_prop_index           (int object_index, int name);
 void        jsal_def_prop_string          (int object_index, const char* name);

@@ -75,24 +75,27 @@ struct object
 	JsValueRef    object;
 };
 
-static void CHAKRA_CALLBACK        dispatch_promise (JsValueRef function, void* userdata);
-static JsValueRef CHAKRA_CALLBACK  do_native_call   (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
-static JsErrorCode CHAKRA_CALLBACK fetch_module     (JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module);
-static void CHAKRA_CALLBACK        finalize_object  (void* userdata);
-static void                        free_ref         (js_ref_t* ref);
-static JsValueRef                  get_value        (int stack_index);
-static JsPropertyIdRef             make_property_id (JsValueRef key_value);
-static js_ref_t*                   make_ref         (JsValueRef value);
-static JsValueRef                  pop_value        (void);
-static int                         push_value       (JsValueRef value);
-static void                        resize_stack     (int new_size);
-static void                        throw_if_error   (void);
-static void                        throw_value      (JsValueRef value);
+static void CHAKRA_CALLBACK        dispatch_promise    (JsValueRef function, void* userdata);
+static JsErrorCode CHAKRA_CALLBACK fetch_module        (JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module);
+static void CHAKRA_CALLBACK        finalize_object     (void* userdata);
+static void                        free_ref            (js_ref_t* ref);
+static JsValueRef                  get_value           (int stack_index);
+static void CHAKRA_CALLBACK        handle_debug_event  (JsDiagDebugEvent event, JsValueRef data, void* userdata);
+static JsValueRef CHAKRA_CALLBACK  handle_native_call  (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
+static JsPropertyIdRef             make_property_id    (JsValueRef key_value);
+static js_ref_t*                   make_ref            (JsValueRef value);
+static JsValueRef                  pop_value           (void);
+static void                        push_debug_callback_args (JsValueRef event_data);
+static int                         push_value          (JsValueRef value);
+static void                        resize_stack        (int new_size);
+static void                        throw_if_error      (void);
+static void                        throw_value         (JsValueRef value);
 
 static int asprintf  (char* *out, const char* format, ...);
 static int vasprintf (char* *out, const char* format, va_list ap);
 
 static vector_t*            s_catch_stack;
+static js_break_callback_t  s_break_callback = NULL;
 static js_module_callback_t s_fetch_callback = NULL;
 static JsContextRef         s_js_context;
 static JsRuntimeHandle      s_js_runtime = NULL;
@@ -151,6 +154,12 @@ jsal_uninit(void)
 	vector_free(s_module_jobs);
 	vector_free(s_stack);
 	vector_free(s_catch_stack);
+}
+
+void
+jsal_on_breakpoint(js_break_callback_t callback)
+{
+	s_break_callback = callback;
 }
 
 void
@@ -240,6 +249,24 @@ jsal_compile(const char* filename)
 	JsParse(source_string, s_source_cookie++, name_string, JsParseScriptAttributeNone, &function);
 	throw_if_error();
 	push_value(function);
+}
+
+void
+jsal_debug_attach(void)
+{
+	if (s_break_callback == NULL)
+		jsal_error(JS_ERROR, "no debugger event callback set");
+	JsDiagStartDebugging(s_js_runtime, handle_debug_event, NULL);
+	JsDiagSetBreakOnException(s_js_runtime, JsDiagBreakOnExceptionAttributeUncaught);
+	JsDiagRequestAsyncBreak(s_js_runtime);
+}
+
+void
+jsal_debug_detach(void)
+{
+	void* userdata;
+	
+	JsDiagStopDebugging(s_js_runtime, &userdata);
 }
 
 void
@@ -379,6 +406,7 @@ jsal_eval_module(const char* filename)
 	JsValueRef         result;
 	const char*        source;
 	size_t             source_len;
+	JsModuleRecord     submodule;
 	JsValueRef         url_string;
 
 	source = jsal_require_lstring(-1, &source_len);
@@ -396,9 +424,11 @@ jsal_eval_module(const char* filename)
 	while (vector_len(s_module_jobs) > 0) {
 		job = vector_get(s_module_jobs, 0);
 		job_source = job->source;
+		submodule = job->module;
 		error_code = JsParseModuleSource(job->module,  // note: invalidates 'job'
 			s_source_cookie++, (BYTE*)job->source, (unsigned int)job->source_size,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
+		JsRelease(submodule, NULL);
 		free(job_source);
 		if (error_code == JsErrorScriptCompile) {
 			vector_clear(s_module_jobs);
@@ -860,7 +890,7 @@ jsal_push_constructor(js_callback_t callback, const char* name, int min_args, in
 	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
-	JsCreateNamedFunction(name_string, do_native_call, function_data, &function);
+	JsCreateNamedFunction(name_string, handle_native_call, function_data, &function);
 	return push_value(function);
 }
 
@@ -873,7 +903,7 @@ jsal_push_eval(const char* source)
 
 	JsCreateString(source, strlen(source), &source_ref);
 	JsCreateString("eval()", 6, &name_ref);
-	JsRun(source_ref, s_source_cookie++, name_ref, JsParseScriptAttributeNone, &ref);
+	JsRun(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeLibraryCode, &ref);
 	throw_if_error();
 	return push_value(ref);
 }
@@ -890,7 +920,7 @@ jsal_push_function(js_callback_t callback, const char* name, int min_args, int m
 	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
-	JsCreateNamedFunction(name_string, do_native_call, function_data, &function);
+	JsCreateNamedFunction(name_string, handle_native_call, function_data, &function);
 	return push_value(function);
 }
 
@@ -1785,60 +1815,6 @@ dispatch_promise(JsValueRef task, void* userdata)
 	s_stack_base = last_stack_base;
 }
 
-static JsValueRef CHAKRA_CALLBACK
-do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
-{
-	js_ref_t*        callee_ref;
-	JsValueRef       exception;
-	struct function* function_data;
-	bool             has_return;
-	int              last_stack_base;
-	JsValueRef       last_this_value;
-	jmp_buf          label;
-	JsValueRef       retval = JS_INVALID_REFERENCE;
-
-	int i;
-
-	function_data = userdata;
-
-	last_stack_base = s_stack_base;
-	last_this_value = s_this_value;
-	s_stack_base = vector_len(s_stack);
-	s_this_value = argv[0];
-	callee_ref = make_ref(callee);
-	for (i = 1; i < argc; ++i)
-		push_value(argv[i]);
-	if (setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
-		if (!is_ctor && function_data->ctor_only) {
-			push_value(callee);  // note: gets popped during unwind
-			jsal_get_prop_string(-1, "name");
-			jsal_error(JS_TYPE_ERROR, "constructor '%s()' requires 'new'", jsal_to_string(-1));
-		}
-		if (argc - 1 < function_data->min_args) {
-			push_value(callee);  // note: gets popped during unwind
-			jsal_get_prop_string(-1, "name");
-			jsal_error(JS_TYPE_ERROR, "too few arguments for '%s()'", jsal_to_string(-1));
-		}
-		has_return = function_data->callback(callee_ref, argc - 1, is_ctor, function_data->magic);
-		if (has_return)
-			retval = pop_value();
-		vector_pop(s_catch_stack, 1);
-	}
-	else {
-		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
-		// of the value stack.
-		exception = pop_value();
-		JsSetException(exception);
-		retval = exception;
-	}
-	free_ref(callee_ref);
-	resize_stack(s_stack_base);
-	s_this_value = last_this_value;
-	s_stack_base = last_stack_base;
-	return retval;
-}
-
 static JsErrorCode CHAKRA_CALLBACK
 fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module)
 {
@@ -1919,6 +1895,135 @@ finalize_object(void* userdata)
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
 	free(object_info);
+}
+
+static void CHAKRA_CALLBACK
+handle_debug_event(JsDiagDebugEvent event, JsValueRef data, void* userdata)
+{
+	jmp_buf        label;
+	int            last_stack_base;
+	js_step_t      step = JS_STEP_CONTINUE;
+	JsDiagStepType step_type;
+	
+	switch (event) {
+		case JsDiagDebugEventAsyncBreak:
+		case JsDiagDebugEventBreakpoint:
+		case JsDiagDebugEventDebuggerStatement:
+		case JsDiagDebugEventRuntimeException:
+		case JsDiagDebugEventStepComplete:
+			last_stack_base = s_stack_base;
+			s_stack_base = vector_len(s_stack);
+			push_debug_callback_args(data);
+			if (setjmp(label) == 0) {
+				vector_push(s_catch_stack, label);
+				step = s_break_callback();
+				vector_pop(s_catch_stack, 1);
+			}
+			else {
+				jsal_pop(1);
+			}
+			resize_stack(s_stack_base);
+			s_stack_base = last_stack_base;
+			step_type = step == JS_STEP_IN ? JsDiagStepTypeStepIn
+				: step == JS_STEP_OUT ? JsDiagStepTypeStepOut
+				: step == JS_STEP_OVER ? JsDiagStepTypeStepOver
+				: JsDiagStepTypeContinue;
+			JsDiagSetStepType(step_type);
+			break;
+	}
+}
+
+static JsValueRef CHAKRA_CALLBACK
+handle_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
+{
+	js_ref_t*        callee_ref;
+	JsValueRef       exception;
+	struct function* function_data;
+	bool             has_return;
+	int              last_stack_base;
+	JsValueRef       last_this_value;
+	jmp_buf          label;
+	JsValueRef       retval = JS_INVALID_REFERENCE;
+
+	int i;
+
+	function_data = userdata;
+
+	last_stack_base = s_stack_base;
+	last_this_value = s_this_value;
+	s_stack_base = vector_len(s_stack);
+	s_this_value = argv[0];
+	callee_ref = make_ref(callee);
+	for (i = 1; i < argc; ++i)
+		push_value(argv[i]);
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		if (!is_ctor && function_data->ctor_only) {
+			push_value(callee);  // note: gets popped during unwind
+			jsal_get_prop_string(-1, "name");
+			jsal_error(JS_TYPE_ERROR, "constructor '%s()' requires 'new'", jsal_to_string(-1));
+		}
+		if (argc - 1 < function_data->min_args) {
+			push_value(callee);  // note: gets popped during unwind
+			jsal_get_prop_string(-1, "name");
+			jsal_error(JS_TYPE_ERROR, "too few arguments for '%s()'", jsal_to_string(-1));
+		}
+		has_return = function_data->callback(callee_ref, argc - 1, is_ctor, function_data->magic);
+		if (has_return)
+			retval = pop_value();
+		vector_pop(s_catch_stack, 1);
+	}
+	else {
+		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
+		// of the value stack.
+		exception = pop_value();
+		JsSetException(exception);
+		retval = exception;
+	}
+	free_ref(callee_ref);
+	resize_stack(s_stack_base);
+	s_this_value = last_this_value;
+	s_stack_base = last_stack_base;
+	return retval;
+}
+
+static void
+push_debug_callback_args(JsValueRef event_data)
+{
+	int        num_scripts;
+	bool       result = true;
+	int        script_id;
+	JsValueRef script_list;
+
+	int i;
+
+	push_value(event_data);
+	jsal_get_prop_string(-1, "scriptId");
+	jsal_get_prop_string(-2, "line");
+	jsal_get_prop_string(-3, "column");
+	jsal_remove(-4);
+
+	script_id = jsal_get_int(-3);
+	JsDiagGetScripts(&script_list);
+	push_value(script_list);
+	num_scripts = jsal_get_length(-1);
+	for (i = 0; i < num_scripts; ++i) {
+		jsal_get_prop_index(-1, i);
+		jsal_get_prop_string(-1, "scriptId");
+		if (script_id == jsal_get_int(-1)) {
+			jsal_get_prop_string(-2, "fileName");
+			jsal_remove(-2);
+			jsal_remove(-2);
+			jsal_remove(-2);
+			goto got_info;
+		}
+		jsal_pop(2);
+	}
+	jsal_pop(1);
+	jsal_push_undefined();
+
+got_info:
+	jsal_replace(-4);
 }
 
 static int

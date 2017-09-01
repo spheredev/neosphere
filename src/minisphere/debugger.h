@@ -53,7 +53,9 @@ color_t     debugger_color         (void);
 const char* debugger_name          (void);
 const char* debugger_compiled_name (const char* source_name);
 const char* debugger_source_name   (const char* pathname);
+void        debugger_attach        (void);
 void        debugger_cache_source  (const char* name, const lstring_t* text);
+void        debugger_detach        (void);
 void        debugger_log           (const char* text, print_op_t op, bool use_console);
 
 #endif // MINISPHERE__DEBUGGER_H__INCLUDED
