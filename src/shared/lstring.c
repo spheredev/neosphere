@@ -336,7 +336,7 @@ lstr_from_cp1252(const char* text, size_t length)
 	input = (uint8_t*)text;
 
 	// check that the string isn't already properly encoded
-	utf8 = utf8_decode_start(false);
+	utf8 = utf8_decode_start(true);
 	p_in = input;
 	while (p_in < input + length && is_utf8) {
 		if (utf8_decode_next(utf8, *p_in++, NULL) >= UTF8_ERROR)
@@ -354,7 +354,7 @@ lstr_from_cp1252(const char* text, size_t length)
 		p_in = input;
 		for (i = 0; i < length; ++i) {
 			codepoint = cp1252[*p_in++];
-			cesu8_emit(codepoint, &p_out);
+			utf8_emit(codepoint, &p_out);
 		}
 		*p_out = '\0';  // NUL terminator
 		length = p_out - buffer;
@@ -367,39 +367,6 @@ lstr_from_cp1252(const char* text, size_t length)
 		memcpy(buffer, text, length);
 		buffer[length] = '\0';  // NUL terminator
 	}
-
-	string->cstr = (char*)buffer;
-	string->length = length;
-	return string;
-}
-
-lstring_t*
-lstr_from_utf16(const uint16_t* text, size_t length)
-{
-	// create an lstring from plain text.  CP-1252 is assumed.  as Duktape
-	// expects JS code to be CESU-8 encoded, this functionality is needed for
-	// full compatibility with Sphere v1 scripts.
-
-	uint8_t*       buffer;
-	uint32_t       codepoint;
-	lstring_t*     string;
-	const uint16_t *p_in;
-	uint8_t        *p_out;
-
-	size_t i;
-
-	// note: CESU-8 conversion may expand the string by up to 6x
-	if (!(string = malloc(sizeof(lstring_t) + length * 6 + 1)))
-		return NULL;
-	buffer = (char*)string + sizeof(lstring_t);
-	p_out = buffer;
-	p_in = text;
-	for (i = 0; i < length; ++i) {
-		codepoint = *p_in++;
-		cesu8_emit(codepoint, &p_out);
-	}
-	*p_out = '\0';  // NUL terminator
-	length = p_out - buffer;
 
 	string->cstr = (char*)buffer;
 	string->length = length;

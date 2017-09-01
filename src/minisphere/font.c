@@ -308,7 +308,7 @@ font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t ali
 
 	tab_width = font->glyphs[' '].width * 3;
 	al_hold_bitmap_drawing(true);
-	utf8 = utf8_decode_start(false);
+	utf8 = utf8_decode_start(true);
 	do {
 		while ((ret = utf8_decode_next(utf8, *text++, &cp)) == UTF8_CONTINUE);
 		if (ret == UTF8_RETRY)
@@ -371,7 +371,7 @@ font_get_width(const font_t* font, const char* text)
 	utf8_decode_t* utf8;
 	int            width = 0;
 
-	utf8 = utf8_decode_start(false);
+	utf8 = utf8_decode_start(true);
 	do {
 		while ((ret = utf8_decode_next(utf8, *text++, &cp)) == UTF8_CONTINUE);
 		if (ret == UTF8_RETRY)
@@ -452,7 +452,7 @@ wraptext_new(const char* text, const font_t* font, int width)
 	line_buffer = buffer; line_buffer[0] = '\0';
 	line_idx = 0; line_width = 0; line_length = 0;
 	memset(line_buffer, 0, pitch);  // fill line with NULs
-	utf8 = utf8_decode_start(false);
+	utf8 = utf8_decode_start(true);
 	p = text;
 	do {
 		start = p;

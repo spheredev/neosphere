@@ -12,7 +12,6 @@ lstring_t*  lstr_new         (const char* cstr);
 lstring_t*  lstr_newf        (const char* fmt, ...);
 lstring_t*  lstr_vnewf       (const char* fmt, va_list args);
 lstring_t*  lstr_from_cp1252 (const char* text, size_t length);
-lstring_t*  lstr_from_utf16  (const uint16_t* text, size_t length);
 void        lstr_free        (lstring_t* string);
 const char* lstr_cstr        (const lstring_t* string);
 int         lstr_cmp         (const lstring_t* string1, const lstring_t* string2);

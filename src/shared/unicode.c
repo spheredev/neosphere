@@ -16,35 +16,6 @@ struct utf8_decode
 	uint8_t        utf8_low;
 };
 
-size_t
-cesu8_emit(uint32_t codepoint, uint8_t* *p_ptr)
-{
-	// CESU-8: code points above U+FFFF are encoded as a surrogate pair, like UTF-16.
-	// may emit up to 6 bytes.  surrogate code points themselves and code points beyond
-	// U+10FFFF are not legal and will not be encoded.
-
-	uint32_t utf16_hi;
-	uint32_t utf16_lo;
-
-	if (codepoint <= 0xffff)
-		return utf8_emit(codepoint, p_ptr);
-	else if (codepoint <= 0x10ffff) {
-		utf16_hi = 0xd800 + ((codepoint - 0x010000) >> 10);
-		utf16_lo = 0xdc00 + ((codepoint - 0x010000) & 0x3ff);
-		*(*p_ptr)++ = (utf16_hi >> 12) + 0xe0;
-		*(*p_ptr)++ = 0x80 + (utf16_hi >> 6 & 0x3f);
-		*(*p_ptr)++ = 0x80 + (utf16_hi & 0x3f);
-		*(*p_ptr)++ = (utf16_lo >> 12) + 0xe0;
-		*(*p_ptr)++ = 0x80 + (utf16_lo >> 6 & 0x3f);
-		*(*p_ptr)++ = 0x80 + (utf16_lo & 0x3f);
-		return 6;
-	}
-	else {
-		// not a legal Unicode code point
-		return 0;
-	}
-}
-
 utf8_decode_t*
 utf8_decode_start(bool strict)
 {
@@ -116,8 +87,9 @@ utf8_decode_next(utf8_decode_t* cx, uint8_t byte, uint32_t *out_codepoint)
 			cx->utf8_low = 0x80;
 			cx->utf8_high = 0xbf;
 			cx->codepoint = (cx->codepoint << 6) | (byte & 0x3f);
-			if (++cx->bytes_seen < cx->bytes_needed)
+			if (++cx->bytes_seen < cx->bytes_needed) {
 				return UTF8_CONTINUE;
+			}
 			else if (cx->codepoint < 0xd800 || cx->codepoint > 0xdfff) {
 				if (out_codepoint)
 					*out_codepoint = cx->codepoint;
