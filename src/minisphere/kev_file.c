@@ -52,7 +52,7 @@ kev_open(game_t* game, const char* filename, bool can_create)
 	void*         slurp;
 	size_t        slurp_size;
 
-	console_log(2, "opening kevfile #%u `%s`", s_next_file_id, filename);
+	console_log(2, "opening kevfile #%u '%s'", s_next_file_id, filename);
 	kev_file = calloc(1, sizeof(kev_file_t));
 	if (slurp = game_read_file(game, filename, &slurp_size)) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
@@ -62,7 +62,7 @@ kev_open(game_t* game, const char* filename, bool can_create)
 		free(slurp);
 	}
 	else {
-		console_log(3, "    `%s` doesn't exist", filename);
+		console_log(3, "    '%s' doesn't exist", filename);
 		if (!can_create || !(kev_file->conf = al_create_config()))
 			goto on_error;
 	}
@@ -166,7 +166,7 @@ kev_read_string(kev_file_t* it, const char* key, const char* def_value)
 	if (it == NULL)
 		return def_value;
 
-	console_log(2, "reading key `%s` from kevfile #%u", key, it->id);
+	console_log(2, "reading key '%s' from kevfile #%u", key, it->id);
 	if (!(value = al_get_config_value(it->conf, NULL, key)))
 		value = def_value;
 	return value;
@@ -182,7 +182,7 @@ kev_save(kev_file_t* it)
 	ALLEGRO_FILE* memfile;
 	size_t        next_buf_size;
 
-	console_log(3, "saving kevfile #%u as `%s`", it->id, it->filename);
+	console_log(3, "saving kevfile #%u as '%s'", it->id, it->filename);
 	next_buf_size = 4096;
 	while (!is_aok) {
 		buffer = realloc(buffer, next_buf_size);
@@ -211,7 +211,7 @@ on_error:
 void
 kev_write_bool(kev_file_t* it, const char* key, bool value)
 {
-	console_log(3, "writing boolean to kevfile #%u, key `%s`", it->id, key);
+	console_log(3, "writing boolean to kevfile #%u, key '%s'", it->id, key);
 	al_set_config_value(it->conf, NULL, key, value ? "true" : "false");
 	it->is_dirty = true;
 }
@@ -221,7 +221,7 @@ kev_write_float(kev_file_t* it, const char* key, double value)
 {
 	char string[500];
 
-	console_log(3, "writing number to kevfile #%u, key `%s`", it->id, key);
+	console_log(3, "writing number to kevfile #%u, key '%s'", it->id, key);
 	sprintf(string, "%g", value);
 	al_set_config_value(it->conf, NULL, key, string);
 	it->is_dirty = true;
@@ -230,7 +230,7 @@ kev_write_float(kev_file_t* it, const char* key, double value)
 void
 kev_write_string(kev_file_t* it, const char* key, const char* value)
 {
-	console_log(3, "writing string to kevfile #%u, key `%s`", it->id, key);
+	console_log(3, "writing string to kevfile #%u, key '%s'", it->id, key);
 	al_set_config_value(it->conf, NULL, key, value);
 	it->is_dirty = true;
 }

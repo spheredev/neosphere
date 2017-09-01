@@ -508,8 +508,8 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 	// someone not familiar with Duktape code.  proceed with caution.
 
 	// notes:
-	//     - the final value of `module.exports` is left on top of the Duktape value stack.
-	//     - `module.id` is set to the given filename.  in order to guarantee proper cache
+	//     - the final value of 'module.exports' is left on top of the Duktape value stack.
+	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
 	//       behavior, the filename should be in canonical form.
 	//     - this is a protected call.  if the module being loaded throws, the error will be
 	//       caught and left on top of the stack for the caller to deal with.
@@ -538,7 +538,7 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 	}
 
 	source = fs_fslurp(fs, filename, &source_size);
-	code_string = lstr_from_cp1252(source, source_size);
+	code_string = lstr_from_utf8(source, source_size, true);
 	free(source);
 
 	// construct a module object for the new module
@@ -610,12 +610,12 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 		jsal_pop(1);
 	}
 
-	// module executed successfully, set `module.loaded` to true
+	// module executed successfully, set 'module.loaded' to true
 	jsal_push_boolean(true);
 	jsal_put_prop_string(-2, "loaded");
 
 have_module:
-	// `module` is on the stack, we need `module.exports`
+	// 'module' is on the stack, we need 'module.exports'
 	jsal_get_prop_string(-1, "exports");
 	jsal_remove(-2);
 	return true;
@@ -743,7 +743,7 @@ jsal_fetch_module(void)
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error_blame(-1, JS_REF_ERROR, "module not found `%s`", specifier);
+		jsal_error_blame(-1, JS_REF_ERROR, "module not found '%s'", specifier);
 	if (path_has_extension(path, ".mjs")) {
 		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
@@ -751,7 +751,7 @@ jsal_fetch_module(void)
 		free(source);
 	}
 	else {
-		// ES module shim to allow `import` of CommonJS modules
+		// ES module shim to allow 'import' of CommonJS modules
 		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
 	}
@@ -920,7 +920,7 @@ write_manifests(build_t* build)
 
 	jsal_get_prop_string(-5, "main");
 	if (jsal_is_string(-1)) {
-		// explicitly rebase onto `@/`, as Cell uses `$/` by default.
+		// explicitly rebase onto '@/', as Cell uses '$/' by default.
 		main_path = fs_full_path(jsal_to_string(-1), "@/");
 		if (!path_hop_is(main_path, 0, "@")) {
 			visor_error(build->visor, "'main': illegal prefix '%s/' in filename", path_hop(main_path, 0));
@@ -945,8 +945,8 @@ write_manifests(build_t* build)
 	}
 
 	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
-	// note: SGMv1 requires the main script path to be relative to `@/scripts`.
-	//       this differs from Sv2 (game.json), where it's relative to `@/`.
+	// note: SGMv1 requires the main script path to be relative to '@/scripts'.
+	//       this differs from Sv2 (game.json), where it's relative to '@/'.
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
 	script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
 	fprintf(file, "name=%s\n", jsal_to_string(-5));
@@ -1279,7 +1279,7 @@ js_FS_createDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_pathname(0, NULL);
 
 	if (fs_mkdir(s_build->fs, name) != 0)
-		jsal_error_blame(-1, JS_ERROR, "unable to create directory");
+		jsal_error_blame(-1, JS_ERROR, "couldn't create directory");
 	return false;
 }
 
@@ -1291,7 +1291,7 @@ js_FS_deleteFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	if (!fs_unlink(s_build->fs, filename))
-		jsal_error_blame(-1, JS_ERROR, "unable to delete file", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't delete file", filename);
 	return false;
 }
 
@@ -1343,7 +1343,7 @@ js_FS_readFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(file_data = fs_fslurp(s_build->fs, filename, &file_size)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't read file '%s'", filename);
-	content = lstr_from_cp1252(file_data, file_size);
+	content = lstr_from_utf8(file_data, file_size, true);
 	jsal_push_lstring_t(content);
 	return true;
 }
@@ -1426,7 +1426,7 @@ js_new_FileStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
 	if (!(file = fs_fopen(s_build->fs, filename, mode)))
-		jsal_error_blame(-1, JS_ERROR, "couldn't open file `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't open file '%s'", filename);
 	if (file_op == FILE_OP_UPDATE)
 		fseek(file, 0, SEEK_END);
 

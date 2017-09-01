@@ -209,13 +209,13 @@ jsal_require_lstring_t(int index)
 	size_t      length;
 
 	buffer = jsal_require_lstring(index, &length);
-	return lstr_from_cp1252(buffer, length);
+	return lstr_from_utf8(buffer, length, false);
 }
 
 const char*
 jsal_require_pathname(int index, const char* origin_name, bool legacy_mode, bool need_write)
 {
-	// note: for compatibility with Sphere 1.x, if `legacy_mode` is true, then the game package
+	// note: for compatibility with Sphere 1.x, if 'legacy_mode' is true, then the game package
 	//       is treated as writable.
 
 	static int     s_index = 0;
@@ -237,7 +237,7 @@ jsal_require_pathname(int index, const char* origin_name, bool legacy_mode, bool
 		jsal_error_blame(-1, JS_REF_ERROR, "no save ID defined");
 	if (need_write && !legacy_mode && strcmp(prefix, "~") != 0)
 		jsal_error_blame(-1, JS_TYPE_ERROR, "directory is read-only");
-	if (need_write && strcmp(prefix, "#") == 0)  // `system/` is always read-only
+	if (need_write && strcmp(prefix, "#") == 0)  // 'system/' is always read-only
 		jsal_error_blame(-1, JS_TYPE_ERROR, "directory is read-only");
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);

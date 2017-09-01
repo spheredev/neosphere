@@ -97,7 +97,7 @@ tileset_new(const char* filename)
 	file_t*    file;
 	tileset_t* tileset;
 
-	console_log(2, "loading tileset #%u as `%s`", s_next_tileset_id, filename);
+	console_log(2, "loading tileset #%u from '%s'", s_next_tileset_id, filename);
 
 	if ((file = file_open(g_game, filename, "rb")) == NULL)
 		goto on_error;
@@ -206,7 +206,7 @@ tileset_free(tileset_t* tileset)
 {
 	int i;
 
-	console_log(3, "disposing tileset #%u as it is no longer in use", tileset->id);
+	console_log(3, "disposing tileset #%u no longer in use", tileset->id);
 
 	for (i = 0; i < tileset->num_tiles; ++i) {
 		lstr_free(tileset->tiles[i].name);

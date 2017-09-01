@@ -106,7 +106,7 @@ font_load(const char* filename)
 
 	int i, x, y;
 
-	console_log(2, "loading font #%u as `%s`", s_next_font_id, filename);
+	console_log(2, "loading font #%u from '%s'", s_next_font_id, filename);
 
 	memset(&rfn, 0, sizeof(struct rfn_header));
 

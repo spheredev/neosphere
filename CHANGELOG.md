@@ -4,11 +4,18 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* miniSphere and Cell both now use Microsoft's ChakraCore under the hood to
-  drive JavaScript code, vastly improving JS execution performance and bringing
-  long-overdue native support for ES2015 syntax and built-ins to Sphere--
-  including out-of-the-box support for ECMAScript modules--without the need for
-  any transpilation or polyfills.
+* miniSphere and Cell both now use Microsoft's ChakraCore under the hood,
+  vastly improving JavaScript execution performance and bringing long-overdue
+  native support for ES2015 syntax and built-ins to Sphere--including
+  out-of-the-box support for ECMAScript modules!--without the need for any
+  transpilation or polyfills.
+* Brings back the `Pact` class!  This provides an easy way to manage promises
+  in JavaScript.
+* Improves internal handling of UTF-8 strings, fixing several bugs related to
+  text encoding.  Notably, `FS.readFile()` now correctly handles the UTF-8
+  byte-order mark.
+* Improves error reporting.  SpheRun now prints a complete stack listing to the
+  terminal when a JavaScript runtime error occurs.
 
 
 v4.8.4 - August 22, 2017

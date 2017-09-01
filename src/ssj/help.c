@@ -78,7 +78,7 @@ help_print(const char* command_name)
 			"invaluable.  When the breakpoint is reached, execution will pause, leaving SSj \n"
 			"in control.                                                                    \n\n"
 			"The ID number of the set breakpoint will be given, which will be needed if you \n"
-			"want to clear it later using `clearbreak`.                                        \n\n"
+			"want to clear it later using 'clearbreak'.                                        \n\n"
 			"SYNTAX:                                                                        \n"
 			"    breakpoint             - to list active breakpoints                        \n"
 			"    breakpoint <file:line> - to set a breakpoint                               \n"
@@ -86,10 +86,10 @@ help_print(const char* command_name)
 	}
 	else if (strcmp(command_name, "clearbreak") == 0) {
 		printf(
-			"Clear the breakpoint <index> established using `breakpoint`.  When you no      \n"
+			"Clear the breakpoint <index> established using 'breakpoint'.  When you no      \n"
 			"longer need a breakpoint, you should clear to prevent execution from pausing in\n"
 			"that spot again.                                                               \n\n"
-			"To list active breakpoints and their indices, simply enter `breakpoint` with no\n"
+			"To list active breakpoints and their indices, simply enter 'breakpoint' with no\n"
 			"arguments.                                                                     \n\n"
 			"SYNTAX:                                                                        \n"
 			"    clearbreak <index>                                                            \n"
@@ -107,7 +107,7 @@ help_print(const char* command_name)
 		printf(
 			"Move down the callstack relative to the selected frame, towards the innermost  \n"
 			"call.  A number can be provided which specifies the number of frames to move.  \n"
-			"If no argument is given, `down` moves down by one (1) frame.                   \n\n"
+			"If no argument is given, 'down' moves down by one (1) frame.                   \n\n"
 			"SYNTAX:                                                                        \n"
 			"    down         - move down by one (1) frame                                  \n"
 			"    down <steps> - move down by <steps> frames                                 \n"
@@ -128,7 +128,7 @@ help_print(const char* command_name)
 	else if (strcmp(command_name, "examine") == 0) {
 		printf(
 			"Evaluate a JavaScript expression <expr>.  If the result is a primitive value   \n"
-			"such as a string or number, `examine` works exactly like `eval`.  If the result\n"
+			"such as a string or number, 'examine` works exactly like `eval'.  If the result\n"
 			"is an object, all of its properties (including non-enumerable), their          \n"
 			"attributes, and their values are listed in long form.                          \n\n"
 			"SYNTAX:                                                                        \n"
@@ -137,17 +137,17 @@ help_print(const char* command_name)
 	}
 	else if (strcmp(command_name, "frame") == 0) {
 		printf(
-			"Select a callstack frame to examine.  Use `backtrace` to see the full list of  \n"
+			"Select a callstack frame to examine.  Use 'backtrace' to see the full list of  \n"
 			"frames on the callstack.  When SSj pauses execution, the innermost JavaScript  \n"
 			"frame is selected, which corresponds to the function call in progress.         \n\n"
 			"Sometimes it's necessary when investigating a bug to view the state earlier in \n"
-			"the call chain.  The `frame` command changes the context used for the following\n"
+			"the call chain.  The 'frame' command changes the context used for the following\n"
 			"commands:                                                                      \n\n"
 			"    - eval                                                                     \n"
 			"    - examine                                                                  \n"
 			"    - list                                                                     \n"
 			"    - vars                                                                     \n\n"
-			"The program counter isn't affected: `continue` and stepping commands will      \n"
+			"The program counter isn't affected: 'continue' and stepping commands will      \n"
 			"resume in the innermost call regardless of the stack frame selected.           \n\n"
 			"SYNTAX:                                                                        \n"
 			"    frame <index>                                                              \n"
@@ -157,8 +157,8 @@ help_print(const char* command_name)
 		printf(
 			"Print a few lines of source code surrounding the line currently being executed.\n"
 			"By default, 10 lines of source are shown.  If you provide a number with the    \n"
-			"`list` command, that number of lines will be printed.                          \n\n"
-			"`list` may also be used to show the text of any source file in the project so  \n"
+			"'list' command, that number of lines will be printed.                          \n\n"
+			"'list' may also be used to show the text of any source file in the project so  \n"
 			"long as you know its SphereFS filename.                                        \n\n"
 			"SYNTAX:                                                                        \n"
 			"    list                     - list 10 LOC around the line being executed      \n"
@@ -194,7 +194,7 @@ help_print(const char* command_name)
 		printf(
 			"Move up the callstack relative to the selected frame, towards the outermost    \n"
 			"call.  A number can be provided which specifies the number of frames to move.  \n"
-			"If no argument is given, `up` moves up by one (1) frame.                       \n\n"
+			"If no argument is given, 'up' moves up by one (1) frame.                       \n\n"
 			"SYNTAX:                                                                        \n"
 			"    up         - move up by one (1) frame                                      \n"
 			"    up <steps> - move up by <steps> frames                                     \n"
@@ -204,7 +204,7 @@ help_print(const char* command_name)
 		printf(
 			"Show local variables for the selected stack frame along with all primitive     \n"
 			"values.  Non-primitive values such as objects and functions are displayed      \n"
-			"simply as `{...}` so you will need to use the `eval` or `examine` commands to  \n"
+			"simply as '{...}` so you will need to use the `eval` or `examine' commands to  \n"
 			"view their content.                                                            \n\n"
 			"SYNTAX:                                                                        \n"
 			"    vars                                                                       \n"
@@ -223,7 +223,7 @@ help_print(const char* command_name)
 		printf(
 			"Quit SSj.  This will detach the debugger and return you to the shell.  In most \n"
 			"cases the miniSphere debug target will also close, unless SSj was started with \n"
-			"the `-c` option to connect to a running instance.                              \n\n"
+			"the '-c' option to connect to a running instance.                              \n\n"
 			"SYNTAX:                                                                        \n"
 			"    quit                                                                       \n"
 		);

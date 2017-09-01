@@ -425,7 +425,7 @@ static void stream_emitEvent(dyad_Stream *stream, dyad_Event *e) {
       e->udata = listener->udata;
       listener->callback(e);
     }
-    /* Check to see if this listener was removed: If it was we decrement `i`
+    /* Check to see if this listener was removed: If it was we decrement 'i'
      * since the next listener will now be in this ones place */
     if (listener != &stream->listeners.data[i]) {
       i--;

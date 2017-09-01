@@ -67,7 +67,7 @@ animation_new(const char* path)
 {
 	animation_t* anim;
 
-	console_log(2, "loading animation #%u as `%s`", s_next_animation_id, path);
+	console_log(2, "loading animation #%u from '%s'", s_next_animation_id, path);
 
 	if (!(anim = calloc(1, sizeof(animation_t))))
 		goto on_error;

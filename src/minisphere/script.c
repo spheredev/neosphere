@@ -108,7 +108,7 @@ on_error:
 	lstr_free(source_text);
 	path_free(path);
 	if (jsal_get_top() == stack_top)  // note: ugly hack, refactor
-		jsal_push_new_error(JS_REF_ERROR, "script not found `%s`\n", filename);
+		jsal_push_new_error(JS_REF_ERROR, "script not found '%s'\n", filename);
 	return false;
 }
 
@@ -125,7 +125,7 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	va_end(ap);
 	script = calloc(1, sizeof(script_t));
 
-	console_log(3, "compiling script #%u as `%s`", s_next_script_id, lstr_cstr(name));
+	console_log(3, "compiling script #%u as '%s'", s_next_script_id, lstr_cstr(name));
 
 	// compile the source.  Duktape gives us a function back; save its heap pointer so
 	// we can call the script later.

@@ -807,7 +807,7 @@ jsal_fetch_module(void)
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error_blame(-1, JS_REF_ERROR, "module not found `%s`", specifier);
+		jsal_error_blame(-1, JS_REF_ERROR, "module not found '%s'", specifier);
 	if (path_has_extension(path, ".mjs")) {
 		source = game_read_file(g_game, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
@@ -815,7 +815,7 @@ jsal_fetch_module(void)
 		free(source);
 	}
 	else {
-		// ES module shim to allow `import` of CommonJS modules
+		// ES module shim to allow 'import' of CommonJS modules
 		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
 	}
@@ -831,8 +831,8 @@ jsal_pegasus_eval_module(const char* filename)
 	// someone not familiar with Duktape code.  proceed with caution.
 
 	// notes:
-	//     - the final value of `module.exports` is left on top of the Duktape value stack.
-	//     - `module.id` is set to the given filename.  in order to guarantee proper cache
+	//     - the final value of 'module.exports' is left on top of the Duktape value stack.
+	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
 	//       behavior, the filename should be in canonical form.
 	//     - this is a protected call.  if the module being loaded throws, the error will be
 	//       caught and left on top of the stack for the caller to deal with.
@@ -860,10 +860,10 @@ jsal_pegasus_eval_module(const char* filename)
 		jsal_pop(3);
 	}
 
-	console_log(1, "initializing JS module `%s`", filename);
+	console_log(1, "initializing JS module '%s'", filename);
 
 	source = game_read_file(g_game, filename, &source_size);
-	code_string = lstr_from_cp1252(source, source_size);
+	code_string = lstr_from_utf8(source, source_size, true);
 	free(source);
 
 	// construct a module object for the new module
@@ -936,12 +936,12 @@ jsal_pegasus_eval_module(const char* filename)
 		jsal_pop(1);
 	}
 
-	// module executed successfully, set `module.loaded` to true
+	// module executed successfully, set 'module.loaded' to true
 	jsal_push_boolean(true);
 	jsal_put_prop_string(-2, "loaded");
 
 have_module:
-	// `module` is on the stack, we need `module.exports`
+	// 'module` is on the stack, we need `module.exports'
 	jsal_get_prop_string(-1, "exports");
 	jsal_remove(-2);
 	return true;
@@ -986,7 +986,7 @@ jsal_pegasus_push_require(const char* module_id)
 {
 	jsal_push_function(js_require, "require", 1, 0);
 	
-	// assign `require.cache`
+	// assign 'require.cache'
 	jsal_push_new_object();
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "moduleCache");
@@ -1185,7 +1185,7 @@ js_require(js_ref_t* me, int num_args, bool is_ctor, int magic)
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error_blame(-1, JS_REF_ERROR, "module not found `%s`", id);
+		jsal_error_blame(-1, JS_REF_ERROR, "module not found '%s'", id);
 	if (!jsal_pegasus_eval_module(path_cstr(path)))
 		jsal_throw();
 	return true;
@@ -1445,7 +1445,7 @@ js_Color_of(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		++p;
 	}
 
-	// is `name` an RGB or ARGB signature?
+	// is 'name' an RGB or ARGB signature?
 	if (name[0] != '#')
 		jsal_error_blame(-1, JS_TYPE_ERROR, "unrecognized color name");
 	hex_length = strspn(&name[1], "0123456789ABCDEFabcdef");
@@ -1832,7 +1832,7 @@ js_FS_readFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(file_data = game_read_file(g_game, pathname, &file_size)))
 		jsal_error_blame(-1, JS_ERROR, "couldn't read file '%s'", pathname);
-	content = lstr_from_cp1252(file_data, file_size);
+	content = lstr_from_utf8(file_data, file_size, true);
 	jsal_push_lstring_t(content);
 	return true;
 }
@@ -2081,7 +2081,7 @@ js_new_Font(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(font = font_load(filename)))
-		jsal_error_blame(-1, JS_ERROR, "couldn't load font `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load font '%s'", filename);
 	jsal_push_this();
 	jsal_push_class_obj("Font", font);
 	return true;
@@ -3155,7 +3155,7 @@ js_new_Sample(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(sample = sample_new(filename, true)))
-		jsal_error_blame(-1, JS_ERROR, "couldn't load sample `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load sample '%s'", filename);
 	jsal_push_class_obj("Sample", sample);
 	return true;
 }
@@ -3671,7 +3671,7 @@ js_new_Sound(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(sound = sound_new(filename)))
-		jsal_error_blame(-1, JS_ERROR, "couldn't load sound `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load sound '%s'", filename);
 	jsal_push_class_obj("Sound", sound);
 	return true;
 }
@@ -4027,7 +4027,7 @@ js_new_Surface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	else {
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
-			jsal_error_blame(-1, JS_ERROR, "couldn't load image `%s`", filename);
+			jsal_error_blame(-1, JS_ERROR, "couldn't load image '%s'", filename);
 	}
 	jsal_push_class_obj("Surface", image);
 	return true;
@@ -4186,7 +4186,7 @@ js_new_Texture(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		// create an Image by loading an image file
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
-			jsal_error_blame(-1, JS_ERROR, "couldn't load image `%s`", filename);
+			jsal_error_blame(-1, JS_ERROR, "couldn't load image '%s'", filename);
 	}
 	jsal_push_class_obj("Texture", image);
 	return true;

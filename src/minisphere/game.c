@@ -97,7 +97,7 @@ game_open(const char* game_path)
 	kev_file_t* sgm_file;
 	char*       sgm_text = NULL;
 
-	console_log(1, "opening `%s` from game #%u", game_path, s_next_game_id);
+	console_log(1, "opening '%s' from game #%u", game_path, s_next_game_id);
 
 	game = game_ref(calloc(1, sizeof(game_t)));
 
@@ -120,7 +120,7 @@ game_open(const char* game_path)
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
 		// a bare script transparent to the rest of the engine, keeping things simple.
-		console_log(1, "synthesizing manifest for `%s` from game #%u", path_cstr(path),
+		console_log(1, "synthesizing manifest for '%s' from game #%u", path_cstr(path),
 			s_next_game_id);
 		game->version = 1;
 		game->name = lstr_new(path_filename(path));
@@ -328,7 +328,7 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 	else
 		prefix = strdup("");
 
-	// in legacy contexts only: `~/` is an alias for `@/`.
+	// in legacy contexts only: '~/' is an alias for '@/'.
 	if (legacy_mode && strcmp(prefix, "~") == 0) {
 		path_remove_hop(path, 0);
 		path_insert_hop(path, 0, "@");
@@ -336,7 +336,7 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 		prefix = strdup(path_hop(path, 0));
 	}
 
-	// `$/` is not a first-class prefix but an alias for `@/<scriptsDir>`, so that's
+	// '$/' is not a first-class prefix but an alias for '@/<scriptsDir>', so that's
 	// what we want to canonicalize to if possible.
 	if (strcmp(prefix, "$") == 0 && it->script_path != NULL) {
 		path_remove_hop(path, 0);
@@ -994,8 +994,8 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 		path_free(origin);
 		*out_fs_type = FS_LOCAL;
 	}
-	else {  // no prefix: relative to `@/`
-		// note: this shouldn't actually happen, since `game_full_path()` always adds a prefix.
+	else {  // no prefix: relative to '@/'
+		// note: this shouldn't actually happen, since 'game_full_path()' always adds a prefix.
 		//       however, there might still be some places internally where an unqualified path is
 		//       used, so better to handle it here.
 		if (game == NULL)

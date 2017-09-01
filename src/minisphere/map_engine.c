@@ -848,8 +848,8 @@ map_add_trigger(int x, int y, int layer, script_t* script)
 {
 	struct map_trigger trigger;
 
-	console_log(2, "creating trigger #%d on map `%s`", vector_len(s_map->triggers), s_map_filename);
-	console_log(3, "    location: `%s` @ (%d,%d)", lstr_cstr(s_map->layers[layer].name), x, y);
+	console_log(2, "creating trigger #%d on map '%s'", vector_len(s_map->triggers), s_map_filename);
+	console_log(3, "    location: '%s' @ (%d,%d)", lstr_cstr(s_map->layers[layer].name), x, y);
 
 	trigger.x = x; trigger.y = y;
 	trigger.z = layer;
@@ -864,7 +864,7 @@ map_add_zone(rect_t bounds, int layer, script_t* script, int steps)
 {
 	struct map_zone zone;
 
-	console_log(2, "creating %u-step zone #%d on map `%s`", steps, vector_len(s_map->zones), s_map_filename);
+	console_log(2, "creating %u-step zone #%d on map '%s'", steps, vector_len(s_map->zones), s_map_filename);
 	console_log(3, "    bounds: (%d,%d)-(%d,%d)", bounds.x1, bounds.y1, bounds.x2, bounds.y2);
 
 	memset(&zone, 0, sizeof(struct map_zone));
@@ -1885,7 +1885,7 @@ change_map(const char* filename, bool preserve_persons)
 
 	int i;
 
-	console_log(2, "changing current map to `%s`", filename);
+	console_log(2, "changing current map to '%s'", filename);
 
 	map = load_map(filename);
 	if (map == NULL) return false;
@@ -2278,7 +2278,7 @@ load_map(const char* filename)
 
 	int i, j, x, y, z;
 
-	console_log(2, "constructing new map from `%s`", filename);
+	console_log(2, "constructing new map from '%s'", filename);
 
 	memset(&rmp, 0, sizeof(struct rmp_header));
 

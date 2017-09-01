@@ -603,7 +603,7 @@ parse_command_line(
 				*out_verbosity = atoi(argv[i]);
 			}
 			else {
-				report_error("unrecognized option `%s`\n", argv[i]);
+				report_error("unrecognized option '%s'\n", argv[i]);
 				return false;
 			}
 #else
@@ -621,7 +621,7 @@ parse_command_line(
 					*out_want_debug = true;
 					break;
 				default:
-					report_error("unrecognized option `-%c`\n", argv[i][j]);
+					report_error("unrecognized option '-%c'\n", argv[i][j]);
 					return false;
 				}
 			}
@@ -630,7 +630,7 @@ parse_command_line(
 			if (*out_game_path == NULL) {
 				*out_game_path = path_new(argv[i]);
 				if (!path_resolve(*out_game_path, NULL)) {
-					report_error("pathname not found `%s`\n", path_cstr(*out_game_path));
+					report_error("pathname not found '%s'\n", path_cstr(*out_game_path));
 					path_free(*out_game_path);
 					*out_game_path = NULL;
 					return false;
@@ -653,7 +653,7 @@ parse_command_line(
 	return true;
 
 missing_argument:
-	report_error("missing argument for option `%s`\n", argv[i - 1]);
+	report_error("missing argument for option '%s'\n", argv[i - 1]);
 	return false;
 }
 
@@ -696,7 +696,7 @@ print_usage(void)
 	printf("       --no-sleep     Prevent the engine from sleeping between frames.        \n");
 	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
 	printf("       --verbose      Set the engine's verbosity level from 0 to 4.  This can \n");
-	printf("                      be abbreviated as `-n`, where n is [0-4].               \n");
+	printf("                      be abbreviated as '-n', where n is [0-4].               \n");
 	printf("       --version      Show which version of miniSphere is installed.          \n");
 	printf("       --help         Show this help text.                                    \n");
 	printf("\n");

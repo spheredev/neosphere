@@ -188,7 +188,7 @@ jsal_call_method(int num_args)
 
 	int i;
 
-	num_args += 1;  // treat `this` as first argument
+	num_args += 1;  // treat 'this' as first argument
 	arguments = malloc(num_args * sizeof(JsValueRef));
 	function_ref = get_value(-num_args - 1);
 	offset = -num_args;
@@ -396,7 +396,7 @@ jsal_eval_module(const char* filename)
 	while (vector_len(s_module_jobs) > 0) {
 		job = vector_get(s_module_jobs, 0);
 		job_source = job->source;
-		error_code = JsParseModuleSource(job->module,  // note: invalidates `job`
+		error_code = JsParseModuleSource(job->module,  // note: invalidates 'job'
 			s_source_cookie++, (BYTE*)job->source, (unsigned int)job->source_size,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
 		free(job_source);
@@ -1776,7 +1776,7 @@ dispatch_promise(JsValueRef task, void* userdata)
 		vector_pop(s_catch_stack, 1);
 	}
 	else {
-		// if an error gets thrown into C code, `jsal_throw()` leaves it on top
+		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
 		// of the value stack.
 		exception = pop_value();
 		JsSetException(exception);
@@ -1826,7 +1826,7 @@ do_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 		vector_pop(s_catch_stack, 1);
 	}
 	else {
-		// if an error gets thrown into C code, `jsal_throw()` leaves it on top
+		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
 		// of the value stack.
 		exception = pop_value();
 		JsSetException(exception);

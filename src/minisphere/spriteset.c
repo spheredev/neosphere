@@ -194,7 +194,7 @@ spriteset_load(const char* filename)
 		iter = vector_enum(s_load_cache);
 		while (p_spriteset = iter_next(&iter)) {
 			if (strcmp(filename, (*p_spriteset)->filename) == 0) {
-				console_log(2, "using cached spriteset #%u for `%s`", (*p_spriteset)->id, filename);
+				console_log(2, "using cached spriteset #%u for '%s'", (*p_spriteset)->id, filename);
 				++s_num_cache_hits;
 				return spriteset_clone(*p_spriteset);
 			}
@@ -204,7 +204,7 @@ spriteset_load(const char* filename)
 		s_load_cache = vector_new(sizeof(spriteset_t*));
 
 	// filename not in load cache, load the spriteset
-	console_log(2, "loading spriteset #%u as `%s`", s_next_spriteset_id, filename);
+	console_log(2, "loading spriteset #%u from '%s'", s_next_spriteset_id, filename);
 	spriteset = spriteset_new();
 	if (!(file = file_open(g_game, filename, "rb")))
 		goto on_error;

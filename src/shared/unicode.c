@@ -47,7 +47,7 @@ utf8_decode_next(utf8_decode_t* cx, uint8_t byte, uint32_t *out_codepoint)
 	// https://encoding.spec.whatwg.org/#utf-8-decoder
 
 	// note: this decoder supports both strict UTF-8 as well as CESU-8.  CESU-8 is enabled
-	//       by passing false for the `strict` argument of utf8_decode_start().
+	//       by passing false for the 'strict' argument of utf8_decode_start().
 
 	if (cx->bytes_needed == 0) {
 		if (byte <= 0x7f) {

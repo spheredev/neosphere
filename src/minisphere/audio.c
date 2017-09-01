@@ -297,7 +297,7 @@ sample_new(const char* path, bool polyphonic)
 	size_t          file_size;
 	sample_t*       sample = NULL;
 
-	console_log(2, "loading sample #%u from `%s`", s_next_sample_id, path);
+	console_log(2, "loading sample #%u from '%s'", s_next_sample_id, path);
 
 	if (!(file_data = game_read_file(g_game, path, &file_size)))
 		goto on_error;
@@ -427,7 +427,7 @@ sound_new(const char* path)
 {
 	sound_t* sound;
 
-	console_log(2, "loading sound #%u from `%s`", s_next_sound_id, path);
+	console_log(2, "loading sound #%u from '%s'", s_next_sound_id, path);
 
 	sound = calloc(1, sizeof(sound_t));
 	sound->path = strdup(path);

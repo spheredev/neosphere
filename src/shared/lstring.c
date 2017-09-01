@@ -15,7 +15,8 @@ struct lstring
 };
 
 // map CP-1252 codepage to Unicode
-static uint16_t cp1252[256] =
+static const
+uint16_t CP1252_TO_UNICODE[256] =
 {
 	0x0000,
 	0x0001,
@@ -278,7 +279,7 @@ static uint16_t cp1252[256] =
 lstring_t*
 lstr_new(const char* cstr)
 {
-	return lstr_from_cp1252(cstr, strlen(cstr));
+	return lstr_from_utf8(cstr, strlen(cstr), false);
 }
 
 lstring_t*
@@ -346,14 +347,14 @@ lstr_from_cp1252(const char* text, size_t length)
 		is_utf8 = false;
 
 	if (!is_utf8) {
-		// note: CESU-8 conversion may expand the string by up to 3x
+		// note: UTF-8 conversion may expand the string by up to 3x
 		if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
 			return NULL;
 		buffer = (char*)string + sizeof(lstring_t);
 		p_out = buffer;
 		p_in = input;
 		for (i = 0; i < length; ++i) {
-			codepoint = cp1252[*p_in++];
+			codepoint = CP1252_TO_UNICODE[*p_in++];
 			utf8_emit(codepoint, &p_out);
 		}
 		*p_out = '\0';  // NUL terminator
@@ -367,6 +368,60 @@ lstr_from_cp1252(const char* text, size_t length)
 		memcpy(buffer, text, length);
 		buffer[length] = '\0';  // NUL terminator
 	}
+
+	string->cstr = (char*)buffer;
+	string->length = length;
+	return string;
+}
+
+lstring_t*
+lstr_from_utf8(const char* text, size_t length, bool strip_bom)
+{
+	// create an lstring from plain text.  CP-1252 is assumed.  as Duktape
+	// expects JS code to be CESU-8 encoded, this functionality is needed for
+	// full compatibility with Sphere v1 scripts.
+
+	uint8_t*       buffer;
+	utf8_decode_t* codec;
+	uint32_t       codepoint;
+	uint8_t*       input;
+	bool           is_utf8 = true;
+	utf8_ret_t     state;
+	lstring_t*     string;
+	uint8_t        *p_out;
+	const uint8_t  *p_in;
+
+	input = (uint8_t*)text;
+
+	// in the worst case, conversion can expand the string by up to 4x.
+	if (!(string = malloc(sizeof(lstring_t) + length * 4 + 1)))
+		return NULL;
+	
+	// decode the string; emit U+FFFD after any stream error
+	buffer = ((uint8_t*)string) + sizeof(lstring_t);
+	p_out = &buffer[0];
+	p_in = input;
+	codec = utf8_decode_start(true);
+	while (p_in < input + length) {
+		state = utf8_decode_next(codec, *p_in++, &codepoint);
+		if (state == UTF8_CONTINUE)
+			continue;
+		if (state == UTF8_CODEPOINT) {
+			if (codepoint != 0xfeff || !strip_bom)
+				utf8_emit(codepoint, &p_out);
+			strip_bom = false;
+		}
+		else {
+			utf8_emit(0xfffd, &p_out);
+			if (state == UTF8_RETRY)
+				--p_in;
+		}
+	}
+	if (utf8_decode_end(codec) >= UTF8_ERROR)
+		utf8_emit(0xfffd, &p_out);
+	*p_out = '\0';  // NUL terminator
+
+	length = p_out - buffer;
 
 	string->cstr = (char*)buffer;
 	string->length = length;

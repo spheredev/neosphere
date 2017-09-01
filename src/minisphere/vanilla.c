@@ -1645,7 +1645,7 @@ js_AttachCamera(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_to_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	map_engine_set_subject(person);
 	return false;
 }
@@ -1659,7 +1659,7 @@ js_AttachInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	map_engine_set_player(PLAYER_1, person);
 	return false;
 }
@@ -1677,7 +1677,7 @@ js_AttachPlayerInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (player < 0 || player >= PLAYER_MAX)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid player constant");
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	map_engine_set_player(player, person);
 	return false;
 }
@@ -1745,9 +1745,9 @@ js_BindJoystickButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	script_t* on_up_script = jsal_require_sphere_script(3, "[button-up script]");
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
-		jsal_error_blame(-1, JS_RANGE_ERROR, "joystick index `%d` out of range", joy_index);
+		jsal_error_blame(-1, JS_RANGE_ERROR, "joystick index '%d' out of range", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
-		jsal_error_blame(-1, JS_RANGE_ERROR, "button index `%d` out of range", button);
+		jsal_error_blame(-1, JS_RANGE_ERROR, "button index '%d' out of range", button);
 	joy_bind_button(joy_index, button, on_down_script, on_up_script);
 	return false;
 }
@@ -1814,7 +1814,7 @@ js_CallDefaultPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	type = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		jsal_error_blame(-1, JS_ERROR, "invalid script type constant");
 	if (type == PERSON_SCRIPT_ON_TALK || type == PERSON_SCRIPT_ON_TOUCH)
@@ -1849,7 +1849,7 @@ js_CallPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	type = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		jsal_error_blame(-1, JS_ERROR, "invalid script type constant");
 	if (type == PERSON_SCRIPT_ON_TALK || type == PERSON_SCRIPT_ON_TOUCH)
@@ -1869,7 +1869,7 @@ js_ChangeMap(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!map_engine_running())
 		jsal_error_blame(-1, JS_ERROR, "no active map engine");
 	if (!map_engine_change_map(filename))
-		jsal_error_blame(-1, JS_ERROR, "couldn't load map `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load map '%s'", filename);
 	return false;
 }
 
@@ -1882,7 +1882,7 @@ js_ClearPersonCommands(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_clear_queue(person);
 	return false;
 }
@@ -1984,7 +1984,7 @@ js_CreateDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_pathname(0, "save", true, true);
 
 	if (!game_mkdir(g_game, name))
-		jsal_error_blame(-1, JS_ERROR, "unable to create directory `%s`", name);
+		jsal_error_blame(-1, JS_ERROR, "couldn't create directory '%s'", name);
 	return false;
 }
 
@@ -2008,7 +2008,7 @@ js_CreatePerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	else {
 		filename = jsal_require_pathname(1, "spritesets", true, false);
 		if (!(spriteset = spriteset_load(filename)))
-			jsal_error_blame(-1, JS_ERROR, "couldn't load spriteset `%s`", filename);
+			jsal_error_blame(-1, JS_ERROR, "couldn't load spriteset '%s'", filename);
 	}
 
 	// create the person and its JS-side data object
@@ -2149,7 +2149,7 @@ js_DestroyPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_free(person);
 	return false;
 }
@@ -2183,7 +2183,7 @@ js_DetachPlayerInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	else if (jsal_is_string(0)) {
 		name = jsal_get_string(0);
 		if (!(person = map_person_by_name(name)))
-			jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+			jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 		player = -1;
 		for (i = PLAYER_1; i < PLAYER_MAX; ++i) {
 			if (person == map_engine_get_player(i)) {
@@ -2244,7 +2244,7 @@ js_EvaluateScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "scripts", true, false);
 
 	if (!game_file_exists(g_game, filename))
-		jsal_error_blame(-1, JS_ERROR, "file `%s` not found", filename);
+		jsal_error_blame(-1, JS_ERROR, "file '%s' not found", filename);
 	if (!script_eval(filename, false))
 		jsal_throw();
 	return true;
@@ -2261,7 +2261,7 @@ js_EvaluateSystemScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!game_file_exists(g_game, path))
 		sprintf(path, "#/scripts/%s", filename);
 	if (!game_file_exists(g_game, path))
-		jsal_error_blame(-1, JS_ERROR, "system script `%s` not found", filename);
+		jsal_error_blame(-1, JS_ERROR, "system script '%s' not found", filename);
 	if (!script_eval(path, false))
 		jsal_throw();
 	return true;
@@ -2462,9 +2462,9 @@ js_FollowPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		distance = jsal_require_int(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (!(leader_name[0] == '\0' || (leader = map_person_by_name(leader_name))))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", leader_name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", leader_name);
 	if (distance <= 0 && leader_name[0] != '\0')
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid distance");
 	if (!person_set_leader(person, leader, distance))
@@ -3039,7 +3039,7 @@ js_GetObstructingPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!map_engine_running())
 		jsal_error_blame(-1, JS_ERROR, "no active map engine");
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_obstructed_at(person, x, y, &obs_person, NULL);
 	jsal_push_string(obs_person != NULL ? person_name(obs_person) : "");
 	return true;
@@ -3061,7 +3061,7 @@ js_GetObstructingTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!map_engine_running())
 		jsal_error_blame(-1, JS_ERROR, "no active map engine");
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_obstructed_at(person, x, y, NULL, &tile_index);
 	jsal_push_int(tile_index);
 	return true;
@@ -3076,7 +3076,7 @@ js_GetPersonAngle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_number(person_get_angle(person));
 	return true;
 }
@@ -3091,7 +3091,7 @@ js_GetPersonBase(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	base = spriteset_get_base(person_get_spriteset(person));
 	jsal_push_new_object();
 	jsal_push_int(base.x1); jsal_put_prop_string(-2, "x1");
@@ -3116,7 +3116,7 @@ js_GetPersonData(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	leader = person_get_leader(person);
 	spriteset = person_get_spriteset(person);
 	width = spriteset_width(spriteset);
@@ -3149,7 +3149,7 @@ js_GetPersonDirection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_string(person_get_pose(person));
 	return true;
 }
@@ -3163,7 +3163,7 @@ js_GetPersonFollowDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (person_get_leader(person) == NULL)
 		jsal_error_blame(-1, JS_TYPE_ERROR, "not a follower");
 	jsal_push_int(person_get_trailing(person));
@@ -3184,7 +3184,7 @@ js_GetPersonFollowers(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	all_persons = map_engine_persons();
 	jsal_push_new_array();
 	iter = vector_enum(all_persons);
@@ -3207,7 +3207,7 @@ js_GetPersonFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_int(person_get_frame(person));
 	return true;
 }
@@ -3221,7 +3221,7 @@ js_GetPersonFrameNext(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_int(person_get_frame_delay(person));
 	return true;
 }
@@ -3235,7 +3235,7 @@ js_GetPersonFrameRevert(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_int(person_get_revert_delay(person));
 	return true;
 }
@@ -3252,7 +3252,7 @@ js_GetPersonIgnoreList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	ignore_list = person_ignore_list(person);
 	iter = vector_enum(ignore_list);
 	jsal_push_new_array();
@@ -3272,7 +3272,7 @@ js_GetPersonLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_int(person_get_layer(person));
 	return true;
 }
@@ -3287,7 +3287,7 @@ js_GetPersonLeader(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	leader = person_get_leader(person);
 	jsal_push_string(person_name(leader));
 	return true;
@@ -3321,7 +3321,7 @@ js_GetPersonMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_sphere_color(person_get_color(person));
 	return true;
 }
@@ -3336,7 +3336,7 @@ js_GetPersonOffsetX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	offset = person_get_offset(person);
 	jsal_push_int(offset.x);
 	return true;
@@ -3352,7 +3352,7 @@ js_GetPersonOffsetY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	offset = person_get_offset(person);
 	jsal_push_int(offset.y);
 	return true;
@@ -3368,7 +3368,7 @@ js_GetPersonSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	spriteset = person_get_spriteset(person);
 	jsal_push_sphere_spriteset(spriteset);
 	return true;
@@ -3384,7 +3384,7 @@ js_GetPersonSpeedX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_get_speed(person, &x_speed, NULL);
 	jsal_push_number(x_speed);
 	return true;
@@ -3400,7 +3400,7 @@ js_GetPersonSpeedY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_get_speed(person, NULL, &y_speed);
 	jsal_push_number(y_speed);
 	return true;
@@ -3417,7 +3417,7 @@ js_GetPersonValue(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	key = jsal_to_string(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "personData");
 	if (!jsal_get_prop_string(-1, name)) {
@@ -3441,7 +3441,7 @@ js_GetPersonX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_get_xy(person, &x, &y, true);
 	jsal_push_int(x);
 	return true;
@@ -3458,7 +3458,7 @@ js_GetPersonXFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_get_xy(person, &x, &y, true);
 	jsal_push_number(x);
 	return true;
@@ -3475,7 +3475,7 @@ js_GetPersonY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_get_xy(person, &x, &y, true);
 	jsal_push_int(y);
 	return true;
@@ -3492,7 +3492,7 @@ js_GetPersonYFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_get_xy(person, &x, &y, true);
 	jsal_push_number(y);
 	return true;
@@ -3673,7 +3673,7 @@ js_GetTileImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid tile index");
 	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
-		jsal_error_blame(-1, JS_ERROR, "unable to create new surface image");
+		jsal_error_blame(-1, JS_ERROR, "couldn't create new surface image");
 	jsal_push_class_obj("v1Image", image);
 	return true;
 }
@@ -3712,7 +3712,7 @@ js_GetTileSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid tile index");
 	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
-		jsal_error_blame(-1, JS_ERROR, "unable to create new surface image");
+		jsal_error_blame(-1, JS_ERROR, "couldn't create new surface image");
 	jsal_push_class_obj("v1Surface", image);
 	return true;
 }
@@ -4189,7 +4189,7 @@ js_IgnorePersonObstructions(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	ignoring = jsal_to_boolean(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_ignore_persons(person, ignoring);
 	return false;
 }
@@ -4205,7 +4205,7 @@ js_IgnoreTileObstructions(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	ignoring = jsal_to_boolean(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_ignore_tiles(person, ignoring);
 	return false;
 }
@@ -4251,7 +4251,7 @@ js_IsCommandQueueEmpty(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_boolean(!person_moving(person));
 	return true;
 }
@@ -4265,7 +4265,7 @@ js_IsIgnoringPersonObstructions(js_ref_t* me, int num_args, bool is_ctor, int ma
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_boolean(person_get_ignore_persons(person));
 	return true;
 }
@@ -4279,7 +4279,7 @@ js_IsIgnoringTileObstructions(js_ref_t* me, int num_args, bool is_ctor, int magi
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_boolean(person_get_ignore_tiles(person));
 	return true;
 }
@@ -4299,7 +4299,7 @@ js_IsInputAttached(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	else if (jsal_is_string(0)) {
 		name = jsal_get_string(0);
 		if (!(person = map_person_by_name(name)))
-			jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+			jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 		player = -1;
 		for (i = PLAYER_1; i < PLAYER_MAX; ++i) {
 			if (person == map_engine_get_player(i)) {
@@ -4407,7 +4407,7 @@ js_IsPersonObstructed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	y = jsal_require_int(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_boolean(person_obstructed_at(person, x, y, NULL, NULL));
 	return true;
 }
@@ -4421,7 +4421,7 @@ js_IsPersonVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_boolean(person_get_visible(person));	return true;
 }
 
@@ -4483,7 +4483,7 @@ js_LineSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (num_points > INT_MAX)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "too many vertices");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		jsal_error_blame(-1, JS_ERROR, "unable to allocate vertex buffer");
+		jsal_error_blame(-1, JS_ERROR, "couldn't allocate vertex buffer");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		jsal_get_prop_index(0, i);
@@ -4526,7 +4526,7 @@ js_LoadAnimation(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "animations", true, false);
 	if (!(anim = animation_new(filename)))
-		jsal_error_blame(-1, JS_ERROR, "cannot load animation `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load animation '%s'", filename);
 	jsal_push_class_obj("v1Animation", anim);
 	return true;
 }
@@ -4539,7 +4539,7 @@ js_LoadFont(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "fonts", true, false);
 	if (!(font = font_load(filename)))
-		jsal_error_blame(-1, JS_ERROR, "cannot load font `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load font '%s'", filename);
 	jsal_push_sphere_font(font);
 	font_unref(font);
 	return true;
@@ -4553,7 +4553,7 @@ js_LoadImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "images", true, false);
 	if (!(image = image_load(filename)))
-		jsal_error_blame(-1, JS_ERROR, "cannot load image `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load image '%s'", filename);
 	jsal_push_class_obj("v1Image", image);
 	return true;
 }
@@ -4567,7 +4567,7 @@ js_LoadSound(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "sounds", true, false);
 
 	if (!(sound = sound_new(filename)))
-		jsal_error_blame(-1, JS_ERROR, "cannot load sound `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load sound '%s'", filename);
 	jsal_push_class_obj("v1Sound", sound);
 	return true;
 }
@@ -4583,7 +4583,7 @@ js_LoadSoundEffect(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	mode = num_args >= 2 ? jsal_to_int(1) : SE_SINGLE;
 
 	if (!(sample = sample_new(filename, mode == SE_MULTIPLE)))
-		jsal_error_blame(-1, JS_ERROR, "unable to load sound effect `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load sound effect '%s'", filename);
 	jsal_push_class_obj("v1SoundEffect", sample);
 	return true;
 }
@@ -4596,7 +4596,7 @@ js_LoadSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "spritesets", true, false);
 	if ((spriteset = spriteset_load(filename)) == NULL)
-		jsal_error_blame(-1, JS_ERROR, "cannot load spriteset `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load spriteset '%s'", filename);
 	jsal_push_sphere_spriteset(spriteset);
 	spriteset_unref(spriteset);
 	return true;
@@ -4610,7 +4610,7 @@ js_LoadSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "images", true, false);
 	if (!(image = image_load(filename)))
-		jsal_error_blame(-1, JS_ERROR, "cannot load image `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load image '%s'", filename);
 	jsal_push_class_obj("v1Surface", image);
 	return true;
 }
@@ -4623,7 +4623,7 @@ js_LoadWindowStyle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "windowstyles", true, false);
 	if (!(winstyle = winstyle_load(filename)))
-		jsal_error_blame(-1, JS_ERROR, "cannot load windowstyle `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load windowstyle '%s'", filename);
 	jsal_push_sphere_windowstyle(winstyle);
 	winstyle_unref(winstyle);
 	return true;
@@ -4640,7 +4640,7 @@ js_MapEngine(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		: s_frame_rate;
 
 	if (!map_engine_start(filename, framerate))
-		jsal_error_blame(-1, JS_ERROR, "couldn't load map `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't load map '%s'", filename);
 	return false;
 }
 
@@ -4704,7 +4704,7 @@ js_OpenFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "save", true, true);
 
 	if (!(file = kev_open(g_game, filename, true)))
-		jsal_error_blame(-1, JS_ERROR, "unable to open file `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't open file '%s'", filename);
 	jsal_push_class_obj("v1File", file);
 	return true;
 }
@@ -4717,7 +4717,7 @@ js_OpenLog(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "logs", true, true);
 	if (!(logger = logger_new(filename)))
-		jsal_error_blame(-1, JS_ERROR, "unable to open log `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't open log file '%s'", filename);
 	jsal_push_class_obj("v1Logger", logger);
 	return true;
 }
@@ -4732,10 +4732,10 @@ js_OpenRawFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	writable = num_args >= 2 ? jsal_to_boolean(1) : false;
 	filename = jsal_require_pathname(0, "other", true, writable);
 
-	file = file_open(g_game, filename, writable ? "w+b" : "rb");
-	if (file == NULL)
-		jsal_error_blame(-1, JS_ERROR, "cannot open file for %s",
-			writable ? "write" : "read");
+	if (!(file = file_open(g_game, filename, writable ? "w+b" : "rb"))) {
+		jsal_error_blame(-1, JS_ERROR, "couldn't open file '%s' for %s",
+			filename, writable ? "write" : "read");
+	}
 	jsal_push_class_obj("v1RawFile", file);
 	return true;
 }
@@ -4849,7 +4849,7 @@ js_PointSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (num_points > INT_MAX)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "too many vertices");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		jsal_error_blame(-1, JS_ERROR, "unable to allocate vertex buffer");
+		jsal_error_blame(-1, JS_ERROR, "couldn't allocate vertex buffer");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		jsal_get_prop_index(0, i);
@@ -4897,15 +4897,15 @@ js_QueuePersonCommand(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		immediate = jsal_to_boolean(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid command type constant");
 	if (command >= COMMAND_MOVE_NORTH && command <= COMMAND_MOVE_NORTHWEST) {
 		if (!person_queue_command(person, COMMAND_ANIMATE, true))
-			jsal_error_blame(-1, JS_ERROR, "unable to queue command");
+			jsal_error_blame(-1, JS_ERROR, "couldn't queue command");
 	}
 	if (!person_queue_command(person, command, immediate))
-		jsal_error_blame(-1, JS_ERROR, "unable to queue command");
+		jsal_error_blame(-1, JS_ERROR, "couldn't queue command");
 	return false;
 }
 
@@ -4923,9 +4923,9 @@ js_QueuePersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		immediate = jsal_to_boolean(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (!person_queue_script(person, script, immediate))
-		jsal_error_blame(-1, JS_ERROR, "unable to enqueue script");
+		jsal_error_blame(-1, JS_ERROR, "couldn't enqueue script");
 	return false;
 }
 
@@ -4952,7 +4952,7 @@ js_RemoveDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	name = jsal_require_pathname(0, "save", true, true);
 	if (!game_rmdir(g_game, name))
-		jsal_error_blame(-1, JS_ERROR, "unable to remove directory `%s`", name);
+		jsal_error_blame(-1, JS_ERROR, "couldn't remove directory '%s'", name);
 	return false;
 }
 
@@ -4963,7 +4963,7 @@ js_RemoveFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "save", true, true);
 	if (!game_unlink(g_game, filename))
-		jsal_error_blame(-1, JS_ERROR, "unable to delete file `%s`", filename);
+		jsal_error_blame(-1, JS_ERROR, "couldn't delete file '%s'", filename);
 	return false;
 }
 
@@ -5006,7 +5006,7 @@ js_Rename(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name1 = jsal_require_pathname(0, "save", true, true);
 	name2 = jsal_require_pathname(1, "save", true, true);
 	if (!game_rename(g_game, name1, name2))
-		jsal_error_blame(-1, JS_ERROR, "unable to rename file `%s` to `%s`", name1, name2);
+		jsal_error_blame(-1, JS_ERROR, "couldn't rename file '%s' to '%s'", name1, name2);
 	return false;
 }
 
@@ -5050,7 +5050,7 @@ js_RequireScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	filename = jsal_require_pathname(0, "scripts", true, false);
 	if (!game_file_exists(g_game, filename))
-		jsal_error_blame(-1, JS_ERROR, "file `%s` not found", filename);
+		jsal_error_blame(-1, JS_ERROR, "file '%s' not found", filename);
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "RequireScript");
 	jsal_get_prop_string(-1, filename);
@@ -5078,7 +5078,7 @@ js_RequireSystemScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!game_file_exists(g_game, path))
 		sprintf(path, "#/scripts/%s", filename);
 	if (!game_file_exists(g_game, path))
-		jsal_error_blame(-1, JS_ERROR, "system script `%s` not found", filename);
+		jsal_error_blame(-1, JS_ERROR, "system script '%s' not found", filename);
 
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "RequireScript");
@@ -5298,7 +5298,7 @@ js_SetLayerHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (new_height <= 0)
 		jsal_error_blame(-1, JS_ERROR, "height must be positive and nonzero (got: %d)", new_height);
 	if (!layer_resize(layer, layer_size(layer).width, new_height))
-		jsal_error_blame(-1, JS_ERROR, "unable to resize layer %d", layer);
+		jsal_error_blame(-1, JS_ERROR, "couldn't resize layer '%d'", layer);
 	return false;
 }
 
@@ -5413,7 +5413,7 @@ js_SetLayerWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (new_width <= 0)
 		jsal_error_blame(-1, JS_ERROR, "width must be positive and nonzero (got: %d)", new_width);
 	if (!layer_resize(layer, new_width, layer_size(layer).height))
-		jsal_error_blame(-1, JS_ERROR, "unable to resize layer %d", layer);
+		jsal_error_blame(-1, JS_ERROR, "couldn't resize layer '%d'", layer);
 	return false;
 }
 
@@ -5475,7 +5475,7 @@ js_SetPersonAngle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	theta = jsal_to_number(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_angle(person, theta);
 	return false;
 }
@@ -5490,7 +5490,7 @@ js_SetPersonData(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_require_object_coercible(1);
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "personData");
 	jsal_dup(1); jsal_put_prop_string(-2, name);
@@ -5508,7 +5508,7 @@ js_SetPersonDirection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	new_dir = jsal_require_string(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_pose(person, new_dir);
 	return false;
 }
@@ -5524,7 +5524,7 @@ js_SetPersonFollowDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	distance = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (person_get_leader(person) == NULL)
 		jsal_error_blame(-1, JS_TYPE_ERROR, "person has no leader");
 	if (distance <= 0)
@@ -5544,7 +5544,7 @@ js_SetPersonFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	frame_index = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_frame(person, frame_index);
 	return false;
 }
@@ -5560,7 +5560,7 @@ js_SetPersonFrameNext(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	num_frames = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (num_frames < 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid frame count");
 	person_set_frame_delay(person, num_frames);
@@ -5578,7 +5578,7 @@ js_SetPersonFrameRevert(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	num_frames = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (num_frames < 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid frame count");
 	person_set_revert_delay(person, num_frames);
@@ -5598,7 +5598,7 @@ js_SetPersonIgnoreList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_require_object_coercible(1);
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (!jsal_is_array(1))
 		jsal_error_blame(-1, JS_RANGE_ERROR, "not an array");
 	person_clear_ignores(person);
@@ -5622,7 +5622,7 @@ js_SetPersonLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_layer(person, layer);
 	return false;
 }
@@ -5638,7 +5638,7 @@ js_SetPersonMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	color = jsal_require_sphere_color(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_color(person, color);
 	return false;
 }
@@ -5655,7 +5655,7 @@ js_SetPersonOffsetX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	new_x = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	offset = person_get_offset(person);
 	person_set_offset(person, point2(new_x, offset.y));
 	return false;
@@ -5673,7 +5673,7 @@ js_SetPersonOffsetY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	new_y = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	offset = person_get_offset(person);
 	person_set_offset(person, point2(offset.x, new_y));
 	return false;
@@ -5695,7 +5695,7 @@ js_SetPersonScaleAbsolute(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	height = jsal_require_int(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (width < 0 || height < 0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid scale dimensions");
 	spriteset = person_get_spriteset(person);
@@ -5718,7 +5718,7 @@ js_SetPersonScaleFactor(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	scale_y = jsal_to_number(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (scale_x < 0.0 || scale_y < 0.0)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid scale factor(s)");
 	person_set_scale(person, scale_x, scale_y);
@@ -5738,7 +5738,7 @@ js_SetPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	type = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		jsal_error_blame(-1, JS_ERROR, "invalid script type constant");
 	if (jsal_is_string(2)) {
@@ -5764,7 +5764,7 @@ js_SetPersonSpeed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	speed = jsal_to_number(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_speed(person, speed, speed);
 	return false;
 }
@@ -5782,7 +5782,7 @@ js_SetPersonSpeedXY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	y_speed = jsal_to_number(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_speed(person, x_speed, y_speed);
 	return false;
 }
@@ -5799,7 +5799,7 @@ js_SetPersonSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(person = map_person_by_name(name))) {
 		spriteset_unref(spriteset);
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	}
 	person_set_spriteset(person, spriteset);
 	spriteset_unref(spriteset);
@@ -5818,7 +5818,7 @@ js_SetPersonValue(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_normalize_index(2);
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "personData");
 	if (!jsal_get_prop_string(-1, name)) {
@@ -5844,7 +5844,7 @@ js_SetPersonVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	visible = jsal_to_boolean(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_set_visible(person, visible);
 	return false;
 }
@@ -5863,7 +5863,7 @@ js_SetPersonX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	new_x = jsal_to_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_get_xyz(person, &x, &y, &layer, false);
 	person_set_xyz(person, new_x, y, layer);
 	return false;
@@ -5883,7 +5883,7 @@ js_SetPersonXYFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	y = jsal_to_number(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	layer = person_get_layer(person);
 	person_set_xyz(person, x, y, layer);
 	return false;
@@ -5903,7 +5903,7 @@ js_SetPersonY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	new_y = jsal_to_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error_blame(-1, JS_REF_ERROR, "no such person `%s`", name);
+		jsal_error_blame(-1, JS_REF_ERROR, "no such person '%s'", name);
 	person_get_xyz(person, &x, &y, &layer, false);
 	person_set_xyz(person, x, new_y, layer);
 	return false;
@@ -6265,9 +6265,9 @@ js_UnbindJoystickButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int button = jsal_to_int(1);
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
-		jsal_error_blame(-1, JS_RANGE_ERROR, "joystick index `%d` out of range", joy_index);
+		jsal_error_blame(-1, JS_RANGE_ERROR, "joystick index '%d' out of range", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
-		jsal_error_blame(-1, JS_RANGE_ERROR, "button index `%d` out of range", button);
+		jsal_error_blame(-1, JS_RANGE_ERROR, "button index '%d' out of range", button);
 	joy_bind_button(joy_index, button, NULL, NULL);
 	return false;
 }
@@ -6427,7 +6427,7 @@ js_ByteArray_proxy_get(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		index = jsal_to_int(1);
 		size = bytearray_len(array);
 		if (index < 0 || index >= size)
-			jsal_error_blame(-1, JS_RANGE_ERROR, "byte index `%d` out of bounds", index);
+			jsal_error_blame(-1, JS_RANGE_ERROR, "byte index '%d' out of bounds", index);
 		jsal_push_int(bytearray_get(array, index));
 		return true;
 	}
@@ -6450,7 +6450,7 @@ js_ByteArray_proxy_set(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		index = jsal_to_int(1);
 		size = bytearray_len(array);
 		if (index < 0 || index >= size)
-			jsal_error_blame(-1, JS_RANGE_ERROR, "byte index `%d` out of bounds", index);
+			jsal_error_blame(-1, JS_RANGE_ERROR, "byte index '%d' out of bounds", index);
 		bytearray_set(array, index, jsal_require_int(2));
 		return false;
 	}
@@ -6485,7 +6485,7 @@ js_ByteArray_concat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	array[1] = jsal_require_class_obj(0, "v1ByteArray");
 
 	if (!(new_array = bytearray_concat(array[0], array[1])))
-		jsal_error_blame(-1, JS_ERROR, "unable to concatenate byte arrays");
+		jsal_error_blame(-1, JS_ERROR, "couldn't concatenate byte arrays");
 	jsal_push_sphere_bytearray(new_array);
 	return true;
 }
@@ -6510,7 +6510,7 @@ js_ByteArray_slice(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (end_norm < start || end_norm > size)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "start and/or end is out of bounds");
 	if (!(new_array = bytearray_slice(array, start, end_norm - start)))
-		jsal_error_blame(-1, JS_ERROR, "unable to slice byte array");
+		jsal_error_blame(-1, JS_ERROR, "couldn't slice byte array");
 	jsal_push_sphere_bytearray(new_array);
 	return true;
 }
@@ -6699,7 +6699,7 @@ js_Font_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	font = jsal_require_class_obj(-1, "v1Font");
 	jsal_pop(1);
 	if (!(dolly_font = font_clone(font)))
-		jsal_error_blame(-1, JS_ERROR, "unable to clone font");
+		jsal_error_blame(-1, JS_ERROR, "couldn't clone font");
 	jsal_push_sphere_font(dolly_font);
 	return true;
 }
@@ -7030,7 +7030,7 @@ js_Image_createSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, "v1Image");
 
 	if ((new_image = image_clone(image)) == NULL)
-		jsal_error_blame(-1, JS_ERROR, "unable to create new surface image");
+		jsal_error_blame(-1, JS_ERROR, "couldn't create new surface image");
 	jsal_push_class_obj("v1Surface", new_image);
 	return true;
 }
@@ -7250,7 +7250,7 @@ js_Logger_beginBlock(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	logger = jsal_require_class_obj(-1, "v1Logger");
 	if (!logger_begin_block(logger, title))
-		jsal_error_blame(-1, JS_ERROR, "unable to create new log block");
+		jsal_error_blame(-1, JS_ERROR, "couldn't create new log block");
 	return false;
 }
 
@@ -7508,10 +7508,10 @@ js_Socket_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!socket_v1_connected(socket))
 		jsal_error_blame(-1, JS_ERROR, "socket is not connected");
 	if (!(read_buffer = malloc(length)))
-		jsal_error_blame(-1, JS_ERROR, "unable to allocate read buffer");
+		jsal_error_blame(-1, JS_ERROR, "couldn't allocate read buffer");
 	socket_v1_read(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))
-		jsal_error_blame(-1, JS_ERROR, "unable to create byte array");
+		jsal_error_blame(-1, JS_ERROR, "couldn't create byte array");
 	jsal_push_sphere_bytearray(array);
 	return true;
 }
@@ -7930,8 +7930,8 @@ js_Spriteset_get_filename(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	spriteset = jsal_require_class_obj(-1, "v1Spriteset");
 
-	// returned filename is relative to `@/`, even though Spriteset#save() is
-	// rooted at `@/spritesets`.  I suspect this to be a bug in Sphere 1.x, but fixing
+	// returned filename is relative to '@/', even though Spriteset#save() is
+	// rooted at '@/spritesets'.  I suspect this to be a bug in Sphere 1.x, but fixing
 	// it here would break existing workarounds.
 	path = game_relative_path(g_game, spriteset_pathname(spriteset), "@/");
 	jsal_push_string(path_cstr(path));
@@ -8255,7 +8255,7 @@ js_Surface_cloneSection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	height = jsal_to_int(3);
 
 	if ((new_image = image_new(width, height)) == NULL)
-		jsal_error_blame(-1, JS_ERROR, "unable to create surface");
+		jsal_error_blame(-1, JS_ERROR, "couldn't create surface");
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
@@ -8273,7 +8273,7 @@ js_Surface_createImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, "v1Surface");
 
 	if ((new_image = image_clone(image)) == NULL)
-		jsal_error_blame(-1, JS_ERROR, "unable to create image");
+		jsal_error_blame(-1, JS_ERROR, "couldn't create image");
 	jsal_push_class_obj("v1Image", new_image);
 	return true;
 }
@@ -8619,7 +8619,7 @@ js_Surface_lineSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (num_points > INT_MAX)
 		jsal_error_blame(-1, JS_RANGE_ERROR, "too many vertices");
 	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		jsal_error_blame(-1, JS_ERROR, "unable to allocate vertex buffer");
+		jsal_error_blame(-1, JS_ERROR, "couldn't allocate vertex buffer");
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		jsal_get_prop_index(0, i);
@@ -8942,7 +8942,7 @@ js_Surface_setAlpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, "v1Surface");
 	jsal_pop(1);
 	if (!(lock = image_lock(image)))
-		jsal_error_blame(-1, JS_ERROR, "unable to lock surface");
+		jsal_error_blame(-1, JS_ERROR, "couldn't lock surface");
 	w = image_width(image);
 	h = image_height(image);
 	a = a < 0 ? 0 : a > 255 ? 255 : a;

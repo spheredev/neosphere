@@ -12,7 +12,6 @@ enum utf8_ret
 	UTF8_CODEPOINT,
 	UTF8_CONTINUE,
 	UTF8_ERROR,
-	UTF8_REPLACEMENT,
 	UTF8_RETRY,
 } utf8_ret_t;
 

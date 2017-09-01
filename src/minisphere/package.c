@@ -92,7 +92,7 @@ package_open(const char* path)
 
 	uint32_t i;
 
-	console_log(2, "opening package #%u `%s`", s_next_package_id, path);
+	console_log(2, "opening package #%u '%s'", s_next_package_id, path);
 
 	package = calloc(1, sizeof(package_t));
 
@@ -289,7 +289,7 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 	const char*   local_filename;
 	path_t*       local_path;
 
-	console_log(4, "opening `%s` (%s) from package #%u", path, mode, package->id);
+	console_log(4, "opening '%s' (%s) from package #%u", path, mode, package->id);
 
 	// get path to local cache file
 	cache_path = path_rebase(path_new("miniSphere/.spkCache/"), home_path());
@@ -307,7 +307,7 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 
 	if (al_filename_exists(local_filename)) {
 		// local cache file already exists, open it	directly
-		console_log(4, "using locally cached file for #%u:`%s`", package->id, path);
+		console_log(4, "using locally cached file for #%u:'%s'", package->id, path);
 		if (!(al_file = al_fopen(local_filename, mode)))
 			goto on_error;
 	}
@@ -319,7 +319,7 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 				// if a game requests write access to an existing file,
 				// we extract it. this ensures file operations originating from
 				// inside an SPK are transparent to the game.
-				console_log(4, "extracting #%u:`%s`, write access requested", package->id, path);
+				console_log(4, "extracting #%u:'%s', write access requested", package->id, path);
 				if (!(al_file = al_fopen(local_filename, "w")))
 					goto on_error;
 				al_fwrite(al_file, buffer, file_size);
@@ -345,7 +345,7 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 	return asset;
 
 on_error:
-	console_log(4, "failed to open `%s` from package #%u", path, package->id);
+	console_log(4, "failed to open '%s' from package #%u", path, package->id);
 	path_free(local_path);
 	if (al_file != NULL)
 		al_fclose(al_file);
@@ -359,7 +359,7 @@ asset_fclose(asset_t* file)
 {
 	if (file == NULL)
 		return;
-	console_log(4, "closing `%s` from package #%u", file->filename, file->package->id);
+	console_log(4, "closing '%s' from package #%u", file->filename, file->package->id);
 	al_fclose(file->handle);
 	free(file->buffer);
 	free(file->filename);
@@ -401,7 +401,7 @@ asset_fslurp(package_t* package, const char* path, size_t *out_size)
 
 	iter_t iter;
 
-	console_log(3, "unpacking `%s` from package #%u", path, package->id);
+	console_log(3, "unpacking '%s' from package #%u", path, package->id);
 
 	iter = vector_enum(package->index);
 	while (entry = iter_next(&iter)) {
@@ -427,7 +427,7 @@ asset_fslurp(package_t* package, const char* path, size_t *out_size)
 	return unpacked;
 
 on_error:
-	console_log(3, "couldn't unpack `%s` from package #%u", path, package->id);
+	console_log(3, "couldn't unpack '%s' from package #%u", path, package->id);
 	free(packdata);
 	free(unpacked);
 	return NULL;

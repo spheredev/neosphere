@@ -137,7 +137,7 @@ parse_cmdline(int argc, char* argv[])
 				path_free(s_package_path);
 				s_package_path = path_new(argv[i]);
 				if (path_filename(s_package_path) == NULL) {
-					printf("cell: `%s` argument cannot be a directory\n", argv[i - 1]);
+					printf("cell: '%s' argument cannot be a directory\n", argv[i - 1]);
 					return false;
 				}
 				have_in_dir = true;
@@ -152,7 +152,7 @@ parse_cmdline(int argc, char* argv[])
 				have_in_dir = true;
 			}
 			else {
-				printf("cell: unknown option `%s`\n", argv[i]);
+				printf("cell: unknown option '%s'\n", argv[i]);
 				return false;
 			}
 		}
@@ -176,7 +176,7 @@ parse_cmdline(int argc, char* argv[])
 					path_free(s_package_path);
 					s_package_path = path_new(argv[i]);
 					if (path_filename(s_package_path) == NULL) {
-						printf("cell: `%s` argument cannot be a directory\n", short_args);
+						printf("cell: '%s' argument cannot be a directory\n", short_args);
 						return false;
 					}
 					have_in_dir = true;
@@ -194,13 +194,13 @@ parse_cmdline(int argc, char* argv[])
 					have_in_dir = true;
 					break;
 				default:
-					printf("cell: unknown option `-%c`\n", short_args[i_arg]);
+					printf("cell: unknown option '-%c'\n", short_args[i_arg]);
 					return false;
 				}
 			}
 		}
 		else {
-			printf("cell: unexpected argument `%s`\n", argv[i]);
+			printf("cell: unexpected argument '%s'\n", argv[i]);
 			return false;
 		}
 	}
@@ -227,7 +227,7 @@ parse_cmdline(int argc, char* argv[])
 	return true;
 
 missing_argument:
-	printf("cell: `%s` requires an argument\n", argv[i - 1]);
+	printf("cell: '%s' requires an argument\n", argv[i - 1]);
 	return false;
 }
 

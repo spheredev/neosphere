@@ -104,7 +104,7 @@ obsmap_test_line(const obsmap_t* obsmap, rect_t line)
 bool
 obsmap_test_rect(const obsmap_t* obsmap, rect_t rectangle)
 {
-	// this treats `rect` as hollow, which differs from the usual treatment of rectangles
+	// this treats 'rect' as hollow, which differs from the usual treatment of rectangles
 	// in the engine but matches the behavior of Sphere 1.x.
 	return obsmap_test_line(obsmap, rect(rectangle.x1, rectangle.y1, rectangle.x2, rectangle.y1))
 		|| obsmap_test_line(obsmap, rect(rectangle.x2, rectangle.y1, rectangle.x2, rectangle.y2))

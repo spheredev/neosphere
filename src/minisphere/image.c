@@ -140,7 +140,7 @@ image_load(const char* filename)
 	image_t*      image;
 	void*         slurp = NULL;
 
-	console_log(2, "loading image #%u as `%s`", s_next_image_id, filename);
+	console_log(2, "loading image #%u from '%s'", s_next_image_id, filename);
 
 	image = calloc(1, sizeof(image_t));
 	if (!(slurp = game_read_file(g_game, filename, &file_size)))

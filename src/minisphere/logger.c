@@ -60,7 +60,7 @@ logger_new(const char* filename)
 	time_t     now;
 	char       timestamp[100];
 
-	console_log(2, "creating logger #%u for `%s`", s_next_logger_id, filename);
+	console_log(2, "creating logger #%u for '%s'", s_next_logger_id, filename);
 
 	logger = calloc(1, sizeof(logger_t));
 	if (!(logger->file = file_open(g_game, filename, "a")))

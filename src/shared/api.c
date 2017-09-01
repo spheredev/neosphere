@@ -22,7 +22,7 @@ api_init(void)
 	s_classes = vector_new(sizeof(struct class_info));
 	
 	// JavaScript 'global' binding (like Node.js)
-	// also map global `exports` to the global object, as TypeScript likes to add
+	// also map global 'exports' to the global object, as TypeScript likes to add
 	// exports even when compiling scripts as program code.
 	jsal_push_global_object();
 	jsal_push_eval("({ writable: false, enumerable: false, configurable: false })");
