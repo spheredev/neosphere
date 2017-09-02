@@ -172,7 +172,7 @@ int         jsal_pull                     (int from_index);
 void        jsal_put_prop                 (int object_index);
 void        jsal_put_prop_index           (int object_index, int name);
 void        jsal_put_prop_string          (int object_index, const char* name);
-js_ref_t* jsal_ref                      (int at_index);
+js_ref_t*   jsal_ref                      (int at_index);
 void        jsal_remove                   (int at_index);
 bool        jsal_replace                  (int at_index);
 void        jsal_require_array            (int at_index);

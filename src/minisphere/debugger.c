@@ -36,33 +36,26 @@
 #include "jsal.h"
 #include "sockets.h"
 
+static int const TCP_DEBUG_PORT = 1208;
+
 struct source
 {
 	char*      name;
 	lstring_t* text;
 };
 
-enum appnotify
-{
-	APPNFY_DEBUG_PRINT = 0x01,
-};
-
-enum apprequest
-{
-	APPREQ_GAME_INFO = 0x01,
-	APPREQ_SOURCE = 0x02,
-	APPREQ_WATERMARK = 0x03,
-};
-
-static js_step_t on_breakpoint_hit (void);
-
-static const int TCP_DEBUG_PORT = 1208;
+static bool      do_attach_debugger (void);
+static void      do_detach_debugger (bool is_shutdown);
+static js_step_t on_breakpoint_hit  (void);
 
 static bool       s_is_attached = false;
 static color_t    s_banner_color;
 static lstring_t* s_banner_text;
 static bool       s_have_source_map = false;
+static server_t*  s_server;
+static socket_t*  s_socket = NULL;
 static vector_t*  s_sources;
+static bool       s_want_attach;
 
 void
 debugger_init(bool want_attach, bool allow_remote)
@@ -70,9 +63,9 @@ debugger_init(bool want_attach, bool allow_remote)
 	void*         data;
 	size_t        data_size;
 	const path_t* game_root;
+	const char*   hostname;
 
 	jsal_on_breakpoint(on_breakpoint_hit);
-	debugger_attach();
 	
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
@@ -97,6 +90,18 @@ debugger_init(bool want_attach, bool allow_remote)
 		jsal_put_prop_string(-2, "debugMap");
 	}
 	jsal_pop(1);
+
+	// listen for SSj connection on TCP port 1208. the listening socket will remain active
+	// for the duration of the session, allowing a debugger to be attached at any time.
+	console_log(1, "listening for SSj on TCP port %d", TCP_DEBUG_PORT);
+	hostname = allow_remote ? NULL : "127.0.0.1";
+	s_server = server_new(hostname, TCP_DEBUG_PORT, 1024, 1);
+
+	// if the engine was started in debug mode, wait for a debugger to connect before
+	// beginning execution.
+	s_want_attach = want_attach;
+	if (s_want_attach && !do_attach_debugger())
+		sphere_exit(true);
 }
 
 void
@@ -106,6 +111,9 @@ debugger_uninit()
 
 	iter_t iter;
 
+	do_detach_debugger(true);
+	server_unref(s_server);
+	
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
 		while (iter_next(&iter)) {
@@ -120,6 +128,25 @@ debugger_uninit()
 void
 debugger_update(void)
 {
+	socket_t* client;
+	char*     handshake;
+
+	if (client = server_accept(s_server)) {
+		if (s_socket != NULL) {
+			console_log(2, "rejected SSj connection from %s, already attached",
+				socket_hostname(client));
+			socket_unref(client);
+		}
+		else {
+			console_log(0, "connected to SSj at %s", socket_hostname(client));
+			handshake = strnewf("SSj 1 v%s %s\n", VERSION_NAME, ENGINE_NAME);
+			socket_write(client, handshake, strlen(handshake));
+			free(handshake);
+			s_socket = client;
+			jsal_debug_attach();
+			s_is_attached = true;
+		}
+	}
 }
 
 bool
@@ -203,13 +230,6 @@ debugger_source_name(const char* compiled_name)
 }
 
 void
-debugger_attach(void)
-{
-	jsal_debug_attach();
-	s_is_attached = true;
-}
-
-void
 debugger_cache_source(const char* name, const lstring_t* text)
 {
 	struct source cache_entry;
@@ -235,13 +255,6 @@ debugger_cache_source(const char* name, const lstring_t* text)
 }
 
 void
-debugger_detach(void)
-{
-	s_is_attached = false;
-	jsal_debug_detach();
-}
-
-void
 debugger_log(const char* text, print_op_t op, bool use_console)
 {
 	const char* heading;
@@ -256,6 +269,44 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 			: "log";
 		console_log(0, "%s: %s", heading, text);
 	}
+}
+
+static bool
+do_attach_debugger(void)
+{
+	double timeout;
+
+	printf("waiting for SSj client to connect...\n");
+	fflush(stdout);
+	timeout = al_get_time() + 30.0;
+	while (s_socket == NULL && al_get_time() < timeout) {
+		debugger_update();
+		sphere_sleep(0.05);
+	}
+	if (s_socket == NULL)  // did we time out?
+		printf("timed out waiting for SSj\n");
+	return s_socket != NULL;
+}
+
+static void
+do_detach_debugger(bool is_shutdown)
+{
+	if (!s_is_attached)
+		return;
+
+	// detach the debugger
+	console_log(1, "detaching SSj debug session");
+	s_is_attached = false;
+	jsal_debug_detach();
+	if (s_socket != NULL) {
+		socket_close(s_socket);
+		while (socket_connected(s_socket))
+			sphere_sleep(0.05);
+	}
+	socket_unref(s_socket);
+	s_socket = NULL;
+	if (s_want_attach && !is_shutdown)
+		sphere_exit(true);  // clean detach, exit
 }
 
 static js_step_t
