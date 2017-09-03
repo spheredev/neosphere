@@ -33,7 +33,7 @@
 #include "ssj.h"
 #include "objview.h"
 
-#include "dvalue.h"
+#include "dmessage.h"
 
 struct entry
 {

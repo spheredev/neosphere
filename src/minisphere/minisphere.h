@@ -30,11 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifdef _MSC_VER
-#define _CRT_NONSTDC_NO_WARNINGS
-#define _CRT_SECURE_NO_WARNINGS
-#define _USE_MATH_DEFINES
-#endif
+#include "posix.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -72,16 +68,9 @@
 #include "script.h"
 #include "utility.h"
 
-#ifdef _MSC_VER
-#define strcasecmp stricmp
-#define snprintf _snprintf
-#endif
-
 #define SPHERE_PATH_MAX 1024
 
-#if defined(__GNUC__)
-#define no_return __attribute__((noreturn)) void
-#elif defined(__clang__)
+#if defined(__GNUC__) || defined(__clang__)
 #define no_return __attribute__((noreturn)) void
 #elif defined(_MSC_VER)
 #define no_return __declspec(noreturn) void

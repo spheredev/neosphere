@@ -33,7 +33,7 @@
 #ifndef SSJ__OBJECTVIEW_H__INCLUDED
 #define SSJ__OBJECTVIEW_H__INCLUDED
 
-#include "dvalue.h"
+#include "dmessage.h"
 
 typedef struct objview objview_t;
 

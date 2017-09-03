@@ -1,5 +1,5 @@
 /**
- *  SSj, the Sphere JavaScript debugger
+ *  miniSphere JavaScript game engine
  *  Copyright (c) 2015-2017, Fat Cerberus
  *  All rights reserved.
  *
@@ -33,19 +33,47 @@
 #ifndef SSJ__DMESSAGE_H__INCLUDED
 #define SSJ__DMESSAGE_H__INCLUDED
 
-#include "dvalue.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include "sockets.h"
 
 typedef struct dmessage dmessage_t;
+typedef struct dvalue   dvalue_t;
 
 typedef
-enum message_tag
+enum dvalue_tag
+{
+	DVALUE_EOM = 0x00,
+	DVALUE_REQ = 0x01,
+	DVALUE_REP = 0x02,
+	DVALUE_ERR = 0x03,
+	DVALUE_NFY = 0x04,
+	DVALUE_INT = 0x10,
+	DVALUE_STRING = 0x11,
+	DVALUE_STRING16 = 0x12,
+	DVALUE_BUFFER = 0x13,
+	DVALUE_BUF16 = 0x14,
+	DVALUE_UNUSED = 0x15,
+	DVALUE_UNDEF = 0x16,
+	DVALUE_NULL = 0x17,
+	DVALUE_TRUE = 0x18,
+	DVALUE_FALSE = 0x19,
+	DVALUE_FLOAT = 0x1A,
+	DVALUE_OBJ = 0x1B,
+	DVALUE_PTR = 0x1C,
+	DVALUE_LIGHTFUNC = 0x1D,
+	DVALUE_HEAPPTR = 0x1E,
+} dvalue_tag_t;
+
+typedef
+enum dmessage_tag
 {
 	MESSAGE_UNKNOWN,
 	MESSAGE_REQ,
 	MESSAGE_REP,
 	MESSAGE_ERR,
 	MESSAGE_NFY,
-} message_tag_t;
+} dmessage_tag_t;
 
 enum req_command
 {
@@ -118,10 +146,16 @@ enum apprequest
 	APPREQ_WATERMARK,
 };
 
-dmessage_t*     dmessage_new          (message_tag_t tag);
+typedef
+struct remote_ptr {
+	uintmax_t addr;
+	uint8_t   size;
+} remote_ptr_t;
+
+dmessage_t*     dmessage_new          (dmessage_tag_t tag);
 void            dmessage_free         (dmessage_t* it);
 int             dmessage_len          (const dmessage_t* it);
-message_tag_t   dmessage_tag          (const dmessage_t* it);
+dmessage_tag_t  dmessage_tag          (const dmessage_t* it);
 dvalue_tag_t    dmessage_get_atom_tag (const dmessage_t* it, int index);
 const dvalue_t* dmessage_get_dvalue   (const dmessage_t* it, int index);
 double          dmessage_get_float    (const dmessage_t* it, int index);
@@ -134,5 +168,20 @@ void            dmessage_add_int      (dmessage_t* it, int value);
 void            dmessage_add_string   (dmessage_t* it, const char* value);
 dmessage_t*     dmessage_recv         (socket_t* socket);
 bool            dmessage_send         (const dmessage_t* it, socket_t* socket);
+dvalue_t*       dvalue_new            (dvalue_tag_t tag);
+dvalue_t*       dvalue_new_float      (double value);
+dvalue_t*       dvalue_new_heapptr    (remote_ptr_t value);
+dvalue_t*       dvalue_new_int        (int value);
+dvalue_t*       dvalue_new_string     (const char* value);
+dvalue_t*       dvalue_dup            (const dvalue_t* it);
+void            dvalue_free           (dvalue_t* it);
+dvalue_tag_t    dvalue_tag            (const dvalue_t* it);
+const char*     dvalue_as_cstr        (const dvalue_t* it);
+remote_ptr_t    dvalue_as_ptr         (const dvalue_t* it);
+double          dvalue_as_float       (const dvalue_t* it);
+int             dvalue_as_int         (const dvalue_t* it);
+void            dvalue_print          (const dvalue_t* it, bool is_verbose);
+dvalue_t*       dvalue_recv           (socket_t* socket);
+bool            dvalue_send           (const dvalue_t* it, socket_t* socket);
 
 #endif // SSJ__DMESSAGE_H__INCLUDED

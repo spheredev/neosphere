@@ -30,9 +30,6 @@
     <ClCompile Include="..\src\ssj\source.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ssj\dvalue.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ssj\help.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,13 +54,13 @@
     <ClCompile Include="..\src\ssj\objview.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ssj\dmessage.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\console.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\shared\sockets.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\shared\dmessage.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,16 +80,10 @@
     <ClInclude Include="..\src\ssj\ssj.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ssj\posix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource2.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ssj\source.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ssj\dvalue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ssj\help.h">
@@ -119,13 +110,16 @@
     <ClInclude Include="..\src\ssj\objview.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ssj\dmessage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\shared\console.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\sockets.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\posix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\dmessage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

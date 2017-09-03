@@ -1,5 +1,5 @@
 /**
- *  Cell, the Sphere packaging compiler
+ *  miniSphere JavaScript game engine
  *  Copyright (c) 2015-2017, Fat Cerberus
  *  All rights reserved.
  *
@@ -30,12 +30,22 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef CELL__POSIX_H__INCLUDED
-#define CELL__POSIX_H__INCLUDED
+#ifndef FATCERBERUS__POSIX_H__INCLUDED
+#define FATCERBERUS__POSIX_H__INCLUDED
 
 #if defined(_MSC_VER)
+
+#if !defined(_CRT_NONSTDC_NO_WARNINGS)
 #define _CRT_NONSTDC_NO_WARNINGS
+#endif
+
+#if !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
+#endif
+
+#if !defined(_USE_MATH_DEFINES)
+#define _USE_MATH_DEFINES
+#endif
 
 #define strcasecmp stricmp
 #define strtok_r   strtok_s
@@ -43,6 +53,7 @@
 #if _MSC_VER < 1900
 #define snprintf _snprintf
 #endif
+
 #endif
 
-#endif // CELL__POSIX_H__INCLUDED
+#endif // FATCERBERUS__POSIX_H__INCLUDED
