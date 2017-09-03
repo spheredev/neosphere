@@ -44,10 +44,10 @@ class Pact
 		return 'Pact';
 	}
 
-	promise()
+	makePromise()
 	{
 		var handler;
-		var promise = new Promise(function(resolve, reject) {
+		var promise = new Promise((resolve, reject) => {
 			handler = { resolve: resolve, reject: reject };
 		})
 		handler.that = promise;

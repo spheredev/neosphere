@@ -232,13 +232,13 @@ jsal_require_pathname(int index, const char* origin_name, bool legacy_mode, bool
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
-		jsal_error_blame(-1, JS_TYPE_ERROR, "illegal path '%s'", pathname);
+		jsal_error(JS_TYPE_ERROR, "illegal path '%s'", pathname);
 	if (strcmp(prefix, "~") == 0 && game_save_id(g_game) == NULL)
-		jsal_error_blame(-1, JS_REF_ERROR, "no save ID defined");
+		jsal_error(JS_REF_ERROR, "no save ID defined");
 	if (need_write && !legacy_mode && strcmp(prefix, "~") != 0)
-		jsal_error_blame(-1, JS_TYPE_ERROR, "directory is read-only");
+		jsal_error(JS_TYPE_ERROR, "directory is read-only");
 	if (need_write && strcmp(prefix, "#") == 0)  // 'system/' is always read-only
-		jsal_error_blame(-1, JS_TYPE_ERROR, "directory is read-only");
+		jsal_error(JS_TYPE_ERROR, "directory is read-only");
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;

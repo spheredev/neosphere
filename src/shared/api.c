@@ -275,45 +275,6 @@ api_define_static_prop(const char* namespace_name, const char* name, js_callback
 	jsal_pop(1);
 }
 
-void
-jsal_error_blame(int blame_offset, js_error_type_t type, const char* format, ...)
-{
-	va_list ap;
-	char*   filename;
-	int     line_number;
-
-	// get filename and line number from Duktape call stack
-	/*jsal_inspect_callstack_entry(-1 + blame_offset);
-	if (!jsal_is_object(-1)) {
-		// note: the topmost call is assumed to be a Duktape/C activation.  that's
-		//       probably not what's responsible for the error, so blame the function
-		//       just below it if there's nobody else to blame.
-		jsal_inspect_callstack_entry(-2);
-		jsal_replace(-2);
-	}
-	jsal_get_prop_string(-1, "lineNumber");
-	jsal_get_prop_string(-2, "function");
-	jsal_get_prop_string(-1, "fileName");
-	filename = strdup(jsal_to_string(-1));
-	line_number = jsal_to_int(-3);
-	jsal_pop(4);*/
-
-	filename = strdup("eatyPig.js");
-	line_number = 812;
-
-	// construct an Error object
-	va_start(ap, format);
-	jsal_push_new_error_va(type, format, ap);
-	va_end(ap);
-	jsal_push_string(filename);
-	jsal_put_prop_string(-2, "fileName");
-	jsal_push_int(line_number);
-	jsal_put_prop_string(-2, "lineNumber");
-	free(filename);
-
-	jsal_throw();
-}
-
 bool
 jsal_is_class_obj(int index, const char* class_name)
 {

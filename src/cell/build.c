@@ -556,15 +556,16 @@ eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
 
 	// evaluate .mjs scripts as ES6 modules
 	if (path_has_extension(file_path, ".mjs")) {
-		// work around a bug in ChakraCore where a top-level module with no imports
-		// produces a syntax error.
-		jsal_push_sprintf("import '%s';", filename);
+		jsal_push_sprintf("import * as Module from \"%s\"; global.___exports = Module;",
+			filename);
 		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		is_module_loaded = jsal_try_eval_module(module_name);
 		free(module_name);
 		if (!is_module_loaded)
 			goto on_error;
-		jsal_remove(-2);
+		jsal_pop(2);
+		jsal_get_global_string("___exports");
+		jsal_del_global_string("___exports");
 		return true;
 	}
 
@@ -737,13 +738,13 @@ jsal_fetch_module(void)
 	caller_id = jsal_require_string(1);
 
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
+		jsal_error(JS_TYPE_ERROR, "relative require in global code or ES module is not allowed");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_cjs_module(s_build->fs, specifier, caller_id, PATHS[i]))
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error_blame(-1, JS_REF_ERROR, "module not found '%s'", specifier);
+		jsal_error(JS_REF_ERROR, "module not found '%s'", specifier);
 	if (path_has_extension(path, ".mjs")) {
 		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
@@ -1096,14 +1097,14 @@ js_require(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		parent_id = jsal_get_string(-1);
 
 	if (parent_id == NULL && (strncmp(module_id, "./", 2) == 0 || strncmp(module_id, "../", 3) == 0))
-		jsal_error_blame(-1, JS_TYPE_ERROR, "relative require not allowed in global code");
+		jsal_error(JS_TYPE_ERROR, "relative require not allowed in global code");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_cjs_module(s_build->fs, module_id, parent_id, PATHS[i]))
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error_blame(-1, JS_REF_ERROR, "module not found '%s'", module_id);
+		jsal_error(JS_REF_ERROR, "module not found '%s'", module_id);
 	is_mjs = path_has_extension(path, ".mjs");
 	if (!eval_cjs_module(s_build->fs, path_cstr(path), is_mjs))
 		jsal_throw();
@@ -1158,7 +1159,7 @@ js_new_DirectoryStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL);
 
 	if (!(stream = directory_open(s_build->fs, pathname)))
-		jsal_error_blame(-1, JS_ERROR, "couldn't open directory");
+		jsal_error(JS_ERROR, "couldn't open directory");
 	jsal_push_class_obj("DirectoryStream", stream);
 	return true;
 }
@@ -1222,7 +1223,7 @@ js_DirectoryStream_set_position(js_ref_t* me, int num_args, bool is_ctor, int ma
 	position = jsal_require_int(0);
 
 	if (!directory_seek(stream, position))
-		jsal_error_blame(-1, JS_ERROR, "couldn't set stream position");
+		jsal_error(JS_ERROR, "couldn't set stream position");
 	return false;
 }
 
@@ -1279,7 +1280,7 @@ js_FS_createDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_pathname(0, NULL);
 
 	if (fs_mkdir(s_build->fs, name) != 0)
-		jsal_error_blame(-1, JS_ERROR, "couldn't create directory");
+		jsal_error(JS_ERROR, "couldn't create directory");
 	return false;
 }
 
@@ -1291,7 +1292,7 @@ js_FS_deleteFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	if (!fs_unlink(s_build->fs, filename))
-		jsal_error_blame(-1, JS_ERROR, "couldn't delete file", filename);
+		jsal_error(JS_ERROR, "couldn't delete file", filename);
 	return false;
 }
 
@@ -1342,7 +1343,7 @@ js_FS_readFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	if (!(file_data = fs_fslurp(s_build->fs, filename, &file_size)))
-		jsal_error_blame(-1, JS_ERROR, "couldn't read file '%s'", filename);
+		jsal_error(JS_ERROR, "couldn't read file '%s'", filename);
 	content = lstr_from_utf8(file_data, file_size, true);
 	jsal_push_lstring_t(content);
 	return true;
@@ -1372,7 +1373,7 @@ js_FS_removeDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name = jsal_require_pathname(0, NULL);
 
 	if (!fs_rmdir(s_build->fs, name))
-		jsal_error_blame(-1, JS_ERROR, "directory removal failed");
+		jsal_error(JS_ERROR, "directory removal failed");
 	return false;
 }
 
@@ -1386,7 +1387,7 @@ js_FS_rename(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	name2 = jsal_require_pathname(1, NULL);
 
 	if (!fs_rename(s_build->fs, name1, name2))
-		jsal_error_blame(-1, JS_ERROR, "rename failed", name1, name2);
+		jsal_error(JS_ERROR, "rename failed", name1, name2);
 	return false;
 }
 
@@ -1400,7 +1401,7 @@ js_FS_writeFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	text = jsal_require_lstring_t(1);
 
 	if (!fs_fspew(s_build->fs, filename, lstr_cstr(text), lstr_len(text)))
-		jsal_error_blame(-1, JS_ERROR, "couldn't write file '%s'", filename);
+		jsal_error(JS_ERROR, "couldn't write file '%s'", filename);
 	lstr_free(text);
 	return false;
 }
@@ -1417,7 +1418,7 @@ js_new_FileStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	file_op = jsal_require_int(1);
 
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
-		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file-op constant");
+		jsal_error(JS_RANGE_ERROR, "invalid file-op constant");
 
 	if (file_op == FILE_OP_UPDATE && !fs_fexist(s_build->fs, filename))
 		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
@@ -1426,7 +1427,7 @@ js_new_FileStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
 	if (!(file = fs_fopen(s_build->fs, filename, mode)))
-		jsal_error_blame(-1, JS_ERROR, "couldn't open file '%s'", filename);
+		jsal_error(JS_ERROR, "couldn't open file '%s'", filename);
 	if (file_op == FILE_OP_UPDATE)
 		fseek(file, 0, SEEK_END);
 
@@ -1454,7 +1455,7 @@ js_FileStream_get_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, "FileStream")))
-		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "use of disposed object");
 
 	jsal_push_number(ftell(file));
 	return true;
@@ -1468,7 +1469,7 @@ js_FileStream_get_fileSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, "FileStream")))
-		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "use of disposed object");
 
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
@@ -1485,11 +1486,11 @@ js_FileStream_set_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, "FileStream")))
-		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "use of disposed object");
 	new_pos = jsal_require_int(0);
 
 	if (new_pos < 0)
-		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid file position");
+		jsal_error(JS_RANGE_ERROR, "invalid file position");
 	fseek(file, new_pos, SEEK_SET);
 	return false;
 }
@@ -1522,14 +1523,14 @@ js_FileStream_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, "FileStream")))
-		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "use of disposed object");
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		pos = ftell(file);
 		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
 		fseek(file, 0, SEEK_SET);
 	}
 	if (num_bytes < 0)
-		jsal_error_blame(-1, JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
+		jsal_error(JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
 	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
 	data_ptr = jsal_get_buffer_ptr(-1, &size);
 	num_bytes = (int)fread(data_ptr, 1, num_bytes, file);
@@ -1547,11 +1548,11 @@ js_FileStream_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, "FileStream")))
-		jsal_error_blame(-1, JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "use of disposed object");
 	data = jsal_require_buffer_ptr(0, &num_bytes);
 
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)
-		jsal_error_blame(-1, JS_ERROR, "failure to write to file");
+		jsal_error(JS_ERROR, "failure to write to file");
 	return false;
 }
 
@@ -1579,7 +1580,7 @@ js_RNG_fromState(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	xoro = xoro_new(0);
 	if (!xoro_set_state(xoro, state)) {
 		xoro_unref(xoro);
-		jsal_error_blame(-1, JS_TYPE_ERROR, "invalid RNG state string");
+		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
 	}
 	jsal_push_class_obj("RNG", xoro);
 	return true;
@@ -1632,7 +1633,7 @@ js_RNG_set_state(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	state = jsal_require_string(0);
 
 	if (!xoro_set_state(xoro, state))
-		jsal_error_blame(-1, JS_TYPE_ERROR, "invalid RNG state string");
+		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
 	return false;
 }
 
