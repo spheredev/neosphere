@@ -73,15 +73,15 @@ dvalue_t*    dvalue_new_float   (double value);
 dvalue_t*    dvalue_new_heapptr (remote_ptr_t value);
 dvalue_t*    dvalue_new_int     (int value);
 dvalue_t*    dvalue_new_string  (const char* value);
-dvalue_t*    dvalue_dup         (const dvalue_t* obj);
-void         dvalue_free        (dvalue_t* obj);
-dvalue_tag_t dvalue_tag         (const dvalue_t* obj);
-const char*  dvalue_as_cstr     (const dvalue_t* obj);
-remote_ptr_t dvalue_as_ptr      (const dvalue_t* obj);
-double       dvalue_as_float    (const dvalue_t* obj);
-int          dvalue_as_int      (const dvalue_t* obj);
-void         dvalue_print       (const dvalue_t* obj, bool is_verbose);
+dvalue_t*    dvalue_dup         (const dvalue_t* it);
+void         dvalue_free        (dvalue_t* it);
+dvalue_tag_t dvalue_tag         (const dvalue_t* it);
+const char*  dvalue_as_cstr     (const dvalue_t* it);
+remote_ptr_t dvalue_as_ptr      (const dvalue_t* it);
+double       dvalue_as_float    (const dvalue_t* it);
+int          dvalue_as_int      (const dvalue_t* it);
+void         dvalue_print       (const dvalue_t* it, bool is_verbose);
 dvalue_t*    dvalue_recv        (socket_t* socket);
-bool         dvalue_send        (const dvalue_t* obj, socket_t* socket);
+bool         dvalue_send        (const dvalue_t* it, socket_t* socket);
 
 #endif // SSJ__DVALUE_H__INCLUDED

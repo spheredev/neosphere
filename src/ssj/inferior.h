@@ -50,7 +50,7 @@ enum resume_op
 } resume_op_t;
 
 void               inferiors_init            (void);
-void               inferiors_deinit          (void);
+void               inferiors_uninit          (void);
 inferior_t*        inferior_new              (const char* hostname, int port, bool show_trace);
 void               inferior_free             (inferior_t* obj);
 bool               inferior_update           (inferior_t* obj);

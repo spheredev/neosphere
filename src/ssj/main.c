@@ -88,7 +88,7 @@ main(int argc, char* argv[])
 	session_free(session);
 	inferior_free(inferior);
 
-	inferiors_deinit();
+	inferiors_uninit();
 
 	free_cmdline(cmdline);
 	return EXIT_SUCCESS;

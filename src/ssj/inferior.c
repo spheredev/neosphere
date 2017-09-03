@@ -80,23 +80,31 @@ inferiors_init(void)
 }
 
 void
-inferiors_deinit(void)
+inferiors_uninit(void)
 {
-	sockets_deinit();
+	sockets_uninit();
 }
 
 inferior_t*
 inferior_new(const char* hostname, int port, bool show_trace)
 {
 	inferior_t* obj;
-	dmessage_t*  req;
-	dmessage_t*  rep;
+	dmessage_t* req;
+	dmessage_t* rep;
+	clock_t     timeout;
 
 	obj = calloc(1, sizeof(inferior_t));
 	printf("connecting to %s:%d... ", hostname, port);
 	fflush(stdout);
-	if (!(obj->socket = socket_new_client(hostname, port, 30.0)))
+	obj->socket = socket_new(1024);
+	if (!socket_connect(obj->socket, hostname, port))
 		goto on_error;
+	timeout = clock() + 30 * CLOCKS_PER_SEC;
+	while (!socket_connected(obj->socket)) {
+		if (clock() > timeout)
+			goto timed_out;
+	}
+
 	printf("OK.\n");
 	obj->protocol = do_handshake(obj->socket);
 	if (obj->protocol == 0)
@@ -129,6 +137,10 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	obj->id_no = s_next_id_no++;
 	obj->show_trace = show_trace;
 	return obj;
+
+timed_out:
+	printf("\33[31;1mtimeout!\33[m\n");
+	return NULL;
 
 on_error:
 	free(obj);
@@ -509,7 +521,7 @@ do_handshake(socket_t* socket)
 	do {
 		if (idx >= 127)  // probably not a Duktape handshake
 			goto on_error;
-		socket_recv(socket, &handshake[idx], 1);
+		socket_read(socket, &handshake[idx], 1);
 	} while (handshake[idx++] != '\n');
 	handshake[idx - 1] = '\0';  // remove the newline
 

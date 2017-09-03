@@ -1,5 +1,5 @@
 /**
- *  SSj, the Sphere JavaScript debugger
+ *  miniSphere JavaScript game engine
  *  Copyright (c) 2015-2017, Fat Cerberus
  *  All rights reserved.
  *
@@ -30,17 +30,28 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SSJ__SOCKET_H__INCLUDED
-#define SSJ__SOCKET_H__INCLUDED
+#include "console.h"
 
-typedef struct socket socket_t;
+#include <stdarg.h>
+#include <stdio.h>
 
-void      sockets_init      (void);
-void      sockets_deinit    (void);
-socket_t* socket_new_client (const char* hostname, int port, double timeout);
-void      socket_close      (socket_t* it);
-bool      socket_connected  (socket_t* it);
-int       socket_recv       (socket_t* it, void* buffer, int num_bytes);
-int       socket_send       (socket_t* it, const void* data, int num_bytes);
+static int s_verbosity = -1;
 
-#endif // SSJ__SOCKET_H__INCLUDED
+void
+console_init(int verbosity)
+{
+	s_verbosity = verbosity;
+}
+
+void
+console_log(int level, const char* fmt, ...)
+{
+	va_list ap;
+
+	if (level > s_verbosity)
+		return;
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	fputc('\n', stdout);
+}

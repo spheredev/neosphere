@@ -15,12 +15,13 @@ CFLAGS=-O3
 endif
 
 engine_sources=src/minisphere/main.c \
-   src/shared/api.c src/shared/dyad.c src/shared/jsal.c src/shared/lstring.c \
-   src/shared/md5.c src/shared/path.c src/shared/unicode.c \
-   src/shared/vector.c src/shared/xoroshiro.c \
+   src/shared/api.c src/shared/console.c src/shared/dyad.c src/shared/jsal.c \
+   src/shared/lstring.c src/shared/md5.c src/shared/path.c \
+   src/shared/sockets.c src/shared/unicode.c src/shared/vector.c \
+   src/shared/xoroshiro.c \
    src/minisphere/animation.c src/minisphere/async.c src/minisphere/atlas.c \
    src/minisphere/audio.c src/minisphere/byte_array.c src/minisphere/color.c \
-   src/minisphere/console.c src/minisphere/debugger.c src/minisphere/font.c \
+   src/minisphere/debugger.c src/minisphere/font.c \
    src/minisphere/galileo.c src/minisphere/game.c src/minisphere/geometry.c \
    src/minisphere/image.c src/minisphere/input.c src/minisphere/kev_file.c \
    src/minisphere/legacy.c src/minisphere/logger.c \
@@ -44,7 +45,8 @@ cell_libs= \
    -lChakraCore -lz -lm
 
 ssj_sources=src/ssj/main.c \
-   src/shared/dyad.c src/shared/path.c src/shared/vector.c \
+   src/shared/console.c src/shared/dyad.c src/shared/path.c \
+   src/shared/sockets.c src/shared/vector.c \
    src/ssj/backtrace.c src/ssj/dmessage.c src/ssj/dvalue.c src/ssj/help.c \
    src/ssj/inferior.c src/ssj/objview.c src/ssj/parser.c src/ssj/session.c \
    src/ssj/sockets.c src/ssj/source.c

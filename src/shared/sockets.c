@@ -30,8 +30,14 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include "minisphere.h"
 #include "sockets.h"
+
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <dyad.h>
+#include "console.h"
 
 struct server
 {
@@ -58,8 +64,8 @@ struct socket
 static void on_dyad_accept  (dyad_Event* e);
 static void on_dyad_receive (dyad_Event* e);
 
-static unsigned int s_next_client_id = 0;
-static unsigned int s_next_server_id = 0;
+static unsigned int s_next_server_id = 1;
+static unsigned int s_next_socket_id = 1;
 static unsigned int s_num_refs       = 0;
 
 bool
@@ -96,17 +102,17 @@ socket_new(size_t buffer_size)
 {
 	socket_t* socket;
 
-	console_log(2, "creating TCP socket #%u", s_next_client_id);
+	console_log(2, "creating TCP socket #%u", s_next_socket_id);
 
 	socket = calloc(1, sizeof(socket_t));
 	socket->buffer_size = buffer_size;
 	if (!(socket->recv_buffer = malloc(buffer_size)))
 		goto on_error;
-	socket->id = s_next_client_id++;
+	socket->id = s_next_socket_id++;
 	return socket_ref(socket);
 
 on_error:
-	console_log(2, "couldn't create TCP socket #%u", s_next_client_id++);
+	console_log(2, "couldn't create TCP socket #%u", s_next_socket_id++);
 	free(socket);
 	return NULL;
 }
@@ -286,7 +292,7 @@ server_accept(server_t* it)
 		return NULL;
 
 	console_log(2, "accepting new TCP socket #%u from server #%u",
-		s_next_client_id, it->id);
+		s_next_socket_id, it->id);
 	console_log(2, "    remote address: %s:%d",
 		dyad_getAddress(it->backlog[0]),
 		dyad_getPort(it->backlog[0]));
@@ -303,7 +309,7 @@ server_accept(server_t* it)
 	for (i = 0; i < it->num_backlog; ++i)
 		it->backlog[i] = it->backlog[i + 1];
 
-	client->id = s_next_client_id++;
+	client->id = s_next_socket_id++;
 	return socket_ref(client);
 }
 

@@ -119,20 +119,20 @@ enum apprequest
 };
 
 dmessage_t*     dmessage_new          (message_tag_t tag);
-void            dmessage_free         (dmessage_t* o);
-int             dmessage_len          (const dmessage_t* o);
-message_tag_t   dmessage_tag          (const dmessage_t* o);
-dvalue_tag_t    dmessage_get_atom_tag (const dmessage_t* o, int index);
-const dvalue_t* dmessage_get_dvalue   (const dmessage_t* o, int index);
-double          dmessage_get_float    (const dmessage_t* o, int index);
-int32_t         dmessage_get_int      (const dmessage_t* o, int index);
-const char*     dmessage_get_string   (const dmessage_t* o, int index);
-void            dmessage_add_dvalue   (dmessage_t* o, const dvalue_t* dvalue);
-void            dmessage_add_float    (dmessage_t* o, double value);
-void            dmessage_add_heapptr  (dmessage_t* o, remote_ptr_t value);
-void            dmessage_add_int      (dmessage_t* o, int value);
-void            dmessage_add_string   (dmessage_t* o, const char* value);
+void            dmessage_free         (dmessage_t* it);
+int             dmessage_len          (const dmessage_t* it);
+message_tag_t   dmessage_tag          (const dmessage_t* it);
+dvalue_tag_t    dmessage_get_atom_tag (const dmessage_t* it, int index);
+const dvalue_t* dmessage_get_dvalue   (const dmessage_t* it, int index);
+double          dmessage_get_float    (const dmessage_t* it, int index);
+int32_t         dmessage_get_int      (const dmessage_t* it, int index);
+const char*     dmessage_get_string   (const dmessage_t* it, int index);
+void            dmessage_add_dvalue   (dmessage_t* it, const dvalue_t* dvalue);
+void            dmessage_add_float    (dmessage_t* it, double value);
+void            dmessage_add_heapptr  (dmessage_t* it, remote_ptr_t value);
+void            dmessage_add_int      (dmessage_t* it, int value);
+void            dmessage_add_string   (dmessage_t* it, const char* value);
 dmessage_t*     dmessage_recv         (socket_t* socket);
-bool            dmessage_send         (const dmessage_t* o, socket_t* socket);
+bool            dmessage_send         (const dmessage_t* it, socket_t* socket);
 
 #endif // SSJ__DMESSAGE_H__INCLUDED
