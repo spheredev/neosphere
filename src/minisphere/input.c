@@ -34,6 +34,7 @@
 #include "input.h"
 
 #include "debugger.h"
+#include "jsal.h"
 #include "kev_file.h"
 #include "vector.h"
 
@@ -594,7 +595,10 @@ update_input(void)
 				screen_toggle_fps(g_screen);
 				break;
 			case ALLEGRO_KEY_F12:
-				screen_queue_screenshot(g_screen);
+				if (!debugger_attached())
+					screen_queue_screenshot(g_screen);
+				else
+					jsal_debug_break_now();
 				break;
 			default:
 				queue_key(event.keyboard.keycode);

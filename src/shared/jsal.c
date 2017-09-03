@@ -578,8 +578,7 @@ jsal_get_length(int at_index)
 {
 	int value;
 
-	if (!jsal_get_prop_string(at_index, "length"))
-		return 0;
+	jsal_get_prop_string(at_index, "length");
 	value = jsal_get_int(-1);
 	jsal_pop(1);
 	return value;
@@ -1089,6 +1088,16 @@ jsal_push_new_host_object(void* data, js_callback_t finalizer)
 	object_info->object = object;
 	
 	return push_value(object);
+}
+
+int
+jsal_push_new_iterator(int for_index)
+{
+	jsal_push_known_symbol("iterator");
+	jsal_get_prop(for_index);
+	jsal_dup(for_index);
+	jsal_call_method(0);
+	return jsal_get_top() - 1;
 }
 
 int

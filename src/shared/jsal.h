@@ -162,6 +162,7 @@ int         jsal_push_new_buffer          (js_buffer_type_t type, size_t length)
 int         jsal_push_new_error           (js_error_type_t type, const char* format, ...);
 int         jsal_push_new_error_va        (js_error_type_t type, const char* format, va_list ap);
 int         jsal_push_new_host_object     (void* data_ptr, js_callback_t finalizer);
+int         jsal_push_new_iterator        (int for_index);
 int         jsal_push_new_object          (void);
 int         jsal_push_new_symbol          (const char* description);
 int         jsal_push_null                (void);
