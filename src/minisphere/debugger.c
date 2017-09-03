@@ -78,7 +78,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	jsal_push_hidden_stash();
 	jsal_del_prop_string(-1, "debugMap");
 	game_root = game_path(g_game);
-	if (data = game_read_file(g_game, "sources.json", &data_size)) {
+	if (data = game_read_file(g_game, "@/sources.json", &data_size)) {
 		jsal_push_lstring(data, data_size);
 		jsal_parse(-1);
 		jsal_put_prop_string(-2, "debugMap");
@@ -132,12 +132,10 @@ debugger_update(void)
 {
 	socket_t*     client;
 	char*         handshake;
-	ki_message_t* message;
+	js_step_t     step_op;
 
-	if (s_is_attached && s_socket == NULL) {
-		s_is_attached = false;
-		jsal_debug_detach();
-	}
+	if (s_is_attached && s_socket == NULL)
+		do_detach_debugger(false);
 	
 	// watch for incoming SSj client and attach debugger
 	if (client = server_accept(s_server)) {
@@ -157,14 +155,10 @@ debugger_update(void)
 		}
 	}
 
+	// process any incoming SSj requests
 	if (s_socket == NULL || socket_peek(s_socket) == 0)
 		return;
-
-	message = dmessage_recv(s_socket);
-	dmessage_free(message);
-	message = dmessage_new(DMESSAGE_REP);
-	dmessage_send(message, s_socket);
-	dmessage_free(message);
+	process_message(&step_op);
 }
 
 bool
@@ -336,10 +330,12 @@ process_message(js_step_t* out_step)
 	char*          file_data;
 	size_t         file_size;
 	const char*    filename;
+	int            num_calls;
 	bool           resuming = false;
 	struct source* source;
 
 	iter_t iter;
+	int i;
 
 	if (!(request = dmessage_recv(s_socket)))
 		goto on_error;
@@ -386,6 +382,27 @@ process_message(js_step_t* out_step)
 			break;
 		}
 		break;
+	case REQ_DETACH:
+		dmessage_send(reply, s_socket);
+		dmessage_free(reply);
+		dmessage_free(request);
+		do_detach_debugger(false);
+		*out_step = JS_STEP_CONTINUE;
+		return true;
+	case REQ_GETCALLSTACK:
+		num_calls = jsal_debug_num_calls();
+		for (i = 0; i < num_calls; ++i) {
+			jsal_debug_inspect_call(-i - 1);
+			dmessage_add_string(reply, jsal_get_string(-3));
+			dmessage_add_string(reply, "function");
+			dmessage_add_int(reply, jsal_get_int(-2) + 1);
+			dmessage_add_int(reply, jsal_get_int(-1) + 1);
+			jsal_pop(3);
+		}
+		break;
+	case REQ_PAUSE:
+		jsal_debug_break_now();
+		break;
 	case REQ_RESUME:
 		*out_step = JS_STEP_CONTINUE;
 		resuming = true;
@@ -426,13 +443,16 @@ on_breakpoint_hit(void)
 	ki_message_t* message;
 	js_step_t     step_op;
 
+	if (s_socket == NULL)
+		return JS_STEP_CONTINUE;
+	
 	filename = jsal_get_string(0);
 	line = jsal_get_int(1) + 1;
 	column = jsal_get_int(2) + 1;
 
 	message = dmessage_new(DMESSAGE_NFY);
 	dmessage_add_int(message, NFY_STATUS);
-	dmessage_add_int(message, 0);
+	dmessage_add_int(message, 1);
 	dmessage_add_string(message, filename);
 	dmessage_add_int(message, line);
 	dmessage_add_int(message, column);
@@ -446,7 +466,7 @@ on_breakpoint_hit(void)
 
 	message = dmessage_new(DMESSAGE_NFY);
 	dmessage_add_int(message, NFY_STATUS);
-	dmessage_add_int(message, 1);
+	dmessage_add_int(message, 0);
 	dmessage_add_string(message, filename);
 	dmessage_add_int(message, line);
 	dmessage_add_int(message, column);

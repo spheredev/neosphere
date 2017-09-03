@@ -57,7 +57,6 @@ struct socket
 	unsigned int refcount;
 	unsigned int id;
 	size_t       buffer_size;
-	bool         closed;
 	uint8_t*     recv_buffer;
 	size_t       recv_size;
 	dyad_Stream* stream;
@@ -205,7 +204,7 @@ socket_read(socket_t* it, void* buffer, size_t num_bytes)
 {
 	if (it->sync_mode) {
 		// in sync mode, block until all bytes are available.
-		while (it->recv_size < num_bytes && !it->closed)
+		while (it->recv_size < num_bytes && it->stream != NULL)
 			sockets_update();
 		if (it->recv_size < num_bytes)
 			return 0;
@@ -221,7 +220,7 @@ socket_read(socket_t* it, void* buffer, size_t num_bytes)
 size_t
 socket_write(socket_t* it, const void* data, size_t num_bytes)
 {
-	if (it->closed)
+	if (it->stream == NULL)
 		return 0;
 
 	console_log(4, "writing %zd bytes to TCP socket #%u", num_bytes, it->id);
@@ -361,7 +360,7 @@ on_dyad_close(dyad_Event* e)
 
 	socket = e->udata;
 
-	socket->closed = true;
+	socket->stream = NULL;
 }
 
 static void

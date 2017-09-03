@@ -86,6 +86,7 @@ static JsPropertyIdRef             make_property_id    (JsValueRef key_value);
 static js_ref_t*                   make_ref            (JsValueRef value);
 static JsValueRef                  pop_value           (void);
 static void                        push_debug_callback_args (JsValueRef event_data);
+static bool                        script_id_to_url         (int at_index);
 static int                         push_value          (JsValueRef value);
 static void                        resize_stack        (int new_size);
 static void                        throw_if_error      (void);
@@ -267,6 +268,42 @@ jsal_debug_detach(void)
 	void* userdata;
 	
 	JsDiagStopDebugging(s_js_runtime, &userdata);
+}
+
+int
+jsal_debug_num_calls(void)
+{
+	int        num_calls;
+	JsValueRef stack_info;
+
+	JsDiagGetStackTrace(&stack_info);
+	push_value(stack_info);
+	num_calls = jsal_get_length(-1);
+	jsal_pop(1);
+	return num_calls;
+	
+}
+
+void
+jsal_debug_break_now(void)
+{
+	JsDiagRequestAsyncBreak(s_js_runtime);
+}
+
+void
+jsal_debug_inspect_call(int offset)
+{
+	JsValueRef stack_info;
+	
+	JsDiagGetStackTrace(&stack_info);
+	push_value(stack_info);
+	jsal_get_prop_index(-1, -offset - 1);
+	jsal_get_prop_string(-1, "scriptId");
+	script_id_to_url(-1);
+	jsal_get_prop_string(-2, "line");
+	jsal_get_prop_string(-3, "column");
+	jsal_remove(-4);
+	jsal_remove(-4);
 }
 
 void
@@ -1734,6 +1771,41 @@ pop_value(void)
 	return ref;
 }
 
+static bool
+script_id_to_url(int at_index)
+{
+	int        num_scripts;
+	int        script_id;
+	JsValueRef script_list;
+
+	int i;
+	
+	at_index = jsal_normalize_index(at_index);
+	script_id = jsal_require_int(at_index);
+	
+	JsDiagGetScripts(&script_list);
+	push_value(script_list);
+	num_scripts = jsal_get_length(-1);
+	for (i = 0; i < num_scripts; ++i) {
+		jsal_get_prop_index(-1, i);
+		jsal_get_prop_string(-1, "scriptId");
+		if (script_id == jsal_get_int(-1)) {
+			jsal_get_prop_string(-2, "fileName");
+			jsal_replace(at_index);
+			jsal_pop(3);
+			goto found_script;
+		}
+		jsal_pop(2);
+	}
+	jsal_pop(1);
+	jsal_push_undefined();
+	jsal_replace(at_index);
+	return false;
+
+found_script:
+	return true;
+}
+
 static int
 push_value(JsValueRef value)
 {
@@ -1990,40 +2062,12 @@ handle_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned 
 static void
 push_debug_callback_args(JsValueRef event_data)
 {
-	int        num_scripts;
-	bool       result = true;
-	int        script_id;
-	JsValueRef script_list;
-
-	int i;
-
 	push_value(event_data);
 	jsal_get_prop_string(-1, "scriptId");
+	script_id_to_url(-1);
 	jsal_get_prop_string(-2, "line");
 	jsal_get_prop_string(-3, "column");
 	jsal_remove(-4);
-
-	script_id = jsal_get_int(-3);
-	JsDiagGetScripts(&script_list);
-	push_value(script_list);
-	num_scripts = jsal_get_length(-1);
-	for (i = 0; i < num_scripts; ++i) {
-		jsal_get_prop_index(-1, i);
-		jsal_get_prop_string(-1, "scriptId");
-		if (script_id == jsal_get_int(-1)) {
-			jsal_get_prop_string(-2, "fileName");
-			jsal_remove(-2);
-			jsal_remove(-2);
-			jsal_remove(-2);
-			goto got_info;
-		}
-		jsal_pop(2);
-	}
-	jsal_pop(1);
-	jsal_push_undefined();
-
-got_info:
-	jsal_replace(-4);
 }
 
 static int
