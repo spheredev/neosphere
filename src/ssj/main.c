@@ -103,7 +103,7 @@ launch_minisphere(path_t* game_path)
 	STARTUPINFOA        si;
 	PROCESS_INFORMATION pi;
 
-	printf("starting %s... ", path_cstr(game_path));
+	printf("starting '%s'... ", path_cstr(game_path));
 	fflush(stdout);
 	GetModuleFileName(NULL, pathname, MAX_PATH);
 	PathRemoveFileSpec(pathname);
@@ -130,7 +130,7 @@ launch_minisphere(path_t* game_path)
 	ssize_t     pathname_len;
 	struct stat stat_buf;
 
-	printf("starting %s... ", path_cstr(game_path));
+	printf("starting '%s'... ", path_cstr(game_path));
 	fflush(stdout);
 	memset(pathname, 0, sizeof pathname);
 	pathname_len = readlink("/proc/self/exe", pathname, PATH_MAX);

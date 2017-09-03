@@ -27,10 +27,10 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/legacy.c src/minisphere/logger.c \
    src/minisphere/map_engine.c src/minisphere/obstruction.c \
    src/minisphere/package.c src/minisphere/pegasus.c src/minisphere/screen.c \
-   src/minisphere/script.c src/minisphere/sockets.c \
-   src/minisphere/spriteset.c src/minisphere/tileset.c \
-   src/minisphere/transform.c src/minisphere/utility.c \
-   src/minisphere/vanilla.c src/minisphere/windowstyle.c
+   src/minisphere/script.c src/minisphere/spriteset.c \
+   src/minisphere/tileset.c src/minisphere/transform.c \
+   src/minisphere/utility.c src/minisphere/vanilla.c \
+   src/minisphere/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
@@ -49,7 +49,7 @@ ssj_sources=src/ssj/main.c \
    src/shared/sockets.c src/shared/vector.c \
    src/ssj/backtrace.c src/ssj/dmessage.c src/ssj/dvalue.c src/ssj/help.c \
    src/ssj/inferior.c src/ssj/objview.c src/ssj/parser.c src/ssj/session.c \
-   src/ssj/sockets.c src/ssj/source.c
+   src/ssj/source.c
 
 .PHONY: all
 all: minisphere spherun cell ssj

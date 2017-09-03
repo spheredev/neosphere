@@ -99,10 +99,11 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	obj->socket = socket_new(1024);
 	if (!socket_connect(obj->socket, hostname, port))
 		goto on_error;
-	timeout = clock() + 30 * CLOCKS_PER_SEC;
+	timeout = clock() + 60 * CLOCKS_PER_SEC;
 	while (!socket_connected(obj->socket)) {
 		if (clock() > timeout)
 			goto timed_out;
+		sockets_update();
 	}
 
 	printf("OK.\n");
@@ -139,7 +140,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	return obj;
 
 timed_out:
-	printf("\33[31;1mtimeout!\33[m\n");
+	printf("\33[31mtimeout\33[m\n");
 	return NULL;
 
 on_error:
@@ -516,7 +517,7 @@ do_handshake(socket_t* socket)
 	int          protocol;
 	char*        token;
 
-	printf("verifying... ");
+	printf("establishing communication... ");
 	idx = 0;
 	do {
 		if (idx >= 127)  // probably not a Duktape handshake
@@ -540,7 +541,7 @@ do_handshake(socket_t* socket)
 	return protocol;
 
 on_error:
-	printf("\33[31;1merror!\33[m\n");
+	printf("\33[31merror!\33[m\n");
 	return 0;
 }
 
