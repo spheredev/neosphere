@@ -65,6 +65,7 @@ struct socket
 };
 
 static void on_dyad_accept  (dyad_Event* e);
+static void on_dyad_close   (dyad_Event* e);
 static void on_dyad_receive (dyad_Event* e);
 
 static unsigned int s_next_server_id = 1;
@@ -160,6 +161,7 @@ socket_connect(socket_t* it, const char* hostname, int port)
 		goto on_error;
 	dyad_setNoDelay(it->stream, true);
 	dyad_addListener(it->stream, DYAD_EVENT_DATA, on_dyad_receive, it);
+	dyad_addListener(it->stream, DYAD_EVENT_CLOSE, on_dyad_close, it);
 	if (dyad_connect(it->stream, hostname, port) == -1)
 		goto on_error;
 	return true;
@@ -322,6 +324,7 @@ server_accept(server_t* it)
 	client->recv_buffer = malloc(it->buffer_size);
 	client->stream = it->backlog[0];
 	dyad_addListener(client->stream, DYAD_EVENT_DATA, on_dyad_receive, client);
+	dyad_addListener(client->stream, DYAD_EVENT_CLOSE, on_dyad_close, client);
 
 	// we accepted the connection, remove it from the backlog
 	--it->num_backlog;

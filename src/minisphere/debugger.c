@@ -47,6 +47,7 @@ struct source
 
 static bool      do_attach_debugger (void);
 static void      do_detach_debugger (bool is_shutdown);
+static bool      process_message    (js_step_t* out_step);
 static js_step_t on_breakpoint_hit  (void);
 
 static bool       s_is_attached = false;
@@ -133,6 +134,11 @@ debugger_update(void)
 	char*         handshake;
 	ki_message_t* message;
 
+	if (s_is_attached && s_socket == NULL) {
+		s_is_attached = false;
+		jsal_debug_detach();
+	}
+	
 	// watch for incoming SSj client and attach debugger
 	if (client = server_accept(s_server)) {
 		if (s_socket != NULL) {
@@ -142,7 +148,7 @@ debugger_update(void)
 		}
 		else {
 			console_log(0, "connected to SSj at %s", socket_hostname(client));
-			handshake = strnewf("SSj/Ki 1 v%s %s\n", SPHERE_VERSION, SPHERE_ENGINE_NAME);
+			handshake = strnewf("2 20000 v2.1.1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 			socket_write(client, handshake, strlen(handshake));
 			free(handshake);
 			s_socket = client;
@@ -321,6 +327,96 @@ do_detach_debugger(bool is_shutdown)
 		sphere_exit(true);  // clean detach, exit
 }
 
+static bool
+process_message(js_step_t* out_step)
+{
+	ki_message_t*  reply;
+	ki_message_t*  request = NULL;
+	size2_t        resolution;
+	char*          file_data;
+	size_t         file_size;
+	const char*    filename;
+	bool           resuming = false;
+	struct source* source;
+
+	iter_t iter;
+
+	if (!(request = dmessage_recv(s_socket)))
+		goto on_error;
+	if (dmessage_tag(request) != DMESSAGE_REQ)
+		goto on_error;
+	reply = dmessage_new(DMESSAGE_REP);
+	switch (dmessage_get_int(request, 0)) {
+	case REQ_APPREQUEST:
+		switch (dmessage_get_int(request, 1)) {
+		case APPREQ_GAME_INFO:
+			resolution = game_resolution(g_game);
+			dmessage_add_string(reply, game_name(g_game));
+			dmessage_add_string(reply, game_author(g_game));
+			dmessage_add_string(reply, game_summary(g_game));
+			dmessage_add_int(reply, resolution.width);
+			dmessage_add_int(reply, resolution.height);
+			break;
+		case APPREQ_SOURCE:
+			filename = dmessage_get_string(request, 2);
+			filename = debugger_compiled_name(filename);
+
+			// check if the data is in the source cache
+			iter = vector_enum(s_sources);
+			while (source = iter_next(&iter)) {
+				if (strcmp(filename, source->name) == 0) {
+					dmessage_add_string(reply, lstr_cstr(source->text));
+					goto finished;
+				}
+			}
+
+			// no cache entry, try loading the file via SphereFS
+			if ((file_data = game_read_file(g_game, filename, &file_size))) {
+				dmessage_add_string(reply, file_data);
+				free(file_data);
+			}
+			break;
+		case APPREQ_WATERMARK:
+			s_banner_text = lstr_new(dmessage_get_string(request, 2));
+			s_banner_color = color_new(
+				dmessage_get_int(request, 3),
+				dmessage_get_int(request, 4),
+				dmessage_get_int(request, 5),
+				255);
+			break;
+		}
+		break;
+	case REQ_RESUME:
+		*out_step = JS_STEP_CONTINUE;
+		resuming = true;
+		break;
+	case REQ_STEPINTO:
+		*out_step = JS_STEP_IN;
+		resuming = true;
+		break;
+	case REQ_STEPOUT:
+		*out_step = JS_STEP_OUT;
+		resuming = true;
+		break;
+	case REQ_STEPOVER:
+		*out_step = JS_STEP_OVER;
+		resuming = true;
+		break;
+	}
+
+finished:
+	dmessage_send(reply, s_socket);
+	dmessage_free(reply);
+	dmessage_free(request);
+	return resuming;
+
+on_error:
+	dmessage_free(request);
+	socket_unref(s_socket);
+	s_socket = NULL;
+	return false;
+}
+
 static js_step_t
 on_breakpoint_hit(void)
 {
@@ -328,6 +424,7 @@ on_breakpoint_hit(void)
 	const char*   filename;
 	int           line;
 	ki_message_t* message;
+	js_step_t     step_op;
 
 	filename = jsal_get_string(0);
 	line = jsal_get_int(1) + 1;
@@ -342,6 +439,11 @@ on_breakpoint_hit(void)
 	dmessage_send(message, s_socket);
 	dmessage_free(message);
 
+	while (!process_message(&step_op)) {
+		if (s_socket == NULL)
+			return JS_STEP_CONTINUE;
+	}
+
 	message = dmessage_new(DMESSAGE_NFY);
 	dmessage_add_int(message, NFY_STATUS);
 	dmessage_add_int(message, 1);
@@ -351,5 +453,5 @@ on_breakpoint_hit(void)
 	dmessage_send(message, s_socket);
 	dmessage_free(message);
 
-	return JS_STEP_CONTINUE;
+	return step_op;
 }
