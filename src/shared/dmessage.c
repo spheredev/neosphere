@@ -237,17 +237,20 @@ dmessage_recv(socket_t* socket)
 
 	obj = calloc(1, sizeof(dmessage_t));
 	obj->dvalues = vector_new(sizeof(dvalue_t*));
-	if (!(dvalue = dvalue_recv(socket))) goto lost_dvalue;
-	obj->tag = dvalue_tag(dvalue) == DVALUE_REQ ? MESSAGE_REQ
-		: dvalue_tag(dvalue) == DVALUE_REP ? MESSAGE_REP
-		: dvalue_tag(dvalue) == DVALUE_ERR ? MESSAGE_ERR
-		: dvalue_tag(dvalue) == DVALUE_NFY ? MESSAGE_NFY
-		: MESSAGE_UNKNOWN;
+	if (!(dvalue = dvalue_recv(socket)))
+		goto lost_dvalue;
+	obj->tag = dvalue_tag(dvalue) == DVALUE_REQ ? DMESSAGE_REQ
+		: dvalue_tag(dvalue) == DVALUE_REP ? DMESSAGE_REP
+		: dvalue_tag(dvalue) == DVALUE_ERR ? DMESSAGE_ERR
+		: dvalue_tag(dvalue) == DVALUE_NFY ? DMESSAGE_NFY
+		: DMESSAGE_UNKNOWN;
 	dvalue_free(dvalue);
-	if (!(dvalue = dvalue_recv(socket))) goto lost_dvalue;
+	if (!(dvalue = dvalue_recv(socket)))
+		goto lost_dvalue;
 	while (dvalue_tag(dvalue) != DVALUE_EOM) {
 		vector_push(obj->dvalues, &dvalue);
-		if (!(dvalue = dvalue_recv(socket))) goto lost_dvalue;
+		if (!(dvalue = dvalue_recv(socket)))
+			goto lost_dvalue;
 	}
 	dvalue_free(dvalue);
 	return obj;
@@ -272,10 +275,10 @@ dmessage_send(const dmessage_t* o, socket_t* socket)
 	iter_t iter;
 	dvalue_t* *p_dvalue;
 
-	lead_tag = o->tag == MESSAGE_REQ ? DVALUE_REQ
-		: o->tag == MESSAGE_REP ? DVALUE_REP
-		: o->tag == MESSAGE_ERR ? DVALUE_ERR
-		: o->tag == MESSAGE_NFY ? DVALUE_NFY
+	lead_tag = o->tag == DMESSAGE_REQ ? DVALUE_REQ
+		: o->tag == DMESSAGE_REP ? DVALUE_REP
+		: o->tag == DMESSAGE_ERR ? DVALUE_ERR
+		: o->tag == DMESSAGE_NFY ? DVALUE_NFY
 		: DVALUE_EOM;
 	dvalue = dvalue_new(lead_tag);
 	dvalue_send(dvalue, socket);

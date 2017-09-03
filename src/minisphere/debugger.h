@@ -30,20 +30,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__DEBUGGER_H__INCLUDED
-#define MINISPHERE__DEBUGGER_H__INCLUDED
+#ifndef SPHERE__DEBUGGER_H__INCLUDED
+#define SPHERE__DEBUGGER_H__INCLUDED
 
-typedef
-enum print_op
-{
-	PRINT_NORMAL,
-	PRINT_ASSERT,
-	PRINT_DEBUG,
-	PRINT_ERROR,
-	PRINT_INFO,
-	PRINT_TRACE,
-	PRINT_WARN,
-} print_op_t;
+#include "dmessage.h"
 
 void        debugger_init          (bool want_attach, bool allow_remote);
 void        debugger_uninit        (void);
@@ -58,4 +48,4 @@ void        debugger_cache_source  (const char* name, const lstring_t* text);
 void        debugger_detach        (void);
 void        debugger_log           (const char* text, print_op_t op, bool use_console);
 
-#endif // MINISPHERE__DEBUGGER_H__INCLUDED
+#endif // SPHERE__DEBUGGER_H__INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef CELL__BUILD_H__INCLUDED
-#define CELL__BUILD_H__INCLUDED
+#ifndef SPHERE__BUILD_H__INCLUDED
+#define SPHERE__BUILD_H__INCLUDED
 
 typedef struct build build_t;
 
@@ -42,4 +42,4 @@ bool     build_eval    (build_t* build, const char* filename);
 bool     build_package (build_t* build, const char* filename);
 bool     build_run     (build_t* build, bool want_debug, bool rebuild_all);
 
-#endif // CELL__BUILD_H__INCLUDED
+#endif // SPHERE__BUILD_H__INCLUDED

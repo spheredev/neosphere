@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef CELL__CELL_H__INCLUDED
-#define CELL__CELL_H__INCLUDED
+#ifndef SPHERE__CELL_H__INCLUDED
+#define SPHERE__CELL_H__INCLUDED
 
 #include "posix.h"
 
@@ -68,4 +68,4 @@
 #define no_return void
 #endif
 
-#endif // CELL__CELL_H__INCLUDED
+#endif // SPHERE__CELL_H__INCLUDED

@@ -298,7 +298,7 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("%s %s Sphere JavaScript debugger (%s)\n", DEBUGGER_NAME, VERSION_NAME,
+	printf("%s %s Sphere JavaScript debugger (%s)\n", SPHERE_DEBUGGER_NAME, SPHERE_VERSION,
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("the powerful symbolic JS debugger for Sphere\n");

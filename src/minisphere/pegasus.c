@@ -1309,7 +1309,7 @@ js_Sphere_get_Game(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Sphere_get_Platform(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	jsal_push_sprintf("%s %s", ENGINE_NAME, VERSION_NAME);
+	jsal_push_sprintf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 	return true;
 }
 
@@ -3241,7 +3241,7 @@ js_new_Server(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (max_backlog <= 0)
 		jsal_error(JS_RANGE_ERROR, "invalid backlog size", max_backlog);
 
-	if (!(server = server_new(NULL, port, 1024, max_backlog)))
+	if (!(server = server_new(NULL, port, 1024, max_backlog, false)))
 		jsal_error(JS_ERROR, "couldn't create server");
 	jsal_push_class_obj("Server", server);
 	return true;
@@ -3510,7 +3510,7 @@ js_new_Socket(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		port = jsal_require_int(1);
 	}
 
-	if (!(socket = socket_new(1024)))
+	if (!(socket = socket_new(1024, false)))
 		jsal_error(JS_ERROR, "couldn't create TCP socket");
 	if (hostname != NULL && !socket_connect(socket, hostname, port))
 		jsal_error(JS_ERROR, "couldn't connect to '%s'", hostname);

@@ -1139,7 +1139,7 @@ js_Sphere_get_Game(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Sphere_get_Platform(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	jsal_push_sprintf("%s %s", COMPILER_NAME, VERSION_NAME);
+	jsal_push_sprintf("%s %s", SPHERE_COMPILER_NAME, SPHERE_VERSION);
 	return true;
 }
 

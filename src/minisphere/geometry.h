@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__GEOMETRY_H__INCLUDED
-#define MINISPHERE__GEOMETRY_H__INCLUDED
+#ifndef SPHERE__GEOMETRY_H__INCLUDED
+#define SPHERE__GEOMETRY_H__INCLUDED
 
 typedef
 struct point2
@@ -87,4 +87,4 @@ rect_t       translate_rect       (rect_t rect, int x_offset, int y_offset);
 float_rect_t translate_float_rect (float_rect_t rect, float x_offset, float y_offset);
 rect_t       zoom_rect            (rect_t rect, double scale_x, double scale_y);
 
-#endif // MINISPHERE__GEOMETRY_H__INCLUDED
+#endif // SPHERE__GEOMETRY_H__INCLUDED

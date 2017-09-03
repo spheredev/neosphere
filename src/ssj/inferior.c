@@ -96,7 +96,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	obj = calloc(1, sizeof(inferior_t));
 	printf("connecting to %s:%d... ", hostname, port);
 	fflush(stdout);
-	obj->socket = socket_new(1024);
+	obj->socket = socket_new(1024, true);
 	if (!socket_connect(obj->socket, hostname, port))
 		goto on_error;
 	timeout = clock() + 60 * CLOCKS_PER_SEC;
@@ -112,7 +112,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 		goto on_error;
 
 	// set watermark (shown on bottom left)
-	req = dmessage_new(MESSAGE_REQ);
+	req = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(req, REQ_APPREQUEST);
 	dmessage_add_int(req, APPREQ_WATERMARK);
 	dmessage_add_string(req, "ssj");
@@ -123,7 +123,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	dmessage_free(rep);
 
 	printf("querying target... ");
-	req = dmessage_new(MESSAGE_REQ);
+	req = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(req, REQ_APPREQUEST);
 	dmessage_add_int(req, APPREQ_GAME_INFO);
 	rep = inferior_request(obj, req);
@@ -223,7 +223,7 @@ inferior_get_calls(inferior_t* obj)
 	int i;
 
 	if (obj->calls == NULL) {
-		msg = dmessage_new(MESSAGE_REQ);
+		msg = dmessage_new(DMESSAGE_REQ);
 		dmessage_add_int(msg, REQ_GETCALLSTACK);
 		if (!(msg = inferior_request(obj, msg)))
 			return NULL;
@@ -260,7 +260,7 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 	const dvalue_t* value;
 	objview_t*      view;
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_GETOBJPROPDESCRANGE);
 	dmessage_add_heapptr(msg, heapptr);
 	dmessage_add_int(msg, 0);
@@ -315,13 +315,13 @@ inferior_get_source(inferior_t* obj, const char* filename)
 			return obj->sources[i].source;
 	}
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_APPREQUEST);
 	dmessage_add_int(msg, APPREQ_SOURCE);
 	dmessage_add_string(msg, filename);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
-	if (dmessage_tag(msg) == MESSAGE_ERR)
+	if (dmessage_tag(msg) == DMESSAGE_ERR)
 		goto on_error;
 	text = dmessage_get_string(msg, 0);
 	source = source_new(text);
@@ -349,7 +349,7 @@ inferior_get_vars(inferior_t* obj, int frame)
 
 	int i;
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_GETLOCALS);
 	dmessage_add_int(msg, -frame - 1);
 	if (!(msg = inferior_request(obj, msg)))
@@ -370,13 +370,13 @@ inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
 	int        handle;
 	dmessage_t* msg;
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_ADDBREAK);
 	dmessage_add_string(msg, filename);
 	dmessage_add_int(msg, linenum);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
-	if (dmessage_tag(msg) == MESSAGE_ERR)
+	if (dmessage_tag(msg) == DMESSAGE_ERR)
 		goto on_error;
 	handle = dmessage_get_int(msg, 0);
 	dmessage_free(msg);
@@ -392,12 +392,12 @@ inferior_clear_breakpoint(inferior_t* obj, int handle)
 {
 	dmessage_t* msg;
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_DELBREAK);
 	dmessage_add_int(msg, handle);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
-	if (dmessage_tag(msg) == MESSAGE_ERR)
+	if (dmessage_tag(msg) == DMESSAGE_ERR)
 		goto on_error;
 	dmessage_free(msg);
 	return true;
@@ -412,7 +412,7 @@ inferior_detach(inferior_t* obj)
 {
 	dmessage_t* msg;
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_DETACH);
 	if (!(msg = inferior_request(obj, msg)))
 		return;
@@ -427,7 +427,7 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 	dvalue_t*  dvalue = NULL;
 	dmessage_t* msg;
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_EVAL);
 	if (obj->protocol == 2) {
 		dmessage_add_int(msg, -(1 + frame));
@@ -449,7 +449,7 @@ inferior_pause(inferior_t* obj)
 {
 	dmessage_t* msg;
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_PAUSE);
 	if (!(msg = inferior_request(obj, msg)))
 		return false;
@@ -467,9 +467,9 @@ inferior_request(inferior_t* obj, dmessage_t* msg)
 		dmessage_free(response);
 		if (!(response = dmessage_recv(obj->socket)))
 			goto lost_connection;
-		if (dmessage_tag(response) == MESSAGE_NFY)
+		if (dmessage_tag(response) == DMESSAGE_NFY)
 			handle_notify(obj, response);
-	} while (dmessage_tag(response) == MESSAGE_NFY);
+	} while (dmessage_tag(response) == DMESSAGE_NFY);
 	dmessage_free(msg);
 	return response;
 
@@ -485,7 +485,7 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 {
 	dmessage_t* msg;
 
-	msg = dmessage_new(MESSAGE_REQ);
+	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg,
 		op == OP_STEP_OVER ? REQ_STEPOVER
 		: op == OP_STEP_IN ? REQ_STEPINTO
@@ -553,7 +553,7 @@ handle_notify(inferior_t* obj, const dmessage_t* msg)
 	int           status_type;
 
 	switch (dmessage_tag(msg)) {
-	case MESSAGE_NFY:
+	case DMESSAGE_NFY:
 		switch (dmessage_get_int(msg, 0)) {
 		case NFY_APPNOTIFY:
 			switch (dmessage_get_int(msg, 1)) {

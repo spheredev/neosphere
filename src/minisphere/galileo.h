@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__GALILEO_H__INCLUDED
-#define MINISPHERE__GALILEO_H__INCLUDED
+#ifndef SPHERE__GALILEO_H__INCLUDED
+#define SPHERE__GALILEO_H__INCLUDED
 
 typedef struct ibo    ibo_t;
 typedef struct model  model_t;
@@ -119,4 +119,4 @@ int                    vbo_len                (const vbo_t* it);
 void                   vbo_add_vertex         (vbo_t* it, vertex_t vertex);
 bool                   vbo_upload             (vbo_t* it);
 
-#endif // MINISPHERE__GALILEO_H__INCLUDED
+#endif // SPHERE__GALILEO_H__INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__DISPLAY_H__INCLUDED
-#define MINISPHERE__DISPLAY_H__INCLUDED
+#ifndef SPHERE__DISPLAY_H__INCLUDED
+#define SPHERE__DISPLAY_H__INCLUDED
 
 #include "geometry.h"
 #include "image.h"
@@ -62,4 +62,4 @@ void             screen_toggle_fps        (screen_t* it);
 void             screen_toggle_fullscreen (screen_t* it);
 void             screen_unskip_frame      (screen_t* it);
 
-#endif // MINISPHERE__DISPLAY_H__INCLUDED
+#endif // SPHERE__DISPLAY_H__INCLUDED

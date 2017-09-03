@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__IMAGE_H__INCLUDED
-#define MINISPHERE__IMAGE_H__INCLUDED
+#ifndef SPHERE__IMAGE_H__INCLUDED
+#define SPHERE__IMAGE_H__INCLUDED
 
 #include "geometry.h"
 #include "transform.h"
@@ -84,4 +84,4 @@ void            image_set_pixel          (image_t* it, int x, int y, color_t col
 void            image_unlock             (image_t* it, image_lock_t* lock);
 bool            image_write              (image_t* it, file_t* file);
 
-#endif // MINISPHERE__IMAGE_H__INCLUDED
+#endif // SPHERE__IMAGE_H__INCLUDED

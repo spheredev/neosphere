@@ -30,12 +30,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__PEGASUS_H__INCLUDED
-#define MINISPHERE__PEGASUS_H__INCLUDED
+#ifndef SPHERE__PEGASUS_H__INCLUDED
+#define SPHERE__PEGASUS_H__INCLUDED
 
 void initialize_pegasus_api (void);
 bool pegasus_run            (void);
 
 bool jsal_pegasus_eval_module (const char* filename);
 
-#endif // MINISPHERE__PEGASUS_H__INCLUDED
+#endif // SPHERE__PEGASUS_H__INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__LEGACY_H__INCLUDED
-#define MINISPHERE__LEGACY_H__INCLUDED
+#ifndef SPHERE__LEGACY_H__INCLUDED
+#define SPHERE__LEGACY_H__INCLUDED
 
 #include "font.h"
 #include "image.h"
@@ -56,4 +56,4 @@ size_t         socket_v1_peek                  (const socket_v1_t* it);
 size_t         socket_v1_read                  (socket_v1_t* it, void* buffer, size_t num_bytes);
 void           socket_v1_write                 (socket_v1_t* it, const void* data, size_t num_bytes);
 
-#endif // MINISPHERE__LEGACY_H__INCLUDED
+#endif // SPHERE__LEGACY_H__INCLUDED

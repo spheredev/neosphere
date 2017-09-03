@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SSJ__DMESSAGE_H__INCLUDED
-#define SSJ__DMESSAGE_H__INCLUDED
+#ifndef SPHERE__DMESSAGE_H__INCLUDED
+#define SPHERE__DMESSAGE_H__INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -68,12 +68,24 @@ enum dvalue_tag
 typedef
 enum dmessage_tag
 {
-	MESSAGE_UNKNOWN,
-	MESSAGE_REQ,
-	MESSAGE_REP,
-	MESSAGE_ERR,
-	MESSAGE_NFY,
+	DMESSAGE_UNKNOWN,
+	DMESSAGE_REQ,
+	DMESSAGE_REP,
+	DMESSAGE_ERR,
+	DMESSAGE_NFY,
 } dmessage_tag_t;
+
+typedef
+enum print_op
+{
+	PRINT_NORMAL,
+	PRINT_ASSERT,
+	PRINT_DEBUG,
+	PRINT_ERROR,
+	PRINT_INFO,
+	PRINT_TRACE,
+	PRINT_WARN,
+} print_op_t;
 
 enum req_command
 {
@@ -119,17 +131,6 @@ enum err_command
 	ERR_TOO_MANY = 0x02,
 	ERR_NOT_FOUND = 0x03,
 	ERR_APP_ERROR = 0x04,
-};
-
-enum print_op
-{
-	PRINT_NORMAL,
-	PRINT_ASSERT,
-	PRINT_DEBUG,
-	PRINT_ERROR,
-	PRINT_INFO,
-	PRINT_TRACE,
-	PRINT_WARN,
 };
 
 enum appnotify
@@ -184,4 +185,4 @@ void            dvalue_print          (const dvalue_t* it, bool is_verbose);
 dvalue_t*       dvalue_recv           (socket_t* socket);
 bool            dvalue_send           (const dvalue_t* it, socket_t* socket);
 
-#endif // SSJ__DMESSAGE_H__INCLUDED
+#endif // SPHERE__DMESSAGE_H__INCLUDED

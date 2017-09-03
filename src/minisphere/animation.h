@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__ANIMATION_H__INCLUDED
-#define MINISPHERE__ANIMATION_H__INCLUDED
+#ifndef SPHERE__ANIMATION_H__INCLUDED
+#define SPHERE__ANIMATION_H__INCLUDED
 
 typedef struct animation animation_t;
 
@@ -45,4 +45,4 @@ int          animation_num_frames (const animation_t* anim);
 int          animation_width      (const animation_t* anim);
 bool         animation_update     (animation_t* anim);
 
-#endif // MINISPHERE__ANIMATION_H__INCLUDED
+#endif // SPHERE__ANIMATION_H__INCLUDED

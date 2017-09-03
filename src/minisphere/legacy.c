@@ -143,7 +143,7 @@ socket_v1_new_client(const char* hostname, int port)
 	socket_t*    client;
 	socket_v1_t* socket;
 
-	if (!(client = socket_new(4096)))
+	if (!(client = socket_new(4096, false)))
 		goto on_error;
 	if (!socket_connect(client, hostname, port))
 		goto on_error;
@@ -163,7 +163,7 @@ socket_v1_new_server(int port)
 	server_t*     server;
 	socket_v1_t* socket;
 
-	server = server_new(NULL, port, 4096, 16);
+	server = server_new(NULL, port, 4096, 16, false);
 
 	socket = calloc(1, sizeof(socket_v1_t));
 	socket->server = server;

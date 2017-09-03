@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__TRANSFORM_H__INCLUDED
-#define MINISPHERE__TRANSFORM_H__INCLUDED
+#ifndef SPHERE__TRANSFORM_H__INCLUDED
+#define SPHERE__TRANSFORM_H__INCLUDED
 
 typedef struct transform transform_t;
 
@@ -49,4 +49,4 @@ void                     transform_rotate       (transform_t* it, float theta, f
 void                     transform_scale        (transform_t* it, float sx, float sy, float sz);
 void                     transform_translate    (transform_t* it, float dx, float dy, float dz);
 
-#endif // MINISPHERE__TRANSFORM_H__INCLUDED
+#endif // SPHERE__TRANSFORM_H__INCLUDED

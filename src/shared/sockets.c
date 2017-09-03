@@ -48,6 +48,7 @@ struct server
 	int          num_backlog;
 	dyad_Stream* stream4;
 	dyad_Stream* stream6;
+	bool         sync_mode;
 	dyad_Stream* *backlog;
 };
 
@@ -56,9 +57,11 @@ struct socket
 	unsigned int refcount;
 	unsigned int id;
 	size_t       buffer_size;
+	bool         closed;
 	uint8_t*     recv_buffer;
 	size_t       recv_size;
 	dyad_Stream* stream;
+	bool         sync_mode;
 };
 
 static void on_dyad_accept  (dyad_Event* e);
@@ -98,7 +101,7 @@ sockets_update(void)
 }
 
 socket_t*
-socket_new(size_t buffer_size)
+socket_new(size_t buffer_size, bool sync_mode)
 {
 	socket_t* socket;
 
@@ -106,6 +109,7 @@ socket_new(size_t buffer_size)
 
 	socket = calloc(1, sizeof(socket_t));
 	socket->buffer_size = buffer_size;
+	socket->sync_mode = sync_mode;
 	if (!(socket->recv_buffer = malloc(buffer_size)))
 		goto on_error;
 	socket->id = s_next_socket_id++;
@@ -197,6 +201,13 @@ socket_peek(const socket_t* it)
 size_t
 socket_read(socket_t* it, void* buffer, size_t num_bytes)
 {
+	if (it->sync_mode) {
+		// in sync mode, block until all bytes are available.
+		while (it->recv_size < num_bytes && !it->closed)
+			sockets_update();
+		if (it->recv_size < num_bytes)
+			return 0;
+	}
 	num_bytes = num_bytes <= it->recv_size ? num_bytes : it->recv_size;
 	console_log(4, "reading %zd bytes from TCP socket #%u", num_bytes, it->id);
 	memcpy(buffer, it->recv_buffer, num_bytes);
@@ -205,15 +216,21 @@ socket_read(socket_t* it, void* buffer, size_t num_bytes)
 	return num_bytes;
 }
 
-void
+size_t
 socket_write(socket_t* it, const void* data, size_t num_bytes)
 {
+	if (it->closed)
+		return 0;
+
 	console_log(4, "writing %zd bytes to TCP socket #%u", num_bytes, it->id);
 	dyad_write(it->stream, data, (int)num_bytes);
+	if (num_bytes > 0)
+		sockets_update();
+	return num_bytes;
 }
 
 server_t*
-server_new(const char* hostname, int port, size_t buffer_size, int max_backlog)
+server_new(const char* hostname, int port, size_t buffer_size, int max_backlog, bool sync_mode)
 {
 	server_t* server = NULL;
 
@@ -222,6 +239,7 @@ server_new(const char* hostname, int port, size_t buffer_size, int max_backlog)
 		console_log(3, "    backlog size: %d", max_backlog);
 
 	server = calloc(1, sizeof(server_t));
+	server->sync_mode = sync_mode;
 	server->buffer_size = buffer_size;
 	server->backlog = malloc(max_backlog * sizeof(dyad_Stream*));
 	server->max_backlog = max_backlog;
@@ -299,6 +317,7 @@ server_accept(server_t* it)
 
 	// construct a socket object for the new connection
 	client = calloc(1, sizeof(socket_t));
+	client->sync_mode = it->sync_mode;
 	client->buffer_size = it->buffer_size;
 	client->recv_buffer = malloc(it->buffer_size);
 	client->stream = it->backlog[0];
@@ -333,17 +352,29 @@ on_dyad_accept(dyad_Event* e)
 }
 
 static void
+on_dyad_close(dyad_Event* e)
+{
+	socket_t* socket;
+
+	socket = e->udata;
+
+	socket->closed = true;
+}
+
+static void
 on_dyad_receive(dyad_Event* e)
 {
 	size_t    new_size;
-	socket_t* client = e->udata;
+	socket_t* socket;
+	
+	socket = e->udata;
 
 	// buffer any data received until read() is called
-	new_size = client->recv_size + e->size;
-	if (new_size > client->buffer_size) {
-		client->buffer_size = new_size * 2;
-		client->recv_buffer = realloc(client->recv_buffer, client->buffer_size);
+	new_size = socket->recv_size + e->size;
+	if (new_size > socket->buffer_size) {
+		socket->buffer_size = new_size * 2;
+		socket->recv_buffer = realloc(socket->recv_buffer, socket->buffer_size);
 	}
-	memcpy(client->recv_buffer + client->recv_size, e->data, e->size);
-	client->recv_size += e->size;
+	memcpy(socket->recv_buffer + socket->recv_size, e->data, e->size);
+	socket->recv_size += e->size;
 }

@@ -184,7 +184,7 @@ main(int argc, char* argv[])
 	}
 	else {
 		// no game path provided and no startup game, let user find one
-		dialog_name = lstr_newf("%s - Select a Sphere game to launch", ENGINE_NAME);
+		dialog_name = lstr_newf("%s - Select a Sphere game to launch", SPHERE_ENGINE_NAME);
 		file_dlg = al_create_native_file_dialog(path_cstr(games_path),
 			lstr_cstr(dialog_name),
 			"game.sgm;game.s2gm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
@@ -663,7 +663,7 @@ print_banner(bool want_copyright, bool want_deps)
 	char*    al_version;
 	uint32_t al_version_id;
 
-	printf("%s %s JS game engine (%s)\n", ENGINE_NAME, VERSION_NAME, sizeof(void*) == 4 ? "x86" : "x64");
+	printf("%s %s JS game engine (%s)\n", SPHERE_ENGINE_NAME, SPHERE_VERSION, sizeof(void*) == 4 ? "x86" : "x64");
 	if (want_copyright) {
 		printf("a lightweight JavaScript-powered game engine\n");
 		printf("(c) 2015-2017 Fat Cerberus\n");

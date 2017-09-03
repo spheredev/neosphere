@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__FILE_H__INCLUDED
-#define MINISPHERE__FILE_H__INCLUDED
+#ifndef SPHERE__FILE_H__INCLUDED
+#define SPHERE__FILE_H__INCLUDED
 
 #include "game.h"
 
@@ -49,4 +49,4 @@ void         kev_write_bool   (kev_file_t* it, const char* key, bool value);
 void         kev_write_float  (kev_file_t* it, const char* key, double value);
 void         kev_write_string (kev_file_t* it, const char* key, const char* value);
 
-#endif // MINISPHERE__FILE_H__INCLUDED
+#endif // SPHERE__FILE_H__INCLUDED

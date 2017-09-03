@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SSJ__PARSER_H__INCLUDED
-#define SSJ__PARSER_H__INCLUDED
+#ifndef SPHERE__PARSER_H__INCLUDED
+#define SPHERE__PARSER_H__INCLUDED
 
 typedef struct command command_t;
 
@@ -51,4 +51,4 @@ int         command_get_int    (const command_t* obj, int index);
 double      command_get_float  (const command_t* obj, int index);
 const char* command_get_string (const command_t* obj, int index);
 
-#endif // SSJ__PARSER_H__INCLUDED
+#endif // SPHERE__PARSER_H__INCLUDED

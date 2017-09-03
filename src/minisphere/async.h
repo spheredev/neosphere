@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__ASYNC_H__INCLUDED
-#define MINISPHERE__ASYNC_H__INCLUDED
+#ifndef SPHERE__ASYNC_H__INCLUDED
+#define SPHERE__ASYNC_H__INCLUDED
 
 #include "script.h"
 
@@ -55,4 +55,4 @@ int64_t async_defer      (script_t* script, uint32_t timeout, async_hint_t hint)
 int64_t async_recur      (script_t* script, double priority, async_hint_t hint);
 void    async_run_jobs   (async_hint_t hint);
 
-#endif // MINISPHERE__ASYNC_H__INCLUDED
+#endif // SPHERE__ASYNC_H__INCLUDED

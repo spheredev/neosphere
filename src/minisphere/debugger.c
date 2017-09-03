@@ -33,6 +33,7 @@
 #include "minisphere.h"
 #include "debugger.h"
 
+#include "dmessage.h"
 #include "jsal.h"
 #include "sockets.h"
 
@@ -95,7 +96,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	// for the duration of the session, allowing a debugger to be attached at any time.
 	console_log(1, "listening for SSj on TCP port %d", TCP_DEBUG_PORT);
 	hostname = allow_remote ? NULL : "127.0.0.1";
-	s_server = server_new(hostname, TCP_DEBUG_PORT, 1024, 1);
+	s_server = server_new(hostname, TCP_DEBUG_PORT, 1024, 1, true);
 
 	// if the engine was started in debug mode, wait for a debugger to connect before
 	// beginning execution.
@@ -139,7 +140,7 @@ debugger_update(void)
 		}
 		else {
 			console_log(0, "connected to SSj at %s", socket_hostname(client));
-			handshake = strnewf("SSj 1 v%s %s\n", VERSION_NAME, ENGINE_NAME);
+			handshake = strnewf("2 20000 v2.1.1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 			socket_write(client, handshake, strlen(handshake));
 			free(handshake);
 			s_socket = client;
@@ -312,13 +313,32 @@ do_detach_debugger(bool is_shutdown)
 static js_step_t
 on_breakpoint_hit(void)
 {
-	const char* filename;
 	int         column;
+	const char* filename;
 	int         line;
+	dmessage_t* message;
 
 	filename = jsal_get_string(0);
 	line = jsal_get_int(1) + 1;
 	column = jsal_get_int(2) + 1;
-	
+
+	message = dmessage_new(DMESSAGE_NFY);
+	dmessage_add_int(message, NFY_STATUS);
+	dmessage_add_int(message, 0);
+	dmessage_add_string(message, filename);
+	dmessage_add_int(message, line);
+	dmessage_add_int(message, column);
+	dmessage_send(message, s_socket);
+	dmessage_free(message);
+
+	message = dmessage_new(DMESSAGE_NFY);
+	dmessage_add_int(message, NFY_STATUS);
+	dmessage_add_int(message, 1);
+	dmessage_add_string(message, filename);
+	dmessage_add_int(message, line);
+	dmessage_add_int(message, column);
+	dmessage_send(message, s_socket);
+	dmessage_free(message);
+
 	return JS_STEP_CONTINUE;
 }

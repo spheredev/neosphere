@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SSJ__BACKTRACE_H__INCLUDED
-#define SSJ__BACKTRACE_H__INCLUDED
+#ifndef SPHERE__BACKTRACE_H__INCLUDED
+#define SPHERE__BACKTRACE_H__INCLUDED
 
 typedef struct backtrace backtrace_t;
 
@@ -44,4 +44,4 @@ int          backtrace_get_linenum   (const backtrace_t* obj, int index);
 void         backtrace_add           (backtrace_t* obj, const char* call_name, const char* filename, int line_no);
 void         backtrace_print         (const backtrace_t* obj, int active_frame, bool show_all);
 
-#endif // SSJ__BACKTRACE_H__INCLUDED
+#endif // SPHERE__BACKTRACE_H__INCLUDED

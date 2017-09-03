@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__COLOR_H__INCLUDED
-#define MINISPHERE__COLOR_H__INCLUDED
+#ifndef SPHERE__COLOR_H__INCLUDED
+#define SPHERE__COLOR_H__INCLUDED
 
 typedef
 struct color
@@ -57,4 +57,4 @@ color_t       color_transform  (color_t color, colormatrix_t matrix);
 colormatrix_t colormatrix_new  (int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int bn, int br, int bg, int bb);
 colormatrix_t colormatrix_lerp (colormatrix_t mat1, colormatrix_t mat2, int w1, int w2);
 
-#endif // MINISPHERE__COLOR_H__INCLUDED
+#endif // SPHERE__COLOR_H__INCLUDED

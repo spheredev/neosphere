@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__ATLAS_H__INCLUDED
-#define MINISPHERE__ATLAS_H__INCLUDED
+#ifndef SPHERE__ATLAS_H__INCLUDED
+#define SPHERE__ATLAS_H__INCLUDED
 
 #include "image.h"
 
@@ -45,4 +45,4 @@ image_t* atlas_load   (atlas_t* atlas, file_t* file, int index, int width, int h
 void     atlas_lock   (atlas_t* atlas);
 void     atlas_unlock (atlas_t* atlas);
 
-#endif // MINISPHERE__ATLAS_H__INCLUDED
+#endif // SPHERE__ATLAS_H__INCLUDED

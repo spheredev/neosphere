@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__AUDIO_H__INCLUDED
-#define MINISPHERE__AUDIO_H__INCLUDED
+#ifndef SPHERE__AUDIO_H__INCLUDED
+#define SPHERE__AUDIO_H__INCLUDED
 
 typedef struct mixer  mixer_t;
 typedef struct sample sample_t;
@@ -91,4 +91,4 @@ void        stream_pause      (stream_t* stream, bool paused);
 void        stream_play       (stream_t* stream, mixer_t* mixer);
 void        stream_stop       (stream_t* stream);
 
-#endif // MINISPHERE__AUDIO_H__INCLUDED
+#endif // SPHERE__AUDIO_H__INCLUDED

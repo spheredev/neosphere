@@ -256,7 +256,7 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("%s %s Sphere packaging compiler (%s)\n", COMPILER_NAME, VERSION_NAME,
+	printf("%s %s Sphere packaging compiler (%s)\n", SPHERE_COMPILER_NAME, SPHERE_VERSION,
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("the JavaScript-powered build engine for Sphere\n");

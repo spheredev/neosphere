@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__MAP_ENGINE_H__INCLUDED
-#define MINISPHERE__MAP_ENGINE_H__INCLUDED
+#ifndef SPHERE__MAP_ENGINE_H__INCLUDED
+#define SPHERE__MAP_ENGINE_H__INCLUDED
 
 #include "color.h"
 #include "geometry.h"
@@ -235,4 +235,4 @@ void             zone_set_script              (int zone_index, script_t* script)
 void             zone_set_steps               (int zone_index, int steps);
 void             zone_activate                (int zone_index);
 
-#endif // MINISPHERE__MAP_ENGINE_H__INCLUDED
+#endif // SPHERE__MAP_ENGINE_H__INCLUDED

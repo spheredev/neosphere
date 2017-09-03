@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__SCRIPT_H__INCLUDED
-#define MINISPHERE__SCRIPT_H__INCLUDED
+#ifndef SPHERE__SCRIPT_H__INCLUDED
+#define SPHERE__SCRIPT_H__INCLUDED
 
 typedef struct script script_t;
 
@@ -44,4 +44,4 @@ script_t* script_ref      (script_t* script);
 void      script_unref    (script_t* script);
 void      script_run      (script_t* script, bool allow_reentry);
 
-#endif // MINISPHERE__SCRIPT_H__INCLUDED
+#endif // SPHERE__SCRIPT_H__INCLUDED

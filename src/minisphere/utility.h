@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__UTILITY_H__INCLUDED
-#define MINISPHERE__UTILITY_H__INCLUDED
+#ifndef SPHERE__UTILITY_H__INCLUDED
+#define SPHERE__UTILITY_H__INCLUDED
 
 const path_t* assets_path (void);
 const path_t* engine_path (void);
@@ -48,4 +48,4 @@ lstring_t*  read_lstring_raw       (file_t* file, size_t length, bool trim_null)
 char*       strnewf                (const char* fmt, ...);
 bool        write_lstring          (file_t* file, const lstring_t* string, bool include_nul);
 
-#endif // MINISPHERE__UTILITY_H__INCLUDED
+#endif // SPHERE__UTILITY_H__INCLUDED

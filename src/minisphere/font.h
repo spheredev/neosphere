@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__FONT_H__INCLUDED
-#define MINISPHERE__FONT_H__INCLUDED
+#ifndef SPHERE__FONT_H__INCLUDED
+#define SPHERE__FONT_H__INCLUDED
 
 #include "color.h"
 #include "image.h"
@@ -63,4 +63,4 @@ void        wraptext_free    (wraptext_t* wraptext);
 int         wraptext_len     (const wraptext_t* wraptext);
 const char* wraptext_line    (const wraptext_t* wraptext, int line_index);
 
-#endif // MINISPHERE__FONT_H__INCLUDED
+#endif // SPHERE__FONT_H__INCLUDED

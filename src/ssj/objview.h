@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SSJ__OBJECTVIEW_H__INCLUDED
-#define SSJ__OBJECTVIEW_H__INCLUDED
+#ifndef SPHERE__OBJECTVIEW_H__INCLUDED
+#define SPHERE__OBJECTVIEW_H__INCLUDED
 
 #include "dmessage.h"
 
@@ -64,4 +64,4 @@ const dvalue_t* objview_get_value    (const objview_t* obj, int index);
 void            objview_add_accessor (objview_t* obj, const char* key, const dvalue_t* getter, const dvalue_t* setter, unsigned int flags);
 void            objview_add_value    (objview_t* obj, const char* key, const dvalue_t* value, unsigned int flags);
 
-#endif // SSJ__OBJECTVIEW_H__INCLUDED
+#endif // SPHERE__OBJECTVIEW_H__INCLUDED

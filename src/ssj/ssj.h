@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SSJ__SSJ_H__INCLUDED
-#define SSJ__SSJ_H__INCLUDED
+#ifndef SPHERE__SSJ_H__INCLUDED
+#define SPHERE__SSJ_H__INCLUDED
 
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES
@@ -65,4 +65,4 @@
 bool  launch_minisphere (path_t* game_path);
 char* strnewf           (const char* fmt, ...);
 
-#endif // SSJ__SSJ_H__INCLUDED
+#endif // SPHERE__SSJ_H__INCLUDED

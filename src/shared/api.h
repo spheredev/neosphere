@@ -1,5 +1,5 @@
-#ifndef MINISPHERE__API_H__INCLUDED
-#define MINISPHERE__API_H__INCLUDED
+#ifndef SPHERE__API_H__INCLUDED
+#define SPHERE__API_H__INCLUDED
 
 #include <stdbool.h>
 
@@ -20,4 +20,4 @@ int   jsal_push_class_prototype (const char* class_name);
 void* jsal_require_class_obj    (int index, const char* class_name);
 void  jsal_set_class_ptr        (int index, void* ptr);
 
-#endif // MINISPHERE__API_H__INCLUDED
+#endif // SPHERE__API_H__INCLUDED

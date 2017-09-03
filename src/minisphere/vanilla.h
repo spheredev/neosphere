@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__VANILLA_H__INCLUDED
-#define MINISPHERE__VANILLA_H__INCLUDED
+#ifndef SPHERE__VANILLA_H__INCLUDED
+#define SPHERE__VANILLA_H__INCLUDED
 
 #include "byte_array.h"
 #include "jsal.h"
@@ -48,4 +48,4 @@ colormatrix_t jsal_require_sphere_colormatrix (int index);
 script_t*     jsal_require_sphere_script      (int index, const char* name);
 spriteset_t*  jsal_require_sphere_spriteset   (int index);
 
-#endif // MINISPHERE__VANILLA_H__INCLUDED
+#endif // SPHERE__VANILLA_H__INCLUDED

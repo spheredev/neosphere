@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SSJ__INFERIOR_H__INCLUDED
-#define SSJ__INFERIOR_H__INCLUDED
+#ifndef SPHERE__INFERIOR_H__INCLUDED
+#define SPHERE__INFERIOR_H__INCLUDED
 
 #include "backtrace.h"
 #include "dmessage.h"
@@ -70,4 +70,4 @@ bool               inferior_pause            (inferior_t* obj);
 dmessage_t*        inferior_request          (inferior_t* obj, dmessage_t* msg);
 bool               inferior_resume           (inferior_t* obj, resume_op_t op);
 
-#endif // SSJ__INFERIOR_H__INCLUDED
+#endif // SPHERE__INFERIOR_H__INCLUDED

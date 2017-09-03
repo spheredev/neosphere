@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef CELL__UTILITY_H__INCLUDED
-#define CELL__UTILITY_H__INCLUDED
+#ifndef SPHERE__UTILITY_H__INCLUDED
+#define SPHERE__UTILITY_H__INCLUDED
 
 #include <stdbool.h>
 #include <stddef.h>

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef MINISPHERE__INPUT_H__INCLUDED
-#define MINISPHERE__INPUT_H__INCLUDED
+#ifndef SPHERE__INPUT_H__INCLUDED
+#define SPHERE__INPUT_H__INCLUDED
 
 #define MAX_JOYSTICKS   16
 #define MAX_JOY_BUTTONS 64
@@ -109,4 +109,4 @@ void  attach_input_display (void);
 void  update_bound_keys    (bool use_map_keys);
 void  update_input         (void);
 
-#endif // MINISPHERE__INPUT_H__INCLUDED
+#endif // SPHERE__INPUT_H__INCLUDED
