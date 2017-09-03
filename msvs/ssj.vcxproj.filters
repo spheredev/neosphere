@@ -60,7 +60,7 @@
     <ClCompile Include="..\src\shared\sockets.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\dmessage.c">
+    <ClCompile Include="..\src\shared\ki.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,7 +119,7 @@
     <ClInclude Include="..\src\shared\posix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\dmessage.h">
+    <ClInclude Include="..\src\shared\ki.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

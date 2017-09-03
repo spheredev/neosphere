@@ -34,7 +34,7 @@
 #define SPHERE__INFERIOR_H__INCLUDED
 
 #include "backtrace.h"
-#include "dmessage.h"
+#include "ki.h"
 #include "objview.h"
 #include "source.h"
 
@@ -65,9 +65,9 @@ objview_t*         inferior_get_vars         (inferior_t* obj, int frame);
 int                inferior_add_breakpoint   (inferior_t* obj, const char* filename, int linenum);
 bool               inferior_clear_breakpoint (inferior_t* obj, int handle);
 void               inferior_detach           (inferior_t* obj);
-dvalue_t*          inferior_eval             (inferior_t* obj, const char* expr, int frame, bool* out_is_error);
+ki_atom_t*         inferior_eval             (inferior_t* obj, const char* expr, int frame, bool* out_is_error);
 bool               inferior_pause            (inferior_t* obj);
-dmessage_t*        inferior_request          (inferior_t* obj, dmessage_t* msg);
+ki_message_t*        inferior_request          (inferior_t* obj, ki_message_t* msg);
 bool               inferior_resume           (inferior_t* obj, resume_op_t op);
 
 #endif // SPHERE__INFERIOR_H__INCLUDED

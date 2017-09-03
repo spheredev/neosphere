@@ -33,7 +33,7 @@
 #ifndef SPHERE__OBJECTVIEW_H__INCLUDED
 #define SPHERE__OBJECTVIEW_H__INCLUDED
 
-#include "dmessage.h"
+#include "ki.h"
 
 typedef struct objview objview_t;
 
@@ -52,16 +52,16 @@ enum prop_flag
 	PROP_CONFIGURABLE = 1 << 2,
 } prop_flag_t;
 
-objview_t*      objview_new          (void);
-void            objview_free         (objview_t* obj);
-int             objview_len          (const objview_t* obj);
-const char*     objview_get_key      (const objview_t* obj, int index);
-prop_tag_t      objview_get_tag      (const objview_t* obj, int index);
-unsigned int    objview_get_flags    (const objview_t* obj, int index);
-const dvalue_t* objview_get_getter   (const objview_t* obj, int index);
-const dvalue_t* objview_get_setter   (const objview_t* obj, int index);
-const dvalue_t* objview_get_value    (const objview_t* obj, int index);
-void            objview_add_accessor (objview_t* obj, const char* key, const dvalue_t* getter, const dvalue_t* setter, unsigned int flags);
-void            objview_add_value    (objview_t* obj, const char* key, const dvalue_t* value, unsigned int flags);
+objview_t*       objview_new          (void);
+void             objview_free         (objview_t* obj);
+int              objview_len          (const objview_t* obj);
+const char*      objview_get_key      (const objview_t* obj, int index);
+prop_tag_t       objview_get_tag      (const objview_t* obj, int index);
+unsigned int     objview_get_flags    (const objview_t* obj, int index);
+const ki_atom_t* objview_get_getter   (const objview_t* obj, int index);
+const ki_atom_t* objview_get_setter   (const objview_t* obj, int index);
+const ki_atom_t* objview_get_value    (const objview_t* obj, int index);
+void             objview_add_accessor (objview_t* obj, const char* key, const ki_atom_t* getter, const ki_atom_t* setter, unsigned int flags);
+void             objview_add_value    (objview_t* obj, const char* key, const ki_atom_t* value, unsigned int flags);
 
 #endif // SPHERE__OBJECTVIEW_H__INCLUDED

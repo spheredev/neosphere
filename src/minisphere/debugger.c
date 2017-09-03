@@ -33,8 +33,8 @@
 #include "minisphere.h"
 #include "debugger.h"
 
-#include "dmessage.h"
 #include "jsal.h"
+#include "ki.h"
 #include "sockets.h"
 
 static int const TCP_DEBUG_PORT = 1208;
@@ -129,9 +129,11 @@ debugger_uninit()
 void
 debugger_update(void)
 {
-	socket_t* client;
-	char*     handshake;
+	socket_t*     client;
+	char*         handshake;
+	ki_message_t* message;
 
+	// watch for incoming SSj client and attach debugger
 	if (client = server_accept(s_server)) {
 		if (s_socket != NULL) {
 			console_log(2, "rejected SSj connection from %s, already attached",
@@ -140,7 +142,7 @@ debugger_update(void)
 		}
 		else {
 			console_log(0, "connected to SSj at %s", socket_hostname(client));
-			handshake = strnewf("2 20000 v2.1.1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
+			handshake = strnewf("SSj/Ki 1 v%s %s\n", SPHERE_VERSION, SPHERE_ENGINE_NAME);
 			socket_write(client, handshake, strlen(handshake));
 			free(handshake);
 			s_socket = client;
@@ -148,6 +150,15 @@ debugger_update(void)
 			s_is_attached = true;
 		}
 	}
+
+	if (s_socket == NULL || socket_peek(s_socket) == 0)
+		return;
+
+	message = dmessage_recv(s_socket);
+	dmessage_free(message);
+	message = dmessage_new(DMESSAGE_REP);
+	dmessage_send(message, s_socket);
+	dmessage_free(message);
 }
 
 bool
@@ -313,10 +324,10 @@ do_detach_debugger(bool is_shutdown)
 static js_step_t
 on_breakpoint_hit(void)
 {
-	int         column;
-	const char* filename;
-	int         line;
-	dmessage_t* message;
+	int           column;
+	const char*   filename;
+	int           line;
+	ki_message_t* message;
 
 	filename = jsal_get_string(0);
 	line = jsal_get_int(1) + 1;

@@ -30,18 +30,18 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__DMESSAGE_H__INCLUDED
-#define SPHERE__DMESSAGE_H__INCLUDED
+#ifndef SPHERE__KI_H__INCLUDED
+#define SPHERE__KI_H__INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
 #include "sockets.h"
 
-typedef struct dmessage dmessage_t;
-typedef struct dvalue   dvalue_t;
+typedef struct ki_message ki_message_t;
+typedef struct ki_atom    ki_atom_t;
 
 typedef
-enum dvalue_tag
+enum ki_tag
 {
 	DVALUE_EOM = 0x00,
 	DVALUE_REQ = 0x01,
@@ -63,7 +63,7 @@ enum dvalue_tag
 	DVALUE_PTR = 0x1C,
 	DVALUE_LIGHTFUNC = 0x1D,
 	DVALUE_HEAPPTR = 0x1E,
-} dvalue_tag_t;
+} ki_tag_t;
 
 typedef
 enum dmessage_tag
@@ -153,36 +153,36 @@ struct remote_ptr {
 	uint8_t   size;
 } remote_ptr_t;
 
-dmessage_t*     dmessage_new          (dmessage_tag_t tag);
-void            dmessage_free         (dmessage_t* it);
-int             dmessage_len          (const dmessage_t* it);
-dmessage_tag_t  dmessage_tag          (const dmessage_t* it);
-dvalue_tag_t    dmessage_get_atom_tag (const dmessage_t* it, int index);
-const dvalue_t* dmessage_get_dvalue   (const dmessage_t* it, int index);
-double          dmessage_get_float    (const dmessage_t* it, int index);
-int32_t         dmessage_get_int      (const dmessage_t* it, int index);
-const char*     dmessage_get_string   (const dmessage_t* it, int index);
-void            dmessage_add_dvalue   (dmessage_t* it, const dvalue_t* dvalue);
-void            dmessage_add_float    (dmessage_t* it, double value);
-void            dmessage_add_heapptr  (dmessage_t* it, remote_ptr_t value);
-void            dmessage_add_int      (dmessage_t* it, int value);
-void            dmessage_add_string   (dmessage_t* it, const char* value);
-dmessage_t*     dmessage_recv         (socket_t* socket);
-bool            dmessage_send         (const dmessage_t* it, socket_t* socket);
-dvalue_t*       dvalue_new            (dvalue_tag_t tag);
-dvalue_t*       dvalue_new_float      (double value);
-dvalue_t*       dvalue_new_heapptr    (remote_ptr_t value);
-dvalue_t*       dvalue_new_int        (int value);
-dvalue_t*       dvalue_new_string     (const char* value);
-dvalue_t*       dvalue_dup            (const dvalue_t* it);
-void            dvalue_free           (dvalue_t* it);
-dvalue_tag_t    dvalue_tag            (const dvalue_t* it);
-const char*     dvalue_as_cstr        (const dvalue_t* it);
-remote_ptr_t    dvalue_as_ptr         (const dvalue_t* it);
-double          dvalue_as_float       (const dvalue_t* it);
-int             dvalue_as_int         (const dvalue_t* it);
-void            dvalue_print          (const dvalue_t* it, bool is_verbose);
-dvalue_t*       dvalue_recv           (socket_t* socket);
-bool            dvalue_send           (const dvalue_t* it, socket_t* socket);
+ki_message_t*    dmessage_new          (dmessage_tag_t tag);
+void             dmessage_free         (ki_message_t* it);
+int              dmessage_len          (const ki_message_t* it);
+dmessage_tag_t   dmessage_tag          (const ki_message_t* it);
+ki_tag_t         dmessage_get_atom_tag (const ki_message_t* it, int index);
+const ki_atom_t* dmessage_get_dvalue   (const ki_message_t* it, int index);
+double           dmessage_get_float    (const ki_message_t* it, int index);
+int32_t          dmessage_get_int      (const ki_message_t* it, int index);
+const char*      dmessage_get_string   (const ki_message_t* it, int index);
+void             dmessage_add_dvalue   (ki_message_t* it, const ki_atom_t* dvalue);
+void             dmessage_add_float    (ki_message_t* it, double value);
+void             dmessage_add_heapptr  (ki_message_t* it, remote_ptr_t value);
+void             dmessage_add_int      (ki_message_t* it, int value);
+void             dmessage_add_string   (ki_message_t* it, const char* value);
+ki_message_t*    dmessage_recv         (socket_t* socket);
+bool             dmessage_send         (const ki_message_t* it, socket_t* socket);
+ki_atom_t*       dvalue_new            (ki_tag_t tag);
+ki_atom_t*       dvalue_new_float      (double value);
+ki_atom_t*       dvalue_new_heapptr    (remote_ptr_t value);
+ki_atom_t*       dvalue_new_int        (int value);
+ki_atom_t*       dvalue_new_string     (const char* value);
+ki_atom_t*       dvalue_dup            (const ki_atom_t* it);
+void             dvalue_free           (ki_atom_t* it);
+ki_tag_t         dvalue_tag            (const ki_atom_t* it);
+const char*      dvalue_as_cstr        (const ki_atom_t* it);
+remote_ptr_t     dvalue_as_ptr         (const ki_atom_t* it);
+double           dvalue_as_float       (const ki_atom_t* it);
+int              dvalue_as_int         (const ki_atom_t* it);
+void             dvalue_print          (const ki_atom_t* it, bool is_verbose);
+ki_atom_t*       dvalue_recv           (socket_t* socket);
+bool             dvalue_send           (const ki_atom_t* it, socket_t* socket);
 
-#endif // SPHERE__DMESSAGE_H__INCLUDED
+#endif // SPHERE__KI_H__INCLUDED

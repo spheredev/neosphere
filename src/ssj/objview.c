@@ -33,16 +33,16 @@
 #include "ssj.h"
 #include "objview.h"
 
-#include "dmessage.h"
+#include "ki.h"
 
 struct entry
 {
 	char*        key;
 	prop_tag_t   tag;
 	unsigned int flags;
-	dvalue_t*    getter;
-	dvalue_t*    setter;
-	dvalue_t*    value;
+	ki_atom_t*   getter;
+	ki_atom_t*   setter;
+	ki_atom_t*   value;
 };
 
 struct objview
@@ -57,7 +57,7 @@ objview_new(void)
 {
 	struct entry* array;
 	int           array_size = 16;
-	objview_t* obj;
+	objview_t*    obj;
 
 	array = malloc(array_size * sizeof(struct entry));
 
@@ -108,28 +108,28 @@ objview_get_key(const objview_t* obj, int index)
 	return obj->props[index].key;
 }
 
-const dvalue_t*
+const ki_atom_t*
 objview_get_getter(const objview_t* obj, int index)
 {
 	return obj->props[index].tag == PROP_ACCESSOR
 		? obj->props[index].getter : NULL;
 }
 
-const dvalue_t*
+const ki_atom_t*
 objview_get_setter(const objview_t* obj, int index)
 {
 	return obj->props[index].tag == PROP_ACCESSOR
 		? obj->props[index].setter : NULL;
 }
 
-const dvalue_t*
+const ki_atom_t*
 objview_get_value(const objview_t* obj, int index)
 {
 	return obj->props[index].tag == PROP_VALUE ? obj->props[index].value : NULL;
 }
 
 void
-objview_add_accessor(objview_t* obj, const char* key, const dvalue_t* getter, const dvalue_t* setter, unsigned int flags)
+objview_add_accessor(objview_t* obj, const char* key, const ki_atom_t* getter, const ki_atom_t* setter, unsigned int flags)
 {
 	int idx;
 
@@ -147,7 +147,7 @@ objview_add_accessor(objview_t* obj, const char* key, const dvalue_t* getter, co
 }
 
 void
-objview_add_value(objview_t* obj, const char* key, const dvalue_t* value, unsigned int flags)
+objview_add_value(objview_t* obj, const char* key, const ki_atom_t* value, unsigned int flags)
 {
 	int idx;
 

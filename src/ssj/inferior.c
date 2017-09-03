@@ -34,8 +34,8 @@
 #include "inferior.h"
 
 #include "backtrace.h"
-#include "dmessage.h"
 #include "help.h"
+#include "ki.h"
 #include "objview.h"
 #include "parser.h"
 #include "session.h"
@@ -69,7 +69,7 @@ struct inferior
 
 static void clear_pause_cache (inferior_t* obj);
 static int  do_handshake      (socket_t* socket);
-static bool handle_notify     (inferior_t* obj, const dmessage_t* msg);
+static bool handle_notify     (inferior_t* obj, const ki_message_t* msg);
 
 static unsigned int s_next_id_no = 1;
 
@@ -88,10 +88,10 @@ inferiors_uninit(void)
 inferior_t*
 inferior_new(const char* hostname, int port, bool show_trace)
 {
-	inferior_t* obj;
-	dmessage_t* req;
-	dmessage_t* rep;
-	clock_t     timeout;
+	inferior_t*   obj;
+	ki_message_t* reply;
+	ki_message_t* request;
+	clock_t       timeout;
 
 	obj = calloc(1, sizeof(inferior_t));
 	printf("connecting to %s:%d... ", hostname, port);
@@ -112,24 +112,24 @@ inferior_new(const char* hostname, int port, bool show_trace)
 		goto on_error;
 
 	// set watermark (shown on bottom left)
-	req = dmessage_new(DMESSAGE_REQ);
-	dmessage_add_int(req, REQ_APPREQUEST);
-	dmessage_add_int(req, APPREQ_WATERMARK);
-	dmessage_add_string(req, "ssj");
-	dmessage_add_int(req, 255);
-	dmessage_add_int(req, 224);
-	dmessage_add_int(req, 0);
-	rep = inferior_request(obj, req);
-	dmessage_free(rep);
+	request = dmessage_new(DMESSAGE_REQ);
+	dmessage_add_int(request, REQ_APPREQUEST);
+	dmessage_add_int(request, APPREQ_WATERMARK);
+	dmessage_add_string(request, "ssj");
+	dmessage_add_int(request, 255);
+	dmessage_add_int(request, 224);
+	dmessage_add_int(request, 0);
+	reply = inferior_request(obj, request);
+	dmessage_free(reply);
 
 	printf("querying target... ");
-	req = dmessage_new(DMESSAGE_REQ);
-	dmessage_add_int(req, REQ_APPREQUEST);
-	dmessage_add_int(req, APPREQ_GAME_INFO);
-	rep = inferior_request(obj, req);
-	obj->title = strdup(dmessage_get_string(rep, 0));
-	obj->author = strdup(dmessage_get_string(rep, 1));
-	dmessage_free(rep);
+	request = dmessage_new(DMESSAGE_REQ);
+	dmessage_add_int(request, REQ_APPREQUEST);
+	dmessage_add_int(request, APPREQ_GAME_INFO);
+	reply = inferior_request(obj, request);
+	obj->title = strdup(dmessage_get_string(reply, 0));
+	obj->author = strdup(dmessage_get_string(reply, 1));
+	dmessage_free(reply);
 	printf("OK.\n");
 
 	printf("    game: %s\n", obj->title);
@@ -167,21 +167,21 @@ inferior_free(inferior_t* obj)
 bool
 inferior_update(inferior_t* obj)
 {
-	bool       is_active = true;
-	dmessage_t* msg = NULL;
+	bool          is_active = true;
+	ki_message_t* notify = NULL;
 
 	if (obj->is_detached)
 		return false;
 
-	if (!(msg = dmessage_recv(obj->socket)))
+	if (!(notify = dmessage_recv(obj->socket)))
 		goto detached;
-	if (!handle_notify(obj, msg))
+	if (!handle_notify(obj, notify))
 		goto detached;
-	dmessage_free(msg);
+	dmessage_free(notify);
 	return true;
 
 detached:
-	dmessage_free(msg);
+	dmessage_free(notify);
 	obj->is_detached = true;
 	return false;
 }
@@ -213,33 +213,33 @@ inferior_title(const inferior_t* obj)
 const backtrace_t*
 inferior_get_calls(inferior_t* obj)
 {
-	char*       call_name;
-	const char* filename;
-	const char* function_name;
-	int         line_no;
-	dmessage_t*  msg;
-	int         num_frames;
+	char*         call_name;
+	const char*   filename;
+	const char*   function_name;
+	int           line_no;
+	int           num_frames;
+	ki_message_t* request;
 
 	int i;
 
 	if (obj->calls == NULL) {
-		msg = dmessage_new(DMESSAGE_REQ);
-		dmessage_add_int(msg, REQ_GETCALLSTACK);
-		if (!(msg = inferior_request(obj, msg)))
+		request = dmessage_new(DMESSAGE_REQ);
+		dmessage_add_int(request, REQ_GETCALLSTACK);
+		if (!(request = inferior_request(obj, request)))
 			return NULL;
-		num_frames = dmessage_len(msg) / 4;
+		num_frames = dmessage_len(request) / 4;
 		obj->calls = backtrace_new();
 		for (i = 0; i < num_frames; ++i) {
-			function_name = dmessage_get_string(msg, i * 4 + 1);
+			function_name = dmessage_get_string(request, i * 4 + 1);
 			if (strcmp(function_name, "") == 0)
 				call_name = strdup("[anon]");
 			else
 				call_name = strnewf("%s()", function_name);
-			filename = dmessage_get_string(msg, i * 4);
-			line_no = dmessage_get_int(msg, i * 4 + 2);
+			filename = dmessage_get_string(request, i * 4);
+			line_no = dmessage_get_int(request, i * 4 + 2);
 			backtrace_add(obj->calls, call_name, filename, line_no);
 		}
-		dmessage_free(msg);
+		dmessage_free(request);
 	}
 
 	return obj->calls;
@@ -248,29 +248,29 @@ inferior_get_calls(inferior_t* obj)
 objview_t*
 inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 {
-	unsigned int    flags;
-	const dvalue_t* getter;
-	bool            is_accessor;
-	int             index = 0;
-	char*           key_string;
-	int             prop_flags;
-	const dvalue_t* prop_key;
-	dmessage_t*      msg;
-	const dvalue_t* setter;
-	const dvalue_t* value;
-	objview_t*      view;
+	unsigned int     flags;
+	const ki_atom_t* getter;
+	bool             is_accessor;
+	int              index = 0;
+	char*            key_string;
+	int              prop_flags;
+	const ki_atom_t* prop_key;
+	ki_message_t*    request;
+	const ki_atom_t* setter;
+	const ki_atom_t* value;
+	objview_t*       view;
 
-	msg = dmessage_new(DMESSAGE_REQ);
-	dmessage_add_int(msg, REQ_GETOBJPROPDESCRANGE);
-	dmessage_add_heapptr(msg, heapptr);
-	dmessage_add_int(msg, 0);
-	dmessage_add_int(msg, INT_MAX);
-	if (!(msg = inferior_request(obj, msg)))
+	request = dmessage_new(DMESSAGE_REQ);
+	dmessage_add_int(request, REQ_GETOBJPROPDESCRANGE);
+	dmessage_add_heapptr(request, heapptr);
+	dmessage_add_int(request, 0);
+	dmessage_add_int(request, INT_MAX);
+	if (!(request = inferior_request(obj, request)))
 		return NULL;
 	view = objview_new();
-	while (index < dmessage_len(msg)) {
-		prop_flags = dmessage_get_int(msg, index++);
-		prop_key = dmessage_get_dvalue(msg, index++);
+	while (index < dmessage_len(request)) {
+		prop_flags = dmessage_get_int(request, index++);
+		prop_key = dmessage_get_dvalue(request, index++);
 		if (dvalue_tag(prop_key) == DVALUE_STRING)
 			key_string = strdup(dvalue_as_cstr(prop_key));
 		else
@@ -285,28 +285,28 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 		if (prop_flags & 0x02) flags |= PROP_ENUMERABLE;
 		if (prop_flags & 0x04) flags |= PROP_CONFIGURABLE;
 		if (is_accessor) {
-			getter = dmessage_get_dvalue(msg, index++);
-			setter = dmessage_get_dvalue(msg, index++);
+			getter = dmessage_get_dvalue(request, index++);
+			setter = dmessage_get_dvalue(request, index++);
 			objview_add_accessor(view, key_string, getter, setter, flags);
 		}
 		else {
-			value = dmessage_get_dvalue(msg, index++);
+			value = dmessage_get_dvalue(request, index++);
 			if (dvalue_tag(value) != DVALUE_UNUSED)
 				objview_add_value(view, key_string, value, flags);
 		}
 		free(key_string);
 	}
-	dmessage_free(msg);
+	dmessage_free(request);
 	return view;
 }
 
 const source_t*
 inferior_get_source(inferior_t* obj, const char* filename)
 {
-	int         cache_id;
-	dmessage_t*  msg;
-	source_t*   source;
-	const char* text;
+	int           cache_id;
+	ki_message_t* request;
+	source_t*     source;
+	const char*   text;
 
 	int i;
 
@@ -315,15 +315,15 @@ inferior_get_source(inferior_t* obj, const char* filename)
 			return obj->sources[i].source;
 	}
 
-	msg = dmessage_new(DMESSAGE_REQ);
-	dmessage_add_int(msg, REQ_APPREQUEST);
-	dmessage_add_int(msg, APPREQ_SOURCE);
-	dmessage_add_string(msg, filename);
-	if (!(msg = inferior_request(obj, msg)))
+	request = dmessage_new(DMESSAGE_REQ);
+	dmessage_add_int(request, REQ_APPREQUEST);
+	dmessage_add_int(request, APPREQ_SOURCE);
+	dmessage_add_string(request, filename);
+	if (!(request = inferior_request(obj, request)))
 		goto on_error;
-	if (dmessage_tag(msg) == DMESSAGE_ERR)
+	if (dmessage_tag(request) == DMESSAGE_ERR)
 		goto on_error;
-	text = dmessage_get_string(msg, 0);
+	text = dmessage_get_string(request, 0);
 	source = source_new(text);
 
 	cache_id = obj->num_sources++;
@@ -334,18 +334,18 @@ inferior_get_source(inferior_t* obj, const char* filename)
 	return source;
 
 on_error:
-	dmessage_free(msg);
+	dmessage_free(request);
 	return NULL;
 }
 
 objview_t*
 inferior_get_vars(inferior_t* obj, int frame)
 {
-	const char*     name;
-	dmessage_t*      msg;
-	int             num_vars;
-	const dvalue_t* value;
-	objview_t*      vars;
+	const char*      name;
+	ki_message_t*      msg;
+	int              num_vars;
+	const ki_atom_t* value;
+	objview_t*       vars;
 
 	int i;
 
@@ -368,7 +368,7 @@ int
 inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
 {
 	int        handle;
-	dmessage_t* msg;
+	ki_message_t* msg;
 
 	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_ADDBREAK);
@@ -390,7 +390,7 @@ on_error:
 bool
 inferior_clear_breakpoint(inferior_t* obj, int handle)
 {
-	dmessage_t* msg;
+	ki_message_t* msg;
 
 	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_DELBREAK);
@@ -410,7 +410,7 @@ on_error:
 void
 inferior_detach(inferior_t* obj)
 {
-	dmessage_t* msg;
+	ki_message_t* msg;
 
 	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_DETACH);
@@ -421,11 +421,11 @@ inferior_detach(inferior_t* obj)
 		inferior_update(obj);
 }
 
-dvalue_t*
+ki_atom_t*
 inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 {
-	dvalue_t*  dvalue = NULL;
-	dmessage_t* msg;
+	ki_atom_t*  dvalue = NULL;
+	ki_message_t* msg;
 
 	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_EVAL);
@@ -447,7 +447,7 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 bool
 inferior_pause(inferior_t* obj)
 {
-	dmessage_t* msg;
+	ki_message_t* msg;
 
 	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg, REQ_PAUSE);
@@ -456,10 +456,10 @@ inferior_pause(inferior_t* obj)
 	return true;
 }
 
-dmessage_t*
-inferior_request(inferior_t* obj, dmessage_t* msg)
+ki_message_t*
+inferior_request(inferior_t* obj, ki_message_t* msg)
 {
-	dmessage_t* response = NULL;
+	ki_message_t* response = NULL;
 
 	if (!(dmessage_send(msg, obj->socket)))
 		goto lost_connection;
@@ -483,7 +483,7 @@ lost_connection:
 bool
 inferior_resume(inferior_t* obj, resume_op_t op)
 {
-	dmessage_t* msg;
+	ki_message_t* msg;
 
 	msg = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(msg,
@@ -546,7 +546,7 @@ on_error:
 }
 
 static bool
-handle_notify(inferior_t* obj, const dmessage_t* msg)
+handle_notify(inferior_t* obj, const ki_message_t* msg)
 {
 	const char*   heading;
 	enum print_op print_op;

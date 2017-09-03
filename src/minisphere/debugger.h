@@ -33,7 +33,7 @@
 #ifndef SPHERE__DEBUGGER_H__INCLUDED
 #define SPHERE__DEBUGGER_H__INCLUDED
 
-#include "dmessage.h"
+#include "ki.h"
 
 void        debugger_init          (bool want_attach, bool allow_remote);
 void        debugger_uninit        (void);

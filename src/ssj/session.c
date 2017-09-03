@@ -454,17 +454,17 @@ handle_resume(session_t* obj, command_t* cmd, resume_op_t op)
 static void
 handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 {
-	const char*     expr;
-	const dvalue_t* getter;
-	remote_ptr_t    heapptr;
-	bool            is_accessor;
-	bool            is_error;
-	int             max_len = 0;
-	objview_t*      object;
-	unsigned int    prop_flags;
-	const char*     prop_key;
-	const dvalue_t* setter;
-	dvalue_t*       result;
+	const char*      expr;
+	const ki_atom_t* getter;
+	remote_ptr_t     heapptr;
+	bool             is_accessor;
+	bool             is_error;
+	int              max_len = 0;
+	objview_t*       object;
+	unsigned int     prop_flags;
+	const char*      prop_key;
+	ki_atom_t*       result;
+	const ki_atom_t* setter;
 
 	int i = 0;
 
@@ -625,7 +625,7 @@ handle_vars(session_t* obj, command_t* cmd)
 {
 	const backtrace_t* calls;
 	const char*        call_name;
-	const dvalue_t*    value;
+	const ki_atom_t*   value;
 	const objview_t*   vars;
 	const char*        var_name;
 
