@@ -84,6 +84,7 @@ enum js_error_type
 typedef bool      (* js_callback_t)        (js_ref_t* me, int num_args, bool is_ctor, int magic);
 typedef js_step_t (* js_break_callback_t)  (void);
 typedef void      (* js_task_callback_t)   (void);
+typedef void      (* js_throw_callback_t)  (void);
 typedef void      (* js_module_callback_t) (void);
 
 bool        jsal_init                     (void);
@@ -91,6 +92,7 @@ void        jsal_uninit                   (void);
 void        jsal_on_breakpoint            (js_break_callback_t callback);
 void        jsal_on_dispatch              (js_task_callback_t callback);
 void        jsal_on_fetch_module          (js_module_callback_t callback);
+void        jsal_on_throw                 (js_throw_callback_t callback);
 void        jsal_call                     (int num_args);
 void        jsal_call_method              (int num_args);
 void        jsal_compile                  (const char* filename);

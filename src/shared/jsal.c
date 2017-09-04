@@ -107,6 +107,7 @@ static vector_t*            s_stack;
 static int                  s_stack_base;
 static js_task_callback_t   s_task_callback = NULL;
 static JsValueRef           s_this_value = JS_INVALID_REFERENCE;
+static js_throw_callback_t  s_throw_callback = NULL;
 
 bool
 jsal_init(void)
@@ -173,6 +174,12 @@ void
 jsal_on_fetch_module(js_module_callback_t callback)
 {
 	s_fetch_callback = callback;
+}
+
+void
+jsal_on_throw(js_throw_callback_t callback)
+{
+	s_throw_callback = callback;
 }
 
 void
@@ -2023,10 +2030,29 @@ handle_debug_event(JsDiagDebugEvent event, JsValueRef data, void* userdata)
 	JsDiagStepType step_type;
 	
 	switch (event) {
+		case JsDiagDebugEventRuntimeException:
+			last_stack_base = s_stack_base;
+			s_stack_base = vector_len(s_stack);
+			push_value(data);
+			jsal_get_prop_string(-1, "exception");
+			jsal_get_prop_string(-1, "display");
+			jsal_remove(-2);
+			jsal_remove(-2);
+			if (setjmp(label) == 0) {
+				vector_push(s_catch_stack, label);
+				if (s_throw_callback != NULL)
+					s_throw_callback();
+				vector_pop(s_catch_stack, 1);
+			}
+			else {
+				jsal_pop(1);
+			}
+			resize_stack(s_stack_base);
+			s_stack_base = last_stack_base;
+			// fallthrough;
 		case JsDiagDebugEventAsyncBreak:
 		case JsDiagDebugEventBreakpoint:
 		case JsDiagDebugEventDebuggerStatement:
-		case JsDiagDebugEventRuntimeException:
 		case JsDiagDebugEventStepComplete:
 			last_stack_base = s_stack_base;
 			s_stack_base = vector_len(s_stack);

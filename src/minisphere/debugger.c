@@ -49,6 +49,7 @@ static bool      do_attach_debugger (void);
 static void      do_detach_debugger (bool is_shutdown);
 static js_step_t handle_breakpoint  (void);
 static bool      process_message    (js_step_t* out_step);
+static void      handle_throw       (void);
 
 static bool       s_is_attached = false;
 static color_t    s_banner_color;
@@ -68,7 +69,8 @@ debugger_init(bool want_attach, bool allow_remote)
 	const char*   hostname;
 
 	jsal_on_breakpoint(handle_breakpoint);
-	
+	jsal_on_throw(handle_throw);
+
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
 	s_sources = vector_new(sizeof(struct source));
@@ -356,6 +358,21 @@ handle_breakpoint(void)
 	dmessage_free(message);
 
 	return step_op;
+}
+
+static void
+handle_throw(void)
+{
+	ki_message_t* message;
+	
+	message = dmessage_new(DMESSAGE_NFY);
+	dmessage_add_int(message, NFY_THROW);
+	dmessage_add_int(message, 1);
+	dmessage_add_string(message, jsal_get_string(0));
+	dmessage_add_string(message, "insideThePig.js");
+	dmessage_add_int(message, 812);
+	dmessage_send(message, s_socket);
+	dmessage_free(message);
 }
 
 static bool
