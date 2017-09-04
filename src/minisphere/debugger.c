@@ -47,8 +47,8 @@ struct source
 
 static bool      do_attach_debugger (void);
 static void      do_detach_debugger (bool is_shutdown);
+static js_step_t handle_breakpoint  (void);
 static bool      process_message    (js_step_t* out_step);
-static js_step_t on_breakpoint_hit  (void);
 
 static bool       s_is_attached = false;
 static color_t    s_banner_color;
@@ -67,7 +67,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	const path_t* game_root;
 	const char*   hostname;
 
-	jsal_on_breakpoint(on_breakpoint_hit);
+	jsal_on_breakpoint(handle_breakpoint);
 	
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
@@ -188,10 +188,7 @@ debugger_compiled_name(const char* source_name)
 
 	static char retval[SPHERE_PATH_MAX];
 
-	int         num_files;
 	const char* this_source;
-
-	int i;
 
 	strncpy(retval, source_name, SPHERE_PATH_MAX - 1);
 	retval[SPHERE_PATH_MAX - 1] = '\0';
@@ -200,19 +197,17 @@ debugger_compiled_name(const char* source_name)
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "debugMap");
 	if (jsal_get_prop_string(-1, "fileMap")) {
-		num_files = jsal_get_length(-1);
-		for (i = 0; i < num_files; ++i) {
-			jsal_get_prop_index(-1, i);
+		jsal_push_new_iterator(-1);
+		while (jsal_next(-1)) {
+			jsal_get_prop_string(-3, jsal_get_string(-1));
 			this_source = jsal_get_string(-1);
 			if (strcmp(this_source, source_name) == 0)
 				strncpy(retval, jsal_get_string(-2), SPHERE_PATH_MAX - 1);
-			jsal_pop(1);
+			jsal_pop(2);
 		}
-		jsal_pop(3);
+		jsal_pop(1);
 	}
-	else {
-		jsal_pop(3);
-	}
+	jsal_pop(3);
 	return retval;
 }
 
@@ -319,6 +314,48 @@ do_detach_debugger(bool is_shutdown)
 	s_socket = NULL;
 	if (s_want_attach && !is_shutdown)
 		sphere_exit(true);  // clean detach, exit
+}
+
+static js_step_t
+handle_breakpoint(void)
+{
+	int           column;
+	const char*   filename;
+	int           line;
+	ki_message_t* message;
+	js_step_t     step_op;
+
+	if (s_socket == NULL)
+		return JS_STEP_CONTINUE;
+
+	filename = jsal_get_string(0);
+	line = jsal_get_int(1) + 1;
+	column = jsal_get_int(2) + 1;
+
+	message = dmessage_new(DMESSAGE_NFY);
+	dmessage_add_int(message, NFY_STATUS);
+	dmessage_add_int(message, 1);
+	dmessage_add_string(message, filename);
+	dmessage_add_int(message, line);
+	dmessage_add_int(message, column);
+	dmessage_send(message, s_socket);
+	dmessage_free(message);
+
+	while (!process_message(&step_op)) {
+		if (s_socket == NULL)
+			return JS_STEP_CONTINUE;
+	}
+
+	message = dmessage_new(DMESSAGE_NFY);
+	dmessage_add_int(message, NFY_STATUS);
+	dmessage_add_int(message, 0);
+	dmessage_add_string(message, filename);
+	dmessage_add_int(message, line);
+	dmessage_add_int(message, column);
+	dmessage_send(message, s_socket);
+	dmessage_free(message);
+
+	return step_op;
 }
 
 static bool
@@ -432,46 +469,4 @@ on_error:
 	socket_unref(s_socket);
 	s_socket = NULL;
 	return false;
-}
-
-static js_step_t
-on_breakpoint_hit(void)
-{
-	int           column;
-	const char*   filename;
-	int           line;
-	ki_message_t* message;
-	js_step_t     step_op;
-
-	if (s_socket == NULL)
-		return JS_STEP_CONTINUE;
-	
-	filename = jsal_get_string(0);
-	line = jsal_get_int(1) + 1;
-	column = jsal_get_int(2) + 1;
-
-	message = dmessage_new(DMESSAGE_NFY);
-	dmessage_add_int(message, NFY_STATUS);
-	dmessage_add_int(message, 1);
-	dmessage_add_string(message, filename);
-	dmessage_add_int(message, line);
-	dmessage_add_int(message, column);
-	dmessage_send(message, s_socket);
-	dmessage_free(message);
-
-	while (!process_message(&step_op)) {
-		if (s_socket == NULL)
-			return JS_STEP_CONTINUE;
-	}
-
-	message = dmessage_new(DMESSAGE_NFY);
-	dmessage_add_int(message, NFY_STATUS);
-	dmessage_add_int(message, 0);
-	dmessage_add_string(message, filename);
-	dmessage_add_int(message, line);
-	dmessage_add_int(message, column);
-	dmessage_send(message, s_socket);
-	dmessage_free(message);
-
-	return step_op;
 }

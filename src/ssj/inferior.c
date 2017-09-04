@@ -341,8 +341,8 @@ on_error:
 objview_t*
 inferior_get_vars(inferior_t* obj, int frame)
 {
+	ki_message_t*    msg;
 	const char*      name;
-	ki_message_t*      msg;
 	int              num_vars;
 	const ki_atom_t* value;
 	objview_t*       vars;

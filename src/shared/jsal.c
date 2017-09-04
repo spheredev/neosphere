@@ -867,6 +867,29 @@ jsal_is_undefined(int stack_index)
 	return type == JsUndefined;
 }
 
+bool
+jsal_next(int iter_index)
+{
+	bool finished;
+	
+	iter_index = jsal_normalize_index(iter_index);
+	jsal_get_prop_string(iter_index, "next");
+	jsal_dup(iter_index);
+	jsal_call_method(0);
+	jsal_get_prop_string(-1, "done");
+	finished = jsal_to_boolean(-1);
+	jsal_pop(1);
+	if (!finished) {
+		jsal_get_prop_string(-1, "value");
+		jsal_remove(-2);
+		return true;
+	}
+	else {
+		jsal_pop(1);
+		return false;
+	}
+}
+
 int
 jsal_normalize_index(int index)
 {
@@ -1093,10 +1116,23 @@ jsal_push_new_host_object(void* data, js_callback_t finalizer)
 int
 jsal_push_new_iterator(int for_index)
 {
+	JsValueRef key_list;
+	JsValueRef object;
+	
+	for_index = jsal_normalize_index(for_index);
 	jsal_push_known_symbol("iterator");
-	jsal_get_prop(for_index);
-	jsal_dup(for_index);
-	jsal_call_method(0);
+	if (jsal_get_prop(for_index)) {
+		jsal_dup(for_index);
+		jsal_call_method(0);
+	}
+	else {
+		jsal_pop(1);
+		object = get_value(for_index);
+		JsGetOwnPropertyNames(object, &key_list);
+		push_value(key_list);
+		jsal_push_new_iterator(-1);
+		jsal_remove(-2);
+	}
 	return jsal_get_top() - 1;
 }
 
