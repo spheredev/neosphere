@@ -83,6 +83,7 @@ enum js_error_type
 
 typedef bool      (* js_callback_t)        (js_ref_t* me, int num_args, bool is_ctor, int magic);
 typedef js_step_t (* js_break_callback_t)  (void);
+typedef void      (* js_finalizer_t)       (void* host_ptr);
 typedef void      (* js_task_callback_t)   (void);
 typedef void      (* js_throw_callback_t)  (void);
 typedef void      (* js_module_callback_t) (void);
@@ -157,7 +158,7 @@ int         jsal_push_new_bare_object     (void);
 int         jsal_push_new_buffer          (js_buffer_type_t type, size_t length);
 int         jsal_push_new_error           (js_error_type_t type, const char* format, ...);
 int         jsal_push_new_error_va        (js_error_type_t type, const char* format, va_list ap);
-int         jsal_push_new_host_object     (void* data_ptr, js_callback_t finalizer);
+int         jsal_push_new_host_object     (void* data_ptr, js_finalizer_t finalizer);
 int         jsal_push_new_iterator        (int for_index);
 int         jsal_push_new_object          (void);
 int         jsal_push_new_symbol          (const char* description);
@@ -188,7 +189,7 @@ void        jsal_require_object_coercible (int at_index);
 const char* jsal_require_string           (int at_index);
 void        jsal_require_symbol           (int at_index);
 void        jsal_require_undefined        (int at_index);
-void        jsal_set_finalizer            (int at_index, js_callback_t callback);
+void        jsal_set_finalizer            (int at_index, js_finalizer_t callback);
 void        jsal_set_host_data            (int at_index, void* ptr);
 void        jsal_set_prototype            (int object_index);
 void        jsal_set_top                  (int new_top);

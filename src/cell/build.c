@@ -68,7 +68,6 @@ static bool js_Sphere_get_Game               (js_ref_t* me, int num_args, bool i
 static bool js_Sphere_get_Platform           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Version            (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_DirectoryStream           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_finalize      (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_fileCount (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_fileName  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_position  (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -86,7 +85,6 @@ static bool js_FS_rename                     (js_ref_t* me, int num_args, bool i
 static bool js_FS_removeDirectory            (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_writeFile                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_FileStream                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_FileStream_finalize           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FileStream_dispose            (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FileStream_get_fileSize       (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FileStream_get_position       (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -96,16 +94,19 @@ static bool js_FileStream_write              (js_ref_t* me, int num_args, bool i
 static bool js_RNG_fromSeed                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RNG_fromState                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_RNG                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RNG_finalize                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RNG_get_state                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RNG_set_state                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RNG_next                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_Tool                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Tool_finalize                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Tool_stage                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Target_finalize               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Target_get_fileName           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Target_get_name               (js_ref_t* me, int num_args, bool is_ctor, int magic);
+
+static void js_DirectoryStream_finalize (void* host_ptr);
+static void js_FileStream_finalize      (void* host_ptr);
+static void js_RNG_finalize             (void* host_ptr);
+static void js_Tool_finalize            (void* host_ptr);
+static void js_Target_finalize          (void* host_ptr);
 
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
 static bool    eval_cjs_module      (fs_t* fs, const char* filename, bool as_mjs);
@@ -1164,16 +1165,10 @@ js_new_DirectoryStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_DirectoryStream_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_DirectoryStream_finalize(void* host_ptr)
 {
-	directory_t* stream;
-
-	jsal_push_this();
-	stream = jsal_require_class_obj(-1, "DirectoryStream");
-
-	directory_close(stream);
-	return false;
+	directory_close(host_ptr);
 }
 
 static bool
@@ -1435,17 +1430,11 @@ js_new_FileStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_FileStream_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_FileStream_finalize(void* host_ptr)
 {
-	FILE* file;
-
-	jsal_push_this();
-	file = jsal_require_class_obj(-1, "FileStream");
-
-	if (file != NULL)
-		fclose(file);
-	return false;
+	if (host_ptr != NULL)
+		fclose(host_ptr);
 }
 
 static bool
@@ -1596,16 +1585,10 @@ js_new_RNG(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_RNG_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_RNG_finalize(void* host_ptr)
 {
-	xoro_t* xoro;
-
-	jsal_push_this();
-	xoro = jsal_require_class_obj(-1, "RNG");
-
-	xoro_unref(xoro);
-	return false;
+	xoro_unref(host_ptr);
 }
 
 static bool
@@ -1649,16 +1632,10 @@ js_RNG_next(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_Target_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Target_finalize(void* host_ptr)
 {
-	target_t* target;
-
-	jsal_push_this();
-	target = jsal_require_class_obj(-1, "Target");
-
-	target_free(target);
-	return false;
+	target_free(host_ptr);
 }
 
 static bool
@@ -1702,16 +1679,10 @@ js_new_Tool(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_Tool_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Tool_finalize(void* host_ptr)
 {
-	tool_t* tool;
-
-	jsal_push_this();
-	tool = jsal_require_class_obj(-1, "Tool");
-
-	tool_unref(tool);
-	return false;
+	tool_unref(host_ptr);
 }
 
 static bool

@@ -10,8 +10,8 @@
 
 struct class_info
 {
-	js_callback_t finalizer;
-	char*         name;
+	js_finalizer_t finalizer;
+	char*          name;
 };
 
 static vector_t* s_classes;
@@ -95,7 +95,7 @@ api_define_const(const char* enum_name, const char* name, double value)
 }
 
 void
-api_define_class(const char* name, js_callback_t constructor, js_callback_t finalizer)
+api_define_class(const char* name, js_callback_t constructor, js_finalizer_t finalizer)
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
@@ -295,7 +295,7 @@ int
 jsal_push_class_obj(const char* class_name, void* udata)
 {
 	struct class_info* class_info;
-	js_callback_t    finalizer = NULL;
+	js_finalizer_t     finalizer = NULL;
 	int                index;
 	
 	iter_t iter;

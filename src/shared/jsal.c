@@ -70,9 +70,9 @@ struct module_job
 
 struct object
 {
-	void*         data;
-	js_callback_t finalizer;
-	JsValueRef    object;
+	void*          data;
+	js_finalizer_t finalizer;
+	JsValueRef     object;
 };
 
 static void CHAKRA_CALLBACK        on_debugger_event   (JsDiagDebugEvent event, JsValueRef data, void* userdata);
@@ -152,10 +152,12 @@ jsal_uninit(void)
 		value = *(JsValueRef*)iter.ptr;
 		JsRelease(value, NULL);
 	}
-	JsRelease(s_stash, NULL);
 	vector_free(s_module_jobs);
 	vector_free(s_stack);
 	vector_free(s_catch_stack);
+	JsRelease(s_stash, NULL);
+	JsSetCurrentContext(JS_INVALID_REFERENCE);
+	JsDisposeRuntime(s_js_runtime);
 }
 
 void
@@ -406,7 +408,6 @@ jsal_eval_module(const char* filename)
 		error_code = JsParseModuleSource(job->module,  // note: invalidates 'job'
 			s_source_cookie++, (BYTE*)job->source, (unsigned int)job->source_size,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
-		JsRelease(submodule, NULL);
 		free(job_source);
 		if (error_code == JsErrorScriptCompile) {
 			vector_clear(s_module_jobs);
@@ -1039,7 +1040,7 @@ jsal_push_new_error_va(js_error_type_t type, const char* format, va_list ap)
 }
 
 int
-jsal_push_new_host_object(void* data, js_callback_t finalizer)
+jsal_push_new_host_object(void* data, js_finalizer_t finalizer)
 {
 	JsValueRef     object;
 	struct object* object_info;
@@ -1403,7 +1404,7 @@ jsal_require_undefined(int at_index)
 }
 
 void
-jsal_set_finalizer(int at_index, js_callback_t callback)
+jsal_set_finalizer(int at_index, js_finalizer_t callback)
 {
 	JsValueRef     object;
 	struct object* object_info;
@@ -1995,7 +1996,6 @@ on_fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecor
 		source = jsal_require_lstring(-1, &source_len);
 		full_specifier = get_value(-2);
 		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
-		JsAddRef(module, NULL);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
 		throw_if_error();
@@ -2021,30 +2021,11 @@ on_fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecor
 static void CHAKRA_CALLBACK
 on_finalize_object(void* userdata)
 {
-	JsValueRef	   exception;
-	jmp_buf        label;
-	int            last_stack_base;
-	JsValueRef     last_this_value;
 	struct object* object_info;
 
 	object_info = userdata;
-	last_stack_base = s_stack_base;
-	last_this_value = s_this_value;
-	s_stack_base = vector_len(s_stack);
-	s_this_value = object_info->object;
-	if (setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
-		if (object_info->finalizer != NULL)
-			object_info->finalizer(NULL, 0, false, 0);
-		vector_pop(s_catch_stack, 1);
-	}
-	else {
-		exception = pop_value();
-		JsSetException(exception);
-	}
-	resize_stack(s_stack_base);
-	s_this_value = last_this_value;
-	s_stack_base = last_stack_base;
+	if (object_info->finalizer != NULL)
+		object_info->finalizer(object_info->data);
 	free(object_info);
 }
 

@@ -340,7 +340,6 @@ static bool js_Triangle                         (js_ref_t* me, int num_args, boo
 static bool js_UnbindJoystickButton             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_UnbindKey                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_UpdateMapEngine                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Animation_finalize               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Animation_get_height             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Animation_get_width              (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Animation_drawFrame              (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -348,7 +347,6 @@ static bool js_Animation_drawZoomedFrame        (js_ref_t* me, int num_args, boo
 static bool js_Animation_getDelay               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Animation_getNumFrames           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Animation_readNextFrame          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ByteArray_finalize               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ByteArray_proxy_get              (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ByteArray_proxy_set              (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ByteArray_get_length             (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -357,7 +355,6 @@ static bool js_ByteArray_slice                  (js_ref_t* me, int num_args, boo
 static bool js_ByteArray_toString               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Color_toString                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ColorMatrix_toString             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_File_finalize                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_File_close                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_File_flush                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_File_getKey                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -365,7 +362,6 @@ static bool js_File_getNumKeys                  (js_ref_t* me, int num_args, boo
 static bool js_File_read                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_File_toString                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_File_write                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_finalize                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Font_clone                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Font_drawText                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Font_drawTextBox                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -379,7 +375,6 @@ static bool js_Font_setCharacterImage           (js_ref_t* me, int num_args, boo
 static bool js_Font_setColorMask                (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Font_toString                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Font_wordWrapString              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_finalize                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Image_get_height                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Image_get_width                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Image_blit                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -392,12 +387,10 @@ static bool js_Image_transformBlit              (js_ref_t* me, int num_args, boo
 static bool js_Image_transformBlitMask          (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Image_zoomBlit                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Image_zoomBlitMask               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Logger_finalize                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Logger_beginBlock                (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Logger_endBlock                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Logger_toString                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Logger_write                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RawFile_finalize                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RawFile_close                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RawFile_getPosition              (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RawFile_getSize                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -405,14 +398,12 @@ static bool js_RawFile_read                     (js_ref_t* me, int num_args, boo
 static bool js_RawFile_setPosition              (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RawFile_toString                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RawFile_write                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Socket_finalize                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Socket_close                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Socket_getPendingReadSize        (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Socket_isConnected               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Socket_read                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Socket_toString                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Socket_write                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_finalize                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Sound_getLength                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Sound_getPan                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Sound_getPitch                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -431,7 +422,6 @@ static bool js_Sound_setRepeat                  (js_ref_t* me, int num_args, boo
 static bool js_Sound_setVolume                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Sound_stop                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Sound_toString                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_finalize             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_SoundEffect_getPan               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_SoundEffect_getPitch             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_SoundEffect_getVolume            (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -441,12 +431,10 @@ static bool js_SoundEffect_setVolume            (js_ref_t* me, int num_args, boo
 static bool js_SoundEffect_play                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_SoundEffect_stop                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_SoundEffect_toString             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Spriteset_finalize               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Spriteset_get_filename           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Spriteset_clone                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Spriteset_save                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Spriteset_toString               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_finalize                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Surface_get_height               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Surface_get_width                (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Surface_applyColorFX             (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -490,11 +478,24 @@ static bool js_Surface_transformBlitMaskSurface (js_ref_t* me, int num_args, boo
 static bool js_Surface_transformBlitSurface     (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Surface_zoomBlitMaskSurface      (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Surface_zoomBlitSurface          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_WindowStyle_finalize             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_WindowStyle_drawWindow           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_WindowStyle_getColorMask         (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_WindowStyle_setColorMask         (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_WindowStyle_toString             (js_ref_t* me, int num_args, bool is_ctor, int magic);
+
+static void js_Animation_finalize   (void* host_ptr);
+static void js_ByteArray_finalize   (void* host_ptr);
+static void js_File_finalize        (void* host_ptr);
+static void js_Font_finalize        (void* host_ptr);
+static void js_Image_finalize       (void* host_ptr);
+static void js_Logger_finalize      (void* host_ptr);
+static void js_RawFile_finalize     (void* host_ptr);
+static void js_Socket_finalize      (void* host_ptr);
+static void js_Sound_finalize       (void* host_ptr);
+static void js_SoundEffect_finalize (void* host_ptr);
+static void js_Spriteset_finalize   (void* host_ptr);
+static void js_Surface_finalize     (void* host_ptr);
+static void js_WindowStyle_finalize (void* host_ptr);
 
 enum blend_mode
 {
@@ -6292,16 +6293,10 @@ js_UpdateMapEngine(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return false;
 }
 
-static bool
-js_Animation_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Animation_finalize(void* host_ptr)
 {
-	animation_t* anim;
-
-	jsal_push_this();
-	anim = jsal_require_class_obj(-1, "v1Animation");
-
-	animation_unref(anim);
-	return false;
+	animation_unref(host_ptr);
 }
 
 static bool
@@ -6403,16 +6398,10 @@ js_Animation_readNextFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return false;
 }
 
-static bool
-js_ByteArray_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_ByteArray_finalize(void* host_ptr)
 {
-	bytearray_t* array;
-
-	jsal_push_this();
-	array = jsal_require_class_obj(-1, "v1ByteArray");
-
-	bytearray_unref(array);
-	return false;
+	bytearray_unref(host_ptr);
 }
 
 static bool
@@ -6550,16 +6539,10 @@ js_ColorMatrix_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_File_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_File_finalize(void* host_ptr)
 {
-	kev_file_t* file;
-
-	jsal_push_this();
-	file = jsal_require_class_obj(-1, "v1File");
-
-	kev_close(file);
-	return false;
+	kev_close(host_ptr);
 }
 
 static bool
@@ -6677,16 +6660,10 @@ js_File_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return false;
 }
 
-static bool
-js_Font_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Font_finalize(void* host_ptr)
 {
-	font_t* font;
-
-	jsal_push_this();
-	font = jsal_require_class_obj(-1, "v1Font");
-
-	font_unref(font);
-	return false;
+	font_unref(host_ptr);
 }
 
 static bool
@@ -6947,16 +6924,10 @@ js_Font_wordWrapString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_Image_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Image_finalize(void* host_ptr)
 {
-	image_t* image;
-
-	jsal_push_this();
-	image = jsal_require_class_obj(-1, "v1Image");
-
-	image_unref(image);
-	return false;
+	image_unref(host_ptr);
 }
 
 static bool
@@ -7228,16 +7199,10 @@ js_Image_zoomBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return false;
 }
 
-static bool
-js_Logger_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Logger_finalize(void* host_ptr)
 {
-	logger_t* logger;
-
-	jsal_push_this();
-	logger = jsal_require_class_obj(-1, "v1Logger");
-
-	logger_unref(logger);
-	return false;
+	logger_unref(host_ptr);
 }
 
 static bool
@@ -7285,17 +7250,10 @@ js_Logger_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return false;
 }
 
-static bool
-js_RawFile_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_RawFile_finalize(void* host_ptr)
 {
-	file_t* file;
-
-	jsal_push_this();
-	file = jsal_require_class_obj(-1, "v1RawFile");
-
-	if (file != NULL)
-		file_close(file);
-	return false;
+	file_close(host_ptr);
 }
 
 static bool
@@ -7433,16 +7391,10 @@ js_RawFile_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return false;
 }
 
-static bool
-js_Socket_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Socket_finalize(void* host_ptr)
 {
-	socket_v1_t* socket;
-
-	jsal_push_this();
-	socket = jsal_require_class_obj(-1, "v1Socket");
-
-	socket_v1_unref(socket);
-	return true;
+	socket_v1_unref(host_ptr);
 }
 
 static bool
@@ -7549,16 +7501,10 @@ js_Socket_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return false;
 }
 
-static bool
-js_Sound_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Sound_finalize(void* host_ptr)
 {
-	sound_t* sound;
-
-	jsal_push_this();
-	sound = jsal_require_class_obj(-1, "v1Sound");
-
-	sound_unref(sound);
-	return false;
+	sound_unref(host_ptr);
 }
 
 static bool
@@ -7788,16 +7734,10 @@ js_Sound_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_SoundEffect_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_SoundEffect_finalize(void* host_ptr)
 {
-	sample_t* sample;
-
-	jsal_push_this();
-	sample = jsal_require_class_obj(-1, "v1SoundEffect");
-
-	sample_unref(sample);
-	return false;
+	sample_unref(host_ptr);
 }
 
 static bool
@@ -7909,16 +7849,10 @@ js_SoundEffect_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_Spriteset_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Spriteset_finalize(void* host_ptr)
 {
-	spriteset_t* spriteset;
-
-	jsal_push_this();
-	spriteset = jsal_require_class_obj(-1, "v1Spriteset");
-
-	spriteset_unref(spriteset);
-	return false;
+	spriteset_unref(host_ptr);
 }
 
 static bool
@@ -7978,16 +7912,10 @@ js_Spriteset_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return true;
 }
 
-static bool
-js_Surface_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_Surface_finalize(void* host_ptr)
 {
-	image_t* image;
-
-	jsal_push_this();
-	image = jsal_require_class_obj(-1, "v1Surface");
-
-	image_unref(image);
-	return false;
+	image_unref(host_ptr);
 }
 
 static bool
@@ -9136,16 +9064,10 @@ js_Surface_zoomBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	return false;
 }
 
-static bool
-js_WindowStyle_finalize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+static void
+js_WindowStyle_finalize(void* host_ptr)
 {
-	windowstyle_t* winstyle;
-
-	jsal_push_this();
-	winstyle = jsal_require_class_obj(-1, "v1WindowStyle");
-
-	winstyle_unref(winstyle);
-	return false;
+	winstyle_unref(host_ptr);
 }
 
 static bool
