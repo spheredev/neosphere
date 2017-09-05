@@ -45,11 +45,11 @@ struct source
 	lstring_t* text;
 };
 
-static bool      do_attach_debugger (void);
-static void      do_detach_debugger (bool is_shutdown);
-static js_step_t handle_breakpoint  (void);
-static bool      process_message    (js_step_t* out_step);
-static void      handle_throw       (void);
+static js_step_t on_breakpoint_hit       (void);
+static void      on_throw_exception  (void);
+static bool      do_attach_debugger  (void);
+static void      do_detach_debugger  (bool is_shutdown);
+static bool      process_message     (js_step_t* out_step);
 
 static bool       s_is_attached = false;
 static color_t    s_banner_color;
@@ -68,8 +68,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	const path_t* game_root;
 	const char*   hostname;
 
-	jsal_on_breakpoint(handle_breakpoint);
-	jsal_on_throw(handle_throw);
+	jsal_debug_on_throw(on_throw_exception);
 
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
@@ -152,7 +151,7 @@ debugger_update(void)
 			socket_write(client, handshake, strlen(handshake));
 			free(handshake);
 			s_socket = client;
-			jsal_debug_attach();
+			jsal_debug_init(on_breakpoint_hit);
 			s_is_attached = true;
 		}
 	}
@@ -239,7 +238,7 @@ debugger_source_name(const char* compiled_name)
 }
 
 void
-debugger_cache_source(const char* name, const lstring_t* text)
+debugger_add_source(const char* name, const lstring_t* text)
 {
 	struct source cache_entry;
 
@@ -280,46 +279,8 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 	}
 }
 
-static bool
-do_attach_debugger(void)
-{
-	double timeout;
-
-	printf("waiting for SSj client to connect...\n");
-	fflush(stdout);
-	timeout = al_get_time() + 30.0;
-	while (s_socket == NULL && al_get_time() < timeout) {
-		debugger_update();
-		sphere_sleep(0.05);
-	}
-	if (s_socket == NULL)  // did we time out?
-		printf("timed out waiting for SSj\n");
-	return s_socket != NULL;
-}
-
-static void
-do_detach_debugger(bool is_shutdown)
-{
-	if (!s_is_attached)
-		return;
-
-	// detach the debugger
-	console_log(1, "detaching SSj debug session");
-	s_is_attached = false;
-	jsal_debug_detach();
-	if (s_socket != NULL) {
-		socket_close(s_socket);
-		while (socket_connected(s_socket))
-			sphere_sleep(0.05);
-	}
-	socket_unref(s_socket);
-	s_socket = NULL;
-	if (s_want_attach && !is_shutdown)
-		sphere_exit(true);  // clean detach, exit
-}
-
 static js_step_t
-handle_breakpoint(void)
+on_breakpoint_hit(void)
 {
 	int           column;
 	const char*   filename;
@@ -361,10 +322,10 @@ handle_breakpoint(void)
 }
 
 static void
-handle_throw(void)
+on_throw_exception(void)
 {
 	ki_message_t* message;
-	
+
 	message = dmessage_new(DMESSAGE_NFY);
 	dmessage_add_int(message, NFY_THROW);
 	dmessage_add_int(message, 1);
@@ -373,6 +334,44 @@ handle_throw(void)
 	dmessage_add_int(message, 812);
 	dmessage_send(message, s_socket);
 	dmessage_free(message);
+}
+
+static bool
+do_attach_debugger(void)
+{
+	double timeout;
+
+	printf("waiting for SSj client to connect...\n");
+	fflush(stdout);
+	timeout = al_get_time() + 30.0;
+	while (s_socket == NULL && al_get_time() < timeout) {
+		debugger_update();
+		sphere_sleep(0.05);
+	}
+	if (s_socket == NULL)  // did we time out?
+		printf("timed out waiting for SSj\n");
+	return s_socket != NULL;
+}
+
+static void
+do_detach_debugger(bool is_shutdown)
+{
+	if (!s_is_attached)
+		return;
+
+	// detach the debugger
+	console_log(1, "detaching SSj debug session");
+	s_is_attached = false;
+	jsal_debug_uninit();
+	if (s_socket != NULL) {
+		socket_close(s_socket);
+		while (socket_connected(s_socket))
+			sphere_sleep(0.05);
+	}
+	socket_unref(s_socket);
+	s_socket = NULL;
+	if (s_want_attach && !is_shutdown)
+		sphere_exit(true);  // clean detach, exit
 }
 
 static bool

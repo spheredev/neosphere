@@ -89,19 +89,12 @@ typedef void      (* js_module_callback_t) (void);
 
 bool        jsal_init                     (void);
 void        jsal_uninit                   (void);
-void        jsal_on_breakpoint            (js_break_callback_t callback);
-void        jsal_on_dispatch              (js_task_callback_t callback);
+void        jsal_on_dispatch_job          (js_task_callback_t callback);
 void        jsal_on_fetch_module          (js_module_callback_t callback);
-void        jsal_on_throw                 (js_throw_callback_t callback);
 void        jsal_call                     (int num_args);
 void        jsal_call_method              (int num_args);
 void        jsal_compile                  (const char* filename);
 void        jsal_construct                (int num_args);
-void        jsal_debug_attach             (void);
-void        jsal_debug_detach             (void);
-int         jsal_debug_num_calls          (void);
-void        jsal_debug_break_now          (void);
-void        jsal_debug_inspect_call       (int offset);
 void        jsal_def_prop                 (int object_index);
 void        jsal_def_prop_index           (int object_index, int name);
 void        jsal_def_prop_string          (int object_index, const char* name);
@@ -214,5 +207,14 @@ bool        jsal_try_construct            (int num_args);
 bool        jsal_try_eval_module          (const char* filename);
 bool        jsal_try_parse                (int at_index);
 void        jsal_unref                    (js_ref_t* ref);
+
+void        jsal_debug_init               (js_break_callback_t callback);
+void        jsal_debug_uninit             (void);
+void        jsal_debug_on_throw           (js_throw_callback_t callback);
+int         jsal_debug_num_calls          (void);
+void        jsal_debug_break_now          (void);
+bool        jsal_debug_get_filename       (int script_id);
+bool        jsal_debug_get_object         (int handle);
+void        jsal_debug_inspect_call       (int offset);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED

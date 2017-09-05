@@ -421,10 +421,10 @@ initialize_engine(void)
 	dyad_setUpdateTimeout(0.0);
 
 	// initialize JavaScript
-	console_log(1, "initializing JavaScript");
+	console_log(1, "initializing ChakraCore 1.7.1");
 	if (!jsal_init())
 		goto on_error;
-	jsal_on_dispatch(on_js_dispatch);
+	jsal_on_dispatch_job(on_js_dispatch);
 
 	// initialize engine components
 	async_init();

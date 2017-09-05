@@ -134,7 +134,7 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	function = jsal_ref(-1);
 	jsal_pop(1);
 
-	debugger_cache_source(lstr_cstr(name), source);
+	debugger_add_source(lstr_cstr(name), source);
 	lstr_free(name);
 
 	script->id = s_next_script_id++;
