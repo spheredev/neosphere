@@ -63,9 +63,10 @@ struct function
 
 struct module_job
 {
-	JsModuleRecord module;
-	char*          source;
-	size_t         source_size;
+	JsModuleRecord  module;
+	JsSourceContext script_id;
+	char*           source;
+	size_t          source_size;
 };
 
 struct object
@@ -77,7 +78,8 @@ struct object
 
 struct script
 {
-	char* filename;
+	char*           filename;
+	JsSourceContext script_id;
 };
 
 static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent event, JsValueRef data, void* userdata);
@@ -85,6 +87,7 @@ static void CHAKRA_CALLBACK        on_dispatch_job          (JsValueRef function
 static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
 static JsValueRef CHAKRA_CALLBACK  on_native_call           (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
 static JsErrorCode CHAKRA_CALLBACK on_resolve_import        (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
+static void                        add_compiled_script      (const char* filename, JsSourceContext script_id);
 static void                        free_ref                 (js_ref_t* ref);
 static JsValueRef                  get_value                (int stack_index);
 static JsPropertyIdRef             make_property_id         (JsValueRef key_value);
@@ -110,7 +113,7 @@ static js_job_callback_t    s_job_callback = NULL;
 static JsContextRef         s_js_context;
 static JsRuntimeHandle      s_js_runtime = NULL;
 static vector_t*            s_module_jobs;
-static JsSourceContext      s_source_cookie = 1;
+static JsSourceContext      s_next_script_id = 1;
 static JsValueRef           s_stash;
 static vector_t*            s_stack;
 static int                  s_stack_base;
@@ -249,18 +252,13 @@ jsal_compile(const char* filename)
 
 	JsValueRef      function;
 	JsValueRef      name_string;
-	JsSourceContext script_id;
-	struct script   script_info;
 	JsValueRef      source_string;
-	
-	script_id = (JsSourceContext)vector_len(s_compiled_scripts);
-	script_info.filename = strdup(filename);
-	vector_push(s_compiled_scripts, &script_info);
 	
 	source_string = pop_value();
 	JsCreateString(filename, strlen(filename), &name_string);
-	JsParse(source_string, script_id, name_string, JsParseScriptAttributeNone, &function);
+	JsParse(source_string, s_next_script_id, name_string, JsParseScriptAttributeNone, &function);
 	throw_if_error();
+	add_compiled_script(filename, s_next_script_id++);
 	push_value(function);
 }
 
@@ -410,8 +408,9 @@ jsal_eval_module(const char* filename)
 	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_resolve_import);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, url_string);
 	error_code = JsParseModuleSource(module,
-		s_source_cookie++, (BYTE*)source, (unsigned int)source_len,
+		s_next_script_id, (BYTE*)source, (unsigned int)source_len,
 		JsParseModuleSourceFlags_DataIsUTF8, &exception);
+	add_compiled_script(filename, s_next_script_id++);
 	if (error_code == JsErrorScriptCompile) {
 		vector_clear(s_module_jobs);
 		throw_value(exception);
@@ -421,7 +420,7 @@ jsal_eval_module(const char* filename)
 		job_source = job->source;
 		submodule = job->module;
 		error_code = JsParseModuleSource(job->module,  // note: invalidates 'job'
-			s_source_cookie++, (BYTE*)job->source, (unsigned int)job->source_size,
+			job->script_id, (BYTE*)job->source, (unsigned int)job->source_size,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
 		free(job_source);
 		if (error_code == JsErrorScriptCompile) {
@@ -919,7 +918,7 @@ jsal_push_eval(const char* source)
 
 	JsCreateString(source, strlen(source), &source_ref);
 	JsCreateString("eval()", 6, &name_ref);
-	JsRun(source_ref, JS_SOURCE_CONTEXT_NONE, name_ref, JsParseScriptAttributeLibraryCode, &ref);
+	JsRun(source_ref, s_next_script_id++, name_ref, JsParseScriptAttributeLibraryCode, &ref);
 	throw_if_error();
 	return push_value(ref);
 }
@@ -1778,6 +1777,16 @@ jsal_debug_inspect_call(int offset)
 }
 
 static void
+add_compiled_script(const char* filename, JsSourceContext script_id)
+{
+	struct script script_info;
+	
+	script_info.filename = strdup(filename);
+	script_info.script_id = script_id;
+	vector_push(s_compiled_scripts, &script_info);
+}
+
+static void
 free_ref(js_ref_t* ref)
 {
 	JsRelease(ref->value, NULL);
@@ -1857,18 +1866,24 @@ script_id_to_url(int at_index)
 {
 	int            script_id;
 	struct script* script_info;
+
+	iter_t iter;
 	
+	at_index = jsal_normalize_index(at_index);
 	script_id = jsal_require_int(at_index);
-	script_info = NULL;
-	if (script_id < vector_len(s_compiled_scripts)) {
-		script_info = vector_get(s_compiled_scripts, script_id);
-		jsal_push_string(script_info->filename);
-		return true;
+	iter = vector_enum(s_compiled_scripts);
+	while (iter_next(&iter)) {
+		script_info = iter.ptr;
+		if (script_id == script_info->script_id) {
+			jsal_push_string(script_info->filename);
+			goto finish_up;
+		}
 	}
-	else {
-		jsal_push_undefined();
-		return false;
-	}
+	jsal_push_undefined();
+	
+finish_up:
+	jsal_replace(at_index);
+	return false;
 }
 
 static int
@@ -2091,6 +2106,7 @@ on_resolve_import(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRec
 {
 	JsValueRef        caller_id;
 	JsValueRef        exception;
+	const char*       filename;
 	JsValueRef        full_specifier;
 	jmp_buf           label;
 	int               last_stack_base;
@@ -2112,12 +2128,15 @@ on_resolve_import(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRec
 		s_import_callback();
 		if (jsal_get_top() < 2)
 			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
+		filename = jsal_require_string(-2);
 		source = jsal_require_lstring(-1, &source_len);
 		full_specifier = get_value(-2);
 		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_resolve_import);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
 		throw_if_error();
+		add_compiled_script(filename, s_next_script_id);
+		job.script_id = s_next_script_id++;
 		job.module = module;
 		job.source = strdup(source);
 		job.source_size = strlen(source);
