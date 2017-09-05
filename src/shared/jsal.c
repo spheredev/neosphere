@@ -82,7 +82,7 @@ struct script
 	JsSourceContext script_id;
 };
 
-static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent event, JsValueRef data, void* userdata);
+static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
 static void CHAKRA_CALLBACK        on_dispatch_job          (JsValueRef function, void* userdata);
 static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
 static JsValueRef CHAKRA_CALLBACK  on_native_call           (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
@@ -1993,14 +1993,14 @@ on_finalize_host_object(void* userdata)
 }
 
 static void CHAKRA_CALLBACK
-on_debugger_event(JsDiagDebugEvent event, JsValueRef data, void* userdata)
+on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 {
 	jmp_buf        label;
 	int            last_stack_base;
 	js_step_t      step = JS_STEP_CONTINUE;
 	JsDiagStepType step_type;
 	
-	switch (event) {
+	switch (event_type) {
 		case JsDiagDebugEventRuntimeException:
 			last_stack_base = s_stack_base;
 			s_stack_base = vector_len(s_stack);
@@ -2009,6 +2009,7 @@ on_debugger_event(JsDiagDebugEvent event, JsValueRef data, void* userdata)
 			jsal_get_prop_string(-1, "display");
 			jsal_remove(-2);
 			jsal_remove(-2);
+			push_debug_callback_args(data);
 			if (setjmp(label) == 0) {
 				vector_push(s_catch_stack, label);
 				if (s_throw_callback != NULL)

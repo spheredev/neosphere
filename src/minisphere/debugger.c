@@ -330,8 +330,9 @@ on_throw_exception(void)
 	dmessage_add_int(message, NFY_THROW);
 	dmessage_add_int(message, 1);
 	dmessage_add_string(message, jsal_get_string(0));
-	dmessage_add_string(message, "insideThePig.js");
-	dmessage_add_int(message, 812);
+	dmessage_add_string(message, jsal_get_string(1));
+	dmessage_add_int(message, jsal_get_int(2) + 1);
+	dmessage_add_int(message, jsal_get_int(3) + 1);
 	dmessage_send(message, s_socket);
 	dmessage_free(message);
 }
