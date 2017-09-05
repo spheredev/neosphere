@@ -81,17 +81,17 @@ enum js_error_type
 	JS_URI_ERROR,
 } js_error_type_t;
 
-typedef bool      (* js_callback_t)        (js_ref_t* me, int num_args, bool is_ctor, int magic);
+typedef bool      (* js_function_t)        (js_ref_t* me, int num_args, bool is_ctor, int magic);
 typedef js_step_t (* js_break_callback_t)  (void);
 typedef void      (* js_finalizer_t)       (void* host_ptr);
-typedef void      (* js_task_callback_t)   (void);
+typedef void      (* js_job_callback_t)    (void);
 typedef void      (* js_throw_callback_t)  (void);
-typedef void      (* js_module_callback_t) (void);
+typedef void      (* js_import_callback_t) (void);
 
 bool        jsal_init                     (void);
 void        jsal_uninit                   (void);
-void        jsal_on_dispatch_job          (js_task_callback_t callback);
-void        jsal_on_fetch_module          (js_module_callback_t callback);
+void        jsal_on_enqueue_job           (js_job_callback_t callback);
+void        jsal_on_import_module         (js_import_callback_t callback);
 void        jsal_call                     (int num_args);
 void        jsal_call_method              (int num_args);
 void        jsal_compile                  (const char* filename);
@@ -145,9 +145,9 @@ int         jsal_normalize_index          (int index);
 void        jsal_parse                    (int at_index);
 void        jsal_pop                      (int num_values);
 int         jsal_push_boolean             (bool value);
-int         jsal_push_constructor         (js_callback_t callback, const char* name, int min_args, int magic);
+int         jsal_push_constructor         (js_function_t callback, const char* name, int min_args, int magic);
 int         jsal_push_eval                (const char* source);
-int         jsal_push_function            (js_callback_t callback, const char* name, int min_args, int magic);
+int         jsal_push_function            (js_function_t callback, const char* name, int min_args, int magic);
 int         jsal_push_global_object       (void);
 int         jsal_push_hidden_stash        (void);
 int         jsal_push_int                 (int value);
@@ -200,7 +200,7 @@ int         jsal_to_int                   (int at_index);
 double      jsal_to_number                (int at_index);
 void        jsal_to_object                (int at_index);
 const char* jsal_to_string                (int at_index);
-bool        jsal_try                      (js_callback_t callback, int num_args);
+bool        jsal_try                      (js_function_t callback, int num_args);
 bool        jsal_try_call                 (int num_args);
 bool        jsal_try_call_method          (int num_args);
 bool        jsal_try_compile              (const char* filename);

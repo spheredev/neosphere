@@ -35,10 +35,10 @@
 #include "build.h"
 #include "jsal.h"
 
-static bool parse_cmdline    (int argc, char* argv[]);
-static void print_cell_quote (void);
-static void print_banner     (bool want_copyright, bool want_deps);
-static void print_usage      (void);
+static bool parse_command_line (int argc, char* argv[]);
+static void print_banner       (bool want_copyright, bool want_deps);
+static void print_cell_quote   (void);
+static void print_usage        (void);
 
 static path_t* s_in_path;
 static path_t* s_out_path;
@@ -57,7 +57,7 @@ main(int argc, char* argv[])
 	jsal_init();
 
 	// parse the command line
-	if (!parse_cmdline(argc, argv))
+	if (!parse_command_line(argc, argv))
 		goto shutdown;
 
 	print_banner(true, false);
@@ -85,7 +85,7 @@ shutdown:
 }
 
 static bool
-parse_cmdline(int argc, char* argv[])
+parse_command_line(int argc, char* argv[])
 {
 	bool        have_in_dir = false;
 	path_t*     js_path;

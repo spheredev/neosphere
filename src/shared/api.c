@@ -95,7 +95,7 @@ api_define_const(const char* enum_name, const char* name, double value)
 }
 
 void
-api_define_class(const char* name, js_callback_t constructor, js_finalizer_t finalizer)
+api_define_class(const char* name, js_function_t constructor, js_finalizer_t finalizer)
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
@@ -142,7 +142,7 @@ api_define_class(const char* name, js_callback_t constructor, js_finalizer_t fin
 }
 
 void
-api_define_function(const char* namespace_name, const char* name, js_callback_t callback)
+api_define_function(const char* namespace_name, const char* name, js_function_t callback)
 {
 	jsal_push_global_object();
 
@@ -169,7 +169,7 @@ api_define_function(const char* namespace_name, const char* name, js_callback_t 
 }
 
 void
-api_define_method(const char* class_name, const char* name, js_callback_t callback)
+api_define_method(const char* class_name, const char* name, js_function_t callback)
 {
 	jsal_push_global_object();
 	if (class_name != NULL) {
@@ -216,7 +216,7 @@ api_define_object(const char* namespace_name, const char* name, const char* clas
 }
 
 void
-api_define_property(const char* class_name, const char* name, js_callback_t getter, js_callback_t setter)
+api_define_property(const char* class_name, const char* name, js_function_t getter, js_function_t setter)
 {
 	jsal_push_global_object();
 	if (class_name != NULL) {
@@ -243,7 +243,7 @@ api_define_property(const char* class_name, const char* name, js_callback_t gett
 }
 
 void
-api_define_static_prop(const char* namespace_name, const char* name, js_callback_t getter, js_callback_t setter)
+api_define_static_prop(const char* namespace_name, const char* name, js_function_t getter, js_function_t setter)
 {
 	jsal_push_global_object();
 

@@ -424,7 +424,7 @@ static void js_Texture_finalize         (void* host_ptr);
 static void js_Transform_finalize       (void* host_ptr);
 static void js_VertexList_finalize      (void* host_ptr);
 
-static void      jsal_fetch_module           (void);
+static void      on_import_module            (void);
 static void      jsal_pegasus_push_color     (color_t color);
 static void      jsal_pegasus_push_job_token (int64_t token);
 static void      jsal_pegasus_push_require   (const char* module_id);
@@ -447,7 +447,7 @@ initialize_pegasus_api(void)
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
-	jsal_on_fetch_module(jsal_fetch_module);
+	jsal_on_import_module(on_import_module);
 
 	// initialize CommonJS cache and global require()
 	jsal_push_hidden_stash();
@@ -781,7 +781,7 @@ pegasus_run(void)
 }
 
 static void
-jsal_fetch_module(void)
+on_import_module(void)
 {
 	const char* const PATHS[] =
 	{

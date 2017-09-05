@@ -55,7 +55,7 @@ struct js_ref
 
 struct function
 {
-	js_callback_t callback;
+	js_function_t callback;
 	bool          ctor_only;
 	int           magic;
 	int           min_args;
@@ -75,29 +75,38 @@ struct object
 	JsValueRef     object;
 };
 
-static void CHAKRA_CALLBACK        on_debugger_event   (JsDiagDebugEvent event, JsValueRef data, void* userdata);
-static void CHAKRA_CALLBACK        on_dispatch_job     (JsValueRef function, void* userdata);
-static JsErrorCode CHAKRA_CALLBACK on_fetch_module     (JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module);
-static void CHAKRA_CALLBACK        on_finalize_object  (void* userdata);
-static JsValueRef CHAKRA_CALLBACK  on_native_call      (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
-static void                        free_ref            (js_ref_t* ref);
-static JsValueRef                  get_value           (int stack_index);
-static JsPropertyIdRef             make_property_id    (JsValueRef key_value);
-static js_ref_t*                   make_ref            (JsValueRef value);
-static JsValueRef                  pop_value           (void);
+struct script
+{
+	char* filename;
+};
+
+static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent event, JsValueRef data, void* userdata);
+static void CHAKRA_CALLBACK        on_dispatch_job          (JsValueRef function, void* userdata);
+static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
+static JsValueRef CHAKRA_CALLBACK  on_native_call           (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
+static JsErrorCode CHAKRA_CALLBACK on_resolve_import        (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
+static void                        free_ref                 (js_ref_t* ref);
+static JsValueRef                  get_value                (int stack_index);
+static JsPropertyIdRef             make_property_id         (JsValueRef key_value);
+static js_ref_t*                   make_ref                 (JsValueRef value);
+static JsValueRef                  pop_value                (void);
 static void                        push_debug_callback_args (JsValueRef event_data);
 static bool                        script_id_to_url         (int at_index);
-static int                         push_value          (JsValueRef value);
-static void                        resize_stack        (int new_size);
-static void                        throw_if_error      (void);
-static void                        throw_value         (JsValueRef value);
+static int                         push_value               (JsValueRef value);
+static void                        resize_stack             (int new_size);
+static void                        throw_if_error           (void);
+static void                        throw_value              (JsValueRef value);
 
+#if !defined(__APPLE__)
 static int asprintf  (char* *out, const char* format, ...);
 static int vasprintf (char* *out, const char* format, va_list ap);
+#endif
 
-static vector_t*            s_catch_stack;
 static js_break_callback_t  s_break_callback = NULL;
-static js_module_callback_t s_fetch_callback = NULL;
+static vector_t*            s_catch_stack;
+static vector_t*            s_compiled_scripts;
+static js_import_callback_t s_import_callback = NULL;
+static js_job_callback_t    s_job_callback = NULL;
 static JsContextRef         s_js_context;
 static JsRuntimeHandle      s_js_runtime = NULL;
 static vector_t*            s_module_jobs;
@@ -105,7 +114,6 @@ static JsSourceContext      s_source_cookie = 1;
 static JsValueRef           s_stash;
 static vector_t*            s_stack;
 static int                  s_stack_base;
-static js_task_callback_t   s_task_callback = NULL;
 static JsValueRef           s_this_value = JS_INVALID_REFERENCE;
 static js_throw_callback_t  s_throw_callback = NULL;
 
@@ -130,6 +138,7 @@ jsal_init(void)
 	s_stack = vector_new(sizeof(JsValueRef));
 	s_catch_stack = vector_new(sizeof(jmp_buf));
 	s_stack_base = 0;
+	s_compiled_scripts = vector_new(sizeof(struct script));
 	s_module_jobs = vector_new(sizeof(struct module_job));
 	return true;
 
@@ -161,15 +170,15 @@ jsal_uninit(void)
 }
 
 void
-jsal_on_dispatch_job(js_task_callback_t callback)
+jsal_on_enqueue_job(js_job_callback_t callback)
 {
-	s_task_callback = callback;
+	s_job_callback = callback;
 }
 
 void
-jsal_on_fetch_module(js_module_callback_t callback)
+jsal_on_import_module(js_import_callback_t callback)
 {
-	s_fetch_callback = callback;
+	s_import_callback = callback;
 }
 
 void
@@ -238,13 +247,19 @@ jsal_compile(const char* filename)
 {
 	/* [ ... source ] -> [ ... function ] */
 
-	JsValueRef function;
-	JsValueRef name_string;
-	JsValueRef source_string;
+	JsValueRef      function;
+	JsValueRef      name_string;
+	JsSourceContext script_id;
+	struct script   script_info;
+	JsValueRef      source_string;
+	
+	script_id = (JsSourceContext)vector_len(s_compiled_scripts);
+	script_info.filename = strdup(filename);
+	vector_push(s_compiled_scripts, &script_info);
 	
 	source_string = pop_value();
 	JsCreateString(filename, strlen(filename), &name_string);
-	JsParse(source_string, s_source_cookie++, name_string, JsParseScriptAttributeNone, &function);
+	JsParse(source_string, script_id, name_string, JsParseScriptAttributeNone, &function);
 	throw_if_error();
 	push_value(function);
 }
@@ -392,7 +407,7 @@ jsal_eval_module(const char* filename)
 	source = jsal_require_lstring(-1, &source_len);
 	JsCreateString(filename, strlen(filename), &url_string);
 	JsInitializeModuleRecord(NULL, url_string, &module);
-	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_module);
+	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_resolve_import);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, url_string);
 	error_code = JsParseModuleSource(module,
 		s_source_cookie++, (BYTE*)source, (unsigned int)source_len,
@@ -879,7 +894,7 @@ jsal_push_boolean(bool value)
 }
 
 int
-jsal_push_constructor(js_callback_t callback, const char* name, int min_args, int magic)
+jsal_push_constructor(js_function_t callback, const char* name, int min_args, int magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
@@ -910,7 +925,7 @@ jsal_push_eval(const char* source)
 }
 
 int
-jsal_push_function(js_callback_t callback, const char* name, int min_args, int magic)
+jsal_push_function(js_function_t callback, const char* name, int min_args, int magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
@@ -1046,7 +1061,7 @@ jsal_push_new_host_object(void* data, js_finalizer_t finalizer)
 	struct object* object_info;
 
 	object_info = calloc(1, sizeof(struct object));
-	JsCreateExternalObject(object_info, on_finalize_object, &object);
+	JsCreateExternalObject(object_info, on_finalize_host_object, &object);
 
 	object_info->data = data;
 	object_info->finalizer = finalizer;
@@ -1539,7 +1554,7 @@ jsal_to_string(int at_index)
 }
 
 bool
-jsal_try(js_callback_t callback, int num_args)
+jsal_try(js_function_t callback, int num_args)
 {
 	/* [ ... arg1..argN ] -> [ ... retval ] */
 
@@ -1840,36 +1855,20 @@ push_debug_callback_args(JsValueRef event_data)
 static bool
 script_id_to_url(int at_index)
 {
-	int        num_scripts;
-	int        script_id;
-	JsValueRef script_list;
-
-	int i;
+	int            script_id;
+	struct script* script_info;
 	
-	at_index = jsal_normalize_index(at_index);
 	script_id = jsal_require_int(at_index);
-	
-	JsDiagGetScripts(&script_list);
-	push_value(script_list);
-	num_scripts = jsal_get_length(-1);
-	for (i = 0; i < num_scripts; ++i) {
-		jsal_get_prop_index(-1, i);
-		jsal_get_prop_string(-1, "scriptId");
-		if (script_id == jsal_get_int(-1)) {
-			jsal_get_prop_string(-2, "fileName");
-			jsal_replace(at_index);
-			jsal_pop(3);
-			goto found_script;
-		}
-		jsal_pop(2);
+	script_info = NULL;
+	if (script_id < vector_len(s_compiled_scripts)) {
+		script_info = vector_get(s_compiled_scripts, script_id);
+		jsal_push_string(script_info->filename);
+		return true;
 	}
-	jsal_pop(1);
-	jsal_push_undefined();
-	jsal_replace(at_index);
-	return false;
-
-found_script:
-	return true;
+	else {
+		jsal_push_undefined();
+		return false;
+	}
 }
 
 static int
@@ -1952,9 +1951,9 @@ on_dispatch_job(JsValueRef task, void* userdata)
 	push_value(task);
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
-		if (s_task_callback == NULL)
+		if (s_job_callback == NULL)
 			jsal_error(JS_ERROR, "no async/Promise support");
-		s_task_callback();
+		s_job_callback();
 		vector_pop(s_catch_stack, 1);
 	}
 	else {
@@ -1967,59 +1966,8 @@ on_dispatch_job(JsValueRef task, void* userdata)
 	s_stack_base = last_stack_base;
 }
 
-static JsErrorCode CHAKRA_CALLBACK
-on_fetch_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module)
-{
-	JsValueRef        caller_id;
-	JsValueRef        exception;
-	JsValueRef        full_specifier;
-	jmp_buf           label;
-	int               last_stack_base;
-	struct module_job job;
-	JsModuleRecord    module;
-	const char*       source;
-	size_t            source_len;
-	
-	if (s_fetch_callback == NULL)
-		return JsErrorInvalidArgument;
-	
-	last_stack_base = s_stack_base;
-	s_stack_base = vector_len(s_stack);
-	JsGetModuleHostInfo(sourceModule, JsModuleHostInfo_HostDefined, &caller_id);
-	push_value(specifier);
-	push_value(caller_id);
-	if (setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
-		s_fetch_callback();
-		if (jsal_get_top() < 2)
-			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
-		source = jsal_require_lstring(-1, &source_len);
-		full_specifier = get_value(-2);
-		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
-		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_module);
-		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
-		throw_if_error();
-		job.module = module;
-		job.source = strdup(source);
-		job.source_size = strlen(source);
-		vector_push(s_module_jobs, &job);
-		vector_pop(s_catch_stack, 1);
-	}
-	else {
-		exception = pop_value();
-		JsSetException(exception);
-		resize_stack(s_stack_base);
-		s_stack_base = last_stack_base;
-		return JsErrorScriptCompile;
-	}
-	resize_stack(s_stack_base);
-	s_stack_base = last_stack_base;
-	*out_module = module;
-	return JsNoError;
-}
-
 static void CHAKRA_CALLBACK
-on_finalize_object(void* userdata)
+on_finalize_host_object(void* userdata)
 {
 	struct object* object_info;
 
@@ -2138,6 +2086,58 @@ on_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	return retval;
 }
 
+static JsErrorCode CHAKRA_CALLBACK
+on_resolve_import(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module)
+{
+	JsValueRef        caller_id;
+	JsValueRef        exception;
+	JsValueRef        full_specifier;
+	jmp_buf           label;
+	int               last_stack_base;
+	struct module_job job;
+	JsModuleRecord    module;
+	const char*       source;
+	size_t            source_len;
+
+	if (s_import_callback == NULL)
+		return JsErrorInvalidArgument;
+
+	last_stack_base = s_stack_base;
+	s_stack_base = vector_len(s_stack);
+	JsGetModuleHostInfo(sourceModule, JsModuleHostInfo_HostDefined, &caller_id);
+	push_value(specifier);
+	push_value(caller_id);
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		s_import_callback();
+		if (jsal_get_top() < 2)
+			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
+		source = jsal_require_lstring(-1, &source_len);
+		full_specifier = get_value(-2);
+		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_resolve_import);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
+		throw_if_error();
+		job.module = module;
+		job.source = strdup(source);
+		job.source_size = strlen(source);
+		vector_push(s_module_jobs, &job);
+		vector_pop(s_catch_stack, 1);
+	}
+	else {
+		exception = pop_value();
+		JsSetException(exception);
+		resize_stack(s_stack_base);
+		s_stack_base = last_stack_base;
+		return JsErrorScriptCompile;
+	}
+	resize_stack(s_stack_base);
+	s_stack_base = last_stack_base;
+	*out_module = module;
+	return JsNoError;
+}
+
+#if !defined(__APPLE__)
 static int
 asprintf(char** out, const char* format, ...)
 {
@@ -2163,3 +2163,4 @@ vasprintf(char** out, const char* format, va_list ap)
 	vsnprintf(*out, buf_size, format, ap);
 	return buf_size;
 }
+#endif

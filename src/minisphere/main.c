@@ -61,7 +61,7 @@
 
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
-static void on_js_dispatch      (void);
+static void on_enqueue_js_job      (void);
 static bool find_startup_game   (path_t* *out_path);
 static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
 static void print_banner        (bool want_copyright, bool want_deps);
@@ -421,10 +421,10 @@ initialize_engine(void)
 	dyad_setUpdateTimeout(0.0);
 
 	// initialize JavaScript
-	console_log(1, "initializing ChakraCore 1.7.1");
+	console_log(1, "initializing ChakraCore");
 	if (!jsal_init())
 		goto on_error;
-	jsal_on_dispatch_job(on_js_dispatch);
+	jsal_on_enqueue_job(on_enqueue_js_job);
 
 	// initialize engine components
 	async_init();
@@ -484,7 +484,7 @@ shutdown_engine(void)
 }
 
 static void
-on_js_dispatch(void)
+on_enqueue_js_job(void)
 {
 	script_t* script;
 

@@ -112,7 +112,7 @@ static void    clean_old_artifacts  (build_t* build, bool keep_targets);
 static bool    eval_cjs_module      (fs_t* fs, const char* filename, bool as_mjs);
 static path_t* find_cjs_module      (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static bool    install_target       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static void    jsal_fetch_module    (void);
+static void    on_import_module    (void);
 static path_t* load_package_json    (const char* filename);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void    push_require         (const char* module_id);
@@ -142,7 +142,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	visor_begin_op(visor, "setting up Cellscript environment");
 
-	jsal_on_fetch_module(jsal_fetch_module);
+	jsal_on_import_module(on_import_module);
 
 	// initialize the CommonJS cache and global require()
 	jsal_push_hidden_stash();
@@ -718,7 +718,7 @@ install_target(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static void
-jsal_fetch_module(void)
+on_import_module(void)
 {
 	const char* const PATHS[] =
 	{

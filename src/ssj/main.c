@@ -43,7 +43,7 @@ struct cmdline
 	bool    show_trace;
 };
 
-static struct cmdline* parse_cmdline    (int argc, char* argv[], int *out_retval);
+static struct cmdline* parse_command_line    (int argc, char* argv[], int *out_retval);
 static void            free_cmdline     (struct cmdline* obj);
 static void            print_cell_quote (void);
 static void            print_banner     (bool want_copyright, bool want_deps);
@@ -69,7 +69,7 @@ main(int argc, char* argv[])
 	SetConsoleMode(hStdOut, handleMode);
 #endif
 
-	if (!(cmdline = parse_cmdline(argc, argv, &retval)))
+	if (!(cmdline = parse_command_line(argc, argv, &retval)))
 		return retval;
 
 	print_banner(true, false);
@@ -189,7 +189,7 @@ free_cmdline(struct cmdline* obj)
 }
 
 static struct cmdline*
-parse_cmdline(int argc, char* argv[], int *out_retval)
+parse_command_line(int argc, char* argv[], int *out_retval)
 {
 	struct cmdline* cmdline;
 	bool            have_target = false;
