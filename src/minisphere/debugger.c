@@ -299,6 +299,7 @@ on_breakpoint_hit(void)
 	dmessage_add_int(message, NFY_STATUS);
 	dmessage_add_int(message, 1);
 	dmessage_add_string(message, filename);
+	dmessage_add_string(message, "");
 	dmessage_add_int(message, line);
 	dmessage_add_int(message, column);
 	dmessage_send(message, s_socket);
@@ -313,6 +314,7 @@ on_breakpoint_hit(void)
 	dmessage_add_int(message, NFY_STATUS);
 	dmessage_add_int(message, 0);
 	dmessage_add_string(message, filename);
+	dmessage_add_string(message, "");
 	dmessage_add_int(message, line);
 	dmessage_add_int(message, column);
 	dmessage_send(message, s_socket);
@@ -378,12 +380,14 @@ do_detach_debugger(bool is_shutdown)
 static bool
 process_message(js_step_t* out_step)
 {
+	unsigned int   breakpoint_id;
 	ki_message_t*  reply;
 	ki_message_t*  request = NULL;
 	size2_t        resolution;
 	char*          file_data;
 	size_t         file_size;
 	const char*    filename;
+	unsigned int   line_number;
 	int            num_calls;
 	bool           resuming = false;
 	struct source* source;
@@ -435,6 +439,16 @@ process_message(js_step_t* out_step)
 				255);
 			break;
 		}
+		break;
+	case REQ_ADDBREAK:
+		filename = dmessage_get_string(request, 1);
+		line_number = dmessage_get_int(request, 2);
+		breakpoint_id = jsal_debug_add_breakpoint(filename, line_number, 1);
+		dmessage_add_int(reply, breakpoint_id);
+		break;
+	case REQ_DELBREAK:
+		breakpoint_id = dmessage_get_int(request, 1);
+		jsal_debug_remove_breakpoint(breakpoint_id);
 		break;
 	case REQ_DETACH:
 		dmessage_send(reply, s_socket);

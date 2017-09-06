@@ -89,13 +89,14 @@ static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
 static JsValueRef CHAKRA_CALLBACK  on_native_call           (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
 static JsErrorCode CHAKRA_CALLBACK on_resolve_import        (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
 static void                        add_compiled_script      (const char* filename, JsSourceContext script_id);
+static const char*                 filename_from_script_id  (JsSourceContext script_id);
 static void                        free_ref                 (js_ref_t* ref);
 static JsValueRef                  get_value                (int stack_index);
 static JsPropertyIdRef             make_property_id         (JsValueRef key_value);
 static js_ref_t*                   make_ref                 (JsValueRef value);
 static JsValueRef                  pop_value                (void);
 static void                        push_debug_callback_args (JsValueRef event_data);
-static bool                        script_id_to_url         (int at_index);
+static JsSourceContext             script_id_from_filename  (const char* filename);
 static int                         push_value               (JsValueRef value);
 static void                        resize_stack             (int new_size);
 static void                        throw_if_error           (void);
@@ -246,7 +247,7 @@ jsal_construct(int num_args)
 	push_value(retval_ref);
 }
 
-void
+unsigned int
 jsal_compile(const char* filename)
 {
 	/* [ ... source ] -> [ ... function ] */
@@ -259,8 +260,9 @@ jsal_compile(const char* filename)
 	JsCreateString(filename, strlen(filename), &name_string);
 	JsParse(source_string, s_next_script_id, name_string, JsParseScriptAttributeNone, &function);
 	throw_if_error();
-	add_compiled_script(filename, s_next_script_id++);
+	add_compiled_script(filename, s_next_script_id);
 	push_value(function);
+	return (unsigned int)s_next_script_id++;
 }
 
 void
@@ -1757,6 +1759,28 @@ jsal_debug_num_calls(void)
 
 }
 
+unsigned int
+jsal_debug_add_breakpoint(const char* filename, unsigned int line, unsigned int column)
+{
+	JsValueRef      breakpoint;
+	unsigned int    breakpoint_id;
+	JsSourceContext script_id;
+
+	script_id = script_id_from_filename(filename);
+	JsDiagSetBreakpoint((unsigned int)script_id, line - 1, column - 1, &breakpoint);
+	push_value(breakpoint);
+	jsal_get_prop_string(-1, "breakpointId");
+	breakpoint_id = jsal_get_uint(-1);
+	jsal_pop(2);
+	return breakpoint_id;
+}
+
+void
+jsal_debug_remove_breakpoint(unsigned int id)
+{
+	JsDiagRemoveBreakpoint(id);
+}
+
 void
 jsal_debug_break_now(void)
 {
@@ -1764,10 +1788,16 @@ jsal_debug_break_now(void)
 }
 
 bool
-jsal_debug_get_filename(int script_id)
+jsal_debug_get_filename(unsigned int script_id)
 {
-	jsal_push_int(script_id);
-	return script_id_to_url(-1);
+	const char* filename;
+	
+	filename = filename_from_script_id((JsSourceContext)script_id);
+	if (filename != NULL)
+		jsal_push_string(filename);
+	else
+		jsal_push_undefined();
+	return !jsal_is_undefined(-1);
 }
 
 bool
@@ -1794,7 +1824,8 @@ jsal_debug_inspect_call(int offset)
 	push_value(stack_info);
 	jsal_get_prop_index(-1, -offset - 1);
 	jsal_get_prop_string(-1, "scriptId");
-	script_id_to_url(-1);
+	jsal_push_string(filename_from_script_id(jsal_get_uint(-1)));
+	jsal_replace(-2);
 	jsal_get_prop_string(-2, "line");
 	jsal_get_prop_string(-3, "column");
 	jsal_remove(-4);
@@ -1880,35 +1911,43 @@ push_debug_callback_args(JsValueRef event_data)
 {
 	push_value(event_data);
 	jsal_get_prop_string(-1, "scriptId");
-	script_id_to_url(-1);
+	jsal_push_string(filename_from_script_id(jsal_get_uint(-1)));
+	jsal_replace(-2);
 	jsal_get_prop_string(-2, "line");
 	jsal_get_prop_string(-3, "column");
 	jsal_remove(-4);
 }
 
-static bool
-script_id_to_url(int at_index)
+static JsSourceContext
+script_id_from_filename(const char* filename)
 {
-	int            script_id;
+	struct script* script_info;
+
+	iter_t iter;
+
+	iter = vector_enum(s_compiled_scripts);
+	while (iter_next(&iter)) {
+		script_info = iter.ptr;
+		if (strcmp(filename, script_info->filename) == 0)
+			return script_info->script_id;
+	}
+	return JS_SOURCE_CONTEXT_NONE;
+}
+
+static const char*
+filename_from_script_id(JsSourceContext script_id)
+{
 	struct script* script_info;
 
 	iter_t iter;
 	
-	at_index = jsal_normalize_index(at_index);
-	script_id = jsal_require_int(at_index);
 	iter = vector_enum(s_compiled_scripts);
 	while (iter_next(&iter)) {
 		script_info = iter.ptr;
-		if (script_id == script_info->script_id) {
-			jsal_push_string(script_info->filename);
-			goto finish_up;
-		}
+		if (script_id == script_info->script_id)
+			return script_info->filename;
 	}
-	jsal_push_undefined();
-	
-finish_up:
-	jsal_replace(at_index);
-	return false;
+	return NULL;
 }
 
 static int

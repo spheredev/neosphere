@@ -94,7 +94,7 @@ void         jsal_on_enqueue_job           (js_job_callback_t callback);
 void         jsal_on_import_module         (js_import_callback_t callback);
 void         jsal_call                     (int num_args);
 void         jsal_call_method              (int num_args);
-void         jsal_compile                  (const char* filename);
+unsigned int jsal_compile                  (const char* filename);
 void         jsal_construct                (int num_args);
 void         jsal_def_prop                 (int object_index);
 void         jsal_def_prop_index           (int object_index, int name);
@@ -216,9 +216,11 @@ void         jsal_debug_init               (js_break_callback_t callback);
 void         jsal_debug_uninit             (void);
 void         jsal_debug_on_throw           (js_throw_callback_t callback);
 int          jsal_debug_num_calls          (void);
+unsigned int jsal_debug_add_breakpoint     (const char* filename, unsigned int line, unsigned int column);
 void         jsal_debug_break_now          (void);
-bool         jsal_debug_get_filename       (int script_id);
+bool         jsal_debug_get_filename       (unsigned int script_id);
 bool         jsal_debug_get_object         (int handle);
 void         jsal_debug_inspect_call       (int offset);
+void         jsal_debug_remove_breakpoint  (unsigned int id);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED
