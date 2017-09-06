@@ -588,12 +588,10 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 		case NFY_THROW:
 			if ((status_type = dmessage_get_int(msg, 1)) == 0)
 				break;
-			printf("\33[31;1mthrow: \33[31;0m");
-			printf("%s\n", dmessage_get_string(msg, 2));
-			printf("    at %s:%d\n",
-				dmessage_get_string(msg, 3),
-				dmessage_get_int(msg, 4));
+			printf("\33[31;1m");
+			printf("UNCAUGHT: ");
 			printf("\33[m");
+			printf("%s\n", dmessage_get_string(msg, 2));
 			break;
 		case NFY_DETACHING:
 			status_type = dmessage_get_int(msg, 1);

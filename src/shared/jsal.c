@@ -520,13 +520,15 @@ jsal_get_host_data(int at_index)
 int
 jsal_get_int(int index)
 {
-	int        value;
+	double     value;
 	JsValueRef value_ref;
 
 	value_ref = get_value(index);
-	if (JsNumberToInt(value_ref, &value) != JsNoError)
+	if (JsNumberToDouble(value_ref, &value) != JsNoError)
 		return 0;
-	return value;
+	return value < INT_MIN ? INT_MIN
+		: value > INT_MAX ? INT_MAX
+		: (unsigned int)value;
 }
 
 int
@@ -640,6 +642,19 @@ jsal_get_top(void)
 	return vector_len(s_stack) - s_stack_base;
 }
 
+unsigned int
+jsal_get_uint(int index)
+{
+	double     value;
+	JsValueRef value_ref;
+
+	value_ref = get_value(index);
+	if (JsNumberToDouble(value_ref, &value) != JsNoError)
+		return 0;
+	return value < 0 ? 0
+		: value > UINT_MAX ? UINT_MAX
+		: (unsigned int)value;
+}
 
 bool
 jsal_has_prop(int object_index)
@@ -959,7 +974,7 @@ jsal_push_int(int value)
 {
 	JsValueRef ref;
 
-	JsIntToNumber(value, &ref);
+	JsDoubleToNumber((double)value, &ref);
 	return push_value(ref);
 }
 
@@ -1169,6 +1184,15 @@ jsal_push_this(void)
 }
 
 int
+jsal_push_uint(unsigned int value)
+{
+	JsValueRef ref;
+
+	JsDoubleToNumber((double)value, &ref);
+	return push_value(ref);
+}
+
+int
 jsal_push_undefined(void)
 {
 	JsValueRef ref;
@@ -1321,12 +1345,7 @@ jsal_require_function(int at_index)
 int
 jsal_require_int(int at_index)
 {
-	if (!jsal_is_number(at_index)) {
-		jsal_dup(at_index);
-		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a number", jsal_to_string(-1));
-		jsal_remove(-2);
-		jsal_throw();
-	}
+	jsal_require_number(at_index);
 	return jsal_get_int(at_index);
 }
 
@@ -1390,9 +1409,7 @@ jsal_require_object_coercible(int at_index)
 const char*
 jsal_require_string(int at_index)
 {
-	size_t length;
-	
-	return jsal_require_lstring(at_index, &length);
+	return jsal_require_lstring(at_index, NULL);
 }
 
 void
@@ -1404,6 +1421,13 @@ jsal_require_symbol(int at_index)
 		jsal_remove(-2);
 		jsal_throw();
 	}
+}
+
+unsigned int
+jsal_require_uint(int at_index)
+{
+	jsal_require_number(at_index);
+	return jsal_get_uint(at_index);
 }
 
 void
@@ -1995,10 +2019,14 @@ on_finalize_host_object(void* userdata)
 static void CHAKRA_CALLBACK
 on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 {
+	unsigned int   handle;
 	jmp_buf        label;
 	int            last_stack_base;
+	const char*    name;
+	JsValueRef     properties;
 	js_step_t      step = JS_STEP_CONTINUE;
 	JsDiagStepType step_type;
+	char*          traceback;
 	
 	switch (event_type) {
 		case JsDiagDebugEventRuntimeException:
@@ -2006,9 +2034,26 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 			s_stack_base = vector_len(s_stack);
 			push_value(data);
 			jsal_get_prop_string(-1, "exception");
-			jsal_get_prop_string(-1, "display");
-			jsal_remove(-2);
-			jsal_remove(-2);
+			jsal_get_prop_string(-1, "handle");
+			handle = jsal_get_uint(-1);
+			jsal_pop(3);
+			JsDiagGetProperties(handle, 0, UINT_MAX, &properties);
+			push_value(properties);
+			jsal_get_prop_string(-1, "properties");
+			jsal_push_new_iterator(-1);
+			while (jsal_next(-1)) {
+				jsal_get_prop_string(-1, "name");
+				name = jsal_get_string(-1);
+				if (name != NULL && strcmp(name, "stack") == 0) {
+					jsal_get_prop_string(-2, "value");
+					traceback = strdup(jsal_get_string(-1));
+					jsal_pop(3);
+					break;
+				}
+				jsal_pop(2);
+			}
+			jsal_pop(3);
+			jsal_push_string(traceback);
 			push_debug_callback_args(data);
 			if (setjmp(label) == 0) {
 				vector_push(s_catch_stack, label);
