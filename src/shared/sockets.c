@@ -142,6 +142,17 @@ socket_unref(socket_t* it)
 }
 
 bool
+socket_closed(const socket_t* it)
+{
+	int state;
+
+	if (it->stream == NULL)
+		return true;
+	state = dyad_getState(it->stream);
+	return state == DYAD_STATE_CLOSED;
+}
+
+bool
 socket_connected(const socket_t* it)
 {
 	int state;

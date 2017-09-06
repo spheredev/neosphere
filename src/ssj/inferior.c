@@ -101,6 +101,8 @@ inferior_new(const char* hostname, int port, bool show_trace)
 		goto on_error;
 	timeout = clock() + 60 * CLOCKS_PER_SEC;
 	while (!socket_connected(obj->socket)) {
+		if (socket_closed(obj->socket))
+			socket_connect(obj->socket, hostname, port);
 		if (clock() > timeout)
 			goto timed_out;
 		sockets_update();
@@ -140,7 +142,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	return obj;
 
 timed_out:
-	printf("\33[31mtimeout\33[m\n");
+	printf("\33[31merror!\33[m\n");
 	return NULL;
 
 on_error:

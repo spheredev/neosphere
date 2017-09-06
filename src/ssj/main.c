@@ -43,11 +43,11 @@ struct cmdline
 	bool    show_trace;
 };
 
-static struct cmdline* parse_command_line    (int argc, char* argv[], int *out_retval);
-static void            free_cmdline     (struct cmdline* obj);
-static void            print_cell_quote (void);
-static void            print_banner     (bool want_copyright, bool want_deps);
-static void            print_usage      (void);
+static struct cmdline* parse_command_line (int argc, char* argv[], int *out_retval);
+static void            free_cmdline       (struct cmdline* obj);
+static void            print_cell_quote   (void);
+static void            print_banner       (bool want_copyright, bool want_deps);
+static void            print_usage        (void);
 
 int
 main(int argc, char* argv[])

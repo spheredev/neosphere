@@ -50,6 +50,7 @@ socket_t*   socket_new       (size_t buffer_size, bool sync_mode);
 socket_t*   socket_ref       (socket_t* it);
 void        socket_unref     (socket_t* it);
 bool        socket_connected (const socket_t* it);
+bool        socket_closed    (const socket_t* it);
 const char* socket_hostname  (const socket_t* it);
 int         socket_port      (const socket_t* it);
 void        socket_close     (socket_t* it);
