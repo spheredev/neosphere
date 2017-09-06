@@ -33,6 +33,7 @@
 #include "minisphere.h"
 #include "debugger.h"
 
+#include "audio.h"
 #include "jsal.h"
 #include "ki.h"
 #include "sockets.h"
@@ -291,6 +292,8 @@ on_breakpoint_hit(void)
 	if (s_socket == NULL)
 		return JS_STEP_CONTINUE;
 
+	audio_suspend();
+	
 	filename = jsal_get_string(0);
 	line = jsal_get_int(1) + 1;
 	column = jsal_get_int(2) + 1;
@@ -320,6 +323,8 @@ on_breakpoint_hit(void)
 	dmessage_send(message, s_socket);
 	dmessage_free(message);
 
+	audio_resume();
+	
 	return step_op;
 }
 
@@ -467,6 +472,8 @@ process_message(js_step_t* out_step)
 			dmessage_add_int(reply, jsal_get_int(-1) + 1);
 			jsal_pop(3);
 		}
+		break;
+	case REQ_LISTBREAK:
 		break;
 	case REQ_PAUSE:
 		jsal_debug_break_now();
