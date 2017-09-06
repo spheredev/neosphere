@@ -34,6 +34,7 @@
 #include "build.h"
 
 #include "api.h"
+#include "encoding.h"
 #include "fs.h"
 #include "spk_writer.h"
 #include "target.h"
@@ -97,16 +98,26 @@ static bool js_new_RNG                       (js_ref_t* me, int num_args, bool i
 static bool js_RNG_get_state                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RNG_set_state                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_RNG_next                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_new_Tool                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Tool_stage                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Target_get_fileName           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Target_get_name               (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_new_TextDecoder               (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_TextDecoder_get_encoding      (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_TextDecoder_get_fatal         (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_TextDecoder_get_ignoreBOM     (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_TextDecoder_decode            (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_new_TextEncoder               (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_TextEncoder_get_encoding      (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_TextEncoder_encode            (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_new_Tool                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Tool_stage                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 
 static void js_DirectoryStream_finalize (void* host_ptr);
 static void js_FileStream_finalize      (void* host_ptr);
 static void js_RNG_finalize             (void* host_ptr);
-static void js_Tool_finalize            (void* host_ptr);
 static void js_Target_finalize          (void* host_ptr);
+static void js_TextDecoder_finalize     (void* host_ptr);
+static void js_TextEncoder_finalize     (void* host_ptr);
+static void js_Tool_finalize            (void* host_ptr);
 
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
 static bool    eval_cjs_module      (fs_t* fs, const char* filename, bool as_mjs);
@@ -196,6 +207,14 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_class("Target", NULL, js_Target_finalize);
 	api_define_property("Target", "fileName", js_Target_get_fileName, NULL);
 	api_define_property("Target", "name", js_Target_get_name, NULL);
+	api_define_class("TextDecoder", js_new_TextDecoder, js_TextDecoder_finalize);
+	api_define_property("TextDecoder", "encoding", js_TextDecoder_get_encoding, NULL);
+	api_define_property("TextDecoder", "fatal", js_TextDecoder_get_fatal, NULL);
+	api_define_property("TextDecoder", "ignoreBOM", js_TextDecoder_get_ignoreBOM, NULL);
+	api_define_method("TextDecoder", "decode", js_TextDecoder_decode);
+	api_define_class("TextEncoder", js_new_TextEncoder, js_TextEncoder_finalize);
+	api_define_property("TextEncoder", "encoding", js_TextEncoder_get_encoding, NULL);
+	api_define_method("TextEncoder", "encode", js_TextEncoder_encode);
 	api_define_class("Tool", js_new_Tool, js_Tool_finalize);
 	api_define_method("Tool", "stage", js_Tool_stage);
 
@@ -1659,6 +1678,173 @@ js_Target_get_name(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	target = jsal_require_class_obj(-1, "Target");
 
 	jsal_push_string(path_cstr(target_name(target)));
+	return true;
+}
+
+static bool
+js_new_TextDecoder(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	decoder_t*  decoder;
+	bool        fatal = false;
+	bool        ignore_bom = false;
+	const char* label = "utf-8";
+
+	if (num_args >= 1)
+		label = jsal_require_string(0);
+	if (num_args >= 2) {
+		jsal_require_object_coercible(1);
+		if (jsal_get_prop_string(1, "fatal"))
+			fatal = jsal_require_boolean(-1);
+		if (jsal_get_prop_string(1, "ignoreBOM"))
+			ignore_bom = jsal_require_boolean(-1);
+	}
+
+	// TextDecoder only supports UTF-8 for now.  in the future it'd be nice to support
+	// at least UTF-16 and maybe CP-1252.
+	if (strcasecmp(label, "unicode-1-1-utf-8") != 0
+		&& strcasecmp(label, "utf-8") != 0
+		&& strcasecmp(label, "utf8") != 0)
+	{
+		jsal_error(JS_TYPE_ERROR, "'%s' encoding is not supported", label);
+	}
+
+	decoder = decoder_new(fatal, ignore_bom);
+	jsal_push_class_obj("TextDecoder", decoder);
+	return true;
+}
+
+static void
+js_TextDecoder_finalize(void* host_ptr)
+{
+	decoder_free(host_ptr);
+}
+
+static bool
+js_TextDecoder_get_encoding(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	decoder_t* decoder;
+
+	jsal_push_this();
+	decoder = jsal_require_class_obj(-1, "TextDecoder");
+
+	jsal_push_string("utf-8");
+	return true;
+}
+
+static bool
+js_TextDecoder_get_fatal(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	decoder_t* decoder;
+
+	jsal_push_this();
+	decoder = jsal_require_class_obj(-1, "TextDecoder");
+
+	jsal_push_boolean(decoder_fatal(decoder));
+	return 1;
+}
+
+static bool
+js_TextDecoder_get_ignoreBOM(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	decoder_t* decoder;
+
+	jsal_push_this();
+	decoder = jsal_require_class_obj(-1, "TextDecoder");
+
+	jsal_push_boolean(decoder_ignore_bom(decoder));
+	return true;
+}
+
+static bool
+js_TextDecoder_decode(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	decoder_t*  decoder;
+	lstring_t*  head;
+	const char* input = "";
+	size_t      length = 0;
+	lstring_t*  string;
+	bool        streaming = false;
+	lstring_t*  tail = NULL;
+
+	jsal_push_this();
+	decoder = jsal_require_class_obj(-1, "TextDecoder");
+	if (num_args >= 1)
+		input = jsal_require_buffer_ptr(0, &length);
+	if (num_args >= 2) {
+		jsal_require_object_coercible(1);
+		if (jsal_get_prop_string(1, "stream"))
+			streaming = jsal_require_boolean(-1);
+	}
+
+	if (!(string = decoder_run(decoder, input, length)))
+		jsal_error(JS_TYPE_ERROR, "data is not valid utf-8");
+	if (!streaming) {
+		if (!(tail = decoder_finish(decoder)))
+			jsal_error(JS_TYPE_ERROR, "data is not valid utf-8");
+		head = string;
+		string = lstr_cat(head, tail);
+		lstr_free(head);
+		lstr_free(tail);
+		jsal_push_lstring_t(string);
+		lstr_free(string);
+	}
+	else {
+		jsal_push_lstring_t(string);
+		lstr_free(string);
+	}
+	return true;
+}
+
+static bool
+js_new_TextEncoder(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	encoder_t* encoder;
+
+	encoder = encoder_new();
+	jsal_push_class_obj("TextEncoder", encoder);
+	return true;
+}
+
+static void
+js_TextEncoder_finalize(void* host_ptr)
+{
+	encoder_free(host_ptr);
+}
+
+static bool
+js_TextEncoder_get_encoding(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	encoder_t* encoder;
+
+	jsal_push_this();
+	encoder = jsal_require_class_obj(-1, "TextEncoder");
+
+	jsal_push_string("utf-8");
+	return true;
+}
+
+static bool
+js_TextEncoder_encode(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	void*      buffer;
+	lstring_t* input;
+	uint8_t*   output;
+	size_t     size;
+
+	encoder_t* encoder;
+
+	jsal_push_this();
+	encoder = jsal_require_class_obj(-1, "TextEncoder");
+	if (num_args >= 1)
+		input = jsal_require_lstring_t(0);
+	else
+		input = lstr_new("");
+
+	output = encoder_run(encoder, input, &size);
+	jsal_push_new_buffer(JS_UINT8ARRAY, size);
+	buffer = jsal_get_buffer_ptr(-1, NULL);
+	memcpy(buffer, output, size);
+	lstr_free(input);
 	return true;
 }
 

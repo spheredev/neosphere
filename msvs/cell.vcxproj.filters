@@ -60,6 +60,9 @@
     <ClCompile Include="..\src\shared\jsal.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\shared\encoding.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\lstring.h">
@@ -117,6 +120,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\posix.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\shared\encoding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

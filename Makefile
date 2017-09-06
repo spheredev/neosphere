@@ -15,8 +15,9 @@ CFLAGS=-O3
 endif
 
 engine_sources=src/minisphere/main.c \
-   src/shared/api.c src/shared/console.c src/shared/dyad.c src/shared/jsal.c \
-   src/shared/ki.c src/shared/lstring.c src/shared/md5.c src/shared/path.c \
+   src/shared/api.c src/shared/console.c src/shared/dyad.c \
+   src/shared/encoding.c src/shared/jsal.c src/shared/ki.c \
+   src/shared/lstring.c src/shared/md5.c src/shared/path.c \
    src/shared/sockets.c src/shared/unicode.c src/shared/vector.c \
    src/shared/xoroshiro.c \
    src/minisphere/animation.c src/minisphere/async.c src/minisphere/atlas.c \
@@ -37,8 +38,9 @@ engine_libs= \
    -lChakraCore -lmng -lz -lm
 
 cell_sources=src/cell/main.c \
-   src/shared/api.c src/shared/jsal.c src/shared/lstring.c src/shared/path.c \
-   src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
+   src/shared/api.c src/shared/encoding.c src/shared/jsal.c \
+   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
+   src/shared/vector.c src/shared/xoroshiro.c \
    src/cell/build.c src/cell/fs.c src/cell/spk_writer.c src/cell/target.c \
    src/cell/tool.c src/cell/utility.c src/cell/visor.c
 cell_libs= \
