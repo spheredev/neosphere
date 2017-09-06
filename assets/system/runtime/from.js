@@ -271,7 +271,7 @@ function CallbackSource(source, callback)
 
 function FilterSource(source, predicate)
 {
-	predicate = predicate || function(v) { return true; };
+	predicate = predicate || (() => true);
 
 	this.init =
 	function init()
@@ -295,7 +295,7 @@ function FromSource(source, selector)
 {
 	var m_iterator;
 	var m_nextItem;
-	var m_selector = selector || function(v) { return v; };
+	var m_selector = selector || (it => it);
 
 	this.init =
 	function init()
@@ -396,7 +396,7 @@ function IsSource(source, value)
 
 function MapSource(source, selector)
 {
-	selector = selector || function(v) { return v; };
+	selector = selector || (it => it);
 
 	this.init =
 	function init()
@@ -451,7 +451,7 @@ function OrderedSource(descending)
 
 			// Array#sort() is not guaranteed to be stable.  to stabilize it,
 			// we use the item's position in the input stream as a tiebreaker.
-			m_list.sort(function(a, b) {
+			m_list.sort((a, b) => {
 				return a.key < b.key ? -1 * order
 					: a.key > b.key ? 1 * order
 					: a.index - b.index;
