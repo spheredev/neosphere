@@ -36,10 +36,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+typedef void (* sockets_on_idle_t) (void);
+
 typedef struct server server_t;
 typedef struct socket socket_t;
 
-bool        sockets_init     (void);
+bool        sockets_init     (sockets_on_idle_t idle_handler);
 void        sockets_uninit   (void);
 void        sockets_update   (void);
 server_t*   server_new       (const char* hostname, int port, size_t buffer_size, int max_backlog, bool sync_mode);

@@ -76,7 +76,7 @@ static unsigned int s_next_id_no = 1;
 void
 inferiors_init(void)
 {
-	sockets_init();
+	sockets_init(NULL);
 }
 
 void

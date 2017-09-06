@@ -59,9 +59,10 @@
     "language='*'\"")
 #endif
 
+static void on_enqueue_js_job   (void);
+static void on_socket_idle      (void);
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
-static void on_enqueue_js_job      (void);
 static bool find_startup_game   (path_t* *out_path);
 static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
 static void print_banner        (bool want_copyright, bool want_deps);
@@ -354,7 +355,8 @@ sphere_run(bool allow_dispatch)
 	sockets_update();
 
 #if defined(MINISPHERE_SPHERUN)
-	debugger_update();
+	if (allow_dispatch)
+		debugger_update();
 #endif
 
 	if (allow_dispatch)
@@ -390,6 +392,21 @@ sphere_sleep(double time)
 			al_wait_for_event_timed(g_events, NULL, time_left);
 		sphere_run(false);
 	} while (al_get_time() < end_time);
+}
+
+static void
+on_enqueue_js_job(void)
+{
+	script_t* script;
+
+	script = script_new_func(0);
+	async_defer(script, 0, ASYNC_TICK);
+}
+
+static void
+on_socket_idle(void)
+{
+	sphere_sleep(0.05);
 }
 
 static bool
@@ -431,7 +448,7 @@ initialize_engine(void)
 	galileo_init();
 	audio_init();
 	initialize_input();
-	sockets_init();
+	sockets_init(on_socket_idle);
 	spritesets_init();
 	map_engine_init();
 	scripts_init();
@@ -481,15 +498,6 @@ shutdown_engine(void)
 	game_unref(g_game);
 	g_game = NULL;
 	al_uninstall_system();
-}
-
-static void
-on_enqueue_js_job(void)
-{
-	script_t* script;
-
-	script = script_new_func(0);
-	async_defer(script, 0, ASYNC_TICK);
 }
 
 static bool

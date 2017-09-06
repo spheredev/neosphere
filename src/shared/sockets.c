@@ -69,12 +69,13 @@ static void on_dyad_accept  (dyad_Event* e);
 static void on_dyad_close   (dyad_Event* e);
 static void on_dyad_receive (dyad_Event* e);
 
-static unsigned int s_next_server_id = 1;
-static unsigned int s_next_socket_id = 1;
-static unsigned int s_num_refs       = 0;
+static sockets_on_idle_t s_idle_callback = NULL;
+static unsigned int      s_next_server_id = 1;
+static unsigned int      s_next_socket_id = 1;
+static unsigned int      s_num_refs       = 0;
 
 bool
-sockets_init(void)
+sockets_init(sockets_on_idle_t idle_handler)
 {
 	if (++s_num_refs > 1)
 		return true;
@@ -82,7 +83,8 @@ sockets_init(void)
 	console_log(1, "initializing sockets subsystem");
 	console_log(2, "    Dyad.c %s", dyad_getVersion());
 	dyad_init();
-	dyad_setUpdateTimeout(0.0);
+	dyad_setUpdateTimeout(idle_handler != NULL ? 0.0 : 0.05);
+	s_idle_callback = idle_handler;
 	return true;
 }
 
@@ -217,8 +219,11 @@ socket_read(socket_t* it, void* buffer, size_t num_bytes)
 {
 	if (it->sync_mode) {
 		// in sync mode, block until all bytes are available.
-		while (it->recv_size < num_bytes && it->stream != NULL)
+		while (it->recv_size < num_bytes && it->stream != NULL) {
+			if (s_idle_callback != NULL)
+				s_idle_callback();
 			sockets_update();
+		}
 		if (it->recv_size < num_bytes)
 			return 0;
 	}
