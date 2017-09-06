@@ -440,6 +440,26 @@ lstr_cstr(const lstring_t* string)
 	return string->cstr;
 }
 
+lstring_t*
+lstr_cat(const lstring_t* string1, const lstring_t* string2)
+{
+	char*      buffer;
+	size_t     length;
+	lstring_t* string;
+
+	length = string1->length + string2->length;
+	if (!(string = malloc(sizeof(lstring_t) + length + 1)))
+		return NULL;
+	buffer = (char*)string + sizeof(lstring_t);
+	memcpy(buffer, string1->cstr, string1->length);
+	memcpy(buffer + string1->length, string2->cstr, string2->length);
+	buffer[length] = '\0';  // NUL terminator
+	
+	string->cstr = buffer;
+	string->length = length;
+	return string;
+}
+
 int
 lstr_cmp(const lstring_t* string1, const lstring_t* string2)
 {

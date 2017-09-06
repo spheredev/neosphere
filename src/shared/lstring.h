@@ -15,6 +15,7 @@ lstring_t*  lstr_from_cp1252 (const char* text, size_t length);
 lstring_t*  lstr_from_utf8   (const char* text, size_t length, bool strip_bom);
 void        lstr_free        (lstring_t* string);
 const char* lstr_cstr        (const lstring_t* string);
+lstring_t*  lstr_cat         (const lstring_t* string1, const lstring_t* string2);
 int         lstr_cmp         (const lstring_t* string1, const lstring_t* string2);
 lstring_t*  lstr_dup         (const lstring_t* string);
 size_t      lstr_len         (const lstring_t* string);
