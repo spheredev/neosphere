@@ -467,7 +467,7 @@ process_message(js_step_t* out_step)
 		for (i = 0; i < num_calls; ++i) {
 			jsal_debug_inspect_call(-i - 1);
 			dmessage_add_string(reply, jsal_get_string(-3));
-			dmessage_add_string(reply, "function");
+			dmessage_add_string(reply, "");
 			dmessage_add_int(reply, jsal_get_int(-2) + 1);
 			dmessage_add_int(reply, jsal_get_int(-1) + 1);
 			jsal_pop(3);

@@ -1751,7 +1751,8 @@ jsal_debug_num_calls(void)
 	int        num_calls;
 	JsValueRef stack_info;
 
-	JsDiagGetStackTrace(&stack_info);
+	if (JsDiagGetStackTrace(&stack_info) != JsNoError)
+		return 0;
 	push_value(stack_info);
 	num_calls = jsal_get_length(-1);
 	jsal_pop(1);
