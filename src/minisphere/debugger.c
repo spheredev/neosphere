@@ -46,7 +46,7 @@ struct source
 	lstring_t* text;
 };
 
-static js_step_t on_breakpoint_hit       (void);
+static js_step_t on_breakpoint_hit   (void);
 static void      on_throw_exception  (void);
 static bool      do_attach_debugger  (void);
 static void      do_detach_debugger  (bool is_shutdown);
@@ -393,7 +393,6 @@ process_message(js_step_t* out_step)
 	size_t         file_size;
 	const char*    filename;
 	unsigned int   line_number;
-	int            num_calls;
 	bool           resuming = false;
 	struct source* source;
 
@@ -463,14 +462,21 @@ process_message(js_step_t* out_step)
 		*out_step = JS_STEP_CONTINUE;
 		return true;
 	case REQ_GETCALLSTACK:
-		num_calls = jsal_debug_num_calls();
-		for (i = 0; i < num_calls; ++i) {
-			jsal_debug_inspect_call(-i - 1);
+		i = 0;
+		while (jsal_debug_inspect_call(i++)) {
 			dmessage_add_string(reply, jsal_get_string(-4));
 			dmessage_add_string(reply, jsal_get_string(-3));
 			dmessage_add_int(reply, jsal_get_int(-2) + 1);
 			dmessage_add_int(reply, jsal_get_int(-1) + 1);
-			jsal_pop(3);
+			jsal_pop(4);
+		}
+		break;
+	case REQ_GETLOCALS:
+		i = 0;
+		while (jsal_debug_inspect_var(0, i++)) {
+			dmessage_add_string(reply, jsal_get_string(-2));
+			dmessage_add_string(reply, jsal_to_string(-1));
+			jsal_pop(2);
 		}
 		break;
 	case REQ_LISTBREAK:

@@ -1766,21 +1766,6 @@ jsal_debug_on_throw(js_throw_callback_t callback)
 	s_throw_callback = callback;
 }
 
-int
-jsal_debug_num_calls(void)
-{
-	int        num_calls;
-	JsValueRef stack_info;
-
-	if (JsDiagGetStackTrace(&stack_info) != JsNoError)
-		return 0;
-	push_value(stack_info);
-	num_calls = jsal_get_length(-1);
-	jsal_pop(1);
-	return num_calls;
-
-}
-
 unsigned int
 jsal_debug_add_breakpoint(const char* filename, unsigned int line, unsigned int column)
 {
@@ -1837,14 +1822,15 @@ jsal_debug_get_object(int handle)
 	}
 }
 
-void
-jsal_debug_inspect_call(int offset)
+bool
+jsal_debug_inspect_call(int call_index)
 {
 	JsValueRef backtrace;
 
-	JsDiagGetStackTrace(&backtrace);
+	if (JsDiagGetStackTrace(&backtrace) != JsNoError)
+		return false;
 	push_value(backtrace);
-	jsal_get_prop_index(-1, -offset - 1);
+	jsal_get_prop_index(-1, call_index);
 	jsal_get_prop_string(-1, "scriptId");
 	jsal_push_string(filename_from_script_id(jsal_get_uint(-1)));
 	jsal_replace(-2);
@@ -1853,6 +1839,36 @@ jsal_debug_inspect_call(int offset)
 	jsal_get_prop_string(-4, "column");
 	jsal_remove(-5);
 	jsal_remove(-5);
+	return true;
+}
+
+bool
+jsal_debug_inspect_var(int call_index, int var_index)
+{
+	JsValueRef  frame_info;
+	int         index = 0;
+
+	JsDiagGetStackProperties(call_index, &frame_info);
+	push_value(frame_info);
+	jsal_get_prop_string(-1, "locals");
+	jsal_push_new_iterator(-1);
+	while (jsal_next(-1)) {
+		jsal_get_prop_string(-1, "name");
+		if (var_index == index++) {
+			if (jsal_has_prop_string(-2, "display"))
+				jsal_get_prop_string(-2, "display");
+			else
+				jsal_get_prop_string(-2, "value");
+			jsal_remove(-3);
+			jsal_remove(-3);
+			jsal_remove(-3);
+			jsal_remove(-3);
+			return true;
+		}
+		jsal_pop(2);
+	}
+	jsal_pop(3);
+	return false;
 }
 
 static void
