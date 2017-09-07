@@ -249,8 +249,7 @@ namespace Sphere.Gdk.Components
 
             // clear all matching breakpoints
             var breaks = await Inferior.ListBreak();
-            for (int i = breaks.Length - 1; i >= 0; --i)
-            {
+            for (int i = breaks.Length - 1; i >= 0; --i) {
                 string fn = breaks[i].Item1;
                 int line = breaks[i].Item2;
                 if (fileName == fn && lineNumber == line)

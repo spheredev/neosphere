@@ -145,6 +145,7 @@ jsal_init(void)
 	s_stack_base = 0;
 	s_compiled_scripts = vector_new(sizeof(struct script));
 	s_module_jobs = vector_new(sizeof(struct module_job));
+
 	return true;
 
 on_error:
@@ -221,6 +222,24 @@ jsal_call_method(int num_args)
 	push_value(retval_ref);
 }
 
+unsigned int
+jsal_compile(const char* filename)
+{
+	/* [ ... source ] -> [ ... function ] */
+
+	JsValueRef      function;
+	JsValueRef      name_string;
+	JsValueRef      source_string;
+	
+	source_string = pop_value();
+	JsCreateString(filename, strlen(filename), &name_string);
+	JsParse(source_string, s_next_script_id, name_string, JsParseScriptAttributeNone, &function);
+	throw_if_error();
+	add_compiled_script(filename, s_next_script_id);
+	push_value(function);
+	return (unsigned int)s_next_script_id++;
+}
+
 void
 jsal_construct(int num_args)
 {
@@ -245,24 +264,6 @@ jsal_construct(int num_args)
 	jsal_pop(num_args + 1);
 	throw_if_error();
 	push_value(retval_ref);
-}
-
-unsigned int
-jsal_compile(const char* filename)
-{
-	/* [ ... source ] -> [ ... function ] */
-
-	JsValueRef      function;
-	JsValueRef      name_string;
-	JsValueRef      source_string;
-	
-	source_string = pop_value();
-	JsCreateString(filename, strlen(filename), &name_string);
-	JsParse(source_string, s_next_script_id, name_string, JsParseScriptAttributeNone, &function);
-	throw_if_error();
-	add_compiled_script(filename, s_next_script_id);
-	push_value(function);
-	return (unsigned int)s_next_script_id++;
 }
 
 void
@@ -839,6 +840,26 @@ jsal_is_undefined(int stack_index)
 	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsUndefined;
+}
+
+void
+jsal_make_buffer(int object_index, js_buffer_type_t buffer_type, void* buffer, size_t num_items)
+{
+	JsValueRef       object;
+	JsTypedArrayType type;
+
+	object = get_value(object_index);
+	type = buffer_type == JS_UINT8ARRAY ? JsArrayTypeUint8
+		: buffer_type == JS_UINT8ARRAY_CLAMPED ? JsArrayTypeUint8Clamped
+		: buffer_type == JS_UINT16ARRAY ? JsArrayTypeUint16
+		: buffer_type == JS_UINT32ARRAY ? JsArrayTypeUint32
+		: buffer_type == JS_INT8ARRAY ? JsArrayTypeInt8
+		: buffer_type == JS_INT16ARRAY ? JsArrayTypeInt16
+		: buffer_type == JS_INT32ARRAY ? JsArrayTypeInt32
+		: buffer_type == JS_FLOAT32ARRAY ? JsArrayTypeFloat32
+		: buffer_type == JS_FLOAT64ARRAY ? JsArrayTypeFloat64
+		: JsArrayTypeUint8;
+	JsSetIndexedPropertiesToExternalData(object, buffer, type, (unsigned int)num_items);
 }
 
 bool
@@ -1819,18 +1840,19 @@ jsal_debug_get_object(int handle)
 void
 jsal_debug_inspect_call(int offset)
 {
-	JsValueRef stack_info;
+	JsValueRef backtrace;
 
-	JsDiagGetStackTrace(&stack_info);
-	push_value(stack_info);
+	JsDiagGetStackTrace(&backtrace);
+	push_value(backtrace);
 	jsal_get_prop_index(-1, -offset - 1);
 	jsal_get_prop_string(-1, "scriptId");
 	jsal_push_string(filename_from_script_id(jsal_get_uint(-1)));
 	jsal_replace(-2);
+	jsal_push_string("");
 	jsal_get_prop_string(-2, "line");
 	jsal_get_prop_string(-3, "column");
-	jsal_remove(-4);
-	jsal_remove(-4);
+	jsal_remove(-5);
+	jsal_remove(-5);
 }
 
 static void

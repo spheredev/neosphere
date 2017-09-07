@@ -347,8 +347,6 @@ static bool js_Animation_drawZoomedFrame        (js_ref_t* me, int num_args, boo
 static bool js_Animation_getDelay               (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Animation_getNumFrames           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Animation_readNextFrame          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ByteArray_proxy_get              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ByteArray_proxy_set              (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ByteArray_get_length             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ByteArray_concat                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ByteArray_slice                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -1183,25 +1181,8 @@ initialize_vanilla_api(void)
 void
 jsal_push_sphere_bytearray(bytearray_t* array)
 {
-	int obj_index;
-
 	jsal_push_class_obj("v1ByteArray", bytearray_ref(array));
-	obj_index = jsal_normalize_index(-1);
-
-	// return proxy object so we can catch array accesses
-	jsal_push_global_object();
-	jsal_get_prop_string(-1, "Proxy");
-	jsal_dup(obj_index);
-	jsal_push_new_object();
-	jsal_push_function(js_ByteArray_proxy_get, "get", 0, 0);
-	jsal_put_prop_string(-2, "get");
-	jsal_push_function(js_ByteArray_proxy_set, "set", 0, 0);
-	jsal_put_prop_string(-2, "set");
-	jsal_construct(2);
-	jsal_get_prototype(obj_index);
-	jsal_set_prototype(-2);
-	jsal_remove(-2);
-	jsal_remove(-2);
+	jsal_make_buffer(-1, JS_UINT8ARRAY, bytearray_buffer(array), bytearray_len(array));
 }
 
 void

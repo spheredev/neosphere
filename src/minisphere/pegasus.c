@@ -2133,7 +2133,7 @@ js_Font_drawText(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int         height;
 	image_t*    surface;
 	const char* text;
-	int         width;
+	int         width = 0;
 	wraptext_t* wraptext;
 	int         x;
 	int         y;
@@ -2148,12 +2148,14 @@ js_Font_drawText(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	text = jsal_to_string(3);
 	color = num_args >= 5 ? jsal_pegasus_require_color(4)
 		: color_new(255, 255, 255, 255);
-	width = num_args >= 6 ? jsal_require_int(5) : 0;
+	if (num_args >= 6)
+		width = jsal_require_int(5);
 
 	if (surface == screen_backbuffer(g_screen) && screen_skip_frame(g_screen))
 		return false;
 	else {
 		image_render_to(surface, NULL);
+		shader_use(galileo_shader(), false);
 		if (num_args < 6)
 			font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
 		else {

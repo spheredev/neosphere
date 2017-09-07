@@ -141,6 +141,7 @@ bool         jsal_is_object_coercible      (int stack_index);
 bool         jsal_is_string                (int stack_index);
 bool         jsal_is_symbol                (int stack_index);
 bool         jsal_is_undefined             (int stack_index);
+void         jsal_make_buffer              (int object_index, js_buffer_type_t buffer_type, void* buffer, size_t num_items);
 bool         jsal_next                     (int iter_index);
 int          jsal_normalize_index          (int index);
 void         jsal_parse                    (int at_index);
