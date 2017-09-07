@@ -74,7 +74,7 @@ Thread.join = function join(threadIDs)
 {
 	threadIDs = threadIDs instanceof Array ? threadIDs : [ threadIDs ];
 	while (from.Array(threads)
-		.where(function(t) { return threadIDs.indexOf(t.id) >= 0; })
+		.where(it => threadIDs.indexOf(it.id) >= 0)
 		.count() > 0)
 	{
 		if (haveMapEngine && IsMapEngineRunning()) {
@@ -88,8 +88,8 @@ Thread.join = function join(threadIDs)
 Thread.kill = function kill(threadID)
 {
 	from.Array(threads)
-		.where(function(t) { return t.id == threadID })
-		.besides(function(t) { t.isValid = false; })
+		.where(it => it.id == threadID)
+		.besides(it => it.isValid = false)
 		.remove();
 }
 
@@ -114,7 +114,7 @@ Thread.prototype.on_render = function() {};
 Object.defineProperty(Thread.prototype, 'running',
 {
 	enumerable: true, configurable: true,
-	get: function() { return Thread.isRunning(this.threadID); },
+	get: function get() { return Thread.isRunning(this.threadID); },
 });
 
 Thread.prototype.dispose = function dispose()
@@ -172,37 +172,30 @@ function _makeThread(that, threadDesc)
 
 function _renderAll()
 {
-	from.Array(threads.slice())
-		.where(function(t) { return t.isValid; })
-		.where(function(t) { return t.renderer !== undefined; })
-		.each(function(thread)
-	{
+	let activeThreads = from.Array(threads.slice())
+		.where(it => it.isValid)
+		.where(it => it.renderer !== undefined)
+    for (let thread of activeThreads)
 		thread.renderer();
-	});
 }
 
 function _updateAll()
 {
-	var threadsEnding = [];
-	from.Array(threads.slice())
-		.where(function(t) { return t.isValid; })
-		.where(function(t) { return !t.isBusy; })
-		.each(function(thread)
-	{
-		var lastSelf = currentSelf;
+	let activeThreads = from.Array(threads.slice())
+		.where(it => it.isValid && !it.isBusy)
+	let threadsEnding = [];
+    for (let thread of activeThreads) {
+		let lastSelf = currentSelf;
 		thread.isBusy = true;
 		currentSelf = thread.id;
-		var isRunning = thread.updater(thread.id);
+		let isRunning = thread.updater(thread.id);
 		if (thread.inputHandler !== undefined && isRunning)
 			thread.inputHandler();
 		currentSelf = lastSelf;
 		thread.isBusy = false;
 		if (!isRunning)
 			threadsEnding.push(thread.id);
-	});
-	from.Array(threadsEnding)
-		.each(function(threadID)
-	{
-		Thread.kill(threadID);
-	});
+	}
+	for (let threadID of threadsEnding)
+        Thread.kill(threadID);
 }
