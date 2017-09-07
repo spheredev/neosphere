@@ -1849,8 +1849,8 @@ jsal_debug_inspect_call(int offset)
 	jsal_push_string(filename_from_script_id(jsal_get_uint(-1)));
 	jsal_replace(-2);
 	jsal_push_string("");
-	jsal_get_prop_string(-2, "line");
-	jsal_get_prop_string(-3, "column");
+	jsal_get_prop_string(-3, "line");
+	jsal_get_prop_string(-4, "column");
 	jsal_remove(-5);
 	jsal_remove(-5);
 }

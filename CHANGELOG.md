@@ -6,7 +6,7 @@ vX.X.X - TBD
 
 * miniSphere and Cell both now use Microsoft's ChakraCore under the hood,
   vastly improving JavaScript execution performance and bringing long-overdue
-  native support for ES2015 syntax and built-ins to Sphere--including
+  native support for ES2015+ syntax and built-ins to Sphere--including
   out-of-the-box support for ECMAScript modules!--without the need for any
   transpilation or polyfills.
 * Brings back the `Pact` class!  This provides an easy way to manage promises
