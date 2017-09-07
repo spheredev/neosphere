@@ -1783,12 +1783,6 @@ jsal_debug_add_breakpoint(const char* filename, unsigned int line, unsigned int 
 }
 
 void
-jsal_debug_remove_breakpoint(unsigned int id)
-{
-	JsDiagRemoveBreakpoint(id);
-}
-
-void
 jsal_debug_break_now(void)
 {
 	JsDiagRequestAsyncBreak(s_js_runtime);
@@ -1825,50 +1819,63 @@ jsal_debug_get_object(int handle)
 bool
 jsal_debug_inspect_call(int call_index)
 {
+	/* [ ... ] -> [ ... filename function_name line column ] */
+	
 	JsValueRef backtrace;
 
 	if (JsDiagGetStackTrace(&backtrace) != JsNoError)
 		return false;
 	push_value(backtrace);
-	jsal_get_prop_index(-1, call_index);
-	jsal_get_prop_string(-1, "scriptId");
-	jsal_push_string(filename_from_script_id(jsal_get_uint(-1)));
-	jsal_replace(-2);
-	jsal_push_string("");
-	jsal_get_prop_string(-3, "line");
-	jsal_get_prop_string(-4, "column");
-	jsal_remove(-5);
-	jsal_remove(-5);
-	return true;
+	if (jsal_get_prop_index(-1, call_index)) {
+		jsal_get_prop_string(-1, "scriptId");
+		jsal_push_string(filename_from_script_id(jsal_get_uint(-1)));
+		jsal_replace(-2);
+		jsal_push_string("");
+		jsal_get_prop_string(-3, "line");
+		jsal_get_prop_string(-4, "column");
+		jsal_remove(-5);
+		jsal_remove(-5);
+		return true;
+	}
+	else {
+		jsal_pop(2);
+		return false;
+	}
 }
 
 bool
 jsal_debug_inspect_var(int call_index, int var_index)
 {
+	/* [ ... ] -> [ ... name value_summary ] */
+
 	JsValueRef  frame_info;
 	int         index = 0;
 
-	JsDiagGetStackProperties(call_index, &frame_info);
+	if (JsDiagGetStackProperties(call_index, &frame_info) != JsNoError)
+		return false;
 	push_value(frame_info);
 	jsal_get_prop_string(-1, "locals");
-	jsal_push_new_iterator(-1);
-	while (jsal_next(-1)) {
+	if (jsal_get_prop_index(-1, var_index)) {
 		jsal_get_prop_string(-1, "name");
-		if (var_index == index++) {
-			if (jsal_has_prop_string(-2, "display"))
-				jsal_get_prop_string(-2, "display");
-			else
-				jsal_get_prop_string(-2, "value");
-			jsal_remove(-3);
-			jsal_remove(-3);
-			jsal_remove(-3);
-			jsal_remove(-3);
-			return true;
-		}
-		jsal_pop(2);
+		if (jsal_has_prop_string(-2, "display"))
+			jsal_get_prop_string(-2, "display");
+		else
+			jsal_get_prop_string(-2, "value");
+		jsal_remove(-3);
+		jsal_remove(-3);
+		jsal_remove(-3);
+		return true;
 	}
-	jsal_pop(3);
-	return false;
+	else {
+		jsal_pop(3);
+		return false;
+	}
+}
+
+void
+jsal_debug_remove_breakpoint(unsigned int id)
+{
+	JsDiagRemoveBreakpoint(id);
 }
 
 static void
