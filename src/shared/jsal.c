@@ -1767,7 +1767,7 @@ jsal_debug_on_throw(js_throw_callback_t callback)
 }
 
 unsigned int
-jsal_debug_add_breakpoint(const char* filename, unsigned int line, unsigned int column)
+jsal_debug_breakpoint_add(const char* filename, unsigned int line, unsigned int column)
 {
 	JsValueRef      breakpoint;
 	unsigned int    breakpoint_id;
@@ -1783,37 +1783,15 @@ jsal_debug_add_breakpoint(const char* filename, unsigned int line, unsigned int 
 }
 
 void
-jsal_debug_break_now(void)
+jsal_debug_breakpoint_inject(void)
 {
 	JsDiagRequestAsyncBreak(s_js_runtime);
 }
 
-bool
-jsal_debug_get_filename(unsigned int script_id)
+void
+jsal_debug_breakpoint_remove(unsigned int id)
 {
-	const char* filename;
-	
-	filename = filename_from_script_id((JsSourceContext)script_id);
-	if (filename != NULL)
-		jsal_push_string(filename);
-	else
-		jsal_push_undefined();
-	return !jsal_is_undefined(-1);
-}
-
-bool
-jsal_debug_get_object(int handle)
-{
-	JsValueRef object;
-
-	if (JsDiagGetObjectFromHandle(handle, &object) == JsNoError) {
-		push_value(object);
-		return true;
-	}
-	else {
-		jsal_push_undefined();
-		return false;
-	}
+	JsDiagRemoveBreakpoint(id);
 }
 
 bool
@@ -1870,12 +1848,6 @@ jsal_debug_inspect_var(int call_index, int var_index)
 		jsal_pop(3);
 		return false;
 	}
-}
-
-void
-jsal_debug_remove_breakpoint(unsigned int id)
-{
-	JsDiagRemoveBreakpoint(id);
 }
 
 static void

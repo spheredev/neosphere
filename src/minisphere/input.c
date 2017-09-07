@@ -598,7 +598,7 @@ update_input(void)
 				if (!debugger_attached())
 					screen_queue_screenshot(g_screen);
 				else
-					jsal_debug_break_now();
+					jsal_debug_breakpoint_inject();
 				break;
 			default:
 				queue_key(event.keyboard.keycode);

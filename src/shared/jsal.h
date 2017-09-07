@@ -216,12 +216,10 @@ void         jsal_unref                    (js_ref_t* ref);
 void         jsal_debug_init               (js_break_callback_t callback);
 void         jsal_debug_uninit             (void);
 void         jsal_debug_on_throw           (js_throw_callback_t callback);
-unsigned int jsal_debug_add_breakpoint     (const char* filename, unsigned int line, unsigned int column);
-void         jsal_debug_break_now          (void);
-bool         jsal_debug_get_filename       (unsigned int script_id);
-bool         jsal_debug_get_object         (int handle);
+unsigned int jsal_debug_breakpoint_add     (const char* filename, unsigned int line, unsigned int column);
+void         jsal_debug_breakpoint_inject  (void);
+void         jsal_debug_breakpoint_remove  (unsigned int id);
 bool         jsal_debug_inspect_call       (int call_index);
 bool         jsal_debug_inspect_var        (int call_index, int var_index);
-void         jsal_debug_remove_breakpoint  (unsigned int id);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED

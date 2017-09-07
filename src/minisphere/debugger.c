@@ -447,12 +447,12 @@ process_message(js_step_t* out_step)
 	case REQ_ADDBREAK:
 		filename = dmessage_get_string(request, 1);
 		line_number = dmessage_get_int(request, 2);
-		breakpoint_id = jsal_debug_add_breakpoint(filename, line_number, 1);
+		breakpoint_id = jsal_debug_breakpoint_add(filename, line_number, 1);
 		dmessage_add_int(reply, breakpoint_id);
 		break;
 	case REQ_DELBREAK:
 		breakpoint_id = dmessage_get_int(request, 1);
-		jsal_debug_remove_breakpoint(breakpoint_id);
+		jsal_debug_breakpoint_remove(breakpoint_id);
 		break;
 	case REQ_DETACH:
 		dmessage_send(reply, s_socket);
@@ -482,7 +482,7 @@ process_message(js_step_t* out_step)
 	case REQ_LISTBREAK:
 		break;
 	case REQ_PAUSE:
-		jsal_debug_break_now();
+		jsal_debug_breakpoint_inject();
 		break;
 	case REQ_RESUME:
 		*out_step = JS_STEP_CONTINUE;
