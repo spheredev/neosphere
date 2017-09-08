@@ -81,17 +81,18 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 	ALLEGRO_BITMAP*      icon_bitmap;
 	ALLEGRO_MONITOR_INFO desktop_info;
 	screen_t*            screen;
-	int                  x_scale;
-	int                  y_scale;
+	int                  x_scale = 1;
+	int                  y_scale = 1;
 
 	console_log(1, "initializing render context at %dx%d", resolution.width, resolution.height);
 
 	al_set_new_window_title(title);
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
-	al_get_monitor_info(0, &desktop_info);
-	x_scale = ((desktop_info.x2 - desktop_info.x1) / 2) / resolution.width;
-	y_scale = ((desktop_info.y2 - desktop_info.y1) / 2) / resolution.height;
-	x_scale = y_scale = fmax(fmin(x_scale, y_scale), 1.0);
+	if (al_get_monitor_info(0, &desktop_info)) {
+		x_scale = ((desktop_info.x2 - desktop_info.x1) / 1.5) / resolution.width;
+		y_scale = ((desktop_info.y2 - desktop_info.y1) / 1.5) / resolution.height;
+		x_scale = y_scale = fmax(fmin(x_scale, y_scale), 1.0);
+	}
 	display = al_create_display(resolution.width * x_scale, resolution.height * y_scale);
 
 	// custom backbuffer: this allows pixel-perfect rendering regardless
@@ -474,8 +475,8 @@ refresh_display(screen_t* screen)
 	}
 	else {
 		al_get_monitor_info(0, &desktop_info);
-		screen->x_scale = ((desktop_info.x2 - desktop_info.x1) / 2) / screen->x_size;
-		screen->y_scale = ((desktop_info.y2 - desktop_info.y1) / 2) / screen->y_size;
+		screen->x_scale = trunc(((desktop_info.x2 - desktop_info.x1) / 1.5) / screen->x_size);
+		screen->y_scale = trunc(((desktop_info.y2 - desktop_info.y1) / 1.5) / screen->y_size);
 		screen->x_scale = screen->y_scale = fmax(fmin(screen->x_scale, screen->y_scale), 1.0);
 		screen->x_offset = screen->y_offset = 0.0;
 
