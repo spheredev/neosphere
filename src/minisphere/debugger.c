@@ -136,8 +136,14 @@ debugger_update(void)
 	char*         handshake;
 	js_step_t     step_op;
 
-	if (s_is_attached && s_socket == NULL)
-		do_detach_debugger(false);
+	if (s_is_attached) {
+		if (s_socket != NULL && socket_closed(s_socket)) {
+			socket_unref(s_socket);
+			s_socket = NULL;
+		}
+		if (s_socket == NULL)
+			do_detach_debugger(false);
+	}
 	
 	// watch for incoming SSj client and attach debugger
 	if (client = server_accept(s_server)) {
