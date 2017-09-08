@@ -70,6 +70,7 @@ debugger_init(bool want_attach, bool allow_remote)
 	const char*   hostname;
 
 	jsal_debug_on_throw(on_throw_exception);
+	jsal_debug_init(on_breakpoint_hit);
 
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
@@ -116,8 +117,9 @@ debugger_uninit()
 	iter_t iter;
 
 	do_detach_debugger(true);
+	jsal_debug_uninit();
 	server_unref(s_server);
-	
+
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
 		while (iter_next(&iter)) {
@@ -153,18 +155,13 @@ debugger_update(void)
 			socket_unref(client);
 		}
 		else {
-			if (jsal_debug_init(on_breakpoint_hit)) {
-				console_log(0, "connected to debugger at %s", socket_hostname(client));
-				handshake = strnewf("2 20000 v2.1.1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
-				socket_write(client, handshake, strlen(handshake));
-				free(handshake);
-				s_socket = client;
-			}
-			else {
-				console_log(0, "rejected connection from %s, couldn't attach debugger",
-					socket_hostname(client));
-				socket_unref(client);
-			}
+			jsal_debug_breakpoint_inject();
+			console_log(0, "connected to debugger at %s", socket_hostname(client));
+			handshake = strnewf("2 20000 v2.1.1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
+			socket_write(client, handshake, strlen(handshake));
+			free(handshake);
+			s_socket = client;
+			s_is_attached = true;
 		}
 	}
 
@@ -303,8 +300,6 @@ on_breakpoint_hit(void)
 	if (s_socket == NULL)
 		return JS_STEP_CONTINUE;
 
-	s_is_attached = true;
-
 	audio_suspend();
 	
 	filename = jsal_get_string(0);
@@ -321,20 +316,19 @@ on_breakpoint_hit(void)
 	dmessage_send(message, s_socket);
 	dmessage_free(message);
 
-	while (!process_message(&step_op)) {
-		if (s_socket == NULL)
-			return JS_STEP_CONTINUE;
-	}
+	while (!process_message(&step_op));
 
-	message = dmessage_new(DMESSAGE_NFY);
-	dmessage_add_int(message, NFY_STATUS);
-	dmessage_add_int(message, 0);
-	dmessage_add_string(message, filename);
-	dmessage_add_string(message, "");
-	dmessage_add_int(message, line);
-	dmessage_add_int(message, column);
-	dmessage_send(message, s_socket);
-	dmessage_free(message);
+	if (s_socket != NULL) {
+		message = dmessage_new(DMESSAGE_NFY);
+		dmessage_add_int(message, NFY_STATUS);
+		dmessage_add_int(message, 0);
+		dmessage_add_string(message, filename);
+		dmessage_add_string(message, "");
+		dmessage_add_int(message, line);
+		dmessage_add_int(message, column);
+		dmessage_send(message, s_socket);
+		dmessage_free(message);
+	}
 
 	audio_resume();
 	
@@ -346,6 +340,9 @@ on_throw_exception(void)
 {
 	ki_message_t* message;
 
+	if (s_socket == NULL)
+		return;
+	
 	message = dmessage_new(DMESSAGE_NFY);
 	dmessage_add_int(message, NFY_THROW);
 	dmessage_add_int(message, 1);
@@ -383,7 +380,6 @@ do_detach_debugger(bool is_shutdown)
 	// detach the debugger
 	console_log(1, "detaching SSj debug session");
 	s_is_attached = false;
-	jsal_debug_uninit();
 	if (s_socket != NULL) {
 		socket_close(s_socket);
 		while (socket_connected(s_socket))
@@ -541,5 +537,6 @@ on_error:
 	dmessage_free(request);
 	socket_unref(s_socket);
 	s_socket = NULL;
-	return false;
+	*out_step = JS_STEP_CONTINUE;
+	return true;
 }

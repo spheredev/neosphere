@@ -1750,7 +1750,6 @@ jsal_debug_init(js_break_callback_t on_breakpoint)
 	if (JsDiagStartDebugging(s_js_runtime, on_debugger_event, NULL) != JsNoError)
 		return false;
 	JsDiagSetBreakOnException(s_js_runtime, JsDiagBreakOnExceptionAttributeUncaught);
-	JsDiagRequestAsyncBreak(s_js_runtime);
 	return true;
 }
 
