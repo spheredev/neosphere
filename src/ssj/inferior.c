@@ -299,7 +299,7 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 		else {
 			value = dmessage_get_dvalue(request, index++);
 			if (dvalue_tag(value) != DVALUE_UNUSED)
-				objview_add_value(view, key_string, value, flags);
+				objview_add_value(view, key_string, "property", value, flags);
 		}
 		free(key_string);
 	}
@@ -348,6 +348,7 @@ on_error:
 objview_t*
 inferior_get_vars(inferior_t* obj, int frame)
 {
+	const char*      class_name;
 	ki_message_t*    msg;
 	const char*      name;
 	int              num_vars;
@@ -362,11 +363,12 @@ inferior_get_vars(inferior_t* obj, int frame)
 	if (!(msg = inferior_request(obj, msg)))
 		return NULL;
 	vars = objview_new();
-	num_vars = dmessage_len(msg) / 2;
+	num_vars = dmessage_len(msg) / 3;
 	for (i = 0; i < num_vars; ++i) {
-		name = dmessage_get_string(msg, i * 2 + 0);
-		value = dmessage_get_dvalue(msg, i * 2 + 1);
-		objview_add_value(vars, name, value, 0x0);
+		name = dmessage_get_string(msg, i * 3 + 0);
+		class_name = dmessage_get_string(msg, i * 3 + 1);
+		value = dmessage_get_dvalue(msg, i * 3 + 2);
+		objview_add_value(vars, name, class_name, value, 0x0);
 	}
 	return vars;
 }

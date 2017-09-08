@@ -37,6 +37,7 @@
 
 struct entry
 {
+	char*        class_name;
 	char*        key;
 	prop_tag_t   tag;
 	unsigned int flags;
@@ -77,6 +78,7 @@ objview_free(objview_t* obj)
 
 	for (i = 0; i < obj->num_props; ++i) {
 		free(obj->props[i].key);
+		free(obj->props[i].class_name);
 		dvalue_free(obj->props[i].value);
 		dvalue_free(obj->props[i].getter);
 		dvalue_free(obj->props[i].setter);
@@ -100,6 +102,12 @@ prop_tag_t
 objview_get_tag(const objview_t* obj, int index)
 {
 	return obj->props[index].tag;
+}
+
+const char*
+objview_get_class(const objview_t* obj, int index)
+{
+	return obj->props[index].class_name;
 }
 
 const char*
@@ -147,7 +155,7 @@ objview_add_accessor(objview_t* obj, const char* key, const ki_atom_t* getter, c
 }
 
 void
-objview_add_value(objview_t* obj, const char* key, const ki_atom_t* value, unsigned int flags)
+objview_add_value(objview_t* obj, const char* key, const char* class_name, const ki_atom_t* value, unsigned int flags)
 {
 	int idx;
 
@@ -158,6 +166,7 @@ objview_add_value(objview_t* obj, const char* key, const ki_atom_t* value, unsig
 	}
 	obj->props[idx].tag = PROP_VALUE;
 	obj->props[idx].key = strdup(key);
+	obj->props[idx].class_name = strdup(class_name);
 	obj->props[idx].value = dvalue_dup(value);
 	obj->props[idx].getter = NULL;
 	obj->props[idx].setter = NULL;

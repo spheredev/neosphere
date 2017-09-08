@@ -478,9 +478,10 @@ process_message(js_step_t* out_step)
 	case REQ_GETLOCALS:
 		i = 0;
 		while (jsal_debug_inspect_var(0, i++)) {
+			dmessage_add_string(reply, jsal_get_string(-3));
 			dmessage_add_string(reply, jsal_get_string(-2));
-			dmessage_add_string(reply, jsal_to_string(-1));
-			jsal_pop(2);
+			dmessage_add_string(reply, jsal_get_string(-1));
+			jsal_pop(3);
 		}
 		break;
 	case REQ_LISTBREAK:

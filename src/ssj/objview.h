@@ -55,6 +55,7 @@ enum prop_flag
 objview_t*       objview_new          (void);
 void             objview_free         (objview_t* obj);
 int              objview_len          (const objview_t* obj);
+const char*      objview_get_class    (const objview_t* obj, int index);
 const char*      objview_get_key      (const objview_t* obj, int index);
 prop_tag_t       objview_get_tag      (const objview_t* obj, int index);
 unsigned int     objview_get_flags    (const objview_t* obj, int index);
@@ -62,6 +63,6 @@ const ki_atom_t* objview_get_getter   (const objview_t* obj, int index);
 const ki_atom_t* objview_get_setter   (const objview_t* obj, int index);
 const ki_atom_t* objview_get_value    (const objview_t* obj, int index);
 void             objview_add_accessor (objview_t* obj, const char* key, const ki_atom_t* getter, const ki_atom_t* setter, unsigned int flags);
-void             objview_add_value    (objview_t* obj, const char* key, const ki_atom_t* value, unsigned int flags);
+void             objview_add_value    (objview_t* obj, const char* key, const char* class_name, const ki_atom_t* value, unsigned int flags);
 
 #endif // SPHERE__OBJECTVIEW_H__INCLUDED

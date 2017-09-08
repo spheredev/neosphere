@@ -1848,13 +1848,18 @@ jsal_debug_inspect_var(int call_index, int var_index)
 	jsal_get_prop_string(-1, "locals");
 	if (jsal_get_prop_index(-1, var_index)) {
 		jsal_get_prop_string(-1, "name");
-		if (jsal_has_prop_string(-2, "display"))
-			jsal_get_prop_string(-2, "display");
+		if (jsal_has_prop_string(-2, "type"))
+			jsal_get_prop_string(-2, "type");
 		else
-			jsal_get_prop_string(-2, "value");
-		jsal_remove(-3);
-		jsal_remove(-3);
-		jsal_remove(-3);
+			jsal_push_string("unknown");
+		if (jsal_has_prop_string(-3, "display"))
+			jsal_get_prop_string(-3, "display");
+		else
+			jsal_get_prop_string(-3, "value");
+		jsal_to_string(-1);
+		jsal_remove(-4);
+		jsal_remove(-4);
+		jsal_remove(-4);
 		return true;
 	}
 	else {
