@@ -1,7 +1,7 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
+v5.0.0 - TBD
 ------------
 
 * miniSphere and Cell both now use Microsoft's ChakraCore under the hood,

@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+miniSphere 5.0
+--------------
+
+* Duktape has been replaced!  miniSphere 5.0 uses ChakraCore for blazing-fast
+  JavaScript performance.  Chakra supports ECMAScript 2015 natively, so you no
+  longer need a `transpile()` step in your Cellscript to use ES2015 features
+  such as arrow functions, destructuring, even modules!
+
+
 miniSphere 4.8
 --------------
 
