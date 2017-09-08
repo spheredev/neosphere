@@ -233,6 +233,9 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 				case 'a':
 					have_target = true;
 					break;
+				case 'r':
+					cmdline->run_now = true;
+					break;
 				case 't':
 					cmdline->show_trace = true;
 					break;
@@ -322,7 +325,7 @@ print_usage(void)
 	printf("OPTIONS:\n");
 	printf("   -a, --attach     Attach to a target which has already been started.  If no  \n");
 	printf("                    connection can be made within 30 seconds, SSj will exit.   \n");
-	printf("       --no-pause   Prevent SSj from pausing execution on attach.              \n");
+	printf("   -r, --no-pause   Prevent SSj from pausing execution on attach.              \n");
 	printf("   -t, --trace      Show trace-level output, e.g., from SSj.trace().           \n");
 	printf("       --version    Print the version number of SSj and its dependencies.      \n");
 	printf("       --help       Print this help text.                                      \n");
