@@ -148,18 +148,23 @@ debugger_update(void)
 	// watch for incoming SSj client and attach debugger
 	if (client = server_accept(s_server)) {
 		if (s_socket != NULL) {
-			console_log(2, "rejected SSj connection from %s, already attached",
+			console_log(2, "rejected connection from %s, debugger attached",
 				socket_hostname(client));
 			socket_unref(client);
 		}
 		else {
-			console_log(0, "connected to SSj at %s", socket_hostname(client));
-			handshake = strnewf("2 20000 v2.1.1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
-			socket_write(client, handshake, strlen(handshake));
-			free(handshake);
-			s_socket = client;
-			jsal_debug_init(on_breakpoint_hit);
-			s_is_attached = true;
+			if (jsal_debug_init(on_breakpoint_hit)) {
+				console_log(0, "connected to debugger at %s", socket_hostname(client));
+				handshake = strnewf("2 20000 v2.1.1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
+				socket_write(client, handshake, strlen(handshake));
+				free(handshake);
+				s_socket = client;
+			}
+			else {
+				console_log(0, "rejected connection from %s, couldn't attach debugger",
+					socket_hostname(client));
+				socket_unref(client);
+			}
 		}
 	}
 
@@ -298,6 +303,8 @@ on_breakpoint_hit(void)
 	if (s_socket == NULL)
 		return JS_STEP_CONTINUE;
 
+	s_is_attached = true;
+
 	audio_suspend();
 	
 	filename = jsal_get_string(0);
@@ -355,7 +362,7 @@ do_attach_debugger(void)
 {
 	double timeout;
 
-	printf("waiting for SSj client to connect...\n");
+	printf("waiting for SSj debugger to connect...\n");
 	fflush(stdout);
 	timeout = al_get_time() + 30.0;
 	while (s_socket == NULL && al_get_time() < timeout) {
@@ -406,6 +413,11 @@ process_message(js_step_t* out_step)
 	iter_t iter;
 	int i;
 
+	if (!s_is_attached) {
+		*out_step = JS_STEP_CONTINUE;
+		return false;
+	}
+	
 	if (!(request = dmessage_recv(s_socket)))
 		goto on_error;
 	if (dmessage_tag(request) != DMESSAGE_REQ)

@@ -1742,14 +1742,16 @@ jsal_unref(js_ref_t* ref)
 	free(ref);
 }
 
-void
+bool
 jsal_debug_init(js_break_callback_t on_breakpoint)
 {
 	s_break_callback = on_breakpoint;
 	
-	JsDiagStartDebugging(s_js_runtime, on_debugger_event, NULL);
+	if (JsDiagStartDebugging(s_js_runtime, on_debugger_event, NULL) != JsNoError)
+		return false;
 	JsDiagSetBreakOnException(s_js_runtime, JsDiagBreakOnExceptionAttributeUncaught);
 	JsDiagRequestAsyncBreak(s_js_runtime);
+	return true;
 }
 
 void
