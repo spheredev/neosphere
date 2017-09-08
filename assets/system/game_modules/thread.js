@@ -130,9 +130,9 @@ Thread.prototype.join = function join()
 Thread.prototype.start = function start()
 {
 	this.threadID = Thread.create({
-		getInput: function() { this.on_checkInput(); }.bind(this),
-		update:   function() { this.on_update(); return true }.bind(this),
-		render:   function() { this.on_render(); }.bind(this),
+		getInput: () => { this.on_checkInput(); },
+		update:   () => { this.on_update(); return true; },
+		render:   () => { this.on_render(); },
 	}, this.threadPriority);
 };
 

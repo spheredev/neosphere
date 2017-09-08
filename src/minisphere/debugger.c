@@ -437,6 +437,12 @@ process_message(js_step_t* out_step)
 				dmessage_add_string(reply, file_data);
 				free(file_data);
 			}
+			else {
+				dmessage_free(reply);
+				reply = dmessage_new(DMESSAGE_ERR);
+				dmessage_add_int(reply, 4);
+				dmessage_add_string(reply, "no source code available");
+			}
 			break;
 		case APPREQ_WATERMARK:
 			s_banner_text = lstr_new(dmessage_get_string(request, 2));
