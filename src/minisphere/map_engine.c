@@ -2888,7 +2888,7 @@ update_person(person_t* person, bool* out_has_moved)
 	if (person->revert_frames > 0 && --person->revert_frames <= 0)
 		person->frame = 0;
 	if (person->leader == NULL) {  // no leader; use command queue
-								   // call the command generator if the queue is empty
+		// call the command generator if the queue is empty
 		if (person->num_commands == 0)
 			person_activate(person, PERSON_SCRIPT_GENERATOR, NULL, true);
 

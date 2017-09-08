@@ -386,13 +386,14 @@ static bool
 process_message(js_step_t* out_step)
 {
 	unsigned int   breakpoint_id;
-	ki_message_t*  reply;
-	ki_message_t*  request = NULL;
-	size2_t        resolution;
 	char*          file_data;
 	size_t         file_size;
 	const char*    filename;
 	unsigned int   line_number;
+	char*          platform_name;
+	ki_message_t*  reply;
+	ki_message_t*  request = NULL;
+	size2_t        resolution;
 	bool           resuming = false;
 	struct source* source;
 
@@ -408,12 +409,15 @@ process_message(js_step_t* out_step)
 	case REQ_APPREQUEST:
 		switch (dmessage_get_int(request, 1)) {
 		case APPREQ_GAME_INFO:
+			platform_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 			resolution = game_resolution(g_game);
+			dmessage_add_string(reply, platform_name);
 			dmessage_add_string(reply, game_name(g_game));
 			dmessage_add_string(reply, game_author(g_game));
 			dmessage_add_string(reply, game_summary(g_game));
 			dmessage_add_int(reply, resolution.width);
 			dmessage_add_int(reply, resolution.height);
+			free(platform_name);
 			break;
 		case APPREQ_SOURCE:
 			filename = dmessage_get_string(request, 2);

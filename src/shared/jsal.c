@@ -1799,7 +1799,9 @@ jsal_debug_inspect_call(int call_index)
 {
 	/* [ ... ] -> [ ... filename function_name line column ] */
 	
-	JsValueRef backtrace;
+	JsValueRef   backtrace;
+	unsigned int handle;
+	JsValueRef   function_data;
 
 	if (JsDiagGetStackTrace(&backtrace) != JsNoError)
 		return false;
@@ -1808,7 +1810,18 @@ jsal_debug_inspect_call(int call_index)
 		jsal_get_prop_string(-1, "scriptId");
 		jsal_push_string(filename_from_script_id(jsal_get_uint(-1)));
 		jsal_replace(-2);
-		jsal_push_string("");
+
+		jsal_get_prop_string(-2, "functionHandle");
+		handle = jsal_get_uint(-1);
+		JsDiagGetObjectFromHandle(handle, &function_data);
+		push_value(function_data);
+		if (!jsal_get_prop_string(-1, "name")) {
+			jsal_pop(1);
+			jsal_push_string("");
+		}
+		jsal_remove(-2);
+		jsal_remove(-2);
+
 		jsal_get_prop_string(-3, "line");
 		jsal_get_prop_string(-4, "column");
 		jsal_remove(-5);

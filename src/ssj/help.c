@@ -223,7 +223,7 @@ help_print(const char* command_name)
 		printf(
 			"Quit SSj.  This will detach the debugger and return you to the shell.  In most \n"
 			"cases the miniSphere debug target will also close, unless SSj was started with \n"
-			"the '-c' option to connect to a running instance.                              \n\n"
+			"the '-a' option to attach to a running instance.                               \n\n"
 			"SYNTAX:                                                                        \n"
 			"    quit                                                                       \n"
 		);

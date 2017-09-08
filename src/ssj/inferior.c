@@ -89,6 +89,7 @@ inferior_t*
 inferior_new(const char* hostname, int port, bool show_trace)
 {
 	inferior_t*   obj;
+	char*         platform_name;
 	ki_message_t* reply;
 	ki_message_t* request;
 	clock_t       timeout;
@@ -124,18 +125,20 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	reply = inferior_request(obj, request);
 	dmessage_free(reply);
 
-	printf("querying target... ");
+	printf("downloading game information... ");
 	request = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(request, REQ_APPREQUEST);
 	dmessage_add_int(request, APPREQ_GAME_INFO);
 	reply = inferior_request(obj, request);
-	obj->title = strdup(dmessage_get_string(reply, 0));
-	obj->author = strdup(dmessage_get_string(reply, 1));
+	platform_name = strdup(dmessage_get_string(reply, 0));
+	obj->title = strdup(dmessage_get_string(reply, 1));
+	obj->author = strdup(dmessage_get_string(reply, 2));
 	dmessage_free(reply);
 	printf("OK.\n");
 
 	printf("    game: %s\n", obj->title);
 	printf("    author: %s\n", obj->author);
+	printf("    engine: %s\n", platform_name);
 
 	obj->id_no = s_next_id_no++;
 	obj->show_trace = show_trace;
@@ -233,8 +236,10 @@ inferior_get_calls(inferior_t* obj)
 		obj->calls = backtrace_new();
 		for (i = 0; i < num_frames; ++i) {
 			function_name = dmessage_get_string(request, i * 4 + 1);
-			if (strcmp(function_name, "") == 0)
-				call_name = strdup("[anon]");
+			if (strcmp(function_name, "Anonymous function") == 0)
+				call_name = strdup("[anonymous function]");
+			else if (strcmp(function_name, "Global code") == 0)
+				call_name = strdup("[global code]");
 			else
 				call_name = strnewf("%s()", function_name);
 			filename = dmessage_get_string(request, i * 4);

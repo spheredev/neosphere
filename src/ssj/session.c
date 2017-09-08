@@ -139,7 +139,7 @@ session_run(session_t* obj, bool run_now)
 
 	while (inferior_attached(obj->inferior))
 		do_command_line(obj);
-	printf("SSj session terminated.\n");
+	printf("SSj session shutting down.\n");
 }
 
 static const char*
@@ -658,7 +658,7 @@ handle_where(session_t* obj, command_t* cmd)
 		return;
 	while (backtrace_get_linenum(calls, frame) <= 0)
 		++frame;
-	preview_frame(obj, obj->frame);
+	preview_frame(obj, frame);
 }
 
 static void

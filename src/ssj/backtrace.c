@@ -126,7 +126,7 @@ backtrace_print(const backtrace_t* obj, int active_frame, bool show_all)
 			if (i == active_frame)
 				printf("\33[33;1m");
 			if (line_no > 0)
-				printf("%s #%2d: %s at %s:%d\n", arrow, i, name, filename, line_no);
+				printf("%s #%2d: %s, at %s:%d\n", arrow, i, name, filename, line_no);
 			else
 				printf("%s #%2d: %s <system call>\n", arrow, i, name);
 			printf("\33[m");
