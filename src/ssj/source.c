@@ -140,12 +140,12 @@ source_print(const source_t* source, int lineno, int num_lines, int active_linen
 	end = start + num_lines < line_count ? start + num_lines : line_count;
 	for (i = start; i < end; ++i) {
 		text = source_get_line(source, i);
-		arrow = i + 1 == active_lineno ? "=>" : "  ";
+		arrow = i + 1 == active_lineno ? "->" : "  ";
 		if (num_lines == 1)
 			printf("%d %s\n", i + 1, text);
 		else {
 			if (i + 1 == active_lineno)
-				printf("\33[36;1m");
+				printf("\33[37;1m");
 			printf("%s %4d %s\n", arrow, i + 1, text);
 			printf("\33[m");
 		}

@@ -139,7 +139,7 @@ session_run(session_t* obj, bool run_now)
 
 	while (inferior_attached(obj->inferior))
 		do_command_line(obj);
-	printf("SSj session shutting down.\n");
+	printf("the SSj debugger has been detached.\n");
 }
 
 static const char*
@@ -644,7 +644,7 @@ handle_vars(session_t* obj, command_t* cmd)
 		var_name = objview_get_key(vars, i);
 		class_name = objview_get_class(vars, i);
 		value = objview_get_value(vars, i);
-		printf("\33[36;1m%s\33[m: \33[37;1m%s\33[m = %s",
+		printf("\33[37;1m%s: %s\33[m = %s",
 			var_name, class_name, dvalue_as_cstr(value));
 		printf("\n");
 	}

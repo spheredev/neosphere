@@ -136,9 +136,9 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	dmessage_free(reply);
 	printf("OK.\n");
 
-	printf("    game: %s\n", obj->title);
-	printf("    author: %s\n", obj->author);
-	printf("    engine: %s\n", platform_name);
+	printf("    platform: \33[37;1m%s\33[m\n", platform_name);
+	printf("    title:    \33[37;1m%s\33[m\n", obj->title);
+	printf("    author:   \33[37;1m%s\33[m\n", obj->author);
 
 	obj->id_no = s_next_id_no++;
 	obj->show_trace = show_trace;
