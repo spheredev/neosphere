@@ -160,11 +160,9 @@ namespace Sphere.Gdk.Components
 
         private void duktape_ErrorThrown(object sender, ThrowEventArgs e)
         {
-            PluginManager.Core.Invoke(new Action(async () =>
+            PluginManager.Core.Invoke(new Action(() =>
             {
-                await InternSourceFile(e.FileName);
-                var lineNumber = m_sourceMap.LineInSource(e.FileName, e.LineNumber);
-                Panes.Console.AddError(e.Message, e.IsFatal, e.FileName, lineNumber);
+                Panes.Console.AddError(e.Message, e.IsFatal, e.FileName, e.LineNumber);
                 if (e.IsFatal) {
                     PluginManager.Core.Docking.Show(Panes.Console);
                     PluginManager.Core.Docking.Activate(Panes.Console);
@@ -193,19 +191,13 @@ namespace Sphere.Gdk.Components
                 if (wantPause)
                 {
                     m_focusTimer.Change(Timeout.Infinite, Timeout.Infinite);
-                    await InternSourceFile(Inferior.FileName);
                     FileName = ResolvePath(Inferior.FileName);
-                    LineNumber = m_sourceMap.LineInSource(Inferior.FileName, Inferior.LineNumber);
+                    LineNumber = Inferior.LineNumber;
                     if (!File.Exists(FileName))
                     {
                         // filename reported by Duktape doesn't exist; walk callstack for a
                         // JavaScript call as a fallback
                         var callStack = await Inferior.GetCallStack();
-                        foreach (var frame in callStack)
-                        {
-                            await InternSourceFile(frame.FileName);
-                            frame.LineNumber = m_sourceMap.LineInSource(frame.FileName, frame.LineNumber);
-                        }
                         var topJSFrame = callStack.First(entry => entry.LineNumber != 0);
                         var callIndex = Array.IndexOf(callStack, topJSFrame);
                         FileName = ResolvePath(topJSFrame.FileName);
@@ -238,8 +230,6 @@ namespace Sphere.Gdk.Components
         public async Task SetBreakpoint(string fileName, int lineNumber)
         {
             fileName = UnresolvePath(fileName);
-            await InternSourceFile(fileName);
-            lineNumber = m_sourceMap.LineInTarget(fileName, lineNumber);
             await Inferior.AddBreak(fileName, lineNumber);
         }
 
@@ -327,11 +317,6 @@ namespace Sphere.Gdk.Components
             {
                 SsjDebugger me = (SsjDebugger)state;
                 var callStack = await me.Inferior.GetCallStack();
-                foreach (var frame in callStack)
-                {
-                    await me.InternSourceFile(frame.FileName);
-                    frame.LineNumber = me.m_sourceMap.LineInSource(frame.FileName, frame.LineNumber);
-                }
                 if (!me.Running)
                 {
                     await Panes.Inspector.SetCallStack(callStack);
