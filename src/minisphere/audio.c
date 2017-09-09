@@ -179,8 +179,8 @@ audio_suspend(void)
 void
 audio_update(void)
 {
+	sound_t*               sound;
 	struct sample_instance *p_sample;
-	sound_t*               *p_sound;
 	stream_t*              *p_stream;
 
 	iter_t iter;
@@ -203,10 +203,11 @@ audio_update(void)
 	}
 
 	iter = vector_enum(s_active_sounds);
-	while (p_sound = iter_next(&iter)) {
-		if (sound_playing(*p_sound))
+	while (iter_next(&iter)) {
+		sound = *(sound_t**)iter.ptr;
+		if (sound_playing(sound) || sound->suspended)
 			continue;
-		sound_unref(*p_sound);
+		sound_unref(sound);
 		iter_remove(&iter);
 	}
 }
