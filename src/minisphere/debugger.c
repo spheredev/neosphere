@@ -342,7 +342,7 @@ on_throw_exception(void)
 
 	if (s_socket == NULL)
 		return;
-	
+
 	message = dmessage_new(DMESSAGE_NFY);
 	dmessage_add_int(message, NFY_THROW);
 	dmessage_add_int(message, 1);
@@ -395,6 +395,9 @@ static bool
 process_message(js_step_t* out_step)
 {
 	unsigned int   breakpoint_id;
+	int            call_index;
+	const char*    eval_code;
+	bool           eval_errored;
 	char*          file_data;
 	size_t         file_size;
 	const char*    filename;
@@ -485,6 +488,15 @@ process_message(js_step_t* out_step)
 		do_detach_debugger(false);
 		*out_step = JS_STEP_CONTINUE;
 		return true;
+	case REQ_EVAL:
+		call_index = -(dmessage_get_int(request, 1)) - 1;
+		eval_code = dmessage_get_string(request, 2);
+		jsal_debug_inspect_eval(call_index, eval_code, &eval_errored);
+		dmessage_add_int(reply, eval_errored ? 1 : 0);
+		dmessage_add_string(reply, jsal_get_string(-1));
+		dmessage_add_string(reply, jsal_get_string(-2));
+		jsal_pop(2);
+		break;
 	case REQ_GETCALLSTACK:
 		i = 0;
 		while (jsal_debug_inspect_call(i++)) {

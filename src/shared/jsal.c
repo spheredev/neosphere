@@ -1836,6 +1836,34 @@ jsal_debug_inspect_call(int call_index)
 }
 
 bool
+jsal_debug_inspect_eval(int call_index, const char* source, bool *out_errored)
+{
+	/* [ ... ] -> [ type value_summary ] */
+
+	JsErrorCode error_code;
+	JsValueRef  result;
+	JsValueRef  source_string;
+
+	JsCreateString(source, strlen(source), &source_string);
+	error_code = JsDiagEvaluate(source_string, call_index, JsParseScriptAttributeNone, false, &result);
+	if (error_code != JsNoError && error_code != JsErrorScriptException)
+		return false;
+	*out_errored = error_code != JsNoError;
+	push_value(result);
+	if (jsal_has_prop_string(-1, "type"))
+		jsal_get_prop_string(-1, "type");
+	else
+		jsal_push_string("unknown");
+	if (jsal_has_prop_string(-2, "display"))
+		jsal_get_prop_string(-2, "display");
+	else
+		jsal_get_prop_string(-2, "value");
+	jsal_to_string(-1);
+	jsal_remove(-3);
+	return true;
+}
+
+bool
 jsal_debug_inspect_var(int call_index, int var_index)
 {
 	/* [ ... ] -> [ ... name value_summary ] */

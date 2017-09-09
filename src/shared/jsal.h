@@ -220,6 +220,7 @@ unsigned int jsal_debug_breakpoint_add     (const char* filename, unsigned int l
 void         jsal_debug_breakpoint_inject  (void);
 void         jsal_debug_breakpoint_remove  (unsigned int id);
 bool         jsal_debug_inspect_call       (int call_index);
+bool         jsal_debug_inspect_eval       (int call_index, const char* source, bool *out_errored);
 bool         jsal_debug_inspect_var        (int call_index, int var_index);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED

@@ -598,7 +598,7 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 			if ((status_type = dmessage_get_int(msg, 1)) == 0)
 				break;
 			printf("\33[31;1m");
-			printf("UNCAUGHT: ");
+			printf("uncaught: ");
 			printf("\33[m");
 			printf("%s\n", dmessage_get_string(msg, 2));
 			break;

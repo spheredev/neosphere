@@ -471,9 +471,7 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 	expr = command_get_string(cmd, 1);
 	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
 	if (dvalue_tag(result) != DVALUE_OBJ) {
-		printf(is_error ? "error: " : "= ");
-		dvalue_print(result, is_verbose);
-		printf("\n");
+		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "eval() = \33[37;1m%s\33[m\n", dvalue_as_cstr(result));
 	}
 	else {
 		heapptr = dvalue_as_ptr(result);
@@ -644,7 +642,7 @@ handle_vars(session_t* obj, command_t* cmd)
 		var_name = objview_get_key(vars, i);
 		class_name = objview_get_class(vars, i);
 		value = objview_get_value(vars, i);
-		printf("\33[37;1m%s: %s\33[m = %s",
+		printf("%s: %s = \33[37;1m%s\33[m",
 			var_name, class_name, dvalue_as_cstr(value));
 		printf("\n");
 	}
