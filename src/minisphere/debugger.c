@@ -274,7 +274,8 @@ debugger_add_source(const char* name, const lstring_t* text)
 void
 debugger_log(const char* text, print_op_t op, bool use_console)
 {
-	const char* heading;
+	const char*   heading;
+	ki_message_t* notify;
 
 	if (use_console) {
 		heading = op == PRINT_ASSERT ? "ASSERT"
@@ -285,6 +286,15 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 			: op == PRINT_WARN ? "WARN"
 			: "log";
 		console_log(0, "%s: %s", heading, text);
+	}
+	if (s_socket != NULL) {
+		notify = dmessage_new(DMESSAGE_NFY);
+		dmessage_add_int(notify, NFY_APPNOTIFY);
+		dmessage_add_int(notify, APPNFY_DEBUG_PRINT);
+		dmessage_add_int(notify, op);
+		dmessage_add_string(notify, text);
+		dmessage_send(notify, s_socket);
+		dmessage_free(notify);
 	}
 }
 

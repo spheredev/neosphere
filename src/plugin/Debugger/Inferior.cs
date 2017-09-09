@@ -266,10 +266,10 @@ namespace Sphere.Gdk.Debugger
         {
             var reply = await DoRequest(DValueTag.REQ, Request.GetLocals, stackOffset);
             var vars = new Dictionary<string, DValue>();
-            int count = (reply.Length - 1) / 2;
+            int count = (reply.Length - 1) / 3;
             for (int i = 0; i < count; ++i) {
-                string name = (string)reply[1 + i * 2];
-                DValue value = reply[2 + i * 2];
+                string name = (string)reply[1 + i * 3];
+                DValue value = reply[3 + i * 3];
                 vars.Add(name, value);
             }
             return vars;
