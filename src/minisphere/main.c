@@ -171,7 +171,8 @@ main(int argc, char* argv[])
 		shutdown_engine();
 		console_log(1, "\nrestarting to launch new game");
 		console_log(1, "    path: %s", path_cstr(g_game_path));
-		initialize_engine();
+		if (!initialize_engine())
+			return EXIT_FAILURE;
 	}
 
 	// locate the game manifest
