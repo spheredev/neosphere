@@ -465,20 +465,24 @@ refresh_display(screen_t* screen)
 		if (screen->x_scale > screen->y_scale) {
 			screen->x_scale = screen->y_scale;
 			screen->x_offset = (real_width - screen->x_size * screen->x_scale) / 2;
-			screen->y_offset = 0.0;
+			screen->y_offset = 0;
 		}
 		else {
 			screen->y_scale = screen->x_scale;
 			screen->y_offset = (real_height - screen->y_size * screen->y_scale) / 2;
-			screen->x_offset = 0.0;
+			screen->x_offset = 0;
 		}
 	}
 	else {
-		al_get_monitor_info(0, &desktop_info);
-		screen->x_scale = trunc(((desktop_info.x2 - desktop_info.x1) / 1.5) / screen->x_size);
-		screen->y_scale = trunc(((desktop_info.y2 - desktop_info.y1) / 1.5) / screen->y_size);
-		screen->x_scale = screen->y_scale = fmax(fmin(screen->x_scale, screen->y_scale), 1.0);
-		screen->x_offset = screen->y_offset = 0.0;
+		screen->x_scale = 1.0;
+		screen->y_scale = 1.0;
+		screen->x_offset = 0;
+		screen->y_offset = 0;
+		if (al_get_monitor_info(0, &desktop_info)) {
+			screen->x_scale = trunc(((desktop_info.x2 - desktop_info.x1) / 1.5) / screen->x_size);
+			screen->y_scale = trunc(((desktop_info.y2 - desktop_info.y1) / 1.5) / screen->y_size);
+			screen->x_scale = screen->y_scale = fmax(fmin(screen->x_scale, screen->y_scale), 1.0);
+		}
 
 		// size and recenter the window
 		al_resize_display(screen->display, screen->x_size * screen->x_scale, screen->y_size * screen->y_scale);
