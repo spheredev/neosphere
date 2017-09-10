@@ -18,6 +18,15 @@ v5.0.0 - TBD
   terminal when a JavaScript runtime error occurs.
 
 
+v4.8.5 - September 10, 2017
+---------------------------
+
+* Improves Sphere 1.x backward compatibility by aligning small maps to the
+  top-left of the screen instead of centering them, especially important for
+  games using a render script.
+* Improves the window scaling algorithm so that 320x240 games again run at 2x
+  on 1366x768 displays.
+
 v4.8.4 - August 22, 2017
 ------------------------
 
