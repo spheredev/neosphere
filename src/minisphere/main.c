@@ -154,7 +154,10 @@ main(int argc, char* argv[])
 			use_fullscreen = screen_get_fullscreen(g_screen);
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
-			initialize_engine();
+			if (!initialize_engine()) {
+				path_free(g_last_game_path);
+				return EXIT_FAILURE;
+			}
 			g_game_path = g_last_game_path;
 			g_last_game_path = NULL;
 		}
@@ -458,7 +461,7 @@ initialize_engine(void)
 	return true;
 
 on_error:
-	al_show_native_message_box(NULL, "Unable to Start", "Engine initialized failed.",
+	al_show_native_message_box(NULL, "Unable to Start", "Does your car turn over in the morning?",
 		"One or more components failed to initialize.  miniSphere cannot continue in this state and will now close.",
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
