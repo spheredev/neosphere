@@ -1,3 +1,13 @@
+minisphere (4.8.5) zesty; urgency=low
+
+  * Improves Sphere 1.x backward compatibility by aligning small maps to the
+    top-left of the screen instead of centering them, especially important for
+    games using a render script.
+  * Improves the window scaling algorithm so that 320x240 games again run at 2x
+    on 1366x768 displays.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 10 Sep 2017 00:00:00 -0500
+
 minisphere (4.8.4) zesty; urgency=low
 
   * Improves Cell game manifest generation to produce an error if the file named
