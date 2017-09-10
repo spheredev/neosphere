@@ -2536,11 +2536,13 @@ map_screen_to_layer(int layer, int camera_x, int camera_y, int* inout_x, int* in
 	x_offset = camera_x - center_x - plx_offset_x;
 	y_offset = camera_y - center_y - plx_offset_y;
 	if (!s_map->is_repeating && !s_map->layers[layer].is_parallax) {
-		// if the map is smaller than the screen, windowbox it
+		// if the map is smaller than the screen, align to top left.  centering
+		// would be better aesthetically, but there are a couple Sphere 1.x games
+		// that depend on top-left justification.
 		if (layer_w < resolution.width)
-			x_offset = -(resolution.width - layer_w) / 2;
+			x_offset = 0;
 		if (layer_h < resolution.height)
-			y_offset = -(resolution.height - layer_h) / 2;
+			y_offset = 0;
 	}
 	if (inout_x != NULL)
 		*inout_x += x_offset;
@@ -2587,11 +2589,13 @@ map_screen_to_map(int camera_x, int camera_y, int* inout_x, int* inout_y)
 	x_offset = camera_x - center_x;
 	y_offset = camera_y - center_y;
 	if (!s_map->is_repeating) {
-		// if the map is smaller than the screen, windowbox it
+		// if the map is smaller than the screen, align to top left.  centering
+		// would be better aesthetically, but there are a couple Sphere 1.x games
+		// that depend on top-left justification.
 		if (map_w < resolution.width)
-			x_offset = -(resolution.width - map_w) / 2;
+			x_offset = 0;
 		if (map_h < resolution.height)
-			y_offset = -(resolution.height - map_h) / 2;
+			y_offset = 0;
 	}
 	if (inout_x != NULL)
 		*inout_x += x_offset;

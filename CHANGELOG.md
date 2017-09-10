@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+v4.8.5 - September 10, 2017
+---------------------------
+
+* Improves Sphere 1.x backward compatibility by aligning small maps to the
+  top-left of the screen instead of centering them, especially important for
+  games using a render script.
+
 v4.8.4 - August 22, 2017
 ------------------------
 
