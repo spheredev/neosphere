@@ -153,7 +153,7 @@ parse_command_line(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--debug") == 0) {
 				if (have_debug_flag && !s_debug_build) {
-					printf("cell: illegal command line, both '--debug' and '--release' specified");
+					printf("cell: illegal command line, both '--debug' and '--release' specified\n");
 					return false;
 				}
 				s_debug_build = true;
@@ -162,7 +162,7 @@ parse_command_line(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--release") == 0) {
 				if (have_debug_flag && s_debug_build) {
-					printf("cell: illegal command line, both '--debug' and '--release' specified");
+					printf("cell: illegal command line, both '--debug' and '--release' specified\n");
 					return false;
 				}
 				s_debug_build = false;
@@ -209,7 +209,7 @@ parse_command_line(int argc, char* argv[])
 					break;
 				case 'd':
 					if (have_debug_flag && !s_debug_build) {
-						printf("cell: illegal command line, both '--debug' and '--release' specified");
+						printf("cell: illegal command line, both '--debug' and '--release' specified\n");
 						return false;
 					}
 					s_debug_build = true;
