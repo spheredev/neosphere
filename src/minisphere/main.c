@@ -202,8 +202,7 @@ main(int argc, char* argv[])
 			al_destroy_native_file_dialog(file_dlg);
 		}
 		else {
-			// user clicked Cancel; as this is a valid action, we return
-			// success, not failure.
+			// user cancelled the dialog box
 			al_destroy_native_file_dialog(file_dlg);
 			path_free(games_path);
 			return EXIT_SUCCESS;
@@ -216,7 +215,7 @@ main(int argc, char* argv[])
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
-			"miniSphere either couldn't read the game manifest or a manifest file was not found.  Check that the directory shown above contains a valid Sphere manifest file.\n\n"
+			"miniSphere either couldn't read the game manifest or a manifest file was not found.  Check that the directory listed above contains a valid Sphere game manifest file.\n\n"
 			"For Sphere developers:\nUsing SpheRun to start the game from the command line may yield more insight.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
@@ -231,8 +230,8 @@ main(int argc, char* argv[])
 		icon = image_load("#/icon.png");
 	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip, !use_conserve_cpu);
 	if (g_screen == NULL) {
-		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere was unable to create a render context.",
-			"Your hardware may be too old to run miniSphere, or there could be a problem with the drivers on this system.  Check that your graphics drivers in particular are installed and up-to-date.",
+		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere couldn't create a render context.",
+			"Your hardware may be too old to run miniSphere, or there could be a problem with the drivers on this system.  Check that your graphics drivers in particular are fully installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
@@ -252,8 +251,8 @@ main(int argc, char* argv[])
 	// attempt to locate and load system font
 	console_log(1, "loading system default font");
 	if (!(g_system_font = legacy_default_font())) {
-		al_show_native_message_box(screen_display(g_screen), "No System Font Available", "A system font is required.",
-			"miniSphere was unable to locate the system font or it failed to load.  As a usable font is necessary for correct operation, miniSphere will now close.",
+		al_show_native_message_box(screen_display(g_screen), "No System Font Available", "The system font couldn't be loaded.",
+			"miniSphere was unable to find the system font or an error occurred while loading it.  As a default font is required for normal operation, the engine will now close.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
 	}
@@ -463,7 +462,7 @@ initialize_engine(void)
 
 on_error:
 	al_show_native_message_box(NULL, "Unable to Start", "Does your car turn over in the morning?",
-		"One or more components failed to initialize.  miniSphere cannot continue in this state and will now close.",
+		"miniSphere was unable to initialize one or more engine components.  The engine cannot continue in this state and will now close.",
 		NULL, ALLEGRO_MESSAGEBOX_ERROR);
 	return false;
 }

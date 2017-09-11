@@ -40,12 +40,12 @@ static void print_banner       (bool want_copyright, bool want_deps);
 static void print_cell_quote   (void);
 static void print_usage        (void);
 
+static bool    s_debug_build;
 static path_t* s_in_path;
 static path_t* s_out_path;
 static path_t* s_package_path;
 static bool    s_want_clean;
 static bool    s_want_rebuild;
-static bool    s_want_source_map;
 
 int
 main(int argc, char* argv[])
@@ -69,7 +69,7 @@ main(int argc, char* argv[])
 	if (s_want_clean)
 		build_clean(build);
 	else {
-		if (!build_run(build, s_want_source_map, s_want_rebuild))
+		if (!build_run(build, s_debug_build, s_want_rebuild))
 			goto shutdown;
 		if (s_package_path != NULL)
 			build_package(build, path_cstr(s_package_path));
@@ -87,6 +87,7 @@ shutdown:
 static bool
 parse_command_line(int argc, char* argv[])
 {
+	bool        have_debug_flag = false;
 	bool        have_in_dir = false;
 	path_t*     js_path;
 	path_t*     mjs_path;
@@ -99,9 +100,10 @@ parse_command_line(int argc, char* argv[])
 	// establish default options
 	s_in_path = path_new("./");
 	s_out_path = NULL;
+	s_package_path = NULL;
 	s_want_clean = false;
 	s_want_rebuild = false;
-	s_want_source_map = false;
+	s_debug_build = false;
 
 	// validate and parse the command line
 	for (i = 1; i < argc; ++i) {
@@ -133,7 +135,8 @@ parse_command_line(int argc, char* argv[])
 				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--package") == 0) {
-				if (++i >= argc) goto missing_argument;
+				if (++i >= argc)
+					goto missing_argument;
 				path_free(s_package_path);
 				s_package_path = path_new(argv[i]);
 				if (path_filename(s_package_path) == NULL) {
@@ -143,12 +146,27 @@ parse_command_line(int argc, char* argv[])
 				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--out-dir") == 0) {
-				if (++i >= argc) goto missing_argument;
+				if (++i >= argc)
+					goto missing_argument;
 				path_free(s_out_path);
 				s_out_path = path_new_dir(argv[i]);
 			}
 			else if (strcmp(argv[i], "--debug") == 0) {
-				s_want_source_map = true;
+				if (have_debug_flag && !s_debug_build) {
+					printf("cell: illegal command line, both '--debug' and '--release' specified");
+					return false;
+				}
+				s_debug_build = true;
+				have_debug_flag = true;
+				have_in_dir = true;
+			}
+			else if (strcmp(argv[i], "--release") == 0) {
+				if (have_debug_flag && s_debug_build) {
+					printf("cell: illegal command line, both '--debug' and '--release' specified");
+					return false;
+				}
+				s_debug_build = false;
+				have_debug_flag = true;
 				have_in_dir = true;
 			}
 			else {
@@ -190,7 +208,12 @@ parse_command_line(int argc, char* argv[])
 					have_in_dir = true;
 					break;
 				case 'd':
-					s_want_source_map = true;
+					if (have_debug_flag && !s_debug_build) {
+						printf("cell: illegal command line, both '--debug' and '--release' specified");
+						return false;
+					}
+					s_debug_build = true;
+					have_debug_flag = true;
 					have_in_dir = true;
 					break;
 				default:
@@ -208,6 +231,8 @@ parse_command_line(int argc, char* argv[])
 	// validate command line
 	if (s_out_path == NULL)
 		s_out_path = path_new("dist/");
+	if (!have_debug_flag)
+		s_debug_build = s_package_path == NULL;
 
 	// check if a Cellscript exists
 	mjs_path = path_rebase(path_new("Cellscript.mjs"), s_in_path);
