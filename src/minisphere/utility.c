@@ -196,10 +196,10 @@ strnewf(const char* fmt, ...)
 	return buffer;
 }
 
-void
+int
 jsal_push_lstring_t(const lstring_t* string)
 {
-	jsal_push_lstring(lstr_cstr(string), lstr_len(string));
+	return jsal_push_lstring(lstr_cstr(string), lstr_len(string));
 }
 
 lstring_t*

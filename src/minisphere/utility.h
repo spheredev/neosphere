@@ -39,7 +39,7 @@ const path_t* home_path   (void);
 
 bool        fread_rect16           (file_t* file, rect_t* out_rect);
 bool        fread_rect32           (file_t* file, rect_t* out_rect);
-void        jsal_push_lstring_t    (const lstring_t* string);
+int         jsal_push_lstring_t    (const lstring_t* string);
 lstring_t*  jsal_require_lstring_t (int index);
 const char* jsal_require_pathname  (int index, const char* origin_name, bool legacy_mode, bool need_write);
 const char* md5sum                 (const void* data, size_t size);

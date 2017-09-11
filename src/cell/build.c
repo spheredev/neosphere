@@ -357,7 +357,6 @@ build_package(build_t* build, const char* filename)
 	spk = spk_create(filename);
 	spk_add_file(spk, build->fs, "@/game.json", "game.json");
 	spk_add_file(spk, build->fs, "@/game.sgm", "game.sgm");
-	spk_add_file(spk, build->fs, "@/sources.json", "sources.json");
 	iter = vector_enum(build->targets);
 	while (p_target = iter_next(&iter)) {
 		in_path = target_path(*p_target);
@@ -429,6 +428,28 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	}
 	visor_end_op(build->visor);
 
+	// generate the source map
+	if (want_debug) {
+		visor_begin_op(build->visor, "collecting debugging information");
+		jsal_push_hidden_stash();
+		jsal_get_prop_string(-1, "manifest");
+		jsal_push_new_object();
+		iter = vector_enum(build->targets);
+		while (p_target = iter_next(&iter)) {
+			path = target_path(*p_target);
+			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
+				continue;
+			if (!(source_path = target_source_path(*p_target)))
+				continue;
+			jsal_push_string(path_cstr(path));
+			jsal_push_string(path_cstr(source_path));
+			jsal_put_prop(-3);
+		}
+		jsal_put_prop_string(-2, "$SOURCES");
+		jsal_pop(2);
+		visor_end_op(build->visor);
+	}
+
 	// only generate a game manifest if the build finished with no errors.
 	// warnings are fine.
 	if (visor_num_errors(build->visor) == 0) {
@@ -445,33 +466,6 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		fs_unlink(build->fs, "@/game.json");
 		fs_unlink(build->fs, "@/game.sgm");
 		goto finished;
-	}
-
-	// generate the source map
-	if (want_debug) {
-		visor_begin_op(build->visor, "writing source map");
-		jsal_push_new_object();
-		jsal_push_new_object();
-		iter = vector_enum(build->targets);
-		while (p_target = iter_next(&iter)) {
-			path = target_path(*p_target);
-			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
-				continue;
-			if (!(source_path = target_source_path(*p_target)))
-				continue;
-			jsal_push_string(path_cstr(path));
-			jsal_push_string(path_cstr(source_path));
-			jsal_put_prop(-3);
-		}
-		jsal_put_prop_string(-2, "fileMap");
-		jsal_stringify(-1);
-		json = jsal_get_lstring(-1, &json_size);
-		fs_fspew(build->fs, "@/sources.json", json, json_size);
-		jsal_pop(1);
-		visor_end_op(build->visor);
-	}
-	else {
-		fs_unlink(build->fs, "@/sources.json");
 	}
 
 	filenames = visor_filenames(build->visor);

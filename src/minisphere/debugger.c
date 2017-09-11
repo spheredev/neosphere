@@ -64,10 +64,9 @@ static bool       s_want_attach;
 void
 debugger_init(bool want_attach, bool allow_remote)
 {
-	void*         data;
-	size_t        data_size;
 	const path_t* game_root;
 	const char*   hostname;
+	int           json_index;
 
 	jsal_debug_on_throw(on_throw_exception);
 	jsal_debug_init(on_breakpoint_hit);
@@ -78,14 +77,17 @@ debugger_init(bool want_attach, bool allow_remote)
 
 	// load the source map, if one is available
 	s_have_source_map = false;
+	json_index = jsal_push_lstring_t(game_manifest(g_game));
+	jsal_parse(json_index);
+
 	jsal_push_hidden_stash();
 	jsal_del_prop_string(-1, "debugMap");
 	game_root = game_path(g_game);
-	if (data = game_read_file(g_game, "@/sources.json", &data_size)) {
-		jsal_push_lstring(data, data_size);
-		jsal_parse(-1);
+	if (jsal_has_prop_string(json_index, "$SOURCES")) {
+		jsal_push_new_object();
+		jsal_get_prop_string(json_index, "$SOURCES");
+		jsal_put_prop_string(-2, "fileMap");
 		jsal_put_prop_string(-2, "debugMap");
-		free(data);
 		s_have_source_map = true;
 	}
 	else if (!path_is_file(game_root)) {
@@ -94,7 +96,8 @@ debugger_init(bool want_attach, bool allow_remote)
 		jsal_put_prop_string(-2, "origin");
 		jsal_put_prop_string(-2, "debugMap");
 	}
-	jsal_pop(1);
+	
+	jsal_pop(2);
 
 	// listen for SSj connection on TCP port 1208. the listening socket will remain active
 	// for the duration of the session, allowing a debugger to be attached at any time.
