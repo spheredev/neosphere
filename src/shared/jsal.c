@@ -54,6 +54,14 @@ struct js_ref
 	JsValueRef value;
 };
 
+struct breakpoint
+{
+	int          column;
+	char*        filename;
+	unsigned int id;
+	int          line;
+};
+
 struct function
 {
 	js_function_t callback;
@@ -108,6 +116,7 @@ static int vasprintf (char* *out, const char* format, va_list ap);
 #endif
 
 static js_break_callback_t  s_break_callback = NULL;
+static vector_t*            s_breakpoints;
 static vector_t*            s_catch_stack;
 static vector_t*            s_compiled_scripts;
 static js_import_callback_t s_import_callback = NULL;
@@ -143,6 +152,7 @@ jsal_init(void)
 	s_stack = vector_new(sizeof(JsValueRef));
 	s_catch_stack = vector_new(sizeof(jmp_buf));
 	s_stack_base = 0;
+	s_breakpoints = vector_new(sizeof(struct breakpoint));
 	s_compiled_scripts = vector_new(sizeof(struct script));
 	s_module_jobs = vector_new(sizeof(struct module_job));
 
@@ -158,15 +168,24 @@ on_error:
 void
 jsal_uninit(void)
 {
-	JsValueRef value;
+	struct breakpoint* breakpoint;
+	JsValueRef         value;
 	
 	iter_t iter;
 
+	iter = vector_enum(s_breakpoints);
+	while (iter_next(&iter)) {
+		breakpoint = iter.ptr;
+		free(breakpoint->filename);
+	}
+	
 	iter = vector_enum(s_stack);
 	while (iter_next(&iter)) {
 		value = *(JsValueRef*)iter.ptr;
 		JsRelease(value, NULL);
 	}
+	
+	vector_free(s_breakpoints);
 	vector_free(s_module_jobs);
 	vector_free(s_stack);
 	vector_free(s_catch_stack);
@@ -232,10 +251,11 @@ jsal_compile(const char* filename)
 	JsValueRef      source_string;
 	
 	source_string = pop_value();
-	JsCreateString(filename, strlen(filename), &name_string);
-	JsParse(source_string, s_next_script_id, name_string, JsParseScriptAttributeNone, &function);
-	throw_if_error();
 	add_compiled_script(filename, s_next_script_id);
+	JsCreateString(filename, strlen(filename), &name_string);
+	if (JsParse(source_string, s_next_script_id, name_string, JsParseScriptAttributeNone, &function) != JsNoError)
+		vector_pop(s_compiled_scripts, 1);
+	throw_if_error();
 	push_value(function);
 	return (unsigned int)s_next_script_id++;
 }
@@ -1767,20 +1787,30 @@ jsal_debug_on_throw(js_throw_callback_t callback)
 	s_throw_callback = callback;
 }
 
-unsigned int
+int
 jsal_debug_breakpoint_add(const char* filename, unsigned int line, unsigned int column)
 {
-	JsValueRef      breakpoint;
-	unsigned int    breakpoint_id;
-	JsSourceContext script_id;
+	struct breakpoint breakpoint;
+	JsValueRef        result;
+	JsSourceContext   script_id;
 
+	breakpoint.filename = strdup(filename);
+	breakpoint.line = line;
+	breakpoint.column = column;
+	breakpoint.id = 0;
 	script_id = script_id_from_filename(filename);
-	JsDiagSetBreakpoint((unsigned int)script_id, line - 1, column - 1, &breakpoint);
-	push_value(breakpoint);
-	jsal_get_prop_string(-1, "breakpointId");
-	breakpoint_id = jsal_get_uint(-1);
-	jsal_pop(2);
-	return breakpoint_id;
+	if (script_id != JS_SOURCE_CONTEXT_NONE) {
+		if (JsDiagSetBreakpoint((unsigned int)script_id, line - 1, column - 1, &result) != JsNoError)
+			goto finished;
+		push_value(result);
+		jsal_get_prop_string(-1, "breakpointId");
+		breakpoint.id = jsal_get_uint(-1);
+		jsal_pop(2);
+	}
+
+finished:
+	vector_push(s_breakpoints, &breakpoint);
+	return vector_len(s_breakpoints) - 1;
 }
 
 void
@@ -1790,9 +1820,26 @@ jsal_debug_breakpoint_inject(void)
 }
 
 void
-jsal_debug_breakpoint_remove(unsigned int id)
+jsal_debug_breakpoint_remove(int index)
 {
-	JsDiagRemoveBreakpoint(id);
+	struct breakpoint* breakpoint;
+	unsigned int       id;
+	JsValueRef         list;
+	
+	breakpoint = vector_get(s_breakpoints, index);
+	
+	JsDiagGetBreakpoints(&list);
+	push_value(list);
+	jsal_push_new_iterator(-1);
+	while (jsal_next(-1)) {
+		jsal_get_prop_string(-1, "breakpointId");
+		id = jsal_get_uint(-1);
+		if (breakpoint->id == id)
+			JsDiagRemoveBreakpoint(id);
+		jsal_pop(2);
+	}
+	jsal_pop(2);
+	vector_remove(s_breakpoints, index);
 }
 
 bool
@@ -2124,16 +2171,42 @@ on_finalize_host_object(void* userdata)
 static void CHAKRA_CALLBACK
 on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 {
-	unsigned int   handle;
-	jmp_buf        label;
-	int            last_stack_base;
-	const char*    name;
-	JsValueRef     properties;
-	js_step_t      step = JS_STEP_CONTINUE;
-	JsDiagStepType step_type;
-	char*          traceback;
+	struct breakpoint* breakpoint;
+	JsValueRef         breakpoint_info;
+	const char*        filename;
+	unsigned int       handle;
+	jmp_buf            label;
+	int                last_stack_base;
+	const char*        name;
+	JsValueRef         properties;
+	unsigned int       script_id;
+	js_step_t          step = JS_STEP_CONTINUE;
+	JsDiagStepType     step_type;
+	char*              traceback;
+
+	iter_t iter;
 	
 	switch (event_type) {
+		case JsDiagDebugEventSourceCompile:
+			push_value(data);
+			jsal_get_prop_string(-1, "scriptId");
+			script_id = jsal_get_uint(-1);
+			jsal_pop(2);
+			if (!(filename = filename_from_script_id(script_id)))
+				break;
+			iter = vector_enum(s_breakpoints);
+			while (iter_next(&iter)) {
+				breakpoint = iter.ptr;
+				if (strcmp(filename, breakpoint->filename) == 0) {
+					if (JsDiagSetBreakpoint(script_id, breakpoint->line - 1, breakpoint->column - 1, &breakpoint_info) != JsNoError)
+						continue;
+					push_value(breakpoint_info);
+					jsal_get_prop_string(-1, "breakpointId");
+					breakpoint->id = jsal_get_uint(-1);
+					jsal_pop(2);
+				}
+			}
+			break;
 		case JsDiagDebugEventRuntimeException:
 			last_stack_base = s_stack_base;
 			s_stack_base = vector_len(s_stack);

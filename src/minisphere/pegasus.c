@@ -830,7 +830,7 @@ on_import_module(void)
 		jsal_error(JS_REF_ERROR, "module not found '%s'", specifier);
 	if (path_has_extension(path, ".mjs")) {
 		source = game_read_file(g_game, path_cstr(path), &source_len);
-		jsal_push_string(path_cstr(path));
+		jsal_push_string(debugger_source_name(path_cstr(path)));
 		jsal_push_lstring(source, source_len);
 		free(source);
 	}
