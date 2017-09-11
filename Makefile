@@ -93,7 +93,7 @@ install: all
 	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/pixmaps
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
-	cp dep/lib/libChakraCore.so $(installdir)/lib
+	cp bin/libChakraCore.so $(installdir)/lib
 	cp -r bin/system $(installdir)/share/minisphere
 	gzip docs/sphere2-core-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-core-api.gz
 	gzip docs/sphere2-hl-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-hl-api.gz
@@ -117,8 +117,9 @@ bin/minisphere:
 	$(CC) -o bin/minisphere $(CFLAGS) \
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
 	      -Ldep/lib \
-	      -DDUK_OPT_HAVE_CUSTOM_H \
+	      -Wl,-rpath=\$$ORIGIN \
 	      $(engine_sources) $(engine_libs)
+	cp dep/lib/libChakraCore.so bin
 	cp -r assets/system bin
 
 bin/spherun:
@@ -126,15 +127,19 @@ bin/spherun:
 	$(CC) -o bin/spherun $(CFLAGS) \
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
 	      -Ldep/lib \
-	      -DDUK_OPT_HAVE_CUSTOM_H -DMINISPHERE_SPHERUN \
+	      -Wl,-rpath=\$$ORIGIN \
+	      -DMINISPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
+	cp dep/lib/libChakraCore.so bin
 
 bin/cell:
 	mkdir -p bin
 	$(CC) -o bin/cell $(CFLAGS) \
 	      -Idep/include -Isrc/shared \
 	      -Ldep/lib \
+	      -Wl,-rpath=\$$ORIGIN \
 	      $(cell_sources) $(cell_libs)
+	cp dep/lib/libChakraCore.so bin
 
 bin/ssj:
 	mkdir -p bin
