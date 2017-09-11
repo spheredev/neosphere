@@ -430,7 +430,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 
 	// generate the source map
 	if (want_debug) {
-		visor_begin_op(build->visor, "collecting debugging information");
+		visor_begin_op(build->visor, "collecting debug information");
 		jsal_push_hidden_stash();
 		jsal_get_prop_string(-1, "manifest");
 		jsal_push_new_object();
@@ -491,7 +491,7 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 
 	iter_t iter_i, iter_j;
 
-	visor_begin_op(build->visor, "cleaning up old build artifacts");
+	visor_begin_op(build->visor, "cleaning up outdated artifacts");
 	filenames = visor_filenames(build->visor);
 	iter_i = vector_enum(build->artifacts);
 	while (iter_next(&iter_i)) {

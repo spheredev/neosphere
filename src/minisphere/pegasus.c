@@ -646,7 +646,7 @@ initialize_pegasus_api(void)
 	api_define_method("Transform", "translate", js_Transform_translate);
 	api_define_class("VertexList", js_new_VertexList, js_VertexList_finalize);
 
-	api_define_object(NULL, "screen", "Surface", screen_backbuffer(g_screen));
+	api_define_object(NULL, "screen", "Surface", image_ref(screen_backbuffer(g_screen)));
 	api_define_static_prop("screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop("screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
 	api_define_static_prop("screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
