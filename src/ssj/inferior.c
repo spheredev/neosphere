@@ -483,7 +483,7 @@ inferior_request(inferior_t* obj, ki_message_t* msg)
 	return response;
 
 lost_connection:
-	printf("debugger lost connection with the target.\n");
+	printf("\33[31;1mSSj lost communication with the target.\33[m\n");
 	dmessage_free(msg);
 	obj->is_detached = true;
 	return NULL;
@@ -605,9 +605,9 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 		case NFY_DETACHING:
 			status_type = dmessage_get_int(msg, 1);
 			if (status_type == 0)
-				printf("\33[36mdebugger disconnected normally.\n");
+				printf("\33[36mthe engine disconnected from SSj normally.\n");
 			else
-				printf("\33[31mdebugger disconnected due to an error.\n");
+				printf("\33[31;1ma communication error occurred while debugging.\n");
 			printf("\33[m");
 			obj->is_detached = true;
 			return false;

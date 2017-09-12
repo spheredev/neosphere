@@ -387,6 +387,8 @@ do_attach_debugger(void)
 static void
 do_detach_debugger(bool is_shutdown)
 {
+	ki_message_t* notify;
+
 	if (!s_is_attached)
 		return;
 
@@ -394,6 +396,11 @@ do_detach_debugger(bool is_shutdown)
 	console_log(1, "detaching SSj debug session");
 	s_is_attached = false;
 	if (s_socket != NULL) {
+		notify = dmessage_new(DMESSAGE_NFY);
+		dmessage_add_int(notify, NFY_DETACHING);
+		dmessage_add_int(notify, 0);
+		dmessage_send(notify, s_socket);
+		dmessage_free(notify);
 		socket_close(s_socket);
 		while (socket_connected(s_socket))
 			sphere_sleep(0.05);
