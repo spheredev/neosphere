@@ -554,7 +554,7 @@ jsal_get_int(int index)
 		return 0;
 	return value < INT_MIN ? INT_MIN
 		: value > INT_MAX ? INT_MAX
-		: (unsigned int)value;
+		: (int)value;
 }
 
 int

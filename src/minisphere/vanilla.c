@@ -6225,13 +6225,21 @@ js_SetZoneSteps(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Triangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	int x1 = jsal_to_int(0);
-	int y1 = jsal_to_int(1);
-	int x2 = jsal_to_int(2);
-	int y2 = jsal_to_int(3);
-	int x3 = jsal_to_int(4);
-	int y3 = jsal_to_int(5);
-	color_t color = jsal_require_sphere_color(6);
+	color_t color;
+	float   x1;
+	float   x2;
+	float   x3;
+	float   y1;
+	float   y2;
+	float   y3;
+	
+	x1 = trunc(jsal_to_number(0));
+	y1 = trunc(jsal_to_number(1));
+	x2 = trunc(jsal_to_number(2));
+	y2 = trunc(jsal_to_number(3));
+	x3 = trunc(jsal_to_number(4));
+	y3 = trunc(jsal_to_number(5));
+	color = jsal_require_sphere_color(6);
 
 	if (screen_skip_frame(g_screen))
 		return false;
