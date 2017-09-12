@@ -1,6 +1,17 @@
 miniSphere Changelog
 ====================
 
+v4.8.6 - TBD
+------------
+
+* Fixes a bug where the backbuffer texture is freed prematurely, causing the
+  engine to crash on shutdown.
+* Fixes a bug where miniSphere can crash or behave strangely if it's unable to
+  determine the desktop resolution on startup.
+* Fixes a bug where miniSphere can crash after calling `ExecuteGame()` if the
+  engine fails to reinitialize.
+
+
 v4.8.5 - September 10, 2017
 ---------------------------
 
