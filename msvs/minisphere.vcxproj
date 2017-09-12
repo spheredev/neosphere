@@ -402,7 +402,7 @@ xcopy /y /d /e /f "lib64\*.dll" "$(OutDir)"</Command>
       <PreprocessorDefinitions>MINISPHERE_SPHERUN;DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
@@ -417,7 +417,7 @@ xcopy /y /d /e /f "lib64\*.dll" "$(OutDir)"</Command>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>lib64</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
@@ -468,7 +468,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <PreprocessorDefinitions>MINISPHERE_SPHERUN;DUK_OPT_HAVE_CUSTOM_H;WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
@@ -483,7 +483,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>

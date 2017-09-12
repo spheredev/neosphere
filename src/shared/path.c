@@ -26,6 +26,10 @@
 #include <time.h>
 #include <sys/stat.h>
 
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
+
 #if !defined(_WIN32)
 #include <unistd.h>
 #else
@@ -71,6 +75,14 @@ path_new_self(void)
 
 	GetModuleFileNameA(NULL, pathname, MAX_PATH);
 	return path_new(pathname);
+#elif defined(__APPLE__)
+	char     pathname[PATH_MAX];
+	uint32_t pathname_len;
+
+	pathname_len = sizeof pathname;
+	if (_NSGetExecutablePath(pathname, &pathname_len) != 0)
+		return NULL;
+	return path_resolve(path_new(pathname), NULL);
 #else
 	char        pathname[PATH_MAX];
 	ssize_t     pathname_len;
