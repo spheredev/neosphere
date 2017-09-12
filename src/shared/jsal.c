@@ -421,6 +421,7 @@ jsal_eval_module(const char* filename)
 	char*              job_source;
 	JsModuleRecord     module;
 	JsValueRef         result;
+	JsSourceContext    script_cookie;
 	const char*        source;
 	size_t             source_len;
 	JsModuleRecord     submodule;
@@ -431,10 +432,11 @@ jsal_eval_module(const char* filename)
 	JsInitializeModuleRecord(NULL, url_string, &module);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_resolve_import);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, url_string);
+	script_cookie = s_next_script_id++;
 	error_code = JsParseModuleSource(module,
-		s_next_script_id, (BYTE*)source, (unsigned int)source_len,
+		script_cookie, (BYTE*)source, (unsigned int)source_len,
 		JsParseModuleSourceFlags_DataIsUTF8, &exception);
-	add_compiled_script(filename, s_next_script_id++);
+	add_compiled_script(filename, script_cookie);
 	if (error_code == JsErrorScriptCompile) {
 		vector_clear(s_module_jobs);
 		throw_value(exception);
