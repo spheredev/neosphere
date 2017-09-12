@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v4.8.6 - TBD
-------------
+v4.8.6 - September 12, 2017
+---------------------------
 
 * Fixes a bug where the backbuffer texture is freed prematurely, causing the
   engine to crash on shutdown.
