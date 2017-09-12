@@ -94,8 +94,8 @@ struct script
 static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
 static void CHAKRA_CALLBACK        on_dispatch_job          (JsValueRef function, void* userdata);
 static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
+static JsErrorCode CHAKRA_CALLBACK on_import_module         (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
 static JsValueRef CHAKRA_CALLBACK  on_native_call           (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
-static JsErrorCode CHAKRA_CALLBACK on_resolve_import        (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
 static void                        add_compiled_script      (const char* filename, JsSourceContext script_id);
 static const char*                 filename_from_script_id  (JsSourceContext script_id);
 static void                        free_ref                 (js_ref_t* ref);
@@ -430,7 +430,7 @@ jsal_eval_module(const char* filename)
 	source = jsal_require_lstring(-1, &source_len);
 	JsCreateString(filename, strlen(filename), &url_string);
 	JsInitializeModuleRecord(NULL, url_string, &module);
-	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_resolve_import);
+	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_import_module);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, url_string);
 	script_cookie = s_next_script_id++;
 	error_code = JsParseModuleSource(module,
@@ -1885,6 +1885,20 @@ jsal_debug_inspect_call(int call_index)
 }
 
 bool
+jsal_debug_inspect_breakpoint(int index)
+{
+	struct breakpoint* breakpoint;
+
+	if (index >= vector_len(s_breakpoints))
+		return false;
+	breakpoint = vector_get(s_breakpoints, index);
+	jsal_push_string(breakpoint->filename);
+	jsal_push_int(breakpoint->line);
+	jsal_push_int(breakpoint->column);
+	return true;
+}
+
+bool
 jsal_debug_inspect_eval(int call_index, const char* source, bool *out_errored)
 {
 	/* [ ... ] -> [ type value_summary ] */
@@ -2273,6 +2287,61 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 	}
 }
 
+static JsErrorCode CHAKRA_CALLBACK
+on_import_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module)
+{
+	JsValueRef        caller_id;
+	JsValueRef        exception;
+	const char*       filename;
+	JsValueRef        full_specifier;
+	jmp_buf           label;
+	int               last_stack_base;
+	struct module_job job;
+	JsModuleRecord    module;
+	const char*       source;
+	size_t            source_len;
+
+	if (s_import_callback == NULL)
+		return JsErrorInvalidArgument;
+
+	last_stack_base = s_stack_base;
+	s_stack_base = vector_len(s_stack);
+	JsGetModuleHostInfo(sourceModule, JsModuleHostInfo_HostDefined, &caller_id);
+	push_value(specifier);
+	push_value(caller_id);
+	if (setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		s_import_callback();
+		if (jsal_get_top() < 2)
+			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
+		filename = jsal_require_string(-2);
+		source = jsal_require_lstring(-1, &source_len);
+		full_specifier = get_value(-2);
+		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_import_module);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
+		throw_if_error();
+		add_compiled_script(filename, s_next_script_id);
+		job.script_id = s_next_script_id++;
+		job.module = module;
+		job.source = strdup(source);
+		job.source_size = strlen(source);
+		vector_push(s_module_jobs, &job);
+		vector_pop(s_catch_stack, 1);
+	}
+	else {
+		exception = pop_value();
+		JsSetException(exception);
+		resize_stack(s_stack_base);
+		s_stack_base = last_stack_base;
+		return JsErrorScriptCompile;
+	}
+	resize_stack(s_stack_base);
+	s_stack_base = last_stack_base;
+	*out_module = module;
+	return JsNoError;
+}
+
 static JsValueRef CHAKRA_CALLBACK
 on_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
 {
@@ -2325,61 +2394,6 @@ on_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
 	return retval;
-}
-
-static JsErrorCode CHAKRA_CALLBACK
-on_resolve_import(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module)
-{
-	JsValueRef        caller_id;
-	JsValueRef        exception;
-	const char*       filename;
-	JsValueRef        full_specifier;
-	jmp_buf           label;
-	int               last_stack_base;
-	struct module_job job;
-	JsModuleRecord    module;
-	const char*       source;
-	size_t            source_len;
-
-	if (s_import_callback == NULL)
-		return JsErrorInvalidArgument;
-
-	last_stack_base = s_stack_base;
-	s_stack_base = vector_len(s_stack);
-	JsGetModuleHostInfo(sourceModule, JsModuleHostInfo_HostDefined, &caller_id);
-	push_value(specifier);
-	push_value(caller_id);
-	if (setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
-		s_import_callback();
-		if (jsal_get_top() < 2)
-			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
-		filename = jsal_require_string(-2);
-		source = jsal_require_lstring(-1, &source_len);
-		full_specifier = get_value(-2);
-		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
-		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_resolve_import);
-		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
-		throw_if_error();
-		add_compiled_script(filename, s_next_script_id);
-		job.script_id = s_next_script_id++;
-		job.module = module;
-		job.source = strdup(source);
-		job.source_size = strlen(source);
-		vector_push(s_module_jobs, &job);
-		vector_pop(s_catch_stack, 1);
-	}
-	else {
-		exception = pop_value();
-		JsSetException(exception);
-		resize_stack(s_stack_base);
-		s_stack_base = last_stack_base;
-		return JsErrorScriptCompile;
-	}
-	resize_stack(s_stack_base);
-	s_stack_base = last_stack_base;
-	*out_module = module;
-	return JsNoError;
 }
 
 #if !defined(__APPLE__)

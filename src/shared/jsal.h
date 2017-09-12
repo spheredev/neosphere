@@ -213,14 +213,15 @@ bool         jsal_try_eval_module          (const char* filename);
 bool         jsal_try_parse                (int at_index);
 void         jsal_unref                    (js_ref_t* ref);
 
-bool jsal_debug_init              (js_break_callback_t callback);
-void jsal_debug_uninit            (void);
-void jsal_debug_on_throw          (js_throw_callback_t callback);
-int  jsal_debug_breakpoint_add    (const char* filename, unsigned int line, unsigned int column);
-void jsal_debug_breakpoint_inject (void);
-void jsal_debug_breakpoint_remove (int index);
-bool jsal_debug_inspect_call      (int call_index);
-bool jsal_debug_inspect_eval      (int call_index, const char* source, bool *out_errored);
-bool jsal_debug_inspect_var       (int call_index, int var_index);
+bool jsal_debug_init               (js_break_callback_t callback);
+void jsal_debug_uninit             (void);
+void jsal_debug_on_throw           (js_throw_callback_t callback);
+int  jsal_debug_breakpoint_add     (const char* filename, unsigned int line, unsigned int column);
+void jsal_debug_breakpoint_inject  (void);
+void jsal_debug_breakpoint_remove  (int index);
+bool jsal_debug_inspect_breakpoint (int index);
+bool jsal_debug_inspect_call       (int call_index);
+bool jsal_debug_inspect_eval       (int call_index, const char* source, bool *out_errored);
+bool jsal_debug_inspect_var        (int call_index, int var_index);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED

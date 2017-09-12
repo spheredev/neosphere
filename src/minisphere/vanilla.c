@@ -6226,13 +6226,9 @@ static bool
 js_Triangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	color_t color;
-	float   x1;
-	float   x2;
-	float   x3;
-	float   y1;
-	float   y2;
-	float   y3;
-	
+	float   x1, x2, x3;
+	float   y1, y2, y3;
+
 	x1 = trunc(jsal_to_number(0));
 	y1 = trunc(jsal_to_number(1));
 	x2 = trunc(jsal_to_number(2));

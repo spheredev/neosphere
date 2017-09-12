@@ -530,6 +530,12 @@ process_message(js_step_t* out_step)
 		}
 		break;
 	case REQ_LISTBREAK:
+		i = 0;
+		while (jsal_debug_inspect_breakpoint(i++)) {
+			dmessage_add_string(reply, jsal_get_string(-3));
+			dmessage_add_int(reply, jsal_get_int(-2));
+			jsal_pop(3);
+		}
 		break;
 	case REQ_PAUSE:
 		jsal_debug_breakpoint_inject();
