@@ -85,9 +85,10 @@ class Pact
 	}
 }
 
+// CommonJS
 exports = module.exports = Pact;
 Object.assign(exports, {
 	__esModule: true,
-	default:   Pact,
 	Pact:       Pact,
+	default:    Pact,
 });

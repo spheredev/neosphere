@@ -31,47 +31,53 @@
 **/
 
 'use strict';
-exports = module.exports = Delegate;
-exports.__esModule = true;
-exports.default = exports;
-
 const from = require('from');
 
-function Delegate()
+class Delegate
 {
-    this._invokeList = [];
+	constructor()
+	{
+		this._invocationList = [];
+	}
+
+	add(handler, thisObj)
+	{
+		if (this._haveHandler(this, handler, thisObj))
+			throw new Error("Cannot add same handler more than once");
+		this._invocationList.push({ thisObj, handler });
+	}
+
+	call(...args)
+	{
+		let lastResult = undefined;
+		for (const entry of this._invocationList)
+			lastResult = entry.handler.apply(entry.thisObj, args);
+
+		// use the return value of the last handler called
+		return lastResult;
+	}
+
+	remove(handler, thisObj)
+	{
+		if (!this._haveHandler(this, handler, thisObj))
+			throw new Error("handler is not registered");
+		from.Array(this._invocationList)
+			.where(it => handler === it.handler)
+			.where(it => thisObj === it.thisObj)
+			.remove();
+	}
+
+	_haveHandler(delegate, handler, thisObj)
+	{
+		return from.Array(delegate._invocationList)
+			.any(it => handler === it.handler == handler && thisObj === it.thisObj);
+	}
 }
 
-Delegate.prototype.add = function add(handler, thisObj)
-{
-	if (haveHandler(this, handler, thisObj))
-		throw new Error("duplicate handler");
-	this._invokeList.push({ thisObj, handler });
-}
-
-Delegate.prototype.call = function call(/*...*/)
-{
-	var lastResult = undefined;
-	var invokeArgs = arguments;
-	for (let it of this._invokeList)
-        lastResult = it.handler.apply(it.thisObj, invokeArgs);
-
-	// use the return value of the last handler called
-	return lastResult;
-}
-
-Delegate.prototype.remove = function remove(handler, thisObj)
-{
-	if (!haveHandler(this, handler, thisObj))
-		throw new Error("handler is not registered");
-	from.Array(this._invokeList)
-		.where(it => handler === it.handler)
-		.where(it => thisObj === it.thisObj)
-		.remove();
-}
-
-function haveHandler(delegate, handler, thisObj)
-{
-	return from.Array(delegate._invokeList)
-        .any(it => handler === it.handler == handler && thisObj === it.thisObj);
-}
+// CommonJS
+exports = module.exports = Delegate;
+Object.assign(exports, {
+	__esModule: true,
+	Delegate:   Delegate,
+	default:    Delegate,
+});

@@ -434,7 +434,8 @@ path_resolve(path_t* path, const path_t* relative_to)
 
 	if (!(pathname = realpath(path_cstr(path), NULL)))
 		return NULL;
-	if (stat(path_cstr(path), &stat_buf) != 0) return NULL;
+	if (stat(path_cstr(path), &stat_buf) != 0)
+		return NULL;
 	new_path = stat_buf.st_mode & S_IFDIR
 		? path_new_dir(pathname)
 		: path_new(pathname);

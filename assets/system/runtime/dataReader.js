@@ -36,7 +36,7 @@ exports.__esModule = true;
 exports.default = exports;
 
 const assert = require('assert'),
-      from = require('from');
+      from   = require('from');
 
 function DataReader(stream)
 {
