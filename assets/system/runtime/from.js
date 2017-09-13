@@ -38,16 +38,16 @@ exports = module.exports = from;
 exports.__esModule = true;
 exports.default = exports;
 
-var symItemSource = Symbol('itemSource');
+const ItemSourceKey = Symbol('itemSource');
 
-function from(target/*, ...*/)
+function from(...targets)
 {
 	// for multiple targets, query against the list of targets and unroll with
 	// .from().
-	if (arguments.length > 1)
-		return from(arguments).from();
+	if (targets.length > 1)
+		return from(targets).from();
 
-	target = Object(target);
+	let target = Object(targets[0]);
 	if (typeof target.length === 'number')
 		return fromArray(target);
 	else if (typeof target[Symbol.iterator] === 'function' || typeof target.next === 'function')
@@ -85,16 +85,9 @@ function fromIterable(target)
 
 function MAKEPOINT(sourceType, op)
 {
-	// this is some crazy witchcraft, don't try this at home!
-	const makeArray = Function.prototype.call.bind(Array.prototype.slice);
-
-	return function(/*...*/)
-	{
-		// some more crazy witchcraft to emulate ES6 Reflect.construct().
-		var source = this[symItemSource];
-		var boundArgs = [ null, source ].concat(makeArray(arguments));
-		var constructor = Function.prototype.bind.apply(sourceType, boundArgs);
-		var newSource = new constructor();
+	return function (...args) {
+		let thisSource = this[ItemSourceKey];
+		let newSource = new sourceType(thisSource, ...args);
 
 		// if it's a terminal operator, run the query.  otherwise construct
 		// a new FromQuery.  this allows LINQ-style composition.
@@ -121,7 +114,7 @@ function PROPDESC(flags, valueOrGetter, setter)
 
 function FromQuery(source)
 {
-	this[symItemSource] = source;
+	this[ItemSourceKey] = source;
 }
 
 Object.defineProperties(FromQuery.prototype,
@@ -129,7 +122,7 @@ Object.defineProperties(FromQuery.prototype,
 	[Symbol.iterator]:
 	PROPDESC('wc', function enumerate(withKeys)
 	{
-		var source = this[symItemSource];
+		var source = this[ItemSourceKey];
 		source.init();
 		return { next: next };
 
@@ -422,8 +415,7 @@ function MapSource(source, selector)
 // bubble sort, but with eaty pigs.
 function OrderedSource(descending)
 {
-	return function(source, keySelector)
-	{
+	return function (source, keySelector) {
 		var m_index = 0;
 		var m_length;
 		var m_list = [];
@@ -512,8 +504,7 @@ function ReduceSource(source, reducer, initialValue)
 
 function SampleSource(uniqueOnly)
 {
-	return function(source, count)
-	{
+	return function (source, count) {
 		var m_count = Number(count);
 		var m_items = [];
 		var m_numSamples;
