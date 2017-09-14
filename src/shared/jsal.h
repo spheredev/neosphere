@@ -105,6 +105,7 @@ bool         jsal_del_prop                 (int object_index);
 bool         jsal_del_prop_index           (int object_index, int name);
 bool         jsal_del_prop_string          (int object_index, const char* name);
 int          jsal_dup                      (int from_index);
+bool         jsal_equal                    (int at_index, int to_index);
 void         jsal_error                    (js_error_type_t type, const char* message, ...);
 void         jsal_error_va                 (js_error_type_t type, const char* message, va_list ap);
 void         jsal_eval_module              (const char* filename);

@@ -393,6 +393,18 @@ jsal_dup(int from_index)
 	return push_value(value);
 }
 
+bool
+jsal_equal(int at_index, int to_index)
+{
+	JsValueRef a, b;
+	bool       result;
+
+	a = get_value(at_index);
+	b = get_value(to_index);
+	JsStrictEquals(a, b, &result);
+	return result;
+}
+
 void
 jsal_error(js_error_type_t type, const char* format, ...)
 {
