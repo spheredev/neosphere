@@ -616,7 +616,6 @@ jsal_get_prop(int object_index)
 	JsValueRef      value;
 
 	object = get_value(object_index);
-	JsConvertValueToObject(object, &object);
 	if (jsal_is_number(-1)) {
 		key_value = pop_value();
 		JsGetIndexedProperty(object, key_value, &value);
@@ -640,7 +639,6 @@ jsal_get_prop_index(int object_index, int name)
 	JsValueRef value;
 
 	object = get_value(object_index);
-	JsConvertValueToObject(object, &object);
 	JsIntToNumber(name, &index);
 	JsGetIndexedProperty(object, index, &value);
 	throw_on_error();
@@ -658,7 +656,6 @@ jsal_get_prop_string(int object_index, const char* name)
 	JsValueRef      value;
 
 	object = get_value(object_index);
-	JsConvertValueToObject(object, &object);
 	JsCreatePropertyId(name, strlen(name), &key);
 	JsGetProperty(object, key, &value);
 	throw_on_error();
@@ -1293,7 +1290,6 @@ jsal_put_prop(int object_index)
 
 	object = get_value(object_index);
 	value = pop_value();
-	JsConvertValueToObject(object, &object);
 	if (jsal_is_number(-1)) {
 		key_value = pop_value();
 		JsSetIndexedProperty(object, key_value, value);
@@ -1316,7 +1312,6 @@ jsal_put_prop_index(int object_index, int name)
 
 	object = get_value(object_index);
 	value = pop_value();
-	JsConvertValueToObject(object, &object);
 	JsIntToNumber(name, &index);
 	JsSetIndexedProperty(object, index, value);
 	throw_on_error();
@@ -1333,7 +1328,6 @@ jsal_put_prop_string(int object_index, const char* name)
 
 	object = get_value(object_index);
 	value = pop_value();
-	JsConvertValueToObject(object, &object);
 	JsCreatePropertyId(name, strlen(name), &key);
 	JsSetProperty(object, key, value, true);
 	throw_on_error();

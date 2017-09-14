@@ -281,7 +281,7 @@ jsal_is_class_obj(int index, const char* class_name)
 	const char* obj_class_name;
 	bool        result;
 
-	if (!jsal_is_object_coercible(index))
+	if (!jsal_is_object(index))
 		return false;
 
 	jsal_get_prop_string(index, "___internalClass");
