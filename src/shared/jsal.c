@@ -107,7 +107,7 @@ static void                        push_debug_callback_args (JsValueRef event_da
 static JsSourceContext             script_id_from_filename  (const char* filename);
 static int                         push_value               (JsValueRef value);
 static void                        resize_stack             (int new_size);
-static void                        throw_if_error           (void);
+static void                        throw_on_error           (void);
 static void                        throw_value              (JsValueRef value);
 
 #if !defined(__APPLE__)
@@ -237,7 +237,7 @@ jsal_call_method(int num_args)
 		arguments[i] = get_value(i + offset);
 	JsCallFunction(function_ref, arguments, (unsigned short)num_args, &retval_ref);
 	jsal_pop(num_args + 1);
-	throw_if_error();
+	throw_on_error();
 	push_value(retval_ref);
 }
 
@@ -255,7 +255,7 @@ jsal_compile(const char* filename)
 	JsCreateString(filename, strlen(filename), &name_string);
 	if (JsParse(source_string, s_next_script_id, name_string, JsParseScriptAttributeNone, &function) != JsNoError)
 		vector_pop(s_compiled_scripts, 1);
-	throw_if_error();
+	throw_on_error();
 	push_value(function);
 	return (unsigned int)s_next_script_id++;
 }
@@ -282,7 +282,7 @@ jsal_construct(int num_args)
 		arguments[i + 1] = get_value(i + offset);
 	JsConstructObject(function_ref, arguments, (unsigned short)(num_args + 1), &retval_ref);
 	jsal_pop(num_args + 1);
-	throw_if_error();
+	throw_on_error();
 	push_value(retval_ref);
 }
 
@@ -300,7 +300,7 @@ jsal_def_prop(int object_index)
 	descriptor = pop_value();
 	key = make_property_id(pop_value());
 	JsDefineProperty(object, key, descriptor, &result);
-	throw_if_error();
+	throw_on_error();
 }
 
 void
@@ -338,7 +338,7 @@ jsal_del_global(void)
 	JsGetGlobalObject(&object_ref);
 	key_ref = make_property_id(pop_value());
 	JsDeleteProperty(object_ref, key_ref, true, &result);
-	throw_if_error();
+	throw_on_error();
 	JsBooleanToBool(result, &retval);
 	return retval;
 }
@@ -363,7 +363,7 @@ jsal_del_prop(int object_index)
 	object_ref = get_value(object_index);
 	key_ref = make_property_id(pop_value());
 	JsDeleteProperty(object_ref, key_ref, true, &result);
-	throw_if_error();
+	throw_on_error();
 	JsBooleanToBool(result, &retval);
 	return retval;
 }
@@ -456,7 +456,7 @@ jsal_eval_module(const char* filename)
 		vector_remove(s_module_jobs, 0);
 	}
 	JsModuleEvaluation(module, &result);
-	throw_if_error();
+	throw_on_error();
 
 	push_value(result);
 	jsal_remove(-2);
@@ -513,7 +513,7 @@ jsal_get_global(void)
 	key = make_property_id(pop_value());
 	JsGetGlobalObject(&object);
 	JsGetProperty(object, key, &value);
-	throw_if_error();
+	throw_on_error();
 	push_value(value);
 	return !jsal_is_undefined(-1);
 }
@@ -581,7 +581,7 @@ jsal_get_lstring(int index, size_t *out_length)
 	value = get_value(index);
 	if (JsGetStringLength(value, &length) != JsNoError)
 		return NULL;
-	buffer_size = length * 4 + 1;
+	buffer_size = length * 3 + 1;
 	buffer = malloc(buffer_size);
 	JsCopyString(value, buffer, buffer_size, &num_bytes, NULL);
 	buffer[num_bytes] = '\0';  // NUL terminator
@@ -625,7 +625,7 @@ jsal_get_prop(int object_index)
 		key = make_property_id(pop_value());
 		JsGetProperty(object, key, &value);
 	}
-	throw_if_error();
+	throw_on_error();
 	push_value(value);
 	return !jsal_is_undefined(-1);
 }
@@ -635,9 +635,17 @@ jsal_get_prop_index(int object_index, int name)
 {
 	/* [ ... ] -> [ ... value ] */
 
-	object_index = jsal_normalize_index(object_index);
-	jsal_push_int(name);
-	return jsal_get_prop(object_index);
+	JsValueRef index;
+	JsValueRef object;
+	JsValueRef value;
+
+	object = get_value(object_index);
+	JsConvertValueToObject(object, &object);
+	JsIntToNumber(name, &index);
+	JsGetIndexedProperty(object, index, &value);
+	throw_on_error();
+	push_value(value);
+	return !jsal_is_undefined(-1);
 }
 
 bool
@@ -645,9 +653,17 @@ jsal_get_prop_string(int object_index, const char* name)
 {
 	/* [ ... ] -> [ ... value ] */
 
-	object_index = jsal_normalize_index(object_index);
-	jsal_push_string(name);
-	return jsal_get_prop(object_index);
+	JsPropertyIdRef key;
+	JsValueRef      object;
+	JsValueRef      value;
+
+	object = get_value(object_index);
+	JsConvertValueToObject(object, &object);
+	JsCreatePropertyId(name, strlen(name), &key);
+	JsGetProperty(object, key, &value);
+	throw_on_error();
+	push_value(value);
+	return !jsal_is_undefined(-1);
 }
 
 void
@@ -660,7 +676,7 @@ jsal_get_prototype(int object_index)
 
 	object = get_value(object_index);
 	JsGetPrototype(object, &prototype);
-	throw_if_error();
+	throw_on_error();
 	push_value(prototype);
 }
 
@@ -986,7 +1002,7 @@ jsal_push_eval(const char* source)
 	JsCreateString(source, strlen(source), &source_ref);
 	JsCreateString("eval()", 6, &name_ref);
 	JsRun(source_ref, s_next_script_id++, name_ref, JsParseScriptAttributeLibraryCode, &ref);
-	throw_if_error();
+	throw_on_error();
 	return push_value(ref);
 }
 
@@ -1286,7 +1302,7 @@ jsal_put_prop(int object_index)
 		key = make_property_id(pop_value());
 		JsSetProperty(object, key, value, true);
 	}
-	throw_if_error();
+	throw_on_error();
 }
 
 void
@@ -1294,10 +1310,16 @@ jsal_put_prop_index(int object_index, int name)
 {
 	/* [ ... value ] -> [ ... ] */
 
-	object_index = jsal_normalize_index(object_index);
-	jsal_push_int(name);
-	jsal_insert(-2);
-	jsal_put_prop(object_index);
+	JsValueRef index;
+	JsValueRef object;
+	JsValueRef value;
+
+	object = get_value(object_index);
+	value = pop_value();
+	JsConvertValueToObject(object, &object);
+	JsIntToNumber(name, &index);
+	JsSetIndexedProperty(object, index, value);
+	throw_on_error();
 }
 
 void
@@ -1305,10 +1327,16 @@ jsal_put_prop_string(int object_index, const char* name)
 {
 	/* [ ... value ] -> [ ... ] */
 
-	object_index = jsal_normalize_index(object_index);
-	jsal_push_string(name);
-	jsal_insert(-2);
-	jsal_put_prop(object_index);
+	JsPropertyIdRef key;
+	JsValueRef      object;
+	JsValueRef      value;
+
+	object = get_value(object_index);
+	value = pop_value();
+	JsConvertValueToObject(object, &object);
+	JsCreatePropertyId(name, strlen(name), &key);
+	JsSetProperty(object, key, value, true);
+	throw_on_error();
 }
 
 js_ref_t*
@@ -1539,7 +1567,7 @@ jsal_set_prototype(int object_index)
 	object = get_value(object_index);
 	prototype = pop_value();
 	JsSetPrototype(object, prototype);
-	throw_if_error();
+	throw_on_error();
 }
 
 void
@@ -1581,7 +1609,7 @@ jsal_to_boolean(int at_index)
 	at_index = jsal_normalize_index(at_index);
 	value = get_value(at_index);
 	JsConvertValueToBoolean(value, &value);
-	throw_if_error();
+	throw_on_error();
 	push_value(value);
 	jsal_replace(at_index);
 	return jsal_get_boolean(at_index);
@@ -1602,7 +1630,7 @@ jsal_to_number(int at_index)
 	at_index = jsal_normalize_index(at_index);
 	value = get_value(at_index);
 	JsConvertValueToNumber(value, &value);
-	throw_if_error();
+	throw_on_error();
 	push_value(value);
 	jsal_replace(at_index);
 	return jsal_get_number(at_index);
@@ -1616,7 +1644,7 @@ jsal_to_object(int at_index)
 	at_index = jsal_normalize_index(at_index);
 	value = get_value(at_index);
 	JsConvertValueToObject(value, &value);
-	throw_if_error();
+	throw_on_error();
 	push_value(value);
 	jsal_replace(at_index);
 }
@@ -1629,7 +1657,7 @@ jsal_to_string(int at_index)
 	at_index = jsal_normalize_index(at_index);
 	value = get_value(at_index);
 	JsConvertValueToString(value, &value);
-	throw_if_error();
+	throw_on_error();
 	push_value(value);
 	jsal_replace(at_index);
 	return jsal_get_string(at_index);
@@ -2123,7 +2151,7 @@ resize_stack(int new_size)
 }
 
 static void
-throw_if_error(void)
+throw_on_error(void)
 {
 	JsValueRef  error_ref;
 	bool        has_exception;
@@ -2330,7 +2358,7 @@ on_import_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleReco
 		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_import_module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
-		throw_if_error();
+		throw_on_error();
 		add_compiled_script(filename, s_next_script_id);
 		job.script_id = s_next_script_id++;
 		job.module = module;
