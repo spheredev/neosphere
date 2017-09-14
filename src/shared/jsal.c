@@ -546,15 +546,13 @@ jsal_get_host_data(int at_index)
 int
 jsal_get_int(int index)
 {
-	double     value;
+	int        value;
 	JsValueRef value_ref;
 
 	value_ref = get_value(index);
-	if (JsNumberToDouble(value_ref, &value) != JsNoError)
+	if (JsNumberToInt(value_ref, &value) != JsNoError)
 		return 0;
-	return value < INT_MIN ? INT_MIN
-		: value > INT_MAX ? INT_MAX
-		: (int)value;
+	return value;
 }
 
 int
@@ -575,15 +573,18 @@ jsal_get_lstring(int index, size_t *out_length)
 	static char* retval[25];
 
 	char*       buffer;
-	size_t      length;
+	size_t      buffer_size;
+	size_t      num_bytes;
+	int         length;
 	JsValueRef  value;
 
 	value = get_value(index);
-	if (JsCopyString(value, NULL, 0, NULL, &length) != JsNoError)
+	if (JsGetStringLength(value, &length) != JsNoError)
 		return NULL;
-	buffer = malloc(length + 1);
-	JsCopyString(value, buffer, length, NULL, NULL);
-	buffer[length] = '\0';  // NUL terminator
+	buffer_size = length * 4 + 1;
+	buffer = malloc(buffer_size);
+	JsCopyString(value, buffer, buffer_size, &num_bytes, NULL);
+	buffer[num_bytes] = '\0';  // NUL terminator
 	free(retval[counter]);
 	retval[counter] = buffer;
 	counter = (counter + 1) % 25;
@@ -671,15 +672,13 @@ jsal_get_top(void)
 unsigned int
 jsal_get_uint(int index)
 {
-	double     value;
+	int        value;
 	JsValueRef value_ref;
 
 	value_ref = get_value(index);
-	if (JsNumberToDouble(value_ref, &value) != JsNoError)
+	if (JsNumberToInt(value_ref, &value) != JsNoError)
 		return 0;
-	return value < 0 ? 0
-		: value > UINT_MAX ? UINT_MAX
-		: (unsigned int)value;
+	return (unsigned int)value;
 }
 
 bool
