@@ -611,13 +611,20 @@ jsal_get_prop(int object_index)
 	/* [ ... key ] -> [ ... value ] */
 
 	JsPropertyIdRef key;
+	JsValueRef      key_value;
 	JsValueRef      object;
 	JsValueRef      value;
 
 	object = get_value(object_index);
-	key = make_property_id(pop_value());
 	JsConvertValueToObject(object, &object);
-	JsGetProperty(object, key, &value);
+	if (jsal_is_number(-1)) {
+		key_value = pop_value();
+		JsGetIndexedProperty(object, key_value, &value);
+	}
+	else {
+		key = make_property_id(pop_value());
+		JsGetProperty(object, key, &value);
+	}
 	throw_if_error();
 	push_value(value);
 	return !jsal_is_undefined(-1);
@@ -629,7 +636,7 @@ jsal_get_prop_index(int object_index, int name)
 	/* [ ... ] -> [ ... value ] */
 
 	object_index = jsal_normalize_index(object_index);
-	jsal_push_sprintf("%d", name);
+	jsal_push_int(name);
 	return jsal_get_prop(object_index);
 }
 
@@ -1264,14 +1271,21 @@ jsal_put_prop(int object_index)
 	/* [ ... key value ] -> [ ... ] */
 
 	JsPropertyIdRef key;
+	JsValueRef      key_value;
 	JsValueRef      object;
 	JsValueRef      value;
 
 	object = get_value(object_index);
 	value = pop_value();
-	key = make_property_id(pop_value());
 	JsConvertValueToObject(object, &object);
-	JsSetProperty(object, key, value, true);
+	if (jsal_is_number(-1)) {
+		key_value = pop_value();
+		JsSetIndexedProperty(object, key_value, value);
+	}
+	else {
+		key = make_property_id(pop_value());
+		JsSetProperty(object, key, value, true);
+	}
 	throw_if_error();
 }
 
@@ -1281,7 +1295,7 @@ jsal_put_prop_index(int object_index, int name)
 	/* [ ... value ] -> [ ... ] */
 
 	object_index = jsal_normalize_index(object_index);
-	jsal_push_sprintf("%d", name);
+	jsal_push_int(name);
 	jsal_insert(-2);
 	jsal_put_prop(object_index);
 }
