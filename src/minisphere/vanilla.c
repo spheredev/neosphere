@@ -351,6 +351,14 @@ static bool js_ByteArray_get_length             (js_ref_t* me, int num_args, boo
 static bool js_ByteArray_concat                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ByteArray_slice                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ByteArray_toString               (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_get_alpha                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_get_blue                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_get_green                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_get_red                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_set_alpha                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_set_blue                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_set_green                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_set_red                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Color_toString                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_ColorMatrix_toString             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_File_close                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -483,6 +491,7 @@ static bool js_WindowStyle_toString             (js_ref_t* me, int num_args, boo
 
 static void js_Animation_finalize   (void* host_ptr);
 static void js_ByteArray_finalize   (void* host_ptr);
+static void js_Color_finalize       (void* host_ptr);
 static void js_File_finalize        (void* host_ptr);
 static void js_Font_finalize        (void* host_ptr);
 static void js_Image_finalize       (void* host_ptr);
@@ -846,6 +855,10 @@ initialize_vanilla_api(void)
 	api_define_method("v1ByteArray", "toString", js_ByteArray_toString);
 
 	api_define_class("v1Color", NULL, NULL);
+	api_define_property("v1Color", "alpha", js_Color_get_alpha, js_Color_set_alpha);
+	api_define_property("v1Color", "blue", js_Color_get_blue, js_Color_set_blue);
+	api_define_property("v1Color", "green", js_Color_get_green, js_Color_set_green);
+	api_define_property("v1Color", "red", js_Color_get_red, js_Color_set_red);
 	api_define_method("v1Color", "toString", js_Color_toString);
 
 	api_define_class("v1ColorMatrix", NULL, NULL);
@@ -1188,12 +1201,11 @@ jsal_push_sphere_bytearray(bytearray_t* array)
 void
 jsal_push_sphere_color(color_t color)
 {
-	jsal_get_global_string("CreateColor");
-	jsal_push_number(color.r);
-	jsal_push_number(color.g);
-	jsal_push_number(color.b);
-	jsal_push_number(color.a);
-	jsal_call(4);
+	color_t* color_ptr;
+
+	color_ptr = malloc(sizeof(color_t));
+	*color_ptr = color;
+	jsal_push_class_obj("v1Color", color_ptr);
 }
 
 void
@@ -1301,19 +1313,10 @@ have_index:
 color_t
 jsal_require_sphere_color(int index)
 {
-	int r, g, b;
-	int a;
+	color_t* color_ptr;
 
-	jsal_require_class_obj(index, "v1Color");
-	jsal_get_prop_string(index, "red"); r = jsal_get_int(-1); jsal_pop(1);
-	jsal_get_prop_string(index, "green"); g = jsal_get_int(-1); jsal_pop(1);
-	jsal_get_prop_string(index, "blue"); b = jsal_get_int(-1); jsal_pop(1);
-	jsal_get_prop_string(index, "alpha"); a = jsal_get_int(-1); jsal_pop(1);
-	r = r < 0 ? 0 : r > 255 ? 255 : r;
-	g = g < 0 ? 0 : g > 255 ? 255 : g;
-	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	a = a < 0 ? 0 : a > 255 ? 255 : a;
-	return color_new(r, g, b, a);
+	color_ptr = jsal_require_class_obj(index, "v1Color");
+	return *color_ptr;
 }
 
 colormatrix_t
@@ -1917,11 +1920,7 @@ js_CreateColor(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	a = a < 0 ? 0 : a > 255 ? 255 : a;
 
 	// construct a Color object
-	jsal_push_class_obj("v1Color", NULL);
-	jsal_push_int(r); jsal_put_prop_string(-2, "red");
-	jsal_push_int(g); jsal_put_prop_string(-2, "green");
-	jsal_push_int(b); jsal_put_prop_string(-2, "blue");
-	jsal_push_int(a); jsal_put_prop_string(-2, "alpha");
+	jsal_push_sphere_color(color_new(r, g, b, a));
 	return true;
 }
 
@@ -6497,6 +6496,110 @@ js_ByteArray_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
+js_Color_get_red(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "v1Color");
+
+	jsal_push_uint(color->r / 255.0);
+	return true;
+}
+
+static bool
+js_Color_get_green(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "v1Color");
+
+	jsal_push_uint(color->g);
+	return true;
+}
+
+static bool
+js_Color_get_blue(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "v1Color");
+
+	jsal_push_uint(color->b);
+	return true;
+}
+
+static bool
+js_Color_get_alpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "v1Color");
+
+	jsal_push_uint(color->a);
+	return true;
+}
+
+static bool
+js_Color_set_red(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+	double   value;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "v1Color");
+	value = jsal_require_int(0);
+
+	color->r = value < 0 ? 0 : value > 255 ? 255 : value;
+	return false;
+}
+
+static bool
+js_Color_set_green(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+	double   value;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "v1Color");
+	value = jsal_require_int(0);
+
+	color->g = value < 0 ? 0 : value > 255 ? 255 : value;
+	return false;
+}
+
+static bool
+js_Color_set_blue(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+	double   value;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "v1Color");
+	value = jsal_require_int(0);
+
+	color->b = value < 0 ? 0 : value > 255 ? 255 : value;
+	return false;
+}
+
+static bool
+js_Color_set_alpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+	double   value;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "v1Color");
+	value = jsal_require_int(0);
+
+	color->a = value < 0 ? 0 : value > 255 ? 255 : value;
+	return false;
+}
+
+static bool
 js_Color_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object color]");
@@ -6522,6 +6625,12 @@ js_ColorMatrix_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object colormatrix]");
 	return true;
+}
+
+static void
+js_Color_finalize(void* host_ptr)
+{
+	free(host_ptr);
 }
 
 static void

@@ -242,6 +242,14 @@ static bool js_Color_mix                     (js_ref_t* me, int num_args, bool i
 static bool js_Color_of                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_Color                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Color_get_name                (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_get_r                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_get_g                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_get_b                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_get_a                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_set_r                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_set_g                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_set_b                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_set_a                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Color_clone                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Color_fade                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_DirectoryStream           (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -412,6 +420,7 @@ static bool js_Transform_scale               (js_ref_t* me, int num_args, bool i
 static bool js_Transform_translate           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_VertexList                (js_ref_t* me, int num_args, bool is_ctor, int magic);
 
+static void js_Color_finalize           (void* host_ptr);
 static void js_DirectoryStream_finalize (void* host_ptr);
 static void js_FileStream_finalize      (void* host_ptr);
 static void js_Font_finalize            (void* host_ptr);
@@ -483,11 +492,15 @@ initialize_pegasus_api(void)
 	api_define_function("Sphere", "restart", js_Sphere_restart);
 	api_define_function("Sphere", "run", js_Sphere_run);
 	api_define_function("Sphere", "sleep", js_Sphere_sleep);
-	api_define_class("Color", js_new_Color, NULL);
+	api_define_class("Color", js_new_Color, js_Color_finalize);
 	api_define_function("Color", "is", js_Color_is);
 	api_define_function("Color", "mix", js_Color_mix);
 	api_define_function("Color", "of", js_Color_of);
 	api_define_property("Color", "name", js_Color_get_name, NULL);
+	api_define_property("Color", "r", js_Color_get_r, js_Color_set_r);
+	api_define_property("Color", "g", js_Color_get_g, js_Color_set_g);
+	api_define_property("Color", "b", js_Color_get_b, js_Color_set_b);
+	api_define_property("Color", "a", js_Color_get_a, js_Color_set_a);
 	api_define_method("Color", "clone", js_Color_clone);
 	api_define_method("Color", "fade", js_Color_fade);
 	api_define_class("DirectoryStream", js_new_DirectoryStream, js_DirectoryStream_finalize);
@@ -980,15 +993,11 @@ on_error:
 static void
 jsal_pegasus_push_color(color_t color)
 {
-	jsal_push_class_obj("Color", NULL);
-	jsal_push_number(color.r / 255.0);
-	jsal_push_number(color.g / 255.0);
-	jsal_push_number(color.b / 255.0);
-	jsal_push_number(color.a / 255.0);
-	jsal_put_prop_string(-5, "a");
-	jsal_put_prop_string(-4, "b");
-	jsal_put_prop_string(-3, "g");
-	jsal_put_prop_string(-2, "r");
+	color_t* color_ptr;
+	
+	color_ptr = malloc(sizeof(color_t));
+	*color_ptr = color;
+	jsal_push_class_obj("Color", color_ptr);
 }
 
 static void
@@ -1025,23 +1034,10 @@ jsal_pegasus_push_require(const char* module_id)
 static color_t
 jsal_pegasus_require_color(int index)
 {
-	float a;
-	float b;
-	float g;
-	float r;
+	color_t* color_ptr;
 
-	index = jsal_normalize_index(index);
-	jsal_require_class_obj(index, "Color");
-	jsal_get_prop_string(index, "r");
-	jsal_get_prop_string(index, "g");
-	jsal_get_prop_string(index, "b");
-	jsal_get_prop_string(index, "a");
-	a = fmin(fmax(jsal_get_number(-1) * 255, 0), 255);
-	b = fmin(fmax(jsal_get_number(-2) * 255, 0), 255);
-	g = fmin(fmax(jsal_get_number(-3) * 255, 0), 255);
-	r = fmin(fmax(jsal_get_number(-4) * 255, 0), 255);
-	jsal_pop(4);
-	return color_new(r, g, b, a);
+	color_ptr = jsal_require_class_obj(index, "Color");
+	return *color_ptr;
 }
 
 static script_t*
@@ -1483,10 +1479,9 @@ js_Color_of(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_new_Color(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	float a = 1.0;
-	float b;
-	float g;
-	float r;
+	float   a = 1.0;
+	color_t color;
+	float   r, g, b;
 
 	r = jsal_require_number(0);
 	g = jsal_require_number(1);
@@ -1495,16 +1490,19 @@ js_new_Color(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		a = jsal_require_number(3);
 
 	// construct a Color object
-	jsal_push_class_obj("Color", NULL);
-	jsal_push_number(r);
-	jsal_push_number(g);
-	jsal_push_number(b);
-	jsal_push_number(a);
-	jsal_put_prop_string(-5, "a");
-	jsal_put_prop_string(-4, "b");
-	jsal_put_prop_string(-3, "g");
-	jsal_put_prop_string(-2, "r");
+	color = color_new(
+		fmin(fmax(r, 0.0), 1.0) * 255,
+		fmin(fmax(g, 0.0), 1.0) * 255,
+		fmin(fmax(b, 0.0), 1.0) * 255,
+		fmin(fmax(a, 0.0), 1.0) * 255);
+	jsal_pegasus_push_color(color);
 	return true;
+}
+
+static void
+js_Color_finalize(void* host_ptr)
+{
+	free(host_ptr);
 }
 
 static bool
@@ -1528,6 +1526,110 @@ js_Color_get_name(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_sprintf("#%.2x%.2x%.2x%.2x", color.a, color.r, color.g, color.b);
 	return true;
+}
+
+static bool
+js_Color_get_r(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "Color");
+
+	jsal_push_number(color->r / 255.0);
+	return true;
+}
+
+static bool
+js_Color_get_g(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "Color");
+
+	jsal_push_number(color->g / 255.0);
+	return true;
+}
+
+static bool
+js_Color_get_b(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "Color");
+
+	jsal_push_number(color->b / 255.0);
+	return true;
+}
+
+static bool
+js_Color_get_a(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "Color");
+
+	jsal_push_number(color->a / 255.0);
+	return true;
+}
+
+static bool
+js_Color_set_r(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+	double   value;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "Color");
+	value = jsal_require_number(0);
+
+	color->r = fmin(fmax(value, 0.0), 1.0) * 255;
+	return false;
+}
+
+static bool
+js_Color_set_g(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+	double   value;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "Color");
+	value = jsal_require_number(0);
+
+	color->g = fmin(fmax(value, 0.0), 1.0) * 255;
+	return false;
+}
+
+static bool
+js_Color_set_b(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+	double   value;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "Color");
+	value = jsal_require_number(0);
+
+	color->b = fmin(fmax(value, 0.0), 1.0) * 255;
+	return false;
+}
+
+static bool
+js_Color_set_a(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	color_t* color;
+	double   value;
+
+	jsal_push_this();
+	color = jsal_require_class_obj(-1, "Color");
+	value = jsal_require_number(0);
+
+	color->a = fmin(fmax(value, 0.0), 1.0) * 255;
+	return false;
 }
 
 static bool

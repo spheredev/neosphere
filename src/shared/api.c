@@ -112,7 +112,7 @@ api_define_class(const char* name, js_function_t constructor, js_finalizer_t fin
 	jsal_push_eval("({ writable: false, enumerable: false, configurable: false })");
 	jsal_push_string(name);
 	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "___internalClass");
+	jsal_def_prop_string(-2, "___iC");
 
 	// save the prototype to the hidden stash.  this ensures it remains accessible
 	// internally even if the constructor is overwritten.
@@ -284,7 +284,7 @@ jsal_is_class_obj(int index, const char* class_name)
 	if (!jsal_is_object(index))
 		return false;
 
-	jsal_get_prop_string(index, "___internalClass");
+	jsal_get_prop_string(index, "___iC");
 	obj_class_name = jsal_to_string(-1);
 	result = strcmp(obj_class_name, class_name) == 0;
 	jsal_pop(1);
