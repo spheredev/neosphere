@@ -19,6 +19,7 @@ static int         class_id_from_name (const char* name);
 static const char* class_name_from_id (int class_id);
 
 static vector_t* s_classes;
+static js_ref_t* s_prototypes;
 
 void
 api_init(void)
@@ -37,11 +38,10 @@ api_init(void)
 	jsal_def_prop_string(-2, "exports");
 	jsal_pop(1);
 
-	// set up a prototype stash.  this ensures the prototypes for built-in classes
+	// set up an object to keep prototypes.  this way prototypes for built-in classes
 	// remain accessible internally even if their constructors are overwritten.
-	jsal_push_hidden_stash();
 	jsal_push_new_object();
-	jsal_put_prop_string(-2, "prototypes");
+	s_prototypes = jsal_ref(-1);
 	jsal_pop(1);
 }
 
@@ -52,6 +52,7 @@ api_uninit(void)
 	
 	iter_t iter;
 
+	jsal_unref(s_prototypes);
 	iter = vector_enum(s_classes);
 	while (iter_next(&iter)) {
 		class_info = iter.ptr;
@@ -121,11 +122,10 @@ api_define_class(const char* name, int class_id, js_function_t constructor, js_f
 
 	// save the prototype to the hidden stash.  this ensures it remains accessible
 	// internally even if the constructor is overwritten.
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "prototypes");
-	jsal_dup(-3);
+	jsal_push_ref(s_prototypes);
+	jsal_dup(-2);
 	jsal_put_prop_index(-2, class_id);
-	jsal_pop(2);
+	jsal_pop(1);
 
 	if (constructor != NULL) {
 		jsal_push_constructor(constructor, name, 0, 0);
@@ -179,8 +179,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 	jsal_push_global_object();
 	if (class_name != NULL) {
 		// load the prototype from the prototype stash
-		jsal_push_hidden_stash();
-		jsal_get_prop_string(-1, "prototypes");
+		jsal_push_ref(s_prototypes);
 		jsal_get_prop_index(-1, class_id_from_name(class_name));
 	}
 
@@ -190,7 +189,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 	jsal_def_prop_string(-2, name);
 
 	if (class_name != NULL)
-		jsal_pop(3);
+		jsal_pop(2);
 	jsal_pop(1);
 }
 
@@ -225,8 +224,7 @@ api_define_property(const char* class_name, const char* name, js_function_t gett
 {
 	jsal_push_global_object();
 	if (class_name != NULL) {
-		jsal_push_hidden_stash();
-		jsal_get_prop_string(-1, "prototypes");
+		jsal_push_ref(s_prototypes);
 		jsal_get_prop_index(-1, class_id_from_name(class_name));
 	}
 
@@ -243,7 +241,7 @@ api_define_property(const char* class_name, const char* name, js_function_t gett
 	
 	jsal_def_prop_string(-2, name);
 	if (class_name != NULL)
-		jsal_pop(3);
+		jsal_pop(2);
 	jsal_pop(1);
 }
 
@@ -314,11 +312,10 @@ jsal_push_class_obj(int class_id, void* udata)
 	if (finalizer != NULL)
 		jsal_set_finalizer(-1, finalizer);
 
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "prototypes");
+	jsal_push_ref(s_prototypes);
 	jsal_get_prop_index(-1, class_id);
 	jsal_set_prototype(index);
-	jsal_pop(2);
+	jsal_pop(1);
 
 	return index;
 }
@@ -326,10 +323,8 @@ jsal_push_class_obj(int class_id, void* udata)
 int
 jsal_push_class_prototype(int class_id)
 {
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "prototypes");
+	jsal_push_ref(s_prototypes);
 	jsal_get_prop_index(-1, class_id);
-	jsal_remove(-2);
 	jsal_remove(-2);
 	return jsal_get_top() - 1;
 }
