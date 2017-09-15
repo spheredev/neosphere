@@ -177,7 +177,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL);
 	api_define_static_prop("Sphere", "Platform", js_Sphere_get_Platform, NULL);
 	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
-	api_define_class("DirectoryStream", js_new_DirectoryStream, js_DirectoryStream_finalize);
+	api_define_class("DirectoryStream", CELL_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize);
 	api_define_property("DirectoryStream", "fileCount", js_DirectoryStream_get_fileCount, NULL);
 	api_define_property("DirectoryStream", "fileName", js_DirectoryStream_get_fileName, NULL);
 	api_define_property("DirectoryStream", "position", js_DirectoryStream_get_position, js_DirectoryStream_set_position);
@@ -193,29 +193,29 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function("FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function("FS", "rename", js_FS_rename);
 	api_define_function("FS", "writeFile", js_FS_writeFile);
-	api_define_class("FileStream", js_new_FileStream, js_FileStream_finalize);
+	api_define_class("FileStream", CELL_FILE_STREAM, js_new_FileStream, js_FileStream_finalize);
 	api_define_property("FileStream", "fileSize", js_FileStream_get_fileSize, NULL);
 	api_define_property("FileStream", "position", js_FileStream_get_position, js_FileStream_set_position);
 	api_define_method("FileStream", "dispose", js_FileStream_dispose);
 	api_define_method("FileStream", "read", js_FileStream_read);
 	api_define_method("FileStream", "write", js_FileStream_write);
-	api_define_class("RNG", js_new_RNG, js_RNG_finalize);
+	api_define_class("RNG", CELL_RNG, js_new_RNG, js_RNG_finalize);
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed);
 	api_define_function("RNG", "fromState", js_RNG_fromState);
 	api_define_property("RNG", "state", js_RNG_get_state, js_RNG_set_state);
 	api_define_method("RNG", "next", js_RNG_next);
-	api_define_class("Target", NULL, js_Target_finalize);
+	api_define_class("Target", CELL_TARGET, NULL, js_Target_finalize);
 	api_define_property("Target", "fileName", js_Target_get_fileName, NULL);
 	api_define_property("Target", "name", js_Target_get_name, NULL);
-	api_define_class("TextDecoder", js_new_TextDecoder, js_TextDecoder_finalize);
+	api_define_class("TextDecoder", CELL_TEXT_DEC, js_new_TextDecoder, js_TextDecoder_finalize);
 	api_define_property("TextDecoder", "encoding", js_TextDecoder_get_encoding, NULL);
 	api_define_property("TextDecoder", "fatal", js_TextDecoder_get_fatal, NULL);
 	api_define_property("TextDecoder", "ignoreBOM", js_TextDecoder_get_ignoreBOM, NULL);
 	api_define_method("TextDecoder", "decode", js_TextDecoder_decode);
-	api_define_class("TextEncoder", js_new_TextEncoder, js_TextEncoder_finalize);
+	api_define_class("TextEncoder", CELL_TEXT_ENC, js_new_TextEncoder, js_TextEncoder_finalize);
 	api_define_property("TextEncoder", "encoding", js_TextEncoder_get_encoding, NULL);
 	api_define_method("TextEncoder", "encode", js_TextEncoder_encode);
-	api_define_class("Tool", js_new_Tool, js_Tool_finalize);
+	api_define_class("Tool", CELL_TOOL, js_new_Tool, js_Tool_finalize);
 	api_define_method("Tool", "stage", js_Tool_stage);
 
 	api_define_const("FileOp", "Read", FILE_OP_READ);
@@ -231,7 +231,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	// create a Tool for the install() function to use
 	jsal_push_hidden_stash();
 	jsal_push_function(install_target, "doInstall", 0, 0);
-	jsal_push_class_obj("Tool", tool_new("installing"));
+	jsal_push_class_obj(CELL_TOOL, tool_new("installing"));
 	jsal_put_prop_string(-2, "installTool");
 	jsal_pop(1);
 
@@ -1034,7 +1034,7 @@ js_files(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_push_new_array();
 	iter = vector_enum(targets);
 	while (p = iter_next(&iter)) {
-		jsal_push_class_obj("Target", *p);
+		jsal_push_class_obj(CELL_TARGET, *p);
 		jsal_put_prop_index(-2, iter.index);
 	}
 	return true;
@@ -1058,14 +1058,14 @@ js_install(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	// retrieve the Install tool from the stash
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "installTool");
-	tool = jsal_require_class_obj(-1, "Tool");
+	tool = jsal_require_class_obj(-1, CELL_TOOL);
 	jsal_pop(1);
 
 	if (jsal_is_array(1)) {
 		length = jsal_get_length(1);
 		for (i = 0; i < length; ++i) {
 			jsal_get_prop_index(1, i);
-			source = jsal_require_class_obj(-1, "Target");
+			source = jsal_require_class_obj(-1, CELL_TARGET);
 			name = path_dup(target_name(source));
 			path = path_rebase(path_dup(name), dest_path);
 			target = target_new(name, s_build->fs, path, tool, s_build->timestamp, true);
@@ -1075,7 +1075,7 @@ js_install(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		}
 	}
 	else {
-		source = jsal_require_class_obj(1, "Target");
+		source = jsal_require_class_obj(1, CELL_TARGET);
 		name = path_dup(target_name(source));
 		path = path_rebase(path_dup(name), dest_path);
 		target = target_new(name, s_build->fs, path, tool, s_build->timestamp, true);
@@ -1174,7 +1174,7 @@ js_new_DirectoryStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(stream = directory_open(s_build->fs, pathname)))
 		jsal_error(JS_ERROR, "couldn't open directory");
-	jsal_push_class_obj("DirectoryStream", stream);
+	jsal_push_class_obj(CELL_DIR_STREAM, stream);
 	return true;
 }
 
@@ -1190,7 +1190,7 @@ js_DirectoryStream_get_fileCount(js_ref_t* me, int num_args, bool is_ctor, int m
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, "DirectoryStream");
+	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
 
 	jsal_push_int(directory_num_files(stream));
 	return true;
@@ -1202,7 +1202,7 @@ js_DirectoryStream_get_fileName(js_ref_t* me, int num_args, bool is_ctor, int ma
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, "DirectoryStream");
+	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
 
 	jsal_push_string(directory_pathname(stream));
 	return true;
@@ -1214,7 +1214,7 @@ js_DirectoryStream_get_position(js_ref_t* me, int num_args, bool is_ctor, int ma
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, "DirectoryStream");
+	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
 
 	jsal_push_int(directory_position(stream));
 	return true;
@@ -1227,7 +1227,7 @@ js_DirectoryStream_set_position(js_ref_t* me, int num_args, bool is_ctor, int ma
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, "DirectoryStream");
+	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
 	position = jsal_require_int(0);
 
 	if (!directory_seek(stream, position))
@@ -1242,7 +1242,7 @@ js_DirectoryStream_next(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	directory_t*  stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, "DirectoryStream");
+	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
 
 	entry_path = directory_next(stream);
 	jsal_push_new_object();
@@ -1274,7 +1274,7 @@ js_DirectoryStream_rewind(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, "DirectoryStream");
+	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
 
 	directory_rewind(stream);
 	return false;
@@ -1439,7 +1439,7 @@ js_new_FileStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (file_op == FILE_OP_UPDATE)
 		fseek(file, 0, SEEK_END);
 
-	jsal_push_class_obj("FileStream", file);
+	jsal_push_class_obj(CELL_FILE_STREAM, file);
 	return true;
 }
 
@@ -1456,7 +1456,7 @@ js_FileStream_get_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	FILE* file;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, "FileStream")))
+	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
 		jsal_error(JS_ERROR, "use of disposed object");
 
 	jsal_push_number(ftell(file));
@@ -1470,7 +1470,7 @@ js_FileStream_get_fileSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	long  file_pos;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, "FileStream")))
+	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
 		jsal_error(JS_ERROR, "use of disposed object");
 
 	file_pos = ftell(file);
@@ -1487,7 +1487,7 @@ js_FileStream_set_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	long  new_pos;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, "FileStream")))
+	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
 		jsal_error(JS_ERROR, "use of disposed object");
 	new_pos = jsal_require_int(0);
 
@@ -1503,7 +1503,7 @@ js_FileStream_dispose(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	FILE* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, "FileStream");
+	file = jsal_require_class_obj(-1, CELL_FILE_STREAM);
 
 	jsal_set_host_data(0, NULL);
 	if (file != NULL)
@@ -1524,7 +1524,7 @@ js_FileStream_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		num_bytes = jsal_require_int(1);
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, "FileStream")))
+	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
 		jsal_error(JS_ERROR, "use of disposed object");
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		pos = ftell(file);
@@ -1549,7 +1549,7 @@ js_FileStream_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	size_t      num_bytes;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, "FileStream")))
+	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
 		jsal_error(JS_ERROR, "use of disposed object");
 	data = jsal_require_buffer_ptr(0, &num_bytes);
 
@@ -1567,7 +1567,7 @@ js_RNG_fromSeed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	seed = (uint64_t)jsal_require_number(0);
 
 	xoro = xoro_new(seed);
-	jsal_push_class_obj("RNG", xoro);
+	jsal_push_class_obj(CELL_RNG, xoro);
 	return true;
 }
 
@@ -1584,7 +1584,7 @@ js_RNG_fromState(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		xoro_unref(xoro);
 		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
 	}
-	jsal_push_class_obj("RNG", xoro);
+	jsal_push_class_obj(CELL_RNG, xoro);
 	return true;
 }
 
@@ -1594,7 +1594,7 @@ js_new_RNG(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	xoro_t* xoro;
 
 	xoro = xoro_new((uint64_t)clock());
-	jsal_push_class_obj("RNG", xoro);
+	jsal_push_class_obj(CELL_RNG, xoro);
 	return true;
 }
 
@@ -1611,7 +1611,7 @@ js_RNG_get_state(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	xoro_t* xoro;
 
 	jsal_push_this();
-	xoro = jsal_require_class_obj(-1, "RNG");
+	xoro = jsal_require_class_obj(-1, CELL_RNG);
 
 	xoro_get_state(xoro, state);
 	jsal_push_string(state);
@@ -1625,7 +1625,7 @@ js_RNG_set_state(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	xoro_t*     xoro;
 
 	jsal_push_this();
-	xoro = jsal_require_class_obj(-1, "RNG");
+	xoro = jsal_require_class_obj(-1, CELL_RNG);
 	state = jsal_require_string(0);
 
 	if (!xoro_set_state(xoro, state))
@@ -1639,7 +1639,7 @@ js_RNG_next(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	xoro_t*     xoro;
 
 	jsal_push_this();
-	xoro = jsal_require_class_obj(-1, "RNG");
+	xoro = jsal_require_class_obj(-1, CELL_RNG);
 
 	jsal_push_number(xoro_gen_double(xoro));
 	return true;
@@ -1657,7 +1657,7 @@ js_Target_get_fileName(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	target_t* target;
 
 	jsal_push_this();
-	target = jsal_require_class_obj(-1, "Target");
+	target = jsal_require_class_obj(-1, CELL_TARGET);
 
 	jsal_push_string(path_cstr(target_path(target)));
 	return true;
@@ -1669,7 +1669,7 @@ js_Target_get_name(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	target_t* target;
 
 	jsal_push_this();
-	target = jsal_require_class_obj(-1, "Target");
+	target = jsal_require_class_obj(-1, CELL_TARGET);
 
 	jsal_push_string(path_cstr(target_name(target)));
 	return true;
@@ -1703,7 +1703,7 @@ js_new_TextDecoder(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	}
 
 	decoder = decoder_new(fatal, ignore_bom);
-	jsal_push_class_obj("TextDecoder", decoder);
+	jsal_push_class_obj(CELL_TEXT_DEC, decoder);
 	return true;
 }
 
@@ -1719,7 +1719,7 @@ js_TextDecoder_get_encoding(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	decoder_t* decoder;
 
 	jsal_push_this();
-	decoder = jsal_require_class_obj(-1, "TextDecoder");
+	decoder = jsal_require_class_obj(-1, CELL_TEXT_DEC);
 
 	jsal_push_string("utf-8");
 	return true;
@@ -1731,7 +1731,7 @@ js_TextDecoder_get_fatal(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	decoder_t* decoder;
 
 	jsal_push_this();
-	decoder = jsal_require_class_obj(-1, "TextDecoder");
+	decoder = jsal_require_class_obj(-1, CELL_TEXT_DEC);
 
 	jsal_push_boolean(decoder_fatal(decoder));
 	return 1;
@@ -1743,7 +1743,7 @@ js_TextDecoder_get_ignoreBOM(js_ref_t* me, int num_args, bool is_ctor, int magic
 	decoder_t* decoder;
 
 	jsal_push_this();
-	decoder = jsal_require_class_obj(-1, "TextDecoder");
+	decoder = jsal_require_class_obj(-1, CELL_TEXT_DEC);
 
 	jsal_push_boolean(decoder_ignore_bom(decoder));
 	return true;
@@ -1761,7 +1761,7 @@ js_TextDecoder_decode(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	lstring_t*  tail = NULL;
 
 	jsal_push_this();
-	decoder = jsal_require_class_obj(-1, "TextDecoder");
+	decoder = jsal_require_class_obj(-1, CELL_TEXT_DEC);
 	if (num_args >= 1)
 		input = jsal_require_buffer_ptr(0, &length);
 	if (num_args >= 2) {
@@ -1795,7 +1795,7 @@ js_new_TextEncoder(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	encoder_t* encoder;
 
 	encoder = encoder_new();
-	jsal_push_class_obj("TextEncoder", encoder);
+	jsal_push_class_obj(CELL_TEXT_ENC, encoder);
 	return true;
 }
 
@@ -1811,7 +1811,7 @@ js_TextEncoder_get_encoding(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	encoder_t* encoder;
 
 	jsal_push_this();
-	encoder = jsal_require_class_obj(-1, "TextEncoder");
+	encoder = jsal_require_class_obj(-1, CELL_TEXT_ENC);
 
 	jsal_push_string("utf-8");
 	return true;
@@ -1828,7 +1828,7 @@ js_TextEncoder_encode(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	encoder_t* encoder;
 
 	jsal_push_this();
-	encoder = jsal_require_class_obj(-1, "TextEncoder");
+	encoder = jsal_require_class_obj(-1, CELL_TEXT_ENC);
 	if (num_args >= 1)
 		input = jsal_require_lstring_t(0);
 	else
@@ -1855,7 +1855,7 @@ js_new_Tool(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_dup(0);
 	tool = tool_new(verb);
 	
-	jsal_push_class_obj("Tool", tool);
+	jsal_push_class_obj(CELL_TOOL, tool);
 	return true;
 }
 
@@ -1878,7 +1878,7 @@ js_Tool_stage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	tool = jsal_require_class_obj(-1, "Tool");
+	tool = jsal_require_class_obj(-1, CELL_TOOL);
 	out_path = path_new(jsal_require_string(0));
 	jsal_require_array(1);
 	if (num_args >= 3)
@@ -1897,13 +1897,13 @@ js_Tool_stage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	length = jsal_get_length(1);
 	for (i = 0; i < length; ++i) {
 		jsal_get_prop_index(1, i);
-		source = jsal_require_class_obj(-1, "Target");
+		source = jsal_require_class_obj(-1, CELL_TARGET);
 		target_add_source(target, source);
 		jsal_pop(1);
 	}
 	path_free(out_path);
 	vector_push(s_build->targets, &target);
 
-	jsal_push_class_obj("Target", target_ref(target));
+	jsal_push_class_obj(CELL_TARGET, target_ref(target));
 	return true;
 }

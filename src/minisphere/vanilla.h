@@ -37,6 +37,25 @@
 #include "jsal.h"
 #include "spriteset.h"
 
+enum vanilla_class
+{
+	SV1_ANIMATION = 0x1000,
+	SV1_BYTE_ARRAY,
+	SV1_COLOR,
+	SV1_COLOR_MATRIX,
+	SV1_FILE,
+	SV1_FONT,
+	SV1_IMAGE,
+	SV1_LOGGER,
+	SV1_RAW_FILE,
+	SV1_SOCKET,
+	SV1_SOUND,
+	SV1_SOUND_EFFECT,
+	SV1_SPRITESET,
+	SV1_SURFACE,
+	SV1_WINDOW_STYLE,
+};
+
 void initialize_vanilla_api (void);
 
 void          jsal_push_sphere_bytearray      (bytearray_t* array);

@@ -33,6 +33,17 @@
 #ifndef SPHERE__BUILD_H__INCLUDED
 #define SPHERE__BUILD_H__INCLUDED
 
+enum cell_class
+{
+	CELL_DIR_STREAM = 0x3000,
+	CELL_FILE_STREAM,
+	CELL_RNG,
+	CELL_TARGET,
+	CELL_TEXT_DEC,
+	CELL_TEXT_ENC,
+	CELL_TOOL,
+};
+
 typedef struct build build_t;
 
 build_t* build_new     (const path_t* source_path, const path_t* out_path);

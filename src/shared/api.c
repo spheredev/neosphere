@@ -11,8 +11,12 @@
 struct class_info
 {
 	js_finalizer_t finalizer;
+	int            id;
 	char*          name;
 };
+
+static int         class_id_from_name (const char* name);
+static const char* class_name_from_id (int class_id);
 
 static vector_t* s_classes;
 
@@ -95,13 +99,14 @@ api_define_const(const char* enum_name, const char* name, double value)
 }
 
 void
-api_define_class(const char* name, js_function_t constructor, js_finalizer_t finalizer)
+api_define_class(const char* name, int class_id, js_function_t constructor, js_finalizer_t finalizer)
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
 
 	struct class_info class_info;
 
+	class_info.id = class_id;
 	class_info.name = strdup(name);
 	class_info.finalizer = finalizer;
 	vector_push(s_classes, &class_info);
@@ -110,7 +115,7 @@ api_define_class(const char* name, js_function_t constructor, js_finalizer_t fin
 	// value stack afterwards.
 	jsal_push_new_object();
 	jsal_push_eval("({ writable: false, enumerable: false, configurable: false })");
-	jsal_push_string(name);
+	jsal_push_int(class_id);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, "___iC");
 
@@ -119,7 +124,7 @@ api_define_class(const char* name, js_function_t constructor, js_finalizer_t fin
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "prototypes");
 	jsal_dup(-3);
-	jsal_put_prop_string(-2, name);
+	jsal_put_prop_index(-2, class_id);
 	jsal_pop(2);
 
 	if (constructor != NULL) {
@@ -176,7 +181,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 		// load the prototype from the prototype stash
 		jsal_push_hidden_stash();
 		jsal_get_prop_string(-1, "prototypes");
-		jsal_get_prop_string(-1, class_name);
+		jsal_get_prop_index(-1, class_id_from_name(class_name));
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
@@ -190,7 +195,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 }
 
 void
-api_define_object(const char* namespace_name, const char* name, const char* class_name, void* udata)
+api_define_object(const char* namespace_name, const char* name, int class_id, void* udata)
 {
 	jsal_push_global_object();
 
@@ -207,7 +212,7 @@ api_define_object(const char* namespace_name, const char* name, const char* clas
 	}
 
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_push_class_obj(class_name, udata);
+	jsal_push_class_obj(class_id, udata);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, name);
 	if (namespace_name != NULL)
@@ -222,7 +227,7 @@ api_define_property(const char* class_name, const char* name, js_function_t gett
 	if (class_name != NULL) {
 		jsal_push_hidden_stash();
 		jsal_get_prop_string(-1, "prototypes");
-		jsal_get_prop_string(-1, class_name);
+		jsal_get_prop_index(-1, class_id_from_name(class_name));
 	}
 
 	// populate the property descriptor
@@ -276,23 +281,21 @@ api_define_static_prop(const char* namespace_name, const char* name, js_function
 }
 
 bool
-jsal_is_class_obj(int index, const char* class_name)
+jsal_is_class_obj(int index, int class_id)
 {
-	const char* obj_class_name;
-	bool        result;
+	bool result;
 
 	if (!jsal_is_object(index))
 		return false;
 
 	jsal_get_prop_string(index, "___iC");
-	obj_class_name = jsal_to_string(-1);
-	result = strcmp(obj_class_name, class_name) == 0;
+	result = class_id == jsal_get_int(-1);
 	jsal_pop(1);
 	return result;
 }
 
 int
-jsal_push_class_obj(const char* class_name, void* udata)
+jsal_push_class_obj(int class_id, void* udata)
 {
 	struct class_info* class_info;
 	js_finalizer_t     finalizer = NULL;
@@ -303,7 +306,7 @@ jsal_push_class_obj(const char* class_name, void* udata)
 	iter = vector_enum(s_classes);
 	while (iter_next(&iter)) {
 		class_info = iter.ptr;
-		if (strcmp(class_name, class_info->name) == 0)
+		if (class_id == class_info->id)
 			finalizer = class_info->finalizer;
 	}
 	
@@ -313,7 +316,7 @@ jsal_push_class_obj(const char* class_name, void* udata)
 
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "prototypes");
-	jsal_get_prop_string(-1, class_name);
+	jsal_get_prop_index(-1, class_id);
 	jsal_set_prototype(index);
 	jsal_pop(2);
 
@@ -321,22 +324,22 @@ jsal_push_class_obj(const char* class_name, void* udata)
 }
 
 int
-jsal_push_class_prototype(const char* class_name)
+jsal_push_class_prototype(int class_id)
 {
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "prototypes");
-	jsal_get_prop_string(-1, class_name);
+	jsal_get_prop_index(-1, class_id);
 	jsal_remove(-2);
 	jsal_remove(-2);
 	return jsal_get_top() - 1;
 }
 
 void*
-jsal_require_class_obj(int index, const char* class_name)
+jsal_require_class_obj(int index, int class_id)
 {
-	if (!jsal_is_class_obj(index, class_name)) {
+	if (!jsal_is_class_obj(index, class_id)) {
 		jsal_dup(index);
-		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a %s object", jsal_to_string(-1), class_name);
+		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a %s object", jsal_to_string(-1), class_name_from_id(class_id));
 		jsal_remove(-2);
 		jsal_throw();
 	}
@@ -347,4 +350,36 @@ void
 jsal_set_class_ptr(int index, void* udata)
 {
 	jsal_set_host_data(index, udata);
+}
+
+static int
+class_id_from_name(const char* name)
+{
+	struct class_info* class;
+
+	iter_t iter;
+
+	iter = vector_enum(s_classes);
+	while (iter_next(&iter)) {
+		class = iter.ptr;
+		if (strcmp(name, class->name) == 0)
+			return class->id;
+	}
+	return 0;
+}
+
+static const char*
+class_name_from_id(int class_id)
+{
+	struct class_info* class;
+	
+	iter_t iter;
+
+	iter = vector_enum(s_classes);
+	while (iter_next(&iter)) {
+		class = iter.ptr;
+		if (class_id == class->id)
+			return class->name;
+	}
+	return NULL;
 }
