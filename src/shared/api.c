@@ -288,7 +288,8 @@ jsal_is_class_obj(int index, int class_id)
 		return false;
 
 	data = jsal_get_host_data(index);
-	return class_id == data->class_id;
+	return data != NULL
+		&& class_id == data->class_id;
 }
 
 int
