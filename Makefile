@@ -77,7 +77,7 @@ deb: dist
 .PHONY: dist
 dist:
 	mkdir -p dist/$(pkgname)
-	cp -r assets desktop docs manpages src dist/$(pkgname)
+	cp -r assets dep desktop docs manpages src dist/$(pkgname)
 	cp Makefile VERSION dist/$(pkgname)
 	cp CHANGELOG.md LICENSE.txt README.md dist/$(pkgname)
 	cd dist && tar cfz $(pkgname).tar.gz $(pkgname) && rm -rf dist/$(pkgname)

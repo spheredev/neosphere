@@ -33,7 +33,7 @@
 ; solution configurations.
 #define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.0a1"
+#define AppVersion3 "5.0b1"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -98,11 +98,13 @@ Source: "..\msw\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Compone
 Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
+Source: "..\msw\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
 Source: "..\msw\gdk-cp.bat"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw64\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
 Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
 Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
 Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
+Source: "..\msw64\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
 Source: "..\msw\documentation\sphere2-core-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\sphere2-hl-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\cellscript-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cli
