@@ -128,7 +128,7 @@ debugger_uninit()
 
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
-		while (p_source = vector_next(&iter)) {
+		while (p_source = iter_next(&iter)) {
 			lstr_free(p_source->text);
 			free(p_source->name);
 		}
@@ -252,7 +252,7 @@ debugger_cache_source(const char* name, const lstring_t* text)
 		return;
 
 	iter = vector_enum(s_sources);
-	while (p_source = vector_next(&iter)) {
+	while (p_source = iter_next(&iter)) {
 		if (strcmp(name, p_source->name) == 0) {
 			lstr_free(p_source->text);
 			p_source->text = lstr_dup(text);
@@ -373,7 +373,7 @@ duk_cb_debug_request(duk_context* ctx, void* udata, duk_idx_t nvalues)
 
 		// check if the data is in the source cache
 		iter = vector_enum(s_sources);
-		while (p_source = vector_next(&iter)) {
+		while (p_source = iter_next(&iter)) {
 			if (strcmp(name, p_source->name) == 0) {
 				duk_push_lstring_t(ctx, p_source->text);
 				return 1;

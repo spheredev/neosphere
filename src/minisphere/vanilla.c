@@ -3193,7 +3193,7 @@ js_GetPersonFollowers(duk_context* ctx)
 	all_persons = map_engine_persons();
 	duk_push_array(ctx);
 	iter = vector_enum(all_persons);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		candidate = *(person_t**)iter.ptr;
 		if (person_get_leader(candidate) == person) {
 			duk_push_string(ctx, person_name(candidate));
@@ -3261,7 +3261,7 @@ js_GetPersonIgnoreList(duk_context* ctx)
 	ignore_list = person_ignore_list(person);
 	iter = vector_enum(ignore_list);
 	duk_push_array(ctx);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		duk_push_string(ctx, *(const char**)iter.ptr);
 		duk_put_prop_index(ctx, -2, iter.index);
 	}
@@ -3309,7 +3309,7 @@ js_GetPersonList(duk_context* ctx)
 	all_persons = map_engine_persons();
 	iter = vector_enum(all_persons);
 	duk_push_array(ctx);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		person = *(person_t**)iter.ptr;
 		duk_push_string(ctx, person_name(person));
 		duk_put_prop_index(ctx, -2, iter.index);

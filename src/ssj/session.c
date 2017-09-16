@@ -76,8 +76,8 @@ command_db[] =
 	"clearbreak", "cb", "n",
 	"continue",   "c",  "",
 	"down",       "d",  "~n",
-	"eval",       "e",  "s",
-	"examine",    "x",  "s",
+	"eval",       "e",  "*",
+	"examine",    "x",  "*",
 	"frame",      "f",  "~n",
 	"list",       "l",  "~nf",
 	"stepover",   "s",  "",
@@ -143,7 +143,7 @@ session_run(session_t* obj, bool run_now)
 }
 
 static const char*
-find_verb(const char* abbrev, const char* *o_pattern)
+find_verb(const char* abbrev, const char* *out_pattern)
 {
 	const char* full_name;
 	const char* matches[100];
@@ -160,14 +160,14 @@ find_verb(const char* abbrev, const char* *o_pattern)
 		if (strcmp(abbrev, short_name) == 0) {
 			matches[0] = full_name;
 			num_matches = 1;
-			if (o_pattern != NULL)
-				*o_pattern = command_db[2 + i * 3];
+			if (out_pattern != NULL)
+				*out_pattern = command_db[2 + i * 3];
 			break;  // canonical short name is never ambiguous
 		}
 		if (strstr(full_name, abbrev) == full_name) {
 			matches[num_matches] = full_name;
-			if (num_matches == 0 && o_pattern != NULL)
-				*o_pattern = command_db[2 + i * 3];
+			if (num_matches == 0 && out_pattern != NULL)
+				*out_pattern = command_db[2 + i * 3];
 			++num_matches;
 		}
 	}

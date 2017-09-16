@@ -780,7 +780,7 @@ map_trigger_at(int x, int y, int layer)
 
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	iter = vector_enum(s_map->triggers);
-	while (trigger = vector_next(&iter)) {
+	while (trigger = iter_next(&iter)) {
 		if (trigger->z != layer && false)  // layer ignored for compatibility
 			continue;
 		bounds.x1 = trigger->x - tile_w / 2;
@@ -813,7 +813,7 @@ map_zone_at(int x, int y, int layer, int which)
 	iter_t iter;
 
 	iter = vector_enum(s_map->zones);
-	while (zone = vector_next(&iter)) {
+	while (zone = iter_next(&iter)) {
 		if (zone->layer != layer && false)  // layer ignored for compatibility
 			continue;
 		if (is_point_in_rect(x, y, zone->bounds) && --which < 0)
@@ -2163,10 +2163,10 @@ free_map(struct map* map)
 		lstr_free(map->persons[i].touch_script);
 	}
 	iter = vector_enum(s_map->triggers);
-	while (trigger = vector_next(&iter))
+	while (trigger = iter_next(&iter))
 		script_unref(trigger->script);
 	iter = vector_enum(s_map->zones);
-	while (zone = vector_next(&iter))
+	while (zone = iter_next(&iter))
 		script_unref(zone->script);
 	lstr_free(s_map->bgm_file);
 	tileset_free(map->tileset);
@@ -2204,7 +2204,7 @@ get_trigger_at(int x, int y, int layer, int* out_index)
 
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	iter = vector_enum(s_map->triggers);
-	while (trigger = vector_next(&iter)) {
+	while (trigger = iter_next(&iter)) {
 		if (trigger->z != layer && false)  // layer ignored for compatibility reasons
 			continue;
 		bounds.x1 = trigger->x - tile_w / 2;
@@ -2231,7 +2231,7 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 	int    i;
 
 	iter = vector_enum(s_map->zones); i = -1;
-	while (zone = vector_next(&iter)) {
+	while (zone = iter_next(&iter)) {
 		if (zone->layer != layer && false)  // layer ignored for compatibility
 			continue;
 		if (is_point_in_rect(x, y, zone->bounds) && which-- == 0) {

@@ -84,14 +84,14 @@ async_cancel_all(bool recurring)
 	job_t* job;
 
 	iter = vector_enum(s_onetime);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		job = *(job_t**)iter.ptr;
 		job->finished = true;
 	}
 
 	if (recurring) {
 		iter = vector_enum(s_recurring);
-		while (vector_next(&iter)) {
+		while (iter_next(&iter)) {
 			job = *(job_t**)iter.ptr;
 			job->finished = true;
 		}
@@ -106,13 +106,13 @@ async_cancel(int64_t token)
 	job_t** p_job;
 
 	iter = vector_enum(s_onetime);
-	while (p_job = vector_next(&iter)) {
+	while (p_job = iter_next(&iter)) {
 		if ((*p_job)->token == token)
 			(*p_job)->finished = true;
 	}
 
 	iter = vector_enum(s_recurring);
-	while (p_job = vector_next(&iter)) {
+	while (p_job = iter_next(&iter)) {
 		if ((*p_job)->token == token)
 			(*p_job)->finished = true;
 	}
@@ -171,7 +171,7 @@ async_run_jobs(async_hint_t hint)
 
 	// process recurring jobs
 	iter = vector_enum(s_recurring);
-	while (vector_next(&iter)) {
+	while (iter_next(&iter)) {
 		job = *(job_t**)iter.ptr;
 		if (job->hint == hint && !job->finished)
 			script_run(job->script, true);
@@ -185,7 +185,7 @@ async_run_jobs(async_hint_t hint)
 	// to work.
 	if (s_onetime != NULL) {
 		iter = vector_enum(s_onetime);
-		while (vector_next(&iter)) {
+		while (iter_next(&iter)) {
 			job = *(job_t**)iter.ptr;
 			if (!job->armed) {
 				// avoid starting jobs on the same tick they're dispatched.  this works reliably

@@ -95,7 +95,7 @@ spk_close(spk_writer_t* writer)
 	// write package index
 	idx_offset = ftell(writer->file);
 	iter = vector_enum(writer->index);
-	while (p_entry = vector_next(&iter)) {
+	while (p_entry = iter_next(&iter)) {
 		// for compatibility with Sphere 1.5, we have to include the NUL terminator
 		// in the filename. this, despite the fact that there is an explicit length
 		// field in the header...

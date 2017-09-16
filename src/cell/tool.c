@@ -115,7 +115,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	duk_push_string(js_ctx, path_cstr(out_path));
 	duk_push_array(js_ctx);
 	iter = vector_enum(in_paths);
-	while (p_path = vector_next(&iter)) {
+	while (p_path = iter_next(&iter)) {
 		array_index = (duk_uarridx_t)duk_get_length(js_ctx, -1);
 		duk_push_string(js_ctx, path_cstr(*p_path));
 		duk_put_prop_index(js_ctx, -2, array_index);

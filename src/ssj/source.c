@@ -103,7 +103,7 @@ source_free(source_t* source)
 
 	if (source == NULL) return;
 	it = vector_enum(source->lines);
-	while (p_line = vector_next(&it))
+	while (p_line = iter_next(&it))
 		free(*p_line);
 	vector_free(source->lines);
 	free(source);

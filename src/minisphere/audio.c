@@ -135,11 +135,11 @@ audio_uninit(void)
 	console_log(1, "shutting down audio subsystem");
 
 	iter = vector_enum(s_active_sounds);
-	while (p_sound = vector_next(&iter))
+	while (p_sound = iter_next(&iter))
 		sound_unref(*p_sound);
 	vector_free(s_active_sounds);
 	iter = vector_enum(s_active_samples);
-	while (p_sample = vector_next(&iter)) {
+	while (p_sample = iter_next(&iter)) {
 		al_destroy_sample_instance(p_sample->ptr);
 		sample_unref(p_sample->sample);
 		mixer_unref(p_sample->mixer);
@@ -157,7 +157,7 @@ audio_resume(void)
 	sound_t*  *p_sound;
 
 	iter = vector_enum(s_active_sounds);
-	while (p_sound = vector_next(&iter)) {
+	while (p_sound = iter_next(&iter)) {
 		if ((*p_sound)->suspended)
 			sound_pause(*p_sound, false);
 	}
@@ -170,7 +170,7 @@ audio_suspend(void)
 	sound_t*  *p_sound;
 
 	iter = vector_enum(s_active_sounds);
-	while (p_sound = vector_next(&iter)) {
+	while (p_sound = iter_next(&iter)) {
 		(*p_sound)->suspended = sound_playing(*p_sound);
 		sound_pause(*p_sound, true);
 	}
@@ -189,11 +189,11 @@ audio_update(void)
 		return;
 
 	iter = vector_enum(s_active_streams);
-	while (p_stream = vector_next(&iter))
+	while (p_stream = iter_next(&iter))
 		update_stream(*p_stream);
 
 	iter = vector_enum(s_active_samples);
-	while (p_sample = vector_next(&iter)) {
+	while (p_sample = iter_next(&iter)) {
 		if (al_get_sample_instance_playing(p_sample->ptr))
 			continue;
 		al_destroy_sample_instance(p_sample->ptr);
@@ -203,7 +203,7 @@ audio_update(void)
 	}
 
 	iter = vector_enum(s_active_sounds);
-	while (p_sound = vector_next(&iter)) {
+	while (p_sound = iter_next(&iter)) {
 		if (sound_playing(*p_sound))
 			continue;
 		sound_unref(*p_sound);
@@ -412,7 +412,7 @@ sample_stop_all(sample_t* sample)
 
 	console_log(2, "stopping all instances of sample #%u", sample->id);
 	iter = vector_enum(s_active_samples);
-	while (p_instance = vector_next(&iter)) {
+	while (p_instance = iter_next(&iter)) {
 		if (p_instance->sample != sample)
 			continue;
 		al_destroy_sample_instance(p_instance->ptr);
@@ -689,7 +689,7 @@ stream_unref(stream_t* stream)
 	free(stream->buffer);
 	free(stream);
 	iter = vector_enum(s_active_streams);
-	while (p_stream = vector_next(&iter)) {
+	while (p_stream = iter_next(&iter)) {
 		if (*p_stream == stream) {
 			vector_remove(s_active_streams, iter.index);
 			break;

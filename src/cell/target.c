@@ -82,7 +82,7 @@ target_free(target_t* target)
 		return;
 
 	iter = vector_enum(target->sources);
-	while (p = vector_next(&iter))
+	while (p = iter_next(&iter))
 		target_free(*p);
 	vector_free(target->sources);
 	tool_unref(target->tool);
@@ -139,7 +139,7 @@ target_build(target_t* target, visor_t* visor, bool force_build)
 	// build dependencies and add them to the source list
 	in_paths = vector_new(sizeof(path_t*));
 	iter = vector_enum(target->sources);
-	while (p_target = vector_next(&iter)) {
+	while (p_target = iter_next(&iter)) {
 		target_build(*p_target, visor, force_build);
 		path = path_dup(target_path(*p_target));
 		vector_push(in_paths, &path);
@@ -162,7 +162,7 @@ target_build(target_t* target, visor_t* visor, bool force_build)
 		is_outdated = true;
 	else {
 		iter = vector_enum(in_paths);
-		while (p_path = vector_next(&iter)) {
+		while (p_path = iter_next(&iter)) {
 			fs_stat(target->fs, path_cstr(*p_path), &sb);
 			if (is_outdated = sb.st_mtime > last_time)
 				break;  // short circuit
@@ -174,7 +174,7 @@ target_build(target_t* target, visor_t* visor, bool force_build)
 		? tool_run(target->tool, visor, target->fs, target->path, in_paths)
 		: true;
 	iter = vector_enum(in_paths);
-	while (p_path = vector_next(&iter))
+	while (p_path = iter_next(&iter))
 		path_free(*p_path);
 	vector_free(in_paths);
 	return status;
