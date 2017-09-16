@@ -1,3 +1,11 @@
+minisphere (4.8.7) zesty; urgency=low
+
+  * Fixes a bug where paths beginning with `~/` were incorrectly interpreted as
+    referring to the save data directory in Sphere v1 code, leading to a runtime
+    error.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 16 Sep 2017 00:00:00 -0500
+
 minisphere (4.8.6) zesty; urgency=low
 
   * Fixes a bug where the backbuffer texture is freed prematurely, causing the

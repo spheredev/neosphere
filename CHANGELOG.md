@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v4.8.7 - TBD
-------------
+v4.8.7 - September 16, 2017
+---------------------------
 
 * Fixes a bug where paths beginning with `~/` were incorrectly interpreted as
   referring to the save data directory in Sphere v1 code, leading to a runtime
