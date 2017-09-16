@@ -51,7 +51,7 @@
 
 struct js_ref
 {
-	JsValueRef value;
+	JsRef value;
 };
 
 struct breakpoint
@@ -92,7 +92,7 @@ struct script
 };
 
 static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
-static void CHAKRA_CALLBACK        on_dispatch_job          (JsValueRef function, void* userdata);
+static void CHAKRA_CALLBACK        on_dispatch_job         (JsValueRef function, void* userdata);
 static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
 static JsErrorCode CHAKRA_CALLBACK on_import_module         (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
 static JsValueRef CHAKRA_CALLBACK  on_native_call           (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
@@ -101,7 +101,7 @@ static const char*                 filename_from_script_id  (JsSourceContext scr
 static void                        free_ref                 (js_ref_t* ref);
 static JsValueRef                  get_value                (int stack_index);
 static JsPropertyIdRef             make_property_id         (JsValueRef key_value);
-static js_ref_t*                   make_ref                 (JsValueRef value);
+static js_ref_t*                   make_ref                 (JsRef value);
 static JsValueRef                  pop_value                (void);
 static void                        push_debug_callback_args (JsValueRef event_data);
 static JsSourceContext             script_id_from_filename  (const char* filename);
@@ -659,6 +659,21 @@ jsal_get_prop_index(int object_index, int name)
 }
 
 bool
+jsal_get_prop_key(int object_index, js_ref_t* key)
+{
+	/* [ ... ] -> [ ... value ] */
+
+	JsValueRef      object;
+	JsValueRef      value;
+
+	object = get_value(object_index);
+	JsGetProperty(object, key->value, &value);
+	throw_on_error();
+	push_value(value);
+	return !jsal_is_undefined(-1);
+}
+
+bool
 jsal_get_prop_string(int object_index, const char* name)
 {
 	/* [ ... ] -> [ ... value ] */
@@ -913,6 +928,15 @@ jsal_make_buffer(int object_index, js_buffer_type_t buffer_type, void* buffer, s
 		: buffer_type == JS_FLOAT64ARRAY ? JsArrayTypeFloat64
 		: JsArrayTypeUint8;
 	JsSetIndexedPropertiesToExternalData(object, buffer, type, (unsigned int)num_items);
+}
+
+js_ref_t*
+jsal_new_key(const char* name)
+{
+	JsPropertyIdRef key;
+
+	JsCreatePropertyId(name, strlen(name), &key);
+	return make_ref(key);
 }
 
 bool
@@ -1326,6 +1350,20 @@ jsal_put_prop_index(int object_index, int name)
 	value = pop_value();
 	JsIntToNumber(name, &index);
 	JsSetIndexedProperty(object, index, value);
+	throw_on_error();
+}
+
+void
+jsal_put_prop_key(int object_index, js_ref_t* key)
+{
+	/* [ ... value ] -> [ ... ] */
+
+	JsValueRef      object;
+	JsValueRef      value;
+
+	object = get_value(object_index);
+	value = pop_value();
+	JsSetProperty(object, key->value, value, true);
 	throw_on_error();
 }
 
@@ -2054,7 +2092,7 @@ make_property_id(JsValueRef key)
 }
 
 js_ref_t*
-make_ref(JsValueRef value)
+make_ref(JsRef value)
 {
 	js_ref_t* ref;
 	

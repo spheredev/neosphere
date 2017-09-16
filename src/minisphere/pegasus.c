@@ -455,9 +455,15 @@ static path_t*   find_module                 (const char* id, const char* origin
 static void      load_joysticks              (void);
 static path_t*   load_package_json           (const char* filename);
 
-static mixer_t* s_def_mixer;
-static int      s_framerate = 60;
-static int      s_next_module_id = 1;
+static mixer_t*  s_def_mixer;
+static int       s_framerate = 60;
+static js_ref_t* s_key_color;
+static js_ref_t* s_key_x;
+static js_ref_t* s_key_y;
+static js_ref_t* s_key_z;
+static js_ref_t* s_key_u;
+static js_ref_t* s_key_v;
+static int       s_next_module_id = 1;
 
 void
 initialize_pegasus_api(void)
@@ -468,6 +474,13 @@ initialize_pegasus_api(void)
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 	jsal_on_import_module(on_import_module);
+
+	s_key_color = jsal_new_key("color");
+	s_key_x = jsal_new_key("x");
+	s_key_y = jsal_new_key("y");
+	s_key_z = jsal_new_key("z");
+	s_key_u = jsal_new_key("u");
+	s_key_v = jsal_new_key("v");
 
 	// initialize CommonJS cache and global require()
 	jsal_push_hidden_stash();
@@ -4662,10 +4675,10 @@ js_Transform_translate(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_new_VertexList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	int      num_entries;
-	int      stack_idx;
-	vbo_t*   vbo;
-	vertex_t vertex;
+	int       num_entries;
+	int       stack_idx;
+	vbo_t*    vbo;
+	vertex_t  vertex;
 
 	int i;
 
@@ -4674,23 +4687,24 @@ js_new_VertexList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	num_entries = (int)jsal_get_length(0);
 	if (num_entries == 0)
 		jsal_error(JS_RANGE_ERROR, "empty list not allowed");
+	
 	vbo = vbo_new();
 	for (i = 0; i < num_entries; ++i) {
 		jsal_get_prop_index(0, i);
-		jsal_require_object_coercible(-1);
+		jsal_require_object(-1);
 		stack_idx = jsal_normalize_index(-1);
-		vertex.x = jsal_get_prop_string(stack_idx, "x") ? jsal_require_number(-1) : 0.0;
-		vertex.y = jsal_get_prop_string(stack_idx, "y") ? jsal_require_number(-1) : 0.0;
-		vertex.z = jsal_get_prop_string(stack_idx, "z") ? jsal_require_number(-1) : 0.0;
-		if (jsal_get_prop_string(stack_idx, "u"))
+		vertex.x = jsal_get_prop_key(stack_idx, s_key_x) ? jsal_require_number(-1) : 0.0;
+		vertex.y = jsal_get_prop_key(stack_idx, s_key_y) ? jsal_require_number(-1) : 0.0;
+		vertex.z = jsal_get_prop_key(stack_idx, s_key_z) ? jsal_require_number(-1) : 0.0;
+		if (jsal_get_prop_key(stack_idx, s_key_u))
 			vertex.u = jsal_require_number(-1);
 		else
 			vertex.u = 0;
-		if (jsal_get_prop_string(stack_idx, "v"))
+		if (jsal_get_prop_key(stack_idx, s_key_v))
 			vertex.v = jsal_require_number(-1);
 		else
 			vertex.v = 0;
-		vertex.color = jsal_get_prop_string(stack_idx, "color")
+		vertex.color = jsal_get_prop_key(stack_idx, s_key_color)
 			? jsal_pegasus_require_color(-1)
 			: color_new(255, 255, 255, 255);
 		vbo_add_vertex(vbo, vertex);
@@ -4700,6 +4714,7 @@ js_new_VertexList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		vbo_unref(vbo);
 		jsal_error(JS_ERROR, "upload to GPU failed");
 	}
+	
 	jsal_push_class_obj(CLASS_VERTEX_LIST, vbo);
 	return true;
 }
