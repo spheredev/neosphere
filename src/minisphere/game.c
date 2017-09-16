@@ -330,6 +330,8 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 	if (legacy_mode && strcmp(prefix, "~") == 0) {
 		path_remove_hop(path, 0);
 		path_insert_hop(path, 0, "@");
+		free(prefix);
+		prefix = strdup(path_hop(path, 0));
 	}
 
 	// `$/` is not a first-class prefix but an alias for `@/<scriptsDir>`, so that's
