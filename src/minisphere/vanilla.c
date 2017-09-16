@@ -6503,7 +6503,7 @@ js_Color_get_red(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	color = jsal_require_class_obj(-1, SV1_COLOR);
 
-	jsal_push_uint(color->r / 255.0);
+	jsal_push_uint(color->r);
 	return true;
 }
 
