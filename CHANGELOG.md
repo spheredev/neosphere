@@ -18,8 +18,15 @@ v5.0.0 - TBD
   terminal when a JavaScript runtime error occurs.
 
 
-v4.8.6 - TBD
-------------
+v4.8.7 - September 16, 2017
+---------------------------
+
+* Fixes a bug where paths beginning with `~/` were incorrectly interpreted as
+  referring to the save data directory in Sphere v1 code, leading to a runtime
+  error.
+
+v4.8.6 - September 12, 2017
+---------------------------
 
 * Fixes a bug where the backbuffer texture is freed prematurely, causing the
   engine to crash on shutdown.
@@ -27,7 +34,6 @@ v4.8.6 - TBD
   determine the desktop resolution on startup.
 * Fixes a bug where miniSphere can crash after calling `ExecuteGame()` if the
   engine fails to reinitialize.
-
 
 v4.8.5 - September 10, 2017
 ---------------------------
