@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static bool ensure_space (vector_t* vector, int min_items);
+static bool ensure_space (vector_t* vector, int min_items, bool compacting);
 
 struct vector
 {
@@ -28,7 +28,7 @@ vector_new(size_t pitch)
 	if (!(vector = calloc(1, sizeof(vector_t))))
 		return NULL;
 	vector->pitch = pitch;
-	ensure_space(vector, 8);
+	ensure_space(vector, 8, false);
 	return vector;
 }
 
@@ -38,7 +38,7 @@ vector_dup(const vector_t* it)
 	vector_t* copy;
 
 	copy = vector_new(it->pitch);
-	ensure_space(copy, it->num_items);
+	ensure_space(copy, it->num_items, false);
 	memcpy(copy->buffer, it->buffer, it->pitch * it->num_items);
 	copy->num_items = it->num_items;
 	return copy;
@@ -63,7 +63,7 @@ void
 vector_clear(vector_t* it)
 {
 	it->num_items = 0;
-	ensure_space(it, 8);
+	ensure_space(it, 8, true);
 }
 
 iter_t
@@ -86,7 +86,7 @@ vector_get(const vector_t* it, int index)
 bool
 vector_insert(vector_t* it, int index, const void* in_object)
 {
-	if (!ensure_space(it, it->num_items + 1))
+	if (!ensure_space(it, it->num_items + 1, false))
 		return false;
 	memmove(it->buffer + (index + 1) * it->pitch,
 		it->buffer + index * it->pitch,
@@ -105,7 +105,7 @@ vector_pop(vector_t* it, int num_items)
 bool
 vector_push(vector_t* it, const void* in_object)
 {
-	if (!ensure_space(it, it->num_items + 1))
+	if (!ensure_space(it, it->num_items + 1, false))
 		return false;
 	memcpy(it->buffer + it->num_items * it->pitch, in_object, it->pitch);
 	++it->num_items;
@@ -131,13 +131,13 @@ vector_remove(vector_t* it, int index)
 	move_size = (it->num_items - index) * it->pitch;
 	p_item = it->buffer + index * it->pitch;
 	memmove(p_item, p_item + it->pitch, move_size);
-	ensure_space(it, it->num_items);
+	ensure_space(it, it->num_items, true);
 }
 
 bool
 vector_resize(vector_t* it, int new_size)
 {
-	if (!ensure_space(it, new_size))
+	if (!ensure_space(it, new_size, true))
 		return false;
 	it->num_items = new_size;
 	return true;
@@ -178,7 +178,7 @@ iter_remove(iter_t* iter)
 }
 
 static bool
-ensure_space(vector_t* vector, int min_items)
+ensure_space(vector_t* vector, int min_items, bool compacting)
 {
 	uint8_t* new_buffer;
 	int      new_max;
@@ -186,8 +186,8 @@ ensure_space(vector_t* vector, int min_items)
 	new_max = vector->max_items;
 	if (min_items > vector->max_items)  // is the buffer too small?
 		new_max = min_items * 2;
-	else if (min_items < vector->max_items / 4)  // if item count drops below 1/4 of peak size, shrink the buffer
-		new_max = min_items;
+	else if (compacting && min_items < vector->max_items / 4)  // if item count drops below 1/4 of peak size, shrink the buffer
+		new_max = min_items * 2;
 	if (new_max != vector->max_items) {
 		if (!(new_buffer = realloc(vector->buffer, new_max * vector->pitch)) && new_max > 0)
 			return false;
