@@ -338,7 +338,7 @@ jsal_require_class_obj(int index, int class_id)
 	struct object_data* data;
 	
 	data = jsal_get_host_data(index);
-	if (data->class_id != class_id) {
+	if (data == NULL || data->class_id != class_id) {
 		jsal_dup(index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a %s object", jsal_to_string(-1), class_name_from_id(class_id));
 		jsal_remove(-2);
