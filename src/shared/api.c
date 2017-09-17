@@ -221,7 +221,7 @@ api_define_object(const char* namespace_name, const char* name, int class_id, vo
 }
 
 void
-api_define_property(const char* class_name, const char* name, js_function_t getter, js_function_t setter)
+api_define_property(const char* class_name, const char* name, bool enumerable, js_function_t getter, js_function_t setter)
 {
 	jsal_push_global_object();
 	if (class_name != NULL) {
@@ -231,6 +231,8 @@ api_define_property(const char* class_name, const char* name, js_function_t gett
 
 	// populate the property descriptor
 	jsal_push_eval("({ configurable: true })");
+	jsal_push_boolean(enumerable);
+	jsal_put_prop_string(-2, "enumerable");
 	if (getter != NULL) {
 		jsal_push_function(getter, "get", 0, 0);
 		jsal_put_prop_string(-2, "get");

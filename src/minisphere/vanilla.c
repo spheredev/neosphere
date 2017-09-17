@@ -840,8 +840,8 @@ initialize_vanilla_api(void)
 	api_define_function(NULL, "UpdateMapEngine", js_UpdateMapEngine);
 
 	api_define_class("v1Animation", SV1_ANIMATION, NULL, js_Animation_finalize);
-	api_define_property("v1Animation", "width", js_Animation_get_width, NULL);
-	api_define_property("v1Animation", "height", js_Animation_get_height, NULL);
+	api_define_property("v1Animation", "width", false, js_Animation_get_width, NULL);
+	api_define_property("v1Animation", "height", false, js_Animation_get_height, NULL);
 	api_define_method("v1Animation", "getDelay", js_Animation_getDelay);
 	api_define_method("v1Animation", "getNumFrames", js_Animation_getNumFrames);
 	api_define_method("v1Animation", "drawFrame", js_Animation_drawFrame);
@@ -849,16 +849,16 @@ initialize_vanilla_api(void)
 	api_define_method("v1Animation", "readNextFrame", js_Animation_readNextFrame);
 
 	api_define_class("v1ByteArray", SV1_BYTE_ARRAY, NULL, js_ByteArray_finalize);
-	api_define_property("v1ByteArray", "length", js_ByteArray_get_length, NULL);
+	api_define_property("v1ByteArray", "length", false, js_ByteArray_get_length, NULL);
 	api_define_method("v1ByteArray", "concat", js_ByteArray_concat);
 	api_define_method("v1ByteArray", "slice", js_ByteArray_slice);
 	api_define_method("v1ByteArray", "toString", js_ByteArray_toString);
 
 	api_define_class("v1Color", SV1_COLOR, NULL, NULL);
-	api_define_property("v1Color", "alpha", js_Color_get_alpha, js_Color_set_alpha);
-	api_define_property("v1Color", "blue", js_Color_get_blue, js_Color_set_blue);
-	api_define_property("v1Color", "green", js_Color_get_green, js_Color_set_green);
-	api_define_property("v1Color", "red", js_Color_get_red, js_Color_set_red);
+	api_define_property("v1Color", "alpha", true, js_Color_get_alpha, js_Color_set_alpha);
+	api_define_property("v1Color", "blue", true, js_Color_get_blue, js_Color_set_blue);
+	api_define_property("v1Color", "green", true, js_Color_get_green, js_Color_set_green);
+	api_define_property("v1Color", "red", true, js_Color_get_red, js_Color_set_red);
 	api_define_method("v1Color", "toString", js_Color_toString);
 
 	api_define_class("v1ColorMatrix", SV1_COLOR_MATRIX, NULL, NULL);
@@ -889,8 +889,8 @@ initialize_vanilla_api(void)
 	api_define_method("v1Font", "wordWrapString", js_Font_wordWrapString);
 
 	api_define_class("v1Image", SV1_IMAGE, NULL, js_Image_finalize);
-	api_define_property("v1Image", "height", js_Image_get_height, NULL);
-	api_define_property("v1Image", "width", js_Image_get_width, NULL);
+	api_define_property("v1Image", "height", false, js_Image_get_height, NULL);
+	api_define_property("v1Image", "width", false, js_Image_get_width, NULL);
 	api_define_method("v1Image", "blit", js_Image_blit);
 	api_define_method("v1Image", "blitMask", js_Image_blitMask);
 	api_define_method("v1Image", "createSurface", js_Image_createSurface);
@@ -957,14 +957,14 @@ initialize_vanilla_api(void)
 	api_define_method("v1SoundEffect", "toString", js_SoundEffect_toString);
 
 	api_define_class("v1Spriteset", SV1_SPRITESET, NULL, js_Spriteset_finalize);
-	api_define_property("v1Spriteset", "filename", js_Spriteset_get_filename, NULL);
+	api_define_property("v1Spriteset", "filename", false, js_Spriteset_get_filename, NULL);
 	api_define_method("v1Spriteset", "clone", js_Spriteset_clone);
 	api_define_method("v1Spriteset", "save", js_Spriteset_save);
 	api_define_method("v1Spriteset", "toString", js_Spriteset_toString);
 
 	api_define_class("v1Surface", SV1_SURFACE, NULL, js_Surface_finalize);
-	api_define_property("v1Surface", "height", js_Surface_get_height, NULL);
-	api_define_property("v1Surface", "width", js_Surface_get_width, NULL);
+	api_define_property("v1Surface", "height", false, js_Surface_get_height, NULL);
+	api_define_property("v1Surface", "width", false, js_Surface_get_width, NULL);
 	api_define_method("v1Surface", "applyColorFX", js_Surface_applyColorFX);
 	api_define_method("v1Surface", "applyColorFX4", js_Surface_applyColorFX4);
 	api_define_method("v1Surface", "applyLookup", js_Surface_applyLookup);
@@ -7168,30 +7168,30 @@ js_Image_transformBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_t*      image;
 	ALLEGRO_COLOR mask;
 	int           width;
-	int           x1, y1;
-	int           x2, y2;
-	int           x3, y3;
-	int           x4, y4;
+	float         x1, y1;
+	float         x2, y2;
+	float         x3, y3;
+	float         x4, y4;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
-	x1 = jsal_to_int(0);
-	y1 = jsal_to_int(1);
-	x2 = jsal_to_int(2);
-	y2 = jsal_to_int(3);
-	x3 = jsal_to_int(4);
-	y3 = jsal_to_int(5);
-	x4 = jsal_to_int(6);
-	y4 = jsal_to_int(7);
+	x1 = trunc(jsal_to_number(0));
+	y1 = trunc(jsal_to_number(1));
+	x2 = trunc(jsal_to_number(2));
+	y2 = trunc(jsal_to_number(3));
+	x3 = trunc(jsal_to_number(4));
+	y3 = trunc(jsal_to_number(5));
+	x4 = trunc(jsal_to_number(6));
+	y4 = trunc(jsal_to_number(7));
 
 	width = image_width(image);
 	height = image_height(image);
 	mask = al_map_rgba(255, 255, 255, 255);
 	ALLEGRO_VERTEX v[] = {
-		{ x1 + 0.5, y1 + 0.5, 0, 0, 0, mask },
-		{ x2 + 0.5, y2 + 0.5, 0, width, 0, mask },
-		{ x4 + 0.5, y4 + 0.5, 0, 0, height, mask },
-		{ x3 + 0.5, y3 + 0.5, 0, width, height, mask }
+		{ x1, y1, 0, 0, 0, mask },
+		{ x2, y2, 0, width, 0, mask },
+		{ x4, y4, 0, 0, height, mask },
+		{ x3, y3, 0, width, height, mask }
 	};
 	if (screen_skip_frame(g_screen))
 		return false;
@@ -7203,34 +7203,36 @@ js_Image_transformBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Image_transformBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	int      height;
-	image_t* image;
-	color_t  mask;
-	int      width;
-	int      x1, y1;
-	int      x2, y2;
-	int      x3, y3;
-	int      x4, y4;
+	ALLEGRO_COLOR color;
+	int           height;
+	image_t*      image;
+	color_t       mask;
+	int           width;
+	float         x1, y1;
+	float         x2, y2;
+	float         x3, y3;
+	float         x4, y4;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
-	x1 = jsal_to_int(0);
-	y1 = jsal_to_int(1);
-	x2 = jsal_to_int(2);
-	y2 = jsal_to_int(3);
-	x3 = jsal_to_int(4);
-	y3 = jsal_to_int(5);
-	x4 = jsal_to_int(6);
-	y4 = jsal_to_int(7);
+	x1 = trunc(jsal_to_number(0));
+	y1 = trunc(jsal_to_number(1));
+	x2 = trunc(jsal_to_number(2));
+	y2 = trunc(jsal_to_number(3));
+	x3 = trunc(jsal_to_number(4));
+	y3 = trunc(jsal_to_number(5));
+	x4 = trunc(jsal_to_number(6));
+	y4 = trunc(jsal_to_number(7));
 	mask = jsal_require_sphere_color(8);
 
 	width = image_width(image);
 	height = image_height(image);
+	color = nativecolor(mask);
 	ALLEGRO_VERTEX v[] = {
-		{ x1 + 0.5, y1 + 0.5, 0, 0, 0, nativecolor(mask) },
-		{ x2 + 0.5, y2 + 0.5, 0, width, 0, nativecolor(mask) },
-		{ x4 + 0.5, y4 + 0.5, 0, 0, height, nativecolor(mask) },
-		{ x3 + 0.5, y3 + 0.5, 0, width, height, nativecolor(mask) }
+		{ x1, y1, 0, 0, 0, color },
+		{ x2, y2, 0, width, 0, color },
+		{ x4, y4, 0, 0, height, color },
+		{ x3, y3, 0, width, height, color }
 	};
 	if (screen_skip_frame(g_screen))
 		return false;
