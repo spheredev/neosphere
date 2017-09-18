@@ -1515,27 +1515,28 @@ js_FileStream_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	void*  data_ptr;
 	FILE*  file;
 	int    num_bytes = 0;
-	long   pos;
+	long   position;
 	size_t size;
-
-	if (num_args >= 1)
-		num_bytes = jsal_require_int(1);
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+	if (num_args >= 1)
+		num_bytes = jsal_require_int(0);
+
+	if (num_bytes < 0)
+		jsal_error(JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
+
 	if (num_args < 1) {  // if no arguments, read entire file back to front
-		pos = ftell(file);
+		position = ftell(file);
 		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
 		fseek(file, 0, SEEK_SET);
 	}
-	if (num_bytes < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
 	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
 	data_ptr = jsal_get_buffer_ptr(-1, &size);
 	num_bytes = (int)fread(data_ptr, 1, num_bytes, file);
 	if (num_args < 1)  // reset file position after whole-file read
-		fseek(file, pos, SEEK_SET);
+		fseek(file, position, SEEK_SET);
 	return true;
 }
 

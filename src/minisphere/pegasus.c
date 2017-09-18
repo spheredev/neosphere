@@ -2084,7 +2084,7 @@ js_FileStream_get_fileName(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
 
 	jsal_push_string(file_pathname(file));
 	return true;
@@ -2098,7 +2098,7 @@ js_FileStream_get_fileSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
 
 	file_pos = file_position(file);
 	file_seek(file, 0, WHENCE_END);
@@ -2114,7 +2114,7 @@ js_FileStream_get_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
 
 	jsal_push_number(file_position(file));
 	return true;
@@ -2128,7 +2128,7 @@ js_FileStream_set_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
 
 	new_pos = jsal_require_number(0);
 	file_seek(file, new_pos, WHENCE_SET);
@@ -2159,10 +2159,12 @@ js_FileStream_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
-	num_bytes = num_args >= 1 ? jsal_require_int(0) : 0;
+		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+	if (num_args >= 1)
+		num_bytes = jsal_require_int(0);
+
 	if (num_bytes < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid read size");
+		jsal_error(JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
 
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		pos = file_position(file);
@@ -2189,7 +2191,7 @@ js_FileStream_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
 
 	if (file_write(file, data, num_bytes, 1) != num_bytes)
 		jsal_error(JS_ERROR, "couldn't write to file");
@@ -2220,7 +2222,7 @@ js_new_Font(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(font = font_load(filename)))
-		jsal_error(JS_ERROR, "couldn't load font '%s'", filename);
+		jsal_error(JS_ERROR, "couldn't load font file '%s'", filename);
 	jsal_push_this();
 	jsal_push_class_obj(CLASS_FONT, font);
 	return true;
