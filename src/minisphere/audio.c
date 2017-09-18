@@ -698,10 +698,22 @@ stream_unref(stream_t* stream)
 	}
 }
 
-size_t
-stream_bytes_left(const stream_t* stream)
+double
+stream_length(const stream_t* stream)
 {
-	return stream->feed_size;
+	ALLEGRO_CHANNEL_CONF channel_conf;
+	ALLEGRO_AUDIO_DEPTH  depth_conf;
+	unsigned int         frequency;
+	size_t               num_channels;
+	size_t               sample_size;
+
+	channel_conf = al_get_audio_stream_channels(stream->ptr);
+	depth_conf = al_get_audio_stream_depth(stream->ptr);
+	frequency = al_get_audio_stream_frequency(stream->ptr);
+	num_channels = al_get_channel_count(channel_conf);
+	sample_size = al_get_audio_depth_size(depth_conf);
+
+	return (double)stream->feed_size / (frequency * num_channels * sample_size);
 }
 
 mixer_t*

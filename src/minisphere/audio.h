@@ -83,7 +83,7 @@ double      sound_tell        (sound_t* sound);
 stream_t*   stream_new        (int frequency, int bits, int channels);
 stream_t*   stream_ref        (stream_t* stream);
 void        stream_unref      (stream_t* stream);
-size_t      stream_bytes_left (const stream_t* stream);
+double      stream_length     (const stream_t* stream);
 mixer_t*    stream_mixer      (const stream_t* stream);
 bool        stream_playing    (const stream_t* stream);
 void        stream_buffer     (stream_t* stream, const void* data, size_t size);

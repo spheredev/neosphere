@@ -384,7 +384,7 @@ static bool js_Sound_pause                   (js_ref_t* me, int num_args, bool i
 static bool js_Sound_play                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Sound_stop                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_SoundStream               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundStream_get_bufferSize    (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_SoundStream_get_length        (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_SoundStream_play              (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_SoundStream_pause             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_SoundStream_stop              (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -638,7 +638,7 @@ initialize_pegasus_api(void)
 	api_define_method("Sound", "play", js_Sound_play);
 	api_define_method("Sound", "stop", js_Sound_stop);
 	api_define_class("SoundStream", CLASS_SOUND_STREAM, js_new_SoundStream, js_SoundStream_finalize);
-	api_define_property("SoundStream", "bufferSize", false, js_SoundStream_get_bufferSize, NULL);
+	api_define_property("SoundStream", "length", false, js_SoundStream_get_length, NULL);
 	api_define_method("SoundStream", "pause", js_SoundStream_pause);
 	api_define_method("SoundStream", "play", js_SoundStream_play);
 	api_define_method("SoundStream", "stop", js_SoundStream_stop);
@@ -3973,14 +3973,14 @@ js_SoundStream_finalize(void* host_ptr)
 }
 
 static bool
-js_SoundStream_get_bufferSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundStream_get_length(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	stream_t*    stream;
 
 	jsal_push_this();
 	stream = jsal_require_class_obj(-1, CLASS_SOUND_STREAM);
 
-	jsal_push_number(stream_bytes_left(stream));
+	jsal_push_number(stream_length(stream));
 	return true;
 }
 
