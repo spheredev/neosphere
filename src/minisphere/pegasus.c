@@ -269,6 +269,7 @@ static bool js_Dispatch_onUpdate             (js_ref_t* me, int num_args, bool i
 static bool js_FS_createDirectory            (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_deleteFile                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_directoryExists            (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_evaluateScript                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_fileExists                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_fullPath                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_readFile                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -546,6 +547,7 @@ initialize_pegasus_api(void)
 	api_define_function("FS", "createDirectory", js_FS_createDirectory);
 	api_define_function("FS", "deleteFile", js_FS_deleteFile);
 	api_define_function("FS", "directoryExists", js_FS_directoryExists);
+	api_define_function("FS", "evaluateScript", js_FS_evaluateScript);
 	api_define_function("FS", "fileExists", js_FS_fileExists);
 	api_define_function("FS", "fullPath", js_FS_fullPath);
 	api_define_function("FS", "readFile", js_FS_readFile);
@@ -1921,6 +1923,20 @@ js_FS_directoryExists(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	jsal_push_boolean(game_dir_exists(g_game, pathname));
+	return true;
+}
+
+static bool
+js_FS_evaluateScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	const char* filename;
+
+	filename = jsal_require_pathname(0, NULL, false, false);
+
+	if (!game_file_exists(g_game, filename))
+		jsal_error(JS_ERROR, "script file not found '%s'", filename);
+	if (!script_eval(filename, false))
+		jsal_throw();
 	return true;
 }
 
