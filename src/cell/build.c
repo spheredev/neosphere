@@ -751,8 +751,6 @@ on_import_module(void)
 	specifier = jsal_require_string(0);
 	caller_id = jsal_require_string(1);
 
-	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_TYPE_ERROR, "relative require in global code or ES module is not allowed");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_cjs_module(s_build->fs, specifier, caller_id, PATHS[i]))
 			break;  // short-circuit
@@ -1111,7 +1109,7 @@ js_require(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		parent_id = jsal_get_string(-1);
 
 	if (parent_id == NULL && (strncmp(module_id, "./", 2) == 0 || strncmp(module_id, "../", 3) == 0))
-		jsal_error(JS_TYPE_ERROR, "relative require not allowed in global code");
+		jsal_error(JS_TYPE_ERROR, "require() outside of a CommonJS module must be absolute");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_cjs_module(s_build->fs, module_id, parent_id, PATHS[i]))
@@ -1173,7 +1171,7 @@ js_new_DirectoryStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL);
 
 	if (!(stream = directory_open(s_build->fs, pathname)))
-		jsal_error(JS_ERROR, "couldn't open directory");
+		jsal_error(JS_ERROR, "couldn't open directory '%s'", pathname);
 	jsal_push_class_obj(CELL_DIR_STREAM, stream);
 	return true;
 }
@@ -1283,12 +1281,12 @@ js_DirectoryStream_rewind(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_FS_createDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	const char* name;
+	const char* filename;
 
-	name = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(0, NULL);
 
-	if (fs_mkdir(s_build->fs, name) != 0)
-		jsal_error(JS_ERROR, "couldn't create directory");
+	if (fs_mkdir(s_build->fs, filename) != 0)
+		jsal_error(JS_ERROR, "couldn't create directory '%s'", filename);
 	return false;
 }
 
@@ -1300,7 +1298,7 @@ js_FS_deleteFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	if (!fs_unlink(s_build->fs, filename))
-		jsal_error(JS_ERROR, "couldn't delete file", filename);
+		jsal_error(JS_ERROR, "couldn't delete file '%s'", filename);
 	return false;
 }
 
@@ -1376,26 +1374,26 @@ js_FS_relativePath(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_FS_removeDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	const char* name;
+	const char* filename;
 
-	name = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(0, NULL);
 
-	if (!fs_rmdir(s_build->fs, name))
-		jsal_error(JS_ERROR, "directory removal failed");
+	if (!fs_rmdir(s_build->fs, filename))
+		jsal_error(JS_ERROR, "couldn't remove directory '%s'", filename);
 	return false;
 }
 
 static bool
 js_FS_rename(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	const char* name1;
-	const char* name2;
+	const char* old_name;
+	const char* new_name;
 
-	name1 = jsal_require_pathname(0, NULL);
-	name2 = jsal_require_pathname(1, NULL);
+	old_name = jsal_require_pathname(0, NULL);
+	new_name = jsal_require_pathname(1, NULL);
 
-	if (!fs_rename(s_build->fs, name1, name2))
-		jsal_error(JS_ERROR, "rename failed", name1, name2);
+	if (!fs_rename(s_build->fs, old_name, new_name))
+		jsal_error(JS_ERROR, "couldn't rename '%s' to '%s'", old_name, new_name);
 	return false;
 }
 
@@ -1429,7 +1427,7 @@ js_new_FileStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_RANGE_ERROR, "invalid file-op constant");
 
 	if (file_op == FILE_OP_UPDATE && !fs_fexist(s_build->fs, filename))
-		file_op = FILE_OP_WRITE;  // because 'r+b' requires the file to exist.
+		file_op = FILE_OP_WRITE;  // ...because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
 		: file_op == FILE_OP_WRITE ? "w+b"
 		: file_op == FILE_OP_UPDATE ? "r+b"
@@ -1457,7 +1455,7 @@ js_FileStream_get_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
 
 	jsal_push_number(ftell(file));
 	return true;
@@ -1471,7 +1469,7 @@ js_FileStream_get_fileSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
 
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
@@ -1488,7 +1486,7 @@ js_FileStream_set_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
 	new_pos = jsal_require_int(0);
 
 	if (new_pos < 0)
@@ -1525,7 +1523,7 @@ js_FileStream_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		pos = ftell(file);
 		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
@@ -1550,7 +1548,7 @@ js_FileStream_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "use of disposed object");
+		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
 	data = jsal_require_buffer_ptr(0, &num_bytes);
 
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)

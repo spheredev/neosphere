@@ -1208,7 +1208,7 @@ js_require(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		parent_id = jsal_get_string(-1);
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
-		jsal_error(JS_TYPE_ERROR, "relative require not allowed in global code");
+		jsal_error(JS_TYPE_ERROR, "require() outside of a CommonJS module must be absolute");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module(id, parent_id, PATHS[i], false))
 			break;  // short-circuit
