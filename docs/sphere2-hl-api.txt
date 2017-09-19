@@ -786,44 +786,44 @@ Prim.fill(surface, color);
     surface.
 
 
-`Random` Namespace
-------------------
+`RNGPlus` Object Class
+----------------------
 
-Many games don't need the full power of the Sphere `RNG` object and just need
-a convenient way to generate random numbers for various purposes.  The `Random`
-namespace provides exactly that.
+Oftentimes, a game doesn't need the full flexibility of the built-in `RNG`
+class and just needs a convenient way to generate random numbers for various
+purposes.  The `RNGPlus` class provides exactly that.
 
-    import { Random } from 'sphere-runtime';
-    const Random = require('random');
+    import { RNGPlus } from 'sphere-runtime';
+    const RNGPlus = require('rngPlus');
 
-Random.chance(odds);
+RNGPlus#chance(odds);
 
     Returns true or false depending on the given odds.  `odds` is a number in
     the range [0-1] specifying the odds of returning true.  For example, odds
     of 0.75 will return true 75% of the time.
 
-Random.discrete(min, max);
+RNGPlus#discrete(min, max);
 
     Returns a random integer uniformly distributed within the range [min,max].
 
-Random.normal(mean, sigma);
+RNGPlus#normal(mean, sigma);
 
     Returns a random floating point number from a normal distribution
     (sometimes called a bell curve) with expected value of `mean` and standard
     deviation `sigma`.
 
-Random.sample(array);
+RNGPlus#sample(array);
 
     Returns a randomly chosen item from the specified array.
 
-Random.string(length);
+RNGPlus#string(length);
 
     Returns a randomly generated string consisting of alphanumeric characters.
     The generated string looks something like a YouTube video hash (e.g.
     YlHRHDrKS) and is useful for uniquely identifying things, for example to
     generate temporary filenames.
 
-Random.uniform(mean, variance);
+RNGPlus#uniform(mean, variance);
 
     Returns a random floating point value uniformly distributed around `mean`
     with an absolute maximum deviation ("give or take") specified by

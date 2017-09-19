@@ -31,14 +31,11 @@
 **/
 
 'use strict';
-const assert = require('assert'),
-      Random = require('random');
+const assert  = require('assert'),
+      RNGPlus = require('rngPlus');
 
-exports = module.exports = from;
-exports.__esModule = true;
-exports.default = exports;
-
-const ItemSourceKey = Symbol('itemSource');
+const ItemSourceKey = Symbol('itemSource'),
+      RandomNumberGod = new RNGPlus();
 
 function from(...targets)
 {
@@ -527,7 +524,7 @@ function SampleSource(uniqueOnly)
 			var item;
 
 			if (m_numSamples++ < m_count) {
-				index = Random.discrete(0, m_items.length - 1);
+				index = RandomNumberGod.discrete(0, m_items.length - 1);
 				item = m_items[index];
 				if (uniqueOnly)
 					m_items.splice(index, 1);
@@ -560,7 +557,7 @@ function ShuffledSource(source)
 			m_list[index] = item;
 		}
 		for (var i = m_list.length - 1; i >= 1; --i) {
-			index = Random.discrete(0, i);
+			index = RandomNumberGod.discrete(0, i);
 			temp = m_list[index];
 			m_list[index] = m_list[i];
 			m_list[i] = temp;
@@ -725,3 +722,11 @@ function updateOp(source)
 	while (item = source.next())
 		item.t[item.k] = item.v;
 };
+
+// CommonJS
+exports = module.exports = from;
+Object.assign(exports, {
+	__esModule: true,
+	from:       from,
+	default:    from,
+});
