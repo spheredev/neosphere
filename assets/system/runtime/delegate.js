@@ -64,15 +64,15 @@ class Delegate
 		if (!this._haveHandler(this, handler, thisObj))
 			throw new Error("handler is not registered");
 		from.Array(this._invocationList)
-			.where(it => handler === it.handler)
-			.where(it => thisObj === it.thisObj)
+			.where(it => it.handler === handler)
+			.where(it => it.thisObj === thisObj)
 			.remove();
 	}
 
 	_haveHandler(delegate, handler, thisObj)
 	{
 		return from.Array(delegate._invocationList)
-			.any(it => handler === it.handler == handler && thisObj === it.thisObj);
+			.any(it => it.handler === handler && it.thisObj === thisObj);
 	}
 }
 

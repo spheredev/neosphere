@@ -60,21 +60,21 @@ class DataStream extends FileStream
 
 	readInt8()
 	{
-		return readInteger(this.stream, 1, true);
+		return readInteger(this, 1, true);
 	}
 
 	readInt16(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		return readInteger(this.stream, 2, true, littleEndian);
+		return readInteger(this, 2, true, littleEndian);
 	}
 
 	readInt32(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		return readInteger(this.stream, 4, true, littleEndian);
+		return readInteger(this, 4, true, littleEndian);
 	}
 
 	readStringRaw(length)
@@ -92,7 +92,7 @@ class DataStream extends FileStream
 
 	readString8()
 	{
-		let length = readInteger(this.stream, 1, false);
+		let length = readInteger(this, 1, false);
 		return this.readStringRaw(length);
 	}
 
@@ -100,7 +100,7 @@ class DataStream extends FileStream
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		let length = readInteger(this.stream, 2, false, littleEndian);
+		let length = readInteger(this, 2, false, littleEndian);
 		return this.readStringRaw(length);
 	}
 
@@ -108,7 +108,7 @@ class DataStream extends FileStream
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		let length = readInteger(this.stream, 4, false, littleEndian);
+		let length = readInteger(this, 4, false, littleEndian);
 		return this.readStringRaw(length);
 	}
 
@@ -151,21 +151,21 @@ class DataStream extends FileStream
 
 	readUint8()
 	{
-		return readInteger(this.stream, 1, false);
+		return readInteger(this, 1, false);
 	}
 
 	readUint16(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		return readInteger(this.stream, 2, false, littleEndian);
+		return readInteger(this, 2, false, littleEndian);
 	}
 
 	readUint32(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		return readInteger(this.stream, 4, false, littleEndian);
+		return readInteger(this, 4, false, littleEndian);
 	}
 
 	writeFloat32(value, littleEndian)
