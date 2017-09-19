@@ -565,7 +565,12 @@ new Image(fileName);
 
     Note: `fileName` is relative to `@/images` unless it includes a SphereFS
           prefix.  The file extension is optional; if no extension is included,
-          Sphere will find an appropriate file automatically.
+          Sphere will try to find an appropriate file automatically.
+
+Image#width [read-only]
+Image#height [read-only]
+
+    Gets the width and height of the image, in pixels.
 
 Image#blitTo(surface, x, y[, tint_color);
 

@@ -31,42 +31,60 @@
 **/
 
 'use strict';
-exports = module.exports = Image;
-exports.__esModule = true;
-exports.default = exports;
-
 const from = require('from');
 
-function Image(fileName)
+class Image
 {
-	var fullPath = FS.fullPath(fileName, '@/images');
-	fullPath = from([ '', 'png', 'jpg', 'bmp' ])
-		.select(function(it) { return fullPath + '.' + it; })
-		.first(function(it) { return FS.fileExists(it); })
-	if (fullPath === undefined)
-		throw new Error("couldn't find image '" + fileName + "'");
-	this.texture = new Texture(fullPath);
-	var shape = new Shape(ShapeType.TriStrip, this.texture,
-		new VertexList([
-			{ x: 0, y: 0, u: 0, v: 1 },
-			{ x: 1, y: 0, u: 1, v: 1 },
-			{ x: 0, y: 1, u: 0, v: 0 },
-			{ x: 1, y: 1, u: 1, v: 0 },
-		]));
-	var tintShader = new Shader({
-		fragment: '#/shaders/tintedImage.frag.glsl',
-		vertex:   '#/shaders/tintedImage.vert.glsl',
-	});
-	this.model = new Model([ shape ], tintShader);
+	constructor(fileName)
+	{
+		let fullPath = FS.fullPath(fileName, '@/images');
+		fullPath = from([ '', 'png', 'jpg', 'bmp' ])
+			.select(function(it) { return fullPath + '.' + it; })
+			.first(function(it) { return FS.fileExists(it); })
+		if (fullPath === undefined)
+			throw new Error(`couldn't find image '${fileName}'`);
+		
+		let texture = new Texture(fullPath);
+		let shape = new Shape(ShapeType.TriStrip, texture,
+			new VertexList([
+				{ x: 0, y: 0, u: 0, v: 1 },
+				{ x: 1, y: 0, u: 1, v: 1 },
+				{ x: 0, y: 1, u: 0, v: 0 },
+				{ x: 1, y: 1, u: 1, v: 0 },
+			]));
+		let tintShader = new Shader({
+			fragment: '#/shaders/tintedImage.frag.glsl',
+			vertex:   '#/shaders/tintedImage.vert.glsl'
+		});
+		
+		this.model = new Model([ shape ], tintShader);
+		this.texture = texture;
+	}
+
+	get height()
+	{
+		return this.texture.height;
+	}
+
+	get width()
+	{
+		return this.texture.width;
+	}
+
+	blitTo(surface, x, y, tintColor = Color.White)
+	{
+		this.model.transform = new Transform()
+			.scale(this.texture.width, this.texture.height)
+			.translate(x, y);
+		this.model.setColorVector('tintColor', tintColor);
+		this.model.draw(surface);
+	}
 }
 
-Image.prototype.blitTo = function blitTo(surface, x, y, tintColor)
-{
-	tintColor = tintColor || Color.White;
-
-	this.model.transform = new Transform()
-		.scale(this.texture.width, this.texture.height)
-		.translate(x, y);
-	this.model.setColorVector('tintColor', tintColor);
-	this.model.draw(surface);
-}
+// CommonJS
+exports = module.exports = Image;
+Object.assign(exports, {
+	__esModule: true,
+	Image:      Image,
+	default:   Image,
+});
