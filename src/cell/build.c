@@ -1503,9 +1503,9 @@ js_FileStream_dispose(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	file = jsal_require_class_obj(-1, CELL_FILE_STREAM);
 
-	jsal_set_host_data(0, NULL);
 	if (file != NULL)
 		fclose(file);
+	jsal_set_class_ptr(-1, NULL);
 	return false;
 }
 
