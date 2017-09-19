@@ -34,25 +34,25 @@
 const assert = require('assert'),
       from   = require('from');
 
-class DataReader
+class DataStream extends FileStream
 {
-	constructor(stream)
+	constructor(fileName, fileOp)
 	{
-		assert('read' in stream, "stream used with DataReader must be have a read() method");
+		super(fileName, fileOp);
 
-		this.textDecoder = new TextDecoder('utf-8');
-		this.stream = stream;
+		this._textDecoder = new TextDecoder('utf-8');
+		this._textEncoder = new TextEncoder();
 	}
 
 	readFloat32(littleEndian)
 	{
-		let view = new DataView(this.stream.read(4));
+		let view = new DataView(this.read(4));
 		return view.getFloat32(0, littleEndian);
 	}
 
 	readFloat64(littleEndian)
 	{
-		let view = new DataView(this.stream.read(8));
+		let view = new DataView(this.read(8));
 		return view.getFloat64(0, littleEndian);
 	}
 
@@ -79,8 +79,8 @@ class DataReader
 	{
 		assert.equal(typeof length, 'number');
 
-		let bytes = this.stream.read(length);
-		let string = this.textDecoder.decode(bytes);
+		let bytes = this.read(length);
+		let string = this._textDecoder.decode(bytes);
 		let nulIndex = string.indexOf('\0');
 		if (nulIndex !== -1)
 			return string.substring(0, nulIndex);
@@ -140,7 +140,7 @@ class DataReader
 				case 'lstr16le': value = this.readString16(true); break;
 				case 'lstr32be': value = this.readString32(); break;
 				case 'lstr32le': value = this.readString32(true); break;
-				case 'raw': value = this.stream.read(fieldDesc.size); break;
+				case 'raw': value = this.read(fieldDesc.size); break;
 			}
 			object[key] = value;
 		}
@@ -164,6 +164,149 @@ class DataReader
 		assert.equal(typeof littleEndian, 'boolean');
 
 		return readInteger(this.stream, 4, false, littleEndian);
+	}
+
+	writeFloat32(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		let dv = new DataView(new ArrayBuffer(4));
+		dv.setFloat32(0, value, littleEndian);
+		this.write(dv.buffer);
+	}
+
+	writeFloat64(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		let dv = new DataView(new ArrayBuffer(8));
+		dv.setFloat64(0, value, littleEndian);
+		this.write(dv.buffer);
+	}
+
+	writeInt8(value)
+	{
+		assert.equal(typeof value, 'number');
+
+		let dv = new DataView(new ArrayBuffer(1));
+		dv.setInt8(0, value);
+		this.write(dv.buffer);
+	}
+
+	writeInt16(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		let dv = new DataView(new ArrayBuffer(2));
+		dv.setInt16(0, value, littleEndian);
+		this.write(dv.buffer);
+	}
+
+	writeInt32(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		let dv = new DataView(new ArrayBuffer(4));
+		dv.setInt32(0, value, littleEndian);
+		this.write(dv.buffer);
+	}
+
+	writeStringRaw(value, length)
+	{
+		assert.equal(typeof value, 'string');
+		assert.equal(typeof length, 'number');
+
+		let encoded = this._textEncoder.encode(value);
+		let bytes = new Uint8Array(length);
+		bytes.set(encoded.subarray(0, length));
+		this.write(bytes);
+	}
+
+	writeString8(value)
+	{
+		assert.equal(typeof value, 'string');
+
+		let bytes = this._textEncoder.encode(value);
+		this.writeUint8(bytes.length);
+		this.write(bytes);
+	}
+
+	writeString16(value, littleEndian)
+	{
+		assert.equal(typeof value, 'string');
+
+		let bytes = this._textEncoder.encode(value);
+		this.writeUint16(bytes.length, littleEndian);
+		this.write(bytes);
+	}
+
+	writeString32(value, littleEndian)
+	{
+		assert.equal(typeof value, 'string');
+
+		let bytes = this._textEncoder.encode(value);
+		this.writeUint32(bytes.length, littleEndian);
+		this.write(bytes);
+	}
+
+	writeStruct(object, desc)
+	{
+		verifyStructDescriptor(desc);
+
+		for (const key of Object.keys(desc)) {
+			let value = key in object ? object[key] : desc[key].default
+			switch (desc[key].type) {
+				case 'bool': this.writeUint8(value ? 1 : 0); break;
+				case 'float32be': this.writeFloat32(value); break;
+				case 'float32le': this.writeFloat32(value, true); break;
+				case 'float64be': this.writeFloat64(value); break;
+				case 'float64le': this.writeFloat64(value, true); break;
+				case 'int8': this.writeInt8(value); break;
+				case 'int16be': this.writeInt16(value); break;
+				case 'int16le': this.writeInt16(value, true); break;
+				case 'int32be': this.writeInt32(value); break;
+				case 'int32le': this.writeInt32(value, true); break;
+				case 'uint8': this.writeUint8(value); break;
+				case 'uint16be': this.writeUint16(value); break;
+				case 'uint16le': this.writeUint16(value, true); break;
+				case 'uint32be': this.writeUint32(value); break;
+				case 'uint32le': this.writeUint32(value, true); break;
+				case 'fstring': this.writeStringRaw(value, desc[key].length); break;
+				case 'lstr8': this.writeString8(value); break;
+				case 'lstr16be': this.writeString16(value); break;
+				case 'lstr16le': this.writeString16(value, true); break;
+				case 'lstr32be': this.writeString32(value); break;
+				case 'lstr32le': this.writeString32(value, true); break;
+				case 'raw': this.write(value); break;
+			}
+		}
+	}
+
+	writeUint8(value)
+	{
+		assert.equal(typeof value, 'number');
+
+		let dv = new DataView(new ArrayBuffer(1));
+		dv.setUint8(0, value);
+		this.write(dv.buffer);
+	}
+
+	writeUint16(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		let dv = new DataView(new ArrayBuffer(2));
+		dv.setUint16(0, value, littleEndian);
+		this.write(dv.buffer);
+	}
+
+	writeUint32(value, littleEndian)
+	{
+		assert.equal(typeof value, 'number');
+
+		let dv = new DataView(new ArrayBuffer(4));
+		dv.setUint32(0, value, littleEndian);
+		this.write(dv.buffer);
 	}
 }
 
@@ -223,9 +366,9 @@ function verifyStructDescriptor(desc)
 }
 
 // CommonJS
-exports = module.exports = DataReader;
+exports = module.exports = DataStream;
 Object.assign(exports, {
 	__esModule: true,
-	DataReader: DataReader,
-	default:    DataReader,
+	DataStream: DataStream,
+	default:    DataStream,
 });
