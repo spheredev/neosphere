@@ -31,207 +31,160 @@
 **/
 
 'use strict';
-exports = module.exports = DataReader;
-exports.__esModule = true;
-exports.default = exports;
-
 const assert = require('assert'),
       from   = require('from');
 
-function DataReader(stream)
+class DataReader
 {
-	assert(this instanceof DataReader, "constructor requires 'new'");
-	assert('read' in stream, "not a readable stream");
-
-	var m_decoder = new TextDecoder('utf-8');
-	var m_stream = stream;
-
-	this.readFloat32 = m_readFloat32;
-	function m_readFloat32(littleEndian)
+	constructor(stream)
 	{
-		var view = new DataView(m_stream.read(4));
-		value = view.getFloat32(0, littleEndian);
+		assert('read' in stream, "stream used with DataReader must be have a read() method");
+
+		this.textDecoder = new TextDecoder('utf-8');
+		this.stream = stream;
 	}
 
-	this.readFloat64 = m_readFloat64;
-	function m_readFloat64(littleEndian)
+	readFloat32(littleEndian)
 	{
-		var view = new DataView(m_stream.read(8));
-		value = view.getFloat64(0, littleEndian);
+		let view = new DataView(this.stream.read(4));
+		return view.getFloat32(0, littleEndian);
 	}
 
-	this.readInt8 = m_readInt8
-	function m_readInt8()
+	readFloat64(littleEndian)
 	{
-		return _readInt(m_stream, 1, true);
+		let view = new DataView(this.stream.read(8));
+		return view.getFloat64(0, littleEndian);
 	}
 
-	this.readInt16 = m_readInt16
-	function m_readInt16(littleEndian)
+	readInt8()
+	{
+		return readInteger(this.stream, 1, true);
+	}
+
+	readInt16(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		return _readInt(m_stream, 2, true, littleEndian);
+		return readInteger(this.stream, 2, true, littleEndian);
 	}
 
-	this.readInt32 = m_readInt32
-	function m_readInt32(littleEndian)
+	readInt32(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		return _readInt(m_stream, 4, true, littleEndian);
+		return readInteger(this.stream, 4, true, littleEndian);
 	}
 
-	this.readString = m_readString;
-	function m_readString(length)
+	readStringRaw(length)
 	{
 		assert.equal(typeof length, 'number');
 
-		var bytes = m_stream.read(length);
-		var string = m_decoder.decode(bytes);
-		var nulIndex = string.indexOf('\0');
+		let bytes = this.stream.read(length);
+		let string = this.textDecoder.decode(bytes);
+		let nulIndex = string.indexOf('\0');
 		if (nulIndex !== -1)
 			return string.substring(0, nulIndex);
 		else
 			return string;
 	}
 
-	this.readString8 = m_readString8;
-	function m_readString8()
+	readString8()
 	{
-		var length = _readInt(m_stream, 1, false);
-		return m_readString(length);
+		let length = readInteger(this.stream, 1, false);
+		return this.readStringRaw(length);
 	}
 
-	this.readString16 = m_readString16;
-	function m_readString16(littleEndian)
+	readString16(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		var length = _readInt(m_stream, 2, false, littleEndian);
-		return m_readString(length);
+		let length = readInteger(this.stream, 2, false, littleEndian);
+		return this.readStringRaw(length);
 	}
 
-	this.readString32 = m_readString32;
-	function m_readString32(littleEndian)
+	readString32(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		var length = _readInt(m_stream, 4, false, littleEndian);
-		return m_readString(length);
+		let length = readInteger(this.stream, 4, false, littleEndian);
+		return this.readStringRaw(length);
 	}
 
-	this.readStruct = m_readStruct;
-	function m_readStruct(desc)
+	readStruct(desc)
 	{
-		_checkStructDescriptor(desc);
+		verifyStructDescriptor(desc);
 
-		var keys = Reflect.ownKeys(desc);
-		var object = {};
-		for (var i = 0; i < keys.length; ++i) {
-			var key = keys[i];
-			var fieldDesc = desc[key];
-			var value;
+		let object = {};
+		for (const key of Object.keys(desc)) {
+			let fieldDesc = desc[key];
+			let value;
 			switch (fieldDesc.type) {
-				case 'bool': value = m_readUint8() != 0; break;
-				case 'float32be': value = m_readFloat32(); break;
-				case 'float32le': value = m_readFloat32(true); break;
-				case 'float64be': value = m_readFloat64(); break;
-				case 'float64le': value = m_readFloat64(true); break;
-				case 'int8': value = m_readInt8(); break;
-				case 'int16be': value = m_readInt16(); break;
-				case 'int16le': value = m_readInt16(true); break;
-				case 'int32be': value = m_readInt32(); break;
-				case 'int32le': value = m_readInt32(true); break;
-				case 'uint8': value = m_readUint8(); break;
-				case 'uint16be': value = m_readUint16(); break;
-				case 'uint16le': value = m_readUint16(true); break;
-				case 'uint32be': value = m_readUint32(); break;
-				case 'uint32le': value = m_readUint32(true); break;
-				case 'fstring': value = m_readString(fieldDesc.length); break;
-				case 'lstr8': value = m_readString8(); break;
-				case 'lstr16be': value = m_readString16(); break;
-				case 'lstr16le': value = m_readString16(true); break;
-				case 'lstr32be': value = m_readString32(); break;
-				case 'lstr32le': value = m_readString32(true); break;
-				case 'raw': value = m_stream.read(fieldDesc.size); break;
+				case 'bool': value = this.readUint8() != 0; break;
+				case 'float32be': value = this.readFloat32(); break;
+				case 'float32le': value = this.readFloat32(true); break;
+				case 'float64be': value = this.readFloat64(); break;
+				case 'float64le': value = this.readFloat64(true); break;
+				case 'int8': value = this.readInt8(); break;
+				case 'int16be': value = this.readInt16(); break;
+				case 'int16le': value = this.readInt16(true); break;
+				case 'int32be': value = this.readInt32(); break;
+				case 'int32le': value = this.readInt32(true); break;
+				case 'uint8': value = this.readUint8(); break;
+				case 'uint16be': value = this.readUint16(); break;
+				case 'uint16le': value = this.readUint16(true); break;
+				case 'uint32be': value = this.readUint32(); break;
+				case 'uint32le': value = this.readUint32(true); break;
+				case 'fstring': value = this.readStringRaw(fieldDesc.length); break;
+				case 'lstr8': value = this.readString8(); break;
+				case 'lstr16be': value = this.readString16(); break;
+				case 'lstr16le': value = this.readString16(true); break;
+				case 'lstr32be': value = this.readString32(); break;
+				case 'lstr32le': value = this.readString32(true); break;
+				case 'raw': value = this.stream.read(fieldDesc.size); break;
 			}
 			object[key] = value;
 		}
 		return object;
 	}
 
-	this.readUint8 = m_readUint8
-	function m_readUint8()
+	readUint8()
 	{
-		return _readInt(m_stream, 1, false);
+		return readInteger(this.stream, 1, false);
 	}
 
-	this.readUint16 = m_readUint16
-	function m_readUint16(littleEndian)
+	readUint16(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		return _readInt(m_stream, 2, false, littleEndian);
+		return readInteger(this.stream, 2, false, littleEndian);
 	}
 
-	this.readUint32 = m_readUint32
-	function m_readUint32(littleEndian)
+	readUint32(littleEndian)
 	{
 		assert.equal(typeof littleEndian, 'boolean');
 
-		return _readInt(m_stream, 4, false, littleEndian);
+		return readInteger(this.stream, 4, false, littleEndian);
 	}
 }
 
-function _checkStructDescriptor(desc)
-{
-	var types = [
-		'float32be', 'float32le', 'float64be', 'float64le',
-		'int8', 'int16be', 'int16le', 'int32be', 'int32le',
-		'uint8', 'uint16be', 'uint16le', 'uint32be', 'uint32le',
-		'fstring', 'lstr8', 'lstr16be', 'lstr16le', 'lstr32be', 'lstr32le',
-		'bool', 'raw',
-	];
-
-	var attributes = {
-		'fstring': [ 'length' ],
-		'raw':     [ 'size' ],
-	};
-
-	var keys = Reflect.ownKeys(desc);
-	for (var i = 0; i < keys.length; ++i) {
-		var fieldDesc = desc[keys[i]];
-		var fieldType = fieldDesc.type;
-		if (!from.Array(types).any(it => it === fieldType))
-			throw new TypeError("unrecognized field type '" + fieldType + "'");
-		if (fieldType in attributes) {
-			var haveAttributes = from.Array(attributes[fieldType])
-				.all(it => it in fieldDesc);
-			if (!haveAttributes)
-				throw new TypeError("missing attributes for " + fieldType);
-		}
-	}
-}
-
-function _readInt(stream, size, signed, littleEndian)
+function readInteger(stream, size, signed, littleEndian)
 {
 	// variable-size two's complement integer decoding algorithm jacked from
 	// Node.js.  this allows us to read integer values up to 48 bits in size.
 
-	assert(size >= 1 && size <= 6, "(u)int size out of range");
+	assert(size >= 1 && size <= 6, `(u)int size ${size} out of range`);
 
-	var bytes = new Uint8Array(stream.read(size));
-	var mul = 1;
-	var value;
+	let bytes = new Uint8Array(stream.read(size));
+	let mul = 1;
+	let value;
 	if (littleEndian) {
-		var ptr = 0;
+		let ptr = 0;
 		value = bytes[ptr];
 		while (++ptr < size && (mul *= 0x100))
 			value += bytes[ptr] * mul;
 	}
 	else {
-		var ptr = size - 1;
+		let ptr = size - 1;
 		value = bytes[ptr];
 		while (ptr > 0 && (mul *= 0x100))
 			value += bytes[--ptr] * mul;
@@ -240,3 +193,39 @@ function _readInt(stream, size, signed, littleEndian)
 		value -= Math.pow(2, 8 * size);
 	return value;
 }
+
+function verifyStructDescriptor(desc)
+{
+	const FieldTypes = [
+		'float32be', 'float32le', 'float64be', 'float64le',
+		'int8', 'int16be', 'int16le', 'int32be', 'int32le',
+		'uint8', 'uint16be', 'uint16le', 'uint32be', 'uint32le',
+		'fstring', 'lstr8', 'lstr16be', 'lstr16le', 'lstr32be', 'lstr32le',
+		'bool', 'raw',
+	];
+	const Attributes = {
+		'fstring': [ 'length' ],
+		'raw':     [ 'size' ],
+	};
+
+	for (const key of Object.keys(desc)) {
+		let fieldDesc = desc[key];
+		let fieldType = fieldDesc.type;
+		if (!from.Array(FieldTypes).any(it => it === fieldType))
+			throw new TypeError(`invalid field type '${fieldType}'`);
+		if (fieldType in Attributes) {
+			let haveAttributes = from.Array(Attributes[fieldType])
+				.all(it => it in fieldDesc);
+			if (!haveAttributes)
+				throw new TypeError(`missing attributes for '${fieldType}'`);
+		}
+	}
+}
+
+// CommonJS
+exports = module.exports = DataReader;
+Object.assign(exports, {
+	__esModule: true,
+	DataReader: DataReader,
+	default:    DataReader,
+});

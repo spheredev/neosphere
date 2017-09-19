@@ -36,7 +36,7 @@ class Pact
 {
 	constructor()
 	{
-		this.m_handlers = [];
+		this._handlers = [];
 	}
 
 	get [Symbol.toStringTag]()
@@ -46,40 +46,40 @@ class Pact
 
 	makePromise()
 	{
-		var handler;
-		var promise = new Promise((resolve, reject) => {
-			handler = { resolve: resolve, reject: reject };
+		let handler;
+		let promise = new Promise((resolve, reject) => {
+			handler = { resolve, reject };
 		})
 		handler.that = promise;
-		this.m_handlers.push(handler);
+		this._handlers.push(handler);
 		return promise;
 	}
 
 	resolve(promise, value)
 	{
-		let handler = this.m_getHandler(promise);
+		let handler = this._getHandler(promise);
 		handler.resolve(value);
 	}
 
 	reject(promise, reason)
 	{
-		let handler = this.m_getHandler(promise);
+		let handler = this._getHandler(promise);
 		handler.reject(reason);
 	}
 
 	welsh(reason)
 	{
-		for (let i = this.m_handlers.length - 1; i >= 0; --i)
-			this.m_handlers[i].reject(reason);
+		for (let i = this._handlers.length - 1; i >= 0; --i)
+			this._handlers[i].reject(reason);
 	}
 
-	m_getHandler(promise)
+	_getHandler(promise)
 	{
 		if (!(promise instanceof Promise))
 			throw new TypeError(`'${String(promise)}' is not a promise`);
-		for (var i = this.m_handlers.length - 1; i >= 0; --i) {
-			if (this.m_handlers[i].that == promise)
-				return this.m_handlers[i];
+		for (var i = this._handlers.length - 1; i >= 0; --i) {
+			if (this._handlers[i].that == promise)
+				return this._handlers[i];
 		}
 		throw new TypeError("unrecognized promise");
 	}

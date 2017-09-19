@@ -31,207 +31,195 @@
 **/
 
 'use strict';
-exports = module.exports = DataWriter;
-exports.__esModule = true;
-exports.default = exports;
-
 const assert = require('assert'),
       from   = require('from');
 
-function DataWriter(stream)
+class DataWriter
 {
-	assert(this instanceof DataWriter, "constructor requires 'new'");
-	assert('write' in stream, "not a writable stream");
+	constructor(stream)
+	{
+		assert('write' in stream, "stream used with DataWriter must be have a write() method");
 
-	var m_encoder = new TextEncoder();
-	var m_stream = stream;
+		this.textEncoder = new TextEncoder();
+		this.stream = stream;
+	}
 
-	this.writeFloat32 = m_writeFloat32;
-	function m_writeFloat32(value, littleEndian)
+	writeFloat32(value, littleEndian)
 	{
 		assert.equal(typeof value, 'number');
 
-		var dv = new DataView(new ArrayBuffer(4));
+		let dv = new DataView(new ArrayBuffer(4));
 		dv.setFloat32(0, value, littleEndian);
-		m_stream.write(dv);
+		this.stream.write(dv.buffer);
 	}
 
-	this.writeFloat64 = m_writeFloat64;
-	function m_writeFloat64(value, littleEndian)
+	writeFloat64(value, littleEndian)
 	{
 		assert.equal(typeof value, 'number');
 
-		var dv = new DataView(new ArrayBuffer(8));
+		let dv = new DataView(new ArrayBuffer(8));
 		dv.setFloat64(0, value, littleEndian);
-		m_stream.write(dv);
+		this.stream.write(dv.buffer);
 	}
 
-	this.writeInt8 = m_writeInt8;
-	function m_writeInt8(value)
+	writeInt8(value)
 	{
 		assert.equal(typeof value, 'number');
 
-		var dv = new DataView(new ArrayBuffer(1));
+		let dv = new DataView(new ArrayBuffer(1));
 		dv.setInt8(0, value);
-		m_stream.write(dv);
+		this.stream.write(dv.buffer);
 	}
 
-	this.writeInt16 = m_writeInt16;
-	function m_writeInt16(value, littleEndian)
+	writeInt16(value, littleEndian)
 	{
 		assert.equal(typeof value, 'number');
 
-		var dv = new DataView(new ArrayBuffer(2));
+		let dv = new DataView(new ArrayBuffer(2));
 		dv.setInt16(0, value, littleEndian);
-		m_stream.write(dv);
+		this.stream.write(dv.buffer);
 	}
 
-	this.writeInt32 = m_writeInt32;
-	function m_writeInt32(value, littleEndian)
+	writeInt32(value, littleEndian)
 	{
 		assert.equal(typeof value, 'number');
 
-		var dv = new DataView(new ArrayBuffer(4));
+		let dv = new DataView(new ArrayBuffer(4));
 		dv.setInt32(0, value, littleEndian);
-		m_stream.write(dv);
+		this.stream.write(dv.buffer);
 	}
 
-	this.writeString = m_writeString;
-	function m_writeString(value, length)
+	writeStringRaw(value, length)
 	{
 		assert.equal(typeof value, 'string');
 		assert.equal(typeof length, 'number');
 
-		var encoded = m_encoder.encode(value);
-		var bytes = new Uint8Array(length);
+		let encoded = this.textEncoder.encode(value);
+		let bytes = new Uint8Array(length);
 		bytes.set(encoded.subarray(0, length));
-		m_stream.write(bytes);
+		this.stream.write(bytes);
 	}
 
-	this.writeString8 = m_writeString8;
-	function m_writeString8(value)
+	writeString8(value)
 	{
 		assert.equal(typeof value, 'string');
 
-		var bytes = m_encoder.encode(value);
-		m_writeUint8(bytes.length);
-		m_stream.write(bytes);
+		let bytes = this.textEncoder.encode(value);
+		this.writeUint8(bytes.length);
+		this.stream.write(bytes);
 	}
 
-	this.writeString16 = m_writeString16;
-	function m_writeString16(value, littleEndian)
+	writeString16(value, littleEndian)
 	{
 		assert.equal(typeof value, 'string');
 
-		var bytes = m_encoder.encode(value);
-		m_writeUint16(bytes.length, littleEndian);
-		m_stream.write(bytes);
+		let bytes = this.textEncoder.encode(value);
+		this.writeUint16(bytes.length, littleEndian);
+		this.stream.write(bytes);
 	}
 
-	this.writeString32 = m_writeString32;
-	function m_writeString32(value, littleEndian)
+	writeString32(value, littleEndian)
 	{
 		assert.equal(typeof value, 'string');
 
-		var bytes = m_encoder.encode(value);
-		m_writeUint32(bytes.length, littleEndian);
-		m_stream.write(bytes);
+		let bytes = this.textEncoder.encode(value);
+		this.writeUint32(bytes.length, littleEndian);
+		this.stream.write(bytes);
 	}
 
-	this.writeStruct = m_writeStruct;
-	function m_writeStruct(object, desc)
+	writeStruct(object, desc)
 	{
-		_checkStructDescriptor(desc);
+		verifyStructDescriptor(desc);
 
-		var keys = Reflect.ownKeys(desc);
-		for (var i = 0; i < keys.length; ++i) {
-			var key = keys[i];
-			var value = key in object ? object[key]
-				: desc[key].default
+		for (const key of Object.keys(desc)) {
+			let value = key in object ? object[key] : desc[key].default
 			switch (desc[key].type) {
-				case 'bool': m_writeUint8(value ? 1 : 0); break;
-				case 'float32be': m_writeFloat32(value); break;
-				case 'float32le': m_writeFloat32(value, true); break;
-				case 'float64be': m_writeFloat64(value); break;
-				case 'float64le': m_writeFloat64(value, true); break;
-				case 'int8': m_writeInt8(value); break;
-				case 'int16be': m_writeInt16(value); break;
-				case 'int16le': m_writeInt16(value, true); break;
-				case 'int32be': m_writeInt32(value); break;
-				case 'int32le': m_writeInt32(value, true); break;
-				case 'uint8': m_writeUint8(value); break;
-				case 'uint16be': m_writeUint16(value); break;
-				case 'uint16le': m_writeUint16(value, true); break;
-				case 'uint32be': m_writeUint32(value); break;
-				case 'uint32le': m_writeUint32(value, true); break;
-				case 'fstring': m_writeString(value, desc[key].length); break;
-				case 'lstr8': m_writeString8(value); break;
-				case 'lstr16be': m_writeString16(value); break;
-				case 'lstr16le': m_writeString16(value, true); break;
-				case 'lstr32be': m_writeString32(value); break;
-				case 'lstr32le': m_writeString32(value, true); break;
-				case 'raw': m_stream.write(value); break;
+				case 'bool': this.writeUint8(value ? 1 : 0); break;
+				case 'float32be': this.writeFloat32(value); break;
+				case 'float32le': this.writeFloat32(value, true); break;
+				case 'float64be': this.writeFloat64(value); break;
+				case 'float64le': this.writeFloat64(value, true); break;
+				case 'int8': this.writeInt8(value); break;
+				case 'int16be': this.writeInt16(value); break;
+				case 'int16le': this.writeInt16(value, true); break;
+				case 'int32be': this.writeInt32(value); break;
+				case 'int32le': this.writeInt32(value, true); break;
+				case 'uint8': this.writeUint8(value); break;
+				case 'uint16be': this.writeUint16(value); break;
+				case 'uint16le': this.writeUint16(value, true); break;
+				case 'uint32be': this.writeUint32(value); break;
+				case 'uint32le': this.writeUint32(value, true); break;
+				case 'fstring': this.writeStringRaw(value, desc[key].length); break;
+				case 'lstr8': this.writeString8(value); break;
+				case 'lstr16be': this.writeString16(value); break;
+				case 'lstr16le': this.writeString16(value, true); break;
+				case 'lstr32be': this.writeString32(value); break;
+				case 'lstr32le': this.writeString32(value, true); break;
+				case 'raw': this.stream.write(value); break;
 			}
 		}
-	};
+	}
 
-	this.writeUint8 = m_writeUint8;
-	function m_writeUint8(value)
+	writeUint8(value)
 	{
 		assert.equal(typeof value, 'number');
 
-		var dv = new DataView(new ArrayBuffer(1));
+		let dv = new DataView(new ArrayBuffer(1));
 		dv.setUint8(0, value);
-		m_stream.write(dv);
+		this.stream.write(dv.buffer);
 	}
 
-	this.writeUint16 = m_writeUint16;
-	function m_writeUint16(value, littleEndian)
+	writeUint16(value, littleEndian)
 	{
 		assert.equal(typeof value, 'number');
 
-		var dv = new DataView(new ArrayBuffer(2));
+		let dv = new DataView(new ArrayBuffer(2));
 		dv.setUint16(0, value, littleEndian);
-		m_stream.write(dv);
+		this.stream.write(dv.buffer);
 	}
 
-	this.writeUint32 = m_writeUint32;
-	function m_writeUint32(value, littleEndian)
+	writeUint32(value, littleEndian)
 	{
 		assert.equal(typeof value, 'number');
 
-		var dv = new DataView(new ArrayBuffer(4));
+		let dv = new DataView(new ArrayBuffer(4));
 		dv.setUint32(0, value, littleEndian);
-		m_stream.write(dv);
+		this.stream.write(dv.buffer);
 	}
 }
 
-function _checkStructDescriptor(desc)
+function verifyStructDescriptor(desc)
 {
-	var types = [
+	const FieldTypes = [
 		'float32be', 'float32le', 'float64be', 'float64le',
 		'int8', 'int16be', 'int16le', 'int32be', 'int32le',
 		'uint8', 'uint16be', 'uint16le', 'uint32be', 'uint32le',
 		'fstring', 'lstr8', 'lstr16be', 'lstr16le', 'lstr32be', 'lstr32le',
 		'bool', 'raw',
 	];
-
-	var attributes = {
+	const Attributes = {
 		'fstring': [ 'length' ],
 		'raw':     [ 'size' ],
 	};
 
-	var keys = Reflect.ownKeys(desc);
-	for (var i = 0; i < keys.length; ++i) {
-		var fieldDesc = desc[keys[i]];
-		var fieldType = fieldDesc.type;
-		if (!from.Array(types).any(it => it === fieldType))
-			throw new TypeError("unrecognized field type '" + fieldType + "'");
-		if (fieldType in attributes) {
-			var haveAttributes = from.Array(attributes[fieldType])
+	for (const key of Object.keys(desc)) {
+		let fieldDesc = desc[key];
+		let fieldType = fieldDesc.type;
+		if (!from.Array(FieldTypes).any(it => it === fieldType))
+			throw new TypeError(`invalid field type '${fieldType}'`);
+		if (fieldType in Attributes) {
+			let haveAttributes = from.Array(Attributes[fieldType])
 				.all(it => it in fieldDesc);
 			if (!haveAttributes)
-				throw new TypeError("missing attributes for " + fieldType);
+				throw new TypeError(`missing attributes for '${fieldType}'`);
 		}
 	}
 }
+
+// CommonJS
+exports = module.exports = DataWriter;
+Object.assign(exports, {
+	__esModule: true,
+	DataWriter: DataWriter,
+	default:    DataWriter,
+});
