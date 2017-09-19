@@ -35,6 +35,8 @@ const from = require('from');
 
 class Delegate
 {
+	get [Symbol.toStringTag]() { return 'Delegate'; }
+
 	constructor()
 	{
 		this._invocationList = [];

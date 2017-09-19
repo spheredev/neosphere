@@ -220,6 +220,10 @@ class Prim
 	}
 }
 
+// CommonJS
 exports = module.exports = Prim;
-exports.__esModule = true;
-exports.default = exports;
+Object.assign(exports, {
+	__esModule: true,
+	Prim:       Prim,
+	default:    Prim,
+});

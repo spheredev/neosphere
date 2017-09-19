@@ -36,6 +36,8 @@ const assert = require('assert'),
 
 class DataStream extends FileStream
 {
+	get [Symbol.toStringTag]() { return 'DataStream'; }
+
 	constructor(fileName, fileOp)
 	{
 		super(fileName, fileOp);

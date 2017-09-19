@@ -34,14 +34,11 @@
 
 class Pact
 {
+	get [Symbol.toStringTag]() { return 'Pact'; }
+
 	constructor()
 	{
 		this._handlers = [];
-	}
-
-	get [Symbol.toStringTag]()
-	{
-		return 'Pact';
 	}
 
 	makePromise()

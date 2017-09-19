@@ -31,46 +31,54 @@
 **/
 
 'use strict';
-exports = module.exports = Logger;
-exports.__esModule = true;
-exports.default = exports;
 
-function Logger(fileName)
+class Logger
 {
-	var fullPath = FS.fullPath(fileName, '~/logFiles');
-	if (fullPath.substr(0, 2) != fileName.substr(0, 2))  // SphereFS prefix?
-		fullPath += '.log';
+	get [Symbol.toStringTag]() { return 'Logger'; }
 
-	this.utf8 = new TextEncoder();
-	this.stream = new FileStream(fullPath, FileOp.Update);
-	this.groups = [];
+	constructor(fileName)
+	{
+		let fullPath = FS.fullPath(fileName, '~/logFiles');
+		if (fullPath.substr(0, 2) != fileName.substr(0, 2))  // SphereFS prefix?
+			fullPath += '.log';
 
-	var timestamp = new Date().toISOString();
-	var logLine = "LOG FILE OPENED: " + timestamp;
-	this.stream.write(this.utf8.encode("\n" + logLine + "\n"));
+		this._textEncoder = new TextEncoder();
+		this._stream = new FileStream(fullPath, FileOp.Update);
+		this._groups = [];
+
+		let timestamp = new Date().toISOString();
+		let logLine = `LOG FILE OPENED: ${timestamp}`;
+		this._stream.write(this._textEncoder.encode(`\n${logLine}\n`));
+	}
+	
+	beginGroup(text)
+	{
+		text = text.toString();
+		this.write(`BEGIN: ${text}`);
+		this._groups.push(text);
+	}
+
+	endGroup()
+	{
+		let groupName = this._groups.pop();
+		this.write(`END: ${groupName}`);
+	}
+
+	write(text)
+	{
+		text = text.toString();
+		let timestamp = new Date().toISOString();
+		this._stream.write(this._textEncoder.encode(`${timestamp} .. `));
+		for (let i = 0; i < this._groups.length; ++i)
+			this._stream.write(_encoder.encode("  "));
+		this._stream.write(this._textEncoder.encode(`${text}\n`));
+	}
 }
 
-Logger.prototype.beginGroup = function beginGroup(text)
-{
-	text = text.toString();
-
-	this.write("BEGIN: " + text);
-	this.groups.push(text);
-};
-
-Logger.prototype.endGroup = function endGroup()
-{
-	var groupName = this.groups.pop();
-	this.write("END: " + groupName);
-};
-
-Logger.prototype.write = function write(text)
-{
-	text = text.toString();
-
-	var timestamp = new Date().toISOString();
-	this.stream.write(this.utf8.encode(timestamp + " .. "));
-	for (var i = 0; i < this.groups.length; ++i)
-		this.stream.write(_encoder.encode("  "));
-	this.stream.write(this.utf8.encode(text + "\n"));
-};
+// CommonJS
+exports = module.exports = Logger;
+Object.assign(exports, {
+	__esModule: true,
+	Logger:     Logger,
+	default:    Logger,
+});
