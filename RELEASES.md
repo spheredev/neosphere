@@ -4,11 +4,27 @@ Release Notes
 miniSphere 5.0
 --------------
 
-* Duktape has been replaced!  miniSphere 5.0 uses ChakraCore for blazing-fast
-  JavaScript performance.  Chakra supports ECMAScript 2015 natively, so you no
-  longer need a `transpile()` step in your Cellscript to use ES2015 features
-  such as arrow functions, destructuring, even modules!
+* miniSphere now uses ChakraCore for blazing-fast JavaScript performance.
+  Chakra is the same engine used in Microsoft Edge and supports ECMAScript 2015
+  natively, so you no longer need a `transpile()` step in your Cellscript to
+  use ES2015 features such as arrow functions, destructuring, even modules!
 
+* `require()` has been deprecated and is now provided only for interop with
+  transpilers such as Babel and modules originally written for Node.js.  New
+  code should always use the ES2015 module syntax (`import`/`export`) and the
+  `.mjs` file extension.
+
+* `DataReader` and `DataWriter` have been combined into a single class,
+  `DataStream`, which inherits from `FileStream`.  This makes it easier to use
+  as it's no longer necessary to construct a FileStream separately.  Naturally,
+  any code using the old classes will need to be updated to work with the new
+  class.
+
+* The `Random` object has been reimagined as a `Randomizer` class that inherits
+  from `RNG`.  This makes it possible to use multiple independent generators
+  and still use the convenience calls; code using the old `Random` object will
+  need to be rewritten.
+  
 
 miniSphere 4.8
 --------------
