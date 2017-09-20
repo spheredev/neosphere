@@ -22,7 +22,6 @@ message is specified, a default message will be used approximating the
 offending expression, e.g. "AssertionError: 2 < 1"
 
     import { assert } from 'sphere-runtime';
-    const assert = require('assert');
 
 assert(condition[, error_text]);
 assert.ok(condition[, error_text]);
@@ -74,7 +73,6 @@ use a query to narrow down the scope of status effects.  Even enemy AI code can
 benefit from queries!
 
     import { from } from 'sphere-runtime';
-    const from = require('from');
 
 If you're familiar with C#, the from() function exposed by this module works a
 lot like LINQ.  A query is built from a number of predicates and mappings, and
@@ -325,7 +323,6 @@ During gameplay, if the game has initialized the console, it can be shown and
 hidden by the player using a hotkey (`~` by default).
 
     import { Console } from 'sphere-runtime';
-    const Console = require('console');
 
 Console.visible [read/write]
 
@@ -381,61 +378,61 @@ Console.undefineObject(objectName);
     possible to unregister individual commands.
 
 
-`DataReader` Object
+`DataStream` Object
 -------------------
 
-`DataReader` allows you to read from structured binary files like those used
-for Sphere game assets (maps, tilesets, etc.) based on a simple JSON schema.
-You can also read individual binary values from the file.
+A `DataStream` object allows you to read from structured binary files like
+those used for Sphere game assets (maps, tilesets, etc.) based on a simple JSON
+schema.  You can also read individual binary values from the file.
 
-    import { DataReader } from 'sphere-runtime';
-    const DataReader = require('dataReader');
+`DataStream` is a subclass of `FileStream` and supports all the same methods.
+See the Core API reference for information on `FileStream`.
 
-new DataReader(stream, schema);
+    import { DataStream } from 'sphere-runtime';
 
-    Constructs a `DataReader` object which can be used to read binary data from
-    a stream.  `stream` is an object with a `read()` method taking a byte count
-    and returning an ArrayBuffer, such as a `FileStream` or `Socket`.
+new DataStream(fileName, fileOp);
 
-DataReader#readFloat32([littleEndian]);
-DataReader#readFloat64([littleEndian]);
+    Constructs a `DataStream` object which can be used to read binary data from
+    `fileName`.  `fileOp` specifies the access requested; refer to the API
+    documentation for FileStream for more information on this parameter.
 
-    Reads an IEEE floating point value from the associated stream.  If
-    `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
-    big-endian mode.
+DataStream#readFloat32([littleEndian]);
+DataStream#readFloat64([littleEndian]);
 
-DataReader#readInt8();
-DataReader#readInt16([littleEndian]);
-DataReader#readInt32([littleEndian]);
-DataReader#readUint8();
-DataReader#readUint16([littleEndian]);
-DataReader#readUint32([littleEndian]);
+    Reads an IEEE floating point value from the data file.  If `littleEndian`
+    is true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
 
-    Reads an integer value from the associated stream.  If `littleEndian` is
-    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
+DataStream#readInt8();
+DataStream#readInt16([littleEndian]);
+DataStream#readInt32([littleEndian]);
+DataStream#readUint8();
+DataStream#readUint16([littleEndian]);
+DataStream#readUint32([littleEndian]);
+
+    Reads an integer value from the data file.  If `littleEndian` is true,
+    reads in little-endian mode.  Otherwise, reads in big-endian mode.
 
     Note: "readUint" variants read unsigned values.  "readInt" variants read
           signed ("two's complement") values.
 
-DataReader#readString(length);
+DataStream#readStringRaw(length);
 
-    Reads a UTF-8 string from the associated stream.  `length` specifies how
-    many bytes to read.
+    Reads a UTF-8 string from the data file.  `length` specifies how many bytes
+    to read.
 
-DataReader#readString8();
-DataReader#readString16([littleEndian]);
-DataReader#readString32([littleEndian]);
+DataStream#readString8();
+DataStream#readString16([littleEndian]);
+DataStream#readString32([littleEndian]);
 
-    Reads a UTF-8 length-prefixed string from the associated stream, where the
-    length in bytes is stored as an unsigned integer.  If `littleEndian` is
-    true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
+    Reads a UTF-8 length-prefixed string from the data file, where the length
+    in bytes is stored as an unsigned integer.  If `littleEndian` is true,
+    reads in little-endian mode.  Otherwise, reads in big-endian mode.
 
-DataReader#readStruct(desc);
+DataStream#readStruct(desc);
 
-    Reads an object from the associated stream, based on `desc`.  The
-    descriptor is an object describing the layout and typing of the data; for
-    example, the following will read the 256-byte header from a Sphere v1
-    format map file:
+    Reads an object from the data file, based on `desc`.  The descriptor is an
+    object describing the layout and typing of the data; for example, the
+    following will read the 256-byte header from a Sphere v1 format map file:
 
         rmp_header = myReader.readStruct({
             signature: { type: 'fstring', length: 4 },
@@ -454,52 +451,36 @@ DataReader#readStruct(desc);
             reserved2: { type: 'raw', size: 234 },
         });
 
+DataStream#writeFloat32(value[, littleEndian]);
+DataStream#writeFloat64(value[, littleEndian]);
 
-`DataWriter` Object
--------------------
-
-`DataWriter` allows you to write binary data to files or sockets.  It's like
-`DataReader` (see above), but for write access.
-
-    import { DataWriter } from 'sphere-runtime';
-    const DataWriter = require('dataWriter');
-
-new DataWriter(stream);
-
-    Constructs a `DataWriter` object which can be used to write binary data
-    into a stream.  `stream` is an object with a `write()` method that takes an
-    ArrayBuffer, such as a `FileStream` or `Socket`.
-
-DataWriter#writeFloat32(value[, littleEndian]);
-DataWriter#writeFloat64(value[, littleEndian]);
-
-    Writes a floating point value to the stream.  If `littleEndian` is true,
+    Writes a floating point value to the data file.  If `littleEndian` is true,
     writes in little-endian mode.  Otherwise writes in big-endian mode.
 
-DataWriter#writeInt8(value);
-DataWriter#writeInt16(value[, littleEndian]);
-DataWriter#writeInt32(value[, littleEndian]);
-DataWriter#writeUint8(value);
-DataWriter#writeUint16(value[, littleEndian]);
-DataWriter#writeUint32(value[, littleEndian]);
+DataStream#writeInt8(value);
+DataStream#writeInt16(value[, littleEndian]);
+DataStream#writeInt32(value[, littleEndian]);
+DataStream#writeUint8(value);
+DataStream#writeUint16(value[, littleEndian]);
+DataStream#writeUint32(value[, littleEndian]);
 
-    Writes an integer value to the associated stream.  If `littleEndian` is
-    true, writes in little-endian mode.  Otherwise writes in big-endian mode.
+    Writes an integer value to the data file.  If `littleEndian` is true,
+    writes in little-endian mode.  Otherwise writes in big-endian mode.
 
     Note: "writeUint" variants write unsigned values.  "writeInt" variants
           write signed ("two's complement") values.
 
-DataWriter#writeString(value);
+DataStream#writeStringRaw(value);
 
-    Writes a UTF-8 string to the associated stream.
+    Writes a UTF-8 string to the data file.
 
-DataWriter#writeString8(value);
-DataWriter#writeString16(value[, littleEndian]);
-DataWriter#writeString32(value[, littleEndian]);
+DataStream#writeString8(value);
+DataStream#writeString16(value[, littleEndian]);
+DataStream#writeString32(value[, littleEndian]);
 
-    Writes a UTF-8 length-prefixed string to the associated stream, where the
-    length is stored as an unsigned integer.  If `littleEndian` is true, writes
-    in little-endian mode.  Otherwise, writes in big-endian mode.
+    Writes a UTF-8 length-prefixed string to the data file, where the length is
+    stored as an unsigned integer.  If `littleEndian` is true, writes in
+    little-endian mode.  Otherwise, writes in big-endian mode.
 
 
 `Delegate` Object
@@ -513,14 +494,13 @@ registered handlers in turn.  In this way outside code can react to changing
 situations without breaking encapsulation.
 
     import { Delegate } from 'sphere-runtime';
-    const Delegate = require('delegate');
 
 new Delegate();
 
     Constructs a new delegate.  The delegate starts out empty, with no handlers
     attached.
 
-Delegate#add(handler[, thisObj]);
+Delegate#addHandler(handler[, thisObj]);
 
     Registers the function `handler` with the delegate.  Whenever the delegate
     is invoked, all handlers registered at that time will be called in order.
@@ -536,7 +516,7 @@ Delegate#call([...]);
     of registration, and any arguments passed to `call()` are forwarded to the
     handlers as-is.
 
-Delegate#remove(handler[, thisObj]);
+Delegate#removeHandler(handler[, thisObj]);
 
     Removes a previously-registered handler from the delegate.  Throws an error
     if no matching handler is registered.
@@ -557,7 +537,6 @@ letting you concentrate on setting up your scene without having to juggle
 Shape, Model, and Transform objects.
 
     import { Image } from 'sphere-runtime';
-    const Image = require('image');
 
 new Image(fileName);
 
@@ -588,7 +567,6 @@ Using this module, games can support joystick input for up to 4 players
 simultaneously.
 
     import { Joypad } from 'sphere-runtime';
-    const Joypad = require('joypad');
 
 Joypad.P1 [read-only]
 Joypad.P2 [read-only]
@@ -612,7 +590,6 @@ this to log lines of text to a file--complete with timestamps for each--which
 is often very useful for debugging purposes.
 
     import { Logger } from 'sphere-runtime';
-    const Logger = require('logger');
 
 new Logger(filename);
 
@@ -655,7 +632,6 @@ stack entirely, which is often useful in RPGs to override the battle music for
 story reasons.
 
     import { Music } from 'sphere-runtime';
-    const Music = require('music');
 
 Music.adjusting [read-only]
 
@@ -723,7 +699,6 @@ primitives such as circles and rectangles, which are tedious to render using
 the Core API directly.
 
     import { Prim } from 'sphere-runtime';
-    const Prim = require('prim');
 
 Prim.blit(surface, x, y, texture[, mask]);
 
@@ -786,44 +761,55 @@ Prim.fill(surface, color);
     surface.
 
 
-`RNGPlus` Object Class
-----------------------
+`Randomizer` Object
+-------------------
 
-Oftentimes, a game doesn't need the full flexibility of the built-in `RNG`
-class and just needs a convenient way to generate random numbers for various
-purposes.  The `RNGPlus` class provides exactly that.
+`Randomizer` is an enhanced version of the built-in `RNG` class with additional
+convenience methods for generating different types of random values.  For
+example, using a `Randomizer` you can easily generate values from a normal
+distribution or determine whether to do something based on a percentage chance.
+This is very useful in battle systems, for example.
 
-    import { RNGPlus } from 'sphere-runtime';
-    const RNGPlus = require('rngPlus');
+`Randomizer` is a subclass of `RNG` and supports all the same methods.  See the
+Core API reference for more information on `RNG`.
 
-RNGPlus#chance(odds);
+    import { Randomizer } from 'sphere-runtime';
+
+new Randomizer();
+
+    Constructs a new Randomizer object seeded from the current time.  Use
+    `Randomizer.fromSeed()` or `Randomizer.fromState()` to control the initial
+    state of the generator.  See the Core API reference section on `RNG` for
+    more information about these.
+
+Randomizer#chance(odds);
 
     Returns true or false depending on the given odds.  `odds` is a number in
     the range [0-1] specifying the odds of returning true.  For example, odds
     of 0.75 will return true 75% of the time.
 
-RNGPlus#discrete(min, max);
+Randomizer#discrete(min, max);
 
     Returns a random integer uniformly distributed within the range [min,max].
 
-RNGPlus#normal(mean, sigma);
+Randomizer#normal(mean, sigma);
 
     Returns a random floating point number from a normal distribution
     (sometimes called a bell curve) with expected value of `mean` and standard
     deviation `sigma`.
 
-RNGPlus#sample(array);
+Randomizer#sample(array);
 
     Returns a randomly chosen item from the specified array.
 
-RNGPlus#string(length);
+Randomizer#string(length);
 
     Returns a randomly generated string consisting of alphanumeric characters.
     The generated string looks something like a YouTube video hash (e.g.
     YlHRHDrKS) and is useful for uniquely identifying things, for example to
     generate temporary filenames.
 
-RNGPlus#uniform(mean, variance);
+Randomizer#uniform(mean, variance);
 
     Returns a random floating point value uniformly distributed around `mean`
     with an absolute maximum deviation ("give or take") specified by
@@ -846,7 +832,6 @@ Sphere v1, but has been updated to take advantage of Sphere v2 features and to
 integrate more seamlessly with other Sphere v2 technologies.
 
     import { Scene } from 'sphere-runtime';
-    const Scene = require('scene');
 
 A scene consists of a chain of scenelet invocations, with optional forks and
 resync points.  For example, supposing the scenelets used have been properly
@@ -984,7 +969,6 @@ single function.  Unit test code itself can likely benefit from the `assert`
 function though; see above for more information about that one.
 
     import { Test } from 'sphere-runtime';
-    const Test = require('test');
 
 Test.run(tests);
 
@@ -1009,7 +993,6 @@ An active-time battle engine might even use several threads to manage each of
 the units on the battlefield.
 
     import { Thread } from 'sphere-runtime';
-    const Thread = require('thread');
 
 Thread.create(def[, priority]);
 
@@ -1081,7 +1064,6 @@ document object model (DOM) from it.  This module is based on the MIT-licensed
 "sax js" parser.  The API is simple but should cover most use cases.
 
     import { XML } from 'sphere-runtime';
-    const XML = require('xml');
 
 XML.parse(text);
 

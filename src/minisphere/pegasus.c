@@ -269,7 +269,7 @@ static bool js_Dispatch_onUpdate             (js_ref_t* me, int num_args, bool i
 static bool js_FS_createDirectory            (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_deleteFile                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_directoryExists            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_FS_evaluateScript                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_FS_evaluateScript             (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_fileExists                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_fullPath                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_FS_readFile                   (js_ref_t* me, int num_args, bool is_ctor, int magic);

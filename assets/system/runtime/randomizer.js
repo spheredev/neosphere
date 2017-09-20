@@ -1,5 +1,5 @@
 /**
- *  Sphere Runtime for miniSphere
+ *  Sphere Runtime for Sphere games
  *  Copyright (c) 2015-2017, Fat Cerberus
  *  All rights reserved.
  *
@@ -21,7 +21,7 @@
 'use strict';
 const assert = require('assert');
 
-class RNGPlus extends RNG
+class Randomizer extends RNG
 {
 	static fromSeed(seedValue)
 	{
@@ -123,9 +123,9 @@ class RNGPlus extends RNG
 }
 
 // CommonJS
-exports = module.exports = RNGPlus;
+exports = module.exports = Randomizer;
 Object.assign(exports, {
 	__esModule: true,
-	RNGPlus:    RNGPlus,
-	default:    RNGPlus,
+	Randomizer: Randomizer,
+	default:    Randomizer,
 });

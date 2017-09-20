@@ -35,6 +35,6 @@ export const assert     = require('assert'),
              transpile  = require('transpile'),
              DataStream = require('dataStream'),
              Delegate   = require('delegate'),
-             RNGPlus    = require('rngPlus'),
+             Randomizer = require('randomizer'),
              Test       = require('test'),
              XML        = require('xml');
