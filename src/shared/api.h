@@ -15,7 +15,7 @@ void   api_define_property    (const char* class_name, const char* name, bool en
 void   api_define_static_prop (const char* namespace_name, const char* name, js_function_t getter, js_function_t setter);
 
 bool  jsal_is_class_obj         (int index, int class_id);
-int   jsal_push_class_obj       (int class_id, void* ptr);
+int   jsal_push_class_obj       (int class_id, void* ptr, bool in_ctor);
 int   jsal_push_class_prototype (int class_id);
 void* jsal_require_class_obj    (int index, int class_id);
 void  jsal_set_class_ptr        (int index, void* ptr);

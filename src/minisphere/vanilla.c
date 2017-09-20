@@ -1194,7 +1194,7 @@ initialize_vanilla_api(void)
 void
 jsal_push_sphere_bytearray(bytearray_t* array)
 {
-	jsal_push_class_obj(SV1_BYTE_ARRAY, bytearray_ref(array));
+	jsal_push_class_obj(SV1_BYTE_ARRAY, bytearray_ref(array), false);
 	jsal_make_buffer(-1, JS_UINT8ARRAY, bytearray_buffer(array), bytearray_len(array));
 }
 
@@ -1205,13 +1205,13 @@ jsal_push_sphere_color(color_t color)
 
 	color_ptr = malloc(sizeof(color_t));
 	*color_ptr = color;
-	jsal_push_class_obj(SV1_COLOR, color_ptr);
+	jsal_push_class_obj(SV1_COLOR, color_ptr, false);
 }
 
 void
 jsal_push_sphere_font(font_t* font)
 {
-	jsal_push_class_obj(SV1_FONT, font_ref(font));
+	jsal_push_class_obj(SV1_FONT, font_ref(font), false);
 	jsal_push_sphere_color(color_new(255, 255, 255, 255));
 	jsal_put_prop_string(-2, "\xFF" "color_mask");
 }
@@ -1225,7 +1225,7 @@ jsal_push_sphere_spriteset(spriteset_t* spriteset)
 
 	int i, j;
 
-	jsal_push_class_obj(SV1_SPRITESET, spriteset_ref(spriteset));
+	jsal_push_class_obj(SV1_SPRITESET, spriteset_ref(spriteset), false);
 
 	// Spriteset:base
 	base = spriteset_get_base(spriteset);
@@ -1240,7 +1240,7 @@ jsal_push_sphere_spriteset(spriteset_t* spriteset)
 	jsal_push_new_array();
 	for (i = 0; i < spriteset_num_images(spriteset); ++i) {
 		image = spriteset_image(spriteset, i);
-		jsal_push_class_obj(SV1_IMAGE, image_ref(image));
+		jsal_push_class_obj(SV1_IMAGE, image_ref(image), false);
 		jsal_put_prop_index(-2, i);
 	}
 	jsal_put_prop_string(-2, "images");
@@ -1440,7 +1440,7 @@ jsal_require_sphere_spriteset(int index)
 static void
 jsal_push_sphere_windowstyle(windowstyle_t* winstyle)
 {
-	jsal_push_class_obj(SV1_WINDOW_STYLE, winstyle_ref(winstyle));
+	jsal_push_class_obj(SV1_WINDOW_STYLE, winstyle_ref(winstyle), false);
 	jsal_push_sphere_color(color_new(255, 255, 255, 255));
 	jsal_put_prop_string(-2, "\xFF" "color_mask");
 }
@@ -1941,7 +1941,7 @@ js_CreateColorMatrix(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	int bb = jsal_to_int(11);
 
 	// construct a ColorMatrix object
-	jsal_push_class_obj(SV1_COLOR_MATRIX, NULL);
+	jsal_push_class_obj(SV1_COLOR_MATRIX, NULL, false);
 	jsal_push_int(rn); jsal_put_prop_string(-2, "rn");
 	jsal_push_int(rr); jsal_put_prop_string(-2, "rr");
 	jsal_push_int(rg); jsal_put_prop_string(-2, "rg");
@@ -2087,7 +2087,7 @@ js_CreateSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!(image = image_new(width, height)))
 		jsal_error(JS_ERROR, "couldn't create surface");
 	image_fill(image, fill_color);
-	jsal_push_class_obj(SV1_SURFACE, image);
+	jsal_push_class_obj(SV1_SURFACE, image, false);
 	return true;
 }
 
@@ -3517,7 +3517,7 @@ js_GetSystemArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = legacy_default_arrow_image()))
 		jsal_error(JS_REF_ERROR, "missing system arrow image");
-	jsal_push_class_obj(SV1_IMAGE, image_ref(image));
+	jsal_push_class_obj(SV1_IMAGE, image_ref(image), false);
 	return true;
 }
 
@@ -3528,7 +3528,7 @@ js_GetSystemDownArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = legacy_default_arrow_down_image()))
 		jsal_error(JS_REF_ERROR, "missing system down arrow image");
-	jsal_push_class_obj(SV1_IMAGE, image_ref(image));
+	jsal_push_class_obj(SV1_IMAGE, image_ref(image), false);
 	return true;
 }
 
@@ -3546,7 +3546,7 @@ js_GetSystemUpArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = legacy_default_arrow_up_image()))
 		jsal_error(JS_REF_ERROR, "missing system up arrow image");
-	jsal_push_class_obj(SV1_IMAGE, image_ref(image));
+	jsal_push_class_obj(SV1_IMAGE, image_ref(image), false);
 	return true;
 }
 
@@ -3655,7 +3655,7 @@ js_GetTileImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
 	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
 		jsal_error(JS_ERROR, "couldn't create new surface image");
-	jsal_push_class_obj(SV1_IMAGE, image);
+	jsal_push_class_obj(SV1_IMAGE, image, false);
 	return true;
 }
 
@@ -3694,7 +3694,7 @@ js_GetTileSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
 	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
 		jsal_error(JS_ERROR, "couldn't create new surface image");
-	jsal_push_class_obj(SV1_SURFACE, image);
+	jsal_push_class_obj(SV1_SURFACE, image, false);
 	return true;
 }
 
@@ -3918,7 +3918,7 @@ js_GrabImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = screen_grab(g_screen, x, y, width, height)))
 		jsal_error(JS_ERROR, "couldn't grab screen image");
-	jsal_push_class_obj(SV1_IMAGE, image);
+	jsal_push_class_obj(SV1_IMAGE, image, false);
 	return true;
 }
 
@@ -3938,7 +3938,7 @@ js_GrabSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(image = screen_grab(g_screen, x, y, width, height)))
 		jsal_error(JS_ERROR, "couldn't grab screen image");
-	jsal_push_class_obj(SV1_SURFACE, image);
+	jsal_push_class_obj(SV1_SURFACE, image, false);
 	return true;
 }
 
@@ -4493,7 +4493,7 @@ js_ListenOnPort(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	port = jsal_to_int(0);
 
 	if (socket = socket_v1_new_server(port))
-		jsal_push_class_obj(SV1_SOCKET, socket);
+		jsal_push_class_obj(SV1_SOCKET, socket, false);
 	else
 		jsal_push_null();
 	return true;
@@ -4508,7 +4508,7 @@ js_LoadAnimation(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "animations", true, false);
 	if (!(anim = animation_new(filename)))
 		jsal_error(JS_ERROR, "couldn't load animation '%s'", filename);
-	jsal_push_class_obj(SV1_ANIMATION, anim);
+	jsal_push_class_obj(SV1_ANIMATION, anim, false);
 	return true;
 }
 
@@ -4535,7 +4535,7 @@ js_LoadImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "images", true, false);
 	if (!(image = image_load(filename)))
 		jsal_error(JS_ERROR, "couldn't load image '%s'", filename);
-	jsal_push_class_obj(SV1_IMAGE, image);
+	jsal_push_class_obj(SV1_IMAGE, image, false);
 	return true;
 }
 
@@ -4549,7 +4549,7 @@ js_LoadSound(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(sound = sound_new(filename)))
 		jsal_error(JS_ERROR, "couldn't load sound '%s'", filename);
-	jsal_push_class_obj(SV1_SOUND, sound);
+	jsal_push_class_obj(SV1_SOUND, sound, false);
 	return true;
 }
 
@@ -4565,7 +4565,7 @@ js_LoadSoundEffect(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(sample = sample_new(filename, mode == SE_MULTIPLE)))
 		jsal_error(JS_ERROR, "couldn't load sound effect '%s'", filename);
-	jsal_push_class_obj(SV1_SOUND_EFFECT, sample);
+	jsal_push_class_obj(SV1_SOUND_EFFECT, sample, false);
 	return true;
 }
 
@@ -4592,7 +4592,7 @@ js_LoadSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "images", true, false);
 	if (!(image = image_load(filename)))
 		jsal_error(JS_ERROR, "couldn't load image '%s'", filename);
-	jsal_push_class_obj(SV1_SURFACE, image);
+	jsal_push_class_obj(SV1_SURFACE, image, false);
 	return true;
 }
 
@@ -4670,7 +4670,7 @@ js_OpenAddress(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	port = jsal_to_int(1);
 
 	if (socket = socket_v1_new_client(hostname, port))
-		jsal_push_class_obj(SV1_SOCKET, socket);
+		jsal_push_class_obj(SV1_SOCKET, socket, false);
 	else
 		jsal_push_null();
 	return true;
@@ -4686,7 +4686,7 @@ js_OpenFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(file = kev_open(g_game, filename, true)))
 		jsal_error(JS_ERROR, "couldn't open file '%s'", filename);
-	jsal_push_class_obj(SV1_FILE, file);
+	jsal_push_class_obj(SV1_FILE, file, false);
 	return true;
 }
 
@@ -4699,7 +4699,7 @@ js_OpenLog(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "logs", true, true);
 	if (!(logger = logger_new(filename)))
 		jsal_error(JS_ERROR, "couldn't open log file '%s'", filename);
-	jsal_push_class_obj(SV1_LOGGER, logger);
+	jsal_push_class_obj(SV1_LOGGER, logger, false);
 	return true;
 }
 
@@ -4717,7 +4717,7 @@ js_OpenRawFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "couldn't open file '%s' for %s",
 			filename, writable ? "write" : "read");
 	}
-	jsal_push_class_obj(SV1_RAW_FILE, file);
+	jsal_push_class_obj(SV1_RAW_FILE, file, false);
 	return true;
 }
 
@@ -6893,7 +6893,7 @@ js_Font_getCharacterImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	font = jsal_require_class_obj(-1, SV1_FONT);
 	cp = (uint32_t)jsal_require_number(0);
 
-	jsal_push_class_obj(SV1_IMAGE, image_ref(font_glyph(font, cp)));
+	jsal_push_class_obj(SV1_IMAGE, image_ref(font_glyph(font, cp)), false);
 	return true;
 }
 
@@ -7096,7 +7096,7 @@ js_Image_createSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if ((new_image = image_clone(image)) == NULL)
 		jsal_error(JS_ERROR, "couldn't create new surface image");
-	jsal_push_class_obj(SV1_SURFACE, new_image);
+	jsal_push_class_obj(SV1_SURFACE, new_image, false);
 	return true;
 }
 
@@ -8257,7 +8257,7 @@ js_Surface_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if ((new_image = image_clone(image)) == NULL)
 		jsal_error(JS_ERROR, "couldn't create new surface");
-	jsal_push_class_obj(SV1_SURFACE, new_image);
+	jsal_push_class_obj(SV1_SURFACE, new_image, false);
 	return true;
 }
 
@@ -8283,7 +8283,7 @@ js_Surface_cloneSection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
 	al_draw_bitmap_region(image_bitmap(image), x, y, width, height, 0, 0, 0x0);
-	jsal_push_class_obj(SV1_SURFACE, new_image);
+	jsal_push_class_obj(SV1_SURFACE, new_image, false);
 	return true;
 }
 
@@ -8298,7 +8298,7 @@ js_Surface_createImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if ((new_image = image_clone(image)) == NULL)
 		jsal_error(JS_ERROR, "couldn't create image");
-	jsal_push_class_obj(SV1_IMAGE, new_image);
+	jsal_push_class_obj(SV1_IMAGE, new_image, false);
 	return true;
 }
 

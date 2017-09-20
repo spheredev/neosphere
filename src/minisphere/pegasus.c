@@ -446,7 +446,7 @@ static void js_Transform_finalize       (void* host_ptr);
 static void js_VertexList_finalize      (void* host_ptr);
 
 static void      on_import_module            (void);
-static void      jsal_pegasus_push_color     (color_t color);
+static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
 static void      jsal_pegasus_push_require   (const char* module_id);
 static color_t   jsal_pegasus_require_color  (int index);
@@ -1006,13 +1006,13 @@ on_error:
 }
 
 static void
-jsal_pegasus_push_color(color_t color)
+jsal_pegasus_push_color(color_t color, bool in_ctor)
 {
 	color_t* color_ptr;
 	
 	color_ptr = malloc(sizeof(color_t));
 	*color_ptr = color;
-	jsal_push_class_obj(CLASS_COLOR, color_ptr);
+	jsal_push_class_obj(CLASS_COLOR, color_ptr, in_ctor);
 }
 
 static void
@@ -1022,7 +1022,7 @@ jsal_pegasus_push_job_token(int64_t token)
 
 	ptr = malloc(sizeof(int64_t));
 	*ptr = token;
-	jsal_push_class_obj(CLASS_JOB_TOKEN, ptr);
+	jsal_push_class_obj(CLASS_JOB_TOKEN, ptr, false);
 }
 
 static void
@@ -1148,7 +1148,7 @@ load_joysticks(void)
 	for (i = 0; i < num_devices; ++i) {
 		device = malloc(sizeof(int));
 		*device = i;
-		jsal_push_class_obj(CLASS_JOYSTICK, device);
+		jsal_push_class_obj(CLASS_JOYSTICK, device, false);
 		jsal_put_prop_index(-2, i);
 	}
 	jsal_put_prop_string(-2, "joystickObjects");
@@ -1413,7 +1413,7 @@ js_Color_get_Color(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	const struct x11_color* data;
 
 	data = &COLORS[magic];
-	jsal_pegasus_push_color(color_new(data->r, data->g, data->b, data->a));
+	jsal_pegasus_push_color(color_new(data->r, data->g, data->b, data->a), false);
 	return true;
 }
 
@@ -1450,7 +1450,7 @@ js_Color_mix(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (w1 < 0.0 || w2 < 0.0)
 		jsal_error(JS_RANGE_ERROR, "invalid weight(s)", w1, w2);
 
-	jsal_pegasus_push_color(color_mix(color1, color2, w1, w2));
+	jsal_pegasus_push_color(color_mix(color1, color2, w1, w2), false);
 	return true;
 }
 
@@ -1470,7 +1470,7 @@ js_Color_of(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	p = &COLORS[0];
 	while (p->name != NULL) {
 		if (strcasecmp(name, p->name) == 0) {
-			jsal_pegasus_push_color(color_new(p->r, p->g, p->b, p->a));
+			jsal_pegasus_push_color(color_new(p->r, p->g, p->b, p->a), false);
 			return true;
 		}
 		++p;
@@ -1487,7 +1487,7 @@ js_Color_of(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	color.r = (value >> 16) & 0xFF;
 	color.g = (value >> 8) & 0xFF;
 	color.b = value & 0xFF;
-	jsal_pegasus_push_color(color);
+	jsal_pegasus_push_color(color, false);
 	return true;
 }
 
@@ -1510,7 +1510,7 @@ js_new_Color(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		fmin(fmax(g, 0.0), 1.0) * 255,
 		fmin(fmax(b, 0.0), 1.0) * 255,
 		fmin(fmax(a, 0.0), 1.0) * 255);
-	jsal_pegasus_push_color(color);
+	jsal_pegasus_push_color(color, true);
 	return true;
 }
 
@@ -1655,7 +1655,7 @@ js_Color_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	color = jsal_pegasus_require_color(-1);
 
-	jsal_pegasus_push_color(color);
+	jsal_pegasus_push_color(color, false);
 	return true;
 }
 
@@ -1670,7 +1670,7 @@ js_Color_fade(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	a = jsal_require_number(0);
 
 	color.a = fmin(fmax(color.a * a, 0), 255);
-	jsal_pegasus_push_color(color);
+	jsal_pegasus_push_color(color, false);
 	return true;
 }
 
@@ -1684,7 +1684,7 @@ js_new_DirectoryStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(stream = directory_open(g_game, pathname)))
 		jsal_error(JS_ERROR, "couldn't open directory");
-	jsal_push_class_obj(CLASS_DIR_STREAM, stream);
+	jsal_push_class_obj(CLASS_DIR_STREAM, stream, true);
 	return true;
 }
 
@@ -2067,7 +2067,7 @@ js_new_FileStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "couldn't open file '%s'", pathname);
 	if (file_op == FILE_OP_UPDATE)
 		file_seek(file, 0, WHENCE_END);
-	jsal_push_class_obj(CLASS_FILE_STREAM, file);
+	jsal_push_class_obj(CLASS_FILE_STREAM, file, true);
 	return true;
 }
 
@@ -2201,7 +2201,7 @@ js_FileStream_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Font_get_Default(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	jsal_push_class_obj(CLASS_FONT, g_system_font);
+	jsal_push_class_obj(CLASS_FONT, g_system_font, false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -2224,7 +2224,7 @@ js_new_Font(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	if (!(font = font_load(filename)))
 		jsal_error(JS_ERROR, "couldn't load font file '%s'", filename);
 	jsal_push_this();
-	jsal_push_class_obj(CLASS_FONT, font);
+	jsal_push_class_obj(CLASS_FONT, font, true);
 	return true;
 }
 
@@ -2392,7 +2392,7 @@ js_new_IndexList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		ibo_unref(ibo);
 		jsal_error(JS_ERROR, "upload to GPU failed");
 	}
-	jsal_push_class_obj(CLASS_INDEX_LIST, ibo);
+	jsal_push_class_obj(CLASS_INDEX_LIST, ibo, true);
 	return true;
 }
 
@@ -2415,7 +2415,7 @@ js_Joystick_get_Null(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	device = malloc(sizeof(int));
 	*device = -1;
-	jsal_push_class_obj(CLASS_JOYSTICK, device);
+	jsal_push_class_obj(CLASS_JOYSTICK, device, false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -2530,7 +2530,7 @@ js_Joystick_isPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Keyboard_get_Default(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	jsal_push_class_obj(CLASS_KEYBOARD, NULL);
+	jsal_push_class_obj(CLASS_KEYBOARD, NULL, false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -2679,7 +2679,7 @@ js_Keyboard_isPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Mixer_get_Default(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	jsal_push_class_obj(CLASS_MIXER, mixer_ref(s_def_mixer));
+	jsal_push_class_obj(CLASS_MIXER, mixer_ref(s_def_mixer), false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -2711,7 +2711,7 @@ js_new_Mixer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	
 	if (!(mixer = mixer_new(frequency, bits, channels)))
 		jsal_error(JS_ERROR, "couldn't create %d-bit %dch voice", bits, channels);
-	jsal_push_class_obj(CLASS_MIXER, mixer);
+	jsal_push_class_obj(CLASS_MIXER, mixer, true);
 	return true;
 }
 
@@ -2772,7 +2772,7 @@ js_new_Model(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		shape = jsal_require_class_obj(-1, CLASS_SHAPE);
 		model_add_shape(group, shape);
 	}
-	jsal_push_class_obj(CLASS_MODEL, group);
+	jsal_push_class_obj(CLASS_MODEL, group, true);
 	return true;
 }
 
@@ -2792,7 +2792,7 @@ js_Model_get_shader(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	group = jsal_require_class_obj(-1, CLASS_MODEL);
 
 	shader = model_get_shader(group);
-	jsal_push_class_obj(CLASS_SHADER, shader_ref(shader));
+	jsal_push_class_obj(CLASS_SHADER, shader_ref(shader), false);
 	return true;
 }
 
@@ -2806,7 +2806,7 @@ js_Model_get_transform(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	group = jsal_require_class_obj(-1, CLASS_MODEL);
 
 	transform = model_get_transform(group);
-	jsal_push_class_obj(CLASS_TRANSFORM, transform_ref(transform));
+	jsal_push_class_obj(CLASS_TRANSFORM, transform_ref(transform), false);
 	return true;
 }
 
@@ -3057,7 +3057,7 @@ js_Model_setMatrix(js_ref_t* me, int num_args, bool is_ctor, int magic)
 static bool
 js_Mouse_get_Default(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
-	jsal_push_class_obj(CLASS_MOUSE, NULL);
+	jsal_push_class_obj(CLASS_MOUSE, NULL, false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -3155,7 +3155,7 @@ js_RNG_fromSeed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	seed = jsal_require_number(0);
 
 	xoro = xoro_new(seed);
-	jsal_push_class_obj(CLASS_RNG, xoro);
+	jsal_push_class_obj(CLASS_RNG, xoro, false);
 	return true;
 }
 
@@ -3172,7 +3172,7 @@ js_RNG_fromState(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		xoro_unref(xoro);
 		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
 	}
-	jsal_push_class_obj(CLASS_RNG, xoro);
+	jsal_push_class_obj(CLASS_RNG, xoro, false);
 	return true;
 }
 
@@ -3182,7 +3182,7 @@ js_new_RNG(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	xoro_t* xoro;
 
 	xoro = xoro_new((uint64_t)(al_get_time() * 1000000));
-	jsal_push_class_obj(CLASS_RNG, xoro);
+	jsal_push_class_obj(CLASS_RNG, xoro, true);
 	return true;
 }
 
@@ -3257,7 +3257,7 @@ js_new_Sample(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(sample = sample_new(filename, true)))
 		jsal_error(JS_ERROR, "couldn't load sample '%s'", filename);
-	jsal_push_class_obj(CLASS_SAMPLE, sample);
+	jsal_push_class_obj(CLASS_SAMPLE, sample, true);
 	return true;
 }
 
@@ -3338,7 +3338,7 @@ js_new_Server(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(server = server_new(NULL, port, 1024, max_backlog, false)))
 		jsal_error(JS_ERROR, "couldn't create server");
-	jsal_push_class_obj(CLASS_SERVER, server);
+	jsal_push_class_obj(CLASS_SERVER, server, true);
 	return true;
 }
 
@@ -3361,7 +3361,7 @@ js_Server_accept(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "server has shut down");
 	new_socket = server_accept(server);
 	if (new_socket != NULL)
-		jsal_push_class_obj(CLASS_SOCKET, new_socket);
+		jsal_push_class_obj(CLASS_SOCKET, new_socket, false);
 	else
 		jsal_push_null();
 	return true;
@@ -3387,7 +3387,7 @@ js_Shader_get_Default(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(shader = galileo_shader()))
 		jsal_error(JS_ERROR, "couldn't compile default shaders");
-	jsal_push_class_obj(CLASS_SHADER, shader_ref(shader));
+	jsal_push_class_obj(CLASS_SHADER, shader_ref(shader), false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -3421,7 +3421,7 @@ js_new_Shader(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_pop(2);
 	if (!(shader = shader_new(vs_filename, game_filename)))
 		jsal_error(JS_ERROR, "couldn't compile shader program");
-	jsal_push_class_obj(CLASS_SHADER, shader);
+	jsal_push_class_obj(CLASS_SHADER, shader, true);
 	return true;
 }
 
@@ -3457,7 +3457,7 @@ js_new_Shape(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_RANGE_ERROR, "invalid ShapeType constant");
 
 	shape = shape_new(vbo, ibo, type, texture);
-	jsal_push_class_obj(CLASS_SHAPE, shape);
+	jsal_push_class_obj(CLASS_SHAPE, shape, true);
 	return true;
 }
 
@@ -3478,7 +3478,7 @@ js_Shape_get_indexList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	ibo = shape_get_ibo(shape);
 	if (ibo != NULL)
-		jsal_push_class_obj(CLASS_INDEX_LIST, ibo_ref(ibo));
+		jsal_push_class_obj(CLASS_INDEX_LIST, ibo_ref(ibo), false);
 	else
 		jsal_push_null();
 	return true;
@@ -3495,7 +3495,7 @@ js_Shape_get_texture(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	texture = shape_get_texture(shape);
 	if (texture != NULL)
-		jsal_push_class_obj(CLASS_TEXTURE, image_ref(texture));
+		jsal_push_class_obj(CLASS_TEXTURE, image_ref(texture), false);
 	else
 		jsal_push_null();
 	return true;
@@ -3509,7 +3509,7 @@ js_Shape_get_vertexList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	shape = jsal_require_class_obj(-1, CLASS_SHAPE);
 
-	jsal_push_class_obj(CLASS_VERTEX_LIST, vbo_ref(shape_get_vbo(shape)));
+	jsal_push_class_obj(CLASS_VERTEX_LIST, vbo_ref(shape_get_vbo(shape)), false);
 	return true;
 }
 
@@ -3591,7 +3591,7 @@ js_new_Socket(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "couldn't create TCP socket");
 	if (hostname != NULL && !socket_connect(socket, hostname, port))
 		jsal_error(JS_ERROR, "couldn't connect to '%s'", hostname);
-	jsal_push_class_obj(CLASS_SOCKET, socket);
+	jsal_push_class_obj(CLASS_SOCKET, socket, true);
 	return true;
 }
 
@@ -3743,7 +3743,7 @@ js_new_Sound(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(sound = sound_new(filename)))
 		jsal_error(JS_ERROR, "couldn't load sound '%s'", filename);
-	jsal_push_class_obj(CLASS_SOUND, sound);
+	jsal_push_class_obj(CLASS_SOUND, sound, true);
 	return true;
 }
 
@@ -3980,7 +3980,7 @@ js_new_SoundStream(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (!(stream = stream_new(frequency, bits, channels)))
 		jsal_error(JS_ERROR, "couldn't create stream");
-	jsal_push_class_obj(CLASS_SOUND_STREAM, stream);
+	jsal_push_class_obj(CLASS_SOUND_STREAM, stream, true);
 	return true;
 }
 
@@ -4088,7 +4088,7 @@ js_new_Surface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "couldn't load image '%s'", filename);
 	}
-	jsal_push_class_obj(CLASS_SURFACE, image);
+	jsal_push_class_obj(CLASS_SURFACE, image, true);
 	return true;
 }
 
@@ -4120,7 +4120,7 @@ js_Surface_get_transform(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, CLASS_SURFACE);
 
 	transform = image_get_transform(image);
-	jsal_push_class_obj(CLASS_TRANSFORM, transform_ref(transform));
+	jsal_push_class_obj(CLASS_TRANSFORM, transform_ref(transform), false);
 	return true;
 }
 
@@ -4181,7 +4181,7 @@ js_Surface_toTexture(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if ((new_image = image_clone(image)) == NULL)
 		jsal_error(JS_ERROR, "image creation failed");
-	jsal_push_class_obj(CLASS_TEXTURE, new_image);
+	jsal_push_class_obj(CLASS_TEXTURE, new_image, false);
 	return true;
 }
 
@@ -4213,7 +4213,7 @@ js_new_TextDecoder(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	}
 
 	decoder = decoder_new(fatal, ignore_bom);
-	jsal_push_class_obj(CLASS_TEXT_DEC, decoder);
+	jsal_push_class_obj(CLASS_TEXT_DEC, decoder, true);
 	return true;
 }
 
@@ -4305,7 +4305,7 @@ js_new_TextEncoder(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	encoder_t* encoder;
 
 	encoder = encoder_new();
-	jsal_push_class_obj(CLASS_TEXT_ENC, encoder);
+	jsal_push_class_obj(CLASS_TEXT_ENC, encoder, true);
 	return true;
 }
 
@@ -4408,7 +4408,7 @@ js_new_Texture(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "couldn't load image '%s'", filename);
 	}
-	jsal_push_class_obj(CLASS_TEXTURE, image);
+	jsal_push_class_obj(CLASS_TEXTURE, image, true);
 	return true;
 }
 
@@ -4464,7 +4464,7 @@ js_new_Transform(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	transform = transform_new();
-	jsal_push_class_obj(CLASS_TRANSFORM, transform);
+	jsal_push_class_obj(CLASS_TRANSFORM, transform, true);
 	return true;
 }
 
@@ -4733,7 +4733,7 @@ js_new_VertexList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "upload to GPU failed");
 	}
 	
-	jsal_push_class_obj(CLASS_VERTEX_LIST, vbo);
+	jsal_push_class_obj(CLASS_VERTEX_LIST, vbo, true);
 	return true;
 }
 

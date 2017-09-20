@@ -38,7 +38,6 @@ class Randomizer extends RNG
 	constructor()
 	{
 		super();
-		Object.setPrototypeOf(this, new.target.prototype);
 	}
 
 	chance(odds)

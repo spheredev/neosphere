@@ -212,7 +212,7 @@ api_define_object(const char* namespace_name, const char* name, int class_id, vo
 	}
 
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_push_class_obj(class_id, udata);
+	jsal_push_class_obj(class_id, udata, false);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, name);
 	if (namespace_name != NULL)
@@ -295,7 +295,7 @@ jsal_is_class_obj(int index, int class_id)
 }
 
 int
-jsal_push_class_obj(int class_id, void* udata)
+jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 {
 	struct class_data*  class_data;
 	js_finalizer_t      finalizer = NULL;
@@ -321,6 +321,18 @@ jsal_push_class_obj(int class_id, void* udata)
 	jsal_get_prop_index(-1, class_id);
 	jsal_set_prototype(index);
 	jsal_pop(1);
+
+	// ChakraCore has really odd semantics for native functions: if the function
+	// is called as part of constructing a subclass, its `this` is equal to
+	// `new.target` instead of the object being constructed.
+	if (in_ctor) {
+		jsal_push_this();
+		if (jsal_is_function(-1)) {
+			jsal_get_prop_string(-1, "prototype");
+			jsal_set_prototype(-3);
+		}
+		jsal_pop(1);
+	}
 
 	return index;
 }

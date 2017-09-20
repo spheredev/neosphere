@@ -41,7 +41,6 @@ class DataStream extends FileStream
 	constructor(fileName, fileOp)
 	{
 		super(fileName, fileOp);
-		Object.setPrototypeOf(this, new.target.prototype);
 
 		this._textDecoder = new TextDecoder('utf-8');
 		this._textEncoder = new TextEncoder();
