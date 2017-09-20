@@ -31,10 +31,6 @@
 **/
 
 'use strict';
-exports = module.exports = Thread;
-exports.__esModule = true;
-exports.default = exports;
-
 const from = require('from');
 
 var currentSelf = 0;
@@ -199,3 +195,11 @@ function _updateAll()
 	for (let threadID of threadsEnding)
         Thread.kill(threadID);
 }
+
+// CommonJS
+exports = module.exports = Thread;
+Object.assign(exports, {
+	__esModule: true,
+	Thread:     Thread,
+	default:    Thread,
+});

@@ -31,46 +31,57 @@
 **/
 
 'use strict';
-exports.__esModule = true;
-exports.default = exports;
-
 const sax = require('./lib/sax');
 
-exports.readFile = readFile;
-function readFile(fileName)
+class XML
 {
-	var xmlText = FS.readFile(fileName);
-	return parse(xmlText);
-}
+	static parse(xmlText)
+	{
+		let dom = { type: 'root', nodes: [] };
+		let currentNode = dom;
+		let parentNodes = [];
 
-exports.parse = parse;
-function parse(xmlText)
-{
-	var dom = { type: 'root', nodes: [] };
-	var currentNode = dom, parents = [];
-
-	var saxParser = sax.parser(true, { normalize: true });
-	saxParser.onopentag = function(tag) {
-		parents.push(currentNode);
-		currentNode = { type: 'tag', name: tag.name, nodes: [], attributes: {} };
-		for (var key in tag.attributes) {
-			currentNode.attributes[key] = tag.attributes[key];
+		// parse the XML document using sax-js
+		let saxStream = sax.parser(true, { normalize: true });
+		saxStream.onopentag = tag => {
+			parentNodes.push(currentNode);
+			currentNode = { type: 'tag', name: tag.name, nodes: [], attributes: {} };
+			for (const key in tag.attributes)
+				currentNode.attributes[key] = tag.attributes[key];
+		};
+		saxStream.onclosetag = tag => {
+			let nodeWithTag = currentNode;
+			currentNode = parentNodes.pop();
+			currentNode.nodes.push(nodeWithTag);
+		};
+		saxStream.oncomment = text => {
+			currentNode.nodes.push({ type: 'comment', text: text });
 		}
-	};
-	saxParser.onclosetag = function(tag) {
-		var nodeWithTag = currentNode;
-		currentNode = parents.pop();
-		currentNode.nodes.push(nodeWithTag);
+		saxStream.ontext = text => {
+			currentNode.nodes.push({ type: 'text', text: text });
+		}
+		saxStream.write(xmlText);
+		saxStream.close();
 
-	};
-	saxParser.oncomment = function(text) {
-		currentNode.nodes.push({ type: 'comment', text: text });
+		return dom;
 	}
-	saxParser.ontext = function(text) {
-		currentNode.nodes.push({ type: 'text', text: text });
-	}
-	saxParser.write(xmlText);
-	saxParser.close();
 
-	return dom;
+	static readFile(fileName)
+	{
+		let xmlText = FS.readFile(fileName);
+		return parse(xmlText);
+	}
+
+	constructor()
+	{
+		throw new TypeError(`''${new.target.name}' is a static class and cannot be instantiated`);
+	}
 }
+
+// CommonJS
+exports = module.exports = XML;
+Object.assign(exports, {
+	__esModule: true,
+	XML:        XML,
+	default:    XML,
+});

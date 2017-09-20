@@ -36,17 +36,31 @@ exports.default = exports;
 
 const from = require('from');
 
-exports.run = run;
-function run(tests)
+class Test
 {
-	from.Object(tests)
-		.where(function(test, k) { return k.substring(0, 4) === 'test'; })
-		.where(function(test, k) { return k !== 'test' })
-		.each(function(test)
+	static run(tests)
 	{
-		if (typeof test === 'function')
-			test();
-		else if (typeof test === 'object' && test !== null)
-			run(test);
-	});
+		let testJobs = from.Object(tests)
+			.where((it, key) => key.startsWith('test'))
+			.where((it, key) => key !== 'test');
+		for (const job in testJobs) {
+			if (typeof job === 'function')
+				job();
+			else if (typeof test === 'object' && test !== null)
+				run(job);
+		}
+	}
+
+	constructor()
+	{
+		throw new TypeError(`''${new.target.name}' is a singleton and cannot be instantiated`);
+	}
 }
+
+// CommonJS
+exports = module.exports = Test;
+Object.assign(exports, {
+	__esModule: true,
+	Test:       Test,
+	default:    Test,
+});
