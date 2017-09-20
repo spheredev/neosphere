@@ -31,11 +31,11 @@
 **/
 
 'use strict';
-const assert  = require('assert'),
-      RNGPlus = require('rngPlus');
+const assert     = require('assert'),
+      Randomizer = require('randomizer');
 
-const ItemSourceKey = Symbol('itemSource'),
-      RandomNumberGod = new RNGPlus();
+let itemSourceKey = Symbol('itemSource'),
+    randomizer    = new Randomizer();
 
 function from(...targets)
 {
@@ -83,7 +83,7 @@ function fromIterable(target)
 function MAKEPOINT(sourceType, op)
 {
 	return function (...args) {
-		let thisSource = this[ItemSourceKey];
+		let thisSource = this[itemSourceKey];
 		let newSource = new sourceType(thisSource, ...args);
 
 		// if it's a terminal operator, run the query.  otherwise construct
@@ -111,7 +111,7 @@ function PROPDESC(flags, valueOrGetter, setter)
 
 function FromQuery(source)
 {
-	this[ItemSourceKey] = source;
+	this[itemSourceKey] = source;
 }
 
 Object.defineProperties(FromQuery.prototype,
@@ -119,7 +119,7 @@ Object.defineProperties(FromQuery.prototype,
 	[Symbol.iterator]:
 	PROPDESC('wc', function enumerate(withKeys)
 	{
-		var source = this[ItemSourceKey];
+		var source = this[itemSourceKey];
 		source.init();
 		return { next: next };
 
@@ -524,7 +524,7 @@ function SampleSource(uniqueOnly)
 			var item;
 
 			if (m_numSamples++ < m_count) {
-				index = RandomNumberGod.discrete(0, m_items.length - 1);
+				index = randomizer.discrete(0, m_items.length - 1);
 				item = m_items[index];
 				if (uniqueOnly)
 					m_items.splice(index, 1);
@@ -557,7 +557,7 @@ function ShuffledSource(source)
 			m_list[index] = item;
 		}
 		for (var i = m_list.length - 1; i >= 1; --i) {
-			index = RandomNumberGod.discrete(0, i);
+			index = randomizer.discrete(0, i);
 			temp = m_list[index];
 			m_list[index] = m_list[i];
 			m_list[i] = temp;
