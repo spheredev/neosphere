@@ -82,18 +82,18 @@ static jmp_buf s_jmp_restart;
 
 static const char* const ERROR_TEXT[][2] =
 {
-	{ "*munch*", "a hunger-pig just devourized your game!" },
-	{ "*CRASH!*", "it's an 812-car pileup!" },
-	{ "so, um... a funny thing happened...", "...on the way to the boss..." },
-	{ "here's the deal.", "the game encountered an error." },
-	{ "this game sucks!", "or maybe it's just the programmer..." },
-	{ "cows eat kitties. pigs don't eat cows.", "they just get \"replaced\" by them." },
-	{ "hey look, a squirrel!", "I wonder if IT'S responsible for this." },
-	{ "sorry. it's just...", "...well, this is a trainwreck of a game." },
-	{ "you better run, and you better hide...", "...'cause a big fat hawk just ate that guy!" },
-	{ "an exception was thrown.", "miniSphere takes exception to sucky games." },
-	{ "honk. HONK. honk. HONK. :o)", "there's a clown behind you." },
-	{ "this game has OVER NINE THOUSAND errors.", "WHAT?! 9000?! no way that can be right!" },
+	{ "*MUNCH*", "A hunger-pig just devourized your game!" },
+	{ "*CRASH!*", "It's an 812-car pileup!" },
+	{ "So, um... a funny thing happened...", "...on the way to the boss..." },
+	{ "Here's the deal.", "The game encountered an error." },
+	{ "This game sucks!", "Or maybe it's just the programmer..." },
+	{ "Cows eat kitties. Pigs don't eat cows.", "They just get \"replaced\" by them." },
+	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." },
+	{ "Sorry. it's just...", "...well, this is a trainwreck of a game." },
+	{ "You better run, and you better hide...", "...'cause a big fat hawk just ate that guy!" },
+	{ "An exception was thrown.", "miniSphere takes exception to sucky games." },
+	{ "honk. HONK. honk. HONK. :o)", "There's a clown behind you." },
+	{ "This game has OVER NINE THOUSAND errors.", "WHAT?! 9000?! no way that can be right!" },
 };
 
 int

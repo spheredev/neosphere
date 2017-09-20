@@ -32,13 +32,15 @@
 
 'use strict';
 
+let kPactHandlers = Symbol('pactHandlers');
+
 class Pact
 {
 	get [Symbol.toStringTag]() { return 'Pact'; }
 
 	constructor()
 	{
-		this._handlers = [];
+		this[kPactHandlers] = [];
 	}
 
 	makePromise()
@@ -48,38 +50,38 @@ class Pact
 			handler = { resolve, reject };
 		})
 		handler.that = promise;
-		this._handlers.push(handler);
+		this[kPactHandlers].push(handler);
 		return promise;
-	}
-
-	resolve(promise, value)
-	{
-		let handler = this._getHandler(promise);
-		handler.resolve(value);
 	}
 
 	reject(promise, reason)
 	{
-		let handler = this._getHandler(promise);
+		let handler = getHandler(promise);
 		handler.reject(reason);
+	}
+
+	resolve(promise, value)
+	{
+		let handler = getHandler(promise);
+		handler.resolve(value);
 	}
 
 	welsh(reason)
 	{
-		for (let i = this._handlers.length - 1; i >= 0; --i)
-			this._handlers[i].reject(reason);
+		for (let i = this[kPactHandlers].length - 1; i >= 0; --i)
+			this[kPactHandlers][i].reject(reason);
 	}
+}
 
-	_getHandler(promise)
-	{
-		if (!(promise instanceof Promise))
-			throw new TypeError(`'${String(promise)}' is not a promise`);
-		for (var i = this._handlers.length - 1; i >= 0; --i) {
-			if (this._handlers[i].that == promise)
-				return this._handlers[i];
-		}
-		throw new TypeError("unrecognized promise");
+function getHandler(pact, promise)
+{
+	if (!(promise instanceof Promise))
+		throw new TypeError(`'${String(promise)}' is not a promise`);
+	for (let i = pact[kPactHandlers].length - 1; i >= 0; --i) {
+		if (pact[kPactHandlers][i].that == promise)
+			return pact[kPactHandlers][i];
 	}
+	throw new TypeError("Promise is not from this pact");
 }
 
 // CommonJS
