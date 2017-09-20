@@ -126,32 +126,8 @@ Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
       be met with a sandbox violation error.
 
 
-`require` Function
-------------------
-
-Sphere uses the CommonJS module standard to manage script dependencies.  In a
-CommonJS environment, each script runs as a function, which help isolate them
-from one another and enables more granular control of exports.  In addition,
-because the code importing a module decides under what name to store the
-imports (if at all), naming conflicts between modules are avoided entirely.
-
-require(module_id);
-
-    Loads a CommonJS module and returns its export table.  `module_id` is a
-    string identifying the module to load, with the same semantics as in, e.g.
-    Node.js.  If the module cannot be found, an error will be thrown.  The
-    engine will look for modules in the following locations:
-
-        @/lib/
-        #/modules/
-
-    If `require()` is provided with a module ID beginning with either `./` or
-    `../`, this indicates a path relative to the location of the calling
-    module.
-
-
-`screen` Built-In Surface
--------------------------
+`screen` Built-In
+-----------------
 
 In Sphere v2, the backbuffer is exposed as a custom `Surface` object (see
 below) with some additional special-purpose methods.  The surface is accessible
