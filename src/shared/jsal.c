@@ -449,10 +449,8 @@ jsal_eval_module(const char* filename)
 		script_cookie, (BYTE*)source, (unsigned int)source_len,
 		JsParseModuleSourceFlags_DataIsUTF8, &exception);
 	add_compiled_script(filename, script_cookie);
-	if (error_code == JsErrorScriptCompile) {
-		vector_clear(s_module_jobs);
-		throw_value(exception);
-	}
+	if (error_code == JsErrorScriptCompile)
+		goto on_exception;
 	while (vector_len(s_module_jobs) > 0) {
 		job = vector_get(s_module_jobs, 0);
 		job_source = job->source;
@@ -461,10 +459,8 @@ jsal_eval_module(const char* filename)
 			job->script_id, (BYTE*)job->source, (unsigned int)job->source_size,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
 		free(job_source);
-		if (error_code == JsErrorScriptCompile) {
-			vector_clear(s_module_jobs);
-			throw_value(exception);
-		}
+		if (error_code == JsErrorScriptCompile)
+			goto on_exception;
 		vector_remove(s_module_jobs, 0);
 	}
 	JsModuleEvaluation(module, &result);
@@ -472,6 +468,12 @@ jsal_eval_module(const char* filename)
 
 	push_value(result);
 	jsal_remove(-2);
+	return;
+
+on_exception:
+	vector_clear(s_module_jobs);
+	throw_on_error();
+	throw_value(exception);
 }
 
 void
@@ -2222,7 +2224,7 @@ throw_value(JsValueRef value)
 		longjmp(label, 1);
 	}
 	else {
-		printf("JSAL exception thrown from unguarded C code!\n");
+		printf("JS exception thrown from unguarded C code!\n");
 		printf("-> %s\n", jsal_to_string(-1));
 		abort();
 	}

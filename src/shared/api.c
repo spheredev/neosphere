@@ -27,13 +27,16 @@ static int         class_id_from_name        (const char* name);
 static const char* class_name_from_id        (int class_id);
 
 static vector_t* s_classes;
+static js_ref_t* s_key_prototype;
 static js_ref_t* s_prototypes;
 
 void
 api_init(void)
 {
 	s_classes = vector_new(sizeof(struct class_data));
-	
+
+	s_key_prototype = jsal_new_key("prototype");
+
 	// JavaScript 'global' binding (like Node.js)
 	// also map global 'exports' to the global object, as TypeScript likes to add
 	// exports even when compiling scripts as program code.
@@ -60,6 +63,7 @@ api_uninit(void)
 	
 	iter_t iter;
 
+	jsal_unref(s_key_prototype);
 	jsal_unref(s_prototypes);
 	iter = vector_enum(s_classes);
 	while (iter_next(&iter)) {
@@ -328,7 +332,7 @@ jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 	if (in_ctor) {
 		jsal_push_this();
 		if (jsal_is_function(-1)) {
-			jsal_get_prop_string(-1, "prototype");
+			jsal_get_prop_key(-1, s_key_prototype);
 			jsal_set_prototype(-3);
 		}
 		jsal_pop(1);
