@@ -9,8 +9,12 @@ v5.0.0 - TBD
   native support for ES2015+ syntax and built-ins to Sphere--including
   out-of-the-box support for ECMAScript modules!--without the need for any
   transpilation or polyfills.
-* Brings back the `Pact` class!  This provides an easy way to manage promises
-  in JavaScript.
+* Adds back the `Pact` class, providing an easier way to manage promises.
+* Adds a new `DataStream` class, which extends from `FileStream` to allow more
+  easily reading binary data such as integers and length-prefixed strings from
+  a file.
+* Adds a `Randomizer` class which extends from `RNG`.  This replaces `Random`.
+* Removes the `DataReader` and `DataWriter` classes.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to
   text encoding.  Notably, `FS.readFile()` now correctly handles the UTF-8
   byte-order mark.
