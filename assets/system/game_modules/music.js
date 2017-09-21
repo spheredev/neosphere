@@ -148,7 +148,7 @@ function _crossfade(fileName, frames, forceChange)
 {
 	frames = frames !== undefined ? Math.trunc(frames) : 0;
 
-	var allowChange = !haveOverride || forceChange;
+	let allowChange = !haveOverride || forceChange;
 	if (currentSound != null && allowChange) {
 		currentSound.fader.stop();
 		currentSound.fader = new Scene()
@@ -156,13 +156,13 @@ function _crossfade(fileName, frames, forceChange)
 			.run();
 	}
 	if (fileName !== null) {
-		var fullPath = FS.fullPath(fileName, '@/music');
-		fullPath = from([ '', 'ogg', 'mp3', 'it', 'mod', 's3m', 'xm', 'flac' ])
-			.select(it => `${fullPath}.${it}`)
-			.first(it => FS.fileExists(it))
+		let fullPath = FS.fullPath(fileName, '@/music');
+		fullPath = from([ '', '.ogg', '.mp3', '.it', '.mod', '.s3m', '.xm', '.flac' ])
+			.select(suffix => `${fullPath}${suffix}`)
+			.first(fileName => FS.fileExists(fileName))
 		if (fullPath === undefined)
 			throw new Error(`couldn't find music '${fileName}'`);
-		var stream = new Sound(fullPath);
+		let stream = new Sound(fullPath);
 		stream.repeat = true;
 		stream.volume = 0.0;
 		stream.play(mixer);

@@ -38,9 +38,9 @@ class Image
 	constructor(fileName)
 	{
 		let fullPath = FS.fullPath(fileName, '@/images');
-		fullPath = from([ '', 'png', 'jpg', 'bmp' ])
-			.select(function(it) { return fullPath + '.' + it; })
-			.first(function(it) { return FS.fileExists(it); })
+		fullPath = from([ '', '.png', '.jpg', '.bmp' ])
+			.select(suffix => `${fullPath}${suffix}`)
+			.first(fileName => FS.fileExists(fileName))
 		if (fullPath === undefined)
 			throw new Error(`couldn't find image '${fileName}'`);
 		
