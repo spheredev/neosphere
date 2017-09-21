@@ -58,6 +58,15 @@ function Image(fileName)
 		vertex:   '#/shaders/tintedImage.vert.glsl',
 	});
 	this.model = new Model([ shape ], tintShader);
+	
+	Object.defineProperty(this, 'width', {
+		writable: false, enumerable: false, configurable: true,
+		value: this.texture.width,
+	});
+	Object.defineProperty(this, 'height', {
+		writable: false, enumerable: false, configurable: true,
+		value: this.texture.height,
+	});
 }
 
 Image.prototype.blitTo = function blitTo(surface, x, y, tintColor)
