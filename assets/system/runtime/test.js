@@ -53,7 +53,7 @@ class Test
 
 	constructor()
 	{
-		throw new TypeError(`''${new.target.name}' is a singleton and cannot be instantiated`);
+		throw new TypeError(`'${new.target.name}' is a singleton and cannot be instantiated`);
 	}
 }
 

@@ -81,7 +81,7 @@ struct rfn_glyph_header
 };
 #pragma pack(pop)
 
-static unsigned int s_next_font_id = 0;
+static unsigned int s_next_font_id = 1;
 
 font_t*
 font_load(const char* filename)
