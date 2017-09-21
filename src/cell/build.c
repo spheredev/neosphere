@@ -1293,7 +1293,7 @@ js_FS_createDirectory(duk_context* ctx)
 	name = duk_require_pathname(ctx, 0, NULL);
 
 	if (fs_mkdir(build->fs, name) != 0)
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to create directory");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't create directory '%s'", name);
 	return 0;
 }
 
@@ -1308,7 +1308,7 @@ js_FS_deleteFile(duk_context* ctx)
 	filename = duk_require_pathname(ctx, 0, NULL);
 
 	if (!fs_unlink(build->fs, filename))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "unable to delete file", filename);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't delete file '%s'", filename);
 	return 0;
 }
 
@@ -1403,7 +1403,7 @@ js_FS_removeDirectory(duk_context* ctx)
 	name = duk_require_pathname(ctx, 0, NULL);
 
 	if (!fs_rmdir(build->fs, name))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "directory removal failed");
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't remove directory '%s'", name);
 	return 0;
 }
 
@@ -1420,7 +1420,7 @@ js_FS_rename(duk_context* ctx)
 	name2 = duk_require_pathname(ctx, 1, NULL);
 
 	if (!fs_rename(build->fs, name1, name2))
-		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "rename failed", name1, name2);
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "couldn't rename '%s' to '%s'", name1, name2);
 	return 0;
 }
 

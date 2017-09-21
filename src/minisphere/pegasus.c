@@ -391,7 +391,7 @@ static duk_ret_t js_Sound_play                    (duk_context* ctx);
 static duk_ret_t js_Sound_stop                    (duk_context* ctx);
 static duk_ret_t js_new_SoundStream               (duk_context* ctx);
 static duk_ret_t js_SoundStream_finalize          (duk_context* ctx);
-static duk_ret_t js_SoundStream_get_bufferSize    (duk_context* ctx);
+static duk_ret_t js_SoundStream_get_length        (duk_context* ctx);
 static duk_ret_t js_SoundStream_play              (duk_context* ctx);
 static duk_ret_t js_SoundStream_pause             (duk_context* ctx);
 static duk_ret_t js_SoundStream_stop              (duk_context* ctx);
@@ -599,7 +599,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_method(ctx, "Sound", "play", js_Sound_play);
 	api_define_method(ctx, "Sound", "stop", js_Sound_stop);
 	api_define_class(ctx, "SoundStream", js_new_SoundStream, js_SoundStream_finalize);
-	api_define_property(ctx, "SoundStream", "bufferSize", js_SoundStream_get_bufferSize, NULL);
+	api_define_property(ctx, "SoundStream", "length", js_SoundStream_get_length, NULL);
 	api_define_method(ctx, "SoundStream", "pause", js_SoundStream_pause);
 	api_define_method(ctx, "SoundStream", "play", js_SoundStream_play);
 	api_define_method(ctx, "SoundStream", "stop", js_SoundStream_stop);
@@ -3995,14 +3995,14 @@ js_SoundStream_finalize(duk_context* ctx)
 }
 
 static duk_ret_t
-js_SoundStream_get_bufferSize(duk_context* ctx)
+js_SoundStream_get_length(duk_context* ctx)
 {
 	stream_t*    stream;
 
 	duk_push_this(ctx);
 	stream = duk_require_class_obj(ctx, -1, "SoundStream");
 
-	duk_push_number(ctx, stream_bytes_left(stream));
+	duk_push_number(ctx, stream_length(stream));
 	return 1;
 }
 

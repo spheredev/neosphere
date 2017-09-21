@@ -1487,9 +1487,12 @@ new SoundStream([frequency[, bits[, channels]]]);
 
     The default stream format is 8-bit 22050Hz with 1 channel.
 
-SoundStream#bufferSize [read-only]
+SoundStream#length [read-only]
 
-    Gets the total number of samples in the stream's buffer.
+    Gets the amount of audio currently buffered into the stream, in seconds.
+    Playback will pause if the buffer is exhausted; To ensure skip-free
+    playback, you should monitor the stream and write more data before `length`
+    reaches zero.
 
 SoundStream#pause();
 
