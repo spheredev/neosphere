@@ -526,6 +526,16 @@ FS.directoryExists(dir_name);
     Checks whether the specified directory exists and returns true if it does.
     Otherwise, returns false.
 
+FS.evaluateScript(filename);
+
+    Executes a JavaScript file in the global scope and returns the result.
+    This is useful for executing scripts originally written for the Web, where
+    modules are not supported.
+
+    Note: Depending on the particular script being evaluated, this function
+          can--and likely will--create new global functions and variables.  Be
+          sure you know what you're doing!
+
 FS.fileExists(filename);
 
     Checks whether the specified file exists and returns true if it does.

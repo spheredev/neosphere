@@ -260,6 +260,7 @@ static duk_ret_t js_Dispatch_onUpdate             (duk_context* ctx);
 static duk_ret_t js_FS_createDirectory            (duk_context* ctx);
 static duk_ret_t js_FS_deleteFile                 (duk_context* ctx);
 static duk_ret_t js_FS_directoryExists            (duk_context* ctx);
+static duk_ret_t js_FS_evaluateScript             (duk_context* ctx);
 static duk_ret_t js_FS_fileExists                 (duk_context* ctx);
 static duk_ret_t js_FS_fullPath                   (duk_context* ctx);
 static duk_ret_t js_FS_readFile                   (duk_context* ctx);
@@ -505,6 +506,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "FS", "createDirectory", js_FS_createDirectory);
 	api_define_function(ctx, "FS", "deleteFile", js_FS_deleteFile);
 	api_define_function(ctx, "FS", "directoryExists", js_FS_directoryExists);
+	api_define_function(ctx, "FS", "evaluateScript", js_FS_evaluateScript);
 	api_define_function(ctx, "FS", "fileExists", js_FS_fileExists);
 	api_define_function(ctx, "FS", "fullPath", js_FS_fullPath);
 	api_define_function(ctx, "FS", "readFile", js_FS_readFile);
@@ -1753,6 +1755,20 @@ js_FS_directoryExists(duk_context* ctx)
 	pathname = duk_require_pathname(ctx, 0, NULL, false, false);
 
 	duk_push_boolean(ctx, game_dir_exists(g_game, pathname));
+	return 1;
+}
+
+static duk_ret_t
+js_FS_evaluateScript(duk_context* ctx)
+{
+	const char* filename;
+
+	filename = duk_require_pathname(ctx, 0, NULL, false, false);
+
+	if (!game_file_exists(g_game, filename))
+		duk_error_blame(ctx, -1, DUK_ERR_ERROR, "script file not found '%s'", filename);
+	if (!script_eval(filename, false))
+		duk_throw(ctx);
 	return 1;
 }
 

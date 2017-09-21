@@ -1,6 +1,11 @@
 miniSphere Changelog
 ====================
 
+v4.8.8 - TBD
+------------
+
+* Adds `FS.evaluateScript()`, backported from miniSphere 5.0.
+
 v4.8.7 - September 16, 2017
 ---------------------------
 
