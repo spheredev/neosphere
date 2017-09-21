@@ -1,3 +1,12 @@
+minisphere (4.8.8) zesty; urgency=low
+
+  * Adds `FS.evaluateScript()`, used for loading Sphere v1 and browser scripts
+    without having to fall back on the Sphere v1 API.
+  * Adds `Image#width` and `Image#height` properties.
+  * Adds `SoundStream#length` and removes `SoundStream#bufferSize`.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 21 Sep 2017 00:00:00 -0500
+
 minisphere (4.8.7) zesty; urgency=low
 
   * Fixes a bug where paths beginning with `~/` were incorrectly interpreted as

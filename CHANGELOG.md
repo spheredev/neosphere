@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v4.8.8 - TBD
-------------
+v4.8.8 - September 21, 2017
+---------------------------
 
 * Adds `FS.evaluateScript()`, used for loading Sphere v1 and browser scripts
   without having to fall back on the Sphere v1 API.
