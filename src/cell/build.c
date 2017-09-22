@@ -46,6 +46,7 @@
 struct build
 {
 	vector_t*     artifacts;
+	bool          crashed;
 	fs_t*         fs;
 	vector_t*     targets;
 	time_t        timestamp;
@@ -271,9 +272,11 @@ build_free(build_t* build)
 	if (build == NULL)
 		return;
 
-	printf("%d error(s), %d warning(s).\n",
-		visor_num_errors(build->visor),
-		visor_num_warns(build->visor));
+	if (!build->crashed) {
+		printf("%d error(s), %d warning(s).\n",
+			visor_num_errors(build->visor),
+			visor_num_warns(build->visor));
+	}
 
 	iter = vector_enum(build->artifacts);
 	while (iter_next(&iter))
@@ -290,11 +293,9 @@ build_free(build_t* build)
 bool
 build_eval(build_t* build, const char* filename)
 {
-	int         column_number;
-	const char* error_stack = NULL;
+	char*       error_stack = NULL;
 	bool        is_mjs;
 	bool        is_ok = true;
-	int         line_number;
 	path_t*     path;
 	struct stat stats;
 
@@ -307,27 +308,21 @@ build_eval(build_t* build, const char* filename)
 	is_mjs = path_has_extension(path, ".mjs");
 	path_free(path);
 	if (!eval_cjs_module(build->fs, filename, is_mjs)) {
+		build->crashed = true;
 		is_ok = false;
-		if (jsal_has_prop_string(-1, "stack")) {
+		if (jsal_is_error(-1)) {
 			jsal_get_prop_string(-1, "stack");
-			jsal_dup(-1);
-			error_stack = jsal_to_string(-1);
-		} else {
-			jsal_get_prop_string(-1, "line");
-			line_number = jsal_get_int(-1) + 1;
-			jsal_get_prop_string(-2, "column");
-			column_number = jsal_get_int(-1);
+			error_stack = strdup(jsal_get_string(-1));
+			jsal_pop(1);
 		}
-		jsal_dup(-3);
-		jsal_to_string(-1);
-		visor_error(build->visor, "%s", jsal_get_string(-1));
+		visor_error(build->visor, "uncaught JavaScript exception");
 		visor_end_op(build->visor);
-		visor_print(build->visor, "SCRIPT CRASH: uncaught JavaScript exception.");
+		visor_print(build->visor, "BUILD CRASH: uncaught JavaScript exception.");
 		if (error_stack != NULL)
 			visor_print(build->visor, "%s", error_stack);
 		else
-			visor_print(build->visor, "   at %d:%d", line_number, column_number);
-		jsal_pop(3);
+			visor_print(build->visor, "%s", jsal_to_string(-1));
+		free(error_stack);
 	}
 	jsal_pop(1);
 	if (is_ok)

@@ -313,7 +313,7 @@ on_js_error:
 	jsal_dup(-1);
 	error_text = jsal_to_string(-1);
 	screen_show_mouse(g_screen, true);
-	if (jsal_is_object_coercible(-2)) {
+	if (jsal_is_error(-2)) {
 		jsal_get_prop_string(-2, "stack");
 		error_stack = jsal_get_string(-1);
 	}

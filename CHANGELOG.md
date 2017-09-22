@@ -22,6 +22,14 @@ v5.0.0 - TBD
   terminal when a JavaScript runtime error occurs.
 
 
+v4.8.8 - September 21, 2017
+---------------------------
+
+* Adds `FS.evaluateScript()`, used for loading Sphere v1 and browser scripts
+  without having to fall back on the Sphere v1 API.
+* Adds `Image#width` and `Image#height` properties.
+* Adds `SoundStream#length` and removes `SoundStream#bufferSize`.
+
 v4.8.7 - September 16, 2017
 ---------------------------
 
