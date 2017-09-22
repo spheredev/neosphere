@@ -597,7 +597,7 @@ jsal_get_lstring(int index, size_t *out_length)
 		return NULL;
 	buffer_size = length * 3 + 1;
 	buffer = malloc(buffer_size);
-	JsCopyString(value, buffer, buffer_size, &num_bytes, NULL);
+	JsCopyString(value, buffer, buffer_size, &num_bytes);
 	buffer[num_bytes] = '\0';  // NUL terminator
 	free(retval[counter]);
 	retval[counter] = buffer;
