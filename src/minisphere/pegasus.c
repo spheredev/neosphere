@@ -837,26 +837,32 @@ on_import_module(void)
 		"#/runtime",
 	};
 
-	const char* caller_id;
+	char*       caller_id;
+	const char* origin;
 	path_t*     path;
 	char*       source;
 	size_t      source_len;
-	const char* specifier;
+	char*       specifier;
 
 	int i;
 
-	specifier = jsal_require_string(0);
-	caller_id = jsal_require_string(1);
+	// strdup() here because the JSAL-managed strings may get overwritten
+	// in the course of a filename lookup.
+	specifier = strdup(jsal_require_string(0));
+	caller_id = strdup(jsal_require_string(1));
 
 	// HACK: the way JSAL is currently designed, the same filename is used for
 	//       module resolution as for display; this works around the limitation
 	//       until more comprehensive refactoring can be done.
-	caller_id = debugger_compiled_name(caller_id);
+	origin = debugger_compiled_name(caller_id);
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module(specifier, caller_id, PATHS[i], true))
+		if (path = find_module(specifier, origin, PATHS[i], true))
 			break;  // short-circuit
 	}
+	free(specifier);
+	free(caller_id);
+
 	if (path == NULL)
 		jsal_error(JS_REF_ERROR, "couldn't find JS module '%s'", specifier);
 	if (path_has_extension(path, ".mjs")) {
