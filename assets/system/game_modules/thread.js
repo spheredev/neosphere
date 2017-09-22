@@ -33,117 +33,109 @@
 'use strict';
 const from = require('from');
 
-var currentSelf = 0;
-var haveMapEngine = typeof MapEngine === 'function';
-var nextThreadID = 1;
-var threads = [];
-Dispatch.onUpdate(_updateAll);
-Dispatch.onRender(_renderAll);
+let currentSelf = 0,
+    haveMapEngine = typeof MapEngine === 'function',
+    initialized = false,
+    nextThreadID = 1,
+    threads = [];
 
-Thread.create = function create(entity, priority)
+class Thread
 {
-	priority = priority !== undefined ? priority : 0;
-
-	var update = entity.update;
-	var render = (typeof entity.render === 'function') ? entity.render : undefined;
-	var getInput = (typeof entity.getInput === 'function') ? entity.getInput : null;
-	return _makeThread(entity, {
-		priority: priority,
-		update: entity.update,
-		render: entity.render,
-		getInput: entity.getInput,
-	});
-}
-
-Thread.isRunning = function isRunning(threadID)
-{
-	if (threadID == 0)
-		return false;
-	for (var i = 0; i < threads.length; ++i) {
-		if (threads[i].id == threadID)
-			return true;
-	}
-	return false;
-}
-
-Thread.join = function join(threadIDs)
-{
-	threadIDs = threadIDs instanceof Array ? threadIDs : [ threadIDs ];
-	while (from.Array(threads)
-		.where(it => threadIDs.indexOf(it.id) >= 0)
-		.count() > 0)
+	static create(entity, priority = 0)
 	{
-		if (haveMapEngine && IsMapEngineRunning()) {
-            UpdateMapEngine();
-			RenderMap();
+		if (!initialized) {
+			Dispatch.onUpdate(updateAllThreads);
+			Dispatch.onRender(renderAllThreads);
+			initialized = true;
 		}
-		screen.flip();
+		return makeThread(entity, {
+			priority: priority,
+			update: entity.update,
+			render: entity.render,
+			getInput: entity.getInput,
+		});
+	}
+
+	static isRunning(threadID)
+	{
+		if (threadID == 0)
+			return false;
+		for (var i = 0; i < threads.length; ++i) {
+			if (threads[i].id == threadID)
+				return true;
+		}
+		return false;
+	}
+
+	static join(threadIDs)
+	{
+		threadIDs = threadIDs instanceof Array ? threadIDs : [ threadIDs ];
+		while (from.Array(threads)
+			.where(it => threadIDs.indexOf(it.id) >= 0)
+			.count() > 0)
+		{
+			if (haveMapEngine && IsMapEngineRunning()) {
+				UpdateMapEngine();
+				RenderMap();
+			}
+			screen.flip();
+		}
+	}
+
+	static kill(threadID)
+	{
+		from.Array(threads)
+			.where(it => it.id == threadID)
+			.besides(it => it.isValid = false)
+			.remove();
+	}
+
+	static self()
+	{
+		return currentSelf;
+	}
+
+	constructor(options = {})
+	{
+		this.threadID = null;
+		this.threadPriority = options.priority !== undefined ? options.priority : 0;
+	}
+
+	on_checkInput() {}
+	on_render() {}
+	on_update() {}
+
+	get running()
+	{
+		return Thread.isRunning(this.threadID);
+	}
+
+	dispose()
+	{
+		this.stop();
+	}
+
+	join()
+	{
+		Thread.join(this.threadID);
+	}
+
+	start()
+	{
+		this.threadID = Thread.create({
+			getInput: () => { this.on_checkInput(); },
+			update:   () => { this.on_update(); return true; },
+			render:   () => { this.on_render(); },
+		}, this.threadPriority);
+	}
+
+	stop()
+	{
+		kill(this.threadID);
 	}
 }
 
-Thread.kill = function kill(threadID)
-{
-	from.Array(threads)
-		.where(it => it.id == threadID)
-		.besides(it => it.isValid = false)
-		.remove();
-}
-
-Thread.self = function self()
-{
-	return currentSelf;
-}
-
-function Thread(options)
-{
-	options = options !== undefined ? options : {};
-
-	this.threadID = null;
-	this.threadPriority = options.priority !== undefined
-		? options.priority : 0;
-}
-
-Thread.prototype.on_checkInput = function() {};
-Thread.prototype.on_update = function() {};
-Thread.prototype.on_render = function() {};
-
-Object.defineProperty(Thread.prototype, 'running',
-{
-	enumerable: true, configurable: true,
-	get: function get() { return Thread.isRunning(this.threadID); },
-});
-
-Thread.prototype.dispose = function dispose()
-{
-	this.stop();
-};
-
-Thread.prototype.join = function join()
-{
-	Thread.join(this.threadID);
-};
-
-Thread.prototype.start = function start()
-{
-	this.threadID = Thread.create({
-		getInput: () => { this.on_checkInput(); },
-		update:   () => { this.on_update(); return true; },
-		render:   () => { this.on_render(); },
-	}, this.threadPriority);
-};
-
-Thread.prototype.stop = function stop()
-{
-	kill(this.threadID);
-};
-
-function _compare(a, b) {
-	return a.priority != b.priority ?
-		a.priority - b.priority :
-		a.id - b.id;
-};
-
-function _makeThread(that, threadDesc)
+function makeThread(that, threadDesc)
 {
 	var update = threadDesc.update.bind(that);
 	var render = typeof threadDesc.render === 'function'
@@ -162,11 +154,14 @@ function _makeThread(that, threadDesc)
 		updater: update,
 	};
 	threads.push(newThread);
-	threads.sort(_compare);
+	threads.sort((a, b) => {
+		return a.priority != b.priority ? a.priority - b.priority
+			: a.id - b.id;
+	});
 	return newThread.id;
 }
 
-function _renderAll()
+function renderAllThreads()
 {
 	let activeThreads = from.Array(threads.slice())
 		.where(it => it.isValid)
@@ -175,7 +170,7 @@ function _renderAll()
 		thread.renderer();
 }
 
-function _updateAll()
+function updateAllThreads()
 {
 	let activeThreads = from.Array(threads.slice())
 		.where(it => it.isValid && !it.isBusy)
