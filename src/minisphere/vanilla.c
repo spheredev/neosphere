@@ -6389,53 +6389,6 @@ js_ByteArray_finalize(void* host_ptr)
 }
 
 static bool
-js_ByteArray_proxy_get(js_ref_t* me, int num_args, bool is_ctor, int magic)
-{
-	bytearray_t* array;
-	int          index;
-	int          size;
-
-	array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
-	if (jsal_is_number(1)) {
-		index = jsal_to_int(1);
-		size = bytearray_len(array);
-		if (index < 0 || index >= size)
-			jsal_error(JS_RANGE_ERROR, "byte index '%d' out of bounds", index);
-		jsal_push_int(bytearray_get(array, index));
-		return true;
-	}
-	else {
-		jsal_dup(1);
-		jsal_get_prop(0);
-		return true;
-	}
-}
-
-static bool
-js_ByteArray_proxy_set(js_ref_t* me, int num_args, bool is_ctor, int magic)
-{
-	bytearray_t* array;
-	int          index;
-	int          size;
-
-	array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
-	if (jsal_is_number(1)) {
-		index = jsal_to_int(1);
-		size = bytearray_len(array);
-		if (index < 0 || index >= size)
-			jsal_error(JS_RANGE_ERROR, "byte index '%d' out of bounds", index);
-		bytearray_set(array, index, jsal_require_int(2));
-		return false;
-	}
-	else {
-		jsal_dup(1);
-		jsal_dup(2);
-		jsal_put_prop(0);
-		return false;
-	}
-}
-
-static bool
 js_ByteArray_get_length(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;

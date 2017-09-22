@@ -848,8 +848,11 @@ on_import_module(void)
 	specifier = jsal_require_string(0);
 	caller_id = jsal_require_string(1);
 
-	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_TYPE_ERROR, "relative require in global code or ES module is not allowed");
+	// HACK: the way JSAL is currently designed, the same filename is used for
+	//       module resolution as for display; this works around the limitation
+	//       until more comprehensive refactoring can be done.
+	caller_id = debugger_compiled_name(caller_id);
+
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module(specifier, caller_id, PATHS[i], true))
 			break;  // short-circuit

@@ -310,8 +310,9 @@ print_usage(void)
 	printf("   -p, --package   Build a Sphere game package (.spk).                       \n");
 	printf("   -r, --rebuild   Rebuild all targets, even when already up to date.        \n");
 	printf("   -c, --clean     Clean up all artifacts from the previous build.           \n");
-	printf("   -d, --debug     Include a debugging map in the compiled game which maps   \n");
-	printf("                   compiled targets to their corresponding source files.     \n");
+	printf("   -d, --debug     Include debugging information for use with SSj/SSj Blue.  \n");
+	printf("       --release   Build for distribution, without SSj debugging information.\n");
+	printf("                   This is the default when building a package.              \n");
 	printf("       --version   Print the version number of Cell and its dependencies.    \n");
 	printf("       --help      Print this help text.                                     \n");
 }
