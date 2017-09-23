@@ -31,11 +31,10 @@
 **/
 
 'use strict';
-const assert     = require('assert'),
-      Randomizer = require('randomizer');
+const assert = require('assert'),
+      Random = require('random');
 
-let itemSourceKey = Symbol('itemSource'),
-    randomizer    = new Randomizer();
+let itemSourceKey = Symbol('from() query source');
 
 function from(...targets)
 {
@@ -524,7 +523,7 @@ function SampleSource(uniqueOnly)
 			var item;
 
 			if (m_numSamples++ < m_count) {
-				index = randomizer.discrete(0, m_items.length - 1);
+				index = Random.discrete(0, m_items.length - 1);
 				item = m_items[index];
 				if (uniqueOnly)
 					m_items.splice(index, 1);
@@ -557,7 +556,7 @@ function ShuffledSource(source)
 			m_list[index] = item;
 		}
 		for (var i = m_list.length - 1; i >= 1; --i) {
-			index = randomizer.discrete(0, i);
+			index = Random.discrete(0, i);
 			temp = m_list[index];
 			m_list[index] = m_list[i];
 			m_list[i] = temp;

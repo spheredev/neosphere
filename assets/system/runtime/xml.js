@@ -35,6 +35,11 @@ const sax = require('./lib/sax');
 
 class XML
 {
+	constructor()
+	{
+		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
+	}
+
 	static parse(xmlText)
 	{
 		let dom = { type: 'root', nodes: [] };
@@ -70,11 +75,6 @@ class XML
 	{
 		let xmlText = FS.readFile(fileName);
 		return parse(xmlText);
-	}
-
-	constructor()
-	{
-		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
 	}
 }
 

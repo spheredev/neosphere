@@ -2958,8 +2958,7 @@ js_Model_setFloatVector(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	group = jsal_require_class_obj(-1, CLASS_MODEL);
 	name = jsal_require_string(0);
-	if (!jsal_is_array(1))
-		jsal_error(JS_TYPE_ERROR, "array was expected here");
+	jsal_require_array(1);
 
 	size = (int)jsal_get_length(1);
 	if (size < 2 || size > 4)

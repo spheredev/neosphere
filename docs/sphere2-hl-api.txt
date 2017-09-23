@@ -761,55 +761,44 @@ Prim.fill(surface, color);
     surface.
 
 
-`Randomizer` Object
--------------------
+`Random` Namespace
+------------------
 
-`Randomizer` is an enhanced version of the built-in `RNG` class with additional
-convenience methods for generating different types of random values.  For
-example, using a `Randomizer` you can easily generate values from a normal
-distribution or determine whether to do something based on a percentage chance.
-This is very useful in battle systems, for example.
+The `Random` namespace provides functions for generating different types of
+random numbers.  This is a very useful convenience when you need high-quality
+pseudorandom numbers for your game but don't necessarily need the full power of
+the `RNG` class.
 
-`Randomizer` is a subclass of `RNG` and supports all the same methods.  See the
-Core API reference for more information on `RNG`.
+    import { Random } from 'sphere-runtime';
 
-    import { Randomizer } from 'sphere-runtime';
-
-new Randomizer();
-
-    Constructs a new Randomizer object seeded from the current time.  Use
-    `Randomizer.fromSeed()` or `Randomizer.fromState()` to control the initial
-    state of the generator.  See the Core API reference section on `RNG` for
-    more information about these.
-
-Randomizer#chance(odds);
+Random.chance(odds);
 
     Returns true or false depending on the given odds.  `odds` is a number in
     the range [0-1] specifying the odds of returning true.  For example, odds
     of 0.75 will return true 75% of the time.
 
-Randomizer#discrete(min, max);
+Random.discrete(min, max);
 
     Returns a random integer uniformly distributed within the range [min,max].
 
-Randomizer#normal(mean, sigma);
+Random.normal(mean, sigma);
 
     Returns a random floating point number from a normal distribution
     (sometimes called a bell curve) with expected value of `mean` and standard
     deviation `sigma`.
 
-Randomizer#sample(array);
+Random.sample(array);
 
     Returns a randomly chosen item from the specified array.
 
-Randomizer#string(length);
+Random.string(length);
 
     Returns a randomly generated string consisting of alphanumeric characters.
     The generated string looks something like a YouTube video hash (e.g.
     YlHRHDrKS) and is useful for uniquely identifying things, for example to
     generate temporary filenames.
 
-Randomizer#uniform(mean, variance);
+Random.uniform(mean, variance);
 
     Returns a random floating point value uniformly distributed around `mean`
     with an absolute maximum deviation ("give or take") specified by

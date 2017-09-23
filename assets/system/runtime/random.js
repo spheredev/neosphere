@@ -21,33 +21,23 @@
 'use strict';
 const assert = require('assert');
 
-class Randomizer extends RNG
+let generator = new RNG();
+
+class Random
 {
-	static fromSeed(seedValue)
-	{
-		let rng = super.fromSeed(seedValue);
-		Object.setPrototypeOf(rng, this.prototype);
-	}
-	
-	static fromState(state)
-	{
-		let rng = super.fromSeed(seedValue);
-		Object.setPrototypeOf(rng, this.prototype);
-	}
-	
 	constructor()
 	{
-		super();
+		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
 	}
 
-	chance(odds)
+	static chance(odds)
 	{
 		assert.ok(typeof odds === 'number', "odds must be a number");
 
-		return odds > this.next();
+		return odds > generator.next();
 	}
 
-	discrete(min, max)
+	static discrete(min, max)
 	{
 		assert.ok(typeof min === 'number', "min must be a number");
 		assert.ok(typeof max === 'number', "max must be a number");
@@ -56,10 +46,10 @@ class Randomizer extends RNG
 		max >>= 0;
 		var range = Math.abs(max - min) + 1;
 		min = min < max ? min : max;
-		return min + Math.floor(this.next() * range);
+		return min + Math.floor(generator.next() * range);
 	}
 
-	normal(mean, sigma)
+	static normal(mean, sigma)
 	{
 		assert.ok(typeof mean === 'number', "mean must be a number");
 		assert.ok(typeof sigma === 'number', "sigma must be a number");
@@ -70,8 +60,8 @@ class Randomizer extends RNG
 		var x, u, v, w;
 		if (this.normal.memo === undefined) {
 			do {
-				u = 2.0 * this.next() - 1.0;
-				v = 2.0 * this.next() - 1.0;
+				u = 2.0 * generator.next() - 1.0;
+				v = 2.0 * generator.next() - 1.0;
 				w = u * u + v * v;
 			} while (w >= 1.0);
 			w = Math.sqrt(-2.0 * Math.log(w) / w);
@@ -85,7 +75,7 @@ class Randomizer extends RNG
 		return mean + x * sigma;
 	}
 
-	sample(array)
+	static sample(array)
 	{
 		assert.ok(Array.isArray(array), "argument must be an array");
 
@@ -93,7 +83,7 @@ class Randomizer extends RNG
 		return array[index];
 	}
 
-	string(length)
+	static string(length)
 	{
 		const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -111,20 +101,20 @@ class Randomizer extends RNG
 		return string;
 	}
 
-	uniform(mean, variance)
+	static uniform(mean, variance)
 	{
 		assert.ok(typeof mean === 'number', "mean must be a number");
 		assert.ok(typeof variance === 'number', "variance must be a number");
 
-		var error = variance * 2.0 * (0.5 - this.next());
+		var error = variance * 2.0 * (0.5 - generator.next());
 		return mean + error;
 	}
 }
 
 // CommonJS
-exports = module.exports = Randomizer;
+exports = module.exports = Random;
 Object.assign(exports, {
 	__esModule: true,
-	Randomizer: Randomizer,
-	default:    Randomizer,
+	Random:     Random,
+	default:    Random,
 });
