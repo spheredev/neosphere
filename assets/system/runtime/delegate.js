@@ -33,47 +33,50 @@
 'use strict';
 const from = require('from');
 
+let kInvocationList = Symbol("invocation list");
+
 class Delegate
 {
 	get [Symbol.toStringTag]() { return 'Delegate'; }
 
 	constructor()
 	{
-		this._invocationList = [];
+		this[kInvocationList] = [];
 	}
 
-	add(handler, thisObj)
+	addHandler(handler, thisObj)
 	{
-		if (this._haveHandler(this, handler, thisObj))
-			throw new Error("Cannot add same handler more than once");
-		this._invocationList.push({ thisObj, handler });
+		if (haveHandler(this, handler, thisObj))
+			throw new Error("cannot add handler more than once");
+		this[kInvocationList].push({ thisObj, handler });
 	}
 
 	call(...args)
 	{
 		let lastResult = undefined;
-		for (const entry of this._invocationList)
+		for (const entry of this[kInvocationList])
 			lastResult = entry.handler.apply(entry.thisObj, args);
 
 		// use the return value of the last handler called
 		return lastResult;
 	}
 
-	remove(handler, thisObj)
+	removeHandler(handler, thisObj)
 	{
-		if (!this._haveHandler(this, handler, thisObj))
+		if (!haveHandler(this, handler, thisObj))
 			throw new Error("handler is not registered");
-		from.Array(this._invocationList)
+		from.Array(this[kInvocationList])
 			.where(it => it.handler === handler)
 			.where(it => it.thisObj === thisObj)
 			.remove();
 	}
 
-	_haveHandler(delegate, handler, thisObj)
-	{
-		return from.Array(delegate._invocationList)
-			.any(it => it.handler === handler && it.thisObj === thisObj);
-	}
+}
+
+function haveHandler(delegate, handler, thisObj)
+{
+	return from.Array(delegate[kInvocationList])
+		.any(it => it.handler === handler && it.thisObj === thisObj);
 }
 
 // CommonJS
