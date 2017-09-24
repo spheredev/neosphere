@@ -43,7 +43,7 @@ class Image
 			.first(fileName => FS.fileExists(fileName))
 		if (fullPath === undefined)
 			throw new Error(`couldn't find image '${fileName}'`);
-		
+
 		let texture = new Texture(fullPath);
 		let shape = new Shape(ShapeType.TriStrip, texture,
 			new VertexList([
@@ -56,7 +56,7 @@ class Image
 			fragment: '#/shaders/tintedImage.frag.glsl',
 			vertex:   '#/shaders/tintedImage.vert.glsl'
 		});
-		
+
 		this.model = new Model([ shape ], tintShader);
 		this.texture = texture;
 	}
@@ -85,6 +85,6 @@ class Image
 exports = module.exports = Image;
 Object.assign(exports, {
 	__esModule: true,
+	default:    Image,
 	Image:      Image,
-	default:   Image,
 });

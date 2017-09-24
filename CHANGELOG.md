@@ -13,14 +13,15 @@ v5.0.0 - TBD
 * Adds a new `DataStream` class, which extends from `FileStream` to allow more
   easily reading binary data such as integers and length-prefixed strings from
   a file.
-* Adds a `Randomizer` class which extends from `RNG`.  This replaces `Random`.
+* Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing them to be used in
+  `for...of` loops.
 * Renames `Color#fade()` to `Color#fadeTo()`.
-* Removes the `DataReader` and `DataWriter` classes.
+* Removes the now-redundant `DataReader` and `DataWriter` classes.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to
   text encoding.  Notably, `FS.readFile()` now correctly handles the UTF-8
-  byte-order mark.
-* Improves error reporting.  SpheRun now prints a complete stack listing to the
-  terminal when a JavaScript runtime error occurs.
+  signature/BOM if one is present.
+* Improves error reporting.  SpheRun now prints a complete JavaScript backtrace
+  to the terminal when a JavaScript runtime error occurs.
 
 
 v4.8.8 - September 21, 2017

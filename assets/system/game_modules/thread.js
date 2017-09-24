@@ -97,6 +97,9 @@ class Thread
 
 	constructor(options = {})
 	{
+		if (new.target === Thread)
+			throw new TypeError(`'${new.target.name}' cannot be instantiated directly`);
+
 		this.threadID = null;
 		this.threadPriority = options.priority !== undefined ? options.priority : 0;
 	}

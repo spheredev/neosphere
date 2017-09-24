@@ -95,7 +95,7 @@ exports.pop = pop;
 function pop(fadeTime)
 {
 	fadeTime = fadeTime !== undefined ? Math.trunc(fadeTime) : 0;
-	
+
 	if (oldSounds.length == 0)
 		return;
 	currentSound.fader.stop();

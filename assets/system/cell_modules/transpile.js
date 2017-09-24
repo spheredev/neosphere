@@ -34,10 +34,6 @@
 const Babel = require('#/babel-core'),
       from  = require('from');
 
-exports = module.exports = transpile;
-exports.__esModule = true;
-exports.default = exports;
-
 var moduleTool = makeTranspileTool(2),
     scriptTool = makeTranspileTool(1);
 
@@ -81,3 +77,11 @@ function stageTarget(dirName, sources)
 	}
 	return targets;
 }
+
+// CommonJS
+exports = module.exports = transpile;
+Object.assign(exports, {
+	__esModule: true,
+	default:    transpile,
+	transpile:  transpile,
+});

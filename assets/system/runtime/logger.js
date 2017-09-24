@@ -50,7 +50,7 @@ class Logger
 		let logLine = `LOG FILE OPENED: ${timestamp}`;
 		this._stream.write(this._textEncoder.encode(`\n${logLine}\n`));
 	}
-	
+
 	beginGroup(text)
 	{
 		text = text.toString();
