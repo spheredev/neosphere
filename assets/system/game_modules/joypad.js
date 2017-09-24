@@ -38,31 +38,28 @@ const from = require('from');
 
 // historically, Sphere requires a gamepad with at least 2 axes (X/Y) and
 // 5 buttons (A, B, X, Y, Start) for full operation.
-var devices = from.Array(Joystick.getDevices())
-	.where(function(d) { return d.numAxes >= 2; })
-	.where(function(d) { return d.numButtons >= 5; })
+let devices = from.Array(Joystick.getDevices())
+	.where(it => it.numAxes >= 2)
+	.where(it => it.numButtons >= 5)
 	.toArray();
 
-Object.defineProperty(exports, 'P1',
+class Joypad
 {
-	enumerable: false, configurable: true,
-	get: function() { return devices[0] || Joystick.Null; },
-});
+	constructor()
+	{
+		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
+	}
 
-Object.defineProperty(exports, 'P2',
-{
-	enumerable: false, configurable: true,
-	get: function() { return devices[1] || Joystick.Null; },
-});
+	static get P1() { return devices[0] || Joystick.Null; }
+	static get P2() { return devices[1] || Joystick.Null; }
+	static get P3() { return devices[2] || Joystick.Null; }
+	static get P4() { return devices[3] || Joystick.Null; }
+}
 
-Object.defineProperty(exports, 'P3',
-{
-	enumerable: false, configurable: true,
-	get: function() { return devices[2] || Joystick.Null; },
-});
-
-Object.defineProperty(exports, 'P4',
-{
-	enumerable: false, configurable: true,
-	get: function() { return devices[3] || Joystick.Null; },
+// CommonJS
+exports = module.exports = Joypad;
+Object.assign(exports, {
+	__esModule: true,
+	default:    Joypad,
+	Joypad:     Joypad,
 });
