@@ -1344,6 +1344,7 @@ js_Sphere_get_Game(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	jsal_dup(-3);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, "Game");
+	jsal_pop(1);
 
 	return true;
 }

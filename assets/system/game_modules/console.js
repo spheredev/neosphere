@@ -109,7 +109,7 @@ class Console extends Thread
 
 		// if we have a logger, write the line to the log file
 		if (this.logger !== null)
-			this.logger.write(buffer[lineInBuffer]);
+			this.logger.write(this.buffer[lineInBuffer]);
 	}
 
 	start()
