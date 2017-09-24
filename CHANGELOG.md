@@ -15,6 +15,9 @@ v5.0.0 - TBD
   a file.
 * Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing them to be used in
   `for...of` loops.
+* Reimagines `Console` as a full-fledged class, which enables the familiar
+  `new Console()` syntax and gives games the ability to set up multiple
+  independent consoles if desired.
 * Renames `Color#fade()` to `Color#fadeTo()`.
 * Removes the now-redundant `DataReader` and `DataWriter` classes.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to

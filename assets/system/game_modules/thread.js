@@ -169,7 +169,7 @@ function renderAllThreads()
 	let activeThreads = from.Array(threads.slice())
 		.where(it => it.isValid)
 		.where(it => it.renderer !== undefined)
-    for (let thread of activeThreads)
+	for (let thread of activeThreads)
 		thread.renderer();
 }
 
@@ -178,7 +178,7 @@ function updateAllThreads()
 	let activeThreads = from.Array(threads.slice())
 		.where(it => it.isValid && !it.isBusy)
 	let threadsEnding = [];
-    for (let thread of activeThreads) {
+	for (let thread of activeThreads) {
 		let lastSelf = currentSelf;
 		thread.isBusy = true;
 		currentSelf = thread.id;
@@ -191,7 +191,7 @@ function updateAllThreads()
 			threadsEnding.push(thread.id);
 	}
 	for (let threadID of threadsEnding)
-        Thread.kill(threadID);
+		Thread.kill(threadID);
 }
 
 // CommonJS

@@ -2289,7 +2289,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 	char*              traceback;
 
 	iter_t iter;
-	
+
 	switch (event_type) {
 		case JsDiagDebugEventSourceCompile:
 			push_value(data);

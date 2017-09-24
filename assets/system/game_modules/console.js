@@ -41,14 +41,15 @@ class Console extends Thread
 {
 	constructor(options = {})
 	{
-		options = Object.assign({}, options);
-		if (options.priority === undefined)
-			options.priority = Infinity;
+		options = Object.assign({
+			hotKey:   Key.Tilde,
+			prompt:   "$",
+			priority: Infinity,
+		}, options);
 
 		super(options);
 
-		this.activationKey = options.hotKey !== undefined
-			? options.hotKey : Key.Tilde;
+		this.activationKey = options.hotKey;
 		this.buffer = [];
 		this.bufferSize = 1000;
 		this.commands = [];
@@ -60,9 +61,11 @@ class Console extends Thread
 		this.mouse = Mouse.Default;
 		this.nextLine = 0;
 		this.numLines = Math.floor((screen.height - 32) / this.font.height);
-		this.prompt = "$";
+		this.prompt = options.prompt;
 		this.view = { visible: false, fade: 0.0, line: 0.0 };
 		this.wasKeyDown = false;
+
+		this.start();
 	}
 
 	get visible()
@@ -93,12 +96,12 @@ class Console extends Thread
 	log(...texts)
 	{
 		if (!this.running)
-			throw new Error("the Console has not been started");
+			throw new Error("the Console thread is not running");
 
 		let lineInBuffer = this.nextLine % this.bufferSize;
 		this.buffer[lineInBuffer] = texts[0];
 		for (let i = 1; i < texts.length; ++i) {
-			this.buffer[lineInBuffer] += " >>" + texts[i];
+			this.buffer[lineInBuffer] += ` >>${texts[i]}`;
 		}
 		++this.nextLine;
 		this.view.line = 0.0;
@@ -111,6 +114,9 @@ class Console extends Thread
 
 	start()
 	{
+		if (this.running)
+			throw new Error("the Console has already been started");
+
 		super.start();
 
 		new Scene()
@@ -129,7 +135,7 @@ class Console extends Thread
 		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Platform})`);
 		this.log("");
 	}
-	
+
 	undefineObject(name)
 	{
 		from.Array(this.commands)
@@ -198,7 +204,7 @@ class Console extends Thread
 			return;
 
 		// draw the command prompt...
-		let promptWidth = this.font.getTextSize(this.prompt + " ").width;
+		let promptWidth = this.font.getTextSize(`${this.prompt} `).width;
 		let boxY = -22 * (1.0 - this.view.fade);
 		Prim.drawSolidRectangle(screen, 0, boxY, screen.width, 22, Color.Black.fadeTo(this.view.fade * 0.875));
 		this.font.drawText(screen, 6, 6 + boxY, this.prompt, Color.Black.fadeTo(this.view.fade * 0.75));
