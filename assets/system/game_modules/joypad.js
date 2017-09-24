@@ -31,9 +31,6 @@
 **/
 
 'use strict';
-exports.__esModule = true;
-exports.default = exports;
-
 const from = require('from');
 
 // historically, Sphere requires a gamepad with at least 2 axes (X/Y) and

@@ -36,10 +36,7 @@ const from   = require('from'),
       Prim   = require('prim'),
       Scene  = require('scene');
 
-exports.__esModule = true;
-exports.default = exports;
-
-var activationKey = Key.Tilde,
+let activationKey = Key.Tilde,
     buffer        = [],
     bufferSize    = 1000,
     commands      = [],
@@ -64,66 +61,66 @@ new Scene()
         .tween(cursorColor, 0.25 * screen.frameRate, 'easeOutSine', { a: 0.5 })
     .end()
     .run();
-log(Sphere.Game.name + " Debug Console");
-log("Sphere v" + Sphere.Version + " API lv. " + Sphere.APILevel + " (" + Sphere.Platform + ")");
-log("");
 
-Object.defineProperty(exports, 'visible',
+class Console
 {
-    enumerable: true, configurable: true,
-    get: function() { return visible.yes; },
-    set: function(value) { value ? _show() : _hide(); },
-});
+	constructor()
+	{
+		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
+	}
 
-exports.initialize = initialize;
-function initialize(options)
-{
-    options = options !== undefined ? options : {};
+	static get visible() { return visible.yes; }
+	
+	static set visible(value) { value ? _show() : _hide(); }
 
-    activationKey = options.hotKey !== undefined ? options.hotKey : Key.Tilde;
-    Dispatch.onRender(_render, Infinity);
-    Dispatch.onUpdate(function() {
-        _getInput();
-        _update();
-    }, Infinity);
-}
+	static initialize(options = {})
+	{
+		activationKey = options.hotKey !== undefined ? options.hotKey
+			: Key.Tilde;
+		Dispatch.onRender(_render, Infinity);
+		Dispatch.onUpdate(function() {
+			_getInput();
+			_update();
+		}, Infinity);
+		
+		this.log(`initializing Sphere Runtime Console module`);
+		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
+		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Platform})`);
+		this.log("");
+	}
 
-exports.defineObject = defineObject;
-function defineObject(name, that, methods)
-{
-    for (var instruction in methods) {
-        commands.push({
-            entity: name,
-            instruction: instruction,
-            that: that,
-            method: methods[instruction]
-        });
-    }
-}
+	static defineObject(name, that, methods)
+	{
+		for (var instruction in methods) {
+			commands.push({
+				entity: name,
+				instruction: instruction,
+				that: that,
+				method: methods[instruction]
+			});
+		}
+	}
 
-exports.log = log;
-function log(/*...*/)
-{
-    var lineInBuffer = nextLine % bufferSize;
-    buffer[lineInBuffer] = ">" + arguments[0];
-    for (var i = 1; i < arguments.length; ++i) {
-        buffer[lineInBuffer] += " >>" + arguments[i];
-    }
-    if (buffer[lineInBuffer] == ">")
-        buffer[lineInBuffer] = "";
-    ++nextLine;
-    visible.line = 0.0;
-    SSj.log(buffer[lineInBuffer].substr(1));
-    if (logger !== null)
-        logger.write(buffer[lineInBuffer]);
-}
+	static log(...texts)
+	{
+		var lineInBuffer = nextLine % bufferSize;
+		buffer[lineInBuffer] = texts[0];
+		for (let i = 1; i < texts.length; ++i) {
+			buffer[lineInBuffer] += " >>" + texts[i];
+		}
+		++nextLine;
+		visible.line = 0.0;
+		SSj.log(buffer[lineInBuffer]);
+		if (logger !== null)
+			logger.write(buffer[lineInBuffer]);
+	}
 
-exports.undefineObject = undefineObject;
-function undefineObject(name)
-{
-    from.Array(commands)
-        .where(function(c) { return c.entity == name; })
-        .remove();
+	static undefineObject(name)
+	{
+		from.Array(commands)
+			.where(function(c) { return c.entity == name; })
+			.remove();
+	}
 }
 
 function _executeCommand(command)
@@ -142,18 +139,18 @@ function _executeCommand(command)
     if (!from.Array(commands)
         .any(function(c) { return entity == c.entity; }))
     {
-        log("unrecognized object name '" + entity + "'");
+        Console.log("unrecognized object name '" + entity + "'");
         return;
     }
     if (tokens.length < 2) {
-        log("missing instruction for '" + entity + "'");
+        Console.log("missing instruction for '" + entity + "'");
         return;
     }
     if (!from.Array(commands)
         .where(function(c) { return entity == c.entity; })
         .any(function(c) { return instruction == c.instruction; }))
     {
-        log("instruction '" + instruction + "' not valid for '" + entity + "'");
+        Console.log("instruction '" + instruction + "' not valid for '" + entity + "'");
         return;
     }
 
@@ -174,7 +171,7 @@ function _executeCommand(command)
                 desc.method.apply(desc.that, tokens.slice(2));
             }
             catch(e) {
-                log("caught error '" + e.toString() + "'");
+                Console.log("caught JS error '" + e.toString() + "'");
             }
         });
     });
@@ -205,7 +202,7 @@ function _getInput()
             return;
         switch (keycode) {
             case Key.Enter:
-                log("player entered command '" + entry + "'");
+                Console.log("executing '" + entry + "'");
                 _executeCommand(entry);
                 entry = "";
                 break;
@@ -292,3 +289,11 @@ function _update()
         visible.line = 0.0;
     return true;
 }
+
+// CommonJS
+exports = module.exports = Console;
+Object.assign(exports, {
+	__esModule: true,
+	default:    Console,
+	Console:    Console,
+});
