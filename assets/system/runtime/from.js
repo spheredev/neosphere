@@ -34,7 +34,7 @@
 const assert = require('assert'),
       Random = require('random');
 
-let itemSourceKey = Symbol('from() query source');
+const kItemSource = Symbol('from() query source');
 
 function from(...targets)
 {
@@ -82,7 +82,7 @@ function fromIterable(target)
 function MAKEPOINT(sourceType, op)
 {
 	return function (...args) {
-		let thisSource = this[itemSourceKey];
+		let thisSource = this[kItemSource];
 		let newSource = new sourceType(thisSource, ...args);
 
 		// if it's a terminal operator, run the query.  otherwise construct
@@ -110,7 +110,7 @@ function PROPDESC(flags, valueOrGetter, setter)
 
 function FromQuery(source)
 {
-	this[itemSourceKey] = source;
+	this[kItemSource] = source;
 }
 
 Object.defineProperties(FromQuery.prototype,
@@ -118,7 +118,7 @@ Object.defineProperties(FromQuery.prototype,
 	[Symbol.iterator]:
 	PROPDESC('wc', function enumerate(withKeys)
 	{
-		var source = this[itemSourceKey];
+		var source = this[kItemSource];
 		source.init();
 		return { next: next };
 

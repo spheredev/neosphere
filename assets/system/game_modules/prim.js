@@ -34,6 +34,11 @@
 
 class Prim
 {
+	constructor()
+	{
+		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
+	}
+
 	static blit(surface, x, y, texture, mask)
 	{
 		Prim.blitSection(surface, x, y, texture, 0, 0, texture.width, texture.height, mask);

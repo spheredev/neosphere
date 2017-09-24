@@ -31,109 +31,103 @@
 **/
 
 'use strict';
-exports.__esModule = true;
-exports.default = exports;
-
 const from    = require('from'),
       Scene   = require('scene');
 
-var adjuster = null;
-var currentSound = null;
-var haveOverride = false;
-var mixer = new Mixer(44100, 16, 2);
-var oldSounds = [];
-var topmostSound = null;
+let adjuster = null,
+    currentSound = null,
+    haveOverride = false,
+    mixer = new Mixer(44100, 16, 2),
+    oldSounds = [],
+    topmostSound = null;
 
-Object.defineProperty(exports, 'adjusting',
+class Music
 {
-	enumerable: true, configurable: true,
-	get: function() { return _isAdjusting(); }
-});
-
-exports.adjustVolume = adjustVolume;
-function adjustVolume(newVolume, frames)
-{
-	frames = frames !== undefined ? Math.trunc(frames) : 0;
-
-	newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
-	if (_isAdjusting())
-		adjuster.stop();
-	if (frames > 0) {
-		adjuster = new Scene()
-			.tween(mixer, frames, 'linear', { volume: newVolume })
-			.run();
-	} else {
-		mixer.volume = newVolume;
+	constructor()
+	{
+		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
 	}
-};
 
-exports.override = override;
-function override(fileName, frames)
-{
-	_crossfade(fileName, frames, true);
-	haveOverride = true;
-};
+	static get adjusting()
+	{
+		return isAdjusting();
+	}
 
-exports.play = play;
-function play(fileName, fadeTime)
-{
-	topmostSound = _crossfade(fileName, fadeTime, false);
-};
+	static adjustVolume(newVolume, frames = 0)
+	{
+		newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
+		if (this.adjusting)
+			adjuster.stop();
+		if (frames > 0) {
+			adjuster = new Scene()
+				.tween(mixer, frames, 'linear', { volume: newVolume })
+				.run();
+		} else {
+			mixer.volume = newVolume;
+		}
+	}
 
-exports.pop = pop;
-function pop(fadeTime)
-{
-	fadeTime = fadeTime !== undefined ? Math.trunc(fadeTime) : 0;
+	static override(fileName, frames)
+	{
+		crossfade(fileName, frames, true);
+		haveOverride = true;
+	}
 
-	if (oldSounds.length == 0)
-		return;
-	currentSound.fader.stop();
-	currentSound.fader = new Scene()
-		.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
-		.run();
-	topmostSound = oldSounds.pop();
-	currentSound = topmostSound;
-	if (currentSound !== null) {
-		currentSound.stream.volume = 0.0;
+	static play(fileName, fadeTime)
+	{
+		topmostSound = crossfade(fileName, fadeTime, false);
+	}
+
+	static pop(fadeTime)
+	{
+		fadeTime = fadeTime !== undefined ? Math.trunc(fadeTime) : 0;
+
+		if (oldSounds.length == 0)
+			return;
 		currentSound.fader.stop();
 		currentSound.fader = new Scene()
-			.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 })
+			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
 			.run();
+		topmostSound = oldSounds.pop();
+		currentSound = topmostSound;
+		if (currentSound !== null) {
+			currentSound.stream.volume = 0.0;
+			currentSound.fader.stop();
+			currentSound.fader = new Scene()
+				.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 })
+				.run();
+		}
+	}
+
+	static push(fileName, fadeTime)
+	{
+		let oldSound = topmostSound;
+		this.play(fileName, fadeTime);
+		oldSounds.push(oldSound);
+	}
+
+	static reset(fadeTime = 0)
+	{
+		if (!haveOverride)
+			return;
+		haveOverride = false;
+
+		currentSound.fader.stop();
+		currentSound.fader = new Scene()
+			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
+			.run();
+		currentSound = topmostSound;
+		if (currentSound !== null) {
+			currentSound.stream.volume = 0.0;
+			currentSound.fader.stop();
+			currentSound.fader = new Scene()
+				.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 })
+				.run();
+		}
 	}
 }
 
-exports.push = push;
-function push(fileName, fadeTime)
-{
-	var oldSound = topmostSound;
-	play(fileName, fadeTime);
-	oldSounds.push(oldSound);
-};
-
-exports.reset = reset;
-function reset(fadeTime)
-{
-	fadeTime = fadeTime !== undefined ? Math.trunc(fadeTime) : 0;
-
-	if (!haveOverride)
-		return;
-	haveOverride = false;
-
-	currentSound.fader.stop();
-	currentSound.fader = new Scene()
-		.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
-		.run();
-	currentSound = topmostSound;
-	if (currentSound !== null) {
-		currentSound.stream.volume = 0.0;
-		currentSound.fader.stop();
-		currentSound.fader = new Scene()
-			.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 })
-			.run();
-	}
-};
-
-function _crossfade(fileName, frames, forceChange)
+function crossfade(fileName, frames, forceChange)
 {
 	frames = frames !== undefined ? Math.trunc(frames) : 0;
 
@@ -155,9 +149,9 @@ function _crossfade(fileName, frames, forceChange)
 		stream.repeat = true;
 		stream.volume = 0.0;
 		stream.play(mixer);
-		var fader = new Scene()
+		let fader = new Scene()
 			.tween(stream, frames, 'linear', { volume: 1.0 })
-		var newSound = { stream: stream, fader: fader };
+		let newSound = { stream: stream, fader: fader };
 		if (allowChange) {
 			currentSound = newSound;
 			newSound.fader.run();
@@ -169,7 +163,15 @@ function _crossfade(fileName, frames, forceChange)
 	}
 }
 
-function _isAdjusting()
+function isAdjusting()
 {
 	return adjuster != null && adjuster.isRunning();
 };
+
+// CommonJS
+exports = module.exports = Music;
+Object.assign(exports, {
+	__esModule: true,
+	default:    Music,
+	Music:      Music,
+});

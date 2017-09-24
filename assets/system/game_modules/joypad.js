@@ -35,7 +35,7 @@ const from = require('from');
 
 // historically, Sphere requires a gamepad with at least 2 axes (X/Y) and
 // 5 buttons (A, B, X, Y, Start) for full operation.
-let devices = from.Array(Joystick.getDevices())
+const Devices = from.Array(Joystick.getDevices())
 	.where(it => it.numAxes >= 2)
 	.where(it => it.numButtons >= 5)
 	.toArray();
@@ -47,10 +47,10 @@ class Joypad
 		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
 	}
 
-	static get P1() { return devices[0] || Joystick.Null; }
-	static get P2() { return devices[1] || Joystick.Null; }
-	static get P3() { return devices[2] || Joystick.Null; }
-	static get P4() { return devices[3] || Joystick.Null; }
+	static get P1() { return Devices[0] || Joystick.Null; }
+	static get P2() { return Devices[1] || Joystick.Null; }
+	static get P3() { return Devices[2] || Joystick.Null; }
+	static get P4() { return Devices[3] || Joystick.Null; }
 }
 
 // CommonJS
