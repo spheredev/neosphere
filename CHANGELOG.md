@@ -14,6 +14,7 @@ v5.0.0 - TBD
   easily reading binary data such as integers and length-prefixed strings from
   a file.
 * Adds a `Randomizer` class which extends from `RNG`.  This replaces `Random`.
+* Renames `Color#fade()` to `Color#fadeTo()`.
 * Removes the `DataReader` and `DataWriter` classes.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to
   text encoding.  Notably, `FS.readFile()` now correctly handles the UTF-8

@@ -251,7 +251,7 @@ static bool js_Color_set_g                   (js_ref_t* me, int num_args, bool i
 static bool js_Color_set_b                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Color_set_a                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Color_clone                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_fade                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Color_fadeTo                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_new_DirectoryStream           (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_dispose       (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_fileCount (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -516,7 +516,7 @@ initialize_pegasus_api(void)
 	api_define_property("Color", "b", true, js_Color_get_b, js_Color_set_b);
 	api_define_property("Color", "a", true, js_Color_get_a, js_Color_set_a);
 	api_define_method("Color", "clone", js_Color_clone);
-	api_define_method("Color", "fade", js_Color_fade);
+	api_define_method("Color", "fadeTo", js_Color_fadeTo);
 	api_define_class("DirectoryStream", CLASS_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize);
 	api_define_method("DirectoryStream", "dispose", js_DirectoryStream_dispose);
 	api_define_property("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
@@ -1669,7 +1669,7 @@ js_Color_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_fade(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_fadeTo(js_ref_t* me, int num_args, bool is_ctor, int magic)
 {
 	float   a;
 	color_t color;

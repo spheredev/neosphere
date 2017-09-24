@@ -328,14 +328,14 @@ Color#clone();
     Returns a copy of this Color object.  Changes to the clone will not affect
     the original object.
 
-Color#fade(alpha);
+Color#fadeTo(alpha_factor);
 
-    Scales this color's alpha channel by `alpha`, between 0.0 and 1.0, and
-    returns the result.  The red, green, and blue components are not modified.
-    This is useful when you need to make a predefined color translucent, for
-    instance:
+    Scales this color's alpha channel by `alpha_factor`, between 0.0 and 1.0,
+    and returns the result.  The red, green, and blue components are not
+    modified.  One use for this is when you need to make a predefined color
+    translucent; for example:
 
-        var translucentBlue = Color.Blue.fade(0.5);
+        let translucentBlue = Color.Blue.fadeTo(0.5);
 
 
 `DirectoryStream` Object
@@ -1630,7 +1630,7 @@ Transform#project3D(fov, aspect, near, far);
     is the size of the vertical field of view, in degrees.  `aspect` should
     match the aspect ratio of the game.  For example, if the game resolution
     is 1280x720, then `aspect` would usually be (16 / 9).
-    
+
     `near` and `far` define the distances in front of the "camera" beyond which
     objects will be clipped.  They must be nonzero and positive, or an error
     will be thrown.
