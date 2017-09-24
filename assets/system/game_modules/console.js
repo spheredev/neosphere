@@ -34,65 +34,54 @@
 const from   = require('from'),
       Logger = require('logger'),
       Prim   = require('prim'),
-      Scene  = require('scene');
+      Scene  = require('scene'),
+      Thread = require('thread');
 
-let activationKey = Key.Tilde,
-    buffer        = [],
-    bufferSize    = 1000,
-    commands      = [],
-    cursorColor   = Color.Gold,
-    entry         = "",
-    font          = Font.Default,
-    logger        = null,
-    keyboard      = Keyboard.Default,
-    mouse         = Mouse.Default,
-    nextLine      = 0,
-    numLines      = 0,
-    prompt        = "$",
-    visible       = { yes: false, fade: 0.0, line: 0.0 },
-    wasKeyDown    = false;
-
-numLines = Math.floor((screen.height - 32) / font.height);
-if ('saveID' in Sphere.Game)
-    logger = new Logger('consoleOutput');
-new Scene()
-    .doWhile(function() { return true; })
-        .tween(cursorColor, 0.25 * screen.frameRate, 'easeInSine', { a: 1.0 })
-        .tween(cursorColor, 0.25 * screen.frameRate, 'easeOutSine', { a: 0.5 })
-    .end()
-    .run();
-
-class Console
+class Console extends Thread
 {
-	constructor()
+	constructor(options = {})
 	{
-		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
+		options = Object.assign({}, options);
+		if (options.priority === undefined)
+			options.priority = Infinity;
+
+		super(options);
+
+		this.activationKey = options.hotKey !== undefined
+			? options.hotKey : Key.Tilde;
+		this.buffer = [];
+		this.bufferSize = 1000;
+		this.commands = [];
+		this.cursorColor = Color.Gold;
+		this.entry = "";
+		this.font = Font.Default;
+		this.logger = null;
+		this.keyboard = Keyboard.Default;
+		this.mouse = Mouse.Default;
+		this.nextLine = 0;
+		this.numLines = Math.floor((screen.height - 32) / this.font.height);
+		this.prompt = "$";
+		this.view = { visible: false, fade: 0.0, line: 0.0 };
+		this.wasKeyDown = false;
 	}
 
-	static get visible() { return visible.yes; }
-	
-	static set visible(value) { value ? _show() : _hide(); }
-
-	static initialize(options = {})
+	get visible()
 	{
-		activationKey = options.hotKey !== undefined ? options.hotKey
-			: Key.Tilde;
-		Dispatch.onRender(_render, Infinity);
-		Dispatch.onUpdate(function() {
-			_getInput();
-			_update();
-		}, Infinity);
-		
-		this.log(`initializing Sphere Runtime Console module`);
-		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
-		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Platform})`);
-		this.log("");
+		return this.view.visible;
 	}
 
-	static defineObject(name, that, methods)
+	set visible(value)
 	{
-		for (var instruction in methods) {
-			commands.push({
+		if (value)
+			showConsole(this);
+		else
+			hideConsole(this);
+	}
+
+	defineObject(name, that, methods)
+	{
+		for (const instruction in methods) {
+			this.commands.push({
 				entity: name,
 				instruction: instruction,
 				that: that,
@@ -101,193 +90,218 @@ class Console
 		}
 	}
 
-	static log(...texts)
+	log(...texts)
 	{
-		var lineInBuffer = nextLine % bufferSize;
-		buffer[lineInBuffer] = texts[0];
+		if (!this.running)
+			throw new Error("the Console has not been started");
+
+		let lineInBuffer = this.nextLine % this.bufferSize;
+		this.buffer[lineInBuffer] = texts[0];
 		for (let i = 1; i < texts.length; ++i) {
-			buffer[lineInBuffer] += " >>" + texts[i];
+			this.buffer[lineInBuffer] += " >>" + texts[i];
 		}
-		++nextLine;
-		visible.line = 0.0;
-		SSj.log(buffer[lineInBuffer]);
-		if (logger !== null)
-			logger.write(buffer[lineInBuffer]);
+		++this.nextLine;
+		this.view.line = 0.0;
+		SSj.log(this.buffer[lineInBuffer]);
+
+		// if we have a logger, write the line to the log file
+		if (this.logger !== null)
+			this.logger.write(buffer[lineInBuffer]);
 	}
 
-	static undefineObject(name)
+	start()
 	{
-		from.Array(commands)
-			.where(function(c) { return c.entity == name; })
+		super.start();
+
+		new Scene()
+			.doWhile(() => true)
+				.tween(this.cursorColor, 0.25 * screen.frameRate, 'easeInSine', { a: 1.0 })
+				.tween(this.cursorColor, 0.25 * screen.frameRate, 'easeOutSine', { a: 0.5 })
+			.end()
+			.run();
+
+		// create a log file only if the game has a save ID defined
+		if ('saveID' in Sphere.Game)
+			this.logger = new Logger('consoleOutput');
+
+		this.log(`initializing Sphere Runtime Console module`);
+		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
+		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Platform})`);
+		this.log("");
+	}
+	
+	undefineObject(name)
+	{
+		from.Array(this.commands)
+			.where(it => it.entity == name)
 			.remove();
 	}
+
+	on_checkInput()
+	{
+		if (!this.wasKeyDown && this.keyboard.isPressed(this.activationKey)) {
+			if (!this.view.visible)
+				showConsole(this);
+			else
+				hideConsole(this);
+		}
+		this.wasKeyDown = this.keyboard.isPressed(this.activationKey);
+		if (this.view.visible) {
+			let mouseEvent = this.mouse.getEvent();
+			let wheelUp = mouseEvent !== null && mouseEvent.key == MouseKey.WheelUp;
+			let wheelDown = mouseEvent !== null && mouseEvent.key == MouseKey.WheelDown;
+			let speed = (wheelUp || wheelDown) ? 1.0 : 0.5;
+			if (this.keyboard.isPressed(Key.PageUp) || wheelUp) {
+				this.view.line = Math.min(this.view.line + speed, this.buffer.length - this.numLines);
+			} else if (this.keyboard.isPressed(Key.PageDown) || wheelDown) {
+				this.view.line = Math.max(this.view.line - speed, 0);
+			}
+			let keycode = this.keyboard.getKey();
+			let fps = screen.frameRate;
+			if (keycode === this.activationKey)
+				return;
+			switch (keycode) {
+				case Key.Enter:
+					this.log(`executing '${this.entry}'`);
+					executeCommand(this, entry);
+					this.entry = "";
+					break;
+				case Key.Backspace:
+					this.entry = this.entry.slice(0, -1);
+					break;
+				case Key.Home:
+					let newLine = this.buffer.length - this.numLines;
+					new Scene()
+						.tween(this.view, 0.125 * fps, 'easeOut', { line: newLine })
+						.run();
+					break;
+				case Key.End:
+					new Scene()
+						.tween(this.view, 0.125 * fps, 'easeOut', { line: 0.0 })
+						.run();
+					break;
+				case Key.Tab:
+				case null:
+					break;
+				default:
+					let isShifted = this.keyboard.isPressed(Key.LShift) || this.keyboard.isPressed(Key.RShift);
+					let ch = this.keyboard.getChar(keycode, isShifted);
+					ch = this.keyboard.capsLock ? ch.toUpperCase() : ch;
+					this.entry += ch;
+			}
+		}
+	}
+
+	on_render()
+	{
+		if (this.view.fade <= 0.0)
+			return;
+
+		// draw the command prompt...
+		let promptWidth = this.font.getTextSize(this.prompt + " ").width;
+		let boxY = -22 * (1.0 - this.view.fade);
+		Prim.drawSolidRectangle(screen, 0, boxY, screen.width, 22, Color.Black.fadeTo(this.view.fade * 0.875));
+		this.font.drawText(screen, 6, 6 + boxY, this.prompt, Color.Black.fadeTo(this.view.fade * 0.75));
+		this.font.drawText(screen, 5, 5 + boxY, this.prompt, Color.Gray.fadeTo(this.view.fade * 0.75));
+		this.font.drawText(screen, 6 + promptWidth, 6 + boxY, this.entry, Color.Black.fadeTo(this.view.fade * 0.75));
+		this.font.drawText(screen, 5 + promptWidth, 5 + boxY, this.entry, Color.Gold.fadeTo(this.view.fade * 0.75));
+		this.font.drawText(screen, 5 + promptWidth + this.font.getTextSize(this.entry).width, 5 + boxY, "_", this.cursorColor);
+
+		// ...then the console output
+		let boxHeight = this.numLines * this.font.height + 10;
+		boxY = screen.height - boxHeight * this.view.fade;
+		Prim.drawSolidRectangle(screen, 0, boxY, screen.width, boxHeight, Color.Black.fadeTo(this.view.fade * 0.75));
+		screen.clipTo(5, boxY + 5, screen.width - 10, boxHeight - 10);
+		for (let i = -1; i < this.numLines + 1; ++i) {
+			let lineToDraw = (this.nextLine - this.numLines) + i - Math.floor(this.view.line);
+			let lineInBuffer = lineToDraw % this.bufferSize;
+			if (lineToDraw >= 0 && this.buffer[lineInBuffer] != null) {
+				let y = boxY + 5 + i * this.font.height;
+				y += (this.view.line - Math.floor(this.view.line)) * this.font.height;
+				this.font.drawText(screen, 6, y + 1, this.buffer[lineInBuffer], Color.Black.fadeTo(this.view.fade * 0.75));
+				this.font.drawText(screen, 5, y, this.buffer[lineInBuffer], Color.White.fadeTo(this.view.fade * 0.75));
+			}
+		}
+		screen.clipTo(0, 0, screen.width, screen.height);
+	}
+
+	on_update()
+	{
+		if (this.view.fade <= 0.0)
+			this.view.line = 0.0;
+	}
 }
 
-function _executeCommand(command)
+function executeCommand(console, command)
 {
-    // tokenize the command string
-    var tokens = command.match(/'.*?'|".*?"|\S+/g);
-    if (tokens == null) return;
-    for (var i = 0; i < tokens.length; ++i) {
-        tokens[i] = tokens[i].replace(/'(.*)'/, "$1");
-        tokens[i] = tokens[i].replace(/"(.*)"/, "$1");
-    }
-    var entity = tokens[0];
-    var instruction = tokens[1];
+	// tokenize the command string
+	let tokens = command.match(/'.*?'|".*?"|\S+/g);
+	if (tokens == null)
+		return;
+	for (let i = 0; i < tokens.length; ++i) {
+		tokens[i] = tokens[i].replace(/'(.*)'/, "$1");
+		tokens[i] = tokens[i].replace(/"(.*)"/, "$1");
+	}
+	let objectName = tokens[0];
+	let instruction = tokens[1];
 
-    // check that the instruction is valid
-    if (!from.Array(commands)
-        .any(function(c) { return entity == c.entity; }))
-    {
-        Console.log("unrecognized object name '" + entity + "'");
-        return;
-    }
-    if (tokens.length < 2) {
-        Console.log("missing instruction for '" + entity + "'");
-        return;
-    }
-    if (!from.Array(commands)
-        .where(function(c) { return entity == c.entity; })
-        .any(function(c) { return instruction == c.instruction; }))
-    {
-        Console.log("instruction '" + instruction + "' not valid for '" + entity + "'");
-        return;
-    }
+	// check that the instruction is valid
+	if (!from.Array(console.commands)
+		.any(it => it.entity == objectName))
+	{
+		console.log(`unrecognized object name '${objectName}'`);
+		return;
+	}
+	if (tokens.length < 2) {
+		console.log(`missing instruction for '${objectName}'`);
+		return;
+	}
+	if (!from.Array(console.commands)
+		.where(it => it.entity == objectName)
+		.any(it => it.instruction == instruction))
+	{
+		console.log(`instruction '${instruction}' not valid for '${objectName}'`);
+		return;
+	}
 
-    // parse arguments
-    for (var i = 2; i < tokens.length; ++i) {
-        var maybeNumber = parseFloat(tokens[i]);
-        tokens[i] = !isNaN(maybeNumber) ? maybeNumber : tokens[i];
-    }
+	// parse arguments
+	for (let i = 2; i < tokens.length; ++i) {
+		let maybeNumber = parseFloat(tokens[i]);
+		tokens[i] = !isNaN(maybeNumber) ? maybeNumber : tokens[i];
+	}
 
-    // execute the command
-    from.Array(commands)
-        .where(function(c) { return entity == c.entity; })
-        .where(function(c) { return instruction == c.instruction; })
-        .each(function(desc)
-    {
-        Dispatch.now(function() {
-            try {
-                desc.method.apply(desc.that, tokens.slice(2));
-            }
-            catch(e) {
-                Console.log("caught JS error '" + e.toString() + "'");
-            }
-        });
-    });
+	// execute the command
+	let matches = from.Array(console.commands)
+		.where(it => it.entity == objectName)
+		.where(it => it.instruction == instruction)
+	for (const command of matches) {
+		Dispatch.now(() => {
+			try {
+				command.method.apply(command.that, tokens.slice(2));
+			}
+			catch (e) {
+				console.log(`caught JS error '${e.toString()}'`);
+			}
+		});
+	}
 }
 
-function _getInput()
+function hideConsole(console)
 {
-    if (!wasKeyDown && keyboard.isPressed(activationKey)) {
-        if (!visible.yes)
-            _show();
-        else
-            _hide();
-    }
-    wasKeyDown = keyboard.isPressed(activationKey);
-    if (visible.yes) {
-        var mouseEvent = mouse.getEvent();
-        var wheelUp = mouseEvent !== null && mouseEvent.key == MouseKey.WheelUp;
-        var wheelDown = mouseEvent !== null && mouseEvent.key == MouseKey.WheelDown;
-        var speed = (wheelUp || wheelDown) ? 1.0 : 0.5;
-        if (keyboard.isPressed(Key.PageUp) || wheelUp) {
-            visible.line = Math.min(visible.line + speed, buffer.length - numLines);
-        } else if (keyboard.isPressed(Key.PageDown) || wheelDown) {
-            visible.line = Math.max(visible.line - speed, 0);
-        }
-        var keycode = keyboard.getKey();
-        var fps = screen.frameRate;
-        if (keycode === activationKey)
-            return;
-        switch (keycode) {
-            case Key.Enter:
-                Console.log("executing '" + entry + "'");
-                _executeCommand(entry);
-                entry = "";
-                break;
-            case Key.Backspace:
-                entry = entry.slice(0, -1);
-                break;
-            case Key.Home:
-                var newLine = buffer.length - numLines;
-                new Scene()
-                    .tween(visible, 0.125 * fps, 'easeOut', { line: newLine })
-                    .run();
-                break;
-            case Key.End:
-                new Scene()
-                    .tween(visible, 0.125 * fps, 'easeOut', { line: 0.0 })
-                    .run();
-                break;
-            case Key.Tab:
-            case null:
-                break;
-            default:
-                var isShifted = keyboard.isPressed(Key.LShift) || keyboard.isPressed(Key.RShift);
-                var ch = keyboard.getChar(keycode, isShifted);
-                ch = keyboard.capsLock ? ch.toUpperCase() : ch;
-                entry += ch;
-        }
-    }
+	let fps = screen.frameRate;
+	new Scene()
+		.tween(console.view, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
+		.call(() => { console.view.visible = false; console.entry = ""; })
+		.run();
 }
 
-function _hide()
+function showConsole(console)
 {
-    var fps = screen.frameRate;
-    new Scene()
-        .tween(visible, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
-        .call(function() { visible.yes = false; entry = ""; })
-        .run();
-}
-
-function _render()
-{
-    if (visible.fade <= 0.0)
-        return;
-
-    // draw the command prompt...
-    var boxY = -22 * (1.0 - visible.fade);
-    Prim.drawSolidRectangle(screen, 0, boxY, screen.width, 22, Color.Black.fadeTo(visible.fade * 0.875));
-    var promptWidth = font.getTextSize(prompt + " ").width;
-    font.drawText(screen, 6, 6 + boxY, prompt, Color.Black.fadeTo(visible.fade * 0.75));
-    font.drawText(screen, 5, 5 + boxY, prompt, Color.Gray.fadeTo(visible.fade * 0.75));
-    font.drawText(screen, 6 + promptWidth, 6 + boxY, entry, Color.Black.fadeTo(visible.fade * 0.75));
-    font.drawText(screen, 5 + promptWidth, 5 + boxY, entry, Color.Gold.fadeTo(visible.fade * 0.75));
-    font.drawText(screen, 5 + promptWidth + font.getTextSize(entry).width, 5 + boxY, "_", cursorColor);
-
-    // ...then the console output
-    var boxHeight = numLines * font.height + 10;
-    var boxY = screen.height - boxHeight * visible.fade;
-    Prim.drawSolidRectangle(screen, 0, boxY, screen.width, boxHeight, Color.Black.fadeTo(visible.fade * 0.75));
-    screen.clipTo(5, boxY + 5, screen.width - 10, boxHeight - 10);
-    for (var i = -1; i < numLines + 1; ++i) {
-        var lineToDraw = (nextLine - numLines) + i - Math.floor(visible.line);
-        var lineInBuffer = lineToDraw % bufferSize;
-        if (lineToDraw >= 0 && buffer[lineInBuffer] != null) {
-            var y = boxY + 5 + i * font.height;
-            y += (visible.line - Math.floor(visible.line)) * font.height;
-            font.drawText(screen, 6, y + 1, buffer[lineInBuffer], Color.Black.fadeTo(visible.fade * 0.75));
-            font.drawText(screen, 5, y, buffer[lineInBuffer], Color.White.fadeTo(visible.fade * 0.75));
-        }
-    }
-    screen.clipTo(0, 0, screen.width, screen.height);
-}
-
-function _show()
-{
-    var fps = screen.frameRate;
-    new Scene()
-        .tween(visible, 0.25 * fps, 'easeOutQuad', { fade: 1.0 })
-        .call(function() { visible.yes = true; })
-        .run();
-}
-
-function _update()
-{
-    if (visible.fade <= 0.0)
-        visible.line = 0.0;
-    return true;
+	let fps = screen.frameRate;
+	new Scene()
+		.tween(console.view, 0.25 * fps, 'easeOutQuad', { fade: 1.0 })
+		.call(() => console.view.visible = true)
+		.run();
 }
 
 // CommonJS

@@ -35,7 +35,6 @@ exports.__esModule = true;
 exports.default = exports;
 
 const from    = require('from'),
-      Console = require('console'),
       Scene   = require('scene');
 
 var adjuster = null;
@@ -44,16 +43,6 @@ var haveOverride = false;
 var mixer = new Mixer(44100, 16, 2);
 var oldSounds = [];
 var topmostSound = null;
-
-Console.defineObject('music', null, {
-	override(fileName) { override(fileName); },
-	play(fileName) { play(fileName); },
-	pop() { pop(); },
-	push(fileName) { push(fileName); },
-	reset() { reset(); },
-	stop() { play(null); },
-	volume(value) { adjustVolume(value / 100); },
-});
 
 Object.defineProperty(exports, 'adjusting',
 {

@@ -134,9 +134,13 @@ static js_throw_callback_t  s_throw_callback = NULL;
 bool
 jsal_init(void)
 {
-	JsValueRef null_value;
+	JsValueRef  null_value;
+	JsErrorCode result;
 	
-	if (JsCreateRuntime(JsRuntimeAttributeDispatchSetExceptionsToDebugger, NULL, &s_js_runtime) != JsNoError)
+	result = JsCreateRuntime(
+		JsRuntimeAttributeDispatchSetExceptionsToDebugger,
+		NULL, &s_js_runtime);
+	if (result != JsNoError)
 		goto on_error;
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
