@@ -258,6 +258,7 @@ static bool js_DirectoryStream_get_fileCount (js_ref_t* me, int num_args, bool i
 static bool js_DirectoryStream_get_fileName  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_position  (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_set_position  (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_iterator      (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_next          (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_rewind        (js_ref_t* me, int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_cancel               (js_ref_t* me, int num_args, bool is_ctor, int magic);
@@ -522,6 +523,7 @@ initialize_pegasus_api(void)
 	api_define_property("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
 	api_define_property("DirectoryStream", "fileName", false, js_DirectoryStream_get_fileName, NULL);
 	api_define_property("DirectoryStream", "position", false, js_DirectoryStream_get_position, js_DirectoryStream_set_position);
+	api_define_method("DirectoryStream", "@@iterator", js_DirectoryStream_iterator);
 	api_define_method("DirectoryStream", "next", js_DirectoryStream_next);
 	api_define_method("DirectoryStream", "rewind", js_DirectoryStream_rewind);
 	api_define_function("Dispatch", "cancel", js_Dispatch_cancel);
@@ -1723,7 +1725,7 @@ js_DirectoryStream_get_fileCount(js_ref_t* me, int num_args, bool is_ctor, int m
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_num_files(directory));
 	return true;
@@ -1736,7 +1738,7 @@ js_DirectoryStream_get_fileName(js_ref_t* me, int num_args, bool is_ctor, int ma
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_string(directory_pathname(directory));
 	return true;
@@ -1749,7 +1751,7 @@ js_DirectoryStream_get_position(js_ref_t* me, int num_args, bool is_ctor, int ma
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_position(directory));
 	return true;
@@ -1763,12 +1765,24 @@ js_DirectoryStream_set_position(js_ref_t* me, int num_args, bool is_ctor, int ma
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 	position = jsal_require_int(0);
 
 	if (!directory_seek(directory, position))
 		jsal_error(JS_ERROR, "couldn't set stream position");
 	return false;
+}
+
+static bool
+js_DirectoryStream_iterator(js_ref_t* me, int num_args, bool is_ctor, int magic)
+{
+	directory_t* directory;
+
+	jsal_push_this();
+	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+
+	return 1;
 }
 
 static bool
@@ -1779,7 +1793,7 @@ js_DirectoryStream_next(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	entry_path = directory_next(directory);
 	jsal_push_new_object();
@@ -1812,7 +1826,7 @@ js_DirectoryStream_rewind(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "object is disposed");
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	directory_rewind(directory);
 	return false;
@@ -2093,7 +2107,7 @@ js_FileStream_get_fileName(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	jsal_push_string(file_pathname(file));
 	return true;
@@ -2107,7 +2121,7 @@ js_FileStream_get_fileSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	file_pos = file_position(file);
 	file_seek(file, 0, WHENCE_END);
@@ -2123,7 +2137,7 @@ js_FileStream_get_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	jsal_push_number(file_position(file));
 	return true;
@@ -2137,7 +2151,7 @@ js_FileStream_set_position(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	new_pos = jsal_require_number(0);
 	file_seek(file, new_pos, WHENCE_SET);
@@ -2168,7 +2182,7 @@ js_FileStream_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 	if (num_args >= 1)
 		num_bytes = jsal_require_int(0);
 
@@ -2200,7 +2214,7 @@ js_FileStream_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	if (file_write(file, data, num_bytes, 1) != num_bytes)
 		jsal_error(JS_ERROR, "couldn't write to file");

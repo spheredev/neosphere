@@ -191,7 +191,14 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 	jsal_push_eval("({ writable: true, configurable: true })");
 	jsal_push_function(callback, name, 0, 0);
 	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, name);
+	if (strncmp(name, "@@", 2) == 0) {
+		jsal_push_known_symbol(&name[2]);
+		jsal_pull(-2);
+		jsal_def_prop(-3);
+	}
+	else {
+		jsal_def_prop_string(-2, name);
+	}
 
 	if (class_name != NULL)
 		jsal_pop(2);
@@ -296,6 +303,23 @@ jsal_is_class_obj(int index, int class_id)
 	data = jsal_get_host_data(index);
 	return data != NULL
 		&& class_id == data->class_id;
+}
+
+int
+jsal_push_class_name(int class_id)
+{
+	struct class_data* class_data;
+	const char*        name;
+
+	iter_t iter;
+
+	iter = vector_enum(s_classes);
+	while (iter_next(&iter)) {
+		class_data = iter.ptr;
+		if (class_id == class_data->id)
+			name = class_data->name;
+	}
+	return jsal_push_string(name);
 }
 
 int
