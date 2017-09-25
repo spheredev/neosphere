@@ -155,8 +155,7 @@ can be used by transpiling the ES 2015 scripts to ES5 first.
 To use the `transpile()` function, add one (and only one!) of the following
 lines to the top of your Cellscript:
 
-    import { transpile } from 'cell-runtime';  // .mjs only!
-    const transpile = require('transpile');
+    import { transpile } from 'cell-runtime';
 
 transpile(targetPath, sources);
 

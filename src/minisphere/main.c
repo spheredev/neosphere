@@ -321,7 +321,7 @@ on_js_error:
 	if (error_stack != NULL) {
 		fprintf(stderr, "%s\n", error_stack);
 		if (error_text[strlen(error_text) - 1] != '\n')
-			jsal_push_sprintf("JavaScript exception!\n\n%s\n", error_stack);
+			jsal_push_sprintf("%s\n", error_stack);
 		else
 			jsal_push_sprintf("%s\n", error_text);
 	}

@@ -130,7 +130,7 @@ class Console extends Thread
 		if ('saveID' in Sphere.Game)
 			this.logger = new Logger('consoleOutput');
 
-		this.log(`initializing Sphere Runtime Console module`);
+		this.log(`initializing the Sphere Runtime Console`);
 		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
 		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Platform})`);
 		this.log("");
