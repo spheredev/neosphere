@@ -168,8 +168,8 @@ class Console extends Thread
 				return;
 			switch (keycode) {
 				case Key.Enter:
-					this.log(`executing '${this.entry}'`);
-					executeCommand(this, entry);
+					this.log(`executing command line '${this.entry}'`);
+					executeCommand(this, this.entry);
 					this.entry = "";
 					break;
 				case Key.Backspace:
