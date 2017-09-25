@@ -276,8 +276,8 @@ build_free(build_t* build)
 bool
 build_eval(build_t* build, const char* filename)
 {
-	const char* err_filename;
-	int         err_line;
+	char*       error_filename = NULL;
+	int         error_line;
 	bool        is_mjs;
 	bool        is_ok = true;
 	path_t*     path;
@@ -293,15 +293,22 @@ build_eval(build_t* build, const char* filename)
 	path_free(path);
 	if (!eval_cjs_module(build->js_context, build->fs, filename, is_mjs)) {
 		is_ok = false;
-		duk_get_prop_string(build->js_context, -1, "fileName");
-		err_filename = duk_safe_to_string(build->js_context, -1);
-		duk_get_prop_string(build->js_context, -2, "lineNumber");
-		err_line = duk_get_int(build->js_context, -1);
-		duk_dup(build->js_context, -3);
+		if (duk_is_error(build->js_context, -1)) {
+			duk_get_prop_string(build->js_context, -1, "fileName");
+			error_filename = strdup(duk_safe_to_string(build->js_context, -1));
+			duk_get_prop_string(build->js_context, -2, "lineNumber");
+			error_line = duk_get_int(build->js_context, -1);
+			duk_pop_2(build->js_context);
+		}
+		else {
+			error_filename = strdup("unknown");
+		}
+		duk_dup(build->js_context, -1);
 		duk_to_string(build->js_context, -1);
-		visor_error(build->visor, "%s", duk_get_string(build->js_context, -1));
-		visor_print(build->visor, "@ [%s:%d]", err_filename, err_line);
-		duk_pop_3(build->js_context);
+		visor_error(build->visor, "%s (%s:%d)", duk_get_string(build->js_context, -1),
+			error_filename, error_line);
+		duk_pop(build->js_context);
+		free(error_filename);
 	}
 	duk_pop(build->js_context);
 	visor_end_op(build->visor);

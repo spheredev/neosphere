@@ -5,6 +5,8 @@ v4.8.9 - TBD
 ------------
 
 * Renames `Color#fade()` to `Color#fadeTo()`.
+* Fixes a bug where Cell will crash if a Cellscript throws either `null` or
+  `undefined` as an exception.
 
 v4.8.8 - September 21, 2017
 ---------------------------
