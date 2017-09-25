@@ -1,6 +1,11 @@
 miniSphere Changelog
 ====================
 
+v4.8.9 - TBD
+------------
+
+* Renames `Color#fade()` to `Color#fadeTo()`.
+
 v4.8.8 - September 21, 2017
 ---------------------------
 

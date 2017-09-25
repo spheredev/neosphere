@@ -241,7 +241,7 @@ static duk_ret_t js_Color_of                      (duk_context* ctx);
 static duk_ret_t js_new_Color                     (duk_context* ctx);
 static duk_ret_t js_Color_get_name                (duk_context* ctx);
 static duk_ret_t js_Color_clone                   (duk_context* ctx);
-static duk_ret_t js_Color_fade                    (duk_context* ctx);
+static duk_ret_t js_Color_fadeTo                  (duk_context* ctx);
 static duk_ret_t js_new_DirectoryStream           (duk_context* ctx);
 static duk_ret_t js_DirectoryStream_finalize      (duk_context* ctx);
 static duk_ret_t js_DirectoryStream_dispose       (duk_context* ctx);
@@ -475,7 +475,7 @@ initialize_pegasus_api(duk_context* ctx)
 	api_define_function(ctx, "Color", "of", js_Color_of);
 	api_define_property(ctx, "Color", "name", js_Color_get_name, NULL);
 	api_define_method(ctx, "Color", "clone", js_Color_clone);
-	api_define_method(ctx, "Color", "fade", js_Color_fade);
+	api_define_method(ctx, "Color", "fadeTo", js_Color_fadeTo);
 	api_define_class(ctx, "DirectoryStream", js_new_DirectoryStream, js_DirectoryStream_finalize);
 	api_define_method(ctx, "DirectoryStream", "dispose", js_DirectoryStream_dispose);
 	api_define_property(ctx, "DirectoryStream", "fileCount", js_DirectoryStream_get_fileCount, NULL);
@@ -1480,7 +1480,7 @@ js_Color_clone(duk_context* ctx)
 }
 
 static duk_ret_t
-js_Color_fade(duk_context* ctx)
+js_Color_fadeTo(duk_context* ctx)
 {
 	float   a;
 	color_t color;
