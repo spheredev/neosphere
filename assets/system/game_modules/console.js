@@ -251,18 +251,18 @@ function _render()
 
     // draw the command prompt...
     var boxY = -22 * (1.0 - visible.fade);
-    Prim.drawSolidRectangle(screen, 0, boxY, screen.width, 22, Color.Black.fade(visible.fade * 0.875));
+    Prim.drawSolidRectangle(screen, 0, boxY, screen.width, 22, Color.Black.fadeTo(visible.fade * 0.875));
     var promptWidth = font.getTextSize(prompt + " ").width;
-    font.drawText(screen, 6, 6 + boxY, prompt, Color.Black.fade(visible.fade * 0.75));
-    font.drawText(screen, 5, 5 + boxY, prompt, Color.Gray.fade(visible.fade * 0.75));
-    font.drawText(screen, 6 + promptWidth, 6 + boxY, entry, Color.Black.fade(visible.fade * 0.75));
-    font.drawText(screen, 5 + promptWidth, 5 + boxY, entry, Color.Gold.fade(visible.fade * 0.75));
+    font.drawText(screen, 6, 6 + boxY, prompt, Color.Black.fadeTo(visible.fade * 0.75));
+    font.drawText(screen, 5, 5 + boxY, prompt, Color.Gray.fadeTo(visible.fade * 0.75));
+    font.drawText(screen, 6 + promptWidth, 6 + boxY, entry, Color.Black.fadeTo(visible.fade * 0.75));
+    font.drawText(screen, 5 + promptWidth, 5 + boxY, entry, Color.Gold.fadeTo(visible.fade * 0.75));
     font.drawText(screen, 5 + promptWidth + font.getTextSize(entry).width, 5 + boxY, "_", cursorColor);
 
     // ...then the console output
     var boxHeight = numLines * font.height + 10;
     var boxY = screen.height - boxHeight * visible.fade;
-    Prim.drawSolidRectangle(screen, 0, boxY, screen.width, boxHeight, Color.Black.fade(visible.fade * 0.75));
+    Prim.drawSolidRectangle(screen, 0, boxY, screen.width, boxHeight, Color.Black.fadeTo(visible.fade * 0.75));
     screen.clipTo(5, boxY + 5, screen.width - 10, boxHeight - 10);
     for (var i = -1; i < numLines + 1; ++i) {
         var lineToDraw = (nextLine - numLines) + i - Math.floor(visible.line);
@@ -270,8 +270,8 @@ function _render()
         if (lineToDraw >= 0 && buffer[lineInBuffer] != null) {
             var y = boxY + 5 + i * font.height;
             y += (visible.line - Math.floor(visible.line)) * font.height;
-            font.drawText(screen, 6, y + 1, buffer[lineInBuffer], Color.Black.fade(visible.fade * 0.75));
-            font.drawText(screen, 5, y, buffer[lineInBuffer], Color.White.fade(visible.fade * 0.75));
+            font.drawText(screen, 6, y + 1, buffer[lineInBuffer], Color.Black.fadeTo(visible.fade * 0.75));
+            font.drawText(screen, 5, y, buffer[lineInBuffer], Color.White.fadeTo(visible.fade * 0.75));
         }
     }
     screen.clipTo(0, 0, screen.width, screen.height);

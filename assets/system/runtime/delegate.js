@@ -42,14 +42,16 @@ function Delegate()
     this._invokeList = [];
 }
 
-Delegate.prototype.add = function add(handler, thisObj)
+Delegate.prototype.addHandler =
+function addHandler(handler, thisObj)
 {
 	if (haveHandler(this, handler, thisObj))
 		throw new Error("duplicate handler");
 	this._invokeList.push({ thisObj: thisObj, handler: handler });
 }
 
-Delegate.prototype.call = function call(/*...*/)
+Delegate.prototype.call =
+function call(/*...*/)
 {
 	var lastResult = undefined;
 	var invokeArgs = arguments;
@@ -61,7 +63,8 @@ Delegate.prototype.call = function call(/*...*/)
 	return lastResult;
 }
 
-Delegate.prototype.remove = function remove(handler, thisObj)
+Delegate.prototype.removeHandler =
+function removeHandler(handler, thisObj)
 {
 	if (!haveHandler(this, handler, thisObj))
 		throw new Error("handler is not registered");
