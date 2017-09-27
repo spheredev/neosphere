@@ -362,8 +362,10 @@ sphere_run(bool allow_dispatch)
 		debugger_update();
 #endif
 
-	if (allow_dispatch)
+	if (allow_dispatch) {
+		jsal_update();
 		async_run_jobs(ASYNC_TICK);
+	}
 	update_input();
 	audio_update();
 

@@ -72,7 +72,7 @@ struct function
 
 struct module_job
 {
-	JsModuleRecord  module;
+	JsModuleRecord  module_record;
 	JsSourceContext script_id;
 	char*           source;
 	size_t          source_size;
@@ -95,6 +95,7 @@ static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent ev
 static void CHAKRA_CALLBACK        on_dispatch_job         (JsValueRef function, void* userdata);
 static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
 static JsErrorCode CHAKRA_CALLBACK on_import_module         (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
+static JsErrorCode CHAKRA_CALLBACK on_module_ready          (JsModuleRecord module, JsValueRef exception);
 static JsValueRef CHAKRA_CALLBACK  on_native_call           (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
 static void                        add_compiled_script      (const char* filename, JsSourceContext script_id);
 static const char*                 filename_from_script_id  (JsSourceContext script_id);
@@ -201,7 +202,31 @@ jsal_uninit(void)
 void
 jsal_update()
 {
+	JsErrorCode        error_code;
+	struct module_job* job;
+	JsValueRef         result;
+	char*              source;
 
+	if (vector_len(s_module_jobs) == 0)
+		return;
+
+	job = vector_get(s_module_jobs, 0);
+	if (job->source != NULL) {
+		// module parse job: parse an imported module
+		source = job->source;  // ...because 'job' may be invalidated
+		error_code = JsParseModuleSource(job->module_record, job->script_id,
+			(BYTE*)job->source, (unsigned int)job->source_size,
+			JsParseModuleSourceFlags_DataIsUTF8, &result);
+		free(source);
+		throw_on_error();
+		if (error_code == JsErrorScriptCompile)
+			throw_value(result);
+	}
+	else {
+		// module evaluation job: execute the root module
+		JsModuleEvaluation(job->module_record, &result);
+	}
+	vector_remove(s_module_jobs, 0);
 }
 
 void
@@ -439,20 +464,17 @@ jsal_eval_module(const char* filename)
 
 	JsErrorCode        error_code;
 	JsValueRef         exception;
-	struct module_job* job;
-	char*              job_source;
 	JsModuleRecord     module;
-	JsValueRef         result;
 	JsSourceContext    script_cookie;
 	const char*        source;
 	size_t             source_len;
-	JsModuleRecord     submodule;
 	JsValueRef         url_string;
 
 	source = jsal_require_lstring(-1, &source_len);
 	JsCreateString(filename, strlen(filename), &url_string);
 	JsInitializeModuleRecord(NULL, url_string, &module);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_import_module);
+	JsSetModuleHostInfo(module, JsModuleHostInfo_NotifyModuleReadyCallback, on_module_ready);
 	JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, url_string);
 	script_cookie = s_next_script_id++;
 	error_code = JsParseModuleSource(module,
@@ -461,22 +483,10 @@ jsal_eval_module(const char* filename)
 	add_compiled_script(filename, script_cookie);
 	if (error_code == JsErrorScriptCompile)
 		goto on_exception;
-	while (vector_len(s_module_jobs) > 0) {
-		job = vector_get(s_module_jobs, 0);
-		job_source = job->source;
-		submodule = job->module;
-		error_code = JsParseModuleSource(job->module,  // note: invalidates 'job'
-			job->script_id, (BYTE*)job->source, (unsigned int)job->source_size,
-			JsParseModuleSourceFlags_DataIsUTF8, &exception);
-		free(job_source);
-		if (error_code == JsErrorScriptCompile)
-			goto on_exception;
-		vector_remove(s_module_jobs, 0);
-	}
-	JsModuleEvaluation(module, &result);
-	throw_on_error();
+	while (vector_len(s_module_jobs) > 0)
+		jsal_update();
 
-	push_value(result);
+	jsal_push_undefined();
 	jsal_remove(-2);
 	return;
 
@@ -2382,7 +2392,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 }
 
 static JsErrorCode CHAKRA_CALLBACK
-on_import_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleRecord *out_module)
+on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module)
 {
 	JsValueRef        caller_id;
 	JsValueRef        exception;
@@ -2400,7 +2410,7 @@ on_import_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleReco
 
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_stack);
-	JsGetModuleHostInfo(sourceModule, JsModuleHostInfo_HostDefined, &caller_id);
+	JsGetModuleHostInfo(importer, JsModuleHostInfo_HostDefined, &caller_id);
 	push_value(specifier);
 	push_value(caller_id);
 	if (setjmp(label) == 0) {
@@ -2411,13 +2421,14 @@ on_import_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleReco
 		filename = jsal_require_string(-2);
 		source = jsal_require_lstring(-1, &source_len);
 		full_specifier = get_value(-2);
-		JsInitializeModuleRecord(sourceModule, full_specifier, &module);
+		JsInitializeModuleRecord(NULL, full_specifier, &module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_import_module);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_NotifyModuleReadyCallback, on_module_ready);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
 		throw_on_error();
 		add_compiled_script(filename, s_next_script_id);
 		job.script_id = s_next_script_id++;
-		job.module = module;
+		job.module_record = module;
 		job.source = strdup(source);
 		job.source_size = strlen(source);
 		vector_push(s_module_jobs, &job);
@@ -2433,6 +2444,18 @@ on_import_module(JsModuleRecord sourceModule, JsValueRef specifier, JsModuleReco
 	resize_stack(s_stack_base);
 	s_stack_base = last_stack_base;
 	*out_module = module;
+	return JsNoError;
+}
+
+static JsErrorCode CHAKRA_CALLBACK
+on_module_ready(JsModuleRecord module, JsValueRef exception)
+{
+	struct module_job job;
+
+	memset(&job, 0, sizeof(struct module_job));
+	job.module_record = module;
+	job.source = NULL;
+	vector_push(s_module_jobs, &job);
 	return JsNoError;
 }
 

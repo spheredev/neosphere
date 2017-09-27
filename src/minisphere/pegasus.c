@@ -862,11 +862,14 @@ on_import_module(void)
 		if (path = find_module(specifier, origin, PATHS[i], true))
 			break;  // short-circuit
 	}
-	free(specifier);
 	free(caller_id);
+	if (path == NULL) {
+		jsal_push_new_error(JS_REF_ERROR, "couldn't find mJS module '%s'", specifier);
+		free(specifier);
+		jsal_throw();
+	}
+	free(specifier);
 
-	if (path == NULL)
-		jsal_error(JS_REF_ERROR, "couldn't find JS module '%s'", specifier);
 	if (path_has_extension(path, ".mjs")) {
 		source = game_read_file(g_game, path_cstr(path), &source_len);
 		jsal_push_string(debugger_source_name(path_cstr(path)));
@@ -919,7 +922,7 @@ jsal_pegasus_eval_module(const char* filename)
 		jsal_pop(3);
 	}
 
-	console_log(1, "initializing JS module '%s'", filename);
+	console_log(1, "evaluating JS module '%s'", filename);
 
 	source = game_read_file(g_game, filename, &source_size);
 	code_string = lstr_from_utf8(source, source_size, true);
