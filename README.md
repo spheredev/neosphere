@@ -16,7 +16,7 @@ three of the major platforms (Windows, Linux, and OS X).
 The Game Engine
 ---------------
 
-*Sphere* games are written in JavaScript.  The engine exposes a collection of
+**Sphere games** are written in JavaScript.  The engine exposes a collection of
 low-level functions to the JavaScript environment, leaving higher-level game
 logic entirely up to script.  In this way, any kind of game you can imagine can
 be developed.
@@ -25,28 +25,28 @@ The Compiler
 ------------
 
 **Cell**, miniSphere's compiler, uses JavaScript to control the build process.
-Out of the box, the compiler supports ECMAScript 2015 transpilation, allowing
-you to use new JavaScript syntax such as classes and arrow functions in your
-game.  A basic Cellscript might look like this:
+Like miniSphere, Cell runs on ChakraCore and thus natively supports ES6
+features like arrow functions, destructuring, and modules.  A basic Cellscript
+might look like this:
 
 ```js
-import transpile from 'transpile';
-
-// whatever is passed to describe() is written to game.json.
-describe("Game Title",
+// all values defined on Sphere.Game are JSON encoded at the end of the build
+// and written to game.json.
+Object.assign(Sphere.Game,
 {
-    author: "Some Guy",
-    summary: "This game is awesome.",
+	name:       "My Game",
+    author:     "Some Guy",
+    summary:    "This game is awesome.",
     resolution: '320x240',
-    main: 'scripts/main.js',  // main JS module
+    main:       '@/scripts/main.mjs',
 });
 
-// miniSphere doesn't support ES 2015 syntax natively.  transpile() builds
-// compatible scripts from ES 2015 code.
-let sources = files('scripts/*.js', true);
-transpile('@/scripts', sources);
+// install modules and scripts.  starting with miniSphere 5.0, Sphere supports
+// ES6+ out of the box so no transpile is necessary!
+install('@/scripts', files('src/*.mjs', true));
+install('@/scripts', files('src/*.js', true));
 
-// install assets into the game package.
+// install game assets
 install('@/images', files('images/*.png', true));
 install('@/music',  files('music/*.ogg', true));
 install('@/sounds', files('sounds/*.wav', true));
@@ -55,21 +55,20 @@ install('@/',       files('icon.png'));
 
 If that's not enough for you, then using Cell's flexible Tool API, you can
 extend the compiler to build any kind of asset.  Simply construct a Tool
-object and provide a function which will be called when the tool is executed.
-The Tool below will write the contents of a single source file to the
-destination file:
+object and provide a function to be called when the tool is executed.  The Tool
+below will write the contents of a single text file to the destination file:
 
 ```js
 // the second argument to `new Tool()` is optional and describes the process
 // performed by the tool, e.g., "compiling" or "installing".  if omitted, Cell
 // just says "building".
-const CopyTool = new Tool((outName, sourceNames) => {
-    let buffer = FS.readFile(sourceNames[0]);
-    FS.writeFile(outName, buffer);
+let copyTool = new Tool((outName, sourceNames) => {
+	let text = FS.readFile(sourceNames[0]);
+	FS.writeFile(outName, text);
 }, "copying");
 ```
 
-To instruct Cell to build a file using your new Tool, just do this:
+To have Cell build a file using your new Tool, just do this:
 
 ```js
 // the first argument is the destination filename, the second argument is an
@@ -78,7 +77,7 @@ To instruct Cell to build a file using your new Tool, just do this:
 //
 // note: the prefix '@/' refers to the root of the game package being compiled.
 //       see `cellscript-api.txt` for more information on SphereFS prefixes.
-CopyTool.stage('@/eatypig.fat', files('eaty/pig.src'));
+copyTool.stage('@/eatypig.fat', files('eaty/pig.src'));
 ```
 
 The Debugger
@@ -99,7 +98,7 @@ Download
 ========
 
 The latest stable miniSphere release at the time of this writing is
-**miniSphere 4.8.7**, released on Saturday, September 16, 2017.  miniSphere
+**miniSphere 4.8.8**, released on Thursday, September 21, 2017.  miniSphere
 binaries are provided through GitHub, and the latest version is always
 available for download here:
 
