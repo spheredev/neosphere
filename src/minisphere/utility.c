@@ -46,6 +46,15 @@ assets_path(void)
 
 	if (retval == NULL) {
 		al_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
+#if defined(__APPLE__) && defined(MINISPHERE_SPHERUN)
+		// for macOS, we want the directory containing miniSphere.app and NOT one
+		// of the subdirectories that's buried inside.  to get there, we need to
+		// go 3 levels up:
+		//     miniSphere.app/Contents/Resources/
+		//     ^3             ^2       ^1        ^0
+		for (i = 0; i < 3; ++i)
+			al_drop_path_tail(al_path);
+#endif
 		retval = path_new_dir(al_path_cstr(al_path, '/'));
 		al_destroy_path(al_path);
 	}
@@ -64,16 +73,15 @@ engine_path(void)
 	if (retval == NULL) {
 		al_path = al_get_standard_path(ALLEGRO_EXENAME_PATH);
 		al_set_path_filename(al_path, NULL);
-		// FIXME: how do we detect if we're running from an app bundle?
-		if (false) {
-			// for OS X, we want the directory containing miniSphere.app and NOT the
-			// executable directory that's buried inside.  to get there, we need to
-			// go 3 levels up from the executable:
-			//     miniSphere.app/Contents/MacOS/minisphere
-			//     ^3             ^2       ^1    ^0
-			for (i = 0; i < 3; ++i)
-				al_drop_path_tail(al_path);
-		}
+#if defined(__APPLE__) && defined(MINISPHERE_SPHERUN)
+		// for macOS, we want the directory containing miniSphere.app and NOT one
+		// of the subdirectories that's buried inside.  to get there, we need to
+		// go 3 levels up:
+		//     miniSphere.app/Contents/MacOS/minisphere
+		//     ^3             ^2       ^1    ^0
+		for (i = 0; i < 3; ++i)
+			al_drop_path_tail(al_path);
+#endif
 		retval = path_new_dir(al_path_cstr(al_path, '/'));
 		al_destroy_path(al_path);
 	}

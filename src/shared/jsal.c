@@ -199,6 +199,12 @@ jsal_uninit(void)
 }
 
 void
+jsal_update()
+{
+
+}
+
+void
 jsal_on_enqueue_job(js_job_callback_t callback)
 {
 	s_job_callback = callback;
