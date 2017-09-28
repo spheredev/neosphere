@@ -51,6 +51,7 @@
 
 struct js_ref
 {
+	bool  weak_ref;
 	JsRef value;
 };
 
@@ -92,17 +93,17 @@ struct script
 };
 
 static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
-static void CHAKRA_CALLBACK        on_dispatch_job         (JsValueRef function, void* userdata);
+static void CHAKRA_CALLBACK        on_dispatch_job          (JsValueRef function, void* userdata);
 static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
 static JsErrorCode CHAKRA_CALLBACK on_import_module         (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
 static JsErrorCode CHAKRA_CALLBACK on_module_ready          (JsModuleRecord module, JsValueRef exception);
-static JsValueRef CHAKRA_CALLBACK  on_native_call           (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
+static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call     (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
 static void                        add_compiled_script      (const char* filename, JsSourceContext script_id);
 static const char*                 filename_from_script_id  (JsSourceContext script_id);
 static void                        free_ref                 (js_ref_t* ref);
 static JsValueRef                  get_value                (int stack_index);
 static JsPropertyIdRef             make_property_id         (JsValueRef key_value);
-static js_ref_t*                   make_ref                 (JsRef value);
+static js_ref_t*                   make_ref                 (JsRef value, bool weak_ref);
 static JsValueRef                  pop_value                (void);
 static void                        push_debug_callback_args (JsValueRef event_data);
 static JsSourceContext             script_id_from_filename  (const char* filename);
@@ -174,8 +175,7 @@ void
 jsal_uninit(void)
 {
 	struct breakpoint* breakpoint;
-	JsValueRef         value;
-	
+
 	iter_t iter;
 
 	iter = vector_enum(s_breakpoints);
@@ -184,11 +184,8 @@ jsal_uninit(void)
 		free(breakpoint->filename);
 	}
 	
-	iter = vector_enum(s_stack);
-	while (iter_next(&iter)) {
-		value = *(JsValueRef*)iter.ptr;
-		JsRelease(value, NULL);
-	}
+	// clear value stack, releasing all references
+	resize_stack(0);
 	
 	vector_free(s_breakpoints);
 	vector_free(s_module_jobs);
@@ -203,6 +200,7 @@ void
 jsal_update()
 {
 	JsErrorCode        error_code;
+	JsValueRef         exception;
 	struct module_job* job;
 	JsValueRef         result;
 	char*              source;
@@ -216,11 +214,11 @@ jsal_update()
 		source = job->source;  // ...because 'job' may be invalidated
 		error_code = JsParseModuleSource(job->module_record, job->script_id,
 			(BYTE*)job->source, (unsigned int)job->source_size,
-			JsParseModuleSourceFlags_DataIsUTF8, &result);
+			JsParseModuleSourceFlags_DataIsUTF8, &exception);
 		free(source);
 		throw_on_error();
 		if (error_code == JsErrorScriptCompile)
-			throw_value(result);
+			JsSetModuleHostInfo(job->module_record, JsModuleHostInfo_Exception, exception);
 	}
 	else {
 		// module evaluation job: execute the root module
@@ -792,9 +790,9 @@ jsal_insert(int at_index)
 
 	if (at_index == jsal_get_top() - 1)
 		return;  // nop
-	value = pop_value();
-	JsAddRef(value, NULL);
+	value = get_value(-1);
 	vector_insert(s_stack, at_index + s_stack_base, &value);
+	vector_pop(s_stack, 1);
 }
 
 bool
@@ -958,7 +956,7 @@ jsal_new_key(const char* name)
 	JsPropertyIdRef key;
 
 	JsCreatePropertyId(name, strlen(name), &key);
-	return make_ref(key);
+	return make_ref(key, false);
 }
 
 bool
@@ -1017,7 +1015,7 @@ jsal_pop(int num_values)
 	
 	top = jsal_get_top();
 	if (num_values > top)
-		jsal_error(JS_RANGE_ERROR, "cannot pop %d values", num_values);
+		jsal_error(JS_RANGE_ERROR, "cannot pop %d values from value stack", num_values);
 	jsal_set_top(top - num_values);
 }
 
@@ -1043,7 +1041,7 @@ jsal_push_constructor(js_function_t callback, const char* name, int min_args, in
 	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
-	JsCreateNamedFunction(name_string, on_native_call, function_data, &function);
+	JsCreateNamedFunction(name_string, on_js_to_native_call, function_data, &function);
 	return push_value(function);
 }
 
@@ -1073,7 +1071,7 @@ jsal_push_function(js_function_t callback, const char* name, int min_args, int m
 	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
-	JsCreateNamedFunction(name_string, on_native_call, function_data, &function);
+	JsCreateNamedFunction(name_string, on_js_to_native_call, function_data, &function);
 	return push_value(function);
 }
 
@@ -1324,16 +1322,15 @@ jsal_push_undefined(void)
 	return push_value(ref);
 }
 
-int
+void
 jsal_pull(int from_index)
 {
 	JsValueRef value;
 
 	from_index = jsal_normalize_index(from_index);
 	value = get_value(from_index);
-	push_value(value);
-	jsal_remove(from_index);
-	return jsal_get_top() - 1;
+	vector_remove(s_stack, from_index + s_stack_base);
+	vector_push(s_stack, &value);
 }
 
 void
@@ -1437,15 +1434,18 @@ jsal_replace(int at_index)
 {
 	/* [ ... old_value ... new_value ] -> [ ... new_value ... ] */
 
+	JsValueRef old_value;
 	JsValueRef value;
 
 	at_index = jsal_normalize_index(at_index);
 
 	if (at_index == jsal_get_top() - 1)
 		return true;  // nop
-	value = pop_value();
-	JsAddRef(value, NULL);
+	old_value = get_value(at_index);
+	value = get_value(-1);
+	JsRelease(old_value, NULL);
 	vector_put(s_stack, at_index + s_stack_base, &value);
+	vector_pop(s_stack, 1);
 	return true;
 }
 
@@ -2080,7 +2080,8 @@ add_compiled_script(const char* filename, JsSourceContext script_id)
 static void
 free_ref(js_ref_t* ref)
 {
-	JsRelease(ref->value, NULL);
+	if (!ref->weak_ref)
+		JsRelease(ref->value, NULL);
 	free(ref);
 }
 
@@ -2114,14 +2115,16 @@ make_property_id(JsValueRef key)
 }
 
 js_ref_t*
-make_ref(JsRef value)
+make_ref(JsRef value, bool weak_ref)
 {
 	js_ref_t* ref;
 	
-	JsAddRef(value, NULL);
+	if (!weak_ref)
+		JsAddRef(value, NULL);
 
 	ref = calloc(1, sizeof(js_ref_t));
 	ref->value = value;
+	ref->weak_ref = weak_ref;
 	return ref;
 }
 
@@ -2129,13 +2132,13 @@ static JsValueRef
 pop_value(void)
 {
 	int        index;
-	JsValueRef ref;
+	JsValueRef value;
 
 	index = vector_len(s_stack) - 1;
-	ref = *(JsValueRef*)vector_get(s_stack, index);
+	value = *(JsValueRef*)vector_get(s_stack, index);
 	vector_pop(s_stack, 1);
-	JsRelease(ref, NULL);
-	return ref;
+	JsRelease(value, NULL);
+	return value;
 }
 
 static void
@@ -2425,7 +2428,6 @@ on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *
 		JsSetModuleHostInfo(module, JsModuleHostInfo_FetchImportedModuleCallback, on_import_module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_NotifyModuleReadyCallback, on_module_ready);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_HostDefined, full_specifier);
-		throw_on_error();
 		add_compiled_script(filename, s_next_script_id);
 		job.script_id = s_next_script_id++;
 		job.module_record = module;
@@ -2447,20 +2449,8 @@ on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *
 	return JsNoError;
 }
 
-static JsErrorCode CHAKRA_CALLBACK
-on_module_ready(JsModuleRecord module, JsValueRef exception)
-{
-	struct module_job job;
-
-	memset(&job, 0, sizeof(struct module_job));
-	job.module_record = module;
-	job.source = NULL;
-	vector_push(s_module_jobs, &job);
-	return JsNoError;
-}
-
 static JsValueRef CHAKRA_CALLBACK
-on_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
+on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
 {
 	js_ref_t*        callee_ref;
 	JsValueRef       exception;
@@ -2479,7 +2469,7 @@ on_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	last_this_value = s_this_value;
 	s_stack_base = vector_len(s_stack);
 	s_this_value = argv[0];
-	callee_ref = make_ref(callee);
+	callee_ref = make_ref(callee, true);
 	for (i = 1; i < argc; ++i)
 		push_value(argv[i]);
 	if (setjmp(label) == 0) {
@@ -2511,6 +2501,18 @@ on_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned shor
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
 	return retval;
+}
+
+static JsErrorCode CHAKRA_CALLBACK
+on_module_ready(JsModuleRecord module, JsValueRef exception)
+{
+	struct module_job job;
+
+	memset(&job, 0, sizeof(struct module_job));
+	job.module_record = module;
+	job.source = NULL;
+	vector_push(s_module_jobs, &job);
+	return JsNoError;
 }
 
 #if !defined(__APPLE__)

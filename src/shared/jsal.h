@@ -176,7 +176,7 @@ int          jsal_push_string              (const char* value);
 int          jsal_push_this                (void);
 int          jsal_push_uint                (unsigned int value);
 int          jsal_push_undefined           (void);
-int          jsal_pull                     (int from_index);
+void         jsal_pull                     (int from_index);
 void         jsal_put_prop                 (int object_index);
 void         jsal_put_prop_index           (int object_index, int name);
 void         jsal_put_prop_key             (int object_index, js_ref_t* key);
