@@ -808,7 +808,7 @@ initialize_pegasus_api(void)
 	p = COLORS;
 	while (p->name != NULL) {
 		jsal_push_eval("({ enumerable: false, configurable: true })");
-		jsal_push_function(js_Color_get_Color, "get", 0, (int)(p - COLORS));
+		jsal_push_new_function(js_Color_get_Color, "get", 0, (int)(p - COLORS));
 		jsal_put_prop_string(-2, "get");
 		jsal_def_prop_string(-2, p->name);
 		++p;
@@ -1042,7 +1042,7 @@ jsal_pegasus_push_job_token(int64_t token)
 static void
 jsal_pegasus_push_require(const char* module_id)
 {
-	jsal_push_function(js_require, "require", 1, 0);
+	jsal_push_new_function(js_require, "require", 1, 0);
 	
 	// assign 'require.cache'
 	jsal_push_new_object();
@@ -4517,11 +4517,11 @@ js_Transform_get_matrix(js_ref_t* me, int num_args, bool is_ctor, int magic)
 		for (i = 0; i < 4; ++i) {
 			jsal_push_new_object();
 			for (j = 0; j < 4; ++j) {
-				jsal_push_function(js_Transform_get_matrix, "get", 0, 1 + (j * 4 + i));
+				jsal_push_new_function(js_Transform_get_matrix, "get", 0, 1 + (j * 4 + i));
 				jsal_push_this();
 				jsal_put_prop_string(-2, "\xFF" "transform");
 				
-				jsal_push_function(js_Transform_set_matrix, "set", 0, 1 + (j * 4 + i));
+				jsal_push_new_function(js_Transform_set_matrix, "set", 0, 1 + (j * 4 + i));
 				jsal_push_this();
 				jsal_put_prop_string(-2, "\xFF" "transform");
 				

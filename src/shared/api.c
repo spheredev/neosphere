@@ -169,7 +169,7 @@ api_define_function(const char* namespace_name, const char* name, js_function_t 
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
-	jsal_push_function(callback, name, 0, 0);
+	jsal_push_new_function(callback, name, 0, 0);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, name);
 	
@@ -189,7 +189,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
-	jsal_push_function(callback, name, 0, 0);
+	jsal_push_new_function(callback, name, 0, 0);
 	jsal_put_prop_string(-2, "value");
 	if (strncmp(name, "@@", 2) == 0) {
 		jsal_push_known_symbol(&name[2]);
@@ -245,11 +245,11 @@ api_define_property(const char* class_name, const char* name, bool enumerable, j
 	jsal_push_boolean(enumerable);
 	jsal_put_prop_string(-2, "enumerable");
 	if (getter != NULL) {
-		jsal_push_function(getter, "get", 0, 0);
+		jsal_push_new_function(getter, "get", 0, 0);
 		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
-		jsal_push_function(setter, "set", 0, 0);
+		jsal_push_new_function(setter, "set", 0, 0);
 		jsal_put_prop_string(-2, "set");
 	}
 	
@@ -279,11 +279,11 @@ api_define_static_prop(const char* namespace_name, const char* name, js_function
 	// populate the property descriptor
 	jsal_push_eval("({ configurable: true })");
 	if (getter != NULL) {
-		jsal_push_function(getter, "get", 0, 0);
+		jsal_push_new_function(getter, "get", 0, 0);
 		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
-		jsal_push_function(setter, "set", 0, 0);
+		jsal_push_new_function(setter, "set", 0, 0);
 		jsal_put_prop_string(-2, "set");
 	}
 	jsal_def_prop_string(-2, name);

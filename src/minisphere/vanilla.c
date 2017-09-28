@@ -6775,7 +6775,7 @@ js_Font_drawTextBox(js_ref_t* me, int num_args, bool is_ctor, int magic)
 
 	if (screen_skip_frame(g_screen))
 		return false;
-	jsal_push_function(js_Font_wordWrapString, "wordWrapString", 0, 0);
+	jsal_push_new_function(js_Font_wordWrapString, "wordWrapString", 0, 0);
 	jsal_push_this();
 	jsal_push_string(text);
 	jsal_push_int(w);
@@ -6883,7 +6883,7 @@ js_Font_getStringHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 	text = jsal_to_string(0);
 	width = jsal_to_int(1);
 
-	jsal_push_function(js_Font_wordWrapString, "wordWrapString", 0, 0);
+	jsal_push_new_function(js_Font_wordWrapString, "wordWrapString", 0, 0);
 	jsal_push_this();
 	jsal_push_string(text);
 	jsal_push_int(width);

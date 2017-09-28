@@ -153,7 +153,7 @@ void         jsal_pop                      (int num_values);
 int          jsal_push_boolean             (bool value);
 int          jsal_push_constructor         (js_function_t callback, const char* name, int min_args, int magic);
 int          jsal_push_eval                (const char* source);
-int          jsal_push_function            (js_function_t callback, const char* name, int min_args, int magic);
+int          jsal_push_new_function            (js_function_t callback, const char* name, int min_args, int magic);
 int          jsal_push_global_object       (void);
 int          jsal_push_hidden_stash        (void);
 int          jsal_push_int                 (int value);
