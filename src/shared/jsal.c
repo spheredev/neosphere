@@ -162,6 +162,8 @@ jsal_init(void)
 	s_compiled_scripts = vector_new(sizeof(struct script));
 	s_module_jobs = vector_new(sizeof(struct module_job));
 
+	vector_reserve(s_stack, 1000);
+
 	return true;
 
 on_error:
