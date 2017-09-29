@@ -14,10 +14,11 @@ static bool ensure_space (vector_t* vector, int min_items, bool compacting);
 
 struct vector
 {
-	size_t   pitch;
 	uint8_t* buffer;
-	int      num_items;
 	int      max_items;
+	int      num_items;
+	size_t   pitch;
+	int      reserve;
 };
 
 vector_t*
@@ -28,7 +29,7 @@ vector_new(size_t pitch)
 	if (!(vector = calloc(1, sizeof(vector_t))))
 		return NULL;
 	vector->pitch = pitch;
-	ensure_space(vector, 8, false);
+	vector_reserve(vector, 8);
 	return vector;
 }
 
@@ -135,6 +136,20 @@ vector_remove(vector_t* it, int index)
 }
 
 bool
+vector_reserve(vector_t* it, int min_items)
+{
+	int new_max;
+
+	new_max = min_items;
+	while (it->max_items > new_max)
+		new_max *= 2;
+	it->reserve = min_items;
+	if (!ensure_space(it, new_max, true))
+		return false;
+	return true;
+}
+
+bool
 vector_resize(vector_t* it, int new_size)
 {
 	if (!ensure_space(it, new_size, true))
@@ -184,10 +199,18 @@ ensure_space(vector_t* vector, int min_items, bool compacting)
 	int      new_max;
 
 	new_max = vector->max_items;
-	if (min_items > vector->max_items)  // is the buffer too small?
+	if (new_max < vector->reserve)
+		new_max = vector->reserve;
+	while (new_max < min_items)  // is the buffer too small?
+		new_max *= 2;
+	
+	// if the vector drops below 1/4 load, shrink the buffer so it doesn't
+	// grow unbounded
+	if (compacting && min_items < vector->max_items / 4)
 		new_max = min_items * 2;
-	else if (compacting && min_items < vector->max_items / 4)  // if item count drops below 1/4 of peak size, shrink the buffer
-		new_max = min_items * 2;
+	if (new_max < vector->reserve)
+		new_max = vector->reserve;
+	
 	if (new_max != vector->max_items) {
 		if (!(new_buffer = realloc(vector->buffer, new_max * vector->pitch)) && new_max > 0)
 			return false;
