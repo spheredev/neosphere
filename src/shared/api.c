@@ -13,6 +13,7 @@ struct class_data
 	js_finalizer_t finalizer;
 	int            id;
 	char*          name;
+	js_ref_t*      prototype;
 };
 
 struct object_data
@@ -28,7 +29,6 @@ static const char* class_name_from_id        (int class_id);
 
 static vector_t* s_classes;
 static js_ref_t* s_key_prototype;
-static js_ref_t* s_prototypes;
 
 void
 api_init(void)
@@ -48,12 +48,6 @@ api_init(void)
 	jsal_def_prop_string(-3, "global");
 	jsal_def_prop_string(-2, "exports");
 	jsal_pop(1);
-
-	// set up an object to keep prototypes.  this way prototypes for built-in classes
-	// remain accessible internally even if their constructors are overwritten.
-	jsal_push_new_object();
-	s_prototypes = jsal_ref(-1);
-	jsal_pop(1);
 }
 
 void
@@ -64,10 +58,10 @@ api_uninit(void)
 	iter_t iter;
 
 	jsal_unref(s_key_prototype);
-	jsal_unref(s_prototypes);
 	iter = vector_enum(s_classes);
 	while (iter_next(&iter)) {
 		class_data = iter.ptr;
+		jsal_unref(class_data->prototype);
 		free(class_data->name);
 	}
 	vector_free(s_classes);
@@ -118,18 +112,17 @@ api_define_class(const char* name, int class_id, js_function_t constructor, js_f
 	//       this is useful for types which can only be created via factory methods.
 
 	struct class_data class_data;
+	js_ref_t*         prototype;
 
-	class_data.id = class_id;
-	class_data.name = strdup(name);
-	class_data.finalizer = finalizer;
-	vector_push(s_classes, &class_data);
-
-	// construct a JS prototype for the new class
+	// create a prototype and leave it on the stack
 	jsal_push_new_object();
-	jsal_push_ref(s_prototypes);
-	jsal_dup(-2);
-	jsal_put_prop_index(-2, class_id);
-	jsal_pop(1);
+	prototype = jsal_ref(-1);
+		
+	class_data.id = class_id;
+	class_data.finalizer = finalizer;
+	class_data.name = strdup(name);
+	class_data.prototype = prototype;
+	vector_push(s_classes, &class_data);
 
 	// register a global constructor, if applicable
 	if (constructor != NULL) {
@@ -184,8 +177,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 	jsal_push_global_object();
 	if (class_name != NULL) {
 		// load the prototype from the prototype stash
-		jsal_push_ref(s_prototypes);
-		jsal_get_prop_index(-1, class_id_from_name(class_name));
+		jsal_push_class_prototype(class_id_from_name(class_name));
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
@@ -201,7 +193,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 	}
 
 	if (class_name != NULL)
-		jsal_pop(2);
+		jsal_pop(1);
 	jsal_pop(1);
 }
 
@@ -236,8 +228,8 @@ api_define_property(const char* class_name, const char* name, bool enumerable, j
 {
 	jsal_push_global_object();
 	if (class_name != NULL) {
-		jsal_push_ref(s_prototypes);
-		jsal_get_prop_index(-1, class_id_from_name(class_name));
+		// load the prototype from the prototype stash
+		jsal_push_class_prototype(class_id_from_name(class_name));
 	}
 
 	// populate the property descriptor
@@ -255,7 +247,7 @@ api_define_property(const char* class_name, const char* name, bool enumerable, j
 	
 	jsal_def_prop_string(-2, name);
 	if (class_name != NULL)
-		jsal_pop(2);
+		jsal_pop(1);
 	jsal_pop(1);
 }
 
@@ -329,14 +321,18 @@ jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 	js_finalizer_t      finalizer = NULL;
 	int                 index;
 	struct object_data* object_data;
+	js_ref_t*           prototype;
 	
 	iter_t iter;
 
 	iter = vector_enum(s_classes);
 	while (iter_next(&iter)) {
 		class_data = iter.ptr;
-		if (class_id == class_data->id)
+		if (class_id == class_data->id) {
 			finalizer = class_data->finalizer;
+			prototype = class_data->prototype;
+			break;
+		}
 	}
 	
 	object_data = malloc(sizeof(struct object_data));
@@ -345,10 +341,8 @@ jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 	object_data->ptr = udata;
 	index = jsal_push_new_host_object(object_data, on_finalize_sphere_object);
 
-	jsal_push_ref(s_prototypes);
-	jsal_get_prop_index(-1, class_id);
+	jsal_push_ref(prototype);
 	jsal_set_prototype(index);
-	jsal_pop(1);
 
 	// ChakraCore has really odd semantics for native functions: if the function
 	// is called as part of constructing a subclass, its `this` is equal to
@@ -368,10 +362,18 @@ jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 int
 jsal_push_class_prototype(int class_id)
 {
-	jsal_push_ref(s_prototypes);
-	jsal_get_prop_index(-1, class_id);
-	jsal_remove(-2);
-	return jsal_get_top() - 1;
+	struct class_data* class_data;
+	
+	iter_t iter;
+
+	iter = vector_enum(s_classes);
+	while (iter_next(&iter)) {
+		class_data = iter.ptr;
+		if (class_id == class_data->id)
+			break;
+	}
+
+	return jsal_push_ref(class_data->prototype);
 }
 
 void*
