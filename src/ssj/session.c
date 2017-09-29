@@ -468,7 +468,7 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 
 	int i = 0;
 
-	expr = command_get_string(cmd, 1);
+	expr = command_get_rest(cmd, 1);
 	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
 	if (dvalue_tag(result) != DVALUE_OBJ) {
 		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "eval() = \33[37;1m%s\33[m\n", dvalue_as_cstr(result));
@@ -713,6 +713,7 @@ validate_args(const command_t* this, const char* verb_name, const char* pattern)
 			++p_type;
 		if (*p_type == '\0')
 			break;
+		want_tag = TOK_ANY;
 		switch (*p_type) {
 		case 's':
 			want_tag = TOK_STRING;
@@ -727,7 +728,7 @@ validate_args(const command_t* this, const char* verb_name, const char* pattern)
 			want_type = "file:line";
 			break;
 		}
-		if (command_get_tag(this, index + 1) != want_tag)
+		if (want_tag != TOK_ANY && command_get_tag(this, index + 1) != want_tag)
 			goto wrong_type;
 		++p_type;
 		++index;

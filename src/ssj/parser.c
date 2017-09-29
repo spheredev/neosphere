@@ -37,6 +37,7 @@
 struct token
 {
 	token_tag_t tag;
+	char*       rest_string;
 	char*       string;
 	int         line_no;
 	double      number;
@@ -75,6 +76,7 @@ command_parse(const char* string)
 			tokens = realloc(tokens, array_len * sizeof(struct token));
 		}
 		memset(&tokens[index], 0, sizeof(struct token));
+		tokens[index].rest_string = strdup(p_ch);
 		if (*p_ch >= '0' && *p_ch <= '9') {
 			length = strspn(p_ch, "0123456789.");
 			number_value = strtod(p_ch, &p_tail);
@@ -108,7 +110,7 @@ command_parse(const char* string)
 		}
 		if (tokens[index].tag == TOK_STRING && *p_ch == ':') {
 			// a string token followed immediately by a colon with no intervening whitespace
-			// should be parsed instead as a filename/linenumber pair.
+			// should be parsed instead as a file:line token.
 			length = strspn(p_ch + 1, "0123456789");
 			number_value = strtod(p_ch + 1, &p_tail);
 			next_char = *p_tail;
@@ -142,8 +144,10 @@ command_free(command_t* obj)
 	if (obj == NULL)
 		return;
 
-	for (i = 0; i < obj->num_tokens; ++i)
+	for (i = 0; i < obj->num_tokens; ++i) {
+		free(obj->tokens[i].rest_string);
 		free(obj->tokens[i].string);
+	}
 	free(obj->tokens);
 	free(obj);
 }
@@ -173,6 +177,12 @@ command_get_int(const command_t* obj, int index)
 	return obj->tokens[index].tag == TOK_NUMBER ? (int)obj->tokens[index].number
 		: obj->tokens[index].tag == TOK_FILE_LINE ? obj->tokens[index].line_no
 		: 0;
+}
+
+const char*
+command_get_rest(const command_t* obj, int index)
+{
+	return obj->tokens[index].rest_string;
 }
 
 const char*
