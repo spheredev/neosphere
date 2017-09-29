@@ -772,11 +772,12 @@ show_error_screen(const char* message)
 		goto show_error_box;
 	num_lines = wraptext_len(error_info);
 
-	// reset the projection to pixel-perfect orthographic and disable clipping.
-	// it's assumed that JavaScript execution won't continue after this point, so we shouldn't
+	// reset the projection to pixel-perfect orthographic, switch to the default shader and disable
+	// clipping.  it's assumed that JavaScript execution won't continue after this point, so we shouldn't
 	// step on any toes by doing this.
 	screen_unskip_frame(g_screen);
 	image_render_to(screen_backbuffer(g_screen), NULL);
+	shader_use(NULL, true);
 	image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, resolution.width, resolution.height));
 	projection = transform_new();
 	transform_orthographic(projection, 0, 0, resolution.width, resolution.height, -1.0f, 1.0f);
