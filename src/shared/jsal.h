@@ -81,7 +81,7 @@ enum js_error_type
 	JS_URI_ERROR,
 } js_error_type_t;
 
-typedef bool      (* js_function_t)        (js_ref_t* me, int num_args, bool is_ctor, int magic);
+typedef bool      (* js_function_t)        (int num_args, bool is_ctor, int magic);
 typedef js_step_t (* js_break_callback_t)  (void);
 typedef void      (* js_finalizer_t)       (void* host_ptr);
 typedef void      (* js_job_callback_t)    (void);
@@ -151,6 +151,7 @@ int          jsal_normalize_index          (int index);
 void         jsal_parse                    (int at_index);
 void         jsal_pop                      (int num_values);
 int          jsal_push_boolean             (bool value);
+int          jsal_push_callee              (void);
 int          jsal_push_constructor         (js_function_t callback, const char* name, int min_args, int magic);
 int          jsal_push_eval                (const char* source);
 int          jsal_push_new_function            (js_function_t callback, const char* name, int min_args, int magic);

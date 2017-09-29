@@ -119,6 +119,7 @@ static int vasprintf (char* *out, const char* format, va_list ap);
 
 static js_break_callback_t  s_break_callback = NULL;
 static vector_t*            s_breakpoints;
+static JsValueRef           s_callee_value = JS_INVALID_REFERENCE;
 static vector_t*            s_catch_stack;
 static vector_t*            s_compiled_scripts;
 static js_import_callback_t s_import_callback = NULL;
@@ -128,7 +129,7 @@ static JsRuntimeHandle      s_js_runtime = NULL;
 static vector_t*            s_module_jobs;
 static JsSourceContext      s_next_script_id = 1;
 static JsValueRef           s_stash;
-static vector_t*            s_stack;
+static vector_t*            s_value_stack;
 static int                  s_stack_base;
 static JsValueRef           s_this_value = JS_INVALID_REFERENCE;
 static js_throw_callback_t  s_throw_callback = NULL;
@@ -155,14 +156,15 @@ jsal_init(void)
 	JsSetPrototype(s_stash, null_value);
 	JsAddRef(s_stash, NULL);
 
-	s_stack = vector_new(sizeof(js_ref_t));
+	s_value_stack = vector_new(sizeof(js_ref_t));
 	s_catch_stack = vector_new(sizeof(jmp_buf));
 	s_stack_base = 0;
 	s_breakpoints = vector_new(sizeof(struct breakpoint));
 	s_compiled_scripts = vector_new(sizeof(struct script));
 	s_module_jobs = vector_new(sizeof(struct module_job));
 
-	vector_reserve(s_stack, 1000);
+	vector_reserve(s_value_stack, 1000);
+	vector_reserve(s_catch_stack, 100);
 
 	return true;
 
@@ -191,7 +193,7 @@ jsal_uninit(void)
 	
 	vector_free(s_breakpoints);
 	vector_free(s_module_jobs);
-	vector_free(s_stack);
+	vector_free(s_value_stack);
 	vector_free(s_catch_stack);
 	JsRelease(s_stash, NULL);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
@@ -735,7 +737,7 @@ jsal_get_string(int index)
 int
 jsal_get_top(void)
 {
-	return vector_len(s_stack) - s_stack_base;
+	return vector_len(s_value_stack) - s_stack_base;
 }
 
 unsigned int
@@ -792,9 +794,9 @@ jsal_insert(int at_index)
 
 	if (at_index == jsal_get_top() - 1)
 		return;  // nop
-	ref = *(js_ref_t*)vector_get(s_stack, vector_len(s_stack) - 1);
-	vector_insert(s_stack, at_index + s_stack_base, &ref);
-	vector_pop(s_stack, 1);
+	ref = *(js_ref_t*)vector_get(s_value_stack, vector_len(s_value_stack) - 1);
+	vector_insert(s_value_stack, at_index + s_stack_base, &ref);
+	vector_pop(s_value_stack, 1);
 }
 
 bool
@@ -1028,6 +1030,12 @@ jsal_push_boolean(bool value)
 
 	JsBoolToBoolean(value, &ref);
 	return push_value(ref, false);
+}
+
+int
+jsal_push_callee(void)
+{
+	return push_value(s_callee_value, true);
 }
 
 int
@@ -1335,9 +1343,9 @@ jsal_pull(int from_index)
 	js_ref_t ref;
 
 	from_index = jsal_normalize_index(from_index);
-	ref = *(js_ref_t*)vector_get(s_stack, from_index + s_stack_base);
-	vector_push(s_stack, &ref);
-	vector_remove(s_stack, from_index + s_stack_base);
+	ref = *(js_ref_t*)vector_get(s_value_stack, from_index + s_stack_base);
+	vector_push(s_value_stack, &ref);
+	vector_remove(s_value_stack, from_index + s_stack_base);
 }
 
 void
@@ -1431,10 +1439,10 @@ jsal_remove(int at_index)
 	js_ref_t* ref;
 
 	at_index = jsal_normalize_index(at_index);
-	ref = vector_get(s_stack, at_index + s_stack_base);
+	ref = vector_get(s_value_stack, at_index + s_stack_base);
 	if (!ref->weak_ref)
 		JsRelease(ref->value, NULL);
-	vector_remove(s_stack, at_index + s_stack_base);
+	vector_remove(s_value_stack, at_index + s_stack_base);
 }
 
 bool
@@ -1449,12 +1457,12 @@ jsal_replace(int at_index)
 
 	if (at_index == jsal_get_top() - 1)
 		return true;  // nop
-	old_ref = vector_get(s_stack, at_index + s_stack_base);
-	ref = vector_get(s_stack, vector_len(s_stack) - 1);
+	old_ref = vector_get(s_value_stack, at_index + s_stack_base);
+	ref = vector_get(s_value_stack, vector_len(s_value_stack) - 1);
 	if (!old_ref->weak_ref)
 		JsRelease(old_ref->value, NULL);
-	vector_put(s_stack, at_index + s_stack_base, ref);
-	vector_pop(s_stack, 1);
+	vector_put(s_value_stack, at_index + s_stack_base, ref);
+	vector_pop(s_value_stack, 1);
 	return true;
 }
 
@@ -1749,10 +1757,10 @@ jsal_try(js_function_t callback, int num_args)
 	bool       retval = true;
 
 	last_stack_base = s_stack_base;
-	s_stack_base = vector_len(s_stack) - num_args;
+	s_stack_base = vector_len(s_value_stack) - num_args;
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
-		if (!callback(NULL, num_args, false, 0))
+		if (!callback(num_args, false, 0))
 			jsal_push_undefined();
 		result = pop_value();
 		vector_pop(s_catch_stack, 1);
@@ -2100,7 +2108,7 @@ get_value(int stack_index)
 	js_ref_t* ref;
 
 	stack_index = jsal_normalize_index(stack_index);
-	ref = vector_get(s_stack, stack_index + s_stack_base);
+	ref = vector_get(s_value_stack, stack_index + s_stack_base);
 	return ref->value;
 }
 
@@ -2144,12 +2152,12 @@ pop_value(void)
 	js_ref_t*  ref;
 	JsValueRef value;
 
-	index = vector_len(s_stack) - 1;
-	ref = vector_get(s_stack, index);
+	index = vector_len(s_value_stack) - 1;
+	ref = vector_get(s_value_stack, index);
 	value = ref->value;
 	if (!ref->weak_ref)
 		JsRelease(ref->value, NULL);
-	vector_pop(s_stack, 1);
+	vector_pop(s_value_stack, 1);
 	return value;
 }
 
@@ -2206,8 +2214,8 @@ push_value(JsValueRef value, bool weak_ref)
 		JsAddRef(value, NULL);
 	ref.value = value;
 	ref.weak_ref = weak_ref;
-	vector_push(s_stack, &ref);
-	return vector_len(s_stack) - s_stack_base - 1;
+	vector_push(s_value_stack, &ref);
+	return vector_len(s_value_stack) - s_stack_base - 1;
 }
 
 static void
@@ -2220,21 +2228,21 @@ resize_stack(int new_size)
 
 	int i;
 
-	old_size = vector_len(s_stack);
+	old_size = vector_len(s_value_stack);
 	if (new_size < old_size) {
 		for (i = new_size; i < old_size; ++i) {
-			ref_ptr = vector_get(s_stack, i);
+			ref_ptr = vector_get(s_value_stack, i);
 			if (!ref_ptr->weak_ref)
 				JsRelease(ref_ptr->value, NULL);
 		}
 	}
-	vector_resize(s_stack, new_size);
+	vector_resize(s_value_stack, new_size);
 	if (new_size > old_size) {
 		JsGetUndefinedValue(&undefined);
 		ref.value = undefined;
 		ref.weak_ref = true;
 		for (i = old_size; i < new_size; ++i)
-			vector_put(s_stack, i, &ref);
+			vector_put(s_value_stack, i, &ref);
 	}
 }
 
@@ -2280,7 +2288,7 @@ on_dispatch_job(JsValueRef task, void* userdata)
 	int        last_stack_base;
 	
 	last_stack_base = s_stack_base;
-	s_stack_base = vector_len(s_stack);
+	s_stack_base = vector_len(s_value_stack);
 	push_value(task, true);
 	if (setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
@@ -2351,7 +2359,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 			break;
 		case JsDiagDebugEventRuntimeException:
 			last_stack_base = s_stack_base;
-			s_stack_base = vector_len(s_stack);
+			s_stack_base = vector_len(s_value_stack);
 			push_value(data, true);
 			jsal_get_prop_string(-1, "exception");
 			jsal_get_prop_string(-1, "handle");
@@ -2392,7 +2400,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 		case JsDiagDebugEventDebuggerStatement:
 		case JsDiagDebugEventStepComplete:
 			last_stack_base = s_stack_base;
-			s_stack_base = vector_len(s_stack);
+			s_stack_base = vector_len(s_value_stack);
 			push_debug_callback_args(data);
 			if (setjmp(label) == 0) {
 				vector_push(s_catch_stack, label);
@@ -2431,7 +2439,7 @@ on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *
 		return JsErrorInvalidArgument;
 
 	last_stack_base = s_stack_base;
-	s_stack_base = vector_len(s_stack);
+	s_stack_base = vector_len(s_value_stack);
 	JsGetModuleHostInfo(importer, JsModuleHostInfo_HostDefined, &caller_id);
 	push_value(specifier, true);
 	push_value(caller_id, true);
@@ -2471,10 +2479,10 @@ on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *
 static JsValueRef CHAKRA_CALLBACK
 on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
 {
-	js_ref_t*        callee_ref;
 	JsValueRef       exception;
 	struct function* function_data;
 	bool             has_return;
+	JsValueRef       last_callee_value;
 	int              last_stack_base;
 	JsValueRef       last_this_value;
 	jmp_buf          label;
@@ -2485,10 +2493,11 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 	function_data = userdata;
 
 	last_stack_base = s_stack_base;
+	last_callee_value = s_callee_value;
 	last_this_value = s_this_value;
-	s_stack_base = vector_len(s_stack);
+	s_stack_base = vector_len(s_value_stack);
+	s_callee_value = callee;
 	s_this_value = argv[0];
-	callee_ref = make_ref(callee, true);
 	for (i = 1; i < argc; ++i)
 		push_value(argv[i], true);
 	if (setjmp(label) == 0) {
@@ -2503,9 +2512,9 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 			jsal_get_prop_string(-1, "name");
 			jsal_error(JS_TYPE_ERROR, "not enough arguments for '%s()'", jsal_to_string(-1));
 		}
-		has_return = function_data->callback(callee_ref, argc - 1, is_ctor, function_data->magic);
+		has_return = function_data->callback(argc - 1, is_ctor, function_data->magic);
 		if (has_return)
-			retval = pop_value();
+			retval = get_value(-1);
 		vector_pop(s_catch_stack, 1);
 	}
 	else {
@@ -2515,8 +2524,8 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 		JsSetException(exception);
 		retval = exception;
 	}
-	free_ref(callee_ref);
 	resize_stack(s_stack_base);
+	s_callee_value = last_callee_value;
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
 	return retval;

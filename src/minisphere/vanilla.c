@@ -57,437 +57,437 @@
 #define API_VERSION        2.0
 #define API_VERSION_STRING "v2.0"
 
-static bool js_Abort                            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_AddTrigger                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_AddZone                          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ApplyColorMask                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_AreKeysLeft                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_AreZonesAt                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_AttachCamera                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_AttachInput                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_AttachPlayerInput                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_BezierCurve                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_BindJoystickButton               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_BindKey                          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_BlendColors                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CallDefaultMapScript             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CallDefaultPersonScript          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CallMapScript                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CallPersonScript                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ChangeMap                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ClearPersonCommands              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreatePerson                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateByteArray                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateByteArrayFromString        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateColor                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateColorMatrix                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateDirectory                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateSpriteset                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateStringFromByteArray        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateStringFromCode             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_CreateSurface                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DeflateByteArray                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DestroyPerson                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DetachCamera                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DetachInput                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DetachPlayerInput                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DoEvents                         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DoesFileExist                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_DoesPersonExist                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Delay                            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_EvaluateScript                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_EvaluateSystemScript             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ExecuteGame                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ExecuteTrigger                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ExecuteZoneScript                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ExecuteZones                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Exit                             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ExitMapEngine                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_FilledCircle                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_FilledComplex                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_FilledEllipse                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_FlipScreen                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_FollowPerson                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GarbageCollect                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetActingPerson                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetCameraPerson                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetCameraX                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetCameraY                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetClippingRectangle             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetCurrentMap                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetCurrentPerson                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetCurrentTrigger                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetCurrentZone                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetDirectoryList                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetFileList                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetFrameRate                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetGameList                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetInputPerson                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetJoystickAxis                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetKey                           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetKeyString                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetLayerAngle                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetLayerHeight                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetLayerMask                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetLayerName                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetLayerWidth                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetLocalAddress                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetLocalName                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetMapEngine                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetMapEngineFrameRate            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetMouseWheelEvent               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetMouseX                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetMouseY                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNextAnimatedTile              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNumJoysticks                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNumJoystickAxes               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNumJoystickButtons            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNumLayers                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNumMouseWheelEvents           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNumTiles                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNumTriggers                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetNumZones                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetObstructingPerson             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetObstructingTile               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonAngle                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonBase                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonData                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonDirection               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonFollowDistance          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonFollowers               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonFrame                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonFrameNext               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonFrameRevert             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonIgnoreList              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonLayer                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonLeader                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonList                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonMask                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonOffsetX                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonOffsetY                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonSpeedX                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonSpeedY                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonSpriteset               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonValue                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonX                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonY                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonXFloat                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPersonYFloat                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetPlayerKey                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetScreenHeight                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetScreenWidth                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetSystemArrow                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetSystemDownArrow               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetSystemFont                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetSystemUpArrow                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetSystemWindowStyle             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTalkActivationButton          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTalkActivationKey             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTalkDistance                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTile                          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTileDelay                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTileHeight                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTileImage                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTileName                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTileSurface                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTileWidth                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTime                          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetToggleState                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTriggerLayer                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTriggerX                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetTriggerY                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetVersion                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetVersionString                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetZoneHeight                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetZoneLayer                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetZoneSteps                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetZoneWidth                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetZoneX                         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GetZoneY                         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GrabImage                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GrabSurface                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GradientCircle                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GradientComplex                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GradientEllipse                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GradientLine                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GradientRectangle                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_GradientTriangle                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_HashByteArray                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_HashFromFile                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IgnorePersonObstructions         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IgnoreTileObstructions           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_InflateByteArray                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsAnyKeyPressed                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsCameraAttached                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsCommandQueueEmpty              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsIgnoringPersonObstructions     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsIgnoringTileObstructions       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsInputAttached                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsJoystickButtonPressed          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsKeyPressed                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsLayerReflective                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsLayerVisible                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsMapEngineRunning               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsMouseButtonPressed             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsPersonObstructed               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsPersonVisible                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_IsTriggerAt                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Line                             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LineSeries                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ListenOnPort                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LoadAnimation                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LoadFont                         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LoadImage                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LoadSound                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LoadSoundEffect                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LoadSpriteset                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LoadSurface                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_LoadWindowStyle                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_MapEngine                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_MapToScreenX                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_MapToScreenY                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OpenAddress                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OpenFile                         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OpenLog                          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OpenRawFile                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OutlinedCircle                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OutlinedComplex                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OutlinedEllipse                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OutlinedRectangle                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_OutlinedRoundRectangle           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Point                            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_PointSeries                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Polygon                          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Print                            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_QueuePersonCommand               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_QueuePersonScript                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Rectangle                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RemoveDirectory                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RemoveFile                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RemoveTrigger                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RemoveZone                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Rename                           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RenderMap                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ReplaceTilesOnLayer              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RequireScript                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RequireSystemScript              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RestartGame                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RoundRectangle                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ScreenToMapX                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ScreenToMapY                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetCameraX                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetCameraY                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetClippingRectangle             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetColorMask                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetDefaultMapScript              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetDefaultPersonScript           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetDelayScript                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetFrameRate                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerAngle                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerHeight                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerMask                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerReflective               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerRenderer                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerScaleFactorX             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerScaleFactorY             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerSize                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerVisible                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetLayerWidth                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetMapEngineFrameRate            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetMousePosition                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetNextAnimatedTile              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonAngle                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonData                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonDirection               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonFollowDistance          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonFrame                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonFrameNext               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonFrameRevert             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonIgnoreList              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonLayer                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonMask                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonOffsetX                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonOffsetY                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonScaleAbsolute           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonScaleFactor             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonScript                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonSpeed                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonSpeedXY                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonSpriteset               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonValue                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonVisible                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonX                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonXYFloat                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetPersonY                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetRenderScript                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTalkActivationButton          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTalkActivationKey             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTalkDistance                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTile                          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTileDelay                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTileImage                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTileName                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTileSurface                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTriggerLayer                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTriggerScript                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetTriggerXY                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetUpdateScript                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetZoneDimensions                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetZoneLayer                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetZoneScript                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SetZoneSteps                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Triangle                         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_UnbindJoystickButton             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_UnbindKey                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_UpdateMapEngine                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Animation_get_height             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Animation_get_width              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Animation_drawFrame              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Animation_drawZoomedFrame        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Animation_getDelay               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Animation_getNumFrames           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Animation_readNextFrame          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ByteArray_get_length             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ByteArray_concat                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ByteArray_slice                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ByteArray_toString               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_get_alpha                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_get_blue                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_get_green                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_get_red                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_set_alpha                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_set_blue                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_set_green                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_set_red                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Color_toString                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_ColorMatrix_toString             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_File_close                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_File_flush                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_File_getKey                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_File_getNumKeys                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_File_read                        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_File_toString                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_File_write                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_clone                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_drawText                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_drawTextBox                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_drawZoomedText              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_getCharacterImage           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_getColorMask                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_getHeight                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_getStringHeight             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_getStringWidth              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_setCharacterImage           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_setColorMask                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_toString                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Font_wordWrapString              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_get_height                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_get_width                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_blit                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_blitMask                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_createSurface              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_rotateBlit                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_rotateBlitMask             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_toString                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_transformBlit              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_transformBlitMask          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_zoomBlit                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Image_zoomBlitMask               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Logger_beginBlock                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Logger_endBlock                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Logger_toString                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Logger_write                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RawFile_close                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RawFile_getPosition              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RawFile_getSize                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RawFile_read                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RawFile_setPosition              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RawFile_toString                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_RawFile_write                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Socket_close                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Socket_getPendingReadSize        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Socket_isConnected               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Socket_read                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Socket_toString                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Socket_write                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_getLength                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_getPan                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_getPitch                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_getPosition                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_getRepeat                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_getVolume                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_isPlaying                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_isSeekable                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_pause                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_play                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_reset                      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_setPan                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_setPitch                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_setPosition                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_setRepeat                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_setVolume                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_stop                       (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Sound_toString                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_getPan               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_getPitch             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_getVolume            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_setPan               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_setPitch             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_setVolume            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_play                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_stop                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_SoundEffect_toString             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Spriteset_get_filename           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Spriteset_clone                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Spriteset_save                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Spriteset_toString               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_get_height               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_get_width                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_applyColorFX             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_applyColorFX4            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_applyLookup              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_bezierCurve              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_blit                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_blitMaskSurface          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_blitSurface              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_clone                    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_cloneSection             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_createImage              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_drawText                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_filledCircle             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_filledEllipse            (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_flipHorizontally         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_flipVertically           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_getPixel                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_gradientCircle           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_gradientEllipse          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_gradientLine             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_gradientRectangle        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_line                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_lineSeries               (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_outlinedCircle           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_outlinedEllipse          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_outlinedRectangle        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_pointSeries              (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_rotate                   (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_rotateBlitMaskSurface    (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_rotateBlitSurface        (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_rectangle                (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_replaceColor             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_rescale                  (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_save                     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_setAlpha                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_setBlendMode             (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_setPixel                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_toString                 (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_transformBlitMaskSurface (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_transformBlitSurface     (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_zoomBlitMaskSurface      (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_Surface_zoomBlitSurface          (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_WindowStyle_drawWindow           (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_WindowStyle_getColorMask         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_WindowStyle_setColorMask         (js_ref_t* me, int num_args, bool is_ctor, int magic);
-static bool js_WindowStyle_toString             (js_ref_t* me, int num_args, bool is_ctor, int magic);
+static bool js_Abort                            (int num_args, bool is_ctor, int magic);
+static bool js_AddTrigger                       (int num_args, bool is_ctor, int magic);
+static bool js_AddZone                          (int num_args, bool is_ctor, int magic);
+static bool js_ApplyColorMask                   (int num_args, bool is_ctor, int magic);
+static bool js_AreKeysLeft                      (int num_args, bool is_ctor, int magic);
+static bool js_AreZonesAt                       (int num_args, bool is_ctor, int magic);
+static bool js_AttachCamera                     (int num_args, bool is_ctor, int magic);
+static bool js_AttachInput                      (int num_args, bool is_ctor, int magic);
+static bool js_AttachPlayerInput                (int num_args, bool is_ctor, int magic);
+static bool js_BezierCurve                      (int num_args, bool is_ctor, int magic);
+static bool js_BindJoystickButton               (int num_args, bool is_ctor, int magic);
+static bool js_BindKey                          (int num_args, bool is_ctor, int magic);
+static bool js_BlendColors                      (int num_args, bool is_ctor, int magic);
+static bool js_CallDefaultMapScript             (int num_args, bool is_ctor, int magic);
+static bool js_CallDefaultPersonScript          (int num_args, bool is_ctor, int magic);
+static bool js_CallMapScript                    (int num_args, bool is_ctor, int magic);
+static bool js_CallPersonScript                 (int num_args, bool is_ctor, int magic);
+static bool js_ChangeMap                        (int num_args, bool is_ctor, int magic);
+static bool js_ClearPersonCommands              (int num_args, bool is_ctor, int magic);
+static bool js_CreatePerson                     (int num_args, bool is_ctor, int magic);
+static bool js_CreateByteArray                  (int num_args, bool is_ctor, int magic);
+static bool js_CreateByteArrayFromString        (int num_args, bool is_ctor, int magic);
+static bool js_CreateColor                      (int num_args, bool is_ctor, int magic);
+static bool js_CreateColorMatrix                (int num_args, bool is_ctor, int magic);
+static bool js_CreateDirectory                  (int num_args, bool is_ctor, int magic);
+static bool js_CreateSpriteset                  (int num_args, bool is_ctor, int magic);
+static bool js_CreateStringFromByteArray        (int num_args, bool is_ctor, int magic);
+static bool js_CreateStringFromCode             (int num_args, bool is_ctor, int magic);
+static bool js_CreateSurface                    (int num_args, bool is_ctor, int magic);
+static bool js_DeflateByteArray                 (int num_args, bool is_ctor, int magic);
+static bool js_DestroyPerson                    (int num_args, bool is_ctor, int magic);
+static bool js_DetachCamera                     (int num_args, bool is_ctor, int magic);
+static bool js_DetachInput                      (int num_args, bool is_ctor, int magic);
+static bool js_DetachPlayerInput                (int num_args, bool is_ctor, int magic);
+static bool js_DoEvents                         (int num_args, bool is_ctor, int magic);
+static bool js_DoesFileExist                    (int num_args, bool is_ctor, int magic);
+static bool js_DoesPersonExist                  (int num_args, bool is_ctor, int magic);
+static bool js_Delay                            (int num_args, bool is_ctor, int magic);
+static bool js_EvaluateScript                   (int num_args, bool is_ctor, int magic);
+static bool js_EvaluateSystemScript             (int num_args, bool is_ctor, int magic);
+static bool js_ExecuteGame                      (int num_args, bool is_ctor, int magic);
+static bool js_ExecuteTrigger                   (int num_args, bool is_ctor, int magic);
+static bool js_ExecuteZoneScript                (int num_args, bool is_ctor, int magic);
+static bool js_ExecuteZones                     (int num_args, bool is_ctor, int magic);
+static bool js_Exit                             (int num_args, bool is_ctor, int magic);
+static bool js_ExitMapEngine                    (int num_args, bool is_ctor, int magic);
+static bool js_FilledCircle                     (int num_args, bool is_ctor, int magic);
+static bool js_FilledComplex                    (int num_args, bool is_ctor, int magic);
+static bool js_FilledEllipse                    (int num_args, bool is_ctor, int magic);
+static bool js_FlipScreen                       (int num_args, bool is_ctor, int magic);
+static bool js_FollowPerson                     (int num_args, bool is_ctor, int magic);
+static bool js_GarbageCollect                   (int num_args, bool is_ctor, int magic);
+static bool js_GetActingPerson                  (int num_args, bool is_ctor, int magic);
+static bool js_GetCameraPerson                  (int num_args, bool is_ctor, int magic);
+static bool js_GetCameraX                       (int num_args, bool is_ctor, int magic);
+static bool js_GetCameraY                       (int num_args, bool is_ctor, int magic);
+static bool js_GetClippingRectangle             (int num_args, bool is_ctor, int magic);
+static bool js_GetCurrentMap                    (int num_args, bool is_ctor, int magic);
+static bool js_GetCurrentPerson                 (int num_args, bool is_ctor, int magic);
+static bool js_GetCurrentTrigger                (int num_args, bool is_ctor, int magic);
+static bool js_GetCurrentZone                   (int num_args, bool is_ctor, int magic);
+static bool js_GetDirectoryList                 (int num_args, bool is_ctor, int magic);
+static bool js_GetFileList                      (int num_args, bool is_ctor, int magic);
+static bool js_GetFrameRate                     (int num_args, bool is_ctor, int magic);
+static bool js_GetGameList                      (int num_args, bool is_ctor, int magic);
+static bool js_GetInputPerson                   (int num_args, bool is_ctor, int magic);
+static bool js_GetJoystickAxis                  (int num_args, bool is_ctor, int magic);
+static bool js_GetKey                           (int num_args, bool is_ctor, int magic);
+static bool js_GetKeyString                     (int num_args, bool is_ctor, int magic);
+static bool js_GetLayerAngle                    (int num_args, bool is_ctor, int magic);
+static bool js_GetLayerHeight                   (int num_args, bool is_ctor, int magic);
+static bool js_GetLayerMask                     (int num_args, bool is_ctor, int magic);
+static bool js_GetLayerName                     (int num_args, bool is_ctor, int magic);
+static bool js_GetLayerWidth                    (int num_args, bool is_ctor, int magic);
+static bool js_GetLocalAddress                  (int num_args, bool is_ctor, int magic);
+static bool js_GetLocalName                     (int num_args, bool is_ctor, int magic);
+static bool js_GetMapEngine                     (int num_args, bool is_ctor, int magic);
+static bool js_GetMapEngineFrameRate            (int num_args, bool is_ctor, int magic);
+static bool js_GetMouseWheelEvent               (int num_args, bool is_ctor, int magic);
+static bool js_GetMouseX                        (int num_args, bool is_ctor, int magic);
+static bool js_GetMouseY                        (int num_args, bool is_ctor, int magic);
+static bool js_GetNextAnimatedTile              (int num_args, bool is_ctor, int magic);
+static bool js_GetNumJoysticks                  (int num_args, bool is_ctor, int magic);
+static bool js_GetNumJoystickAxes               (int num_args, bool is_ctor, int magic);
+static bool js_GetNumJoystickButtons            (int num_args, bool is_ctor, int magic);
+static bool js_GetNumLayers                     (int num_args, bool is_ctor, int magic);
+static bool js_GetNumMouseWheelEvents           (int num_args, bool is_ctor, int magic);
+static bool js_GetNumTiles                      (int num_args, bool is_ctor, int magic);
+static bool js_GetNumTriggers                   (int num_args, bool is_ctor, int magic);
+static bool js_GetNumZones                      (int num_args, bool is_ctor, int magic);
+static bool js_GetObstructingPerson             (int num_args, bool is_ctor, int magic);
+static bool js_GetObstructingTile               (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonAngle                   (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonBase                    (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonData                    (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonDirection               (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonFollowDistance          (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonFollowers               (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonFrame                   (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonFrameNext               (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonFrameRevert             (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonIgnoreList              (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonLayer                   (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonLeader                  (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonList                    (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonMask                    (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonOffsetX                 (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonOffsetY                 (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonSpeedX                  (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonSpeedY                  (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonSpriteset               (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonValue                   (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonX                       (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonY                       (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonXFloat                  (int num_args, bool is_ctor, int magic);
+static bool js_GetPersonYFloat                  (int num_args, bool is_ctor, int magic);
+static bool js_GetPlayerKey                     (int num_args, bool is_ctor, int magic);
+static bool js_GetScreenHeight                  (int num_args, bool is_ctor, int magic);
+static bool js_GetScreenWidth                   (int num_args, bool is_ctor, int magic);
+static bool js_GetSystemArrow                   (int num_args, bool is_ctor, int magic);
+static bool js_GetSystemDownArrow               (int num_args, bool is_ctor, int magic);
+static bool js_GetSystemFont                    (int num_args, bool is_ctor, int magic);
+static bool js_GetSystemUpArrow                 (int num_args, bool is_ctor, int magic);
+static bool js_GetSystemWindowStyle             (int num_args, bool is_ctor, int magic);
+static bool js_GetTalkActivationButton          (int num_args, bool is_ctor, int magic);
+static bool js_GetTalkActivationKey             (int num_args, bool is_ctor, int magic);
+static bool js_GetTalkDistance                  (int num_args, bool is_ctor, int magic);
+static bool js_GetTile                          (int num_args, bool is_ctor, int magic);
+static bool js_GetTileDelay                     (int num_args, bool is_ctor, int magic);
+static bool js_GetTileHeight                    (int num_args, bool is_ctor, int magic);
+static bool js_GetTileImage                     (int num_args, bool is_ctor, int magic);
+static bool js_GetTileName                      (int num_args, bool is_ctor, int magic);
+static bool js_GetTileSurface                   (int num_args, bool is_ctor, int magic);
+static bool js_GetTileWidth                     (int num_args, bool is_ctor, int magic);
+static bool js_GetTime                          (int num_args, bool is_ctor, int magic);
+static bool js_GetToggleState                   (int num_args, bool is_ctor, int magic);
+static bool js_GetTriggerLayer                  (int num_args, bool is_ctor, int magic);
+static bool js_GetTriggerX                      (int num_args, bool is_ctor, int magic);
+static bool js_GetTriggerY                      (int num_args, bool is_ctor, int magic);
+static bool js_GetVersion                       (int num_args, bool is_ctor, int magic);
+static bool js_GetVersionString                 (int num_args, bool is_ctor, int magic);
+static bool js_GetZoneHeight                    (int num_args, bool is_ctor, int magic);
+static bool js_GetZoneLayer                     (int num_args, bool is_ctor, int magic);
+static bool js_GetZoneSteps                     (int num_args, bool is_ctor, int magic);
+static bool js_GetZoneWidth                     (int num_args, bool is_ctor, int magic);
+static bool js_GetZoneX                         (int num_args, bool is_ctor, int magic);
+static bool js_GetZoneY                         (int num_args, bool is_ctor, int magic);
+static bool js_GrabImage                        (int num_args, bool is_ctor, int magic);
+static bool js_GrabSurface                      (int num_args, bool is_ctor, int magic);
+static bool js_GradientCircle                   (int num_args, bool is_ctor, int magic);
+static bool js_GradientComplex                  (int num_args, bool is_ctor, int magic);
+static bool js_GradientEllipse                  (int num_args, bool is_ctor, int magic);
+static bool js_GradientLine                     (int num_args, bool is_ctor, int magic);
+static bool js_GradientRectangle                (int num_args, bool is_ctor, int magic);
+static bool js_GradientTriangle                 (int num_args, bool is_ctor, int magic);
+static bool js_HashByteArray                    (int num_args, bool is_ctor, int magic);
+static bool js_HashFromFile                     (int num_args, bool is_ctor, int magic);
+static bool js_IgnorePersonObstructions         (int num_args, bool is_ctor, int magic);
+static bool js_IgnoreTileObstructions           (int num_args, bool is_ctor, int magic);
+static bool js_InflateByteArray                 (int num_args, bool is_ctor, int magic);
+static bool js_IsAnyKeyPressed                  (int num_args, bool is_ctor, int magic);
+static bool js_IsCameraAttached                 (int num_args, bool is_ctor, int magic);
+static bool js_IsCommandQueueEmpty              (int num_args, bool is_ctor, int magic);
+static bool js_IsIgnoringPersonObstructions     (int num_args, bool is_ctor, int magic);
+static bool js_IsIgnoringTileObstructions       (int num_args, bool is_ctor, int magic);
+static bool js_IsInputAttached                  (int num_args, bool is_ctor, int magic);
+static bool js_IsJoystickButtonPressed          (int num_args, bool is_ctor, int magic);
+static bool js_IsKeyPressed                     (int num_args, bool is_ctor, int magic);
+static bool js_IsLayerReflective                (int num_args, bool is_ctor, int magic);
+static bool js_IsLayerVisible                   (int num_args, bool is_ctor, int magic);
+static bool js_IsMapEngineRunning               (int num_args, bool is_ctor, int magic);
+static bool js_IsMouseButtonPressed             (int num_args, bool is_ctor, int magic);
+static bool js_IsPersonObstructed               (int num_args, bool is_ctor, int magic);
+static bool js_IsPersonVisible                  (int num_args, bool is_ctor, int magic);
+static bool js_IsTriggerAt                      (int num_args, bool is_ctor, int magic);
+static bool js_Line                             (int num_args, bool is_ctor, int magic);
+static bool js_LineSeries                       (int num_args, bool is_ctor, int magic);
+static bool js_ListenOnPort                     (int num_args, bool is_ctor, int magic);
+static bool js_LoadAnimation                    (int num_args, bool is_ctor, int magic);
+static bool js_LoadFont                         (int num_args, bool is_ctor, int magic);
+static bool js_LoadImage                        (int num_args, bool is_ctor, int magic);
+static bool js_LoadSound                        (int num_args, bool is_ctor, int magic);
+static bool js_LoadSoundEffect                  (int num_args, bool is_ctor, int magic);
+static bool js_LoadSpriteset                    (int num_args, bool is_ctor, int magic);
+static bool js_LoadSurface                      (int num_args, bool is_ctor, int magic);
+static bool js_LoadWindowStyle                  (int num_args, bool is_ctor, int magic);
+static bool js_MapEngine                        (int num_args, bool is_ctor, int magic);
+static bool js_MapToScreenX                     (int num_args, bool is_ctor, int magic);
+static bool js_MapToScreenY                     (int num_args, bool is_ctor, int magic);
+static bool js_OpenAddress                      (int num_args, bool is_ctor, int magic);
+static bool js_OpenFile                         (int num_args, bool is_ctor, int magic);
+static bool js_OpenLog                          (int num_args, bool is_ctor, int magic);
+static bool js_OpenRawFile                      (int num_args, bool is_ctor, int magic);
+static bool js_OutlinedCircle                   (int num_args, bool is_ctor, int magic);
+static bool js_OutlinedComplex                  (int num_args, bool is_ctor, int magic);
+static bool js_OutlinedEllipse                  (int num_args, bool is_ctor, int magic);
+static bool js_OutlinedRectangle                (int num_args, bool is_ctor, int magic);
+static bool js_OutlinedRoundRectangle           (int num_args, bool is_ctor, int magic);
+static bool js_Point                            (int num_args, bool is_ctor, int magic);
+static bool js_PointSeries                      (int num_args, bool is_ctor, int magic);
+static bool js_Polygon                          (int num_args, bool is_ctor, int magic);
+static bool js_Print                            (int num_args, bool is_ctor, int magic);
+static bool js_QueuePersonCommand               (int num_args, bool is_ctor, int magic);
+static bool js_QueuePersonScript                (int num_args, bool is_ctor, int magic);
+static bool js_Rectangle                        (int num_args, bool is_ctor, int magic);
+static bool js_RemoveDirectory                  (int num_args, bool is_ctor, int magic);
+static bool js_RemoveFile                       (int num_args, bool is_ctor, int magic);
+static bool js_RemoveTrigger                    (int num_args, bool is_ctor, int magic);
+static bool js_RemoveZone                       (int num_args, bool is_ctor, int magic);
+static bool js_Rename                           (int num_args, bool is_ctor, int magic);
+static bool js_RenderMap                        (int num_args, bool is_ctor, int magic);
+static bool js_ReplaceTilesOnLayer              (int num_args, bool is_ctor, int magic);
+static bool js_RequireScript                    (int num_args, bool is_ctor, int magic);
+static bool js_RequireSystemScript              (int num_args, bool is_ctor, int magic);
+static bool js_RestartGame                      (int num_args, bool is_ctor, int magic);
+static bool js_RoundRectangle                   (int num_args, bool is_ctor, int magic);
+static bool js_ScreenToMapX                     (int num_args, bool is_ctor, int magic);
+static bool js_ScreenToMapY                     (int num_args, bool is_ctor, int magic);
+static bool js_SetCameraX                       (int num_args, bool is_ctor, int magic);
+static bool js_SetCameraY                       (int num_args, bool is_ctor, int magic);
+static bool js_SetClippingRectangle             (int num_args, bool is_ctor, int magic);
+static bool js_SetColorMask                     (int num_args, bool is_ctor, int magic);
+static bool js_SetDefaultMapScript              (int num_args, bool is_ctor, int magic);
+static bool js_SetDefaultPersonScript           (int num_args, bool is_ctor, int magic);
+static bool js_SetDelayScript                   (int num_args, bool is_ctor, int magic);
+static bool js_SetFrameRate                     (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerAngle                    (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerHeight                   (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerMask                     (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerReflective               (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerRenderer                 (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerScaleFactorX             (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerScaleFactorY             (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerSize                     (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerVisible                  (int num_args, bool is_ctor, int magic);
+static bool js_SetLayerWidth                    (int num_args, bool is_ctor, int magic);
+static bool js_SetMapEngineFrameRate            (int num_args, bool is_ctor, int magic);
+static bool js_SetMousePosition                 (int num_args, bool is_ctor, int magic);
+static bool js_SetNextAnimatedTile              (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonAngle                   (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonData                    (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonDirection               (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonFollowDistance          (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonFrame                   (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonFrameNext               (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonFrameRevert             (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonIgnoreList              (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonLayer                   (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonMask                    (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonOffsetX                 (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonOffsetY                 (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonScaleAbsolute           (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonScaleFactor             (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonScript                  (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonSpeed                   (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonSpeedXY                 (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonSpriteset               (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonValue                   (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonVisible                 (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonX                       (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonXYFloat                 (int num_args, bool is_ctor, int magic);
+static bool js_SetPersonY                       (int num_args, bool is_ctor, int magic);
+static bool js_SetRenderScript                  (int num_args, bool is_ctor, int magic);
+static bool js_SetTalkActivationButton          (int num_args, bool is_ctor, int magic);
+static bool js_SetTalkActivationKey             (int num_args, bool is_ctor, int magic);
+static bool js_SetTalkDistance                  (int num_args, bool is_ctor, int magic);
+static bool js_SetTile                          (int num_args, bool is_ctor, int magic);
+static bool js_SetTileDelay                     (int num_args, bool is_ctor, int magic);
+static bool js_SetTileImage                     (int num_args, bool is_ctor, int magic);
+static bool js_SetTileName                      (int num_args, bool is_ctor, int magic);
+static bool js_SetTileSurface                   (int num_args, bool is_ctor, int magic);
+static bool js_SetTriggerLayer                  (int num_args, bool is_ctor, int magic);
+static bool js_SetTriggerScript                 (int num_args, bool is_ctor, int magic);
+static bool js_SetTriggerXY                     (int num_args, bool is_ctor, int magic);
+static bool js_SetUpdateScript                  (int num_args, bool is_ctor, int magic);
+static bool js_SetZoneDimensions                (int num_args, bool is_ctor, int magic);
+static bool js_SetZoneLayer                     (int num_args, bool is_ctor, int magic);
+static bool js_SetZoneScript                    (int num_args, bool is_ctor, int magic);
+static bool js_SetZoneSteps                     (int num_args, bool is_ctor, int magic);
+static bool js_Triangle                         (int num_args, bool is_ctor, int magic);
+static bool js_UnbindJoystickButton             (int num_args, bool is_ctor, int magic);
+static bool js_UnbindKey                        (int num_args, bool is_ctor, int magic);
+static bool js_UpdateMapEngine                  (int num_args, bool is_ctor, int magic);
+static bool js_Animation_get_height             (int num_args, bool is_ctor, int magic);
+static bool js_Animation_get_width              (int num_args, bool is_ctor, int magic);
+static bool js_Animation_drawFrame              (int num_args, bool is_ctor, int magic);
+static bool js_Animation_drawZoomedFrame        (int num_args, bool is_ctor, int magic);
+static bool js_Animation_getDelay               (int num_args, bool is_ctor, int magic);
+static bool js_Animation_getNumFrames           (int num_args, bool is_ctor, int magic);
+static bool js_Animation_readNextFrame          (int num_args, bool is_ctor, int magic);
+static bool js_ByteArray_get_length             (int num_args, bool is_ctor, int magic);
+static bool js_ByteArray_concat                 (int num_args, bool is_ctor, int magic);
+static bool js_ByteArray_slice                  (int num_args, bool is_ctor, int magic);
+static bool js_ByteArray_toString               (int num_args, bool is_ctor, int magic);
+static bool js_Color_get_alpha                  (int num_args, bool is_ctor, int magic);
+static bool js_Color_get_blue                   (int num_args, bool is_ctor, int magic);
+static bool js_Color_get_green                  (int num_args, bool is_ctor, int magic);
+static bool js_Color_get_red                    (int num_args, bool is_ctor, int magic);
+static bool js_Color_set_alpha                  (int num_args, bool is_ctor, int magic);
+static bool js_Color_set_blue                   (int num_args, bool is_ctor, int magic);
+static bool js_Color_set_green                  (int num_args, bool is_ctor, int magic);
+static bool js_Color_set_red                    (int num_args, bool is_ctor, int magic);
+static bool js_Color_toString                   (int num_args, bool is_ctor, int magic);
+static bool js_ColorMatrix_toString             (int num_args, bool is_ctor, int magic);
+static bool js_File_close                       (int num_args, bool is_ctor, int magic);
+static bool js_File_flush                       (int num_args, bool is_ctor, int magic);
+static bool js_File_getKey                      (int num_args, bool is_ctor, int magic);
+static bool js_File_getNumKeys                  (int num_args, bool is_ctor, int magic);
+static bool js_File_read                        (int num_args, bool is_ctor, int magic);
+static bool js_File_toString                    (int num_args, bool is_ctor, int magic);
+static bool js_File_write                       (int num_args, bool is_ctor, int magic);
+static bool js_Font_clone                       (int num_args, bool is_ctor, int magic);
+static bool js_Font_drawText                    (int num_args, bool is_ctor, int magic);
+static bool js_Font_drawTextBox                 (int num_args, bool is_ctor, int magic);
+static bool js_Font_drawZoomedText              (int num_args, bool is_ctor, int magic);
+static bool js_Font_getCharacterImage           (int num_args, bool is_ctor, int magic);
+static bool js_Font_getColorMask                (int num_args, bool is_ctor, int magic);
+static bool js_Font_getHeight                   (int num_args, bool is_ctor, int magic);
+static bool js_Font_getStringHeight             (int num_args, bool is_ctor, int magic);
+static bool js_Font_getStringWidth              (int num_args, bool is_ctor, int magic);
+static bool js_Font_setCharacterImage           (int num_args, bool is_ctor, int magic);
+static bool js_Font_setColorMask                (int num_args, bool is_ctor, int magic);
+static bool js_Font_toString                    (int num_args, bool is_ctor, int magic);
+static bool js_Font_wordWrapString              (int num_args, bool is_ctor, int magic);
+static bool js_Image_get_height                 (int num_args, bool is_ctor, int magic);
+static bool js_Image_get_width                  (int num_args, bool is_ctor, int magic);
+static bool js_Image_blit                       (int num_args, bool is_ctor, int magic);
+static bool js_Image_blitMask                   (int num_args, bool is_ctor, int magic);
+static bool js_Image_createSurface              (int num_args, bool is_ctor, int magic);
+static bool js_Image_rotateBlit                 (int num_args, bool is_ctor, int magic);
+static bool js_Image_rotateBlitMask             (int num_args, bool is_ctor, int magic);
+static bool js_Image_toString                   (int num_args, bool is_ctor, int magic);
+static bool js_Image_transformBlit              (int num_args, bool is_ctor, int magic);
+static bool js_Image_transformBlitMask          (int num_args, bool is_ctor, int magic);
+static bool js_Image_zoomBlit                   (int num_args, bool is_ctor, int magic);
+static bool js_Image_zoomBlitMask               (int num_args, bool is_ctor, int magic);
+static bool js_Logger_beginBlock                (int num_args, bool is_ctor, int magic);
+static bool js_Logger_endBlock                  (int num_args, bool is_ctor, int magic);
+static bool js_Logger_toString                  (int num_args, bool is_ctor, int magic);
+static bool js_Logger_write                     (int num_args, bool is_ctor, int magic);
+static bool js_RawFile_close                    (int num_args, bool is_ctor, int magic);
+static bool js_RawFile_getPosition              (int num_args, bool is_ctor, int magic);
+static bool js_RawFile_getSize                  (int num_args, bool is_ctor, int magic);
+static bool js_RawFile_read                     (int num_args, bool is_ctor, int magic);
+static bool js_RawFile_setPosition              (int num_args, bool is_ctor, int magic);
+static bool js_RawFile_toString                 (int num_args, bool is_ctor, int magic);
+static bool js_RawFile_write                    (int num_args, bool is_ctor, int magic);
+static bool js_Socket_close                     (int num_args, bool is_ctor, int magic);
+static bool js_Socket_getPendingReadSize        (int num_args, bool is_ctor, int magic);
+static bool js_Socket_isConnected               (int num_args, bool is_ctor, int magic);
+static bool js_Socket_read                      (int num_args, bool is_ctor, int magic);
+static bool js_Socket_toString                  (int num_args, bool is_ctor, int magic);
+static bool js_Socket_write                     (int num_args, bool is_ctor, int magic);
+static bool js_Sound_getLength                  (int num_args, bool is_ctor, int magic);
+static bool js_Sound_getPan                     (int num_args, bool is_ctor, int magic);
+static bool js_Sound_getPitch                   (int num_args, bool is_ctor, int magic);
+static bool js_Sound_getPosition                (int num_args, bool is_ctor, int magic);
+static bool js_Sound_getRepeat                  (int num_args, bool is_ctor, int magic);
+static bool js_Sound_getVolume                  (int num_args, bool is_ctor, int magic);
+static bool js_Sound_isPlaying                  (int num_args, bool is_ctor, int magic);
+static bool js_Sound_isSeekable                 (int num_args, bool is_ctor, int magic);
+static bool js_Sound_pause                      (int num_args, bool is_ctor, int magic);
+static bool js_Sound_play                       (int num_args, bool is_ctor, int magic);
+static bool js_Sound_reset                      (int num_args, bool is_ctor, int magic);
+static bool js_Sound_setPan                     (int num_args, bool is_ctor, int magic);
+static bool js_Sound_setPitch                   (int num_args, bool is_ctor, int magic);
+static bool js_Sound_setPosition                (int num_args, bool is_ctor, int magic);
+static bool js_Sound_setRepeat                  (int num_args, bool is_ctor, int magic);
+static bool js_Sound_setVolume                  (int num_args, bool is_ctor, int magic);
+static bool js_Sound_stop                       (int num_args, bool is_ctor, int magic);
+static bool js_Sound_toString                   (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_getPan               (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_getPitch             (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_getVolume            (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_setPan               (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_setPitch             (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_setVolume            (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_play                 (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_stop                 (int num_args, bool is_ctor, int magic);
+static bool js_SoundEffect_toString             (int num_args, bool is_ctor, int magic);
+static bool js_Spriteset_get_filename           (int num_args, bool is_ctor, int magic);
+static bool js_Spriteset_clone                  (int num_args, bool is_ctor, int magic);
+static bool js_Spriteset_save                   (int num_args, bool is_ctor, int magic);
+static bool js_Spriteset_toString               (int num_args, bool is_ctor, int magic);
+static bool js_Surface_get_height               (int num_args, bool is_ctor, int magic);
+static bool js_Surface_get_width                (int num_args, bool is_ctor, int magic);
+static bool js_Surface_applyColorFX             (int num_args, bool is_ctor, int magic);
+static bool js_Surface_applyColorFX4            (int num_args, bool is_ctor, int magic);
+static bool js_Surface_applyLookup              (int num_args, bool is_ctor, int magic);
+static bool js_Surface_bezierCurve              (int num_args, bool is_ctor, int magic);
+static bool js_Surface_blit                     (int num_args, bool is_ctor, int magic);
+static bool js_Surface_blitMaskSurface          (int num_args, bool is_ctor, int magic);
+static bool js_Surface_blitSurface              (int num_args, bool is_ctor, int magic);
+static bool js_Surface_clone                    (int num_args, bool is_ctor, int magic);
+static bool js_Surface_cloneSection             (int num_args, bool is_ctor, int magic);
+static bool js_Surface_createImage              (int num_args, bool is_ctor, int magic);
+static bool js_Surface_drawText                 (int num_args, bool is_ctor, int magic);
+static bool js_Surface_filledCircle             (int num_args, bool is_ctor, int magic);
+static bool js_Surface_filledEllipse            (int num_args, bool is_ctor, int magic);
+static bool js_Surface_flipHorizontally         (int num_args, bool is_ctor, int magic);
+static bool js_Surface_flipVertically           (int num_args, bool is_ctor, int magic);
+static bool js_Surface_getPixel                 (int num_args, bool is_ctor, int magic);
+static bool js_Surface_gradientCircle           (int num_args, bool is_ctor, int magic);
+static bool js_Surface_gradientEllipse          (int num_args, bool is_ctor, int magic);
+static bool js_Surface_gradientLine             (int num_args, bool is_ctor, int magic);
+static bool js_Surface_gradientRectangle        (int num_args, bool is_ctor, int magic);
+static bool js_Surface_line                     (int num_args, bool is_ctor, int magic);
+static bool js_Surface_lineSeries               (int num_args, bool is_ctor, int magic);
+static bool js_Surface_outlinedCircle           (int num_args, bool is_ctor, int magic);
+static bool js_Surface_outlinedEllipse          (int num_args, bool is_ctor, int magic);
+static bool js_Surface_outlinedRectangle        (int num_args, bool is_ctor, int magic);
+static bool js_Surface_pointSeries              (int num_args, bool is_ctor, int magic);
+static bool js_Surface_rotate                   (int num_args, bool is_ctor, int magic);
+static bool js_Surface_rotateBlitMaskSurface    (int num_args, bool is_ctor, int magic);
+static bool js_Surface_rotateBlitSurface        (int num_args, bool is_ctor, int magic);
+static bool js_Surface_rectangle                (int num_args, bool is_ctor, int magic);
+static bool js_Surface_replaceColor             (int num_args, bool is_ctor, int magic);
+static bool js_Surface_rescale                  (int num_args, bool is_ctor, int magic);
+static bool js_Surface_save                     (int num_args, bool is_ctor, int magic);
+static bool js_Surface_setAlpha                 (int num_args, bool is_ctor, int magic);
+static bool js_Surface_setBlendMode             (int num_args, bool is_ctor, int magic);
+static bool js_Surface_setPixel                 (int num_args, bool is_ctor, int magic);
+static bool js_Surface_toString                 (int num_args, bool is_ctor, int magic);
+static bool js_Surface_transformBlitMaskSurface (int num_args, bool is_ctor, int magic);
+static bool js_Surface_transformBlitSurface     (int num_args, bool is_ctor, int magic);
+static bool js_Surface_zoomBlitMaskSurface      (int num_args, bool is_ctor, int magic);
+static bool js_Surface_zoomBlitSurface          (int num_args, bool is_ctor, int magic);
+static bool js_WindowStyle_drawWindow           (int num_args, bool is_ctor, int magic);
+static bool js_WindowStyle_getColorMask         (int num_args, bool is_ctor, int magic);
+static bool js_WindowStyle_setColorMask         (int num_args, bool is_ctor, int magic);
+static bool js_WindowStyle_toString             (int num_args, bool is_ctor, int magic);
 
 static void js_Animation_finalize   (void* host_ptr);
 static void js_ByteArray_finalize   (void* host_ptr);
@@ -1501,7 +1501,7 @@ reset_blend_modes(void)
 }
 
 static bool
-js_Abort(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Abort(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	int         line_number;
@@ -1523,7 +1523,7 @@ js_Abort(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_AddTrigger(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_AddTrigger(int num_args, bool is_ctor, int magic)
 {
 	rect_t    bounds;
 	int       layer;
@@ -1549,7 +1549,7 @@ js_AddTrigger(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_AddZone(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_AddZone(int num_args, bool is_ctor, int magic)
 {
 	rect_t    bounds;
 	int       height;
@@ -1582,7 +1582,7 @@ js_AddZone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ApplyColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ApplyColorMask(int num_args, bool is_ctor, int magic)
 {
 	color_t color;
 	size2_t resolution;
@@ -1599,7 +1599,7 @@ js_ApplyColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_AreKeysLeft(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_AreKeysLeft(int num_args, bool is_ctor, int magic)
 {
 	update_input();
 	jsal_push_boolean(kb_queue_len() > 0);
@@ -1607,7 +1607,7 @@ js_AreKeysLeft(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_AreZonesAt(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_AreZonesAt(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	int x;
@@ -1622,7 +1622,7 @@ js_AreZonesAt(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_AttachCamera(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_AttachCamera(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -1636,7 +1636,7 @@ js_AttachCamera(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_AttachInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_AttachInput(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -1650,7 +1650,7 @@ js_AttachInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_AttachPlayerInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_AttachPlayerInput(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -1668,7 +1668,7 @@ js_AttachPlayerInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_BezierCurve(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_BezierCurve(int num_args, bool is_ctor, int magic)
 {
 	color_t         color;
 	float           cp[8];
@@ -1722,7 +1722,7 @@ js_BezierCurve(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_BindJoystickButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_BindJoystickButton(int num_args, bool is_ctor, int magic)
 {
 	int joy_index = jsal_to_int(0);
 	int button = jsal_to_int(1);
@@ -1738,7 +1738,7 @@ js_BindJoystickButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_BindKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_BindKey(int num_args, bool is_ctor, int magic)
 {
 	int keycode = jsal_to_int(0);
 	script_t* on_down_script = jsal_require_sphere_script(1, "[key-down script]");
@@ -1751,7 +1751,7 @@ js_BindKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_BlendColors(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_BlendColors(int num_args, bool is_ctor, int magic)
 {
 	color_t color1;
 	color_t color2;
@@ -1773,7 +1773,7 @@ js_BlendColors(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CallDefaultMapScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CallDefaultMapScript(int num_args, bool is_ctor, int magic)
 {
 	int map_op;
 
@@ -1788,7 +1788,7 @@ js_CallDefaultMapScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CallDefaultPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CallDefaultPersonScript(int num_args, bool is_ctor, int magic)
 {
 	person_t*   actor = NULL;
 	const char* name;
@@ -1809,7 +1809,7 @@ js_CallDefaultPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CallMapScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CallMapScript(int num_args, bool is_ctor, int magic)
 {
 	int type;
 
@@ -1824,7 +1824,7 @@ js_CallMapScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CallPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CallPersonScript(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -1845,7 +1845,7 @@ js_CallPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ChangeMap(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ChangeMap(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 
@@ -1859,7 +1859,7 @@ js_ChangeMap(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ClearPersonCommands(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ClearPersonCommands(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -1873,7 +1873,7 @@ js_ClearPersonCommands(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CreateByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateByteArray(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;
 	int          size;
@@ -1890,7 +1890,7 @@ js_CreateByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CreateByteArrayFromString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateByteArrayFromString(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;
 	lstring_t*   string;
@@ -1906,7 +1906,7 @@ js_CreateByteArrayFromString(js_ref_t* me, int num_args, bool is_ctor, int magic
 }
 
 static bool
-js_CreateColor(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateColor(int num_args, bool is_ctor, int magic)
 {
 	int r = jsal_to_int(0);
 	int g = jsal_to_int(1);
@@ -1925,7 +1925,7 @@ js_CreateColor(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CreateColorMatrix(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateColorMatrix(int num_args, bool is_ctor, int magic)
 {
 	int rn = jsal_to_int(0);
 	int rr = jsal_to_int(1);
@@ -1958,7 +1958,7 @@ js_CreateColorMatrix(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CreateDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateDirectory(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 
@@ -1970,7 +1970,7 @@ js_CreateDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CreatePerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreatePerson(int num_args, bool is_ctor, int magic)
 {
 	bool         destroy_with_map;
 	const char*  filename;
@@ -2003,7 +2003,7 @@ js_CreatePerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CreateSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateSpriteset(int num_args, bool is_ctor, int magic)
 {
 	int          height;
 	image_t*     image;
@@ -2044,7 +2044,7 @@ js_CreateSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CreateStringFromByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateStringFromByteArray(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;
 	uint8_t*     buffer;
@@ -2059,7 +2059,7 @@ js_CreateStringFromByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic
 }
 
 static bool
-js_CreateStringFromCode(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateStringFromCode(int num_args, bool is_ctor, int magic)
 {
 	int  code;
 
@@ -2073,7 +2073,7 @@ js_CreateStringFromCode(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_CreateSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_CreateSurface(int num_args, bool is_ctor, int magic)
 {
 	color_t     fill_color;
 	int         height;
@@ -2092,7 +2092,7 @@ js_CreateSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DeflateByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_DeflateByteArray(int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
 	bytearray_t* array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
@@ -2109,7 +2109,7 @@ js_DeflateByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Delay(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Delay(int num_args, bool is_ctor, int magic)
 {
 	double timeout;
 
@@ -2122,7 +2122,7 @@ js_Delay(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DestroyPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_DestroyPerson(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -2136,21 +2136,21 @@ js_DestroyPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DetachCamera(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_DetachCamera(int num_args, bool is_ctor, int magic)
 {
 	map_engine_set_subject(NULL);
 	return false;
 }
 
 static bool
-js_DetachInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_DetachInput(int num_args, bool is_ctor, int magic)
 {
 	map_engine_set_player(PLAYER_1, NULL);
 	return false;
 }
 
 static bool
-js_DetachPlayerInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_DetachPlayerInput(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -2188,7 +2188,7 @@ js_DetachPlayerInput(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DoEvents(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_DoEvents(int num_args, bool is_ctor, int magic)
 {
 	sphere_run(true);
 	jsal_push_boolean(true);
@@ -2196,7 +2196,7 @@ js_DoEvents(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DoesFileExist(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_DoesFileExist(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 
@@ -2207,7 +2207,7 @@ js_DoesFileExist(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DoesPersonExist(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_DoesPersonExist(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 
@@ -2218,7 +2218,7 @@ js_DoesPersonExist(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_EvaluateScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_EvaluateScript(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 
@@ -2232,7 +2232,7 @@ js_EvaluateScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_EvaluateSystemScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_EvaluateSystemScript(int num_args, bool is_ctor, int magic)
 {
 	const char* filename = jsal_require_string(0);
 
@@ -2249,7 +2249,7 @@ js_EvaluateSystemScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ExecuteGame(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ExecuteGame(int num_args, bool is_ctor, int magic)
 {
 	path_t*     games_path;
 	const char* filename;
@@ -2270,7 +2270,7 @@ js_ExecuteGame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ExecuteTrigger(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ExecuteTrigger(int num_args, bool is_ctor, int magic)
 {
 	int index;
 	int layer;
@@ -2289,7 +2289,7 @@ js_ExecuteTrigger(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ExecuteZoneScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ExecuteZoneScript(int num_args, bool is_ctor, int magic)
 {
 	int zone_index;
 
@@ -2304,7 +2304,7 @@ js_ExecuteZoneScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ExecuteZones(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ExecuteZones(int num_args, bool is_ctor, int magic)
 {
 	int index;
 	int layer;
@@ -2326,13 +2326,13 @@ js_ExecuteZones(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Exit(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Exit(int num_args, bool is_ctor, int magic)
 {
 	sphere_exit(false);
 }
 
 static bool
-js_ExitMapEngine(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ExitMapEngine(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "no active map engine");
@@ -2341,7 +2341,7 @@ js_ExitMapEngine(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FilledCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_FilledCircle(int num_args, bool is_ctor, int magic)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
@@ -2377,14 +2377,14 @@ js_FilledCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FilledComplex(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_FilledComplex(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return false;
 }
 
 static bool
-js_FilledEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_FilledEllipse(int num_args, bool is_ctor, int magic)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
@@ -2421,14 +2421,14 @@ js_FilledEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FlipScreen(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_FlipScreen(int num_args, bool is_ctor, int magic)
 {
 	screen_flip(g_screen, s_frame_rate, true);
 	return false;
 }
 
 static bool
-js_FollowPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_FollowPerson(int num_args, bool is_ctor, int magic)
 {
 	int         distance = 0;
 	person_t*   leader = NULL;
@@ -2454,14 +2454,14 @@ js_FollowPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GarbageCollect(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GarbageCollect(int num_args, bool is_ctor, int magic)
 {
 	jsal_gc();
 	return false;
 }
 
 static bool
-js_GetActingPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetActingPerson(int num_args, bool is_ctor, int magic)
 {
 	const person_t* person;
 
@@ -2475,7 +2475,7 @@ js_GetActingPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetCameraPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetCameraPerson(int num_args, bool is_ctor, int magic)
 {
 	person_t* subject;
 
@@ -2487,7 +2487,7 @@ js_GetCameraPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetCameraX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetCameraX(int num_args, bool is_ctor, int magic)
 {
 	point2_t position;
 
@@ -2499,7 +2499,7 @@ js_GetCameraX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetCameraY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetCameraY(int num_args, bool is_ctor, int magic)
 {
 	point2_t position;
 
@@ -2511,7 +2511,7 @@ js_GetCameraY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetClippingRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetClippingRectangle(int num_args, bool is_ctor, int magic)
 {
 	rect_t clip;
 
@@ -2530,7 +2530,7 @@ js_GetClippingRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetCurrentMap(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetCurrentMap(int num_args, bool is_ctor, int magic)
 {
 	path_t* path;
 
@@ -2546,7 +2546,7 @@ js_GetCurrentMap(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetCurrentPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetCurrentPerson(int num_args, bool is_ctor, int magic)
 {
 	const person_t* person;
 
@@ -2560,7 +2560,7 @@ js_GetCurrentPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetCurrentTrigger(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetCurrentTrigger(int num_args, bool is_ctor, int magic)
 {
 	int trigger;
 
@@ -2574,7 +2574,7 @@ js_GetCurrentTrigger(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetCurrentZone(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetCurrentZone(int num_args, bool is_ctor, int magic)
 {
 	int zone;
 
@@ -2588,7 +2588,7 @@ js_GetCurrentZone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetDirectoryList(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetDirectoryList(int num_args, bool is_ctor, int magic)
 {
 	directory_t*  dir;
 	const char*   dir_name = "@/";
@@ -2612,7 +2612,7 @@ js_GetDirectoryList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetFileList(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetFileList(int num_args, bool is_ctor, int magic)
 {
 	directory_t*  dir;
 	const char*   dir_name = "@/save";
@@ -2636,14 +2636,14 @@ js_GetFileList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetFrameRate(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetFrameRate(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(s_frame_rate);
 	return true;
 }
 
 static bool
-js_GetGameList(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetGameList(int num_args, bool is_ctor, int magic)
 {
 	ALLEGRO_FS_ENTRY* file_info;
 	ALLEGRO_FS_ENTRY* fse;
@@ -2686,7 +2686,7 @@ js_GetGameList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetInputPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetInputPerson(int num_args, bool is_ctor, int magic)
 {
 	person_t* person;
 	int       player = PLAYER_1;
@@ -2704,7 +2704,7 @@ js_GetInputPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetJoystickAxis(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetJoystickAxis(int num_args, bool is_ctor, int magic)
 {
 	int joy_index = jsal_to_int(0);
 	int axis_index = jsal_to_int(1);
@@ -2714,7 +2714,7 @@ js_GetJoystickAxis(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetKey(int num_args, bool is_ctor, int magic)
 {
 	while (kb_queue_len() == 0) {
 		sphere_sleep(0.05);
@@ -2725,7 +2725,7 @@ js_GetKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetKeyString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetKeyString(int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
 	int keycode = jsal_to_int(0);
@@ -2788,14 +2788,14 @@ js_GetKeyString(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetLayerAngle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetLayerAngle(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return false;
 }
 
 static bool
-js_GetLayerHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetLayerHeight(int num_args, bool is_ctor, int magic)
 {
 	int     layer;
 
@@ -2808,7 +2808,7 @@ js_GetLayerHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetLayerMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetLayerMask(int num_args, bool is_ctor, int magic)
 {
 	int layer = jsal_require_map_layer(0);
 
@@ -2819,7 +2819,7 @@ js_GetLayerMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetLayerName(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetLayerName(int num_args, bool is_ctor, int magic)
 {
 	int layer = jsal_require_map_layer(0);
 
@@ -2830,7 +2830,7 @@ js_GetLayerName(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetLayerWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetLayerWidth(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 
@@ -2843,35 +2843,35 @@ js_GetLayerWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetLocalAddress(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetLocalAddress(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("127.0.0.1");
 	return true;
 }
 
 static bool
-js_GetLocalName(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetLocalName(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("localhost");
 	return true;
 }
 
 static bool
-js_GetMapEngine(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetMapEngine(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return true;
 }
 
 static bool
-js_GetMapEngineFrameRate(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetMapEngineFrameRate(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(map_engine_get_framerate());
 	return true;
 }
 
 static bool
-js_GetMouseWheelEvent(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetMouseWheelEvent(int num_args, bool is_ctor, int magic)
 {
 	mouse_event_t event;
 
@@ -2887,7 +2887,7 @@ js_GetMouseWheelEvent(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetMouseX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetMouseX(int num_args, bool is_ctor, int magic)
 {
 	int x;
 	int y;
@@ -2898,7 +2898,7 @@ js_GetMouseX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetMouseY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetMouseY(int num_args, bool is_ctor, int magic)
 {
 	int x;
 	int y;
@@ -2909,7 +2909,7 @@ js_GetMouseY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetNextAnimatedTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNextAnimatedTile(int num_args, bool is_ctor, int magic)
 {
 	int        tile_index;
 	tileset_t* tileset;
@@ -2927,14 +2927,14 @@ js_GetNextAnimatedTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetNumJoysticks(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNumJoysticks(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(joy_num_devices());
 	return true;
 }
 
 static bool
-js_GetNumJoystickAxes(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNumJoystickAxes(int num_args, bool is_ctor, int magic)
 {
 	int joy_index;
 
@@ -2945,7 +2945,7 @@ js_GetNumJoystickAxes(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetNumJoystickButtons(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNumJoystickButtons(int num_args, bool is_ctor, int magic)
 {
 	int joy_index;
 
@@ -2956,7 +2956,7 @@ js_GetNumJoystickButtons(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetNumLayers(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNumLayers(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "no active map engine");
@@ -2965,14 +2965,14 @@ js_GetNumLayers(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetNumMouseWheelEvents(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNumMouseWheelEvents(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(mouse_queue_len());
 	return true;
 }
 
 static bool
-js_GetNumTiles(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNumTiles(int num_args, bool is_ctor, int magic)
 {
 	tileset_t* tileset;
 
@@ -2985,7 +2985,7 @@ js_GetNumTiles(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetNumTriggers(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNumTriggers(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "no active map engine");
@@ -2995,7 +2995,7 @@ js_GetNumTriggers(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetNumZones(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetNumZones(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "no active map engine");
@@ -3005,7 +3005,7 @@ js_GetNumZones(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetObstructingPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetObstructingPerson(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   obs_person;
@@ -3027,7 +3027,7 @@ js_GetObstructingPerson(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetObstructingTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetObstructingTile(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3049,7 +3049,7 @@ js_GetObstructingTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonAngle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonAngle(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3063,7 +3063,7 @@ js_GetPersonAngle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonBase(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonBase(int num_args, bool is_ctor, int magic)
 {
 	rect_t      base;
 	const char* name;
@@ -3083,7 +3083,7 @@ js_GetPersonBase(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonData(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonData(int num_args, bool is_ctor, int magic)
 {
 	int          height;
 	person_t*    leader;
@@ -3122,7 +3122,7 @@ js_GetPersonData(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonDirection(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonDirection(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3136,7 +3136,7 @@ js_GetPersonDirection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonFollowDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonFollowDistance(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3152,7 +3152,7 @@ js_GetPersonFollowDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonFollowers(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonFollowers(int num_args, bool is_ctor, int magic)
 {
 	vector_t*     all_persons;
 	person_t*     candidate;
@@ -3180,7 +3180,7 @@ js_GetPersonFollowers(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonFrame(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3194,7 +3194,7 @@ js_GetPersonFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonFrameNext(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonFrameNext(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3208,7 +3208,7 @@ js_GetPersonFrameNext(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonFrameRevert(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonFrameRevert(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3222,7 +3222,7 @@ js_GetPersonFrameRevert(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonIgnoreList(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonIgnoreList(int num_args, bool is_ctor, int magic)
 {
 	vector_t*   ignore_list;
 	const char* name;
@@ -3245,7 +3245,7 @@ js_GetPersonIgnoreList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonLayer(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3259,7 +3259,7 @@ js_GetPersonLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonLeader(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonLeader(int num_args, bool is_ctor, int magic)
 {
 	person_t*   leader;
 	const char* name;
@@ -3275,7 +3275,7 @@ js_GetPersonLeader(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonList(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonList(int num_args, bool is_ctor, int magic)
 {
 	vector_t* all_persons;
 	person_t* person;
@@ -3294,7 +3294,7 @@ js_GetPersonList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonMask(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3308,7 +3308,7 @@ js_GetPersonMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonOffsetX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonOffsetX(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	point2_t    offset;
@@ -3324,7 +3324,7 @@ js_GetPersonOffsetX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonOffsetY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonOffsetY(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	point2_t    offset;
@@ -3340,7 +3340,7 @@ js_GetPersonOffsetY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonSpriteset(int num_args, bool is_ctor, int magic)
 {
 	const char*  name;
 	spriteset_t* spriteset;
@@ -3356,7 +3356,7 @@ js_GetPersonSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonSpeedX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonSpeedX(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3372,7 +3372,7 @@ js_GetPersonSpeedX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonSpeedY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonSpeedY(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3388,7 +3388,7 @@ js_GetPersonSpeedY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonValue(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonValue(int num_args, bool is_ctor, int magic)
 {
 	const char* key;
 	const char* name;
@@ -3412,7 +3412,7 @@ js_GetPersonValue(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonX(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3429,7 +3429,7 @@ js_GetPersonX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonXFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonXFloat(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3446,7 +3446,7 @@ js_GetPersonXFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonY(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3463,7 +3463,7 @@ js_GetPersonY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPersonYFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPersonYFloat(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -3480,7 +3480,7 @@ js_GetPersonYFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetPlayerKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetPlayerKey(int num_args, bool is_ctor, int magic)
 {
 	int player;
 	int key_type;
@@ -3497,21 +3497,21 @@ js_GetPlayerKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetScreenHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetScreenHeight(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(screen_size(g_screen).height);
 	return true;
 }
 
 static bool
-js_GetScreenWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetScreenWidth(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(screen_size(g_screen).width);
 	return true;
 }
 
 static bool
-js_GetSystemArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetSystemArrow(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -3522,7 +3522,7 @@ js_GetSystemArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetSystemDownArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetSystemDownArrow(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -3533,14 +3533,14 @@ js_GetSystemDownArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetSystemFont(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetSystemFont(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_sphere_font(legacy_default_font());
 	return true;
 }
 
 static bool
-js_GetSystemUpArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetSystemUpArrow(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -3551,7 +3551,7 @@ js_GetSystemUpArrow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetSystemWindowStyle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetSystemWindowStyle(int num_args, bool is_ctor, int magic)
 {
 	windowstyle_t* windowstyle;
 
@@ -3562,14 +3562,14 @@ js_GetSystemWindowStyle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTalkActivationButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTalkActivationButton(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(map_engine_get_talk_button());
 	return true;
 }
 
 static bool
-js_GetTalkActivationKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTalkActivationKey(int num_args, bool is_ctor, int magic)
 {
 	int player = PLAYER_1;
 
@@ -3583,14 +3583,14 @@ js_GetTalkActivationKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTalkDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTalkDistance(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(map_engine_get_talk_distance());
 	return true;
 }
 
 static bool
-js_GetTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTile(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	int x;
@@ -3607,7 +3607,7 @@ js_GetTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTileDelay(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTileDelay(int num_args, bool is_ctor, int magic)
 {
 	int        tile_index;
 	tileset_t* tileset;
@@ -3624,7 +3624,7 @@ js_GetTileDelay(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTileHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTileHeight(int num_args, bool is_ctor, int magic)
 {
 	int        height;
 	tileset_t* tileset;
@@ -3640,7 +3640,7 @@ js_GetTileHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTileImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTileImage(int num_args, bool is_ctor, int magic)
 {
 	image_t*   image;
 	int        tile_index;
@@ -3660,7 +3660,7 @@ js_GetTileImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTileName(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTileName(int num_args, bool is_ctor, int magic)
 {
 	int              tile_index;
 	const lstring_t* tile_name;
@@ -3679,7 +3679,7 @@ js_GetTileName(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTileSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTileSurface(int num_args, bool is_ctor, int magic)
 {
 	image_t*   image;
 	int        tile_index;
@@ -3699,7 +3699,7 @@ js_GetTileSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTileWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTileWidth(int num_args, bool is_ctor, int magic)
 {
 	int        height;
 	tileset_t* tileset;
@@ -3715,14 +3715,14 @@ js_GetTileWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTime(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTime(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_number(floor(al_get_time() * 1000));
 	return true;
 }
 
 static bool
-js_GetToggleState(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetToggleState(int num_args, bool is_ctor, int magic)
 {
 	int keycode;
 
@@ -3740,7 +3740,7 @@ js_GetToggleState(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTriggerLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTriggerLayer(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	int trigger_index;
@@ -3757,7 +3757,7 @@ js_GetTriggerLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTriggerX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTriggerX(int num_args, bool is_ctor, int magic)
 {
 	int trigger_index;
 	int x;
@@ -3774,7 +3774,7 @@ js_GetTriggerX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetTriggerY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetTriggerY(int num_args, bool is_ctor, int magic)
 {
 	int trigger_index;
 	int y;
@@ -3791,21 +3791,21 @@ js_GetTriggerY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetVersion(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetVersion(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_number(API_VERSION);
 	return true;
 }
 
 static bool
-js_GetVersionString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetVersionString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string(API_VERSION_STRING);
 	return true;
 }
 
 static bool
-js_GetZoneHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetZoneHeight(int num_args, bool is_ctor, int magic)
 {
 	rect_t bounds;
 	int    zone_index;
@@ -3822,7 +3822,7 @@ js_GetZoneHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetZoneLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetZoneLayer(int num_args, bool is_ctor, int magic)
 {
 	int zone_index;
 
@@ -3837,7 +3837,7 @@ js_GetZoneLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetZoneSteps(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetZoneSteps(int num_args, bool is_ctor, int magic)
 {
 	int zone_index;
 
@@ -3852,7 +3852,7 @@ js_GetZoneSteps(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetZoneWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetZoneWidth(int num_args, bool is_ctor, int magic)
 {
 	rect_t bounds;
 	int    zone_index;
@@ -3869,7 +3869,7 @@ js_GetZoneWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetZoneX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetZoneX(int num_args, bool is_ctor, int magic)
 {
 	rect_t bounds;
 	int    zone_index;
@@ -3886,7 +3886,7 @@ js_GetZoneX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GetZoneY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GetZoneY(int num_args, bool is_ctor, int magic)
 {
 	rect_t bounds;
 	int    zone_index;
@@ -3903,7 +3903,7 @@ js_GetZoneY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GrabImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GrabImage(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 	int      height;
@@ -3923,7 +3923,7 @@ js_GrabImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GrabSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GrabSurface(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 	int      height;
@@ -3943,7 +3943,7 @@ js_GrabSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GradientCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GradientCircle(int num_args, bool is_ctor, int magic)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
@@ -3984,14 +3984,14 @@ js_GradientCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GradientComplex(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GradientComplex(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return false;
 }
 
 static bool
-js_GradientEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GradientEllipse(int num_args, bool is_ctor, int magic)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
@@ -4034,7 +4034,7 @@ js_GradientEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GradientLine(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GradientLine(int num_args, bool is_ctor, int magic)
 {
 	color_t color1;
 	color_t color2;
@@ -4069,7 +4069,7 @@ js_GradientLine(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GradientRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GradientRectangle(int num_args, bool is_ctor, int magic)
 {
 	color_t color_ul;
 	color_t color_ur;
@@ -4101,7 +4101,7 @@ js_GradientRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_GradientTriangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_GradientTriangle(int num_args, bool is_ctor, int magic)
 {
 	color_t color1, color2, color3;
 	float   x1, x2, x3;
@@ -4130,7 +4130,7 @@ js_GradientTriangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_HashByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_HashByteArray(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;
 	void*        data;
@@ -4145,7 +4145,7 @@ js_HashByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_HashFromFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_HashFromFile(int num_args, bool is_ctor, int magic)
 {
 	void*       data;
 	size_t      file_size;
@@ -4160,7 +4160,7 @@ js_HashFromFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IgnorePersonObstructions(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IgnorePersonObstructions(int num_args, bool is_ctor, int magic)
 {
 	bool        ignoring;
 	const char* name;
@@ -4176,7 +4176,7 @@ js_IgnorePersonObstructions(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IgnoreTileObstructions(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IgnoreTileObstructions(int num_args, bool is_ctor, int magic)
 {
 	bool        ignoring;
 	const char* name;
@@ -4192,7 +4192,7 @@ js_IgnoreTileObstructions(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_InflateByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_InflateByteArray(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t*  array;
 	int           max_size;
@@ -4210,21 +4210,21 @@ js_InflateByteArray(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsAnyKeyPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsAnyKeyPressed(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_boolean(kb_is_any_key_down());
 	return true;
 }
 
 static bool
-js_IsCameraAttached(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsCameraAttached(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_boolean(map_engine_get_subject() != NULL);
 	return true;
 }
 
 static bool
-js_IsCommandQueueEmpty(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsCommandQueueEmpty(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -4238,7 +4238,7 @@ js_IsCommandQueueEmpty(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsIgnoringPersonObstructions(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsIgnoringPersonObstructions(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -4252,7 +4252,7 @@ js_IsIgnoringPersonObstructions(js_ref_t* me, int num_args, bool is_ctor, int ma
 }
 
 static bool
-js_IsIgnoringTileObstructions(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsIgnoringTileObstructions(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -4266,7 +4266,7 @@ js_IsIgnoringTileObstructions(js_ref_t* me, int num_args, bool is_ctor, int magi
 }
 
 static bool
-js_IsInputAttached(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsInputAttached(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -4306,7 +4306,7 @@ js_IsInputAttached(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsJoystickButtonPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsJoystickButtonPressed(int num_args, bool is_ctor, int magic)
 {
 	int joy_index = jsal_to_int(0);
 	int button = jsal_to_int(1);
@@ -4316,7 +4316,7 @@ js_IsJoystickButtonPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsKeyPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsKeyPressed(int num_args, bool is_ctor, int magic)
 {
 	int keycode = jsal_to_int(0);
 
@@ -4325,7 +4325,7 @@ js_IsKeyPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsLayerReflective(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsLayerReflective(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 
@@ -4338,7 +4338,7 @@ js_IsLayerReflective(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsLayerVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsLayerVisible(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 
@@ -4351,14 +4351,14 @@ js_IsLayerVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsMapEngineRunning(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsMapEngineRunning(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_boolean(map_engine_running());
 	return true;
 }
 
 static bool
-js_IsMouseButtonPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsMouseButtonPressed(int num_args, bool is_ctor, int magic)
 {
 	int                 button;
 	int                 button_id;
@@ -4376,7 +4376,7 @@ js_IsMouseButtonPressed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsPersonObstructed(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsPersonObstructed(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -4394,7 +4394,7 @@ js_IsPersonObstructed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsPersonVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsPersonVisible(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -4407,7 +4407,7 @@ js_IsPersonVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_IsTriggerAt(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_IsTriggerAt(int num_args, bool is_ctor, int magic)
 {
 	int x;
 	int y;
@@ -4422,7 +4422,7 @@ js_IsTriggerAt(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Line(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Line(int num_args, bool is_ctor, int magic)
 {
 	color_t color;
 	float   x1, x2;
@@ -4442,7 +4442,7 @@ js_Line(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LineSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LineSeries(int num_args, bool is_ctor, int magic)
 {
 	color_t         color;
 	int             num_points;
@@ -4485,7 +4485,7 @@ js_LineSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ListenOnPort(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ListenOnPort(int num_args, bool is_ctor, int magic)
 {
 	int          port;
 	socket_v1_t* socket;
@@ -4500,7 +4500,7 @@ js_ListenOnPort(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LoadAnimation(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LoadAnimation(int num_args, bool is_ctor, int magic)
 {
 	animation_t* anim;
 	const char*  filename;
@@ -4513,7 +4513,7 @@ js_LoadAnimation(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LoadFont(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LoadFont(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	font_t*     font;
@@ -4527,7 +4527,7 @@ js_LoadFont(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LoadImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LoadImage(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	image_t*    image;
@@ -4540,7 +4540,7 @@ js_LoadImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LoadSound(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LoadSound(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	sound_t*    sound;
@@ -4554,7 +4554,7 @@ js_LoadSound(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LoadSoundEffect(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LoadSoundEffect(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	int         mode;
@@ -4570,7 +4570,7 @@ js_LoadSoundEffect(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LoadSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LoadSpriteset(int num_args, bool is_ctor, int magic)
 {
 	const char*  filename;
 	spriteset_t* spriteset;
@@ -4584,7 +4584,7 @@ js_LoadSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LoadSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LoadSurface(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	image_t*    image;
@@ -4597,7 +4597,7 @@ js_LoadSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_LoadWindowStyle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_LoadWindowStyle(int num_args, bool is_ctor, int magic)
 {
 	const char*    filename;
 	windowstyle_t* winstyle;
@@ -4611,7 +4611,7 @@ js_LoadWindowStyle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_MapEngine(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_MapEngine(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	int         framerate;
@@ -4626,7 +4626,7 @@ js_MapEngine(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_MapToScreenX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_MapToScreenX(int num_args, bool is_ctor, int magic)
 {
 	int      layer;
 	point2_t offset;
@@ -4643,7 +4643,7 @@ js_MapToScreenX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_MapToScreenY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_MapToScreenY(int num_args, bool is_ctor, int magic)
 {
 	int      layer;
 	point2_t offset;
@@ -4660,7 +4660,7 @@ js_MapToScreenY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_OpenAddress(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OpenAddress(int num_args, bool is_ctor, int magic)
 {
 	const char*  hostname;
 	int          port;
@@ -4677,7 +4677,7 @@ js_OpenAddress(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_OpenFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OpenFile(int num_args, bool is_ctor, int magic)
 {
 	kev_file_t* file;
 	const char* filename;
@@ -4691,7 +4691,7 @@ js_OpenFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_OpenLog(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OpenLog(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	logger_t*   logger;
@@ -4704,7 +4704,7 @@ js_OpenLog(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_OpenRawFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OpenRawFile(int num_args, bool is_ctor, int magic)
 {
 	file_t*     file;
 	const char* filename;
@@ -4722,7 +4722,7 @@ js_OpenRawFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_OutlinedCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OutlinedCircle(int num_args, bool is_ctor, int magic)
 {
 	float x = trunc(jsal_to_number(0)) + 0.5;
 	float y = trunc(jsal_to_number(1)) + 0.5;
@@ -4737,14 +4737,14 @@ js_OutlinedCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_OutlinedComplex(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OutlinedComplex(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return false;
 }
 
 static bool
-js_OutlinedEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OutlinedEllipse(int num_args, bool is_ctor, int magic)
 {
 	float x = jsal_to_int(0) + 0.5;
 	float y = jsal_to_int(1) + 0.5;
@@ -4760,7 +4760,7 @@ js_OutlinedEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_OutlinedRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OutlinedRectangle(int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
 	float x1 = jsal_to_int(0) + 0.5;
@@ -4778,7 +4778,7 @@ js_OutlinedRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_OutlinedRoundRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_OutlinedRoundRectangle(int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
 	float x = jsal_to_int(0) + 0.5;
@@ -4797,7 +4797,7 @@ js_OutlinedRoundRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Point(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Point(int num_args, bool is_ctor, int magic)
 {
 	float x = jsal_to_int(0) + 0.5;
 	float y = jsal_to_int(1) + 0.5;
@@ -4811,7 +4811,7 @@ js_Point(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_PointSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_PointSeries(int num_args, bool is_ctor, int magic)
 {
 	color_t color = jsal_require_sphere_color(1);
 
@@ -4847,14 +4847,14 @@ js_PointSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Polygon(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Polygon(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return false;
 }
 
 static bool
-js_Print(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Print(int num_args, bool is_ctor, int magic)
 {
 	const char* text;
 
@@ -4865,7 +4865,7 @@ js_Print(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_QueuePersonCommand(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_QueuePersonCommand(int num_args, bool is_ctor, int magic)
 {
 	int         command;
 	const char* name;
@@ -4891,7 +4891,7 @@ js_QueuePersonCommand(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_QueuePersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_QueuePersonScript(int num_args, bool is_ctor, int magic)
 {
 	bool        immediate = false;
 	const char* name;
@@ -4911,7 +4911,7 @@ js_QueuePersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Rectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Rectangle(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -4927,7 +4927,7 @@ js_Rectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RemoveDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RemoveDirectory(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 
@@ -4938,7 +4938,7 @@ js_RemoveDirectory(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RemoveFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RemoveFile(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 
@@ -4949,7 +4949,7 @@ js_RemoveFile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RemoveTrigger(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RemoveTrigger(int num_args, bool is_ctor, int magic)
 {
 	int trigger_index;
 
@@ -4964,7 +4964,7 @@ js_RemoveTrigger(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RemoveZone(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RemoveZone(int num_args, bool is_ctor, int magic)
 {
 	int zone_index;
 
@@ -4979,7 +4979,7 @@ js_RemoveZone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Rename(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Rename(int num_args, bool is_ctor, int magic)
 {
 	const char* name1;
 	const char* name2;
@@ -4992,7 +4992,7 @@ js_Rename(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RenderMap(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RenderMap(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "no active map engine");
@@ -5001,7 +5001,7 @@ js_RenderMap(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ReplaceTilesOnLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ReplaceTilesOnLayer(int num_args, bool is_ctor, int magic)
 {
 	int        layer;
 	int        new_index;
@@ -5024,7 +5024,7 @@ js_ReplaceTilesOnLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RequireScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RequireScript(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	bool        is_required;
@@ -5048,7 +5048,7 @@ js_RequireScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RequireSystemScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RequireSystemScript(int num_args, bool is_ctor, int magic)
 {
 	const char* filename = jsal_require_string(0);
 
@@ -5077,13 +5077,13 @@ js_RequireSystemScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RestartGame(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RestartGame(int num_args, bool is_ctor, int magic)
 {
 	sphere_restart();
 }
 
 static bool
-js_RoundRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RoundRectangle(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -5100,7 +5100,7 @@ js_RoundRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ScreenToMapX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ScreenToMapX(int num_args, bool is_ctor, int magic)
 {
 	int      layer;
 	point2_t map_xy;
@@ -5117,7 +5117,7 @@ js_ScreenToMapX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ScreenToMapY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ScreenToMapY(int num_args, bool is_ctor, int magic)
 {
 	int      layer;
 	point2_t map_xy;
@@ -5134,7 +5134,7 @@ js_ScreenToMapY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetCameraX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetCameraX(int num_args, bool is_ctor, int magic)
 {
 	int      new_x;
 	point2_t position;
@@ -5149,7 +5149,7 @@ js_SetCameraX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetCameraY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetCameraY(int num_args, bool is_ctor, int magic)
 {
 	int      new_y;
 	point2_t position;
@@ -5164,7 +5164,7 @@ js_SetCameraY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetClippingRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetClippingRectangle(int num_args, bool is_ctor, int magic)
 {
 	int height;
 	int width;
@@ -5182,7 +5182,7 @@ js_SetClippingRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetColorMask(int num_args, bool is_ctor, int magic)
 {
 	color_t new_mask;
 	int     num_frames;
@@ -5199,7 +5199,7 @@ js_SetColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetDefaultMapScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetDefaultMapScript(int num_args, bool is_ctor, int magic)
 {
 	int         map_op;
 	script_t*   script;
@@ -5215,7 +5215,7 @@ js_SetDefaultMapScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetDefaultPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetDefaultPersonScript(int num_args, bool is_ctor, int magic)
 {
 	int       person_op;
 	script_t* script;
@@ -5231,7 +5231,7 @@ js_SetDefaultPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetDelayScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetDelayScript(int num_args, bool is_ctor, int magic)
 {
 	int num_frames;
 	script_t* script;
@@ -5248,7 +5248,7 @@ js_SetDelayScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetFrameRate(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetFrameRate(int num_args, bool is_ctor, int magic)
 {
 	int framerate = jsal_to_int(0);
 
@@ -5259,14 +5259,14 @@ js_SetFrameRate(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetLayerAngle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerAngle(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return false;
 }
 
 static bool
-js_SetLayerHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerHeight(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	int new_height;
@@ -5284,7 +5284,7 @@ js_SetLayerHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetLayerMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerMask(int num_args, bool is_ctor, int magic)
 {
 	int     layer;
 	color_t mask;
@@ -5299,7 +5299,7 @@ js_SetLayerMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetLayerReflective(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerReflective(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	bool reflective;
@@ -5314,7 +5314,7 @@ js_SetLayerReflective(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetLayerRenderer(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerRenderer(int num_args, bool is_ctor, int magic)
 {
 	int       layer;
 	char      script_name[50];
@@ -5332,21 +5332,21 @@ js_SetLayerRenderer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetLayerScaleFactorX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerScaleFactorX(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return false;
 }
 
 static bool
-js_SetLayerScaleFactorY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerScaleFactorY(int num_args, bool is_ctor, int magic)
 {
 	jsal_error(JS_ERROR, "not implemented");
 	return false;
 }
 
 static bool
-js_SetLayerSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerSize(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	int new_height;
@@ -5366,7 +5366,7 @@ js_SetLayerSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetLayerVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerVisible(int num_args, bool is_ctor, int magic)
 {
 	bool visible;
 	int  layer;
@@ -5381,7 +5381,7 @@ js_SetLayerVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetLayerWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetLayerWidth(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	int new_width;
@@ -5399,7 +5399,7 @@ js_SetLayerWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetMapEngineFrameRate(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetMapEngineFrameRate(int num_args, bool is_ctor, int magic)
 {
 	int framerate;
 
@@ -5413,7 +5413,7 @@ js_SetMapEngineFrameRate(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetMousePosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetMousePosition(int num_args, bool is_ctor, int magic)
 {
 	int x;
 	int y;
@@ -5425,7 +5425,7 @@ js_SetMousePosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetNextAnimatedTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetNextAnimatedTile(int num_args, bool is_ctor, int magic)
 {
 	int        next_index;
 	int        tile_index;
@@ -5446,7 +5446,7 @@ js_SetNextAnimatedTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonAngle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonAngle(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -5462,7 +5462,7 @@ js_SetPersonAngle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonData(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonData(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -5479,7 +5479,7 @@ js_SetPersonData(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonDirection(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonDirection(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	const char* new_dir;
@@ -5495,7 +5495,7 @@ js_SetPersonDirection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonFollowDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonFollowDistance(int num_args, bool is_ctor, int magic)
 {
 	int         distance;
 	const char* name;
@@ -5515,7 +5515,7 @@ js_SetPersonFollowDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonFrame(int num_args, bool is_ctor, int magic)
 {
 	int         frame_index;
 	const char* name;
@@ -5531,7 +5531,7 @@ js_SetPersonFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonFrameNext(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonFrameNext(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	int         num_frames;
@@ -5549,7 +5549,7 @@ js_SetPersonFrameNext(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonFrameRevert(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonFrameRevert(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	int         num_frames;
@@ -5567,7 +5567,7 @@ js_SetPersonFrameRevert(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonIgnoreList(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonIgnoreList(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	int         num_ignores;
@@ -5593,7 +5593,7 @@ js_SetPersonIgnoreList(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonLayer(int num_args, bool is_ctor, int magic)
 {
 	int         layer;
 	const char* name;
@@ -5609,7 +5609,7 @@ js_SetPersonLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonMask(int num_args, bool is_ctor, int magic)
 {
 	color_t     color;
 	const char* name;
@@ -5625,7 +5625,7 @@ js_SetPersonMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonOffsetX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonOffsetX(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	point2_t    offset;
@@ -5643,7 +5643,7 @@ js_SetPersonOffsetX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonOffsetY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonOffsetY(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	point2_t    offset;
@@ -5661,7 +5661,7 @@ js_SetPersonOffsetY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonScaleAbsolute(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonScaleAbsolute(int num_args, bool is_ctor, int magic)
 {
 	int          height;
 	const char*  name;
@@ -5687,7 +5687,7 @@ js_SetPersonScaleAbsolute(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonScaleFactor(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonScaleFactor(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -5707,7 +5707,7 @@ js_SetPersonScaleFactor(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonScript(int num_args, bool is_ctor, int magic)
 {
 	lstring_t*  codestring;
 	const char* name;
@@ -5735,7 +5735,7 @@ js_SetPersonScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonSpeed(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonSpeed(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -5751,7 +5751,7 @@ js_SetPersonSpeed(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonSpeedXY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonSpeedXY(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -5769,7 +5769,7 @@ js_SetPersonSpeedXY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonSpriteset(int num_args, bool is_ctor, int magic)
 {
 	const char*  name;
 	person_t*    person;
@@ -5788,7 +5788,7 @@ js_SetPersonSpriteset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonValue(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonValue(int num_args, bool is_ctor, int magic)
 {
 	const char* key;
 	const char* name;
@@ -5815,7 +5815,7 @@ js_SetPersonValue(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonVisible(int num_args, bool is_ctor, int magic)
 {
 	const char* name;
 	person_t*   person;
@@ -5831,7 +5831,7 @@ js_SetPersonVisible(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonX(int num_args, bool is_ctor, int magic)
 {
 	int         layer;
 	const char* name;
@@ -5851,7 +5851,7 @@ js_SetPersonX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonXYFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonXYFloat(int num_args, bool is_ctor, int magic)
 {
 	int         layer;
 	const char* name;
@@ -5871,7 +5871,7 @@ js_SetPersonXYFloat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetPersonY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetPersonY(int num_args, bool is_ctor, int magic)
 {
 	int         layer;
 	const char* name;
@@ -5891,7 +5891,7 @@ js_SetPersonY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetRenderScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetRenderScript(int num_args, bool is_ctor, int magic)
 {
 	script_t* script;
 
@@ -5903,7 +5903,7 @@ js_SetRenderScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTalkActivationButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTalkActivationButton(int num_args, bool is_ctor, int magic)
 {
 	int button_id;
 
@@ -5914,7 +5914,7 @@ js_SetTalkActivationButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTalkActivationKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTalkActivationKey(int num_args, bool is_ctor, int magic)
 {
 	int key;
 	int player = PLAYER_1;
@@ -5931,7 +5931,7 @@ js_SetTalkActivationKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTalkDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTalkDistance(int num_args, bool is_ctor, int magic)
 {
 	int pixels;
 
@@ -5945,7 +5945,7 @@ js_SetTalkDistance(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTile(int num_args, bool is_ctor, int magic)
 {
 	int        layer;
 	int        tile_index;
@@ -5969,7 +5969,7 @@ js_SetTile(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTileDelay(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTileDelay(int num_args, bool is_ctor, int magic)
 {
 	int        delay;
 	int        tile_index;
@@ -5990,7 +5990,7 @@ js_SetTileDelay(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTileImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTileImage(int num_args, bool is_ctor, int magic)
 {
 	image_t*   image;
 	int        image_h;
@@ -6018,7 +6018,7 @@ js_SetTileImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTileName(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTileName(int num_args, bool is_ctor, int magic)
 {
 	lstring_t* name;
 	int        tile_index;
@@ -6038,7 +6038,7 @@ js_SetTileName(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTileSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTileSurface(int num_args, bool is_ctor, int magic)
 {
 	image_t*   image;
 	int        image_h;
@@ -6066,7 +6066,7 @@ js_SetTileSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTriggerLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTriggerLayer(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	int trigger_index;
@@ -6083,7 +6083,7 @@ js_SetTriggerLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTriggerScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTriggerScript(int num_args, bool is_ctor, int magic)
 {
 	script_t*  script;
 	lstring_t* script_name;
@@ -6104,7 +6104,7 @@ js_SetTriggerScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetTriggerXY(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetTriggerXY(int num_args, bool is_ctor, int magic)
 {
 	int trigger_index;
 	int x;
@@ -6123,7 +6123,7 @@ js_SetTriggerXY(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetUpdateScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetUpdateScript(int num_args, bool is_ctor, int magic)
 {
 	script_t* script;
 
@@ -6135,7 +6135,7 @@ js_SetUpdateScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetZoneDimensions(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetZoneDimensions(int num_args, bool is_ctor, int magic)
 {
 	rect_t bounds;
 	int    height;
@@ -6164,7 +6164,7 @@ js_SetZoneDimensions(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetZoneLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetZoneLayer(int num_args, bool is_ctor, int magic)
 {
 	int layer;
 	int zone_index;
@@ -6181,7 +6181,7 @@ js_SetZoneLayer(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetZoneScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetZoneScript(int num_args, bool is_ctor, int magic)
 {
 	script_t*  script;
 	lstring_t* script_name;
@@ -6203,7 +6203,7 @@ js_SetZoneScript(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SetZoneSteps(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SetZoneSteps(int num_args, bool is_ctor, int magic)
 {
 	int zone_index;
 	int steps;
@@ -6222,7 +6222,7 @@ js_SetZoneSteps(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Triangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Triangle(int num_args, bool is_ctor, int magic)
 {
 	color_t color;
 	float   x1, x2, x3;
@@ -6244,7 +6244,7 @@ js_Triangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_UnbindJoystickButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_UnbindJoystickButton(int num_args, bool is_ctor, int magic)
 {
 	int joy_index = jsal_to_int(0);
 	int button = jsal_to_int(1);
@@ -6258,7 +6258,7 @@ js_UnbindJoystickButton(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_UnbindKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_UnbindKey(int num_args, bool is_ctor, int magic)
 {
 	int keycode = jsal_to_int(0);
 
@@ -6269,7 +6269,7 @@ js_UnbindKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_UpdateMapEngine(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_UpdateMapEngine(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "no active map engine");
@@ -6284,7 +6284,7 @@ js_Animation_finalize(void* host_ptr)
 }
 
 static bool
-js_Animation_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Animation_get_height(int num_args, bool is_ctor, int magic)
 {
 	animation_t* anim;
 
@@ -6296,7 +6296,7 @@ js_Animation_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Animation_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Animation_get_width(int num_args, bool is_ctor, int magic)
 {
 	animation_t* anim;
 
@@ -6308,7 +6308,7 @@ js_Animation_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Animation_drawFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Animation_drawFrame(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_number(0);
 	int y = jsal_to_number(1);
@@ -6323,7 +6323,7 @@ js_Animation_drawFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Animation_drawZoomedFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Animation_drawZoomedFrame(int num_args, bool is_ctor, int magic)
 {
 	animation_t* anim;
 	int          height;
@@ -6347,7 +6347,7 @@ js_Animation_drawZoomedFrame(js_ref_t* me, int num_args, bool is_ctor, int magic
 }
 
 static bool
-js_Animation_getDelay(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Animation_getDelay(int num_args, bool is_ctor, int magic)
 {
 	animation_t* anim;
 
@@ -6359,7 +6359,7 @@ js_Animation_getDelay(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Animation_getNumFrames(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Animation_getNumFrames(int num_args, bool is_ctor, int magic)
 {
 	animation_t* anim;
 
@@ -6371,7 +6371,7 @@ js_Animation_getNumFrames(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Animation_readNextFrame(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Animation_readNextFrame(int num_args, bool is_ctor, int magic)
 {
 	animation_t* anim;
 
@@ -6389,7 +6389,7 @@ js_ByteArray_finalize(void* host_ptr)
 }
 
 static bool
-js_ByteArray_get_length(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ByteArray_get_length(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;
 
@@ -6401,7 +6401,7 @@ js_ByteArray_get_length(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ByteArray_concat(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ByteArray_concat(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array[2];
 	bytearray_t* new_array;
@@ -6417,7 +6417,7 @@ js_ByteArray_concat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ByteArray_slice(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ByteArray_slice(int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
 	int start = jsal_to_int(0);
@@ -6442,14 +6442,14 @@ js_ByteArray_slice(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ByteArray_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ByteArray_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object byte_array]");
 	return true;
 }
 
 static bool
-js_Color_get_red(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_get_red(int num_args, bool is_ctor, int magic)
 {
 	color_t* color;
 
@@ -6461,7 +6461,7 @@ js_Color_get_red(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_get_green(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_get_green(int num_args, bool is_ctor, int magic)
 {
 	color_t* color;
 
@@ -6473,7 +6473,7 @@ js_Color_get_green(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_get_blue(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_get_blue(int num_args, bool is_ctor, int magic)
 {
 	color_t* color;
 
@@ -6485,7 +6485,7 @@ js_Color_get_blue(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_get_alpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_get_alpha(int num_args, bool is_ctor, int magic)
 {
 	color_t* color;
 
@@ -6497,7 +6497,7 @@ js_Color_get_alpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_set_red(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_set_red(int num_args, bool is_ctor, int magic)
 {
 	color_t* color;
 	double   value;
@@ -6511,7 +6511,7 @@ js_Color_set_red(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_set_green(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_set_green(int num_args, bool is_ctor, int magic)
 {
 	color_t* color;
 	double   value;
@@ -6525,7 +6525,7 @@ js_Color_set_green(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_set_blue(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_set_blue(int num_args, bool is_ctor, int magic)
 {
 	color_t* color;
 	double   value;
@@ -6539,7 +6539,7 @@ js_Color_set_blue(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_set_alpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_set_alpha(int num_args, bool is_ctor, int magic)
 {
 	color_t* color;
 	double   value;
@@ -6553,14 +6553,14 @@ js_Color_set_alpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Color_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object color]");
 	return true;
 }
 
 static bool
-js_ColorMatrix_apply(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ColorMatrix_apply(int num_args, bool is_ctor, int magic)
 {
 	color_t color = jsal_require_sphere_color(0);
 
@@ -6574,7 +6574,7 @@ js_ColorMatrix_apply(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_ColorMatrix_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_ColorMatrix_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object colormatrix]");
 	return true;
@@ -6593,7 +6593,7 @@ js_File_finalize(void* host_ptr)
 }
 
 static bool
-js_File_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_File_close(int num_args, bool is_ctor, int magic)
 {
 	kev_file_t* file;
 
@@ -6606,7 +6606,7 @@ js_File_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_File_flush(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_File_flush(int num_args, bool is_ctor, int magic)
 {
 	kev_file_t* file;
 
@@ -6620,7 +6620,7 @@ js_File_flush(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_File_getKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_File_getKey(int num_args, bool is_ctor, int magic)
 {
 	int index = jsal_to_int(0);
 
@@ -6640,7 +6640,7 @@ js_File_getKey(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_File_getNumKeys(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_File_getNumKeys(int num_args, bool is_ctor, int magic)
 {
 	kev_file_t* file;
 
@@ -6654,7 +6654,7 @@ js_File_getNumKeys(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_File_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_File_read(int num_args, bool is_ctor, int magic)
 {
 	const char* key = jsal_to_string(0);
 
@@ -6685,14 +6685,14 @@ js_File_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_File_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_File_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object file]");
 	return true;
 }
 
 static bool
-js_File_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_File_write(int num_args, bool is_ctor, int magic)
 {
 	const char* key = jsal_to_string(0);
 
@@ -6714,7 +6714,7 @@ js_Font_finalize(void* host_ptr)
 }
 
 static bool
-js_Font_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_clone(int num_args, bool is_ctor, int magic)
 {
 	font_t* dolly_font;
 	font_t* font;
@@ -6729,7 +6729,7 @@ js_Font_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_drawText(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_drawText(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -6751,7 +6751,7 @@ js_Font_drawText(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_drawTextBox(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_drawTextBox(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -6795,7 +6795,7 @@ js_Font_drawTextBox(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_drawZoomedText(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_drawZoomedText(int num_args, bool is_ctor, int magic)
 {
 	ALLEGRO_BITMAP* bitmap;
 	font_t*         font;
@@ -6837,7 +6837,7 @@ js_Font_drawZoomedText(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_getCharacterImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_getCharacterImage(int num_args, bool is_ctor, int magic)
 {
 	uint32_t cp;
 	font_t*  font;
@@ -6851,7 +6851,7 @@ js_Font_getCharacterImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_getColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_getColorMask(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_this();
 	jsal_get_prop_string(-1, "\xFF" "color_mask");
@@ -6859,7 +6859,7 @@ js_Font_getColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_getHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_getHeight(int num_args, bool is_ctor, int magic)
 {
 	font_t* font;
 
@@ -6871,7 +6871,7 @@ js_Font_getHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_getStringHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_getStringHeight(int num_args, bool is_ctor, int magic)
 {
 	font_t*     font;
 	int         num_lines;
@@ -6895,7 +6895,7 @@ js_Font_getStringHeight(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_getStringWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_getStringWidth(int num_args, bool is_ctor, int magic)
 {
 	const char* text = jsal_to_string(0);
 
@@ -6909,7 +6909,7 @@ js_Font_getStringWidth(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_setCharacterImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_setCharacterImage(int num_args, bool is_ctor, int magic)
 {
 	int cp = jsal_to_int(0);
 	image_t* image = jsal_require_class_obj(1, SV1_IMAGE);
@@ -6924,7 +6924,7 @@ js_Font_setCharacterImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_setColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_setColorMask(int num_args, bool is_ctor, int magic)
 {
 	font_t* font;
 	color_t mask;
@@ -6939,14 +6939,14 @@ js_Font_setColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object font]");
 	return true;
 }
 
 static bool
-js_Font_wordWrapString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Font_wordWrapString(int num_args, bool is_ctor, int magic)
 {
 	const char* text = jsal_to_string(0);
 	int         width = jsal_to_int(1);
@@ -6978,7 +6978,7 @@ js_Image_finalize(void* host_ptr)
 }
 
 static bool
-js_Image_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_get_height(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -6990,7 +6990,7 @@ js_Image_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_get_width(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -7002,7 +7002,7 @@ js_Image_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_blit(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_blit(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -7020,7 +7020,7 @@ js_Image_blit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_blitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_blitMask(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -7039,7 +7039,7 @@ js_Image_blitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_createSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_createSurface(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 	image_t* new_image;
@@ -7054,7 +7054,7 @@ js_Image_createSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_rotateBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_rotateBlit(int num_args, bool is_ctor, int magic)
 {
 	float    angle;
 	int      height;
@@ -7080,7 +7080,7 @@ js_Image_rotateBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_rotateBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_rotateBlitMask(int num_args, bool is_ctor, int magic)
 {
 	int      height;
 	image_t* image;
@@ -7108,14 +7108,14 @@ js_Image_rotateBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object image]");
 	return true;
 }
 
 static bool
-js_Image_transformBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_transformBlit(int num_args, bool is_ctor, int magic)
 {
 	int           height;
 	image_t*      image;
@@ -7154,7 +7154,7 @@ js_Image_transformBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_transformBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_transformBlitMask(int num_args, bool is_ctor, int magic)
 {
 	ALLEGRO_COLOR color;
 	int           height;
@@ -7195,7 +7195,7 @@ js_Image_transformBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_zoomBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_zoomBlit(int num_args, bool is_ctor, int magic)
 {
 	int      height;
 	image_t* image;
@@ -7221,7 +7221,7 @@ js_Image_zoomBlit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Image_zoomBlitMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Image_zoomBlitMask(int num_args, bool is_ctor, int magic)
 {
 	int      height;
 	image_t* image;
@@ -7255,7 +7255,7 @@ js_Logger_finalize(void* host_ptr)
 }
 
 static bool
-js_Logger_beginBlock(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Logger_beginBlock(int num_args, bool is_ctor, int magic)
 {
 	const char* title = jsal_to_string(0);
 
@@ -7269,7 +7269,7 @@ js_Logger_beginBlock(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Logger_endBlock(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Logger_endBlock(int num_args, bool is_ctor, int magic)
 {
 	logger_t* logger;
 
@@ -7280,14 +7280,14 @@ js_Logger_endBlock(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Logger_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Logger_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object log]");
 	return true;
 }
 
 static bool
-js_Logger_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Logger_write(int num_args, bool is_ctor, int magic)
 {
 	const char* text = jsal_to_string(0);
 
@@ -7306,7 +7306,7 @@ js_RawFile_finalize(void* host_ptr)
 }
 
 static bool
-js_RawFile_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RawFile_close(int num_args, bool is_ctor, int magic)
 {
 	file_t* file;
 
@@ -7321,7 +7321,7 @@ js_RawFile_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RawFile_getPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RawFile_getPosition(int num_args, bool is_ctor, int magic)
 {
 	file_t* file;
 
@@ -7335,7 +7335,7 @@ js_RawFile_getPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RawFile_getSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RawFile_getSize(int num_args, bool is_ctor, int magic)
 {
 	file_t* file;
 	long    file_pos;
@@ -7353,7 +7353,7 @@ js_RawFile_getSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RawFile_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RawFile_read(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;
 	file_t*      file;
@@ -7388,7 +7388,7 @@ js_RawFile_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RawFile_setPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RawFile_setPosition(int num_args, bool is_ctor, int magic)
 {
 	file_t*   file;
 	long long new_pos;
@@ -7406,14 +7406,14 @@ js_RawFile_setPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RawFile_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RawFile_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object rawfile]");
 	return true;
 }
 
 static bool
-js_RawFile_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_RawFile_write(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t* array;
 	const void*  data;
@@ -7447,7 +7447,7 @@ js_Socket_finalize(void* host_ptr)
 }
 
 static bool
-js_Socket_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Socket_close(int num_args, bool is_ctor, int magic)
 {
 	socket_v1_t* socket;
 
@@ -7460,7 +7460,7 @@ js_Socket_close(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_getPendingReadSize(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Socket_getPendingReadSize(int num_args, bool is_ctor, int magic)
 {
 	socket_v1_t* socket;
 
@@ -7476,7 +7476,7 @@ js_Socket_getPendingReadSize(js_ref_t* me, int num_args, bool is_ctor, int magic
 }
 
 static bool
-js_Socket_isConnected(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Socket_isConnected(int num_args, bool is_ctor, int magic)
 {
 	socket_v1_t* socket;
 
@@ -7491,7 +7491,7 @@ js_Socket_isConnected(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Socket_read(int num_args, bool is_ctor, int magic)
 {
 	int length = jsal_to_int(0);
 
@@ -7518,14 +7518,14 @@ js_Socket_read(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Socket_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object socket]");
 	return true;
 }
 
 static bool
-js_Socket_write(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Socket_write(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t*   array;
 	const uint8_t* payload;
@@ -7557,7 +7557,7 @@ js_Sound_finalize(void* host_ptr)
 }
 
 static bool
-js_Sound_getLength(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_getLength(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7569,7 +7569,7 @@ js_Sound_getLength(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_getPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_getPan(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7581,7 +7581,7 @@ js_Sound_getPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_getPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_getPitch(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7593,7 +7593,7 @@ js_Sound_getPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_getPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_getPosition(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7605,7 +7605,7 @@ js_Sound_getPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_getRepeat(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_getRepeat(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7617,7 +7617,7 @@ js_Sound_getRepeat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_getVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_getVolume(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7629,7 +7629,7 @@ js_Sound_getVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_isPlaying(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_isPlaying(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7641,14 +7641,14 @@ js_Sound_isPlaying(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_isSeekable(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_isSeekable(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_boolean(true);
 	return true;
 }
 
 static bool
-js_Sound_pause(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_pause(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7660,7 +7660,7 @@ js_Sound_pause(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_play(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_play(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7681,7 +7681,7 @@ js_Sound_play(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_reset(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_reset(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7693,7 +7693,7 @@ js_Sound_reset(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_setPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_setPan(int num_args, bool is_ctor, int magic)
 {
 	int      new_pan;
 	sound_t* sound;
@@ -7707,7 +7707,7 @@ js_Sound_setPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_setPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_setPitch(int num_args, bool is_ctor, int magic)
 {
 	float    new_pitch;
 	sound_t* sound;
@@ -7721,7 +7721,7 @@ js_Sound_setPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_setPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_setPosition(int num_args, bool is_ctor, int magic)
 {
 	double   new_pos;
 	sound_t* sound;
@@ -7735,7 +7735,7 @@ js_Sound_setPosition(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_setRepeat(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_setRepeat(int num_args, bool is_ctor, int magic)
 {
 	bool     is_looped;
 	sound_t* sound;
@@ -7749,7 +7749,7 @@ js_Sound_setRepeat(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_setVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_setVolume(int num_args, bool is_ctor, int magic)
 {
 	int volume;
 
@@ -7765,7 +7765,7 @@ js_Sound_setVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_stop(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_stop(int num_args, bool is_ctor, int magic)
 {
 	sound_t* sound;
 
@@ -7777,7 +7777,7 @@ js_Sound_stop(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Sound_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object sound]");
 	return true;
@@ -7790,7 +7790,7 @@ js_SoundEffect_finalize(void* host_ptr)
 }
 
 static bool
-js_SoundEffect_getPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_getPan(int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 
@@ -7802,7 +7802,7 @@ js_SoundEffect_getPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundEffect_getPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_getPitch(int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 
@@ -7814,7 +7814,7 @@ js_SoundEffect_getPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundEffect_getVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_getVolume(int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 
@@ -7826,7 +7826,7 @@ js_SoundEffect_getVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundEffect_setPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_setPan(int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 	float     pan;
@@ -7840,7 +7840,7 @@ js_SoundEffect_setPan(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundEffect_setPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_setPitch(int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 	float     pitch;
@@ -7854,7 +7854,7 @@ js_SoundEffect_setPitch(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundEffect_setVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_setVolume(int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 	float     volume;
@@ -7868,7 +7868,7 @@ js_SoundEffect_setVolume(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundEffect_play(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_play(int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 
@@ -7880,7 +7880,7 @@ js_SoundEffect_play(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundEffect_stop(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_stop(int num_args, bool is_ctor, int magic)
 {
 	sample_t* sample;
 
@@ -7892,7 +7892,7 @@ js_SoundEffect_stop(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundEffect_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_SoundEffect_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object sound effect]");
 	return true;
@@ -7905,7 +7905,7 @@ js_Spriteset_finalize(void* host_ptr)
 }
 
 static bool
-js_Spriteset_get_filename(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Spriteset_get_filename(int num_args, bool is_ctor, int magic)
 {
 	path_t*      path;
 	spriteset_t* spriteset;
@@ -7923,7 +7923,7 @@ js_Spriteset_get_filename(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Spriteset_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Spriteset_clone(int num_args, bool is_ctor, int magic)
 {
 	spriteset_t* new_spriteset;
 	spriteset_t* spriteset;
@@ -7939,7 +7939,7 @@ js_Spriteset_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Spriteset_save(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Spriteset_save(int num_args, bool is_ctor, int magic)
 {
 	const char*  filename;
 	spriteset_t* spriteset;
@@ -7955,7 +7955,7 @@ js_Spriteset_save(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Spriteset_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Spriteset_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object spriteset]");
 	return true;
@@ -7968,7 +7968,7 @@ js_Surface_finalize(void* host_ptr)
 }
 
 static bool
-js_Surface_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_get_height(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -7983,7 +7983,7 @@ js_Surface_get_height(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_get_width(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -7998,7 +7998,7 @@ js_Surface_get_width(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_applyColorFX(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_applyColorFX(int num_args, bool is_ctor, int magic)
 {
 	colormatrix_t matrix;
 	int           height;
@@ -8024,7 +8024,7 @@ js_Surface_applyColorFX(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_applyColorFX4(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_applyColorFX4(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -8048,7 +8048,7 @@ js_Surface_applyColorFX4(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_applyLookup(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_applyLookup(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -8076,7 +8076,7 @@ js_Surface_applyLookup(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_bezierCurve(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_bezierCurve(int num_args, bool is_ctor, int magic)
 {
 	int             blend_mode;
 	color_t         color;
@@ -8136,7 +8136,7 @@ js_Surface_bezierCurve(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_blit(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_blit(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 	int      x;
@@ -8155,7 +8155,7 @@ js_Surface_blit(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_blitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_blitMaskSurface(int num_args, bool is_ctor, int magic)
 {
 	image_t* src_image = jsal_require_class_obj(0, SV1_SURFACE);
 	int x = jsal_to_int(1);
@@ -8178,7 +8178,7 @@ js_Surface_blitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_blitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_blitSurface(int num_args, bool is_ctor, int magic)
 {
 	image_t* src_image = jsal_require_class_obj(0, SV1_SURFACE);
 	int x = jsal_to_int(1);
@@ -8200,7 +8200,7 @@ js_Surface_blitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_clone(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 	image_t* new_image;
@@ -8215,7 +8215,7 @@ js_Surface_clone(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_cloneSection(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_cloneSection(int num_args, bool is_ctor, int magic)
 {
 	int      height;
 	image_t* image;
@@ -8241,7 +8241,7 @@ js_Surface_cloneSection(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_createImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_createImage(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 	image_t* new_image;
@@ -8256,7 +8256,7 @@ js_Surface_createImage(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_drawText(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_drawText(int num_args, bool is_ctor, int magic)
 {
 	int         blend_mode;
 	color_t     color;
@@ -8285,7 +8285,7 @@ js_Surface_drawText(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_filledCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_filledCircle(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_number(0);
 	int y = jsal_to_number(1);
@@ -8308,7 +8308,7 @@ js_Surface_filledCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_filledEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_filledEllipse(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_number(0);
 	int y = jsal_to_number(1);
@@ -8332,7 +8332,7 @@ js_Surface_filledEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_flipHorizontally(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_flipHorizontally(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -8344,7 +8344,7 @@ js_Surface_flipHorizontally(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_flipVertically(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_flipVertically(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
 
@@ -8356,7 +8356,7 @@ js_Surface_flipVertically(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_getPixel(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_getPixel(int num_args, bool is_ctor, int magic)
 {
 	int      height;
 	image_t* image;
@@ -8380,7 +8380,7 @@ js_Surface_getPixel(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_gradientCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_gradientCircle(int num_args, bool is_ctor, int magic)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
@@ -8424,7 +8424,7 @@ js_Surface_gradientCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_gradientEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_gradientEllipse(int num_args, bool is_ctor, int magic)
 {
 	static ALLEGRO_VERTEX s_vbuf[128];
 
@@ -8469,7 +8469,7 @@ js_Surface_gradientEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_gradientRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_gradientRectangle(int num_args, bool is_ctor, int magic)
 {
 	int x1 = jsal_to_int(0);
 	int y1 = jsal_to_int(1);
@@ -8503,7 +8503,7 @@ js_Surface_gradientRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic
 }
 
 static bool
-js_Surface_gradientLine(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_gradientLine(int num_args, bool is_ctor, int magic)
 {
 	int      blend_mode;
 	color_t  color1;
@@ -8544,7 +8544,7 @@ js_Surface_gradientLine(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_line(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_line(int num_args, bool is_ctor, int magic)
 {
 	float x1 = jsal_to_int(0) + 0.5;
 	float y1 = jsal_to_int(1) + 0.5;
@@ -8568,7 +8568,7 @@ js_Surface_line(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_lineSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_lineSeries(int num_args, bool is_ctor, int magic)
 {
 	int             blend_mode;
 	color_t         color;
@@ -8619,7 +8619,7 @@ js_Surface_lineSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_outlinedCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_outlinedCircle(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_number(0);
 	int y = jsal_to_number(1);
@@ -8642,7 +8642,7 @@ js_Surface_outlinedCircle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_outlinedEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_outlinedEllipse(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_number(0);
 	int y = jsal_to_number(1);
@@ -8666,7 +8666,7 @@ js_Surface_outlinedEllipse(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_pointSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_pointSeries(int num_args, bool is_ctor, int magic)
 {
 	color_t color = jsal_require_sphere_color(1);
 
@@ -8708,7 +8708,7 @@ js_Surface_pointSeries(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_outlinedRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_outlinedRectangle(int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
 	float x1 = jsal_to_int(0) + 0.5;
@@ -8734,7 +8734,7 @@ js_Surface_outlinedRectangle(js_ref_t* me, int num_args, bool is_ctor, int magic
 }
 
 static bool
-js_Surface_replaceColor(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_replaceColor(int num_args, bool is_ctor, int magic)
 {
 	color_t color = jsal_require_sphere_color(0);
 	color_t new_color = jsal_require_sphere_color(1);
@@ -8750,7 +8750,7 @@ js_Surface_replaceColor(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_rescale(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_rescale(int num_args, bool is_ctor, int magic)
 {
 	int width = jsal_to_int(0);
 	int height = jsal_to_int(1);
@@ -8767,7 +8767,7 @@ js_Surface_rescale(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_rotate(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_rotate(int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
 	float angle = jsal_to_number(0);
@@ -8800,7 +8800,7 @@ js_Surface_rotate(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_rotateBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_rotateBlitMaskSurface(int num_args, bool is_ctor, int magic)
 {
 	float    angle;
 	int      blend_mode;
@@ -8833,7 +8833,7 @@ js_Surface_rotateBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int m
 }
 
 static bool
-js_Surface_rotateBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_rotateBlitSurface(int num_args, bool is_ctor, int magic)
 {
 	float    angle;
 	int      blend_mode;
@@ -8863,7 +8863,7 @@ js_Surface_rotateBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic
 }
 
 static bool
-js_Surface_rectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_rectangle(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -8888,7 +8888,7 @@ js_Surface_rectangle(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_save(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_save(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
 	image_t*    image;
@@ -8902,7 +8902,7 @@ js_Surface_save(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_setAlpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_setAlpha(int num_args, bool is_ctor, int magic)
 {
 	int n_args = jsal_get_top();
 	int a = jsal_to_int(0);
@@ -8933,7 +8933,7 @@ js_Surface_setAlpha(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_setBlendMode(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_setBlendMode(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_this();
 	jsal_dup(0);
@@ -8942,7 +8942,7 @@ js_Surface_setBlendMode(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_setPixel(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_setPixel(int num_args, bool is_ctor, int magic)
 {
 	int x = jsal_to_int(0);
 	int y = jsal_to_int(1);
@@ -8958,14 +8958,14 @@ js_Surface_setPixel(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object surface]");
 	return true;
 }
 
 static bool
-js_Surface_transformBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_transformBlitMaskSurface(int num_args, bool is_ctor, int magic)
 {
 	int      blend_mode;
 	int      height;
@@ -9007,7 +9007,7 @@ js_Surface_transformBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, in
 }
 
 static bool
-js_Surface_transformBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_transformBlitSurface(int num_args, bool is_ctor, int magic)
 {
 	int      blend_mode;
 	int      height;
@@ -9047,7 +9047,7 @@ js_Surface_transformBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int ma
 }
 
 static bool
-js_Surface_zoomBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_zoomBlitMaskSurface(int num_args, bool is_ctor, int magic)
 {
 	int      blend_mode;
 	int      height;
@@ -9082,7 +9082,7 @@ js_Surface_zoomBlitMaskSurface(js_ref_t* me, int num_args, bool is_ctor, int mag
 }
 
 static bool
-js_Surface_zoomBlitSurface(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_Surface_zoomBlitSurface(int num_args, bool is_ctor, int magic)
 {
 	int      blend_mode;
 	int      height;
@@ -9120,7 +9120,7 @@ js_WindowStyle_finalize(void* host_ptr)
 }
 
 static bool
-js_WindowStyle_drawWindow(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_WindowStyle_drawWindow(int num_args, bool is_ctor, int magic)
 {
 	int            height;
 	color_t        mask;
@@ -9143,7 +9143,7 @@ js_WindowStyle_drawWindow(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_WindowStyle_getColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_WindowStyle_getColorMask(int num_args, bool is_ctor, int magic)
 {
 	windowstyle_t* winstyle;
 
@@ -9155,7 +9155,7 @@ js_WindowStyle_getColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_WindowStyle_setColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_WindowStyle_setColorMask(int num_args, bool is_ctor, int magic)
 {
 	color_t        mask;
 	windowstyle_t* winstyle;
@@ -9170,7 +9170,7 @@ js_WindowStyle_setColorMask(js_ref_t* me, int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_WindowStyle_toString(js_ref_t* me, int num_args, bool is_ctor, int magic)
+js_WindowStyle_toString(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_string("[object windowstyle]");
 	return true;

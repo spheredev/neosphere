@@ -406,7 +406,7 @@ xcopy /y /d /e /f "lib64\*.dll" "$(OutDir)"</Command>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
@@ -472,7 +472,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
       <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
-      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
