@@ -49,6 +49,16 @@
 #include <ChakraCore.h>
 #include "vector.h"
 
+#if !defined(WIN32)
+#define jsal_setjmp(env)          sigsetjmp(env, false)
+#define jsal_longjmp(env, value)  siglongjmp(env, value)
+#define jsal_jmpbuf               sigjmp_buf
+#else
+#define jsal_setjmp(env)          setjmp(env)
+#define jsal_longjmp(env, value)  longjmp(env, value)
+#define jsal_jmpbuf               jmp_buf
+#endif
+
 struct js_ref
 {
 	bool  weak_ref;
@@ -157,7 +167,7 @@ jsal_init(void)
 	JsAddRef(s_stash, NULL);
 
 	s_value_stack = vector_new(sizeof(js_ref_t));
-	s_catch_stack = vector_new(sizeof(jmp_buf));
+	s_catch_stack = vector_new(sizeof(jsal_jmpbuf));
 	s_stack_base = 0;
 	s_breakpoints = vector_new(sizeof(struct breakpoint));
 	s_compiled_scripts = vector_new(sizeof(struct script));
@@ -1749,14 +1759,14 @@ jsal_try(js_function_t callback, int num_args)
 {
 	/* [ ... arg1..argN ] -> [ ... retval ] */
 
-	jmp_buf    label;
-	int        last_stack_base;
-	JsValueRef result;
-	bool       retval = true;
+	jsal_jmpbuf label;
+	int         last_stack_base;
+	JsValueRef  result;
+	bool        retval = true;
 
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_value_stack) - num_args;
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		if (!callback(num_args, false, 0))
 			jsal_push_undefined();
@@ -1778,9 +1788,9 @@ jsal_try_call(int num_args)
 {
 	/* [ ... function arg1..argN ] -> [ ... retval ] */
 
-	jmp_buf label;
+	jsal_jmpbuf label;
 
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		jsal_call(num_args);
 		vector_pop(s_catch_stack, 1);
@@ -1796,9 +1806,9 @@ jsal_try_call_method(int num_args)
 {
 	/* [ ... function this arg1..argN ] -> [ ... retval ] */
 
-	jmp_buf label;
+	jsal_jmpbuf label;
 
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		jsal_call_method(num_args);
 		vector_pop(s_catch_stack, 1);
@@ -1814,9 +1824,9 @@ jsal_try_compile(const char* filename)
 {
 	/* [ ... source ] -> [ ... function ] */
 
-	jmp_buf label;
+	jsal_jmpbuf label;
 
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		jsal_compile(filename);
 		vector_pop(s_catch_stack, 1);
@@ -1832,9 +1842,9 @@ jsal_try_construct(int num_args)
 {
 	/* [ ... constructor arg1..argN ] -> [ ... retval ] */
 
-	jmp_buf label;
+	jsal_jmpbuf label;
 
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		jsal_construct(num_args);
 		vector_pop(s_catch_stack, 1);
@@ -1850,9 +1860,9 @@ jsal_try_eval_module(const char* filename)
 {
 	/* [ ... source ] -> [ ... exports ] */
 
-	jmp_buf label;
+	jsal_jmpbuf label;
 
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		jsal_eval_module(filename);
 		vector_pop(s_catch_stack, 1);
@@ -1866,9 +1876,9 @@ jsal_try_eval_module(const char* filename)
 bool
 jsal_try_parse(int at_index)
 {
-	jmp_buf label;
+	jsal_jmpbuf label;
 
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		jsal_parse(at_index);
 		vector_pop(s_catch_stack, 1);
@@ -2261,15 +2271,15 @@ throw_on_error(void)
 static void
 throw_value(JsValueRef value)
 {
-	int     index;
-	jmp_buf label;
+	int         index;
+	jsal_jmpbuf label;
 
 	push_value(value, false);
 	index = vector_len(s_catch_stack) - 1;
 	if (index >= 0) {
-		memcpy(label, vector_get(s_catch_stack, index), sizeof(jmp_buf));
+		memcpy(label, vector_get(s_catch_stack, index), sizeof(jsal_jmpbuf));
 		vector_pop(s_catch_stack, 1);
-		longjmp(label, 1);
+		jsal_longjmp(label, 1);
 	}
 	else {
 		printf("JS exception thrown from unguarded C code!\n");
@@ -2281,14 +2291,14 @@ throw_value(JsValueRef value)
 static void CHAKRA_CALLBACK
 on_dispatch_job(JsValueRef task, void* userdata)
 {
-	JsValueRef exception;
-	jmp_buf    label;
-	int        last_stack_base;
+	JsValueRef  exception;
+	jsal_jmpbuf label;
+	int         last_stack_base;
 	
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_value_stack);
 	push_value(task, true);
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		if (s_job_callback == NULL)
 			jsal_error(JS_ERROR, "no async/Promise support");
@@ -2323,7 +2333,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 	JsValueRef         breakpoint_info;
 	const char*        filename;
 	unsigned int       handle;
-	jmp_buf            label;
+	jsal_jmpbuf        label;
 	int                last_stack_base;
 	const char*        name;
 	JsValueRef         properties;
@@ -2381,7 +2391,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 			jsal_pop(3);
 			jsal_push_string(traceback);
 			push_debug_callback_args(data);
-			if (setjmp(label) == 0) {
+			if (jsal_setjmp(label) == 0) {
 				vector_push(s_catch_stack, label);
 				if (s_throw_callback != NULL)
 					s_throw_callback();
@@ -2400,7 +2410,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 			last_stack_base = s_stack_base;
 			s_stack_base = vector_len(s_value_stack);
 			push_debug_callback_args(data);
-			if (setjmp(label) == 0) {
+			if (jsal_setjmp(label) == 0) {
 				vector_push(s_catch_stack, label);
 				step = s_break_callback();
 				vector_pop(s_catch_stack, 1);
@@ -2426,7 +2436,7 @@ on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *
 	JsValueRef        exception;
 	const char*       filename;
 	JsValueRef        full_specifier;
-	jmp_buf           label;
+	jsal_jmpbuf       label;
 	int               last_stack_base;
 	struct module_job job;
 	JsModuleRecord    module;
@@ -2441,7 +2451,7 @@ on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *
 	JsGetModuleHostInfo(importer, JsModuleHostInfo_HostDefined, &caller_id);
 	push_value(specifier, true);
 	push_value(caller_id, true);
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		s_import_callback();
 		if (jsal_get_top() < 2)
@@ -2483,7 +2493,7 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 	JsValueRef       last_callee_value;
 	int              last_stack_base;
 	JsValueRef       last_this_value;
-	jmp_buf          label;
+	jsal_jmpbuf      label;
 	JsValueRef       retval = JS_INVALID_REFERENCE;
 
 	int i;
@@ -2498,7 +2508,7 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 	s_this_value = argv[0];
 	for (i = 1; i < argc; ++i)
 		push_value(argv[i], true);
-	if (setjmp(label) == 0) {
+	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		if (!is_ctor && function_data->ctor_only) {
 			push_value(callee, true);  // note: gets popped during unwind
