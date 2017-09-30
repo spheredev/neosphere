@@ -220,13 +220,11 @@ jsal_update()
 			(BYTE*)job->source, (unsigned int)job->source_size,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
 		free(source);
-		throw_on_error();
-		if (error_code == JsErrorScriptCompile)
-			JsSetModuleHostInfo(job->module_record, JsModuleHostInfo_Exception, exception);
 	}
 	else {
 		// module evaluation job: execute the root module
 		JsModuleEvaluation(job->module_record, &result);
+		throw_on_error();
 	}
 	vector_remove(s_module_jobs, 0);
 }
