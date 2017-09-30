@@ -216,6 +216,7 @@ jsal_update()
 	JsErrorCode        error_code;
 	JsValueRef         exception;
 	struct module_job* job;
+	JsModuleRecord     module_record;
 	JsValueRef         result;
 	char*              source;
 
@@ -230,13 +231,18 @@ jsal_update()
 			(BYTE*)job->source, (unsigned int)job->source_size,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
 		free(source);
+		vector_remove(s_module_jobs, 0);
 	}
 	else {
-		// module evaluation job: execute the root module
-		JsModuleEvaluation(job->module_record, &result);
+		// module evaluation job: execute the root module.  this is tricky because
+		// a module may call Sphere.run() at load time.  in order to avoid corrupting
+		// the job queue or executing it more than once, we need to remove the job
+		// from the queue in advance.
+		module_record = job->module_record;
+		vector_remove(s_module_jobs, 0);
+		JsModuleEvaluation(module_record, &result);
 		throw_on_error();
 	}
-	vector_remove(s_module_jobs, 0);
 }
 
 void

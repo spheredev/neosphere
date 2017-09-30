@@ -35,7 +35,7 @@
 
 #include "ki.h"
 
-struct entry
+struct property
 {
 	char*        class_name;
 	char*        key;
@@ -48,19 +48,19 @@ struct entry
 
 struct objview
 {
-	int           num_props;
-	int           array_size;
-	struct entry* props;
+	int              array_size;
+	int              num_props;
+	struct property* props;
 };
 
 objview_t*
 objview_new(void)
 {
-	struct entry* array;
-	int           array_size = 16;
-	objview_t*    obj;
+	struct property* array;
+	int              array_size = 16;
+	objview_t*       obj;
 
-	array = malloc(array_size * sizeof(struct entry));
+	array = malloc(array_size * sizeof(struct property));
 
 	obj = calloc(1, sizeof(objview_t));
 	obj->props = array;
@@ -144,7 +144,7 @@ objview_add_accessor(objview_t* obj, const char* key, const ki_atom_t* getter, c
 	idx = obj->num_props++;
 	if (obj->num_props > obj->array_size) {
 		obj->array_size *= 2;
-		obj->props = realloc(obj->props, obj->array_size * sizeof(struct entry));
+		obj->props = realloc(obj->props, obj->array_size * sizeof(struct property));
 	}
 	obj->props[idx].tag = PROP_ACCESSOR;
 	obj->props[idx].key = strdup(key);
@@ -162,7 +162,7 @@ objview_add_value(objview_t* obj, const char* key, const char* class_name, const
 	idx = obj->num_props++;
 	if (obj->num_props > obj->array_size) {
 		obj->array_size *= 2;
-		obj->props = realloc(obj->props, obj->array_size * sizeof(struct entry));
+		obj->props = realloc(obj->props, obj->array_size * sizeof(struct property));
 	}
 	obj->props[idx].tag = PROP_VALUE;
 	obj->props[idx].key = strdup(key);
