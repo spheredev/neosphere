@@ -56,13 +56,13 @@ class Pact
 
 	reject(promise, reason)
 	{
-		let handler = getHandler(promise);
+		let handler = getHandler(this, promise);
 		handler.reject(reason);
 	}
 
 	resolve(promise, value)
 	{
-		let handler = getHandler(promise);
+		let handler = getHandler(this, promise);
 		handler.resolve(value);
 	}
 

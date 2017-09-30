@@ -2632,8 +2632,10 @@ process_map_input(void)
 					person_talk(person);
 				s_players[i].is_talk_allowed = false;
 			}
-			else // allow talking again only after key is released
+			else {
+				// allow talking again only after key is released
 				s_players[i].is_talk_allowed = true;
+			}
 			mv_x = 0; mv_y = 0;
 			if (person->num_commands == 0 && person->leader == NULL) {
 				// allow player control only if the input person is idle and not being led around
