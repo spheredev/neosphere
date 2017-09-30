@@ -215,6 +215,7 @@ jsal_update()
 {
 	JsErrorCode        error_code;
 	JsValueRef         exception;
+	bool               have_error;
 	struct module_job* job;
 	JsModuleRecord     module_record;
 	JsValueRef         result;
@@ -241,7 +242,11 @@ jsal_update()
 		module_record = job->module_record;
 		vector_remove(s_module_jobs, 0);
 		JsModuleEvaluation(module_record, &result);
-		throw_on_error();
+		JsHasException(&have_error);
+		if (have_error) {
+			JsGetAndClearException(&exception);
+			JsSetModuleHostInfo(module_record, JsModuleHostInfo_Exception, exception);
+		}
 	}
 }
 
@@ -501,6 +506,9 @@ jsal_eval_module(const char* filename)
 		goto on_exception;
 	while (vector_len(s_module_jobs) > 0)
 		jsal_update();
+	JsGetModuleHostInfo(module, JsModuleHostInfo_Exception, &exception);
+	if (exception != JS_INVALID_REFERENCE)
+		throw_value(exception);
 
 	jsal_push_undefined();
 	jsal_remove(-2);
