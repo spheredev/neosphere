@@ -221,31 +221,31 @@ jsal_update()
 	JsValueRef         result;
 	char*              source;
 
-	if (vector_len(s_module_jobs) == 0)
-		return;
-
-	job = vector_get(s_module_jobs, 0);
-	if (job->source != NULL) {
-		// module parse job: parse an imported module
-		source = job->source;  // ...because 'job' may be invalidated
-		error_code = JsParseModuleSource(job->module_record, job->script_id,
-			(BYTE*)job->source, (unsigned int)job->source_size,
-			JsParseModuleSourceFlags_DataIsUTF8, &exception);
-		free(source);
-		vector_remove(s_module_jobs, 0);
-	}
-	else {
-		// module evaluation job: execute the root module.  this is tricky because
-		// a module may call Sphere.run() at load time.  in order to avoid corrupting
-		// the job queue or executing it more than once, we need to remove the job
-		// from the queue in advance.
-		module_record = job->module_record;
-		vector_remove(s_module_jobs, 0);
-		JsModuleEvaluation(module_record, &result);
-		JsHasException(&have_error);
-		if (have_error) {
-			JsGetAndClearException(&exception);
-			JsSetModuleHostInfo(module_record, JsModuleHostInfo_Exception, exception);
+	// we're not loading remote modules, so there's no sense causing delays by doing
+	// one at a time.  just blow through the whole dependency graph in one tick.
+	while (vector_len(s_module_jobs) > 0) {
+		job = vector_get(s_module_jobs, 0);
+		if (job->source != NULL) {
+			// module parse job: parse an imported module
+			source = job->source;  // ...because 'job' may be invalidated
+			error_code = JsParseModuleSource(job->module_record, job->script_id,
+				(BYTE*)job->source, (unsigned int)job->source_size,
+				JsParseModuleSourceFlags_DataIsUTF8, &exception);
+			free(source);
+			vector_remove(s_module_jobs, 0);
+		}
+		else {
+			// module evaluation job: execute a top-level module.  this is tricky because
+			// a module may call Sphere.run() at load time.  in order to avoid corrupting
+			// the queue or doing the evaluation more than once, dequeue the job first.
+			module_record = job->module_record;
+			vector_remove(s_module_jobs, 0);
+			JsModuleEvaluation(module_record, &result);
+			JsHasException(&have_error);
+			if (have_error) {
+				JsGetAndClearException(&exception);
+				JsSetModuleHostInfo(module_record, JsModuleHostInfo_Exception, exception);
+			}
 		}
 	}
 }
@@ -504,8 +504,11 @@ jsal_eval_module(const char* filename)
 	add_compiled_script(filename, script_cookie);
 	if (error_code == JsErrorScriptCompile)
 		goto on_exception;
-	while (vector_len(s_module_jobs) > 0)
-		jsal_update();
+	
+	// note: a single call to jsal_update() here is enough, as it will process
+	//       the entire dependency graph before returning.
+	jsal_update();
+	
 	JsGetModuleHostInfo(module, JsModuleHostInfo_Exception, &exception);
 	if (exception != JS_INVALID_REFERENCE)
 		throw_value(exception);
