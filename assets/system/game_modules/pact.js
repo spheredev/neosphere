@@ -32,7 +32,7 @@
 
 'use strict';
 
-let kPactHandlers = Symbol('pactHandlers');
+let kHandlers = Symbol('promise handlers');
 
 class Pact
 {
@@ -40,7 +40,7 @@ class Pact
 
 	constructor()
 	{
-		this[kPactHandlers] = [];
+		this[kHandlers] = new Map();
 	}
 
 	makePromise()
@@ -48,9 +48,11 @@ class Pact
 		let handler;
 		let promise = new Promise((resolve, reject) => {
 			handler = { resolve, reject };
-		})
-		handler.that = promise;
-		this[kPactHandlers].push(handler);
+		});
+		this[kHandlers].set(promise, handler);
+		promise.then(
+			() => this[kHandlers].delete(promise),
+			() => this[kHandlers].delete(promise));
 		return promise;
 	}
 
@@ -68,8 +70,8 @@ class Pact
 
 	welsh(reason)
 	{
-		for (let i = this[kPactHandlers].length - 1; i >= 0; --i)
-			this[kPactHandlers][i].reject(reason);
+		for (const handler of this[kHandlers].values())
+			handler.reject(reason);
 	}
 }
 
@@ -77,11 +79,12 @@ function getHandler(pact, promise)
 {
 	if (!(promise instanceof Promise))
 		throw new TypeError(`'${String(promise)}' is not a promise`);
-	for (let i = pact[kPactHandlers].length - 1; i >= 0; --i) {
-		if (pact[kPactHandlers][i].that == promise)
-			return pact[kPactHandlers][i];
-	}
-	throw new TypeError("Promise is not from this pact");
+
+	let handler = pact[kHandlers].get(promise);
+	if (handler === undefined)
+		throw new TypeError("Promise is not from this pact or is already settled");
+
+	return handler;
 }
 
 // CommonJS
