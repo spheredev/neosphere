@@ -311,37 +311,43 @@ from#where(predicate);
     that match the predicate will be passed on.
 
 
-`Console` Namespace
--------------------
+`Console` Object
+----------------
 
-The `Console` namespace provides a way to add a text-based debug console to
-your game.  A full command parser is already built in, so the only thing your
-game needs to do is provide names and implementations for supported console
-commands.  Sphere will do the rest.
+The `Console` object provides a way to add a text-based debug console to your
+game.  A full command parser is built in, so the only thing your game needs to
+do is provide names and implementations for supported console commands.  Sphere
+will do the rest.
 
-During gameplay, if the game has initialized the console, it can be shown and
-hidden by the player using a hotkey (`~` by default).
+During gameplay, if the game has created at least one Console, it can be shown
+and hidden by the player using a hotkey (`~` by default).
 
     import { Console } from 'sphere-runtime';
 
-Console.visible [read/write]
+new Console(options);
 
-    Gets or sets whether the console is visible to the player.  Setting this to
-    `true` will show the console, while setting to `false` will hide it.
-
-Console.initialize(options);
-
-    Initializes the console, enabling the player to access it while in-game.
-    `options` can include any of the following properties:
+    Constructs a new Console and starts it running, enabling the player to
+    access it while in-game.  `options` can have one or more of the following
+    properties:
 
         options.hotKey
 
             A `Key` value specifying which keyboard key will show and hide the
             console.  If not provided, defaults to `Key.Tilde`.
+		
+		options.prompt
 
-Console.defineObject(objectName, thisObj, commands);
+		    A string specifying the text to display in front of the command
+			line.  The default is "$".
 
-    Registers an object and a set of commands with the console.  `commands` is
+Console#visible [read/write]
+
+    Gets or sets whether this Console is visible to the player.  Setting this
+    to `true` will show the console, while setting to `false` will hide it.
+
+Console#defineObject(objectName, thisObj, commands);
+
+    Registers an object and a set of commands with this Console.  `commands` is
     an object providing the names and implementations of the commands being
     added, which will be associated with the name specified by `objectName`.
     Each property of `commands` has as its key the command name, and a function
@@ -366,16 +372,17 @@ Console.defineObject(objectName, thisObj, commands);
     perform some form of error checking in their command functions to prevent
     the player from destabilizing the game.
 
-Console.log(text[, text2[, ...]]);
+Console#log(text[, text2[, ...]]);
 
-    Logs a line of text to the console.  Passing more than one value will cause
-    the strings to be separated with chevrons (`>>`).
+    Logs a line of text to this console.  Passing more than one value will
+    cause the strings to be separated with chevrons (`>>`).
 
-Console.undefineObject(objectName);
+Console#undefineObject(objectName);
 
-    Unregisters all commands previously registered under `objectName`.  See
-    `term.define()` for more information.  Note: It is not currently
-    possible to unregister individual commands.
+    Unregisters all commands previously registered under `objectName` for this
+    Console.  See `Console#defineObject()` for more information.
+
+    Note: It is not currently possible to unregister individual commands.
 
 
 `DataStream` Object
