@@ -262,6 +262,11 @@ Sphere.run();
           job queue, which may have unexpected side effects if a Dispatch job
           modifies a global variable, for example.
 
+Sphere.shutDown();
+
+    Instructs the event loop to terminate.  All Dispatch jobs will be canceled
+    and the engine will close the next time control returns to the event loop.
+
 Sphere.sleep(timeout);
 
     Suspends JavaScript execution for the specified amount of time.  `timeout`

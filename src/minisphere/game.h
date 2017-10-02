@@ -43,7 +43,7 @@ typedef
 enum fs_safety
 {
 	FS_SAFETY_NONE,
-	FS_SAFETY_DEV,
+	FS_SAFETY_RELAXED,
 	FS_SAFETY_FULL,
 } fs_safety_t;
 

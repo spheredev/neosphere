@@ -119,7 +119,7 @@ game_open(const char* game_path)
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
-		game->safety = FS_SAFETY_DEV;
+		game->safety = FS_SAFETY_RELAXED;
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
 		// a bare script transparent to the rest of the engine, keeping things simple.
@@ -901,7 +901,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	if (jsal_get_prop_string(-9, "sandbox") && jsal_is_string(-1)) {
 		sandbox_mode = jsal_get_string(-1);
 		game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
-			: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_DEV
+			: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED
 			: FS_SAFETY_FULL;
 	}
 	else {
