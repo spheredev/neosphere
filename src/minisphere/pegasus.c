@@ -887,13 +887,13 @@ bool
 jsal_pegasus_eval_module(const char* filename)
 {
 	// HERE BE DRAGONS!
-	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
-	// very messy very quickly when dealing with object properties.  I tried to add
-	// comments to illuminate what's going on, but it's still likely to be confusing for
-	// someone not familiar with Duktape code.  proceed with caution.
+	// this function is horrendous.  JSAL's stack-based API is powerful, but gets very
+	// messy very quickly when dealing with object properties.  I tried to add comments
+	// to illuminate what's going on, but it's still likely to be confusing for someone
+	// not familiar with Lua or similar APIs.  proceed with caution.
 
 	// notes:
-	//     - the final value of 'module.exports' is left on top of the Duktape value stack.
+	//     - the final value of 'module.exports' is left on top of the JSAL value stack.
 	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
 	//       behavior, the filename should be in canonical form.
 	//     - this is a protected call.  if the module being loaded throws, the error will be

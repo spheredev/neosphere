@@ -41,7 +41,7 @@ bool        fread_rect16           (file_t* file, rect_t* out_rect);
 bool        fread_rect32           (file_t* file, rect_t* out_rect);
 int         jsal_push_lstring_t    (const lstring_t* string);
 lstring_t*  jsal_require_lstring_t (int index);
-const char* jsal_require_pathname  (int index, const char* origin_name, bool legacy_mode, bool need_write);
+const char* jsal_require_pathname  (int index, const char* origin_name, bool v1_mode, bool need_write);
 const char* md5sum                 (const void* data, size_t size);
 lstring_t*  read_lstring           (file_t* file, bool trim_null);
 lstring_t*  read_lstring_raw       (file_t* file, size_t length, bool trim_null);

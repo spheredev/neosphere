@@ -127,7 +127,7 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 
 	console_log(3, "compiling script #%u as '%s'", s_next_script_id, lstr_cstr(name));
 
-	// compile the source.  Duktape gives us a function back; save its heap pointer so
+	// compile the source.  JSAL gives us a function back; save its heap pointer so
 	// we can call the script later.
 	jsal_push_lstring_t(source);
 	jsal_compile(lstr_cstr(name));

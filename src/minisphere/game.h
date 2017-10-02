@@ -40,6 +40,14 @@ typedef struct file      file_t;
 typedef struct game      game_t;
 
 typedef
+enum fs_safety
+{
+	FS_SAFETY_NONE,
+	FS_SAFETY_DEV,
+	FS_SAFETY_FULL,
+} fs_safety_t;
+
+typedef
 enum whence
 {
 	WHENCE_SET,
@@ -62,8 +70,10 @@ path_t*          game_relative_path  (const game_t* it, const char* filename, co
 size2_t          game_resolution     (const game_t* it);
 const char*      game_save_id        (const game_t* it);
 const path_t*    game_script_path    (const game_t* it);
+fs_safety_t      game_safety         (const game_t* it);
 const char*      game_summary        (const game_t* it);
 int              game_version        (const game_t* it);
+bool             game_is_writable    (const game_t* it, const char* pathname, bool v1_mode);
 bool             game_mkdir          (game_t* it, const char* dirname);
 void*            game_read_file      (game_t* it, const char* filename, size_t *out_size);
 bool             game_rename         (game_t* it, const char* filename1, const char* filename2);

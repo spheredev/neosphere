@@ -4,17 +4,19 @@ miniSphere Changelog
 v5.0.0 - TBD
 ------------
 
-* miniSphere and Cell both now use Microsoft's ChakraCore under the hood,
-  vastly improving JavaScript execution performance and bringing long-overdue
-  native support for ES2015+ syntax and built-ins to Sphere without the need
-  for transpilation or polyfills.
+* miniSphere (and Cell) now use the ChakraCore JS engine under the hood, vastly
+  improving JavaScript execution performance and bringing long-overdue native
+  support for ES2015+ syntax and built-ins to Sphere without the need for
+  transpilation and polyfills.
 * Adds native support for mJS ("ECMAScript modules") without transpilation.
 * Adds back the `Pact` class, a more intuitive way to manage promises.
 * Adds a new `DataStream` class, which extends from `FileStream` to allow more
-  easily reading binary data such as integers and length-prefixed strings from
-  a file.
+  easily reading binary data such as integers and strings from a file.
+* Adds an optional `sandbox` field to `game.json` which can be set to either
+  `relaxed` or `none` to relax the file system sandbox and ease development.
+  Don't turn these on in the final release!
 * Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing directory contents
-  to be enumerated with a plain `for...of` loop.
+  to be enumerated with a standard `for...of` loop.
 * Reimagines `Console` as a full-fledged class, which allows for a familiar
   `new Console()` usage and gives games the ability to set up multiple consoles
   if desired.

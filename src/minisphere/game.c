@@ -55,6 +55,7 @@ struct game
 	lstring_t*   name;
 	size2_t      resolution;
 	path_t*      root_path;
+	fs_safety_t  safety;
 	lstring_t*   save_id;
 	path_t*      script_path;
 	package_t*   package;
@@ -100,6 +101,7 @@ game_open(const char* game_path)
 	console_log(1, "opening '%s' from game #%u", game_path, s_next_game_id);
 
 	game = game_ref(calloc(1, sizeof(game_t)));
+	game->safety = FS_SAFETY_FULL;
 
 	game->id = s_next_game_id;
 	path = path_new(game_path);
@@ -117,6 +119,7 @@ game_open(const char* game_path)
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
+		game->safety = FS_SAFETY_DEV;
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
 		// a bare script transparent to the rest of the engine, keeping things simple.
@@ -306,7 +309,7 @@ on_error:
 }
 
 path_t*
-game_full_path(const game_t* it, const char* filename, const char* base_dir_name, bool legacy_mode)
+game_full_path(const game_t* it, const char* filename, const char* base_dir_name, bool v1_mode)
 {
 	// note: '../' path hops are collapsed unconditionally, per SphereFS specification.
 	//       this ensures the game can't subvert its sandbox by navigating outside through
@@ -320,7 +323,7 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 	if (path_is_rooted(path))  // absolute path?
 		return path;
 	if (base_dir_name != NULL) {
-		base_path = game_full_path(it, base_dir_name, NULL, legacy_mode);
+		base_path = game_full_path(it, base_dir_name, NULL, v1_mode);
 		path_to_dir(base_path);
 	}
 	if (path_num_hops(path) > 0)
@@ -329,7 +332,7 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 		prefix = strdup("");
 
 	// in legacy contexts only: '~/' is an alias for '@/'.
-	if (legacy_mode && strcmp(prefix, "~") == 0) {
+	if (v1_mode && strcmp(prefix, "~") == 0) {
 		path_remove_hop(path, 0);
 		path_insert_hop(path, 0, "@");
 		free(prefix);
@@ -410,6 +413,12 @@ game_resolution(const game_t* it)
 	return it->resolution;
 }
 
+fs_safety_t
+game_safety(const game_t* it)
+{
+	return it->safety;
+}
+
 const char*
 game_save_id(const game_t* it)
 {
@@ -433,6 +442,22 @@ int
 game_version(const game_t* it)
 {
 	return it->version;
+}
+
+bool
+game_is_writable(const game_t* it, const char* pathname, bool v1_mode)
+{
+	// note: for compatibility with Sphere 1.x, if 'v1_mode' is true, then the game package
+	//       is always treated as writable.
+
+	const char* prefix;
+	path_t*     path;
+
+	path = game_full_path(g_game, pathname, NULL, v1_mode);
+	prefix = path_hop(path, 0);  // safe, prefix is always present
+	return strcmp(prefix, "~") == 0
+		|| strcmp(prefix, "@") == 0 && (v1_mode || it->safety < FS_SAFETY_FULL)
+		|| it->safety == FS_SAFETY_NONE;
 }
 
 bool
@@ -815,14 +840,15 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 static bool
 try_load_s2gm(game_t* game, const lstring_t* json_text)
 {
-	// note: this whole thing needs to be cleaned up.  it's pretty bad when JSAL
+	// note: this whole thing needs to be cleaned up.  it's pretty bad when Chakra
 	//       does the JSON parsing for us yet the JSON manifest loader is STILL more
 	//       complicated than the game.sgm loader.
 
-	js_ref_t* error_ref;
-	int       res_x;
-	int       res_y;
-	int       stack_top;
+	js_ref_t*   error_ref;
+	int         res_x;
+	int         res_y;
+	const char* sandbox_mode;
+	int         stack_top;
 
 	stack_top = jsal_get_top();
 
@@ -871,6 +897,16 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 		game->fullscreen = jsal_get_boolean(-1);
 	else
 		game->fullscreen = true;
+
+	if (jsal_get_prop_string(-9, "sandbox") && jsal_is_string(-1)) {
+		sandbox_mode = jsal_get_string(-1);
+		game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
+			: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_DEV
+			: FS_SAFETY_FULL;
+	}
+	else {
+		game->safety = FS_SAFETY_FULL;
+	}
 
 	jsal_set_top(stack_top);
 	return true;

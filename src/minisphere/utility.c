@@ -221,9 +221,9 @@ jsal_require_lstring_t(int index)
 }
 
 const char*
-jsal_require_pathname(int index, const char* origin_name, bool legacy_mode, bool need_write)
+jsal_require_pathname(int index, const char* origin_name, bool v1_mode, bool need_write)
 {
-	// note: for compatibility with Sphere 1.x, if 'legacy_mode' is true, then the game package
+	// note: for compatibility with Sphere 1.x, if 'v1_mode' is true, then the game package
 	//       is treated as writable.
 
 	static int     s_index = 0;
@@ -235,18 +235,16 @@ jsal_require_pathname(int index, const char* origin_name, bool legacy_mode, bool
 	path_t*     path;
 
 	pathname = jsal_require_string(index);
-	path = game_full_path(g_game, pathname, origin_name, legacy_mode);
-	prefix = path_hop(path, 0);  // note: game_full_path() *always* prefixes
+	path = game_full_path(g_game, pathname, origin_name, v1_mode);
+	prefix = path_hop(path, 0);  // safe, prefix is always present
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
-	if (strcmp(first_hop, "..") == 0 || path_is_rooted(path))
+	if (strcmp(first_hop, "..") == 0 || (path_is_rooted(path) && game_safety(g_game) >= FS_SAFETY_FULL))
 		jsal_error(JS_TYPE_ERROR, "illegal path '%s'", pathname);
 	if (strcmp(prefix, "~") == 0 && game_save_id(g_game) == NULL)
-		jsal_error(JS_REF_ERROR, "no save ID defined");
-	if (need_write && !legacy_mode && strcmp(prefix, "~") != 0)
-		jsal_error(JS_TYPE_ERROR, "directory is read-only");
-	if (need_write && strcmp(prefix, "#") == 0)  // 'system/' is always read-only
-		jsal_error(JS_TYPE_ERROR, "directory is read-only");
+		jsal_error(JS_REF_ERROR, "no save ID in game manifest");
+	if (need_write && !game_is_writable(g_game, path_cstr(path), v1_mode))
+		jsal_error(JS_TYPE_ERROR, "path is not writable '%s'", pathname);
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;
