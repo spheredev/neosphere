@@ -385,6 +385,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	}
 
 	async_run_jobs(ASYNC_UPDATE);
+	async_run_jobs(ASYNC_TICK);
 
 	++it->now;
 }

@@ -38,7 +38,6 @@
 
 struct job
 {
-	bool         armed;
 	bool         finished;
 	async_hint_t hint;
 	double       priority;
@@ -187,12 +186,6 @@ async_run_jobs(async_hint_t hint)
 		iter = vector_enum(s_onetime);
 		while (iter_next(&iter)) {
 			job = *(job_t**)iter.ptr;
-			if (!job->armed) {
-				// avoid starting jobs on the same tick they're dispatched.  this works reliably
-				// because one-time jobs are always added to the end of the list.
-				job->armed = true;
-				continue;  // defer till next tick
-			}
 			if (job->hint == hint && job->timer-- == 0 && !job->finished) {
 				script_run(job->script, false);
 				job->finished = true;
