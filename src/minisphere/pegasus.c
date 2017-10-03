@@ -232,9 +232,7 @@ static bool js_Sphere_get_Game               (int num_args, bool is_ctor, int ma
 static bool js_Sphere_get_Platform           (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Version            (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_abort                  (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_exit                   (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_restart                (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_run                    (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_shutDown               (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_sleep                  (int num_args, bool is_ctor, int magic);
 static bool js_Color_get_Color               (int num_args, bool is_ctor, int magic);
@@ -504,9 +502,7 @@ initialize_pegasus_api(void)
 	api_define_static_prop("Sphere", "Platform", js_Sphere_get_Platform, NULL);
 	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
 	api_define_function("Sphere", "abort", js_Sphere_abort);
-	api_define_function("Sphere", "exit", js_Sphere_exit);
 	api_define_function("Sphere", "restart", js_Sphere_restart);
-	api_define_function("Sphere", "run", js_Sphere_run);
 	api_define_function("Sphere", "shutDown", js_Sphere_shutDown);
 	api_define_function("Sphere", "sleep", js_Sphere_sleep);
 	api_define_class("Color", CLASS_COLOR, js_new_Color, js_Color_finalize);
@@ -1392,23 +1388,9 @@ js_Sphere_abort(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_exit(int num_args, bool is_ctor, int magic)
-{
-	sphere_exit(false);
-}
-
-static bool
 js_Sphere_restart(int num_args, bool is_ctor, int magic)
 {
 	sphere_restart();
-}
-
-static bool
-js_Sphere_run(int num_args, bool is_ctor, int magic)
-{
-	sphere_run(true);
-	jsal_push_boolean(true);
-	return true;
 }
 
 static bool

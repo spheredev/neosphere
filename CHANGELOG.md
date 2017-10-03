@@ -12,16 +12,20 @@ v5.0.0 - TBD
 * Adds back the `Pact` class, a more intuitive way to manage promises.
 * Adds a new `DataStream` class, which extends from `FileStream` to allow more
   easily reading binary data such as integers and strings from a file.
+* Adds `Sphere.shutDown()` which initiates an asynchronous shutdown.
 * Adds an optional `sandbox` field to `game.json` which can be set to either
   `relaxed` or `none` to relax the file system sandbox and ease development.
   Don't turn these on in the final release!
 * Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing directory contents
   to be enumerated with a standard `for...of` loop.
-* Reimagines `Console` as a full-fledged class, which allows for a familiar
+* Changes `Sphere.sleep()` to return a promise instead of blocking, allowing it
+  to be used with `await` to avoid starving the event loop.
+* Changes `Console` into a full-fledged class, which allows for a familiar
   `new Console()` usage and gives games the ability to set up multiple consoles
   if desired.
 * Renames `Color#fade()` to `Color#fadeTo()`.
 * Removes the now-redundant `DataReader` and `DataWriter` classes.
+* Removes `Sphere.run()` and `Sphere.exit()`.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to
   text encoding.  Notably, `FS.readFile()` now correctly handles the UTF-8
   signature/BOM if one is present.
