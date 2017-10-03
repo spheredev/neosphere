@@ -5,14 +5,24 @@ miniSphere 5.0
 --------------
 
 * miniSphere now uses ChakraCore for blazing-fast JavaScript performance.
-  Chakra is the same engine used in Microsoft Edge and supports ECMAScript 2015
-  natively, so you no longer need a `transpile()` step in your Cellscript to
-  use ES2015 features such as arrow functions, destructuring, even modules!
+  Chakra is the same engine used in Microsoft Edge and supports most modern
+  JavaScript syntax natively, so you no longer need a `transpile()` step in
+  your Cellscript to take advantage of ES2015+ features such as arrow
+  functions, destructuring, even `await`!
 
-* `require()` has been deprecated and is now provided only for interop with
-  transpilers such as Babel and modules originally written for Node.js.  New
-  code should always use the ES2015 module syntax (`import`/`export`) and the
-  `.mjs` file extension.
+* Thanks to the introduction of `async` and `await`, the event loop is now a
+  first-class part of the Sphere development experience and games are expected
+  to take advantage of it.  To that end, Sphere v2 functions dedicated the old
+  blocking style have been removed or refactored: both `Sphere.run()` and
+  `screen.flip()` are gone, and `Sphere.sleep()` has been changed to return an
+  awaitable promise instead of blocking the caller.
+
+* mJS is now supported natively, without a transpiler.  This allows you to use
+  `import` and `export` to organize your codebase into self-contained modules
+  without the added complexity of CommonJS.  `require()` has in fact been
+  deprecated and is now provided only for interop with transpilers such as
+  Babel and modules originally written for Node.js.  New code should always use
+  the ES2015 module syntax (`import`/`export`) and the `.mjs` file extension.
 
 * `DataReader` and `DataWriter` have been combined into a single class,
   `DataStream`, which inherits from `FileStream`.  This makes it easier to use
@@ -20,11 +30,27 @@ miniSphere 5.0
   any code using the old classes will need to be updated to work with the new
   class.
 
-* The `Random` object has been reimagined as a `Randomizer` class that inherits
-  from `RNG`.  This makes it possible to use multiple independent generators
-  and still use the convenience calls; code using the old `Random` object will
-  need to be rewritten.
-  
+* The `Console` object has been refactored into a full-fledged class.  This
+  allows an in-game console to be set up using explicit `new Console()` syntax
+  rather than the somewhat awkward `Console.initialize()`.  It also makes it
+  possible to create multiple consoles, in case that's ever needed.   Existing
+  code using the `Console` object will need to be updated.
+
+* The `Pact` class has returned and provides a convenient way to make promises
+  and settle them out-of-band without the awkwardness of working around the
+  promise closure.  As long as you have a reference to both the Promise object
+  and the Pact it came from, you can resolve or reject it at any time.
+
+* A new `sandbox` field in the JSON game manifest can be used to relax the
+  SphereFS sandbox in order to ease development.  The default is a full sandbox
+  as before; 'relaxed' allows use of absolute paths and write access to the
+  game directory, while 'none' disables the sandbox completely.
+
+* `Sphere.exit()` has been replaced with `Sphere.shutDown()`.  Unlike the
+  former function, `Sphere.shutDown()` does not exit immediately but rather
+  cancels all outstanding Dispatch jobs, allowing the event loop to unwind
+  naturally on the next tick.
+
 
 miniSphere 4.8
 --------------

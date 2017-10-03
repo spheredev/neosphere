@@ -12,7 +12,7 @@ v5.0.0 - TBD
 * Adds back the `Pact` class, a more intuitive way to manage promises.
 * Adds a new `DataStream` class, which extends from `FileStream` to allow more
   easily reading binary data such as integers and strings from a file.
-* Adds `Sphere.shutDown()` which initiates an asynchronous shutdown.
+* Adds `Sphere.shutDown()` which initiates an asynchronous exit.
 * Adds an optional `sandbox` field to `game.json` which can be set to either
   `relaxed` or `none` to relax the file system sandbox and ease development.
   Don't turn these on in the final release!
