@@ -1421,14 +1421,22 @@ js_Sphere_shutDown(int num_args, bool is_ctor, int magic)
 static bool
 js_Sphere_sleep(int num_args, bool is_ctor, int magic)
 {
-	double timeout;
+	int       num_frames;
+	js_ref_t* resolver;
+	script_t* script;
 
-	timeout = jsal_require_number(0);
+	num_frames = jsal_require_int(0);
 
-	if (timeout < 0.0)
-		jsal_error(JS_RANGE_ERROR, "invalid sleep timeout");
-	sphere_sleep(timeout);
-	return false;
+	if (num_frames < 0)
+		jsal_error(JS_RANGE_ERROR, "invalid sleep timeout '%d'", num_frames);
+
+	jsal_push_new_promise(&resolver, NULL);
+	jsal_push_ref(resolver);
+	script = script_new_func(-1);
+	jsal_pop(1);
+	jsal_unref(resolver);
+	async_defer(script, num_frames, ASYNC_UPDATE);
+	return true;
 }
 
 static bool

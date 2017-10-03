@@ -168,6 +168,7 @@ int          jsal_push_new_error_va        (js_error_type_t type, const char* fo
 int          jsal_push_new_host_object     (void* data_ptr, js_finalizer_t finalizer);
 int          jsal_push_new_iterator        (int for_index);
 int          jsal_push_new_object          (void);
+int          jsal_push_new_promise         (js_ref_t* *out_resolver, js_ref_t* *out_rejector);
 int          jsal_push_new_symbol          (const char* description);
 int          jsal_push_null                (void);
 int          jsal_push_number              (double value);

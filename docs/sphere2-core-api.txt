@@ -258,23 +258,23 @@ Sphere.run();
             // do stuff here
         }
 
-    Note: Be careful.  Calling this will run all pending immediate jobs in the
-          job queue, which may have unexpected side effects if a Dispatch job
-          modifies a global variable, for example.
+    Note: Be careful.  Calling this will settle promises and run any pending
+          jobs in the Dispatch queue, which may cause unintended side effects.
 
 Sphere.shutDown();
 
-    Instructs the event loop to terminate.  All Dispatch jobs will be canceled
-    and the engine will close the next time control returns to the event loop.
+    Shuts down the engine.  Once control returns to the event loop, all
+    outstanding Dispatch jobs will be canceled and the engine will close.
 
-Sphere.sleep(timeout);
+    Note: This initiates an asynchronous shutdown.  The engine will close ONLY
+          after full control has returned to the event loop.  Calling
+          `Sphere.run()` or `screen.flip()` will **NOT** trigger the shutdown.
 
-    Suspends JavaScript execution for the specified amount of time.  `timeout`
-    is in seconds, and may include a fractional component (e.g., 1.5).
+Sphere.sleep(frames);
 
-    Note: Any pending `Dispatch.now()` jobs will be run before sleeping.
-          Depending on how long that takes, Sphere.sleep() may take longer than
-          expected to return.
+    Returns a promise which resolves after the specified number of frames have
+    elapsed.  Can be used with `await`.  This is useful to delay execution of a
+    function without blocking the event loop.
 
 
 `Color` Object

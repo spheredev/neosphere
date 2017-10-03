@@ -1290,6 +1290,20 @@ jsal_push_new_object(void)
 }
 
 int
+jsal_push_new_promise(js_ref_t* *out_resolver, js_ref_t* *out_rejector)
+{
+	JsValueRef promise;
+	JsValueRef rejector;
+	JsValueRef resolver;
+
+	JsCreatePromise(&promise, &resolver, &rejector);
+	*out_resolver = make_ref(resolver, false);
+	if (out_rejector != NULL)
+		*out_rejector = make_ref(rejector, false);
+	return push_value(promise, false);
+}
+
+int
 jsal_push_new_symbol(const char* description)
 {
 	JsValueRef name_ref;
