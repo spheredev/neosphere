@@ -40,7 +40,7 @@ class Pact
 
 	constructor()
 	{
-		this[kHandlers] = new Map();
+		this[kHandlers] = new WeakMap();
 	}
 
 	makePromise()
@@ -50,9 +50,6 @@ class Pact
 			handler = { resolve, reject };
 		});
 		this[kHandlers].set(promise, handler);
-		promise.then(
-			() => this[kHandlers].delete(promise),
-			() => this[kHandlers].delete(promise));
 		return promise;
 	}
 
@@ -67,12 +64,6 @@ class Pact
 		let handler = getHandler(this, promise);
 		handler.resolve(value);
 	}
-
-	welsh(reason)
-	{
-		for (const handler of this[kHandlers].values())
-			handler.reject(reason);
-	}
 }
 
 function getHandler(pact, promise)
@@ -82,8 +73,7 @@ function getHandler(pact, promise)
 
 	let handler = pact[kHandlers].get(promise);
 	if (handler === undefined)
-		throw new TypeError("Promise is not from this pact or is already settled");
-
+		throw new TypeError("promise was not made from this pact");
 	return handler;
 }
 
