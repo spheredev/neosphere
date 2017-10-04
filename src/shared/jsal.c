@@ -228,7 +228,7 @@ jsal_uninit(void)
 }
 
 void
-jsal_update()
+jsal_update(bool in_event_loop)
 {
 	JsErrorCode        error_code;
 	JsValueRef         exception;
@@ -258,6 +258,8 @@ jsal_update()
 			module_record = job->module_record;
 			vector_remove(s_module_jobs, 0);
 			JsModuleEvaluation(module_record, &result);
+			if (!in_event_loop)
+				throw_on_error();
 			JsHasException(&have_error);
 			if (have_error) {
 				JsGetAndClearException(&exception);
@@ -524,7 +526,7 @@ jsal_eval_module(const char* filename)
 	
 	// note: a single call to jsal_update() here is enough, as it will process
 	//       the entire dependency graph before returning.
-	jsal_update();
+	jsal_update(false);
 	
 	JsGetModuleHostInfo(module, JsModuleHostInfo_Exception, &exception);
 	if (exception != JS_INVALID_REFERENCE)

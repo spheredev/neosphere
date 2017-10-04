@@ -363,7 +363,7 @@ sphere_run(bool allow_dispatch)
 #endif
 
 	if (allow_dispatch) {
-		jsal_update();
+		jsal_update(true);
 		async_run_jobs(ASYNC_TICK);
 	}
 	update_input();
