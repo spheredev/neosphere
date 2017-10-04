@@ -57,8 +57,8 @@ void
 async_init(void)
 {
 	console_log(1, "initializing dispatch manager");
-	s_onetime = vector_new(sizeof(job_t*));
-	s_recurring = vector_new(sizeof(job_t*));
+	s_onetime = vector_new(sizeof(struct job));
+	s_recurring = vector_new(sizeof(struct job));
 }
 
 void
@@ -79,21 +79,18 @@ async_busy(void)
 void
 async_cancel_all(bool recurring)
 {
+	struct job* job;
+
 	iter_t iter;
-	job_t* job;
 
 	iter = vector_enum(s_onetime);
-	while (iter_next(&iter)) {
-		job = *(job_t**)iter.ptr;
+	while (job = iter_next(&iter))
 		job->finished = true;
-	}
 
 	if (recurring) {
 		iter = vector_enum(s_recurring);
-		while (iter_next(&iter)) {
-			job = *(job_t**)iter.ptr;
+		while (job = iter_next(&iter))
 			job->finished = true;
-		}
 		s_need_sort = true;
 	}
 }
@@ -101,19 +98,20 @@ async_cancel_all(bool recurring)
 void
 async_cancel(int64_t token)
 {
-	iter_t  iter;
-	job_t** p_job;
+	struct job* job;
+
+	iter_t iter;
 
 	iter = vector_enum(s_onetime);
-	while (p_job = iter_next(&iter)) {
-		if ((*p_job)->token == token)
-			(*p_job)->finished = true;
+	while (job = iter_next(&iter)) {
+		if (job->token == token)
+			job->finished = true;
 	}
 
 	iter = vector_enum(s_recurring);
-	while (p_job = iter_next(&iter)) {
-		if ((*p_job)->token == token)
-			(*p_job)->finished = true;
+	while (job = iter_next(&iter)) {
+		if (job->token == token)
+			job->finished = true;
 	}
 
 	s_need_sort = true;
@@ -122,23 +120,23 @@ async_cancel(int64_t token)
 int64_t
 async_defer(script_t* script, uint32_t timeout, async_hint_t hint)
 {
-	job_t* job;
+	struct job job;
 
 	if (s_onetime == NULL)
 		return 0;
-	job = calloc(1, sizeof(job_t));
-	job->timer = timeout;
-	job->token = s_next_token++;
-	job->script = script;
-	job->hint = hint;
+	job.finished = false;
+	job.hint = hint;
+	job.script = script;
+	job.timer = timeout;
+	job.token = s_next_token++;
 	vector_push(s_onetime, &job);
-	return job->token;
+	return job.token;
 }
 
 int64_t
 async_recur(script_t* script, double priority, async_hint_t hint)
 {
-	job_t* job;
+	struct job job;
 
 	if (s_recurring == NULL)
 		return 0;
@@ -147,31 +145,31 @@ async_recur(script_t* script, double priority, async_hint_t hint)
 		// get rendered later in a frame, i.e. closer to the screen.
 		priority = -priority;
 	}
-	job = calloc(1, sizeof(job_t));
-	job->token = s_next_token++;
-	job->script = script;
-	job->hint = hint;
-	job->priority = priority;
+	job.finished = false;
+	job.hint = hint;
+	job.priority = priority;
+	job.script = script;
+	job.token = s_next_token++;
 	vector_push(s_recurring, &job);
 
 	s_need_sort = true;
 
-	return job->token;
+	return job.token;
 }
 
 void
 async_run_jobs(async_hint_t hint)
 {
+	struct job* job;
+
 	iter_t iter;
-	job_t* job;
 
 	if (s_need_sort)
 		vector_sort(s_recurring, sort_jobs);
 
 	// process recurring jobs
 	iter = vector_enum(s_recurring);
-	while (iter_next(&iter)) {
-		job = *(job_t**)iter.ptr;
+	while (job = iter_next(&iter)) {
 		if (job->hint == hint && !job->finished)
 			script_run(job->script, true);
 		if (job->finished) {
@@ -184,8 +182,7 @@ async_run_jobs(async_hint_t hint)
 	// to work.
 	if (s_onetime != NULL) {
 		iter = vector_enum(s_onetime);
-		while (iter_next(&iter)) {
-			job = *(job_t**)iter.ptr;
+		while (job = iter_next(&iter)) {
 			if (job->hint == hint && job->timer-- == 0 && !job->finished) {
 				script_run(job->script, false);
 				job->finished = true;
@@ -205,13 +202,13 @@ sort_jobs(const void* in_a, const void* in_b)
 	// so we can maintain FIFO order by just using the token as part of the
 	// sort key.
 
-	job_t*  job_a;
-	job_t*  job_b;
-	double  delta = 0.0;
-	int64_t fifo_delta;
+	double      delta = 0.0;
+	int64_t     fifo_delta;
+	struct job* job_a;
+	struct job* job_b;
 
-	job_a = *(job_t**)in_a;
-	job_b = *(job_t**)in_b;
+	job_a = (struct job*)in_a;
+	job_b = (struct job*)in_b;
 	delta = job_b->priority - job_a->priority;
 	fifo_delta = job_a->token - job_b->token;
 	return delta < 0.0 ? -1 : delta > 0.0 ? 1

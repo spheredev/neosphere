@@ -35,8 +35,6 @@
 
 #include "script.h"
 
-typedef struct job job_t;
-
 typedef
 enum async_hint
 {
