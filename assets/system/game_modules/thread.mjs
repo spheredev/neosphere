@@ -34,11 +34,7 @@ import { from, Pact } from 'sphere-runtime';
 
 let inputThreads = [],
 	threadPact = new Pact(),
-    threads = [],
-    updateStarted = false;
-
-Dispatch.onUpdate(updateAllThreads, -Infinity);
-Dispatch.onRender(renderAllThreads, -Infinity);
+    threads = [];
 
 export default
 class Thread
@@ -63,7 +59,8 @@ class Thread
 		this._terminating = false;
 		this._priority = options.priority;
 		this._promise = threadPact.makePromise();
-		this._started = false;
+		this._renderJob = null;
+		this._updateJob = null;
 
 		threads.push(this);
 	}
@@ -73,9 +70,9 @@ class Thread
 		return this === inputThreads[inputThreads.length - 1];
 	}
 
-	on_inputCheck() {}
+	async on_inputCheck() {}
 	on_render() {}
-	on_update() {}
+	async on_update() {}
 
 	dispose()
 	{
@@ -86,11 +83,25 @@ class Thread
 	start()
 	{
 		this._started = true;
+		this._renderJob = Dispatch.onRender(() => {
+			this.on_render();
+		}, this._priority);
+		this._updateJob = Dispatch.onUpdate(async () => {
+			if (this._busy)
+				return;
+			this._busy = true;
+			if (this === inputThreads[inputThreads.length - 1])
+				await this.on_inputCheck();
+			await this.on_update();
+			this._busy = false;
+		}, this._priority);
 	}
 
 	stop()
 	{
 		this.yieldInput();
+		Dispatch.cancel(this._updateJob);
+		Dispatch.cancel(this._renderJob);
 		this._started = false;
 	}
 
@@ -110,41 +121,4 @@ class Thread
 		if (this === inputThreads[inputThreads.length - 1])
 			inputThreads.pop();
 	}
-}
-
-function renderAllThreads()
-{
-	let toRender = from.Array(threads)
-		.where(it => it._started && !it._terminating)
-		.ascending(it => it._priority);
-	for (const thread of toRender)
-		thread.on_render();
-}
-
-function updateAllThreads()
-{
-	// remove terminated threads from tracking
-	from.Array(threads)
-		.where(it => it._terminating)
-		.besides(it => threadPact.resolve(it._promise))
-		.remove();
-	from.Array(inputThreads)
-		.where(it => !it._started || it._terminating)
-		.remove();
-
-	// update all active threads
-	let toUpdate = from.Array(threads)
-		.where(it => it._started && !it._busy && !it._terminating)
-		.descending(it => it._priority);
-	for (const thread of toUpdate)
-		updateThread(thread);
-}
-
-async function updateThread(thread)
-{
-	thread._busy = true;
-	if (thread === inputThreads[inputThreads.length - 1])
-		await thread.on_inputCheck();
-	await thread.on_update();
-	thread._busy = false;
 }
