@@ -233,8 +233,8 @@ Sphere.restart();
 
 Sphere.shutDown();
 
-    Shuts down the engine.  Once control returns to the event loop, all
-    outstanding Dispatch jobs will be canceled and the engine will close.
+    Shuts down the engine.  All outstanding Dispatch jobs are canceled so that
+    once control returns to the event loop, the engine will close.
 
     Note: This initiates an asynchronous shutdown.  The engine will close ONLY
           after control has returned to the event loop.
