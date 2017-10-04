@@ -9138,6 +9138,7 @@ js_WindowStyle_drawWindow(int num_args, bool is_ctor, int magic)
 	width = jsal_to_int(2);
 	height = jsal_to_int(3);
 
+	galileo_reset();
 	winstyle_draw(winstyle, mask, x, y, width, height);
 	return false;
 }
