@@ -30,8 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-export { default as Thread } from 'thread';
-
 export const assert     = require('assert'),
              from       = require('from'),
              Console    = require('console'),
@@ -47,4 +45,5 @@ export const assert     = require('assert'),
              Random     = require('random'),
              Scene      = require('scene'),
              Test       = require('test'),
+             Thread     = require('thread'),
              XML        = require('xml');
