@@ -53,6 +53,8 @@ function makeTranspileTool(apiVersion)
 			presets: [
 				[ 'latest', { 'es2015': { modules } } ]
 			],
+			comments: false,
+			retainLines: true,
 			sourceMaps: 'inline',
 			sourceType,
 		});
