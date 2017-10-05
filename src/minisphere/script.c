@@ -62,7 +62,7 @@ scripts_uninit(void)
 }
 
 bool
-script_eval(const char* filename, bool as_module)
+script_eval(const char* filename)
 {
 	file_t*     file = NULL;
 	path_t*     path = NULL;
@@ -74,41 +74,29 @@ script_eval(const char* filename, bool as_module)
 
 	stack_top = jsal_get_top();
 
-	if (as_module) {
-		// the existence check here is needed because eval_module() will segfault if the
-		// file doesn't exist.  it's an ugly hack, but a proper fix needs some refactoring
-		// that I'm not up for right now.
-		if (!game_file_exists(g_game, filename))
-			goto on_error;
-		if (!jsal_pegasus_eval_module(filename))
-			goto on_error;
-		return true;
+	path = game_full_path(g_game, filename, NULL, false);
+	source_name = debugger_source_name(path_cstr(path));
+	if (!(slurp = game_read_file(g_game, filename, &size))) {
+		jsal_push_new_error(JS_REF_ERROR, "script not found '%s'\n", filename);
+		goto on_error;
 	}
-	else {
-		path = game_full_path(g_game, filename, NULL, false);
-		source_name = debugger_source_name(path_cstr(path));
-		if (!(slurp = game_read_file(g_game, filename, &size)))
-			goto on_error;
-		source_text = lstr_from_cp1252(slurp, size);
-		free(slurp);
+	source_text = lstr_from_cp1252(slurp, size);
+	free(slurp);
 
-		// ready for launch in T-10...9...*munch*
-		jsal_push_lstring_t(source_text);
-		if (!jsal_try_compile(source_name))
-			goto on_error;
-		if (!jsal_try_call(0))
-			goto on_error;
+	// ready for launch in T-10...9...*munch*
+	jsal_push_lstring_t(source_text);
+	if (!jsal_try_compile(source_name))
+		goto on_error;
+	if (!jsal_try_call(0))
+		goto on_error;
 
-		lstr_free(source_text);
-		path_free(path);
-		return true;
-	}
+	lstr_free(source_text);
+	path_free(path);
+	return true;
 
 on_error:
 	lstr_free(source_text);
 	path_free(path);
-	if (jsal_get_top() == stack_top)  // note: ugly hack, refactor
-		jsal_push_new_error(JS_REF_ERROR, "script not found '%s'\n", filename);
 	return false;
 }
 
@@ -143,14 +131,14 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 }
 
 script_t*
-script_new_func(int idx)
+script_new_function(int stack_index)
 {
 	js_ref_t* function;
 	script_t* script;
 
-	idx = jsal_normalize_index(idx);
-	jsal_require_function(idx);
-	function = jsal_ref(idx);
+	stack_index = jsal_normalize_index(stack_index);
+	jsal_require_function(stack_index);
+	function = jsal_ref(stack_index);
 
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;

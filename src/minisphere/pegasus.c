@@ -445,16 +445,16 @@ static void js_Texture_finalize         (void* host_ptr);
 static void js_Transform_finalize       (void* host_ptr);
 static void js_VertexList_finalize      (void* host_ptr);
 
-static void      on_import_module            (void);
+static void      create_joystick_objects     (void);
+static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool es6_mode);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
 static void      jsal_pegasus_push_require   (const char* module_id);
 static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
-static bool      jsal_safe_event_loop        (int num_args, bool is_ctor, int magic);
-static path_t*   find_module                 (const char* id, const char* origin, const char* sys_origin, bool es6_mode);
-static void      load_joysticks              (void);
+static void      handle_module_import        (void);
 static path_t*   load_package_json           (const char* filename);
+static bool      run_event_loop              (int num_args, bool is_ctor, int magic);
 
 static mixer_t*  s_def_mixer;
 static int       s_framerate = 60;
@@ -467,14 +467,14 @@ static js_ref_t* s_key_v;
 static int       s_next_module_id = 1;
 
 void
-initialize_pegasus_api(void)
+pegasus_register_api(void)
 {
 	const struct x11_color* p;
 
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
-	jsal_on_import_module(on_import_module);
+	jsal_on_import_module(handle_module_import);
 
 	s_key_color = jsal_new_key("color");
 	s_key_x = jsal_new_key("x");
@@ -505,7 +505,7 @@ initialize_pegasus_api(void)
 	api_define_function("Sphere", "restart", js_Sphere_restart);
 	api_define_function("Sphere", "shutDown", js_Sphere_shutDown);
 	api_define_function("Sphere", "sleep", js_Sphere_sleep);
-	api_define_class("Color", CLASS_COLOR, js_new_Color, js_Color_finalize);
+	api_define_class("Color", PEGASUS_COLOR, js_new_Color, js_Color_finalize);
 	api_define_function("Color", "is", js_Color_is);
 	api_define_function("Color", "mix", js_Color_mix);
 	api_define_function("Color", "of", js_Color_of);
@@ -516,7 +516,7 @@ initialize_pegasus_api(void)
 	api_define_property("Color", "a", true, js_Color_get_a, js_Color_set_a);
 	api_define_method("Color", "clone", js_Color_clone);
 	api_define_method("Color", "fadeTo", js_Color_fadeTo);
-	api_define_class("DirectoryStream", CLASS_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize);
+	api_define_class("DirectoryStream", PEGASUS_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize);
 	api_define_method("DirectoryStream", "dispose", js_DirectoryStream_dispose);
 	api_define_property("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
 	api_define_property("DirectoryStream", "fileName", false, js_DirectoryStream_get_fileName, NULL);
@@ -530,14 +530,14 @@ initialize_pegasus_api(void)
 	api_define_function("Dispatch", "now", js_Dispatch_now);
 	api_define_function("Dispatch", "onRender", js_Dispatch_onRender);
 	api_define_function("Dispatch", "onUpdate", js_Dispatch_onUpdate);
-	api_define_class("FileStream", CLASS_FILE_STREAM, js_new_FileStream, js_FileStream_finalize);
+	api_define_class("FileStream", PEGASUS_FILE_STREAM, js_new_FileStream, js_FileStream_finalize);
 	api_define_method("FileStream", "dispose", js_FileStream_dispose);
 	api_define_property("FileStream", "fileName", false, js_FileStream_get_fileName, NULL);
 	api_define_property("FileStream", "fileSize", false, js_FileStream_get_fileSize, NULL);
 	api_define_property("FileStream", "position", false, js_FileStream_get_position, js_FileStream_set_position);
 	api_define_method("FileStream", "read", js_FileStream_read);
 	api_define_method("FileStream", "write", js_FileStream_write);
-	api_define_class("Font", CLASS_FONT, js_new_Font, js_Font_finalize);
+	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize);
 	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL);
 	api_define_property("Font", "fileName", false, js_Font_get_fileName, NULL);
 	api_define_property("Font", "height", false, js_Font_get_height, NULL);
@@ -555,9 +555,9 @@ initialize_pegasus_api(void)
 	api_define_function("FS", "removeDirectory", js_FS_removeDirectory);
 	api_define_function("FS", "rename", js_FS_rename);
 	api_define_function("FS", "writeFile", js_FS_writeFile);
-	api_define_class("IndexList", CLASS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize);
-	api_define_class("JobToken", CLASS_JOB_TOKEN, NULL, js_JobToken_finalize);
-	api_define_class("Joystick", CLASS_JOYSTICK, NULL, js_Joystick_finalize);
+	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize);
+	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, js_JobToken_finalize);
+	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, js_Joystick_finalize);
 	api_define_static_prop("Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function("Joystick", "getDevices", js_Joystick_getDevices);
 	api_define_property("Joystick", "name", false, js_Joystick_get_name, NULL);
@@ -565,7 +565,7 @@ initialize_pegasus_api(void)
 	api_define_property("Joystick", "numButtons", false, js_Joystick_get_numButtons, NULL);
 	api_define_method("Joystick", "getPosition", js_Joystick_getPosition);
 	api_define_method("Joystick", "isPressed", js_Joystick_isPressed);
-	api_define_class("Keyboard", CLASS_KEYBOARD, NULL, NULL);
+	api_define_class("Keyboard", PEGASUS_KEYBOARD, NULL, NULL);
 	api_define_static_prop("Keyboard", "Default", js_Keyboard_get_Default, NULL);
 	api_define_property("Keyboard", "capsLock", false, js_Keyboard_get_capsLock, NULL);
 	api_define_property("Keyboard", "numLock", false, js_Keyboard_get_numLock, NULL);
@@ -574,10 +574,10 @@ initialize_pegasus_api(void)
 	api_define_method("Keyboard", "getChar", js_Keyboard_getChar);
 	api_define_method("Keyboard", "getKey", js_Keyboard_getKey);
 	api_define_method("Keyboard", "isPressed", js_Keyboard_isPressed);
-	api_define_class("Mixer", CLASS_MIXER, js_new_Mixer, js_Mixer_finalize);
+	api_define_class("Mixer", PEGASUS_MIXER, js_new_Mixer, js_Mixer_finalize);
 	api_define_static_prop("Mixer", "Default", js_Mixer_get_Default, NULL);
 	api_define_property("Mixer", "volume", false, js_Mixer_get_volume, js_Mixer_set_volume);
-	api_define_class("Model", CLASS_MODEL, js_new_Model, js_Model_finalize);
+	api_define_class("Model", PEGASUS_MODEL, js_new_Model, js_Model_finalize);
 	api_define_property("Model", "shader", false, js_Model_get_shader, js_Model_set_shader);
 	api_define_property("Model", "transform", false, js_Model_get_transform, js_Model_set_transform);
 	api_define_method("Model", "draw", js_Model_draw);
@@ -590,35 +590,35 @@ initialize_pegasus_api(void)
 	api_define_method("Model", "setIntArray", js_Model_setIntArray);
 	api_define_method("Model", "setIntVector", js_Model_setIntVector);
 	api_define_method("Model", "setMatrix", js_Model_setMatrix);
-	api_define_class("Mouse", CLASS_MOUSE, NULL, NULL);
+	api_define_class("Mouse", PEGASUS_MOUSE, NULL, NULL);
 	api_define_static_prop("Mouse", "Default", js_Mouse_get_Default, NULL);
 	api_define_property("Mouse", "x", false, js_Mouse_get_x, NULL);
 	api_define_property("Mouse", "y", false, js_Mouse_get_y, NULL);
 	api_define_method("Mouse", "clearQueue", js_Mouse_clearQueue);
 	api_define_method("Mouse", "getEvent", js_Mouse_getEvent);
 	api_define_method("Mouse", "isPressed", js_Mouse_isPressed);
-	api_define_class("RNG", CLASS_RNG, js_new_RNG, js_RNG_finalize);
+	api_define_class("RNG", PEGASUS_RNG, js_new_RNG, js_RNG_finalize);
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed);
 	api_define_function("RNG", "fromState", js_RNG_fromState);
 	api_define_property("RNG", "state", false, js_RNG_get_state, js_RNG_set_state);
 	api_define_method("RNG", "next", js_RNG_next);
 	api_define_function("SSj", "log", js_SSj_log);
 	api_define_function("SSj", "trace", js_SSj_trace);
-	api_define_class("Sample", CLASS_SAMPLE, js_new_Sample, js_Sample_finalize);
+	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize);
 	api_define_property("Sample", "fileName", false, js_Sample_get_fileName, NULL);
 	api_define_method("Sample", "play", js_Sample_play);
 	api_define_method("Sample", "stopAll", js_Sample_stopAll);
-	api_define_class("Server", CLASS_SERVER, js_new_Server, js_Server_finalize);
+	api_define_class("Server", PEGASUS_SERVER, js_new_Server, js_Server_finalize);
 	api_define_method("Server", "close", js_Server_close);
 	api_define_method("Server", "accept", js_Server_accept);
-	api_define_class("Shader", CLASS_SHADER, js_new_Shader, js_Shader_finalize);
+	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize);
 	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL);
-	api_define_class("Shape", CLASS_SHAPE, js_new_Shape, js_Shape_finalize);
+	api_define_class("Shape", PEGASUS_SHAPE, js_new_Shape, js_Shape_finalize);
 	api_define_property("Shape", "indexList", false, js_Shape_get_indexList, js_Shape_set_indexList);
 	api_define_property("Shape", "texture", false, js_Shape_get_texture, js_Shape_set_texture);
 	api_define_property("Shape", "vertexList", false, js_Shape_get_vertexList, js_Shape_set_vertexList);
 	api_define_method("Shape", "draw", js_Shape_draw);
-	api_define_class("Socket", CLASS_SOCKET, js_new_Socket, js_Socket_finalize);
+	api_define_class("Socket", PEGASUS_SOCKET, js_new_Socket, js_Socket_finalize);
 	api_define_property("Socket", "bytesPending", false, js_Socket_get_bytesPending, NULL);
 	api_define_property("Socket", "connected", false, js_Socket_get_connected, NULL);
 	api_define_property("Socket", "remoteAddress", false, js_Socket_get_remoteAddress, NULL);
@@ -627,7 +627,7 @@ initialize_pegasus_api(void)
 	api_define_method("Socket", "connectTo", js_Socket_connectTo);
 	api_define_method("Socket", "read", js_Socket_read);
 	api_define_method("Socket", "write", js_Socket_write);
-	api_define_class("Sound", CLASS_SOUND, js_new_Sound, js_Sound_finalize);
+	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize);
 	api_define_property("Sound", "fileName", false, js_Sound_get_fileName, NULL);
 	api_define_property("Sound", "length", false, js_Sound_get_length, NULL);
 	api_define_property("Sound", "pan", false, js_Sound_get_pan, js_Sound_set_pan);
@@ -639,31 +639,31 @@ initialize_pegasus_api(void)
 	api_define_method("Sound", "pause", js_Sound_pause);
 	api_define_method("Sound", "play", js_Sound_play);
 	api_define_method("Sound", "stop", js_Sound_stop);
-	api_define_class("SoundStream", CLASS_SOUND_STREAM, js_new_SoundStream, js_SoundStream_finalize);
+	api_define_class("SoundStream", PEGASUS_SOUND_STREAM, js_new_SoundStream, js_SoundStream_finalize);
 	api_define_property("SoundStream", "length", false, js_SoundStream_get_length, NULL);
 	api_define_method("SoundStream", "pause", js_SoundStream_pause);
 	api_define_method("SoundStream", "play", js_SoundStream_play);
 	api_define_method("SoundStream", "stop", js_SoundStream_stop);
 	api_define_method("SoundStream", "write", js_SoundStream_write);
-	api_define_class("Surface", CLASS_SURFACE, js_new_Surface, js_Surface_finalize);
+	api_define_class("Surface", PEGASUS_SURFACE, js_new_Surface, js_Surface_finalize);
 	api_define_property("Surface", "height", false, js_Surface_get_height, NULL);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
 	api_define_property("Surface", "width", false, js_Surface_get_width, NULL);
 	api_define_method("Surface", "clipTo", js_Surface_clipTo);
 	api_define_method("Surface", "toTexture", js_Surface_toTexture);
-	api_define_class("TextDecoder", CLASS_TEXT_DEC, js_new_TextDecoder, js_TextDecoder_finalize);
+	api_define_class("TextDecoder", PEGASUS_TEXT_DEC, js_new_TextDecoder, js_TextDecoder_finalize);
 	api_define_property("TextDecoder", "encoding", false, js_TextDecoder_get_encoding, NULL);
 	api_define_property("TextDecoder", "fatal", false, js_TextDecoder_get_fatal, NULL);
 	api_define_property("TextDecoder", "ignoreBOM", false, js_TextDecoder_get_ignoreBOM, NULL);
 	api_define_method("TextDecoder", "decode", js_TextDecoder_decode);
-	api_define_class("TextEncoder", CLASS_TEXT_ENC, js_new_TextEncoder, js_TextEncoder_finalize);
+	api_define_class("TextEncoder", PEGASUS_TEXT_ENC, js_new_TextEncoder, js_TextEncoder_finalize);
 	api_define_property("TextEncoder", "encoding", false, js_TextEncoder_get_encoding, NULL);
 	api_define_method("TextEncoder", "encode", js_TextEncoder_encode);
-	api_define_class("Texture", CLASS_TEXTURE, js_new_Texture, js_Texture_finalize);
+	api_define_class("Texture", PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize);
 	api_define_property("Texture", "fileName", false, js_Texture_get_fileName, NULL);
 	api_define_property("Texture", "height", false, js_Texture_get_height, NULL);
 	api_define_property("Texture", "width", false, js_Texture_get_width, NULL);
-	api_define_class("Transform", CLASS_TRANSFORM, js_new_Transform, js_Transform_finalize);
+	api_define_class("Transform", PEGASUS_TRANSFORM, js_new_Transform, js_Transform_finalize);
 	api_define_property("Transform", "matrix", false, js_Transform_get_matrix, NULL);
 	api_define_method("Transform", "compose", js_Transform_compose);
 	api_define_method("Transform", "identity", js_Transform_identity);
@@ -672,9 +672,9 @@ initialize_pegasus_api(void)
 	api_define_method("Transform", "rotate", js_Transform_rotate);
 	api_define_method("Transform", "scale", js_Transform_scale);
 	api_define_method("Transform", "translate", js_Transform_translate);
-	api_define_class("VertexList", CLASS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize);
+	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize);
 
-	api_define_object(NULL, "screen", CLASS_SURFACE, image_ref(screen_backbuffer(g_screen)));
+	api_define_object(NULL, "screen", PEGASUS_SURFACE, image_ref(screen_backbuffer(g_screen)));
 	api_define_static_prop("screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop("screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
 	api_define_static_prop("screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
@@ -799,7 +799,7 @@ initialize_pegasus_api(void)
 
 	// pre-create joystick objects for Joystick.getDevices().  this ensures that
 	// multiple requests for the device list return the same Joystick object(s).
-	load_joysticks();
+	create_joystick_objects();
 
 	// register predefined X11 colors
 	jsal_get_global_string("Color");
@@ -815,74 +815,7 @@ initialize_pegasus_api(void)
 }
 
 bool
-pegasus_run(void)
-{
-	if (jsal_try(jsal_safe_event_loop, 0)) {
-		jsal_pop(1);  // don't need return value
-		return true;
-	}
-	else {
-		// leave the error for the caller, don't pop it off
-		return false;
-	}
-}
-
-static void
-on_import_module(void)
-{
-	const char* const PATHS[] =
-	{
-		"@/lib",
-		"#/game_modules",
-		"#/runtime",
-	};
-
-	char*       caller_id;
-	const char* origin;
-	path_t*     path;
-	char*       source;
-	size_t      source_len;
-	char*       specifier;
-
-	int i;
-
-	// strdup() here because the JSAL-managed strings may get overwritten
-	// in the course of a filename lookup.
-	specifier = strdup(jsal_require_string(0));
-	caller_id = strdup(jsal_require_string(1));
-
-	// HACK: the way JSAL is currently designed, the same filename is used for
-	//       module resolution as for display; this works around the limitation
-	//       until more comprehensive refactoring can be done.
-	origin = debugger_compiled_name(caller_id);
-
-	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module(specifier, origin, PATHS[i], true))
-			break;  // short-circuit
-	}
-	free(caller_id);
-	if (path == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "couldn't find mJS module '%s'", specifier);
-		free(specifier);
-		jsal_throw();
-	}
-	free(specifier);
-
-	if (path_has_extension(path, ".mjs")) {
-		source = game_read_file(g_game, path_cstr(path), &source_len);
-		jsal_push_string(debugger_source_name(path_cstr(path)));
-		jsal_push_lstring(source, source_len);
-		free(source);
-	}
-	else {
-		// ES module shim to allow 'import' of CommonJS modules
-		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
-		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
-	}
-}
-
-bool
-jsal_pegasus_eval_module(const char* filename)
+pegasus_eval_module(const char* filename)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  JSAL's stack-based API is powerful, but gets very
@@ -939,7 +872,7 @@ jsal_pegasus_eval_module(const char* filename)
 	jsal_pegasus_push_require(filename);
 	jsal_put_prop_string(-2, "require");  // module.require
 
-	// evaluate .mjs scripts as ES6 modules
+	// evaluate .mjs scripts as ES modules ("mJS")
 	if (path_has_extension(file_path, ".mjs")) {
 		jsal_push_sprintf("import * as Module from \"%s\"; global.___exports = Module;",
 			filename);
@@ -983,7 +916,7 @@ jsal_pegasus_eval_module(const char* filename)
 		jsal_push_string("main");
 		jsal_put_prop_string(-2, "value");
 		jsal_def_prop_string(-2, "name");
-		
+
 		// go, go, go!
 		jsal_get_prop_string(-2, "exports");    // this = exports
 		jsal_get_prop_string(-3, "exports");    // exports
@@ -1017,6 +950,19 @@ on_error:
 	return false;
 }
 
+bool
+pegasus_start_event_loop(void)
+{
+	if (jsal_try(run_event_loop, 0)) {
+		jsal_pop(1);  // don't need return value
+		return true;
+	}
+	else {
+		// leave the error for the caller, don't pop it off
+		return false;
+	}
+}
+
 static void
 jsal_pegasus_push_color(color_t color, bool in_ctor)
 {
@@ -1024,7 +970,7 @@ jsal_pegasus_push_color(color_t color, bool in_ctor)
 	
 	color_ptr = malloc(sizeof(color_t));
 	*color_ptr = color;
-	jsal_push_class_obj(CLASS_COLOR, color_ptr, in_ctor);
+	jsal_push_class_obj(PEGASUS_COLOR, color_ptr, in_ctor);
 }
 
 static void
@@ -1034,7 +980,7 @@ jsal_pegasus_push_job_token(int64_t token)
 
 	ptr = malloc(sizeof(int64_t));
 	*ptr = token;
-	jsal_push_class_obj(CLASS_JOB_TOKEN, ptr, false);
+	jsal_push_class_obj(PEGASUS_JOB_TOKEN, ptr, false);
 }
 
 static void
@@ -1063,28 +1009,39 @@ jsal_pegasus_require_color(int index)
 {
 	color_t* color_ptr;
 
-	color_ptr = jsal_require_class_obj(index, CLASS_COLOR);
+	color_ptr = jsal_require_class_obj(index, PEGASUS_COLOR);
 	return *color_ptr;
 }
 
 static script_t*
 jsal_pegasus_require_script(int index)
 {
-	return script_new_func(index);
+	return script_new_function(index);
 }
 
-static bool
-jsal_safe_event_loop(int num_args, bool is_ctor, int magic)
+static void
+create_joystick_objects(void)
 {
-	while (async_busy()) {
-		screen_flip(g_screen, s_framerate, true);
-		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
+	int* device;
+	int  num_devices;
+
+	int i;
+
+	jsal_push_hidden_stash();
+	jsal_push_new_array();
+	num_devices = joy_num_devices();
+	for (i = 0; i < num_devices; ++i) {
+		device = malloc(sizeof(int));
+		*device = i;
+		jsal_push_class_obj(PEGASUS_JOYSTICK, device, false);
+		jsal_put_prop_index(-2, i);
 	}
-	return false;
+	jsal_put_prop_string(-2, "joystickObjects");
+	jsal_pop(1);
 }
 
 static path_t*
-find_module(const char* id, const char* origin, const char* sys_origin, bool es6_mode)
+find_module_file(const char* id, const char* origin, const char* sys_origin, bool es6_mode)
 {
 	const char* const PATTERNS[] =
 	{
@@ -1147,24 +1104,57 @@ find_module(const char* id, const char* origin, const char* sys_origin, bool es6
 }
 
 static void
-load_joysticks(void)
+handle_module_import(void)
 {
-	int* device;
-	int  num_devices;
+	const char* const PATHS[] =
+	{
+		"@/lib",
+		"#/game_modules",
+		"#/runtime",
+	};
+
+	char*       caller_id;
+	const char* origin;
+	path_t*     path;
+	char*       source;
+	size_t      source_len;
+	char*       specifier;
 
 	int i;
 
-	jsal_push_hidden_stash();
-	jsal_push_new_array();
-	num_devices = joy_num_devices();
-	for (i = 0; i < num_devices; ++i) {
-		device = malloc(sizeof(int));
-		*device = i;
-		jsal_push_class_obj(CLASS_JOYSTICK, device, false);
-		jsal_put_prop_index(-2, i);
+	// strdup() here because the JSAL-managed strings may get overwritten
+	// in the course of a filename lookup.
+	specifier = strdup(jsal_require_string(0));
+	caller_id = strdup(jsal_require_string(1));
+
+	// HACK: the way JSAL is currently designed, the same filename is used for
+	//       module resolution as for display; this works around the limitation
+	//       until more comprehensive refactoring can be done.
+	origin = debugger_compiled_name(caller_id);
+
+	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
+		if (path = find_module_file(specifier, origin, PATHS[i], true))
+			break;  // short-circuit
 	}
-	jsal_put_prop_string(-2, "joystickObjects");
-	jsal_pop(1);
+	free(caller_id);
+	if (path == NULL) {
+		jsal_push_new_error(JS_URI_ERROR, "couldn't find mJS module '%s'", specifier);
+		free(specifier);
+		jsal_throw();
+	}
+	free(specifier);
+
+	if (path_has_extension(path, ".mjs")) {
+		source = game_read_file(g_game, path_cstr(path), &source_len);
+		jsal_push_string(debugger_source_name(path_cstr(path)));
+		jsal_push_lstring(source, source_len);
+		free(source);
+	}
+	else {
+		// ES module shim, allows 'import' to work with CommonJS modules
+		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
+	}
 }
 
 static path_t*
@@ -1200,6 +1190,16 @@ on_error:
 }
 
 static bool
+run_event_loop(int num_args, bool is_ctor, int magic)
+{
+	while (async_busy()) {
+		screen_flip(g_screen, s_framerate, true);
+		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
+	}
+	return false;
+}
+
+static bool
 js_require(int num_args, bool is_ctor, int magic)
 {
 	const char* const PATHS[] =
@@ -1224,12 +1224,12 @@ js_require(int num_args, bool is_ctor, int magic)
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		jsal_error(JS_TYPE_ERROR, "require() outside of a CommonJS module must be absolute");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module(id, parent_id, PATHS[i], false))
+		if (path = find_module_file(id, parent_id, PATHS[i], false))
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_REF_ERROR, "module not found '%s'", id);
-	if (!jsal_pegasus_eval_module(path_cstr(path)))
+		jsal_error(JS_REF_ERROR, "CommonJS module not found '%s'", id);
+	if (!pegasus_eval_module(path_cstr(path)))
 		jsal_throw();
 	return true;
 }
@@ -1414,7 +1414,7 @@ js_Sphere_sleep(int num_args, bool is_ctor, int magic)
 
 	jsal_push_new_promise(&resolver, NULL);
 	jsal_push_ref(resolver);
-	script = script_new_func(-1);
+	script = script_new_function(-1);
 	jsal_pop(1);
 	jsal_unref(resolver);
 	async_defer(script, num_frames, ASYNC_UPDATE);
@@ -1563,7 +1563,7 @@ js_Color_get_r(int num_args, bool is_ctor, int magic)
 	color_t* color;
 
 	jsal_push_this();
-	color = jsal_require_class_obj(-1, CLASS_COLOR);
+	color = jsal_require_class_obj(-1, PEGASUS_COLOR);
 
 	jsal_push_number(color->r / 255.0);
 	return true;
@@ -1575,7 +1575,7 @@ js_Color_get_g(int num_args, bool is_ctor, int magic)
 	color_t* color;
 
 	jsal_push_this();
-	color = jsal_require_class_obj(-1, CLASS_COLOR);
+	color = jsal_require_class_obj(-1, PEGASUS_COLOR);
 
 	jsal_push_number(color->g / 255.0);
 	return true;
@@ -1587,7 +1587,7 @@ js_Color_get_b(int num_args, bool is_ctor, int magic)
 	color_t* color;
 
 	jsal_push_this();
-	color = jsal_require_class_obj(-1, CLASS_COLOR);
+	color = jsal_require_class_obj(-1, PEGASUS_COLOR);
 
 	jsal_push_number(color->b / 255.0);
 	return true;
@@ -1599,7 +1599,7 @@ js_Color_get_a(int num_args, bool is_ctor, int magic)
 	color_t* color;
 
 	jsal_push_this();
-	color = jsal_require_class_obj(-1, CLASS_COLOR);
+	color = jsal_require_class_obj(-1, PEGASUS_COLOR);
 
 	jsal_push_number(color->a / 255.0);
 	return true;
@@ -1612,7 +1612,7 @@ js_Color_set_r(int num_args, bool is_ctor, int magic)
 	double   value;
 
 	jsal_push_this();
-	color = jsal_require_class_obj(-1, CLASS_COLOR);
+	color = jsal_require_class_obj(-1, PEGASUS_COLOR);
 	value = jsal_require_number(0);
 
 	color->r = fmin(fmax(value, 0.0), 1.0) * 255;
@@ -1626,7 +1626,7 @@ js_Color_set_g(int num_args, bool is_ctor, int magic)
 	double   value;
 
 	jsal_push_this();
-	color = jsal_require_class_obj(-1, CLASS_COLOR);
+	color = jsal_require_class_obj(-1, PEGASUS_COLOR);
 	value = jsal_require_number(0);
 
 	color->g = fmin(fmax(value, 0.0), 1.0) * 255;
@@ -1640,7 +1640,7 @@ js_Color_set_b(int num_args, bool is_ctor, int magic)
 	double   value;
 
 	jsal_push_this();
-	color = jsal_require_class_obj(-1, CLASS_COLOR);
+	color = jsal_require_class_obj(-1, PEGASUS_COLOR);
 	value = jsal_require_number(0);
 
 	color->b = fmin(fmax(value, 0.0), 1.0) * 255;
@@ -1654,7 +1654,7 @@ js_Color_set_a(int num_args, bool is_ctor, int magic)
 	double   value;
 
 	jsal_push_this();
-	color = jsal_require_class_obj(-1, CLASS_COLOR);
+	color = jsal_require_class_obj(-1, PEGASUS_COLOR);
 	value = jsal_require_number(0);
 
 	color->a = fmin(fmax(value, 0.0), 1.0) * 255;
@@ -1698,7 +1698,7 @@ js_new_DirectoryStream(int num_args, bool is_ctor, int magic)
 
 	if (!(stream = directory_open(g_game, pathname)))
 		jsal_error(JS_ERROR, "couldn't open directory");
-	jsal_push_class_obj(CLASS_DIR_STREAM, stream, true);
+	jsal_push_class_obj(PEGASUS_DIR_STREAM, stream, true);
 	return true;
 }
 
@@ -1714,7 +1714,7 @@ js_DirectoryStream_dispose(int num_args, bool is_ctor, int magic)
 	directory_t* directory;
 
 	jsal_push_this();
-	directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM);
+	directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM);
 
 	jsal_set_class_ptr(-1, NULL);
 	directory_close(directory);
@@ -1727,7 +1727,7 @@ js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, int magic)
 	directory_t* directory;
 
 	jsal_push_this();
-	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
+	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_num_files(directory));
@@ -1740,7 +1740,7 @@ js_DirectoryStream_get_fileName(int num_args, bool is_ctor, int magic)
 	directory_t* directory;
 
 	jsal_push_this();
-	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
+	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_string(directory_pathname(directory));
@@ -1753,7 +1753,7 @@ js_DirectoryStream_get_position(int num_args, bool is_ctor, int magic)
 	directory_t* directory;
 
 	jsal_push_this();
-	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
+	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_position(directory));
@@ -1767,7 +1767,7 @@ js_DirectoryStream_set_position(int num_args, bool is_ctor, int magic)
 	int          position;
 
 	jsal_push_this();
-	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
+	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 	position = jsal_require_int(0);
 
@@ -1782,7 +1782,7 @@ js_DirectoryStream_iterator(int num_args, bool is_ctor, int magic)
 	directory_t* directory;
 
 	jsal_push_this();
-	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
+	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	return 1;
@@ -1795,7 +1795,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 	const path_t* entry_path;
 
 	jsal_push_this();
-	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
+	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	entry_path = directory_next(directory);
@@ -1828,7 +1828,7 @@ js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
 	directory_t* directory;
 
 	jsal_push_this();
-	if (!(directory = jsal_require_class_obj(-1, CLASS_DIR_STREAM)))
+	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	directory_rewind(directory);
@@ -1840,7 +1840,7 @@ js_Dispatch_cancel(int num_args, bool is_ctor, int magic)
 {
 	int64_t* token;
 
-	token = jsal_require_class_obj(0, CLASS_JOB_TOKEN);
+	token = jsal_require_class_obj(0, PEGASUS_JOB_TOKEN);
 
 	async_cancel(*token);
 	return false;
@@ -1886,13 +1886,13 @@ js_Dispatch_now(int num_args, bool is_ctor, int magic)
 static bool
 js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 {
-	double    priority;
+	double    priority = 0.0;
 	script_t* script;
 	int64_t   token;
 
 	script = jsal_pegasus_require_script(0);
-	priority = num_args >= 2 ? jsal_require_number(1)
-		: 0.0;
+	if (num_args >= 2)
+		priority = jsal_require_number(1);
 
 	if (!(token = async_recur(script, priority, ASYNC_RENDER)))
 		jsal_error(JS_ERROR, "dispatch failed");
@@ -1903,13 +1903,13 @@ js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 static bool
 js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
 {
-	double    priority;
+	double    priority = 0.0;
 	script_t* script;
 	int64_t   token;
 
 	script = jsal_pegasus_require_script(0);
-	priority = num_args >= 2 ? jsal_require_number(1)
-		: 0.0;
+	if (num_args >= 2)
+		priority = jsal_require_number(1);
 
 	if (!(token = async_recur(script, priority, ASYNC_UPDATE)))
 		jsal_error(JS_ERROR, "dispatch failed");
@@ -1961,7 +1961,7 @@ js_FS_evaluateScript(int num_args, bool is_ctor, int magic)
 
 	if (!game_file_exists(g_game, filename))
 		jsal_error(JS_ERROR, "script file not found '%s'", filename);
-	if (!script_eval(filename, false))
+	if (!script_eval(filename))
 		jsal_throw();
 	return true;
 }
@@ -2093,7 +2093,7 @@ js_new_FileStream(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "couldn't open file '%s'", pathname);
 	if (file_op == FILE_OP_UPDATE)
 		file_seek(file, 0, WHENCE_END);
-	jsal_push_class_obj(CLASS_FILE_STREAM, file, true);
+	jsal_push_class_obj(PEGASUS_FILE_STREAM, file, true);
 	return true;
 }
 
@@ -2109,7 +2109,7 @@ js_FileStream_get_fileName(int num_args, bool is_ctor, int magic)
 	file_t* file;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
+	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
 		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	jsal_push_string(file_pathname(file));
@@ -2123,7 +2123,7 @@ js_FileStream_get_fileSize(int num_args, bool is_ctor, int magic)
 	long    file_pos;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
+	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
 		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	file_pos = file_position(file);
@@ -2139,7 +2139,7 @@ js_FileStream_get_position(int num_args, bool is_ctor, int magic)
 	file_t* file;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
+	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
 		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	jsal_push_number(file_position(file));
@@ -2153,7 +2153,7 @@ js_FileStream_set_position(int num_args, bool is_ctor, int magic)
 	long long new_pos;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
+	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
 		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	new_pos = jsal_require_number(0);
@@ -2167,7 +2167,7 @@ js_FileStream_dispose(int num_args, bool is_ctor, int magic)
 	file_t* file;
 
 	jsal_push_this();
-	file = jsal_require_class_obj(-1, CLASS_FILE_STREAM);
+	file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM);
 
 	jsal_set_class_ptr(-1, NULL);
 	file_close(file);
@@ -2184,7 +2184,7 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 	long    pos;
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
+	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
 		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 	if (num_args >= 1)
 		num_bytes = jsal_require_int(0);
@@ -2216,7 +2216,7 @@ js_FileStream_write(int num_args, bool is_ctor, int magic)
 	data = jsal_require_buffer_ptr(0, &num_bytes);
 
 	jsal_push_this();
-	if (!(file = jsal_require_class_obj(-1, CLASS_FILE_STREAM)))
+	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
 		jsal_error(JS_ERROR, "the FileStream has already been disposed");
 
 	if (file_write(file, data, num_bytes, 1) != num_bytes)
@@ -2227,7 +2227,7 @@ js_FileStream_write(int num_args, bool is_ctor, int magic)
 static bool
 js_Font_get_Default(int num_args, bool is_ctor, int magic)
 {
-	jsal_push_class_obj(CLASS_FONT, g_system_font, false);
+	jsal_push_class_obj(PEGASUS_FONT, g_system_font, false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -2250,7 +2250,7 @@ js_new_Font(int num_args, bool is_ctor, int magic)
 	if (!(font = font_load(filename)))
 		jsal_error(JS_ERROR, "couldn't load font file '%s'", filename);
 	jsal_push_this();
-	jsal_push_class_obj(CLASS_FONT, font, true);
+	jsal_push_class_obj(PEGASUS_FONT, font, true);
 	return true;
 }
 
@@ -2266,7 +2266,7 @@ js_Font_get_fileName(int num_args, bool is_ctor, int magic)
 	font_t* font;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, CLASS_FONT);
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
 
 	jsal_push_string(font_path(font));
 	return true;
@@ -2278,7 +2278,7 @@ js_Font_get_height(int num_args, bool is_ctor, int magic)
 	font_t* font;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, CLASS_FONT);
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
 
 	jsal_push_int(font_height(font));
 	return true;
@@ -2300,8 +2300,8 @@ js_Font_drawText(int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, CLASS_FONT);
-	surface = jsal_require_class_obj(0, CLASS_SURFACE);
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
+	surface = jsal_require_class_obj(0, PEGASUS_SURFACE);
 	x = jsal_require_int(1);
 	y = jsal_require_int(2);
 	text = jsal_to_string(3);
@@ -2338,7 +2338,7 @@ js_Font_getTextSize(int num_args, bool is_ctor, int magic)
 	wraptext_t* wraptext;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, CLASS_FONT);
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
 	text = jsal_to_string(0);
 	if (num_args >= 2)
 		width = jsal_require_int(1);
@@ -2375,7 +2375,7 @@ js_Font_wordWrap(int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	font = jsal_require_class_obj(-1, CLASS_FONT);
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
 	jsal_pop(1);
 	wraptext = wraptext_new(text, font, width);
 	num_lines = wraptext_len(wraptext);
@@ -2418,7 +2418,7 @@ js_new_IndexList(int num_args, bool is_ctor, int magic)
 		ibo_unref(ibo);
 		jsal_error(JS_ERROR, "upload to GPU failed");
 	}
-	jsal_push_class_obj(CLASS_INDEX_LIST, ibo, true);
+	jsal_push_class_obj(PEGASUS_INDEX_LIST, ibo, true);
 	return true;
 }
 
@@ -2441,7 +2441,7 @@ js_Joystick_get_Null(int num_args, bool is_ctor, int magic)
 
 	device = malloc(sizeof(int));
 	*device = -1;
-	jsal_push_class_obj(CLASS_JOYSTICK, device, false);
+	jsal_push_class_obj(PEGASUS_JOYSTICK, device, false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -2483,7 +2483,7 @@ js_Joystick_get_name(int num_args, bool is_ctor, int magic)
 	int* device;
 
 	jsal_push_this();
-	device = jsal_require_class_obj(-1, CLASS_JOYSTICK);
+	device = jsal_require_class_obj(-1, PEGASUS_JOYSTICK);
 
 	jsal_push_string(joy_name(*device));
 	return true;
@@ -2495,7 +2495,7 @@ js_Joystick_get_numAxes(int num_args, bool is_ctor, int magic)
 	int* device;
 
 	jsal_push_this();
-	device = jsal_require_class_obj(-1, CLASS_JOYSTICK);
+	device = jsal_require_class_obj(-1, PEGASUS_JOYSTICK);
 
 	if (*device != -1)
 		jsal_push_int(joy_num_axes(*device));
@@ -2510,7 +2510,7 @@ js_Joystick_get_numButtons(int num_args, bool is_ctor, int magic)
 	int* device;
 
 	jsal_push_this();
-	device = jsal_require_class_obj(-1, CLASS_JOYSTICK);
+	device = jsal_require_class_obj(-1, PEGASUS_JOYSTICK);
 
 	if (*device != -1)
 		jsal_push_int(joy_num_buttons(*device));
@@ -2526,7 +2526,7 @@ js_Joystick_getPosition(int num_args, bool is_ctor, int magic)
 	int* device;
 
 	jsal_push_this();
-	device = jsal_require_class_obj(-1, CLASS_JOYSTICK);
+	device = jsal_require_class_obj(-1, PEGASUS_JOYSTICK);
 	index = jsal_require_int(0);
 
 	if (*device != -1 && (index < 0 || index >= joy_num_axes(*device)))
@@ -2543,7 +2543,7 @@ js_Joystick_isPressed(int num_args, bool is_ctor, int magic)
 	int* device;
 
 	jsal_push_this();
-	device = jsal_require_class_obj(-1, CLASS_JOYSTICK);
+	device = jsal_require_class_obj(-1, PEGASUS_JOYSTICK);
 	index = jsal_require_int(0);
 
 	if (*device != -1 && (index < 0 || index >= joy_num_buttons(*device)))
@@ -2556,7 +2556,7 @@ js_Joystick_isPressed(int num_args, bool is_ctor, int magic)
 static bool
 js_Keyboard_get_Default(int num_args, bool is_ctor, int magic)
 {
-	jsal_push_class_obj(CLASS_KEYBOARD, NULL, false);
+	jsal_push_class_obj(PEGASUS_KEYBOARD, NULL, false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -2572,7 +2572,7 @@ static bool
 js_Keyboard_get_capsLock(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_KEYBOARD);
+	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 
 	jsal_push_boolean(kb_is_toggled(ALLEGRO_KEY_CAPSLOCK));
 	return true;
@@ -2582,7 +2582,7 @@ static bool
 js_Keyboard_get_numLock(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_KEYBOARD);
+	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 
 	jsal_push_boolean(kb_is_toggled(ALLEGRO_KEY_NUMLOCK));
 	return true;
@@ -2592,7 +2592,7 @@ static bool
 js_Keyboard_get_scrollLock(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_KEYBOARD);
+	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 
 	jsal_push_boolean(kb_is_toggled(ALLEGRO_KEY_SCROLLLOCK));
 	return true;
@@ -2602,7 +2602,7 @@ static bool
 js_Keyboard_clearQueue(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_KEYBOARD);
+	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 
 	kb_clear_queue();
 	return false;
@@ -2615,7 +2615,7 @@ js_Keyboard_getChar(int num_args, bool is_ctor, int magic)
 	bool shifted;
 
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_KEYBOARD);
+	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 	keycode = jsal_require_int(0);
 	shifted = num_args >= 2 ? jsal_require_boolean(1)
 		: false;
@@ -2680,7 +2680,7 @@ static bool
 js_Keyboard_getKey(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_KEYBOARD);
+	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 
 	if (kb_queue_len() > 0)
 		jsal_push_int(kb_get_key());
@@ -2695,7 +2695,7 @@ js_Keyboard_isPressed(int num_args, bool is_ctor, int magic)
 	int keycode;
 
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_KEYBOARD);
+	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 	keycode = jsal_require_int(0);
 
 	jsal_push_boolean(kb_is_key_down(keycode));
@@ -2705,7 +2705,7 @@ js_Keyboard_isPressed(int num_args, bool is_ctor, int magic)
 static bool
 js_Mixer_get_Default(int num_args, bool is_ctor, int magic)
 {
-	jsal_push_class_obj(CLASS_MIXER, mixer_ref(s_def_mixer), false);
+	jsal_push_class_obj(PEGASUS_MIXER, mixer_ref(s_def_mixer), false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -2737,7 +2737,7 @@ js_new_Mixer(int num_args, bool is_ctor, int magic)
 	
 	if (!(mixer = mixer_new(frequency, bits, channels)))
 		jsal_error(JS_ERROR, "couldn't create %d-bit %dch voice", bits, channels);
-	jsal_push_class_obj(CLASS_MIXER, mixer, true);
+	jsal_push_class_obj(PEGASUS_MIXER, mixer, true);
 	return true;
 }
 
@@ -2753,7 +2753,7 @@ js_Mixer_get_volume(int num_args, bool is_ctor, int magic)
 	mixer_t* mixer;
 
 	jsal_push_this();
-	mixer = jsal_require_class_obj(-1, CLASS_MIXER);
+	mixer = jsal_require_class_obj(-1, PEGASUS_MIXER);
 
 	jsal_push_number(mixer_get_gain(mixer));
 	return true;
@@ -2767,7 +2767,7 @@ js_Mixer_set_volume(int num_args, bool is_ctor, int magic)
 	mixer_t* mixer;
 
 	jsal_push_this();
-	mixer = jsal_require_class_obj(-1, CLASS_MIXER);
+	mixer = jsal_require_class_obj(-1, PEGASUS_MIXER);
 
 	mixer_set_gain(mixer, volume);
 	return false;
@@ -2785,7 +2785,7 @@ js_new_Model(int num_args, bool is_ctor, int magic)
 
 	jsal_require_object_coercible(0);
 	shader = num_args >= 2
-		? jsal_require_class_obj(1, CLASS_SHADER)
+		? jsal_require_class_obj(1, PEGASUS_SHADER)
 		: galileo_shader();
 
 	if (!jsal_is_array(0))
@@ -2795,10 +2795,10 @@ js_new_Model(int num_args, bool is_ctor, int magic)
 	num_shapes = jsal_get_length(0);
 	for (i = 0; i < num_shapes; ++i) {
 		jsal_get_prop_index(0, i);
-		shape = jsal_require_class_obj(-1, CLASS_SHAPE);
+		shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
 		model_add_shape(group, shape);
 	}
-	jsal_push_class_obj(CLASS_MODEL, group, true);
+	jsal_push_class_obj(PEGASUS_MODEL, group, true);
 	return true;
 }
 
@@ -2815,10 +2815,10 @@ js_Model_get_shader(int num_args, bool is_ctor, int magic)
 	shader_t* shader;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 
 	shader = model_get_shader(group);
-	jsal_push_class_obj(CLASS_SHADER, shader_ref(shader), false);
+	jsal_push_class_obj(PEGASUS_SHADER, shader_ref(shader), false);
 	return true;
 }
 
@@ -2829,10 +2829,10 @@ js_Model_get_transform(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 
 	transform = model_get_transform(group);
-	jsal_push_class_obj(CLASS_TRANSFORM, transform_ref(transform), false);
+	jsal_push_class_obj(PEGASUS_TRANSFORM, transform_ref(transform), false);
 	return true;
 }
 
@@ -2843,8 +2843,8 @@ js_Model_set_shader(int num_args, bool is_ctor, int magic)
 	shader_t* shader;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
-	shader = jsal_require_class_obj(0, CLASS_SHADER);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(0, PEGASUS_SHADER);
 
 	model_set_shader(group, shader);
 	return false;
@@ -2857,8 +2857,8 @@ js_Model_set_transform(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
-	transform = jsal_require_class_obj(0, CLASS_TRANSFORM);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	transform = jsal_require_class_obj(0, PEGASUS_TRANSFORM);
 
 	model_set_transform(group, transform);
 	return false;
@@ -2871,8 +2871,8 @@ js_Model_draw(int num_args, bool is_ctor, int magic)
 	image_t* surface;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
-	surface = num_args >= 1 ? jsal_require_class_obj(0, CLASS_SURFACE)
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	surface = num_args >= 1 ? jsal_require_class_obj(0, PEGASUS_SURFACE)
 		: screen_backbuffer(g_screen);
 
 	if (!screen_skip_frame(g_screen))
@@ -2888,7 +2888,7 @@ js_Model_setBoolean(int num_args, bool is_ctor, int magic)
 	bool        value;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
 	value = jsal_require_boolean(1);
 
@@ -2905,7 +2905,7 @@ js_Model_setColorVector(int num_args, bool is_ctor, int magic)
 	float       values[4];
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
 	color = jsal_pegasus_require_color(1);
 
@@ -2925,7 +2925,7 @@ js_Model_setFloat(int num_args, bool is_ctor, int magic)
 	float       value;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
 	value = jsal_require_number(1);
 
@@ -2944,7 +2944,7 @@ js_Model_setFloatArray(int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
 		jsal_error(JS_TYPE_ERROR, "array was expected here");
@@ -2973,7 +2973,7 @@ js_Model_setFloatVector(int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
 	jsal_require_array(1);
 
@@ -2998,7 +2998,7 @@ js_Model_setInt(int num_args, bool is_ctor, int magic)
 	int         value;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
 	value = jsal_require_int(1);
 
@@ -3017,7 +3017,7 @@ js_Model_setIntArray(int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
 		jsal_error(JS_TYPE_ERROR, "array was expected here");
@@ -3045,7 +3045,7 @@ js_Model_setIntVector(int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
 		jsal_error(JS_TYPE_ERROR, "array was expected here");
@@ -3071,9 +3071,9 @@ js_Model_setMatrix(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, CLASS_MODEL);
+	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	name = jsal_require_string(0);
-	transform = jsal_require_class_obj(1, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(1, PEGASUS_TRANSFORM);
 
 	model_put_matrix(group, name, transform);
 	return false;
@@ -3082,7 +3082,7 @@ js_Model_setMatrix(int num_args, bool is_ctor, int magic)
 static bool
 js_Mouse_get_Default(int num_args, bool is_ctor, int magic)
 {
-	jsal_push_class_obj(CLASS_MOUSE, NULL, false);
+	jsal_push_class_obj(PEGASUS_MOUSE, NULL, false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -3101,7 +3101,7 @@ js_Mouse_get_x(int num_args, bool is_ctor, int magic)
 	int y;
 
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_MOUSE);
+	jsal_require_class_obj(-1, PEGASUS_MOUSE);
 
 	screen_get_mouse_xy(g_screen, &x, &y);
 	jsal_push_int(x);
@@ -3115,7 +3115,7 @@ js_Mouse_get_y(int num_args, bool is_ctor, int magic)
 	int y;
 
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_MOUSE);
+	jsal_require_class_obj(-1, PEGASUS_MOUSE);
 
 	screen_get_mouse_xy(g_screen, &x, &y);
 	jsal_push_int(y);
@@ -3126,7 +3126,7 @@ static bool
 js_Mouse_clearQueue(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_MOUSE);
+	jsal_require_class_obj(-1, PEGASUS_MOUSE);
 
 	mouse_clear_queue();
 	return false;
@@ -3138,7 +3138,7 @@ js_Mouse_getEvent(int num_args, bool is_ctor, int magic)
 	mouse_event_t event;
 
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_MOUSE);
+	jsal_require_class_obj(-1, PEGASUS_MOUSE);
 
 	if (mouse_queue_len() == 0)
 		jsal_push_null();
@@ -3161,7 +3161,7 @@ js_Mouse_isPressed(int num_args, bool is_ctor, int magic)
 	mouse_key_t key;
 
 	jsal_push_this();
-	jsal_require_class_obj(-1, CLASS_MOUSE);
+	jsal_require_class_obj(-1, PEGASUS_MOUSE);
 
 	key = jsal_require_int(0);
 	if (key < 0 || key >= MOUSE_KEY_MAX)
@@ -3180,7 +3180,7 @@ js_RNG_fromSeed(int num_args, bool is_ctor, int magic)
 	seed = jsal_require_number(0);
 
 	xoro = xoro_new(seed);
-	jsal_push_class_obj(CLASS_RNG, xoro, false);
+	jsal_push_class_obj(PEGASUS_RNG, xoro, false);
 	return true;
 }
 
@@ -3197,7 +3197,7 @@ js_RNG_fromState(int num_args, bool is_ctor, int magic)
 		xoro_unref(xoro);
 		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
 	}
-	jsal_push_class_obj(CLASS_RNG, xoro, false);
+	jsal_push_class_obj(PEGASUS_RNG, xoro, false);
 	return true;
 }
 
@@ -3207,7 +3207,7 @@ js_new_RNG(int num_args, bool is_ctor, int magic)
 	xoro_t* xoro;
 
 	xoro = xoro_new((uint64_t)(al_get_time() * 1000000));
-	jsal_push_class_obj(CLASS_RNG, xoro, true);
+	jsal_push_class_obj(PEGASUS_RNG, xoro, true);
 	return true;
 }
 
@@ -3224,7 +3224,7 @@ js_RNG_get_state(int num_args, bool is_ctor, int magic)
 	xoro_t* xoro;
 
 	jsal_push_this();
-	xoro = jsal_require_class_obj(-1, CLASS_RNG);
+	xoro = jsal_require_class_obj(-1, PEGASUS_RNG);
 
 	xoro_get_state(xoro, state);
 	jsal_push_string(state);
@@ -3238,7 +3238,7 @@ js_RNG_set_state(int num_args, bool is_ctor, int magic)
 	xoro_t*     xoro;
 
 	jsal_push_this();
-	xoro = jsal_require_class_obj(-1, CLASS_RNG);
+	xoro = jsal_require_class_obj(-1, PEGASUS_RNG);
 	state = jsal_require_string(0);
 
 	if (!xoro_set_state(xoro, state))
@@ -3252,7 +3252,7 @@ js_RNG_next(int num_args, bool is_ctor, int magic)
 	xoro_t*     xoro;
 
 	jsal_push_this();
-	xoro = jsal_require_class_obj(-1, CLASS_RNG);
+	xoro = jsal_require_class_obj(-1, PEGASUS_RNG);
 
 	jsal_push_number(xoro_gen_double(xoro));
 	return true;
@@ -3282,7 +3282,7 @@ js_new_Sample(int num_args, bool is_ctor, int magic)
 
 	if (!(sample = sample_new(filename, true)))
 		jsal_error(JS_ERROR, "couldn't load sample '%s'", filename);
-	jsal_push_class_obj(CLASS_SAMPLE, sample, true);
+	jsal_push_class_obj(PEGASUS_SAMPLE, sample, true);
 	return true;
 }
 
@@ -3298,7 +3298,7 @@ js_Sample_get_fileName(int num_args, bool is_ctor, int magic)
 	sample_t* sample;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, CLASS_SAMPLE);
+	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
 
 	jsal_push_string(sample_path(sample));
 	return true;
@@ -3314,8 +3314,8 @@ js_Sample_play(int num_args, bool is_ctor, int magic)
 	float     volume = 1.0;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, CLASS_SAMPLE);
-	mixer = jsal_require_class_obj(0, CLASS_MIXER);
+	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
+	mixer = jsal_require_class_obj(0, PEGASUS_MIXER);
 	if (num_args >= 2) {
 		jsal_require_object_coercible(1);
 		jsal_get_prop_string(1, "volume");
@@ -3342,7 +3342,7 @@ js_Sample_stopAll(int num_args, bool is_ctor, int magic)
 	sample_t* sample;
 
 	jsal_push_this();
-	sample = jsal_require_class_obj(-1, CLASS_SAMPLE);
+	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
 
 	sample_stop_all(sample);
 	return false;
@@ -3363,7 +3363,7 @@ js_new_Server(int num_args, bool is_ctor, int magic)
 
 	if (!(server = server_new(NULL, port, 1024, max_backlog, false)))
 		jsal_error(JS_ERROR, "couldn't create server");
-	jsal_push_class_obj(CLASS_SERVER, server, true);
+	jsal_push_class_obj(PEGASUS_SERVER, server, true);
 	return true;
 }
 
@@ -3380,13 +3380,13 @@ js_Server_accept(int num_args, bool is_ctor, int magic)
 	server_t* server;
 
 	jsal_push_this();
-	server = jsal_require_class_obj(-1, CLASS_SERVER);
+	server = jsal_require_class_obj(-1, PEGASUS_SERVER);
 
 	if (server == NULL)
 		jsal_error(JS_ERROR, "server has shut down");
 	new_socket = server_accept(server);
 	if (new_socket != NULL)
-		jsal_push_class_obj(CLASS_SOCKET, new_socket, false);
+		jsal_push_class_obj(PEGASUS_SOCKET, new_socket, false);
 	else
 		jsal_push_null();
 	return true;
@@ -3398,7 +3398,7 @@ js_Server_close(int num_args, bool is_ctor, int magic)
 	server_t* server;
 
 	jsal_push_this();
-	server = jsal_require_class_obj(-1, CLASS_SERVER);
+	server = jsal_require_class_obj(-1, PEGASUS_SERVER);
 
 	jsal_set_class_ptr(-1, NULL);
 	server_unref(server);
@@ -3412,7 +3412,7 @@ js_Shader_get_Default(int num_args, bool is_ctor, int magic)
 
 	if (!(shader = galileo_shader()))
 		jsal_error(JS_ERROR, "couldn't compile default shaders");
-	jsal_push_class_obj(CLASS_SHADER, shader_ref(shader), false);
+	jsal_push_class_obj(PEGASUS_SHADER, shader_ref(shader), false);
 
 	jsal_push_this();
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
@@ -3446,7 +3446,7 @@ js_new_Shader(int num_args, bool is_ctor, int magic)
 	jsal_pop(2);
 	if (!(shader = shader_new(vs_filename, game_filename)))
 		jsal_error(JS_ERROR, "couldn't compile shader program");
-	jsal_push_class_obj(CLASS_SHADER, shader, true);
+	jsal_push_class_obj(PEGASUS_SHADER, shader, true);
 	return true;
 }
 
@@ -3466,23 +3466,23 @@ js_new_Shape(int num_args, bool is_ctor, int magic)
 	vbo_t*       vbo;
 
 	type = jsal_require_int(0);
-	if (jsal_is_class_obj(1, CLASS_TEXTURE) || jsal_is_null(1)) {
-		texture = !jsal_is_null(1) ? jsal_require_class_obj(1, CLASS_TEXTURE) : NULL;
-		vbo = jsal_require_class_obj(2, CLASS_VERTEX_LIST);
+	if (jsal_is_class_obj(1, PEGASUS_TEXTURE) || jsal_is_null(1)) {
+		texture = !jsal_is_null(1) ? jsal_require_class_obj(1, PEGASUS_TEXTURE) : NULL;
+		vbo = jsal_require_class_obj(2, PEGASUS_VERTEX_LIST);
 		if (num_args >= 4)
-			ibo = jsal_require_class_obj(3, CLASS_INDEX_LIST);
+			ibo = jsal_require_class_obj(3, PEGASUS_INDEX_LIST);
 	}
 	else {
-		vbo = jsal_require_class_obj(1, CLASS_VERTEX_LIST);
+		vbo = jsal_require_class_obj(1, PEGASUS_VERTEX_LIST);
 		if (num_args >= 3)
-			ibo = jsal_require_class_obj(2, CLASS_INDEX_LIST);
+			ibo = jsal_require_class_obj(2, PEGASUS_INDEX_LIST);
 	}
 
 	if (type < 0 || type >= SHAPE_MAX)
 		jsal_error(JS_RANGE_ERROR, "invalid ShapeType constant");
 
 	shape = shape_new(vbo, ibo, type, texture);
-	jsal_push_class_obj(CLASS_SHAPE, shape, true);
+	jsal_push_class_obj(PEGASUS_SHAPE, shape, true);
 	return true;
 }
 
@@ -3499,11 +3499,11 @@ js_Shape_get_indexList(int num_args, bool is_ctor, int magic)
 	shape_t* shape;
 
 	jsal_push_this();
-	shape = jsal_require_class_obj(-1, CLASS_SHAPE);
+	shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
 
 	ibo = shape_get_ibo(shape);
 	if (ibo != NULL)
-		jsal_push_class_obj(CLASS_INDEX_LIST, ibo_ref(ibo), false);
+		jsal_push_class_obj(PEGASUS_INDEX_LIST, ibo_ref(ibo), false);
 	else
 		jsal_push_null();
 	return true;
@@ -3516,11 +3516,11 @@ js_Shape_get_texture(int num_args, bool is_ctor, int magic)
 	image_t* texture;
 
 	jsal_push_this();
-	shape = jsal_require_class_obj(-1, CLASS_SHAPE);
+	shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
 
 	texture = shape_get_texture(shape);
 	if (texture != NULL)
-		jsal_push_class_obj(CLASS_TEXTURE, image_ref(texture), false);
+		jsal_push_class_obj(PEGASUS_TEXTURE, image_ref(texture), false);
 	else
 		jsal_push_null();
 	return true;
@@ -3532,9 +3532,9 @@ js_Shape_get_vertexList(int num_args, bool is_ctor, int magic)
 	shape_t* shape;
 
 	jsal_push_this();
-	shape = jsal_require_class_obj(-1, CLASS_SHAPE);
+	shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
 
-	jsal_push_class_obj(CLASS_VERTEX_LIST, vbo_ref(shape_get_vbo(shape)), false);
+	jsal_push_class_obj(PEGASUS_VERTEX_LIST, vbo_ref(shape_get_vbo(shape)), false);
 	return true;
 }
 
@@ -3545,9 +3545,9 @@ js_Shape_set_indexList(int num_args, bool is_ctor, int magic)
 	shape_t* shape;
 
 	jsal_push_this();
-	shape = jsal_require_class_obj(-1, CLASS_SHAPE);
+	shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
 	if (!jsal_is_null(0))
-		ibo = jsal_require_class_obj(0, CLASS_INDEX_LIST);
+		ibo = jsal_require_class_obj(0, PEGASUS_INDEX_LIST);
 
 	shape_set_ibo(shape, ibo);
 	return false;
@@ -3560,9 +3560,9 @@ js_Shape_set_texture(int num_args, bool is_ctor, int magic)
 	image_t* texture = NULL;
 
 	jsal_push_this();
-	shape = jsal_require_class_obj(-1, CLASS_SHAPE);
+	shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
 	if (!jsal_is_null(0))
-		texture = jsal_require_class_obj(0, CLASS_TEXTURE);
+		texture = jsal_require_class_obj(0, PEGASUS_TEXTURE);
 
 	shape_set_texture(shape, texture);
 	return false;
@@ -3575,8 +3575,8 @@ js_Shape_set_vertexList(int num_args, bool is_ctor, int magic)
 	vbo_t*   vbo;
 
 	jsal_push_this();
-	shape = jsal_require_class_obj(-1, CLASS_SHAPE);
-	vbo = jsal_require_class_obj(0, CLASS_VERTEX_LIST);
+	shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
+	vbo = jsal_require_class_obj(0, PEGASUS_VERTEX_LIST);
 
 	shape_set_vbo(shape, vbo);
 	return false;
@@ -3590,11 +3590,11 @@ js_Shape_draw(int num_args, bool is_ctor, int magic)
 	transform_t* transform = NULL;
 
 	jsal_push_this();
-	shape = jsal_require_class_obj(-1, CLASS_SHAPE);
-	surface = num_args >= 1 ? jsal_require_class_obj(0, CLASS_SURFACE)
+	shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
+	surface = num_args >= 1 ? jsal_require_class_obj(0, PEGASUS_SURFACE)
 		: screen_backbuffer(g_screen);
 	if (num_args >= 2)
-		transform = jsal_require_class_obj(1, CLASS_TRANSFORM);
+		transform = jsal_require_class_obj(1, PEGASUS_TRANSFORM);
 
 	shape_draw(shape, surface, transform);
 	return false;
@@ -3616,7 +3616,7 @@ js_new_Socket(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "couldn't create TCP socket");
 	if (hostname != NULL && !socket_connect(socket, hostname, port))
 		jsal_error(JS_ERROR, "couldn't connect to '%s'", hostname);
-	jsal_push_class_obj(CLASS_SOCKET, socket, true);
+	jsal_push_class_obj(PEGASUS_SOCKET, socket, true);
 	return true;
 }
 
@@ -3632,7 +3632,7 @@ js_Socket_get_bytesPending(int num_args, bool is_ctor, int magic)
 	socket_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, CLASS_SOCKET);
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	if (socket == NULL)
 		jsal_error(JS_ERROR, "socket is not connected");
@@ -3646,7 +3646,7 @@ js_Socket_get_connected(int num_args, bool is_ctor, int magic)
 	socket_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, CLASS_SOCKET);
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	if (socket != NULL)
 		jsal_push_boolean(socket_connected(socket));
@@ -3661,7 +3661,7 @@ js_Socket_get_remoteAddress(int num_args, bool is_ctor, int magic)
 	socket_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, CLASS_SOCKET);
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	if (socket == NULL)
 		jsal_error(JS_ERROR, "socket is closed");
@@ -3677,7 +3677,7 @@ js_Socket_get_remotePort(int num_args, bool is_ctor, int magic)
 	socket_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, CLASS_SOCKET);
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	if (socket == NULL)
 		jsal_error(JS_ERROR, "socket is closed");
@@ -3693,7 +3693,7 @@ js_Socket_close(int num_args, bool is_ctor, int magic)
 	socket_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, CLASS_SOCKET);
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	jsal_set_class_ptr(-1, NULL);
 	socket_unref(socket);
@@ -3708,7 +3708,7 @@ js_Socket_connectTo(int num_args, bool is_ctor, int magic)
 	socket_t*   socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, CLASS_SOCKET);
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 	hostname = jsal_require_string(0);
 	port = jsal_require_int(1);
 
@@ -3726,7 +3726,7 @@ js_Socket_read(int num_args, bool is_ctor, int magic)
 	socket_t* socket;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, CLASS_SOCKET);
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	num_bytes = jsal_require_int(0);
 	if (socket == NULL)
@@ -3747,7 +3747,7 @@ js_Socket_write(int num_args, bool is_ctor, int magic)
 	size_t         write_size;
 
 	jsal_push_this();
-	socket = jsal_require_class_obj(-1, CLASS_SOCKET);
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 	payload = jsal_require_buffer_ptr(0, &write_size);
 
 	if (socket == NULL)
@@ -3768,7 +3768,7 @@ js_new_Sound(int num_args, bool is_ctor, int magic)
 
 	if (!(sound = sound_new(filename)))
 		jsal_error(JS_ERROR, "couldn't load sound '%s'", filename);
-	jsal_push_class_obj(CLASS_SOUND, sound, true);
+	jsal_push_class_obj(PEGASUS_SOUND, sound, true);
 	return true;
 }
 
@@ -3784,7 +3784,7 @@ js_Sound_get_fileName(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_string(sound_path(sound));
 	return true;
@@ -3796,7 +3796,7 @@ js_Sound_get_length(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_len(sound));
 	return true;
@@ -3808,7 +3808,7 @@ js_Sound_get_pan(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_pan(sound));
 	return true;
@@ -3821,7 +3821,7 @@ js_Sound_set_pan(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 	new_pan = jsal_require_number(0);
 
 	sound_set_pan(sound, new_pan);
@@ -3834,7 +3834,7 @@ js_Sound_get_speed(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_speed(sound));
 	return true;
@@ -3848,7 +3848,7 @@ js_Sound_set_speed(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	sound_set_speed(sound, new_speed);
 	return false;
@@ -3860,7 +3860,7 @@ js_Sound_get_playing(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_boolean(sound_playing(sound));
 	return true;
@@ -3872,7 +3872,7 @@ js_Sound_get_position(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_tell(sound));
 	return true;
@@ -3885,7 +3885,7 @@ js_Sound_set_position(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 	new_pos = jsal_require_number(0);
 
 	sound_seek(sound, new_pos);
@@ -3898,7 +3898,7 @@ js_Sound_get_repeat(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_boolean(sound_repeat(sound));
 	return true;
@@ -3912,7 +3912,7 @@ js_Sound_set_repeat(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	sound_set_repeat(sound, is_looped);
 	return false;
@@ -3924,7 +3924,7 @@ js_Sound_get_volume(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_gain(sound));
 	return true;
@@ -3938,7 +3938,7 @@ js_Sound_set_volume(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	sound_set_gain(sound, volume);
 	return false;
@@ -3950,7 +3950,7 @@ js_Sound_pause(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	sound_pause(sound, true);
 	return false;
@@ -3963,12 +3963,12 @@ js_Sound_play(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	if (num_args < 1)
 		sound_pause(sound, false);
 	else {
-		mixer = jsal_require_class_obj(0, CLASS_MIXER);
+		mixer = jsal_require_class_obj(0, PEGASUS_MIXER);
 		sound_play(sound, mixer);
 	}
 	return false;
@@ -3980,7 +3980,7 @@ js_Sound_stop(int num_args, bool is_ctor, int magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_require_class_obj(-1, CLASS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	sound_stop(sound);
 	return false;
@@ -4005,7 +4005,7 @@ js_new_SoundStream(int num_args, bool is_ctor, int magic)
 
 	if (!(stream = stream_new(frequency, bits, channels)))
 		jsal_error(JS_ERROR, "couldn't create stream");
-	jsal_push_class_obj(CLASS_SOUND_STREAM, stream, true);
+	jsal_push_class_obj(PEGASUS_SOUND_STREAM, stream, true);
 	return true;
 }
 
@@ -4021,7 +4021,7 @@ js_SoundStream_get_length(int num_args, bool is_ctor, int magic)
 	stream_t*    stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CLASS_SOUND_STREAM);
+	stream = jsal_require_class_obj(-1, PEGASUS_SOUND_STREAM);
 
 	jsal_push_number(stream_length(stream));
 	return true;
@@ -4033,7 +4033,7 @@ js_SoundStream_pause(int num_args, bool is_ctor, int magic)
 	stream_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CLASS_SOUND_STREAM);
+	stream = jsal_require_class_obj(-1, PEGASUS_SOUND_STREAM);
 
 	stream_pause(stream, true);
 	return false;
@@ -4046,12 +4046,12 @@ js_SoundStream_play(int num_args, bool is_ctor, int magic)
 	stream_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CLASS_SOUND_STREAM);
+	stream = jsal_require_class_obj(-1, PEGASUS_SOUND_STREAM);
 
 	if (num_args < 1)
 		stream_pause(stream, false);
 	else {
-		mixer = jsal_require_class_obj(0, CLASS_MIXER);
+		mixer = jsal_require_class_obj(0, PEGASUS_MIXER);
 		stream_play(stream, mixer);
 	}
 	return false;
@@ -4063,7 +4063,7 @@ js_SoundStream_stop(int num_args, bool is_ctor, int magic)
 	stream_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CLASS_SOUND_STREAM);
+	stream = jsal_require_class_obj(-1, PEGASUS_SOUND_STREAM);
 
 	stream_stop(stream);
 	return false;
@@ -4077,7 +4077,7 @@ js_SoundStream_write(int num_args, bool is_ctor, int magic)
 	stream_t*   stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CLASS_SOUND_STREAM);
+	stream = jsal_require_class_obj(-1, PEGASUS_SOUND_STREAM);
 
 	data = jsal_require_buffer_ptr(0, &size);
 	stream_buffer(stream, data, size);
@@ -4103,8 +4103,8 @@ js_new_Surface(int num_args, bool is_ctor, int magic)
 			jsal_error(JS_ERROR, "couldn't create surface");
 		image_fill(image, fill_color);
 	}
-	else if (jsal_is_class_obj(0, CLASS_TEXTURE)) {
-		src_image = jsal_require_class_obj(0, CLASS_TEXTURE);
+	else if (jsal_is_class_obj(0, PEGASUS_TEXTURE)) {
+		src_image = jsal_require_class_obj(0, PEGASUS_TEXTURE);
 		if (!(image = image_clone(src_image)))
 			jsal_error(JS_ERROR, "couldn't create surface");
 	}
@@ -4113,7 +4113,7 @@ js_new_Surface(int num_args, bool is_ctor, int magic)
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "couldn't load image '%s'", filename);
 	}
-	jsal_push_class_obj(CLASS_SURFACE, image, true);
+	jsal_push_class_obj(PEGASUS_SURFACE, image, true);
 	return true;
 }
 
@@ -4129,7 +4129,7 @@ js_Surface_get_height(int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_height(image));
 	return true;
@@ -4142,10 +4142,10 @@ js_Surface_get_transform(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	transform = image_get_transform(image);
-	jsal_push_class_obj(CLASS_TRANSFORM, transform_ref(transform), false);
+	jsal_push_class_obj(PEGASUS_TRANSFORM, transform_ref(transform), false);
 	return true;
 }
 
@@ -4155,7 +4155,7 @@ js_Surface_get_width(int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_width(image));
 	return true;
@@ -4168,8 +4168,8 @@ js_Surface_set_transform(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_SURFACE);
-	transform = jsal_require_class_obj(0, CLASS_TRANSFORM);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
+	transform = jsal_require_class_obj(0, PEGASUS_TRANSFORM);
 
 	image_set_transform(image, transform);
 	return false;
@@ -4185,7 +4185,7 @@ js_Surface_clipTo(int num_args, bool is_ctor, int magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 	x = jsal_require_int(0);
 	y = jsal_require_int(1);
 	width = jsal_require_int(2);
@@ -4202,11 +4202,11 @@ js_Surface_toTexture(int num_args, bool is_ctor, int magic)
 	image_t* new_image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	if ((new_image = image_clone(image)) == NULL)
 		jsal_error(JS_ERROR, "image creation failed");
-	jsal_push_class_obj(CLASS_TEXTURE, new_image, false);
+	jsal_push_class_obj(PEGASUS_TEXTURE, new_image, false);
 	return true;
 }
 
@@ -4238,7 +4238,7 @@ js_new_TextDecoder(int num_args, bool is_ctor, int magic)
 	}
 
 	decoder = decoder_new(fatal, ignore_bom);
-	jsal_push_class_obj(CLASS_TEXT_DEC, decoder, true);
+	jsal_push_class_obj(PEGASUS_TEXT_DEC, decoder, true);
 	return true;
 }
 
@@ -4254,7 +4254,7 @@ js_TextDecoder_get_encoding(int num_args, bool is_ctor, int magic)
 	decoder_t* decoder;
 
 	jsal_push_this();
-	decoder = jsal_require_class_obj(-1, CLASS_TEXT_DEC);
+	decoder = jsal_require_class_obj(-1, PEGASUS_TEXT_DEC);
 
 	jsal_push_string("utf-8");
 	return true;
@@ -4266,7 +4266,7 @@ js_TextDecoder_get_fatal(int num_args, bool is_ctor, int magic)
 	decoder_t* decoder;
 
 	jsal_push_this();
-	decoder = jsal_require_class_obj(-1, CLASS_TEXT_DEC);
+	decoder = jsal_require_class_obj(-1, PEGASUS_TEXT_DEC);
 
 	jsal_push_boolean(decoder_fatal(decoder));
 	return 1;
@@ -4278,7 +4278,7 @@ js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, int magic)
 	decoder_t* decoder;
 
 	jsal_push_this();
-	decoder = jsal_require_class_obj(-1, CLASS_TEXT_DEC);
+	decoder = jsal_require_class_obj(-1, PEGASUS_TEXT_DEC);
 
 	jsal_push_boolean(decoder_ignore_bom(decoder));
 	return true;
@@ -4296,7 +4296,7 @@ js_TextDecoder_decode(int num_args, bool is_ctor, int magic)
 	lstring_t*  tail = NULL;
 
 	jsal_push_this();
-	decoder = jsal_require_class_obj(-1, CLASS_TEXT_DEC);
+	decoder = jsal_require_class_obj(-1, PEGASUS_TEXT_DEC);
 	if (num_args >= 1)
 		input = jsal_require_buffer_ptr(0, &length);
 	if (num_args >= 2) {
@@ -4330,7 +4330,7 @@ js_new_TextEncoder(int num_args, bool is_ctor, int magic)
 	encoder_t* encoder;
 
 	encoder = encoder_new();
-	jsal_push_class_obj(CLASS_TEXT_ENC, encoder, true);
+	jsal_push_class_obj(PEGASUS_TEXT_ENC, encoder, true);
 	return true;
 }
 
@@ -4346,7 +4346,7 @@ js_TextEncoder_get_encoding(int num_args, bool is_ctor, int magic)
 	encoder_t* encoder;
 
 	jsal_push_this();
-	encoder = jsal_require_class_obj(-1, CLASS_TEXT_ENC);
+	encoder = jsal_require_class_obj(-1, PEGASUS_TEXT_ENC);
 
 	jsal_push_string("utf-8");
 	return true;
@@ -4363,7 +4363,7 @@ js_TextEncoder_encode(int num_args, bool is_ctor, int magic)
 	encoder_t* encoder;
 
 	jsal_push_this();
-	encoder = jsal_require_class_obj(-1, CLASS_TEXT_ENC);
+	encoder = jsal_require_class_obj(-1, PEGASUS_TEXT_ENC);
 	if (num_args >= 1)
 		input = jsal_require_lstring_t(0);
 	else
@@ -4393,7 +4393,7 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 
 	int y;
 
-	if (num_args >= 3 && jsal_is_class_obj(2, CLASS_COLOR)) {
+	if (num_args >= 3 && jsal_is_class_obj(2, PEGASUS_COLOR)) {
 		// create an Image filled with a single pixel value
 		width = jsal_require_int(0);
 		height = jsal_require_int(1);
@@ -4421,9 +4421,9 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 		}
 		image_unlock(image, lock);
 	}
-	else if (jsal_is_class_obj(0, CLASS_SURFACE)) {
+	else if (jsal_is_class_obj(0, PEGASUS_SURFACE)) {
 		// create an Image from a Surface
-		src_image = jsal_require_class_obj(0, CLASS_SURFACE);
+		src_image = jsal_require_class_obj(0, PEGASUS_SURFACE);
 		if (!(image = image_clone(src_image)))
 			jsal_error(JS_ERROR, "image creation failed");
 	}
@@ -4433,7 +4433,7 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "couldn't load image '%s'", filename);
 	}
-	jsal_push_class_obj(CLASS_TEXTURE, image, true);
+	jsal_push_class_obj(PEGASUS_TEXTURE, image, true);
 	return true;
 }
 
@@ -4450,7 +4450,7 @@ js_Texture_get_fileName(int num_args, bool is_ctor, int magic)
 	const char* path;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_TEXTURE);
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	if (path = image_path(image))
 		jsal_push_string(path);
@@ -4465,7 +4465,7 @@ js_Texture_get_height(int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_TEXTURE);
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	jsal_push_int(image_height(image));
 	return true;
@@ -4477,7 +4477,7 @@ js_Texture_get_width(int num_args, bool is_ctor, int magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_require_class_obj(-1, CLASS_TEXTURE);
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	jsal_push_int(image_width(image));
 	return true;
@@ -4489,7 +4489,7 @@ js_new_Transform(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	transform = transform_new();
-	jsal_push_class_obj(CLASS_TRANSFORM, transform, true);
+	jsal_push_class_obj(PEGASUS_TRANSFORM, transform, true);
 	return true;
 }
 
@@ -4510,7 +4510,7 @@ js_Transform_get_matrix(int num_args, bool is_ctor, int magic)
 	if (magic == 0) {
 		// on first access: set up getters and setters
 		jsal_push_this();
-		transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 		values = transform_values(transform);
 		jsal_push_new_object();
 		for (i = 0; i < 4; ++i) {
@@ -4551,7 +4551,7 @@ js_Transform_get_matrix(int num_args, bool is_ctor, int magic)
 	else {
 		jsal_push_callee();
 		jsal_get_prop_string(-1, "\xFF" "transform");
-		transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 		values = transform_values(transform);
 		jsal_push_number(values[magic - 1]);
 		return true;
@@ -4569,7 +4569,7 @@ js_Transform_set_matrix(int num_args, bool is_ctor, int magic)
 
 	jsal_push_callee();
 	jsal_get_prop_string(-1, "\xFF" "transform");
-	transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 	values = transform_values(transform);
 	values[magic - 1] = new_value;
 	return false;
@@ -4582,8 +4582,8 @@ js_Transform_compose(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
-	other = jsal_require_class_obj(0, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	other = jsal_require_class_obj(0, PEGASUS_TRANSFORM);
 
 	transform_compose(transform, other);
 	return true;
@@ -4595,7 +4595,7 @@ js_Transform_identity(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 
 	transform_identity(transform);
 	return true;
@@ -4611,7 +4611,7 @@ js_Transform_project2D(int num_args, bool is_ctor, int magic)
 	float        z2 = 1.0f;
 
 	jsal_push_this();
-	transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 	x1 = jsal_require_number(0);
 	y1 = jsal_require_number(1);
 	x2 = jsal_require_number(2);
@@ -4635,7 +4635,7 @@ js_Transform_project3D(int num_args, bool is_ctor, int magic)
 	float        z1, z2;
 
 	jsal_push_this();
-	transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 	fov = jsal_require_number(0);
 	aspect = jsal_require_number(1);
 	z1 = jsal_require_number(2);
@@ -4664,7 +4664,7 @@ js_Transform_rotate(int num_args, bool is_ctor, int magic)
 	float        vz = 1.0;
 
 	jsal_push_this();
-	transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 	theta = jsal_require_number(0);
 	if (num_args >= 2) {
 		vx = jsal_require_number(1);
@@ -4686,7 +4686,7 @@ js_Transform_scale(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 	sx = jsal_require_number(0);
 	sy = jsal_require_number(1);
 	if (num_args >= 3)
@@ -4705,7 +4705,7 @@ js_Transform_translate(int num_args, bool is_ctor, int magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	transform = jsal_require_class_obj(-1, CLASS_TRANSFORM);
+	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 	dx = jsal_require_number(0);
 	dy = jsal_require_number(1);
 	if (num_args >= 3)
@@ -4758,7 +4758,7 @@ js_new_VertexList(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "upload to GPU failed");
 	}
 	
-	jsal_push_class_obj(CLASS_VERTEX_LIST, vbo, true);
+	jsal_push_class_obj(PEGASUS_VERTEX_LIST, vbo, true);
 	return true;
 }
 

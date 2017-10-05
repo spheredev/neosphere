@@ -104,6 +104,8 @@ main(int argc, char* argv[])
 	// something of a hairball over time, and likely quite fragile.  don't be surprised if
 	// attempting to edit it causes something to break. :o)
 
+	int                  api_version;
+	bool                 eval_succeeded;
 	lstring_t*           dialog_name;
 	const char*          error_stack = NULL;
 	const char*          error_text;
@@ -245,8 +247,8 @@ main(int argc, char* argv[])
 	kb_load_keymap();
 
 	api_init();
-	initialize_vanilla_api();
-	initialize_pegasus_api();
+	vanilla_register_api();
+	pegasus_register_api();
 
 	// attempt to locate and load system font
 	console_log(1, "loading system default font");
@@ -273,9 +275,13 @@ main(int argc, char* argv[])
 	debugger_init(want_debug, false);
 #endif
 
-	// execute the main script
+	// evaluate the main script (v1) or module (v2)
 	script_path = game_script_path(g_game);
-	if (!script_eval(path_cstr(script_path), game_version(g_game) >= 2))
+	api_version = game_version(g_game);
+	eval_succeeded =
+		api_version >= 2 ? pegasus_eval_module(path_cstr(script_path))
+		: script_eval(path_cstr(script_path));
+	if (!eval_succeeded)
 		goto on_js_error;
 
 	if (game_version(g_game) >= 2 && jsal_is_object_coercible(-1)) {
@@ -293,7 +299,7 @@ main(int argc, char* argv[])
 		jsal_pop(2);
 	}
 
-	// in Sv1 mode only, call game() function (if it exists)
+	// in Sphere v1 mode only, call game() function (if it exists)
 	if (game_version(g_game) <= 1) {
 		jsal_get_global_string("game");
 		if (jsal_is_function(-1) && !jsal_try_call(0))
@@ -301,10 +307,10 @@ main(int argc, char* argv[])
 		jsal_pop(2);
 	}
 
-	// start the Sphere v2 frame loop.  note that this isn't contingent on the
-	// game's API version: the loop terminates when there are no Dispatch API jobs,
-	// so Sphere 1.x compatibility is not compromised.
-	if (!pegasus_run())
+	// start up the event loop.  we can do this even in compatibility mode:
+	// the event loop terminates when there are no pending jobs or promises to settle,
+	// and neither one was available in Sphere 1.x.
+	if (!pegasus_start_event_loop())
 		goto on_js_error;
 
 	sphere_exit(false);
@@ -404,7 +410,7 @@ on_enqueue_js_job(void)
 {
 	script_t* script;
 
-	script = script_new_func(0);
+	script = script_new_function(0);
 	async_defer(script, 0, ASYNC_TICK);
 }
 

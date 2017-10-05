@@ -535,7 +535,7 @@ static int      s_frame_rate = 0;
 static mixer_t* s_sound_mixer;
 
 void
-initialize_vanilla_api(void)
+vanilla_register_api(void)
 {
 	console_log(1, "initializing Sphere v1 API (%s)", API_VERSION_STRING);
 
@@ -1350,7 +1350,7 @@ jsal_require_sphere_script(int index, const char* name)
 
 	if (jsal_is_function(index)) {
 		// caller passed function directly
-		script = script_new_func(index);
+		script = script_new_function(index);
 	}
 	else if (jsal_is_string(index)) {
 		// caller passed code string, compile it
@@ -2226,7 +2226,7 @@ js_EvaluateScript(int num_args, bool is_ctor, int magic)
 
 	if (!game_file_exists(g_game, filename))
 		jsal_error(JS_ERROR, "file '%s' not found", filename);
-	if (!script_eval(filename, false))
+	if (!script_eval(filename))
 		jsal_throw();
 	return true;
 }
@@ -2243,7 +2243,7 @@ js_EvaluateSystemScript(int num_args, bool is_ctor, int magic)
 		sprintf(path, "#/scripts/%s", filename);
 	if (!game_file_exists(g_game, path))
 		jsal_error(JS_ERROR, "system script '%s' not found", filename);
-	if (!script_eval(path, false))
+	if (!script_eval(path))
 		jsal_throw();
 	return true;
 }
@@ -5040,7 +5040,7 @@ js_RequireScript(int num_args, bool is_ctor, int magic)
 	if (!is_required) {
 		jsal_push_boolean(true);
 		jsal_put_prop_string(-2, filename);
-		if (!script_eval(filename, false))
+		if (!script_eval(filename))
 			jsal_throw();
 	}
 	jsal_pop(3);
@@ -5069,7 +5069,7 @@ js_RequireSystemScript(int num_args, bool is_ctor, int magic)
 	if (!is_required) {
 		jsal_push_boolean(true);
 		jsal_put_prop_string(-2, path);
-		if (!script_eval(path, false))
+		if (!script_eval(path))
 			jsal_throw();
 	}
 	jsal_pop(2);

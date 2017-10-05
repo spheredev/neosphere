@@ -35,13 +35,13 @@
 
 typedef struct script script_t;
 
-void      scripts_init    (void);
-void      scripts_uninit  (void);
-bool      script_eval     (const char* filename, bool as_module);
-script_t* script_new      (const lstring_t* script, const char* fmt_name, ...);
-script_t* script_new_func (int idx);
-script_t* script_ref      (script_t* script);
-void      script_unref    (script_t* script);
-void      script_run      (script_t* script, bool allow_reentry);
+void      scripts_init        (void);
+void      scripts_uninit      (void);
+bool      script_eval         (const char* filename);
+script_t* script_new          (const lstring_t* script, const char* fmt_name, ...);
+script_t* script_new_function (int stack_index);
+script_t* script_ref          (script_t* script);
+void      script_unref        (script_t* script);
+void      script_run          (script_t* script, bool allow_reentry);
 
 #endif // SPHERE__SCRIPT_H__INCLUDED

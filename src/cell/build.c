@@ -121,10 +121,10 @@ static void js_TextEncoder_finalize     (void* host_ptr);
 static void js_Tool_finalize            (void* host_ptr);
 
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
-static bool    eval_cjs_module      (fs_t* fs, const char* filename, bool as_mjs);
-static path_t* find_cjs_module      (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
+static bool    eval_module_file      (fs_t* fs, const char* filename);
+static path_t* find_module_file     (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
+static void    handle_module_import (void);
 static bool    install_target       (int num_args, bool is_ctor, int magic);
-static void    on_import_module     (void);
 static path_t* load_package_json    (const char* filename);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void    push_require         (const char* module_id);
@@ -154,7 +154,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	visor_begin_op(visor, "setting up Cellscript environment");
 
-	jsal_on_import_module(on_import_module);
+	jsal_on_import_module(handle_module_import);
 
 	// initialize the CommonJS cache and global require()
 	jsal_push_hidden_stash();
@@ -294,9 +294,7 @@ bool
 build_eval(build_t* build, const char* filename)
 {
 	char*       error_stack = NULL;
-	bool        is_mjs;
 	bool        is_ok = true;
-	path_t*     path;
 	struct stat stats;
 
 	if (fs_stat(build->fs, filename, &stats) != 0)
@@ -304,10 +302,7 @@ build_eval(build_t* build, const char* filename)
 
 	visor_begin_op(build->visor, "evaluating '%s'", filename);
 	build->timestamp = stats.st_mtime;
-	path = path_new(filename);
-	is_mjs = path_has_extension(path, ".mjs");
-	path_free(path);
-	if (!eval_cjs_module(build->fs, filename, is_mjs)) {
+	if (!eval_module_file(build->fs, filename)) {
 		build->crashed = true;
 		is_ok = false;
 		if (jsal_is_error(-1)) {
@@ -508,7 +503,7 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 }
 
 static bool
-eval_cjs_module(fs_t* fs, const char* filename, bool as_mjs)
+eval_module_file(fs_t* fs, const char* filename)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
@@ -642,7 +637,7 @@ on_error:
 }
 
 static path_t*
-find_cjs_module(fs_t* fs, const char* id, const char* origin, const char* sys_origin)
+find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_origin)
 {
 	const char* const filenames[] =
 	{
@@ -703,30 +698,8 @@ find_cjs_module(fs_t* fs, const char* id, const char* origin, const char* sys_or
 	return NULL;
 }
 
-static bool
-install_target(int num_args, bool is_ctor, int magic)
-{
-	// note: install targets never have more than one source because an individual
-	//       target is constructed for each file installed.
-
-	int         result;
-	const char* source_path;
-	const char* target_path;
-
-	target_path = jsal_require_string(0);
-	jsal_get_prop_index(1, 0);
-	source_path = jsal_require_string(-1);
-
-	result = fs_fcopy(s_build->fs, target_path, source_path, true);
-	if (result == 0)
-		// touch file to prevent "target file unchanged" warning
-		fs_utime(s_build->fs, target_path, NULL);
-	jsal_push_boolean(result == 0);
-	return true;
-}
-
 static void
-on_import_module(void)
+handle_module_import(void)
 {
 	const char* const PATHS[] =
 	{
@@ -747,7 +720,7 @@ on_import_module(void)
 	caller_id = jsal_require_string(1);
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_cjs_module(s_build->fs, specifier, caller_id, PATHS[i]))
+		if (path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i]))
 			break;  // short-circuit
 	}
 	if (path == NULL)
@@ -763,6 +736,28 @@ on_import_module(void)
 		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
 	}
+}
+
+static bool
+install_target(int num_args, bool is_ctor, int magic)
+{
+	// note: install targets never have more than one source because an individual
+	//       target is constructed for each file installed.
+
+	int         result;
+	const char* source_path;
+	const char* target_path;
+
+	target_path = jsal_require_string(0);
+	jsal_get_prop_index(1, 0);
+	source_path = jsal_require_string(-1);
+
+	result = fs_fcopy(s_build->fs, target_path, source_path, true);
+	if (result == 0)
+		// touch file to prevent "target file unchanged" warning
+		fs_utime(s_build->fs, target_path, NULL);
+	jsal_push_boolean(result == 0);
+	return true;
 }
 
 static path_t*
@@ -1104,7 +1099,6 @@ js_require(int num_args, bool is_ctor, int magic)
 		"#/runtime",
 	};
 
-	bool        is_mjs;
 	const char* module_id;
 	const char* parent_id = NULL;
 	path_t*     path;
@@ -1122,13 +1116,12 @@ js_require(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_TYPE_ERROR, "require() outside of a CommonJS module must be absolute");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_cjs_module(s_build->fs, module_id, parent_id, PATHS[i]))
+		if (path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i]))
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_REF_ERROR, "module not found '%s'", module_id);
-	is_mjs = path_has_extension(path, ".mjs");
-	if (!eval_cjs_module(s_build->fs, path_cstr(path), is_mjs))
+		jsal_error(JS_REF_ERROR, "CommonJS module not found '%s'", module_id);
+	if (!eval_module_file(s_build->fs, path_cstr(path)))
 		jsal_throw();
 	return true;
 }
