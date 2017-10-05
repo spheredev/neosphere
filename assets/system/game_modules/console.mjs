@@ -30,13 +30,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-const from   = require('from'),
-      Logger = require('logger'),
-      Prim   = require('prim'),
-      Scene  = require('scene'),
-      Thread = require('thread');
+import from   from 'from';
+import Logger from 'logger';
+import Prim   from 'prim';
+import Scene  from 'scene';
+import Thread from 'thread';
 
+export default
 class Console extends Thread
 {
 	constructor(options = {})
@@ -95,9 +95,6 @@ class Console extends Thread
 
 	log(...texts)
 	{
-		if (!this.running)
-			throw new Error("the Console thread is not running");
-
 		let lineInBuffer = this.nextLine % this.bufferSize;
 		this.buffer[lineInBuffer] = texts[0];
 		for (let i = 1; i < texts.length; ++i) {
@@ -117,8 +114,6 @@ class Console extends Thread
 		if (this.running)
 			throw new Error("the Console has already been started");
 
-		super.start();
-
 		new Scene()
 			.doWhile(() => true)
 				.tween(this.cursorColor, 0.25 * screen.frameRate, 'easeInSine', { a: 1.0 })
@@ -134,6 +129,8 @@ class Console extends Thread
 		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
 		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Platform})`);
 		this.log("");
+
+		super.start();
 	}
 
 	undefineObject(name)
@@ -143,15 +140,8 @@ class Console extends Thread
 			.remove();
 	}
 
-	on_checkInput()
+	on_inputCheck()
 	{
-		if (!this.wasKeyDown && this.keyboard.isPressed(this.activationKey)) {
-			if (!this.view.visible)
-				showConsole(this);
-			else
-				hideConsole(this);
-		}
-		this.wasKeyDown = this.keyboard.isPressed(this.activationKey);
 		if (this.view.visible) {
 			let mouseEvent = this.mouse.getEvent();
 			let wheelUp = mouseEvent !== null && mouseEvent.key == MouseKey.WheelUp;
@@ -233,8 +223,18 @@ class Console extends Thread
 
 	on_update()
 	{
+		if (!this.wasKeyDown && this.keyboard.isPressed(this.activationKey)) {
+			if (!this.view.visible)
+				showConsole(this);
+			else
+				hideConsole(this);
+		}
+		this.wasKeyDown = this.keyboard.isPressed(this.activationKey);
+
 		if (this.view.fade <= 0.0)
 			this.view.line = 0.0;
+			
+		return true;
 	}
 }
 
@@ -294,6 +294,7 @@ function executeCommand(console, command)
 
 function hideConsole(console)
 {
+	console.yieldInput();
 	let fps = screen.frameRate;
 	new Scene()
 		.tween(console.view, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
@@ -303,17 +304,10 @@ function hideConsole(console)
 
 function showConsole(console)
 {
+	console.takeInput();
 	let fps = screen.frameRate;
 	new Scene()
 		.tween(console.view, 0.25 * fps, 'easeOutQuad', { fade: 1.0 })
 		.call(() => console.view.visible = true)
 		.run();
 }
-
-// CommonJS
-exports = module.exports = Console;
-Object.assign(exports, {
-	__esModule: true,
-	default:    Console,
-	Console:    Console,
-});

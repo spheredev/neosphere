@@ -30,21 +30,15 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-exports = module.exports = Scene;
-exports.__esModule = true;
-exports.default = exports;
+import asset  from 'assert';
+import from   from 'from';
+import Prim   from 'prim';
+import Thread from 'thread';
 
-const assert = require('assert'),
-      from   = require('from'),
-      Prim   = require('prim'),
-      Thread = require('thread');
+let screenMask = Color.Transparent;
 
-var screenMask = Color.Transparent;
-Thread.create({
-	update: _updateScenes,
-	render: _renderScenes,
-}, 99);
+Dispatch.onUpdate(_updateScenes, 99);
+Dispatch.onRender(_renderScenes, 99);
 
 // Scene.defineAction()
 // register a new scene action ("scenelet").
@@ -80,6 +74,7 @@ Scene.defineAction = function defineAction(name, def)
 	};
 };
 
+export default
 function Scene()
 {
 	var activation = null;
@@ -98,7 +93,7 @@ function Scene()
 	function runTimeline(ctx)
 	{
 		if ('opThread' in ctx) {
-			if (Thread.isRunning(ctx.opThread))
+			if (ctx.opThread.running)
 				return true;
 			else {
 				from.Array(tasks)
@@ -126,7 +121,7 @@ function Scene()
 				ctx.opThread = Thread.create({
 					update: ctx.op.update.bind(ctx.opctx, this),
 					render: typeof ctx.op.render === 'function' ? ctx.op.render.bind(ctx.opctx, this) : undefined,
-					getInput: typeof ctx.op.getInput  === 'function' ? ctx.op.getInput.bind(ctx.opctx, this) : undefined,
+					checkInput: typeof ctx.op.getInput  === 'function' ? ctx.op.getInput.bind(ctx.opctx, this) : undefined,
 				}, 99);
 				tasks.push(ctx.opThread);
 			} else {
@@ -135,7 +130,7 @@ function Scene()
 			return true;
 		} else {
 			if (from.Array(ctx.forks)
-				.where(function(tid) { return Thread.isRunning(tid); })
+				.where(function(tid) { return tid.running; })
 				.count() == 0)
 			{
 				var self = Thread.self();
@@ -155,7 +150,7 @@ function Scene()
 	//     true if the scene is still executing commands; false otherwise.
 	function isRunning()
 	{
-		return Thread.isRunning(mainThread);
+		return mainThread.running;
 	};
 
 	// Scene:doIf()
@@ -296,7 +291,7 @@ function Scene()
 			},
 			update: function(scene) {
 				return from.Array(this.forks)
-					.where(function(tid) { return Thread.isRunning(tid); })
+					.where(function(tid) { return tid.running; })
 					.count() > 0;
 			}
 		};
@@ -308,7 +303,7 @@ function Scene()
 	// play back the scene.
 	// arguments:
 	//     waitUntilDone: if true, block until playback has finished.
-	function run(waitUntilDone)
+	async function run(waitUntilDone)
 	{
 		if (openBlockTypes.length > 0)
 			throw new Error("unclosed block in scene definition");
@@ -323,7 +318,7 @@ function Scene()
 		});
 		tasks.push(mainThread);
 		if (waitUntilDone)
-			Thread.join(mainThread);
+			await Thread.join(mainThread);
 		return this;
 	};
 

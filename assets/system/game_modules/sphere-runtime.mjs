@@ -30,9 +30,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+export { default as Console } from 'console';
+export { default as Scene }   from 'scene';
+export { default as Thread }  from 'thread';
+
 export const assert     = require('assert'),
              from       = require('from'),
-             Console    = require('console'),
              DataStream = require('dataStream'),
              Delegate   = require('delegate'),
              Image      = require('image'),
@@ -43,7 +46,5 @@ export const assert     = require('assert'),
              Person     = require('person'),
              Prim       = require('prim'),
              Random     = require('random'),
-             Scene      = require('scene'),
              Test       = require('test'),
-             Thread     = require('thread'),
              XML        = require('xml');
