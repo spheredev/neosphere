@@ -415,10 +415,9 @@ performed from a designated part of the Sphere event loop.  This is like an
 advanced version of Sphere v1's update and render scripts, but more tightly
 integrated and available throughout the engine.
 
-Dispatch.cancel(token);
-
-    Cancels the job associated with JobToken `token`.  Note that for one-time
-    jobs, cancellation has no effect if the job has already been processed.
+When queueing a job, a token is returned which allows you to manage the
+in-flight job.  See the documentation for `JobToken` below to find out what you
+can do with the token.
 
 Dispatch.cancelAll();
 
@@ -431,7 +430,7 @@ Dispatch.later(num_frames, fn);
     Sets up a one-time job to call `fn` from the event loop after a specified
     number of frames have passed.
 
-    Returns a JobToken for use with Dispatch.cancel().
+    Returns a `JobToken` you can use the manage the job.
 
 Dispatch.now(fn);
 
@@ -439,7 +438,7 @@ Dispatch.now(fn);
     This is useful for performing operations that need to be done from the
     event loop with minimal delay.
 
-    Returns a JobToken for use with Dispatch.cancel().
+    Returns a `JobToken` you can use to manage the job.
 
     Note: Dispatch.now(fn) is *NOT* an alias for Dispatch.later(0, fn).  The
           latter runs at the beginning of the next frame; Dispatch.now() always
@@ -458,7 +457,7 @@ Dispatch.onUpdate(fn[, priority]);
     default is 0.0.  Priority can be negative, and fractional priorities are
     honored: 8.12, for example, is considered a higher priority than 8.0.
 
-    Returns a JobToken for use with Dispatch.cancel().
+    Returns a `JobToken` you can use to manage the job.
 
     Note: Update jobs are processed at the beginning of a frame, while render
           jobs are processed at the end, just before the backbuffer is flipped.
@@ -696,6 +695,20 @@ new IndexList(indices);
     Note: The list of indices stored on the GPU can't be modified later.  If
           you want to upload a new set of indices, you must construct a new
           `IndexList`.
+
+
+`JobToken` Object
+-----------------
+
+A JobToken represents a job queued using one of the `Dispatch` functions above.
+When queuing a job, you must keep a reference to the token if you want to be
+able to cancel the job later.
+
+JobToken#cancel();
+
+    Cancels the dispatch job associated with this token.  If the job was queued
+    using either `Dispatch.now()` or `Dispatch.later()` and has already started
+    running, calling this has no effect.
 
 
 `Joystick` Object

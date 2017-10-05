@@ -4,7 +4,7 @@ miniSphere Changelog
 v5.0.0 - TBD
 ------------
 
-* miniSphere (and Cell) now use the ChakraCore JS engine under the hood, vastly
+* miniSphere and Cell now use the ChakraCore JS engine under the hood, vastly
   improving JavaScript execution performance and bringing long-overdue native
   support for ES2015+ syntax and built-ins to Sphere without the need for
   transpilation and polyfills.
@@ -19,13 +19,15 @@ v5.0.0 - TBD
 * Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing directory contents
   to be enumerated with a standard `for...of` loop.
 * Changes `Sphere.sleep()` to return a promise instead of blocking, allowing it
-  to be used with `await` to avoid starving the event loop.
+  to be used with `await` so as to avoid starving the event loop.
 * Changes `Console` into a full-fledged class, which allows for a familiar
   `new Console()` usage and gives games the ability to set up multiple consoles
   if desired.
+* Renames `Dispatch.cancel()` to `JobToken#cancel()`.
 * Renames `Color#fade()` to `Color#fadeTo()`.
 * Removes the now-redundant `DataReader` and `DataWriter` classes.
-* Removes `Sphere.run()` and `Sphere.exit()`.
+* Removes `screen.flip()`, `Sphere.run()` and `Sphere.exit()` in favor of the
+  engine-provided event loop.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to
   text encoding.  Notably, `FS.readFile()` now correctly handles the UTF-8
   signature/BOM if one is present.

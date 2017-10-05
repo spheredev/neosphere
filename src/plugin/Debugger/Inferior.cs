@@ -270,7 +270,7 @@ namespace Sphere.Gdk.Debugger
             for (int i = 0; i < count; ++i) {
                 string name = (string)reply[1 + i * 3];
                 DValue value = reply[3 + i * 3];
-                vars.Add(name, value);
+                vars[name] = value;
             }
             return vars;
         }

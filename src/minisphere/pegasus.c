@@ -260,7 +260,6 @@ static bool js_DirectoryStream_set_position  (int num_args, bool is_ctor, int ma
 static bool js_DirectoryStream_iterator      (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_next          (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, int magic);
-static bool js_Dispatch_cancel               (int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_cancelAll            (int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_later                (int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_now                  (int num_args, bool is_ctor, int magic);
@@ -293,6 +292,7 @@ static bool js_Font_drawText                 (int num_args, bool is_ctor, int ma
 static bool js_Font_getTextSize              (int num_args, bool is_ctor, int magic);
 static bool js_Font_wordWrap                 (int num_args, bool is_ctor, int magic);
 static bool js_new_IndexList                 (int num_args, bool is_ctor, int magic);
+static bool js_JobToken_cancel               (int num_args, bool is_ctor, int magic);
 static bool js_Joystick_get_Null             (int num_args, bool is_ctor, int magic);
 static bool js_Joystick_getDevices           (int num_args, bool is_ctor, int magic);
 static bool js_Joystick_get_name             (int num_args, bool is_ctor, int magic);
@@ -524,7 +524,6 @@ pegasus_register_api(void)
 	api_define_method("DirectoryStream", "@@iterator", js_DirectoryStream_iterator);
 	api_define_method("DirectoryStream", "next", js_DirectoryStream_next);
 	api_define_method("DirectoryStream", "rewind", js_DirectoryStream_rewind);
-	api_define_function("Dispatch", "cancel", js_Dispatch_cancel);
 	api_define_function("Dispatch", "cancelAll", js_Dispatch_cancelAll);
 	api_define_function("Dispatch", "later", js_Dispatch_later);
 	api_define_function("Dispatch", "now", js_Dispatch_now);
@@ -557,6 +556,7 @@ pegasus_register_api(void)
 	api_define_function("FS", "writeFile", js_FS_writeFile);
 	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize);
 	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, js_JobToken_finalize);
+	api_define_method("JobToken", "cancel", js_JobToken_cancel);
 	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, js_Joystick_finalize);
 	api_define_static_prop("Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function("Joystick", "getDevices", js_Joystick_getDevices);
@@ -1836,11 +1836,12 @@ js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Dispatch_cancel(int num_args, bool is_ctor, int magic)
+js_JobToken_cancel(int num_args, bool is_ctor, int magic)
 {
 	int64_t* token;
 
-	token = jsal_require_class_obj(0, PEGASUS_JOB_TOKEN);
+	jsal_push_this();
+	token = jsal_require_class_obj(-1, PEGASUS_JOB_TOKEN);
 
 	async_cancel(*token);
 	return false;
