@@ -30,9 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-const from    = require('from'),
-      Scene   = require('scene');
+import from  from 'from';
+import Scene from 'scene';
 
 let adjuster = null,
     currentSound = null,
@@ -41,6 +40,7 @@ let adjuster = null,
     oldSounds = [],
     topmostSound = null;
 
+export default
 class Music
 {
 	constructor()
@@ -166,12 +166,4 @@ function crossfade(fileName, frames, forceChange)
 function isAdjusting()
 {
 	return adjuster != null && adjuster.isRunning();
-};
-
-// CommonJS
-exports = module.exports = Music;
-Object.assign(exports, {
-	__esModule: true,
-	default:    Music,
-	Music:      Music,
-});
+}

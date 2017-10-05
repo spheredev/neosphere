@@ -30,8 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-const from = require('from');
+import from from 'from';
 
 // historically, Sphere requires a gamepad with at least 2 axes (X/Y) and
 // 5 buttons (A, B, X, Y, Start) for full operation.
@@ -40,6 +39,7 @@ const Devices = from.Array(Joystick.getDevices())
 	.where(it => it.numButtons >= 5)
 	.toArray();
 
+export default
 class Joypad
 {
 	constructor()
@@ -52,11 +52,3 @@ class Joypad
 	static get P3() { return Devices[2] || Joystick.Null; }
 	static get P4() { return Devices[3] || Joystick.Null; }
 }
-
-// CommonJS
-exports = module.exports = Joypad;
-Object.assign(exports, {
-	__esModule: true,
-	default:    Joypad,
-	Joypad:     Joypad,
-});

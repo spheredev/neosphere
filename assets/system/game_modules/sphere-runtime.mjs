@@ -31,6 +31,11 @@
 **/
 
 export { default as Console } from 'console';
+export { default as Image }   from 'image';
+export { default as Joypad }  from 'joypad';
+export { default as Music }   from 'music';
+export { default as Pact }    from 'pact';
+export { default as Prim }    from 'prim';
 export { default as Scene }   from 'scene';
 export { default as Thread }  from 'thread';
 
@@ -38,13 +43,8 @@ export const assert     = require('assert'),
              from       = require('from'),
              DataStream = require('dataStream'),
              Delegate   = require('delegate'),
-             Image      = require('image'),
-             Joypad     = require('joypad'),
              Logger     = require('logger'),
-             Music      = require('music'),
-             Pact       = require('pact'),
              Person     = require('person'),
-             Prim       = require('prim'),
              Random     = require('random'),
              Test       = require('test'),
              XML        = require('xml');

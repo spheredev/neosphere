@@ -30,57 +30,53 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
+import from from 'from';
 
-let kHandlers = Symbol('promise handlers');
-
-class Pact
+export default
+class Image
 {
-	get [Symbol.toStringTag]() { return 'Pact'; }
-
-	constructor()
+	constructor(fileName)
 	{
-		this[kHandlers] = new WeakMap();
-	}
+		let fullPath = FS.fullPath(fileName, '@/images');
+		fullPath = from([ '', '.png', '.jpg', '.bmp' ])
+			.select(suffix => `${fullPath}${suffix}`)
+			.first(fileName => FS.fileExists(fileName))
+		if (fullPath === undefined)
+			throw new Error(`couldn't find image '${fileName}'`);
 
-	makePromise()
-	{
-		let handler;
-		let promise = new Promise((resolve, reject) => {
-			handler = { resolve, reject };
+		let texture = new Texture(fullPath);
+		let shape = new Shape(ShapeType.TriStrip, texture,
+			new VertexList([
+				{ x: 0, y: 0, u: 0, v: 1 },
+				{ x: 1, y: 0, u: 1, v: 1 },
+				{ x: 0, y: 1, u: 0, v: 0 },
+				{ x: 1, y: 1, u: 1, v: 0 },
+			]));
+		let tintShader = new Shader({
+			fragment: '#/shaders/tintedImage.frag.glsl',
+			vertex:   '#/shaders/tintedImage.vert.glsl'
 		});
-		this[kHandlers].set(promise, handler);
-		return promise;
+
+		this.model = new Model([ shape ], tintShader);
+		this.texture = texture;
 	}
 
-	reject(promise, reason)
+	get height()
 	{
-		let handler = getHandler(this, promise);
-		handler.reject(reason);
+		return this.texture.height;
 	}
 
-	resolve(promise, value)
+	get width()
 	{
-		let handler = getHandler(this, promise);
-		handler.resolve(value);
+		return this.texture.width;
+	}
+
+	blitTo(surface, x, y, tintColor = Color.White)
+	{
+		this.model.transform = new Transform()
+			.scale(this.texture.width, this.texture.height)
+			.translate(x, y);
+		this.model.setColorVector('tintColor', tintColor);
+		this.model.draw(surface);
 	}
 }
-
-function getHandler(pact, promise)
-{
-	if (!(promise instanceof Promise))
-		throw new TypeError(`'${String(promise)}' is not a promise`);
-
-	let handler = pact[kHandlers].get(promise);
-	if (handler === undefined)
-		throw new TypeError("promise was not made from this pact");
-	return handler;
-}
-
-// CommonJS
-exports = module.exports = Pact;
-Object.assign(exports, {
-	__esModule: true,
-	Pact:       Pact,
-	default:    Pact,
-});

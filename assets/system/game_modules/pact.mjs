@@ -30,61 +30,46 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-const from = require('from');
-
-class Image
+export default
+class Pact
 {
-	constructor(fileName)
-	{
-		let fullPath = FS.fullPath(fileName, '@/images');
-		fullPath = from([ '', '.png', '.jpg', '.bmp' ])
-			.select(suffix => `${fullPath}${suffix}`)
-			.first(fileName => FS.fileExists(fileName))
-		if (fullPath === undefined)
-			throw new Error(`couldn't find image '${fileName}'`);
+	get [Symbol.toStringTag]() { return 'Pact'; }
 
-		let texture = new Texture(fullPath);
-		let shape = new Shape(ShapeType.TriStrip, texture,
-			new VertexList([
-				{ x: 0, y: 0, u: 0, v: 1 },
-				{ x: 1, y: 0, u: 1, v: 1 },
-				{ x: 0, y: 1, u: 0, v: 0 },
-				{ x: 1, y: 1, u: 1, v: 0 },
-			]));
-		let tintShader = new Shader({
-			fragment: '#/shaders/tintedImage.frag.glsl',
-			vertex:   '#/shaders/tintedImage.vert.glsl'
+	constructor()
+	{
+		this._handlers = new WeakMap();
+	}
+
+	makePromise()
+	{
+		let handler;
+		let promise = new Promise((resolve, reject) => {
+			handler = { resolve, reject };
 		});
-
-		this.model = new Model([ shape ], tintShader);
-		this.texture = texture;
+		this._handlers.set(promise, handler);
+		return promise;
 	}
 
-	get height()
+	reject(promise, reason)
 	{
-		return this.texture.height;
+		let handler = getHandler(this, promise);
+		handler.reject(reason);
 	}
 
-	get width()
+	resolve(promise, value)
 	{
-		return this.texture.width;
-	}
-
-	blitTo(surface, x, y, tintColor = Color.White)
-	{
-		this.model.transform = new Transform()
-			.scale(this.texture.width, this.texture.height)
-			.translate(x, y);
-		this.model.setColorVector('tintColor', tintColor);
-		this.model.draw(surface);
+		let handler = getHandler(this, promise);
+		handler.resolve(value);
 	}
 }
 
-// CommonJS
-exports = module.exports = Image;
-Object.assign(exports, {
-	__esModule: true,
-	default:    Image,
-	Image:      Image,
-});
+function getHandler(pact, promise)
+{
+	if (!(promise instanceof Promise))
+		throw new TypeError(`'${String(promise)}' is not a promise`);
+
+	let handler = pact._handlers.get(promise);
+	if (handler === undefined)
+		throw new TypeError("promise was not made from this pact");
+	return handler;
+}

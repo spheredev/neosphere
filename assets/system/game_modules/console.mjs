@@ -233,8 +233,6 @@ class Console extends Thread
 
 		if (this.view.fade <= 0.0)
 			this.view.line = 0.0;
-			
-		return true;
 	}
 }
 

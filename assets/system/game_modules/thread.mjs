@@ -48,12 +48,12 @@ class Thread
 		thread.start();
 		return thread;
 	}
-	
+
 	static join(thread)
 	{
 		return thread._promise;
 	}
-	
+
 	static self()
 	{
 		return currentSelf;
@@ -80,7 +80,7 @@ class Thread
 	{
 		return this === inputThreads[inputThreads.length - 1];
 	}
-	
+
 	get running()
 	{
 		return this._started;
@@ -108,8 +108,7 @@ class Thread
 			this._busy = true;
 			if (this === inputThreads[inputThreads.length - 1])
 				await this.on_inputCheck();
-			if (!await this.on_update())
-				this.stop();
+			await this.on_update();
 			this._busy = false;
 			currentSelf = lastSelf;
 		}, this._priority);
@@ -162,22 +161,22 @@ class PromptThread extends Thread
 		this.renderer = options.render;
 		this.updater = options.update;
 	}
-	
+
 	async on_checkInput()
 	{
 		if (this.inputChecker !== undefined)
 			await this.inputChecker();
 	}
-	
+
 	on_render()
 	{
 		if (this.renderer !== undefined)
 			return this.renderer();
 	}
-	
+
 	async on_update()
 	{
-		if (this.updater !== undefined)
-			return await this.updater();
+		if (this.updater === undefined || !await this.updater())
+			this.stop();
 	}
 }

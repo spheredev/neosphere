@@ -30,8 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-
+export default
 class Prim
 {
 	constructor()
@@ -212,11 +211,3 @@ class Prim
 		Prim.drawSolidRectangle(surface, 0, 0, surface.width, surface.height, color);
 	}
 }
-
-// CommonJS
-exports = module.exports = Prim;
-Object.assign(exports, {
-	__esModule: true,
-	Prim:       Prim,
-	default:    Prim,
-});

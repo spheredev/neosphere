@@ -8,6 +8,7 @@ v5.0.0 - TBD
   improving JavaScript execution performance and bringing long-overdue native
   support for ES2015+ syntax and built-ins to Sphere without the need for
   transpilation and polyfills.
+* Overhauls the Thread class to take advantage of `await` and promises.
 * Adds native support for mJS ("ECMAScript modules") without transpilation.
 * Adds back the `Pact` class, a more intuitive way to manage promises.
 * Adds a new `DataStream` class, which extends from `FileStream` to allow more
