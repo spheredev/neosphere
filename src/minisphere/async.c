@@ -162,34 +162,34 @@ async_run_jobs(async_hint_t hint)
 {
 	struct job* job;
 
-	iter_t iter;
+	int i;
 
 	if (s_need_sort)
 		vector_sort(s_recurring, sort_jobs);
 
 	// process recurring jobs
-	iter = vector_enum(s_recurring);
-	while (job = iter_next(&iter)) {
+	for (i = 0; i < vector_len(s_recurring); ++i) {
+		job = vector_get(s_recurring, i);
 		if (job->hint == hint && !job->finished)
 			script_run(job->script, true);
 		if (job->finished) {
 			script_unref(job->script);
-			iter_remove(&iter);
+			vector_remove(s_recurring, i--);
 		}
 	}
 
 	// process one-time jobs.  swap in a fresh queue first to allow nested callbacks
 	// to work.
 	if (s_onetime != NULL) {
-		iter = vector_enum(s_onetime);
-		while (job = iter_next(&iter)) {
+		for (i = 0; i < vector_len(s_onetime); ++i) {
+			job = vector_get(s_onetime, i);
 			if (job->hint == hint && job->timer-- == 0 && !job->finished) {
 				script_run(job->script, false);
 				job->finished = true;
 			}
 			if (job->finished) {
 				script_unref(job->script);
-				iter_remove(&iter);
+				vector_remove(s_onetime, i--);
 			}
 		}
 	}
