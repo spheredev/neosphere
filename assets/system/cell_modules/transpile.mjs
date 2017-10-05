@@ -30,13 +30,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
 const Babel = require('#/babel-core'),
       from  = require('from');
 
-var moduleTool = makeTranspileTool(2),
+let moduleTool = makeTranspileTool(2),
     scriptTool = makeTranspileTool(1);
 
+export default
 function transpile(dirName, sources)
 {
 	return stageTarget(dirName, sources);
@@ -79,11 +79,3 @@ function stageTarget(dirName, sources)
 	}
 	return targets;
 }
-
-// CommonJS
-exports = module.exports = transpile;
-Object.assign(exports, {
-	__esModule: true,
-	default:    transpile,
-	transpile:  transpile,
-});

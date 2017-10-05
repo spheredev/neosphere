@@ -30,9 +30,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+export { default as transpile } from 'transpile';
+
 export const assert     = require('assert'),
              from       = require('from'),
-             transpile  = require('transpile'),
              DataStream = require('dataStream'),
              Delegate   = require('delegate'),
              Random     = require('random'),
