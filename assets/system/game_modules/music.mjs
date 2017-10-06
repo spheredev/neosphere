@@ -60,8 +60,8 @@ class Music
 			adjuster.stop();
 		if (frames > 0) {
 			adjuster = new Scene()
-				.tween(mixer, frames, 'linear', { volume: newVolume })
-				.run();
+				.tween(mixer, frames, 'linear', { volume: newVolume });
+			adjuster.run();
 		} else {
 			mixer.volume = newVolume;
 		}
@@ -86,16 +86,16 @@ class Music
 			return;
 		currentSound.fader.stop();
 		currentSound.fader = new Scene()
-			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
-			.run();
+			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 });
+		currentSound.fader.run();
 		topmostSound = oldSounds.pop();
 		currentSound = topmostSound;
 		if (currentSound !== null) {
 			currentSound.stream.volume = 0.0;
 			currentSound.fader.stop();
 			currentSound.fader = new Scene()
-				.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 })
-				.run();
+				.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 });
+			currentSound.fader.run();
 		}
 	}
 
@@ -114,15 +114,15 @@ class Music
 
 		currentSound.fader.stop();
 		currentSound.fader = new Scene()
-			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 })
-			.run();
+			.tween(currentSound.stream, fadeTime, 'linear', { volume: 0.0 });
+		currentSound.fader.run();
 		currentSound = topmostSound;
 		if (currentSound !== null) {
 			currentSound.stream.volume = 0.0;
 			currentSound.fader.stop();
 			currentSound.fader = new Scene()
-				.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 })
-				.run();
+				.tween(currentSound.stream, fadeTime, 'linear', { volume: 1.0 });
+			currentSound.fader.run();
 		}
 	}
 }
@@ -135,8 +135,8 @@ function crossfade(fileName, frames, forceChange)
 	if (currentSound != null && allowChange) {
 		currentSound.fader.stop();
 		currentSound.fader = new Scene()
-			.tween(currentSound.stream, frames, 'linear', { volume: 0.0 })
-			.run();
+			.tween(currentSound.stream, frames, 'linear', { volume: 0.0 });
+		currentSound.fader.run();
 	}
 	if (fileName !== null) {
 		let fullPath = FS.fullPath(fileName, '@/music');
@@ -150,7 +150,7 @@ function crossfade(fileName, frames, forceChange)
 		stream.volume = 0.0;
 		stream.play(mixer);
 		let fader = new Scene()
-			.tween(stream, frames, 'linear', { volume: 1.0 })
+			.tween(stream, frames, 'linear', { volume: 1.0 });
 		let newSound = { stream: stream, fader: fader };
 		if (allowChange) {
 			currentSound = newSound;

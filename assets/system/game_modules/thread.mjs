@@ -34,8 +34,8 @@ import from from 'from';
 import Pact from 'pact';
 
 let currentSelf = null,
-	inputThreads = [],
-	threadPact = new Pact();
+    inputThreads = [],
+    threadPact = new Pact();
 
 export default
 class Thread
