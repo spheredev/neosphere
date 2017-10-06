@@ -49,9 +49,11 @@ class Thread
 		return thread;
 	}
 
-	static join(thread)
+	static join(...threads)
 	{
-		return thread._promise;
+		let promises = from(threads)
+			.select(it => it._promise);
+		return Promise.all(promises);
 	}
 
 	static self()
