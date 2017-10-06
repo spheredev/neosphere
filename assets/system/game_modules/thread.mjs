@@ -42,9 +42,9 @@ class Thread
 {
 	get [Symbol.toStringTag]() { return 'Thread'; }
 
-	static create(options)
+	static create(entity, priority)
 	{
-		let thread = new PromptThread(options);
+		let thread = new PromptThread(entity, priority);
 		thread.start();
 		return thread;
 	}
@@ -153,30 +153,28 @@ class Thread
 
 class PromptThread extends Thread
 {
-	constructor(options)
+	constructor(entity, priority = 0)
 	{
-		super(options);
+		super({ priority });
 
-		this.inputChecker = options.checkInput;
-		this.renderer = options.render;
-		this.updater = options.update;
+		this.entity = entity;
 	}
 
 	async on_checkInput()
 	{
-		if (this.inputChecker !== undefined)
-			await this.inputChecker();
+		if (this.entity.inputChecker !== undefined)
+			await this.entity.inputChecker();
 	}
 
 	on_render()
 	{
-		if (this.renderer !== undefined)
-			return this.renderer();
+		if (this.entity.renderer !== undefined)
+			return this.entity.renderer();
 	}
 
 	async on_update()
 	{
-		if (this.updater === undefined || !await this.updater())
+		if (this.entity.updater === undefined || !await this.entity.updater())
 			this.stop();
 	}
 }

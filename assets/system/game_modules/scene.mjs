@@ -42,7 +42,7 @@ Dispatch.onRender(renderScenes, 99);
 export default
 class Scene
 {
-	get [Symbol.toStringTag]() { return 'Scenario'; }
+	get [Symbol.toStringTag]() { return 'Scene'; }
 
 	static defineOp(name, def)
 	{
