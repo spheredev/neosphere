@@ -160,7 +160,7 @@ async_recur(script_t* script, double priority, async_hint_t hint)
 void
 async_run_jobs(async_hint_t hint)
 {
-	struct job* job;
+	struct job job;
 
 	int i;
 
@@ -169,11 +169,11 @@ async_run_jobs(async_hint_t hint)
 
 	// process recurring jobs
 	for (i = 0; i < vector_len(s_recurring); ++i) {
-		job = vector_get(s_recurring, i);
-		if (job->hint == hint && !job->finished)
-			script_run(job->script, true);
-		if (job->finished) {
-			script_unref(job->script);
+		job = *(struct job*)vector_get(s_recurring, i);
+		if (job.hint == hint && !job.finished)
+			script_run(job.script, true);
+		if (job.finished) {
+			script_unref(job.script);
 			vector_remove(s_recurring, i--);
 		}
 	}
@@ -182,13 +182,13 @@ async_run_jobs(async_hint_t hint)
 	// to work.
 	if (s_onetime != NULL) {
 		for (i = 0; i < vector_len(s_onetime); ++i) {
-			job = vector_get(s_onetime, i);
-			if (job->hint == hint && job->timer-- == 0 && !job->finished) {
-				script_run(job->script, false);
-				job->finished = true;
+			job = *(struct job*)vector_get(s_onetime, i);
+			if (job.hint == hint && job.timer-- == 0 && !job.finished) {
+				script_run(job.script, false);
+				job.finished = true;
 			}
-			if (job->finished) {
-				script_unref(job->script);
+			if (job.finished) {
+				script_unref(job.script);
 				vector_remove(s_onetime, i--);
 			}
 		}
