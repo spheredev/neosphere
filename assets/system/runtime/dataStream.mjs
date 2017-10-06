@@ -30,10 +30,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-const assert = require('assert'),
-      from   = require('from');
+import assert from 'assert';
+import from   from 'from';
 
+export default
 class DataStream extends FileStream
 {
 	get [Symbol.toStringTag]() { return 'DataStream'; }
@@ -366,11 +366,3 @@ function verifyStructDescriptor(desc)
 		}
 	}
 }
-
-// CommonJS
-exports = module.exports = DataStream;
-Object.assign(exports, {
-	__esModule: true,
-	DataStream: DataStream,
-	default:    DataStream,
-});

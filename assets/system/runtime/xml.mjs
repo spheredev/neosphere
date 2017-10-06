@@ -30,59 +30,50 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-const from = require('from');
+const sax = require('./lib/sax');
 
-let kInvocationList = Symbol("invocation list");
-
-class Delegate
+export default
+class XML
 {
-	get [Symbol.toStringTag]() { return 'Delegate'; }
-
 	constructor()
 	{
-		this[kInvocationList] = [];
+		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
 	}
 
-	addHandler(handler, thisObj)
+	static parse(xmlText)
 	{
-		if (haveHandler(this, handler, thisObj))
-			throw new Error("cannot add handler more than once");
-		this[kInvocationList].push({ thisObj, handler });
+		let dom = { type: 'root', nodes: [] };
+		let currentNode = dom;
+		let parentNodes = [];
+
+		// parse the XML document using sax-js
+		let saxStream = sax.parser(true, { normalize: true });
+		saxStream.onopentag = tag => {
+			parentNodes.push(currentNode);
+			currentNode = { type: 'tag', name: tag.name, nodes: [], attributes: {} };
+			for (const key in tag.attributes)
+				currentNode.attributes[key] = tag.attributes[key];
+		};
+		saxStream.onclosetag = tag => {
+			let nodeWithTag = currentNode;
+			currentNode = parentNodes.pop();
+			currentNode.nodes.push(nodeWithTag);
+		};
+		saxStream.oncomment = text => {
+			currentNode.nodes.push({ type: 'comment', text: text });
+		}
+		saxStream.ontext = text => {
+			currentNode.nodes.push({ type: 'text', text: text });
+		}
+		saxStream.write(xmlText);
+		saxStream.close();
+
+		return dom;
 	}
 
-	call(...args)
+	static readFile(fileName)
 	{
-		let lastResult = undefined;
-		for (const entry of this[kInvocationList])
-			lastResult = entry.handler.apply(entry.thisObj, args);
-
-		// use the return value of the last handler called
-		return lastResult;
+		let xmlText = FS.readFile(fileName);
+		return parse(xmlText);
 	}
-
-	removeHandler(handler, thisObj)
-	{
-		if (!haveHandler(this, handler, thisObj))
-			throw new Error("handler is not registered");
-		from.Array(this[kInvocationList])
-			.where(it => it.handler === handler)
-			.where(it => it.thisObj === thisObj)
-			.remove();
-	}
-
 }
-
-function haveHandler(delegate, handler, thisObj)
-{
-	return from.Array(delegate[kInvocationList])
-		.any(it => it.handler === handler && it.thisObj === thisObj);
-}
-
-// CommonJS
-exports = module.exports = Delegate;
-Object.assign(exports, {
-	__esModule: true,
-	Delegate:   Delegate,
-	default:    Delegate,
-});

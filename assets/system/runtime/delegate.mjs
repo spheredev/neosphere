@@ -30,37 +30,49 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-exports.__esModule = true;
-exports.default = exports;
+import from from 'from';
 
-const from = require('from');
-
-class Test
+export default
+class Delegate
 {
-	static run(tests)
-	{
-		let testJobs = from.Object(tests)
-			.where((it, key) => key.startsWith('test'))
-			.where((it, key) => key !== 'test');
-		for (const job in testJobs) {
-			if (typeof job === 'function')
-				job();
-			else if (typeof test === 'object' && test !== null)
-				run(job);
-		}
-	}
+	get [Symbol.toStringTag]() { return 'Delegate'; }
 
 	constructor()
 	{
-		throw new TypeError(`'${new.target.name}' is a singleton and cannot be instantiated`);
+		this._invokeList = [];
 	}
+
+	addHandler(handler, thisObj)
+	{
+		if (haveHandler(this, handler, thisObj))
+			throw new Error("cannot add handler more than once");
+		this._invokeList.push({ thisObj, handler });
+	}
+
+	call(...args)
+	{
+		let lastResult = undefined;
+		for (const entry of this._invokeList)
+			lastResult = entry.handler.apply(entry.thisObj, args);
+
+		// use the return value of the last handler called
+		return lastResult;
+	}
+
+	removeHandler(handler, thisObj)
+	{
+		if (!haveHandler(this, handler, thisObj))
+			throw new Error("handler is not registered");
+		from.Array(this._invokeList)
+			.where(it => it.handler === handler)
+			.where(it => it.thisObj === thisObj)
+			.remove();
+	}
+
 }
 
-// CommonJS
-exports = module.exports = Test;
-Object.assign(exports, {
-	__esModule: true,
-	Test:       Test,
-	default:    Test,
-});
+function haveHandler(delegate, handler, thisObj)
+{
+	return from.Array(delegate._invokeList)
+		.any(it => it.handler === handler && it.thisObj === thisObj);
+}

@@ -30,12 +30,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-const assert = require('assert'),
-      Random = require('random');
+import assert from 'assert';
+import Random from 'random';
 
-const kItemSource = Symbol('from() query source');
-
+export default
 function from(...targets)
 {
 	// for multiple targets, query against the list of targets and unroll with
@@ -50,7 +48,7 @@ function from(...targets)
 		return fromIterable(target);
 	else
 		return fromObject(target);
-};
+}
 
 from.Array = fromArray;
 function fromArray(target)
@@ -82,7 +80,7 @@ function fromIterable(target)
 function MAKEPOINT(sourceType, op)
 {
 	return function (...args) {
-		let thisSource = this[kItemSource];
+		let thisSource = this.itemSource;
 		let newSource = new sourceType(thisSource, ...args);
 
 		// if it's a terminal operator, run the query.  otherwise construct
@@ -106,11 +104,11 @@ function PROPDESC(flags, valueOrGetter, setter)
 		desc.set = setter;
 	}
 	return desc;
-};
+}
 
 function FromQuery(source)
 {
-	this[kItemSource] = source;
+	this.itemSource = source;
 }
 
 Object.defineProperties(FromQuery.prototype,
@@ -118,7 +116,7 @@ Object.defineProperties(FromQuery.prototype,
 	[Symbol.iterator]:
 	PROPDESC('wc', function enumerate(withKeys)
 	{
-		var source = this[kItemSource];
+		var source = this.itemSource;
 		source.init();
 		return { next: next };
 
@@ -631,7 +629,7 @@ function allOp(source)
 			return false;
 	}
 	return true;
-};
+}
 
 function anyOp(source)
 {
@@ -643,7 +641,7 @@ function anyOp(source)
 			return true;
 	}
 	return false;
-};
+}
 
 function collectOp(source)
 {
@@ -654,7 +652,7 @@ function collectOp(source)
 	while (item = source.next())
 		collection[collection.length] = item.v;
 	return collection;
-};
+}
 
 function countOp(source)
 {
@@ -664,7 +662,7 @@ function countOp(source)
 	while (source.next())
 		++numItems;
 	return numItems;
-};
+}
 
 function firstOp(source)
 {
@@ -673,7 +671,7 @@ function firstOp(source)
 	source.init();
 	if (item = source.next())
 		return item.v;
-};
+}
 
 function lastOp(source)
 {
@@ -693,7 +691,7 @@ function nullOp(source)
 	while (source.next()) {
 		/* no-op */
 	}
-};
+}
 
 function removeOp(source)
 {
@@ -711,7 +709,7 @@ function removeOp(source)
 		else
 			delete item.t[item.k]
 	}
-};
+}
 
 function updateOp(source)
 {
@@ -720,12 +718,4 @@ function updateOp(source)
 	source.init();
 	while (item = source.next())
 		item.t[item.k] = item.v;
-};
-
-// CommonJS
-exports = module.exports = from;
-Object.assign(exports, {
-	__esModule: true,
-	from:       from,
-	default:    from,
-});
+}

@@ -30,55 +30,26 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
+import from from 'from';
 
-class Logger
+export default
+class Test
 {
-	get [Symbol.toStringTag]() { return 'Logger'; }
-
-	constructor(fileName)
+	static run(tests)
 	{
-		let fullPath = FS.fullPath(fileName, '~/logFiles');
-		if (fullPath.substr(0, 2) != fileName.substr(0, 2))  // SphereFS prefix?
-			fullPath += '.log';
-
-		this._textEncoder = new TextEncoder();
-		this._stream = new FileStream(fullPath, FileOp.Update);
-		this._groups = [];
-
-		let timestamp = new Date().toISOString();
-		let logLine = `LOG FILE OPENED: ${timestamp}`;
-		this._stream.write(this._textEncoder.encode(`\n${logLine}\n`));
+		let testJobs = from.Object(tests)
+			.where((it, key) => key.startsWith('test'))
+			.where((it, key) => key !== 'test');
+		for (const job in testJobs) {
+			if (typeof job === 'function')
+				job();
+			else if (typeof test === 'object' && test !== null)
+				run(job);
+		}
 	}
 
-	beginGroup(text)
+	constructor()
 	{
-		text = text.toString();
-		this.write(`BEGIN: ${text}`);
-		this._groups.push(text);
-	}
-
-	endGroup()
-	{
-		let groupName = this._groups.pop();
-		this.write(`END: ${groupName}`);
-	}
-
-	write(text)
-	{
-		text = text.toString();
-		let timestamp = new Date().toISOString();
-		this._stream.write(this._textEncoder.encode(`${timestamp} .. `));
-		for (let i = 0; i < this._groups.length; ++i)
-			this._stream.write(_encoder.encode("  "));
-		this._stream.write(this._textEncoder.encode(`${text}\n`));
+		throw new TypeError(`'${new.target.name}' is a singleton and cannot be instantiated`);
 	}
 }
-
-// CommonJS
-exports = module.exports = Logger;
-Object.assign(exports, {
-	__esModule: true,
-	Logger:     Logger,
-	default:    Logger,
-});

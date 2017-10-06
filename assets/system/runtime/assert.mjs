@@ -30,16 +30,13 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-exports = module.exports = assert;
-exports.__esModule = true;
-exports.default = exports;
-
-assert.ok = assert;
+export default
 function assert(guard, message)
 {
 	equal(!!guard, true, message);
 }
+
+assert.ok = assert;
 
 assert.deepEqual = deepEqual;
 function deepEqual(actual, expected, message)

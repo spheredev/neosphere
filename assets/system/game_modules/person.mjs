@@ -30,13 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-exports = module.exports = Person;
-exports.__esModule = true;
-exports.default = exports;
-
-var Console = require('console'),
-    Thread  = require('thread');
+import Thread from 'thread';
 
 function LegacyToNewColor(o) {
 	return new Color(o.red / 255, o.green / 255, o.blue / 255, o.alpha / 255);
@@ -46,7 +40,8 @@ function NewToLegacyColor(n) {
     return CreateColor(n.r * 255, n.g * 255, n.b * 255, n.a * 255);
 }
 
-Person.generatePersonObjects = function fromMap(arr, ignore) {
+export
+function generatePersonObjects(arr, ignore) {
 	// if ignore, arr = list of people not to use
 	var objects = [];
 	var personlist = GetPersonList();
@@ -62,21 +57,21 @@ Person.generatePersonObjects = function fromMap(arr, ignore) {
 	return objects;
 }
 
+export default
 function Person(name,spriteset,destroy_with_map, force) {
 	if(DoesPersonExist(name)) {
 		if(!force) throw "\"" + name + "\" already exists. Duplicate names are not allowed.";
-		else Console.log("WARNING: \"" + name + "\" already exists, this might cause trouble");
 	} else {
 		CreatePerson(name, spriteset, destroy_with_map);
 	}
 	this.name = name;
 
 	this.alive = true;
-	this.threadID = Thread.create(this);
+	this.thread = Thread.create(this);
 }
 
 Person.prototype.killThread = function() {
-	Thread.kill(this.threadID);
+	this.thread.stop();
 }
 
 Person.prototype.clone = function(new_name,same_data,generating) {

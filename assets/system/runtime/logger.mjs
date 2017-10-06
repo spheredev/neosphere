@@ -30,58 +30,46 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-'use strict';
-const sax = require('./lib/sax');
-
-class XML
+export default
+class Logger
 {
-	constructor()
+	get [Symbol.toStringTag]() { return 'Logger'; }
+
+	constructor(fileName)
 	{
-		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
+		let fullPath = FS.fullPath(fileName, '~/logFiles');
+		if (fullPath.substr(0, 2) != fileName.substr(0, 2))  // SphereFS prefix?
+			fullPath += '.log';
+
+		this._textEncoder = new TextEncoder();
+		this._stream = new FileStream(fullPath, FileOp.Update);
+		this._groups = [];
+
+		let timestamp = new Date().toISOString();
+		let logLine = `LOG FILE OPENED: ${timestamp}`;
+		this._stream.write(this._textEncoder.encode(`\n${logLine}\n`));
 	}
 
-	static parse(xmlText)
+	beginGroup(text)
 	{
-		let dom = { type: 'root', nodes: [] };
-		let currentNode = dom;
-		let parentNodes = [];
-
-		// parse the XML document using sax-js
-		let saxStream = sax.parser(true, { normalize: true });
-		saxStream.onopentag = tag => {
-			parentNodes.push(currentNode);
-			currentNode = { type: 'tag', name: tag.name, nodes: [], attributes: {} };
-			for (const key in tag.attributes)
-				currentNode.attributes[key] = tag.attributes[key];
-		};
-		saxStream.onclosetag = tag => {
-			let nodeWithTag = currentNode;
-			currentNode = parentNodes.pop();
-			currentNode.nodes.push(nodeWithTag);
-		};
-		saxStream.oncomment = text => {
-			currentNode.nodes.push({ type: 'comment', text: text });
-		}
-		saxStream.ontext = text => {
-			currentNode.nodes.push({ type: 'text', text: text });
-		}
-		saxStream.write(xmlText);
-		saxStream.close();
-
-		return dom;
+		text = text.toString();
+		this.write(`BEGIN: ${text}`);
+		this._groups.push(text);
 	}
 
-	static readFile(fileName)
+	endGroup()
 	{
-		let xmlText = FS.readFile(fileName);
-		return parse(xmlText);
+		let groupName = this._groups.pop();
+		this.write(`END: ${groupName}`);
+	}
+
+	write(text)
+	{
+		text = text.toString();
+		let timestamp = new Date().toISOString();
+		this._stream.write(this._textEncoder.encode(`${timestamp} .. `));
+		for (let i = 0; i < this._groups.length; ++i)
+			this._stream.write(_encoder.encode("  "));
+		this._stream.write(this._textEncoder.encode(`${text}\n`));
 	}
 }
-
-// CommonJS
-exports = module.exports = XML;
-Object.assign(exports, {
-	__esModule: true,
-	XML:        XML,
-	default:    XML,
-});
