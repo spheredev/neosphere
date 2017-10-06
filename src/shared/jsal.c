@@ -117,7 +117,7 @@ static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call     (JsValueRef callee, 
 static void                        add_compiled_script      (const char* filename, JsSourceContext script_id);
 static const char*                 filename_from_script_id  (JsSourceContext script_id);
 static void                        free_ref                 (js_ref_t* ref);
-static JsModuleRecord              get_module_record        (const char* filename, bool *out_is_new);
+static JsModuleRecord              get_module_record        (const char* filename, JsModuleRecord parent, bool *out_is_new);
 static JsValueRef                  get_value                (int stack_index);
 static JsPropertyIdRef             make_property_id         (JsValueRef key_value);
 static js_ref_t*                   make_ref                 (JsRef value, bool weak_ref);
@@ -513,7 +513,7 @@ jsal_eval_module(const char* filename)
 
 	source = jsal_require_lstring(-1, &source_len);
 	JsCreateString(filename, strlen(filename), &url_string);
-	module = get_module_record(filename, &is_new_module);
+	module = get_module_record(filename, NULL, &is_new_module);
 	if (is_new_module) {
 		script_cookie = s_next_script_id++;
 		error_code = JsParseModuleSource(module,
@@ -2264,7 +2264,7 @@ filename_from_script_id(JsSourceContext script_id)
 }
 
 static JsModuleRecord
-get_module_record(const char* filename, bool *out_is_new)
+get_module_record(const char* filename, JsModuleRecord parent, bool *out_is_new)
 {
 	struct module* cached;
 	struct module  module;
@@ -2282,7 +2282,7 @@ get_module_record(const char* filename, bool *out_is_new)
 	
 	*out_is_new = true;
 	JsCreateString(filename, strlen(filename), &specifier);
-	JsInitializeModuleRecord(NULL, specifier, &module_record);
+	JsInitializeModuleRecord(parent, specifier, &module_record);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_import_module);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_module_ready);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_HostDefined, specifier);
@@ -2538,7 +2538,7 @@ on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *
 			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
 		filename = jsal_require_string(-2);
 		source = jsal_require_lstring(-1, &source_len);
-		module = get_module_record(filename, &is_new_module);
+		module = get_module_record(filename, importer, &is_new_module);
 		if (is_new_module) {
 			add_compiled_script(filename, s_next_script_id);
 			job.script_id = s_next_script_id++;

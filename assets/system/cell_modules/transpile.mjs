@@ -30,8 +30,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const Babel = require('#/babel-core'),
-      from  = require('from');
+import from from 'from';
+
+const Babel = require('#/babel-core');
 
 let moduleTool = makeTranspileTool(2),
     scriptTool = makeTranspileTool(1);

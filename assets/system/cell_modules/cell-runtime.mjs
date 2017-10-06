@@ -30,12 +30,15 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+// Cell-specific modules
 export { default as transpile } from 'transpile';
 
-export const assert     = require('assert'),
-             from       = require('from'),
-             DataStream = require('dataStream'),
-             Delegate   = require('delegate'),
-             Random     = require('random'),
-             Test       = require('test'),
-             XML        = require('xml');
+// Sphere Runtime shared modules
+export { default as assert }     from 'assert';
+export { default as from }       from 'from';
+export { default as DataStream } from 'dataStream';
+export { default as Delegate }   from 'delegate';
+export { default as Logger }     from 'logger';
+export { default as Random }     from 'random';
+export { default as Test }       from 'test';
+export { default as XML }        from 'xml';

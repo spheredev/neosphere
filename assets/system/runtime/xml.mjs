@@ -30,7 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const sax = require('./lib/sax');
+const sax = require('#/lib/sax');
 
 export default
 class XML
