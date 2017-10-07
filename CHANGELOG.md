@@ -16,6 +16,8 @@ v5.0.0 - TBD
 * Adds a new `DataStream` class, which extends from `FileStream` to allow more
   easily reading binary data such as integers and strings from a file.
 * Adds `Sphere.shutDown()` which initiates an asynchronous exit.
+* Adds a new `inBackground` option for Dispatch jobs, for setting up background
+  tasks that shouldn't keep the event loop alive by themselves.
 * Adds an optional `sandbox` field to `game.json` which can be set to either
   `relaxed` or `none` to relax the file system sandbox and ease development.
   Don't turn these on in the final release!
@@ -26,6 +28,8 @@ v5.0.0 - TBD
 * Changes `Console` into a full-fledged class, which allows for a familiar
   `new Console()` usage and gives games the ability to set up multiple consoles
   if desired.
+* Renames `from.Array()` and `from.Object()` to lowercase to match typical
+  JavaScript naming conventions.
 * Renames `screen.frameRate` and `screen.now()` to `Sphere.frameRate` and
   `Sphere.now()`, respectively.
 * Renames `Dispatch.cancel()` to `JobToken#cancel()`.

@@ -1089,8 +1089,8 @@ Thread#on_render(); [event handler]
 Thread#on_update(); [event handler]
 
     Implement this in your subclass to provide code to be executed every frame.
-    Updates will be done at a rate determined by the value of
-    `screen.frameRate`.
+    The value of `Sphere.frameRate` (see the Core API documentation) determines
+    how often updates will be done.
 
 Thread#takeInput();
 

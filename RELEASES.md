@@ -29,6 +29,10 @@ miniSphere 5.0
   are listed below, but be sure to review the API documentation to get fully
   up to speed!
 
+* `Dispatch.onUpdate()` and `Dispatch.onRender()` now take an options object
+  as their second parameter.  Job priority is now be specified as a property of
+  the options argument and defaults to 0.0 if not provided, as before.
+
 * `DataReader` and `DataWriter` have been combined into a single class,
   `DataStream`, which inherits from `FileStream`.  This makes it easier to use
   as it's no longer necessary to construct a FileStream separately.  Naturally,
