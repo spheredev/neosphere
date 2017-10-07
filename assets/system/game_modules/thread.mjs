@@ -174,21 +174,21 @@ class PromptThread extends Thread
 		this.entity = entity;
 	}
 
-	async on_checkInput()
+	async on_inputCheck()
 	{
-		if (this.entity.inputChecker !== undefined)
-			await this.entity.inputChecker();
+		if (this.entity.getInput !== undefined)
+			await this.entity.getInput();
 	}
 
 	on_render()
 	{
-		if (this.entity.renderer !== undefined)
-			return this.entity.renderer();
+		if (this.entity.render !== undefined)
+			return this.entity.render();
 	}
 
 	async on_update()
 	{
-		if (this.entity.updater === undefined || !await this.entity.updater())
+		if (this.entity.update === undefined || !await this.entity.update())
 			this.stop();
 	}
 }
