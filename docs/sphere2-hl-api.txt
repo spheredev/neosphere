@@ -99,7 +99,7 @@ from(source[, ...]);
     you should use one of the specialized calls below and work through one at a
     time.
 
-from.Array(array);
+from.array(array);
 
     Constructs a FromQuery against an array or array-like object.  `array` must
     have a number-valued `length` property, and only sequential integer keys in
@@ -108,18 +108,18 @@ from.Array(array);
     Throws a TypeError if the object either doesn't have a `length` property or
     its value is non-numeric.
 
-from.Object(object);
-
-    Constructs a FromQuery against an ordinary JavaScript object.  Only
-    enumerable own properties of the object will be queried.  Non-enumerable
-    and inherited properties will be ignored.
-
 from.iterable(source);
 
     Constructs a FromQuery against an iterable object.  Iterable objects are
     those implementing the JavaScript "iterable protocol"; in other words,
     objects implementing `[Symbol.iterator]`.  `from()` queries are themselves
     iterable.
+
+from.object(object);
+
+    Constructs a FromQuery against an ordinary JavaScript object.  Only
+    enumerable own properties of the object will be queried.  Non-enumerable
+    and inherited properties will be ignored.
 
 from#all(predicate);
 

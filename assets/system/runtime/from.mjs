@@ -50,20 +50,13 @@ function from(...targets)
 		return fromObject(target);
 }
 
-from.Array = fromArray;
+from.array = fromArray;
 function fromArray(target)
 {
 	target = Object(target);
 	if (typeof target.length !== 'number')
 		throw new TypeError("object with 'length' required");
 	var itemSource = new ArraySource(target);
-	return new FromQuery(itemSource);
-}
-
-from.Object = fromObject;
-function fromObject(target)
-{
-	var itemSource = new ObjectSource(Object(target));
 	return new FromQuery(itemSource);
 }
 
@@ -74,6 +67,13 @@ function fromIterable(target)
 	if (typeof target[Symbol.iterator] !== 'function' && typeof target.next !== 'function')
 		throw new TypeError("object is not iterable");
 	var itemSource = new IterableSource(target);
+	return new FromQuery(itemSource);
+}
+
+from.object = fromObject;
+function fromObject(target)
+{
+	var itemSource = new ObjectSource(Object(target));
 	return new FromQuery(itemSource);
 }
 

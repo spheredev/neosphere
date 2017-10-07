@@ -51,7 +51,7 @@ class Thread
 
 	static join(...threads)
 	{
-		let promises = from(threads)
+		let promises = from.array(threads)
 			.select(it => it._promise);
 		return Promise.all(promises);
 	}
@@ -117,7 +117,7 @@ class Thread
 
 		// after thread terminates, remove from input stack
 		this._promise.then(() => {
-			from.Array(inputThreads)
+			from.array(inputThreads)
 				.where(it => !it._started)
 				.remove();
 		});
@@ -142,7 +142,7 @@ class Thread
 		if (this.on_inputCheck === Thread.on_inputCheck)
 			throw new TypeError("thread cannot accept user input");
 
-		inputThreads = from.Array(inputThreads)
+		inputThreads = from.array(inputThreads)
 			.where(it => it != this)
 			.including([ this ])
 			.toArray();

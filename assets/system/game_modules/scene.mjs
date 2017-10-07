@@ -179,7 +179,7 @@ class Scene
 				this.forks = timeline.children;
 			},
 			update(scene) {
-				return from.Array(this.forks)
+				return from.array(this.forks)
 					.where(it => it.running)
 					.count() > 0;
 			}

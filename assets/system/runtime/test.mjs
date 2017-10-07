@@ -37,7 +37,7 @@ class Test
 {
 	static run(tests)
 	{
-		let testJobs = from.Object(tests)
+		let testJobs = from.object(tests)
 			.where((it, key) => key.startsWith('test'))
 			.where((it, key) => key !== 'test');
 		for (const job in testJobs) {

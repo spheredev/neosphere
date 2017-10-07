@@ -140,7 +140,7 @@ function crossfade(fileName, frames, forceChange)
 	}
 	if (fileName !== null) {
 		let fullPath = FS.fullPath(fileName, '@/music');
-		fullPath = from([ '', '.ogg', '.mp3', '.it', '.mod', '.s3m', '.xm', '.flac' ])
+		fullPath = from.array([ '', '.ogg', '.mp3', '.it', '.mod', '.s3m', '.xm', '.flac' ])
 			.select(suffix => `${fullPath}${suffix}`)
 			.first(fileName => FS.fileExists(fileName))
 		if (fullPath === undefined)

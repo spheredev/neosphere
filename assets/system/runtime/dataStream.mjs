@@ -356,10 +356,10 @@ function verifyStructDescriptor(desc)
 	for (const key of Object.keys(desc)) {
 		let fieldDesc = desc[key];
 		let fieldType = fieldDesc.type;
-		if (!from.Array(FieldTypes).any(it => it === fieldType))
+		if (!from.array(FieldTypes).any(it => it === fieldType))
 			throw new TypeError(`invalid field type '${fieldType}'`);
 		if (fieldType in Attributes) {
-			let haveAttributes = from.Array(Attributes[fieldType])
+			let haveAttributes = from.array(Attributes[fieldType])
 				.all(it => it in fieldDesc);
 			if (!haveAttributes)
 				throw new TypeError(`missing attributes for '${fieldType}'`);
