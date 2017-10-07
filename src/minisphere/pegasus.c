@@ -1885,7 +1885,7 @@ js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 	if (num_args >= 2)
 		priority = jsal_require_number(1);
 
-	if (!(token = async_recur(script, priority, ASYNC_RENDER)))
+	if (!(token = async_recur(script, priority, false, ASYNC_RENDER)))
 		jsal_error(JS_ERROR, "dispatch failed");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -1902,7 +1902,7 @@ js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
 	if (num_args >= 2)
 		priority = jsal_require_number(1);
 
-	if (!(token = async_recur(script, priority, ASYNC_UPDATE)))
+	if (!(token = async_recur(script, priority, false, ASYNC_UPDATE)))
 		jsal_error(JS_ERROR, "dispatch failed");
 	jsal_pegasus_push_job_token(token);
 	return true;

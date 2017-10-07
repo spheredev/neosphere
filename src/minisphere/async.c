@@ -38,6 +38,7 @@
 
 struct job
 {
+	bool         background;
 	bool         finished;
 	async_hint_t hint;
 	double       priority;
@@ -134,7 +135,7 @@ async_defer(script_t* script, uint32_t timeout, async_hint_t hint)
 }
 
 int64_t
-async_recur(script_t* script, double priority, async_hint_t hint)
+async_recur(script_t* script, double priority, bool background, async_hint_t hint)
 {
 	struct job job;
 
@@ -145,6 +146,7 @@ async_recur(script_t* script, double priority, async_hint_t hint)
 		// get rendered later in a frame, i.e. closer to the screen.
 		priority = -priority;
 	}
+	job.background = background;
 	job.finished = false;
 	job.hint = hint;
 	job.priority = priority;

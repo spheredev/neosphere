@@ -23,6 +23,10 @@ those at file scope) with `s_`. There is one exception: simple utility functions
 with no side effects can leave out the word separator when appropriate, e.g.
 `nativecolor()`.
 
+**Important:** When writing cloning functions, always name the variable holding
+the cloned object `dolly`! (Yes, that was critically important, why are you
+looking at me like that?!)
+
 Placement of Braces
 -------------------
 
