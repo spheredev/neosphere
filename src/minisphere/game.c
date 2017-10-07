@@ -125,7 +125,7 @@ game_open(const char* game_path)
 		// a bare script transparent to the rest of the engine, keeping things simple.
 		console_log(1, "synthesizing manifest for '%s' from game #%u", path_cstr(path),
 			s_next_game_id);
-		game->version = 1;
+		game->version = path_has_extension(path, ".mjs") ? 2 : 1;
 		game->name = lstr_new(path_filename(path));
 		game->author = lstr_new("Author Unknown");
 		game->summary = lstr_new(path_cstr(path));
@@ -896,7 +896,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	if (jsal_get_prop_string(-8, "fullScreen") && jsal_is_boolean(-1))
 		game->fullscreen = jsal_get_boolean(-1);
 	else
-		game->fullscreen = true;
+		game->fullscreen = false;
 
 	if (jsal_get_prop_string(-9, "sandbox") && jsal_is_string(-1)) {
 		sandbox_mode = jsal_get_string(-1);
