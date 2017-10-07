@@ -31,13 +31,17 @@
 **/
 
 import assert from 'assert';
-import from   from 'from';
-import Prim   from 'prim';
+import from from 'from';
+import Prim from 'prim';
 import Thread from 'thread';
 
 let screenMask = Color.Transparent;
 
-Dispatch.onRender(renderScenes, 99);
+Dispatch.onRender(() =>
+{
+	if (screenMask.a > 0.0)
+		Prim.fill(screen, screenMask);
+}, 99);
 
 export default
 class Scene
@@ -286,12 +290,6 @@ class OpThread extends Thread
 			await this.stop();
 	}
 }
-
-function renderScenes()
-{
-	if (screenMask.a > 0.0)
-		Prim.fill(screen, screenMask);
-};
 
 Scene.defineOp('call',
 {

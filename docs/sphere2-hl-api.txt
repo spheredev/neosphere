@@ -335,10 +335,10 @@ new Console(options);
             A `Key` value specifying which keyboard key will show and hide the
             console.  If not provided, defaults to `Key.Tilde`.
 
-		options.prompt
+        options.prompt
 
-		    A string specifying the text to display in front of the command
-			line.  The default is "$".
+            A string specifying the text to display in front of the command
+            line.  The default is "$".
 
 Console#visible [read/write]
 
@@ -701,10 +701,10 @@ Music.reset([fadeTime]);
 `Pact` Object
 -------------
 
-Promises, the mechanism underlying `async` functions in JavaScript, are a
+Promises, the mechanism underlying asynchronous functions in JavaScript, are a
 powerful construct but can be difficult to work with.  A promise represents the
 future result of some ongoing task which will eventually settle it; outside
-code can only observe it.
+code can only observe the promise and await its resolution.
 
 Normally, a Promise can only be settled from within a closure passed to the
 `Promise` constructor.  This makes managing promises awkward if not overly
@@ -876,23 +876,23 @@ defined, the scene below would cause the screen to fade out simultaneously and
 the person `scott` to walk offscreen, and finally change the background music
 only when both are complete:
 
-    var myScene = new Scene()
+    let myScene = new Scene()
         .fork()  // fork the timeline
             .fadeTo(new Color(0, 0, 0, 255), 2.0)  // 2 sec. fade
         .end()
         .walkOffscreen("scott")
         .resync()  // resync point - await completion of forks
-        .changeBGM('maggieIsHungry')
+        .changeBGM('maggieIsHungry');
 
 This scene can be played back at any time by calling `myScene.run()`.  miniRT's
 scene engine uses the threads module and by default, scenes are nonblocking.
 See the documentation for `Scene#run()` below to find out how to play a scene
 in blocking mode.
 
-Scene.defineAction(name, def);
+Scene.defineOp(name, def);
 
-    Registers a new action with the scene engine.  `name` is the name of the
-    action and should be a valid JavaScript identifier (although this is not
+    Registers a new scenelet with the scene engine.  `name` is the name of the
+    operation and should be a valid JavaScript identifier (although this is not
     enforced).  `def` is an object defining the scenelet, and should include
     the following function properties:
 
@@ -933,24 +933,24 @@ Scene.defineAction(name, def);
 new Scene();
 
     Constructs a new scene definition.  The scene starts with no scenelets and
-    will do nothing when run.  Calling any method other than .run() on the scene
-    will add scenelets, and this is how you build a scene.
+    will do nothing when run.  Calling any method other than .run() on the
+    scene will add scenelets, and this is how you build a scene.
 
-Scene#isRunning();
+Scene#running [read-only]
 
-    true if scene execution is in progress, false if not.
+    `true` if scene execution is in progress, `false` if not.
 
-Scene#doIf(fn);
+Scene#doIf(predicate);
 
-    `fn` should be a function.  Any scenelets between the doIf() and its
-    corresponding end() will be executed only if the function returns true.
-    This is like to an `if` statement in JavaScript.
+    `predicate` should be a function.  Any scenelets between the doIf() and its
+    corresponding end() will be executed only if the predicate returns `true`.
+    This works like an `if` statement in JavaScript.
 
-Scene#doWhile(fn);
+Scene#doWhile(predicate);
 
-    `fn` should be a function.  Any scenelets between the doWhile() and its
-    corresponding end() will be executed in a loop as long as the function
-    keeps returning true.  This is like to a `while` statement in JavaScript.
+    `predicate` should be a function.  Any scenelets between the doWhile() and
+    its corresponding end() will be executed in a loop as long as the predicate
+    returns `true`.  This works like a `while` statement in JavaScript.
 
 Scene#end();
 
@@ -964,7 +964,7 @@ Scene#end();
 Scene#fork();
 
     A metascenelet which forks the timeline.  This opens a new timeline to which
-    all subsequent scenelets are added until an end() metascenelet is
+    all subsequent scenelets are added until a corresponding end() is
     encountered.  Forked timelines run in parallel with the timeline that
     spawned them.
 
@@ -979,22 +979,25 @@ Scene#resync();
     may be forked to run operations in parallel, but it is sometimes necessary
     to wait until several simultaneous operations have completed before
     continuing.  Resync points do just that, halting the timeline they are found
-    on until all outstanding forks against it have completed.
+    on until all timelines forked from it have completed.
 
     There is an implicit resync point at the end of a timeline.  In practice,
     this means that a scene will not complete until all of its timelines have
     completed.
 
-Scene#run([blocking]);
+Scene#run();
 
-    Plays back this scene.  `blocking` is an optional boolean argument
-    specifying whether to wait for the scene to finish before returning.  If not
-    provided, the default is false.
+    Starts playing the scene and returns a promise which resolves once playback
+    ends.  This function can be used with `await`.
 
 Scene#stop();
 
-    Stops scene execution immediately.  This works like the Stop button on a CD
-    player: The next time the scene is run, it will start from the beginning.
+    Stops playing the scene.  This works like the Stop button on a CD player:
+    The next time the scene is run, it will start from the beginning.
+
+    Note: Stopping a scene this way will cause the promise returned by `run()`
+          to resolve normally.  It will not be rejected as this is not an error
+          condition.
 
 
 `Test` Namespace
@@ -1018,79 +1021,80 @@ Test.run(tests);
           will be called as well.
 
 
-`Thread` Namespace
-------------------
+`Thread` Objects
+----------------
 
-An easy-to-use cooperative threading engine.  In Sphere v1, games could define
-an update and render script, which would called each frame.  Using the `Thread`
-object, multiple threads can be created, each with its own update and render
-handler.  This allows many actions to run simultaneously.  For example, you
-might have a thread to run the in-game clock and another to manage animations.
-An active-time battle engine might even use several threads to manage each of
-the units on the battlefield.
+Using `Thread`, independent threads can be started and stopped at will, each
+with its own update and render handler.  This allows game processes to run in
+parallel.  For example, you might have a thread to run the in-game clock and
+another to run your battle system.
+
+While `Thread` objects are not true, native threads (JS is single-threaded!),
+they come close.  An update handler can freely `await` on the result of a
+promise and other threads will happily continue on their way, all without
+blocking the event loop.
 
     import { Thread } from 'sphere-runtime';
 
-Thread.create(def[, priority]);
+Thread.join(thread[, ...]);
 
-    Creates a new thread and returns its thread ID (an integer).  `def` should
-    be an object with the following properties:
-
-        def.update()
-
-            The thread's update function.  This is called once per game frame to
-            update any state maintained by the thread.  The update function
-            should return true to keep the thread going.  If it ever returns
-            false, the thread will terminate.
-
-        def.render()
-
-            Optional.  The thread's render function.  This is called once per
-            render frame to perform any rendering related to the thread.  For
-            example, a thread managing a battle unit could render its sprite.
-            Render order of threads is determined by `priority`, with higher
-            priority threads being rendered later (closer to the screen).
-
-        def.getInput()
-
-            Optional.  Called once per frame to process player input for the
-            thread.  In the current version of miniRT (2.0), getInput() and
-            update() calls will always match 1:1.  Future versions may change
-            this however, for example by implementing an input stack or
-            Z-ordering of some form.
-
-    Each of the above functions is called with its `this` binding set to `def`.
-    This can be used to implement an "entity": a full object implementing the
-    above functions which manages its own thread.
-
-Thread.isRunning(tid);
-
-    true if a thread with thread ID `tid` is running.  miniRT never recycles
-    thread IDs, so this can be counted on to return false if given the tid of a
-    thread which has terminated.
-
-Thread.join(tid);
-
-    Blocks the caller and awaits termination of the thread with thread ID `tid`.
-    Any running threads (and the map engine, if it's in use) will continue to
-    run.  If called during a thread update, the calling thread will be blocked
-    from updating or accepting input until the join is satisfied.
-
-    Note that due to limitations inherent to JavaScript's single-threaded
-    architecture, join is implemented recursively and can only be satisfied in
-    a last-in-first-out manner.  So if two threads are being awaited and the
-    first one terminates, the corresponding join cannot be satisfied until the
-    second thread also terminates.
-
-Thread.kill(tid);
-
-    Forcibly terminates the thread with thread ID `tid`.  If the thread ID is
-    invalid or has already terminated, nothing happens.
+    Returns a promise that resolves upon termination of one or more threads.
+    Works with `await`.  If multiple threads are specified, the promise will
+    not resolve until all of them have finished.
 
 Thread.self();
 
-    When called from an update or render function, returns the thread ID of the
-    active thread.  Otherwise, returns 0.
+    When called during execution of an update or render function, returns the
+    thread currently being updated.  Otherwise returns `null`.
+
+    Note: Due to technical constraints imposed by Sphere's event loop model,
+          this will currently return `null` if called after returning from an
+          `await` statement.
+
+new Thread(options);
+
+    Constructs a Thread object.  This can only be invoked as a `super()` call;
+    calling this directly as `new Thread()` will produce a TypeError.
+
+    options.priority [default: 0.0]
+
+        The thread priority.  Higher priority threads will be updated
+        sooner and rendered later in a frame.  Especially useful to enforce
+        rendering order.
+
+Thread#running [read-only]
+
+    `true` if this thread is running (even if it's awaiting a promise),
+    otherwise `false`.
+
+Thread#on_inputCheck(); [event handler]
+
+    Implement this in your subclass to provide code to accept user input.  This
+    will be called once per frame, but only if the thread has been given input
+    focus by calling `Thread#takeInput()`.
+
+Thread#on_render(); [event handler]
+
+    Implement this in your subclass to provide code to draw objects associated
+    with the thread.  Renders may be skipped in order to maintain the game's
+    desired frame rate, so you'll want to avoid putting any "business logic" in
+    here.
+
+Thread#on_update(); [event handler]
+
+    Implement this in your subclass to provide code to be executed every frame.
+    Updates will be done at a rate determined by the value of
+    `screen.frameRate`.
+
+Thread#takeInput();
+
+    Gives this thread the input focus.  Only the thread with input focus will
+    receive inputCheck events (see below).
+
+Thread#yieldInput();
+
+    If this thread currently has the input focus, calling this gives it back to
+    the previously-focused thread.  Otherwise this does nothing.
 
 
 `XML` Namespace

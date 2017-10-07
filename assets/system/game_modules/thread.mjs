@@ -137,8 +137,10 @@ class Thread
 
 	takeInput()
 	{
+		if (!this.running)
+			throw new Error("thread is not running");
 		if (this.on_inputCheck === Thread.on_inputCheck)
-			throw new TypeError("thread doesn't accept user input");
+			throw new TypeError("thread cannot accept user input");
 
 		inputThreads = from.Array(inputThreads)
 			.where(it => it != this)

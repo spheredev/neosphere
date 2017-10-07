@@ -31,22 +31,22 @@
 **/
 
 // miniSphere-specific modules
-export { default as Console }    from 'console';
-export { default as Image }      from 'image';
-export { default as Joypad }     from 'joypad';
-export { default as Music }      from 'music';
-export { default as Pact }       from 'pact';
-export { default as Person }     from 'person';
-export { default as Prim }       from 'prim';
-export { default as Scene }      from 'scene';
-export { default as Thread }     from 'thread';
+export { default as Console } from 'console';
+export { default as Image } from 'image';
+export { default as Joypad } from 'joypad';
+export { default as Music } from 'music';
+export { default as Pact } from 'pact';
+export { default as Person } from 'person';
+export { default as Prim } from 'prim';
+export { default as Scene } from 'scene';
+export { default as Thread } from 'thread';
 
 // Sphere Runtime shared modules
-export { default as assert }     from 'assert';
-export { default as from }       from 'from';
+export { default as assert } from 'assert';
+export { default as from } from 'from';
 export { default as DataStream } from 'dataStream';
-export { default as Delegate }   from 'delegate';
-export { default as Logger }     from 'logger';
-export { default as Random }     from 'random';
-export { default as Test }       from 'test';
-export { default as XML }        from 'xml';
+export { default as Delegate } from 'delegate';
+export { default as Logger } from 'logger';
+export { default as Random } from 'random';
+export { default as Test } from 'test';
+export { default as XML } from 'xml';

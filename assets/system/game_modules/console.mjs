@@ -30,10 +30,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from   from 'from';
+import from from 'from';
 import Logger from 'logger';
-import Prim   from 'prim';
-import Scene  from 'scene';
+import Prim from 'prim';
+import Scene from 'scene';
 import Thread from 'thread';
 
 export default

@@ -30,7 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from  from 'from';
+import from from 'from';
 import Scene from 'scene';
 
 let adjuster = null,
