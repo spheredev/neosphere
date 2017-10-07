@@ -24,6 +24,11 @@ miniSphere 5.0
   Babel and modules originally written for Node.js.  New code should always use
   the ES2015 module syntax (`import`/`export`) and the `.mjs` file extension.
 
+* The entire Sphere Runtime was overhauled and is now written entirely in mJS.
+  This brought several breaking changes both major and minor.  The big changes
+  are listed below, but be sure to review the API documentation to get fully
+  up to speed!
+
 * `DataReader` and `DataWriter` have been combined into a single class,
   `DataStream`, which inherits from `FileStream`.  This makes it easier to use
   as it's no longer necessary to construct a FileStream separately.  Naturally,
@@ -41,6 +46,16 @@ miniSphere 5.0
   promise closure.  As long as you have a reference to both the Promise object
   and the Pact it came from, you can resolve or reject it at any time.
 
+* `Scene#run()` now returns a promise that can be `await`ed and never blocks.
+  The boolean parameter that specified whether or not to block until completion
+  has been removed; if you want a scene to run in the background, simply ignore
+  the promise.
+
+* `Thread.join()` is no longer a blocking call and instead returns a promise
+  that can be `await`ed.  This allows any thread to await termination of
+  another without delaying other threads, regardless of how many joins are
+  already underway.
+
 * A new `sandbox` field in the JSON game manifest can be used to relax the
   SphereFS sandbox in order to ease development.  The default is a full sandbox
   as before; 'relaxed' allows use of absolute paths and write access to the
@@ -50,6 +65,10 @@ miniSphere 5.0
   former function, `Sphere.shutDown()` does not exit immediately but rather
   cancels all outstanding Dispatch jobs, allowing the event loop to unwind
   naturally on the next tick.
+
+* `screen.now()` and `screen.frameRate` have been moved into the `Sphere`
+  namespace.  This better reflects the fact that they regulate the event loop
+  rather the screen directly.
 
 
 miniSphere 4.8

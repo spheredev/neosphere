@@ -108,26 +108,26 @@ struct script
 	JsSourceContext script_id;
 };
 
-static void CHAKRA_CALLBACK        on_debugger_event        (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
-static void CHAKRA_CALLBACK        on_dispatch_job          (JsValueRef function, void* userdata);
-static void CHAKRA_CALLBACK        on_finalize_host_object  (void* userdata);
-static JsErrorCode CHAKRA_CALLBACK on_import_module         (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
-static JsErrorCode CHAKRA_CALLBACK on_module_ready          (JsModuleRecord module, JsValueRef exception);
-static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call     (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
-static void                        add_compiled_script      (const char* filename, JsSourceContext script_id);
-static const char*                 filename_from_script_id  (JsSourceContext script_id);
-static void                        free_ref                 (js_ref_t* ref);
-static JsModuleRecord              get_module_record        (const char* filename, JsModuleRecord parent, bool *out_is_new);
-static JsValueRef                  get_value                (int stack_index);
-static JsPropertyIdRef             make_property_id         (JsValueRef key_value);
-static js_ref_t*                   make_ref                 (JsRef value, bool weak_ref);
-static JsValueRef                  pop_value                (void);
-static void                        push_debug_callback_args (JsValueRef event_data);
-static JsSourceContext             script_id_from_filename  (const char* filename);
-static int                         push_value               (JsValueRef value, bool weak_ref);
-static void                        resize_stack             (int new_size);
-static void                        throw_on_error           (void);
-static void                        throw_value              (JsValueRef value);
+static void CHAKRA_CALLBACK        on_debugger_event         (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
+static JsErrorCode CHAKRA_CALLBACK on_fetch_imported_module  (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
+static void CHAKRA_CALLBACK        on_finalize_host_object   (void* userdata);
+static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call      (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
+static JsErrorCode CHAKRA_CALLBACK on_notify_module_ready    (JsModuleRecord module, JsValueRef exception);
+static void CHAKRA_CALLBACK        on_resolve_reject_promise (JsValueRef function, void* userdata);
+static void                        add_compiled_script       (const char* filename, JsSourceContext script_id);
+static const char*                 filename_from_script_id   (JsSourceContext script_id);
+static void                        free_ref                  (js_ref_t* ref);
+static JsModuleRecord              get_module_record         (const char* filename, JsModuleRecord parent, bool *out_is_new);
+static JsValueRef                  get_value                 (int stack_index);
+static JsPropertyIdRef             make_property_id          (JsValueRef key_value);
+static js_ref_t*                   make_ref                  (JsRef value, bool weak_ref);
+static JsValueRef                  pop_value                 (void);
+static void                        push_debug_callback_args  (JsValueRef event_data);
+static JsSourceContext             script_id_from_filename   (const char* filename);
+static int                         push_value                (JsValueRef value, bool weak_ref);
+static void                        resize_stack              (int new_size);
+static void                        throw_on_error            (void);
+static void                        throw_value               (JsValueRef value);
 
 #if !defined(__APPLE__)
 static int asprintf  (char* *out, const char* format, ...);
@@ -166,7 +166,7 @@ jsal_init(void)
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
-	JsSetPromiseContinuationCallback(on_dispatch_job, NULL);
+	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
 
 	// set up the stash, used to store JS values behind the scenes.
 	JsCreateObject(&s_stash);
@@ -2283,8 +2283,8 @@ get_module_record(const char* filename, JsModuleRecord parent, bool *out_is_new)
 	*out_is_new = true;
 	JsCreateString(filename, strlen(filename), &specifier);
 	JsInitializeModuleRecord(parent, specifier, &module_record);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_import_module);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_module_ready);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_HostDefined, specifier);
 	JsAddRef(module_record, NULL);
 	module.filename = strdup(filename);
@@ -2366,44 +2366,6 @@ throw_value(JsValueRef value)
 		printf("-> %s\n", jsal_to_string(-1));
 		abort();
 	}
-}
-
-static void CHAKRA_CALLBACK
-on_dispatch_job(JsValueRef task, void* userdata)
-{
-	JsValueRef  exception;
-	jsal_jmpbuf label;
-	int         last_stack_base;
-	
-	last_stack_base = s_stack_base;
-	s_stack_base = vector_len(s_value_stack);
-	push_value(task, true);
-	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
-		if (s_job_callback == NULL)
-			jsal_error(JS_ERROR, "no async/Promise support");
-		s_job_callback();
-		vector_pop(s_catch_stack, 1);
-	}
-	else {
-		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
-		// of the value stack.
-		exception = pop_value();
-		JsSetException(exception);
-	}
-	resize_stack(s_stack_base);
-	s_stack_base = last_stack_base;
-}
-
-static void CHAKRA_CALLBACK
-on_finalize_host_object(void* userdata)
-{
-	struct object* object_info;
-
-	object_info = userdata;
-	if (object_info->finalizer != NULL)
-		object_info->finalizer(object_info->data);
-	free(object_info);
 }
 
 static void CHAKRA_CALLBACK
@@ -2510,7 +2472,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 }
 
 static JsErrorCode CHAKRA_CALLBACK
-on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module)
+on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module)
 {
 	JsValueRef        caller_id;
 	JsValueRef        exception;
@@ -2560,6 +2522,17 @@ on_import_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *
 	s_stack_base = last_stack_base;
 	*out_module = module;
 	return JsNoError;
+}
+
+static void CHAKRA_CALLBACK
+on_finalize_host_object(void* userdata)
+{
+	struct object* object_info;
+
+	object_info = userdata;
+	if (object_info->finalizer != NULL)
+		object_info->finalizer(object_info->data);
+	free(object_info);
 }
 
 static JsValueRef CHAKRA_CALLBACK
@@ -2618,7 +2591,7 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 }
 
 static JsErrorCode CHAKRA_CALLBACK
-on_module_ready(JsModuleRecord module, JsValueRef exception)
+on_notify_module_ready(JsModuleRecord module, JsValueRef exception)
 {
 	struct module_job job;
 
@@ -2627,6 +2600,33 @@ on_module_ready(JsModuleRecord module, JsValueRef exception)
 	job.source = NULL;
 	vector_push(s_module_jobs, &job);
 	return JsNoError;
+}
+
+static void CHAKRA_CALLBACK
+on_resolve_reject_promise(JsValueRef task, void* userdata)
+{
+	JsValueRef  exception;
+	jsal_jmpbuf label;
+	int         last_stack_base;
+
+	last_stack_base = s_stack_base;
+	s_stack_base = vector_len(s_value_stack);
+	push_value(task, true);
+	if (jsal_setjmp(label) == 0) {
+		vector_push(s_catch_stack, label);
+		if (s_job_callback == NULL)
+			jsal_error(JS_ERROR, "no async/Promise support");
+		s_job_callback();
+		vector_pop(s_catch_stack, 1);
+	}
+	else {
+		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
+		// of the value stack.
+		exception = pop_value();
+		JsSetException(exception);
+	}
+	resize_stack(s_stack_base);
+	s_stack_base = last_stack_base;
 }
 
 #if !defined(__APPLE__)

@@ -116,8 +116,8 @@ class Console extends Thread
 
 		new Scene()
 			.doWhile(() => true)
-				.tween(this.cursorColor, 0.25 * screen.frameRate, 'easeInSine', { a: 1.0 })
-				.tween(this.cursorColor, 0.25 * screen.frameRate, 'easeOutSine', { a: 0.5 })
+				.tween(this.cursorColor, 0.25 * Sphere.frameRate, 'easeInSine', { a: 1.0 })
+				.tween(this.cursorColor, 0.25 * Sphere.frameRate, 'easeOutSine', { a: 0.5 })
 			.end()
 			.run();
 
@@ -153,7 +153,7 @@ class Console extends Thread
 				this.view.line = Math.max(this.view.line - speed, 0);
 			}
 			let keycode = this.keyboard.getKey();
-			let fps = screen.frameRate;
+			let fps = Sphere.frameRate;
 			if (keycode === this.activationKey)
 				return;
 			switch (keycode) {
@@ -293,7 +293,7 @@ function executeCommand(console, command)
 function hideConsole(console)
 {
 	console.yieldInput();
-	let fps = screen.frameRate;
+	let fps = Sphere.frameRate;
 	new Scene()
 		.tween(console.view, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
 		.call(() => { console.view.visible = false; console.entry = ""; })
@@ -303,7 +303,7 @@ function hideConsole(console)
 function showConsole(console)
 {
 	console.takeInput();
-	let fps = screen.frameRate;
+	let fps = Sphere.frameRate;
 	new Scene()
 		.tween(console.view, 0.25 * fps, 'easeOutQuad', { fade: 1.0 })
 		.call(() => console.view.visible = true)

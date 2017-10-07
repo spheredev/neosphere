@@ -8,7 +8,9 @@ v5.0.0 - TBD
   improving JavaScript execution performance and bringing long-overdue native
   support for ES2015+ syntax and built-ins to Sphere without the need for
   transpilation and polyfills.
-* Overhauls the Thread class to take advantage of `await` and promises.
+* Overhauls the entire Sphere Runtime to take full advantage of the event loop
+  as well as modern JavaScript features such as classes, `async` functions, and
+  promises.
 * Adds native support for mJS ("ECMAScript modules") without transpilation.
 * Adds back the `Pact` class, a more intuitive way to manage promises.
 * Adds a new `DataStream` class, which extends from `FileStream` to allow more
@@ -24,6 +26,8 @@ v5.0.0 - TBD
 * Changes `Console` into a full-fledged class, which allows for a familiar
   `new Console()` usage and gives games the ability to set up multiple consoles
   if desired.
+* Renames `screen.frameRate` and `screen.now()` to `Sphere.frameRate` and
+  `Sphere.now()`, respectively.
 * Renames `Dispatch.cancel()` to `JobToken#cancel()`.
 * Renames `Color#fade()` to `Color#fadeTo()`.
 * Removes the now-redundant `DataReader` and `DataWriter` classes.

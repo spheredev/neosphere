@@ -159,11 +159,6 @@ screen [global, non-replaceable]
     to `screen` will become visible the next time the event loop regains
     control.
 
-screen.frameRate [read/write]
-
-    Gets or sets the frame rate used to regulate the event loop.  Set this to
-    Infinity to disable the frame limiter.
-
 screen.frameSkip [read/write]
 
     Gets or sets the maximum number of frames the engine is allowed to skip in
@@ -173,15 +168,6 @@ screen.fullScreen [read/write]
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
-
-screen.now();
-
-    Returns the number of frames (including skipped frames) processed by the
-    engine since it started running.
-
-    Note: This value will wrap around to zero after around 4.3 billion frames.
-          That typically isn't an issue: at 60 FPS, a game would need to run
-          continuously for *over 2 years* before it would roll over.
 
 screen.resize(width, height);
 
@@ -217,6 +203,11 @@ Sphere.Game [non-replaceable]
     consists of everything in the JSON manifest plus any fields synthesized by
     the engine.
 
+Sphere.frameRate [read/write]
+
+    Gets or sets the frame rate used to regulate the event loop.  Set this to
+    Infinity to disable the frame limiter.
+
 Sphere.abort(message);
 
     Unconditionally aborts execution and displays an error screen before
@@ -225,6 +216,16 @@ Sphere.abort(message);
     Note: Sphere.abort() bypasses all exception handling mechanisms, including
           the debugger.  Be sure you know what you're doing before you call
           this function.
+
+Sphere.now();
+
+    Returns the number of frames (including skipped frames) processed by the
+    engine since it started running.  To measure wall clock time instead, use
+    `Date.now()`.
+
+    Note: This value will wrap around to zero after around 4.3 billion frames.
+          That typically isn't an issue: at 60 FPS, a game would need to run
+          continuously for *over 2 years* before the timer would roll over.
 
 Sphere.restart();
 

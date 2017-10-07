@@ -218,20 +218,19 @@ COLORS[] =
 };
 
 static bool js_require                       (int num_args, bool is_ctor, int magic);
-static bool js_screen_get_frameRate          (int num_args, bool is_ctor, int magic);
 static bool js_screen_get_frameSkip          (int num_args, bool is_ctor, int magic);
 static bool js_screen_get_fullScreen         (int num_args, bool is_ctor, int magic);
-static bool js_screen_set_frameRate          (int num_args, bool is_ctor, int magic);
 static bool js_screen_set_frameSkip          (int num_args, bool is_ctor, int magic);
 static bool js_screen_set_fullScreen         (int num_args, bool is_ctor, int magic);
-static bool js_screen_flip                   (int num_args, bool is_ctor, int magic);
-static bool js_screen_now                    (int num_args, bool is_ctor, int magic);
 static bool js_screen_resize                 (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_APILevel           (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Game               (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Platform           (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Version            (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_frameRate          (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_set_frameRate          (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_abort                  (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_now                    (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_restart                (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_shutDown               (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_sleep                  (int num_args, bool is_ctor, int magic);
@@ -454,7 +453,7 @@ static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
 static void      handle_module_import        (void);
 static path_t*   load_package_json           (const char* filename);
-static bool      run_event_loop              (int num_args, bool is_ctor, int magic);
+static bool      run_sphere_v2_event_loop    (int num_args, bool is_ctor, int magic);
 
 static mixer_t*  s_def_mixer;
 static int       s_framerate = 60;
@@ -501,7 +500,9 @@ pegasus_register_api(void)
 	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL);
 	api_define_static_prop("Sphere", "Platform", js_Sphere_get_Platform, NULL);
 	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
+	api_define_static_prop("Sphere", "frameRate", js_Sphere_get_frameRate, js_Sphere_set_frameRate);
 	api_define_function("Sphere", "abort", js_Sphere_abort);
+	api_define_function("Sphere", "now", js_Sphere_now);
 	api_define_function("Sphere", "restart", js_Sphere_restart);
 	api_define_function("Sphere", "shutDown", js_Sphere_shutDown);
 	api_define_function("Sphere", "sleep", js_Sphere_sleep);
@@ -675,11 +676,8 @@ pegasus_register_api(void)
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize);
 
 	api_define_object(NULL, "screen", PEGASUS_SURFACE, image_ref(screen_backbuffer(g_screen)));
-	api_define_static_prop("screen", "frameRate", js_screen_get_frameRate, js_screen_set_frameRate);
 	api_define_static_prop("screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
 	api_define_static_prop("screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
-	api_define_function("screen", "flip", js_screen_flip);
-	api_define_function("screen", "now", js_screen_now);
 	api_define_function("screen", "resize", js_screen_resize);
 
 	api_define_const("FileOp", "Read", FILE_OP_READ);
@@ -953,7 +951,7 @@ on_error:
 bool
 pegasus_start_event_loop(void)
 {
-	if (jsal_try(run_event_loop, 0)) {
+	if (jsal_try(run_sphere_v2_event_loop, 0)) {
 		jsal_pop(1);  // don't need return value
 		return true;
 	}
@@ -1190,7 +1188,7 @@ on_error:
 }
 
 static bool
-run_event_loop(int num_args, bool is_ctor, int magic)
+run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
 {
 	while (async_busy()) {
 		screen_flip(g_screen, s_framerate, true);
@@ -1235,31 +1233,6 @@ js_require(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_screen_get_frameRate(int num_args, bool is_ctor, int magic)
-{
-	// as far as Sphere v2 code is concerned, infinity, not 0, means "unthrottled".
-	// that's stored as a zero internally though, so we need to translate.
-	jsal_push_number(s_framerate > 0 ? s_framerate : INFINITY);
-	return true;
-}
-
-static bool
-js_screen_set_frameRate(int num_args, bool is_ctor, int magic)
-{
-	double framerate;
-
-	framerate = jsal_require_number(0);
-
-	if (framerate < 1.0)
-		jsal_error(JS_RANGE_ERROR, "invalid frame rate");
-	if (framerate != INFINITY)
-		s_framerate = framerate;
-	else
-		s_framerate = 0;  // unthrottled
-	return false;
-}
-
-static bool
 js_screen_get_frameSkip(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_number(screen_get_frameskip(g_screen));
@@ -1295,21 +1268,6 @@ js_screen_set_fullScreen(int num_args, bool is_ctor, int magic)
 
 	screen_set_fullscreen(g_screen, fullscreen);
 	return false;
-}
-
-static bool
-js_screen_flip(int num_args, bool is_ctor, int magic)
-{
-	screen_flip(g_screen, s_framerate, true);
-	image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
-	return false;
-}
-
-static bool
-js_screen_now(int num_args, bool is_ctor, int magic)
-{
-	jsal_push_number(screen_now(g_screen));
-	return true;
 }
 
 static bool
@@ -1365,6 +1323,31 @@ js_Sphere_get_Version(int num_args, bool is_ctor, int magic)
 }
 
 static bool
+js_Sphere_get_frameRate(int num_args, bool is_ctor, int magic)
+{
+	// as far as Sphere v2 code is concerned, infinity, not 0, means "unthrottled".
+	// that's stored as a zero internally though, so we need to translate.
+	jsal_push_number(s_framerate > 0 ? s_framerate : INFINITY);
+	return true;
+}
+
+static bool
+js_Sphere_set_frameRate(int num_args, bool is_ctor, int magic)
+{
+	double framerate;
+
+	framerate = jsal_require_number(0);
+
+	if (framerate < 1.0)
+		jsal_error(JS_RANGE_ERROR, "invalid frame rate");
+	if (framerate != INFINITY)
+		s_framerate = framerate;
+	else
+		s_framerate = 0;  // unthrottled
+	return false;
+}
+
+static bool
 js_Sphere_abort(int num_args, bool is_ctor, int magic)
 {
 	const char* filename;
@@ -1385,6 +1368,13 @@ js_Sphere_abort(int num_args, bool is_ctor, int magic)
 	line_number = 812;
 	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
 	sphere_abort(text);
+}
+
+static bool
+js_Sphere_now(int num_args, bool is_ctor, int magic)
+{
+	jsal_push_number(screen_now(g_screen));
+	return true;
 }
 
 static bool
