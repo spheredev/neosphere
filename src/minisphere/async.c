@@ -49,6 +49,7 @@ struct job
 
 static int sort_jobs (const void* in_a, const void* in_b);
 
+static bool      s_is_busy = false;
 static bool      s_need_sort = false;
 static int64_t   s_next_token = 1;
 static vector_t* s_onetime;
@@ -73,8 +74,7 @@ async_uninit(void)
 bool
 async_busy(void)
 {
-	return vector_len(s_recurring) > 0
-		|| vector_len(s_onetime) > 0;
+	return s_is_busy || vector_len(s_onetime) > 0;
 }
 
 void
@@ -139,6 +139,8 @@ async_recur(script_t* script, double priority, bool background, async_hint_t hin
 {
 	struct job job;
 
+	iter_t iter;
+
 	if (s_recurring == NULL)
 		return 0;
 	if (hint == ASYNC_RENDER) {
@@ -153,6 +155,12 @@ async_recur(script_t* script, double priority, bool background, async_hint_t hin
 	job.script = script;
 	job.token = s_next_token++;
 	vector_push(s_recurring, &job);
+
+	// check whether we should keep the event loop alive
+	s_is_busy = false;
+	iter = vector_enum(s_recurring);
+	while (iter_next(&iter))
+		s_is_busy |= !((struct job*)iter.ptr)->background;
 
 	s_need_sort = true;
 

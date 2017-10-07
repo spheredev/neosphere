@@ -139,7 +139,7 @@ from a different location, you can use one of the SphereFS prefixes:
 As an example, the following will create a FileStream which allows reading from
 the file `EatyPig.bin` residing in the user's save data directory.
 
-    var file = new FileStream('~/EatyPig.bin', FileOp.Read);
+    let file = new FileStream('~/EatyPig.bin', FileOp.Read);
 
 Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
       to break into the underlying file system, e.g. "@/../maggie.fat", will
@@ -268,8 +268,8 @@ etc...
     it is invoked.  This ensures that code like what's shown below won't cause
     undesirable side effects:
 
-        var color = Color.Red;
-        color.blue = 255;  // we needed magenta instead
+        let customColor = Color.Red;
+        customColor.blue = 255;  // we needed magenta instead
 
     The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
     false, but this is rarely an issue in practice.
@@ -447,29 +447,28 @@ Dispatch.now(fn);
           latter runs at the beginning of the next frame; Dispatch.now() always
           runs on the very next tick even if no frame processing is done.
 
-Dispatch.onRender(fn[, priority]);
-Dispatch.onUpdate(fn[, priority]);
+Dispatch.onRender(fn[, options]);
+Dispatch.onUpdate(fn[, options]);
 
-    Sets up a recurring job to call `fn` from a given part of the event loop.
+    Sets up a recurring job to call `fn` during a specified event loop phase.
     For example, `onRender()` jobs are called before the backbuffer is flipped,
-    and `onUpdate()` jobs are called at the start of a frame.
-
-    `priority` affects the order of calls when there is more than one job.
-    Render jobs are performed in ascending priority order, while update jobs
-    are performed in descending priority order.  If no priority is given, the
-    default is 0.0.  Priority can be negative, and fractional priorities are
-    honored: 8.12, for example, is considered a higher priority than 8.0.
+    and `onUpdate()` jobs are called at the start of each frame.
 
     Returns a `JobToken` you can use to manage the job.
 
-    Note: Update jobs are processed at the beginning of a frame, while render
-          jobs are processed at the end, just before the backbuffer is flipped.
-          This ensures that:
+    options.inBackground [default: false]
 
-          1) Frame loops always have access to up-to-date game state for the
-             current frame.
-          2) Objects drawn by an asynchronous render job can't be obscured by
-             those rendered synchronously.
+        If this is `true`, the job won't keep the event loop alive.  This is
+        useful for screen overlays and the like that you want to run in the
+        background without preventing the game from exiting.
+
+    options.priority [default: 0.0]
+
+        Determines the order of calls when there is more than one job.  Render
+        jobs are performed in ascending priority order, while update jobs are
+        performed in descending priority order.  The priority can be negative,
+        and fractional priorities are honored: 8.12, for example, is considered
+        a higher priority than 8.0.
 
 
 `FS` Namespace

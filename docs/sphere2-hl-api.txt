@@ -1056,6 +1056,12 @@ new Thread(options);
     Constructs a Thread object.  This can only be invoked as a `super()` call;
     calling this directly as `new Thread()` will produce a TypeError.
 
+    options.inBackground [default: false]
+
+        The thread represents a background task.  Specify this for threads you
+        want to run in the background without keeping the event loop alive past
+        its time.
+
     options.priority [default: 0.0]
 
         The thread priority.  Higher priority threads will be updated

@@ -67,11 +67,13 @@ class Thread
 			throw new Error(`'${new.target.name}' is abstract and cannot be instantiated`);
 
 		options = Object.assign({}, {
-			priority: 0,
+			inBackground: false,
+			priority:     0,
 		}, options);
 
 		this._started = false;
 		this._busy = false;
+		this._inBackground = options.inBackground;
 		this._priority = options.priority;
 		this._promise = Promise.resolve();
 		this._renderJob = null;
@@ -99,9 +101,14 @@ class Thread
 
 		this._started = true;
 		this._promise = threadPact.makePromise();
+
 		this._renderJob = Dispatch.onRender(() => {
 			this.on_render();
-		}, this._priority);
+		}, {
+			inBackground: this._inBackground,
+			priority:     this._priority,
+		});
+
 		this._updateJob = Dispatch.onUpdate(async () => {
 			if (this._busy)
 				return;
@@ -113,7 +120,10 @@ class Thread
 			await this.on_update();
 			this._busy = false;
 			currentSelf = lastSelf;
-		}, this._priority);
+		}, {
+			inBackground: this._inBackground,
+			priority:     this._priority,
+		});
 
 		// after thread terminates, remove from input stack
 		this._promise.then(() => {

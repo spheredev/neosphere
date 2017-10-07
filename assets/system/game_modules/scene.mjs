@@ -39,7 +39,10 @@ let screenMask = Color.Transparent;
 Dispatch.onRender(() => {
 	if (screenMask.a > 0.0)
 		Prim.fill(screen, screenMask);
-}, 99);
+}, {
+	inBackground: true,
+	priority:     99,
+});
 
 export default
 class Scene

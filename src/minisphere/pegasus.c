@@ -457,13 +457,16 @@ static bool      run_sphere_v2_event_loop    (int num_args, bool is_ctor, int ma
 
 static mixer_t*  s_def_mixer;
 static int       s_framerate = 60;
+static int       s_next_module_id = 1;
+
 static js_ref_t* s_key_color;
+static js_ref_t* s_key_inBackground;
+static js_ref_t* s_key_priority;
 static js_ref_t* s_key_x;
 static js_ref_t* s_key_y;
 static js_ref_t* s_key_z;
 static js_ref_t* s_key_u;
 static js_ref_t* s_key_v;
-static int       s_next_module_id = 1;
 
 void
 pegasus_register_api(void)
@@ -476,6 +479,8 @@ pegasus_register_api(void)
 	jsal_on_import_module(handle_module_import);
 
 	s_key_color = jsal_new_key("color");
+	s_key_inBackground = jsal_new_key("inBackground");
+	s_key_priority = jsal_new_key("priority");
 	s_key_x = jsal_new_key("x");
 	s_key_y = jsal_new_key("y");
 	s_key_z = jsal_new_key("z");
@@ -1877,16 +1882,23 @@ js_Dispatch_now(int num_args, bool is_ctor, int magic)
 static bool
 js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 {
+	bool      background = false;
 	double    priority = 0.0;
 	script_t* script;
 	int64_t   token;
 
 	script = jsal_pegasus_require_script(0);
-	if (num_args >= 2)
-		priority = jsal_require_number(1);
+	if (num_args >= 2) {
+		jsal_require_object(1);
+		if (jsal_get_prop_key(1, s_key_inBackground))
+			background = jsal_require_boolean(-1);
+		if (jsal_get_prop_key(1, s_key_priority))
+			priority = jsal_require_number(-1);
+		jsal_pop(2);
+	}
 
-	if (!(token = async_recur(script, priority, false, ASYNC_RENDER)))
-		jsal_error(JS_ERROR, "dispatch failed");
+	if (!(token = async_recur(script, priority, background, ASYNC_RENDER)))
+		jsal_error(JS_ERROR, "couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
 }
@@ -1894,16 +1906,23 @@ js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 static bool
 js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
 {
+	bool      background = false;
 	double    priority = 0.0;
 	script_t* script;
 	int64_t   token;
 
 	script = jsal_pegasus_require_script(0);
-	if (num_args >= 2)
-		priority = jsal_require_number(1);
+	if (num_args >= 2) {
+		jsal_require_object(1);
+		if (jsal_get_prop_key(1, s_key_inBackground))
+			background = jsal_require_boolean(-1);
+		if (jsal_get_prop_key(1, s_key_priority))
+			priority = jsal_require_number(-1);
+		jsal_pop(2);
+	}
 
-	if (!(token = async_recur(script, priority, false, ASYNC_UPDATE)))
-		jsal_error(JS_ERROR, "dispatch failed");
+	if (!(token = async_recur(script, priority, background, ASYNC_UPDATE)))
+		jsal_error(JS_ERROR, "couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
 }

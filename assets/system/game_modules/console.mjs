@@ -42,9 +42,10 @@ class Console extends Thread
 	constructor(options = {})
 	{
 		options = Object.assign({
-			hotKey:   Key.Tilde,
-			prompt:   "$",
-			priority: Infinity,
+			hotKey:       Key.Tilde,
+			inBackground: true,
+			prompt:       "$",
+			priority:     Infinity,
 		}, options);
 
 		super(options);
