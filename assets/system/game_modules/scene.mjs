@@ -36,9 +36,7 @@ import Prim from 'prim';
 import Thread from 'thread';
 
 let screenMask = Color.Transparent;
-
-Dispatch.onRender(() =>
-{
+Dispatch.onRender(() => {
 	if (screenMask.a > 0.0)
 		Prim.fill(screen, screenMask);
 }, 99);
@@ -235,8 +233,10 @@ class Timeline extends Thread
 		let thread = new OpThread(this.scene, op);
 		await thread.start();
 		await Thread.join(thread);
-		if (this.pc >= this.ops.length)
+		if (this.pc >= this.ops.length) {
+			await Thread.join(...this.children);
 			this.stop();
+		}
 	}
 }
 

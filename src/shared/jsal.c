@@ -2615,7 +2615,7 @@ on_resolve_reject_promise(JsValueRef task, void* userdata)
 	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		if (s_job_callback == NULL)
-			jsal_error(JS_ERROR, "no async/Promise support");
+			jsal_error(JS_ERROR, "application is missing promise callback");
 		s_job_callback();
 		vector_pop(s_catch_stack, 1);
 	}
