@@ -896,7 +896,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	if (jsal_get_prop_string(-8, "fullScreen") && jsal_is_boolean(-1))
 		game->fullscreen = jsal_get_boolean(-1);
 	else
-		game->fullscreen = false;
+		game->fullscreen = game->version < 2;
 
 	if (jsal_get_prop_string(-9, "sandbox") && jsal_is_string(-1)) {
 		sandbox_mode = jsal_get_string(-1);

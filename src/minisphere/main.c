@@ -59,12 +59,19 @@
     "language='*'\"")
 #endif
 
+enum fullscreen_mode
+{
+	FULLSCREEN_AUTO,
+	FULLSCREEN_ON,
+	FULLSCREEN_OFF,
+};
+
 static void on_enqueue_js_job   (void);
 static void on_socket_idle      (void);
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static bool find_startup_game   (path_t* *out_path);
-static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, bool *out_want_fullscreen, int *out_fullscreen, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
+static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
 static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
@@ -110,19 +117,19 @@ main(int argc, char* argv[])
 	const char*          error_stack = NULL;
 	const char*          error_text;
 	ALLEGRO_FILECHOOSER* file_dlg;
+	int                  fullscreen_mode;
 	path_t*              games_path;
 	image_t*             icon;
 	size2_t              resolution;
 	const path_t*        script_path;
 	bool                 use_conserve_cpu;
 	int                  use_frameskip;
-	bool                 use_fullscreen;
 	int                  use_verbosity;
 	bool                 want_debug;
 
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
-		&use_fullscreen, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))
+		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))
 	{
 		console_init(use_verbosity);
 	}
@@ -136,7 +143,10 @@ main(int argc, char* argv[])
 	// print out options
 	console_log(1, "parsing command line");
 	console_log(1, "    game path: %s", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
-	console_log(1, "    fullscreen: %s", use_fullscreen ? "on" : "off");
+	console_log(1, "    fullscreen: %s",
+		fullscreen_mode == FULLSCREEN_ON ? "on"
+			: fullscreen_mode == FULLSCREEN_OFF ? "off"
+			: "auto");
 	console_log(1, "    frameskip limit: %d frames", use_frameskip);
 	console_log(1, "    sleep when idle: %s", use_conserve_cpu ? "yes" : "no");
 	console_log(1, "    console verbosity: V%d", use_verbosity);
@@ -152,8 +162,10 @@ main(int argc, char* argv[])
 	console_log(1, "setting up jump points for longjmp");
 	if (setjmp(s_jmp_exit) != 0) {
 		// JS code called Exit(), user closed engine, etc.
-		if (g_screen != NULL)
-			use_fullscreen = screen_get_fullscreen(g_screen);
+		if (g_screen != NULL) {
+			fullscreen_mode = screen_get_fullscreen(g_screen)
+				? FULLSCREEN_ON : FULLSCREEN_OFF;
+		}
 		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
 			if (!initialize_engine()) {
@@ -169,7 +181,8 @@ main(int argc, char* argv[])
 	}
 	if (setjmp(s_jmp_restart) != 0) {
 		// JS code called either RestartGame() or ExecuteGame()
-		use_fullscreen = screen_get_fullscreen(g_screen);
+		fullscreen_mode = screen_get_fullscreen(g_screen)
+			? FULLSCREEN_ON : FULLSCREEN_OFF;
 		shutdown_engine();
 		console_log(1, "\nrestarting to launch new game");
 		console_log(1, "    path: %s", path_cstr(g_game_path));
@@ -260,7 +273,7 @@ main(int argc, char* argv[])
 	}
 
 	// switch to fullscreen if necessary and initialize clipping
-	if (use_fullscreen)
+	if (fullscreen_mode == FULLSCREEN_ON || fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game))
 		screen_toggle_fullscreen(g_screen);
 	screen_show_mouse(g_screen, false);
 
@@ -567,7 +580,7 @@ find_startup_game(path_t* *out_path)
 static bool
 parse_command_line(
 	int argc, char* argv[],
-	path_t* *out_game_path, bool *out_want_fullscreen, int *out_frameskip,
+	path_t* *out_game_path, int *out_fullscreen, int *out_frameskip,
 	int *out_verbosity, bool *out_want_throttle, bool *out_want_debug)
 {
 	bool parse_options = true;
@@ -575,14 +588,9 @@ parse_command_line(
 	int i, j;
 
 	// establish default settings
-#if defined(MINISPHERE_SPHERUN)
-	*out_want_fullscreen = false;
-#else
-	*out_want_fullscreen = true;
-	#endif
-
-	*out_game_path = NULL;
+	*out_fullscreen = FULLSCREEN_AUTO;
 	*out_frameskip = 20;
+	*out_game_path = NULL;
 	*out_verbosity = 0;
 	*out_want_throttle = true;
 	*out_want_debug = false;
@@ -600,10 +608,10 @@ parse_command_line(
 				*out_want_throttle = false;
 			}
 			else if (strcmp(argv[i], "--fullscreen") == 0) {
-				*out_want_fullscreen = true;
+				*out_fullscreen = FULLSCREEN_ON;
 			}
 			else if (strcmp(argv[i], "--windowed") == 0) {
-				*out_want_fullscreen = false;
+				*out_fullscreen = FULLSCREEN_OFF;
 			}
 #if defined(MINISPHERE_SPHERUN)
 			else if (strcmp(argv[i], "--version") == 0) {

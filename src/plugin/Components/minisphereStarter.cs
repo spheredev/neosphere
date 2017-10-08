@@ -26,7 +26,7 @@ namespace Sphere.Gdk.Components
 
             string enginePath = Path.Combine(gdkPath, wantConsole ? "spherun.exe" : "minisphere.exe");
             string options = string.Format(@"{0} --verbose {1} ""{2}""",
-                wantWindow ? "--windowed" : "--fullscreen", m_main.Conf.Verbosity, gamePath);
+                wantWindow ? "--windowed" : "", m_main.Conf.Verbosity, gamePath);
             Process.Start(enginePath, options);
         }
 
