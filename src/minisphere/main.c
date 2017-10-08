@@ -81,6 +81,7 @@ ALLEGRO_EVENT_QUEUE* g_events = NULL;
 game_t*              g_game = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;
+bool                 g_restarting = false;
 screen_t*            g_screen = NULL;
 font_t*              g_system_font = NULL;
 
@@ -327,6 +328,8 @@ main(int argc, char* argv[])
 	// and neither one was available in Sphere 1.x.
 	if (!pegasus_start_event_loop())
 		goto on_js_error;
+	if (g_restarting)
+		sphere_restart();
 
 	sphere_exit(false);
 

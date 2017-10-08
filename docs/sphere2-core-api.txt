@@ -238,8 +238,12 @@ Sphere.now();
 
 Sphere.restart();
 
-    Restarts the currently running game from scratch, as though it were just
-    loaded.  Unsaved data will be lost.
+    Restarts the engine.  All in-flight Dispatch jobs are canceled so that once
+    control returns to the event loop, the engine will initiate a restart.
+
+    Note: This initiates an asynchronous shutdown.  The game will restart ONLY
+          after control has returned to the event loop.  Note that dispatching
+          new update or render jobs before then will cancel the request!
 
 Sphere.shutDown();
 
@@ -248,7 +252,7 @@ Sphere.shutDown();
 
     Note: This initiates an asynchronous shutdown.  The engine will close ONLY
           after control has returned to the event loop.  Note that dispatching
-          new update or render jobs before then will cancel the shutdown!
+          new update or render jobs before then will cancel the request!
 
 Sphere.sleep(frames);
 

@@ -1195,6 +1195,7 @@ on_error:
 static bool
 run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
 {
+	g_restarting = false;
 	while (async_busy()) {
 		screen_flip(g_screen, s_framerate, true);
 		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
@@ -1385,12 +1386,15 @@ js_Sphere_now(int num_args, bool is_ctor, int magic)
 static bool
 js_Sphere_restart(int num_args, bool is_ctor, int magic)
 {
-	sphere_restart();
+	g_restarting = true;
+	async_cancel_all(true);
+	return false;
 }
 
 static bool
 js_Sphere_shutDown(int num_args, bool is_ctor, int magic)
 {
+	g_restarting = false;
 	async_cancel_all(true);
 	return false;
 }

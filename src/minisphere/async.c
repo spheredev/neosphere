@@ -93,6 +93,7 @@ async_cancel_all(bool recurring)
 		while (job = iter_next(&iter))
 			job->finished = true;
 		s_need_sort = true;
+		s_is_busy = false;
 	}
 }
 
