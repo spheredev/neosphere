@@ -29,7 +29,7 @@ Here's a sample manifest:
         "author": "Fat Cerberus",
         "summary": "Follow Scott Starcross in his quest to stop the Primus.",
         "resolution": "320x240",
-        "main": "main.js"
+        "main": "@/bin/main.mjs"
     }
 
 JSON fields defined by the Sphere v2 specification are documented below.
@@ -40,23 +40,28 @@ needed, and their values can be accessed from JavaScript through `Sphere.Game`.
 
     The Sphere standards version the game was developed against.  If this is
     set to 2 (or is just not present) the game runs in Sphere v2 mode.  In
-    Sphere v2 mode, the main script is run as a CommonJS module, which enables
-    the use of relative paths in `require()` (see below), as well as ensuring
-    variable and function declarations remain local to the module.
+    Sphere v2 mode, the main script is run as a module, either CommonJS or
+    mJS depending on the file extension.
 
-    If this is set to 1, the game runs in Sphere v1 compatibility mode.  In
-    compatibility mode, the main module is executed as normal JavaScript
-    program code, and miniSphere calls the global `game()` function--if one is
-    provided--to begin game execution.
+    If this is set to 1, the game runs in Sphere 1.x compatibility mode.  In
+    compatibility mode, the main module is executed as top-level program code,
+    and miniSphere calls the global `game()` function--if one is provided--to
+    begin game execution.
 
     Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
-          be available for use by game code.  The version in the manifest
-          currently only affects the way the main module is loaded.  That may
-          change in the future, however.
+          be available for use by game code.  The standards version merely
+          tells the engine how to load the main module.
 
 "author" [default: none]
 
     The name of the person or company who developed the game.
+
+"fullScreen" [default: false]
+
+    The game's preferred fullscreen mode.  If the engine is started without
+    passing either `--windowed` or `--fullscreen` on the command line, the
+    value of this property will decide whether to start in fullscreen mode or
+    not.
 
 "main" [required]
 
@@ -168,6 +173,10 @@ screen.fullScreen [read/write]
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
+
+    Note: If an SSj debugger instance is attached, the engine is forced into
+          windowed mode and any change to the value of `screen.fullScreen` will
+          be silently ignored.
 
 screen.resize(width, height);
 

@@ -131,6 +131,8 @@ main(int argc, char* argv[])
 	if (parse_command_line(argc, argv, &g_game_path,
 		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))
 	{
+		if (want_debug)
+			fullscreen_mode = FULLSCREEN_OFF;
 		console_init(use_verbosity);
 	}
 	else {

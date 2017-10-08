@@ -215,6 +215,8 @@ screen_set_frameskip(screen_t* it, int max_skips)
 void
 screen_set_fullscreen(screen_t* it, bool fullscreen)
 {
+	if (debugger_attached())
+		fullscreen = false;
 	it->fullscreen = fullscreen;
 	refresh_display(it);
 }
@@ -439,8 +441,7 @@ screen_toggle_fps(screen_t* it)
 void
 screen_toggle_fullscreen(screen_t* it)
 {
-	it->fullscreen = !it->fullscreen;
-	refresh_display(it);
+	screen_set_fullscreen(it, !it->fullscreen);
 }
 
 void

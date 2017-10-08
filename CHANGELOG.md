@@ -23,6 +23,8 @@ v5.0.0 - TBD
   Don't turn these on in the final release!
 * Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing directory contents
   to be enumerated with a standard `for...of` loop.
+* Adds a `fullScreen` property to the JSON manifest format which allows each
+  game to specify its preferred fullscreen mode.
 * Changes `Sphere.sleep()` to return a promise instead of blocking, allowing it
   to be used with `await` so as to avoid starving the event loop.
 * Changes `Console` into a full-fledged class, which allows for a familiar
@@ -37,6 +39,8 @@ v5.0.0 - TBD
 * Removes the now-redundant `DataReader` and `DataWriter` classes.
 * Removes `screen.flip()`, `Sphere.run()` and `Sphere.exit()` in favor of the
   engine-provided event loop.
+* Improves the SSj and SSj Blue debugging experience by forcing the engine to
+  remain in windowed mode as long as a debugger is attached.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to
   text encoding.  Notably, `FS.readFile()` now correctly handles the UTF-8
   signature/BOM if one is present.

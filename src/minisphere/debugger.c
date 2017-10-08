@@ -158,6 +158,7 @@ debugger_update(void)
 			socket_unref(client);
 		}
 		else {
+			screen_set_fullscreen(g_screen, false);
 			jsal_debug_breakpoint_inject();
 			console_log(0, "connected to debugger at %s", socket_hostname(client));
 			handshake = strnewf("2 20000 v2.1.1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
