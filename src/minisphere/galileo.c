@@ -108,16 +108,18 @@ struct vbo
 	vector_t*              vertices;
 };
 
-static shader_t*    s_def_shader = NULL;
-static shader_t*    s_last_shader = NULL;
-static unsigned int s_next_group_id = 0;
+static shader_t*    s_def_shader;
+static shader_t*    s_last_shader;
+static unsigned int s_next_group_id = 1;
 static unsigned int s_next_shader_id = 1;
-static unsigned int s_next_shape_id = 0;
+static unsigned int s_next_shape_id = 1;
 
 void
 galileo_init(void)
 {
 	console_log(1, "initializing Galileo subsystem");
+	s_def_shader = NULL;
+	s_last_shader = NULL;
 }
 
 void

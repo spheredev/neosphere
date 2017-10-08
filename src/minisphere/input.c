@@ -94,6 +94,8 @@ initialize_input(void)
 	if (!(s_have_joystick = al_install_joystick()))
 		console_log(1, "  joystick initialization failed");
 
+	memset(s_key_state, 0, sizeof s_key_state);
+
 	s_events = al_create_event_queue();
 	al_register_event_source(s_events, al_get_keyboard_event_source());
 	if (s_have_mouse)
