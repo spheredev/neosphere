@@ -726,7 +726,7 @@ print_usage(void)
 	printf("\n");
 	printf("USAGE:\n");
 	printf("   spherun [--fullscreen | --windowed] [--frameskip <n>] [--no-sleep]         \n");
-	printf("           [--debug] [--verbose <n>] <game_path>                              \n");
+	printf("           [--debug | --performance] [--verbose <n>] <game_path>              \n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --fullscreen   Start miniSphere in fullscreen mode.                    \n");

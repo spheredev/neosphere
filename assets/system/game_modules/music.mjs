@@ -48,12 +48,12 @@ class Music
 		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
 	}
 
-	static get adjusting()
+	static get adjustingVolume()
 	{
-		return isAdjusting();
+		return adjuster !== null && adjuster.running;
 	}
 
-	static adjustVolume(newVolume, frames = 0)
+	static async adjustVolume(newVolume, frames = 0)
 	{
 		newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
 		if (this.adjusting)
@@ -61,7 +61,7 @@ class Music
 		if (frames > 0) {
 			adjuster = new Scene()
 				.tween(mixer, frames, 'linear', { volume: newVolume });
-			adjuster.run();
+			return adjuster.run();
 		} else {
 			mixer.volume = newVolume;
 		}
@@ -161,9 +161,4 @@ function crossfade(fileName, frames, forceChange)
 	else {
 		return null;
 	}
-}
-
-function isAdjusting()
-{
-	return adjuster != null && adjuster.isRunning();
 }

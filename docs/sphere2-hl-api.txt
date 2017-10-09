@@ -640,16 +640,17 @@ story reasons.
 
     import { Music } from 'sphere-runtime';
 
-Music.adjusting [read-only]
+Music.adjustingVolume [read-only]
 
-    true if the music volume is currently being adjusted by a call to
-    music.adjustVolume() (see below), otherwise false.
+    `true` if the music volume is currently being adjusted by a call to
+    Music.adjustVolume() (see below), otherwise `false`.
 
 Music.adjustVolume(newVolume, time);
 
-    Smoothly adjusts the BGM volume level.  `newVolume` should be a value
-    between 0 and 1, where 0 is silent and 1 is full volume.  `time` is the
-    amount of game time the adjustment should take, in frames.
+    Smoothly adjusts the BGM volume level and returns a promise that resolves
+    when the adjustment is complete.  Works with `await`.  `newVolume` should
+    be a value between 0 and 1, where 0 is silent and 1 is full volume.  `time`
+    is the amount of game time the adjustment should take, in frames.
 
 Music.override(fileName[, fadeTime]);
 
