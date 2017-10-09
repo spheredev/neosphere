@@ -1086,6 +1086,9 @@ Thread#on_render(); [event handler]
     desired frame rate, so you'll want to avoid putting any "business logic" in
     here.
 
+    IMPORTANT: Do not use `await` in the render handler.  Doing so is undefined
+               behavior; bad things will happen.
+
 Thread#on_update(); [event handler]
 
     Implement this in your subclass to provide code to be executed every frame.
