@@ -133,6 +133,7 @@ class Scene
 						// note: Thread.self() is the calling timeline
 						let forkedFrom = Thread.self();
 						forkedFrom.children.push(timeline);
+						timeline.goTo(0);
 						timeline.start();
 					}
 				};
@@ -199,6 +200,11 @@ class Scene
 		this.timeline.start();
 		return Thread.join(this.timeline);
 	}
+	
+	stop()
+	{
+		this.timeline.stop();
+	}
 }
 
 class Timeline extends Thread
@@ -208,6 +214,7 @@ class Timeline extends Thread
 		super();
 
 		this.children = [];
+		this.opThread = null;
 		this.ops = [];
 		this.pc = 0;
 		this.scene = scene;
@@ -228,6 +235,15 @@ class Timeline extends Thread
 	goTo(pc)
 	{
 		this.pc = pc;
+	}
+	
+	stop()
+	{
+		if (this.opThread !== null)
+			this.opThread.stop();
+		for (const child of this.children)
+			child.stop();
+		super.stop();
 	}
 
 	async on_update()

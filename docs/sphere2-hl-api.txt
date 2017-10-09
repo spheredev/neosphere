@@ -1040,7 +1040,8 @@ Thread.join(thread[, ...]);
 
     Returns a promise that resolves upon termination of one or more threads.
     Works with `await`.  If multiple threads are specified, the promise will
-    not resolve until all of them have finished.
+    not resolve until all of them have finished.  If all specified threads are
+    already stopped, the promise resolves immediately.
 
 Thread.self();
 
@@ -1049,7 +1050,7 @@ Thread.self();
 
     Note: Due to technical constraints imposed by Sphere's event loop model,
           this will currently return `null` if called after returning from an
-          `await` statement.
+          `await` expression.
 
 new Thread(options);
 
@@ -1067,6 +1068,10 @@ new Thread(options);
         The thread priority.  Higher priority threads will be updated
         sooner and rendered later in a frame.  Especially useful to enforce
         rendering order.
+
+Thread#hasFocus [read-only]
+
+    `true` if the thread has input focus, `false` otherwise.
 
 Thread#running [read-only]
 
@@ -1095,10 +1100,24 @@ Thread#on_update(); [event handler]
     The value of `Sphere.frameRate` (see the Core API documentation) determines
     how often updates will be done.
 
+Thread#start();
+
+    Starts the thread.  All threads are created in stopped state and must be
+    started by calling Thread#start() before their handlers will execute.
+
+Thread#stop();
+
+    Stops the thread.  Any outstanding Thread#join() promises for this thread
+    will resolve and Sphere will stop calling the thread handlers.
+
+    Note: If the thread's update handler is paused at an `await` expression
+          when this method is called, the asynchronous operation being awaited
+          will not be canceled and that update will still run to completion.
+
 Thread#takeInput();
 
     Gives this thread the input focus.  Only the thread with input focus will
-    receive inputCheck events (see below).
+    receive inputCheck events (see Thread#on_inputCheck() above).
 
 Thread#yieldInput();
 

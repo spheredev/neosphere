@@ -166,12 +166,6 @@ screen_display(const screen_t* it)
 	return it->display;
 }
 
-bool
-screen_get_fullscreen(const screen_t* it)
-{
-	return it->fullscreen;
-}
-
 size2_t
 screen_size(const screen_t* it)
 {
@@ -194,6 +188,12 @@ int
 screen_get_frameskip(const screen_t* it)
 {
 	return it->max_skips;
+}
+
+bool
+screen_get_fullscreen(const screen_t* it)
+{
+	return it->fullscreen;
 }
 
 void
@@ -261,12 +261,12 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 void
 screen_flip(screen_t* it, int framerate, bool need_clear)
 {
+	time_t            datetime;
 	char*             filename;
 	char              fps_text[20];
 	const char*       game_filename;
 	const path_t*     game_root;
 	bool              is_backbuffer_valid;
-	time_t            now;
 	ALLEGRO_STATE     old_state;
 	ALLEGRO_BITMAP*   old_target;
 	path_t*           path;
@@ -308,8 +308,8 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 				: path_hop(game_root, path_num_hops(game_root) - 1);
 			path = path_rebase(path_new("miniSphere/Screenshots/"), home_path());
 			path_mkdir(path);
-			time(&now);
-			strftime(timestamp, 100, "%Y%m%d", localtime(&now));
+			time(&datetime);
+			strftime(timestamp, 100, "%Y%m%d", localtime(&datetime));
 			do {
 				filename = strnewf("%s-%s-%d.png", game_filename, timestamp, serial++);
 				for (i = 0; filename[i] != '\0'; ++i)
