@@ -462,14 +462,14 @@ static int       s_next_module_id = 1;
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_inBackground;
 static js_ref_t* s_key_priority;
+static js_ref_t* s_key_u;
+static js_ref_t* s_key_v;
 static js_ref_t* s_key_x;
 static js_ref_t* s_key_y;
 static js_ref_t* s_key_z;
-static js_ref_t* s_key_u;
-static js_ref_t* s_key_v;
 
 void
-pegasus_register_api(void)
+pegasus_init(void)
 {
 	const struct x11_color* p;
 
@@ -481,11 +481,11 @@ pegasus_register_api(void)
 	s_key_color = jsal_new_key("color");
 	s_key_inBackground = jsal_new_key("inBackground");
 	s_key_priority = jsal_new_key("priority");
+	s_key_u = jsal_new_key("u");
+	s_key_v = jsal_new_key("v");
 	s_key_x = jsal_new_key("x");
 	s_key_y = jsal_new_key("y");
 	s_key_z = jsal_new_key("z");
-	s_key_u = jsal_new_key("u");
-	s_key_v = jsal_new_key("v");
 
 	// initialize CommonJS cache and global require()
 	jsal_push_hidden_stash();
@@ -815,6 +815,21 @@ pegasus_register_api(void)
 		++p;
 	}
 	jsal_pop(1);
+}
+
+void
+pegasus_uninit(void)
+{
+	jsal_unref(s_key_color);
+	jsal_unref(s_key_inBackground);
+	jsal_unref(s_key_priority);
+	jsal_unref(s_key_u);
+	jsal_unref(s_key_v);
+	jsal_unref(s_key_x);
+	jsal_unref(s_key_y);
+	jsal_unref(s_key_z);
+
+	mixer_unref(s_def_mixer);
 }
 
 bool

@@ -2069,6 +2069,8 @@ jsal_debug_inspect_call(int call_index)
 bool
 jsal_debug_inspect_breakpoint(int index)
 {
+	/* [ ... ] -> [ ... filename line column ] */
+
 	struct breakpoint* breakpoint;
 
 	if (index >= vector_len(s_breakpoints))

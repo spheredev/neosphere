@@ -267,7 +267,7 @@ main(int argc, char* argv[])
 
 	api_init();
 	vanilla_register_api();
-	pegasus_register_api();
+	pegasus_init();
 
 	// attempt to locate and load system font
 	console_log(1, "loading system default font");
