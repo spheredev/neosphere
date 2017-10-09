@@ -241,6 +241,8 @@ jsal_require_pathname(int index, const char* origin_name, bool v1_mode, bool nee
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || (path_is_rooted(path) && game_safety(g_game) >= FS_SAFETY_FULL))
 		jsal_error(JS_TYPE_ERROR, "illegal path '%s'", pathname);
+	if (strcmp(prefix, "%") == 0)
+		jsal_error(JS_REF_ERROR, "SphereFS prefix '%%/' is reserved for future use");
 	if (strcmp(prefix, "~") == 0 && game_save_id(g_game) == NULL)
 		jsal_error(JS_REF_ERROR, "no save ID in game manifest");
 	if (need_write && !game_is_writable(g_game, path_cstr(path), v1_mode))

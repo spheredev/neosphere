@@ -122,7 +122,7 @@ fs_full_path(const char* filename, const char* base_dir_name)
 		prefix = strdup(path_hop(path, 0));
 	else
 		prefix = strdup("");
-	if (!strpbrk(prefix, "@#~$") || strlen(prefix) != 1) {
+	if (!strpbrk(prefix, "@#~$%") || strlen(prefix) != 1) {
 		if (base_path != NULL)
 			path_rebase(path, base_path);
 		else

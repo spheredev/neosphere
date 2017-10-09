@@ -350,7 +350,7 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 
 	// if the path doesn't contain a SphereFS prefix, it's relative and we need
 	// to rebase it.
-	if (!strpbrk(prefix, "@#~$") || strlen(prefix) != 1) {
+	if (!strpbrk(prefix, "@#~$%") || strlen(prefix) != 1) {
 		if (base_path != NULL)
 			path_rebase(path, base_path);
 		else
