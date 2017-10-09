@@ -35,7 +35,15 @@
 
 #include "ki.h"
 
-void        debugger_init          (bool want_attach, bool allow_remote);
+typedef
+enum ssj_mode
+{
+	SSJ_OFF,
+	SSJ_PASSIVE,
+	SSJ_ACTIVE,
+} ssj_mode_t;
+
+void        debugger_init          (ssj_mode_t ssj_mode, bool allow_remote);
 void        debugger_uninit        (void);
 void        debugger_update        (void);
 bool        debugger_attached      (void);
@@ -44,7 +52,7 @@ const char* debugger_name          (void);
 const char* debugger_compiled_name (const char* source_name);
 const char* debugger_source_name   (const char* pathname);
 void        debugger_attach        (void);
-void        debugger_add_source  (const char* name, const lstring_t* text);
+void        debugger_add_source    (const char* name, const lstring_t* text);
 void        debugger_detach        (void);
 void        debugger_log           (const char* text, print_op_t op, bool use_console);
 

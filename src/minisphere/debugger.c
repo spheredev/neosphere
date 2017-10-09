@@ -52,24 +52,29 @@ static bool      do_attach_debugger  (void);
 static void      do_detach_debugger  (bool is_shutdown);
 static bool      process_message     (js_step_t* out_step);
 
-static bool       s_is_attached = false;
-static color_t    s_banner_color;
-static lstring_t* s_banner_text;
-static bool       s_have_source_map = false;
-static server_t*  s_server;
-static socket_t*  s_socket = NULL;
-static vector_t*  s_sources;
-static bool       s_want_attach;
+static bool         s_is_attached = false;
+static color_t      s_banner_color;
+static lstring_t*   s_banner_text;
+static bool         s_have_source_map = false;
+static server_t*    s_server;
+static socket_t*    s_socket = NULL;
+static vector_t*    s_sources;
+static ssj_mode_t s_ssj_mode;
+static bool         s_want_attach;
 
 void
-debugger_init(bool want_attach, bool allow_remote)
+debugger_init(ssj_mode_t ssj_mode, bool allow_remote)
 {
 	const path_t* game_root;
 	const char*   hostname;
 	int           json_index;
 
-	jsal_debug_on_throw(on_throw_exception);
-	jsal_debug_init(on_breakpoint_hit);
+	s_ssj_mode = ssj_mode;
+
+	if (ssj_mode != SSJ_OFF) {
+		jsal_debug_on_throw(on_throw_exception);
+		jsal_debug_init(on_breakpoint_hit);
+	}
 
 	s_banner_text = lstr_new("debug");
 	s_banner_color = color_new(192, 192, 192, 255);
@@ -101,13 +106,18 @@ debugger_init(bool want_attach, bool allow_remote)
 
 	// listen for SSj connection on TCP port 1208. the listening socket will remain active
 	// for the duration of the session, allowing a debugger to be attached at any time.
-	console_log(1, "listening for SSj on TCP port %d", TCP_DEBUG_PORT);
-	hostname = allow_remote ? NULL : "127.0.0.1";
-	s_server = server_new(hostname, TCP_DEBUG_PORT, 1024, 1, true);
+	if (ssj_mode != SSJ_OFF) {
+		console_log(1, "listening for SSj on TCP port %d", TCP_DEBUG_PORT);
+		hostname = allow_remote ? NULL : "127.0.0.1";
+		s_server = server_new(hostname, TCP_DEBUG_PORT, 1024, 1, true);
+	}
+	else {
+		s_server = NULL;
+	}
 
 	// if the engine was started in debug mode, wait for a debugger to connect before
 	// beginning execution.
-	s_want_attach = want_attach;
+	s_want_attach = ssj_mode == SSJ_ACTIVE;
 	if (s_want_attach && !do_attach_debugger())
 		sphere_exit(true);
 }
@@ -119,9 +129,11 @@ debugger_uninit()
 
 	iter_t iter;
 
-	do_detach_debugger(true);
-	jsal_debug_uninit();
-	server_unref(s_server);
+	if (s_ssj_mode != SSJ_OFF) {
+		do_detach_debugger(true);
+		jsal_debug_uninit();
+		server_unref(s_server);
+	}
 
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
@@ -141,6 +153,9 @@ debugger_update(void)
 	char*         handshake;
 	js_step_t     step_op;
 
+	if (s_ssj_mode == SSJ_OFF)
+		return;
+	
 	if (s_is_attached) {
 		if (s_socket != NULL && socket_closed(s_socket)) {
 			socket_unref(s_socket);

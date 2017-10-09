@@ -71,7 +71,7 @@ static void on_socket_idle      (void);
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static bool find_startup_game   (path_t* *out_path);
-static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, bool *out_want_throttle, bool *out_want_debug);
+static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode);
 static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
@@ -123,16 +123,16 @@ main(int argc, char* argv[])
 	image_t*             icon;
 	size2_t              resolution;
 	const path_t*        script_path;
+	ssj_mode_t           ssj_mode;
 	bool                 use_conserve_cpu;
 	int                  use_frameskip;
 	int                  use_verbosity;
-	bool                 want_debug;
 
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
-		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &want_debug))
+		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &ssj_mode))
 	{
-		if (want_debug)
+		if (ssj_mode == SSJ_ACTIVE)
 			fullscreen_mode = FULLSCREEN_OFF;
 		console_init(use_verbosity);
 	}
@@ -154,7 +154,10 @@ main(int argc, char* argv[])
 	console_log(1, "    sleep when idle: %s", use_conserve_cpu ? "yes" : "no");
 	console_log(1, "    console verbosity: V%d", use_verbosity);
 #if defined(MINISPHERE_SPHERUN)
-	console_log(1, "    debugger mode: %s", want_debug ? "active" : "passive");
+	console_log(1, "    debugger mode: %s",
+		ssj_mode == SSJ_ACTIVE ? "active"
+			: ssj_mode == SSJ_PASSIVE ? "passive"
+			: "disabled");
 #endif
 	console_log(1, "");
 
@@ -282,13 +285,13 @@ main(int argc, char* argv[])
 
 	// enable the SSj debug server, wait for a connection if requested.
 #if defined(MINISPHERE_SPHERUN)
-	if (want_debug) {
+	if (ssj_mode == SSJ_ACTIVE) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		screen_draw_status(g_screen, "waiting for debugger", color_new(255, 255, 255, 255));
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
-	debugger_init(want_debug, false);
+	debugger_init(ssj_mode, false);
 #endif
 
 	// evaluate the main script (v1) or module (v2)
@@ -381,12 +384,10 @@ sphere_run(bool allow_dispatch)
 
 	sockets_update();
 
+	if (allow_dispatch) {
 #if defined(MINISPHERE_SPHERUN)
-	if (allow_dispatch)
 		debugger_update();
 #endif
-
-	if (allow_dispatch) {
 		jsal_update(true);
 		async_run_jobs(ASYNC_TICK);
 	}
@@ -586,7 +587,7 @@ static bool
 parse_command_line(
 	int argc, char* argv[],
 	path_t* *out_game_path, int *out_fullscreen, int *out_frameskip,
-	int *out_verbosity, bool *out_want_throttle, bool *out_want_debug)
+	int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode)
 {
 	bool parse_options = true;
 
@@ -596,9 +597,9 @@ parse_command_line(
 	*out_fullscreen = FULLSCREEN_AUTO;
 	*out_frameskip = 20;
 	*out_game_path = NULL;
+	*out_ssj_mode = SSJ_PASSIVE;
 	*out_verbosity = 0;
 	*out_want_throttle = true;
-	*out_want_debug = false;
 
 	// process command line arguments
 	for (i = 1; i < argc; ++i) {
@@ -628,7 +629,10 @@ parse_command_line(
 				return false;
 			}
 			else if (strcmp(argv[i], "--debug") == 0) {
-				*out_want_debug = true;
+				*out_ssj_mode = SSJ_ACTIVE;
+			}
+			else if (strcmp(argv[i], "--performance") == 0) {
+				*out_ssj_mode = SSJ_OFF;
 			}
 			else if (strcmp(argv[i], "--verbose") == 0) {
 				if (++i >= argc) goto missing_argument;
@@ -650,7 +654,10 @@ parse_command_line(
 					*out_verbosity = argv[i][j] - '0';
 					break;
 				case 'd':
-					*out_want_debug = true;
+					*out_ssj_mode = SSJ_ACTIVE;
+					break;
+				case 'p':
+					*out_ssj_mode = SSJ_OFF;
 					break;
 				default:
 					report_error("unrecognized option '-%c'\n", argv[i][j]);
@@ -727,6 +734,7 @@ print_usage(void)
 	printf("       --frameskip    Set the maximum number of consecutive frames to skip.   \n");
 	printf("       --no-sleep     Prevent the engine from sleeping between frames.        \n");
 	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
+	printf("   -p, --performance  Run at full speed by disabling the single-step debugger.\n");
 	printf("       --verbose      Set the engine's verbosity level from 0 to 4.  This can \n");
 	printf("                      be abbreviated as '-n', where n is [0-4].               \n");
 	printf("       --version      Show which version of miniSphere is installed.          \n");
