@@ -338,6 +338,7 @@ static bool js_new_RNG                       (int num_args, bool is_ctor, int ma
 static bool js_RNG_get_state                 (int num_args, bool is_ctor, int magic);
 static bool js_RNG_set_state                 (int num_args, bool is_ctor, int magic);
 static bool js_RNG_next                      (int num_args, bool is_ctor, int magic);
+static bool js_SSj_flipScreen                (int num_args, bool is_ctor, int magic);
 static bool js_SSj_log                       (int num_args, bool is_ctor, int magic);
 static bool js_SSj_trace                     (int num_args, bool is_ctor, int magic);
 static bool js_new_Sample                    (int num_args, bool is_ctor, int magic);
@@ -608,6 +609,7 @@ pegasus_init(void)
 	api_define_function("RNG", "fromState", js_RNG_fromState);
 	api_define_property("RNG", "state", false, js_RNG_get_state, js_RNG_set_state);
 	api_define_method("RNG", "next", js_RNG_next);
+	api_define_function("SSj", "flipScreen", js_SSj_flipScreen);
 	api_define_function("SSj", "log", js_SSj_log);
 	api_define_function("SSj", "trace", js_SSj_trace);
 	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize);
@@ -3285,6 +3287,13 @@ js_RNG_next(int num_args, bool is_ctor, int magic)
 
 	jsal_push_number(xoro_gen_double(xoro));
 	return true;
+}
+
+static bool
+js_SSj_flipScreen(int num_args, bool is_ctor, int magic)
+{
+	screen_flip(g_screen, 0, false);
+	return false;
 }
 
 static bool

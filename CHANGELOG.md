@@ -21,6 +21,8 @@ v5.0.0 - TBD
 * Adds an optional `sandbox` field to `game.json` which can be set to either
   `relaxed` or `none` to relax the file system sandbox and ease development.
   Don't turn these on in the final release!
+* Adds `SSj.flipScreen()` which immediately flips the backbuffer to the screen
+  without any other event loop processing, useful for debugging rendering code.
 * Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing directory contents
   to be enumerated with a standard `for...of` loop.
 * Adds a new `--performance` command line option for SpheRun which disables the

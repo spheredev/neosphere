@@ -1150,6 +1150,12 @@ RNG#next();
 The `SSj` namespace allows your game to communicate with an attached debugger
 such as SSj or SSj Blue.
 
+SSj.flipScreen();
+
+    Immediately flips the contents of the backbuffer to the screen.  The
+    backbuffer is not cleared afterwards.  May be useful for debugging graphics
+    code.
+
 SSj.log(text);
 
     Logs `text` to the debugger.  If the game is started using `spherun`, the

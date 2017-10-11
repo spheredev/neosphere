@@ -114,19 +114,13 @@ function FromQuery(source)
 Object.defineProperties(FromQuery.prototype,
 {
 	[Symbol.iterator]:
-	PROPDESC('wc', function enumerate(withKeys)
+	PROPDESC('wc', function* enumerate(withKeys)
 	{
-		var source = this.itemSource;
+		let source = this.itemSource;
+		let item;
 		source.init();
-		return { next: next };
-
-		function next()
-		{
-			var item = source.next();
-			return item !== null
-				? { value: (withKeys ? item : item.v), done: false }
-				: { done: true };
-		}
+		while (item = source.next())
+			yield withKeys ? item : item.v;
 	}),
 
 	// from() query operators.
