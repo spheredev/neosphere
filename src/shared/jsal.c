@@ -143,7 +143,7 @@ static js_import_callback_t s_import_callback = NULL;
 static js_job_callback_t    s_job_callback = NULL;
 static JsContextRef         s_js_context;
 static JsRuntimeHandle      s_js_runtime = NULL;
-static vector_t*            s_modules;
+static vector_t*            s_module_cache;
 static vector_t*            s_module_jobs;
 static JsSourceContext      s_next_script_id = 1;
 static JsValueRef           s_stash;
@@ -179,7 +179,7 @@ jsal_init(void)
 	s_stack_base = 0;
 	s_breakpoints = vector_new(sizeof(struct breakpoint));
 	s_compiled_scripts = vector_new(sizeof(struct script));
-	s_modules = vector_new(sizeof(struct module));
+	s_module_cache = vector_new(sizeof(struct module));
 	s_module_jobs = vector_new(sizeof(struct module_job));
 
 	vector_reserve(s_value_stack, 128);
@@ -208,7 +208,7 @@ jsal_uninit(void)
 		free(breakpoint->filename);
 	}
 	
-	iter = vector_enum(s_modules);
+	iter = vector_enum(s_module_cache);
 	while (module = iter_next(&iter)) {
 		JsRelease(module->record, NULL);
 		free(module->filename);
@@ -218,7 +218,7 @@ jsal_uninit(void)
 	resize_stack(0);
 	
 	vector_free(s_breakpoints);
-	vector_free(s_modules);
+	vector_free(s_module_cache);
 	vector_free(s_module_jobs);
 	vector_free(s_value_stack);
 	vector_free(s_catch_stack);
@@ -2276,7 +2276,7 @@ get_module_record(const char* filename, JsModuleRecord parent, bool *out_is_new)
 	iter_t iter;
 
 	*out_is_new = false;
-	iter = vector_enum(s_modules);
+	iter = vector_enum(s_module_cache);
 	while (cached = iter_next(&iter)) {
 		if (strcmp(filename, cached->filename) == 0)
 			return cached->record;
@@ -2291,7 +2291,7 @@ get_module_record(const char* filename, JsModuleRecord parent, bool *out_is_new)
 	JsAddRef(module_record, NULL);
 	module.filename = strdup(filename);
 	module.record = module_record;
-	vector_push(s_modules, &module);
+	vector_push(s_module_cache, &module);
 	return module_record;
 }
 
