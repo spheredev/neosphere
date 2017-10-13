@@ -1133,8 +1133,8 @@ handle_module_import(void)
 		"#/runtime",
 	};
 
-	char*       caller_id;
-	const char* origin;
+	char*       caller_id = NULL;
+	const char* origin = NULL;
 	path_t*     path;
 	char*       source;
 	size_t      source_len;
@@ -1145,12 +1145,17 @@ handle_module_import(void)
 	// strdup() here because the JSAL-managed strings may get overwritten
 	// in the course of a filename lookup.
 	specifier = strdup(jsal_require_string(0));
-	caller_id = strdup(jsal_require_string(1));
+	if (!jsal_is_null(1))
+		caller_id = strdup(jsal_require_string(1));
+
+	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
+		jsal_error(JS_TYPE_ERROR, "relative path for import() is not allowed outside of an mJS module");
 
 	// HACK: the way JSAL is currently designed, the same filename is used for
 	//       module resolution as for display; this works around the limitation
 	//       until more comprehensive refactoring can be done.
-	origin = debugger_compiled_name(caller_id);
+	if (caller_id != NULL)
+		origin = debugger_compiled_name(caller_id);
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module_file(specifier, origin, PATHS[i], true))

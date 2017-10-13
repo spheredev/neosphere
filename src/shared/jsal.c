@@ -109,6 +109,7 @@ struct script
 };
 
 static void CHAKRA_CALLBACK        on_debugger_event         (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
+static JsErrorCode CHAKRA_CALLBACK on_fetch_dynamic_import   (JsSourceContext importer, JsValueRef specifier, JsModuleRecord *out_module);
 static JsErrorCode CHAKRA_CALLBACK on_fetch_imported_module  (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
 static void CHAKRA_CALLBACK        on_finalize_host_object   (void* userdata);
 static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call      (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
@@ -155,8 +156,9 @@ static js_throw_callback_t  s_throw_callback = NULL;
 bool
 jsal_init(void)
 {
-	JsValueRef  null_value;
-	JsErrorCode result;
+	JsModuleRecord module_record;
+	JsValueRef     null_value;
+	JsErrorCode    result;
 	
 	result = JsCreateRuntime(
 		JsRuntimeAttributeDispatchSetExceptionsToDebugger,
@@ -167,6 +169,9 @@ jsal_init(void)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
 	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
+
+	JsInitializeModuleRecord(NULL, NULL, &module_record);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
 
 	// set up the stash, used to store JS values behind the scenes.
 	JsCreateObject(&s_stash);
@@ -2286,6 +2291,7 @@ get_module_record(const char* filename, JsModuleRecord parent, bool *out_is_new)
 	JsCreateString(filename, strlen(filename), &specifier);
 	JsInitializeModuleRecord(parent, specifier, &module_record);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_HostDefined, specifier);
 	JsAddRef(module_record, NULL);
@@ -2474,8 +2480,17 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 }
 
 static JsErrorCode CHAKRA_CALLBACK
+on_fetch_dynamic_import(JsSourceContext importer, JsValueRef specifier, JsModuleRecord *out_module)
+{
+	return on_fetch_imported_module(NULL, specifier, out_module);
+}
+
+static JsErrorCode CHAKRA_CALLBACK
 on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module)
 {
+	// note: be careful, `importer` will be NULL if we were chained from
+	//       on_fetch_dynamic_import().
+
 	JsValueRef        caller_id;
 	JsValueRef        exception;
 	const char*       filename;
@@ -2492,9 +2507,14 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModule
 
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_value_stack);
-	JsGetModuleHostInfo(importer, JsModuleHostInfo_HostDefined, &caller_id);
 	push_value(specifier, true);
-	push_value(caller_id, true);
+	if (importer != NULL) {
+		JsGetModuleHostInfo(importer, JsModuleHostInfo_HostDefined, &caller_id);
+		push_value(caller_id, true);
+	}
+	else {
+		jsal_push_null();
+	}
 	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		s_import_callback();

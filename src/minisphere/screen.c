@@ -215,6 +215,12 @@ screen_set_frameskip(screen_t* it, int max_skips)
 void
 screen_set_fullscreen(screen_t* it, bool fullscreen)
 {
+#ifdef _DEBUG
+	// in a debug build, disallow fullscreen.  Allegro sets the always-on-top
+	// flag in fullscreen mode which interferes with debugging.
+	fullscreen = false;
+#endif
+
 	if (debugger_attached())
 		fullscreen = false;
 	it->fullscreen = fullscreen;
