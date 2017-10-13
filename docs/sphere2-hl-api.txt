@@ -1074,6 +1074,11 @@ Thread#hasFocus [read-only]
 
     `true` if the thread has input focus, `false` otherwise.
 
+Thread#priority [read-only]
+
+    Gets the priority of the thread.  This is set when the thread is created
+    and can't be changed afterwards.
+
 Thread#running [read-only]
 
     `true` if this thread is running (even if it's awaiting a promise),

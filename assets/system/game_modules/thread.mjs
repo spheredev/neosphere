@@ -85,6 +85,11 @@ class Thread
 		return this === inputThreads[inputThreads.length - 1];
 	}
 
+	get priority()
+	{
+		return this._priority;
+	}
+
 	get running()
 	{
 		return this._started;
