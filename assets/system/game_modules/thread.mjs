@@ -153,8 +153,9 @@ class Thread
 			throw new TypeError("thread cannot accept user input");
 
 		inputThreads = from.array(inputThreads)
-			.where(it => it != this)
+			.where(it => it !== this)
 			.including([ this ])
+			.ascending(it => it._priority)
 			.toArray();
 	}
 
