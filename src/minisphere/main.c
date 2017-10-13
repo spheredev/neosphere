@@ -418,8 +418,7 @@ sphere_sleep(double time)
 	end_time = al_get_time() + time;
 	do {
 		time_left = end_time - al_get_time();
-		if (time_left > 0.001)  // engine may stall with < 1ms timeout
-			al_wait_for_event_timed(g_events, NULL, time_left);
+		al_wait_for_event_timed(g_events, NULL, time_left);
 		sphere_run(false);
 	} while (al_get_time() < end_time);
 }

@@ -20,7 +20,6 @@ v5.0.0 - TBD
   tasks that shouldn't keep the event loop alive by themselves.
 * Adds an optional `sandbox` field to `game.json` which can be set to either
   `relaxed` or `none` to relax the file system sandbox and ease development.
-  Don't turn these on in the final release!
 * Adds `SSj.flipScreen()` which immediately flips the backbuffer to the screen
   without any other event loop processing, useful for debugging rendering code.
 * Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing directory contents
