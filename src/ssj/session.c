@@ -489,17 +489,15 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 				max_len = (int)strlen(prop_key);
 		}
 		for (i = 0; i < objview_len(object); ++i) {
-			is_accessor = objview_get_tag(object, i) == PROP_ACCESSOR;
+			is_accessor = objview_get_tag(object, i) == KI_ATTR_ACCESSOR;
 			prop_key = objview_get_key(object, i);
 			prop_flags = objview_get_flags(object, i);
-			if (!(prop_flags & PROP_ENUMERABLE) && !is_verbose)
-				continue;
 			if (is_verbose) {
 				printf("%s%s%s%s  %-*s  ",
-					prop_flags & PROP_ENUMERABLE ? "e" : "-",
-					prop_flags & PROP_WRITABLE ? "w" : "-",
+					prop_flags & KI_ATTR_WRITABLE ? "w" : "-",
+					prop_flags & KI_ATTR_ENUMERABLE ? "e" : "-",
+					prop_flags & KI_ATTR_CONFIGURABLE ? "c" : "-",
 					is_accessor ? "a" : "-",
-					prop_flags & PROP_CONFIGURABLE ? "c" : "-",
 					max_len, prop_key);
 			}
 			else {

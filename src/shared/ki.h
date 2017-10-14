@@ -43,6 +43,17 @@ typedef struct ki_message ki_message_t;
 typedef struct ki_atom    ki_atom_t;
 
 typedef
+enum ki_attribute
+{
+	KI_ATTR_NONE = 0x0,
+	KI_ATTR_WRITABLE = 0x01,
+	KI_ATTR_ENUMERABLE = 0x02,
+	KI_ATTR_CONFIGURABLE = 0x04,
+	KI_ATTR_ACCESSOR = 0x08,
+	KI_ATTR_SYMBOL = 0x10,
+} ki_attribute_t;
+
+typedef
 enum ki_tag
 {
 	DVALUE_EOM = 0x00,

@@ -551,7 +551,7 @@ process_message(js_step_t* out_step)
 		handle = dmessage_get_handle(request, 1);
 		i = 0;
 		while (jsal_debug_inspect_object(handle, i++)) {
-			dmessage_add_int(reply, 0x2);
+			dmessage_add_int(reply, KI_ATTR_NONE);
 			dmessage_add_string(reply, jsal_get_string(-3));
 			if (jsal_get_uint(-1) == 0)
 				dmessage_add_string(reply, jsal_get_string(-2));
