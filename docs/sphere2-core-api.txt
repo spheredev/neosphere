@@ -1147,25 +1147,24 @@ RNG#next();
 `SSj` Namespace
 ---------------
 
-The `SSj` namespace allows your game to communicate with an attached debugger
-such as SSj or SSj Blue.
+The `SSj` namespace provides functions that aid debugging and allow your game
+to communicate with an attached debugger such as SSj or SSj Blue.
 
 SSj.flipScreen();
 
     Immediately flips the contents of the backbuffer to the screen.  The
-    backbuffer is not cleared afterwards.  May be useful for debugging graphics
-    code.
+    backbuffer is not cleared afterwards.  Useful for debugging graphics code.
 
 SSj.log(text);
 
-    Logs `text` to the debugger.  If the game is started using `spherun`, the
-    text is also logged to the terminal.
+    Logs `text` to an attached SSj or SSj Blue session.  If the game was
+    started using `spherun`, the text is logged to the terminal as well.
 
 SSj.trace(text);
 
-    Logs `text` to the debugger.  This is intended for low-level, detailed
-    logging; trace output will not be displayed, even in the debugger, unless
-    its display is enabled by the user.
+    Logs `text` to an attached SSj or SSj Blue session.  This is intended for
+    low-level, detailed logging; by default, traces will not be displayed, even
+    in the debugger, unless enabled by the user.
 
 
 `Sample` Object
