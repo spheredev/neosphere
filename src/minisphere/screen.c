@@ -38,7 +38,6 @@
 #include "minisphere.h"
 #include "screen.h"
 
-#include "async.h"
 #include "debugger.h"
 #include "image.h"
 
@@ -55,7 +54,6 @@ struct screen
 	double           last_flip_time;
 	int              max_skips;
 	double           next_frame_time;
-	uint32_t         now;
 	int              num_flips;
 	int              num_frames;
 	int              num_skips;
@@ -178,12 +176,6 @@ screen_skip_frame(const screen_t* it)
 	return it->skip_frame;
 }
 
-uint32_t
-screen_now(const screen_t* it)
-{
-	return it->now;
-}
-
 int
 screen_get_frameskip(const screen_t* it)
 {
@@ -288,8 +280,6 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 
 	size_t i;
 
-	async_run_jobs(ASYNC_RENDER);
-
 	// update FPS with 1s granularity
 	if (al_get_time() >= it->fps_poll_time) {
 		it->fps_flips = it->num_flips;
@@ -367,7 +357,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 		it->skip_frame = it->num_skips < it->max_skips && it->last_flip_time > it->next_frame_time;
 		do {  // kill time while we wait for the next frame
 			time_left = it->next_frame_time - al_get_time();
-			if (!it->avoid_sleep)
+			if (!it->avoid_sleep && time_left > 0.0)
 				al_wait_for_event_timed(g_events, NULL, time_left);
 			sphere_run(false);
 		} while (al_get_time() < it->next_frame_time);
@@ -391,11 +381,6 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		image_set_scissor(it->backbuffer, scissor);
 	}
-
-	async_run_jobs(ASYNC_UPDATE);
-	async_run_jobs(ASYNC_TICK);
-
-	++it->now;
 }
 
 image_t*

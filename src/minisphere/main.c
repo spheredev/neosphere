@@ -84,6 +84,7 @@ path_t*              g_last_game_path = NULL;
 bool                 g_restarting = false;
 screen_t*            g_screen = NULL;
 font_t*              g_system_font = NULL;
+uint32_t             g_tick_count = 0;
 
 static jmp_buf s_jmp_exit;
 static jmp_buf s_jmp_restart;
@@ -418,7 +419,8 @@ sphere_sleep(double time)
 	end_time = al_get_time() + time;
 	do {
 		time_left = end_time - al_get_time();
-		al_wait_for_event_timed(g_events, NULL, time_left);
+		if (time_left > 0.0)
+			al_wait_for_event_timed(g_events, NULL, time_left);
 		sphere_run(false);
 	} while (al_get_time() < end_time);
 }

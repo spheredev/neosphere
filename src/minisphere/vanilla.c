@@ -2423,7 +2423,11 @@ js_FilledEllipse(int num_args, bool is_ctor, int magic)
 static bool
 js_FlipScreen(int num_args, bool is_ctor, int magic)
 {
+	async_run_jobs(ASYNC_RENDER);
 	screen_flip(g_screen, s_frame_rate, true);
+	async_run_jobs(ASYNC_UPDATE);
+	async_run_jobs(ASYNC_TICK);
+	++g_tick_count;
 	return false;
 }
 

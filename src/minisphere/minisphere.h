@@ -88,6 +88,7 @@ extern path_t*              g_last_game_path;
 extern bool                 g_restarting;
 extern screen_t*            g_screen;
 extern font_t*              g_system_font;
+extern uint32_t             g_tick_count;
 
 no_return sphere_abort   (const char* message);
 no_return sphere_exit    (bool shutting_down);

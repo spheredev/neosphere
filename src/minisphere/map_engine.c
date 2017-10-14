@@ -34,6 +34,7 @@
 #include "map_engine.h"
 
 #include "api.h"
+#include "async.h"
 #include "audio.h"
 #include "color.h"
 #include "image.h"
@@ -61,7 +62,7 @@ static color_t             s_fade_color_from;
 static color_t             s_fade_color_to;
 static int                 s_fade_frames;
 static int                 s_fade_progress;
-static int                 s_framerate = 0;
+static int                 s_frame_rate = 0;
 static unsigned int        s_frames = 0;
 static bool                s_is_map_running = false;
 static lstring_t*          s_last_bgm_file = NULL;
@@ -434,7 +435,7 @@ map_engine_running(void)
 int
 map_engine_get_framerate(void)
 {
-	return s_framerate;
+	return s_frame_rate;
 }
 
 person_t*
@@ -470,7 +471,7 @@ map_engine_get_talk_key(player_id_t player_id)
 void
 map_engine_set_framerate(int framerate)
 {
-	s_framerate = framerate;
+	s_frame_rate = framerate;
 }
 
 void
@@ -641,7 +642,7 @@ map_engine_start(const char* filename, int framerate)
 	s_fade_color_to = s_fade_color_from = s_color_mask;
 	s_fade_progress = s_fade_frames = 0;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-	s_framerate = framerate;
+	s_frame_rate = framerate;
 	if (!change_map(filename, true))
 		goto on_error;
 	while (!s_exiting) {
@@ -649,12 +650,16 @@ map_engine_start(const char* filename, int framerate)
 		// do the update.  for some reason.
 		update_map_engine(true);
 		process_map_input();
-		
-		// draw the map, then flip the backbuffer without clearing it.  the Sphere 1.x
-		// map engine has a bug where it doesn't clear the backbuffer between frames; as
-		// it turns out, a good deal of of Sphere v1 code relies on that.
 		map_engine_draw_map();
-		screen_flip(g_screen, s_framerate, false);
+		
+		// don't clear the backbuffer.  the Sphere 1.x map engine has a bug where it doesn't
+		// clear the backbuffer between frames; as it turns out, a good deal of of v1 code relies
+		// on that behavior.
+		async_run_jobs(ASYNC_RENDER);
+		screen_flip(g_screen, s_frame_rate, false);
+		async_run_jobs(ASYNC_UPDATE);
+		async_run_jobs(ASYNC_TICK);
+		++g_tick_count;
 	}
 	reset_persons(false);
 	s_is_map_running = false;

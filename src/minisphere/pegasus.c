@@ -456,9 +456,9 @@ static void      handle_module_import        (void);
 static path_t*   load_package_json           (const char* filename);
 static bool      run_sphere_v2_event_loop    (int num_args, bool is_ctor, int magic);
 
-static mixer_t*  s_def_mixer;
-static int       s_framerate = 60;
-static int       s_next_module_id = 1;
+static mixer_t* s_def_mixer;
+static int      s_frame_rate = 60;
+static int      s_next_module_id = 1;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_inBackground;
@@ -1219,8 +1219,12 @@ run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
 {
 	g_restarting = false;
 	while (async_busy()) {
-		screen_flip(g_screen, s_framerate, true);
+		async_run_jobs(ASYNC_RENDER);
+		screen_flip(g_screen, s_frame_rate, true);
 		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
+		async_run_jobs(ASYNC_UPDATE);
+		async_run_jobs(ASYNC_TICK);
+		++g_tick_count;
 	}
 	return false;
 }
@@ -1355,7 +1359,7 @@ js_Sphere_get_frameRate(int num_args, bool is_ctor, int magic)
 {
 	// as far as Sphere v2 code is concerned, infinity, not 0, means "unthrottled".
 	// that's stored as a zero internally though, so we need to translate.
-	jsal_push_number(s_framerate > 0 ? s_framerate : INFINITY);
+	jsal_push_number(s_frame_rate > 0 ? s_frame_rate : INFINITY);
 	return true;
 }
 
@@ -1369,9 +1373,9 @@ js_Sphere_set_frameRate(int num_args, bool is_ctor, int magic)
 	if (framerate < 1.0)
 		jsal_error(JS_RANGE_ERROR, "invalid frame rate");
 	if (framerate != INFINITY)
-		s_framerate = framerate;
+		s_frame_rate = framerate;
 	else
-		s_framerate = 0;  // unthrottled
+		s_frame_rate = 0;  // unthrottled
 	return false;
 }
 
@@ -1401,7 +1405,7 @@ js_Sphere_abort(int num_args, bool is_ctor, int magic)
 static bool
 js_Sphere_now(int num_args, bool is_ctor, int magic)
 {
-	jsal_push_number(screen_now(g_screen));
+	jsal_push_number(g_tick_count);
 	return true;
 }
 
