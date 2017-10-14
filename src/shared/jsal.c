@@ -2090,11 +2090,13 @@ jsal_debug_inspect_breakpoint(int index)
 bool
 jsal_debug_inspect_eval(int call_index, const char* source, bool *out_errored)
 {
-	/* [ ... ] -> [ type value_summary ] */
+	/* [ ... ] -> [ type value_summary handle ] */
 
 	JsErrorCode error_code;
+	bool        is_object;
 	JsValueRef  result;
 	JsValueRef  source_string;
+	const char* type;
 
 	JsCreateString(source, strlen(source), &source_string);
 	error_code = JsDiagEvaluate(source_string, call_index, JsParseScriptAttributeNone, false, &result);
@@ -2106,19 +2108,64 @@ jsal_debug_inspect_eval(int call_index, const char* source, bool *out_errored)
 		jsal_get_prop_string(-1, "type");
 	else
 		jsal_push_string("unknown");
+	type = jsal_get_string(-1);
+	is_object = strcmp(type, "object") == 0 || strcmp(type, "function") == 0;
 	if (jsal_has_prop_string(-2, "display"))
 		jsal_get_prop_string(-2, "display");
 	else
 		jsal_get_prop_string(-2, "value");
-	jsal_to_string(-1);
-	jsal_remove(-3);
+	if (is_object)
+		jsal_get_prop_string(-3, "handle");
+	else
+		jsal_push_null();
+	jsal_to_string(-2);
+	jsal_remove(-4);
+	return true;
+}
+
+bool
+jsal_debug_inspect_object(unsigned int handle, int property_index)
+{
+	/* [ ... ] -> [ ... key value handle ] */
+
+	int         index = 0;
+	bool        is_object = false;
+	JsValueRef  results;
+	const char* type;
+
+	if (JsDiagGetProperties(handle, property_index, 1, &results) != JsNoError)
+		return false;
+	push_value(results, true);
+	jsal_get_prop_string(-1, "properties");
+	if (!jsal_get_prop_index(-1, 0)) {
+		jsal_pop(3);
+		return false;
+	}
+	jsal_get_prop_string(-1, "type");
+	type = jsal_get_string(-1);
+	if (type != NULL)
+		is_object = strcmp(type, "object") == 0 || strcmp(type, "function") == 0;
+	jsal_pop(1);
+	jsal_get_prop_string(-1, "name");
+	if (jsal_has_prop_string(-2, "display"))
+		jsal_get_prop_string(-2, "display");
+	else
+		jsal_get_prop_string(-2, "value");
+	if (is_object)
+		jsal_get_prop_string(-3, "handle");
+	else
+		jsal_push_null();
+	jsal_to_string(-2);
+	jsal_remove(-4);
+	jsal_remove(-4);
+	jsal_remove(-4);
 	return true;
 }
 
 bool
 jsal_debug_inspect_var(int call_index, int var_index)
 {
-	/* [ ... ] -> [ ... name value_summary ] */
+	/* [ ... ] -> [ ... name type value_summary ] */
 
 	JsValueRef  frame_info;
 	int         index = 0;

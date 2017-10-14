@@ -253,7 +253,7 @@ inferior_get_calls(inferior_t* obj)
 }
 
 objview_t*
-inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
+inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 {
 	unsigned int     flags;
 	const ki_atom_t* getter;
@@ -269,7 +269,7 @@ inferior_get_object(inferior_t* obj, remote_ptr_t heapptr, bool get_all)
 
 	request = dmessage_new(DMESSAGE_REQ);
 	dmessage_add_int(request, REQ_GETOBJPROPDESCRANGE);
-	dmessage_add_heapptr(request, heapptr);
+	dmessage_add_handle(request, handle);
 	dmessage_add_int(request, 0);
 	dmessage_add_int(request, INT_MAX);
 	if (!(request = inferior_request(obj, request)))

@@ -59,7 +59,7 @@ const char*        inferior_author           (const inferior_t* obj);
 bool               inferior_running          (const inferior_t* obj);
 const char*        inferior_title            (const inferior_t* obj);
 const backtrace_t* inferior_get_calls        (inferior_t* obj);
-objview_t*         inferior_get_object       (inferior_t* obj, remote_ptr_t heapptr, bool get_all);
+objview_t*         inferior_get_object       (inferior_t* obj, unsigned int handle, bool get_all);
 const source_t*    inferior_get_source       (inferior_t* obj, const char* filename);
 objview_t*         inferior_get_vars         (inferior_t* obj, int frame);
 int                inferior_add_breakpoint   (inferior_t* obj, const char* filename, int linenum);

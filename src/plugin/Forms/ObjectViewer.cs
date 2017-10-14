@@ -49,8 +49,8 @@ namespace Sphere.Gdk.Forms
             m_propListTreeView.Nodes.Clear();
             var trunk = m_propListTreeView.Nodes.Add(_value.ToString());
             trunk.ImageKey = "object";
-            if (_value.Tag == DValueTag.HeapPtr)
-                await PopulateTreeNode(trunk, (HeapPtr)_value);
+            if (_value.Tag == DValueTag.Handle)
+                await PopulateTreeNode(trunk, (Handle)_value);
             trunk.Expand();
             m_propListTreeView.EndUpdate();
         }
@@ -83,8 +83,8 @@ namespace Sphere.Gdk.Forms
                 return;
 
             PropDesc propDesc = (PropDesc)e.Node.Tag;
-            if (propDesc.Value.Tag == DValueTag.HeapPtr)
-                await PopulateTreeNode(e.Node, (HeapPtr)propDesc.Value);
+            if (propDesc.Value.Tag == DValueTag.Handle)
+                await PopulateTreeNode(e.Node, (Handle)propDesc.Value);
         }
 
         private void PropTree_MouseMove(object sender, MouseEventArgs e)
@@ -94,10 +94,10 @@ namespace Sphere.Gdk.Forms
                 ? Cursors.Hand : Cursors.Default;
         }
 
-        private async Task PopulateTreeNode(TreeNode node, HeapPtr ptr)
+        private async Task PopulateTreeNode(TreeNode node, Handle handle)
         {
             m_propListTreeView.BeginUpdate();
-            var props = await _inferior.GetObjPropDescRange(ptr, 0, int.MaxValue);
+            var props = await _inferior.GetObjPropDescRange(handle, 0, int.MaxValue);
             foreach (var key in props.Keys) {
                 if (props[key].Flags.HasFlag(PropFlags.Accessor)) {
                     DValue getter = props[key].Getter;
@@ -116,7 +116,7 @@ namespace Sphere.Gdk.Forms
                     valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
                     valueNode.SelectedImageKey = valueNode.ImageKey;
                     valueNode.Tag = props[key];
-                    if (value.Tag == DValueTag.HeapPtr) {
+                    if (value.Tag == DValueTag.Handle) {
                         valueNode.Nodes.Add("");
                     }
                 }

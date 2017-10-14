@@ -88,6 +88,7 @@ struct ki_atom
 	ki_tag_t tag;
 	union {
 		double       float_value;
+		unsigned int handle;
 		int          int_value;
 		struct {
 			remote_ptr_t value;
@@ -164,6 +165,15 @@ dmessage_get_float(const ki_message_t* it, int index)
 	return dvalue_as_float(dvalue);
 }
 
+unsigned int
+dmessage_get_handle(const ki_message_t* it, int index)
+{
+	ki_atom_t* dvalue;
+
+	dvalue = *(ki_atom_t**)vector_get(it->dvalues, index);
+	return dvalue_as_handle(dvalue);
+}
+
 int
 dmessage_get_int(const ki_message_t* it, int index)
 {
@@ -197,6 +207,15 @@ dmessage_add_float(ki_message_t* it, double value)
 	ki_atom_t* dvalue;
 
 	dvalue = dvalue_new_float(value);
+	vector_push(it->dvalues, &dvalue);
+}
+
+void
+dmessage_add_handle(ki_message_t* it, unsigned int value)
+{
+	ki_atom_t* dvalue;
+
+	dvalue = dvalue_new_handle(value);
 	vector_push(it->dvalues, &dvalue);
 }
 
@@ -314,6 +333,17 @@ dvalue_new_float(double value)
 }
 
 ki_atom_t*
+dvalue_new_handle(unsigned int value)
+{
+	ki_atom_t* atom;
+
+	atom = calloc(1, sizeof(ki_atom_t));
+	atom->tag = DVALUE_HANDLE;
+	atom->handle = value;
+	return atom;
+}
+
+ki_atom_t*
 dvalue_new_heapptr(remote_ptr_t value)
 {
 	ki_atom_t* atom;
@@ -393,6 +423,12 @@ dvalue_as_float(const ki_atom_t* it)
 		: 0.0;
 }
 
+unsigned int
+dvalue_as_handle(const ki_atom_t* it)
+{
+	return it->tag == DVALUE_HANDLE ? it->handle : 0;
+}
+
 remote_ptr_t
 dvalue_as_ptr(const ki_atom_t* it)
 {
@@ -436,6 +472,13 @@ dvalue_print(const ki_atom_t* it, bool is_verbose)
 		printf("{lightfunc:\"");
 		print_duktape_ptr(dvalue_as_ptr(it));
 		printf("\"}");
+		break;
+	case DVALUE_HANDLE:
+		if (!is_verbose)
+			printf("{...}");
+		else {
+			printf("{ obj:%08x }", it->handle);
+		}
 		break;
 	case DVALUE_OBJ:
 		if (!is_verbose)
@@ -528,6 +571,12 @@ dvalue_recv(socket_t* socket)
 		((uint8_t*)&atom->float_value)[7] = data[0];
 		atom->tag = DVALUE_FLOAT;
 		break;
+	case DVALUE_HANDLE:
+		if (socket_read(socket, data, 4) == 0)
+			goto lost_connection;
+		atom->tag = DVALUE_HANDLE;
+		atom->handle = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
+		break;
 	case DVALUE_OBJ:
 		if (socket_read(socket, &atom->ptr.class, 1) == 0)
 			goto lost_connection;
@@ -606,6 +655,13 @@ dvalue_send(const ki_atom_t* it, socket_t* socket)
 	data[0] = (uint8_t)it->tag;
 	socket_write(socket, data, 1);
 	switch (it->tag) {
+	case DVALUE_HANDLE:
+		data[0] = (uint8_t)(it->handle >> 24 & 0xFF);
+		data[1] = (uint8_t)(it->handle >> 16 & 0xFF);
+		data[2] = (uint8_t)(it->handle >> 8 & 0xFF);
+		data[3] = (uint8_t)(it->handle & 0xFF);
+		socket_write(socket, data, 4);
+		break;
 	case DVALUE_INT:
 		data[0] = (uint8_t)(it->int_value >> 24 & 0xFF);
 		data[1] = (uint8_t)(it->int_value >> 16 & 0xFF);

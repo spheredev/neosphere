@@ -437,6 +437,7 @@ process_message(js_step_t* out_step)
 	char*          file_data;
 	size_t         file_size;
 	const char*    filename;
+	unsigned int   handle;
 	unsigned int   line_number;
 	char*          platform_name;
 	ki_message_t*  reply;
@@ -529,9 +530,12 @@ process_message(js_step_t* out_step)
 		eval_code = dmessage_get_string(request, 2);
 		jsal_debug_inspect_eval(call_index, eval_code, &eval_errored);
 		dmessage_add_int(reply, eval_errored ? 1 : 0);
-		dmessage_add_string(reply, jsal_get_string(-1));
-		dmessage_add_string(reply, jsal_get_string(-2));
-		jsal_pop(2);
+		if (jsal_get_uint(-1) == 0)
+			dmessage_add_string(reply, jsal_get_string(-2));
+		else
+			dmessage_add_handle(reply, jsal_get_uint(-1));
+		dmessage_add_string(reply, jsal_get_string(-3));
+		jsal_pop(3);
 		break;
 	case REQ_GETCALLSTACK:
 		i = 0;
@@ -541,6 +545,19 @@ process_message(js_step_t* out_step)
 			dmessage_add_int(reply, jsal_get_int(-2) + 1);
 			dmessage_add_int(reply, jsal_get_int(-1) + 1);
 			jsal_pop(4);
+		}
+		break;
+	case REQ_GETOBJPROPDESCRANGE:
+		handle = dmessage_get_handle(request, 1);
+		i = 0;
+		while (jsal_debug_inspect_object(handle, i++)) {
+			dmessage_add_int(reply, 0x2);
+			dmessage_add_string(reply, jsal_get_string(-3));
+			if (jsal_get_uint(-1) == 0)
+				dmessage_add_string(reply, jsal_get_string(-2));
+			else
+				dmessage_add_handle(reply, jsal_get_uint(-1));
+			jsal_pop(3);
 		}
 		break;
 	case REQ_GETLOCALS:

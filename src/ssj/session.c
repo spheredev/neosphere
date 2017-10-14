@@ -456,7 +456,7 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 {
 	const char*      expr;
 	const ki_atom_t* getter;
-	remote_ptr_t     heapptr;
+	unsigned int     handle;
 	bool             is_accessor;
 	bool             is_error;
 	int              max_len = 0;
@@ -470,12 +470,12 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 
 	expr = command_get_rest(cmd, 1);
 	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
-	if (dvalue_tag(result) != DVALUE_OBJ) {
+	if (dvalue_tag(result) != DVALUE_HANDLE) {
 		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "eval() = \33[37;1m%s\33[m\n", dvalue_as_cstr(result));
 	}
 	else {
-		heapptr = dvalue_as_ptr(result);
-		if (!(object = inferior_get_object(obj->inferior, heapptr, is_verbose)))
+		handle = dvalue_as_handle(result);
+		if (!(object = inferior_get_object(obj->inferior, handle, is_verbose)))
 			return;
 		if (objview_len(object) == 0) {
 			printf("object has no properties.\n");

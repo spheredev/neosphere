@@ -275,9 +275,9 @@ namespace Sphere.Gdk.Debugger
             return vars;
         }
 
-        public async Task<Dictionary<string, PropDesc>> GetObjPropDescRange(HeapPtr ptr, int start, int end)
+        public async Task<Dictionary<string, PropDesc>> GetObjPropDescRange(Handle handle, int start, int end)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.GetObjPropDescRange, ptr, start, end);
+            var reply = await DoRequest(DValueTag.REQ, Request.GetObjPropDescRange, handle, start, end);
             var props = new Dictionary<string, PropDesc>();
             int count = (reply.Length - 1) / 2;
             int i = 1;

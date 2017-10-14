@@ -29,6 +29,7 @@ namespace Sphere.Gdk.Debugger
         Pointer = 0x1C,
         LightFunc = 0x1D,
         HeapPtr = 0x1E,
+        Handle = 0x1F,
     }
 
     enum HeapClass
@@ -63,6 +64,11 @@ namespace Sphere.Gdk.Debugger
         Uint32Array,
         Float32Array,
         Float64Array,
+    }
+
+    struct Handle
+    {
+        public uint Value;
     }
 
     struct HeapPtr
@@ -111,6 +117,12 @@ namespace Sphere.Gdk.Debugger
             _value = value;
         }
 
+        public DValue(Handle handle)
+        {
+            _tag = DValueTag.Handle;
+            _value = handle;
+        }
+
         public DValue(HeapPtr ptr)
         {
             _tag = DValueTag.HeapPtr;
@@ -134,6 +146,11 @@ namespace Sphere.Gdk.Debugger
         public static explicit operator string(DValue dvalue)
         {
             return dvalue._tag == DValueTag.String ? dvalue._value : "(unknown value)";
+        }
+
+        public static explicit operator Handle(DValue dvalue)
+        {
+            return dvalue._tag == DValueTag.Handle ? dvalue._value : null;
         }
 
         public static explicit operator HeapPtr(DValue dvalue)
@@ -177,6 +194,7 @@ namespace Sphere.Gdk.Debugger
             else
             {
                 HeapPtr heapPtr = new HeapPtr();
+                Handle handle = new Handle();
                 switch ((DValueTag)initialByte)
                 {
                     case DValueTag.EOM:
@@ -249,6 +267,11 @@ namespace Sphere.Gdk.Debugger
                         heapPtr.Size = bytes[0];
                         socket.ReceiveAll(heapPtr.Data = new byte[heapPtr.Size]);
                         return new DValue(heapPtr);
+                    case DValueTag.Handle:
+                        if (!socket.ReceiveAll(bytes = new byte[4]))
+                            return null;
+                        handle.Value = (uint)((bytes[0] << 24) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3]);
+                        return new DValue(handle);
                     default:
                         return null;
                 }
@@ -259,6 +282,7 @@ namespace Sphere.Gdk.Debugger
         {
             try {
                 socket.Send(new byte[] { (byte)_tag });
+                Handle handle;
                 switch (_tag)
                 {
                     case DValueTag.Float:
@@ -290,6 +314,15 @@ namespace Sphere.Gdk.Debugger
                         socket.Send(new byte[] { _value.Size });
                         socket.Send(_value.Data);
                         break;
+                    case DValueTag.Handle:
+                        handle = (Handle)_value;
+                        socket.Send(new byte[] {
+                            (byte)(handle.Value >> 24 & 0xFF),
+                            (byte)(handle.Value >> 16 & 0xFF),
+                            (byte)(handle.Value >> 8 & 0xFF),
+                            (byte)(handle.Value & 0xFF)
+                        });
+                        break;
                 }
                 return true;
             }
@@ -304,6 +337,7 @@ namespace Sphere.Gdk.Debugger
             return
                 _tag == DValueTag.HeapPtr && _value.Class == HeapClass.Array ? "[ ... ]"
                 : _tag == DValueTag.HeapPtr ? string.Format(@"{{ obj: '{0}' }}", _value.Class.ToString())
+                : _tag == DValueTag.Handle ? "{ ... }"
                 : _tag == DValueTag.Undefined ? "undefined"
                 : _tag == DValueTag.Null ? "null"
                 : _tag == DValueTag.True ? "true" : _tag == DValueTag.False ? "false"

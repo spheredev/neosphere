@@ -37,6 +37,8 @@
 #include <stdint.h>
 #include "sockets.h"
 
+#define KI_VERSION 1
+
 typedef struct ki_message ki_message_t;
 typedef struct ki_atom    ki_atom_t;
 
@@ -63,6 +65,7 @@ enum ki_tag
 	DVALUE_PTR = 0x1C,
 	DVALUE_LIGHTFUNC = 0x1D,
 	DVALUE_HEAPPTR = 0x1E,
+	DVALUE_HANDLE = 0x1F,
 } ki_tag_t;
 
 typedef
@@ -160,10 +163,12 @@ dmessage_tag_t   dmessage_tag          (const ki_message_t* it);
 ki_tag_t         dmessage_get_atom_tag (const ki_message_t* it, int index);
 const ki_atom_t* dmessage_get_dvalue   (const ki_message_t* it, int index);
 double           dmessage_get_float    (const ki_message_t* it, int index);
+unsigned int     dmessage_get_handle   (const ki_message_t* it, int index);
 int32_t          dmessage_get_int      (const ki_message_t* it, int index);
 const char*      dmessage_get_string   (const ki_message_t* it, int index);
 void             dmessage_add_dvalue   (ki_message_t* it, const ki_atom_t* dvalue);
 void             dmessage_add_float    (ki_message_t* it, double value);
+void             dmessage_add_handle   (ki_message_t* it, unsigned int value);
 void             dmessage_add_heapptr  (ki_message_t* it, remote_ptr_t value);
 void             dmessage_add_int      (ki_message_t* it, int value);
 void             dmessage_add_string   (ki_message_t* it, const char* value);
@@ -171,6 +176,7 @@ ki_message_t*    dmessage_recv         (socket_t* socket);
 bool             dmessage_send         (const ki_message_t* it, socket_t* socket);
 ki_atom_t*       dvalue_new            (ki_tag_t tag);
 ki_atom_t*       dvalue_new_float      (double value);
+ki_atom_t*       dvalue_new_handle     (unsigned int value);
 ki_atom_t*       dvalue_new_heapptr    (remote_ptr_t value);
 ki_atom_t*       dvalue_new_int        (int value);
 ki_atom_t*       dvalue_new_string     (const char* value);
@@ -178,6 +184,7 @@ ki_atom_t*       dvalue_dup            (const ki_atom_t* it);
 void             dvalue_free           (ki_atom_t* it);
 ki_tag_t         dvalue_tag            (const ki_atom_t* it);
 const char*      dvalue_as_cstr        (const ki_atom_t* it);
+unsigned int     dvalue_as_handle      (const ki_atom_t* it);
 remote_ptr_t     dvalue_as_ptr         (const ki_atom_t* it);
 double           dvalue_as_float       (const ki_atom_t* it);
 int              dvalue_as_int         (const ki_atom_t* it);

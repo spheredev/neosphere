@@ -229,6 +229,7 @@ void jsal_debug_breakpoint_remove  (int index);
 bool jsal_debug_inspect_breakpoint (int index);
 bool jsal_debug_inspect_call       (int call_index);
 bool jsal_debug_inspect_eval       (int call_index, const char* source, bool *out_errored);
+bool jsal_debug_inspect_object     (unsigned int object_id, int property_index);
 bool jsal_debug_inspect_var        (int call_index, int var_index);
 
 #endif // FATCERBERUS__JSAL_H__INCLUDED
