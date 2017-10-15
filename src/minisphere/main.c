@@ -534,21 +534,29 @@ shutdown_engine(void)
 static bool
 find_startup_game(path_t* *out_path)
 {
+	const char* const MANIFEST_PATHS[] =
+	{
+		"startup/game.json",
+		"dist/game.json",
+		"startup/game.sgm",
+		"dist/game.sgm",
+	};
+	
 	ALLEGRO_FS_ENTRY* engine_dir;
 	const char*       file_ext;
 	const char*       filename;
 	ALLEGRO_FS_ENTRY* fse;
 	int               n_spk_files = 0;
 
+	int i;
+
 	// prefer a bundled startup game over an SPK if one exists
-	*out_path = path_rebase(path_new("startup/game.sgm"), assets_path());
-	if (al_filename_exists(path_cstr(*out_path)))
-		return true;  // found a startup game
-	path_free(*out_path);
-	*out_path = path_rebase(path_new("startup/game.json"), assets_path());
-	if (al_filename_exists(path_cstr(*out_path)))
-		return true;  // found a startup game
-	path_free(*out_path);
+	for (i = 0; i < sizeof MANIFEST_PATHS / sizeof MANIFEST_PATHS[0]; ++i) {
+		*out_path = path_rebase(path_new(MANIFEST_PATHS[i]), assets_path());
+		if (al_filename_exists(path_cstr(*out_path)))
+			return true;  // found a startup game
+		path_free(*out_path);
+	}
 
 	// check for a single bundled SPK package
 	*out_path = path_dup(assets_path());
