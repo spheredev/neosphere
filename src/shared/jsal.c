@@ -2582,10 +2582,14 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModule
 	}
 	else {
 		exception = pop_value();
-		JsSetException(exception);
+		push_value(specifier, true);
+		filename = jsal_get_string(-1);
+		module = get_module_record(filename, importer, &is_new_module);
+		JsSetModuleHostInfo(module, JsModuleHostInfo_Exception, exception);
 		resize_stack(s_stack_base);
 		s_stack_base = last_stack_base;
-		return JsErrorInvalidArgument;
+		*out_module = module;
+		return JsNoError;
 	}
 	resize_stack(s_stack_base);
 	s_stack_base = last_stack_base;

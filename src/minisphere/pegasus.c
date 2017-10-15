@@ -1163,7 +1163,7 @@ handle_module_import(void)
 	}
 	free(caller_id);
 	if (path == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "couldn't find mJS module '%s'", specifier);
+		jsal_push_new_error(JS_URI_ERROR, "couldn't find module '%s'", specifier);
 		free(specifier);
 		jsal_throw();
 	}
