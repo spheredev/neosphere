@@ -306,8 +306,8 @@ build_eval(build_t* build, const char* filename)
 		build->crashed = true;
 		is_ok = false;
 		if (jsal_is_error(-1)) {
-			jsal_get_prop_string(-1, "stack");
-			error_stack = strdup(jsal_get_string(-1));
+			if (jsal_get_prop_string(-1, "stack"))
+				error_stack = strdup(jsal_get_string(-1));
 			jsal_pop(1);
 		}
 		visor_error(build->visor, "uncaught JavaScript exception");

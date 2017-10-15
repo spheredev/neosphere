@@ -2585,7 +2585,7 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModule
 		JsSetException(exception);
 		resize_stack(s_stack_base);
 		s_stack_base = last_stack_base;
-		return JsErrorScriptCompile;
+		return JsErrorInvalidArgument;
 	}
 	resize_stack(s_stack_base);
 	s_stack_base = last_stack_base;
