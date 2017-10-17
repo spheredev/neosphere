@@ -41,42 +41,6 @@
 #include <string.h>
 #include "vector.h"
 
-static void print_duktape_ptr (remote_ptr_t ptr);
-
-const char* const
-CLASS_NAMES[] = {
-	"unknown",
-	"Object",
-	"Array",
-	"Function",
-	"Arguments",
-	"Boolean",
-	"Date",
-	"Error",
-	"JSON",
-	"Math",
-	"Number",
-	"RegExp",
-	"String",
-	"global",
-	"Symbol",
-	"ObjEnv",
-	"DecEnv",
-	"Pointer",
-	"Thread",
-	"ArrayBuffer",
-	"DataView",
-	"Int8Array",
-	"Uint8Array",
-	"Uint8ClampedArray",
-	"Int16Array",
-	"Uint16Array",
-	"Int32Array",
-	"Uint32Array",
-	"Float32Array",
-	"Float64Array",
-};
-
 struct ki_message
 {
 	vector_t*      dvalues;
@@ -90,10 +54,6 @@ struct ki_atom
 		double       float_value;
 		unsigned int handle;
 		int          int_value;
-		struct {
-			remote_ptr_t value;
-			uint8_t      class;
-		} ptr;
 		struct {
 			void*  data;
 			size_t size;
@@ -220,15 +180,6 @@ dmessage_add_handle(ki_message_t* it, unsigned int value)
 }
 
 void
-dmessage_add_heapptr(ki_message_t* it, remote_ptr_t heapptr)
-{
-	ki_atom_t* dvalue;
-
-	dvalue = dvalue_new_heapptr(heapptr);
-	vector_push(it->dvalues, &dvalue);
-}
-
-void
 dmessage_add_int(ki_message_t* it, int value)
 {
 	ki_atom_t* dvalue;
@@ -344,18 +295,6 @@ dvalue_new_handle(unsigned int value)
 }
 
 ki_atom_t*
-dvalue_new_heapptr(remote_ptr_t value)
-{
-	ki_atom_t* atom;
-
-	atom = calloc(1, sizeof(ki_atom_t));
-	atom->tag = DVALUE_HEAPPTR;
-	atom->ptr.value.addr = value.addr;
-	atom->ptr.value.size = value.size;
-	return atom;
-}
-
-ki_atom_t*
 dvalue_new_int(int value)
 {
 	ki_atom_t* atom;
@@ -429,19 +368,6 @@ dvalue_as_handle(const ki_atom_t* it)
 	return it->tag == DVALUE_HANDLE ? it->handle : 0;
 }
 
-remote_ptr_t
-dvalue_as_ptr(const ki_atom_t* it)
-{
-	remote_ptr_t retval;
-
-	memset(&retval, 0, sizeof(remote_ptr_t));
-	if (it->tag == DVALUE_PTR || it->tag == DVALUE_HEAPPTR || it->tag == DVALUE_OBJ || it->tag == DVALUE_LIGHTFUNC) {
-		retval.addr = it->ptr.value.addr;
-		retval.size = it->ptr.value.size;
-	}
-	return retval;
-}
-
 int
 dvalue_as_int(const ki_atom_t* it)
 {
@@ -463,34 +389,12 @@ dvalue_print(const ki_atom_t* it, bool is_verbose)
 	case DVALUE_INT: printf("%d", it->int_value); break;
 	case DVALUE_STRING: printf("\"%s\"", (char*)it->buffer.data); break;
 	case DVALUE_BUFFER: printf("{buf:\"%zd bytes\"}", it->buffer.size); break;
-	case DVALUE_HEAPPTR:
-		printf("{heap:\"");
-		print_duktape_ptr(dvalue_as_ptr(it));
-		printf("\"}");
-		break;
-	case DVALUE_LIGHTFUNC:
-		printf("{lightfunc:\"");
-		print_duktape_ptr(dvalue_as_ptr(it));
-		printf("\"}");
-		break;
 	case DVALUE_HANDLE:
 		if (!is_verbose)
 			printf("{...}");
 		else {
 			printf("{ obj:%08x }", it->handle);
 		}
-		break;
-	case DVALUE_OBJ:
-		if (!is_verbose)
-			printf("{...}");
-		else {
-			printf("{ obj:'%s' }", CLASS_NAMES[it->ptr.class]);
-		}
-		break;
-	case DVALUE_PTR:
-		printf("{ptr:\"");
-		print_duktape_ptr(dvalue_as_ptr(it));
-		printf("\"}");
 		break;
 	default:
 		printf("*munch*");
@@ -504,8 +408,6 @@ dvalue_recv(socket_t* socket)
 	uint8_t    data[32];
 	uint8_t    ib;
 	int        read_size;
-
-	ptrdiff_t i, j;
 
 	atom = calloc(1, sizeof(ki_atom_t));
 	if (socket_read(socket, &ib, 1) == 0)
@@ -577,46 +479,6 @@ dvalue_recv(socket_t* socket)
 		atom->tag = DVALUE_HANDLE;
 		atom->handle = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
-	case DVALUE_OBJ:
-		if (socket_read(socket, &atom->ptr.class, 1) == 0)
-			goto lost_connection;
-		if (socket_read(socket, &atom->ptr.value.size, 1) == 0)
-			goto lost_connection;
-		if (socket_read(socket, data, atom->ptr.value.size) == 0)
-			goto lost_connection;
-		atom->tag = DVALUE_OBJ;
-		for (i = 0, j = atom->ptr.value.size - 1; j >= 0; ++i, --j)
-			((uint8_t*)&atom->ptr.value.addr)[i] = data[j];
-		break;
-	case DVALUE_PTR:
-		if (socket_read(socket, &atom->ptr.value.size, 1) == 0)
-			goto lost_connection;
-		if (socket_read(socket, data, atom->ptr.value.size) == 0)
-			goto lost_connection;
-		atom->tag = DVALUE_PTR;
-		for (i = 0, j = atom->ptr.value.size - 1; j >= 0; ++i, --j)
-			((uint8_t*)&atom->ptr.value.addr)[i] = data[j];
-		break;
-	case DVALUE_LIGHTFUNC:
-		if (socket_read(socket, data, 2) == 0)
-			goto lost_connection;
-		if (socket_read(socket, &atom->ptr.value.size, 1) == 0)
-			goto lost_connection;
-		if (socket_read(socket, data, atom->ptr.value.size) == 0)
-			goto lost_connection;
-		atom->tag = DVALUE_LIGHTFUNC;
-		for (i = 0, j = atom->ptr.value.size - 1; j >= 0; ++i, --j)
-			((uint8_t*)&atom->ptr.value.addr)[i] = data[j];
-		break;
-	case DVALUE_HEAPPTR:
-		if (socket_read(socket, &atom->ptr.value.size, 1) == 0)
-			goto lost_connection;
-		if (socket_read(socket, data, atom->ptr.value.size) == 0)
-			goto lost_connection;
-		atom->tag = DVALUE_HEAPPTR;
-		for (i = 0, j = atom->ptr.value.size - 1; j >= 0; ++i, --j)
-			((uint8_t*)&atom->ptr.value.addr)[i] = data[j];
-		break;
 	default:
 		if (ib >= 0x60 && ib <= 0x7F) {
 			atom->tag = DVALUE_STRING;
@@ -650,11 +512,20 @@ dvalue_send(const ki_atom_t* it, socket_t* socket)
 	uint8_t  data[32];
 	uint32_t str_length;
 
-	ptrdiff_t i, j;
-
 	data[0] = (uint8_t)it->tag;
 	socket_write(socket, data, 1);
 	switch (it->tag) {
+	case DVALUE_FLOAT:
+		data[0] = ((uint8_t*)&it->float_value)[7];
+		data[1] = ((uint8_t*)&it->float_value)[6];
+		data[2] = ((uint8_t*)&it->float_value)[5];
+		data[3] = ((uint8_t*)&it->float_value)[4];
+		data[4] = ((uint8_t*)&it->float_value)[3];
+		data[5] = ((uint8_t*)&it->float_value)[2];
+		data[6] = ((uint8_t*)&it->float_value)[1];
+		data[7] = ((uint8_t*)&it->float_value)[0];
+		socket_write(socket, data, 8);
+		break;
 	case DVALUE_HANDLE:
 		data[0] = (uint8_t)(it->handle >> 24 & 0xFF);
 		data[1] = (uint8_t)(it->handle >> 16 & 0xFF);
@@ -678,32 +549,6 @@ dvalue_send(const ki_atom_t* it, socket_t* socket)
 		socket_write(socket, data, 4);
 		socket_write(socket, it->buffer.data, (int)str_length);
 		break;
-	case DVALUE_FLOAT:
-		data[0] = ((uint8_t*)&it->float_value)[7];
-		data[1] = ((uint8_t*)&it->float_value)[6];
-		data[2] = ((uint8_t*)&it->float_value)[5];
-		data[3] = ((uint8_t*)&it->float_value)[4];
-		data[4] = ((uint8_t*)&it->float_value)[3];
-		data[5] = ((uint8_t*)&it->float_value)[2];
-		data[6] = ((uint8_t*)&it->float_value)[1];
-		data[7] = ((uint8_t*)&it->float_value)[0];
-		socket_write(socket, data, 8);
-		break;
-	case DVALUE_HEAPPTR:
-		for (i = 0, j = it->ptr.value.size - 1; j >= 0; ++i, --j)
-			data[i] = ((uint8_t*)&it->ptr.value.addr)[j];
-		socket_write(socket, &it->ptr.value.size, 1);
-		socket_write(socket, data, it->ptr.value.size);
-		break;
 	}
 	return socket_connected(socket);
-}
-
-static void
-print_duktape_ptr(remote_ptr_t ptr)
-{
-	if (ptr.size == 8)  // x64 pointer
-		printf("%016"PRIx64"h", (uint64_t)ptr.addr);
-	else if (ptr.size == 4)  // x86 pointer
-		printf("%08"PRIx32"h", (uint32_t)ptr.addr);
 }

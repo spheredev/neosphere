@@ -74,9 +74,9 @@ benefit from queries!
 
     import { from } from 'sphere-runtime';
 
-If you're familiar with C#, the from() function exposed by this module works a
-lot like LINQ.  A query is built from a number of predicates and mappings, and
-is then typically processed using a `for...of` loop.
+If you're familiar with C#, the from() function works a lot like LINQ.  A query
+is built from a number of predicates and mappings, and is then typically
+processed using a `for...of` loop.
 
 For example, suppose you wanted to code an attack that damages all opposing
 battlers whose level is a multiple of 5, but only hits 75% of the time.  That

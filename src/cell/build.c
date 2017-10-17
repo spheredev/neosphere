@@ -708,7 +708,7 @@ handle_module_import(void)
 		"#/runtime",
 	};
 
-	const char* caller_id;
+	const char* caller_id = NULL;
 	path_t*     path;
 	char*       source;
 	size_t      source_len;
@@ -717,7 +717,11 @@ handle_module_import(void)
 	int i;
 
 	specifier = jsal_require_string(0);
-	caller_id = jsal_require_string(1);
+	if (!jsal_is_null(1))
+		caller_id = jsal_require_string(1);
+
+	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
+		jsal_error(JS_TYPE_ERROR, "relative import() not allowed outside of an mJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i]))
@@ -1113,7 +1117,7 @@ js_require(int num_args, bool is_ctor, int magic)
 		parent_id = jsal_get_string(-1);
 
 	if (parent_id == NULL && (strncmp(module_id, "./", 2) == 0 || strncmp(module_id, "../", 3) == 0))
-		jsal_error(JS_TYPE_ERROR, "require() outside of a CommonJS module must be absolute");
+		jsal_error(JS_TYPE_ERROR, "relative require() not allowed outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i]))

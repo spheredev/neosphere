@@ -471,12 +471,14 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 	expr = command_get_rest(cmd, 1);
 	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
 	if (dvalue_tag(result) != DVALUE_HANDLE) {
-		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "eval() = \33[37;1m%s\33[m\n", dvalue_as_cstr(result));
+		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", dvalue_as_cstr(result));
 	}
 	else {
 		handle = dvalue_as_handle(result);
 		if (!(object = inferior_get_object(obj->inferior, handle, is_verbose)))
 			return;
+		if (is_error)
+			printf("\33[31;1m");
 		if (objview_len(object) == 0) {
 			printf("object has no properties.\n");
 			return;
@@ -518,6 +520,8 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 		objview_free(object);
 		if (!is_verbose)
 			printf("}\n");
+		if (is_error)
+			printf("\33[m");
 	}
 	dvalue_free(result);
 }

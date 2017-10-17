@@ -129,12 +129,11 @@ from a different location, you can use one of the SphereFS prefixes:
 
     @/: The root of the game's sandboxed file system.  Usually redundant, but
         can be useful to qualify filenames in situations where a bare SphereFS
-        filename is ambiguous, for example in a require() call.  This directory
-        is read-only; trying to save or modify anything here will throw a
-        TypeError.
+        filename will be ambiguous, for example in an `import` declaration.
+        This directory is read-only; trying to save or modify anything here
+        will cause a TypeError to be thrown.
     $/: The directory containing the startup script.  This is mostly provided
-        as a convenience for specifying module names for `require()` and
-        `import`.
+        as a convenience for specifying module names in `import` declarations.
     #/: The engine's system directory.  This contains assets included with the
         engine.  As with `@/`, this is read-only to Sphere games.
     ~/: The current user's save data directory (note: requires a save ID; refer

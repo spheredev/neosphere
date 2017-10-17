@@ -136,9 +136,9 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	dmessage_free(reply);
 	printf("OK.\n");
 
-	printf("    platform: \33[37;1m%s\33[m\n", platform_name);
-	printf("    title:    \33[37;1m%s\33[m\n", obj->title);
-	printf("    author:   \33[37;1m%s\33[m\n", obj->author);
+	printf("    engine: \33[37;1m%s\33[m\n", platform_name);
+	printf("    title:  \33[37;1m%s\33[m\n", obj->title);
+	printf("    author: \33[37;1m%s\33[m\n", obj->author);
 
 	obj->id_no = s_next_id_no++;
 	obj->show_trace = show_trace;
@@ -605,7 +605,7 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 		case NFY_DETACHING:
 			status_type = dmessage_get_int(msg, 1);
 			if (status_type == 0)
-				printf("\33[36mthe engine disconnected from SSj normally.\n");
+				printf("\33[36;1mthe engine disconnected from SSj normally.\n");
 			else
 				printf("\33[31;1ma communication error occurred while debugging.\n");
 			printf("\33[m");

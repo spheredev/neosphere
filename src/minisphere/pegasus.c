@@ -1149,7 +1149,7 @@ handle_module_import(void)
 		caller_id = strdup(jsal_require_string(1));
 
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_TYPE_ERROR, "relative path for import() is not allowed outside of an mJS module");
+		jsal_error(JS_TYPE_ERROR, "relative import() not allowed outside of an mJS module");
 
 	// HACK: the way JSAL is currently designed, the same filename is used for
 	//       module resolution as for display; this works around the limitation
@@ -1252,7 +1252,7 @@ js_require(int num_args, bool is_ctor, int magic)
 		parent_id = jsal_get_string(-1);
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
-		jsal_error(JS_TYPE_ERROR, "require() outside of a CommonJS module must be absolute");
+		jsal_error(JS_TYPE_ERROR, "relative require() not allowed outside of a CommonJS module");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module_file(id, parent_id, PATHS[i], false))
 			break;  // short-circuit
