@@ -39,8 +39,8 @@
 
 #define KI_VERSION 1
 
-typedef struct ki_message ki_message_t;
 typedef struct ki_atom    ki_atom_t;
+typedef struct ki_message ki_message_t;
 
 typedef
 enum ki_attribute
@@ -85,33 +85,33 @@ enum print_op
 	PRINT_WARN,
 } print_op_t;
 
-enum req_command
+enum ki_request
 {
-	REQ_BASICINFO = 0x10,
-	REQ_SENDSTATUS = 0x11,
-	REQ_PAUSE = 0x12,
-	REQ_RESUME = 0x13,
-	REQ_STEPINTO = 0x14,
-	REQ_STEPOVER = 0x15,
-	REQ_STEPOUT = 0x16,
-	REQ_LISTBREAK = 0x17,
-	REQ_ADDBREAK = 0x18,
-	REQ_DELBREAK = 0x19,
-	REQ_GETVAR = 0x1A,
-	REQ_PUTVAR = 0x1B,
-	REQ_GETCALLSTACK = 0x1C,
-	REQ_GETLOCALS = 0x1D,
-	REQ_EVAL = 0x1E,
-	REQ_DETACH = 0x1F,
-	REQ_DUMPHEAP = 0x20,
-	REQ_GETBYTECODE = 0x21,
-	REQ_APPREQUEST = 0x22,
-	REQ_GETHEAPOBJINFO = 0x23,
-	REQ_GETOBJPROPDESC = 0x24,
-	REQ_GETOBJPROPDESCRANGE = 0x25,
+	KI_REQ_BASICINFO = 0x10,
+	KI_REQ_SENDSTATUS = 0x11,
+	KI_REQ_PAUSE = 0x12,
+	KI_REQ_RESUME = 0x13,
+	KI_REQ_STEPINTO = 0x14,
+	KI_REQ_STEPOVER = 0x15,
+	KI_REQ_STEPOUT = 0x16,
+	KI_REQ_LISTBREAK = 0x17,
+	KI_REQ_ADDBREAK = 0x18,
+	KI_REQ_DELBREAK = 0x19,
+	KI_REQ_GETVAR = 0x1A,
+	KI_REQ_PUTVAR = 0x1B,
+	KI_REQ_GETCALLSTACK = 0x1C,
+	KI_REQ_GETLOCALS = 0x1D,
+	KI_REQ_EVAL = 0x1E,
+	KI_REQ_DETACH = 0x1F,
+	KI_REQ_DUMPHEAP = 0x20,
+	KI_REQ_GETBYTECODE = 0x21,
+	KI_REQ_APP_REQUEST = 0x22,
+	KI_REQ_GETHEAPOBJINFO = 0x23,
+	KI_REQ_GETOBJPROPDESC = 0x24,
+	KI_REQ_GETOBJPROPDESCRANGE = 0x25,
 };
 
-enum ki_err_command
+enum ki_error
 {
 	KI_ERR_UNKNOWN = 0x00,
 	KI_ERR_UNSUPPORTED = 0x01,
@@ -120,7 +120,7 @@ enum ki_err_command
 	KI_ERR_APP_ERROR = 0x04,
 };
 
-enum nfy_command
+enum ki_notify
 {
 	KI_NFY_STATUS = 0x01,
 	KI_NFY_PRINT = 0x02,
@@ -128,54 +128,54 @@ enum nfy_command
 	KI_NFY_LOG = 0x04,
 	KI_NFY_THROW = 0x05,
 	KI_NFY_DETACHING = 0x06,
-	KI_NFY_APPNOTIFY = 0x07,
+	KI_NFY_APP_NOTIFY = 0x07,
 };
 
-enum appnotify
+enum ki_app_notify
 {
-	APPNFY_NOP,
-	APPNFY_DEBUG_PRINT,
+	KI_APP_NFY_NOP,
+	KI_APP_NFY_DEBUG_PRINT,
 };
 
-enum apprequest
+enum ki_app_request
 {
-	APPREQ_NOP,
-	APPREQ_GAME_INFO,
-	APPREQ_SOURCE,
-	APPREQ_WATERMARK,
+	KI_APP_REQ_NOP,
+	KI_APP_REQ_GAME_INFO,
+	KI_APP_REQ_SOURCE,
+	KI_APP_REQ_WATERMARK,
 };
 
-ki_message_t*    dmessage_new          (ki_type_t command_tag);
-void             dmessage_free         (ki_message_t* it);
-int              dmessage_len          (const ki_message_t* it);
-ki_type_t        dmessage_tag          (const ki_message_t* it);
-ki_type_t        dmessage_get_atom_tag (const ki_message_t* it, int index);
-const ki_atom_t* dmessage_get_dvalue   (const ki_message_t* it, int index);
-double           dmessage_get_float    (const ki_message_t* it, int index);
-unsigned int     dmessage_get_handle   (const ki_message_t* it, int index);
-int32_t          dmessage_get_int      (const ki_message_t* it, int index);
-const char*      dmessage_get_string   (const ki_message_t* it, int index);
-void             dmessage_add_dvalue   (ki_message_t* it, const ki_atom_t* dvalue);
-void             dmessage_add_float    (ki_message_t* it, double value);
-void             dmessage_add_handle   (ki_message_t* it, unsigned int value);
-void             dmessage_add_int      (ki_message_t* it, int value);
-void             dmessage_add_string   (ki_message_t* it, const char* value);
-ki_message_t*    dmessage_recv         (socket_t* socket);
-bool             dmessage_send         (const ki_message_t* it, socket_t* socket);
-ki_atom_t*       dvalue_new            (ki_type_t tag);
-ki_atom_t*       dvalue_new_float      (double value);
-ki_atom_t*       dvalue_new_handle     (unsigned int value);
-ki_atom_t*       dvalue_new_int        (int value);
-ki_atom_t*       dvalue_new_string     (const char* value);
-ki_atom_t*       dvalue_dup            (const ki_atom_t* it);
-void             dvalue_free           (ki_atom_t* it);
-ki_type_t        dvalue_tag            (const ki_atom_t* it);
-const char*      dvalue_as_cstr        (const ki_atom_t* it);
-unsigned int     dvalue_as_handle      (const ki_atom_t* it);
-double           dvalue_as_float       (const ki_atom_t* it);
-int              dvalue_as_int         (const ki_atom_t* it);
-void             dvalue_print          (const ki_atom_t* it, bool is_verbose);
-ki_atom_t*       dvalue_recv           (socket_t* socket);
-bool             dvalue_send           (const ki_atom_t* it, socket_t* socket);
+ki_atom_t*       ki_atom_new           (ki_type_t tag);
+ki_atom_t*       ki_atom_new_handle    (unsigned int value);
+ki_atom_t*       ki_atom_new_int       (int value);
+ki_atom_t*       ki_atom_new_number    (double value);
+ki_atom_t*       ki_atom_new_string    (const char* value);
+ki_atom_t*       ki_atom_dup           (const ki_atom_t* it);
+void             ki_atom_free          (ki_atom_t* it);
+const char*      ki_atom_cstr          (const ki_atom_t* it);
+unsigned int     ki_atom_handle        (const ki_atom_t* it);
+double           ki_atom_number        (const ki_atom_t* it);
+int              ki_atom_int           (const ki_atom_t* it);
+ki_type_t        ki_atom_tag           (const ki_atom_t* it);
+void             ki_atom_print         (const ki_atom_t* it, bool is_verbose);
+ki_atom_t*       ki_atom_recv          (socket_t* socket);
+bool             ki_atom_send          (const ki_atom_t* it, socket_t* socket);
+ki_message_t*    ki_message_new        (ki_type_t command_tag);
+void             ki_message_free       (ki_message_t* it);
+const ki_atom_t* ki_message_atom       (const ki_message_t* it, int index);
+ki_type_t        ki_message_atom_tag   (const ki_message_t* it, int index);
+unsigned int     ki_message_handle     (const ki_message_t* it, int index);
+int32_t          ki_message_int        (const ki_message_t* it, int index);
+int              ki_message_len        (const ki_message_t* it);
+double           ki_message_number     (const ki_message_t* it, int index);
+const char*      ki_message_string     (const ki_message_t* it, int index);
+ki_type_t        ki_message_tag        (const ki_message_t* it);
+void             ki_message_add_atom   (ki_message_t* it, const ki_atom_t* dvalue);
+void             ki_message_add_handle (ki_message_t* it, unsigned int value);
+void             ki_message_add_number (ki_message_t* it, double value);
+void             ki_message_add_int    (ki_message_t* it, int value);
+void             ki_message_add_string (ki_message_t* it, const char* value);
+ki_message_t*    ki_message_recv       (socket_t* socket);
+bool             ki_message_send       (const ki_message_t* it, socket_t* socket);
 
 #endif // SPHERE__KI_H__INCLUDED

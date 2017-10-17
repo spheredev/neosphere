@@ -470,11 +470,11 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 
 	expr = command_get_rest(cmd, 1);
 	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
-	if (dvalue_tag(result) != KI_HANDLE) {
-		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", dvalue_as_cstr(result));
+	if (ki_atom_tag(result) != KI_HANDLE) {
+		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", ki_atom_cstr(result));
 	}
 	else {
-		handle = dvalue_as_handle(result);
+		handle = ki_atom_handle(result);
 		if (!(object = inferior_get_object(obj->inferior, handle, is_verbose)))
 			return;
 		if (is_error)
@@ -506,14 +506,14 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 				printf("    \"%s\": ", prop_key);
 			}
 			if (!is_accessor)
-				dvalue_print(objview_get_value(object, i), is_verbose);
+				ki_atom_print(objview_get_value(object, i), is_verbose);
 			else {
 				getter = objview_get_getter(object, i);
 				setter = objview_get_setter(object, i);
 				printf("get ");
-				dvalue_print(getter, is_verbose);
+				ki_atom_print(getter, is_verbose);
 				printf(", set ");
-				dvalue_print(setter, is_verbose);
+				ki_atom_print(setter, is_verbose);
 			}
 			printf("\n");
 		}
@@ -523,7 +523,7 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 		if (is_error)
 			printf("\33[m");
 	}
-	dvalue_free(result);
+	ki_atom_free(result);
 }
 
 static void
@@ -645,7 +645,7 @@ handle_vars(session_t* obj, command_t* cmd)
 		class_name = objview_get_class(vars, i);
 		value = objview_get_value(vars, i);
 		printf("%s: %s = \33[37;1m%s\33[m",
-			var_name, class_name, dvalue_as_cstr(value));
+			var_name, class_name, ki_atom_cstr(value));
 		printf("\n");
 	}
 }

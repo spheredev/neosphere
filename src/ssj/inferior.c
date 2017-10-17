@@ -115,25 +115,25 @@ inferior_new(const char* hostname, int port, bool show_trace)
 		goto on_error;
 
 	// set watermark (shown on bottom left)
-	request = dmessage_new(KI_REQ);
-	dmessage_add_int(request, REQ_APPREQUEST);
-	dmessage_add_int(request, APPREQ_WATERMARK);
-	dmessage_add_string(request, "ssj");
-	dmessage_add_int(request, 255);
-	dmessage_add_int(request, 224);
-	dmessage_add_int(request, 0);
+	request = ki_message_new(KI_REQ);
+	ki_message_add_int(request, KI_REQ_APP_REQUEST);
+	ki_message_add_int(request, KI_APP_REQ_WATERMARK);
+	ki_message_add_string(request, "ssj");
+	ki_message_add_int(request, 255);
+	ki_message_add_int(request, 224);
+	ki_message_add_int(request, 0);
 	reply = inferior_request(obj, request);
-	dmessage_free(reply);
+	ki_message_free(reply);
 
 	printf("downloading game information... ");
-	request = dmessage_new(KI_REQ);
-	dmessage_add_int(request, REQ_APPREQUEST);
-	dmessage_add_int(request, APPREQ_GAME_INFO);
+	request = ki_message_new(KI_REQ);
+	ki_message_add_int(request, KI_REQ_APP_REQUEST);
+	ki_message_add_int(request, KI_APP_REQ_GAME_INFO);
 	reply = inferior_request(obj, request);
-	platform_name = strdup(dmessage_get_string(reply, 0));
-	obj->title = strdup(dmessage_get_string(reply, 1));
-	obj->author = strdup(dmessage_get_string(reply, 2));
-	dmessage_free(reply);
+	platform_name = strdup(ki_message_string(reply, 0));
+	obj->title = strdup(ki_message_string(reply, 1));
+	obj->author = strdup(ki_message_string(reply, 2));
+	ki_message_free(reply);
 	printf("OK.\n");
 
 	printf("    engine: \33[37;1m%s\33[m\n", platform_name);
@@ -178,15 +178,15 @@ inferior_update(inferior_t* obj)
 	if (obj->is_detached)
 		return false;
 
-	if (!(notify = dmessage_recv(obj->socket)))
+	if (!(notify = ki_message_recv(obj->socket)))
 		goto detached;
 	if (!handle_notify(obj, notify))
 		goto detached;
-	dmessage_free(notify);
+	ki_message_free(notify);
 	return true;
 
 detached:
-	dmessage_free(notify);
+	ki_message_free(notify);
 	obj->is_detached = true;
 	return false;
 }
@@ -228,25 +228,25 @@ inferior_get_calls(inferior_t* obj)
 	int i;
 
 	if (obj->calls == NULL) {
-		request = dmessage_new(KI_REQ);
-		dmessage_add_int(request, REQ_GETCALLSTACK);
+		request = ki_message_new(KI_REQ);
+		ki_message_add_int(request, KI_REQ_GETCALLSTACK);
 		if (!(request = inferior_request(obj, request)))
 			return NULL;
-		num_frames = dmessage_len(request) / 4;
+		num_frames = ki_message_len(request) / 4;
 		obj->calls = backtrace_new();
 		for (i = 0; i < num_frames; ++i) {
-			function_name = dmessage_get_string(request, i * 4 + 1);
+			function_name = ki_message_string(request, i * 4 + 1);
 			if (strcmp(function_name, "Anonymous function") == 0)
 				call_name = strdup("[anonymous function]");
 			else if (strcmp(function_name, "Global code") == 0)
 				call_name = strdup("[global code]");
 			else
 				call_name = strnewf("%s()", function_name);
-			filename = dmessage_get_string(request, i * 4);
-			line_no = dmessage_get_int(request, i * 4 + 2);
+			filename = ki_message_string(request, i * 4);
+			line_no = ki_message_int(request, i * 4 + 2);
 			backtrace_add(obj->calls, call_name, filename, line_no);
 		}
-		dmessage_free(request);
+		ki_message_free(request);
 	}
 
 	return obj->calls;
@@ -267,21 +267,21 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 	const ki_atom_t* value;
 	objview_t*       view;
 
-	request = dmessage_new(KI_REQ);
-	dmessage_add_int(request, REQ_GETOBJPROPDESCRANGE);
-	dmessage_add_handle(request, handle);
-	dmessage_add_int(request, 0);
-	dmessage_add_int(request, INT_MAX);
+	request = ki_message_new(KI_REQ);
+	ki_message_add_int(request, KI_REQ_GETOBJPROPDESCRANGE);
+	ki_message_add_handle(request, handle);
+	ki_message_add_int(request, 0);
+	ki_message_add_int(request, INT_MAX);
 	if (!(request = inferior_request(obj, request)))
 		return NULL;
 	view = objview_new();
-	while (index < dmessage_len(request)) {
-		prop_flags = dmessage_get_int(request, index++);
-		prop_key = dmessage_get_dvalue(request, index++);
-		if (dvalue_tag(prop_key) == KI_STRING)
-			key_string = strdup(dvalue_as_cstr(prop_key));
+	while (index < ki_message_len(request)) {
+		prop_flags = ki_message_int(request, index++);
+		prop_key = ki_message_atom(request, index++);
+		if (ki_atom_tag(prop_key) == KI_STRING)
+			key_string = strdup(ki_atom_cstr(prop_key));
 		else
-			key_string = strnewf("%d", dvalue_as_int(prop_key));
+			key_string = strnewf("%d", ki_atom_int(prop_key));
 		is_accessor = (prop_flags & 0x008) != 0;
 		if (prop_flags & 0x100) {
 			index += is_accessor ? 2 : 1;
@@ -292,18 +292,18 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 		if (prop_flags & 0x02) flags |= PROP_ENUMERABLE;
 		if (prop_flags & 0x04) flags |= PROP_CONFIGURABLE;
 		if (is_accessor) {
-			getter = dmessage_get_dvalue(request, index++);
-			setter = dmessage_get_dvalue(request, index++);
+			getter = ki_message_atom(request, index++);
+			setter = ki_message_atom(request, index++);
 			objview_add_accessor(view, key_string, getter, setter, flags);
 		}
 		else {
-			value = dmessage_get_dvalue(request, index++);
-			if (dvalue_tag(value) != KI_UNUSED)
+			value = ki_message_atom(request, index++);
+			if (ki_atom_tag(value) != KI_UNUSED)
 				objview_add_value(view, key_string, "property", value, flags);
 		}
 		free(key_string);
 	}
-	dmessage_free(request);
+	ki_message_free(request);
 	return view;
 }
 
@@ -322,15 +322,15 @@ inferior_get_source(inferior_t* obj, const char* filename)
 			return obj->sources[i].source;
 	}
 
-	request = dmessage_new(KI_REQ);
-	dmessage_add_int(request, REQ_APPREQUEST);
-	dmessage_add_int(request, APPREQ_SOURCE);
-	dmessage_add_string(request, filename);
+	request = ki_message_new(KI_REQ);
+	ki_message_add_int(request, KI_REQ_APP_REQUEST);
+	ki_message_add_int(request, KI_APP_REQ_SOURCE);
+	ki_message_add_string(request, filename);
 	if (!(request = inferior_request(obj, request)))
 		goto on_error;
-	if (dmessage_tag(request) == KI_ERR)
+	if (ki_message_tag(request) == KI_ERR)
 		goto on_error;
-	text = dmessage_get_string(request, 0);
+	text = ki_message_string(request, 0);
 	source = source_new(text);
 
 	cache_id = obj->num_sources++;
@@ -341,7 +341,7 @@ inferior_get_source(inferior_t* obj, const char* filename)
 	return source;
 
 on_error:
-	dmessage_free(request);
+	ki_message_free(request);
 	return NULL;
 }
 
@@ -357,17 +357,17 @@ inferior_get_vars(inferior_t* obj, int frame)
 
 	int i;
 
-	msg = dmessage_new(KI_REQ);
-	dmessage_add_int(msg, REQ_GETLOCALS);
-	dmessage_add_int(msg, -frame - 1);
+	msg = ki_message_new(KI_REQ);
+	ki_message_add_int(msg, KI_REQ_GETLOCALS);
+	ki_message_add_int(msg, -frame - 1);
 	if (!(msg = inferior_request(obj, msg)))
 		return NULL;
 	vars = objview_new();
-	num_vars = dmessage_len(msg) / 3;
+	num_vars = ki_message_len(msg) / 3;
 	for (i = 0; i < num_vars; ++i) {
-		name = dmessage_get_string(msg, i * 3 + 0);
-		class_name = dmessage_get_string(msg, i * 3 + 1);
-		value = dmessage_get_dvalue(msg, i * 3 + 2);
+		name = ki_message_string(msg, i * 3 + 0);
+		class_name = ki_message_string(msg, i * 3 + 1);
+		value = ki_message_atom(msg, i * 3 + 2);
 		objview_add_value(vars, name, class_name, value, 0x0);
 	}
 	return vars;
@@ -379,20 +379,20 @@ inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
 	int        handle;
 	ki_message_t* msg;
 
-	msg = dmessage_new(KI_REQ);
-	dmessage_add_int(msg, REQ_ADDBREAK);
-	dmessage_add_string(msg, filename);
-	dmessage_add_int(msg, linenum);
+	msg = ki_message_new(KI_REQ);
+	ki_message_add_int(msg, KI_REQ_ADDBREAK);
+	ki_message_add_string(msg, filename);
+	ki_message_add_int(msg, linenum);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
-	if (dmessage_tag(msg) == KI_ERR)
+	if (ki_message_tag(msg) == KI_ERR)
 		goto on_error;
-	handle = dmessage_get_int(msg, 0);
-	dmessage_free(msg);
+	handle = ki_message_int(msg, 0);
+	ki_message_free(msg);
 	return handle;
 
 on_error:
-	dmessage_free(msg);
+	ki_message_free(msg);
 	return -1;
 }
 
@@ -401,18 +401,18 @@ inferior_clear_breakpoint(inferior_t* obj, int handle)
 {
 	ki_message_t* msg;
 
-	msg = dmessage_new(KI_REQ);
-	dmessage_add_int(msg, REQ_DELBREAK);
-	dmessage_add_int(msg, handle);
+	msg = ki_message_new(KI_REQ);
+	ki_message_add_int(msg, KI_REQ_DELBREAK);
+	ki_message_add_int(msg, handle);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
-	if (dmessage_tag(msg) == KI_ERR)
+	if (ki_message_tag(msg) == KI_ERR)
 		goto on_error;
-	dmessage_free(msg);
+	ki_message_free(msg);
 	return true;
 
 on_error:
-	dmessage_free(msg);
+	ki_message_free(msg);
 	return false;
 }
 
@@ -421,11 +421,11 @@ inferior_detach(inferior_t* obj)
 {
 	ki_message_t* msg;
 
-	msg = dmessage_new(KI_REQ);
-	dmessage_add_int(msg, REQ_DETACH);
+	msg = ki_message_new(KI_REQ);
+	ki_message_add_int(msg, KI_REQ_DETACH);
 	if (!(msg = inferior_request(obj, msg)))
 		return;
-	dmessage_free(msg);
+	ki_message_free(msg);
 	while (inferior_attached(obj))
 		inferior_update(obj);
 }
@@ -436,20 +436,20 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 	ki_atom_t*  dvalue = NULL;
 	ki_message_t* msg;
 
-	msg = dmessage_new(KI_REQ);
-	dmessage_add_int(msg, REQ_EVAL);
+	msg = ki_message_new(KI_REQ);
+	ki_message_add_int(msg, KI_REQ_EVAL);
 	if (obj->protocol == 2) {
-		dmessage_add_int(msg, -(1 + frame));
-		dmessage_add_string(msg, expr);
+		ki_message_add_int(msg, -(1 + frame));
+		ki_message_add_string(msg, expr);
 	}
 	else {
-		dmessage_add_string(msg, expr);
-		dmessage_add_int(msg, -(1 + frame));
+		ki_message_add_string(msg, expr);
+		ki_message_add_int(msg, -(1 + frame));
 	}
 	msg = inferior_request(obj, msg);
-	dvalue = dvalue_dup(dmessage_get_dvalue(msg, 1));
-	*out_is_error = dmessage_get_int(msg, 0) != 0;
-	dmessage_free(msg);
+	dvalue = ki_atom_dup(ki_message_atom(msg, 1));
+	*out_is_error = ki_message_int(msg, 0) != 0;
+	ki_message_free(msg);
 	return dvalue;
 }
 
@@ -458,8 +458,8 @@ inferior_pause(inferior_t* obj)
 {
 	ki_message_t* msg;
 
-	msg = dmessage_new(KI_REQ);
-	dmessage_add_int(msg, REQ_PAUSE);
+	msg = ki_message_new(KI_REQ);
+	ki_message_add_int(msg, KI_REQ_PAUSE);
 	if (!(msg = inferior_request(obj, msg)))
 		return false;
 	return true;
@@ -470,21 +470,21 @@ inferior_request(inferior_t* obj, ki_message_t* msg)
 {
 	ki_message_t* response = NULL;
 
-	if (!(dmessage_send(msg, obj->socket)))
+	if (!(ki_message_send(msg, obj->socket)))
 		goto lost_connection;
 	do {
-		dmessage_free(response);
-		if (!(response = dmessage_recv(obj->socket)))
+		ki_message_free(response);
+		if (!(response = ki_message_recv(obj->socket)))
 			goto lost_connection;
-		if (dmessage_tag(response) == KI_NFY)
+		if (ki_message_tag(response) == KI_NFY)
 			handle_notify(obj, response);
-	} while (dmessage_tag(response) == KI_NFY);
-	dmessage_free(msg);
+	} while (ki_message_tag(response) == KI_NFY);
+	ki_message_free(msg);
 	return response;
 
 lost_connection:
 	printf("\33[31;1mSSj lost communication with the target.\33[m\n");
-	dmessage_free(msg);
+	ki_message_free(msg);
 	obj->is_detached = true;
 	return NULL;
 }
@@ -494,12 +494,12 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 {
 	ki_message_t* msg;
 
-	msg = dmessage_new(KI_REQ);
-	dmessage_add_int(msg,
-		op == OP_STEP_OVER ? REQ_STEPOVER
-		: op == OP_STEP_IN ? REQ_STEPINTO
-		: op == OP_STEP_OUT ? REQ_STEPOUT
-		: REQ_RESUME);
+	msg = ki_message_new(KI_REQ);
+	ki_message_add_int(msg,
+		op == OP_STEP_OVER ? KI_REQ_STEPOVER
+		: op == OP_STEP_IN ? KI_REQ_STEPINTO
+		: op == OP_STEP_OUT ? KI_REQ_STEPOUT
+		: KI_REQ_RESUME);
 	if (!(msg = inferior_request(obj, msg)))
 		return false;
 	obj->frame_index = 0;
@@ -561,13 +561,13 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 	enum print_op print_op;
 	int           status_type;
 
-	switch (dmessage_tag(msg)) {
+	switch (ki_message_tag(msg)) {
 	case KI_NFY:
-		switch (dmessage_get_int(msg, 0)) {
-		case KI_NFY_APPNOTIFY:
-			switch (dmessage_get_int(msg, 1)) {
-			case APPNFY_DEBUG_PRINT:
-				print_op = (enum print_op)dmessage_get_int(msg, 2);
+		switch (ki_message_int(msg, 0)) {
+		case KI_NFY_APP_NOTIFY:
+			switch (ki_message_int(msg, 1)) {
+			case KI_APP_NFY_DEBUG_PRINT:
+				print_op = (enum print_op)ki_message_int(msg, 2);
 				heading = print_op == PRINT_ASSERT ? "ASSERT"
 					: print_op == PRINT_DEBUG ? "debug"
 					: print_op == PRINT_ERROR ? "ERROR"
@@ -583,27 +583,27 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 					printf("\33[33;1m");
 				else
 					printf("\33[36m");
-				printf("%s: %s\n", heading, dmessage_get_string(msg, 3));
+				printf("%s: %s\n", heading, ki_message_string(msg, 3));
 				printf("\33[m");
 				break;
 			}
 			break;
 		case KI_NFY_STATUS:
-			status_type = dmessage_get_int(msg, 1);
+			status_type = ki_message_int(msg, 1);
 			obj->is_paused = status_type != 0;
 			if (!obj->is_paused)
 				clear_pause_cache(obj);
 			break;
 		case KI_NFY_THROW:
-			if ((status_type = dmessage_get_int(msg, 1)) == 0)
+			if ((status_type = ki_message_int(msg, 1)) == 0)
 				break;
 			printf("\33[31;1m");
 			printf("uncaught: ");
 			printf("\33[m");
-			printf("%s\n", dmessage_get_string(msg, 2));
+			printf("%s\n", ki_message_string(msg, 2));
 			break;
 		case KI_NFY_DETACHING:
-			status_type = dmessage_get_int(msg, 1);
+			status_type = ki_message_int(msg, 1);
 			if (status_type == 0)
 				printf("\33[36;1mthe engine disconnected from SSj normally.\n");
 			else

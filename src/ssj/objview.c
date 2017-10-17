@@ -79,9 +79,9 @@ objview_free(objview_t* obj)
 	for (i = 0; i < obj->num_props; ++i) {
 		free(obj->props[i].key);
 		free(obj->props[i].class_name);
-		dvalue_free(obj->props[i].value);
-		dvalue_free(obj->props[i].getter);
-		dvalue_free(obj->props[i].setter);
+		ki_atom_free(obj->props[i].value);
+		ki_atom_free(obj->props[i].getter);
+		ki_atom_free(obj->props[i].setter);
 	}
 	free(obj);
 }
@@ -149,8 +149,8 @@ objview_add_accessor(objview_t* obj, const char* key, const ki_atom_t* getter, c
 	obj->props[idx].tag = PROP_ACCESSOR;
 	obj->props[idx].key = strdup(key);
 	obj->props[idx].value = NULL;
-	obj->props[idx].getter = dvalue_dup(getter);
-	obj->props[idx].setter = dvalue_dup(setter);
+	obj->props[idx].getter = ki_atom_dup(getter);
+	obj->props[idx].setter = ki_atom_dup(setter);
 	obj->props[idx].flags = flags;
 }
 
@@ -167,7 +167,7 @@ objview_add_value(objview_t* obj, const char* key, const char* class_name, const
 	obj->props[idx].tag = PROP_VALUE;
 	obj->props[idx].key = strdup(key);
 	obj->props[idx].class_name = strdup(class_name);
-	obj->props[idx].value = dvalue_dup(value);
+	obj->props[idx].value = ki_atom_dup(value);
 	obj->props[idx].getter = NULL;
 	obj->props[idx].setter = NULL;
 	obj->props[idx].flags = flags;

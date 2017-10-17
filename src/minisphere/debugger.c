@@ -307,13 +307,13 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 		console_log(0, "%s: %s", heading, text);
 	}
 	if (s_socket != NULL) {
-		notify = dmessage_new(KI_NFY);
-		dmessage_add_int(notify, KI_NFY_APPNOTIFY);
-		dmessage_add_int(notify, APPNFY_DEBUG_PRINT);
-		dmessage_add_int(notify, op);
-		dmessage_add_string(notify, text);
-		dmessage_send(notify, s_socket);
-		dmessage_free(notify);
+		notify = ki_message_new(KI_NFY);
+		ki_message_add_int(notify, KI_NFY_APP_NOTIFY);
+		ki_message_add_int(notify, KI_APP_NFY_DEBUG_PRINT);
+		ki_message_add_int(notify, op);
+		ki_message_add_string(notify, text);
+		ki_message_send(notify, s_socket);
+		ki_message_free(notify);
 	}
 }
 
@@ -335,28 +335,28 @@ on_breakpoint_hit(void)
 	line = jsal_get_int(1) + 1;
 	column = jsal_get_int(2) + 1;
 
-	message = dmessage_new(KI_NFY);
-	dmessage_add_int(message, KI_NFY_STATUS);
-	dmessage_add_int(message, 1);
-	dmessage_add_string(message, filename);
-	dmessage_add_string(message, "");
-	dmessage_add_int(message, line);
-	dmessage_add_int(message, column);
-	dmessage_send(message, s_socket);
-	dmessage_free(message);
+	message = ki_message_new(KI_NFY);
+	ki_message_add_int(message, KI_NFY_STATUS);
+	ki_message_add_int(message, 1);
+	ki_message_add_string(message, filename);
+	ki_message_add_string(message, "");
+	ki_message_add_int(message, line);
+	ki_message_add_int(message, column);
+	ki_message_send(message, s_socket);
+	ki_message_free(message);
 
 	while (!process_message(&step_op));
 
 	if (s_socket != NULL) {
-		message = dmessage_new(KI_NFY);
-		dmessage_add_int(message, KI_NFY_STATUS);
-		dmessage_add_int(message, 0);
-		dmessage_add_string(message, filename);
-		dmessage_add_string(message, "");
-		dmessage_add_int(message, line);
-		dmessage_add_int(message, column);
-		dmessage_send(message, s_socket);
-		dmessage_free(message);
+		message = ki_message_new(KI_NFY);
+		ki_message_add_int(message, KI_NFY_STATUS);
+		ki_message_add_int(message, 0);
+		ki_message_add_string(message, filename);
+		ki_message_add_string(message, "");
+		ki_message_add_int(message, line);
+		ki_message_add_int(message, column);
+		ki_message_send(message, s_socket);
+		ki_message_free(message);
 	}
 
 	audio_resume();
@@ -372,15 +372,15 @@ on_throw_exception(void)
 	if (s_socket == NULL)
 		return;
 
-	message = dmessage_new(KI_NFY);
-	dmessage_add_int(message, KI_NFY_THROW);
-	dmessage_add_int(message, 1);
-	dmessage_add_string(message, jsal_get_string(0));
-	dmessage_add_string(message, jsal_get_string(1));
-	dmessage_add_int(message, jsal_get_int(2) + 1);
-	dmessage_add_int(message, jsal_get_int(3) + 1);
-	dmessage_send(message, s_socket);
-	dmessage_free(message);
+	message = ki_message_new(KI_NFY);
+	ki_message_add_int(message, KI_NFY_THROW);
+	ki_message_add_int(message, 1);
+	ki_message_add_string(message, jsal_get_string(0));
+	ki_message_add_string(message, jsal_get_string(1));
+	ki_message_add_int(message, jsal_get_int(2) + 1);
+	ki_message_add_int(message, jsal_get_int(3) + 1);
+	ki_message_send(message, s_socket);
+	ki_message_free(message);
 }
 
 static bool
@@ -412,11 +412,11 @@ do_detach_debugger(bool is_shutdown)
 	console_log(1, "detaching SSj debug session");
 	s_is_attached = false;
 	if (s_socket != NULL) {
-		notify = dmessage_new(KI_NFY);
-		dmessage_add_int(notify, KI_NFY_DETACHING);
-		dmessage_add_int(notify, 0);
-		dmessage_send(notify, s_socket);
-		dmessage_free(notify);
+		notify = ki_message_new(KI_NFY);
+		ki_message_add_int(notify, KI_NFY_DETACHING);
+		ki_message_add_int(notify, 0);
+		ki_message_send(notify, s_socket);
+		ki_message_free(notify);
 		socket_close(s_socket);
 		while (socket_connected(s_socket))
 			sphere_sleep(0.05);
@@ -454,158 +454,158 @@ process_message(js_step_t* out_step)
 		return false;
 	}
 	
-	if (!(request = dmessage_recv(s_socket)))
+	if (!(request = ki_message_recv(s_socket)))
 		goto on_error;
-	if (dmessage_tag(request) != KI_REQ)
+	if (ki_message_tag(request) != KI_REQ)
 		goto on_error;
-	reply = dmessage_new(KI_REP);
-	switch (dmessage_get_int(request, 0)) {
-	case REQ_APPREQUEST:
-		switch (dmessage_get_int(request, 1)) {
-		case APPREQ_GAME_INFO:
+	reply = ki_message_new(KI_REP);
+	switch (ki_message_int(request, 0)) {
+	case KI_REQ_APP_REQUEST:
+		switch (ki_message_int(request, 1)) {
+		case KI_APP_REQ_GAME_INFO:
 			platform_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 			resolution = game_resolution(g_game);
-			dmessage_add_string(reply, platform_name);
-			dmessage_add_string(reply, game_name(g_game));
-			dmessage_add_string(reply, game_author(g_game));
-			dmessage_add_string(reply, game_summary(g_game));
-			dmessage_add_int(reply, resolution.width);
-			dmessage_add_int(reply, resolution.height);
+			ki_message_add_string(reply, platform_name);
+			ki_message_add_string(reply, game_name(g_game));
+			ki_message_add_string(reply, game_author(g_game));
+			ki_message_add_string(reply, game_summary(g_game));
+			ki_message_add_int(reply, resolution.width);
+			ki_message_add_int(reply, resolution.height);
 			free(platform_name);
 			break;
-		case APPREQ_SOURCE:
-			filename = dmessage_get_string(request, 2);
+		case KI_APP_REQ_SOURCE:
+			filename = ki_message_string(request, 2);
 			filename = debugger_compiled_name(filename);
 
 			// check if the data is in the source cache
 			iter = vector_enum(s_sources);
 			while (source = iter_next(&iter)) {
 				if (strcmp(filename, source->name) == 0) {
-					dmessage_add_string(reply, lstr_cstr(source->text));
+					ki_message_add_string(reply, lstr_cstr(source->text));
 					goto finished;
 				}
 			}
 
 			// no cache entry, try loading the file via SphereFS
 			if ((file_data = game_read_file(g_game, filename, &file_size))) {
-				dmessage_add_string(reply, file_data);
+				ki_message_add_string(reply, file_data);
 				free(file_data);
 			}
 			else {
-				dmessage_free(reply);
-				reply = dmessage_new(KI_ERR);
-				dmessage_add_int(reply, 4);
-				dmessage_add_string(reply, "no source code available");
+				ki_message_free(reply);
+				reply = ki_message_new(KI_ERR);
+				ki_message_add_int(reply, 4);
+				ki_message_add_string(reply, "no source code available");
 			}
 			break;
-		case APPREQ_WATERMARK:
-			s_banner_text = lstr_new(dmessage_get_string(request, 2));
+		case KI_APP_REQ_WATERMARK:
+			s_banner_text = lstr_new(ki_message_string(request, 2));
 			s_banner_color = color_new(
-				dmessage_get_int(request, 3),
-				dmessage_get_int(request, 4),
-				dmessage_get_int(request, 5),
+				ki_message_int(request, 3),
+				ki_message_int(request, 4),
+				ki_message_int(request, 5),
 				255);
 			break;
 		}
 		break;
-	case REQ_ADDBREAK:
-		filename = dmessage_get_string(request, 1);
-		line_number = dmessage_get_int(request, 2);
+	case KI_REQ_ADDBREAK:
+		filename = ki_message_string(request, 1);
+		line_number = ki_message_int(request, 2);
 		breakpoint_id = jsal_debug_breakpoint_add(filename, line_number, 1);
-		dmessage_add_int(reply, breakpoint_id);
+		ki_message_add_int(reply, breakpoint_id);
 		break;
-	case REQ_DELBREAK:
-		breakpoint_id = dmessage_get_int(request, 1);
+	case KI_REQ_DELBREAK:
+		breakpoint_id = ki_message_int(request, 1);
 		jsal_debug_breakpoint_remove(breakpoint_id);
 		break;
-	case REQ_DETACH:
-		dmessage_send(reply, s_socket);
-		dmessage_free(reply);
-		dmessage_free(request);
+	case KI_REQ_DETACH:
+		ki_message_send(reply, s_socket);
+		ki_message_free(reply);
+		ki_message_free(request);
 		do_detach_debugger(false);
 		*out_step = JS_STEP_CONTINUE;
 		return true;
-	case REQ_EVAL:
-		call_index = -(dmessage_get_int(request, 1)) - 1;
-		eval_code = dmessage_get_string(request, 2);
+	case KI_REQ_EVAL:
+		call_index = -(ki_message_int(request, 1)) - 1;
+		eval_code = ki_message_string(request, 2);
 		jsal_debug_inspect_eval(call_index, eval_code, &eval_errored);
-		dmessage_add_int(reply, eval_errored ? 1 : 0);
+		ki_message_add_int(reply, eval_errored ? 1 : 0);
 		if (jsal_get_uint(-1) == 0)
-			dmessage_add_string(reply, jsal_get_string(-2));
+			ki_message_add_string(reply, jsal_get_string(-2));
 		else
-			dmessage_add_handle(reply, jsal_get_uint(-1));
-		dmessage_add_string(reply, jsal_get_string(-3));
+			ki_message_add_handle(reply, jsal_get_uint(-1));
+		ki_message_add_string(reply, jsal_get_string(-3));
 		jsal_pop(3);
 		break;
-	case REQ_GETCALLSTACK:
+	case KI_REQ_GETCALLSTACK:
 		i = 0;
 		while (jsal_debug_inspect_call(i++)) {
-			dmessage_add_string(reply, jsal_get_string(-4));
-			dmessage_add_string(reply, jsal_get_string(-3));
-			dmessage_add_int(reply, jsal_get_int(-2) + 1);
-			dmessage_add_int(reply, jsal_get_int(-1) + 1);
+			ki_message_add_string(reply, jsal_get_string(-4));
+			ki_message_add_string(reply, jsal_get_string(-3));
+			ki_message_add_int(reply, jsal_get_int(-2) + 1);
+			ki_message_add_int(reply, jsal_get_int(-1) + 1);
 			jsal_pop(4);
 		}
 		break;
-	case REQ_GETOBJPROPDESCRANGE:
-		handle = dmessage_get_handle(request, 1);
+	case KI_REQ_GETOBJPROPDESCRANGE:
+		handle = ki_message_handle(request, 1);
 		i = 0;
 		while (jsal_debug_inspect_object(handle, i++)) {
-			dmessage_add_int(reply, KI_ATTR_NONE);
-			dmessage_add_string(reply, jsal_get_string(-3));
+			ki_message_add_int(reply, KI_ATTR_NONE);
+			ki_message_add_string(reply, jsal_get_string(-3));
 			if (jsal_get_uint(-1) == 0)
-				dmessage_add_string(reply, jsal_get_string(-2));
+				ki_message_add_string(reply, jsal_get_string(-2));
 			else
-				dmessage_add_handle(reply, jsal_get_uint(-1));
+				ki_message_add_handle(reply, jsal_get_uint(-1));
 			jsal_pop(3);
 		}
 		break;
-	case REQ_GETLOCALS:
+	case KI_REQ_GETLOCALS:
 		i = 0;
 		while (jsal_debug_inspect_var(0, i++)) {
-			dmessage_add_string(reply, jsal_get_string(-3));
-			dmessage_add_string(reply, jsal_get_string(-2));
-			dmessage_add_string(reply, jsal_get_string(-1));
+			ki_message_add_string(reply, jsal_get_string(-3));
+			ki_message_add_string(reply, jsal_get_string(-2));
+			ki_message_add_string(reply, jsal_get_string(-1));
 			jsal_pop(3);
 		}
 		break;
-	case REQ_LISTBREAK:
+	case KI_REQ_LISTBREAK:
 		i = 0;
 		while (jsal_debug_inspect_breakpoint(i++)) {
-			dmessage_add_string(reply, jsal_get_string(-3));
-			dmessage_add_int(reply, jsal_get_int(-2));
+			ki_message_add_string(reply, jsal_get_string(-3));
+			ki_message_add_int(reply, jsal_get_int(-2));
 			jsal_pop(3);
 		}
 		break;
-	case REQ_PAUSE:
+	case KI_REQ_PAUSE:
 		jsal_debug_breakpoint_inject();
 		break;
-	case REQ_RESUME:
+	case KI_REQ_RESUME:
 		*out_step = JS_STEP_CONTINUE;
 		resuming = true;
 		break;
-	case REQ_STEPINTO:
+	case KI_REQ_STEPINTO:
 		*out_step = JS_STEP_IN;
 		resuming = true;
 		break;
-	case REQ_STEPOUT:
+	case KI_REQ_STEPOUT:
 		*out_step = JS_STEP_OUT;
 		resuming = true;
 		break;
-	case REQ_STEPOVER:
+	case KI_REQ_STEPOVER:
 		*out_step = JS_STEP_OVER;
 		resuming = true;
 		break;
 	}
 
 finished:
-	dmessage_send(reply, s_socket);
-	dmessage_free(reply);
-	dmessage_free(request);
+	ki_message_send(reply, s_socket);
+	ki_message_free(reply);
+	ki_message_free(request);
 	return resuming;
 
 on_error:
-	dmessage_free(request);
+	ki_message_free(request);
 	socket_unref(s_socket);
 	s_socket = NULL;
 	*out_step = JS_STEP_CONTINUE;
