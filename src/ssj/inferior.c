@@ -564,29 +564,34 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 	switch (ki_message_tag(msg)) {
 	case KI_NFY:
 		switch (ki_message_int(msg, 0)) {
-		case KI_NFY_APP_NOTIFY:
-			switch (ki_message_int(msg, 1)) {
-			case KI_APP_NFY_DEBUG_PRINT:
-				print_op = (enum print_op)ki_message_int(msg, 2);
-				heading = print_op == PRINT_ASSERT ? "ASSERT"
-					: print_op == PRINT_DEBUG ? "debug"
-					: print_op == PRINT_ERROR ? "ERROR"
-					: print_op == PRINT_INFO ? "info"
-					: print_op == PRINT_TRACE ? "trace"
-					: print_op == PRINT_WARN ? "warn"
-					: "log";
-				if (print_op == PRINT_TRACE && !obj->show_trace)
-					break;
-				if (print_op == PRINT_ASSERT || print_op == PRINT_ERROR)
-					printf("\33[31;1m");
-				else if (print_op == PRINT_WARN)
-					printf("\33[33;1m");
-				else
-					printf("\33[36m");
-				printf("%s: %s\n", heading, ki_message_string(msg, 3));
-				printf("\33[m");
+		case KI_NFY_DETACHING:
+			status_type = ki_message_int(msg, 1);
+			if (status_type == 0)
+				printf("\33[36;1mthe engine disconnected from SSj normally.\n");
+			else
+				printf("\33[31;1ma communication error occurred while debugging.\n");
+			printf("\33[m");
+			obj->is_detached = true;
+			return false;
+		case KI_NFY_LOG:
+			print_op = (enum print_op)ki_message_int(msg, 1);
+			heading = print_op == PRINT_ASSERT ? "ASSERT"
+				: print_op == PRINT_DEBUG ? "debug"
+				: print_op == PRINT_ERROR ? "ERROR"
+				: print_op == PRINT_INFO ? "info"
+				: print_op == PRINT_TRACE ? "trace"
+				: print_op == PRINT_WARN ? "warn"
+				: "log";
+			if (print_op == PRINT_TRACE && !obj->show_trace)
 				break;
-			}
+			if (print_op == PRINT_ASSERT || print_op == PRINT_ERROR)
+				printf("\33[31;1m");
+			else if (print_op == PRINT_WARN)
+				printf("\33[33;1m");
+			else
+				printf("\33[36m");
+			printf("%s: %s\n", heading, ki_message_string(msg, 2));
+			printf("\33[m");
 			break;
 		case KI_NFY_STATUS:
 			status_type = ki_message_int(msg, 1);
@@ -602,15 +607,6 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 			printf("\33[m");
 			printf("%s\n", ki_message_string(msg, 2));
 			break;
-		case KI_NFY_DETACHING:
-			status_type = ki_message_int(msg, 1);
-			if (status_type == 0)
-				printf("\33[36;1mthe engine disconnected from SSj normally.\n");
-			else
-				printf("\33[31;1ma communication error occurred while debugging.\n");
-			printf("\33[m");
-			obj->is_detached = true;
-			return false;
 		}
 		break;
 	}

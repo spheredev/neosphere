@@ -87,6 +87,7 @@ enum print_op
 
 enum ki_request
 {
+	KI_REQ_NOP = 0x00,
 	KI_REQ_BASICINFO = 0x10,
 	KI_REQ_SENDSTATUS = 0x11,
 	KI_REQ_PAUSE = 0x12,
@@ -122,19 +123,11 @@ enum ki_error
 
 enum ki_notify
 {
-	KI_NFY_STATUS = 0x01,
-	KI_NFY_PRINT = 0x02,
-	KI_NFY_ALERT = 0x03,
-	KI_NFY_LOG = 0x04,
-	KI_NFY_THROW = 0x05,
-	KI_NFY_DETACHING = 0x06,
-	KI_NFY_APP_NOTIFY = 0x07,
-};
-
-enum ki_app_notify
-{
-	KI_APP_NFY_NOP,
-	KI_APP_NFY_DEBUG_PRINT,
+	KI_NFY_NOP,
+	KI_NFY_DETACHING,
+	KI_NFY_LOG,
+	KI_NFY_STATUS,
+	KI_NFY_THROW,
 };
 
 enum ki_app_request

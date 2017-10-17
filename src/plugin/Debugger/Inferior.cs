@@ -410,6 +410,22 @@ namespace Sphere.Gdk.Debugger
                 else if (message[0].Tag == DValueTag.NFY) {
                     switch ((Notify)(int)message[1])
                     {
+                        case Notify.Detaching:
+                            tcp.Close();
+                            Detached?.Invoke(this, EventArgs.Empty);
+                            return;
+                        case Notify.Log:
+                            PrintType type = (PrintType)(int)message[2];
+                            string debugText = (string)message[3];
+                            string prefix = type == PrintType.Assert ? "ASSERT"
+                                : type == PrintType.Debug ? "debug"
+                                : type == PrintType.Error ? "ERROR"
+                                : type == PrintType.Info ? "info"
+                                : type == PrintType.Trace ? "trace"
+                                : type == PrintType.Warn ? "warn"
+                                : "log";
+                            Print?.Invoke(this, new TraceEventArgs(string.Format("{0}: {1}", prefix, debugText)));
+                            break;
                         case Notify.Status:
                             FileName = (string)message[3];
                             LineNumber = (int)message[5];
@@ -420,27 +436,6 @@ namespace Sphere.Gdk.Debugger
                             Throw?.Invoke(this, new ThrowEventArgs(
                                 (string)message[3], (string)message[4], (int)message[5],
                                 (int)message[2] != 0));
-                            break;
-                        case Notify.Detaching:
-                            tcp.Close();
-                            Detached?.Invoke(this, EventArgs.Empty);
-                            return;
-                        case Notify.AppNotify:
-                            switch ((AppNotify)(int)message[2])
-                            {
-                                case AppNotify.DebugPrint:
-                                    PrintType type = (PrintType)(int)message[3];
-                                    string debugText = (string)message[4];
-                                    string prefix = type == PrintType.Assert ? "ASSERT"
-                                        : type == PrintType.Debug ? "debug"
-                                        : type == PrintType.Error ? "ERROR"
-                                        : type == PrintType.Info ? "info"
-                                        : type == PrintType.Trace ? "trace"
-                                        : type == PrintType.Warn ? "warn"
-                                        : "log";
-                                    Print?.Invoke(this, new TraceEventArgs(string.Format("{0}: {1}", prefix, debugText)));
-                                    break;
-                            }
                             break;
                     }
                 }

@@ -35,13 +35,11 @@ namespace Sphere.Gdk.Debugger
 
     enum Notify
     {
-        Status = 0x01,
-        Print = 0x02,
-        Alert = 0x03,
-        Log = 0x04,
-        Throw = 0x05,
-        Detaching = 0x06,
-        AppNotify = 0x07,
+        None,
+        Detaching,
+        Log,
+        Status,
+        Throw,
     }
 
     enum AppRequest
@@ -49,11 +47,6 @@ namespace Sphere.Gdk.Debugger
         GetGameInfo = 0x01,
         GetSource = 0x02,
         SetWatermark = 0x03,
-    }
-
-    enum AppNotify
-    {
-        DebugPrint = 0x01,
     }
 
     enum PrintType

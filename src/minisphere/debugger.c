@@ -308,8 +308,7 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 	}
 	if (s_socket != NULL) {
 		notify = ki_message_new(KI_NFY);
-		ki_message_add_int(notify, KI_NFY_APP_NOTIFY);
-		ki_message_add_int(notify, KI_APP_NFY_DEBUG_PRINT);
+		ki_message_add_int(notify, KI_NFY_LOG);
 		ki_message_add_int(notify, op);
 		ki_message_add_string(notify, text);
 		ki_message_send(notify, s_socket);
