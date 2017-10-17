@@ -178,7 +178,7 @@ namespace Sphere.Gdk.Debugger
             // start the communication thread
             messenger = new Thread(ProcessMessages) { IsBackground = true };
             messenger.Start();
-            await DoRequest(DValueTag.REQ, Request.AppRequest, AppRequest.SetWatermark, "ssj blue", 0, 255, 255);
+            await DoRequest(DValueTag.REQ, Request.SetWatermark, "ssj blue", 0, 255, 255);
             Attached?.Invoke(this, EventArgs.Empty);
         }
 
@@ -190,7 +190,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns>The index assigned to the breakpoint by Duktape.</returns>
         public async Task<int> AddBreak(string filename, int lineNumber)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.AddBreak, filename, lineNumber);
+            var reply = await DoRequest(DValueTag.REQ, Request.AddBreakpoint, filename, lineNumber);
             return (int)reply[1];
         }
 
@@ -201,7 +201,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task DelBreak(int index)
         {
-            await DoRequest(DValueTag.REQ, Request.DelBreak, index);
+            await DoRequest(DValueTag.REQ, Request.DelBreakpoint, index);
         }
         
         /// <summary>
@@ -241,7 +241,7 @@ namespace Sphere.Gdk.Debugger
         /// </returns>
         public async Task<StackFrameInfo[]> GetCallStack()
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.GetCallStack);
+            var reply = await DoRequest(DValueTag.REQ, Request.InspectStack);
             var stack = new List<StackFrameInfo>();
             int count = (reply.Length - 1) / 4;
             for (int i = 0; i < count; ++i) {
@@ -264,7 +264,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task<IReadOnlyDictionary<string, DValue>> GetLocals(int stackOffset = -1)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.GetLocals, stackOffset);
+            var reply = await DoRequest(DValueTag.REQ, Request.InspectLocals, stackOffset);
             var vars = new Dictionary<string, DValue>();
             int count = (reply.Length - 1) / 3;
             for (int i = 0; i < count; ++i) {
@@ -277,7 +277,7 @@ namespace Sphere.Gdk.Debugger
 
         public async Task<Dictionary<string, PropDesc>> GetObjPropDescRange(Handle handle, int start, int end)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.GetObjPropDescRange, handle, start, end);
+            var reply = await DoRequest(DValueTag.REQ, Request.InspectObject, handle, start, end);
             var props = new Dictionary<string, PropDesc>();
             int count = (reply.Length - 1) / 2;
             int i = 1;
@@ -303,7 +303,7 @@ namespace Sphere.Gdk.Debugger
 
         public async Task<string> GetSource(string fileName)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.AppRequest, AppRequest.GetSource, fileName);
+            var reply = await DoRequest(DValueTag.REQ, Request.GetSource, fileName);
             return reply[0].Tag != DValueTag.ERR ? (string)reply[1] : null;
         }
 
@@ -316,7 +316,7 @@ namespace Sphere.Gdk.Debugger
         /// </returns>
         public async Task<Tuple<string, int>[]> ListBreak()
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.ListBreak);
+            var reply = await DoRequest(DValueTag.REQ, Request.GetBreakpoints);
             var count = (reply.Length - 1) / 2;
             List<Tuple<string, int>> list = new List<Tuple<string, int>>();
             for (int i = 0; i < count; ++i) {
@@ -354,7 +354,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task StepInto()
         {
-            await DoRequest(DValueTag.REQ, Request.StepInto);
+            await DoRequest(DValueTag.REQ, Request.StepIn);
         }
 
         /// <summary>

@@ -116,8 +116,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 
 	// set watermark (shown on bottom left)
 	request = ki_message_new(KI_REQ);
-	ki_message_add_int(request, KI_REQ_APP_REQUEST);
-	ki_message_add_int(request, KI_APP_REQ_WATERMARK);
+	ki_message_add_int(request, KI_REQ_SET_WATERMARK);
 	ki_message_add_string(request, "ssj");
 	ki_message_add_int(request, 255);
 	ki_message_add_int(request, 224);
@@ -127,8 +126,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 
 	printf("downloading game information... ");
 	request = ki_message_new(KI_REQ);
-	ki_message_add_int(request, KI_REQ_APP_REQUEST);
-	ki_message_add_int(request, KI_APP_REQ_GAME_INFO);
+	ki_message_add_int(request, KI_REQ_GET_GAME_INFO);
 	reply = inferior_request(obj, request);
 	platform_name = strdup(ki_message_string(reply, 0));
 	obj->title = strdup(ki_message_string(reply, 1));
@@ -229,7 +227,7 @@ inferior_get_calls(inferior_t* obj)
 
 	if (obj->calls == NULL) {
 		request = ki_message_new(KI_REQ);
-		ki_message_add_int(request, KI_REQ_GETCALLSTACK);
+		ki_message_add_int(request, KI_REQ_INSPECT_STACK);
 		if (!(request = inferior_request(obj, request)))
 			return NULL;
 		num_frames = ki_message_len(request) / 4;
@@ -268,7 +266,7 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 	objview_t*       view;
 
 	request = ki_message_new(KI_REQ);
-	ki_message_add_int(request, KI_REQ_GETOBJPROPDESCRANGE);
+	ki_message_add_int(request, KI_REQ_INSPECT_OBJ);
 	ki_message_add_handle(request, handle);
 	ki_message_add_int(request, 0);
 	ki_message_add_int(request, INT_MAX);
@@ -323,8 +321,7 @@ inferior_get_source(inferior_t* obj, const char* filename)
 	}
 
 	request = ki_message_new(KI_REQ);
-	ki_message_add_int(request, KI_REQ_APP_REQUEST);
-	ki_message_add_int(request, KI_APP_REQ_SOURCE);
+	ki_message_add_int(request, KI_REQ_GET_SOURCE);
 	ki_message_add_string(request, filename);
 	if (!(request = inferior_request(obj, request)))
 		goto on_error;
@@ -358,7 +355,7 @@ inferior_get_vars(inferior_t* obj, int frame)
 	int i;
 
 	msg = ki_message_new(KI_REQ);
-	ki_message_add_int(msg, KI_REQ_GETLOCALS);
+	ki_message_add_int(msg, KI_REQ_INSPECT_LOCALS);
 	ki_message_add_int(msg, -frame - 1);
 	if (!(msg = inferior_request(obj, msg)))
 		return NULL;
@@ -380,7 +377,7 @@ inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
 	ki_message_t* msg;
 
 	msg = ki_message_new(KI_REQ);
-	ki_message_add_int(msg, KI_REQ_ADDBREAK);
+	ki_message_add_int(msg, KI_REQ_ADD_BREAK);
 	ki_message_add_string(msg, filename);
 	ki_message_add_int(msg, linenum);
 	if (!(msg = inferior_request(obj, msg)))
@@ -402,7 +399,7 @@ inferior_clear_breakpoint(inferior_t* obj, int handle)
 	ki_message_t* msg;
 
 	msg = ki_message_new(KI_REQ);
-	ki_message_add_int(msg, KI_REQ_DELBREAK);
+	ki_message_add_int(msg, KI_REQ_DEL_BREAK);
 	ki_message_add_int(msg, handle);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
@@ -496,9 +493,9 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 
 	msg = ki_message_new(KI_REQ);
 	ki_message_add_int(msg,
-		op == OP_STEP_OVER ? KI_REQ_STEPOVER
-		: op == OP_STEP_IN ? KI_REQ_STEPINTO
-		: op == OP_STEP_OUT ? KI_REQ_STEPOUT
+		op == OP_STEP_OVER ? KI_REQ_STEP_OVER
+		: op == OP_STEP_IN ? KI_REQ_STEP_IN
+		: op == OP_STEP_OUT ? KI_REQ_STEP_OUT
 		: KI_REQ_RESUME);
 	if (!(msg = inferior_request(obj, msg)))
 		return false;

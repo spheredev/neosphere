@@ -9,28 +9,23 @@ namespace Sphere.Gdk.Debugger
 {
     enum Request
     {
-        BasicInfo = 0x10,
-        TriggerStatus = 0x11,
-        Pause = 0x12,
-        Resume = 0x13,
-        StepInto = 0x14,
-        StepOver = 0x15,
-        StepOut = 0x16,
-        ListBreak = 0x17,
-        AddBreak = 0x18,
-        DelBreak = 0x19,
-        GetVar = 0x1A,
-        PutVar = 0x1B,
-        GetCallStack = 0x1C,
-        GetLocals = 0x1D,
-        Eval = 0x1E,
-        Detach = 0x1F,
-        DumpHeap = 0x20,
-        GetByteCode = 0x21,
-        AppRequest = 0x22,
-        GetHeapObjInfo = 0x23,
-        GetObjPropDesc = 0x24,
-        GetObjPropDescRange = 0x25,
+        None,
+        AddBreakpoint,
+        DelBreakpoint,
+        Detach,
+        Eval,
+        GetBreakpoints,
+        GetGameInfo,
+        GetSource,
+        InspectLocals,
+        InspectObject,
+        InspectStack,
+        Pause,
+        Resume,
+        SetWatermark,
+        StepIn,
+        StepOut,
+        StepOver,
     }
 
     enum Notify
@@ -40,13 +35,6 @@ namespace Sphere.Gdk.Debugger
         Log,
         Status,
         Throw,
-    }
-
-    enum AppRequest
-    {
-        GetGameInfo = 0x01,
-        GetSource = 0x02,
-        SetWatermark = 0x03,
     }
 
     enum PrintType
@@ -72,7 +60,7 @@ namespace Sphere.Gdk.Debugger
             foreach (dynamic value in values) {
                 if (value is DValue)
                     fieldValue = value;
-                else if (value is Request || value is AppRequest)
+                else if (value is Request)
                     fieldValue = new DValue((int)value);
                 else
                     fieldValue = new DValue(value);

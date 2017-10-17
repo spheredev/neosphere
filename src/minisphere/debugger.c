@@ -459,61 +459,57 @@ process_message(js_step_t* out_step)
 		goto on_error;
 	reply = ki_message_new(KI_REP);
 	switch (ki_message_int(request, 0)) {
-	case KI_REQ_APP_REQUEST:
-		switch (ki_message_int(request, 1)) {
-		case KI_APP_REQ_GAME_INFO:
-			platform_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
-			resolution = game_resolution(g_game);
-			ki_message_add_string(reply, platform_name);
-			ki_message_add_string(reply, game_name(g_game));
-			ki_message_add_string(reply, game_author(g_game));
-			ki_message_add_string(reply, game_summary(g_game));
-			ki_message_add_int(reply, resolution.width);
-			ki_message_add_int(reply, resolution.height);
-			free(platform_name);
-			break;
-		case KI_APP_REQ_SOURCE:
-			filename = ki_message_string(request, 2);
-			filename = debugger_compiled_name(filename);
+	case KI_REQ_GET_GAME_INFO:
+		platform_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
+		resolution = game_resolution(g_game);
+		ki_message_add_string(reply, platform_name);
+		ki_message_add_string(reply, game_name(g_game));
+		ki_message_add_string(reply, game_author(g_game));
+		ki_message_add_string(reply, game_summary(g_game));
+		ki_message_add_int(reply, resolution.width);
+		ki_message_add_int(reply, resolution.height);
+		free(platform_name);
+		break;
+	case KI_REQ_GET_SOURCE:
+		filename = ki_message_string(request, 1);
+		filename = debugger_compiled_name(filename);
 
-			// check if the data is in the source cache
-			iter = vector_enum(s_sources);
-			while (source = iter_next(&iter)) {
-				if (strcmp(filename, source->name) == 0) {
-					ki_message_add_string(reply, lstr_cstr(source->text));
-					goto finished;
-				}
+		// check if the data is in the source cache
+		iter = vector_enum(s_sources);
+		while (source = iter_next(&iter)) {
+			if (strcmp(filename, source->name) == 0) {
+				ki_message_add_string(reply, lstr_cstr(source->text));
+				goto finished;
 			}
+		}
 
-			// no cache entry, try loading the file via SphereFS
-			if ((file_data = game_read_file(g_game, filename, &file_size))) {
-				ki_message_add_string(reply, file_data);
-				free(file_data);
-			}
-			else {
-				ki_message_free(reply);
-				reply = ki_message_new(KI_ERR);
-				ki_message_add_int(reply, 4);
-				ki_message_add_string(reply, "no source code available");
-			}
-			break;
-		case KI_APP_REQ_WATERMARK:
-			s_banner_text = lstr_new(ki_message_string(request, 2));
-			s_banner_color = color_new(
-				ki_message_int(request, 3),
-				ki_message_int(request, 4),
-				ki_message_int(request, 5),
-				255);
-			break;
+		// no cache entry, try loading the file via SphereFS
+		if ((file_data = game_read_file(g_game, filename, &file_size))) {
+			ki_message_add_string(reply, file_data);
+			free(file_data);
+		}
+		else {
+			ki_message_free(reply);
+			reply = ki_message_new(KI_ERR);
+			ki_message_add_int(reply, 4);
+			ki_message_add_string(reply, "no source code available");
 		}
 		break;
-	case KI_REQ_ADDBREAK:
+	case KI_REQ_SET_WATERMARK:
+		s_banner_text = lstr_new(ki_message_string(request, 1));
+		s_banner_color = color_new(
+			ki_message_int(request, 2),
+			ki_message_int(request, 3),
+			ki_message_int(request, 4),
+			255);
+		break;
+	case KI_REQ_ADD_BREAK:
 		filename = ki_message_string(request, 1);
 		line_number = ki_message_int(request, 2);
 		breakpoint_id = jsal_debug_breakpoint_add(filename, line_number, 1);
 		ki_message_add_int(reply, breakpoint_id);
 		break;
-	case KI_REQ_DELBREAK:
+	case KI_REQ_DEL_BREAK:
 		breakpoint_id = ki_message_int(request, 1);
 		jsal_debug_breakpoint_remove(breakpoint_id);
 		break;
@@ -536,7 +532,7 @@ process_message(js_step_t* out_step)
 		ki_message_add_string(reply, jsal_get_string(-3));
 		jsal_pop(3);
 		break;
-	case KI_REQ_GETCALLSTACK:
+	case KI_REQ_INSPECT_STACK:
 		i = 0;
 		while (jsal_debug_inspect_call(i++)) {
 			ki_message_add_string(reply, jsal_get_string(-4));
@@ -546,7 +542,7 @@ process_message(js_step_t* out_step)
 			jsal_pop(4);
 		}
 		break;
-	case KI_REQ_GETOBJPROPDESCRANGE:
+	case KI_REQ_INSPECT_OBJ:
 		handle = ki_message_handle(request, 1);
 		i = 0;
 		while (jsal_debug_inspect_object(handle, i++)) {
@@ -559,7 +555,7 @@ process_message(js_step_t* out_step)
 			jsal_pop(3);
 		}
 		break;
-	case KI_REQ_GETLOCALS:
+	case KI_REQ_INSPECT_LOCALS:
 		i = 0;
 		while (jsal_debug_inspect_var(0, i++)) {
 			ki_message_add_string(reply, jsal_get_string(-3));
@@ -568,7 +564,7 @@ process_message(js_step_t* out_step)
 			jsal_pop(3);
 		}
 		break;
-	case KI_REQ_LISTBREAK:
+	case KI_REQ_GET_BREAKS:
 		i = 0;
 		while (jsal_debug_inspect_breakpoint(i++)) {
 			ki_message_add_string(reply, jsal_get_string(-3));
@@ -583,15 +579,15 @@ process_message(js_step_t* out_step)
 		*out_step = JS_STEP_CONTINUE;
 		resuming = true;
 		break;
-	case KI_REQ_STEPINTO:
+	case KI_REQ_STEP_IN:
 		*out_step = JS_STEP_IN;
 		resuming = true;
 		break;
-	case KI_REQ_STEPOUT:
+	case KI_REQ_STEP_OUT:
 		*out_step = JS_STEP_OUT;
 		resuming = true;
 		break;
-	case KI_REQ_STEPOVER:
+	case KI_REQ_STEP_OVER:
 		*out_step = JS_STEP_OVER;
 		resuming = true;
 		break;
