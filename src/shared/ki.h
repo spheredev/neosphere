@@ -46,48 +46,32 @@ typedef
 enum ki_attribute
 {
 	KI_ATTR_NONE = 0x0,
-	KI_ATTR_WRITABLE = 0x01,
-	KI_ATTR_ENUMERABLE = 0x02,
-	KI_ATTR_CONFIGURABLE = 0x04,
-	KI_ATTR_ACCESSOR = 0x08,
-	KI_ATTR_SYMBOL = 0x10,
+	KI_ATTR_ACCESSOR = 0x01,
+	KI_ATTR_CONFIGURABLE = 0x02,
+	KI_ATTR_ENUMERABLE = 0x04,
+	KI_ATTR_SYMBOL = 0x08,
+	KI_ATTR_WRITABLE = 0x10,
 } ki_attribute_t;
 
 typedef
-enum ki_tag
+enum ki_type
 {
-	DVALUE_EOM = 0x00,
-	DVALUE_REQ = 0x01,
-	DVALUE_REP = 0x02,
-	DVALUE_ERR = 0x03,
-	DVALUE_NFY = 0x04,
-	DVALUE_INT = 0x10,
-	DVALUE_STRING = 0x11,
-	DVALUE_STRING16 = 0x12,
-	DVALUE_BUFFER = 0x13,
-	DVALUE_BUF16 = 0x14,
-	DVALUE_UNUSED = 0x15,
-	DVALUE_UNDEF = 0x16,
-	DVALUE_NULL = 0x17,
-	DVALUE_TRUE = 0x18,
-	DVALUE_FALSE = 0x19,
-	DVALUE_FLOAT = 0x1A,
-	DVALUE_OBJ = 0x1B,
-	DVALUE_PTR = 0x1C,
-	DVALUE_LIGHTFUNC = 0x1D,
-	DVALUE_HEAPPTR = 0x1E,
-	DVALUE_HANDLE = 0x1F,
-} ki_tag_t;
-
-typedef
-enum dmessage_tag
-{
-	DMESSAGE_UNKNOWN,
-	DMESSAGE_REQ,
-	DMESSAGE_REP,
-	DMESSAGE_ERR,
-	DMESSAGE_NFY,
-} dmessage_tag_t;
+	KI_EOM = 0x00,
+	KI_REQ = 0x01,
+	KI_REP = 0x02,
+	KI_ERR = 0x03,
+	KI_NFY = 0x04,
+	KI_INT = 0x10,
+	KI_STRING = 0x11,
+	KI_BUFFER = 0x13,
+	KI_UNUSED = 0x15,
+	KI_UNDEF = 0x16,
+	KI_NULL = 0x17,
+	KI_TRUE = 0x18,
+	KI_FALSE = 0x19,
+	KI_NUMBER = 0x1A,
+	KI_HANDLE = 0x1F,
+} ki_type_t;
 
 typedef
 enum print_op
@@ -127,24 +111,24 @@ enum req_command
 	REQ_GETOBJPROPDESCRANGE = 0x25,
 };
 
-enum nfy_command
+enum ki_err_command
 {
-	NFY_STATUS = 0x01,
-	NFY_PRINT = 0x02,
-	NFY_ALERT = 0x03,
-	NFY_LOG = 0x04,
-	NFY_THROW = 0x05,
-	NFY_DETACHING = 0x06,
-	NFY_APPNOTIFY = 0x07,
+	KI_ERR_UNKNOWN = 0x00,
+	KI_ERR_UNSUPPORTED = 0x01,
+	KI_ERR_TOO_MANY = 0x02,
+	KI_ERR_NOT_FOUND = 0x03,
+	KI_ERR_APP_ERROR = 0x04,
 };
 
-enum err_command
+enum nfy_command
 {
-	ERR_UNKNOWN = 0x00,
-	ERR_UNSUPPORTED = 0x01,
-	ERR_TOO_MANY = 0x02,
-	ERR_NOT_FOUND = 0x03,
-	ERR_APP_ERROR = 0x04,
+	KI_NFY_STATUS = 0x01,
+	KI_NFY_PRINT = 0x02,
+	KI_NFY_ALERT = 0x03,
+	KI_NFY_LOG = 0x04,
+	KI_NFY_THROW = 0x05,
+	KI_NFY_DETACHING = 0x06,
+	KI_NFY_APPNOTIFY = 0x07,
 };
 
 enum appnotify
@@ -161,11 +145,11 @@ enum apprequest
 	APPREQ_WATERMARK,
 };
 
-ki_message_t*    dmessage_new          (dmessage_tag_t tag);
+ki_message_t*    dmessage_new          (ki_type_t command_tag);
 void             dmessage_free         (ki_message_t* it);
 int              dmessage_len          (const ki_message_t* it);
-dmessage_tag_t   dmessage_tag          (const ki_message_t* it);
-ki_tag_t         dmessage_get_atom_tag (const ki_message_t* it, int index);
+ki_type_t        dmessage_tag          (const ki_message_t* it);
+ki_type_t        dmessage_get_atom_tag (const ki_message_t* it, int index);
 const ki_atom_t* dmessage_get_dvalue   (const ki_message_t* it, int index);
 double           dmessage_get_float    (const ki_message_t* it, int index);
 unsigned int     dmessage_get_handle   (const ki_message_t* it, int index);
@@ -178,14 +162,14 @@ void             dmessage_add_int      (ki_message_t* it, int value);
 void             dmessage_add_string   (ki_message_t* it, const char* value);
 ki_message_t*    dmessage_recv         (socket_t* socket);
 bool             dmessage_send         (const ki_message_t* it, socket_t* socket);
-ki_atom_t*       dvalue_new            (ki_tag_t tag);
+ki_atom_t*       dvalue_new            (ki_type_t tag);
 ki_atom_t*       dvalue_new_float      (double value);
 ki_atom_t*       dvalue_new_handle     (unsigned int value);
 ki_atom_t*       dvalue_new_int        (int value);
 ki_atom_t*       dvalue_new_string     (const char* value);
 ki_atom_t*       dvalue_dup            (const ki_atom_t* it);
 void             dvalue_free           (ki_atom_t* it);
-ki_tag_t         dvalue_tag            (const ki_atom_t* it);
+ki_type_t        dvalue_tag            (const ki_atom_t* it);
 const char*      dvalue_as_cstr        (const ki_atom_t* it);
 unsigned int     dvalue_as_handle      (const ki_atom_t* it);
 double           dvalue_as_float       (const ki_atom_t* it);

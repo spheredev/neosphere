@@ -115,7 +115,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 		goto on_error;
 
 	// set watermark (shown on bottom left)
-	request = dmessage_new(DMESSAGE_REQ);
+	request = dmessage_new(KI_REQ);
 	dmessage_add_int(request, REQ_APPREQUEST);
 	dmessage_add_int(request, APPREQ_WATERMARK);
 	dmessage_add_string(request, "ssj");
@@ -126,7 +126,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	dmessage_free(reply);
 
 	printf("downloading game information... ");
-	request = dmessage_new(DMESSAGE_REQ);
+	request = dmessage_new(KI_REQ);
 	dmessage_add_int(request, REQ_APPREQUEST);
 	dmessage_add_int(request, APPREQ_GAME_INFO);
 	reply = inferior_request(obj, request);
@@ -228,7 +228,7 @@ inferior_get_calls(inferior_t* obj)
 	int i;
 
 	if (obj->calls == NULL) {
-		request = dmessage_new(DMESSAGE_REQ);
+		request = dmessage_new(KI_REQ);
 		dmessage_add_int(request, REQ_GETCALLSTACK);
 		if (!(request = inferior_request(obj, request)))
 			return NULL;
@@ -267,7 +267,7 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 	const ki_atom_t* value;
 	objview_t*       view;
 
-	request = dmessage_new(DMESSAGE_REQ);
+	request = dmessage_new(KI_REQ);
 	dmessage_add_int(request, REQ_GETOBJPROPDESCRANGE);
 	dmessage_add_handle(request, handle);
 	dmessage_add_int(request, 0);
@@ -278,7 +278,7 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 	while (index < dmessage_len(request)) {
 		prop_flags = dmessage_get_int(request, index++);
 		prop_key = dmessage_get_dvalue(request, index++);
-		if (dvalue_tag(prop_key) == DVALUE_STRING)
+		if (dvalue_tag(prop_key) == KI_STRING)
 			key_string = strdup(dvalue_as_cstr(prop_key));
 		else
 			key_string = strnewf("%d", dvalue_as_int(prop_key));
@@ -298,7 +298,7 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 		}
 		else {
 			value = dmessage_get_dvalue(request, index++);
-			if (dvalue_tag(value) != DVALUE_UNUSED)
+			if (dvalue_tag(value) != KI_UNUSED)
 				objview_add_value(view, key_string, "property", value, flags);
 		}
 		free(key_string);
@@ -322,13 +322,13 @@ inferior_get_source(inferior_t* obj, const char* filename)
 			return obj->sources[i].source;
 	}
 
-	request = dmessage_new(DMESSAGE_REQ);
+	request = dmessage_new(KI_REQ);
 	dmessage_add_int(request, REQ_APPREQUEST);
 	dmessage_add_int(request, APPREQ_SOURCE);
 	dmessage_add_string(request, filename);
 	if (!(request = inferior_request(obj, request)))
 		goto on_error;
-	if (dmessage_tag(request) == DMESSAGE_ERR)
+	if (dmessage_tag(request) == KI_ERR)
 		goto on_error;
 	text = dmessage_get_string(request, 0);
 	source = source_new(text);
@@ -357,7 +357,7 @@ inferior_get_vars(inferior_t* obj, int frame)
 
 	int i;
 
-	msg = dmessage_new(DMESSAGE_REQ);
+	msg = dmessage_new(KI_REQ);
 	dmessage_add_int(msg, REQ_GETLOCALS);
 	dmessage_add_int(msg, -frame - 1);
 	if (!(msg = inferior_request(obj, msg)))
@@ -379,13 +379,13 @@ inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
 	int        handle;
 	ki_message_t* msg;
 
-	msg = dmessage_new(DMESSAGE_REQ);
+	msg = dmessage_new(KI_REQ);
 	dmessage_add_int(msg, REQ_ADDBREAK);
 	dmessage_add_string(msg, filename);
 	dmessage_add_int(msg, linenum);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
-	if (dmessage_tag(msg) == DMESSAGE_ERR)
+	if (dmessage_tag(msg) == KI_ERR)
 		goto on_error;
 	handle = dmessage_get_int(msg, 0);
 	dmessage_free(msg);
@@ -401,12 +401,12 @@ inferior_clear_breakpoint(inferior_t* obj, int handle)
 {
 	ki_message_t* msg;
 
-	msg = dmessage_new(DMESSAGE_REQ);
+	msg = dmessage_new(KI_REQ);
 	dmessage_add_int(msg, REQ_DELBREAK);
 	dmessage_add_int(msg, handle);
 	if (!(msg = inferior_request(obj, msg)))
 		goto on_error;
-	if (dmessage_tag(msg) == DMESSAGE_ERR)
+	if (dmessage_tag(msg) == KI_ERR)
 		goto on_error;
 	dmessage_free(msg);
 	return true;
@@ -421,7 +421,7 @@ inferior_detach(inferior_t* obj)
 {
 	ki_message_t* msg;
 
-	msg = dmessage_new(DMESSAGE_REQ);
+	msg = dmessage_new(KI_REQ);
 	dmessage_add_int(msg, REQ_DETACH);
 	if (!(msg = inferior_request(obj, msg)))
 		return;
@@ -436,7 +436,7 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 	ki_atom_t*  dvalue = NULL;
 	ki_message_t* msg;
 
-	msg = dmessage_new(DMESSAGE_REQ);
+	msg = dmessage_new(KI_REQ);
 	dmessage_add_int(msg, REQ_EVAL);
 	if (obj->protocol == 2) {
 		dmessage_add_int(msg, -(1 + frame));
@@ -458,7 +458,7 @@ inferior_pause(inferior_t* obj)
 {
 	ki_message_t* msg;
 
-	msg = dmessage_new(DMESSAGE_REQ);
+	msg = dmessage_new(KI_REQ);
 	dmessage_add_int(msg, REQ_PAUSE);
 	if (!(msg = inferior_request(obj, msg)))
 		return false;
@@ -476,9 +476,9 @@ inferior_request(inferior_t* obj, ki_message_t* msg)
 		dmessage_free(response);
 		if (!(response = dmessage_recv(obj->socket)))
 			goto lost_connection;
-		if (dmessage_tag(response) == DMESSAGE_NFY)
+		if (dmessage_tag(response) == KI_NFY)
 			handle_notify(obj, response);
-	} while (dmessage_tag(response) == DMESSAGE_NFY);
+	} while (dmessage_tag(response) == KI_NFY);
 	dmessage_free(msg);
 	return response;
 
@@ -494,7 +494,7 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 {
 	ki_message_t* msg;
 
-	msg = dmessage_new(DMESSAGE_REQ);
+	msg = dmessage_new(KI_REQ);
 	dmessage_add_int(msg,
 		op == OP_STEP_OVER ? REQ_STEPOVER
 		: op == OP_STEP_IN ? REQ_STEPINTO
@@ -562,9 +562,9 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 	int           status_type;
 
 	switch (dmessage_tag(msg)) {
-	case DMESSAGE_NFY:
+	case KI_NFY:
 		switch (dmessage_get_int(msg, 0)) {
-		case NFY_APPNOTIFY:
+		case KI_NFY_APPNOTIFY:
 			switch (dmessage_get_int(msg, 1)) {
 			case APPNFY_DEBUG_PRINT:
 				print_op = (enum print_op)dmessage_get_int(msg, 2);
@@ -588,13 +588,13 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 				break;
 			}
 			break;
-		case NFY_STATUS:
+		case KI_NFY_STATUS:
 			status_type = dmessage_get_int(msg, 1);
 			obj->is_paused = status_type != 0;
 			if (!obj->is_paused)
 				clear_pause_cache(obj);
 			break;
-		case NFY_THROW:
+		case KI_NFY_THROW:
 			if ((status_type = dmessage_get_int(msg, 1)) == 0)
 				break;
 			printf("\33[31;1m");
@@ -602,7 +602,7 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 			printf("\33[m");
 			printf("%s\n", dmessage_get_string(msg, 2));
 			break;
-		case NFY_DETACHING:
+		case KI_NFY_DETACHING:
 			status_type = dmessage_get_int(msg, 1);
 			if (status_type == 0)
 				printf("\33[36;1mthe engine disconnected from SSj normally.\n");

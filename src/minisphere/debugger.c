@@ -307,8 +307,8 @@ debugger_log(const char* text, print_op_t op, bool use_console)
 		console_log(0, "%s: %s", heading, text);
 	}
 	if (s_socket != NULL) {
-		notify = dmessage_new(DMESSAGE_NFY);
-		dmessage_add_int(notify, NFY_APPNOTIFY);
+		notify = dmessage_new(KI_NFY);
+		dmessage_add_int(notify, KI_NFY_APPNOTIFY);
 		dmessage_add_int(notify, APPNFY_DEBUG_PRINT);
 		dmessage_add_int(notify, op);
 		dmessage_add_string(notify, text);
@@ -335,8 +335,8 @@ on_breakpoint_hit(void)
 	line = jsal_get_int(1) + 1;
 	column = jsal_get_int(2) + 1;
 
-	message = dmessage_new(DMESSAGE_NFY);
-	dmessage_add_int(message, NFY_STATUS);
+	message = dmessage_new(KI_NFY);
+	dmessage_add_int(message, KI_NFY_STATUS);
 	dmessage_add_int(message, 1);
 	dmessage_add_string(message, filename);
 	dmessage_add_string(message, "");
@@ -348,8 +348,8 @@ on_breakpoint_hit(void)
 	while (!process_message(&step_op));
 
 	if (s_socket != NULL) {
-		message = dmessage_new(DMESSAGE_NFY);
-		dmessage_add_int(message, NFY_STATUS);
+		message = dmessage_new(KI_NFY);
+		dmessage_add_int(message, KI_NFY_STATUS);
 		dmessage_add_int(message, 0);
 		dmessage_add_string(message, filename);
 		dmessage_add_string(message, "");
@@ -372,8 +372,8 @@ on_throw_exception(void)
 	if (s_socket == NULL)
 		return;
 
-	message = dmessage_new(DMESSAGE_NFY);
-	dmessage_add_int(message, NFY_THROW);
+	message = dmessage_new(KI_NFY);
+	dmessage_add_int(message, KI_NFY_THROW);
 	dmessage_add_int(message, 1);
 	dmessage_add_string(message, jsal_get_string(0));
 	dmessage_add_string(message, jsal_get_string(1));
@@ -412,8 +412,8 @@ do_detach_debugger(bool is_shutdown)
 	console_log(1, "detaching SSj debug session");
 	s_is_attached = false;
 	if (s_socket != NULL) {
-		notify = dmessage_new(DMESSAGE_NFY);
-		dmessage_add_int(notify, NFY_DETACHING);
+		notify = dmessage_new(KI_NFY);
+		dmessage_add_int(notify, KI_NFY_DETACHING);
 		dmessage_add_int(notify, 0);
 		dmessage_send(notify, s_socket);
 		dmessage_free(notify);
@@ -456,9 +456,9 @@ process_message(js_step_t* out_step)
 	
 	if (!(request = dmessage_recv(s_socket)))
 		goto on_error;
-	if (dmessage_tag(request) != DMESSAGE_REQ)
+	if (dmessage_tag(request) != KI_REQ)
 		goto on_error;
-	reply = dmessage_new(DMESSAGE_REP);
+	reply = dmessage_new(KI_REP);
 	switch (dmessage_get_int(request, 0)) {
 	case REQ_APPREQUEST:
 		switch (dmessage_get_int(request, 1)) {
@@ -493,7 +493,7 @@ process_message(js_step_t* out_step)
 			}
 			else {
 				dmessage_free(reply);
-				reply = dmessage_new(DMESSAGE_ERR);
+				reply = dmessage_new(KI_ERR);
 				dmessage_add_int(reply, 4);
 				dmessage_add_string(reply, "no source code available");
 			}

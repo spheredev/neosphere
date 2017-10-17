@@ -43,13 +43,13 @@
 
 struct ki_message
 {
-	vector_t*      dvalues;
-	dmessage_tag_t tag;
+	ki_type_t command;
+	vector_t* dvalues;
 };
 
 struct ki_atom
 {
-	ki_tag_t tag;
+	ki_type_t tag;
 	union {
 		double       float_value;
 		unsigned int handle;
@@ -62,13 +62,13 @@ struct ki_atom
 };
 
 ki_message_t*
-dmessage_new(dmessage_tag_t tag)
+dmessage_new(ki_type_t command_tag)
 {
 	ki_message_t* message;
 
 	message = calloc(1, sizeof(ki_message_t));
 	message->dvalues = vector_new(sizeof(ki_atom_t*));
-	message->tag = tag;
+	message->command = command_tag;
 	return message;
 }
 
@@ -95,13 +95,13 @@ dmessage_len(const ki_message_t* it)
 	return (int)vector_len(it->dvalues);
 }
 
-dmessage_tag_t
+ki_type_t
 dmessage_tag(const ki_message_t* it)
 {
-	return it->tag;
+	return it->command;
 }
 
-ki_tag_t
+ki_type_t
 dmessage_get_atom_tag(const ki_message_t* it, int index)
 {
 	ki_atom_t* dvalue;
@@ -209,15 +209,11 @@ dmessage_recv(socket_t* socket)
 	message->dvalues = vector_new(sizeof(ki_atom_t*));
 	if (!(atom = dvalue_recv(socket)))
 		goto lost_dvalue;
-	message->tag = dvalue_tag(atom) == DVALUE_REQ ? DMESSAGE_REQ
-		: dvalue_tag(atom) == DVALUE_REP ? DMESSAGE_REP
-		: dvalue_tag(atom) == DVALUE_ERR ? DMESSAGE_ERR
-		: dvalue_tag(atom) == DVALUE_NFY ? DMESSAGE_NFY
-		: DMESSAGE_UNKNOWN;
+	message->command = dvalue_tag(atom);
 	dvalue_free(atom);
 	if (!(atom = dvalue_recv(socket)))
 		goto lost_dvalue;
-	while (dvalue_tag(atom) != DVALUE_EOM) {
+	while (dvalue_tag(atom) != KI_EOM) {
 		vector_push(message->dvalues, &atom);
 		if (!(atom = dvalue_recv(socket)))
 			goto lost_dvalue;
@@ -240,30 +236,30 @@ bool
 dmessage_send(const ki_message_t* it, socket_t* socket)
 {
 	ki_atom_t* atom;
-	ki_tag_t   lead_tag;
+	ki_type_t  lead_tag;
 
 	iter_t iter;
 	ki_atom_t* *p_dvalue;
 
-	lead_tag = it->tag == DMESSAGE_REQ ? DVALUE_REQ
-		: it->tag == DMESSAGE_REP ? DVALUE_REP
-		: it->tag == DMESSAGE_ERR ? DVALUE_ERR
-		: it->tag == DMESSAGE_NFY ? DVALUE_NFY
-		: DVALUE_EOM;
+	lead_tag = it->command == KI_REQ ? KI_REQ
+		: it->command == KI_REP ? KI_REP
+		: it->command == KI_ERR ? KI_ERR
+		: it->command == KI_NFY ? KI_NFY
+		: KI_EOM;
 	atom = dvalue_new(lead_tag);
 	dvalue_send(atom, socket);
 	dvalue_free(atom);
 	iter = vector_enum(it->dvalues);
 	while (p_dvalue = iter_next(&iter))
 		dvalue_send(*p_dvalue, socket);
-	atom = dvalue_new(DVALUE_EOM);
+	atom = dvalue_new(KI_EOM);
 	dvalue_send(atom, socket);
 	dvalue_free(atom);
 	return socket_connected(socket);
 }
 
 ki_atom_t*
-dvalue_new(ki_tag_t tag)
+dvalue_new(ki_type_t tag)
 {
 	ki_atom_t* atom;
 
@@ -278,7 +274,7 @@ dvalue_new_float(double value)
 	ki_atom_t* atom;
 
 	atom = calloc(1, sizeof(ki_atom_t));
-	atom->tag = DVALUE_FLOAT;
+	atom->tag = KI_NUMBER;
 	atom->float_value = value;
 	return atom;
 }
@@ -289,7 +285,7 @@ dvalue_new_handle(unsigned int value)
 	ki_atom_t* atom;
 
 	atom = calloc(1, sizeof(ki_atom_t));
-	atom->tag = DVALUE_HANDLE;
+	atom->tag = KI_HANDLE;
 	atom->handle = value;
 	return atom;
 }
@@ -300,7 +296,7 @@ dvalue_new_int(int value)
 	ki_atom_t* atom;
 
 	atom = calloc(1, sizeof(ki_atom_t));
-	atom->tag = DVALUE_INT;
+	atom->tag = KI_INT;
 	atom->int_value = value;
 	return atom;
 }
@@ -311,7 +307,7 @@ dvalue_new_string(const char* value)
 	ki_atom_t* atom;
 
 	atom = calloc(1, sizeof(ki_atom_t));
-	atom->tag = DVALUE_STRING;
+	atom->tag = KI_STRING;
 	atom->buffer.data = strdup(value);
 	atom->buffer.size = strlen(value);
 	return atom;
@@ -324,7 +320,7 @@ dvalue_dup(const ki_atom_t* it)
 
 	atom = calloc(1, sizeof(ki_atom_t));
 	memcpy(atom, it, sizeof(ki_atom_t));
-	if (atom->tag == DVALUE_STRING || atom->tag == DVALUE_BUFFER) {
+	if (atom->tag == KI_STRING || atom->tag == KI_BUFFER) {
 		atom->buffer.data = malloc(it->buffer.size + 1);
 		memcpy(atom->buffer.data, it->buffer.data, it->buffer.size + 1);
 	}
@@ -337,12 +333,12 @@ dvalue_free(ki_atom_t* it)
 	if (it == NULL)
 		return;
 
-	if (it->tag == DVALUE_STRING || it->tag == DVALUE_BUFFER)
+	if (it->tag == KI_STRING || it->tag == KI_BUFFER)
 		free(it->buffer.data);
 	free(it);
 }
 
-ki_tag_t
+ki_type_t
 dvalue_tag(const ki_atom_t* it)
 {
 	return it->tag;
@@ -351,28 +347,28 @@ dvalue_tag(const ki_atom_t* it)
 const char*
 dvalue_as_cstr(const ki_atom_t* it)
 {
-	return it->tag == DVALUE_STRING ? it->buffer.data : NULL;
+	return it->tag == KI_STRING ? it->buffer.data : NULL;
 }
 
 double
 dvalue_as_float(const ki_atom_t* it)
 {
-	return it->tag == DVALUE_FLOAT ? it->float_value
-		: it->tag == DVALUE_INT ? (double)it->int_value
+	return it->tag == KI_NUMBER ? it->float_value
+		: it->tag == KI_INT ? (double)it->int_value
 		: 0.0;
 }
 
 unsigned int
 dvalue_as_handle(const ki_atom_t* it)
 {
-	return it->tag == DVALUE_HANDLE ? it->handle : 0;
+	return it->tag == KI_HANDLE ? it->handle : 0;
 }
 
 int
 dvalue_as_int(const ki_atom_t* it)
 {
-	return it->tag == DVALUE_INT ? it->int_value
-		: it->tag == DVALUE_FLOAT ? (int)it->float_value
+	return it->tag == KI_INT ? it->int_value
+		: it->tag == KI_NUMBER ? (int)it->float_value
 		: 0;
 }
 
@@ -380,16 +376,16 @@ void
 dvalue_print(const ki_atom_t* it, bool is_verbose)
 {
 	switch (dvalue_tag(it)) {
-	case DVALUE_UNDEF: printf("undefined"); break;
-	case DVALUE_UNUSED: printf("unused"); break;
-	case DVALUE_NULL: printf("null"); break;
-	case DVALUE_TRUE: printf("true"); break;
-	case DVALUE_FALSE: printf("false"); break;
-	case DVALUE_FLOAT: printf("%g", it->float_value); break;
-	case DVALUE_INT: printf("%d", it->int_value); break;
-	case DVALUE_STRING: printf("\"%s\"", (char*)it->buffer.data); break;
-	case DVALUE_BUFFER: printf("{buf:\"%zd bytes\"}", it->buffer.size); break;
-	case DVALUE_HANDLE:
+	case KI_UNDEF: printf("undefined"); break;
+	case KI_UNUSED: printf("unused"); break;
+	case KI_NULL: printf("null"); break;
+	case KI_TRUE: printf("true"); break;
+	case KI_FALSE: printf("false"); break;
+	case KI_NUMBER: printf("%g", it->float_value); break;
+	case KI_INT: printf("%d", it->int_value); break;
+	case KI_STRING: printf("\"%s\"", (char*)it->buffer.data); break;
+	case KI_BUFFER: printf("{buf:\"%zd bytes\"}", it->buffer.size); break;
+	case KI_HANDLE:
 		if (!is_verbose)
 			printf("{...}");
 		else {
@@ -397,7 +393,7 @@ dvalue_print(const ki_atom_t* it, bool is_verbose)
 		}
 		break;
 	default:
-		printf("*munch*");
+		printf("*MUNCH*");
 	}
 }
 
@@ -412,15 +408,15 @@ dvalue_recv(socket_t* socket)
 	atom = calloc(1, sizeof(ki_atom_t));
 	if (socket_read(socket, &ib, 1) == 0)
 		goto lost_connection;
-	atom->tag = (ki_tag_t)ib;
+	atom->tag = (ki_type_t)ib;
 	switch (ib) {
-	case DVALUE_INT:
+	case KI_INT:
 		if (socket_read(socket, data, 4) == 0)
 			goto lost_connection;
-		atom->tag = DVALUE_INT;
+		atom->tag = KI_INT;
 		atom->int_value = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
-	case DVALUE_STRING:
+	case KI_STRING:
 		if (socket_read(socket, data, 4) == 0)
 			goto lost_connection;
 		atom->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
@@ -428,19 +424,9 @@ dvalue_recv(socket_t* socket)
 		read_size = (int)atom->buffer.size;
 		if (socket_read(socket, atom->buffer.data, read_size) != read_size)
 			goto lost_connection;
-		atom->tag = DVALUE_STRING;
+		atom->tag = KI_STRING;
 		break;
-	case DVALUE_STRING16:
-		if (socket_read(socket, data, 2) == 0)
-			goto lost_connection;
-		atom->buffer.size = (data[0] << 8) + data[1];
-		atom->buffer.data = calloc(1, atom->buffer.size + 1);
-		read_size = (int)atom->buffer.size;
-		if (socket_read(socket, atom->buffer.data, read_size) != read_size)
-			goto lost_connection;
-		atom->tag = DVALUE_STRING;
-		break;
-	case DVALUE_BUFFER:
+	case KI_BUFFER:
 		if (socket_read(socket, data, 4) == 0)
 			goto lost_connection;
 		atom->buffer.size = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
@@ -448,19 +434,9 @@ dvalue_recv(socket_t* socket)
 		read_size = (int)atom->buffer.size;
 		if (socket_read(socket, atom->buffer.data, read_size) != read_size)
 			goto lost_connection;
-		atom->tag = DVALUE_BUFFER;
+		atom->tag = KI_BUFFER;
 		break;
-	case DVALUE_BUF16:
-		if (socket_read(socket, data, 2) == 0)
-			goto lost_connection;
-		atom->buffer.size = (data[0] << 8) + data[1];
-		atom->buffer.data = calloc(1, atom->buffer.size + 1);
-		read_size = (int)atom->buffer.size;
-		if (socket_read(socket, atom->buffer.data, read_size) != read_size)
-			goto lost_connection;
-		atom->tag = DVALUE_BUFFER;
-		break;
-	case DVALUE_FLOAT:
+	case KI_NUMBER:
 		if (socket_read(socket, data, 8) == 0)
 			goto lost_connection;
 		((uint8_t*)&atom->float_value)[0] = data[7];
@@ -471,17 +447,17 @@ dvalue_recv(socket_t* socket)
 		((uint8_t*)&atom->float_value)[5] = data[2];
 		((uint8_t*)&atom->float_value)[6] = data[1];
 		((uint8_t*)&atom->float_value)[7] = data[0];
-		atom->tag = DVALUE_FLOAT;
+		atom->tag = KI_NUMBER;
 		break;
-	case DVALUE_HANDLE:
+	case KI_HANDLE:
 		if (socket_read(socket, data, 4) == 0)
 			goto lost_connection;
-		atom->tag = DVALUE_HANDLE;
+		atom->tag = KI_HANDLE;
 		atom->handle = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
 	default:
 		if (ib >= 0x60 && ib <= 0x7F) {
-			atom->tag = DVALUE_STRING;
+			atom->tag = KI_STRING;
 			atom->buffer.size = ib - 0x60;
 			atom->buffer.data = calloc(1, atom->buffer.size + 1);
 			read_size = (int)atom->buffer.size;
@@ -489,13 +465,13 @@ dvalue_recv(socket_t* socket)
 				goto lost_connection;
 		}
 		else if (ib >= 0x80 && ib <= 0xBF) {
-			atom->tag = DVALUE_INT;
+			atom->tag = KI_INT;
 			atom->int_value = ib - 0x80;
 		}
 		else if (ib >= 0xC0) {
 			if (socket_read(socket, data, 1) == 0)
 				goto lost_connection;
-			atom->tag = DVALUE_INT;
+			atom->tag = KI_INT;
 			atom->int_value = ((ib - 0xC0) << 8) + data[0];
 		}
 	}
@@ -515,7 +491,7 @@ dvalue_send(const ki_atom_t* it, socket_t* socket)
 	data[0] = (uint8_t)it->tag;
 	socket_write(socket, data, 1);
 	switch (it->tag) {
-	case DVALUE_FLOAT:
+	case KI_NUMBER:
 		data[0] = ((uint8_t*)&it->float_value)[7];
 		data[1] = ((uint8_t*)&it->float_value)[6];
 		data[2] = ((uint8_t*)&it->float_value)[5];
@@ -526,21 +502,21 @@ dvalue_send(const ki_atom_t* it, socket_t* socket)
 		data[7] = ((uint8_t*)&it->float_value)[0];
 		socket_write(socket, data, 8);
 		break;
-	case DVALUE_HANDLE:
+	case KI_HANDLE:
 		data[0] = (uint8_t)(it->handle >> 24 & 0xFF);
 		data[1] = (uint8_t)(it->handle >> 16 & 0xFF);
 		data[2] = (uint8_t)(it->handle >> 8 & 0xFF);
 		data[3] = (uint8_t)(it->handle & 0xFF);
 		socket_write(socket, data, 4);
 		break;
-	case DVALUE_INT:
+	case KI_INT:
 		data[0] = (uint8_t)(it->int_value >> 24 & 0xFF);
 		data[1] = (uint8_t)(it->int_value >> 16 & 0xFF);
 		data[2] = (uint8_t)(it->int_value >> 8 & 0xFF);
 		data[3] = (uint8_t)(it->int_value & 0xFF);
 		socket_write(socket, data, 4);
 		break;
-	case DVALUE_STRING:
+	case KI_STRING:
 		str_length = (uint32_t)strlen(it->buffer.data);
 		data[0] = (uint8_t)(str_length >> 24 & 0xFF);
 		data[1] = (uint8_t)(str_length >> 16 & 0xFF);
