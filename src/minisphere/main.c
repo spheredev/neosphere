@@ -116,6 +116,8 @@ main(int argc, char* argv[])
 	int                  api_version;
 	bool                 eval_succeeded;
 	lstring_t*           dialog_name;
+	const char*          error_file = NULL;
+	int                  error_line;
 	const char*          error_stack = NULL;
 	const char*          error_text;
 	ALLEGRO_FILECHOOSER* file_dlg;
@@ -342,16 +344,26 @@ on_js_error:
 	error_text = jsal_to_string(-1);
 	screen_show_mouse(g_screen, true);
 	if (jsal_is_error(-2)) {
-		jsal_get_prop_string(-2, "stack");
-		error_stack = jsal_get_string(-1);
+		jsal_get_prop_string(-2, "url");
+		error_file = jsal_get_string(-1);
+		jsal_get_prop_string(-3, "line");
+		error_line = jsal_get_int(-1) + 1;
+		jsal_get_prop_string(-4, "stack");
+		if (!(error_stack = jsal_get_string(-1)))
+			error_stack = error_text;
 	}
 	fprintf(stderr, "GAME CRASH: uncaught JavaScript exception.\n");
 	if (error_stack != NULL) {
 		fprintf(stderr, "%s\n", error_stack);
-		if (error_text[strlen(error_text) - 1] != '\n')
-			jsal_push_sprintf("%s\n", error_stack);
-		else
+		if (error_text[strlen(error_text) - 1] != '\n') {
+			if (error_file != NULL)
+				jsal_push_sprintf("- %s:%d -\n\n%s\n", error_file, error_line, error_stack);
+			else
+				jsal_push_sprintf("- JS runtime error -\n\n%s\n", error_stack);
+		}
+		else {
 			jsal_push_sprintf("%s\n", error_text);
+		}
 	}
 	else {
 		fprintf(stderr, "%s\n", error_text);
