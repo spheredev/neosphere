@@ -176,7 +176,7 @@ ki_atom_int(const ki_atom_t* it)
 }
 
 void
-ki_atom_print(const ki_atom_t* it, bool is_verbose)
+ki_atom_print(const ki_atom_t* it, bool verbose)
 {
 	switch (ki_atom_tag(it)) {
 	case KI_UNDEF: printf("undefined"); break;
@@ -189,7 +189,7 @@ ki_atom_print(const ki_atom_t* it, bool is_verbose)
 	case KI_STRING: printf("\"%s\"", (char*)it->buffer.data); break;
 	case KI_BUFFER: printf("{buf:\"%zd bytes\"}", it->buffer.size); break;
 	case KI_HANDLE:
-		if (!is_verbose)
+		if (!verbose)
 			printf("{...}");
 		else {
 			printf("{ obj:%08x }", it->handle);

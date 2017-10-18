@@ -335,8 +335,7 @@ on_breakpoint_hit(void)
 	column = jsal_get_int(2) + 1;
 
 	message = ki_message_new(KI_NFY);
-	ki_message_add_int(message, KI_NFY_STATUS);
-	ki_message_add_int(message, 1);
+	ki_message_add_int(message, KI_NFY_PAUSE);
 	ki_message_add_string(message, filename);
 	ki_message_add_string(message, "");
 	ki_message_add_int(message, line);
@@ -348,12 +347,7 @@ on_breakpoint_hit(void)
 
 	if (s_socket != NULL) {
 		message = ki_message_new(KI_NFY);
-		ki_message_add_int(message, KI_NFY_STATUS);
-		ki_message_add_int(message, 0);
-		ki_message_add_string(message, filename);
-		ki_message_add_string(message, "");
-		ki_message_add_int(message, line);
-		ki_message_add_int(message, column);
+		ki_message_add_int(message, KI_NFY_RESUME);
 		ki_message_send(message, s_socket);
 		ki_message_free(message);
 	}

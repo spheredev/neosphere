@@ -33,7 +33,8 @@ namespace Sphere.Gdk.Debugger
         None,
         Detaching,
         Log,
-        Status,
+        Pause,
+        Resume,
         Throw,
     }
 

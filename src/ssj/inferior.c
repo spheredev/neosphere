@@ -50,10 +50,10 @@ struct source
 
 struct inferior
 {
-	unsigned int   id_no;
+	unsigned int   id;
 	int            num_sources;
 	bool           is_detached;
-	bool           is_paused;
+	bool           paused;
 	char*          title;
 	char*          author;
 	backtrace_t*   calls;
@@ -71,7 +71,7 @@ static void clear_pause_cache (inferior_t* obj);
 static int  do_handshake      (socket_t* socket);
 static bool handle_notify     (inferior_t* obj, const ki_message_t* msg);
 
-static unsigned int s_next_id_no = 1;
+static unsigned int s_next_inferior_id = 1;
 
 void
 inferiors_init(void)
@@ -138,7 +138,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	printf("    title:  \33[37;1m%s\33[m\n", obj->title);
 	printf("    author: \33[37;1m%s\33[m\n", obj->author);
 
-	obj->id_no = s_next_id_no++;
+	obj->id = s_next_inferior_id++;
 	obj->show_trace = show_trace;
 	return obj;
 
@@ -198,7 +198,7 @@ inferior_attached(const inferior_t* obj)
 bool
 inferior_running(const inferior_t* obj)
 {
-	return !obj->is_paused && inferior_attached(obj);
+	return !obj->paused && inferior_attached(obj);
 }
 
 const char*
@@ -500,7 +500,7 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 	if (!(msg = inferior_request(obj, msg)))
 		return false;
 	obj->frame_index = 0;
-	obj->is_paused = false;
+	obj->paused = false;
 	while (inferior_running(obj))
 		inferior_update(obj);
 	return true;
@@ -552,7 +552,7 @@ on_error:
 }
 
 static bool
-handle_notify(inferior_t* obj, const ki_message_t* msg)
+handle_notify(inferior_t* inferior, const ki_message_t* msg)
 {
 	const char*   heading;
 	enum print_op print_op;
@@ -568,7 +568,7 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 			else
 				printf("\33[31;1ma communication error occurred while debugging.\n");
 			printf("\33[m");
-			obj->is_detached = true;
+			inferior->is_detached = true;
 			return false;
 		case KI_NFY_LOG:
 			print_op = (enum print_op)ki_message_int(msg, 1);
@@ -579,7 +579,7 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 				: print_op == PRINT_TRACE ? "trace"
 				: print_op == PRINT_WARN ? "warn"
 				: "log";
-			if (print_op == PRINT_TRACE && !obj->show_trace)
+			if (print_op == PRINT_TRACE && !inferior->show_trace)
 				break;
 			if (print_op == PRINT_ASSERT || print_op == PRINT_ERROR)
 				printf("\33[31;1m");
@@ -590,11 +590,12 @@ handle_notify(inferior_t* obj, const ki_message_t* msg)
 			printf("%s: %s\n", heading, ki_message_string(msg, 2));
 			printf("\33[m");
 			break;
-		case KI_NFY_STATUS:
-			status_type = ki_message_int(msg, 1);
-			obj->is_paused = status_type != 0;
-			if (!obj->is_paused)
-				clear_pause_cache(obj);
+		case KI_NFY_PAUSE:
+			inferior->paused = true;
+			break;
+		case KI_NFY_RESUME:
+			inferior->paused = false;
+			clear_pause_cache(inferior);
 			break;
 		case KI_NFY_THROW:
 			if ((status_type = ki_message_int(msg, 1)) == 0)

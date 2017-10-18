@@ -140,12 +140,12 @@ namespace Sphere.Gdk.Debugger
         public string Version { get; private set; }
         
         /// <summary>
-        /// Gets the filename reported in the last status update.
+        /// Gets the filename of the last breakpoint hit.
         /// </summary>
         public string FileName { get; private set; }
 
         /// <summary>
-        /// Gets the line number being executed as of the last status update.
+        /// Gets the line number of the last breakpoint hit.
         /// </summary>
         public int LineNumber { get; private set; }
 
@@ -426,10 +426,14 @@ namespace Sphere.Gdk.Debugger
                                 : "log";
                             Print?.Invoke(this, new TraceEventArgs(string.Format("{0}: {1}", prefix, debugText)));
                             break;
-                        case Notify.Status:
-                            FileName = (string)message[3];
-                            LineNumber = (int)message[5];
-                            Running = (int)message[2] == 0;
+                        case Notify.Pause:
+                            FileName = (string)message[2];
+                            LineNumber = (int)message[4];
+                            Running = false;
+                            Status?.Invoke(this, EventArgs.Empty);
+                            break;
+                        case Notify.Resume:
+                            Running = true;
                             Status?.Invoke(this, EventArgs.Empty);
                             break;
                         case Notify.Throw:

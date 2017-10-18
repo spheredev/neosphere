@@ -85,6 +85,24 @@ enum print_op
 	PRINT_WARN,
 } print_op_t;
 
+enum ki_error
+{
+	KI_ERR_NOP,
+	KI_ERR_NOT_FOUND,
+	KI_ERR_TOO_MANY,
+	KI_ERR_UNSUPPORTED,
+};
+
+enum ki_notify
+{
+	KI_NFY_NOP,
+	KI_NFY_DETACHING,
+	KI_NFY_LOG,
+	KI_NFY_PAUSE,
+	KI_NFY_RESUME,
+	KI_NFY_THROW,
+};
+
 enum ki_request
 {
 	KI_REQ_NOP,
@@ -106,23 +124,6 @@ enum ki_request
 	KI_REQ_STEP_OVER,
 };
 
-enum ki_error
-{
-	KI_ERR_UNKNOWN,
-	KI_ERR_UNSUPPORTED,
-	KI_ERR_TOO_MANY,
-	KI_ERR_NOT_FOUND,
-};
-
-enum ki_notify
-{
-	KI_NFY_NOP,
-	KI_NFY_DETACHING,
-	KI_NFY_LOG,
-	KI_NFY_STATUS,
-	KI_NFY_THROW,
-};
-
 ki_atom_t*       ki_atom_new           (ki_type_t tag);
 ki_atom_t*       ki_atom_new_handle    (unsigned int value);
 ki_atom_t*       ki_atom_new_int       (int value);
@@ -135,7 +136,7 @@ unsigned int     ki_atom_handle        (const ki_atom_t* it);
 double           ki_atom_number        (const ki_atom_t* it);
 int              ki_atom_int           (const ki_atom_t* it);
 ki_type_t        ki_atom_tag           (const ki_atom_t* it);
-void             ki_atom_print         (const ki_atom_t* it, bool is_verbose);
+void             ki_atom_print         (const ki_atom_t* it, bool verbose);
 ki_atom_t*       ki_atom_recv          (socket_t* socket);
 bool             ki_atom_send          (const ki_atom_t* it, socket_t* socket);
 ki_message_t*    ki_message_new        (ki_type_t command_tag);
