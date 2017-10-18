@@ -515,7 +515,7 @@ process_message(js_step_t* out_step)
 		*out_step = JS_STEP_CONTINUE;
 		return true;
 	case KI_REQ_EVAL:
-		call_index = -(ki_message_int(request, 1)) - 1;
+		call_index = ki_message_int(request, 1);
 		eval_code = ki_message_string(request, 2);
 		jsal_debug_inspect_eval(call_index, eval_code, &eval_errored);
 		ki_message_add_int(reply, eval_errored ? 1 : 0);

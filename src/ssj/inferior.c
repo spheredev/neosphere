@@ -435,14 +435,8 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 
 	msg = ki_message_new(KI_REQ);
 	ki_message_add_int(msg, KI_REQ_EVAL);
-	if (obj->protocol == 2) {
-		ki_message_add_int(msg, -(1 + frame));
-		ki_message_add_string(msg, expr);
-	}
-	else {
-		ki_message_add_string(msg, expr);
-		ki_message_add_int(msg, -(1 + frame));
-	}
+	ki_message_add_int(msg, frame);
+	ki_message_add_string(msg, expr);
 	msg = inferior_request(obj, msg);
 	dvalue = ki_atom_dup(ki_message_atom(msg, 1));
 	*out_is_error = ki_message_int(msg, 0) != 0;

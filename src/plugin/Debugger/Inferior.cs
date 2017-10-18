@@ -219,12 +219,12 @@ namespace Sphere.Gdk.Debugger
         }
 
         /// <summary>
-        /// Evaluates a JS expression and returns the JX-encoded result.
+        /// Evaluates a JS expression and returns the result.
         /// </summary>
         /// <param name="expression">The expression or statement to evaluate.</param>
-        /// <param name="stackOffset">The point in the stack to do the eval. -1 is active call, -2 the caller, etc..</param>
+        /// <param name="stackOffset">The point in the stack to do the eval. 0 is active call, 1 the caller, etc..</param>
         /// <returns>The value produced by the expression.</returns>
-        public async Task<DValue> Eval(string expression, int stackOffset = -1)
+        public async Task<DValue> Eval(string expression, int stackOffset = 0)
         {
             var reply = protocolVersion == 2
                 ? await DoRequest(DValueTag.REQ, Request.Eval, stackOffset, expression)
@@ -260,9 +260,9 @@ namespace Sphere.Gdk.Debugger
         /// Gets a list of local values and their values. Note that objects
         /// are not evaluated and are listed simply as "{ obj: 'ClassName' }".
         /// </summary>
-        /// <param name="stackOffset">The call stack offset to get locals for, -1 being the current activation.</param>
+        /// <param name="stackOffset">The stack frame to get locals for, 0 being the current activation.</param>
         /// <returns></returns>
-        public async Task<IReadOnlyDictionary<string, DValue>> GetLocals(int stackOffset = -1)
+        public async Task<IReadOnlyDictionary<string, DValue>> GetLocals(int stackOffset = 0)
         {
             var reply = await DoRequest(DValueTag.REQ, Request.InspectLocals, stackOffset);
             var vars = new Dictionary<string, DValue>();

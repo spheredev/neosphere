@@ -72,7 +72,7 @@ namespace Sphere.Gdk.DockPanes
 
         private async Task DoEvaluate(string expr)
         {
-            var result = await SSj.Inferior.Eval(expr, -(_frame + 1));
+            var result = await SSj.Inferior.Eval(expr, _frame);
             new ObjectViewer(SSj.Inferior, expr, result).ShowDialog(this);
         }
 
@@ -83,7 +83,7 @@ namespace Sphere.Gdk.DockPanes
             _frame = callIndex;
             m_callsListView.Items[_frame].ForeColor = Color.Blue;
             m_callsListView.SelectedItems.Clear();
-            _vars = await SSj.Inferior.GetLocals(-(_frame + 1));
+            _vars = await SSj.Inferior.GetLocals(_frame);
             m_localsListView.BeginUpdate();
             m_localsListView.Items.Clear();
             foreach (var k in _vars.Keys)
