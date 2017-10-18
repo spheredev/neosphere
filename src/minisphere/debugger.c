@@ -176,7 +176,7 @@ debugger_update(void)
 			screen_set_fullscreen(g_screen, false);
 			jsal_debug_breakpoint_inject();
 			console_log(0, "connected to debugger at %s", socket_hostname(client));
-			handshake = strnewf("2 20000 v2.0.0 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
+			handshake = strnewf("SSj/Ki v1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 			socket_write(client, handshake, strlen(handshake));
 			free(handshake);
 			s_socket = client;

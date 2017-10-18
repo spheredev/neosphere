@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -67,15 +63,15 @@ namespace Sphere.Gdk.Debugger
     }
     
     /// <summary>
-    /// Allows control of a Duktape debug target over TCP.
+    /// Allows control of an SSj/Ki debug target over TCP.
     /// </summary>
     class Inferior : IDisposable
     {
         private TcpClient tcp = new TcpClient() { NoDelay = true };
         private Thread messenger = null;
         private object replyLock = new object();
-        private Queue<DMessage> requests = new Queue<DMessage>();
-        private Dictionary<DMessage, DMessage> replies = new Dictionary<DMessage, DMessage>();
+        private Queue<KiMessage> requests = new Queue<KiMessage>();
+        private Dictionary<KiMessage, KiMessage> replies = new Dictionary<KiMessage, KiMessage>();
         private int protocolVersion;
 
         /// <summary>
@@ -135,11 +131,6 @@ namespace Sphere.Gdk.Debugger
         public string TargetID { get; private set; }
 
         /// <summary>
-        /// Gets the target's Duktape version ID string.
-        /// </summary>
-        public string Version { get; private set; }
-        
-        /// <summary>
         /// Gets the filename of the last breakpoint hit.
         /// </summary>
         public string FileName { get; private set; }
@@ -167,18 +158,19 @@ namespace Sphere.Gdk.Debugger
                     line += (char)buffer[0];
                 }
             });
-            string[] handshake = line.Trim().Split(new[] { ' ' }, 4);
-            protocolVersion = int.Parse(handshake[0]);
-            if (protocolVersion < 1 || protocolVersion > 2)
-                throw new NotSupportedException("Unsupported Duktape debugger protocol version!");
+            string[] handshake = line.Trim().Split(new[] { ' ' }, 3);
+            if (handshake[0] != "SSj/Ki")
+                throw new NotSupportedException("SSj/Ki handshake failed, unsupported protocol");
+            protocolVersion = int.Parse(handshake[1].Substring(1));
+            if (protocolVersion < 1 || protocolVersion > 1)
+                throw new NotSupportedException("Unsupported SSj/Ki protocol version!");
 
-            Version = handshake[2];
-            TargetID = handshake[3];
+            TargetID = handshake[2];
 
             // start the communication thread
             messenger = new Thread(ProcessMessages) { IsBackground = true };
             messenger.Start();
-            await DoRequest(DValueTag.REQ, Request.SetWatermark, "ssj blue", 0, 255, 255);
+            await DoRequest(KiTag.REQ, KiRequest.SetWatermark, "ssj blue", 0, 255, 255);
             Attached?.Invoke(this, EventArgs.Empty);
         }
 
@@ -190,7 +182,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns>The index assigned to the breakpoint by Duktape.</returns>
         public async Task<int> AddBreak(string filename, int lineNumber)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.AddBreakpoint, filename, lineNumber);
+            var reply = await DoRequest(KiTag.REQ, KiRequest.AddBreakpoint, filename, lineNumber);
             return (int)reply[1];
         }
 
@@ -201,7 +193,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task DelBreak(int index)
         {
-            await DoRequest(DValueTag.REQ, Request.DelBreakpoint, index);
+            await DoRequest(KiTag.REQ, KiRequest.DelBreakpoint, index);
         }
         
         /// <summary>
@@ -212,7 +204,7 @@ namespace Sphere.Gdk.Debugger
         {
             if (messenger == null)
                 return;
-            await DoRequest(DValueTag.REQ, Request.Detach);
+            await DoRequest(KiTag.REQ, KiRequest.Detach);
             await Task.Run(() => messenger.Join());
             tcp.Client.Disconnect(true);
             Detached?.Invoke(this, EventArgs.Empty);
@@ -224,11 +216,9 @@ namespace Sphere.Gdk.Debugger
         /// <param name="expression">The expression or statement to evaluate.</param>
         /// <param name="stackOffset">The point in the stack to do the eval. 0 is active call, 1 the caller, etc..</param>
         /// <returns>The value produced by the expression.</returns>
-        public async Task<DValue> Eval(string expression, int stackOffset = 0)
+        public async Task<KiAtom> Eval(string expression, int stackOffset = 0)
         {
-            var reply = protocolVersion == 2
-                ? await DoRequest(DValueTag.REQ, Request.Eval, stackOffset, expression)
-                : await DoRequest(DValueTag.REQ, Request.Eval, expression, stackOffset);
+            var reply = await DoRequest(KiTag.REQ, KiRequest.Eval, stackOffset, expression);
             return reply[2];
         }
 
@@ -241,16 +231,14 @@ namespace Sphere.Gdk.Debugger
         /// </returns>
         public async Task<StackFrameInfo[]> GetCallStack()
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.InspectStack);
+            var reply = await DoRequest(KiTag.REQ, KiRequest.InspectStack);
             var stack = new List<StackFrameInfo>();
             int count = (reply.Length - 1) / 4;
             for (int i = 0; i < count; ++i) {
                 string filename = (string)reply[1 + i * 4];
                 string functionName = (string)reply[2 + i * 4];
                 int lineNumber = (int)reply[3 + i * 4];
-                int pc = (int)reply[4 + i * 4];
-                if (lineNumber == 0)
-                    filename = "[system call]";
+                int column = (int)reply[4 + i * 4];
                 stack.Add(new StackFrameInfo(functionName, filename, lineNumber));
             }
             return stack.ToArray();
@@ -262,14 +250,14 @@ namespace Sphere.Gdk.Debugger
         /// </summary>
         /// <param name="stackOffset">The stack frame to get locals for, 0 being the current activation.</param>
         /// <returns></returns>
-        public async Task<IReadOnlyDictionary<string, DValue>> GetLocals(int stackOffset = 0)
+        public async Task<IReadOnlyDictionary<string, KiAtom>> GetLocals(int stackOffset = 0)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.InspectLocals, stackOffset);
-            var vars = new Dictionary<string, DValue>();
+            var reply = await DoRequest(KiTag.REQ, KiRequest.InspectLocals, stackOffset);
+            var vars = new Dictionary<string, KiAtom>();
             int count = (reply.Length - 1) / 3;
             for (int i = 0; i < count; ++i) {
                 string name = (string)reply[1 + i * 3];
-                DValue value = reply[3 + i * 3];
+                KiAtom value = reply[3 + i * 3];
                 vars[name] = value;
             }
             return vars;
@@ -277,7 +265,7 @@ namespace Sphere.Gdk.Debugger
 
         public async Task<Dictionary<string, PropDesc>> GetObjPropDescRange(Handle handle, int start, int end)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.InspectObject, handle, start, end);
+            var reply = await DoRequest(KiTag.REQ, KiRequest.InspectObject, handle, start, end);
             var props = new Dictionary<string, PropDesc>();
             int count = (reply.Length - 1) / 2;
             int i = 1;
@@ -285,16 +273,16 @@ namespace Sphere.Gdk.Debugger
                 PropFlags flags = (PropFlags)(int)reply[i++];
                 string name = reply[i++].ToString();
                 if (flags.HasFlag(PropFlags.Accessor)) {
-                    DValue getter = reply[i++];
-                    DValue setter = reply[i++];
+                    KiAtom getter = reply[i++];
+                    KiAtom setter = reply[i++];
                     PropDesc propValue = new PropDesc(getter, setter, flags);
                     if (!flags.HasFlag(PropFlags.Internal))
                         props.Add(name, propValue);
                 }
                 else {
-                    DValue value = reply[i++];
+                    KiAtom value = reply[i++];
                     PropDesc propValue = new PropDesc(value, flags);
-                    if (!flags.HasFlag(PropFlags.Internal) && value.Tag != DValueTag.Unused)
+                    if (!flags.HasFlag(PropFlags.Internal))
                         props.Add(name, propValue);
                 }
             }
@@ -303,8 +291,8 @@ namespace Sphere.Gdk.Debugger
 
         public async Task<string> GetSource(string fileName)
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.GetSource, fileName);
-            return reply[0].Tag != DValueTag.ERR ? (string)reply[1] : null;
+            var reply = await DoRequest(KiTag.REQ, KiRequest.GetSource, fileName);
+            return reply[0].Tag != KiTag.ERR ? (string)reply[1] : null;
         }
 
         /// <summary>
@@ -316,7 +304,7 @@ namespace Sphere.Gdk.Debugger
         /// </returns>
         public async Task<Tuple<string, int>[]> ListBreak()
         {
-            var reply = await DoRequest(DValueTag.REQ, Request.GetBreakpoints);
+            var reply = await DoRequest(KiTag.REQ, KiRequest.GetBreakpoints);
             var count = (reply.Length - 1) / 2;
             List<Tuple<string, int>> list = new List<Tuple<string, int>>();
             for (int i = 0; i < count; ++i) {
@@ -335,7 +323,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task Pause()
         {
-            await DoRequest(DValueTag.REQ, Request.Pause);
+            await DoRequest(KiTag.REQ, KiRequest.Pause);
         }
 
         /// <summary>
@@ -344,7 +332,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task Resume()
         {
-            await DoRequest(DValueTag.REQ, Request.Resume);
+            await DoRequest(KiTag.REQ, KiRequest.Resume);
         }
 
         /// <summary>
@@ -354,7 +342,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task StepInto()
         {
-            await DoRequest(DValueTag.REQ, Request.StepIn);
+            await DoRequest(KiTag.REQ, KiRequest.StepIn);
         }
 
         /// <summary>
@@ -363,7 +351,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task StepOut()
         {
-            await DoRequest(DValueTag.REQ, Request.StepOut);
+            await DoRequest(KiTag.REQ, KiRequest.StepOut);
         }
 
         /// <summary>
@@ -372,12 +360,12 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task StepOver()
         {
-            await DoRequest(DValueTag.REQ, Request.StepOver);
+            await DoRequest(KiTag.REQ, KiRequest.StepOver);
         }
 
-        private async Task<DMessage> DoRequest(params dynamic[] values)
+        private async Task<KiMessage> DoRequest(params dynamic[] values)
         {
-            DMessage message = new DMessage(values);
+            KiMessage message = new KiMessage(values);
             lock (replyLock)
                 requests.Enqueue(message);
             message.Send(tcp.Client);
@@ -400,21 +388,21 @@ namespace Sphere.Gdk.Debugger
         private void ProcessMessages()
         {
             while (true) {
-                DMessage message = DMessage.Receive(tcp.Client);
+                KiMessage message = KiMessage.Receive(tcp.Client);
                 if (message == null) {
                     // if DMessage.Receive() returns null, detach.
                     tcp.Close();
                     Detached?.Invoke(this, EventArgs.Empty);
                     return;
                 }
-                else if (message[0].Tag == DValueTag.NFY) {
-                    switch ((Notify)(int)message[1])
+                else if (message[0].Tag == KiTag.NFY) {
+                    switch ((KiNotify)(int)message[1])
                     {
-                        case Notify.Detaching:
+                        case KiNotify.Detaching:
                             tcp.Close();
                             Detached?.Invoke(this, EventArgs.Empty);
                             return;
-                        case Notify.Log:
+                        case KiNotify.Log:
                             PrintType type = (PrintType)(int)message[2];
                             string debugText = (string)message[3];
                             string prefix = type == PrintType.Assert ? "ASSERT"
@@ -426,26 +414,26 @@ namespace Sphere.Gdk.Debugger
                                 : "log";
                             Print?.Invoke(this, new TraceEventArgs(string.Format("{0}: {1}", prefix, debugText)));
                             break;
-                        case Notify.Pause:
+                        case KiNotify.Pause:
                             FileName = (string)message[2];
                             LineNumber = (int)message[4];
                             Running = false;
                             Status?.Invoke(this, EventArgs.Empty);
                             break;
-                        case Notify.Resume:
+                        case KiNotify.Resume:
                             Running = true;
                             Status?.Invoke(this, EventArgs.Empty);
                             break;
-                        case Notify.Throw:
+                        case KiNotify.Throw:
                             Throw?.Invoke(this, new ThrowEventArgs(
                                 (string)message[3], (string)message[4], (int)message[5],
                                 (int)message[2] != 0));
                             break;
                     }
                 }
-                else if (message[0].Tag == DValueTag.REP || message[0].Tag == DValueTag.ERR) {
+                else if (message[0].Tag == KiTag.REP || message[0].Tag == KiTag.ERR) {
                     lock (replyLock) {
-                        DMessage request = requests.Dequeue();
+                        KiMessage request = requests.Dequeue();
                         replies.Add(request, message);
                     }
                 }

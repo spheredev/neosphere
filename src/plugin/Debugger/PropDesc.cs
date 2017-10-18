@@ -8,14 +8,14 @@ namespace Sphere.Gdk.Debugger
 {
     struct PropDesc
     {
-        public PropDesc(DValue value, PropFlags flags)
+        public PropDesc(KiAtom value, PropFlags flags)
         {
             Value = value;
             Getter = Setter = null;
             Flags = flags;
         }
 
-        public PropDesc(DValue getter, DValue setter, PropFlags flags)
+        public PropDesc(KiAtom getter, KiAtom setter, PropFlags flags)
         {
             Value = null;
             Getter = getter;
@@ -23,9 +23,9 @@ namespace Sphere.Gdk.Debugger
             Flags = flags;
         }
 
-        public DValue Value;
-        public DValue Getter;
-        public DValue Setter;
+        public KiAtom Value;
+        public KiAtom Getter;
+        public KiAtom Setter;
         public PropFlags Flags;
     }
 

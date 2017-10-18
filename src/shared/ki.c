@@ -258,25 +258,6 @@ ki_atom_recv(socket_t* socket)
 		atom->tag = KI_HANDLE;
 		atom->handle = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
-	default:
-		if (ib >= 0x60 && ib <= 0x7F) {
-			atom->tag = KI_STRING;
-			atom->buffer.size = ib - 0x60;
-			atom->buffer.data = calloc(1, atom->buffer.size + 1);
-			read_size = (int)atom->buffer.size;
-			if (socket_read(socket, atom->buffer.data, read_size) != read_size)
-				goto lost_connection;
-		}
-		else if (ib >= 0x80 && ib <= 0xBF) {
-			atom->tag = KI_INT;
-			atom->int_value = ib - 0x80;
-		}
-		else if (ib >= 0xC0) {
-			if (socket_read(socket, data, 1) == 0)
-				goto lost_connection;
-			atom->tag = KI_INT;
-			atom->int_value = ((ib - 0xC0) << 8) + data[0];
-		}
 	}
 	return atom;
 

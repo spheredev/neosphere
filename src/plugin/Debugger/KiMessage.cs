@@ -7,7 +7,25 @@ using System.Threading.Tasks;
 
 namespace Sphere.Gdk.Debugger
 {
-    enum Request
+    enum KiError
+    {
+        None,
+        NotFound,
+        TooMany,
+        Unsupported,
+    }
+
+    enum KiNotify
+    {
+        None,
+        Detaching,
+        Log,
+        Pause,
+        Resume,
+        Throw,
+    }
+
+    enum KiRequest
     {
         None,
         AddBreakpoint,
@@ -28,16 +46,6 @@ namespace Sphere.Gdk.Debugger
         StepOver,
     }
 
-    enum Notify
-    {
-        None,
-        Detaching,
-        Log,
-        Pause,
-        Resume,
-        Throw,
-    }
-
     enum PrintType
     {
         Normal = 0x00,
@@ -49,52 +57,52 @@ namespace Sphere.Gdk.Debugger
         Warn = 0x06,
     }
 
-    class DMessage
+    class KiMessage
     {
-        private DValue[] _fields;
+        private KiAtom[] m_words;
 
-        public DMessage(params dynamic[] values)
+        public KiMessage(params dynamic[] values)
         {
-            List<DValue> fields = new List<DValue>();
-            DValue fieldValue;
+            List<KiAtom> fields = new List<KiAtom>();
+            KiAtom fieldValue;
 
             foreach (dynamic value in values) {
-                if (value is DValue)
+                if (value is KiAtom)
                     fieldValue = value;
-                else if (value is Request)
-                    fieldValue = new DValue((int)value);
+                else if (value is KiRequest)
+                    fieldValue = new KiAtom((int)value);
                 else
-                    fieldValue = new DValue(value);
+                    fieldValue = new KiAtom(value);
                 fields.Add(fieldValue);
             }
-            _fields = fields.ToArray();
+            m_words = fields.ToArray();
         }
 
-        public DValue this[int index] => _fields[index];
+        public KiAtom this[int index] => m_words[index];
 
-        public int Length => _fields.Length;
+        public int Length => m_words.Length;
 
-        public static DMessage Receive(Socket socket)
+        public static KiMessage Receive(Socket socket)
         {
-            List<DValue> fields = new List<DValue>();
-            DValue value;
+            List<KiAtom> fields = new List<KiAtom>();
+            KiAtom value;
 
             do {
-                if ((value = DValue.Receive(socket)) == null)
+                if ((value = KiAtom.Receive(socket)) == null)
                     return null;
-                if (value.Tag != DValueTag.EOM)
+                if (value.Tag != KiTag.EOM)
                     fields.Add(value);
-            } while (value.Tag != DValueTag.EOM);
-            return new DMessage(fields.ToArray());
+            } while (value.Tag != KiTag.EOM);
+            return new KiMessage(fields.ToArray());
         }
 
         public bool Send(Socket socket)
         {
-            foreach (var field in _fields) {
+            foreach (var field in m_words) {
                 if (!field.Send(socket))
                     return false;
             }
-            if (!(new DValue(DValueTag.EOM).Send(socket)))
+            if (!(new KiAtom(KiTag.EOM).Send(socket)))
                 return false;
             return true;
         }

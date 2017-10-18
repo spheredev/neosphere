@@ -12,9 +12,9 @@ namespace Sphere.Gdk.Forms
     partial class ObjectViewer : Form, IStyleAware
     {
         private Inferior _inferior;
-        private DValue _value;
+        private KiAtom _value;
 
-        public ObjectViewer(Inferior inferior, string objectName, DValue value)
+        public ObjectViewer(Inferior inferior, string objectName, KiAtom value)
         {
             InitializeComponent();
             StyleManager.AutoStyle(this);
@@ -49,7 +49,7 @@ namespace Sphere.Gdk.Forms
             m_propListTreeView.Nodes.Clear();
             var trunk = m_propListTreeView.Nodes.Add(_value.ToString());
             trunk.ImageKey = "object";
-            if (_value.Tag == DValueTag.Handle)
+            if (_value.Tag == KiTag.Handle)
                 await PopulateTreeNode(trunk, (Handle)_value);
             trunk.Expand();
             m_propListTreeView.EndUpdate();
@@ -83,7 +83,7 @@ namespace Sphere.Gdk.Forms
                 return;
 
             PropDesc propDesc = (PropDesc)e.Node.Tag;
-            if (propDesc.Value.Tag == DValueTag.Handle)
+            if (propDesc.Value.Tag == KiTag.Handle)
                 await PopulateTreeNode(e.Node, (Handle)propDesc.Value);
         }
 
@@ -100,8 +100,8 @@ namespace Sphere.Gdk.Forms
             var props = await _inferior.GetObjPropDescRange(handle, 0, int.MaxValue);
             foreach (var key in props.Keys) {
                 if (props[key].Flags.HasFlag(PropFlags.Accessor)) {
-                    DValue getter = props[key].Getter;
-                    DValue setter = props[key].Setter;
+                    KiAtom getter = props[key].Getter;
+                    KiAtom setter = props[key].Setter;
                     var nodeText = string.Format("{0} = get: {1}, set: {2}", key,
                         getter.ToString(), setter.ToString());
                     var valueNode = node.Nodes.Add(nodeText);
@@ -110,13 +110,13 @@ namespace Sphere.Gdk.Forms
                     valueNode.Tag = props[key];
                 }
                 else {
-                    DValue value = props[key].Value;
+                    KiAtom value = props[key].Value;
                     var nodeText = string.Format("{0} = {1}", key, value.ToString());
                     var valueNode = node.Nodes.Add(nodeText);
                     valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
                     valueNode.SelectedImageKey = valueNode.ImageKey;
                     valueNode.Tag = props[key];
-                    if (value.Tag == DValueTag.Handle) {
+                    if (value.Tag == KiTag.Handle) {
                         valueNode.Nodes.Add("");
                     }
                 }

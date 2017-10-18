@@ -512,15 +512,15 @@ do_handshake(socket_t* socket)
 {
 	static char handshake[128];
 
-	ptrdiff_t    idx;
-	char*        next_token;
-	int          protocol;
-	char*        token;
+	ptrdiff_t idx;
+	char*     next_token;
+	char*     token;
+	int       version;
 
 	printf("establishing communication... ");
 	idx = 0;
 	do {
-		if (idx >= 127)  // probably not a Duktape handshake
+		if (idx >= 127)  // probably not an SSj/Ki handshake
 			goto on_error;
 		socket_read(socket, &handshake[idx], 1);
 	} while (handshake[idx++] != '\n');
@@ -529,16 +529,16 @@ do_handshake(socket_t* socket)
 	// parse handshake line
 	if (!(token = strtok_r(handshake, " ", &next_token)))
 		goto on_error;
-	protocol = atoi(token);
-	if (protocol < 1 || protocol > 2)
+	if (strcmp(token, "SSj/Ki") != 0)
 		goto on_error;
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
+	sscanf(token, "v%d", &version);
 	if (!(token = strtok_r(NULL, " ", &next_token)))
 		goto on_error;
 	printf("OK.\n");
 
-	return protocol;
+	return version;
 
 on_error:
 	printf("\33[31merror!\33[m\n");

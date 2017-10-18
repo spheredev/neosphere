@@ -20,7 +20,7 @@ namespace Sphere.Gdk.DockPanes
 
         private bool _isEvaling = false;
         private int _frame = -1;
-        private IReadOnlyDictionary<string, DValue> _vars;
+        private IReadOnlyDictionary<string, KiAtom> _vars;
 
         public InspectorPane()
         {
