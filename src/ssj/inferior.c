@@ -356,7 +356,7 @@ inferior_get_vars(inferior_t* obj, int frame)
 
 	msg = ki_message_new(KI_REQ);
 	ki_message_add_int(msg, KI_REQ_INSPECT_LOCALS);
-	ki_message_add_int(msg, -frame - 1);
+	ki_message_add_int(msg, frame);
 	if (!(msg = inferior_request(obj, msg)))
 		return NULL;
 	vars = objview_new();

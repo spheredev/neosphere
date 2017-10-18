@@ -550,8 +550,9 @@ process_message(js_step_t* out_step)
 		}
 		break;
 	case KI_REQ_INSPECT_LOCALS:
+		call_index = ki_message_int(request, 1);
 		i = 0;
-		while (jsal_debug_inspect_var(0, i++)) {
+		while (jsal_debug_inspect_var(call_index, i++)) {
 			ki_message_add_string(reply, jsal_get_string(-3));
 			ki_message_add_string(reply, jsal_get_string(-2));
 			ki_message_add_string(reply, jsal_get_string(-1));
