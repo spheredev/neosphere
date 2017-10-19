@@ -14,7 +14,7 @@ namespace Sphere.Gdk.Debugger
     enum KiNotify
     {
         None,
-        Detaching,
+        Detach,
         Log,
         Pause,
         Resume,
@@ -25,21 +25,21 @@ namespace Sphere.Gdk.Debugger
     {
         None,
         AddBreakpoint,
-        DelBreakpoint,
+        AssetData,
+        DeleteBreakpoint,
         Detach,
         Eval,
-        GetBreakpoints,
-        GetGameInfo,
-        GetSource,
+        GameInfo,
+        InspectBreakpoints,
         InspectLocals,
         InspectObject,
         InspectStack,
         Pause,
         Resume,
-        SetWatermark,
         StepIn,
         StepOut,
         StepOver,
+        Watermark,
     }
 
     enum PrintType

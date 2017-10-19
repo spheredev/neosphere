@@ -452,7 +452,7 @@ handle_resume(session_t* obj, command_t* cmd, resume_op_t op)
 }
 
 static void
-handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
+handle_eval(session_t* obj, command_t* cmd, bool verbose)
 {
 	const char*      expr;
 	const ki_atom_t* getter;
@@ -475,7 +475,7 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 	}
 	else {
 		handle = ki_atom_handle(result);
-		if (!(object = inferior_get_object(obj->inferior, handle, is_verbose)))
+		if (!(object = inferior_get_object(obj->inferior, handle, verbose)))
 			return;
 		if (is_error)
 			printf("\33[31;1m");
@@ -483,7 +483,7 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			printf("object has no properties.\n");
 			return;
 		}
-		if (!is_verbose)
+		if (!verbose)
 			printf("= {\n");
 		for (i = 0; i < objview_len(object); ++i) {
 			prop_key = objview_get_key(object, i);
@@ -494,31 +494,24 @@ handle_eval(session_t* obj, command_t* cmd, bool is_verbose)
 			is_accessor = objview_get_tag(object, i) == KI_ATTR_ACCESSOR;
 			prop_key = objview_get_key(object, i);
 			prop_flags = objview_get_flags(object, i);
-			if (is_verbose) {
-				printf("%s%s%s%s  %-*s  ",
-					prop_flags & KI_ATTR_WRITABLE ? "w" : "-",
-					prop_flags & KI_ATTR_ENUMERABLE ? "e" : "-",
-					prop_flags & KI_ATTR_CONFIGURABLE ? "c" : "-",
-					is_accessor ? "a" : "-",
-					max_len, prop_key);
-			}
-			else {
+			if (verbose)
+				printf("----  %-*s  ", max_len, prop_key);
+			else
 				printf("    \"%s\": ", prop_key);
-			}
 			if (!is_accessor)
-				ki_atom_print(objview_get_value(object, i), is_verbose);
+				ki_atom_print(objview_get_value(object, i), verbose);
 			else {
 				getter = objview_get_getter(object, i);
 				setter = objview_get_setter(object, i);
 				printf("get ");
-				ki_atom_print(getter, is_verbose);
+				ki_atom_print(getter, verbose);
 				printf(", set ");
-				ki_atom_print(setter, is_verbose);
+				ki_atom_print(setter, verbose);
 			}
 			printf("\n");
 		}
 		objview_free(object);
-		if (!is_verbose)
+		if (!verbose)
 			printf("}\n");
 		if (is_error)
 			printf("\33[m");

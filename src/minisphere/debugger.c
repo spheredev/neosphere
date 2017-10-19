@@ -176,7 +176,7 @@ debugger_update(void)
 			screen_set_fullscreen(g_screen, false);
 			jsal_debug_breakpoint_inject();
 			console_log(0, "connected to debugger at %s", socket_hostname(client));
-			handshake = strnewf("SSj/Ki v1 %s %s\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
+			handshake = strnewf("SSj/Ki v%d %s %s\n", KI_VERSION, SPHERE_ENGINE_NAME, SPHERE_VERSION);
 			socket_write(client, handshake, strlen(handshake));
 			free(handshake);
 			s_socket = client;
@@ -406,7 +406,7 @@ do_detach_debugger(bool is_shutdown)
 	s_is_attached = false;
 	if (s_socket != NULL) {
 		notify = ki_message_new(KI_NFY);
-		ki_message_add_int(notify, KI_NFY_DETACHING);
+		ki_message_add_int(notify, KI_NFY_DETACH);
 		ki_message_add_int(notify, 0);
 		ki_message_send(notify, s_socket);
 		ki_message_free(notify);
@@ -453,18 +453,13 @@ process_message(js_step_t* out_step)
 		goto on_error;
 	reply = ki_message_new(KI_REP);
 	switch (ki_message_int(request, 0)) {
-	case KI_REQ_GET_GAME_INFO:
-		platform_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
-		resolution = game_resolution(g_game);
-		ki_message_add_string(reply, platform_name);
-		ki_message_add_string(reply, game_name(g_game));
-		ki_message_add_string(reply, game_author(g_game));
-		ki_message_add_string(reply, game_summary(g_game));
-		ki_message_add_int(reply, resolution.width);
-		ki_message_add_int(reply, resolution.height);
-		free(platform_name);
+	case KI_REQ_ADD_BREAK:
+		filename = ki_message_string(request, 1);
+		line_number = ki_message_int(request, 2);
+		breakpoint_id = jsal_debug_breakpoint_add(filename, line_number, 1);
+		ki_message_add_int(reply, breakpoint_id);
 		break;
-	case KI_REQ_GET_SOURCE:
+	case KI_REQ_ASSET_DATA:
 		filename = ki_message_string(request, 1);
 		filename = debugger_compiled_name(filename);
 
@@ -489,20 +484,6 @@ process_message(js_step_t* out_step)
 			ki_message_add_string(reply, "no source code available");
 		}
 		break;
-	case KI_REQ_SET_WATERMARK:
-		s_banner_text = lstr_new(ki_message_string(request, 1));
-		s_banner_color = color_new(
-			ki_message_int(request, 2),
-			ki_message_int(request, 3),
-			ki_message_int(request, 4),
-			255);
-		break;
-	case KI_REQ_ADD_BREAK:
-		filename = ki_message_string(request, 1);
-		line_number = ki_message_int(request, 2);
-		breakpoint_id = jsal_debug_breakpoint_add(filename, line_number, 1);
-		ki_message_add_int(reply, breakpoint_id);
-		break;
 	case KI_REQ_DEL_BREAK:
 		breakpoint_id = ki_message_int(request, 1);
 		jsal_debug_breakpoint_remove(breakpoint_id);
@@ -526,14 +507,33 @@ process_message(js_step_t* out_step)
 		ki_message_add_string(reply, jsal_get_string(-3));
 		jsal_pop(3);
 		break;
-	case KI_REQ_INSPECT_STACK:
+	case KI_REQ_GAME_INFO:
+		platform_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
+		resolution = game_resolution(g_game);
+		ki_message_add_string(reply, platform_name);
+		ki_message_add_string(reply, game_name(g_game));
+		ki_message_add_string(reply, game_author(g_game));
+		ki_message_add_string(reply, game_summary(g_game));
+		ki_message_add_int(reply, resolution.width);
+		ki_message_add_int(reply, resolution.height);
+		free(platform_name);
+		break;
+	case KI_REQ_INSPECT_BREAKS:
 		i = 0;
-		while (jsal_debug_inspect_call(i++)) {
-			ki_message_add_string(reply, jsal_get_string(-4));
+		while (jsal_debug_inspect_breakpoint(i++)) {
 			ki_message_add_string(reply, jsal_get_string(-3));
-			ki_message_add_int(reply, jsal_get_int(-2) + 1);
-			ki_message_add_int(reply, jsal_get_int(-1) + 1);
-			jsal_pop(4);
+			ki_message_add_int(reply, jsal_get_int(-2));
+			jsal_pop(3);
+		}
+		break;
+	case KI_REQ_INSPECT_LOCALS:
+		call_index = ki_message_int(request, 1);
+		i = 0;
+		while (jsal_debug_inspect_var(call_index, i++)) {
+			ki_message_add_string(reply, jsal_get_string(-3));
+			ki_message_add_string(reply, jsal_get_string(-2));
+			ki_message_add_string(reply, jsal_get_string(-1));
+			jsal_pop(3);
 		}
 		break;
 	case KI_REQ_INSPECT_OBJ:
@@ -549,22 +549,14 @@ process_message(js_step_t* out_step)
 			jsal_pop(3);
 		}
 		break;
-	case KI_REQ_INSPECT_LOCALS:
-		call_index = ki_message_int(request, 1);
+	case KI_REQ_INSPECT_STACK:
 		i = 0;
-		while (jsal_debug_inspect_var(call_index, i++)) {
+		while (jsal_debug_inspect_call(i++)) {
+			ki_message_add_string(reply, jsal_get_string(-4));
 			ki_message_add_string(reply, jsal_get_string(-3));
-			ki_message_add_string(reply, jsal_get_string(-2));
-			ki_message_add_string(reply, jsal_get_string(-1));
-			jsal_pop(3);
-		}
-		break;
-	case KI_REQ_GET_BREAKS:
-		i = 0;
-		while (jsal_debug_inspect_breakpoint(i++)) {
-			ki_message_add_string(reply, jsal_get_string(-3));
-			ki_message_add_int(reply, jsal_get_int(-2));
-			jsal_pop(3);
+			ki_message_add_int(reply, jsal_get_int(-2) + 1);
+			ki_message_add_int(reply, jsal_get_int(-1) + 1);
+			jsal_pop(4);
 		}
 		break;
 	case KI_REQ_PAUSE:
@@ -585,6 +577,14 @@ process_message(js_step_t* out_step)
 	case KI_REQ_STEP_OVER:
 		*out_step = JS_STEP_OVER;
 		resuming = true;
+		break;
+	case KI_REQ_WATERMARK:
+		s_banner_text = lstr_new(ki_message_string(request, 1));
+		s_banner_color = color_new(
+			ki_message_int(request, 2),
+			ki_message_int(request, 3),
+			ki_message_int(request, 4),
+			255);
 		break;
 	}
 

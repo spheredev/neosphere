@@ -170,7 +170,7 @@ namespace Sphere.Gdk.Debugger
             // start the communication thread
             messenger = new Thread(ProcessMessages) { IsBackground = true };
             messenger.Start();
-            await DoRequest(KiTag.REQ, KiRequest.SetWatermark, "ssj blue", 0, 255, 255);
+            await DoRequest(KiTag.REQ, KiRequest.Watermark, "ssj blue", 0, 255, 255);
             Attached?.Invoke(this, EventArgs.Empty);
         }
 
@@ -193,7 +193,7 @@ namespace Sphere.Gdk.Debugger
         /// <returns></returns>
         public async Task DelBreak(int index)
         {
-            await DoRequest(KiTag.REQ, KiRequest.DelBreakpoint, index);
+            await DoRequest(KiTag.REQ, KiRequest.DeleteBreakpoint, index);
         }
         
         /// <summary>
@@ -291,7 +291,7 @@ namespace Sphere.Gdk.Debugger
 
         public async Task<string> GetSource(string fileName)
         {
-            var reply = await DoRequest(KiTag.REQ, KiRequest.GetSource, fileName);
+            var reply = await DoRequest(KiTag.REQ, KiRequest.AssetData, fileName);
             return reply[0].Tag != KiTag.ERR ? (string)reply[1] : null;
         }
 
@@ -304,7 +304,7 @@ namespace Sphere.Gdk.Debugger
         /// </returns>
         public async Task<Tuple<string, int>[]> ListBreak()
         {
-            var reply = await DoRequest(KiTag.REQ, KiRequest.GetBreakpoints);
+            var reply = await DoRequest(KiTag.REQ, KiRequest.InspectBreakpoints);
             var count = (reply.Length - 1) / 2;
             List<Tuple<string, int>> list = new List<Tuple<string, int>>();
             for (int i = 0; i < count; ++i) {
@@ -398,7 +398,7 @@ namespace Sphere.Gdk.Debugger
                 else if (message[0].Tag == KiTag.NFY) {
                     switch ((KiNotify)(int)message[1])
                     {
-                        case KiNotify.Detaching:
+                        case KiNotify.Detach:
                             tcp.Close();
                             Detached?.Invoke(this, EventArgs.Empty);
                             return;

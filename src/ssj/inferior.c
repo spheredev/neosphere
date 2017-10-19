@@ -116,7 +116,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 
 	// set watermark (shown on bottom left)
 	request = ki_message_new(KI_REQ);
-	ki_message_add_int(request, KI_REQ_SET_WATERMARK);
+	ki_message_add_int(request, KI_REQ_WATERMARK);
 	ki_message_add_string(request, "ssj");
 	ki_message_add_int(request, 255);
 	ki_message_add_int(request, 224);
@@ -126,7 +126,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 
 	printf("downloading game information... ");
 	request = ki_message_new(KI_REQ);
-	ki_message_add_int(request, KI_REQ_GET_GAME_INFO);
+	ki_message_add_int(request, KI_REQ_GAME_INFO);
 	reply = inferior_request(obj, request);
 	platform_name = strdup(ki_message_string(reply, 0));
 	obj->title = strdup(ki_message_string(reply, 1));
@@ -321,7 +321,7 @@ inferior_get_source(inferior_t* obj, const char* filename)
 	}
 
 	request = ki_message_new(KI_REQ);
-	ki_message_add_int(request, KI_REQ_GET_SOURCE);
+	ki_message_add_int(request, KI_REQ_ASSET_DATA);
 	ki_message_add_string(request, filename);
 	if (!(request = inferior_request(obj, request)))
 		goto on_error;
@@ -555,7 +555,7 @@ handle_notify(inferior_t* inferior, const ki_message_t* msg)
 	switch (ki_message_tag(msg)) {
 	case KI_NFY:
 		switch (ki_message_int(msg, 0)) {
-		case KI_NFY_DETACHING:
+		case KI_NFY_DETACH:
 			status_type = ki_message_int(msg, 1);
 			if (status_type == 0)
 				printf("\33[36;1mthe engine disconnected from SSj normally.\n");
