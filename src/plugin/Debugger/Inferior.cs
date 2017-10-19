@@ -195,7 +195,7 @@ namespace Sphere.Gdk.Debugger
         {
             await DoRequest(KiTag.REQ, KiRequest.DeleteBreakpoint, index);
         }
-        
+
         /// <summary>
         /// Requests that Duktape end the debug session.
         /// </summary>

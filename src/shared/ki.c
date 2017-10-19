@@ -57,8 +57,8 @@ struct ki_atom
 
 struct ki_message
 {
+	vector_t* atoms;
 	ki_type_t command;
-	vector_t* dvalues;
 };
 
 ki_atom_t*
@@ -68,6 +68,27 @@ ki_atom_new(ki_type_t tag)
 
 	atom = calloc(1, sizeof(ki_atom_t));
 	atom->tag = tag;
+	return atom;
+}
+
+ki_atom_t*
+ki_atom_new_bool(bool value)
+{
+	ki_atom_t* atom;
+
+	atom = calloc(1, sizeof(ki_atom_t));
+	atom->tag = value ? KI_TRUE : KI_FALSE;
+	return atom;
+}
+
+ki_atom_t*
+ki_atom_new_int(int value)
+{
+	ki_atom_t* atom;
+
+	atom = calloc(1, sizeof(ki_atom_t));
+	atom->tag = KI_INT;
+	atom->int_value = value;
 	return atom;
 }
 
@@ -83,24 +104,13 @@ ki_atom_new_number(double value)
 }
 
 ki_atom_t*
-ki_atom_new_handle(unsigned int value)
+ki_atom_new_ref(unsigned int value)
 {
 	ki_atom_t* atom;
 
 	atom = calloc(1, sizeof(ki_atom_t));
 	atom->tag = KI_REF;
 	atom->handle = value;
-	return atom;
-}
-
-ki_atom_t*
-ki_atom_new_int(int value)
-{
-	ki_atom_t* atom;
-
-	atom = calloc(1, sizeof(ki_atom_t));
-	atom->tag = KI_INT;
-	atom->int_value = value;
 	return atom;
 }
 
@@ -145,6 +155,12 @@ ki_type_t
 ki_atom_tag(const ki_atom_t* it)
 {
 	return it->tag;
+}
+
+bool
+ki_atom_bool(const ki_atom_t* it)
+{
+	return it->tag == KI_TRUE;
 }
 
 const char*
@@ -334,7 +350,7 @@ ki_message_new(ki_type_t command_tag)
 	ki_message_t* message;
 
 	message = calloc(1, sizeof(ki_message_t));
-	message->dvalues = vector_new(sizeof(ki_atom_t*));
+	message->atoms = vector_new(sizeof(ki_atom_t*));
 	message->command = command_tag;
 	return message;
 }
@@ -342,24 +358,26 @@ ki_message_new(ki_type_t command_tag)
 void
 ki_message_free(ki_message_t* it)
 {
+	ki_atom_t* atom;
+	
 	iter_t iter;
 
 	if (it== NULL)
 		return;
 
-	iter = vector_enum(it->dvalues);
+	iter = vector_enum(it->atoms);
 	while (iter_next(&iter)) {
-		ki_atom_t* dvalue = *(ki_atom_t**)iter.ptr;
-		ki_atom_free(dvalue);
+		atom = *(ki_atom_t**)iter.ptr;
+		ki_atom_free(atom);
 	}
-	vector_free(it->dvalues);
+	vector_free(it->atoms);
 	free(it);
 }
 
 int
 ki_message_len(const ki_message_t* it)
 {
-	return (int)vector_len(it->dvalues);
+	return (int)vector_len(it->atoms);
 }
 
 ki_type_t
@@ -371,97 +389,115 @@ ki_message_tag(const ki_message_t* it)
 ki_type_t
 ki_message_atom_tag(const ki_message_t* it, int index)
 {
-	ki_atom_t* dvalue;
+	ki_atom_t* atom;
 
-	dvalue = *(ki_atom_t**)vector_get(it->dvalues, index);
-	return ki_atom_tag(dvalue);
+	atom = *(ki_atom_t**)vector_get(it->atoms, index);
+	return ki_atom_tag(atom);
 }
 
 const ki_atom_t*
 ki_message_atom(const ki_message_t* it, int index)
 {
-	return *(ki_atom_t**)vector_get(it->dvalues, index);
+	return *(ki_atom_t**)vector_get(it->atoms, index);
+}
+
+bool
+ki_message_bool(const ki_message_t* it, int index)
+{
+	ki_atom_t* atom;
+
+	atom = *(ki_atom_t**)vector_get(it->atoms, index);
+	return ki_atom_bool(atom);
 }
 
 double
 ki_message_number(const ki_message_t* it, int index)
 {
-	ki_atom_t* dvalue;
+	ki_atom_t* atom;
 
-	dvalue = *(ki_atom_t**)vector_get(it->dvalues, index);
-	return ki_atom_number(dvalue);
+	atom = *(ki_atom_t**)vector_get(it->atoms, index);
+	return ki_atom_number(atom);
 }
 
 unsigned int
 ki_message_handle(const ki_message_t* it, int index)
 {
-	ki_atom_t* dvalue;
+	ki_atom_t* atom;
 
-	dvalue = *(ki_atom_t**)vector_get(it->dvalues, index);
-	return ki_atom_handle(dvalue);
+	atom = *(ki_atom_t**)vector_get(it->atoms, index);
+	return ki_atom_handle(atom);
 }
 
 int
 ki_message_int(const ki_message_t* it, int index)
 {
-	ki_atom_t* dvalue;
+	ki_atom_t* atom;
 
-	dvalue = *(ki_atom_t**)vector_get(it->dvalues, index);
-	return ki_atom_int(dvalue);
+	atom = *(ki_atom_t**)vector_get(it->atoms, index);
+	return ki_atom_int(atom);
 }
 
 const char*
 ki_message_string(const ki_message_t* it, int index)
 {
-	ki_atom_t* dvalue;
+	ki_atom_t* atom;
 
-	dvalue = *(ki_atom_t**)vector_get(it->dvalues, index);
-	return ki_atom_cstr(dvalue);
+	atom = *(ki_atom_t**)vector_get(it->atoms, index);
+	return ki_atom_cstr(atom);
 }
 
 void
-ki_message_add_atom(ki_message_t* it, const ki_atom_t* dvalue)
+ki_message_add_atom(ki_message_t* it, const ki_atom_t* atom)
 {
 	ki_atom_t* dup;
 
-	dup = ki_atom_dup(dvalue);
-	vector_push(it->dvalues, &dup);
+	dup = ki_atom_dup(atom);
+	vector_push(it->atoms, &dup);
 }
 
 void
-ki_message_add_number(ki_message_t* it, double value)
+ki_message_add_bool(ki_message_t* it, bool value)
 {
-	ki_atom_t* dvalue;
+	ki_atom_t* atom;
 
-	dvalue = ki_atom_new_number(value);
-	vector_push(it->dvalues, &dvalue);
-}
-
-void
-ki_message_add_handle(ki_message_t* it, unsigned int value)
-{
-	ki_atom_t* dvalue;
-
-	dvalue = ki_atom_new_handle(value);
-	vector_push(it->dvalues, &dvalue);
+	atom = ki_atom_new_bool(value);
+	vector_push(it->atoms, &atom);
 }
 
 void
 ki_message_add_int(ki_message_t* it, int value)
 {
-	ki_atom_t* dvalue;
+	ki_atom_t* atom;
 
-	dvalue = ki_atom_new_int(value);
-	vector_push(it->dvalues, &dvalue);
+	atom = ki_atom_new_int(value);
+	vector_push(it->atoms, &atom);
+}
+
+void
+ki_message_add_number(ki_message_t* it, double value)
+{
+	ki_atom_t* atom;
+
+	atom = ki_atom_new_number(value);
+	vector_push(it->atoms, &atom);
+}
+
+void
+ki_message_add_ref(ki_message_t* it, unsigned int value)
+{
+	ki_atom_t* atom;
+
+	atom = ki_atom_new_ref(value);
+	vector_push(it->atoms, &atom);
 }
 
 void
 ki_message_add_string(ki_message_t* it, const char* value)
 {
-	ki_atom_t* dvalue;
+	ki_atom_t* atom;
 
-	dvalue = ki_atom_new_string(value);
-	vector_push(it->dvalues, &dvalue);
+	atom = ki_atom_new_string(value);
+	vector_push(it->atoms, &atom);
 }
 
 ki_message_t*
@@ -473,7 +509,7 @@ ki_message_recv(socket_t* socket)
 	iter_t iter;
 
 	message = calloc(1, sizeof(ki_message_t));
-	message->dvalues = vector_new(sizeof(ki_atom_t*));
+	message->atoms = vector_new(sizeof(ki_atom_t*));
 	if (!(atom = ki_atom_recv(socket)))
 		goto lost_dvalue;
 	message->command = ki_atom_tag(atom);
@@ -481,7 +517,7 @@ ki_message_recv(socket_t* socket)
 	if (!(atom = ki_atom_recv(socket)))
 		goto lost_dvalue;
 	while (ki_atom_tag(atom) != KI_EOM) {
-		vector_push(message->dvalues, &atom);
+		vector_push(message->atoms, &atom);
 		if (!(atom = ki_atom_recv(socket)))
 			goto lost_dvalue;
 	}
@@ -490,10 +526,10 @@ ki_message_recv(socket_t* socket)
 
 lost_dvalue:
 	if (message != NULL) {
-		iter = vector_enum(message->dvalues);
+		iter = vector_enum(message->atoms);
 		while (atom = iter_next(&iter))
 			ki_atom_free(atom);
-		vector_free(message->dvalues);
+		vector_free(message->atoms);
 		free(message);
 	}
 	return NULL;
@@ -516,7 +552,7 @@ ki_message_send(const ki_message_t* it, socket_t* socket)
 	atom = ki_atom_new(lead_tag);
 	ki_atom_send(atom, socket);
 	ki_atom_free(atom);
-	iter = vector_enum(it->dvalues);
+	iter = vector_enum(it->atoms);
 	while (p_dvalue = iter_next(&iter))
 		ki_atom_send(*p_dvalue, socket);
 	atom = ki_atom_new(KI_EOM);

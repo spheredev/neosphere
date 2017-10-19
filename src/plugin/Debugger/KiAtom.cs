@@ -72,28 +72,33 @@ namespace Sphere.Gdk.Debugger
             m_value = handle;
         }
 
-        public static explicit operator double(KiAtom dvalue)
+        public static explicit operator bool(KiAtom atom)
         {
-            return dvalue.m_tag == KiTag.Number ? dvalue.m_value
-                : dvalue.m_tag == KiTag.Integer ? (double)dvalue.m_value
+            return atom.m_tag == KiTag.True;
+        }
+
+        public static explicit operator double(KiAtom atom)
+        {
+            return atom.m_tag == KiTag.Number ? atom.m_value
+                : atom.m_tag == KiTag.Integer ? (double)atom.m_value
                 : 0.0;
         }
 
-        public static explicit operator int(KiAtom dvalue)
+        public static explicit operator int(KiAtom atom)
         {
-            return dvalue.m_tag == KiTag.Integer ? dvalue.m_value
-                : dvalue.m_tag == KiTag.Number ? (int)dvalue.m_value
+            return atom.m_tag == KiTag.Integer ? atom.m_value
+                : atom.m_tag == KiTag.Number ? (int)atom.m_value
                 : 0;
         }
 
-        public static explicit operator string(KiAtom dvalue)
+        public static explicit operator string(KiAtom atom)
         {
-            return dvalue.m_tag == KiTag.String ? dvalue.m_value : "(unknown value)";
+            return atom.m_tag == KiTag.String ? atom.m_value : "(unknown value)";
         }
 
-        public static explicit operator KiRef(KiAtom dvalue)
+        public static explicit operator KiRef(KiAtom atom)
         {
-            return dvalue.m_tag == KiTag.Ref ? dvalue.m_value : null;
+            return atom.m_tag == KiTag.Ref ? atom.m_value : null;
         }
 
         public KiTag Tag

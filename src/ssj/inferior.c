@@ -253,13 +253,13 @@ inferior_get_calls(inferior_t* obj)
 objview_t*
 inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 {
+	int              attributes;
 	unsigned int     flags;
 	const ki_atom_t* getter;
-	bool             is_accessor;
 	int              index = 0;
+	bool             is_accessor;
+	const ki_atom_t* key_atom;
 	char*            key_string;
-	int              prop_flags;
-	const ki_atom_t* prop_key;
 	ki_message_t*    request;
 	const ki_atom_t* setter;
 	const ki_atom_t* value;
@@ -267,28 +267,31 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 
 	request = ki_message_new(KI_REQ);
 	ki_message_add_int(request, KI_REQ_INSPECT_OBJ);
-	ki_message_add_handle(request, handle);
+	ki_message_add_ref(request, handle);
 	ki_message_add_int(request, 0);
 	ki_message_add_int(request, INT_MAX);
 	if (!(request = inferior_request(obj, request)))
 		return NULL;
 	view = objview_new();
 	while (index < ki_message_len(request)) {
-		prop_flags = ki_message_int(request, index++);
-		prop_key = ki_message_atom(request, index++);
-		if (ki_atom_tag(prop_key) == KI_STRING)
-			key_string = strdup(ki_atom_cstr(prop_key));
+		key_atom = ki_message_atom(request, index++);
+		attributes = ki_message_int(request, index++);
+		if (ki_atom_tag(key_atom) == KI_STRING)
+			key_string = strdup(ki_atom_cstr(key_atom));
 		else
-			key_string = strnewf("%d", ki_atom_int(prop_key));
-		is_accessor = (prop_flags & 0x008) != 0;
-		if (prop_flags & 0x100) {
+			key_string = strnewf("%d", ki_atom_int(key_atom));
+		is_accessor = (attributes & 0x008) != 0;
+		if (attributes & 0x100) {
 			index += is_accessor ? 2 : 1;
 			continue;
 		}
 		flags = 0x0;
-		if (prop_flags & 0x01) flags |= PROP_WRITABLE;
-		if (prop_flags & 0x02) flags |= PROP_ENUMERABLE;
-		if (prop_flags & 0x04) flags |= PROP_CONFIGURABLE;
+		if (attributes & 0x01)
+			flags |= PROP_WRITABLE;
+		if (attributes & 0x02)
+			flags |= PROP_ENUMERABLE;
+		if (attributes & 0x04)
+			flags |= PROP_CONFIGURABLE;
 		if (is_accessor) {
 			getter = ki_message_atom(request, index++);
 			setter = ki_message_atom(request, index++);
@@ -438,7 +441,7 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 	ki_message_add_string(msg, expr);
 	msg = inferior_request(obj, msg);
 	dvalue = ki_atom_dup(ki_message_atom(msg, 1));
-	*out_is_error = ki_message_int(msg, 0) != 0;
+	*out_is_error = !ki_message_bool(msg, 0);
 	ki_message_free(msg);
 	return dvalue;
 }
