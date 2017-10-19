@@ -6,25 +6,25 @@ namespace Sphere.Gdk.Debugger
 {
     enum KiTag
     {
-        EOM = 0x00,
-        REQ = 0x01,
-        REP = 0x02,
-        ERR = 0x03,
-        NFY = 0x04,
-        Integer = 0x10,
-        String = 0x11,
-        Buffer = 0x13,
-        Undefined = 0x16,
-        Null = 0x17,
-        True = 0x18,
-        False = 0x19,
-        Number = 0x1A,
-        Handle = 0x1F,
+        EOM,
+        REQ,
+        REP,
+        ERR,
+        NFY,
+        Buffer,
+        False,
+        Integer,
+        Null,
+        Number,
+        Ref,
+        String,
+        True,
+        Undefined,
     }
 
-    struct Handle
+    struct KiRef
     {
-        public uint Value;
+        public uint Handle;
     }
 
     class KiAtom
@@ -66,9 +66,9 @@ namespace Sphere.Gdk.Debugger
             m_value = value;
         }
 
-        public KiAtom(Handle handle)
+        public KiAtom(KiRef handle)
         {
-            m_tag = KiTag.Handle;
+            m_tag = KiTag.Ref;
             m_value = handle;
         }
 
@@ -91,9 +91,9 @@ namespace Sphere.Gdk.Debugger
             return dvalue.m_tag == KiTag.String ? dvalue.m_value : "(unknown value)";
         }
 
-        public static explicit operator Handle(KiAtom dvalue)
+        public static explicit operator KiRef(KiAtom dvalue)
         {
-            return dvalue.m_tag == KiTag.Handle ? dvalue.m_value : null;
+            return dvalue.m_tag == KiTag.Ref ? dvalue.m_value : null;
         }
 
         public KiTag Tag
@@ -111,7 +111,7 @@ namespace Sphere.Gdk.Debugger
             if (!socket.ReceiveAll(bytes = new byte[1]))
                 return null;
             initialByte = bytes[0];
-            Handle handle = new Handle();
+            KiRef handle = new KiRef();
             switch ((KiTag)initialByte)
             {
                 case KiTag.EOM:
@@ -131,10 +131,10 @@ namespace Sphere.Gdk.Debugger
                     if (!socket.ReceiveAll(bytes = new byte[length]))
                         return null;
                     return new KiAtom(bytes);
-                case KiTag.Handle:
+                case KiTag.Ref:
                     if (!socket.ReceiveAll(bytes = new byte[4]))
                         return null;
-                    handle.Value = (uint)((bytes[0] << 24) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3]);
+                    handle.Handle = (uint)((bytes[0] << 24) + (bytes[1] << 16) + (bytes[2] << 8) + bytes[3]);
                     return new KiAtom(handle);
                 case KiTag.Integer:
                     if (!socket.ReceiveAll(bytes = new byte[4]))
@@ -162,16 +162,16 @@ namespace Sphere.Gdk.Debugger
         {
             try {
                 socket.Send(new byte[] { (byte)m_tag });
-                Handle handle;
+                KiRef handle;
                 switch (m_tag)
                 {
-                    case KiTag.Handle:
-                        handle = (Handle)m_value;
+                    case KiTag.Ref:
+                        handle = (KiRef)m_value;
                         socket.Send(new byte[] {
-                            (byte)(handle.Value >> 24 & 0xFF),
-                            (byte)(handle.Value >> 16 & 0xFF),
-                            (byte)(handle.Value >> 8 & 0xFF),
-                            (byte)(handle.Value & 0xFF)
+                            (byte)(handle.Handle >> 24 & 0xFF),
+                            (byte)(handle.Handle >> 16 & 0xFF),
+                            (byte)(handle.Handle >> 8 & 0xFF),
+                            (byte)(handle.Handle & 0xFF)
                         });
                         break;
                     case KiTag.Integer:
@@ -210,7 +210,7 @@ namespace Sphere.Gdk.Debugger
 
         public override string ToString()
         {
-            return m_tag == KiTag.Handle ? "{ ... }"
+            return m_tag == KiTag.Ref ? "{ ... }"
                 : m_tag == KiTag.Undefined ? "undefined"
                 : m_tag == KiTag.Null ? "null"
                 : m_tag == KiTag.True ? "true" : m_tag == KiTag.False ? "false"

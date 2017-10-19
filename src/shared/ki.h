@@ -45,45 +45,39 @@ typedef struct ki_message ki_message_t;
 typedef
 enum ki_attribute
 {
-	KI_ATTR_NONE = 0x0,
-	KI_ATTR_ACCESSOR = 0x01,
+	KI_ATTR_NONE         = 0x00,
+	KI_ATTR_ACCESSOR     = 0x01,
 	KI_ATTR_CONFIGURABLE = 0x02,
-	KI_ATTR_ENUMERABLE = 0x04,
-	KI_ATTR_SYMBOL = 0x08,
-	KI_ATTR_WRITABLE = 0x10,
+	KI_ATTR_ENUMERABLE   = 0x04,
+	KI_ATTR_SYMBOL       = 0x08,
+	KI_ATTR_WRITABLE     = 0x10,
 } ki_attribute_t;
+
+typedef
+enum ki_log_op
+{
+	KI_LOG_NORMAL,
+	KI_LOG_TRACE,
+} ki_log_op_t;
 
 typedef
 enum ki_type
 {
-	KI_EOM = 0x00,
-	KI_REQ = 0x01,
-	KI_REP = 0x02,
-	KI_ERR = 0x03,
-	KI_NFY = 0x04,
-	KI_INT = 0x10,
-	KI_STRING = 0x11,
-	KI_BUFFER = 0x13,
-	KI_UNUSED = 0x15,
-	KI_UNDEF = 0x16,
-	KI_NULL = 0x17,
-	KI_TRUE = 0x18,
-	KI_FALSE = 0x19,
-	KI_NUMBER = 0x1A,
-	KI_HANDLE = 0x1F,
+	KI_EOM,
+	KI_REQ,
+	KI_REP,
+	KI_ERR,
+	KI_NFY,
+	KI_BUFFER,
+	KI_FALSE,
+	KI_INT,
+	KI_NULL,
+	KI_NUMBER,
+	KI_REF,
+	KI_STRING,
+	KI_TRUE,
+	KI_UNDEFINED,
 } ki_type_t;
-
-typedef
-enum print_op
-{
-	PRINT_NORMAL,
-	PRINT_ASSERT,
-	PRINT_DEBUG,
-	PRINT_ERROR,
-	PRINT_INFO,
-	PRINT_TRACE,
-	PRINT_WARN,
-} print_op_t;
 
 enum ki_error
 {

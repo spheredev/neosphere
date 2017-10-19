@@ -170,7 +170,7 @@ namespace Sphere.Gdk.Debugger
             // start the communication thread
             messenger = new Thread(ProcessMessages) { IsBackground = true };
             messenger.Start();
-            await DoRequest(KiTag.REQ, KiRequest.Watermark, "ssj blue", 0, 255, 255);
+            await DoRequest(KiTag.REQ, KiRequest.Watermark, "SSj Blue", 0, 255, 255);
             Attached?.Invoke(this, EventArgs.Empty);
         }
 
@@ -263,7 +263,7 @@ namespace Sphere.Gdk.Debugger
             return vars;
         }
 
-        public async Task<Dictionary<string, PropDesc>> GetObjPropDescRange(Handle handle, int start, int end)
+        public async Task<Dictionary<string, PropDesc>> GetObjPropDescRange(KiRef handle, int start, int end)
         {
             var reply = await DoRequest(KiTag.REQ, KiRequest.InspectObject, handle, start, end);
             var props = new Dictionary<string, PropDesc>();
@@ -403,14 +403,9 @@ namespace Sphere.Gdk.Debugger
                             Detached?.Invoke(this, EventArgs.Empty);
                             return;
                         case KiNotify.Log:
-                            PrintType type = (PrintType)(int)message[2];
+                            LogOp type = (LogOp)(int)message[2];
                             string debugText = (string)message[3];
-                            string prefix = type == PrintType.Assert ? "ASSERT"
-                                : type == PrintType.Debug ? "debug"
-                                : type == PrintType.Error ? "ERROR"
-                                : type == PrintType.Info ? "info"
-                                : type == PrintType.Trace ? "trace"
-                                : type == PrintType.Warn ? "warn"
+                            string prefix = type == LogOp.Trace ? "trace"
                                 : "log";
                             Print?.Invoke(this, new TraceEventArgs(string.Format("{0}: {1}", prefix, debugText)));
                             break;

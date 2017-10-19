@@ -291,18 +291,13 @@ debugger_add_source(const char* name, const lstring_t* text)
 }
 
 void
-debugger_log(const char* text, print_op_t op, bool use_console)
+debugger_log(const char* text, ki_log_op_t op, bool use_console)
 {
 	const char*   heading;
 	ki_message_t* notify;
 
 	if (use_console) {
-		heading = op == PRINT_ASSERT ? "ASSERT"
-			: op == PRINT_DEBUG ? "debug"
-			: op == PRINT_ERROR ? "ERROR"
-			: op == PRINT_INFO ? "info"
-			: op == PRINT_TRACE ? "trace"
-			: op == PRINT_WARN ? "WARN"
+		heading = op == KI_LOG_TRACE ? "trace"
 			: "log";
 		console_log(0, "%s: %s", heading, text);
 	}

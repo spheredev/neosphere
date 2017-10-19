@@ -117,7 +117,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	// set watermark (shown on bottom left)
 	request = ki_message_new(KI_REQ);
 	ki_message_add_int(request, KI_REQ_WATERMARK);
-	ki_message_add_string(request, "ssj");
+	ki_message_add_string(request, "SSj");
 	ki_message_add_int(request, 255);
 	ki_message_add_int(request, 224);
 	ki_message_add_int(request, 0);
@@ -296,8 +296,7 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 		}
 		else {
 			value = ki_message_atom(request, index++);
-			if (ki_atom_tag(value) != KI_UNUSED)
-				objview_add_value(view, key_string, "property", value, flags);
+			objview_add_value(view, key_string, "property", value, flags);
 		}
 		free(key_string);
 	}
@@ -549,7 +548,7 @@ static bool
 handle_notify(inferior_t* inferior, const ki_message_t* msg)
 {
 	const char*   heading;
-	enum print_op print_op;
+	enum ki_log_op log_op;
 	int           status_type;
 
 	switch (ki_message_tag(msg)) {
@@ -565,20 +564,11 @@ handle_notify(inferior_t* inferior, const ki_message_t* msg)
 			inferior->is_detached = true;
 			return false;
 		case KI_NFY_LOG:
-			print_op = (enum print_op)ki_message_int(msg, 1);
-			heading = print_op == PRINT_ASSERT ? "ASSERT"
-				: print_op == PRINT_DEBUG ? "debug"
-				: print_op == PRINT_ERROR ? "ERROR"
-				: print_op == PRINT_INFO ? "info"
-				: print_op == PRINT_TRACE ? "trace"
-				: print_op == PRINT_WARN ? "warn"
+			log_op = (enum ki_log_op)ki_message_int(msg, 1);
+			heading = log_op == KI_LOG_TRACE ? "trace"
 				: "log";
-			if (print_op == PRINT_TRACE && !inferior->show_trace)
+			if (log_op == KI_LOG_TRACE && !inferior->show_trace)
 				break;
-			if (print_op == PRINT_ASSERT || print_op == PRINT_ERROR)
-				printf("\33[31;1m");
-			else if (print_op == PRINT_WARN)
-				printf("\33[33;1m");
 			else
 				printf("\33[36m");
 			printf("%s: %s\n", heading, ki_message_string(msg, 2));

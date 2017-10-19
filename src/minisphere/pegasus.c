@@ -3308,14 +3308,14 @@ js_SSj_flipScreen(int num_args, bool is_ctor, int magic)
 static bool
 js_SSj_log(int num_args, bool is_ctor, int magic)
 {
-	debugger_log(jsal_to_string(0), PRINT_NORMAL, true);
+	debugger_log(jsal_to_string(0), KI_LOG_NORMAL, true);
 	return false;
 }
 
 static bool
 js_SSj_trace(int num_args, bool is_ctor, int magic)
 {
-	debugger_log(jsal_to_string(0), PRINT_TRACE, true);
+	debugger_log(jsal_to_string(0), KI_LOG_TRACE, true);
 	return false;
 }
 

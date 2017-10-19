@@ -42,15 +42,10 @@ namespace Sphere.Gdk.Debugger
         Watermark,
     }
 
-    enum PrintType
+    enum LogOp
     {
-        Normal = 0x00,
-        Assert = 0x01,
-        Debug = 0x02,
-        Error = 0x03,
-        Info = 0x04,
-        Trace = 0x05,
-        Warn = 0x06,
+        Normal,
+        Trace,
     }
 
     class KiMessage

@@ -470,7 +470,7 @@ handle_eval(session_t* obj, command_t* cmd, bool verbose)
 
 	expr = command_get_rest(cmd, 1);
 	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
-	if (ki_atom_tag(result) != KI_HANDLE) {
+	if (ki_atom_tag(result) != KI_REF) {
 		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", ki_atom_cstr(result));
 	}
 	else {

@@ -4864,7 +4864,7 @@ js_Print(int num_args, bool is_ctor, int magic)
 
 	text = jsal_require_string(0);
 
-	debugger_log(text, PRINT_NORMAL, true);
+	debugger_log(text, KI_LOG_NORMAL, true);
 	return false;
 }
 

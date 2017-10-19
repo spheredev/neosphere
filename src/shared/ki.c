@@ -88,7 +88,7 @@ ki_atom_new_handle(unsigned int value)
 	ki_atom_t* atom;
 
 	atom = calloc(1, sizeof(ki_atom_t));
-	atom->tag = KI_HANDLE;
+	atom->tag = KI_REF;
 	atom->handle = value;
 	return atom;
 }
@@ -164,7 +164,7 @@ ki_atom_number(const ki_atom_t* it)
 unsigned int
 ki_atom_handle(const ki_atom_t* it)
 {
-	return it->tag == KI_HANDLE ? it->handle : 0;
+	return it->tag == KI_REF ? it->handle : 0;
 }
 
 int
@@ -179,21 +179,36 @@ void
 ki_atom_print(const ki_atom_t* it, bool verbose)
 {
 	switch (ki_atom_tag(it)) {
-	case KI_UNDEF: printf("undefined"); break;
-	case KI_UNUSED: printf("unused"); break;
-	case KI_NULL: printf("null"); break;
-	case KI_TRUE: printf("true"); break;
-	case KI_FALSE: printf("false"); break;
-	case KI_NUMBER: printf("%g", it->float_value); break;
-	case KI_INT: printf("%d", it->int_value); break;
-	case KI_STRING: printf("\"%s\"", (char*)it->buffer.data); break;
-	case KI_BUFFER: printf("{buf:\"%zd bytes\"}", it->buffer.size); break;
-	case KI_HANDLE:
+	case KI_BUFFER:
+		printf("{buf:\"%zd bytes\"}", it->buffer.size);
+		break;
+	case KI_FALSE:
+		printf("false");
+		break;
+	case KI_INT:
+		printf("%d", it->int_value);
+		break;
+	case KI_NULL:
+		printf("null");
+		break;
+	case KI_NUMBER:
+		printf("%g", it->float_value);
+		break;
+	case KI_REF:
 		if (!verbose)
 			printf("{...}");
 		else {
 			printf("{ obj:%08x }", it->handle);
 		}
+		break;
+	case KI_STRING:
+		printf("\"%s\"", (char*)it->buffer.data);
+		break;
+	case KI_TRUE:
+		printf("true");
+		break;
+	case KI_UNDEFINED:
+		printf("undefined");
 		break;
 	default:
 		printf("*MUNCH*");
@@ -252,10 +267,10 @@ ki_atom_recv(socket_t* socket)
 		((uint8_t*)&atom->float_value)[7] = data[0];
 		atom->tag = KI_NUMBER;
 		break;
-	case KI_HANDLE:
+	case KI_REF:
 		if (socket_read(socket, data, 4) == 0)
 			goto lost_connection;
-		atom->tag = KI_HANDLE;
+		atom->tag = KI_REF;
 		atom->handle = (data[0] << 24) + (data[1] << 16) + (data[2] << 8) + data[3];
 		break;
 	}
@@ -286,7 +301,7 @@ ki_atom_send(const ki_atom_t* it, socket_t* socket)
 		data[7] = ((uint8_t*)&it->float_value)[0];
 		socket_write(socket, data, 8);
 		break;
-	case KI_HANDLE:
+	case KI_REF:
 		data[0] = (uint8_t)(it->handle >> 24 & 0xFF);
 		data[1] = (uint8_t)(it->handle >> 16 & 0xFF);
 		data[2] = (uint8_t)(it->handle >> 8 & 0xFF);
