@@ -3,7 +3,6 @@ using System.IO;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-using SphereStudio;
 using SphereStudio.Base;
 
 using Sphere.Gdk.Components;

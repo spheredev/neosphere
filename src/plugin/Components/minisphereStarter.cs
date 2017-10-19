@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 
-using SphereStudio;
 using SphereStudio.Base;
 
 namespace Sphere.Gdk.Components
