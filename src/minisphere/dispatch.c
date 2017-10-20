@@ -213,7 +213,7 @@ sort_jobs(const void* in_a, const void* in_b)
 	// so we can maintain FIFO order by just using the token as part of the
 	// sort key.
 
-	double      delta = 0.0;
+	double      delta;
 	int64_t     fifo_delta;
 	struct job* job_a;
 	struct job* job_b;

@@ -4334,13 +4334,13 @@ js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, int magic)
 static bool
 js_TextDecoder_decode(int num_args, bool is_ctor, int magic)
 {
-	decoder_t*  decoder;
-	lstring_t*  head;
-	const char* input = "";
-	size_t      length = 0;
-	lstring_t*  string;
-	bool        streaming = false;
-	lstring_t*  tail = NULL;
+	decoder_t*     decoder;
+	lstring_t*     head;
+	const uint8_t* input = (uint8_t*)"";
+	size_t         length = 0;
+	lstring_t*     string;
+	bool           streaming = false;
+	lstring_t*     tail = NULL;
 
 	jsal_push_this();
 	decoder = jsal_require_class_obj(-1, PEGASUS_TEXT_DEC);

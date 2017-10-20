@@ -75,7 +75,7 @@ decoder_finish(decoder_t* decoder)
 		else
 			return NULL;
 	}
-	return lstr_from_utf8(output, p_out - output, false);
+	return lstr_from_utf8((char*)output, p_out - output, false);
 }
 
 lstring_t*
@@ -110,7 +110,7 @@ decoder_run(decoder_t* decoder, const uint8_t* buffer, size_t size)
 			utf8_emit(codepoint, &p_out);
 		decoder->bom_seen = true;
 	}
-	string = lstr_from_utf8(output, p_out - output, false);
+	string = lstr_from_utf8((char*)output, p_out - output, false);
 	return string;
 
 on_error:
@@ -157,7 +157,7 @@ encoder_run(encoder_t* encoder, const lstring_t* string, size_t *out_size)
 	length = lstr_len(string);
 	if (!(output = malloc(length)))
 		return NULL;
-	p_in = lstr_cstr(string);
+	p_in = (uint8_t*)lstr_cstr(string);
 	p_out = output;
 
 	cx = utf8_decode_start(false);

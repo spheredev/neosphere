@@ -350,7 +350,7 @@ lstr_from_cp1252(const char* text, size_t length)
 		// note: UTF-8 conversion may expand the string by up to 3x
 		if (!(string = malloc(sizeof(lstring_t) + length * 3 + 1)))
 			return NULL;
-		buffer = (char*)string + sizeof(lstring_t);
+		buffer = (uint8_t*)string + sizeof(lstring_t);
 		p_out = buffer;
 		p_in = input;
 		for (i = 0; i < length; ++i) {
@@ -385,7 +385,6 @@ lstr_from_utf8(const char* text, size_t length, bool strip_bom)
 	utf8_decode_t* codec;
 	uint32_t       codepoint;
 	uint8_t*       input;
-	bool           is_utf8 = true;
 	utf8_ret_t     state;
 	lstring_t*     string;
 	uint8_t        *p_out;

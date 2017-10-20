@@ -2136,7 +2136,6 @@ jsal_debug_inspect_object(unsigned int handle, int property_index)
 {
 	/* [ ... ] -> [ ... key value handle ] */
 
-	int         index = 0;
 	bool        is_object = false;
 	JsValueRef  results;
 	const char* type;
@@ -2176,7 +2175,6 @@ jsal_debug_inspect_var(int call_index, int var_index)
 	/* [ ... ] -> [ ... name type value_summary ] */
 
 	JsValueRef  frame_info;
-	int         index = 0;
 
 	if (JsDiagGetStackProperties(call_index, &frame_info) != JsNoError)
 		return false;
