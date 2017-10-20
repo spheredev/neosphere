@@ -171,7 +171,9 @@ jsal_init(void)
 	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
 
 	JsInitializeModuleRecord(NULL, NULL, &module_record);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
 
 	// set up the stash, used to store JS values behind the scenes.
 	JsCreateObject(&s_stash);
