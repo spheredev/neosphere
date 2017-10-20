@@ -31,20 +31,20 @@
 **/
 
 #include "minisphere.h"
-#include "async.h"
+#include "dispatch.h"
 
 #include "script.h"
 #include "vector.h"
 
 struct job
 {
-	bool         background;
-	bool         finished;
-	async_hint_t hint;
-	double       priority;
-	uint32_t     timer;
-	int64_t      token;
-	script_t*    script;
+	bool       background;
+	bool       finished;
+	job_type_t hint;
+	double     priority;
+	uint32_t   timer;
+	int64_t    token;
+	script_t*  script;
 };
 
 static int sort_jobs (const void* in_a, const void* in_b);
@@ -56,7 +56,7 @@ static vector_t* s_onetime;
 static vector_t* s_recurring;
 
 void
-async_init(void)
+dispatch_init(void)
 {
 	console_log(1, "initializing dispatch manager");
 	s_onetime = vector_new(sizeof(struct job));
@@ -64,7 +64,7 @@ async_init(void)
 }
 
 void
-async_uninit(void)
+dispatch_uninit(void)
 {
 	console_log(1, "shutting down dispatch manager");
 	vector_free(s_onetime);
@@ -72,13 +72,13 @@ async_uninit(void)
 }
 
 bool
-async_busy(void)
+dispatch_busy(void)
 {
 	return s_is_busy || vector_len(s_onetime) > 0;
 }
 
 void
-async_cancel_all(bool recurring)
+dispatch_cancel_all(bool recurring)
 {
 	struct job* job;
 
@@ -98,7 +98,7 @@ async_cancel_all(bool recurring)
 }
 
 void
-async_cancel(int64_t token)
+dispatch_cancel(int64_t token)
 {
 	struct job* job;
 
@@ -120,7 +120,7 @@ async_cancel(int64_t token)
 }
 
 int64_t
-async_defer(script_t* script, uint32_t timeout, async_hint_t hint)
+dispatch_enqueue(script_t* script, uint32_t timeout, job_type_t hint)
 {
 	struct job job;
 
@@ -136,7 +136,7 @@ async_defer(script_t* script, uint32_t timeout, async_hint_t hint)
 }
 
 int64_t
-async_recur(script_t* script, double priority, bool background, async_hint_t hint)
+dispatch_recur(script_t* script, double priority, bool background, job_type_t hint)
 {
 	struct job job;
 
@@ -144,7 +144,7 @@ async_recur(script_t* script, double priority, bool background, async_hint_t hin
 
 	if (s_recurring == NULL)
 		return 0;
-	if (hint == ASYNC_RENDER) {
+	if (hint == JOB_RENDER) {
 		// invert priority for render jobs.  this ensures higher priority jobs
 		// get rendered later in a frame, i.e. closer to the screen.
 		priority = -priority;
@@ -169,7 +169,7 @@ async_recur(script_t* script, double priority, bool background, async_hint_t hin
 }
 
 void
-async_run_jobs(async_hint_t hint)
+dispatch_run(job_type_t hint)
 {
 	struct job job;
 

@@ -276,8 +276,8 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 	while (index < ki_message_len(request)) {
 		key_atom = ki_message_atom(request, index++);
 		attributes = ki_message_int(request, index++);
-		if (ki_atom_tag(key_atom) == KI_STRING)
-			key_string = strdup(ki_atom_cstr(key_atom));
+		if (ki_atom_type(key_atom) == KI_STRING)
+			key_string = strdup(ki_atom_string(key_atom));
 		else
 			key_string = strnewf("%d", ki_atom_int(key_atom));
 		is_accessor = (attributes & 0x008) != 0;

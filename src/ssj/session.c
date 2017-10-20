@@ -470,8 +470,8 @@ handle_eval(session_t* obj, command_t* cmd, bool verbose)
 
 	expr = command_get_rest(cmd, 1);
 	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
-	if (ki_atom_tag(result) != KI_REF) {
-		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", ki_atom_cstr(result));
+	if (ki_atom_type(result) != KI_REF) {
+		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", ki_atom_string(result));
 	}
 	else {
 		handle = ki_atom_handle(result);
@@ -638,7 +638,7 @@ handle_vars(session_t* obj, command_t* cmd)
 		class_name = objview_get_class(vars, i);
 		value = objview_get_value(vars, i);
 		printf("%s: %s = \33[37;1m%s\33[m",
-			var_name, class_name, ki_atom_cstr(value));
+			var_name, class_name, ki_atom_string(value));
 		printf("\n");
 	}
 }

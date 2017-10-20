@@ -34,9 +34,9 @@
 #include "map_engine.h"
 
 #include "api.h"
-#include "async.h"
 #include "audio.h"
 #include "color.h"
+#include "dispatch.h"
 #include "image.h"
 #include "input.h"
 #include "obstruction.h"
@@ -655,10 +655,10 @@ map_engine_start(const char* filename, int framerate)
 		// don't clear the backbuffer.  the Sphere 1.x map engine has a bug where it doesn't
 		// clear the backbuffer between frames; as it turns out, a good deal of of v1 code relies
 		// on that behavior.
-		async_run_jobs(ASYNC_RENDER);
+		dispatch_run(JOB_RENDER);
 		screen_flip(g_screen, s_frame_rate, false);
-		async_run_jobs(ASYNC_UPDATE);
-		async_run_jobs(ASYNC_TICK);
+		dispatch_run(JOB_UPDATE);
+		dispatch_run(JOB_TICK);
 		++g_tick_count;
 	}
 	reset_persons(false);

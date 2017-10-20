@@ -512,7 +512,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\shared\vector.c" />
     <ClCompile Include="..\src\minisphere\main.c" />
     <ClCompile Include="..\src\minisphere\animation.c" />
-    <ClCompile Include="..\src\minisphere\async.c" />
+    <ClCompile Include="..\src\minisphere\dispatch.c" />
     <ClCompile Include="..\src\minisphere\atlas.c" />
     <ClCompile Include="..\src\minisphere\audio.c" />
     <ClCompile Include="..\src\minisphere\byte_array.c" />
@@ -558,7 +558,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\shared\version.h" />
     <ClInclude Include="..\src\minisphere\minisphere.h" />
     <ClInclude Include="..\src\minisphere\animation.h" />
-    <ClInclude Include="..\src\minisphere\async.h" />
+    <ClInclude Include="..\src\minisphere\dispatch.h" />
     <ClInclude Include="..\src\minisphere\atlas.h" />
     <ClInclude Include="..\src\minisphere\audio.h" />
     <ClInclude Include="..\src\minisphere\byte_array.h" />

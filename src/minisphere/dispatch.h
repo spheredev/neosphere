@@ -30,27 +30,26 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__ASYNC_H__INCLUDED
-#define SPHERE__ASYNC_H__INCLUDED
+#ifndef SPHERE__DISPATCH_H__INCLUDED
+#define SPHERE__DISPATCH_H__INCLUDED
 
 #include "script.h"
 
 typedef
-enum async_hint
+enum job_type
 {
-	ASYNC_TICK,
-	ASYNC_RENDER,
-	ASYNC_UPDATE,
-	ASYNC_MAX
-} async_hint_t;
+	JOB_TICK,
+	JOB_RENDER,
+	JOB_UPDATE,
+} job_type_t;
 
-void    async_init       (void);
-void    async_uninit     (void);
-bool    async_busy       (void);
-void    async_cancel     (int64_t token);
-void    async_cancel_all (bool recurring);
-int64_t async_defer      (script_t* script, uint32_t timeout, async_hint_t hint);
-int64_t async_recur      (script_t* script, double priority, bool background, async_hint_t hint);
-void    async_run_jobs   (async_hint_t hint);
+void    dispatch_init       (void);
+void    dispatch_uninit     (void);
+bool    dispatch_busy       (void);
+void    dispatch_cancel     (int64_t token);
+void    dispatch_cancel_all (bool recurring);
+int64_t dispatch_enqueue    (script_t* script, uint32_t timeout, job_type_t hint);
+int64_t dispatch_recur      (script_t* script, double priority, bool background, job_type_t hint);
+void    dispatch_run        (job_type_t hint);
 
-#endif // SPHERE__ASYNC_H__INCLUDED
+#endif // SPHERE__DISPATCH_H__INCLUDED

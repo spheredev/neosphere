@@ -39,10 +39,10 @@
 
 #include "animation.h"
 #include "api.h"
-#include "async.h"
 #include "audio.h"
 #include "byte_array.h"
 #include "debugger.h"
+#include "dispatch.h"
 #include "font.h"
 #include "galileo.h"
 #include "image.h"
@@ -2423,10 +2423,10 @@ js_FilledEllipse(int num_args, bool is_ctor, int magic)
 static bool
 js_FlipScreen(int num_args, bool is_ctor, int magic)
 {
-	async_run_jobs(ASYNC_RENDER);
+	dispatch_run(JOB_RENDER);
 	screen_flip(g_screen, s_frame_rate, true);
-	async_run_jobs(ASYNC_UPDATE);
-	async_run_jobs(ASYNC_TICK);
+	dispatch_run(JOB_UPDATE);
+	dispatch_run(JOB_TICK);
 	++g_tick_count;
 	return false;
 }

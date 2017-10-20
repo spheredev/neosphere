@@ -274,6 +274,12 @@ jsal_update(bool in_event_loop)
 	}
 }
 
+bool
+jsal_busy(void)
+{
+	return vector_len(s_module_jobs) > 0;
+}
+
 void
 jsal_on_enqueue_job(js_job_callback_t callback)
 {

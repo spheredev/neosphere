@@ -34,11 +34,11 @@
 #include "pegasus.h"
 
 #include "api.h"
-#include "async.h"
 #include "audio.h"
 #include "color.h"
 #include "console.h"
 #include "debugger.h"
+#include "dispatch.h"
 #include "encoding.h"
 #include "font.h"
 #include "galileo.h"
@@ -1218,12 +1218,12 @@ static bool
 run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
 {
 	g_restarting = false;
-	while (async_busy()) {
-		async_run_jobs(ASYNC_RENDER);
+	while (dispatch_busy() || jsal_busy()) {
+		dispatch_run(JOB_RENDER);
 		screen_flip(g_screen, s_frame_rate, true);
 		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
-		async_run_jobs(ASYNC_UPDATE);
-		async_run_jobs(ASYNC_TICK);
+		dispatch_run(JOB_UPDATE);
+		dispatch_run(JOB_TICK);
 		++g_tick_count;
 	}
 	return false;
@@ -1413,7 +1413,7 @@ static bool
 js_Sphere_restart(int num_args, bool is_ctor, int magic)
 {
 	g_restarting = true;
-	async_cancel_all(true);
+	dispatch_cancel_all(true);
 	return false;
 }
 
@@ -1421,7 +1421,7 @@ static bool
 js_Sphere_shutDown(int num_args, bool is_ctor, int magic)
 {
 	g_restarting = false;
-	async_cancel_all(true);
+	dispatch_cancel_all(true);
 	return false;
 }
 
@@ -1442,7 +1442,7 @@ js_Sphere_sleep(int num_args, bool is_ctor, int magic)
 	script = script_new_function(-1);
 	jsal_pop(1);
 	jsal_unref(resolver);
-	async_defer(script, num_frames, ASYNC_UPDATE);
+	dispatch_enqueue(script, num_frames, JOB_UPDATE);
 	return true;
 }
 
@@ -1868,14 +1868,14 @@ js_JobToken_cancel(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	token = jsal_require_class_obj(-1, PEGASUS_JOB_TOKEN);
 
-	async_cancel(*token);
+	dispatch_cancel(*token);
 	return false;
 }
 
 static bool
 js_Dispatch_cancelAll(int num_args, bool is_ctor, int magic)
 {
-	async_cancel_all(false);
+	dispatch_cancel_all(false);
 	return false;
 }
 
@@ -1889,7 +1889,7 @@ js_Dispatch_later(int num_args, bool is_ctor, int magic)
 	timeout = jsal_require_int(0);
 	script = jsal_pegasus_require_script(1);
 
-	if (!(token = async_defer(script, timeout, ASYNC_UPDATE)))
+	if (!(token = dispatch_enqueue(script, timeout, JOB_UPDATE)))
 		jsal_error(JS_ERROR, "dispatch failed");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -1903,7 +1903,7 @@ js_Dispatch_now(int num_args, bool is_ctor, int magic)
 
 	script = jsal_pegasus_require_script(0);
 
-	if (!(token = async_defer(script, 0, ASYNC_TICK)))
+	if (!(token = dispatch_enqueue(script, 0, JOB_TICK)))
 		jsal_error(JS_ERROR, "dispatch failed");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -1927,7 +1927,7 @@ js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 		jsal_pop(2);
 	}
 
-	if (!(token = async_recur(script, priority, background, ASYNC_RENDER)))
+	if (!(token = dispatch_recur(script, priority, background, JOB_RENDER)))
 		jsal_error(JS_ERROR, "couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -1951,7 +1951,7 @@ js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
 		jsal_pop(2);
 	}
 
-	if (!(token = async_recur(script, priority, background, ASYNC_UPDATE)))
+	if (!(token = dispatch_recur(script, priority, background, JOB_UPDATE)))
 		jsal_error(JS_ERROR, "couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;

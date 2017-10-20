@@ -35,9 +35,9 @@
 #include <libmng.h>
 #include <zlib.h>
 #include "api.h"
-#include "async.h"
 #include "audio.h"
 #include "debugger.h"
+#include "dispatch.h"
 #include "galileo.h"
 #include "input.h"
 #include "jsal.h"
@@ -402,7 +402,7 @@ sphere_run(bool allow_dispatch)
 		debugger_update();
 #endif
 		jsal_update(true);
-		async_run_jobs(ASYNC_TICK);
+		dispatch_run(JOB_TICK);
 	}
 	update_input();
 	audio_update();
@@ -443,7 +443,7 @@ on_enqueue_js_job(void)
 	script_t* script;
 
 	script = script_new_function(0);
-	async_defer(script, 0, ASYNC_TICK);
+	dispatch_enqueue(script, 0, JOB_TICK);
 }
 
 static void
@@ -487,7 +487,7 @@ initialize_engine(void)
 	jsal_on_enqueue_job(on_enqueue_js_job);
 
 	// initialize engine components
-	async_init();
+	dispatch_init();
 	galileo_init();
 	audio_init();
 	initialize_input();
@@ -530,7 +530,7 @@ shutdown_engine(void)
 	spritesets_uninit();
 	audio_uninit();
 	galileo_uninit();
-	async_uninit();
+	dispatch_uninit();
 
 	console_log(1, "shutting down Allegro");
 	screen_free(g_screen);
@@ -806,7 +806,7 @@ show_error_screen(const char* message)
 
 	// cancel all jobs, including recurring.  we need to run a frame loop
 	// and we don't want any JS code to execute after this point.
-	async_cancel_all(true);
+	dispatch_cancel_all(true);
 
 	title_index = rand() % (sizeof ERROR_TEXT / sizeof(const char*) / 2);
 	title = ERROR_TEXT[title_index][0];

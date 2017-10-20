@@ -36,9 +36,6 @@
     <ClCompile Include="..\src\minisphere\animation.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\minisphere\async.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\minisphere\atlas.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -141,6 +138,9 @@
     <ClCompile Include="..\src\shared\encoding.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\minisphere\dispatch.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\dyad.h">
@@ -165,9 +165,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\animation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\minisphere\async.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\atlas.h">
@@ -276,6 +273,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\encoding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minisphere\dispatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

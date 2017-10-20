@@ -118,7 +118,7 @@ enum ki_request
 	KI_REQ_WATERMARK,
 };
 
-ki_atom_t*       ki_atom_new           (ki_type_t tag);
+ki_atom_t*       ki_atom_new           (ki_type_t type);
 ki_atom_t*       ki_atom_new_bool      (bool value);
 ki_atom_t*       ki_atom_new_int       (int value);
 ki_atom_t*       ki_atom_new_number    (double value);
@@ -127,18 +127,18 @@ ki_atom_t*       ki_atom_new_string    (const char* value);
 ki_atom_t*       ki_atom_dup           (const ki_atom_t* it);
 void             ki_atom_free          (ki_atom_t* it);
 bool             ki_atom_bool          (const ki_atom_t* it);
-const char*      ki_atom_cstr          (const ki_atom_t* it);
 unsigned int     ki_atom_handle        (const ki_atom_t* it);
-double           ki_atom_number        (const ki_atom_t* it);
 int              ki_atom_int           (const ki_atom_t* it);
-ki_type_t        ki_atom_tag           (const ki_atom_t* it);
+double           ki_atom_number        (const ki_atom_t* it);
+const char*      ki_atom_string        (const ki_atom_t* it);
+ki_type_t        ki_atom_type          (const ki_atom_t* it);
 void             ki_atom_print         (const ki_atom_t* it, bool verbose);
 ki_atom_t*       ki_atom_recv          (socket_t* socket);
 bool             ki_atom_send          (const ki_atom_t* it, socket_t* socket);
 ki_message_t*    ki_message_new        (ki_type_t command_tag);
 void             ki_message_free       (ki_message_t* it);
 const ki_atom_t* ki_message_atom       (const ki_message_t* it, int index);
-ki_type_t        ki_message_atom_tag   (const ki_message_t* it, int index);
+ki_type_t        ki_message_atom_type  (const ki_message_t* it, int index);
 bool             ki_message_bool       (const ki_message_t* it, int index);
 unsigned int     ki_message_handle     (const ki_message_t* it, int index);
 int32_t          ki_message_int        (const ki_message_t* it, int index);
