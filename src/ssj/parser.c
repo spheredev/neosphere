@@ -123,8 +123,11 @@ command_parse(const char* string)
 		++index;
 	}
 
-	if (index > 0 && tokens[0].tag != TOK_STRING)
-		goto syntax_error;
+	if (index > 0 && tokens[0].tag != TOK_STRING) {
+		free(tokens);
+		printf("missing instruction in command line");
+		return NULL;
+	}
 
 	obj = calloc(1, sizeof(command_t));
 	obj->num_tokens = index;
@@ -132,8 +135,11 @@ command_parse(const char* string)
 	return obj;
 
 syntax_error:
-	printf("syntax error in command line.\n");
-	return NULL;
+	tokens[index++].tag = TOK_ERROR;
+	obj = calloc(1, sizeof(command_t));
+	obj->num_tokens = index;
+	obj->tokens = tokens;
+	return obj;
 }
 
 void

@@ -39,9 +39,10 @@ typedef
 enum token_tag
 {
 	TOK_ANY,
-	TOK_STRING,
-	TOK_NUMBER,
+	TOK_ERROR,
 	TOK_FILE_LINE,
+	TOK_NUMBER,
+	TOK_STRING,
 } token_tag_t;
 
 command_t*  command_parse      (const char* string);
