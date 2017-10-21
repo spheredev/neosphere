@@ -150,6 +150,40 @@ Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
       be met with a sandbox violation error.
 
 
+The Sphere Event Loop
+---------------------
+
+Sphere, like most JavaScript-based platforms, is built around the concept of a
+central event loop that keeps the engine running and schedules JavaScript
+execution.  JavaScript operations cannot run indefinitely; the engine runs in
+a single thread, so the game must yield to the event loop periodically to allow
+other tasks to run.  There are two ways this can be done: either by allowing
+the current operation to run to completion, or by suspending execution using
+the `await` operator.
+
+The event loop begins running after all JavaScript modules have been loaded and
+remains active as long as there is something for it to do.  Each iteration of
+the event loop represents one frame and consists of three phases:
+
+    Render: The Render phase calls jobs set up with `Dispatch.onRender()`.
+            This phase is unique in that it may be skipped entirely in order
+            to maintain the game's desired frame rate.  Only drawing operations
+            should be performed during this phase.  Immediately after the
+            Render phase, the contents of the backbuffer are flipped to the
+            screen and the backbuffer is cleared.
+
+    Update: The Update phase calls jobs set up with `Dispatch.onUpdate()`.
+            The engine will always try to perform a number of updates per
+            second equal to the value of `Sphere.frameRate`; you can take
+            advantage of this fact to simplify your update code.
+
+    Dispatch: The Dispatch phase is a multi-purpose phase which calls one-off
+              jobs such as `Dispatch.now()` and settles promises.  The Dispatch
+              phase runs until there are no more jobs to execute, ensuring
+              results which are available immediately aren't delayed until the
+              next frame.
+
+
 `screen` Built-In
 -----------------
 
