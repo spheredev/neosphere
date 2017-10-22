@@ -454,7 +454,7 @@ handle_resume(session_t* obj, command_t* cmd, resume_op_t op)
 static void
 handle_eval(session_t* obj, command_t* cmd, bool verbose)
 {
-	const char*      expr;
+	const char*      expr = NULL;
 	const ki_atom_t* getter;
 	unsigned int     handle;
 	bool             is_accessor;
@@ -468,55 +468,60 @@ handle_eval(session_t* obj, command_t* cmd, bool verbose)
 
 	int i = 0;
 
-	expr = command_get_rest(cmd, 1);
-	result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
-	if (ki_atom_type(result) != KI_REF) {
-		printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", ki_atom_string(result));
+	if (command_get_tag(cmd, 1) == TOK_REF) {
+		handle = command_get_handle(cmd, 1);
 	}
 	else {
+		expr = command_get_rest(cmd, 1);
+		result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
 		handle = ki_atom_handle(result);
-		if (!(object = inferior_get_object(obj->inferior, handle, verbose)))
-			return;
-		if (is_error)
-			printf("\33[31;1m");
-		if (objview_len(object) == 0) {
-			printf("object has no properties.\n");
+		if (ki_atom_type(result) != KI_REF) {  // primitive value?
+			printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", ki_atom_string(result));
+			ki_atom_free(result);
 			return;
 		}
-		if (!verbose)
-			printf("= {\n");
-		for (i = 0; i < objview_len(object); ++i) {
-			prop_key = objview_get_key(object, i);
-			if ((int)strlen(prop_key) > max_len)
-				max_len = (int)strlen(prop_key);
-		}
-		for (i = 0; i < objview_len(object); ++i) {
-			is_accessor = objview_get_tag(object, i) == KI_ATTR_ACCESSOR;
-			prop_key = objview_get_key(object, i);
-			prop_flags = objview_get_flags(object, i);
-			if (verbose)
-				printf("----  %-*s  ", max_len, prop_key);
-			else
-				printf("    \"%s\": ", prop_key);
-			if (!is_accessor)
-				ki_atom_print(objview_get_value(object, i), verbose);
-			else {
-				getter = objview_get_getter(object, i);
-				setter = objview_get_setter(object, i);
-				printf("get ");
-				ki_atom_print(getter, verbose);
-				printf(", set ");
-				ki_atom_print(setter, verbose);
-			}
-			printf("\n");
-		}
-		objview_free(object);
-		if (!verbose)
-			printf("}\n");
-		if (is_error)
-			printf("\33[m");
 	}
-	ki_atom_free(result);
+
+	if (!(object = inferior_get_object(obj->inferior, handle, verbose)))
+		return;
+	if (is_error)
+		printf("\33[31;1m");
+	if (objview_len(object) == 0) {
+		printf("object has no properties.\n");
+		return;
+	}
+	if (!verbose)
+		printf("= {\n");
+	for (i = 0; i < objview_len(object); ++i) {
+		prop_key = objview_get_key(object, i);
+		if ((int)strlen(prop_key) > max_len)
+			max_len = (int)strlen(prop_key);
+	}
+	for (i = 0; i < objview_len(object); ++i) {
+		is_accessor = objview_get_tag(object, i) == KI_ATTR_ACCESSOR;
+		prop_key = objview_get_key(object, i);
+		prop_flags = objview_get_flags(object, i);
+		if (verbose)
+			printf("----  %-*s  ", max_len, prop_key);
+		else
+			printf("    \"%s\": ", prop_key);
+		if (!is_accessor)
+			ki_atom_print(objview_get_value(object, i), verbose);
+		else {
+			getter = objview_get_getter(object, i);
+			setter = objview_get_setter(object, i);
+			printf("get ");
+			ki_atom_print(getter, verbose);
+			printf(", set ");
+			ki_atom_print(setter, verbose);
+		}
+		printf("\n");
+	}
+	objview_free(object);
+	if (!verbose)
+		printf("}\n");
+	if (is_error)
+		printf("\33[m");
 }
 
 static void
@@ -710,17 +715,21 @@ validate_args(const command_t* this, const char* verb_name, const char* pattern)
 			break;
 		want_tag = TOK_ANY;
 		switch (*p_type) {
-		case 's':
-			want_tag = TOK_STRING;
-			want_type = "string";
+		case 'f':
+			want_tag = TOK_FILE_LINE;
+			want_type = "file:line";
 			break;
 		case 'n':
 			want_tag = TOK_NUMBER;
 			want_type = "number";
 			break;
-		case 'f':
-			want_tag = TOK_FILE_LINE;
-			want_type = "file:line";
+		case 'r':
+			want_tag = TOK_REF;
+			want_type = "reference";
+			break;
+		case 's':
+			want_tag = TOK_STRING;
+			want_type = "string";
 			break;
 		}
 		if (want_tag != TOK_ANY && command_get_tag(this, index + 1) != want_tag)

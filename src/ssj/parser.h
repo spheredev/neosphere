@@ -42,16 +42,18 @@ enum token_tag
 	TOK_ERROR,
 	TOK_FILE_LINE,
 	TOK_NUMBER,
+	TOK_REF,
 	TOK_STRING,
 } token_tag_t;
 
-command_t*  command_parse      (const char* string);
-void        command_free       (command_t* obj);
-int         command_len        (const command_t* obj);
-token_tag_t command_get_tag    (const command_t* obj, int index);
-int         command_get_int    (const command_t* obj, int index);
-double      command_get_float  (const command_t* obj, int index);
-const char* command_get_rest   (const command_t* obj, int index);
-const char* command_get_string (const command_t* obj, int index);
+command_t*   command_parse      (const char* string);
+void         command_free       (command_t* it);
+int          command_len        (const command_t* it);
+token_tag_t  command_get_tag    (const command_t* it, int index);
+unsigned int command_get_handle (const command_t* it, int index);
+int          command_get_int    (const command_t* it, int index);
+double       command_get_float  (const command_t* it, int index);
+const char*  command_get_rest   (const command_t* it, int index);
+const char*  command_get_string (const command_t* it, int index);
 
 #endif // SPHERE__PARSER_H__INCLUDED

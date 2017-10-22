@@ -36,11 +36,12 @@
 
 struct token
 {
-	token_tag_t tag;
-	char*       rest_string;
-	char*       string;
-	int         line_no;
-	double      number;
+	token_tag_t  tag;
+	unsigned int handle;
+	int          line_no;
+	double       number;
+	char*        rest_string;
+	char*        string;
 };
 
 struct command
@@ -52,8 +53,9 @@ struct command
 command_t*
 command_parse(const char* string)
 {
-	command_t*   obj;
+	command_t*   command;
 	int          array_len = 8;
+	unsigned int handle;
 	int          index = 0;
 	size_t       length;
 	char         next_char;
@@ -99,6 +101,16 @@ command_parse(const char* string)
 			tokens[index].string = string_value;
 			p_ch += length + 2;
 		}
+		else if (*p_ch == '@') {
+			length = strspn(++p_ch, "0123456789abcdefABCDEF");
+			handle = strtoul(p_ch, &p_tail, 16);
+			next_char = *p_tail;
+			if (next_char != '\0' && next_char != ' ' && next_char != '\t')
+				goto syntax_error;
+			tokens[index].tag = TOK_REF;
+			tokens[index].handle = handle;
+			p_ch += length;
+		}
 		else {
 			length = strcspn(p_ch, " \t'\":");
 			next_char = *(p_ch + length);
@@ -129,71 +141,78 @@ command_parse(const char* string)
 		return NULL;
 	}
 
-	obj = calloc(1, sizeof(command_t));
-	obj->num_tokens = index;
-	obj->tokens = tokens;
-	return obj;
+	command = calloc(1, sizeof(command_t));
+	command->num_tokens = index;
+	command->tokens = tokens;
+	return command;
 
 syntax_error:
 	tokens[index++].tag = TOK_ERROR;
-	obj = calloc(1, sizeof(command_t));
-	obj->num_tokens = index;
-	obj->tokens = tokens;
-	return obj;
+	command = calloc(1, sizeof(command_t));
+	command->num_tokens = index;
+	command->tokens = tokens;
+	return command;
 }
 
 void
-command_free(command_t* obj)
+command_free(command_t* it)
 {
 	int i;
 
-	if (obj == NULL)
+	if (it == NULL)
 		return;
 
-	for (i = 0; i < obj->num_tokens; ++i) {
-		free(obj->tokens[i].rest_string);
-		free(obj->tokens[i].string);
+	for (i = 0; i < it->num_tokens; ++i) {
+		free(it->tokens[i].rest_string);
+		free(it->tokens[i].string);
 	}
-	free(obj->tokens);
-	free(obj);
+	free(it->tokens);
+	free(it);
 }
 
 int
-command_len(const command_t* obj)
+command_len(const command_t* it)
 {
-	return obj->num_tokens;
+	return it->num_tokens;
 }
 
 token_tag_t
-command_get_tag(const command_t* obj, int index)
+command_get_tag(const command_t* it, int index)
 {
-	return obj->tokens[index].tag;
+	return it->tokens[index].tag;
 }
 
 double
-command_get_float(const command_t* obj, int index)
+command_get_float(const command_t* it, int index)
 {
-	return obj->tokens[index].tag == TOK_NUMBER
-		? obj->tokens[index].number : 0.0;
+	return it->tokens[index].tag == TOK_NUMBER
+		? it->tokens[index].number : 0.0;
+}
+
+unsigned int
+command_get_handle(const command_t* it, int index)
+{
+	return it->tokens[index].tag == TOK_REF
+		? it->tokens[index].handle : 0;
 }
 
 int
-command_get_int(const command_t* obj, int index)
+command_get_int(const command_t* it, int index)
 {
-	return obj->tokens[index].tag == TOK_NUMBER ? (int)obj->tokens[index].number
-		: obj->tokens[index].tag == TOK_FILE_LINE ? obj->tokens[index].line_no
+	return it->tokens[index].tag == TOK_NUMBER ? (int)it->tokens[index].number
+		: it->tokens[index].tag == TOK_FILE_LINE ? it->tokens[index].line_no
 		: 0;
 }
 
 const char*
-command_get_rest(const command_t* obj, int index)
+command_get_rest(const command_t* it, int index)
 {
-	return obj->tokens[index].rest_string;
+	return it->tokens[index].rest_string;
 }
 
 const char*
-command_get_string(const command_t* obj, int index)
+command_get_string(const command_t* it, int index)
 {
-	return obj->tokens[index].tag == TOK_STRING || obj->tokens[index].tag == TOK_FILE_LINE
-		? obj->tokens[index].string : NULL;
+	return it->tokens[index].tag == TOK_STRING || it->tokens[index].tag == TOK_FILE_LINE
+		? it->tokens[index].string : NULL;
 }
