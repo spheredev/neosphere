@@ -458,7 +458,7 @@ handle_eval(session_t* obj, command_t* cmd, bool verbose)
 	const ki_atom_t* getter;
 	unsigned int     handle;
 	bool             is_accessor;
-	bool             is_error;
+	bool             is_error = false;
 	int              max_len = 0;
 	objview_t*       object;
 	unsigned int     prop_flags;
