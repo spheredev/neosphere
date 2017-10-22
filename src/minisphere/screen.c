@@ -87,8 +87,8 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 	al_set_new_window_title(title);
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (al_get_monitor_info(0, &desktop_info)) {
-		x_scale = ((desktop_info.x2 - desktop_info.x1) / 2) / resolution.width;
-		y_scale = ((desktop_info.y2 - desktop_info.y1) / 2) / resolution.height;
+		x_scale = ((desktop_info.x2 - desktop_info.x1) / 1.5) / resolution.width;
+		y_scale = ((desktop_info.y2 - desktop_info.y1) / 1.5) / resolution.height;
 		x_scale = y_scale = fmax(fmin(x_scale, y_scale), 1.0);
 	}
 	display = al_create_display(resolution.width * x_scale, resolution.height * y_scale);
@@ -472,8 +472,8 @@ refresh_display(screen_t* screen)
 		screen->x_offset = 0;
 		screen->y_offset = 0;
 		if (al_get_monitor_info(0, &desktop_info)) {
-			screen->x_scale = trunc(((desktop_info.x2 - desktop_info.x1) / 2) / screen->x_size);
-			screen->y_scale = trunc(((desktop_info.y2 - desktop_info.y1) / 2) / screen->y_size);
+			screen->x_scale = trunc(((desktop_info.x2 - desktop_info.x1) / 1.5) / screen->x_size);
+			screen->y_scale = trunc(((desktop_info.y2 - desktop_info.y1) / 1.5) / screen->y_size);
 			screen->x_scale = screen->y_scale = fmax(fmin(screen->x_scale, screen->y_scale), 1.0);
 		}
 
