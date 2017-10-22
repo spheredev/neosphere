@@ -139,17 +139,16 @@ static JsRuntimeHandle      s_js_runtime = NULL;
 static vector_t*            s_module_cache;
 static vector_t*            s_module_jobs;
 static JsSourceContext      s_next_source_context = 1;
-static JsValueRef           s_stash;
-static vector_t*            s_value_stack;
 static int                  s_stack_base;
+static JsValueRef           s_stash;
 static JsValueRef           s_this_value = JS_INVALID_REFERENCE;
+static vector_t*            s_value_stack;
 static js_throw_callback_t  s_throw_callback = NULL;
 
 bool
 jsal_init(void)
 {
 	JsModuleRecord module_record;
-	JsValueRef     null_value;
 	JsErrorCode    result;
 	
 	result = JsCreateRuntime(
@@ -160,8 +159,9 @@ jsal_init(void)
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
+	
+	// set up the callbacks
 	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
-
 	JsInitializeModuleRecord(NULL, NULL, &module_record);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
@@ -169,8 +169,6 @@ jsal_init(void)
 
 	// set up the stash, used to store JS values behind the scenes.
 	JsCreateObject(&s_stash);
-	JsGetNullValue(&null_value);
-	JsSetPrototype(s_stash, null_value);
 	JsAddRef(s_stash, NULL);
 
 	s_value_stack = vector_new(sizeof(js_ref_t));
@@ -223,6 +221,59 @@ jsal_uninit(void)
 	JsRelease(s_stash, NULL);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
 	JsDisposeRuntime(s_js_runtime);
+}
+
+bool
+jsal_reinit(void)
+{
+	struct breakpoint* breakpoint;
+	JsContextRef       context;
+	struct module*     module;
+	JsModuleRecord     module_record;
+
+	iter_t iter;
+
+	if (JsCreateContext(s_js_runtime, &context) != JsNoError)
+		return false;
+
+	resize_stack(0);
+	JsRelease(s_stash, NULL);
+
+	iter = vector_enum(s_breakpoints);
+	while (iter_next(&iter)) {
+		breakpoint = iter.ptr;
+		free(breakpoint->filename);
+	}
+
+	iter = vector_enum(s_module_cache);
+	while (module = iter_next(&iter)) {
+		JsRelease(module->record, NULL);
+		free(module->filename);
+	}
+
+	vector_resize(s_breakpoints, 0);
+	vector_resize(s_catch_stack, 0);
+	vector_resize(s_module_cache, 0);
+	vector_resize(s_module_jobs, 0);
+
+	JsSetCurrentContext(context);
+	JsCreateObject(&s_stash);
+	JsAddRef(s_stash, NULL);
+
+	// callbacks must be reinitialized for the new context.
+	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
+	JsInitializeModuleRecord(NULL, NULL, &module_record);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
+
+	s_callee_value = JS_INVALID_REFERENCE;
+	s_js_context = context;
+	s_next_source_context = 1;
+	s_this_value = JS_INVALID_REFERENCE;
+	s_stack_base = 0;
+
+	return true;
 }
 
 void
