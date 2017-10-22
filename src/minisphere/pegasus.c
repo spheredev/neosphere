@@ -3308,7 +3308,13 @@ js_SSj_flipScreen(int num_args, bool is_ctor, int magic)
 static bool
 js_SSj_log(int num_args, bool is_ctor, int magic)
 {
-	debugger_log(jsal_to_string(0), KI_LOG_NORMAL, true);
+	const char* text;
+
+	if (jsal_is_object(0))
+		jsal_stringify(0);
+	text = jsal_to_string(0);
+
+	debugger_log(text, KI_LOG_NORMAL, true);
 	return false;
 }
 

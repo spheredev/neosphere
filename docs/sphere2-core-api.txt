@@ -1188,10 +1188,13 @@ SSj.flipScreen();
     Immediately flips the contents of the backbuffer to the screen.  The
     backbuffer is not cleared afterwards.  Useful for debugging graphics code.
 
-SSj.log(text);
+SSj.log(text_or_object);
 
-    Logs `text` to an attached SSj or SSj Blue session.  If the game was
-    started using `spherun`, the text is logged to the terminal as well.
+    Logs `text_or_object` to an attached SSj or SSj Blue session.  If an object
+    is passed in, logs the result of calling `JSON.stringify()` on the object.
+
+    Note: If the game was started from the command line using SpheRun, the
+          item is logged to the terminal as well.
 
 SSj.trace(text);
 
