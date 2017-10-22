@@ -33,10 +33,6 @@ namespace Sphere.Gdk.Forms
         public void ApplyStyle(UIStyle style)
         {
             style.AsUIElement(this);
-            style.AsUIElement(m_writableCheckBox);
-            style.AsUIElement(m_enumerableCheckBox);
-            style.AsUIElement(m_configurableCheckBox);
-            style.AsUIElement(m_accessorCheckBox);
             style.AsTextView(m_nameTextBox);
             style.AsTextView(m_propListTreeView);
             style.AsAccent(m_okButton);
@@ -53,28 +49,6 @@ namespace Sphere.Gdk.Forms
                 await PopulateTreeNode(trunk, (KiRef)_value);
             trunk.Expand();
             m_propListTreeView.EndUpdate();
-        }
-
-        private void PropTree_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-            if (e.Node.Tag != null)
-            {
-                PropDesc desc = (PropDesc)e.Node.Tag;
-                m_writableCheckBox.Enabled = !desc.Flags.HasFlag(PropFlags.Accessor);
-                m_enumerableCheckBox.Enabled = true;
-                m_configurableCheckBox.Enabled = true;
-                m_accessorCheckBox.Enabled = true;
-                m_writableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Writable);
-                m_enumerableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Enumerable);
-                m_configurableCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Configurable);
-                m_accessorCheckBox.Checked = desc.Flags.HasFlag(PropFlags.Accessor);
-            }
-            else {
-                m_writableCheckBox.Enabled = m_writableCheckBox.Checked = false;
-                m_enumerableCheckBox.Enabled = m_enumerableCheckBox.Checked = false;
-                m_configurableCheckBox.Enabled = m_configurableCheckBox.Checked = false;
-                m_accessorCheckBox.Enabled = m_accessorCheckBox.Enabled = false;
-            }
         }
 
         private async void PropTree_BeforeExpand(object sender, TreeViewCancelEventArgs e)
@@ -97,7 +71,7 @@ namespace Sphere.Gdk.Forms
         private async Task PopulateTreeNode(TreeNode node, KiRef handle)
         {
             m_propListTreeView.BeginUpdate();
-            var props = await _inferior.GetObjPropDescRange(handle, 0, int.MaxValue);
+            var props = await _inferior.InspectObject(handle, 0, int.MaxValue);
             foreach (var key in props.Keys) {
                 if (props[key].Flags.HasFlag(PropFlags.Accessor)) {
                     KiAtom getter = props[key].Getter;
@@ -105,7 +79,7 @@ namespace Sphere.Gdk.Forms
                     var nodeText = string.Format("{0} = get: {1}, set: {2}", key,
                         getter.ToString(), setter.ToString());
                     var valueNode = node.Nodes.Add(nodeText);
-                    valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
+                    valueNode.ImageKey = "prop";
                     valueNode.SelectedImageKey = valueNode.ImageKey;
                     valueNode.Tag = props[key];
                 }
@@ -113,7 +87,7 @@ namespace Sphere.Gdk.Forms
                     KiAtom value = props[key].Value;
                     var nodeText = string.Format("{0} = {1}", key, value.ToString());
                     var valueNode = node.Nodes.Add(nodeText);
-                    valueNode.ImageKey = props[key].Flags.HasFlag(PropFlags.Enumerable) ? "prop" : "hiddenProp";
+                    valueNode.ImageKey = "prop";
                     valueNode.SelectedImageKey = valueNode.ImageKey;
                     valueNode.Tag = props[key];
                     if (value.Tag == KiTag.Ref) {

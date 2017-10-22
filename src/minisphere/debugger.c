@@ -46,11 +46,12 @@ struct source
 	lstring_t* text;
 };
 
-static js_step_t on_breakpoint_hit   (void);
-static void      on_throw_exception  (void);
-static bool      do_attach_debugger  (void);
-static void      do_detach_debugger  (bool is_shutdown);
-static bool      process_message     (js_step_t* out_step);
+static js_step_t  on_breakpoint_hit   (void);
+static void       on_throw_exception  (void);
+static ki_atom_t* atom_from_value     (int stack_index);
+static bool       do_attach_debugger  (void);
+static void       do_detach_debugger  (bool is_shutdown);
+static bool       process_message     (js_step_t* out_step);
 
 static ssj_mode_t   s_attach_mode;
 static color_t      s_banner_color;
@@ -371,6 +372,21 @@ on_throw_exception(void)
 	ki_message_free(message);
 }
 
+static ki_atom_t*
+atom_from_value(int stack_index)
+{
+	if (jsal_is_boolean(stack_index))
+		return ki_atom_new_bool(jsal_get_boolean(stack_index));
+	else if (jsal_is_number(stack_index))
+		return ki_atom_new_number(jsal_get_number(stack_index));
+	else if (jsal_is_null(stack_index))
+		return ki_atom_new(KI_NULL);
+	else if (jsal_is_undefined(stack_index))
+		return ki_atom_new(KI_UNDEFINED);
+	else
+		return ki_atom_new_string(jsal_to_string(stack_index));
+}
+
 static bool
 do_attach_debugger(void)
 {
@@ -538,7 +554,7 @@ process_message(js_step_t* out_step)
 			ki_message_add_string(reply, jsal_get_string(-3));
 			ki_message_add_int(reply, KI_ATTR_NONE);
 			if (jsal_get_uint(-1) == 0)
-				ki_message_add_string(reply, jsal_get_string(-2));
+				ki_message_add_atom(reply, atom_from_value(-2));
 			else
 				ki_message_add_ref(reply, jsal_get_uint(-1));
 			jsal_pop(3);

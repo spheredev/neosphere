@@ -214,7 +214,7 @@ ki_atom_print(const ki_atom_t* it, bool verbose)
 		if (!verbose)
 			printf("{...}");
 		else {
-			printf("{ obj:%08x }", it->handle);
+			printf("{ ...obj: @%x }", it->handle);
 		}
 		break;
 	case KI_STRING:

@@ -2163,7 +2163,6 @@ jsal_debug_inspect_eval(int call_index, const char* source, bool *out_errored)
 		jsal_get_prop_string(-3, "handle");
 	else
 		jsal_push_null();
-	jsal_to_string(-2);
 	jsal_remove(-4);
 	return true;
 }
@@ -2199,7 +2198,6 @@ jsal_debug_inspect_object(unsigned int handle, int property_index)
 		jsal_get_prop_string(-3, "handle");
 	else
 		jsal_push_null();
-	jsal_to_string(-2);
 	jsal_remove(-4);
 	jsal_remove(-4);
 	jsal_remove(-4);
@@ -2227,7 +2225,6 @@ jsal_debug_inspect_var(int call_index, int var_index)
 			jsal_get_prop_string(-3, "display");
 		else
 			jsal_get_prop_string(-3, "value");
-		jsal_to_string(-1);
 		jsal_remove(-4);
 		jsal_remove(-4);
 		jsal_remove(-4);

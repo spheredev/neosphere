@@ -63,7 +63,7 @@ namespace Sphere.Gdk.Debugger
     }
     
     /// <summary>
-    /// Allows control of an SSj/Ki debug target over TCP.
+    /// Allows control of an SSj/Ki-enabled debug target over TCP.
     /// </summary>
     class Inferior : IDisposable
     {
@@ -263,27 +263,26 @@ namespace Sphere.Gdk.Debugger
             return vars;
         }
 
-        public async Task<Dictionary<string, PropDesc>> GetObjPropDescRange(KiRef handle, int start, int end)
+        public async Task<Dictionary<string, PropDesc>> InspectObject(KiRef handle, int start, int end)
         {
             var reply = await DoRequest(KiTag.REQ, KiRequest.InspectObject, handle, start, end);
             var props = new Dictionary<string, PropDesc>();
-            int count = (reply.Length - 1) / 2;
             int i = 1;
             while (i < reply.Length) {
+                string key = reply[i++].ToString();
                 PropFlags flags = (PropFlags)(int)reply[i++];
-                string name = reply[i++].ToString();
                 if (flags.HasFlag(PropFlags.Accessor)) {
                     KiAtom getter = reply[i++];
                     KiAtom setter = reply[i++];
                     PropDesc propValue = new PropDesc(getter, setter, flags);
                     if (!flags.HasFlag(PropFlags.Internal))
-                        props.Add(name, propValue);
+                        props.Add(key, propValue);
                 }
                 else {
                     KiAtom value = reply[i++];
                     PropDesc propValue = new PropDesc(value, flags);
                     if (!flags.HasFlag(PropFlags.Internal))
-                        props.Add(name, propValue);
+                        props.Add(key, propValue);
                 }
             }
             return props;
