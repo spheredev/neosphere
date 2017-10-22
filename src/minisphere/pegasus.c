@@ -1442,7 +1442,7 @@ js_Sphere_sleep(int num_args, bool is_ctor, int magic)
 	script = script_new_function(-1);
 	jsal_pop(1);
 	jsal_unref(resolver);
-	dispatch_enqueue(script, num_frames, JOB_UPDATE);
+	dispatch_defer(script, num_frames, JOB_UPDATE);
 	return true;
 }
 
@@ -1889,7 +1889,7 @@ js_Dispatch_later(int num_args, bool is_ctor, int magic)
 	timeout = jsal_require_int(0);
 	script = jsal_pegasus_require_script(1);
 
-	if (!(token = dispatch_enqueue(script, timeout, JOB_UPDATE)))
+	if (!(token = dispatch_defer(script, timeout, JOB_UPDATE)))
 		jsal_error(JS_ERROR, "dispatch failed");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -1903,7 +1903,7 @@ js_Dispatch_now(int num_args, bool is_ctor, int magic)
 
 	script = jsal_pegasus_require_script(0);
 
-	if (!(token = dispatch_enqueue(script, 0, JOB_TICK)))
+	if (!(token = dispatch_defer(script, 0, JOB_TICK)))
 		jsal_error(JS_ERROR, "dispatch failed");
 	jsal_pegasus_push_job_token(token);
 	return true;

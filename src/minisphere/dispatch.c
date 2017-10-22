@@ -120,7 +120,7 @@ dispatch_cancel(int64_t token)
 }
 
 int64_t
-dispatch_enqueue(script_t* script, uint32_t timeout, job_type_t hint)
+dispatch_defer(script_t* script, uint32_t timeout, job_type_t hint)
 {
 	struct job job;
 
