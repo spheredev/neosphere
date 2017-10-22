@@ -30,9 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-// Cell-specific modules
-export { default as transpile } from 'transpile';
-
 // Sphere Runtime shared modules
 export { default as assert } from 'assert';
 export { default as from } from 'from';

@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.0.0 - TBD
-------------
+v5.0.0 - October 31, 2017 (WIP)
+-------------------------------
 
 * miniSphere and Cell now use the ChakraCore JS engine under the hood, vastly
   improving JavaScript execution performance and bringing long-overdue native
@@ -40,6 +40,7 @@ v5.0.0 - TBD
 * Removes the now-redundant `DataReader` and `DataWriter` classes.
 * Removes `screen.flip()`, `Sphere.run()` and `Sphere.exit()` in favor of the
   engine-provided event loop.
+* Removes the Cell `transpile` module in favor of promoting native ES2015.
 * Improves `SSj.log()` to perform JSON serialization if its argument is an
   object.
 * Improves the startup routines to also look in `dist/` for a bundled game.
