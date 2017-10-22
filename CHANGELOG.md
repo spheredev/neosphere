@@ -40,7 +40,11 @@ v5.0.0 - TBD
 * Removes the now-redundant `DataReader` and `DataWriter` classes.
 * Removes `screen.flip()`, `Sphere.run()` and `Sphere.exit()` in favor of the
   engine-provided event loop.
+* Improves `SSj.log()` to perform JSON serialization if its argument is an
+  object.
 * Improves the startup routines to also look in `dist/` for a bundled game.
+* Improves SSj `eval` and `examine` commands, allowing them to work without
+  having to quote the expression to evaluate.
 * Improves the SSj debugging experience by preventing the engine from switching
   to fullscreen mode as long as the debugger is attached.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to
