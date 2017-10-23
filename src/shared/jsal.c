@@ -152,7 +152,7 @@ jsal_init(void)
 	JsErrorCode    result;
 	
 	result = JsCreateRuntime(
-		JsRuntimeAttributeDispatchSetExceptionsToDebugger,
+		JsRuntimeAttributeDispatchSetExceptionsToDebugger | JsRuntimeAttributeAllowScriptInterrupt,
 		NULL, &s_js_runtime);
 	if (result != JsNoError)
 		goto on_error;
@@ -322,6 +322,15 @@ bool
 jsal_busy(void)
 {
 	return vector_len(s_module_jobs) > 0;
+}
+
+bool
+jsal_disabled(void)
+{
+	bool disabled;
+
+	JsIsRuntimeExecutionDisabled(s_js_runtime, &disabled);
+	return disabled;
 }
 
 void
@@ -510,6 +519,15 @@ jsal_del_prop_string(int object_index, const char* name)
 	object_index = jsal_normalize_index(object_index);
 	jsal_push_string(name);
 	return jsal_del_prop(object_index);
+}
+
+void
+jsal_disable(bool disabled)
+{
+	if (disabled)
+		JsDisableRuntimeExecution(s_js_runtime);
+	else
+		JsEnableRuntimeExecution(s_js_runtime);
 }
 
 int

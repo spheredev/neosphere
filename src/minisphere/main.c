@@ -68,8 +68,8 @@ enum fullscreen_mode
 
 static void on_enqueue_js_job   (void);
 static void on_socket_idle      (void);
-static bool initialize_engine   (bool initialize_js);
-static void shutdown_engine     (bool shutdown_js);
+static bool initialize_engine   (void);
+static void shutdown_engine     (void);
 static bool find_startup_game   (path_t* *out_path);
 static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode);
 static void print_banner        (bool want_copyright, bool want_deps);
@@ -164,7 +164,7 @@ main(int argc, char* argv[])
 #endif
 	console_log(1, "");
 
-	if (!initialize_engine(true))
+	if (!initialize_engine())
 		return EXIT_FAILURE;
 
 	// set up jump points for script bailout
@@ -175,9 +175,9 @@ main(int argc, char* argv[])
 			fullscreen_mode = screen_get_fullscreen(g_screen)
 				? FULLSCREEN_ON : FULLSCREEN_OFF;
 		}
-		shutdown_engine(false);
+		shutdown_engine();
 		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
-			if (!initialize_engine(false) || !jsal_reinit()) {
+			if (!initialize_engine()) {
 				path_free(g_last_game_path);
 				return EXIT_FAILURE;
 			}
@@ -192,11 +192,11 @@ main(int argc, char* argv[])
 		// JS code called either RestartGame() or ExecuteGame()
 		fullscreen_mode = screen_get_fullscreen(g_screen)
 			? FULLSCREEN_ON : FULLSCREEN_OFF;
-		shutdown_engine(false);
+		shutdown_engine();
 		console_log(1, "\nrestarting to launch new game");
 		console_log(1, "    path: %s", path_cstr(g_game_path));
 		screen_free(g_screen);
-		if (!initialize_engine(false) || !jsal_reinit())
+		if (!initialize_engine())
 			return EXIT_FAILURE;
 	}
 
@@ -454,7 +454,7 @@ on_socket_idle(void)
 }
 
 static bool
-initialize_engine(bool initialize_js)
+initialize_engine(void)
 {
 	uint32_t al_version;
 
@@ -482,12 +482,10 @@ initialize_engine(bool initialize_js)
 	dyad_setUpdateTimeout(0.0);
 
 	// initialize JavaScript
-	if (initialize_js) {
-		console_log(1, "initializing JavaScript");
-		if (!jsal_init())
-			goto on_error;
-		jsal_on_enqueue_job(on_enqueue_js_job);
-	}
+	console_log(1, "initializing JavaScript");
+	if (!jsal_init())
+		goto on_error;
+	jsal_on_enqueue_job(on_enqueue_js_job);
 
 	// initialize engine components
 	dispatch_init();
@@ -511,9 +509,11 @@ on_error:
 }
 
 static void
-shutdown_engine(bool shutdown_js)
+shutdown_engine(void)
 {
 	kb_save_keymap();
+
+	jsal_disable(false);
 
 #if defined(MINISPHERE_SPHERUN)
 	debugger_uninit();
@@ -524,10 +524,8 @@ shutdown_engine(bool shutdown_js)
 	scripts_uninit();
 	sockets_uninit();
 
-	if (shutdown_js) {
-		console_log(1, "shutting down JavaScript");
-		jsal_uninit();
-	}
+	console_log(1, "shutting down JavaScript");
+	jsal_uninit();
 
 	console_log(1, "shutting down Dyad");
 	dyad_shutdown();
