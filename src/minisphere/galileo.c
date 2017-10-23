@@ -36,7 +36,7 @@
 #include "color.h"
 #include "vector.h"
 
-static void free_cached_uniform (model_t* model, const char* name);
+static void free_cached_uniform (shader_t* shader, const char* name);
 static void render_shape        (shape_t* shape);
 
 enum uniform_type
@@ -81,14 +81,15 @@ struct model
 	shader_t*    shader;
 	vector_t*    shapes;
 	transform_t* transform;
-	vector_t*    uniforms;
 };
 
 struct shader
 {
 	unsigned int    id;
 	unsigned int    refcount;
+	bool            need_update;
 	ALLEGRO_SHADER* program;
+	vector_t*       uniforms;
 };
 
 struct shape
@@ -245,7 +246,6 @@ model_new(shader_t* shader)
 	model->shapes = vector_new(sizeof(shape_t*));
 	model->transform = transform_new();
 	model->shader = shader_ref(shader);
-	model->uniforms = vector_new(sizeof(struct uniform));
 
 	model->id = s_next_group_id++;
 	return model_ref(model);
@@ -277,7 +277,6 @@ model_unref(model_t* it)
 	vector_free(it->shapes);
 	shader_unref(it->shader);
 	transform_unref(it->transform);
-	vector_free(it->uniforms);
 	free(it);
 }
 
@@ -327,154 +326,13 @@ void
 model_draw(const model_t* it, image_t* surface)
 {
 	iter_t iter;
-	struct uniform* p;
 
 	image_render_to(surface, it->transform);
-
 	shader_use(it->shader != NULL ? it->shader : galileo_shader(), false);
-	iter = vector_enum(it->uniforms);
-	while (p = iter_next(&iter)) {
-		switch (p->type) {
-		case UNIFORM_BOOL:
-			al_set_shader_bool(p->name, p->bool_value);
-			break;
-		case UNIFORM_FLOAT:
-			al_set_shader_float(p->name, p->float_value);
-			break;
-		case UNIFORM_FLOAT_ARR:
-			al_set_shader_float_vector(p->name, 1, p->float_list, p->num_values);
-			break;
-		case UNIFORM_FLOAT_VEC:
-			al_set_shader_float_vector(p->name, p->num_values, p->float_vec, 1);
-			break;
-		case UNIFORM_INT:
-			al_set_shader_int(p->name, p->int_value);
-			break;
-		case UNIFORM_INT_ARR:
-			al_set_shader_int_vector(p->name, 1, p->int_list, p->num_values);
-			break;
-		case UNIFORM_INT_VEC:
-			al_set_shader_int_vector(p->name, p->num_values, p->int_vec, 1);
-			break;
-		case UNIFORM_MATRIX:
-			al_set_shader_matrix(p->name, &p->mat_value);
-			break;
-		}
-	}
 
 	iter = vector_enum(it->shapes);
 	while (iter_next(&iter))
 		render_shape(*(shape_t**)iter.ptr);
-}
-
-void
-model_put_bool(model_t* it, const char* name, bool value)
-{
-	struct uniform unif;
-
-	free_cached_uniform(it, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_BOOL;
-	unif.bool_value = value;
-	vector_push(it->uniforms, &unif);
-}
-
-void
-model_put_float(model_t* it, const char* name, float value)
-{
-	struct uniform unif;
-
-	free_cached_uniform(it, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_FLOAT;
-	unif.float_value = value;
-	vector_push(it->uniforms, &unif);
-}
-
-void
-model_put_float_array(model_t* it, const char* name, float values[], int size)
-{
-	struct uniform unif;
-
-	free_cached_uniform(it, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_FLOAT_ARR;
-	unif.float_list = malloc(size * sizeof(float));
-	unif.num_values = size;
-	memcpy(unif.float_list, values, size * sizeof(float));
-	vector_push(it->uniforms, &unif);
-}
-
-void
-model_put_float_vector(model_t* it, const char* name, float values[], int size)
-{
-	struct uniform unif;
-
-	free_cached_uniform(it, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_FLOAT_VEC;
-	unif.num_values = size;
-	memcpy(unif.float_vec, values, sizeof(float) * size);
-	vector_push(it->uniforms, &unif);
-}
-
-void
-model_put_int(model_t* it, const char* name, int value)
-{
-	struct uniform unif;
-
-	free_cached_uniform(it, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_INT;
-	unif.int_value = value;
-	vector_push(it->uniforms, &unif);
-}
-
-void
-model_put_int_array(model_t* it, const char* name, int values[], int size)
-{
-	struct uniform unif;
-
-	free_cached_uniform(it, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_INT_ARR;
-	unif.int_list = malloc(size * sizeof(int));
-	unif.num_values = size;
-	memcpy(unif.int_list, values, size * sizeof(int));
-	vector_push(it->uniforms, &unif);
-}
-
-void
-model_put_int_vector(model_t* it, const char* name, int values[], int size)
-{
-	struct uniform unif;
-
-	free_cached_uniform(it, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_INT_VEC;
-	unif.num_values = size;
-	memcpy(unif.int_vec, values, sizeof(int) * size);
-	vector_push(it->uniforms, &unif);
-}
-
-void
-model_put_matrix(model_t* it, const char* name, const transform_t* matrix)
-{
-	struct uniform unif;
-
-	free_cached_uniform(it, name);
-	strncpy(unif.name, name, 255);
-	unif.name[255] = '\0';
-	unif.type = UNIFORM_MATRIX;
-	al_copy_transform(&unif.mat_value, transform_matrix(matrix));
-	vector_push(it->uniforms, &unif);
 }
 
 shader_t*
@@ -510,6 +368,7 @@ shader_new(const char* vert_filename, const char* frag_filename)
 	free(frag_source);
 
 	shader->id = s_next_shader_id++;
+	shader->uniforms = vector_new(sizeof(struct uniform));
 	return shader_ref(shader);
 
 on_error:
@@ -522,23 +381,24 @@ on_error:
 }
 
 shader_t*
-shader_ref(shader_t* shader)
+shader_ref(shader_t* it)
 {
-	if (shader == NULL)
-		return shader;
-	++shader->refcount;
-	return shader;
+	if (it == NULL)
+		return it;
+	++it->refcount;
+	return it;
 }
 
 void
-shader_unref(shader_t* shader)
+shader_unref(shader_t* it)
 {
-	if (shader == NULL || --shader->refcount > 0)
+	if (it == NULL || --it->refcount > 0)
 		return;
 
-	console_log(3, "disposing shader program #%u no longer in use", shader->id);
-	al_destroy_shader(shader->program);
-	free(shader);
+	console_log(3, "disposing shader program #%u no longer in use", it->id);
+	al_destroy_shader(it->program);
+	vector_free(it->uniforms);
+	free(it);
 }
 
 ALLEGRO_SHADER*
@@ -547,23 +407,213 @@ shader_program(const shader_t* it)
 	return it->program;
 }
 
+void
+shader_put_bool(shader_t* it, const char* name, bool value)
+{
+	struct uniform unif;
+
+	if (s_last_shader == it) {
+		al_set_shader_bool(name, value);
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_BOOL;
+		unif.bool_value = value;
+		vector_push(it->uniforms, &unif);
+	}
+}
+
+void
+shader_put_float(shader_t* it, const char* name, float value)
+{
+	struct uniform unif;
+
+	if (s_last_shader == it) {
+		al_set_shader_float(name, value);
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_FLOAT;
+		unif.float_value = value;
+		vector_push(it->uniforms, &unif);
+	}
+}
+
+void
+shader_put_float_array(shader_t* it, const char* name, float values[], int size)
+{
+	struct uniform unif;
+
+	if (s_last_shader == it) {
+		al_set_shader_float_vector(name, 1, values, size);
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_FLOAT_ARR;
+		unif.float_list = malloc(size * sizeof(float));
+		unif.num_values = size;
+		memcpy(unif.float_list, values, size * sizeof(float));
+		vector_push(it->uniforms, &unif);
+	}
+}
+
+void
+shader_put_float_vector(shader_t* it, const char* name, float values[], int size)
+{
+	struct uniform unif;
+
+	if (s_last_shader == it) {
+		al_set_shader_float_vector(name, size, values, 1);
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_FLOAT_VEC;
+		unif.num_values = size;
+		memcpy(unif.float_vec, values, sizeof(float) * size);
+		vector_push(it->uniforms, &unif);
+	}
+}
+
+void
+shader_put_int(shader_t* it, const char* name, int value)
+{
+	struct uniform unif;
+
+	if (s_last_shader == it) {
+		al_set_shader_int(name, value);
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_INT;
+		unif.int_value = value;
+		vector_push(it->uniforms, &unif);
+	}
+}
+
+void
+shader_put_int_array(shader_t* it, const char* name, int values[], int size)
+{
+	struct uniform unif;
+
+	if (s_last_shader == it) {
+		al_set_shader_int_vector(name, 1, values, size);
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_INT_ARR;
+		unif.int_list = malloc(size * sizeof(int));
+		unif.num_values = size;
+		memcpy(unif.int_list, values, size * sizeof(int));
+		vector_push(it->uniforms, &unif);
+	}
+}
+
+void
+shader_put_int_vector(shader_t* it, const char* name, int values[], int size)
+{
+	struct uniform unif;
+
+	if (s_last_shader == it) {
+		al_set_shader_int_vector(name, size, values, 1);
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_INT_VEC;
+		unif.num_values = size;
+		memcpy(unif.int_vec, values, sizeof(int) * size);
+		vector_push(it->uniforms, &unif);
+	}
+}
+
+void
+shader_put_matrix(shader_t* it, const char* name, const transform_t* matrix)
+{
+	struct uniform unif;
+
+	if (s_last_shader == it) {
+		al_set_shader_matrix(name, transform_matrix(matrix));
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_MATRIX;
+		al_copy_transform(&unif.mat_value, transform_matrix(matrix));
+		vector_push(it->uniforms, &unif);
+	}
+}
+
 bool
-shader_use(shader_t* shader, bool force_set)
+shader_use(shader_t* it, bool force_set)
 {
 	ALLEGRO_SHADER* al_shader;
+	struct uniform* uniform;
 
-	if (shader == s_last_shader && !force_set)
+	iter_t iter;
+
+	if (it == s_last_shader && !force_set)
 		return true;
 
-	if (shader != NULL)
-		console_log(4, "activating shader program #%u", shader->id);
+	if (it != NULL)
+		console_log(4, "activating shader program #%u", it->id);
 	else
 		console_log(4, "activating legacy shaders");
 
-	al_shader = shader != NULL ? shader->program : NULL;
+	al_shader = it != NULL ? it->program : NULL;
 	if (!al_use_shader(al_shader))
 		return false;
-	s_last_shader = shader;
+	
+	// set any uniforms defined while we were inactive
+	if (it != NULL) {
+		iter = vector_enum(it->uniforms);
+		while (uniform = iter_next(&iter)) {
+			switch (uniform->type) {
+			case UNIFORM_BOOL:
+				al_set_shader_bool(uniform->name, uniform->bool_value);
+				break;
+			case UNIFORM_FLOAT:
+				al_set_shader_float(uniform->name, uniform->float_value);
+				break;
+			case UNIFORM_FLOAT_ARR:
+				al_set_shader_float_vector(uniform->name, 1, uniform->float_list, uniform->num_values);
+				free(uniform->float_list);
+				break;
+			case UNIFORM_FLOAT_VEC:
+				al_set_shader_float_vector(uniform->name, uniform->num_values, uniform->float_vec, 1);
+				break;
+			case UNIFORM_INT:
+				al_set_shader_int(uniform->name, uniform->int_value);
+				break;
+			case UNIFORM_INT_ARR:
+				al_set_shader_int_vector(uniform->name, 1, uniform->int_list, uniform->num_values);
+				free(uniform->int_list);
+				break;
+			case UNIFORM_INT_VEC:
+				al_set_shader_int_vector(uniform->name, uniform->num_values, uniform->int_vec, 1);
+				break;
+			case UNIFORM_MATRIX:
+				al_set_shader_matrix(uniform->name, &uniform->mat_value);
+				break;
+			}
+		}
+		vector_clear(it->uniforms);
+	}
+
+	s_last_shader = it;
 	return true;
 }
 
@@ -754,12 +804,12 @@ vbo_upload(vbo_t* it)
 }
 
 static void
-free_cached_uniform(model_t* group, const char* name)
+free_cached_uniform(shader_t* shader, const char* name)
 {
 	iter_t iter;
 	struct uniform* p;
 
-	iter = vector_enum(group->uniforms);
+	iter = vector_enum(shader->uniforms);
 	while (p = iter_next(&iter)) {
 		if (strcmp(p->name, name) == 0)
 			iter_remove(&iter);

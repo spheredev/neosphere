@@ -317,15 +317,6 @@ static bool js_Model_get_transform           (int num_args, bool is_ctor, int ma
 static bool js_Model_set_shader              (int num_args, bool is_ctor, int magic);
 static bool js_Model_set_transform           (int num_args, bool is_ctor, int magic);
 static bool js_Model_draw                    (int num_args, bool is_ctor, int magic);
-static bool js_Model_setBoolean              (int num_args, bool is_ctor, int magic);
-static bool js_Model_setColorVector          (int num_args, bool is_ctor, int magic);
-static bool js_Model_setFloat                (int num_args, bool is_ctor, int magic);
-static bool js_Model_setFloatArray           (int num_args, bool is_ctor, int magic);
-static bool js_Model_setFloatVector          (int num_args, bool is_ctor, int magic);
-static bool js_Model_setInt                  (int num_args, bool is_ctor, int magic);
-static bool js_Model_setIntArray             (int num_args, bool is_ctor, int magic);
-static bool js_Model_setIntVector            (int num_args, bool is_ctor, int magic);
-static bool js_Model_setMatrix               (int num_args, bool is_ctor, int magic);
 static bool js_Mouse_get_Default             (int num_args, bool is_ctor, int magic);
 static bool js_Mouse_get_x                   (int num_args, bool is_ctor, int magic);
 static bool js_Mouse_get_y                   (int num_args, bool is_ctor, int magic);
@@ -350,6 +341,15 @@ static bool js_Server_close                  (int num_args, bool is_ctor, int ma
 static bool js_Server_accept                 (int num_args, bool is_ctor, int magic);
 static bool js_Shader_get_Default            (int num_args, bool is_ctor, int magic);
 static bool js_new_Shader                    (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setBoolean             (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setColorVector         (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setFloat               (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setFloatArray          (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setFloatVector         (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setInt                 (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setIntArray            (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setIntVector           (int num_args, bool is_ctor, int magic);
+static bool js_Shader_setMatrix              (int num_args, bool is_ctor, int magic);
 static bool js_new_Shape                     (int num_args, bool is_ctor, int magic);
 static bool js_Shape_get_indexList           (int num_args, bool is_ctor, int magic);
 static bool js_Shape_get_texture             (int num_args, bool is_ctor, int magic);
@@ -588,15 +588,6 @@ pegasus_init(void)
 	api_define_property("Model", "shader", false, js_Model_get_shader, js_Model_set_shader);
 	api_define_property("Model", "transform", false, js_Model_get_transform, js_Model_set_transform);
 	api_define_method("Model", "draw", js_Model_draw);
-	api_define_method("Model", "setBoolean", js_Model_setBoolean);
-	api_define_method("Model", "setColorVector", js_Model_setColorVector);
-	api_define_method("Model", "setFloat", js_Model_setFloat);
-	api_define_method("Model", "setFloatArray", js_Model_setFloatArray);
-	api_define_method("Model", "setFloatVector", js_Model_setFloatVector);
-	api_define_method("Model", "setInt", js_Model_setInt);
-	api_define_method("Model", "setIntArray", js_Model_setIntArray);
-	api_define_method("Model", "setIntVector", js_Model_setIntVector);
-	api_define_method("Model", "setMatrix", js_Model_setMatrix);
 	api_define_class("Mouse", PEGASUS_MOUSE, NULL, NULL);
 	api_define_static_prop("Mouse", "Default", js_Mouse_get_Default, NULL);
 	api_define_property("Mouse", "x", false, js_Mouse_get_x, NULL);
@@ -621,6 +612,15 @@ pegasus_init(void)
 	api_define_method("Server", "accept", js_Server_accept);
 	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize);
 	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL);
+	api_define_method("Shader", "setBoolean", js_Shader_setBoolean);
+	api_define_method("Shader", "setColorVector", js_Shader_setColorVector);
+	api_define_method("Shader", "setFloat", js_Shader_setFloat);
+	api_define_method("Shader", "setFloatArray", js_Shader_setFloatArray);
+	api_define_method("Shader", "setFloatVector", js_Shader_setFloatVector);
+	api_define_method("Shader", "setInt", js_Shader_setInt);
+	api_define_method("Shader", "setIntArray", js_Shader_setIntArray);
+	api_define_method("Shader", "setIntVector", js_Shader_setIntVector);
+	api_define_method("Shader", "setMatrix", js_Shader_setMatrix);
 	api_define_class("Shape", PEGASUS_SHAPE, js_new_Shape, js_Shape_finalize);
 	api_define_property("Shape", "indexList", false, js_Shape_get_indexList, js_Shape_set_indexList);
 	api_define_property("Shape", "texture", false, js_Shape_get_texture, js_Shape_set_texture);
@@ -2920,31 +2920,31 @@ js_Model_draw(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Model_setBoolean(int num_args, bool is_ctor, int magic)
+js_Shader_setBoolean(int num_args, bool is_ctor, int magic)
 {
-	model_t*    group;
 	const char* name;
+	shader_t*   shader;
 	bool        value;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	value = jsal_require_boolean(1);
 
-	model_put_bool(group, name, value);
+	shader_put_bool(shader, name, value);
 	return false;
 }
 
 static bool
-js_Model_setColorVector(int num_args, bool is_ctor, int magic)
+js_Shader_setColorVector(int num_args, bool is_ctor, int magic)
 {
 	color_t     color;
-	model_t*    group;
 	const char* name;
+	shader_t*   shader;
 	float       values[4];
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	color = jsal_pegasus_require_color(1);
 
@@ -2952,38 +2952,38 @@ js_Model_setColorVector(int num_args, bool is_ctor, int magic)
 	values[1] = color.g / 255.0;
 	values[2] = color.b / 255.0;
 	values[3] = color.a / 255.0;
-	model_put_float_vector(group, name, values, 4);
+	shader_put_float_vector(shader, name, values, 4);
 	return false;
 }
 
 static bool
-js_Model_setFloat(int num_args, bool is_ctor, int magic)
+js_Shader_setFloat(int num_args, bool is_ctor, int magic)
 {
-	model_t*    group;
 	const char* name;
+	shader_t*   shader;
 	float       value;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	value = jsal_require_number(1);
 
-	model_put_float(group, name, value);
+	shader_put_float(shader, name, value);
 	return false;
 }
 
 static bool
-js_Model_setFloatArray(int num_args, bool is_ctor, int magic)
+js_Shader_setFloatArray(int num_args, bool is_ctor, int magic)
 {
-	model_t*    group;
 	const char* name;
+	shader_t*   shader;
 	int         size;
 	float*      values;
 
 	int i;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
 		jsal_error(JS_TYPE_ERROR, "array was expected here");
@@ -2996,23 +2996,23 @@ js_Model_setFloatArray(int num_args, bool is_ctor, int magic)
 		values[i] = jsal_require_number(-1);
 		jsal_pop(1);
 	}
-	model_put_float_array(group, name, values, size);
+	shader_put_float_array(shader, name, values, size);
 	free(values);
 	return false;
 }
 
 static bool
-js_Model_setFloatVector(int num_args, bool is_ctor, int magic)
+js_Shader_setFloatVector(int num_args, bool is_ctor, int magic)
 {
-	model_t*    group;
 	const char* name;
+	shader_t*   shader;
 	int         size;
 	float       values[4];
 
 	int i;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	jsal_require_array(1);
 
@@ -3025,38 +3025,38 @@ js_Model_setFloatVector(int num_args, bool is_ctor, int magic)
 		values[i] = jsal_require_number(-1);
 		jsal_pop(1);
 	}
-	model_put_float_vector(group, name, values, size);
+	shader_put_float_vector(shader, name, values, size);
 	return false;
 }
 
 static bool
-js_Model_setInt(int num_args, bool is_ctor, int magic)
+js_Shader_setInt(int num_args, bool is_ctor, int magic)
 {
-	model_t*    group;
 	const char* name;
+	shader_t*   shader;
 	int         value;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	value = jsal_require_int(1);
 
-	model_put_int(group, name, value);
+	shader_put_int(shader, name, value);
 	return false;
 }
 
 static bool
-js_Model_setIntArray(int num_args, bool is_ctor, int magic)
+js_Shader_setIntArray(int num_args, bool is_ctor, int magic)
 {
-	model_t*    group;
 	const char* name;
+	shader_t*   shader;
 	int         size;
 	int*        values;
 
 	int i;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
 		jsal_error(JS_TYPE_ERROR, "array was expected here");
@@ -3068,15 +3068,15 @@ js_Model_setIntArray(int num_args, bool is_ctor, int magic)
 		values[i] = jsal_require_int(-1);
 		jsal_pop(1);
 	}
-	model_put_int_array(group, name, values, size);
+	shader_put_int_array(shader, name, values, size);
 	free(values);
 	return false;
 }
 
 static bool
-js_Model_setIntVector(int num_args, bool is_ctor, int magic)
+js_Shader_setIntVector(int num_args, bool is_ctor, int magic)
 {
-	model_t*    group;
+	shader_t*   shader;
 	const char* name;
 	int         size;
 	int         values[4];
@@ -3084,7 +3084,7 @@ js_Model_setIntVector(int num_args, bool is_ctor, int magic)
 	int i;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
 		jsal_error(JS_TYPE_ERROR, "array was expected here");
@@ -3098,23 +3098,23 @@ js_Model_setIntVector(int num_args, bool is_ctor, int magic)
 		values[i] = jsal_require_int(-1);
 		jsal_pop(1);
 	}
-	model_put_int_vector(group, name, values, size);
+	shader_put_int_vector(shader, name, values, size);
 	return false;
 }
 
 static bool
-js_Model_setMatrix(int num_args, bool is_ctor, int magic)
+js_Shader_setMatrix(int num_args, bool is_ctor, int magic)
 {
-	model_t*     group;
 	const char*  name;
+	shader_t*    shader;
 	transform_t* transform;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	transform = jsal_require_class_obj(1, PEGASUS_TRANSFORM);
 
-	model_put_matrix(group, name, transform);
+	shader_put_matrix(shader, name, transform);
 	return false;
 }
 

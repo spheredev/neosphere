@@ -1022,49 +1022,6 @@ Model#draw([surface]);
     Any transformations defined for the model (see below) are applied as if all
     the shapes comprising it were a single object.
 
-Model#setBoolean(name, value);
-
-    Sets the value of a GLSL boolean-valued (`bool`) uniform.  `value` is
-    either `true` or `false`.
-
-Model#setColorVector(name, color);
-
-    Sets the value of a GLSL floating point 4-vector uniform (`vec4`) from the
-    components of a `Color` object.  Order is assumed to be RGBA.
-
-Model#setFloat(name, value);
-Model#setInt(name, value);
-
-    Sets the value of a GLSL scalar uniform.
-
-    Note: Only `float` and `int` types are currently supported.
-
-Model#setFloatArray(name, values);
-Model#setIntArray(name, values);
-
-    Sets the values of a GLSL array uniform.  `values` should be an array
-    containing a number of values equal to the size of the array, otherwise
-    the uniform will not be set.
-
-    Note: Only `float` and `int` types are currently supported.
-
-Model#setFloatVector(name, values);
-Model#setIntVector(name, values);
-
-    Sets the value of a GLSL vector uniform.  `values` must be an array and
-    contain between 2 and 4 values, inclusive.  If not, an error will be
-    thrown.
-
-    Note: Only `vecN` (float) and `ivecN` (integer) types are currently
-          supported.
-
-Model#setMatrix(name, transform);
-
-    Sets the value of 4x4 matrix uniform (`mat4`) using the underlying matrix
-    cells of a `Transform` object.
-
-    Note: Matrix types other than `mat4` are not currently supported.
-
 
 `Mouse` Object
 --------------
@@ -1314,6 +1271,49 @@ new Shader(options);
             shader.
 
     Note: HLSL (DirectX) shaders are not supported, even on Windows.
+
+Shader#setBoolean(name, value);
+
+    Sets the value of a GLSL boolean-valued (`bool`) uniform.  `value` is
+    either `true` or `false`.
+
+Shader#setColorVector(name, color);
+
+    Sets the value of a GLSL floating point 4-vector uniform (`vec4`) from the
+    components of a `Color` object.  Order is assumed to be RGBA.
+
+Shader#setFloat(name, value);
+Shader#setInt(name, value);
+
+    Sets the value of a GLSL scalar uniform.
+
+    Note: Only `float` and `int` types are currently supported.
+
+Shader#setFloatArray(name, values);
+Shader#setIntArray(name, values);
+
+    Sets the values of a GLSL array uniform.  `values` should be an array
+    containing a number of values equal to the size of the array, otherwise
+    the uniform will not be set.
+
+    Note: Only `float` and `int` types are currently supported.
+
+Shader#setFloatVector(name, values);
+Shader#setIntVector(name, values);
+
+    Sets the value of a GLSL vector uniform.  `values` must be an array and
+    contain between 2 and 4 values, inclusive.  If not, an error will be
+    thrown.
+
+    Note: Only `vecN` (float) and `ivecN` (integer) types are currently
+          supported.
+
+Shader#setMatrix(name, transform);
+
+    Sets the value of 4x4 matrix uniform (`mat4`) using the underlying matrix
+    cells of a `Transform` object.
+
+    Note: Matrix types other than `mat4` are not currently supported.
 
 
 `Shape` Object

@@ -57,6 +57,7 @@ class Image
 			vertex:   '#/shaders/tintedImage.vert.glsl'
 		});
 
+		this.shader = tintShader;
 		this.model = new Model([ shape ], tintShader);
 		this.texture = texture;
 	}
@@ -73,10 +74,10 @@ class Image
 
 	blitTo(surface, x, y, tintColor = Color.White)
 	{
+		this.shader.setColorVector('tintColor', tintColor);
 		this.model.transform = new Transform()
 			.scale(this.texture.width, this.texture.height)
 			.translate(x, y);
-		this.model.setColorVector('tintColor', tintColor);
 		this.model.draw(surface);
 	}
 }
