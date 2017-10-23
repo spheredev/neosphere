@@ -173,9 +173,8 @@ the event loop represents one frame and consists of three phases:
             screen and the backbuffer is cleared.
 
     Update: The Update phase calls jobs set up with `Dispatch.onUpdate()`.
-            The engine will always try to perform a number of updates per
-            second equal to the value of `Sphere.frameRate`; you can take
-            advantage of this fact to simplify your update code.
+            Updates are regulated by `Sphere.frameRate` (see below), which you
+            can take advantage of to simplify, e.g., animation code.
 
     Dispatch: The Dispatch phase is a multi-purpose phase which calls one-off
               jobs such as `Dispatch.now()` and settles promises.  The Dispatch
@@ -247,8 +246,12 @@ Sphere.Game [non-replaceable]
 
 Sphere.frameRate [read/write]
 
-    Gets or sets the frame rate used to regulate the event loop.  Set this to
-    Infinity to disable the frame limiter.
+    Gets or sets the frame rate.  Set this to Infinity to disable the frame
+    limiter.  The default is 60 FPS.
+    
+    The frame rate is used to regulate the event loop.  For example if this is
+    set to 60 (the default), the event loop will perform 60 iterations per
+    second, skipping renders as necessary to meet that goal.
 
 Sphere.abort(message);
 
