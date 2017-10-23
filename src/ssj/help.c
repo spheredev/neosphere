@@ -131,7 +131,12 @@ help_print(const char* command_name)
 			"such as a string or number, 'examine` works exactly like `eval'.  If the result\n"
 			"is an object, all of its properties (including non-enumerable), their          \n"
 			"attributes, and their values are listed in long form.                          \n\n"
+			"Each object in the output includes a numeric handle preceded by an asterisk,   \n"
+			"e.g. '*123'.  These are called 'quick refs', and they let you drill down into  \n"
+			"nested objects by using `examine` on the handle.  For instance, `x *123`.      \n\n"
+			"SHORT NAME: x                                                                  \n"
 			"SYNTAX:                                                                        \n"
+			"    examine <quick-ref>                                                        \n"
 			"    examine <expr>                                                             \n"
 		);
 	}
