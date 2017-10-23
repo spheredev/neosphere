@@ -142,27 +142,3 @@ Tool#stage(filename, sources);
 
     Instructs Cell to build `filename` using this Tool.  Returns a Target
     object representing the target file.
-
-
-`transpile` Function
---------------------
-
-This function allows you to use ECMAScript 2015 features such as destructuring
-assignment and arrow functions in Sphere games.  These syntax features are not
-natively supported by Duktape (the JavaScript engine used in miniSphere), but
-can be used by transpiling the ES 2015 scripts to ES5 first.
-
-To use the `transpile()` function, add one (and only one!) of the following
-lines to the top of your Cellscript:
-
-    import { transpile } from 'cell-runtime';
-
-transpile(targetPath, sources);
-
-    Stages a build that translates each Target in `sources` from ES2015 to ES5
-    and places the output into the directory named by `targetPath`.  Filenames
-    ending in `.mjs` are treated as ES2015 modules; anything else is treated as
-    a normal script.
-
-    Note: `import` and `export` keywords are supported only in ES2015 modules.
-          Using them in a normal script will produce a SyntaxError.
