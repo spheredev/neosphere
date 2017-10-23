@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.0.0 - October 31, 2017 (WIP)
--------------------------------
+v5.0.0 - October 31, 2017
+-------------------------
 
 * miniSphere and Cell now use the ChakraCore JS engine under the hood, vastly
   improving JavaScript execution performance and bringing long-overdue native
