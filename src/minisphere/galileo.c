@@ -87,9 +87,10 @@ struct shader
 {
 	unsigned int    id;
 	unsigned int    refcount;
-	bool            need_update;
+	char*           fragment_path;
 	ALLEGRO_SHADER* program;
 	vector_t*       uniforms;
+	char*           vertex_path;
 };
 
 struct shape
@@ -368,6 +369,8 @@ shader_new(const char* vert_filename, const char* frag_filename)
 	free(frag_source);
 
 	shader->id = s_next_shader_id++;
+	shader->fragment_path = strdup(frag_filename);
+	shader->vertex_path = strdup(vert_filename);
 	shader->uniforms = vector_new(sizeof(struct uniform));
 	return shader_ref(shader);
 
@@ -378,6 +381,15 @@ on_error:
 		al_destroy_shader(shader->program);
 	free(shader);
 	return NULL;
+}
+
+shader_t*
+shader_dup(const shader_t* it)
+{
+	shader_t* dolly;
+
+	dolly = shader_new(it->vertex_path, it->fragment_path);
+	return dolly;
 }
 
 shader_t*

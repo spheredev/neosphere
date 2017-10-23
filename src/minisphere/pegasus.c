@@ -341,6 +341,7 @@ static bool js_Server_close                  (int num_args, bool is_ctor, int ma
 static bool js_Server_accept                 (int num_args, bool is_ctor, int magic);
 static bool js_Shader_get_Default            (int num_args, bool is_ctor, int magic);
 static bool js_new_Shader                    (int num_args, bool is_ctor, int magic);
+static bool js_Shader_clone                  (int num_args, bool is_ctor, int magic);
 static bool js_Shader_setBoolean             (int num_args, bool is_ctor, int magic);
 static bool js_Shader_setColorVector         (int num_args, bool is_ctor, int magic);
 static bool js_Shader_setFloat               (int num_args, bool is_ctor, int magic);
@@ -612,6 +613,7 @@ pegasus_init(void)
 	api_define_method("Server", "accept", js_Server_accept);
 	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize);
 	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL);
+	api_define_method("Shader", "clone", js_Shader_clone);
 	api_define_method("Shader", "setBoolean", js_Shader_setBoolean);
 	api_define_method("Shader", "setColorVector", js_Shader_setColorVector);
 	api_define_method("Shader", "setFloat", js_Shader_setFloat);
@@ -2917,6 +2919,20 @@ js_Model_draw(int num_args, bool is_ctor, int magic)
 	if (!screen_skip_frame(g_screen))
 		model_draw(group, surface);
 	return false;
+}
+
+static bool
+js_Shader_clone(int num_args, bool is_ctor, int magic)
+{
+	shader_t* dolly;
+	shader_t* shader;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+
+	dolly = shader_dup(shader);
+	jsal_push_class_obj(PEGASUS_SHADER, dolly, false);
+	return true;
 }
 
 static bool

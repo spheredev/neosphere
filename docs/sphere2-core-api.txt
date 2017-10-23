@@ -1272,6 +1272,15 @@ new Shader(options);
 
     Note: HLSL (DirectX) shaders are not supported, even on Windows.
 
+Shader#clone();
+
+    Creates a copy of this shader with all uniforms set to their default
+    values.  The new shader is distinct from the first and can have its own
+    independent uniform values.  As uniform values are persistent, cloning
+    a shader can sometimes be useful as an optimization.
+    
+    Note: 
+
 Shader#setBoolean(name, value);
 
     Sets the value of a GLSL boolean-valued (`bool`) uniform.  `value` is
