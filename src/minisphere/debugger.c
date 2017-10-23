@@ -512,7 +512,7 @@ process_message(js_step_t* out_step)
 		jsal_debug_inspect_eval(call_index, eval_code, &eval_errored);
 		ki_message_add_bool(reply, !eval_errored);
 		if (jsal_get_uint(-1) == 0)
-			ki_message_add_string(reply, jsal_get_string(-2));
+			ki_message_add_atom(reply, atom_from_value(-2));
 		else
 			ki_message_add_ref(reply, jsal_get_uint(-1));
 		ki_message_add_string(reply, jsal_get_string(-3));
@@ -543,7 +543,7 @@ process_message(js_step_t* out_step)
 		while (jsal_debug_inspect_var(call_index, i++)) {
 			ki_message_add_string(reply, jsal_get_string(-3));
 			ki_message_add_string(reply, jsal_get_string(-2));
-			ki_message_add_string(reply, jsal_get_string(-1));
+			ki_message_add_atom(reply, atom_from_value(-1));
 			jsal_pop(3);
 		}
 		break;

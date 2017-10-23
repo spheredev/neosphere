@@ -26,9 +26,9 @@ v5.0.0 - October 31, 2017 (WIP)
 * Adds a new `--performance` command line option for SpheRun which disables the
   stepping debugger to ensure JavaScript code runs at full speed.
 * Adds `fullScreen` manifest field to specify a game's default fullscreen mode.
-* Adds support for quick refs to SSj: when using `examine`, this assigns an
-  alphanumeric handle to each object in the result, which you can quickly drill
-  into by typing `x @handle`.
+* Adds support for quick refs to SSj: when using `examine`, this assigns a
+  numeric handle to each object in the result, which you can quickly drill into
+  by typing, e.g., `x *123`.
 * Changes `Sphere.sleep()` to return a promise instead of blocking, allowing it
   to be used with `await` so as to avoid starving the event loop.
 * Changes `Console` into a full-fledged class, which allows for a familiar

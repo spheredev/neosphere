@@ -101,9 +101,9 @@ command_parse(const char* string)
 			tokens[index].string = string_value;
 			p_ch += length + 2;
 		}
-		else if (*p_ch == '@') {
-			length = strspn(++p_ch, "0123456789abcdefABCDEF");
-			handle = strtoul(p_ch, &p_tail, 16);
+		else if (*p_ch == '*') {
+			length = strspn(++p_ch, "0123456789");
+			handle = strtoul(p_ch, &p_tail, 10);
 			next_char = *p_tail;
 			if (next_char != '\0' && next_char != ' ' && next_char != '\t')
 				goto syntax_error;

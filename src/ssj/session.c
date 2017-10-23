@@ -476,7 +476,13 @@ handle_eval(session_t* obj, command_t* cmd, bool verbose)
 		result = inferior_eval(obj->inferior, expr, obj->frame, &is_error);
 		handle = ki_atom_handle(result);
 		if (ki_atom_type(result) != KI_REF) {  // primitive value?
-			printf(is_error ? "\33[31;1merror: \33[37;1m%s\33[m\n" : "= \33[37;1m%s\33[m\n", ki_atom_string(result));
+			if (!is_error) {
+				printf("= \33[37;1m");
+				ki_atom_print(result, verbose);
+				printf("\33[m\n");
+			} else {
+				printf("\33[31;1merror: \33[37;1m%s\33[m\n", ki_atom_string(result));
+			}
 			ki_atom_free(result);
 			return;
 		}
@@ -487,7 +493,7 @@ handle_eval(session_t* obj, command_t* cmd, bool verbose)
 	if (is_error)
 		printf("\33[31;1m");
 	if (objview_len(object) == 0) {
-		printf("object has no properties.\n");
+		printf("object has no properties or doesn't exist.\n");
 		return;
 	}
 	if (!verbose)
