@@ -298,11 +298,13 @@ main(int argc, char* argv[])
 	debugger_init(ssj_mode, false);
 #endif
 
+	g_restarting = false;
+	
 	// evaluate the main script (v1) or module (v2)
 	script_path = game_script_path(g_game);
 	api_version = game_version(g_game);
-	eval_succeeded =
-		api_version >= 2 ? pegasus_eval_module(path_cstr(script_path))
+	eval_succeeded = api_version >= 2
+		? pegasus_eval_module(path_cstr(script_path))
 		: script_eval(path_cstr(script_path));
 	if (!eval_succeeded)
 		goto on_js_error;

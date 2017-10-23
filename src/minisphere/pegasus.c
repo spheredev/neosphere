@@ -1217,7 +1217,6 @@ on_error:
 static bool
 run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
 {
-	g_restarting = false;
 	while (dispatch_busy() || jsal_busy()) {
 		dispatch_run(JOB_RENDER);
 		screen_flip(g_screen, s_frame_rate, true);
