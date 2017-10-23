@@ -1274,12 +1274,12 @@ new Shader(options);
 
 Shader#clone();
 
-    Creates a copy of this shader with all uniforms set to their default
-    values.  The new shader is distinct from the first and can have its own
-    independent uniform values.  As uniform values are persistent, cloning
-    a shader can sometimes be useful as an optimization.
-    
-    Note: 
+    Creates a copy of this shader.  The new shader is distinct from the first
+    and can have its own independent uniform values.  As uniform values are
+    persistent, cloning a shader can sometimes be useful as an optimization.
+
+    Note: Uniform values are not copied; the cloned shader will be constructed
+          with all of its uniforms set to their default values.
 
 Shader#setBoolean(name, value);
 

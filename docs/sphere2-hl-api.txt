@@ -890,6 +890,16 @@ scene engine uses the threads module and by default, scenes are nonblocking.
 See the documentation for `Scene#run()` below to find out how to play a scene
 in blocking mode.
 
+Scene.defaultPriority [read/write]
+
+    The Dispatch priority to use for new scenes.  Changing this value allows
+    you control where in the render order your cutscene elements (such as
+    dialogue text boxes) will be drawn.  If this is not set, the default is
+    0.0.
+
+    Note: Setting this applies only to new `Scene` objects and will not affect
+          the priority of objects that had already been created.
+
 Scene.defineOp(name, def);
 
     Registers a new scenelet with the scene engine.  `name` is the name of the

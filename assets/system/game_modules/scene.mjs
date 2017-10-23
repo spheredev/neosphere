@@ -35,7 +35,9 @@ import from from 'from';
 import Prim from 'prim';
 import Thread from 'thread';
 
-let screenMask = Color.Transparent;
+let defaultPriority = 0.0,
+    screenMask = Color.Transparent;
+
 Dispatch.onRender(() => {
 	if (screenMask.a > 0.0)
 		Prim.fill(screen, screenMask);
@@ -49,6 +51,16 @@ class Scene
 {
 	get [Symbol.toStringTag]() { return 'Scene'; }
 
+	static get defaultPriority()
+	{
+		return defaultPriority;
+	}
+	
+	static set defaultPriority(value)
+	{
+		defaultPriority = value;
+	}
+	
 	static defineOp(name, def)
 	{
 		if (name in this.prototype)
@@ -211,7 +223,7 @@ class Timeline extends Thread
 {
 	constructor(scene)
 	{
-		super();
+		super({ priority: defaultPriority });
 
 		this.children = [];
 		this.opThread = null;
@@ -263,7 +275,7 @@ class OpThread extends Thread
 {
 	constructor(scene, op)
 	{
-		super();
+		super({ priority: defaultPriority });
 
 		this.scene = scene;
 		this.op = op;

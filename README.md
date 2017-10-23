@@ -70,7 +70,7 @@ might look like this:
 // and written to game.json.
 Object.assign(Sphere.Game,
 {
-	name:       "My Game",
+    name:       "My Game",
     author:     "Some Guy",
     summary:    "This game is awesome.",
     resolution: '320x240',
@@ -99,8 +99,8 @@ below will write the contents of a single text file to the destination file:
 // performed by the tool, e.g., "compiling" or "installing".  if omitted, Cell
 // just says "building".
 let copyTool = new Tool((outName, sourceNames) => {
-	let text = FS.readFile(sourceNames[0]);
-	FS.writeFile(outName, text);
+    let text = FS.readFile(sourceNames[0]);
+    FS.writeFile(outName, text);
 }, "copying");
 ```
 
