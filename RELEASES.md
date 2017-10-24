@@ -11,23 +11,29 @@ miniSphere 5.0
   functions, destructuring, even `await`!
 
 * Thanks to the introduction of `async` and `await`, the event loop is now a
-  first-class part of the Sphere development experience and games are expected
-  to take advantage of it.  To that end, Sphere v2 functions dedicated the old
-  blocking style have been removed or refactored: both `Sphere.run()` and
-  `screen.flip()` are gone, and `Sphere.sleep()` has been changed to return an
-  awaitable promise instead of blocking the caller.
+  first-class part of the Sphere development experience.  To that end, all
+  Sphere v2 functions dedicated the old blocking style have been removed or
+  refactored: both `Sphere.run()` and `screen.flip()` are gone, and
+  `Sphere.sleep()` has been changed to return an awaitable promise instead of
+  blocking the caller.
 
-* mJS is now supported natively, without a transpiler.  This allows you to use
-  `import` and `export` to organize your codebase into self-contained modules
-  without the added complexity of CommonJS.  `require()` has in fact been
-  deprecated and is now provided only for interop with transpilers such as
-  Babel and modules originally written for Node.js.  New code should always use
-  the ES2015 module syntax (`import`/`export`) and the `.mjs` file extension.
+* mJS modules are now supported natively, without a transpiler.  This allows
+  you to use `import` and `export` to organize your codebase into
+  self-contained modules without the added complexity of CommonJS.  `require()`
+  has in fact been deprecated and is now provided only for interop with
+  transpilers such as Babel and modules originally written for Node.js.  New
+  code should always use the ES2015 module syntax (`import`/`export`) and the
+  `.mjs` file extension.
 
 * The entire Sphere Runtime was overhauled and is now written entirely in mJS.
   This brought several breaking changes both major and minor.  The big changes
   are listed below, but be sure to review the API documentation to get fully
   up to speed!
+
+* Because ES2015+ syntax is now supported natively, the Cell Runtime
+  `transpile` module has been cut.  If you're currently using it in your build,
+  you can simply change your Cellscript to use `install()` in place of
+  `transpile()` and everything should work as before.
 
 * `Dispatch.onUpdate()` and `Dispatch.onRender()` now take an options object
   as their second parameter.  Job priority is now be specified as a property of

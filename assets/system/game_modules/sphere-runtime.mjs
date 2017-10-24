@@ -36,7 +36,6 @@ export { default as Image } from 'image';
 export { default as Joypad } from 'joypad';
 export { default as Music } from 'music';
 export { default as Pact } from 'pact';
-export { default as Person } from 'person';
 export { default as Prim } from 'prim';
 export { default as Scene } from 'scene';
 export { default as Thread } from 'thread';

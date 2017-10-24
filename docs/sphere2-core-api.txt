@@ -248,7 +248,7 @@ Sphere.frameRate [read/write]
 
     Gets or sets the frame rate.  Set this to Infinity to disable the frame
     limiter.  The default is 60 FPS.
-    
+
     The frame rate is used to regulate the event loop.  For example if this is
     set to 60 (the default), the event loop will perform 60 iterations per
     second, skipping renders as necessary to meet that goal.
@@ -397,16 +397,6 @@ new DirectoryStream(dir_name);
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
 
-DirectoryStream#dispose();
-
-    Disposes of the DirectoryStream object, closing the underlying directory.
-    Attempting to the object afterwards will throw an error.
-
-    Note: While it's not strictly necessary to call `dispose()` on stream
-          objects,  it may take some time for the garbage collector to get to
-          them.  If there's an active DirectoryStream for a given directory, an
-          error may be thrown if you try to construct another one.
-
 DirectoryStream#fileCount [read-only]
 
     Gets the number of entries (both files and directories) in the directory
@@ -424,6 +414,16 @@ DirectoryStream#position [read/write]
 
     Gets or sets the position within the stream.  This is an index into the
     directory specifying which entry will be read next.
+
+DirectoryStream#dispose();
+
+    Disposes of the DirectoryStream object, closing the underlying directory.
+    Attempting to the object afterwards will throw an error.
+
+    Note: While it's not strictly necessary to call `dispose()` on stream
+          objects,  it may take some time for the garbage collector to get to
+          them.  If there's an active DirectoryStream for a given directory, an
+          error may be thrown if you try to construct another one.
 
 DirectoryStream#next();
 
@@ -939,19 +939,19 @@ Keyboard#scrollLock [read-only]
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
 
+Keyboard#charOf(key, shifted);
+
+    Gets the character(s) that would be generated if a specified key is pressed
+    on this keyboard.  For example, Key.A becomes "a" (or "A" if shifted).
+    `shifted` specifies whether to act as if the Shift key was pressed.
+
+    An empty string is returned if the specified key is not associated with a
+    character (a modifier key, for example).
+
 Keyboard#clearQueue();
 
     Removes all keys from the keyboard queue.  If another key is not pressed
     in the interim, the next getKey() will return null.
-
-Keyboard#getChar(key, shifted);
-
-    Gets the character(s) that would be generated if a specified key is pressed
-    on this keyboard.  For example, Key.A becomes "a" (or "A" if shifted).
-    `shifted` specifies whether to assume the Shift key is pressed.
-
-    An empty string is returned if the specified key is not associated with a
-    character (a modifier key, for example).
 
 Keyboard#getKey();
 
@@ -1133,8 +1133,14 @@ RNG#state [read/write]
 
 RNG#next();
 
-    Gets the next random number in the sequence.  Value returned is in the
-    range [0-1).
+    Generates the next random number in the sequence.  This returns an object
+    whose `done` property is always false, and whose `value` property is a
+    number in the range [0,1).
+
+    Note: This method is compatible with the JavaScript ES6 iterator protocol,
+          allowing you to use the RNG object as input to a `from()` query.
+          Refer to the Sphere Runtime API documentation for more information
+          about `from()`.
 
 
 `SSj` Namespace

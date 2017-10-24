@@ -46,7 +46,7 @@ class Random
 	{
 		assert.ok(typeof odds === 'number', "odds must be a number");
 
-		return odds > generator.next();
+		return odds > generator.next().value;
 	}
 
 	static discrete(min, max)
@@ -58,7 +58,7 @@ class Random
 		max >>= 0;
 		var range = Math.abs(max - min) + 1;
 		min = min < max ? min : max;
-		return min + Math.floor(generator.next() * range);
+		return min + Math.floor(generator.next().value * range);
 	}
 
 	static normal(mean, sigma)
@@ -72,8 +72,8 @@ class Random
 		var x, u, v, w;
 		if (this.normal.memo === undefined) {
 			do {
-				u = 2.0 * generator.next() - 1.0;
-				v = 2.0 * generator.next() - 1.0;
+				u = 2.0 * generator.next().value - 1.0;
+				v = 2.0 * generator.next().value - 1.0;
 				w = u * u + v * v;
 			} while (w >= 1.0);
 			w = Math.sqrt(-2.0 * Math.log(w) / w);
@@ -118,7 +118,7 @@ class Random
 		assert.ok(typeof mean === 'number', "mean must be a number");
 		assert.ok(typeof variance === 'number', "variance must be a number");
 
-		var error = variance * 2.0 * (0.5 - generator.next());
+		var error = variance * 2.0 * (0.5 - generator.next().value);
 		return mean + error;
 	}
 }

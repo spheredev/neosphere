@@ -251,12 +251,12 @@ static bool js_Color_set_a                   (int num_args, bool is_ctor, int ma
 static bool js_Color_clone                   (int num_args, bool is_ctor, int magic);
 static bool js_Color_fadeTo                  (int num_args, bool is_ctor, int magic);
 static bool js_new_DirectoryStream           (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_dispose       (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_fileCount (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_fileName  (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_position  (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_set_position  (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_iterator      (int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_dispose       (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_next          (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_cancelAll            (int num_args, bool is_ctor, int magic);
@@ -303,8 +303,8 @@ static bool js_Keyboard_get_Default          (int num_args, bool is_ctor, int ma
 static bool js_Keyboard_get_capsLock         (int num_args, bool is_ctor, int magic);
 static bool js_Keyboard_get_numLock          (int num_args, bool is_ctor, int magic);
 static bool js_Keyboard_get_scrollLock       (int num_args, bool is_ctor, int magic);
+static bool js_Keyboard_charOf               (int num_args, bool is_ctor, int magic);
 static bool js_Keyboard_clearQueue           (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_getChar              (int num_args, bool is_ctor, int magic);
 static bool js_Keyboard_getKey               (int num_args, bool is_ctor, int magic);
 static bool js_Keyboard_isPressed            (int num_args, bool is_ctor, int magic);
 static bool js_Mixer_get_Default             (int num_args, bool is_ctor, int magic);
@@ -328,6 +328,7 @@ static bool js_RNG_fromState                 (int num_args, bool is_ctor, int ma
 static bool js_new_RNG                       (int num_args, bool is_ctor, int magic);
 static bool js_RNG_get_state                 (int num_args, bool is_ctor, int magic);
 static bool js_RNG_set_state                 (int num_args, bool is_ctor, int magic);
+static bool js_RNG_iterator                  (int num_args, bool is_ctor, int magic);
 static bool js_RNG_next                      (int num_args, bool is_ctor, int magic);
 static bool js_SSj_flipScreen                (int num_args, bool is_ctor, int magic);
 static bool js_SSj_log                       (int num_args, bool is_ctor, int magic);
@@ -462,10 +463,12 @@ static int      s_frame_rate = 60;
 static int      s_next_module_id = 1;
 
 static js_ref_t* s_key_color;
+static js_ref_t* s_key_done;
 static js_ref_t* s_key_inBackground;
 static js_ref_t* s_key_priority;
 static js_ref_t* s_key_u;
 static js_ref_t* s_key_v;
+static js_ref_t* s_key_value;
 static js_ref_t* s_key_x;
 static js_ref_t* s_key_y;
 static js_ref_t* s_key_z;
@@ -481,10 +484,12 @@ pegasus_init(void)
 	jsal_on_import_module(handle_module_import);
 
 	s_key_color = jsal_new_key("color");
+	s_key_done = jsal_new_key("done");
 	s_key_inBackground = jsal_new_key("inBackground");
 	s_key_priority = jsal_new_key("priority");
 	s_key_u = jsal_new_key("u");
 	s_key_v = jsal_new_key("v");
+	s_key_value = jsal_new_key("value");
 	s_key_x = jsal_new_key("x");
 	s_key_y = jsal_new_key("y");
 	s_key_z = jsal_new_key("z");
@@ -525,11 +530,11 @@ pegasus_init(void)
 	api_define_method("Color", "clone", js_Color_clone);
 	api_define_method("Color", "fadeTo", js_Color_fadeTo);
 	api_define_class("DirectoryStream", PEGASUS_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize);
-	api_define_method("DirectoryStream", "dispose", js_DirectoryStream_dispose);
 	api_define_property("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
 	api_define_property("DirectoryStream", "fileName", false, js_DirectoryStream_get_fileName, NULL);
 	api_define_property("DirectoryStream", "position", false, js_DirectoryStream_get_position, js_DirectoryStream_set_position);
 	api_define_method("DirectoryStream", "@@iterator", js_DirectoryStream_iterator);
+	api_define_method("DirectoryStream", "dispose", js_DirectoryStream_dispose);
 	api_define_method("DirectoryStream", "next", js_DirectoryStream_next);
 	api_define_method("DirectoryStream", "rewind", js_DirectoryStream_rewind);
 	api_define_function("Dispatch", "cancelAll", js_Dispatch_cancelAll);
@@ -578,8 +583,8 @@ pegasus_init(void)
 	api_define_property("Keyboard", "capsLock", false, js_Keyboard_get_capsLock, NULL);
 	api_define_property("Keyboard", "numLock", false, js_Keyboard_get_numLock, NULL);
 	api_define_property("Keyboard", "scrollLock", false, js_Keyboard_get_scrollLock, NULL);
+	api_define_method("Keyboard", "charOf", js_Keyboard_charOf);
 	api_define_method("Keyboard", "clearQueue", js_Keyboard_clearQueue);
-	api_define_method("Keyboard", "getChar", js_Keyboard_getChar);
 	api_define_method("Keyboard", "getKey", js_Keyboard_getKey);
 	api_define_method("Keyboard", "isPressed", js_Keyboard_isPressed);
 	api_define_class("Mixer", PEGASUS_MIXER, js_new_Mixer, js_Mixer_finalize);
@@ -600,6 +605,7 @@ pegasus_init(void)
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed);
 	api_define_function("RNG", "fromState", js_RNG_fromState);
 	api_define_property("RNG", "state", false, js_RNG_get_state, js_RNG_set_state);
+	api_define_method("RNG", "@@iterator", js_RNG_iterator);
 	api_define_method("RNG", "next", js_RNG_next);
 	api_define_function("SSj", "flipScreen", js_SSj_flipScreen);
 	api_define_function("SSj", "log", js_SSj_log);
@@ -825,10 +831,12 @@ void
 pegasus_uninit(void)
 {
 	jsal_unref(s_key_color);
+	jsal_unref(s_key_done);
 	jsal_unref(s_key_inBackground);
 	jsal_unref(s_key_priority);
 	jsal_unref(s_key_u);
 	jsal_unref(s_key_v);
+	jsal_unref(s_key_value);
 	jsal_unref(s_key_x);
 	jsal_unref(s_key_y);
 	jsal_unref(s_key_z);
@@ -1220,7 +1228,8 @@ static bool
 run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
 {
 	while (dispatch_busy() || jsal_busy()) {
-		dispatch_run(JOB_RENDER);
+		if (!screen_skip_frame(g_screen))
+			dispatch_run(JOB_RENDER);
 		screen_flip(g_screen, s_frame_rate, true);
 		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
 		dispatch_run(JOB_UPDATE);
@@ -1723,7 +1732,7 @@ js_new_DirectoryStream(int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(stream = directory_open(g_game, pathname)))
-		jsal_error(JS_ERROR, "couldn't open directory");
+		jsal_error(JS_ERROR, "couldn't open directory '%s'", pathname);
 	jsal_push_class_obj(PEGASUS_DIR_STREAM, stream, true);
 	return true;
 }
@@ -1732,19 +1741,6 @@ static void
 js_DirectoryStream_finalize(void* host_ptr)
 {
 	directory_close(host_ptr);
-}
-
-static bool
-js_DirectoryStream_dispose(int num_args, bool is_ctor, int magic)
-{
-	directory_t* directory;
-
-	jsal_push_this();
-	directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM);
-
-	jsal_set_class_ptr(-1, NULL);
-	directory_close(directory);
-	return false;
 }
 
 static bool
@@ -1811,7 +1807,20 @@ js_DirectoryStream_iterator(int num_args, bool is_ctor, int magic)
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
-	return 1;
+	return true;
+}
+
+static bool
+js_DirectoryStream_dispose(int num_args, bool is_ctor, int magic)
+{
+	directory_t* directory;
+
+	jsal_push_this();
+	directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM);
+
+	jsal_set_class_ptr(-1, NULL);
+	directory_close(directory);
+	return false;
 }
 
 static bool
@@ -1828,7 +1837,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 	jsal_push_new_object();
 	if (entry_path != NULL) {
 		jsal_push_boolean(false);
-		jsal_put_prop_string(-2, "done");
+		jsal_put_prop_key(-2, s_key_done);
 		jsal_push_new_object();
 		if (path_is_file(entry_path))
 			jsal_push_string(path_filename(entry_path));
@@ -1839,11 +1848,11 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 		jsal_put_prop_string(-2, "fullPath");
 		jsal_push_boolean(!path_is_file(entry_path));
 		jsal_put_prop_string(-2, "isDirectory");
-		jsal_put_prop_string(-2, "value");
+		jsal_put_prop_key(-2, s_key_value);
 	}
 	else {
 		jsal_push_boolean(true);
-		jsal_put_prop_string(-2, "done");
+		jsal_put_prop_key(-2, s_key_done);
 	}
 	return true;
 }
@@ -2640,17 +2649,7 @@ js_Keyboard_get_scrollLock(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_clearQueue(int num_args, bool is_ctor, int magic)
-{
-	jsal_push_this();
-	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
-
-	kb_clear_queue();
-	return false;
-}
-
-static bool
-js_Keyboard_getChar(int num_args, bool is_ctor, int magic)
+js_Keyboard_charOf(int num_args, bool is_ctor, int magic)
 {
 	int  keycode;
 	bool shifted;
@@ -2715,6 +2714,16 @@ js_Keyboard_getChar(int num_args, bool is_ctor, int magic)
 		jsal_push_string("");
 	}
 	return true;
+}
+
+static bool
+js_Keyboard_clearQueue(int num_args, bool is_ctor, int magic)
+{
+	jsal_push_this();
+	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
+
+	kb_clear_queue();
+	return false;
 }
 
 static bool
@@ -3302,14 +3311,29 @@ js_RNG_set_state(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_next(int num_args, bool is_ctor, int magic)
+js_RNG_iterator(int num_args, bool is_ctor, int magic)
 {
-	xoro_t*     xoro;
+	xoro_t* xoro;
 
 	jsal_push_this();
 	xoro = jsal_require_class_obj(-1, PEGASUS_RNG);
 
+	return true;
+}
+
+static bool
+js_RNG_next(int num_args, bool is_ctor, int magic)
+{
+	xoro_t* xoro;
+
+	jsal_push_this();
+	xoro = jsal_require_class_obj(-1, PEGASUS_RNG);
+
+	jsal_push_new_object();
+	jsal_push_boolean(false);
+	jsal_put_prop_key(-2, s_key_done);
 	jsal_push_number(xoro_gen_double(xoro));
+	jsal_put_prop_key(-2, s_key_value);
 	return true;
 }
 
@@ -4337,7 +4361,7 @@ js_TextDecoder_get_fatal(int num_args, bool is_ctor, int magic)
 	decoder = jsal_require_class_obj(-1, PEGASUS_TEXT_DEC);
 
 	jsal_push_boolean(decoder_fatal(decoder));
-	return 1;
+	return true;
 }
 
 static bool

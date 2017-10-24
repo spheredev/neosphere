@@ -40,15 +40,18 @@ To make things easier for Sphere v2 developers, Cell provides a subset of the
 Sphere v2 API and standard library for use in Cellscripts.  Specifically, the
 following are provided:
 
-    - Text Encoding API (`TextEncoder`, `TextDecoder` classes)
-    - File System API (`FS` object, `FileStream` class)
-    - Random Number Generator API (`RNG` class)
+    - Text Encoding API (`TextEncoder`, `TextDecoder`)
+    - File System API (`FS`, 'DirectoryStream', `FileStream`)
+    - Random Number Generator API (`RNG`)
 
     - Several standard library modules:
         - `assert` module
+        - `dataStream` module
+        - `delegate` module
         - `from` module
+        - `logger` module
         - `random` module
-        - `struct` module
+        - `test` module
         - `xml` module
 
 Refer to `sphere2-api.txt` and/or `miniRT-api.txt` for more information on how

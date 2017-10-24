@@ -34,21 +34,23 @@ v5.0.0 - October 31, 2017
 * Changes `Console` into a full-fledged class, which allows for a familiar
   `new Console()` usage and gives games the ability to set up multiple consoles
   if desired.
+* Changes `RNG` to be compatible with the ES2015 iterator protocol.
+* Changes `SSj.log()` to perform JSON serialization if its argument is an
+  object.
+* Changes SSj `eval`, `examine` to not require quoting the expression string.
 * Renames `from.Array()` and `from.Object()` to lowercase to match typical
   JavaScript naming conventions.
 * Renames `screen.frameRate` and `screen.now()` to `Sphere.frameRate` and
   `Sphere.now()`, respectively.
 * Renames `Dispatch.cancel()` to `JobToken#cancel()`.
 * Renames `Color#fade()` to `Color#fadeTo()`.
+* Renames `Keyboard#getChar()` to `Keyboard#charOf()`.
+* Removes the experimental `Person` class from the Sphere Runtime.
 * Removes the now-redundant `DataReader` and `DataWriter` classes.
 * Removes `screen.flip()`, `Sphere.run()` and `Sphere.exit()` in favor of the
   engine-provided event loop.
 * Removes the Cell `transpile` module in favor of promoting native ES2015.
-* Improves `SSj.log()` to perform JSON serialization if its argument is an
-  object.
 * Improves the startup routines to also look in `dist/` for a bundled game.
-* Improves SSj `eval` and `examine` commands, allowing them to work without
-  having to quote the expression to evaluate.
 * Improves the SSj debugging experience by preventing the engine from switching
   to fullscreen mode as long as the debugger is attached.
 * Improves internal handling of UTF-8 strings, fixing several bugs related to

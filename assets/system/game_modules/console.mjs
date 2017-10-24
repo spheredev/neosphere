@@ -182,7 +182,7 @@ class Console extends Thread
 					break;
 				default:
 					let isShifted = this.keyboard.isPressed(Key.LShift) || this.keyboard.isPressed(Key.RShift);
-					let ch = this.keyboard.getChar(keycode, isShifted);
+					let ch = this.keyboard.charOf(keycode, isShifted);
 					ch = this.keyboard.capsLock ? ch.toUpperCase() : ch;
 					this.entry += ch;
 			}

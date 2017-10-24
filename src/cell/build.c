@@ -74,6 +74,8 @@ static bool js_DirectoryStream_get_fileCount (int num_args, bool is_ctor, int ma
 static bool js_DirectoryStream_get_fileName  (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_position  (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_set_position  (int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_iterator      (int num_args, bool is_ctor, int magic);
+static bool js_DirectoryStream_dispose       (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_next          (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, int magic);
 static bool js_FS_createDirectory            (int num_args, bool is_ctor, int magic);
@@ -98,6 +100,7 @@ static bool js_RNG_fromState                 (int num_args, bool is_ctor, int ma
 static bool js_new_RNG                       (int num_args, bool is_ctor, int magic);
 static bool js_RNG_get_state                 (int num_args, bool is_ctor, int magic);
 static bool js_RNG_set_state                 (int num_args, bool is_ctor, int magic);
+static bool js_RNG_iterator                  (int num_args, bool is_ctor, int magic);
 static bool js_RNG_next                      (int num_args, bool is_ctor, int magic);
 static bool js_Target_get_fileName           (int num_args, bool is_ctor, int magic);
 static bool js_Target_get_name               (int num_args, bool is_ctor, int magic);
@@ -182,6 +185,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_property("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
 	api_define_property("DirectoryStream", "fileName", false, js_DirectoryStream_get_fileName, NULL);
 	api_define_property("DirectoryStream", "position", false, js_DirectoryStream_get_position, js_DirectoryStream_set_position);
+	api_define_method("DirectoryStream", "@@iterator", js_DirectoryStream_iterator);
+	api_define_method("DirectoryStream", "dispose", js_DirectoryStream_dispose);
 	api_define_method("DirectoryStream", "next", js_DirectoryStream_next);
 	api_define_method("DirectoryStream", "rewind", js_DirectoryStream_rewind);
 	api_define_function("FS", "createDirectory", js_FS_createDirectory);
@@ -204,6 +209,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed);
 	api_define_function("RNG", "fromState", js_RNG_fromState);
 	api_define_property("RNG", "state", false, js_RNG_get_state, js_RNG_set_state);
+	api_define_method("RNG", "@@iterator", js_RNG_iterator);
 	api_define_method("RNG", "next", js_RNG_next);
 	api_define_class("Target", CELL_TARGET, NULL, js_Target_finalize);
 	api_define_property("Target", "fileName", false, js_Target_get_fileName, NULL);
@@ -1195,7 +1201,8 @@ js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, int magic)
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
+	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_num_files(stream));
 	return true;
@@ -1207,7 +1214,8 @@ js_DirectoryStream_get_fileName(int num_args, bool is_ctor, int magic)
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
+	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_string(directory_pathname(stream));
 	return true;
@@ -1219,7 +1227,8 @@ js_DirectoryStream_get_position(int num_args, bool is_ctor, int magic)
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
+	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_position(stream));
 	return true;
@@ -1232,11 +1241,37 @@ js_DirectoryStream_set_position(int num_args, bool is_ctor, int magic)
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
+	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 	position = jsal_require_int(0);
 
 	if (!directory_seek(stream, position))
 		jsal_error(JS_ERROR, "couldn't set stream position");
+	return false;
+}
+
+static bool
+js_DirectoryStream_iterator(int num_args, bool is_ctor, int magic)
+{
+	directory_t* stream;
+	
+	jsal_push_this();
+	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+
+	return true;
+}
+
+static bool
+js_DirectoryStream_dispose(int num_args, bool is_ctor, int magic)
+{
+	directory_t* directory;
+
+	jsal_push_this();
+	directory = jsal_require_class_obj(-1, CELL_DIR_STREAM);
+
+	jsal_set_class_ptr(-1, NULL);
+	directory_close(directory);
 	return false;
 }
 
@@ -1247,7 +1282,8 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 	directory_t*  stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
+	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	entry_path = directory_next(stream);
 	jsal_push_new_object();
@@ -1279,7 +1315,8 @@ js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
 	directory_t* stream;
 
 	jsal_push_this();
-	stream = jsal_require_class_obj(-1, CELL_DIR_STREAM);
+	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
+		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
 
 	directory_rewind(stream);
 	return false;
@@ -1640,14 +1677,29 @@ js_RNG_set_state(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_next(int num_args, bool is_ctor, int magic)
+js_RNG_iterator(int num_args, bool is_ctor, int magic)
 {
-	xoro_t*     xoro;
+	xoro_t* xoro;
 
 	jsal_push_this();
 	xoro = jsal_require_class_obj(-1, CELL_RNG);
 
+	return true;
+}
+
+static bool
+js_RNG_next(int num_args, bool is_ctor, int magic)
+{
+	xoro_t* xoro;
+
+	jsal_push_this();
+	xoro = jsal_require_class_obj(-1, CELL_RNG);
+
+	jsal_push_new_object();
+	jsal_push_boolean(false);
+	jsal_put_prop_string(-2, "done");
 	jsal_push_number(xoro_gen_double(xoro));
+	jsal_put_prop_string(-2, "value");
 	return true;
 }
 
@@ -1740,7 +1792,7 @@ js_TextDecoder_get_fatal(int num_args, bool is_ctor, int magic)
 	decoder = jsal_require_class_obj(-1, CELL_TEXT_DEC);
 
 	jsal_push_boolean(decoder_fatal(decoder));
-	return 1;
+	return true;
 }
 
 static bool
