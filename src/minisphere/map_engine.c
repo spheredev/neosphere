@@ -2106,7 +2106,7 @@ draw_persons(int layer, bool is_flipped, int cam_x, int cam_y)
 		x -= cam_x - person->x_offset;
 		y -= cam_y - person->y_offset;
 		spriteset_draw(sprite, person->mask, is_flipped, person->theta, person->scale_x, person->scale_y,
-			person->direction, x, y, person->frame);
+			person->direction, trunc(x), trunc(y), person->frame);
 	}
 }
 

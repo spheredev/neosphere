@@ -116,6 +116,7 @@ main(int argc, char* argv[])
 	int                  api_version;
 	bool                 eval_succeeded;
 	lstring_t*           dialog_name;
+	int                  error_column;
 	const char*          error_file = NULL;
 	int                  error_line;
 	const char*          error_stack = NULL;
@@ -351,7 +352,9 @@ on_js_error:
 		error_file = jsal_get_string(-1);
 		jsal_get_prop_string(-3, "line");
 		error_line = jsal_get_int(-1) + 1;
-		jsal_get_prop_string(-4, "stack");
+		jsal_get_prop_string(-4, "column");
+		error_column = jsal_get_int(-1) + 1;
+		jsal_get_prop_string(-5, "stack");
 		if (!(error_stack = jsal_get_string(-1)))
 			error_stack = error_text;
 	}
@@ -360,9 +363,9 @@ on_js_error:
 		fprintf(stderr, "%s\n", error_stack);
 		if (error_text[strlen(error_text) - 1] != '\n') {
 			if (error_file != NULL)
-				jsal_push_sprintf("- %s:%d -\n\n%s\n", error_file, error_line, error_stack);
+				jsal_push_sprintf("%s:%d:%d\n\n%s\n", error_file, error_line, error_column, error_stack);
 			else
-				jsal_push_sprintf("- JS runtime error -\n\n%s\n", error_stack);
+				jsal_push_sprintf("= JS runtime error =\n\n%s\n", error_stack);
 		}
 		else {
 			jsal_push_sprintf("%s\n", error_text);
