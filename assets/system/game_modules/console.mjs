@@ -115,7 +115,7 @@ class Console extends Thread
 		if (this.running)
 			throw new Error("the Console has already been started");
 
-		new Scene()
+		new Scene({ inBackground: true })
 			.doWhile(() => true)
 				.tween(this.cursorColor, 0.25 * Sphere.frameRate, 'easeInSine', { a: 1.0 })
 				.tween(this.cursorColor, 0.25 * Sphere.frameRate, 'easeOutSine', { a: 0.5 })

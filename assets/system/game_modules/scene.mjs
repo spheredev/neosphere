@@ -78,9 +78,15 @@ class Scene
 		};
 	}
 
-	constructor()
+	constructor(options)
 	{
-		this.timeline = new Timeline(this);
+		options = Object.assign({}, {
+			inBackground: false,
+			priority: defaultPriority,
+		}, options);
+		
+		this.threadOptions = options;
+		this.timeline = new Timeline(this, this.threadOptions);
 		this.forkStack = [];
 		this.jumpsToFix = [];
 		this.openBlockTypes = [];
@@ -181,7 +187,7 @@ class Scene
 	fork()
 	{
 		this.forkStack.push(this.timeline);
-		this.timeline = new Timeline(this);
+		this.timeline = new Timeline(this, this.threadOptions);
 		this.openBlockTypes.push('fork');
 		return this;
 	}
@@ -221,15 +227,16 @@ class Scene
 
 class Timeline extends Thread
 {
-	constructor(scene)
+	constructor(scene, threadOptions)
 	{
-		super({ priority: defaultPriority });
+		super(threadOptions);
 
 		this.children = [];
 		this.opThread = null;
 		this.ops = [];
 		this.pc = 0;
 		this.scene = scene;
+		this.threadOptions = threadOptions;
 	}
 
 	get length()
@@ -261,7 +268,7 @@ class Timeline extends Thread
 	async on_update()
 	{
 		let op = this.ops[this.pc++];
-		let thread = new OpThread(this.scene, op);
+		let thread = new OpThread(this.scene, op, this.threadOptions);
 		await thread.start();
 		await Thread.join(thread);
 		if (this.pc >= this.ops.length) {
@@ -273,9 +280,9 @@ class Timeline extends Thread
 
 class OpThread extends Thread
 {
-	constructor(scene, op)
+	constructor(scene, op, threadOptions)
 	{
-		super({ priority: defaultPriority });
+		super(threadOptions);
 
 		this.scene = scene;
 		this.op = op;

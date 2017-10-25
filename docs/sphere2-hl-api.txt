@@ -941,11 +941,26 @@ Scene.defineOp(name, def);
     its first argument, and its `this` binding is set to a unique object it can
     use to manage execution state for that invocation only.
 
-new Scene();
+new Scene([options]);
 
     Constructs a new scene definition.  The scene starts with no scenelets and
     will do nothing when run.  Calling any method other than .run() on the
     scene will add scenelets, and this is how you build a scene.
+
+    options.inBackground [default: false]
+
+        The scene will run as a background task.  This can be useful to set up
+        animations you want to run continuously in the background without
+        preventing the game from exiting naturally.
+
+    options.priority [default: varies]
+
+        The Dispatch priority of the scene.  See the Core API documentation,
+        specifically the documentation for the `Dispatch` namespace, for more
+        information on job priorities.
+
+        Note: The default priority for new scenes is determined by the value of
+              `Scene.defaultPriority` (see above).
 
 Scene#running [read-only]
 
