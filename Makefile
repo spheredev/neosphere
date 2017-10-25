@@ -85,6 +85,7 @@ dist:
 .PHONY: install
 install: all
 	mkdir -p $(installdir)/bin
+	mkdir -p $(installdir)/lib
 	mkdir -p $(installdir)/share/minisphere
 	mkdir -p $(installdir)/share/applications
 	mkdir -p $(installdir)/share/doc/minisphere
