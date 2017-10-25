@@ -183,39 +183,6 @@ the event loop represents one frame and consists of three phases:
               next frame.
 
 
-`screen` Built-In
------------------
-
-In Sphere v2, the backbuffer is exposed as a custom `Surface` object (see
-below) with some additional special-purpose methods.  The surface is accessible
-to game code through a built-in global constant, `screen`.
-
-screen [global, non-replaceable]
-
-    A `Surface` object (see below) representing the backbuffer.  Anything drawn
-    to `screen` will become visible the next time the event loop regains
-    control.
-
-screen.frameSkip [read/write]
-
-    Gets or sets the maximum number of frames the engine is allowed to skip in
-    order to maintain the desired frame rate.
-
-screen.fullScreen [read/write]
-
-    Gets or sets whether the engine is running in fullscreen mode.  Set this to
-    `true` for fullscreen, or `false` for windowed.
-
-    Note: If an SSj debugger instance is attached, the engine is forced into
-          windowed mode and any change to the value of `screen.fullScreen` will
-          be silently ignored.
-
-screen.resize(width, height);
-
-    Changes the game's resolution.  The change is not persistent and lasts only
-    until the engine is closed.
-
-
 `Sphere` Namespace
 ------------------
 
@@ -295,6 +262,39 @@ Sphere.sleep(frames);
     Returns a promise which resolves after the specified number of frames have
     elapsed.  Can be used with `await`.  This is useful to delay execution of a
     function without blocking the event loop.
+
+
+`screen` Built-In
+-----------------
+
+In Sphere v2, the backbuffer is exposed as a custom `Surface` object (see
+below) with some additional special-purpose methods.  The surface is accessible
+to game code through a built-in global constant, `screen`.
+
+screen [global, non-replaceable]
+
+    A `Surface` object (see below) representing the backbuffer.  Anything drawn
+    to `screen` will become visible the next time the event loop regains
+    control.
+
+screen.frameSkip [read/write]
+
+    Gets or sets the maximum number of frames the engine is allowed to skip in
+    order to maintain the desired frame rate.
+
+screen.fullScreen [read/write]
+
+    Gets or sets whether the engine is running in fullscreen mode.  Set this to
+    `true` for fullscreen, or `false` for windowed.
+
+    Note: If an SSj debugger instance is attached, the engine is forced into
+          windowed mode and any change to the value of `screen.fullScreen` will
+          be silently ignored.
+
+screen.resize(width, height);
+
+    Changes the game's resolution.  The change is not persistent and lasts only
+    until the engine is closed.
 
 
 `Color` Object
@@ -1266,20 +1266,18 @@ Shader.Default [read-only]
 
 new Shader(options);
 
-    Constructs a Shader from a set of shader sources.  `options` should be an
-    object with the following properties:
+    Constructs a shader program from a set of GLSL shader sources.  `options`
+    specifies the shader sources.
 
-        options.vertex
+    options.vertexFile [required]
 
-            The name of the file containing source code for the GLSL vertex
-            shader.
+        The name of a file containing GLSL source code for the program's vertex
+        shader.
 
-        options.fragment
+    options.fragmentFile [required]
 
-            The name of the file containing source code for the GLSL fragment
-            shader.
-
-    Note: HLSL (DirectX) shaders are not supported, even on Windows.
+        The name of a file containing GLSL source code for the program's
+        fragment shader.
 
 Shader#clone();
 

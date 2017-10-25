@@ -45,6 +45,8 @@ v5.0.0 - October 31, 2017
 * Renames `Dispatch.cancel()` to `JobToken#cancel()`.
 * Renames `Color#fade()` to `Color#fadeTo()`.
 * Renames `Keyboard#getChar()` to `Keyboard#charOf()`.
+* Renames `fragment` and `vertex` Shader constructor options to `fragmentFile`
+  and `vertexFile`, respectively.
 * Removes the experimental `Person` class from the Sphere Runtime.
 * Removes the now-redundant `DataReader` and `DataWriter` classes.
 * Removes `screen.flip()`, `Sphere.run()` and `Sphere.exit()` in favor of the

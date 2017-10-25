@@ -3531,24 +3531,19 @@ js_Shader_get_Default(int num_args, bool is_ctor, int magic)
 static bool
 js_new_Shader(int num_args, bool is_ctor, int magic)
 {
-	const char* game_filename;
-	const char* vs_filename;
+	const char* fragment_pathname;
 	shader_t*   shader;
+	const char* vertex_pathname;
 
-	if (!jsal_is_object(0))
-		jsal_error(JS_TYPE_ERROR, "options must be an object");
-	if (jsal_get_prop_string(0, "vertex"), !jsal_is_string(-1))
-		jsal_error(JS_TYPE_ERROR, "'vertex' must be a string");
-	if (jsal_get_prop_string(0, "fragment"), !jsal_is_string(-1))
-		jsal_error(JS_TYPE_ERROR, "'fragment' must be a string");
-	jsal_pop(2);
+	jsal_require_object(0);
+	jsal_get_prop_string(0, "fragmentFile");
+	jsal_require_string(-1);
+	jsal_get_prop_string(0, "vertexFile");
+	jsal_require_string(-1);
 
-	jsal_get_prop_string(0, "vertex");
-	jsal_get_prop_string(0, "fragment");
-	vs_filename = jsal_require_pathname(-2, NULL, false, false);
-	game_filename = jsal_require_pathname(-1, NULL, false, false);
-	jsal_pop(2);
-	if (!(shader = shader_new(vs_filename, game_filename)))
+	fragment_pathname = jsal_require_pathname(-2, NULL, false, false);
+	vertex_pathname = jsal_require_pathname(-1, NULL, false, false);
+	if (!(shader = shader_new(vertex_pathname, fragment_pathname)))
 		jsal_error(JS_ERROR, "couldn't compile shader program");
 	jsal_push_class_obj(PEGASUS_SHADER, shader, true);
 	return true;

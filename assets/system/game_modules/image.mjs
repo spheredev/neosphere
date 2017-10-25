@@ -53,8 +53,8 @@ class Image
 				{ x: 1, y: 1, u: 1, v: 0 },
 			]));
 		let tintShader = new Shader({
-			fragment: '#/shaders/tintedImage.frag.glsl',
-			vertex:   '#/shaders/tintedImage.vert.glsl'
+			fragmentFile: '#/shaders/tintedImage.frag.glsl',
+			vertexFile:   '#/shaders/tintedImage.vert.glsl'
 		});
 
 		this.shader = tintShader;
