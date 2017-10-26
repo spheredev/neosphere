@@ -32,6 +32,11 @@
 
 import from from 'from';
 
+let imageShader = new Shader({
+	fragmentFile: '#/shaders/image.frag.glsl',
+	vertexFile:   '#/shaders/image.vert.glsl',
+});
+
 export default
 class Image
 {
@@ -52,13 +57,8 @@ class Image
 				{ x: 0, y: 1, u: 0, v: 0 },
 				{ x: 1, y: 1, u: 1, v: 0 },
 			]));
-		let tintShader = new Shader({
-			fragmentFile: '#/shaders/tintedImage.frag.glsl',
-			vertexFile:   '#/shaders/tintedImage.vert.glsl'
-		});
 
-		this.shader = tintShader;
-		this.model = new Model([ shape ], tintShader);
+		this.model = new Model([ shape ], imageShader);
 		this.texture = texture;
 	}
 
@@ -74,7 +74,7 @@ class Image
 
 	blitTo(surface, x, y, tintColor = Color.White)
 	{
-		this.shader.setColorVector('tintColor', tintColor);
+		imageShader.setColorVector('tintColor', tintColor);
 		this.model.transform = new Transform()
 			.scale(this.texture.width, this.texture.height)
 			.translate(x, y);

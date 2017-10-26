@@ -137,8 +137,8 @@ galileo_shader(void)
 	if (s_def_shader == NULL) {
 		console_log(3, "compiling Galileo default shaders");
 		s_def_shader = shader_new(
-			"#/shaders/galileo.vert.glsl",
-			"#/shaders/galileo.frag.glsl");
+			"#/shaders/default.vert.glsl",
+			"#/shaders/default.frag.glsl");
 	}
 	return s_def_shader;
 }
