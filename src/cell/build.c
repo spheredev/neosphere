@@ -316,9 +316,9 @@ build_eval(build_t* build, const char* filename)
 				error_stack = strdup(jsal_get_string(-1));
 			jsal_pop(1);
 		}
-		visor_error(build->visor, "uncaught JavaScript exception");
+		visor_error(build->visor, "unhandled JavaScript exception");
 		visor_end_op(build->visor);
-		visor_print(build->visor, "BUILD CRASH: uncaught JavaScript exception.");
+		visor_print(build->visor, "BUILD CRASH: unhandled JavaScript exception.");
 		if (error_stack != NULL)
 			visor_print(build->visor, "%s", error_stack);
 		else

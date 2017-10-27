@@ -77,7 +77,7 @@ Name: "custom"; Description: "Custom Installation"; Flags: iscustom
 [Components]
 Name: "engine"; Description: "{#AppName} JavaScript game engine [Required]"; Types: normal developer custom; Flags: fixed
 Name: "spherun"; Description: "Sphere Game Development Kit"; Types: developer
-Name: "spherun/cli"; Description: "Sphere GDK command-line tools (Cell, SSj)"; Types: developer
+Name: "spherun/cli"; Description: "Sphere GDK development toolchain (Cell, SSj)"; Types: developer
 #ifdef INCLUDE_SPHERE_STUDIO
 Name: "spherun/ide"; Description: "Sphere Studio, the official IDE for Sphere"; Types: developer
 #endif

@@ -550,9 +550,9 @@ on_error:
 static bool
 handle_notify(inferior_t* inferior, const ki_message_t* msg)
 {
-	const char*   heading;
+	const char*    heading;
 	enum ki_log_op log_op;
-	int           status_type;
+	int            status_type;
 
 	switch (ki_message_tag(msg)) {
 	case KI_NFY:
@@ -560,7 +560,7 @@ handle_notify(inferior_t* inferior, const ki_message_t* msg)
 		case KI_NFY_DETACH:
 			status_type = ki_message_int(msg, 1);
 			if (status_type == 0)
-				printf("\33[37;1mSSj/Ki debug session has disconnected normally.\n");
+				printf("\33[37;1mSSj/Ki debug session disconnected normally.\n");
 			else
 				printf("\33[31;1ma communication error occurred while debugging.\n");
 			printf("\33[m");

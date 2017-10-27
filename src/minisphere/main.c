@@ -98,7 +98,7 @@ static const char* const ERROR_TEXT[][2] =
 	{ "This game sucks!", "Or maybe it's just the programmer..." },
 	{ "Cows eat kitties. Pigs don't eat cows.", "They just get \"replaced\" by them." },
 	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." },
-	{ "Sorry. it's just...", "...Well, this is a trainwreck of a game." },
+	{ "Sorry.  It's just...", "...well, this is a trainwreck of a game." },
 	{ "You better run, and you better hide...", "...'cause a big fat hawk just ate that guy!" },
 	{ "An exception was thrown.", "miniSphere takes exception to sucky games." },
 	{ "honk. HONK. honk. HONK. :o)", "There's a clown behind you." },
@@ -119,6 +119,7 @@ main(int argc, char* argv[])
 	int                  error_column;
 	const char*          error_file = NULL;
 	int                  error_line = 0;
+	const char*          error_source;
 	const char*          error_stack = NULL;
 	const char*          error_text;
 	ALLEGRO_FILECHOOSER* file_dlg;
@@ -349,21 +350,28 @@ on_js_error:
 	screen_show_mouse(g_screen, true);
 	if (jsal_is_error(-2)) {
 		jsal_get_prop_string(-2, "url");
-		if (!(error_file = jsal_get_string(-1)))
-			error_file = "[unknown]";
+		error_file = jsal_get_string(-1);
 		jsal_get_prop_string(-3, "line");
 		error_line = jsal_get_int(-1) + 1;
 		jsal_get_prop_string(-4, "column");
 		error_column = jsal_get_int(-1) + 1;
-		jsal_get_prop_string(-5, "stack");
+		jsal_get_prop_string(-5, "source");
+		error_source = jsal_get_string(-1);
+		jsal_get_prop_string(-6, "stack");
 		if (!(error_stack = jsal_get_string(-1)))
 			error_stack = error_text;
 	}
-	fprintf(stderr, "GAME CRASH: uncaught JavaScript exception.\n");
+	if (error_file != NULL) {
+		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception at %s:%d:%d.\n", error_file, error_line, error_column);
+		fprintf(stderr, "   %d %s\n", error_line, error_source);
+	}
+	else {
+		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception.\n");
+	}
 	if (error_stack != NULL) {
 		fprintf(stderr, "%s\n", error_stack);
 		if (error_text[strlen(error_text) - 1] != '\n') {
-			if (error_file != NULL && error_line != 0)
+			if (error_file != NULL)
 				jsal_push_sprintf("%s:%d:%d\n\n%s\n", error_file, error_line, error_column, error_stack);
 			else
 				jsal_push_sprintf("JavaScript Exception\n\n%s\n", error_stack);
@@ -374,7 +382,7 @@ on_js_error:
 	}
 	else {
 		fprintf(stderr, "%s\n", error_text);
-		jsal_push_sprintf("JavaScript exception\n\n%s\n", error_text);
+		jsal_push_sprintf("JavaScript Exception\n\n%s\n", error_text);
 	}
 	show_error_screen(jsal_get_string(-1));
 	sphere_exit(false);
