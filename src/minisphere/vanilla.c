@@ -1503,8 +1503,6 @@ reset_blend_modes(void)
 static bool
 js_Abort(int num_args, bool is_ctor, int magic)
 {
-	const char* filename;
-	int         line_number;
 	const char* message;
 	char*       text;
 
@@ -1512,13 +1510,7 @@ js_Abort(int num_args, bool is_ctor, int magic)
 		? jsal_to_string(0)
 		: "some type of eaty pig just ate your game\n\n\n...and you*munch*";
 
-	/*jsal_inspect_callstack_entry(-2);
-	jsal_get_prop_string(-1, "lineNumber");
-	jsal_get_prop_string(-2, "function");
-	jsal_get_prop_string(-1, "fileName");*/
-	filename = "the pig";
-	line_number = 812;
-	text = strnewf("%s:%d\nmanual abort\n\n%s", filename, line_number, message);
+	text = strnewf("Abort Requested\n\n%s\n", message);
 	sphere_abort(text);
 }
 

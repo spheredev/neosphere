@@ -330,9 +330,9 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			screen_draw_status(it, debugger_name(), debugger_color());
 		if (it->show_fps) {
 			if (framerate > 0)
-				sprintf(fps_text, "%d/%d FPS", it->fps_flips, it->fps_frames);
+				sprintf(fps_text, "%d/%d fps", it->fps_flips, it->fps_frames);
 			else
-				sprintf(fps_text, "%d FPS", it->fps_flips);
+				sprintf(fps_text, "%d fps", it->fps_flips);
 			x = screen_cx - it->x_offset - 108;
 			y = screen_cy - it->y_offset - 24;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));

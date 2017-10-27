@@ -91,18 +91,18 @@ static jmp_buf s_jmp_restart;
 
 static const char* const ERROR_TEXT[][2] =
 {
-	{ ":pig_nose: *MUNCH*", "A hunger-pig just devourized your game!" },
-	{ "*CRASH!*", "It's an 812-car pileup!" },
-	{ "So, um... a funny thing happened...", "...on the way to the boss..." },
-	{ "Here's the deal.", "The game encountered an error." },
-	{ "This game sucks!", "Or maybe it's just the programmer..." },
-	{ "Cows eat kitties. Pigs don't eat cows.", "They just get \"replaced\" by them." },
-	{ "Hey look, a squirrel!", "I wonder if IT'S responsible for this." },
-	{ "Sorry.  It's just...", "...well, this is a trainwreck of a game." },
-	{ "You better run, and you better hide...", "...'cause a big fat hawk just ate that guy!" },
-	{ "An exception was thrown.", "miniSphere takes exception to sucky games." },
-	{ "honk. HONK. honk. HONK. :o)", "There's a clown behind you." },
-	{ "This game has OVER NINE THOUSAND errors.", "WHAT?!  9000?!  No way that can be right!" },
+	{ "*MUNCH*", "pretty sure you just got eaten by a pig" },
+	{ "*crash*", "it's an 812-car pileup" },
+	{ "so, um, a funny thing happened", "on the way to the boss" },
+	{ "here's the deal", "the game encountered an error" },
+	{ "this game sucks", "or maybe it's just the programmer" },
+	{ "cows eat kitties but pigs don't eat cows", "they just get \"replaced\" by them" },
+	{ "hey look, a squirrel", "it's probably responsible for all this" },
+	{ "sorry, it's just", "this is a trainwreck of a game" },
+	{ "you better run, and you better hide", "'cause a big fat hawk just ate that guy" },
+	{ "an exception was thrown", "miniSphere takes exception to sucky games" },
+	{ "honk. HONK. honk. HONK. :o)", "there's a clown behind you" },
+	{ "this game has over nine thousand errors", "what, 9000, there's no way that can be right" },
 };
 
 int
@@ -117,7 +117,7 @@ main(int argc, char* argv[])
 	bool                 eval_succeeded;
 	lstring_t*           dialog_name;
 	int                  error_column;
-	const char*          error_file = NULL;
+	const char*          error_url = NULL;
 	int                  error_line = 0;
 	const char*          error_source;
 	const char*          error_stack = NULL;
@@ -349,41 +349,32 @@ on_js_error:
 	error_text = jsal_to_string(-1);
 	screen_show_mouse(g_screen, true);
 	if (jsal_is_error(-2)) {
-		jsal_get_prop_string(-2, "url");
-		error_file = jsal_get_string(-1);
+		jsal_get_prop_string(-2, "column");
 		jsal_get_prop_string(-3, "line");
-		error_line = jsal_get_int(-1) + 1;
-		jsal_get_prop_string(-4, "column");
-		error_column = jsal_get_int(-1) + 1;
-		jsal_get_prop_string(-5, "source");
-		error_source = jsal_get_string(-1);
-		jsal_get_prop_string(-6, "stack");
-		if (!(error_stack = jsal_get_string(-1)))
-			error_stack = error_text;
+		jsal_get_prop_string(-4, "source");
+		jsal_get_prop_string(-5, "stack");
+		jsal_get_prop_string(-6, "url");
+		error_column = jsal_get_int(-5) + 1;
+		error_line = jsal_get_int(-4) + 1;
+		error_source = jsal_get_string(-3);
+		error_stack = jsal_get_string(-2);
+		error_url = jsal_get_string(-1);
+		if (error_stack != NULL)
+			error_text = error_stack;
 	}
-	if (error_file != NULL) {
-		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception at %s:%d:%d.\n", error_file, error_line, error_column);
+	if (error_url != NULL) {
+		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception at %s:%d:%d.\n", error_url, error_line, error_column);
+		fprintf(stderr, "%s\n", error_text);
 		fprintf(stderr, "   %d %s\n", error_line, error_source);
 	}
 	else {
 		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception.\n");
-	}
-	if (error_stack != NULL) {
-		fprintf(stderr, "%s\n", error_stack);
-		if (error_text[strlen(error_text) - 1] != '\n') {
-			if (error_file != NULL)
-				jsal_push_sprintf("%s:%d:%d\n\n%s\n", error_file, error_line, error_column, error_stack);
-			else
-				jsal_push_sprintf("JavaScript Exception\n\n%s\n", error_stack);
-		}
-		else {
-			jsal_push_sprintf("%s\n", error_text);
-		}
-	}
-	else {
 		fprintf(stderr, "%s\n", error_text);
-		jsal_push_sprintf("JavaScript Exception\n\n%s\n", error_text);
 	}
+	if (error_url != NULL)
+		jsal_push_sprintf("%s:%d:%d\n\n%s\n", error_url, error_line, error_column, error_text);
+	else
+		jsal_push_sprintf("JavaScript Exception\n\n%s\n", error_text);
 	show_error_screen(jsal_get_string(-1));
 	sphere_exit(false);
 }
