@@ -2225,15 +2225,22 @@ jsal_debug_inspect_object(unsigned int handle, int property_index)
 bool
 jsal_debug_inspect_var(int call_index, int var_index)
 {
-	/* [ ... ] -> [ ... name type value_summary ] */
+	/* [ ... ] -> [ ... name type value_summary handle ] */
 
 	JsValueRef  frame_info;
+	bool        is_object = false;
+	const char* type;
 
 	if (JsDiagGetStackProperties(call_index, &frame_info) != JsNoError)
 		return false;
 	push_value(frame_info, true);
 	jsal_get_prop_string(-1, "locals");
 	if (jsal_get_prop_index(-1, var_index)) {
+		jsal_get_prop_string(-1, "type");
+		type = jsal_get_string(-1);
+		if (type != NULL)
+			is_object = strcmp(type, "object") == 0 || strcmp(type, "function") == 0;
+		jsal_pop(1);
 		jsal_get_prop_string(-1, "name");
 		if (jsal_has_prop_string(-2, "type"))
 			jsal_get_prop_string(-2, "type");
@@ -2243,9 +2250,13 @@ jsal_debug_inspect_var(int call_index, int var_index)
 			jsal_get_prop_string(-3, "display");
 		else
 			jsal_get_prop_string(-3, "value");
-		jsal_remove(-4);
-		jsal_remove(-4);
-		jsal_remove(-4);
+		if (is_object)
+			jsal_get_prop_string(-4, "handle");
+		else
+			jsal_push_null();
+		jsal_remove(-5);
+		jsal_remove(-5);
+		jsal_remove(-5);
 		return true;
 	}
 	else {

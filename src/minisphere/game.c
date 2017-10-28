@@ -802,8 +802,8 @@ file_read(file_t* it, void* buf, size_t count, size_t size)
 	size_t num_bytes;
 	
 	if (size == 0)
-		return 0;  // dodges an Allegro assertion
-	
+		return 0;  // dodges an Allegro assert
+
 	switch (it->fs_type) {
 	case FS_LOCAL:
 		num_bytes = al_fread(it->handle, buf, size * count);
@@ -830,6 +830,9 @@ file_seek(file_t* it, long long offset, whence_t whence)
 size_t
 file_write(file_t* it, const void* buf, size_t count, size_t size)
 {
+	if (size == 0)
+		return 0;  // dodges an Allegro assert
+
 	switch (it->fs_type) {
 	case FS_LOCAL:
 		return al_fwrite(it->handle, buf, size * count) / size;

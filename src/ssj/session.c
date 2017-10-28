@@ -508,7 +508,7 @@ handle_eval(session_t* obj, command_t* cmd, bool verbose)
 		prop_key = objview_get_key(object, i);
 		prop_flags = objview_get_flags(object, i);
 		if (verbose)
-			printf("----  %-*s  ", max_len, prop_key);
+			printf("\33[30;1mprop\33[m  %-*s  ", max_len, prop_key);
 		else
 			printf("    \"%s\": ", prop_key);
 		if (!is_accessor)
@@ -630,6 +630,7 @@ handle_vars(session_t* obj, command_t* cmd)
 	const backtrace_t* calls;
 	const char*        call_name;
 	const char*        class_name;
+	int                max_len = 0;
 	const ki_atom_t*   value;
 	const objview_t*   vars;
 	const char*        var_name;
@@ -640,6 +641,11 @@ handle_vars(session_t* obj, command_t* cmd)
 		return;
 	if (!(vars = inferior_get_vars(obj->inferior, obj->frame)))
 		return;
+	for (i = 0; i < objview_len(vars); ++i) {
+		var_name = objview_get_key(vars, i);
+		if ((int)strlen(var_name) > max_len)
+			max_len = (int)strlen(var_name);
+	}
 	if (objview_len(vars) == 0) {
 		call_name = backtrace_get_call_name(calls, obj->frame);
 		printf("%s has no local variables.\n", call_name);
@@ -648,9 +654,9 @@ handle_vars(session_t* obj, command_t* cmd)
 		var_name = objview_get_key(vars, i);
 		class_name = objview_get_class(vars, i);
 		value = objview_get_value(vars, i);
-		printf("%s: %s = \33[37;1m%s\33[m",
-			var_name, class_name, ki_atom_string(value));
-		printf("\n");
+		printf("\33[30;1mvar\33[m  %-*s  \33[37;1m", max_len, var_name);
+		ki_atom_print(value, true);
+		printf("\33[m\n");
 	}
 }
 
