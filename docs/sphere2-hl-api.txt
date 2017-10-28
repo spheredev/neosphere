@@ -1095,10 +1095,6 @@ new Thread(options);
         sooner and rendered later in a frame.  Especially useful to enforce
         rendering order.
 
-Thread#hasFocus [read-only]
-
-    `true` if the thread has input focus, `false` otherwise.
-
 Thread#priority [read-only]
 
     Gets the priority of the thread.  This is set when the thread is created
@@ -1108,12 +1104,6 @@ Thread#running [read-only]
 
     `true` if this thread is running (even if it's awaiting a promise),
     otherwise `false`.
-
-Thread#on_inputCheck(); [event handler]
-
-    Implement this in your subclass to provide code to accept user input.  This
-    will be called once per frame, but only if the thread has been given input
-    focus by calling `Thread#takeInput()`.
 
 Thread#on_render(); [event handler]
 
@@ -1144,16 +1134,6 @@ Thread#stop();
     Note: If the thread's update handler is paused at an `await` expression
           when this method is called, the asynchronous operation being awaited
           will not be canceled and that update will still run to completion.
-
-Thread#takeInput();
-
-    Gives this thread the input focus.  Only the thread with input focus will
-    receive inputCheck events (see Thread#on_inputCheck() above).
-
-Thread#yieldInput();
-
-    If this thread currently has the input focus, calling this gives it back to
-    the previously-focused thread.  Otherwise this does nothing.
 
 
 `XML` Namespace
