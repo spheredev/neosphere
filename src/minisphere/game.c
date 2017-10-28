@@ -801,6 +801,9 @@ file_read(file_t* it, void* buf, size_t count, size_t size)
 {
 	size_t num_bytes;
 	
+	if (size == 0)
+		return 0;  // dodges an Allegro assertion
+	
 	switch (it->fs_type) {
 	case FS_LOCAL:
 		num_bytes = al_fread(it->handle, buf, size * count);
