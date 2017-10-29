@@ -55,12 +55,12 @@ class Scene
 	{
 		return defaultPriority;
 	}
-	
+
 	static set defaultPriority(value)
 	{
 		defaultPriority = value;
 	}
-	
+
 	static defineOp(name, def)
 	{
 		if (name in this.prototype)
@@ -84,7 +84,7 @@ class Scene
 			inBackground: false,
 			priority: defaultPriority,
 		}, options);
-		
+
 		this.threadOptions = options;
 		this.timeline = new Timeline(this, this.threadOptions);
 		this.forkStack = [];

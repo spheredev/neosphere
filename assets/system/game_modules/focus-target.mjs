@@ -30,23 +30,47 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-// miniSphere-specific modules
-export { default as Console } from 'console';
-export { default as FocusTarget } from 'focus-target';
-export { default as Image } from 'image';
-export { default as Joypad } from 'joypad';
-export { default as Music } from 'music';
-export { default as Pact } from 'pact';
-export { default as Prim } from 'prim';
-export { default as Scene } from 'scene';
-export { default as Thread } from 'thread';
+import from from 'from';
 
-// Sphere Runtime shared modules
-export { default as assert } from 'assert';
-export { default as from } from 'from';
-export { default as DataStream } from 'data-stream';
-export { default as Delegate } from 'delegate';
-export { default as Logger } from 'logger';
-export { default as Random } from 'random';
-export { default as Test } from 'test';
-export { default as XML } from 'xml';
+let focusQueue = [];
+
+export default
+class FocusTarget
+{
+	get [Symbol.toStringTag]() { return 'FocusTarget'; }
+
+	constructor(options)
+	{
+		options = Object.assign({}, {
+			priority: 0.0,
+		}, options);
+
+		this._priority = options.priority;
+	}
+
+	get hasFocus()
+	{
+		return focusQueue[focusQueue.length - 1] === this;
+	}
+
+	dispose()
+	{
+		from.array(focusQueue)
+			.remove(it => it === this);
+	}
+
+	takeFocus()
+	{
+		focusQueue = from.array(focusQueue)
+			.where(it => it !== this)
+			.including([ this ])
+			.ascending(it => it._priority)
+			.toArray();
+	}
+
+	yield()
+	{
+		if (focusQueue[focusQueue.length - 1] === this)
+			focusQueue.pop();
+	}
+}

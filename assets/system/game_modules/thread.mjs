@@ -31,10 +31,10 @@
 **/
 
 import from from 'from';
+import FocusTarget from 'focus-target';
 import Pact from 'pact';
 
 let currentSelf = null,
-    inputThreads = [],
     threadPact = new Pact();
 
 export default
@@ -68,21 +68,22 @@ class Thread
 
 		options = Object.assign({}, {
 			inBackground: false,
-			priority:     0,
+			priority:     0.0,
 		}, options);
 
-		this._started = false;
 		this._busy = false;
+		this._focusTarget = new FocusTarget(options);
 		this._inBackground = options.inBackground;
 		this._priority = options.priority;
 		this._promise = Promise.resolve();
 		this._renderJob = null;
+		this._started = false;
 		this._updateJob = null;
 	}
 
 	get hasFocus()
 	{
-		return this === inputThreads[inputThreads.length - 1];
+		return this._focusTarget.hasFocus;
 	}
 
 	get priority()
@@ -120,7 +121,7 @@ class Thread
 			let lastSelf = currentSelf;
 			currentSelf = this;
 			this._busy = true;
-			if (this === inputThreads[inputThreads.length - 1])
+			if (this.hasFocus)
 				await this.on_inputCheck();
 			await this.on_update();
 			this._busy = false;
@@ -132,9 +133,7 @@ class Thread
 
 		// after thread terminates, remove from input stack
 		this._promise.then(() => {
-			from.array(inputThreads)
-				.where(it => !it._started)
-				.remove();
+			this._focusTarget.dispose();
 		});
 	}
 
@@ -157,23 +156,23 @@ class Thread
 		if (this.on_inputCheck === Thread.on_inputCheck)
 			throw new TypeError("thread cannot accept user input");
 
-		inputThreads = from.array(inputThreads)
-			.where(it => it !== this)
-			.including([ this ])
-			.ascending(it => it._priority)
-			.toArray();
+		this._focusTarget.takeFocus();
 	}
 
 	yieldInput()
 	{
-		if (this === inputThreads[inputThreads.length - 1])
-			inputThreads.pop();
+		if (!this.running)
+			throw new Error("thread is not running");
+		if (this.on_inputCheck === Thread.on_inputCheck)
+			throw new TypeError("thread cannot accept user input");
+
+		this._focusTarget.yield();
 	}
 }
 
 class PromptThread extends Thread
 {
-	constructor(entity, priority = 0)
+	constructor(entity, priority = 0.0)
 	{
 		super({ priority });
 

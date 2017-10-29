@@ -529,6 +529,49 @@ Delegate#removeHandler(handler[, thisObj]);
     if no matching handler is registered.
 
 
+`FocusTarget` Object
+--------------------
+
+The `FocusTarget` object provides a simple way to manage input focus.  Only a
+single target can be in focus at any given moment, and each target can be given
+a priority value to prevent low-priority targets from stealing focus from more
+important ones.
+
+    import { FocusTarget } from 'sphere-runtime';
+
+new FocusTarget(options);
+
+    Constructs a new focus target.  To prevent confusing focus switches, the
+    new target is not given focus initially; you must explicitly call
+    `Focus#take()` when you want to give it focus.
+
+	options.priority [default: 0.0]
+
+	    The priority of the target.  Priority is used to control the behavior
+	    when another target tries to take the focus via `Focus#take()` (see
+	    below).
+
+FocusTarget#hasFocus [read-only]
+
+    `true` if the target is currently in focus, `false` otherwise.
+
+FocusTarget#dispose();
+
+    Disposes of the Focus object.  YOu should call this when the target is no
+    longer needed to clear it from the focus queue.  Also yields the focus if
+    the object is currently in focus when you call this method.
+
+FocusTarget#takeFocus();
+
+	Takes focus.  If a higher-priority object already has focus, this one will
+	not receive focus until the higher-priority one yields.  This prevents
+	focus from being stolen from a higher-priority target.
+
+FocusTarget#yield();
+
+    Yields the focus.  If the target is not in focus, this does nothing.
+
+
 `Image` Object
 --------------
 
@@ -1095,6 +1138,10 @@ new Thread(options);
         sooner and rendered later in a frame.  Especially useful to enforce
         rendering order.
 
+Thread#hasFocus [read-only]
+
+    `true` if the thread has input focus, `false` otherwise.
+
 Thread#priority [read-only]
 
     Gets the priority of the thread.  This is set when the thread is created
@@ -1104,6 +1151,12 @@ Thread#running [read-only]
 
     `true` if this thread is running (even if it's awaiting a promise),
     otherwise `false`.
+
+Thread#on_inputCheck(); [event handler]
+
+    Implement this in your subclass to provide code to accept user input.  This
+    will be called once per frame, but only if the thread has been given input
+    focus by calling `Thread#takeInput()`.
 
 Thread#on_render(); [event handler]
 
@@ -1134,6 +1187,22 @@ Thread#stop();
     Note: If the thread's update handler is paused at an `await` expression
           when this method is called, the asynchronous operation being awaited
           will not be canceled and that update will still run to completion.
+
+Thread#takeInput();
+
+    Gives this thread focus.  Only the thread in focus will receive inputCheck
+    events (see Thread#on_inputCheck() above).  If a higher-priority entity
+    already has focus when this is called, the focus will be given only once
+    the higher-priority task(s) yield.
+
+    Note: This can take focus away any entity holding a Focus object, not only
+          other threads.
+
+Thread#yieldInput();
+
+    If this thread currently has focus, calling this gives focus back to the
+    previously-focused entity.  Nothing happens if the thread doesn't currently
+    have focus.
 
 
 `XML` Namespace
