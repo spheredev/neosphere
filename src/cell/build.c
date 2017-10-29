@@ -1499,7 +1499,7 @@ js_FileStream_get_position(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 
 	jsal_push_number(ftell(file));
 	return true;
@@ -1513,7 +1513,7 @@ js_FileStream_get_fileSize(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
@@ -1530,11 +1530,11 @@ js_FileStream_set_position(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
-	new_pos = jsal_require_int(0);
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+	new_pos = (long)jsal_require_number(0);
 
 	if (new_pos < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid file position");
+		jsal_error(JS_RANGE_ERROR, "invalid file position '%ld'", new_pos);
 	fseek(file, new_pos, SEEK_SET);
 	return false;
 }
@@ -1564,7 +1564,7 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using a FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 	if (num_args >= 1)
 		num_bytes = jsal_require_int(0);
 
@@ -1593,7 +1593,7 @@ js_FileStream_write(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "using FileStream after dispose() is not allowed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 	data = jsal_require_buffer_ptr(0, &num_bytes);
 
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)

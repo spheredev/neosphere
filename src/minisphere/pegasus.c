@@ -2039,7 +2039,6 @@ js_FS_readFile(int num_args, bool is_ctor, int magic)
 	void*       file_data;
 	size_t      file_size;
 	const char* pathname;
-	js_ref_t*   resolver;
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
@@ -2047,13 +2046,6 @@ js_FS_readFile(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "couldn't read file '%s'", pathname);
 	content = lstr_from_utf8(file_data, file_size, true);
 	jsal_push_lstring_t(content);
-
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref(resolver);
-	jsal_pull(-3);
-	jsal_call(1);
-	jsal_pop(1);
-	jsal_unref(resolver);
 	return true;
 }
 
@@ -2095,7 +2087,7 @@ js_FS_rename(int num_args, bool is_ctor, int magic)
 	new_pathname = jsal_require_pathname(1, NULL, false, true);
 
 	if (!game_rename(g_game, old_pathname, new_pathname))
-		jsal_error(JS_ERROR, "couldn't rename file '%s'", old_pathname);
+		jsal_error(JS_ERROR, "couldn't rename '%s' to '%s'", old_pathname, new_pathname);
 	return false;
 }
 
@@ -2105,7 +2097,6 @@ js_FS_writeFile(int num_args, bool is_ctor, int magic)
 	const void* file_data;
 	size_t      file_size;
 	const char* pathname;
-	js_ref_t*   resolver;
 	lstring_t*  text = NULL;
 
 	pathname = jsal_require_pathname(0, NULL, false, true);
@@ -2116,12 +2107,6 @@ js_FS_writeFile(int num_args, bool is_ctor, int magic)
 	if (!game_write_file(g_game, pathname, file_data, file_size))
 		jsal_error(JS_ERROR, "couldn't write file '%s'", pathname);
 	lstr_free(text);
-	
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref(resolver);
-	jsal_call(0);
-	jsal_pop(1);
-	jsal_unref(resolver);
 	return false;
 }
 
@@ -2166,7 +2151,7 @@ js_FileStream_get_fileName(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "the FileStream has already been disposed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 
 	jsal_push_string(file_pathname(file));
 	return true;
@@ -2180,7 +2165,7 @@ js_FileStream_get_fileSize(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "the FileStream has already been disposed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 
 	file_pos = file_position(file);
 	file_seek(file, 0, WHENCE_END);
@@ -2196,7 +2181,7 @@ js_FileStream_get_position(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "the FileStream has already been disposed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 
 	jsal_push_number(file_position(file));
 	return true;
@@ -2210,7 +2195,7 @@ js_FileStream_set_position(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "the FileStream has already been disposed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 
 	new_pos = jsal_require_number(0);
 	file_seek(file, new_pos, WHENCE_SET);
@@ -2238,11 +2223,10 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 	file_t*   file;
 	int       num_bytes;
 	long      pos;
-	js_ref_t* resolver;
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "the FileStream has already been disposed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 	if (num_args >= 1)
 		num_bytes = jsal_require_int(0);
 
@@ -2260,13 +2244,6 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 	num_bytes = (int)file_read(file, buffer, num_bytes, 1);
 	if (num_args < 1)  // reset file position after whole-file read
 		file_seek(file, pos, WHENCE_SET);
-
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref(resolver);
-	jsal_pull(-3);
-	jsal_call(1);
-	jsal_pop(1);
-	jsal_unref(resolver);
 	return true;
 }
 
@@ -2276,23 +2253,16 @@ js_FileStream_write(int num_args, bool is_ctor, int magic)
 	const void* data;
 	file_t*     file;
 	size_t      num_bytes;
-	js_ref_t*   resolver;
 
 	data = jsal_require_buffer_ptr(0, &num_bytes);
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "the FileStream has already been disposed");
+		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
 
 	if (file_write(file, data, num_bytes, 1) != num_bytes)
 		jsal_error(JS_ERROR, "couldn't write to file");
-	
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref(resolver);
-	jsal_call(0);
-	jsal_pop(1);
-	jsal_unref(resolver);
-	return true;
+	return false;
 }
 
 static bool
