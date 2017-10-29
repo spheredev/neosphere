@@ -303,6 +303,8 @@ function hideConsole(console)
 
 function showConsole(console)
 {
+	console.keyboard.clearQueue();
+	console.mouse.clearQueue();
 	console.takeInput();
 	let fps = Sphere.frameRate;
 	new Scene()
