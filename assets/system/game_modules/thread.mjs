@@ -34,8 +34,7 @@ import from from 'from';
 import FocusTarget from 'focus-target';
 import Pact from 'pact';
 
-let currentSelf = null,
-    threadPact = new Pact();
+let currentSelf = null;
 
 export default
 class Thread
@@ -52,7 +51,7 @@ class Thread
 	static join(...threads)
 	{
 		let promises = from.array(threads)
-			.select(it => it._promise);
+			.select(it => it._pact.promise);
 		return Promise.all(promises);
 	}
 
@@ -74,8 +73,8 @@ class Thread
 		this._busy = false;
 		this._focusTarget = new FocusTarget(options);
 		this._inBackground = options.inBackground;
+		this._pact = Pact.resolve();
 		this._priority = options.priority;
-		this._promise = Promise.resolve();
 		this._renderJob = null;
 		this._started = false;
 		this._updateJob = null;
@@ -106,7 +105,7 @@ class Thread
 			return;
 
 		this._started = true;
-		this._promise = threadPact.makePromise();
+		this._pact = new Pact();
 
 		this._renderJob = Dispatch.onRender(() => {
 			this.on_render();
@@ -131,8 +130,8 @@ class Thread
 			priority:     this._priority,
 		});
 
-		// after thread terminates, remove from input stack
-		this._promise.then(() => {
+		// after thread terminates, remove it from the input queue
+		this._pact.promise.then(() => {
 			this._focusTarget.dispose();
 		});
 	}
@@ -146,7 +145,7 @@ class Thread
 		this._updateJob.cancel();
 		this._renderJob.cancel();
 		this._started = false;
-		threadPact.resolve(this._promise);
+		this._pact.resolve();
 	}
 
 	takeInput()

@@ -35,41 +35,40 @@ class Pact
 {
 	get [Symbol.toStringTag]() { return 'Pact'; }
 
+	static reject(reason)
+	{
+		let pact = new Pact();
+		pact.reject(reason);
+		return pact;
+	}
+	
+	static resolve(value)
+	{
+		let pact = new Pact();
+		pact.resolve(value);
+		return pact;
+	}
+	
 	constructor()
 	{
-		this._handlers = new WeakMap();
-	}
-
-	makePromise()
-	{
-		let handler;
-		let promise = new Promise((resolve, reject) => {
-			handler = { resolve, reject };
+		this._handler = null;
+		this._promise = new Promise((resolve, reject) => {
+			this._handler = { resolve, reject };
 		});
-		this._handlers.set(promise, handler);
-		return promise;
 	}
 
-	reject(promise, reason)
+	get promise()
 	{
-		let handler = getHandler(this, promise);
-		handler.reject(reason);
+		return this._promise;
 	}
 
-	resolve(promise, value)
+	reject(reason)
 	{
-		let handler = getHandler(this, promise);
-		handler.resolve(value);
+		this._handler.reject(reason);
 	}
-}
 
-function getHandler(pact, promise)
-{
-	if (!(promise instanceof Promise))
-		throw new TypeError(`'${String(promise)}' is not a promise`);
-
-	let handler = pact._handlers.get(promise);
-	if (handler === undefined)
-		throw new TypeError("promise was not made from this pact");
-	return handler;
+	resolve(value)
+	{
+		this._handler.resolve(value);
+	}
 }

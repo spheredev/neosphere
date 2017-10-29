@@ -545,11 +545,11 @@ new FocusTarget(options);
     new target is not given focus initially; you must explicitly call
     `Focus#take()` when you want to give it focus.
 
-	options.priority [default: 0.0]
+    options.priority [default: 0.0]
 
-	    The priority of the target.  Priority is used to control the behavior
-	    when another target tries to take the focus via `Focus#take()` (see
-	    below).
+        The priority of the target.  Priority is used to control the behavior
+        when another target tries to take the focus via `Focus#take()` (see
+        below).
 
 FocusTarget#hasFocus [read-only]
 
@@ -563,9 +563,9 @@ FocusTarget#dispose();
 
 FocusTarget#takeFocus();
 
-	Takes focus.  If a higher-priority object already has focus, this one will
-	not receive focus until the higher-priority one yields.  This prevents
-	focus from being stolen from a higher-priority target.
+    Takes focus.  If a higher-priority object already has focus, this one will
+    not receive focus until the higher-priority one yields.  This prevents
+    focus from being stolen from a higher-priority target.
 
 FocusTarget#yield();
 
@@ -751,36 +751,52 @@ future result of some ongoing task which will eventually settle it; outside
 code can only observe the promise and await its resolution.
 
 Normally, a Promise can only be settled from within a closure passed to the
-`Promise` constructor.  This makes managing promises awkward if not overly
-difficult--and that's where `Pact` comes in.  A `Pact` object allows your game
-to make an unlimited number of promises, to be settled by any code that holds a
-reference to the pact.  In this way the opacity of the Promise object is
-maintained while keeping things simple for the code handing them out.
+`Promise` constructor.  This makes managing custom promises awkward if not
+overly difficult--and that's where `Pact` comes in.  Pact provides a means to
+set up a promise which can later be settled by any code that holds a reference
+to the pact.  In this way the opacity of the Promise object is maintained while
+keeping things simple for the code handing them out.
 
     import { Pact } from 'sphere-runtime';
 
+Pact.reject([reason]);
+
+    Constructs a new pact whose promise is immediately settled with a rejection
+    value of `reason`.  The promise rejects with a value of `undefined` if no
+    reason is provided.
+
+Pact.resolve([result]);
+
+    Constructs a new pact whose promise is immediately settled with a
+    resolution value of `result`.  The promise resolves with a value of
+    `undefined` if no value is provided.
+
 new Pact();
 
-    Constructs a new pact which can be used immediately to manufacture new
-    promises.
+    Constructs a new pact.  The pact encapsulates a promise which can be
+    settled by calling either `Pact#resolve()` or `Pact#reject()`.
 
-Pact#makePromise();
+Pact#promise [read-only]
 
-    Returns a new promise made from this pact.  To resolve or reject the
-    promise, the code performing promise settlement must have references to
-    both the pact and the promise being settled.
+    Gets the promise underlying this pact.
 
-Pact#resolve(promise, result);
+Pact#reject([reason]);
 
-    Settles `promise` with a fulfillment value of `result`.  The result can be
-    anything at all.  The promise being settled must have been made from this
-    pact, otherwise a TypeError will be thrown.
+    Settles `promise` with a rejection value of `reason` (typically this is a
+    JavaScript Error object, although this is not enforced).  If no reason is
+    provided, the promise will settle with a rejection value of `undefined`.
 
-Pact#reject(promise, reason);
+    Note: If this pact's promise has already been settled, calling this method
+          has no effect.
 
-    Settles `promise` with a rejection value of `reason` (usually an error
-    object, although this is not enforced).  The promise being settled must
-    have been made from this pact, otherwise a TypeError will be thrown.
+Pact#resolve([result]);
+
+    Settles the promise with a fulfillment value of `result`.  The result can
+    be any JavaScript value or object.  If no result value is provided, the
+    promise will settle with a resolution value of `undefined`.
+
+    Note: If this pact's promise has already been settled, calling this method
+          has no effect.
 
 
 `Prim` Namespace
