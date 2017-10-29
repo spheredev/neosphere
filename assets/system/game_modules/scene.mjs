@@ -296,7 +296,7 @@ class OpThread extends Thread
 		if (this.op.update !== undefined) {
 			super.start();
 			if (this.op.getInput !== undefined)
-				this.takeInput();
+				this.takeFocus();
 		}
 		else {
 			if (this.op.finish !== undefined)

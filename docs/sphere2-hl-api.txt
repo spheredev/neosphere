@@ -1172,7 +1172,7 @@ Thread#on_inputCheck(); [event handler]
 
     Implement this in your subclass to provide code to accept user input.  This
     will be called once per frame, but only if the thread has first been given
-    input focus by calling `Thread#takeInput()`.
+    the focus by calling `Thread#takeFocus()`.
 
 Thread#on_render(); [event handler]
 
@@ -1205,7 +1205,7 @@ Thread#stop();
           when this method is called, the asynchronous operation being awaited
           will not be canceled and that update will still run to completion.
 
-Thread#takeInput();
+Thread#takeFocus();
 
     Gives this thread focus.  Only the thread in focus will receive inputCheck
     events (see Thread#on_inputCheck() above).  If a higher-priority entity
@@ -1215,7 +1215,7 @@ Thread#takeInput();
     Note: This can take the focus away from any code holding a FocusTarget
           (see above), not just other threads.
 
-Thread#yieldInput();
+Thread#yieldFocus();
 
     If this thread currently has focus, calling this gives focus back to the
     previously-focused entity.  Nothing happens if the thread doesn't currently

@@ -293,7 +293,7 @@ function executeCommand(console, command)
 
 function hideConsole(console)
 {
-	console.yieldInput();
+	console.yieldFocus();
 	let fps = Sphere.frameRate;
 	new Scene()
 		.tween(console.view, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
@@ -305,7 +305,7 @@ function showConsole(console)
 {
 	console.keyboard.clearQueue();
 	console.mouse.clearQueue();
-	console.takeInput();
+	console.takeFocus();
 	let fps = Sphere.frameRate;
 	new Scene()
 		.tween(console.view, 0.25 * fps, 'easeOutQuad', { fade: 1.0 })

@@ -141,29 +141,29 @@ class Thread
 		if (!this._started)
 			return;
 
-		this.yieldInput();
+		this.yieldFocus();
 		this._updateJob.cancel();
 		this._renderJob.cancel();
 		this._started = false;
 		this._pact.resolve();
 	}
 
-	takeInput()
+	takeFocus()
 	{
 		if (!this.running)
 			throw new Error("thread is not running");
 		if (this.on_inputCheck === Thread.on_inputCheck)
-			throw new TypeError("thread cannot accept user input");
+			throw new TypeError("thread not enabled for user input");
 
 		this._focusTarget.takeFocus();
 	}
 
-	yieldInput()
+	yieldFocus()
 	{
 		if (!this.running)
 			throw new Error("thread is not running");
 		if (this.on_inputCheck === Thread.on_inputCheck)
-			throw new TypeError("thread cannot accept user input");
+			throw new TypeError("thread not enabled for user input");
 
 		this._focusTarget.yield();
 	}
