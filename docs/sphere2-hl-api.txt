@@ -557,9 +557,9 @@ FocusTarget#hasFocus [read-only]
 
 FocusTarget#dispose();
 
-    Disposes of the Focus object.  YOu should call this when the target is no
-    longer needed to clear it from the focus queue.  Also yields the focus if
-    the object is currently in focus when you call this method.
+    Disposes of the FocusTarget object.  YOu should call this when the target
+    is no longer needed, in order to clear it from the focus queue.  This also
+    yields focus if the object was in focus at the time.
 
 FocusTarget#takeFocus();
 
@@ -1155,8 +1155,8 @@ Thread#running [read-only]
 Thread#on_inputCheck(); [event handler]
 
     Implement this in your subclass to provide code to accept user input.  This
-    will be called once per frame, but only if the thread has been given input
-    focus by calling `Thread#takeInput()`.
+    will be called once per frame, but only if the thread has first been given
+    input focus by calling `Thread#takeInput()`.
 
 Thread#on_render(); [event handler]
 
@@ -1182,7 +1182,8 @@ Thread#start();
 Thread#stop();
 
     Stops the thread.  Any outstanding Thread#join() promises for this thread
-    will resolve and Sphere will stop calling the thread handlers.
+    will resolve and Sphere will stop calling the thread handlers.  If the
+    thread currently has input focus, calling this also yields the focus.
 
     Note: If the thread's update handler is paused at an `await` expression
           when this method is called, the asynchronous operation being awaited
@@ -1195,8 +1196,8 @@ Thread#takeInput();
     already has focus when this is called, the focus will be given only once
     the higher-priority task(s) yield.
 
-    Note: This can take focus away any entity holding a Focus object, not only
-          other threads.
+    Note: This can take the focus away from any code holding a FocusTarget
+          (see above), not just other threads.
 
 Thread#yieldInput();
 
