@@ -70,6 +70,7 @@ class Thread
 			priority:     0.0,
 		}, options);
 
+		this._bootstrapping = false;
 		this._busy = false;
 		this._focusTarget = new FocusTarget(options);
 		this._inBackground = options.inBackground;
@@ -97,6 +98,7 @@ class Thread
 
 	on_inputCheck() {}
 	on_render() {}
+	on_startUp() {}
 	on_update() {}
 
 	start()
@@ -104,6 +106,7 @@ class Thread
 		if (this._started)
 			return;
 
+		this._bootstrapping = true;
 		this._started = true;
 		this._pact = new Pact();
 
@@ -120,6 +123,10 @@ class Thread
 			let lastSelf = currentSelf;
 			currentSelf = this;
 			this._busy = true;
+			if (this._bootstrapping) {
+				this._bootstrapping = false;
+				await this.on_startUp();
+			}
 			if (this.hasFocus)
 				await this.on_inputCheck();
 			await this.on_update();
