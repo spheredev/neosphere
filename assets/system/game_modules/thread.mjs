@@ -111,6 +111,8 @@ class Thread
 		this._pact = new Pact();
 
 		this._renderJob = Dispatch.onRender(() => {
+			if (this._bootstrapping)
+				return;
 			this.on_render();
 		}, {
 			inBackground: this._inBackground,
@@ -124,8 +126,8 @@ class Thread
 			currentSelf = this;
 			this._busy = true;
 			if (this._bootstrapping) {
-				this._bootstrapping = false;
 				await this.on_startUp();
+				this._bootstrapping = false;
 			}
 			if (this.hasFocus)
 				await this.on_inputCheck();
