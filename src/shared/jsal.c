@@ -2286,7 +2286,7 @@ get_value(int stack_index)
 static JsPropertyIdRef
 make_property_id(JsValueRef key)
 {
-	const uint16_t* key_name;
+	char*           key_name;
 	size_t          key_length;
 	JsValueType     key_type;
 	JsPropertyIdRef property_id;
@@ -2296,8 +2296,11 @@ make_property_id(JsValueRef key)
 		JsGetPropertyIdFromSymbol(key, &property_id);
 	}
 	else {
-		JsStringToPointer(key, &key_name, &key_length);
-		JsGetPropertyIdFromName(key_name, &property_id);
+		JsCopyString(key, NULL, 0, &key_length);
+		key_name = malloc(key_length);
+		JsCopyString(key, key_name, key_length, NULL);
+		JsCreatePropertyId(key_name, key_length, &property_id);
+		free(key_name);
 	}
 	return property_id;
 }
