@@ -966,35 +966,40 @@ Scene.defineOp(name, def);
     enforced).  `def` is an object defining the scenelet, and should include
     the following function properties:
 
-        def.start(scene, ...)
+        def.start(scene[, ...]); [required]
 
-            Required.  Called once when the scenelet begins execution.  .start()
-            should initialize any execution state for the scenelet.  For one-off
-            operations which can be completed entirely in the start function,
-            .start() may return false.  Otherwise, it should return true to kick
-            off a scenelet thread.
+            This is called once when the scenelet begins execution.  .start()
+            should initialize any execution state for the scenelet and receives
+            all arguments provided when the scenelet was added to the scene.
 
-            .start() receives all arguments provided when the scenelet was added
-            to the scene.
+        def.finish(scene); [optional]
 
-        def.update(scene)
+            .finish() is called once before execution continues on to the next
+            operation.  This is useful if you have a scenelet that needs to do
+            something specific to finalize the operation without needing to add
+            a special case to .update().
 
-            Required.  The scenelet's update function.  As with threads, this
-            is called once per game frame and should return true to continue
-            scenelet execution or false to finish.
+        def.getInput(scene); [optional]
 
-        def.render(scene)
+            Called once per game frame for the topmost scenelet to accept
+            player input for that scenelet.  Only scenelets implementing a
+            .getInput() callback can receive focus (see FocusTarget above).
 
-            Optional.  .render() is called once per render frame to render
-            anything related to the scenelet.  A dialogue scenelet might render
-            a textbox, for example.  Render order is determined by the order in
-            which scenelets were started.
+        def.render(scene); [optional]
 
-        def.getInput(scene)
+            Called once per frame to render anything related to the scenelet.
+            A text scenelet might render a text box, for example.  Render order
+            is determined by the order in which scenelets were started.
 
-            Optional.  Called once per game frame for the topmost scenelet to
-            accept player input for that scenelet.  Only scenelets implementing
-            a .getInput() callback are considered for topmost status.
+        def.update(scene); [optional]
+
+            The scenelet's update function.  As with threads, this is called
+            once per game frame and should return `true` to continue scenelet
+            execution or `false` to finish.
+
+            Note: If no update function is provided, the timeline immediately
+                  proceeds to the next operation after running the scenelet's
+                  start and finish callbacks.
 
     Each callback receives a reference to the Scene object which invoked it as
     its first argument, and its `this` binding is set to a unique object it can
