@@ -189,8 +189,7 @@ dispatch_run(job_type_t hint)
 		}
 	}
 
-	// process one-time jobs.  swap in a fresh queue first to allow nested callbacks
-	// to work.
+	// process one-time jobs
 	if (s_onetime != NULL) {
 		for (i = 0; i < vector_len(s_onetime); ++i) {
 			job = *(struct job*)vector_get(s_onetime, i);

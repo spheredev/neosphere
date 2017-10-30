@@ -116,13 +116,19 @@ class Thread
 			if (this._busy)
 				return;
 			this._busy = true;
-			if (this._bootstrapping) {
-				await this.on_startUp();
-				this._bootstrapping = false;
+			try {
+				if (this._bootstrapping) {
+					await this.on_startUp();
+					this._bootstrapping = false;
+				}
+				if (this.hasFocus)
+					await this.on_inputCheck();
+				await this.on_update();
 			}
-			if (this.hasFocus)
-				await this.on_inputCheck();
-			await this.on_update();
+			catch (error) {
+				// rethrow from the event loop to force a crash
+				Dispatch.now(() => { throw error; });
+			}
 			this._busy = false;
 		}, {
 			inBackground: this._inBackground,
