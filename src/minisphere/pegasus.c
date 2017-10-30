@@ -521,7 +521,7 @@ pegasus_init(void)
 	api_define_function("Sphere", "abort", js_Sphere_abort);
 	api_define_function("Sphere", "now", js_Sphere_now);
 	api_define_function("Sphere", "restart", js_Sphere_restart);
-	api_define_function("screen", "setResolution", js_Sphere_setResolution);
+	api_define_function("Sphere", "setResolution", js_Sphere_setResolution);
 	api_define_function("Sphere", "shutDown", js_Sphere_shutDown);
 	api_define_function("Sphere", "sleep", js_Sphere_sleep);
 	api_define_class("Color", PEGASUS_COLOR, js_new_Color, js_Color_finalize);
