@@ -50,6 +50,7 @@ struct game
 	unsigned int refcount;
 	unsigned int id;
 	lstring_t*   author;
+	char*        compiler;
 	bool         fullscreen;
 	lstring_t*   manifest;
 	lstring_t*   name;
@@ -242,6 +243,7 @@ game_unref(game_t* it)
 	console_log(3, "disposing game #%u no longer in use", it->id);
 	if (it->type == FS_PACKAGE)
 		package_unref(it->package);
+	free(it->compiler);
 	path_free(it->script_path);
 	path_free(it->root_path);
 	lstr_free(it->manifest);
@@ -252,6 +254,12 @@ const char*
 game_author(const game_t* it)
 {
 	return lstr_cstr(it->author);
+}
+
+const char*
+game_compiler(const game_t* it)
+{
+	return it->compiler;
 }
 
 bool
@@ -913,6 +921,10 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	else {
 		game->safety = FS_SAFETY_FULL;
 	}
+
+	// load build metadata
+	if (jsal_get_prop_string(-10, "$COMPILER") && jsal_is_string(-1))
+		game->compiler = strdup(jsal_get_string(-1));
 
 	jsal_set_top(stack_top);
 	return true;

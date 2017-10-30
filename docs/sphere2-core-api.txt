@@ -205,6 +205,12 @@ Sphere.APILevel [read-only]
     methods, or properties are added to the Core API, the API level is
     increased.
 
+Sphere.Compiler [read-only]
+
+    A string specifying the name and version number of the compiler or build
+    tool used to make the game distribution.  For example, "Cell 5.0.0".  If no
+    compiler information is available, this evaluates to `undefined`.
+
 Sphere.Game [non-replaceable]
 
     An object whose properties describe the currently running game.  The object

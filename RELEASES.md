@@ -4,6 +4,11 @@ Release Notes
 miniSphere 5.0
 --------------
 
+* As of miniSphere 5.0.0, the Core API has been frozen.  Going forward, no
+  further breaking changes will be made to the Core API and games written
+  against it will continue to function as-is in future versions.  This freeze
+  **does not** apply to the Sphere Runtime!
+
 * miniSphere now uses ChakraCore for blazing-fast JavaScript performance.
   Chakra is the same engine used in Microsoft Edge and supports most modern
   JavaScript syntax natively, so you no longer need a `transpile()` step in
@@ -35,6 +40,10 @@ miniSphere 5.0
   you can simply change your Cellscript to use `install()` in place of
   `transpile()` and everything should work as before.
 
+* `screen` was renamed to `Surface.Screen`, and the custom `screen` methods
+  have been moved into the `Sphere` namespace.  So `screen.frameRate` becomes
+  `Sphere.frameRate`, etc.
+
 * `Dispatch.onUpdate()` and `Dispatch.onRender()` now take an options object
   as their second parameter.  Job priority is now be specified as a property of
   the options argument and defaults to 0.0 if not provided, as before.
@@ -50,6 +59,11 @@ miniSphere 5.0
   rather than the somewhat awkward `Console.initialize()`.  It also makes it
   possible to create multiple consoles, in case that's ever needed.   Existing
   code using the `Console` object will need to be updated.
+
+* Thee new `FocusTarget` class provides a centralized mechanism for managing
+  input focus.  Only one focus target can have the focus at any given time,
+  making this very well-suited to managing input focus in, e.g., menu systems
+  and map engines.  Just import `FocusTarget` from `sphere-runtime` to try it!
 
 * The `Pact` class has returned and provides a convenient way to make promises
   and settle them out-of-band without the awkwardness of working around the
@@ -75,10 +89,6 @@ miniSphere 5.0
   former function, `Sphere.shutDown()` does not exit immediately but rather
   cancels all outstanding Dispatch jobs, allowing the event loop to unwind
   naturally on the next tick.
-
-* `screen.now()` and `screen.frameRate` have been moved into the `Sphere`
-  namespace.  This better reflects the fact that they regulate the event loop
-  rather the screen directly.
 
 
 miniSphere 4.8

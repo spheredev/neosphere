@@ -424,6 +424,13 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	}
 	visor_end_op(build->visor);
 
+	// add metadata
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "manifest");
+	jsal_push_sprintf("%s %s", SPHERE_COMPILER_NAME, SPHERE_VERSION);
+	jsal_put_prop_string(-2, "$COMPILER");
+	jsal_pop(2);
+
 	// generate the source map
 	if (want_debug) {
 		visor_begin_op(build->visor, "collecting debugging information");

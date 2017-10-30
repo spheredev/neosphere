@@ -219,8 +219,9 @@ COLORS[] =
 
 static bool js_require                       (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_APILevel           (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_Engine             (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Game               (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Engine           (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Version            (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_frameRate          (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_frameSkip          (int num_args, bool is_ctor, int magic);
@@ -510,6 +511,7 @@ pegasus_init(void)
 
 	// initialize the Sphere v2 API
 	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
+	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL);
 	api_define_static_prop("Sphere", "Engine", js_Sphere_get_Engine, NULL);
 	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL);
 	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
@@ -1278,6 +1280,18 @@ static bool
 js_Sphere_get_APILevel(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(API_LEVEL);
+	return true;
+}
+
+static bool
+js_Sphere_get_Compiler(int num_args, bool is_ctor, int magic)
+{
+	const char* compiler;
+
+	compiler = game_compiler(g_game);
+	jsal_push_undefined();
+	if (compiler != NULL)
+		jsal_push_string(compiler);
 	return true;
 }
 

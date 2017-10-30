@@ -12,6 +12,7 @@ v5.0.0 - October 31, 2017
   promises.
 * Adds native support for ES2015+ syntax and mJS modules without transpilation.
 * Adds back the `Pact` class, a more intuitive way to manage promises.
+* Adds a new `FocusTarget` class as a centralized means to manage input focus.
 * Adds a new `DataStream` class, which extends from `FileStream` to allow more
   easily reading binary data such as integers and strings from a file.
 * Adds `Sphere.shutDown()` which initiates an asynchronous exit.
@@ -28,15 +29,20 @@ v5.0.0 - October 31, 2017
 * Adds support for quick refs to SSj: when using `examine`, this assigns a
   numeric handle to each object in the result, which you can quickly drill into
   by typing, e.g., `x *123`.
+* Adds `Sphere.Compiler` which evaluates to the name and version number of the
+  compiler used to build the current game.
 * Changes `Sphere.sleep()` to return a promise instead of blocking, allowing it
   to be used with `await` so as to avoid starving the event loop.
 * Changes `Console` into a full-fledged class, which allows for a familiar
   `new Console()` usage and gives games the ability to set up multiple consoles
   if desired.
 * Changes `RNG` to be compatible with the ES2015 iterator protocol.
+* Changes `SSj` namespace functions to be no-ops in the redistributable engine.
 * Changes `SSj.log()` to perform JSON serialization if its argument is an
   object.
-* Changes SSj `eval`, `examine` to not require quoting the expression string.
+* Changes SSj commands `eval`, `examine` to not require quoting the expression.
+* Renames `screen` to `Surface.Screen` and moves the custom `screen` properties
+  into the `Sphere` namespace.
 * Renames `from.Array()` and `from.Object()` to lowercase to match typical
   JavaScript naming conventions.
 * Renames `screen.frameRate` and `screen.now()` to `Sphere.frameRate` and
