@@ -171,7 +171,7 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 void
 dispatch_run(job_type_t hint)
 {
-	struct job job;
+	struct job* job;
 
 	int i;
 
@@ -180,11 +180,13 @@ dispatch_run(job_type_t hint)
 
 	// process recurring jobs
 	for (i = 0; i < vector_len(s_recurring); ++i) {
-		job = *(struct job*)vector_get(s_recurring, i);
-		if (job.hint == hint && !job.finished)
-			script_run(job.script, true);
-		if (job.finished) {
-			script_unref(job.script);
+		job = (struct job*)vector_get(s_recurring, i);
+		if (job->hint == hint && !job->finished) {
+			script_run(job->script, true);  // invalidates job ptr
+			job = (struct job*)vector_get(s_recurring, i);
+		}
+		if (job->finished) {
+			script_unref(job->script);
 			vector_remove(s_recurring, i--);
 		}
 	}
@@ -192,13 +194,14 @@ dispatch_run(job_type_t hint)
 	// process one-time jobs
 	if (s_onetime != NULL) {
 		for (i = 0; i < vector_len(s_onetime); ++i) {
-			job = *(struct job*)vector_get(s_onetime, i);
-			if (job.hint == hint && job.timer-- == 0 && !job.finished) {
-				script_run(job.script, false);
-				job.finished = true;
+			job = (struct job*)vector_get(s_onetime, i);
+			if (job->hint == hint && job->timer-- == 0 && !job->finished) {
+				script_run(job->script, false);  // invalidates job ptr
+				job = (struct job*)vector_get(s_onetime, i);
+				job->finished = true;
 			}
-			if (job.finished) {
-				script_unref(job.script);
+			if (job->finished) {
+				script_unref(job->script);
 				vector_remove(s_onetime, i--);
 			}
 		}
