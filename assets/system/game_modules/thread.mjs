@@ -34,8 +34,6 @@ import from from 'from';
 import FocusTarget from 'focus-target';
 import Pact from 'pact';
 
-let currentSelf = null;
-
 export default
 class Thread
 {
@@ -53,11 +51,6 @@ class Thread
 		let promises = from.array(threads)
 			.select(it => it._pact.promise);
 		return Promise.all(promises);
-	}
-
-	static self()
-	{
-		return currentSelf;
 	}
 
 	constructor(options = {})
@@ -122,8 +115,6 @@ class Thread
 		this._updateJob = Dispatch.onUpdate(async () => {
 			if (this._busy)
 				return;
-			let lastSelf = currentSelf;
-			currentSelf = this;
 			this._busy = true;
 			if (this._bootstrapping) {
 				await this.on_startUp();
@@ -133,7 +124,6 @@ class Thread
 				await this.on_inputCheck();
 			await this.on_update();
 			this._busy = false;
-			currentSelf = lastSelf;
 		}, {
 			inBackground: this._inBackground,
 			priority:     this._priority,

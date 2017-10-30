@@ -99,6 +99,7 @@ class Scene
 
 	doIf(predicate)
 	{
+		let timeline = this.timeline;
 		let jump = { ifFalse: null };
 		this.jumpsToFix.push(jump);
 		let op = {
@@ -106,7 +107,6 @@ class Scene
 			start(scene) {
 				if (predicate.call(scene))
 					return;
-				let timeline = Thread.self();
 				timeline.goTo(jump.ifFalse);
 			}
 		};
@@ -117,6 +117,7 @@ class Scene
 
 	doWhile(predicate)
 	{
+		let timeline = this.timeline;
 		let jump = {
 			loopStart: this.timeline.length,
 			ifDone: null,
@@ -127,7 +128,6 @@ class Scene
 			start(scene) {
 				if (predicate.call(scene))
 					return;
-				let timeline = Thread.self();
 				timeline.goTo(jump.ifDone);
 			}
 		};
@@ -145,17 +145,16 @@ class Scene
 		let op;
 		switch (blockType) {
 			case 'fork':
+				let forkedFrom = this.forkStack.pop();
 				op = {
 					arguments: [ this.timeline ],
 					start(scene, timeline) {
-						// note: Thread.self() is the calling timeline
-						let forkedFrom = Thread.self();
 						forkedFrom.children.push(timeline);
 						timeline.goTo(0);
 						timeline.start();
 					}
 				};
-				this.timeline = this.forkStack.pop();
+				this.timeline = forkedFrom;
 				this.enqueue(op);
 				break;
 			case 'branch':
@@ -165,9 +164,8 @@ class Scene
 			case 'loop':
 				jump = this.jumpsToFix.pop();
 				op = {
-					arguments: [ jump ],
-					start(scene, jump) {
-						let timeline = Thread.self();
+					arguments: [ jump, this.timeline ],
+					start(scene, jump, timeline) {
 						timeline.goTo(jump.loopStart);
 					}
 				};
@@ -195,9 +193,8 @@ class Scene
 	resync()
 	{
 		let op = {
-			arguments: [],
-			start(scene) {
-				let timeline = Thread.self();
+			arguments: [ this.timeline ],
+			start(scene, timeline) {
 				this.forks = timeline.children;
 			},
 			update(scene) {

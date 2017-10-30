@@ -1133,15 +1133,6 @@ Thread.join(thread[, ...]);
     not resolve until all of them have finished.  If all specified threads are
     already stopped, the promise resolves immediately.
 
-Thread.self();
-
-    When called during execution of an update or render function, returns the
-    thread currently being updated.  Otherwise returns `null`.
-
-    Note: Due to technical constraints imposed by Sphere's event loop model,
-          this will currently return `null` if called after returning from an
-          `await` expression.
-
 new Thread(options);
 
     Constructs a Thread object.  This can only be invoked as a `super()` call;
