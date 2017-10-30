@@ -1,5 +1,6 @@
 version=$(shell cat VERSION)
 pkgname=minisphere-$(version)
+arch=$(shell uname -m)
 
 ifndef prefix
 prefix=/usr
@@ -117,30 +118,30 @@ bin/minisphere:
 	mkdir -p bin
 	$(CC) -o bin/minisphere $(CFLAGS) \
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
-	      -Ldep/lib \
+	      -Ldep/lib/$(arch) \
 	      -Wl,-rpath=\$$ORIGIN \
 	      $(engine_sources) $(engine_libs)
-	cp dep/lib/libChakraCore.so bin
+	cp dep/lib/$(arch)/libChakraCore.so bin
 	cp -r assets/system bin
 
 bin/spherun:
 	mkdir -p bin
 	$(CC) -o bin/spherun $(CFLAGS) \
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
-	      -Ldep/lib \
+	      -Ldep/lib/$(arch) \
 	      -Wl,-rpath=\$$ORIGIN \
 	      -DMINISPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
-	cp dep/lib/libChakraCore.so bin
+	cp dep/lib/$(arch)/libChakraCore.so bin
 
 bin/cell:
 	mkdir -p bin
 	$(CC) -o bin/cell $(CFLAGS) \
 	      -Idep/include -Isrc/shared \
-	      -Ldep/lib \
+	      -Ldep/lib/$(arch) \
 	      -Wl,-rpath=\$$ORIGIN \
 	      $(cell_sources) $(cell_libs)
-	cp dep/lib/libChakraCore.so bin
+	cp dep/lib/$(arch)/libChakraCore.so bin
 
 bin/ssj:
 	mkdir -p bin

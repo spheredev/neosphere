@@ -1,3 +1,107 @@
+minisphere (5.0.0) zesty; urgency=low
+
+  * miniSphere and Cell now use the ChakraCore JS engine under the hood, vastly
+    improving JavaScript execution performance and bringing long-overdue native
+    support for ES2015+ syntax and built-ins to Sphere.
+  * Overhauls the entire Sphere Runtime to take full advantage of the event loop
+    as well as modern JavaScript features such as classes, `async` functions, and
+    promises.
+  * Adds native support for ES2015+ syntax and mJS modules without transpilation.
+  * Adds back the `Pact` class, a more intuitive way to manage promises.
+  * Adds a new `FocusTarget` class as a centralized means to manage input focus.
+  * Adds a new `DataStream` class, which extends from `FileStream` to allow more
+    easily reading binary data such as integers and strings from a file.
+  * Adds `Sphere.shutDown()` which initiates an asynchronous exit.
+  * Adds a new `inBackground` option for Dispatch jobs, for setting up background
+    tasks that shouldn't keep the event loop alive by themselves.
+  * Adds an optional `sandbox` field to `game.json` which can be set to either
+    `relaxed` or `none` to relax the file system sandbox and ease development.
+  * Adds `SSj.flipScreen()`, useful for debugging rendering code.
+  * Adds a `[Symbol.iterator]` to `DirectoryStream`, allowing directory contents
+    to be enumerated using a standard `for...of` loop.
+  * Adds a new `--performance` command line option for SpheRun which disables the
+    stepping debugger to ensure JavaScript code runs at full speed.
+  * Adds `fullScreen` manifest field to specify a game's default fullscreen mode.
+  * Adds support for quick refs to SSj: when using `examine`, this assigns a
+    numeric handle to each object in the result, which you can quickly drill into
+    by typing, e.g., `x *123`.
+  * Adds `Sphere.Compiler` which evaluates to the name and version number of the
+    compiler used to build the current game.
+  * Changes `Sphere.sleep()` to return a promise instead of blocking, allowing it
+    to be used with `await` so as to avoid starving the event loop.
+  * Changes `Console` into a full-fledged class, which allows for a familiar
+    `new Console()` usage and gives games the ability to set up multiple consoles
+    if desired.
+  * Changes `RNG` to be compatible with the ES2015 iterator protocol.
+  * Changes `SSj` namespace functions to be no-ops in the redistributable engine.
+  * Changes `SSj.log()` to perform JSON serialization if its argument is an
+    object.
+  * Changes SSj commands `eval`, `examine` to not require quoting the expression.
+  * Renames `screen` to `Surface.Screen` and moves the custom `screen` properties
+    into the `Sphere` namespace.
+  * Renames `from.Array()` and `from.Object()` to lowercase to match typical
+    JavaScript naming conventions.
+  * Renames `screen.frameRate` and `screen.now()` to `Sphere.frameRate` and
+    `Sphere.now()`, respectively.
+  * Renames `Dispatch.cancel()` to `JobToken#cancel()`.
+  * Renames `Color#fade()` to `Color#fadeTo()`.
+  * Renames `Keyboard#getChar()` to `Keyboard#charOf()`.
+  * Renames `fragment` and `vertex` Shader constructor options to `fragmentFile`
+    and `vertexFile`, respectively.
+  * Removes the experimental `Person` class from the Sphere Runtime.
+  * Removes the now-redundant `DataReader` and `DataWriter` classes.
+  * Removes `screen.flip()`, `Sphere.run()` and `Sphere.exit()` in favor of the
+    engine-provided event loop.
+  * Removes the Cell `transpile` module in favor of promoting native ES2015.
+  * Improves the startup routines to also look in `dist/` for a bundled game.
+  * Improves the SSj debugging experience by preventing the engine from switching
+    to fullscreen mode as long as the debugger is attached.
+  * Improves internal handling of UTF-8 strings, fixing several bugs related to
+    text encoding.  Notably, `FS.readFile()` now correctly handles the UTF-8
+    signature/BOM if one is present.
+  * Improves error reporting.  SpheRun now prints a complete JavaScript backtrace
+    to the terminal when a JavaScript runtime error occurs.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 31 Oct 2017 00:00:00 -0500
+
+minisphere (4.8.8) zesty; urgency=low
+
+  * Adds `FS.evaluateScript()`, used for loading Sphere v1 and browser scripts
+    without having to fall back on the Sphere v1 API.
+  * Adds `Image#width` and `Image#height` properties.
+  * Adds `SoundStream#length` and removes `SoundStream#bufferSize`.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 21 Sep 2017 00:00:00 -0500
+
+minisphere (4.8.7) zesty; urgency=low
+
+  * Fixes a bug where paths beginning with `~/` were incorrectly interpreted as
+    referring to the save data directory in Sphere v1 code, leading to a runtime
+    error.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sat, 16 Sep 2017 00:00:00 -0500
+
+minisphere (4.8.6) zesty; urgency=low
+
+  * Fixes a bug where the backbuffer texture is freed prematurely, causing the
+    engine to crash on shutdown.
+  * Fixes a bug where miniSphere can crash or behave strangely if it's unable to
+    determine the desktop resolution on startup.
+  * Fixes a bug where miniSphere can crash after calling `ExecuteGame()` if the
+    engine fails to reinitialize.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Tue, 12 Sep 2017 00:00:00 -0500
+
+minisphere (4.8.5) zesty; urgency=low
+
+  * Improves Sphere 1.x backward compatibility by aligning small maps to the
+    top-left of the screen instead of centering them, especially important for
+    games using a render script.
+  * Improves the window scaling algorithm so that 320x240 games again run at 2x
+    on 1366x768 displays.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Sun, 10 Sep 2017 00:00:00 -0500
+
 minisphere (4.8.4) zesty; urgency=low
 
   * Improves Cell game manifest generation to produce an error if the file named
