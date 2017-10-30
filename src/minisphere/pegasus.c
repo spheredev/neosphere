@@ -218,20 +218,20 @@ COLORS[] =
 };
 
 static bool js_require                       (int num_args, bool is_ctor, int magic);
-static bool js_screen_get_frameSkip          (int num_args, bool is_ctor, int magic);
-static bool js_screen_get_fullScreen         (int num_args, bool is_ctor, int magic);
-static bool js_screen_set_frameSkip          (int num_args, bool is_ctor, int magic);
-static bool js_screen_set_fullScreen         (int num_args, bool is_ctor, int magic);
-static bool js_screen_resize                 (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_APILevel           (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Game               (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Platform           (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_Engine           (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Version            (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_frameRate          (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_frameSkip          (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_fullScreen         (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_set_frameRate          (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_set_frameSkip          (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_set_fullScreen         (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_abort                  (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_now                    (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_restart                (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_setResolution          (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_shutDown               (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_sleep                  (int num_args, bool is_ctor, int magic);
 static bool js_Color_get_Color               (int num_args, bool is_ctor, int magic);
@@ -392,6 +392,7 @@ static bool js_SoundStream_play              (int num_args, bool is_ctor, int ma
 static bool js_SoundStream_pause             (int num_args, bool is_ctor, int magic);
 static bool js_SoundStream_stop              (int num_args, bool is_ctor, int magic);
 static bool js_SoundStream_write             (int num_args, bool is_ctor, int magic);
+static bool js_Surface_get_Screen            (int num_args, bool is_ctor, int magic);
 static bool js_new_Surface                   (int num_args, bool is_ctor, int magic);
 static bool js_Surface_get_height            (int num_args, bool is_ctor, int magic);
 static bool js_Surface_get_transform         (int num_args, bool is_ctor, int magic);
@@ -509,13 +510,16 @@ pegasus_init(void)
 
 	// initialize the Sphere v2 API
 	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
+	api_define_static_prop("Sphere", "Engine", js_Sphere_get_Engine, NULL);
 	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL);
-	api_define_static_prop("Sphere", "Platform", js_Sphere_get_Platform, NULL);
 	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
 	api_define_static_prop("Sphere", "frameRate", js_Sphere_get_frameRate, js_Sphere_set_frameRate);
+	api_define_static_prop("Sphere", "frameSkip", js_Sphere_get_frameSkip, js_Sphere_set_frameSkip);
+	api_define_static_prop("Sphere", "fullScreen", js_Sphere_get_fullScreen, js_Sphere_set_fullScreen);
 	api_define_function("Sphere", "abort", js_Sphere_abort);
 	api_define_function("Sphere", "now", js_Sphere_now);
 	api_define_function("Sphere", "restart", js_Sphere_restart);
+	api_define_function("screen", "setResolution", js_Sphere_setResolution);
 	api_define_function("Sphere", "shutDown", js_Sphere_shutDown);
 	api_define_function("Sphere", "sleep", js_Sphere_sleep);
 	api_define_class("Color", PEGASUS_COLOR, js_new_Color, js_Color_finalize);
@@ -662,6 +666,7 @@ pegasus_init(void)
 	api_define_method("SoundStream", "stop", js_SoundStream_stop);
 	api_define_method("SoundStream", "write", js_SoundStream_write);
 	api_define_class("Surface", PEGASUS_SURFACE, js_new_Surface, js_Surface_finalize);
+	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "height", false, js_Surface_get_height, NULL);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
 	api_define_property("Surface", "width", false, js_Surface_get_width, NULL);
@@ -689,11 +694,6 @@ pegasus_init(void)
 	api_define_method("Transform", "scale", js_Transform_scale);
 	api_define_method("Transform", "translate", js_Transform_translate);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize);
-
-	api_define_object(NULL, "screen", PEGASUS_SURFACE, image_ref(screen_backbuffer(g_screen)));
-	api_define_static_prop("screen", "frameSkip", js_screen_get_frameSkip, js_screen_set_frameSkip);
-	api_define_static_prop("screen", "fullScreen", js_screen_get_fullScreen, js_screen_set_fullScreen);
-	api_define_function("screen", "resize", js_screen_resize);
 
 	api_define_const("FileOp", "Read", FILE_OP_READ);
 	api_define_const("FileOp", "Write", FILE_OP_WRITE);
@@ -1275,62 +1275,16 @@ js_require(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_screen_get_frameSkip(int num_args, bool is_ctor, int magic)
-{
-	jsal_push_number(screen_get_frameskip(g_screen));
-	return true;
-}
-
-static bool
-js_screen_set_frameSkip(int num_args, bool is_ctor, int magic)
-{
-	double max_skips;
-
-	max_skips = jsal_require_number(0);
-
-	if (max_skips < 0.0)
-		jsal_error(JS_RANGE_ERROR, "invalid frameskip");
-	screen_set_frameskip(g_screen, max_skips);
-	return false;
-}
-
-static bool
-js_screen_get_fullScreen(int num_args, bool is_ctor, int magic)
-{
-	jsal_push_boolean(screen_get_fullscreen(g_screen));
-	return true;
-}
-
-static bool
-js_screen_set_fullScreen(int num_args, bool is_ctor, int magic)
-{
-	bool fullscreen;
-
-	fullscreen = jsal_require_boolean(0);
-
-	screen_set_fullscreen(g_screen, fullscreen);
-	return false;
-}
-
-static bool
-js_screen_resize(int num_args, bool is_ctor, int magic)
-{
-	int  width;
-	int  height;
-
-	width = jsal_require_int(0);
-	height = jsal_require_int(1);
-
-	if (width < 0 || height < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid screen resolution");
-	screen_resize(g_screen, width, height);
-	return false;
-}
-
-static bool
 js_Sphere_get_APILevel(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(API_LEVEL);
+	return true;
+}
+
+static bool
+js_Sphere_get_Engine(int num_args, bool is_ctor, int magic)
+{
+	jsal_push_sprintf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 	return true;
 }
 
@@ -1351,13 +1305,6 @@ js_Sphere_get_Game(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_get_Platform(int num_args, bool is_ctor, int magic)
-{
-	jsal_push_sprintf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
-	return true;
-}
-
-static bool
 js_Sphere_get_Version(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_int(API_VERSION);
@@ -1374,6 +1321,20 @@ js_Sphere_get_frameRate(int num_args, bool is_ctor, int magic)
 }
 
 static bool
+js_Sphere_get_frameSkip(int num_args, bool is_ctor, int magic)
+{
+	jsal_push_number(screen_get_frameskip(g_screen));
+	return true;
+}
+
+static bool
+js_Sphere_get_fullScreen(int num_args, bool is_ctor, int magic)
+{
+	jsal_push_boolean(screen_get_fullscreen(g_screen));
+	return true;
+}
+
+static bool
 js_Sphere_set_frameRate(int num_args, bool is_ctor, int magic)
 {
 	double framerate;
@@ -1386,6 +1347,30 @@ js_Sphere_set_frameRate(int num_args, bool is_ctor, int magic)
 		s_frame_rate = framerate;
 	else
 		s_frame_rate = 0;  // unthrottled
+	return false;
+}
+
+static bool
+js_Sphere_set_frameSkip(int num_args, bool is_ctor, int magic)
+{
+	double max_skips;
+
+	max_skips = jsal_require_number(0);
+
+	if (max_skips < 0.0)
+		jsal_error(JS_RANGE_ERROR, "invalid frameskip");
+	screen_set_frameskip(g_screen, max_skips);
+	return false;
+}
+
+static bool
+js_Sphere_set_fullScreen(int num_args, bool is_ctor, int magic)
+{
+	bool fullscreen;
+
+	fullscreen = jsal_require_boolean(0);
+
+	screen_set_fullscreen(g_screen, fullscreen);
 	return false;
 }
 
@@ -1415,6 +1400,21 @@ js_Sphere_restart(int num_args, bool is_ctor, int magic)
 {
 	g_restarting = true;
 	dispatch_cancel_all(true);
+	return false;
+}
+
+static bool
+js_Sphere_setResolution(int num_args, bool is_ctor, int magic)
+{
+	int  width;
+	int  height;
+
+	width = jsal_require_int(0);
+	height = jsal_require_int(1);
+
+	if (width < 0 || height < 0)
+		jsal_error(JS_RANGE_ERROR, "invalid screen resolution");
+	screen_resize(g_screen, width, height);
 	return false;
 }
 
@@ -4172,6 +4172,24 @@ js_SoundStream_write(int num_args, bool is_ctor, int magic)
 	data = jsal_require_buffer_ptr(0, &size);
 	stream_buffer(stream, data, size);
 	return false;
+}
+
+static bool
+js_Surface_get_Screen(int num_args, bool is_ctor, int magic)
+{
+	image_t* backbuffer;
+
+	backbuffer = screen_backbuffer(g_screen);
+	jsal_push_class_obj(PEGASUS_SURFACE, image_ref(backbuffer), false);
+
+	jsal_push_this();
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_dup(-3);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, "Default");
+	jsal_pop(1);
+
+	return true;
 }
 
 static bool

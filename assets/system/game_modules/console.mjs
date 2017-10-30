@@ -61,7 +61,7 @@ class Console extends Thread
 		this.keyboard = Keyboard.Default;
 		this.mouse = Mouse.Default;
 		this.nextLine = 0;
-		this.numLines = Math.floor((screen.height - 32) / this.font.height);
+		this.numLines = Math.floor((Surface.Screen.height - 32) / this.font.height);
 		this.prompt = options.prompt;
 		this.view = { visible: false, fade: 0.0, line: 0.0 };
 		this.wasKeyDown = false;
@@ -128,7 +128,7 @@ class Console extends Thread
 
 		this.log(`initializing the Sphere Runtime Console`);
 		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
-		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Platform})`);
+		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Engine})`);
 		this.log("");
 
 		super.start();
@@ -197,29 +197,29 @@ class Console extends Thread
 		// draw the command prompt...
 		let promptWidth = this.font.getTextSize(`${this.prompt} `).width;
 		let boxY = -22 * (1.0 - this.view.fade);
-		Prim.drawSolidRectangle(screen, 0, boxY, screen.width, 22, Color.Black.fadeTo(this.view.fade * 0.875));
-		this.font.drawText(screen, 6, 6 + boxY, this.prompt, Color.Black.fadeTo(this.view.fade * 0.75));
-		this.font.drawText(screen, 5, 5 + boxY, this.prompt, Color.Gray.fadeTo(this.view.fade * 0.75));
-		this.font.drawText(screen, 6 + promptWidth, 6 + boxY, this.entry, Color.Black.fadeTo(this.view.fade * 0.75));
-		this.font.drawText(screen, 5 + promptWidth, 5 + boxY, this.entry, Color.Gold.fadeTo(this.view.fade * 0.75));
-		this.font.drawText(screen, 5 + promptWidth + this.font.getTextSize(this.entry).width, 5 + boxY, "_", this.cursorColor);
+		Prim.drawSolidRectangle(Surface.Screen, 0, boxY, Surface.Screen.width, 22, Color.Black.fadeTo(this.view.fade * 0.875));
+		this.font.drawText(Surface.Screen, 6, 6 + boxY, this.prompt, Color.Black.fadeTo(this.view.fade * 0.75));
+		this.font.drawText(Surface.Screen, 5, 5 + boxY, this.prompt, Color.Gray.fadeTo(this.view.fade * 0.75));
+		this.font.drawText(Surface.Screen, 6 + promptWidth, 6 + boxY, this.entry, Color.Black.fadeTo(this.view.fade * 0.75));
+		this.font.drawText(Surface.Screen, 5 + promptWidth, 5 + boxY, this.entry, Color.Gold.fadeTo(this.view.fade * 0.75));
+		this.font.drawText(Surface.Screen, 5 + promptWidth + this.font.getTextSize(this.entry).width, 5 + boxY, "_", this.cursorColor);
 
 		// ...then the console output
 		let boxHeight = this.numLines * this.font.height + 10;
-		boxY = screen.height - boxHeight * this.view.fade;
-		Prim.drawSolidRectangle(screen, 0, boxY, screen.width, boxHeight, Color.Black.fadeTo(this.view.fade * 0.75));
-		screen.clipTo(5, boxY + 5, screen.width - 10, boxHeight - 10);
+		boxY = Surface.Screen.height - boxHeight * this.view.fade;
+		Prim.drawSolidRectangle(Surface.Screen, 0, boxY, Surface.Screen.width, boxHeight, Color.Black.fadeTo(this.view.fade * 0.75));
+		Surface.Screen.clipTo(5, boxY + 5, Surface.Screen.width - 10, boxHeight - 10);
 		for (let i = -1; i < this.numLines + 1; ++i) {
 			let lineToDraw = (this.nextLine - this.numLines) + i - Math.floor(this.view.line);
 			let lineInBuffer = lineToDraw % this.bufferSize;
 			if (lineToDraw >= 0 && this.buffer[lineInBuffer] != null) {
 				let y = boxY + 5 + i * this.font.height;
 				y += (this.view.line - Math.floor(this.view.line)) * this.font.height;
-				this.font.drawText(screen, 6, y + 1, this.buffer[lineInBuffer], Color.Black.fadeTo(this.view.fade * 0.75));
-				this.font.drawText(screen, 5, y, this.buffer[lineInBuffer], Color.White.fadeTo(this.view.fade * 0.75));
+				this.font.drawText(Surface.Screen, 6, y + 1, this.buffer[lineInBuffer], Color.Black.fadeTo(this.view.fade * 0.75));
+				this.font.drawText(Surface.Screen, 5, y, this.buffer[lineInBuffer], Color.White.fadeTo(this.view.fade * 0.75));
 			}
 		}
-		screen.clipTo(0, 0, screen.width, screen.height);
+		Surface.Screen.clipTo(0, 0, Surface.Screen.width, Surface.Screen.height);
 	}
 
 	on_update()

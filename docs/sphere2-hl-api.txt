@@ -1111,8 +1111,8 @@ Test.run(tests);
           will be called as well.
 
 
-`Thread` Objects
-----------------
+`Thread` Object
+---------------
 
 Using `Thread`, independent threads can be started and stopped at will, each
 with its own update and render handler.  This allows game processes to run in

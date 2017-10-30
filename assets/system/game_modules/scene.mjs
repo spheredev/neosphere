@@ -40,7 +40,7 @@ let defaultPriority = 0.0,
 
 Dispatch.onRender(() => {
 	if (screenMask.a > 0.0)
-		Prim.fill(screen, screenMask);
+		Prim.fill(Surface.Screen, screenMask);
 }, {
 	inBackground: true,
 	priority:     99,

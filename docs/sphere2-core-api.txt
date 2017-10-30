@@ -191,9 +191,9 @@ communicate with the underlying Sphere platform.  The properties provide access
 to the engine's name, version number, and API level, and there are several
 methods for managing execution.
 
-Sphere.Platform [read-only]
+Sphere.Engine [read-only]
 
-    A string specifying the name and version number of the engine.  For
+    A string specifying the name and version number of the game engine.  For
     example, "miniSphere 5.0.0".
 
 Sphere.Version [read-only]
@@ -219,6 +219,20 @@ Sphere.frameRate [read/write]
     The frame rate is used to regulate the event loop.  For example if this is
     set to 60 (the default), the event loop will perform 60 iterations per
     second, skipping renders as necessary to meet that goal.
+
+Sphere.frameSkip [read/write]
+
+    Gets or sets the maximum number of frames the engine is allowed to skip in
+    order to maintain the desired frame rate.
+
+Sphere.fullScreen [read/write]
+
+    Gets or sets whether the engine is running in fullscreen mode.  Set this to
+    `true` for fullscreen, or `false` for windowed.
+
+    Note: If an SSj debugger instance is attached, the engine is forced into
+          windowed mode and any change to the value of `screen.fullScreen` will
+          be silently ignored.
 
 Sphere.abort(message);
 
@@ -248,6 +262,15 @@ Sphere.restart();
           after control has returned to the event loop.  Note that dispatching
           new update or render jobs before then will cancel the request!
 
+Sphere.setResolution(width, height);
+
+    Changes the game's resolution.  This determines the width and height of
+    the backbuffer (see `Surface.Screen` below); higher resolutions allow you
+    to render more detail.
+
+    Note: This change is not persistent and lasts only until the engine is
+          closed.
+
 Sphere.shutDown();
 
     Shuts down the engine.  All in-flight Dispatch jobs are canceled so that
@@ -262,39 +285,6 @@ Sphere.sleep(frames);
     Returns a promise which resolves after the specified number of frames have
     elapsed.  Can be used with `await`.  This is useful to delay execution of a
     function without blocking the event loop.
-
-
-`screen` Built-In
------------------
-
-In Sphere v2, the backbuffer is exposed as a custom `Surface` object (see
-below) with some additional special-purpose methods.  The surface is accessible
-to game code through a built-in global constant, `screen`.
-
-screen [global, non-replaceable]
-
-    A `Surface` object (see below) representing the backbuffer.  Anything drawn
-    to `screen` will become visible the next time the event loop regains
-    control.
-
-screen.frameSkip [read/write]
-
-    Gets or sets the maximum number of frames the engine is allowed to skip in
-    order to maintain the desired frame rate.
-
-screen.fullScreen [read/write]
-
-    Gets or sets whether the engine is running in fullscreen mode.  Set this to
-    `true` for fullscreen, or `false` for windowed.
-
-    Note: If an SSj debugger instance is attached, the engine is forced into
-          windowed mode and any change to the value of `screen.fullScreen` will
-          be silently ignored.
-
-screen.resize(width, height);
-
-    Changes the game's resolution.  The change is not persistent and lasts only
-    until the engine is closed.
 
 
 `Color` Object
@@ -1583,8 +1573,11 @@ need to draw directly to the screen; it sometimes makes sense to compose
 complex parts of a scene in advance, offscreen, so that you don't have to
 redraw them every frame.
 
-Note: The built-in `screen` object is itself a surface and supports the same
-      operations as any other `Surface` object.
+Surface.Screen [non-replaceable]
+
+    A special Surface object representing the backbuffer.  Anything drawn to
+    this surface will automatically become visible on the screen the next time
+    the event loop regains control.
 
 new Surface(width, height[, fill_color]);
 

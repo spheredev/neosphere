@@ -66,8 +66,8 @@ static bool js_error                         (int num_args, bool is_ctor, int ma
 static bool js_files                         (int num_args, bool is_ctor, int magic);
 static bool js_install                       (int num_args, bool is_ctor, int magic);
 static bool js_warn                          (int num_args, bool is_ctor, int magic);
+static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Game               (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Platform           (int num_args, bool is_ctor, int magic);
 static bool js_Sphere_get_Version            (int num_args, bool is_ctor, int magic);
 static bool js_new_DirectoryStream           (int num_args, bool is_ctor, int magic);
 static bool js_DirectoryStream_get_fileCount (int num_args, bool is_ctor, int magic);
@@ -178,8 +178,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function(NULL, "files", js_files);
 	api_define_function(NULL, "install", js_install);
 	api_define_function(NULL, "warn", js_warn);
+	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL);
 	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL);
-	api_define_static_prop("Sphere", "Platform", js_Sphere_get_Platform, NULL);
 	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
 	api_define_class("DirectoryStream", CELL_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize);
 	api_define_property("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
@@ -1148,6 +1148,13 @@ js_warn(int num_args, bool is_ctor, int magic)
 }
 
 static bool
+js_Sphere_get_Compiler(int num_args, bool is_ctor, int magic)
+{
+	jsal_push_sprintf("%s %s", SPHERE_COMPILER_NAME, SPHERE_VERSION);
+	return true;
+}
+
+static bool
 js_Sphere_get_Game(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_hidden_stash();
@@ -1158,13 +1165,6 @@ js_Sphere_get_Game(int num_args, bool is_ctor, int magic)
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(0, "Game");
 	
-	return true;
-}
-
-static bool
-js_Sphere_get_Platform(int num_args, bool is_ctor, int magic)
-{
-	jsal_push_sprintf("%s %s", SPHERE_COMPILER_NAME, SPHERE_VERSION);
 	return true;
 }
 

@@ -65,6 +65,16 @@ The functions and properties below are available for use at all times, by all
 Cellscripts and modules.  No `require()` or `import` statements are necessary
 to use them.
 
+Sphere.Compiler [read-only]
+
+    A string specifying the name and version number of the compiler.  For
+    example, "Cell 5.0.0".
+
+Sphere.Version [read-only]
+
+    An integer specifying which version of the Cellscript API is supported by
+    the compiler (e.g., 2).
+
 Sphere.Game [non-replaceable]
 
     An object whose properties will be written to the game's JSON manifest at
@@ -74,16 +84,6 @@ Sphere.Game [non-replaceable]
     Note: You are free to do as you please with this object, but keep in mind
           that only JSON-compatible values will actually be written out to
           `game.json`.
-
-Sphere.Platform [read-only]
-
-    A string specifying the name and version number of the compiler.  For
-    example, "Cell 5.0.0".
-
-Sphere.Version [read-only]
-
-    An integer specifying which version of the Cellscript API is supported by
-    the compiler (e.g., 2).
 
 error(message);
 
