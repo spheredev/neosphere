@@ -4200,7 +4200,7 @@ js_Surface_get_Screen(int num_args, bool is_ctor, int magic)
 	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
 	jsal_dup(-3);
 	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Default");
+	jsal_def_prop_string(-2, "Screen");
 	jsal_pop(1);
 
 	return true;
