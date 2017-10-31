@@ -68,7 +68,7 @@ to use them.
 Sphere.Compiler [read-only]
 
     A string specifying the name and version number of the compiler.  For
-    example, "Cell 5.0.0".
+    example, "Cell 5.0.1".
 
 Sphere.Version [read-only]
 

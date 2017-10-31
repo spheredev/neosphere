@@ -194,7 +194,7 @@ methods for managing execution.
 Sphere.Engine [read-only]
 
     A string specifying the name and version number of the game engine.  For
-    example, "miniSphere 5.0.0".
+    example, "miniSphere 5.0.1".
 
 Sphere.Version [read-only]
 Sphere.APILevel [read-only]
@@ -208,7 +208,7 @@ Sphere.APILevel [read-only]
 Sphere.Compiler [read-only]
 
     A string specifying the name and version number of the compiler or build
-    tool used to make the game distribution.  For example, "Cell 5.0.0".  If no
+    tool used to make the game distribution.  For example, "Cell 5.0.1".  If no
     compiler information is available, this evaluates to `undefined`.
 
 Sphere.Game [non-replaceable]

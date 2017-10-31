@@ -2657,13 +2657,13 @@ static bool
 js_Keyboard_charOf(int num_args, bool is_ctor, int magic)
 {
 	int  keycode;
-	bool shifted;
+	bool shifted = false;
 
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 	keycode = jsal_require_int(0);
-	shifted = num_args >= 2 ? jsal_require_boolean(1)
-		: false;
+	if (num_args >= 2)
+		shifted = jsal_require_boolean(1);
 
 	switch (keycode) {
 	case ALLEGRO_KEY_A: jsal_push_string(shifted ? "A" : "a"); break;

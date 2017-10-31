@@ -60,7 +60,7 @@ miniSphere 5.0
   possible to create multiple consoles, in case that's ever needed.   Existing
   code using the `Console` object will need to be updated.
 
-* Thee new `FocusTarget` class provides a centralized mechanism for managing
+* The new `FocusTarget` class provides a centralized mechanism for managing
   input focus.  Only one focus target can have the focus at any given time,
   making this very well-suited to managing input focus in, e.g., menu systems
   and map engines.  Just import `FocusTarget` from `sphere-runtime` to try it!
