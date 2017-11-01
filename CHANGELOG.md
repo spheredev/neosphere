@@ -10,6 +10,8 @@ v5.0.1 - TBD
 * Fixes a bug where calling `Dispatch.cancelAll()` can stop promise resolution.
 * Fixes a bug where calling `FocusTarget#yield()` on an out-of-focus target can
   allow it to mysteriously regain focus later.
+* Fixes a bug in `SSj.log()` that causes it to log Error objects as "{}"
+  instead of logging the error message.
 
 v5.0.0 - October 31, 2017
 -------------------------
