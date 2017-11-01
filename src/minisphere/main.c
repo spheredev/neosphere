@@ -449,7 +449,7 @@ on_enqueue_js_job(void)
 	script_t* script;
 
 	script = script_new_function(0);
-	dispatch_defer(script, 0, JOB_TICK);
+	dispatch_defer(script, 0, JOB_TICK, true);
 }
 
 static void

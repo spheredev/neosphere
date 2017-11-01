@@ -39,6 +39,7 @@
 struct job
 {
 	bool       background;
+	bool       critical;
 	bool       finished;
 	job_type_t hint;
 	double     priority;
@@ -85,8 +86,10 @@ dispatch_cancel_all(bool recurring)
 	iter_t iter;
 
 	iter = vector_enum(s_onetime);
-	while (job = iter_next(&iter))
-		job->finished = true;
+	while (job = iter_next(&iter)) {
+		if (!job->critical)
+			job->finished = true;
+	}
 
 	if (recurring) {
 		iter = vector_enum(s_recurring);
@@ -120,12 +123,13 @@ dispatch_cancel(int64_t token)
 }
 
 int64_t
-dispatch_defer(script_t* script, uint32_t timeout, job_type_t hint)
+dispatch_defer(script_t* script, uint32_t timeout, job_type_t hint, bool critical)
 {
 	struct job job;
 
 	if (s_onetime == NULL)
 		return 0;
+	job.critical = critical;
 	job.finished = false;
 	job.hint = hint;
 	job.script = script;
