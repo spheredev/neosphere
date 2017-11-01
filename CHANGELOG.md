@@ -8,6 +8,8 @@ v5.0.1 - TBD
   map engine is running.
 * Fixes a bug where the source code of the mJS module shim isn't shown in SSj.
 * Fixes a bug where calling `Dispatch.cancelAll()` can stop promise resolution.
+* Fixes a bug where calling `FocusTarget#yield()` on an out-of-focus target can
+  allow it to mysteriously regain focus later.
 
 v5.0.0 - October 31, 2017
 -------------------------

@@ -55,8 +55,7 @@ class FocusTarget
 
 	dispose()
 	{
-		from.array(focusQueue)
-			.remove(it => it === this);
+		this.yield();
 	}
 
 	takeFocus()
@@ -70,7 +69,7 @@ class FocusTarget
 
 	yield()
 	{
-		if (focusQueue[focusQueue.length - 1] === this)
-			focusQueue.pop();
+		from.array(focusQueue)
+			.remove(it => it === this);
 	}
 }

@@ -96,7 +96,7 @@ static const char* const ERROR_TEXT[][2] =
 	{ "so, um, a funny thing happened", "on the way to the boss" },
 	{ "here's the deal", "the game encountered an error" },
 	{ "this game sucks", "or maybe it's just the programmer" },
-	{ "cows eat kitties but pigs don't eat cows", "they just get \"replaced\" by them" },
+	{ "cows eat kitties but pigs don't eat cows", "they just get 'replaced' by them" },
 	{ "hey look, a squirrel", "it's probably responsible for all this" },
 	{ "sorry, it's just", "this is a trainwreck of a game" },
 	{ "you better run, and you better hide", "'cause a big fat hawk just ate that guy" },
