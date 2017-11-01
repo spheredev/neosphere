@@ -906,16 +906,22 @@ pegasus_eval_module(const char* filename)
 
 	// evaluate .mjs scripts as ES modules ("mJS")
 	if (path_has_extension(file_path, ".mjs")) {
-		jsal_push_sprintf("import * as Module from \"%s\"; global.___exports = Module;",
-			filename);
+		lstr_free(code_string);
+		code_string = lstr_newf(
+			"/* synthesized by the mJS module loader */\n"
+			"import * as exports from \"%s\";\n"
+			"global.$EXPORTS = exports;", filename);
+		jsal_push_lstring_t(code_string);
 		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		debugger_add_source(module_name, code_string);
 		is_module_loaded = jsal_try_eval_module(module_name);
+		lstr_free(code_string);
 		free(module_name);
 		if (!is_module_loaded)
 			goto on_error;
 		jsal_pop(2);
-		jsal_get_global_string("___exports");
-		jsal_del_global_string("___exports");
+		jsal_get_global_string("$EXPORTS");
+		jsal_del_global_string("$EXPORTS");
 		return true;
 	}
 
@@ -1148,6 +1154,8 @@ handle_module_import(void)
 	char*       caller_id = NULL;
 	const char* origin = NULL;
 	path_t*     path;
+	char*       shim_name;
+	lstring_t*  shim_source;
 	char*       source;
 	size_t      source_len;
 	char*       specifier;
@@ -1189,8 +1197,16 @@ handle_module_import(void)
 	}
 	else {
 		// ES module shim, allows 'import' to work with CommonJS modules
-		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
-		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
+		shim_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		shim_source = lstr_newf(
+			"/* synthesized by the mJS module loader */\n"
+			"export default require(\"%s\");", path_cstr(path));
+		debugger_add_source(shim_name, shim_source);
+		jsal_push_string(shim_name);
+		jsal_push_lstring_t(shim_source);
+		free(shim_name);
+		lstr_free(shim_source);
+
 	}
 }
 

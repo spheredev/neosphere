@@ -6,6 +6,8 @@ v5.0.1 - TBD
 
 * Fixes a bug where calling `Exit()` won't close the engine if the Sphere v1
   map engine is still running.
+* Fixes a bug where the source code for the internal module shim isn't viewable
+  under SSj.
 
 v5.0.0 - October 31, 2017
 -------------------------

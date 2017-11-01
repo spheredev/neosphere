@@ -52,7 +52,5 @@ Mac OS X
 --------
 
 Building miniSphere for OS X is very similar to Linux and uses Make as well.
-The dependencies are the same; however, it's not necessary to build Allegro 5.1
-yourself if you have Homebrew. To get Allegro installed, simply run
-`brew install --devel allegro` from the command line. Then switch to the
-directory where you checked out miniSphere and run `make`.
+The dependencies are the same.  Just switch to the directory where you checked
+out miniSphere and run `make`.

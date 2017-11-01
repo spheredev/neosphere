@@ -14,12 +14,10 @@ new commit.
 * Version number in `src/shared/version.h`
 * Version number in `src/plugin/PluginMain.cs`
 * Version number in `src/plugin/Properties/AssemblyInfo.cs`
-* Version number in `docs/sphere2-core-api.txt`
-* Version number in `docs/cellscript-api.txt`
-* Version number in `setup/minisphere.iss`
 * Version number and release date in `README.md`
 * Version number and release date in manual pages (`manpages/*`)
-* Release date in `CHANGELOG.md`
+* Version number and release date in `CHANGELOG.md`
+* Version number in `setup/minisphere.iss`
 * Changelog entry in `src/debian/changelog`
 
 
