@@ -1,9 +1,11 @@
 miniSphere Installation Instructions
 ====================================
 
-miniSphere compiles on all three major platforms (Windows, Linux, and OS X).
-This file contains instructions for how to compile and install the engine on
-each platform.
+miniSphere compiles on all three major platforms (Windows, Linux, and macOS).
+This file contains instructions for how to compile and install the engine for
+Windows and Linux; macOS is more complicated and you will probably have to set
+up your own build harness.
+
 
 Windows
 -------
@@ -46,11 +48,3 @@ Once you have Allegro and other necessary dependencies installed, simply switch
 to the directory where you checked out miniSphere and run `make` on the
 command-line. This will build miniSphere and all GDK tools in `bin/`. To
 install miniSphere on your system, follow this up with `sudo make install`.
-
-
-Mac OS X
---------
-
-Building miniSphere for OS X is very similar to Linux and uses Make as well.
-The dependencies are the same.  Just switch to the directory where you checked
-out miniSphere and run `make`.

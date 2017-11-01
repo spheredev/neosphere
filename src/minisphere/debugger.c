@@ -77,7 +77,7 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 		jsal_debug_init(on_breakpoint_hit);
 	}
 
-	s_banner_text = lstr_new("debug");
+	s_banner_text = lstr_new("debugger");
 	s_banner_color = color_new(192, 192, 192, 255);
 	s_sources = vector_new(sizeof(struct source));
 

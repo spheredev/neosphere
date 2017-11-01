@@ -117,7 +117,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	// set watermark (shown on bottom left)
 	request = ki_message_new(KI_REQ);
 	ki_message_add_int(request, KI_REQ_WATERMARK);
-	ki_message_add_string(request, "ssj");
+	ki_message_add_string(request, "SSj");
 	ki_message_add_int(request, 255);
 	ki_message_add_int(request, 224);
 	ki_message_add_int(request, 0);

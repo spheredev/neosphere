@@ -474,24 +474,24 @@ Dispatch.cancelAll();
     mishaps, recurring jobs are not affected by this call and must be cancelled
     individually.
 
-Dispatch.later(num_frames, fn);
+Dispatch.later(num_frames, callback);
 
-    Sets up a one-time job to call `fn` from the event loop after a specified
-    number of frames have passed.
+    Sets up a one-time job to call `callback` from the event loop after
+    `num_frames` frames have passed.
 
     Returns a `JobToken` you can use the manage the job.
 
-Dispatch.now(fn);
+Dispatch.now(callback);
 
-    Sets up a one-time job to call `fn` from the event loop on the next tick.
-    This is useful for performing operations that need to be done from the
-    event loop with minimal delay.
+    Sets up a one-time job to call `callback` from the event loop during the
+    current frame.  This is useful for performing operations that need to be
+    done from the event loop with minimal delay.
 
     Returns a `JobToken` you can use to manage the job.
 
     Note: Dispatch.now(fn) is *NOT* an alias for Dispatch.later(0, fn).  The
-          latter runs at the beginning of the next frame; Dispatch.now() always
-          runs on the very next tick even if no frame processing is done.
+          latter runs at the beginning of the next frame; Dispatch.now() jobs
+          always run during the same frame they were issued.
 
 Dispatch.onRender(fn[, options]);
 Dispatch.onUpdate(fn[, options]);
@@ -936,11 +936,12 @@ Keyboard#scrollLock [read-only]
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
 
-Keyboard#charOf(key, shifted);
+Keyboard#charOf(key[, shifted]);
 
     Gets the character(s) that would be generated if a specified key is pressed
     on this keyboard.  For example, Key.A becomes "a" (or "A" if shifted).
-    `shifted` specifies whether to act as if the Shift key was pressed.
+    `shifted` specifies whether to act as if the Shift key is pressed and
+    defaults to `false`.
 
     An empty string is returned if the specified key is not associated with a
     character (a modifier key, for example).

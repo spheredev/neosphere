@@ -293,7 +293,7 @@ main(int argc, char* argv[])
 #if defined(MINISPHERE_SPHERUN)
 	if (ssj_mode == SSJ_ACTIVE) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		screen_draw_status(g_screen, "waiting for debugger", color_new(255, 255, 255, 255));
+		screen_draw_status(g_screen, "waiting for debugger...", color_new(255, 255, 255, 255));
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
