@@ -1,3 +1,15 @@
+minisphere (5.0.1) zesty; urgency=low
+
+  * Improves `SSj.log()` and `SSj.trace()` output for error and function objects.
+  * Fixes a bug where calling `Exit()` won't shut down the game if the built-in
+    map engine is running.
+  * Fixes a bug where the source code of the mJS module shim isn't shown in SSj.
+  * Fixes a bug where calling `Dispatch.cancelAll()` can stop promise resolution.
+  * Fixes a bug where calling `FocusTarget#yield()` on an out-of-focus target can
+    allow it to mysteriously regain focus later.
+
+ -- Bruce Pascoe <fatcerberus@icloud.com>  Thu, 2 Nov 2017 00:00:00 -0500
+
 minisphere (5.0.0) zesty; urgency=low
 
   * miniSphere and Cell now use the ChakraCore JS engine under the hood, vastly

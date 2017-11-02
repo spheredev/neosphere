@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.0.1 - TBD
-------------
+v5.0.1 - November 2, 2017
+-------------------------
 
 * Improves `SSj.log()` and `SSj.trace()` output for error and function objects.
 * Fixes a bug where calling `Exit()` won't shut down the game if the built-in
