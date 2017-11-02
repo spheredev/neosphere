@@ -333,7 +333,6 @@ static bool js_RNG_iterator                  (int num_args, bool is_ctor, int ma
 static bool js_RNG_next                      (int num_args, bool is_ctor, int magic);
 static bool js_SSj_flipScreen                (int num_args, bool is_ctor, int magic);
 static bool js_SSj_log                       (int num_args, bool is_ctor, int magic);
-static bool js_SSj_trace                     (int num_args, bool is_ctor, int magic);
 static bool js_new_Sample                    (int num_args, bool is_ctor, int magic);
 static bool js_Sample_get_fileName           (int num_args, bool is_ctor, int magic);
 static bool js_Sample_play                   (int num_args, bool is_ctor, int magic);
@@ -468,6 +467,7 @@ static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
 static js_ref_t* s_key_inBackground;
 static js_ref_t* s_key_priority;
+static js_ref_t* s_key_stack;
 static js_ref_t* s_key_u;
 static js_ref_t* s_key_v;
 static js_ref_t* s_key_value;
@@ -489,6 +489,7 @@ pegasus_init(void)
 	s_key_done = jsal_new_key("done");
 	s_key_inBackground = jsal_new_key("inBackground");
 	s_key_priority = jsal_new_key("priority");
+	s_key_stack = jsal_new_key("stack");
 	s_key_u = jsal_new_key("u");
 	s_key_v = jsal_new_key("v");
 	s_key_value = jsal_new_key("value");
@@ -836,6 +837,7 @@ pegasus_uninit(void)
 	jsal_unref(s_key_done);
 	jsal_unref(s_key_inBackground);
 	jsal_unref(s_key_priority);
+	jsal_unref(s_key_stack);
 	jsal_unref(s_key_u);
 	jsal_unref(s_key_v);
 	jsal_unref(s_key_value);
@@ -3373,10 +3375,15 @@ js_SSj_log(int num_args, bool is_ctor, int magic)
 #if defined(MINISPHERE_SPHERUN)
 	const char* text;
 
-	if (jsal_is_object(0) && !jsal_is_error(0) && !jsal_is_function(0))
+	if (jsal_is_error(0)) {
+		jsal_get_prop_key(0, s_key_stack);
+		jsal_replace(0);
+	} 
+	else if (jsal_is_object(0) && !jsal_is_function(0)) {
 		jsal_stringify(0);
+	}
+	
 	text = jsal_to_string(0);
-
 	debugger_log(text, (ki_log_op_t)magic, true);
 #endif
 	return false;
