@@ -145,7 +145,7 @@ api_define_class(const char* name, int class_id, js_function_t constructor, js_f
 }
 
 void
-api_define_function(const char* namespace_name, const char* name, js_function_t callback)
+api_define_function(const char* namespace_name, const char* name, js_function_t callback, int magic)
 {
 	jsal_push_global_object();
 
@@ -162,7 +162,7 @@ api_define_function(const char* namespace_name, const char* name, js_function_t 
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
-	jsal_push_new_function(callback, name, 0, 0);
+	jsal_push_new_function(callback, name, 0, magic);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, name);
 	
@@ -172,7 +172,7 @@ api_define_function(const char* namespace_name, const char* name, js_function_t 
 }
 
 void
-api_define_method(const char* class_name, const char* name, js_function_t callback)
+api_define_method(const char* class_name, const char* name, js_function_t callback, int magic)
 {
 	jsal_push_global_object();
 	if (class_name != NULL) {
@@ -181,7 +181,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 	}
 
 	jsal_push_eval("({ writable: true, configurable: true })");
-	jsal_push_new_function(callback, name, 0, 0);
+	jsal_push_new_function(callback, name, 0, magic);
 	jsal_put_prop_string(-2, "value");
 	if (strncmp(name, "@@", 2) == 0) {
 		jsal_push_known_symbol(&name[2]);
