@@ -68,7 +68,7 @@ to use them.
 Sphere.Compiler [read-only]
 
     A string specifying the name and version number of the compiler.  The
-    version number is of the form X.Y.Z, where X is the major version, Y is the
+    version number takes the form X.Y.Z, where X is the major version, Y is the
     minor version, and Z is the patch level.
 
 Sphere.Version [read-only]

@@ -194,8 +194,8 @@ methods for managing execution.
 Sphere.Engine [read-only]
 
     A string specifying the name and version number of the game engine.  The
-    version number is of the format X.Y.Z, where X is the major version, Y is
-    the minor version and Z is the patch level.
+    version number takes the form X.Y.Z, where X is the major version, Y is the
+    minor version, and Z is the patch level.
 
 Sphere.Version [read-only]
 Sphere.APILevel [read-only]
@@ -758,17 +758,16 @@ JobToken#cancel();
     using either `Dispatch.now()` or `Dispatch.later()` and has already started
     running, calling this has no effect.
 
+JobToken#pause();
+
+    Pauses the job.  Paused jobs will not run, but do keep the event loop alive
+    and can be resumed at any time without the need to dispatch a new job.
+
 JobToken#resume();
 
     Resumes the job associated with this token after it's been suspended with
     JobToken#suspend() (see below).  If the job is not suspended, this does
     nothing.
-    
-JobToken#suspend();
-
-    Suspends the job.  Suspended jobs will not run, but do keep the event loop
-    alive and can be resumed at any time without needing to pass in a new
-    callback function.
 
 
 `Joystick` Object
