@@ -293,6 +293,7 @@ static bool js_Font_getTextSize              (int num_args, bool is_ctor, int ma
 static bool js_Font_wordWrap                 (int num_args, bool is_ctor, int magic);
 static bool js_new_IndexList                 (int num_args, bool is_ctor, int magic);
 static bool js_JobToken_cancel               (int num_args, bool is_ctor, int magic);
+static bool js_JobToken_suspend              (int num_args, bool is_ctor, int magic);
 static bool js_Joystick_get_Null             (int num_args, bool is_ctor, int magic);
 static bool js_Joystick_getDevices           (int num_args, bool is_ctor, int magic);
 static bool js_Joystick_get_name             (int num_args, bool is_ctor, int magic);
@@ -577,6 +578,8 @@ pegasus_init(void)
 	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize);
 	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, js_JobToken_finalize);
 	api_define_method("JobToken", "cancel", js_JobToken_cancel, 0);
+	api_define_method("JobToken", "resume", js_JobToken_suspend, (int)false);
+	api_define_method("JobToken", "suspend", js_JobToken_suspend, (int)true);
 	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, js_Joystick_finalize);
 	api_define_static_prop("Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function("Joystick", "getDevices", js_Joystick_getDevices, 0);
@@ -1902,6 +1905,18 @@ js_JobToken_cancel(int num_args, bool is_ctor, int magic)
 	token = jsal_require_class_obj(-1, PEGASUS_JOB_TOKEN);
 
 	dispatch_cancel(*token);
+	return false;
+}
+
+static bool
+js_JobToken_suspend(int num_args, bool is_ctor, int magic)
+{
+	int64_t* token;
+
+	jsal_push_this();
+	token = jsal_require_class_obj(-1, PEGASUS_JOB_TOKEN);
+
+	dispatch_suspend(*token, (bool)magic);
 	return false;
 }
 

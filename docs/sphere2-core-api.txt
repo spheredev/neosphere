@@ -750,13 +750,25 @@ new IndexList(indices);
 
 A JobToken represents a job queued using one of the `Dispatch` functions above.
 When queuing a job, you must keep a reference to the token if you want to be
-able to cancel the job later.
+able to manage the job later.
 
 JobToken#cancel();
 
     Cancels the dispatch job associated with this token.  If the job was queued
     using either `Dispatch.now()` or `Dispatch.later()` and has already started
     running, calling this has no effect.
+
+JobToken#resume();
+
+    Resumes the job associated with this token after it's been suspended with
+    JobToken#suspend() (see below).  If the job is not suspended, this does
+    nothing.
+    
+JobToken#suspend();
+
+    Suspends the job.  Suspended jobs will not run, but do keep the event loop
+    alive and can be resumed at any time without needing to pass in a new
+    callback function.
 
 
 `Joystick` Object

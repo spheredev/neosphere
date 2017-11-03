@@ -43,12 +43,14 @@ struct job
 	bool       finished;
 	job_type_t hint;
 	double     priority;
+	bool       suspended;
 	uint32_t   timer;
 	int64_t    token;
 	script_t*  script;
 };
 
-static int sort_jobs (const void* in_a, const void* in_b);
+static struct job* job_from_token (int64_t token);
+static int         sort_jobs      (const void* in_a, const void* in_b);
 
 static bool      s_is_busy = false;
 static bool      s_need_sort = false;
@@ -105,20 +107,9 @@ dispatch_cancel(int64_t token)
 {
 	struct job* job;
 
-	iter_t iter;
-
-	iter = vector_enum(s_onetime);
-	while (job = iter_next(&iter)) {
-		if (job->token == token)
-			job->finished = true;
-	}
-
-	iter = vector_enum(s_recurring);
-	while (job = iter_next(&iter)) {
-		if (job->token == token)
-			job->finished = true;
-	}
-
+	if (!(job = job_from_token(token)))
+		return;
+	job->finished = true;
 	s_need_sort = true;
 }
 
@@ -133,6 +124,7 @@ dispatch_defer(script_t* script, uint32_t timeout, job_type_t hint, bool critica
 	job.finished = false;
 	job.hint = hint;
 	job.script = script;
+	job.suspended = false;
 	job.timer = timeout;
 	job.token = s_next_token++;
 	vector_push(s_onetime, &job);
@@ -158,6 +150,7 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 	job.hint = hint;
 	job.priority = priority;
 	job.script = script;
+	job.suspended = false;
 	job.token = s_next_token++;
 	vector_push(s_recurring, &job);
 
@@ -185,7 +178,9 @@ dispatch_run(job_type_t hint)
 	// process recurring jobs
 	for (i = 0; i < vector_len(s_recurring); ++i) {
 		job = (struct job*)vector_get(s_recurring, i);
-		if (job->hint == hint && !job->finished) {
+		if (job->hint != hint)
+			continue;
+		if (!job->suspended && !job->finished) {
 			script_run(job->script, true);  // invalidates job ptr
 			job = (struct job*)vector_get(s_recurring, i);
 		}
@@ -199,7 +194,9 @@ dispatch_run(job_type_t hint)
 	if (s_onetime != NULL) {
 		for (i = 0; i < vector_len(s_onetime); ++i) {
 			job = (struct job*)vector_get(s_onetime, i);
-			if (job->hint == hint && job->timer-- == 0 && !job->finished) {
+			if (job->hint != hint)
+				continue;
+			if (!job->suspended && job->timer-- == 0 && !job->finished) {
 				script_run(job->script, false);  // invalidates job ptr
 				job = (struct job*)vector_get(s_onetime, i);
 				job->finished = true;
@@ -210,6 +207,36 @@ dispatch_run(job_type_t hint)
 			}
 		}
 	}
+}
+
+void
+dispatch_suspend(int64_t token, bool suspended)
+{
+	struct job* job;
+
+	if (!(job = job_from_token(token)))
+		return;
+	job->suspended = suspended;
+}
+
+static struct job*
+job_from_token(int64_t token)
+{
+	struct job* job;
+	
+	iter_t iter;
+
+	iter = vector_enum(s_onetime);
+	while (job = iter_next(&iter)) {
+		if (token == job->token)
+			return job;
+	}
+	iter = vector_enum(s_recurring);
+	while (job = iter_next(&iter)) {
+		if (token == job->token)
+			return job;
+	}
+	return NULL;
 }
 
 static int
