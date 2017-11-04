@@ -6,6 +6,7 @@ v5.1.0 - TBD
 
 * Adds `JobToken#suspend()` and `JobToken#resume()` methods to allow games to
   pause and resume Dispatch jobs at any time.
+* Adds `Thread#pause()` and `Thread.resume()` methods.
 
 
 v5.0.1 - November 2, 2017

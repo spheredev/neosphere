@@ -117,11 +117,11 @@ main(int argc, char* argv[])
 	bool                 eval_succeeded;
 	lstring_t*           dialog_name;
 	int                  error_column;
-	const char*          error_url = NULL;
 	int                  error_line = 0;
 	const char*          error_source;
 	const char*          error_stack = NULL;
 	const char*          error_text;
+	const char*          error_url = NULL;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	int                  fullscreen_mode;
 	path_t*              games_path;

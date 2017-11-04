@@ -765,9 +765,8 @@ JobToken#pause();
 
 JobToken#resume();
 
-    Resumes the job associated with this token after it's been suspended with
-    JobToken#suspend() (see below).  If the job is not suspended, this does
-    nothing.
+    Resumes the job associated with this token after it's been paused with
+    JobToken#pause().  If the job is not currently paused, this does nothing.
 
 
 `Joystick` Object

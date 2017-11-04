@@ -94,6 +94,20 @@ class Thread
 	on_startUp() {}
 	on_update() {}
 
+	pause()
+	{
+		if (!this.running)
+			throw new Error("thread is currently stopped");
+		this._updateJob.pause();
+	}
+
+	resume()
+	{
+		if (!this.running)
+			throw new Error("thread is currently stopped");
+		this._updateJob.resume();
+	}
+
 	start()
 	{
 		if (this._started)
@@ -156,7 +170,7 @@ class Thread
 	takeFocus()
 	{
 		if (!this.running)
-			throw new Error("thread is not running");
+			throw new Error("thread is currently stopped");
 		if (this.on_inputCheck === Thread.on_inputCheck)
 			throw new TypeError("thread not enabled for user input");
 
@@ -166,7 +180,7 @@ class Thread
 	yieldFocus()
 	{
 		if (!this.running)
-			throw new Error("thread is not running");
+			throw new Error("thread is currently stopped");
 		if (this.on_inputCheck === Thread.on_inputCheck)
 			throw new TypeError("thread not enabled for user input");
 
