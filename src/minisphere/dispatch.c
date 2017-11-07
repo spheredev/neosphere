@@ -64,6 +64,7 @@ dispatch_init(void)
 	console_log(1, "initializing dispatch manager");
 	s_onetime = vector_new(sizeof(struct job));
 	s_recurring = vector_new(sizeof(struct job));
+	vector_reserve(s_onetime, 32);
 }
 
 void
