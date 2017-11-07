@@ -136,6 +136,10 @@ static js_import_callback_t s_import_callback = NULL;
 static js_job_callback_t    s_job_callback = NULL;
 static JsContextRef         s_js_context;
 static JsRuntimeHandle      s_js_runtime = NULL;
+static js_ref_t*            s_key_done;
+static js_ref_t*            s_key_length;
+static js_ref_t*            s_key_next;
+static js_ref_t*            s_key_value;
 static vector_t*            s_module_cache;
 static vector_t*            s_module_jobs;
 static JsSourceContext      s_next_source_context = 1;
@@ -181,6 +185,11 @@ jsal_init(void)
 	vector_reserve(s_value_stack, 128);
 	vector_reserve(s_catch_stack, 32);
 
+	s_key_done = jsal_new_key("done");
+	s_key_length = jsal_new_key("length");
+	s_key_next = jsal_new_key("next");
+	s_key_value = jsal_new_key("value");
+
 	return true;
 
 on_error:
@@ -197,6 +206,11 @@ jsal_uninit(void)
 	struct module*     module;
 
 	iter_t iter;
+
+	jsal_unref(s_key_done);
+	jsal_unref(s_key_length);
+	jsal_unref(s_key_next);
+	jsal_unref(s_key_value);
 
 	iter = vector_enum(s_breakpoints);
 	while (iter_next(&iter)) {
@@ -221,59 +235,6 @@ jsal_uninit(void)
 	JsRelease(s_stash, NULL);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
 	JsDisposeRuntime(s_js_runtime);
-}
-
-bool
-jsal_reinit(void)
-{
-	struct breakpoint* breakpoint;
-	JsContextRef       context;
-	struct module*     module;
-	JsModuleRecord     module_record;
-
-	iter_t iter;
-
-	if (JsCreateContext(s_js_runtime, &context) != JsNoError)
-		return false;
-
-	resize_stack(0);
-	JsRelease(s_stash, NULL);
-
-	iter = vector_enum(s_breakpoints);
-	while (iter_next(&iter)) {
-		breakpoint = iter.ptr;
-		free(breakpoint->filename);
-	}
-
-	iter = vector_enum(s_module_cache);
-	while (module = iter_next(&iter)) {
-		JsRelease(module->record, NULL);
-		free(module->filename);
-	}
-
-	vector_resize(s_breakpoints, 0);
-	vector_resize(s_catch_stack, 0);
-	vector_resize(s_module_cache, 0);
-	vector_resize(s_module_jobs, 0);
-
-	JsSetCurrentContext(context);
-	JsCreateObject(&s_stash);
-	JsAddRef(s_stash, NULL);
-
-	// callbacks must be reinitialized for the new context.
-	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
-	JsInitializeModuleRecord(NULL, NULL, &module_record);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
-
-	s_callee_value = JS_INVALID_REFERENCE;
-	s_js_context = context;
-	s_next_source_context = 1;
-	s_this_value = JS_INVALID_REFERENCE;
-	s_stack_base = 0;
-
-	return true;
 }
 
 void
@@ -708,7 +669,7 @@ jsal_get_length(int at_index)
 {
 	int value;
 
-	jsal_get_prop_string(at_index, "length");
+	jsal_get_prop_key(at_index, s_key_length);
 	value = jsal_get_int(-1);
 	jsal_pop(1);
 	return value;
@@ -1081,14 +1042,14 @@ jsal_next(int iter_index)
 	bool finished;
 	
 	iter_index = jsal_normalize_index(iter_index);
-	jsal_get_prop_string(iter_index, "next");
+	jsal_get_prop_key(iter_index, s_key_next);
 	jsal_dup(iter_index);
 	jsal_call_method(0);
-	jsal_get_prop_string(-1, "done");
+	jsal_get_prop_key(-1, s_key_done);
 	finished = jsal_to_boolean(-1);
 	jsal_pop(1);
 	if (!finished) {
-		jsal_get_prop_string(-1, "value");
+		jsal_get_prop_key(-1, s_key_value);
 		jsal_remove(-2);
 		return true;
 	}

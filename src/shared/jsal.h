@@ -90,7 +90,6 @@ typedef void      (* js_import_callback_t) (void);
 
 bool         jsal_init                     (void);
 void         jsal_uninit                   (void);
-bool         jsal_reinit                   (void);
 void         jsal_update                   (bool in_event_loop);
 bool         jsal_busy                     (void);
 bool         jsal_disabled                 (void);
