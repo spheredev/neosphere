@@ -74,6 +74,6 @@ class XML
 	static readFile(fileName)
 	{
 		let xmlText = FS.readFile(fileName);
-		return parse(xmlText);
+		return this.parse(xmlText);
 	}
 }
