@@ -1093,6 +1093,7 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 		"%s.js",
 		"%s.json",
 		"%s/package.json",
+		"%s/index.mjs",
 		"%s/index.js",
 		"%s/index.json",
 	};

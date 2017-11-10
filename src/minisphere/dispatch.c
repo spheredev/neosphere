@@ -192,7 +192,7 @@ dispatch_run(job_type_t hint)
 		if (job->hint != hint)
 			continue;
 		if (!job->paused && !job->finished) {
-			script_run(job->script, true);  // invalidates job ptr
+			script_run(job->script, true);  // invalidates job pointer
 			job = (struct job*)vector_get(s_recurring, i);
 		}
 		if (job->finished) {
@@ -208,7 +208,7 @@ dispatch_run(job_type_t hint)
 			if (job->hint != hint)
 				continue;
 			if (!job->paused && job->timer-- == 0 && !job->finished) {
-				script_run(job->script, false);  // invalidates job ptr
+				script_run(job->script, false);  // invalidates job pointer
 				job = (struct job*)vector_get(s_onetime, i);
 				job->finished = true;
 			}

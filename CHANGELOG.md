@@ -7,6 +7,8 @@ v5.1.0 - TBD
 * Adds `JobToken#suspend()` and `JobToken#resume()` methods to allow games to
   pause and resume Dispatch jobs at any time.
 * Adds `Thread#pause()` and `Thread.resume()` methods.
+* Adds `index.mjs` to the list of filenames recognized by the module loader.
+* Fixes a bug in `XML.readFile()` which made the function completely unusable.
 
 
 v5.0.1 - November 2, 2017
