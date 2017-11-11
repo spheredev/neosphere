@@ -3392,8 +3392,10 @@ js_SSj_log(int num_args, bool is_ctor, int magic)
 	const char* text;
 
 	if (jsal_is_error(0)) {
-		jsal_get_prop_key(0, s_key_stack);
-		jsal_replace(0);
+		if (jsal_get_prop_key(0, s_key_stack))
+			jsal_replace(0);
+		else
+			jsal_pop(1);
 	} 
 	else if (jsal_is_object(0) && !jsal_is_function(0)) {
 		jsal_stringify(0);
