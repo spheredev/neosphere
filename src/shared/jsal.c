@@ -156,7 +156,9 @@ jsal_init(void)
 	JsErrorCode    result;
 	
 	result = JsCreateRuntime(
-		JsRuntimeAttributeDispatchSetExceptionsToDebugger | JsRuntimeAttributeAllowScriptInterrupt,
+		JsRuntimeAttributeAllowScriptInterrupt
+			| JsRuntimeAttributeDispatchSetExceptionsToDebugger
+			| JsRuntimeAttributeEnableExperimentalFeatures,
 		NULL, &s_js_runtime);
 	if (result != JsNoError)
 		goto on_error;
@@ -2382,7 +2384,7 @@ get_module_record(const char* filename, JsModuleRecord parent, bool *out_is_new)
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_HostDefined, specifier);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_Url, specifier);
 	JsAddRef(module_record, NULL);
 	module.filename = strdup(filename);
 	module.record = module_record;
@@ -2598,7 +2600,7 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModule
 	s_stack_base = vector_len(s_value_stack);
 	push_value(specifier, true);
 	if (importer != NULL) {
-		JsGetModuleHostInfo(importer, JsModuleHostInfo_HostDefined, &caller_id);
+		JsGetModuleHostInfo(importer, JsModuleHostInfo_Url, &caller_id);
 		push_value(caller_id, true);
 	}
 	else {
