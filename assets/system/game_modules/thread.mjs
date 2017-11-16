@@ -39,13 +39,6 @@ class Thread
 {
 	get [Symbol.toStringTag]() { return 'Thread'; }
 
-	static create(entity, priority)
-	{
-		let thread = new PromptThread(entity, priority);
-		thread.start();
-		return thread;
-	}
-
 	static join(...threads)
 	{
 		let promises = from.array(threads)
@@ -185,33 +178,5 @@ class Thread
 			throw new TypeError("thread not enabled for user input");
 
 		this._focusTarget.yield();
-	}
-}
-
-class PromptThread extends Thread
-{
-	constructor(entity, priority = 0.0)
-	{
-		super({ priority });
-
-		this.entity = entity;
-	}
-
-	async on_inputCheck()
-	{
-		if (this.entity.getInput !== undefined)
-			await this.entity.getInput();
-	}
-
-	on_render()
-	{
-		if (this.entity.render !== undefined)
-			return this.entity.render();
-	}
-
-	async on_update()
-	{
-		if (this.entity.update === undefined || !await this.entity.update())
-			this.stop();
 	}
 }

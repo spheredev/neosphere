@@ -11,6 +11,8 @@ v5.1.0 - TBD
 * Fixes a bug in `XML.readFile()` which made the function completely unusable.
 * Fixes a bug where `SSj.log()` logs "undefined" when passed an Error object
   with no stack trace.
+* Fixes the Sphere Studio template after fallout from the `Surface.Screen`
+  rename.
 
 
 v5.0.1 - November 2, 2017

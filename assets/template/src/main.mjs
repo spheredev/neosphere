@@ -6,7 +6,7 @@
 import { Image, Music, Prim, Thread } from 'sphere-runtime';
 
 export default
-class MyNewGame extends Thread
+class MyGame extends Thread
 {
 	constructor()
 	{
@@ -66,17 +66,17 @@ class MyNewGame extends Thread
 		 *  skipped and are not guaranteed to match the frame rate.
 		 */
 
-		Prim.fill(screen, Color.DodgerBlue);
-		Prim.drawSolidEllipse(screen,
+		Prim.fill(Surface.Screen, Color.DodgerBlue);
+		Prim.drawSolidEllipse(Surface.Screen,
 			screen.width / 2, screen.height / 2,
 			screen.width / 4, screen.height / 4,
 			Color.Chartreuse, Color.DarkGreen);
-		Prim.drawEllipse(screen,
+		Prim.drawEllipse(Surface.Screen,
 			screen.width / 2, screen.height / 2,
 			screen.width / 4, screen.height / 4,
 			Color.Black);
 
-		this.image.blitTo(screen, this.x, this.y);
-		Prim.drawRectangle(screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
+		this.image.blitTo(Surface.Screen, this.x, this.y);
+		Prim.drawRectangle(Surface.Screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
 	}
 }
