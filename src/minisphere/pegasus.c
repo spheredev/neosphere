@@ -460,9 +460,10 @@ static void      handle_module_import        (void);
 static path_t*   load_package_json           (const char* filename);
 static bool      run_sphere_v2_event_loop    (int num_args, bool is_ctor, int magic);
 
-static mixer_t* s_def_mixer;
-static int      s_frame_rate = 60;
-static int      s_next_module_id = 1;
+static mixer_t*  s_def_mixer;
+static int       s_frame_rate = 60;
+static int       s_next_module_id = 1;
+static js_ref_t* s_screen_obj;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
@@ -816,6 +817,11 @@ pegasus_init(void)
 	api_define_const("ShapeType", "Triangles", SHAPE_TRIANGLES);
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
+	// keep a local reference to Surface.Screen
+	jsal_push_eval("Surface.Screen");
+	s_screen_obj = jsal_ref(-1);
+	jsal_pop(1);
+	
 	// pre-create joystick objects for Joystick.getDevices().  this ensures that
 	// multiple requests for the device list return the same Joystick object(s).
 	create_joystick_objects();
@@ -836,6 +842,8 @@ pegasus_init(void)
 void
 pegasus_uninit(void)
 {
+	jsal_unref(s_screen_obj);
+	
 	jsal_unref(s_key_color);
 	jsal_unref(s_key_done);
 	jsal_unref(s_key_inBackground);
@@ -1449,8 +1457,13 @@ js_Sphere_setResolution(int num_args, bool is_ctor, int magic)
 	height = jsal_require_int(1);
 
 	if (width < 0 || height < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid screen resolution");
+		jsal_error(JS_RANGE_ERROR, "invalid screen resolution '%dx%d'", width, height);
 	screen_resize(g_screen, width, height);
+
+	jsal_push_ref(s_screen_obj);
+	jsal_del_prop_string(-1, "width");
+	jsal_del_prop_string(-1, "height");
+
 	return false;
 }
 
@@ -4280,6 +4293,13 @@ js_Surface_get_height(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_height(image));
+
+	// surface size is fixed, so we can cache the value.
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_dup(-2);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-3, "height");
+
 	return true;
 }
 
@@ -4306,6 +4326,13 @@ js_Surface_get_width(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_width(image));
+
+	// surface size is fixed, so we can cache the value.
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_dup(-2);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-3, "width");
+	
 	return true;
 }
 
@@ -4616,6 +4643,13 @@ js_Texture_get_height(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	jsal_push_int(image_height(image));
+
+	// textures are read-only, so we can cache the value.
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_dup(-2);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-3, "height");
+
 	return true;
 }
 
@@ -4628,6 +4662,13 @@ js_Texture_get_width(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	jsal_push_int(image_width(image));
+
+	// textures are read-only, so we can cache the value.
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_dup(-2);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-3, "width");
+
 	return true;
 }
 

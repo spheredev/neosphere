@@ -8,6 +8,8 @@ v5.1.0 - TBD
   pause and resume Dispatch jobs at any time.
 * Adds `Thread#pause()` and `Thread.resume()` methods.
 * Adds `index.mjs` to the list of filenames recognized by the module loader.
+* Optimizes Surface and Texture size properties: `.width` and `.height` are now
+  cached as own properties of the object after the first access.
 * Fixes a bug in `XML.readFile()` which made the function completely unusable.
 * Fixes a bug where `SSj.log()` logs "undefined" when passed an Error object
   with no stack trace.
