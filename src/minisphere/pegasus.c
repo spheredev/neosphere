@@ -449,6 +449,7 @@ static void js_Texture_finalize         (void* host_ptr);
 static void js_Transform_finalize       (void* host_ptr);
 static void js_VertexList_finalize      (void* host_ptr);
 
+static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
 static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool es6_mode);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
@@ -1071,6 +1072,17 @@ jsal_pegasus_require_script(int index)
 }
 
 static void
+cache_value_to_this(const char* key)
+{
+	jsal_push_this();
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_dup(-3);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, key);
+	jsal_pop(1);
+}
+
+static void
 create_joystick_objects(void)
 {
 	int* device;
@@ -1337,14 +1349,7 @@ js_Sphere_get_Game(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_lstring_t(game_manifest(g_game));
 	jsal_parse(-1);
-
-	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Game");
-	jsal_pop(1);
-
+	cache_value_to_this("Game");
 	return true;
 }
 
@@ -2306,14 +2311,7 @@ static bool
 js_Font_get_Default(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_class_obj(PEGASUS_FONT, g_system_font, false);
-
-	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Default");
-	jsal_pop(1);
-
+	cache_value_to_this("Default");
 	return true;
 }
 
@@ -2359,6 +2357,7 @@ js_Font_get_height(int num_args, bool is_ctor, int magic)
 	font = jsal_require_class_obj(-1, PEGASUS_FONT);
 
 	jsal_push_int(font_height(font));
+	cache_value_to_this("height");
 	return true;
 }
 
@@ -2545,13 +2544,7 @@ js_Joystick_get_Null(int num_args, bool is_ctor, int magic)
 	*device = -1;
 	jsal_push_class_obj(PEGASUS_JOYSTICK, device, false);
 
-	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Null");
-	jsal_pop(1);
-
+	cache_value_to_this("Null");
 	return true;
 }
 
@@ -2659,14 +2652,7 @@ static bool
 js_Keyboard_get_Default(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_class_obj(PEGASUS_KEYBOARD, NULL, false);
-
-	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Default");
-	jsal_pop(1);
-
+	cache_value_to_this("Default");
 	return true;
 }
 
@@ -2808,14 +2794,7 @@ static bool
 js_Mixer_get_Default(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_class_obj(PEGASUS_MIXER, mixer_ref(s_def_mixer), false);
-
-	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Default");
-	jsal_pop(1);
-
+	cache_value_to_this("Default");
 	return true;
 }
 
@@ -3199,14 +3178,7 @@ static bool
 js_Mouse_get_Default(int num_args, bool is_ctor, int magic)
 {
 	jsal_push_class_obj(PEGASUS_MOUSE, NULL, false);
-
-	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Default");
-	jsal_pop(1);
-
+	cache_value_to_this("Default");
 	return true;
 }
 
@@ -3562,13 +3534,7 @@ js_Shader_get_Default(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "couldn't compile default shaders");
 	jsal_push_class_obj(PEGASUS_SHADER, shader_ref(shader), false);
 
-	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Default");
-	jsal_pop(1);
-
+	cache_value_to_this("Default");
 	return true;
 }
 
@@ -4293,13 +4259,7 @@ js_Surface_get_height(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_height(image));
-
-	// surface size is fixed, so we can cache the value.
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-2);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-3, "height");
-
+	cache_value_to_this("height");
 	return true;
 }
 
@@ -4326,13 +4286,7 @@ js_Surface_get_width(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_width(image));
-
-	// surface size is fixed, so we can cache the value.
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-2);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-3, "width");
-	
+	cache_value_to_this("width");
 	return true;
 }
 
@@ -4643,13 +4597,7 @@ js_Texture_get_height(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	jsal_push_int(image_height(image));
-
-	// textures are read-only, so we can cache the value.
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-2);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-3, "height");
-
+	cache_value_to_this("height");
 	return true;
 }
 
@@ -4662,13 +4610,7 @@ js_Texture_get_width(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	jsal_push_int(image_width(image));
-
-	// textures are read-only, so we can cache the value.
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-2);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-3, "width");
-
+	cache_value_to_this("width");
 	return true;
 }
 
