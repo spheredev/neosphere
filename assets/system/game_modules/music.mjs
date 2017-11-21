@@ -53,7 +53,7 @@ class Music
 		return adjuster !== null && adjuster.running;
 	}
 
-	static async adjustVolume(newVolume, frames = 0)
+	static async adjustVolume(newVolume, fadeTime = 0)
 	{
 		newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
 		if (this.adjusting)
@@ -67,21 +67,19 @@ class Music
 		}
 	}
 
-	static override(fileName, frames)
+	static override(fileName, fadeTime = 0)
 	{
-		crossfade(fileName, frames, true);
+		crossfade(fileName, fadeTime, true);
 		haveOverride = true;
 	}
 
-	static play(fileName, fadeTime)
+	static play(fileName, fadeTime = 0)
 	{
 		topmostSound = crossfade(fileName, fadeTime, false);
 	}
 
-	static pop(fadeTime)
+	static pop(fadeTime = 0)
 	{
-		fadeTime = fadeTime !== undefined ? Math.trunc(fadeTime) : 0;
-
 		if (oldSounds.length == 0)
 			return;
 		currentSound.fader.stop();
@@ -99,7 +97,7 @@ class Music
 		}
 	}
 
-	static push(fileName, fadeTime)
+	static push(fileName, fadeTime = 0)
 	{
 		let oldSound = topmostSound;
 		this.play(fileName, fadeTime);
@@ -127,10 +125,8 @@ class Music
 	}
 }
 
-function crossfade(fileName, frames, forceChange)
+function crossfade(fileName, frames = 0, forceChange)
 {
-	frames = frames !== undefined ? Math.trunc(frames) : 0;
-
 	let allowChange = !haveOverride || forceChange;
 	if (currentSound != null && allowChange) {
 		currentSound.fader.stop();

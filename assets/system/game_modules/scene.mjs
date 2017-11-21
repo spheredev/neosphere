@@ -504,7 +504,7 @@ Scene.defineOp('tween',
 			}
 		};
 		this.change = {};
-		this.duration = frames;
+		this.duration = Math.trunc(frames);
 		this.elapsed = 0.0;
 		this.object = object;
 		this.startValues = {};

@@ -238,7 +238,7 @@ main(int argc, char* argv[])
 	path_free(games_path);
 
 	if (g_game == NULL) {
-		// if after all that, we still don't have a valid game pointer, bail out;
+		// if after all that, we still don't have a valid game_t pointer, bail out;
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),

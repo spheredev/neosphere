@@ -1510,7 +1510,7 @@ js_Abort(int num_args, bool is_ctor, int magic)
 		? jsal_to_string(0)
 		: "some type of eaty pig just ate your game\n\n\n...and you*munch*";
 
-	text = strnewf("Abort Requested\n\n%s\n", message);
+	text = strnewf("abort requested\n\n%s\n", message);
 	sphere_abort(text);
 }
 
