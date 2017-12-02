@@ -106,7 +106,7 @@ on_error:
 }
 
 image_t*
-image_clone(const image_t* it)
+image_dup(const image_t* it)
 {
 	image_t* image;
 

@@ -4233,7 +4233,7 @@ js_new_Surface(int num_args, bool is_ctor, int magic)
 	}
 	else if (jsal_is_class_obj(0, PEGASUS_TEXTURE)) {
 		src_image = jsal_require_class_obj(0, PEGASUS_TEXTURE);
-		if (!(image = image_clone(src_image)))
+		if (!(image = image_dup(src_image)))
 			jsal_error(JS_ERROR, "couldn't create surface");
 	}
 	else {
@@ -4334,7 +4334,7 @@ js_Surface_toTexture(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
-	if ((new_image = image_clone(image)) == NULL)
+	if ((new_image = image_dup(image)) == NULL)
 		jsal_error(JS_ERROR, "image creation failed");
 	jsal_push_class_obj(PEGASUS_TEXTURE, new_image, false);
 	return true;
@@ -4554,7 +4554,7 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 	else if (jsal_is_class_obj(0, PEGASUS_SURFACE)) {
 		// create an Image from a Surface
 		src_image = jsal_require_class_obj(0, PEGASUS_SURFACE);
-		if (!(image = image_clone(src_image)))
+		if (!(image = image_dup(src_image)))
 			jsal_error(JS_ERROR, "image creation failed");
 	}
 	else {

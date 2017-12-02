@@ -48,7 +48,7 @@ struct image_lock
 
 image_t*        image_new                (int width, int height);
 image_t*        image_new_slice          (image_t* parent, int x, int y, int width, int height);
-image_t*        image_clone              (const image_t* it);
+image_t*        image_dup                (const image_t* it);
 image_t*        image_load               (const char* filename);
 image_t*        image_read               (file_t* file, int width, int height);
 image_t*        image_read_slice         (file_t* file, image_t* parent, int x, int y, int width, int height);

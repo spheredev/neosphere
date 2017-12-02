@@ -3655,7 +3655,7 @@ js_GetTileImage(int num_args, bool is_ctor, int magic)
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
-	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
+	if (!(image = image_dup(tileset_get_image(tileset, tile_index))))
 		jsal_error(JS_ERROR, "couldn't create new surface image");
 	jsal_push_class_obj(SV1_IMAGE, image, false);
 	return true;
@@ -3694,7 +3694,7 @@ js_GetTileSurface(int num_args, bool is_ctor, int magic)
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
-	if (!(image = image_clone(tileset_get_image(tileset, tile_index))))
+	if (!(image = image_dup(tileset_get_image(tileset, tile_index))))
 		jsal_error(JS_ERROR, "couldn't create new surface image");
 	jsal_push_class_obj(SV1_SURFACE, image, false);
 	return true;
@@ -7054,7 +7054,7 @@ js_Image_createSurface(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
 
-	if ((new_image = image_clone(image)) == NULL)
+	if ((new_image = image_dup(image)) == NULL)
 		jsal_error(JS_ERROR, "couldn't create new surface image");
 	jsal_push_class_obj(SV1_SURFACE, new_image, false);
 	return true;
@@ -8215,7 +8215,7 @@ js_Surface_clone(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
 
-	if ((new_image = image_clone(image)) == NULL)
+	if ((new_image = image_dup(image)) == NULL)
 		jsal_error(JS_ERROR, "couldn't create new surface");
 	jsal_push_class_obj(SV1_SURFACE, new_image, false);
 	return true;
@@ -8256,7 +8256,7 @@ js_Surface_createImage(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
 
-	if ((new_image = image_clone(image)) == NULL)
+	if ((new_image = image_dup(image)) == NULL)
 		jsal_error(JS_ERROR, "couldn't create image");
 	jsal_push_class_obj(SV1_IMAGE, new_image, false);
 	return true;

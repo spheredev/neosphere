@@ -78,6 +78,7 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 	ALLEGRO_DISPLAY*     display;
 	ALLEGRO_BITMAP*      icon_bitmap;
 	ALLEGRO_MONITOR_INFO desktop_info;
+	ALLEGRO_STATE        old_state;
 	screen_t*            screen;
 	int                  x_scale = 1;
 	int                  y_scale = 1;
@@ -93,10 +94,16 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 	}
 	display = al_create_display(resolution.width * x_scale, resolution.height * y_scale);
 
-	// custom backbuffer: this allows pixel-perfect rendering regardless
-	// of the actual window size.
-	if (display != NULL)
+	// using a custom backbuffer allows pixel-perfect rendering regardless of
+	// actual viewport size.
+	if (display != NULL) {
+		// no alpha channel.  this sidesteps a few edge cases involving alpha blending
+		// and the screen-grab functions.
+		al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
+		al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
 		backbuffer = image_new(resolution.width, resolution.height);
+		al_restore_state(&old_state);
+	}
 	if (backbuffer == NULL) {
 		fprintf(stderr, "FATAL: couldn't initialize render context");
 		return NULL;
@@ -107,7 +114,7 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 		al_set_new_bitmap_flags(
 			ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR
 			| bitmap_flags);
-		icon = image_clone(icon);
+		icon = image_dup(icon);
 		image_rescale(icon, 32, 32);
 		icon_bitmap = image_bitmap(icon);
 		al_set_new_bitmap_flags(bitmap_flags);
@@ -354,7 +361,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	// the engine "can't catch up" (due to a slow machine, overloaded CPU, etc.). better
 	// that we lag instead of never rendering anything at all.
 	if (framerate > 0) {
-		it->skip_frame = it->num_skips < it->max_skips && it->last_flip_time > it->next_frame_time;
+		it->skip_frame = it->last_flip_time > it->next_frame_time && it->num_skips < it->max_skips;
 		do {  // kill time while we wait for the next frame
 			time_left = it->next_frame_time - al_get_time();
 			if (!it->avoid_sleep && time_left > 0.0)
