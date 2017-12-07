@@ -10,6 +10,8 @@ v5.1.0 - TBD
 * Adds `index.mjs` to the list of filenames recognized by the module loader.
 * Optimizes Surface and Texture size properties: `.width` and `.height` are now
   cached as own properties of the object after the first access.
+* Fixes a bug where `Sphere.restart()` causes some things to be rendered in
+  software afterwards, leading to massive slowdown.
 * Fixes a bug in `XML.readFile()` which made the function completely unusable.
 * Fixes a bug where `SSj.log()` logs "undefined" when passed an Error object
   with no stack trace.

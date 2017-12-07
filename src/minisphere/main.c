@@ -263,7 +263,6 @@ main(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	al_set_new_bitmap_flags(ALLEGRO_NO_PREMULTIPLIED_ALPHA);
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 	g_events = al_create_event_queue();
 	al_register_event_source(g_events,

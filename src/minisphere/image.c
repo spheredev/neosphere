@@ -160,7 +160,7 @@ image_load(const char* filename)
 	if (memcmp(first_16, "\0xFF\0xD8", 2) == 0)
 		file_ext = ".jpg";
 
-	if (!(image->bitmap = al_load_bitmap_f(al_file, file_ext)))
+	if (!(image->bitmap = al_load_bitmap_flags_f(al_file, file_ext, ALLEGRO_NO_PREMULTIPLIED_ALPHA)))
 		goto on_error;
 	al_fclose(al_file);
 	free(slurp);
