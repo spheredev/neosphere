@@ -2052,7 +2052,7 @@ compare_persons(const void* a, const void* b)
 
 	person_get_xy(p1, &x, &y_p1, true);
 	person_get_xy(p2, &x, &y_p2, true);
-	y_delta = (y_p1 + p1->y_offset) - (y_p2 + p2->y_offset);
+	y_delta = y_p1 - y_p2;
 	if (y_delta != 0)
 		return y_delta;
 	else if (person_following(p1, p2))
