@@ -50,7 +50,7 @@
 #include "xoroshiro.h"
 
 #define API_VERSION 2
-#define API_LEVEL   1
+#define API_LEVEL   2
 
 enum file_op
 {

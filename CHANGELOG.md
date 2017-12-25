@@ -1,13 +1,14 @@
 miniSphere Changelog
 ====================
 
-v5.1.0 - TBD
-------------
+v5.1.0 - December 25, 2017
+--------------------------
 
-* Adds `JobToken#suspend()` and `JobToken#resume()` methods to allow games to
+* Adds `JobToken#pause()` and `JobToken#resume()` methods to allow games to
   pause and resume Dispatch jobs at any time.
-* Adds `Thread#pause()` and `Thread.resume()` methods.
+* Adds `Thread#pause()` and `Thread#resume()` methods.
 * Adds `index.mjs` to the list of filenames recognized by the module loader.
+* Adds a new predefined color, `Color.StankyBean`.
 * Optimizes Surface and Texture size properties: `.width` and `.height` are now
   cached as own properties of the object after the first access.
 * Fixes a bug where `Sphere.restart()` causes some things to be rendered in

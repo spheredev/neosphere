@@ -33,7 +33,7 @@
 #ifndef SPHERE__VERSION_H__INCLUDED
 #define SPHERE__VERSION_H__INCLUDED
 
-#define SPHERE_VERSION "X.X.X"
+#define SPHERE_VERSION "5.1.0"
 
 #define SPHERE_ENGINE_NAME   "miniSphere"
 #define SPHERE_COMPILER_NAME "Cell"

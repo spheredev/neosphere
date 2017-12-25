@@ -1,6 +1,19 @@
 Release Notes
 =============
 
+miniSphere 5.1
+--------------
+
+* Your game can now suspend and resume recurring Dispatch jobs using the new
+  `JobToken#pause()` and `JobToken#resume()` APIs.  Suspended jobs keep the
+  event loop alive but won't be executed again until they are resumed.
+
+* `Thread` objects now have `.pause()` and `.resume()` methods as well.
+  Pausing a thread suspends its update and input jobs, but not its render job.
+  This allows you to pause updates for an entity while still allowing it to be
+  visible on-screen.
+
+
 miniSphere 5.0
 --------------
 
