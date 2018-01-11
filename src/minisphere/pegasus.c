@@ -924,8 +924,8 @@ pegasus_eval_module(const char* filename)
 		lstr_free(code_string);
 		code_string = lstr_newf(
 			"/* synthesized by the mJS module loader */\n"
-			"import * as exports from \"%s\";\n"
-			"global.$EXPORTS = exports;", filename);
+			"import * as everything from \"%s\";\n"
+			"global.$EXPORTS = everything;", filename);
 		jsal_push_lstring_t(code_string);
 		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		debugger_add_source(module_name, code_string);
@@ -1171,6 +1171,8 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 static void
 handle_module_import(void)
 {
+	/* [ module_name parent_specifier ] -> [ ... specifier url source ] */
+
 	const char* const PATHS[] =
 	{
 		"@/lib",
@@ -1218,6 +1220,7 @@ handle_module_import(void)
 
 	if (path_has_extension(path, ".mjs")) {
 		source = game_read_file(g_game, path_cstr(path), &source_len);
+		jsal_push_string(path_cstr(path));
 		jsal_push_string(debugger_source_name(path_cstr(path)));
 		jsal_push_lstring(source, source_len);
 		free(source);
@@ -1230,10 +1233,10 @@ handle_module_import(void)
 			"export default require(\"%s\");", path_cstr(path));
 		debugger_add_source(shim_name, shim_source);
 		jsal_push_string(shim_name);
+		jsal_dup(-1);
 		jsal_push_lstring_t(shim_source);
 		free(shim_name);
 		lstr_free(shim_source);
-
 	}
 }
 

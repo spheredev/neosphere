@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Fixes a bug where the engine can crash on startup when loading a game with
+  circular module dependencies.
+
+
 v5.1.0 - December 25, 2017
 --------------------------
 

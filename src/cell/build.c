@@ -714,6 +714,8 @@ find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_o
 static void
 handle_module_import(void)
 {
+	/* [ module_name parent_specifier ] -> [ ... specifier url source ] */
+
 	const char* const PATHS[] =
 	{
 		"$/lib",
@@ -745,12 +747,14 @@ handle_module_import(void)
 	if (path_has_extension(path, ".mjs")) {
 		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
+		jsal_dup(-1);
 		jsal_push_lstring(source, source_len);
 		free(source);
 	}
 	else {
 		// ES module shim to allow 'import' of CommonJS modules
 		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		jsal_dup(-1);
 		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
 	}
 }

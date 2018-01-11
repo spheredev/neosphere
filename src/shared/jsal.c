@@ -111,7 +111,7 @@ static JsErrorCode CHAKRA_CALLBACK on_notify_module_ready    (JsModuleRecord mod
 static void CHAKRA_CALLBACK        on_resolve_reject_promise (JsValueRef function, void* userdata);
 static const char*                 filename_from_script_id   (unsigned int script_id);
 static void                        free_ref                  (js_ref_t* ref);
-static JsModuleRecord              get_module_record         (const char* filename, JsModuleRecord parent, bool *out_is_new);
+static JsModuleRecord              get_module_record         (const char* specifier, JsModuleRecord parent, const char* url, bool *out_is_new);
 static JsValueRef                  get_value                 (int stack_index);
 static JsPropertyIdRef             make_property_id          (JsValueRef key_value);
 static js_ref_t*                   make_ref                  (JsRef value, bool weak_ref);
@@ -264,8 +264,8 @@ jsal_update(bool in_event_loop)
 			vector_remove(s_module_jobs, 0);
 		}
 		else {
-			// module evaluation job: execute a top-level module.  this is tricky because
-			// a module may call Sphere.run() at load time.  in order to avoid corrupting
+			// module evaluation job: execute a top-level module.  this is tricky because a
+			// module can call FlipScreen() or DoEvents() at load time.  to avoid corrupting
 			// the queue or doing the evaluation more than once, dequeue the job first.
 			module_record = job->module_record;
 			vector_remove(s_module_jobs, 0);
@@ -532,7 +532,7 @@ jsal_error_va(js_error_type_t type, const char* format, va_list ap)
 }
 
 void
-jsal_eval_module(const char* filename)
+jsal_eval_module(const char* specifier)
 {
 	/* [ ... source ] -> [ ... result ] */
 
@@ -542,11 +542,9 @@ jsal_eval_module(const char* filename)
 	JsModuleRecord module;
 	const char*    source;
 	size_t         source_len;
-	JsValueRef     url_string;
 
 	source = jsal_require_lstring(-1, &source_len);
-	JsCreateString(filename, strlen(filename), &url_string);
-	module = get_module_record(filename, NULL, &is_new_module);
+	module = get_module_record(specifier, NULL, specifier, &is_new_module);
 	if (is_new_module) {
 		error_code = JsParseModuleSource(module,
 			s_next_source_context++, (BYTE*)source, (unsigned int)source_len,
@@ -2362,31 +2360,34 @@ filename_from_script_id(unsigned int script_id)
 }
 
 static JsModuleRecord
-get_module_record(const char* filename, JsModuleRecord parent, bool *out_is_new)
+get_module_record(const char* specifier, JsModuleRecord parent_record, const char* url, bool *out_is_new)
 {
 	struct module* cached;
 	struct module  module;
 	JsModuleRecord module_record;
-	JsValueRef     specifier;
+	JsValueRef     specifier_ref;
+	JsValueRef     url_ref;
 	
 	iter_t iter;
 
 	*out_is_new = false;
 	iter = vector_enum(s_module_cache);
 	while (cached = iter_next(&iter)) {
-		if (strcmp(filename, cached->filename) == 0)
+		if (strcmp(specifier, cached->filename) == 0)
 			return cached->record;
 	}
 	
 	*out_is_new = true;
-	JsCreateString(filename, strlen(filename), &specifier);
-	JsInitializeModuleRecord(parent, specifier, &module_record);
+	JsCreateString(specifier, strlen(specifier), &specifier_ref);
+	JsCreateString(url, strlen(url), &url_ref);
+	JsInitializeModuleRecord(parent_record, specifier_ref, &module_record);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_HostDefined, specifier_ref);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_Url, specifier);
+	JsSetModuleHostInfo(module_record, JsModuleHostInfo_Url, url_ref);
 	JsAddRef(module_record, NULL);
-	module.filename = strdup(filename);
+	module.filename = strdup(specifier);
 	module.record = module_record;
 	vector_push(s_module_cache, &module);
 	return module_record;
@@ -2577,14 +2578,14 @@ on_fetch_dynamic_import(JsSourceContext importer, JsValueRef specifier, JsModule
 }
 
 static JsErrorCode CHAKRA_CALLBACK
-on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module)
+on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModuleRecord *out_module)
 {
 	// note: be careful, `importer` will be NULL if we were chained from
 	//       on_fetch_dynamic_import().
 
 	JsValueRef        caller_id;
 	JsValueRef        exception;
-	const char*       filename;
+	const char*       specifier;
 	bool              is_new_module;
 	jsal_jmpbuf       label;
 	int               last_stack_base;
@@ -2592,15 +2593,16 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModule
 	JsModuleRecord    module;
 	const char*       source;
 	size_t            source_len;
+	const char*       url;
 
 	if (s_import_callback == NULL)
 		return JsErrorInvalidArgument;
 
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_value_stack);
-	push_value(specifier, true);
+	push_value(module_name, true);
 	if (importer != NULL) {
-		JsGetModuleHostInfo(importer, JsModuleHostInfo_Url, &caller_id);
+		JsGetModuleHostInfo(importer, JsModuleHostInfo_HostDefined, &caller_id);
 		push_value(caller_id, true);
 	}
 	else {
@@ -2611,9 +2613,10 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModule
 		s_import_callback();
 		if (jsal_get_top() < 2)
 			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
-		filename = jsal_require_string(-2);
+		specifier = jsal_require_string(-3);
+		url = jsal_require_string(-2);
 		source = jsal_require_lstring(-1, &source_len);
-		module = get_module_record(filename, importer, &is_new_module);
+		module = get_module_record(specifier, importer, url, &is_new_module);
 		if (is_new_module) {
 			job.source_context = s_next_source_context++;
 			job.module_record = module;
@@ -2625,9 +2628,9 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef specifier, JsModule
 	}
 	else {
 		exception = pop_value();
-		push_value(specifier, true);
-		filename = jsal_get_string(-1);
-		module = get_module_record(filename, importer, &is_new_module);
+		push_value(module_name, true);
+		specifier = jsal_get_string(-1);
+		module = get_module_record(specifier, importer, specifier, &is_new_module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_Exception, exception);
 		resize_stack(s_stack_base);
 		s_stack_base = last_stack_base;
