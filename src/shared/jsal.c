@@ -106,7 +106,7 @@ static void CHAKRA_CALLBACK        on_debugger_event         (JsDiagDebugEvent e
 static JsErrorCode CHAKRA_CALLBACK on_fetch_dynamic_import   (JsSourceContext importer, JsValueRef specifier, JsModuleRecord *out_module);
 static JsErrorCode CHAKRA_CALLBACK on_fetch_imported_module  (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
 static void CHAKRA_CALLBACK        on_finalize_host_object   (void* userdata);
-static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call      (JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata);
+static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call      (JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata);
 static JsErrorCode CHAKRA_CALLBACK on_notify_module_ready    (JsModuleRecord module, JsValueRef exception);
 static void CHAKRA_CALLBACK        on_resolve_reject_promise (JsValueRef function, void* userdata);
 static const char*                 filename_from_script_id   (unsigned int script_id);
@@ -142,6 +142,7 @@ static js_ref_t*            s_key_next;
 static js_ref_t*            s_key_value;
 static vector_t*            s_module_cache;
 static vector_t*            s_module_jobs;
+static JsValueRef           s_newtarget_value = JS_INVALID_REFERENCE;
 static JsSourceContext      s_next_source_context = 1;
 static int                  s_stack_base;
 static JsValueRef           s_stash;
@@ -1124,7 +1125,7 @@ jsal_push_constructor(js_function_t callback, const char* name, int min_args, in
 	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
-	JsCreateNamedFunction(name_string, on_js_to_native_call, function_data, &function);
+	JsCreateEnhancedFunction(on_js_to_native_call, name_string, function_data, &function);
 	return push_value(function, false);
 }
 
@@ -1268,7 +1269,7 @@ jsal_push_new_function(js_function_t callback, const char* name, int min_args, i
 	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
-	JsCreateNamedFunction(name_string, on_js_to_native_call, function_data, &function);
+	JsCreateEnhancedFunction(on_js_to_native_call, name_string, function_data, &function);
 	return push_value(function, false);
 }
 
@@ -1343,6 +1344,19 @@ jsal_push_new_symbol(const char* description)
 	JsCreateString(description, strlen(description), &name_ref);
 	JsCreateSymbol(name_ref, &ref);
 	return push_value(ref, false);
+}
+
+int
+jsal_push_newtarget(void)
+{
+	if (s_newtarget_value == JS_INVALID_REFERENCE)
+		jsal_error(JS_REF_ERROR, "no known 'new.target' binding");
+
+	// it's safe for this to be a weak reference: `new.target` can't be garbage collected
+	// while the function using it runs and anything pushed onto the value stack
+	// is unwound on return, so the stack entry can't persist beyond that point by
+	// definition.
+	return push_value(s_newtarget_value, true);
 }
 
 int
@@ -2655,12 +2669,14 @@ on_finalize_host_object(void* userdata)
 }
 
 static JsValueRef CHAKRA_CALLBACK
-on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigned short argc, void* userdata)
+on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata)
 {
 	JsValueRef       exception;
 	struct function* function_data;
 	bool             has_return;
+	bool             is_ctor_call;
 	JsValueRef       last_callee_value;
+	JsValueRef       last_newtarget_value;
 	int              last_stack_base;
 	JsValueRef       last_this_value;
 	jsal_jmpbuf      label;
@@ -2672,15 +2688,18 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 
 	last_stack_base = s_stack_base;
 	last_callee_value = s_callee_value;
+	last_newtarget_value = s_newtarget_value;
 	last_this_value = s_this_value;
 	s_stack_base = vector_len(s_value_stack);
 	s_callee_value = callee;
-	s_this_value = argv[0];
+	s_newtarget_value = env->newTargetArg;
+	s_this_value = env->thisArg;
 	for (i = 1; i < argc; ++i)
 		push_value(argv[i], true);
 	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
-		if (!is_ctor && function_data->ctor_only) {
+		is_ctor_call = env->isConstructCall;
+		if (!is_ctor_call && function_data->ctor_only) {
 			push_value(callee, true);  // note: gets popped during unwind
 			jsal_get_prop_string(-1, "name");
 			jsal_error(JS_TYPE_ERROR, "constructor '%s()' requires 'new'", jsal_to_string(-1));
@@ -2690,7 +2709,7 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 			jsal_get_prop_string(-1, "name");
 			jsal_error(JS_TYPE_ERROR, "not enough arguments for '%s()'", jsal_to_string(-1));
 		}
-		has_return = function_data->callback(argc - 1, is_ctor, function_data->magic);
+		has_return = function_data->callback(argc - 1, is_ctor_call, function_data->magic);
 		if (has_return)
 			retval = get_value(-1);
 		vector_pop(s_catch_stack, 1);
@@ -2704,6 +2723,7 @@ on_js_to_native_call(JsValueRef callee, bool is_ctor, JsValueRef argv[], unsigne
 	}
 	resize_stack(s_stack_base);
 	s_callee_value = last_callee_value;
+	s_newtarget_value = last_newtarget_value;
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
 	return retval;

@@ -348,7 +348,7 @@ jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 	// is called as part of constructing a subclass, its `this` is equal to
 	// `new.target` instead of the object being constructed.
 	if (in_ctor) {
-		jsal_push_this();
+		jsal_push_newtarget();
 		if (jsal_is_function(-1)) {
 			jsal_get_prop_key(-1, s_key_prototype);
 			jsal_set_prototype(-3);
