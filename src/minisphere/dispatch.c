@@ -93,15 +93,19 @@ dispatch_cancel(int64_t token)
 }
 
 void
-dispatch_cancel_all(bool recurring)
+dispatch_cancel_all(bool recurring, bool also_critical)
 {
+	// NOTE: don't pass `true` for `also_critical` unless you're absolutely positive
+	//       you know what you're doing!  doing this will cancel promise continuations,
+	//       which is probably not what you want to do.
+
 	struct job* job;
 
 	iter_t iter;
 
 	iter = vector_enum(s_onetime);
 	while (job = iter_next(&iter)) {
-		if (!job->critical)
+		if (!job->critical || also_critical)
 			job->finished = true;
 	}
 

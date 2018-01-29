@@ -2258,7 +2258,7 @@ js_ExecuteGame(int num_args, bool is_ctor, int magic)
 	path_rebase(g_game_path, games_path);
 	path_free(games_path);
 
-	dispatch_cancel_all(true);
+	dispatch_cancel_all(true, true);
 	jsal_disable(true);
 	g_restarting = true;
 	return false;
@@ -2323,7 +2323,7 @@ js_ExecuteZones(int num_args, bool is_ctor, int magic)
 static bool
 js_Exit(int num_args, bool is_ctor, int magic)
 {
-	dispatch_cancel_all(true);
+	dispatch_cancel_all(true, true);
 	jsal_disable(true);
 	return false;
 }
@@ -5083,7 +5083,7 @@ js_RequireSystemScript(int num_args, bool is_ctor, int magic)
 static bool
 js_RestartGame(int num_args, bool is_ctor, int magic)
 {
-	dispatch_cancel_all(true);
+	dispatch_cancel_all(true, true);
 	jsal_disable(true);
 	g_restarting = true;
 	return false;

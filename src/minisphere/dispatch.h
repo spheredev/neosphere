@@ -47,7 +47,7 @@ void    dispatch_init       (void);
 void    dispatch_uninit     (void);
 bool    dispatch_busy       (void);
 void    dispatch_cancel     (int64_t token);
-void    dispatch_cancel_all (bool recurring);
+void    dispatch_cancel_all (bool recurring, bool also_critical);
 int64_t dispatch_defer      (script_t* script, uint32_t timeout, job_type_t hint, bool critical);
 void    dispatch_pause      (int64_t token, bool paused);
 int64_t dispatch_recur      (script_t* script, double priority, bool background, job_type_t hint);

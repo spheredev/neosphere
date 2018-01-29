@@ -7,6 +7,9 @@ v5.2.0 - TBD
 * Adds a new `logFileName` option for `new Console()` allowing you to specify
   where the log file will be saved.
 * Logging is now disabled by default for `Console` objects.
+* Fixes a bug where code in `.then()` continuations or async functions can end
+  up running after a runtime error occurs, leading to strange behavior or even
+  a hard crash.
 
 
 v5.1.1 - January 23, 2018

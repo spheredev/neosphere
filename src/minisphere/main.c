@@ -811,9 +811,9 @@ show_error_screen(const char* message)
 
 	int i;
 
-	// cancel all jobs, including recurring.  we need to run a frame loop
-	// and we don't want any JS code to execute after this point.
-	dispatch_cancel_all(true);
+	// cancel everything, including recurring and promise jobs.  we need to run a frame loop
+	// here and we can't have *any* JS code running after this point.
+	dispatch_cancel_all(true, true);
 
 	title_index = rand() % (sizeof ERROR_TEXT / sizeof(const char*) / 2);
 	title = ERROR_TEXT[title_index][0];

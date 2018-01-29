@@ -1447,7 +1447,7 @@ static bool
 js_Sphere_restart(int num_args, bool is_ctor, int magic)
 {
 	g_restarting = true;
-	dispatch_cancel_all(true);
+	dispatch_cancel_all(true, false);
 	return false;
 }
 
@@ -1475,7 +1475,7 @@ static bool
 js_Sphere_shutDown(int num_args, bool is_ctor, int magic)
 {
 	g_restarting = false;
-	dispatch_cancel_all(true);
+	dispatch_cancel_all(true, false);
 	return false;
 }
 
@@ -1917,7 +1917,7 @@ js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
 static bool
 js_Dispatch_cancelAll(int num_args, bool is_ctor, int magic)
 {
-	dispatch_cancel_all(false);
+	dispatch_cancel_all(false, false);
 	return false;
 }
 
