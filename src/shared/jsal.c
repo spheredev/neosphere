@@ -251,12 +251,12 @@ jsal_update(bool in_event_loop)
 	JsValueRef         result;
 	char*              source;
 
-	// we're not loading remote modules, so there's no sense causing delays by doing
-	// one at a time.  just blow through the whole dependency graph in one tick.
+	// parse ES modules.  the whole dependency graph is loaded in one fell swoop; doing so is
+	// safe so long as we avoid calling JsParseModuleSource() recursively.
 	while (vector_len(s_module_jobs) > 0) {
 		job = vector_get(s_module_jobs, 0);
 		if (job->source != NULL) {
-			// module parse job: parse an imported module
+			// module parse job: parse and compile an imported module
 			source = job->source;  // ...because 'job' may be invalidated
 			error_code = JsParseModuleSource(job->module_record, job->source_context,
 				(BYTE*)job->source, (unsigned int)job->source_size,
@@ -265,9 +265,9 @@ jsal_update(bool in_event_loop)
 			vector_remove(s_module_jobs, 0);
 		}
 		else {
-			// module evaluation job: execute a top-level module.  this is tricky because a
-			// module can call FlipScreen() or DoEvents() at load time.  to avoid corrupting
-			// the queue or doing the evaluation more than once, dequeue the job first.
+			// module evaluation job: execute a top-level or dynamic module.  this is tricky
+			// because a module can call FlipScreen() or DoEvents() at load time.  to avoid
+			// corrupting the queue or evaluating a module more than once, dequeue the job first.
 			module_record = job->module_record;
 			vector_remove(s_module_jobs, 0);
 			JsModuleEvaluation(module_record, &result);
