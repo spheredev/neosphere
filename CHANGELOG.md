@@ -6,6 +6,9 @@ v5.2.0 - TBD
 
 * Adds a new `logFileName` option for `new Console()` allowing you to specify
   where the log file will be saved.
+* Adds exception handling for promise-based (async) code: uncaught errors
+  in `async` functions will now cause a game to crash, rather than being
+  silently ignored.
 * Cell will now package the entire `#/` directory when making an SPK package.
 * Logging is now disabled by default for `Console` objects.
 * Fixes a bug where code in `.then()` continuations or async functions can end

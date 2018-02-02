@@ -67,6 +67,7 @@ enum fullscreen_mode
 };
 
 static void on_enqueue_js_job   (void);
+static bool on_reject_promise   (void);
 static void on_socket_idle      (void);
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
@@ -451,6 +452,49 @@ on_enqueue_js_job(void)
 	dispatch_defer(script, 0, JOB_TICK, true);
 }
 
+static bool
+on_reject_promise(void)
+{
+	int         error_column;
+	int         error_line;
+	const char* error_source;
+	const char* error_stack;
+	const char* error_text;
+	const char* error_url = NULL;
+
+	if (false) {
+		jsal_dup(0);
+		error_text = jsal_to_string(-1);
+		if (jsal_is_error(1)) {
+			jsal_get_prop_string(1, "column");
+			jsal_get_prop_string(1, "line");
+			jsal_get_prop_string(1, "source");
+			jsal_get_prop_string(1, "stack");
+			jsal_get_prop_string(1, "url");
+			error_column = jsal_get_int(-5) + 1;
+			error_line = jsal_get_int(-4) + 1;
+			error_source = jsal_get_string(-3);
+			error_stack = jsal_get_string(-2);
+			error_url = jsal_get_string(-1);
+			if (error_stack != NULL)
+				error_text = error_stack;
+		}
+		if (error_url != NULL) {
+			fprintf(stderr, "EXCEPTION: unhandled JavaScript promise rejection at %s:%d:%d.\n", error_url, error_line, error_column);
+			fprintf(stderr, "%s\n", error_text);
+			fprintf(stderr, "   %d %s\n", error_line, error_source);
+		}
+		else {
+			fprintf(stderr, "EXCEPTION: unhandled JavaScript promise rejection.\n");
+			fprintf(stderr, "%s\n", error_text);
+		}
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 static void
 on_socket_idle(void)
 {
@@ -490,6 +534,7 @@ initialize_engine(void)
 	if (!jsal_init())
 		goto on_error;
 	jsal_on_enqueue_job(on_enqueue_js_job);
+	jsal_on_reject_promise(on_reject_promise);
 
 	// initialize engine components
 	dispatch_init();
@@ -881,6 +926,7 @@ show_error_screen(const char* message)
 		}
 	}
 	wraptext_free(error_info);
+
 	return;
 
 show_error_box:

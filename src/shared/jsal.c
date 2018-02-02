@@ -102,26 +102,34 @@ struct object
 	JsValueRef     object;
 };
 
-static void CHAKRA_CALLBACK        on_debugger_event         (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
-static JsErrorCode CHAKRA_CALLBACK on_fetch_dynamic_import   (JsSourceContext importer, JsValueRef specifier, JsModuleRecord *out_module);
-static JsErrorCode CHAKRA_CALLBACK on_fetch_imported_module  (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
-static void CHAKRA_CALLBACK        on_finalize_host_object   (void* userdata);
-static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call      (JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata);
-static JsErrorCode CHAKRA_CALLBACK on_notify_module_ready    (JsModuleRecord module, JsValueRef exception);
-static void CHAKRA_CALLBACK        on_resolve_reject_promise (JsValueRef function, void* userdata);
-static const char*                 filename_from_script_id   (unsigned int script_id);
-static void                        free_ref                  (js_ref_t* ref);
-static JsModuleRecord              get_module_record         (const char* specifier, JsModuleRecord parent, const char* url, bool *out_is_new);
-static JsValueRef                  get_value                 (int stack_index);
-static JsPropertyIdRef             make_property_id          (JsValueRef key_value);
-static js_ref_t*                   make_ref                  (JsRef value, bool weak_ref);
-static JsValueRef                  pop_value                 (void);
-static void                        push_debug_callback_args  (JsValueRef event_data);
-static unsigned int                script_id_from_filename   (const char* filename);
-static int                         push_value                (JsValueRef value, bool weak_ref);
-static void                        resize_stack              (int new_size);
-static void                        throw_on_error            (void);
-static void                        throw_value               (JsValueRef value);
+struct rejection
+{
+	bool       handled;
+	JsValueRef promise;
+	JsValueRef value;
+};
+
+static void CHAKRA_CALLBACK        on_debugger_event           (JsDiagDebugEvent event_type, JsValueRef data, void* userdata);
+static JsErrorCode CHAKRA_CALLBACK on_fetch_dynamic_import     (JsSourceContext importer, JsValueRef specifier, JsModuleRecord *out_module);
+static JsErrorCode CHAKRA_CALLBACK on_fetch_imported_module    (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
+static void CHAKRA_CALLBACK        on_finalize_host_object     (void* userdata);
+static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call        (JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata);
+static JsErrorCode CHAKRA_CALLBACK on_notify_module_ready      (JsModuleRecord module, JsValueRef exception);
+static void CHAKRA_CALLBACK        on_reject_promise_unhandled (JsValueRef promise, JsValueRef reason, bool handled, void* userdata);
+static void CHAKRA_CALLBACK        on_resolve_reject_promise   (JsValueRef function, void* userdata);
+static const char*                 filename_from_script_id     (unsigned int script_id);
+static void                        free_ref                    (js_ref_t* ref);
+static JsModuleRecord              get_module_record           (const char* specifier, JsModuleRecord parent, const char* url, bool *out_is_new);
+static JsValueRef                  get_value                   (int stack_index);
+static JsPropertyIdRef             make_property_id            (JsValueRef key_value);
+static js_ref_t*                   make_ref                    (JsRef value, bool weak_ref);
+static JsValueRef                  pop_value                   (void);
+static void                        push_debug_callback_args    (JsValueRef event_data);
+static unsigned int                script_id_from_filename     (const char* filename);
+static int                         push_value                  (JsValueRef value, bool weak_ref);
+static void                        resize_stack                (int new_size);
+static void                        throw_on_error              (void);
+static void                        throw_value                 (JsValueRef value);
 
 #if !defined(__APPLE__)
 static int asprintf  (char* *out, const char* format, ...);
@@ -144,6 +152,8 @@ static vector_t*            s_module_cache;
 static vector_t*            s_module_jobs;
 static JsValueRef           s_newtarget_value = JS_INVALID_REFERENCE;
 static JsSourceContext      s_next_source_context = 1;
+static js_reject_callback_t s_reject_callback = NULL;
+static vector_t*            s_rejections;
 static int                  s_stack_base;
 static JsValueRef           s_stash;
 static JsValueRef           s_this_value = JS_INVALID_REFERENCE;
@@ -169,6 +179,7 @@ jsal_init(void)
 	
 	// set up the callbacks
 	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
+	JsSetHostPromiseRejectionTracker(on_reject_promise_unhandled, NULL);
 	JsInitializeModuleRecord(NULL, NULL, &module_record);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
 	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
@@ -184,6 +195,7 @@ jsal_init(void)
 	s_breakpoints = vector_new(sizeof(struct breakpoint));
 	s_module_cache = vector_new(sizeof(struct module));
 	s_module_jobs = vector_new(sizeof(struct module_job));
+	s_rejections = vector_new(sizeof(struct rejection));
 
 	vector_reserve(s_value_stack, 128);
 	vector_reserve(s_catch_stack, 32);
@@ -235,6 +247,7 @@ jsal_uninit(void)
 	vector_free(s_module_jobs);
 	vector_free(s_value_stack);
 	vector_free(s_catch_stack);
+	vector_free(s_rejections);
 	JsRelease(s_stash, NULL);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
 	JsDisposeRuntime(s_js_runtime);
@@ -247,9 +260,15 @@ jsal_update(bool in_event_loop)
 	JsValueRef         exception;
 	bool               have_error;
 	struct module_job* job;
+	jsal_jmpbuf        label;
+	int                last_stack_base;
 	JsModuleRecord     module_record;
+	JsValueRef         reason_value = JS_INVALID_REFERENCE;
+	struct rejection*  rejection;
 	JsValueRef         result;
 	char*              source;
+
+	iter_t iter;
 
 	// parse ES modules.  the whole dependency graph is loaded in one fell swoop; doing so is
 	// safe so long as we avoid calling JsParseModuleSource() recursively.
@@ -280,12 +299,52 @@ jsal_update(bool in_event_loop)
 			}
 		}
 	}
+
+	if (in_event_loop) {
+		// check for broken promises.  if there are any uncaught rejections, throw the rejection value
+		// as an exception out of the event loop.  this avoids errors in asynchronous code getting eaten
+		// (most likely by the pig).
+		exception = JS_INVALID_REFERENCE;
+		iter = vector_enum(s_rejections);
+		while (rejection = iter_next(&iter)) {
+			if (rejection->handled) {  // does it have a .then()?
+				JsRelease(rejection->promise, NULL);
+				continue;
+			}
+			last_stack_base = s_stack_base;
+			s_stack_base = vector_len(s_value_stack);
+			push_value(rejection->promise, true);
+			push_value(rejection->value, true);
+			if (jsal_setjmp(label) == 0) {
+				vector_push(s_catch_stack, label);
+				if (s_reject_callback != NULL) {
+					if (!s_reject_callback() && exception == JS_INVALID_REFERENCE)
+						exception = rejection->value;
+				}
+				vector_pop(s_catch_stack, 1);
+			}
+			else {
+				resize_stack(s_stack_base);
+				s_stack_base = last_stack_base;
+				jsal_throw();  // rethrow
+			}
+			resize_stack(s_stack_base);
+			s_stack_base = last_stack_base;
+			JsRelease(rejection->promise, NULL);
+		}
+		vector_clear(s_rejections);
+		if (exception != JS_INVALID_REFERENCE) {
+			push_value(exception, false);
+			jsal_throw();
+		}
+	}
 }
 
 bool
 jsal_busy(void)
 {
-	return vector_len(s_module_jobs) > 0;
+	return vector_len(s_module_jobs) > 0
+		|| vector_len(s_rejections) > 0;
 }
 
 bool
@@ -307,6 +366,12 @@ void
 jsal_on_import_module(js_import_callback_t callback)
 {
 	s_import_callback = callback;
+}
+
+void
+jsal_on_reject_promise(js_reject_callback_t callback)
+{
+	s_reject_callback = callback;
 }
 
 void
@@ -2742,6 +2807,32 @@ on_notify_module_ready(JsModuleRecord module, JsValueRef exception)
 }
 
 static void CHAKRA_CALLBACK
+on_reject_promise_unhandled(JsValueRef promise, JsValueRef reason, bool handled, void* userdata)
+{
+	struct rejection* entry;
+	struct rejection  rejection;
+
+	iter_t iter;
+
+	if (!handled) {
+		JsAddRef(promise, NULL);
+		rejection.handled = false;
+		rejection.promise = promise;
+		rejection.value = reason;
+		vector_push(s_rejections, &rejection);
+	}
+	else {
+		iter = vector_enum(s_rejections);
+		while (entry = iter_next(&iter)) {
+			if (entry->promise == promise) {
+				entry->handled = true;
+				break;  // safe to short-circuit
+			}
+		}
+	}
+}
+
+static void CHAKRA_CALLBACK
 on_resolve_reject_promise(JsValueRef task, void* userdata)
 {
 	JsValueRef  exception;
@@ -2754,7 +2845,7 @@ on_resolve_reject_promise(JsValueRef task, void* userdata)
 	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
 		if (s_job_callback == NULL)
-			jsal_error(JS_ERROR, "application is missing promise callback");
+			jsal_error(JS_ERROR, "No async/promise continuation support");
 		s_job_callback();
 		vector_pop(s_catch_stack, 1);
 	}
