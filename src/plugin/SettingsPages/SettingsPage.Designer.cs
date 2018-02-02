@@ -92,10 +92,9 @@
             // ShowTraceCheckBox
             // 
             this.ShowTraceCheckBox.AutoSize = true;
-            this.ShowTraceCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.ShowTraceCheckBox.Location = new System.Drawing.Point(12, 58);
             this.ShowTraceCheckBox.Name = "ShowTraceCheckBox";
-            this.ShowTraceCheckBox.Size = new System.Drawing.Size(277, 17);
+            this.ShowTraceCheckBox.Size = new System.Drawing.Size(280, 17);
             this.ShowTraceCheckBox.TabIndex = 4;
             this.ShowTraceCheckBox.Text = "Show output produced by SSj.trace() while debugging";
             this.ShowTraceCheckBox.UseVisualStyleBackColor = true;
@@ -103,10 +102,9 @@
             // TestInWindowCheckBox
             // 
             this.TestInWindowCheckBox.AutoSize = true;
-            this.TestInWindowCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.TestInWindowCheckBox.Location = new System.Drawing.Point(12, 35);
             this.TestInWindowCheckBox.Name = "TestInWindowCheckBox";
-            this.TestInWindowCheckBox.Size = new System.Drawing.Size(362, 17);
+            this.TestInWindowCheckBox.Size = new System.Drawing.Size(365, 17);
             this.TestInWindowCheckBox.TabIndex = 3;
             this.TestInWindowCheckBox.Text = "Force the engine to start in windowed mode when clicking \"Test Game\"";
             this.TestInWindowCheckBox.UseVisualStyleBackColor = true;
@@ -114,10 +112,9 @@
             // MakeDebugPackageCheckBox
             // 
             this.MakeDebugPackageCheckBox.AutoSize = true;
-            this.MakeDebugPackageCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.MakeDebugPackageCheckBox.Location = new System.Drawing.Point(12, 12);
             this.MakeDebugPackageCheckBox.Name = "MakeDebugPackageCheckBox";
-            this.MakeDebugPackageCheckBox.Size = new System.Drawing.Size(321, 17);
+            this.MakeDebugPackageCheckBox.Size = new System.Drawing.Size(324, 17);
             this.MakeDebugPackageCheckBox.TabIndex = 2;
             this.MakeDebugPackageCheckBox.Text = "Include source maps when building an SPK package using Cell";
             this.MakeDebugPackageCheckBox.UseVisualStyleBackColor = true;
@@ -176,10 +173,9 @@
             // TestWithConsoleCheckBox
             // 
             this.TestWithConsoleCheckBox.AutoSize = true;
-            this.TestWithConsoleCheckBox.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.TestWithConsoleCheckBox.Location = new System.Drawing.Point(12, 12);
             this.TestWithConsoleCheckBox.Name = "TestWithConsoleCheckBox";
-            this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(196, 17);
+            this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(199, 17);
             this.TestWithConsoleCheckBox.TabIndex = 0;
             this.TestWithConsoleCheckBox.Text = "\"Test Game\" using SpheRun engine";
             this.TestWithConsoleCheckBox.UseVisualStyleBackColor = true;
