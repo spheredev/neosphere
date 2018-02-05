@@ -816,7 +816,7 @@ on_error:
 }
 
 static void
-make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp)
+make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir_path, vector_t* targets, bool recursive, time_t timestamp)
 {
 	// note: 'targets' should be a vector_t initialized to sizeof(target_t*).
 
@@ -840,8 +840,8 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 		if (!path_is_file(*p_path) && !ignore_dir && recursive) {
 			name = path_new_dir(path_hop(*p_path, path_num_hops(*p_path) - 1));
 			file_path = path_dup(*p_path);
-			if (subdir != NULL)
-				path_rebase(name, subdir);
+			if (subdir_path != NULL)
+				path_rebase(name, subdir_path);
 			make_file_targets(fs, wildcard, file_path, name, targets, true, timestamp);
 			path_free(file_path);
 			path_free(name);
@@ -849,8 +849,8 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 		else if (path_is_file(*p_path) && wildcmp(path_filename(*p_path), wildcard)) {
 			name = path_new(path_filename(*p_path));
 			file_path = path_dup(*p_path);
-			if (subdir != NULL)
-				path_rebase(name, subdir);
+			if (subdir_path != NULL)
+				path_rebase(name, subdir_path);
 			target = target_new(name, fs, file_path, NULL, timestamp, false);
 			vector_push(targets, &target);
 			path_free(file_path);
@@ -879,7 +879,6 @@ package_dir(build_t* build, spk_writer_t* spk, const char* base_dirname)
 	while (iter_next(&iter)) {
 		file_path = *(path_t**)iter.ptr;
 		if (path_is_file(file_path)) {
-			visor_print(build->visor, "packaging '%s'", path_cstr(file_path));
 			spk_add_file(spk, build->fs, path_cstr(file_path), path_cstr(file_path));
 		}
 		else {

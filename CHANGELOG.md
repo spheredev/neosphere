@@ -6,6 +6,7 @@ v5.2.0 - TBD
 
 * Adds a new `logFileName` option for `new Console()` allowing you to specify
   where the log file will be saved.
+* Cell will now package the entire `#/` directory when making an SPK package.
 * Logging is now disabled by default for `Console` objects.
 * Fixes a bug where code in `.then()` continuations or async functions can end
   up running after a runtime error occurs, leading to strange behavior or even
