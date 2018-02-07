@@ -68,13 +68,6 @@ cell: bin/cell
 .PHONY: ssj
 ssj: bin/ssj
 
-.PHONY: deb
-deb: dist
-	cp dist/minisphere-$(version).tar.gz dist/minisphere_$(version).orig.tar.gz
-	cd dist && tar xf minisphere_$(version).orig.tar.gz
-	cp -r src/debian dist/minisphere-$(version)
-	cd dist/minisphere-$(version) && debuild -S -sa
-
 .PHONY: dist
 dist:
 	mkdir -p dist/$(pkgname)

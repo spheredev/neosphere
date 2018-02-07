@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.2.0 - TBD
-------------
+v5.1.2 - February 7, 2018
+-------------------------
 
 * Adds a new `logFileName` option for `new Console()` allowing you to specify
   where the log file will be saved.
@@ -14,7 +14,6 @@ v5.2.0 - TBD
 * Fixes a bug where code in `.then()` continuations or async functions can end
   up running after a runtime error occurs, leading to strange behavior or even
   a hard crash.
-
 
 v5.1.1 - January 23, 2018
 -------------------------
