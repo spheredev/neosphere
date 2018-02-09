@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Fixes a bug which causes `Music.adjustVolume()` to throw a ReferenceError.
+
+
 v5.1.2 - February 7, 2018
 -------------------------
 

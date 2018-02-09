@@ -58,9 +58,9 @@ class Music
 		newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
 		if (this.adjusting)
 			adjuster.stop();
-		if (frames > 0) {
+		if (fadeTime > 0) {
 			adjuster = new Scene()
-				.tween(mixer, frames, 'linear', { volume: newVolume });
+				.tween(mixer, fadeTime, 'linear', { volume: newVolume });
 			return adjuster.run();
 		} else {
 			mixer.volume = newVolume;

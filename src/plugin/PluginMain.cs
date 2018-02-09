@@ -16,7 +16,7 @@ namespace Sphere.Gdk
     {
         public string Name { get; } = "miniSphere Support";
         public string Description { get; } = "Supports miniSphere and the Sphere v2 toolchain.";
-        public string Version { get; } = "5.1.2";
+        public string Version { get; } = "X.X.X";
         public string Author { get; } = "Fat Cerberus";
 
         internal PluginConf Conf { get; private set; }
