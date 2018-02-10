@@ -1136,7 +1136,7 @@ jsal_normalize_index(int index)
 	if (real_index < 0)
 		real_index += top;
 	if (real_index < 0 || real_index >= top)
-		jsal_error(JS_REF_ERROR, "invalid stack index '%d'", index);
+		jsal_error(JS_REF_ERROR, "Invalid stack index '%d'", index);
 	return real_index;
 }
 
@@ -1158,7 +1158,7 @@ jsal_pop(int num_values)
 	
 	top = jsal_get_top();
 	if (num_values > top)
-		jsal_error(JS_RANGE_ERROR, "cannot pop %d values from value stack", num_values);
+		jsal_error(JS_RANGE_ERROR, "Too many values popped ('%d')", num_values);
 	jsal_set_top(top - num_values);
 }
 
@@ -1415,7 +1415,7 @@ int
 jsal_push_newtarget(void)
 {
 	if (s_newtarget_value == JS_INVALID_REFERENCE)
-		jsal_error(JS_REF_ERROR, "no known 'new.target' binding");
+		jsal_error(JS_REF_ERROR, "No known 'new.target' binding");
 
 	// it's safe for this to be a weak reference: `new.target` can't be garbage collected
 	// while the function using it runs and anything pushed onto the value stack
@@ -1476,7 +1476,7 @@ int
 jsal_push_this(void)
 {
 	if (s_this_value == JS_INVALID_REFERENCE)
-		jsal_error(JS_REF_ERROR, "no known 'this' binding");
+		jsal_error(JS_REF_ERROR, "No known 'this' binding");
 	
 	// it's safe for this to be a weak reference: `this` can't be garbage collected
 	// while the function using it runs and anything pushed onto the value stack
@@ -2691,7 +2691,7 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModu
 		vector_push(s_catch_stack, label);
 		s_import_callback();
 		if (jsal_get_top() < 2)
-			jsal_error(JS_TYPE_ERROR, "internal error in module callback");
+			jsal_error(JS_TYPE_ERROR, "Internal error in module callback");
 		specifier = jsal_require_string(-3);
 		url = jsal_require_string(-2);
 		source = jsal_require_lstring(-1, &source_len);
@@ -2767,12 +2767,12 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 		if (!is_ctor_call && function_data->ctor_only) {
 			push_value(callee, true);  // note: gets popped during unwind
 			jsal_get_prop_string(-1, "name");
-			jsal_error(JS_TYPE_ERROR, "constructor '%s()' requires 'new'", jsal_to_string(-1));
+			jsal_error(JS_TYPE_ERROR, "Constructor '%s()' requires 'new'", jsal_to_string(-1));
 		}
 		if (argc - 1 < function_data->min_args) {
 			push_value(callee, true);  // note: gets popped during unwind
 			jsal_get_prop_string(-1, "name");
-			jsal_error(JS_TYPE_ERROR, "not enough arguments for '%s()'", jsal_to_string(-1));
+			jsal_error(JS_TYPE_ERROR, "Not enough arguments for '%s()'", jsal_to_string(-1));
 		}
 		has_return = function_data->callback(argc - 1, is_ctor_call, function_data->magic);
 		if (has_return)
