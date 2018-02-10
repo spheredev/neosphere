@@ -1199,7 +1199,7 @@ handle_module_import(void)
 	// relative path is nonsensical is a non-module context because the JS engine
 	// doesn't know where the request came from in that case
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "relative import() outside of an mJS module");
+		jsal_error(JS_URI_ERROR, "Relative import() outside of an mJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module_file(specifier, caller_id, PATHS[i], true))
@@ -1305,13 +1305,13 @@ js_require(int num_args, bool is_ctor, int magic)
 		parent_id = jsal_get_string(-1);
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "relative require() outside of a CommonJS module");
+		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if (path = find_module_file(id, parent_id, PATHS[i], false))
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "couldn't find module '%s'", id);
+		jsal_error(JS_URI_ERROR, "Couldn't find JS module '%s'", id);
 	if (!pegasus_eval_module(path_cstr(path)))
 		jsal_throw();
 	return true;
@@ -1390,7 +1390,7 @@ js_Sphere_set_frameRate(int num_args, bool is_ctor, int magic)
 	framerate = jsal_require_number(0);
 
 	if (framerate < 1.0)
-		jsal_error(JS_RANGE_ERROR, "invalid frame rate");
+		jsal_error(JS_RANGE_ERROR, "Invalid frame rate '%g'", framerate);
 	if (framerate != INFINITY)
 		s_frame_rate = framerate;
 	else
@@ -1406,7 +1406,7 @@ js_Sphere_set_frameSkip(int num_args, bool is_ctor, int magic)
 	max_skips = jsal_require_number(0);
 
 	if (max_skips < 0.0)
-		jsal_error(JS_RANGE_ERROR, "invalid frameskip");
+		jsal_error(JS_RANGE_ERROR, "Invalid frameskip count '%g'", max_skips);
 	screen_set_frameskip(g_screen, max_skips);
 	return false;
 }
@@ -1430,9 +1430,9 @@ js_Sphere_abort(int num_args, bool is_ctor, int magic)
 
 	message = num_args >= 1
 		? jsal_to_string(0)
-		: "some type of eaty pig just ate your game\n\n\n...and you*munch*";
+		: "Some type of eaty pig just ate your game\n\n\n...and you*munch*";
 
-	text = strnewf("abort requested\n\n%s\n", message);
+	text = strnewf("Abort Requested\n\n%s\n", message);
 	sphere_abort(text);
 }
 
@@ -1461,7 +1461,7 @@ js_Sphere_setResolution(int num_args, bool is_ctor, int magic)
 	height = jsal_require_int(1);
 
 	if (width < 0 || height < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid screen resolution '%dx%d'", width, height);
+		jsal_error(JS_RANGE_ERROR, "Invalid screen resolution '%dx%d'", width, height);
 	screen_resize(g_screen, width, height);
 
 	jsal_push_ref(s_screen_obj);
@@ -1489,7 +1489,7 @@ js_Sphere_sleep(int num_args, bool is_ctor, int magic)
 	num_frames = jsal_require_int(0);
 
 	if (num_frames < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid sleep timeout '%d'", num_frames);
+		jsal_error(JS_RANGE_ERROR, "Invalid sleep timeout '%d'", num_frames);
 
 	jsal_push_new_promise(&resolver, NULL);
 	jsal_push_ref(resolver);
@@ -1541,7 +1541,7 @@ js_Color_mix(int num_args, bool is_ctor, int magic)
 	}
 
 	if (w1 < 0.0 || w2 < 0.0)
-		jsal_error(JS_RANGE_ERROR, "invalid weight(s)", w1, w2);
+		jsal_error(JS_RANGE_ERROR, "Invalid weight(s) '%g'/'%g'", w1, w2);
 
 	jsal_pegasus_push_color(color_mix(color1, color2, w1, w2), false);
 	return true;
@@ -1571,10 +1571,10 @@ js_Color_of(int num_args, bool is_ctor, int magic)
 
 	// is 'name' an RGB or ARGB signature?
 	if (name[0] != '#')
-		jsal_error(JS_TYPE_ERROR, "unrecognized color name");
+		jsal_error(JS_TYPE_ERROR, "Unrecognized color name '%s'", name);
 	hex_length = strspn(&name[1], "0123456789ABCDEFabcdef");
 	if (hex_length != strlen(name) - 1 || (hex_length != 6 && hex_length != 8))
-		jsal_error(JS_TYPE_ERROR, "invalid RGB signature");
+		jsal_error(JS_TYPE_ERROR, "Invalid RGB signature '%s'", name);
 	value = strtoul(&name[1], NULL, 16);
 	color.a = hex_length == 8 ? (value >> 24) & 0xFF : 255;
 	color.r = (value >> 16) & 0xFF;
@@ -1776,7 +1776,7 @@ js_new_DirectoryStream(int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(stream = directory_open(g_game, pathname)))
-		jsal_error(JS_ERROR, "couldn't open directory '%s'", pathname);
+		jsal_error(JS_ERROR, "Couldn't open directory '%s'", pathname);
 	jsal_push_class_obj(PEGASUS_DIR_STREAM, stream, true);
 	return true;
 }
@@ -1794,7 +1794,7 @@ js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_num_files(directory));
 	return true;
@@ -1807,7 +1807,7 @@ js_DirectoryStream_get_fileName(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	jsal_push_string(directory_pathname(directory));
 	return true;
@@ -1820,7 +1820,7 @@ js_DirectoryStream_get_position(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_position(directory));
 	return true;
@@ -1834,11 +1834,11 @@ js_DirectoryStream_set_position(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 	position = jsal_require_int(0);
 
 	if (!directory_seek(directory, position))
-		jsal_error(JS_ERROR, "couldn't set stream position");
+		jsal_error(JS_ERROR, "Couldn't set stream position");
 	return false;
 }
 
@@ -1849,7 +1849,7 @@ js_DirectoryStream_iterator(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	return true;
 }
@@ -1875,7 +1875,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	entry_path = directory_next(directory);
 	jsal_push_new_object();
@@ -1908,7 +1908,7 @@ js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	directory_rewind(directory);
 	return false;
@@ -1932,7 +1932,7 @@ js_Dispatch_later(int num_args, bool is_ctor, int magic)
 	script = jsal_pegasus_require_script(1);
 
 	if (!(token = dispatch_defer(script, timeout, JOB_UPDATE, false)))
-		jsal_error(JS_ERROR, "dispatch failed");
+		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
 }
@@ -1946,7 +1946,7 @@ js_Dispatch_now(int num_args, bool is_ctor, int magic)
 	script = jsal_pegasus_require_script(0);
 
 	if (!(token = dispatch_defer(script, 0, JOB_TICK, false)))
-		jsal_error(JS_ERROR, "dispatch failed");
+		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
 }
@@ -1970,7 +1970,7 @@ js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 	}
 
 	if (!(token = dispatch_recur(script, priority, background, JOB_RENDER)))
-		jsal_error(JS_ERROR, "couldn't set up Dispatch job");
+		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
 }
@@ -1994,7 +1994,7 @@ js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
 	}
 
 	if (!(token = dispatch_recur(script, priority, background, JOB_UPDATE)))
-		jsal_error(JS_ERROR, "couldn't set up Dispatch job");
+		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
 }
@@ -2007,7 +2007,7 @@ js_FS_createDirectory(int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_mkdir(g_game, pathname))
-		jsal_error(JS_ERROR, "couldn't create directory '%s'", pathname);
+		jsal_error(JS_ERROR, "Couldn't create directory '%s'", pathname);
 	return false;
 }
 
@@ -2019,7 +2019,7 @@ js_FS_deleteFile(int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_unlink(g_game, pathname))
-		jsal_error(JS_ERROR, "couldn't delete file '%s'", pathname);
+		jsal_error(JS_ERROR, "Couldn't delete file '%s'", pathname);
 	return false;
 }
 
@@ -2042,7 +2042,7 @@ js_FS_evaluateScript(int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!game_file_exists(g_game, filename))
-		jsal_error(JS_ERROR, "script file not found '%s'", filename);
+		jsal_error(JS_ERROR, "Script file not found '%s'", filename);
 	if (!script_eval(filename))
 		jsal_throw();
 	return true;
@@ -2084,7 +2084,7 @@ js_FS_readFile(int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(file_data = game_read_file(g_game, pathname, &file_size)))
-		jsal_error(JS_ERROR, "couldn't read file '%s'", pathname);
+		jsal_error(JS_ERROR, "Couldn't read file '%s'", pathname);
 	content = lstr_from_utf8(file_data, file_size, true);
 	jsal_push_lstring_t(content);
 	return true;
@@ -2114,7 +2114,7 @@ js_FS_removeDirectory(int num_args, bool is_ctor, int magic)
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_rmdir(g_game, pathname))
-		jsal_error(JS_ERROR, "couldn't remove directory '%s'", pathname);
+		jsal_error(JS_ERROR, "Couldn't remove directory '%s'", pathname);
 	return false;
 }
 
@@ -2128,7 +2128,7 @@ js_FS_rename(int num_args, bool is_ctor, int magic)
 	new_pathname = jsal_require_pathname(1, NULL, false, true);
 
 	if (!game_rename(g_game, old_pathname, new_pathname))
-		jsal_error(JS_ERROR, "couldn't rename '%s' to '%s'", old_pathname, new_pathname);
+		jsal_error(JS_ERROR, "Couldn't rename '%s' to '%s'", old_pathname, new_pathname);
 	return false;
 }
 
@@ -2146,7 +2146,7 @@ js_FS_writeFile(int num_args, bool is_ctor, int magic)
 	file_data = lstr_cstr(text);
 	file_size = lstr_len(text);
 	if (!game_write_file(g_game, pathname, file_data, file_size))
-		jsal_error(JS_ERROR, "couldn't write file '%s'", pathname);
+		jsal_error(JS_ERROR, "Couldn't write file '%s'", pathname);
 	lstr_free(text);
 	return false;
 }
@@ -2162,7 +2162,7 @@ js_new_FileStream(int num_args, bool is_ctor, int magic)
 	jsal_require_string(0);
 	file_op = jsal_require_int(1);
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid file-op constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid file-op constant");
 
 	pathname = jsal_require_pathname(0, NULL, false, file_op != FILE_OP_READ);
 	if (file_op == FILE_OP_UPDATE && !game_file_exists(g_game, pathname))
@@ -2172,7 +2172,7 @@ js_new_FileStream(int num_args, bool is_ctor, int magic)
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
 	if (!(file = file_open(g_game, pathname, mode)))
-		jsal_error(JS_ERROR, "couldn't open file '%s'", pathname);
+		jsal_error(JS_ERROR, "Couldn't open file '%s' in mode '%s'", pathname, mode);
 	if (file_op == FILE_OP_UPDATE)
 		file_seek(file, 0, WHENCE_END);
 	jsal_push_class_obj(PEGASUS_FILE_STREAM, file, true);
@@ -2192,7 +2192,7 @@ js_FileStream_get_fileName(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 
 	jsal_push_string(file_pathname(file));
 	return true;
@@ -2206,7 +2206,7 @@ js_FileStream_get_fileSize(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 
 	file_pos = file_position(file);
 	file_seek(file, 0, WHENCE_END);
@@ -2222,7 +2222,7 @@ js_FileStream_get_position(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 
 	jsal_push_number(file_position(file));
 	return true;
@@ -2236,7 +2236,7 @@ js_FileStream_set_position(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 
 	new_pos = jsal_require_number(0);
 	file_seek(file, new_pos, WHENCE_SET);
@@ -2267,12 +2267,12 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 	if (num_args >= 1)
 		num_bytes = jsal_require_int(0);
 
 	if (num_bytes < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
+		jsal_error(JS_RANGE_ERROR, "Invalid read size '%d'", num_bytes);
 
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		pos = file_position(file);
@@ -2299,10 +2299,10 @@ js_FileStream_write(int num_args, bool is_ctor, int magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 
 	if (file_write(file, data, num_bytes, 1) != num_bytes)
-		jsal_error(JS_ERROR, "couldn't write to file");
+		jsal_error(JS_ERROR, "Couldn't write '%zu' bytes to file", num_bytes);
 	return false;
 }
 
@@ -2323,7 +2323,7 @@ js_new_Font(int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(font = font_load(filename)))
-		jsal_error(JS_ERROR, "couldn't load font file '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't load font file '%s'", filename);
 	jsal_push_this();
 	jsal_push_class_obj(PEGASUS_FONT, font, true);
 	return true;
@@ -2467,32 +2467,32 @@ js_Font_wordWrap(int num_args, bool is_ctor, int magic)
 static bool
 js_new_IndexList(int num_args, bool is_ctor, int magic)
 {
-	ibo_t*   ibo;
-	uint16_t index;
-	int      num_entries;
+	ibo_t* ibo;
+	int    index;
+	int    num_entries;
 
 	int i;
 
 	if (!jsal_is_array(0))
-		jsal_error(JS_TYPE_ERROR, "expected an array");
+		jsal_error(JS_TYPE_ERROR, "Expected an array as first argument");
 
 	num_entries = (int)jsal_get_length(0);
 	if (num_entries == 0)
-		jsal_error(JS_RANGE_ERROR, "empty list not allowed");
+		jsal_error(JS_RANGE_ERROR, "Empty list is not allowed");
 	ibo = ibo_new();
 	for (i = 0; i < num_entries; ++i) {
 		jsal_get_prop_index(0, i);
 		index = jsal_require_int(-1);
 		if (index < 0 || index > UINT16_MAX) {
 			ibo_unref(ibo);
-			jsal_error(JS_RANGE_ERROR, "index value out of range");
+			jsal_error(JS_RANGE_ERROR, "Index value out of range '%d'", index);
 		}
 		ibo_add_index(ibo, index);
 		jsal_pop(1);
 	}
 	if (!ibo_upload(ibo)) {
 		ibo_unref(ibo);
-		jsal_error(JS_ERROR, "upload to GPU failed");
+		jsal_error(JS_ERROR, "Couldn't upload IndexList to GPU");
 	}
 	jsal_push_class_obj(PEGASUS_INDEX_LIST, ibo, true);
 	return true;
@@ -2624,7 +2624,7 @@ js_Joystick_getPosition(int num_args, bool is_ctor, int magic)
 	index = jsal_require_int(0);
 
 	if (*device != -1 && (index < 0 || index >= joy_num_axes(*device)))
-		jsal_error(JS_RANGE_ERROR, "joystick axis ID out of range");
+		jsal_error(JS_RANGE_ERROR, "Joystick axis ID out of range");
 
 	jsal_push_number(joy_position(*device, index));
 	return true;
@@ -2641,7 +2641,7 @@ js_Joystick_isPressed(int num_args, bool is_ctor, int magic)
 	index = jsal_require_int(0);
 
 	if (*device != -1 && (index < 0 || index >= joy_num_buttons(*device)))
-		jsal_error(JS_RANGE_ERROR, "joystick button ID out of range");
+		jsal_error(JS_RANGE_ERROR, "Joystick button ID out of range");
 
 	jsal_push_boolean(joy_is_button_down(*device, index));
 	return true;
@@ -2811,12 +2811,12 @@ js_new_Mixer(int num_args, bool is_ctor, int magic)
 		channels = jsal_require_int(2);
 
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		jsal_error(JS_RANGE_ERROR, "invalid audio bit depth");
+		jsal_error(JS_RANGE_ERROR, "Invalid audio bit depth '%d'", bits);
 	if (channels < 1 || channels > 7)
-		jsal_error(JS_RANGE_ERROR, "invalid channel count");
+		jsal_error(JS_RANGE_ERROR, "Invalid channel count '%d'", channels);
 	
 	if (!(mixer = mixer_new(frequency, bits, channels)))
-		jsal_error(JS_ERROR, "couldn't create %d-bit %dch voice", bits, channels);
+		jsal_error(JS_ERROR, "Couldn't create %d-bit %dch voice", bits, channels);
 	jsal_push_class_obj(PEGASUS_MIXER, mixer, true);
 	return true;
 }
@@ -2869,7 +2869,7 @@ js_new_Model(int num_args, bool is_ctor, int magic)
 		: galileo_shader();
 
 	if (!jsal_is_array(0))
-		jsal_error(JS_TYPE_ERROR, "array required");
+		jsal_error(JS_TYPE_ERROR, "Expected an array as first argument");
 
 	group = model_new(shader);
 	num_shapes = jsal_get_length(0);
@@ -3041,7 +3041,7 @@ js_Shader_setFloatArray(int num_args, bool is_ctor, int magic)
 	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
-		jsal_error(JS_TYPE_ERROR, "array was expected here");
+		jsal_error(JS_TYPE_ERROR, "Expected an array as second argument");
 
 	size = (int)jsal_get_length(1);
 
@@ -3071,9 +3071,9 @@ js_Shader_setFloatVector(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 	jsal_require_array(1);
 
-	size = (int)jsal_get_length(1);
+	size = jsal_get_length(1);
 	if (size < 2 || size > 4)
-		jsal_error(JS_RANGE_ERROR, "invalid number of components");
+		jsal_error(JS_RANGE_ERROR, "Invalid number of components '%d'", size);
 
 	for (i = 0; i < size; ++i) {
 		jsal_get_prop_index(1, (int)i);
@@ -3114,7 +3114,7 @@ js_Shader_setIntArray(int num_args, bool is_ctor, int magic)
 	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
-		jsal_error(JS_TYPE_ERROR, "array was expected here");
+		jsal_error(JS_TYPE_ERROR, "Expected array as second argument");
 
 	size = (int)jsal_get_length(1);
 	values = malloc(size * sizeof(int));
@@ -3142,11 +3142,11 @@ js_Shader_setIntVector(int num_args, bool is_ctor, int magic)
 	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
 	if (!jsal_is_array(1))
-		jsal_error(JS_TYPE_ERROR, "array was expected here");
+		jsal_error(JS_TYPE_ERROR, "Expected array as second argument");
 
-	size = (int)jsal_get_length(1);
+	size = jsal_get_length(1);
 	if (size < 2 || size > 4)
-		jsal_error(JS_RANGE_ERROR, "invalid number of components");
+		jsal_error(JS_RANGE_ERROR, "Invalid number of components '%d'", size);
 
 	for (i = 0; i < size; ++i) {
 		jsal_get_prop_index(1, (int)i);
@@ -3252,7 +3252,7 @@ js_Mouse_isPressed(int num_args, bool is_ctor, int magic)
 
 	key = jsal_require_int(0);
 	if (key < 0 || key >= MOUSE_KEY_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid MouseKey constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid MouseKey constant");
 
 	jsal_push_boolean(mouse_is_key_down(key));
 	return true;
@@ -3282,7 +3282,7 @@ js_RNG_fromState(int num_args, bool is_ctor, int magic)
 	xoro = xoro_new(0);
 	if (!xoro_set_state(xoro, state)) {
 		xoro_unref(xoro);
-		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
+		jsal_error(JS_TYPE_ERROR, "Invalid RNG state string '%s'", state);
 	}
 	jsal_push_class_obj(PEGASUS_RNG, xoro, false);
 	return true;
@@ -3329,7 +3329,7 @@ js_RNG_set_state(int num_args, bool is_ctor, int magic)
 	state = jsal_require_string(0);
 
 	if (!xoro_set_state(xoro, state))
-		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
+		jsal_error(JS_TYPE_ERROR, "Invalid RNG state string '%s'", state);
 	return false;
 }
 
@@ -3400,7 +3400,7 @@ js_new_Sample(int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(sample = sample_new(filename, true)))
-		jsal_error(JS_ERROR, "couldn't load sample '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't load sample file '%s'", filename);
 	jsal_push_class_obj(PEGASUS_SAMPLE, sample, true);
 	return true;
 }
@@ -3478,10 +3478,10 @@ js_new_Server(int num_args, bool is_ctor, int magic)
 	max_backlog = num_args >= 2 ? jsal_require_int(1) : 16;
 
 	if (max_backlog <= 0)
-		jsal_error(JS_RANGE_ERROR, "invalid backlog size", max_backlog);
+		jsal_error(JS_RANGE_ERROR, "Invalid backlog size '%d'", max_backlog);
 
 	if (!(server = server_new(NULL, port, 1024, max_backlog, false)))
-		jsal_error(JS_ERROR, "couldn't create server");
+		jsal_error(JS_ERROR, "Couldn't create server socket");
 	jsal_push_class_obj(PEGASUS_SERVER, server, true);
 	return true;
 }
@@ -3502,7 +3502,7 @@ js_Server_accept(int num_args, bool is_ctor, int magic)
 	server = jsal_require_class_obj(-1, PEGASUS_SERVER);
 
 	if (server == NULL)
-		jsal_error(JS_ERROR, "server has shut down");
+		jsal_error(JS_ERROR, "Server has already shut down");
 	new_socket = server_accept(server);
 	if (new_socket != NULL)
 		jsal_push_class_obj(PEGASUS_SOCKET, new_socket, false);
@@ -3530,7 +3530,7 @@ js_Shader_get_Default(int num_args, bool is_ctor, int magic)
 	shader_t* shader;
 
 	if (!(shader = galileo_shader()))
-		jsal_error(JS_ERROR, "couldn't compile default shaders");
+		jsal_error(JS_ERROR, "Couldn't build default shader program");
 	jsal_push_class_obj(PEGASUS_SHADER, shader_ref(shader), false);
 
 	cache_value_to_this("Default");
@@ -3553,7 +3553,7 @@ js_new_Shader(int num_args, bool is_ctor, int magic)
 	fragment_pathname = jsal_require_pathname(-2, NULL, false, false);
 	vertex_pathname = jsal_require_pathname(-1, NULL, false, false);
 	if (!(shader = shader_new(vertex_pathname, fragment_pathname)))
-		jsal_error(JS_ERROR, "couldn't compile shader program");
+		jsal_error(JS_ERROR, "Couldn't build shader program");
 	jsal_push_class_obj(PEGASUS_SHADER, shader, true);
 	return true;
 }
@@ -3587,7 +3587,7 @@ js_new_Shape(int num_args, bool is_ctor, int magic)
 	}
 
 	if (type < 0 || type >= SHAPE_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid ShapeType constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid ShapeType constant");
 
 	shape = shape_new(vbo, ibo, type, texture);
 	jsal_push_class_obj(PEGASUS_SHAPE, shape, true);
@@ -3721,9 +3721,9 @@ js_new_Socket(int num_args, bool is_ctor, int magic)
 	}
 
 	if (!(socket = socket_new(1024, false)))
-		jsal_error(JS_ERROR, "couldn't create TCP socket");
+		jsal_error(JS_ERROR, "Couldn't create TCP socket");
 	if (hostname != NULL && !socket_connect(socket, hostname, port))
-		jsal_error(JS_ERROR, "couldn't connect to '%s'", hostname);
+		jsal_error(JS_ERROR, "Couldn't connect to '%s'", hostname);
 	jsal_push_class_obj(PEGASUS_SOCKET, socket, true);
 	return true;
 }
@@ -3743,7 +3743,7 @@ js_Socket_get_bytesPending(int num_args, bool is_ctor, int magic)
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	if (socket == NULL)
-		jsal_error(JS_ERROR, "socket is not connected");
+		jsal_error(JS_ERROR, "Socket is not connected");
 	jsal_push_int((int)socket_peek(socket));
 	return true;
 }
@@ -3772,9 +3772,9 @@ js_Socket_get_remoteAddress(int num_args, bool is_ctor, int magic)
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	if (socket == NULL)
-		jsal_error(JS_ERROR, "socket is closed");
+		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "socket disconnected");
+		jsal_error(JS_ERROR, "Socket is not connected");
 	jsal_push_string(socket_hostname(socket));
 	return true;
 }
@@ -3788,9 +3788,9 @@ js_Socket_get_remotePort(int num_args, bool is_ctor, int magic)
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	if (socket == NULL)
-		jsal_error(JS_ERROR, "socket is closed");
+		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "socket disconnected");
+		jsal_error(JS_ERROR, "Socket is not connected");
 	jsal_push_int(socket_port(socket));
 	return true;
 }
@@ -3821,7 +3821,7 @@ js_Socket_connectTo(int num_args, bool is_ctor, int magic)
 	port = jsal_require_int(1);
 
 	if (!socket_connect(socket, hostname, port))
-		jsal_error(JS_ERROR, "couldn't connect to %s", hostname);
+		jsal_error(JS_ERROR, "Couldn't connect to '%s'", hostname);
 	return false;
 }
 
@@ -3838,9 +3838,9 @@ js_Socket_read(int num_args, bool is_ctor, int magic)
 
 	num_bytes = jsal_require_int(0);
 	if (socket == NULL)
-		jsal_error(JS_ERROR, "socket is closed");
+		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "socket disconnected");
+		jsal_error(JS_ERROR, "Socket is not connected");
 	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
 	buffer = jsal_get_buffer_ptr(-1, NULL);
 	bytes_read = socket_read(socket, buffer, num_bytes);
@@ -3859,9 +3859,9 @@ js_Socket_write(int num_args, bool is_ctor, int magic)
 	payload = jsal_require_buffer_ptr(0, &write_size);
 
 	if (socket == NULL)
-		jsal_error(JS_ERROR, "socket is closed");
+		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "socket disconnected");
+		jsal_error(JS_ERROR, "Socket is not connected");
 	socket_write(socket, payload, write_size);
 	return false;
 }
@@ -3875,7 +3875,7 @@ js_new_Sound(int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(sound = sound_new(filename)))
-		jsal_error(JS_ERROR, "couldn't load sound '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't load sound file '%s'", filename);
 	jsal_push_class_obj(PEGASUS_SOUND, sound, true);
 	return true;
 }
@@ -4107,12 +4107,12 @@ js_new_SoundStream(int num_args, bool is_ctor, int magic)
 	channels = num_args >= 3 ? jsal_require_int(2) : 1;
 
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		jsal_error(JS_RANGE_ERROR, "invalid audio bit depth");
+		jsal_error(JS_RANGE_ERROR, "Invalid audio bit depth '%d'", bits);
 	if (channels < 1 || channels > 7)
-		jsal_error(JS_RANGE_ERROR, "invalid number of channels");
+		jsal_error(JS_RANGE_ERROR, "Invalid number of channels '%d'", channels);
 
 	if (!(stream = stream_new(frequency, bits, channels)))
-		jsal_error(JS_ERROR, "couldn't create stream");
+		jsal_error(JS_ERROR, "Couldn't create audio stream");
 	jsal_push_class_obj(PEGASUS_SOUND_STREAM, stream, true);
 	return true;
 }
@@ -4226,18 +4226,18 @@ js_new_Surface(int num_args, bool is_ctor, int magic)
 		height = jsal_require_int(1);
 		fill_color = n_args >= 3 ? jsal_pegasus_require_color(2) : color_new(0, 0, 0, 0);
 		if (!(image = image_new(width, height)))
-			jsal_error(JS_ERROR, "couldn't create surface");
+			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		image_fill(image, fill_color);
 	}
 	else if (jsal_is_class_obj(0, PEGASUS_TEXTURE)) {
 		src_image = jsal_require_class_obj(0, PEGASUS_TEXTURE);
 		if (!(image = image_dup(src_image)))
-			jsal_error(JS_ERROR, "couldn't create surface");
+			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	}
 	else {
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
-			jsal_error(JS_ERROR, "couldn't load image '%s'", filename);
+			jsal_error(JS_ERROR, "Couldn't load image file '%s'", filename);
 	}
 	jsal_push_class_obj(PEGASUS_SURFACE, image, true);
 	return true;
@@ -4333,7 +4333,7 @@ js_Surface_toTexture(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	if ((new_image = image_dup(image)) == NULL)
-		jsal_error(JS_ERROR, "image creation failed");
+		jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	jsal_push_class_obj(PEGASUS_TEXTURE, new_image, false);
 	return true;
 }
@@ -4434,10 +4434,10 @@ js_TextDecoder_decode(int num_args, bool is_ctor, int magic)
 	}
 
 	if (!(string = decoder_run(decoder, input, length)))
-		jsal_error(JS_TYPE_ERROR, "data is not valid utf-8");
+		jsal_error(JS_TYPE_ERROR, "Data to be decoded is not valid UTF-8 text");
 	if (!streaming) {
 		if (!(tail = decoder_finish(decoder)))
-			jsal_error(JS_TYPE_ERROR, "data is not valid utf-8");
+			jsal_error(JS_TYPE_ERROR, "Data to be decoded is not valid UTF-8 text");
 		head = string;
 		string = lstr_cat(head, tail);
 		lstr_free(head);
@@ -4527,7 +4527,7 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 		height = jsal_require_int(1);
 		fill_color = jsal_pegasus_require_color(2);
 		if (!(image = image_new(width, height)))
-			jsal_error(JS_ERROR, "image creation failed");
+			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		image_fill(image, fill_color);
 	}
 	else if (num_args >= 3 && (buffer = jsal_get_buffer_ptr(2, &buffer_size))) {
@@ -4535,12 +4535,12 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 		width = jsal_require_int(0);
 		height = jsal_require_int(1);
 		if (buffer_size < width * height * sizeof(color_t))
-			jsal_error(JS_ERROR, "not enough data in buffer");
+			jsal_error(JS_ERROR, "Not enough data in pixel buffer");
 		if (!(image = image_new(width, height)))
-			jsal_error(JS_ERROR, "image creation failed");
+			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		if (!(lock = image_lock(image))) {
 			image_unref(image);
-			jsal_error(JS_ERROR, "image lock failed");
+			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		}
 		p_line = lock->pixels;
 		for (y = 0; y < height; ++y) {
@@ -4553,13 +4553,13 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 		// create an Image from a Surface
 		src_image = jsal_require_class_obj(0, PEGASUS_SURFACE);
 		if (!(image = image_dup(src_image)))
-			jsal_error(JS_ERROR, "image creation failed");
+			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	}
 	else {
 		// create an Image by loading an image file
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
-			jsal_error(JS_ERROR, "couldn't load image '%s'", filename);
+			jsal_error(JS_ERROR, "Couldn't load image file '%s'", filename);
 	}
 	jsal_push_class_obj(PEGASUS_TEXTURE, image, true);
 	return true;
@@ -4772,11 +4772,11 @@ js_Transform_project3D(int num_args, bool is_ctor, int magic)
 	z2 = jsal_require_number(3);
 
 	if (fov >= 180.0 || fov <= 0.0)
-		jsal_error(JS_RANGE_ERROR, "invalid field of view angle '%g'", fov);
+		jsal_error(JS_RANGE_ERROR, "Invalid field of view angle '%g'", fov);
 	if (aspect <= 0.0 || aspect == INFINITY)
-		jsal_error(JS_RANGE_ERROR, "invalid aspect ratio '%g'", aspect);
+		jsal_error(JS_RANGE_ERROR, "Invalid aspect ratio '%g'", aspect);
 	if (z1 <= 0.0 || z2 <= 0.0 || z2 < z1)
-		jsal_error(JS_RANGE_ERROR, "invalid near/far range [%g,%g]", z1, z2);
+		jsal_error(JS_RANGE_ERROR, "Invalid near/far range [%g,%g]", z1, z2);
 
 	fh = tan(fov * M_PI / 360) * z1;
 	fw = fh * aspect;
@@ -4859,7 +4859,7 @@ js_new_VertexList(int num_args, bool is_ctor, int magic)
 
 	num_entries = (int)jsal_get_length(0);
 	if (num_entries == 0)
-		jsal_error(JS_RANGE_ERROR, "empty list not allowed");
+		jsal_error(JS_RANGE_ERROR, "Empty list is not allowed");
 	
 	vbo = vbo_new();
 	for (i = 0; i < num_entries; ++i) {
@@ -4885,7 +4885,7 @@ js_new_VertexList(int num_args, bool is_ctor, int magic)
 	}
 	if (!vbo_upload(vbo)) {
 		vbo_unref(vbo);
-		jsal_error(JS_ERROR, "upload to GPU failed");
+		jsal_error(JS_ERROR, "Couldn't upload VertexList to GPU");
 	}
 	
 	jsal_push_class_obj(PEGASUS_VERTEX_LIST, vbo, true);

@@ -4,6 +4,9 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Improves error messages.  The first letter of all error messages is now
+  capitalized for consistency and several messages have been clarified to make
+  them easier to understand.
 * Fixes a bug which causes `Music.adjustVolume()` to throw a ReferenceError.
 
 
