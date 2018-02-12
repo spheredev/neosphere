@@ -397,18 +397,20 @@ sphere_exit(bool shutting_down)
 }
 
 void
-sphere_run(bool allow_dispatch)
+sphere_run(bool in_event_loop)
 {
+	// IMPORTANT: if `in_event_loop` is false, we MUST avoid doing anything that causes
+	//            JavaScript code to run, otherwise bad things will happen.
+
 	ALLEGRO_EVENT event;
 
 	sockets_update();
 
-	if (allow_dispatch) {
+	if (in_event_loop) {
 #if defined(MINISPHERE_SPHERUN)
 		debugger_update();
 #endif
 		jsal_update(true);
-		dispatch_run(JOB_TICK);
 	}
 	update_input();
 	audio_update();

@@ -2086,13 +2086,12 @@ js_CreateSurface(int num_args, bool is_ctor, int magic)
 static bool
 js_DeflateByteArray(int num_args, bool is_ctor, int magic)
 {
-	int n_args = jsal_get_top();
 	bytearray_t* array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
-	int level = n_args >= 2 ? jsal_to_int(1) : -1;
+	int level = num_args >= 2 ? jsal_to_int(1) : -1;
 
 	bytearray_t* new_array;
 
-	if ((level < 0 || level > 9) && n_args >= 2)
+	if ((level < 0 || level > 9) && num_args >= 2)
 		jsal_error(JS_RANGE_ERROR, "invalid compression level");
 	if (!(new_array = bytearray_deflate(array, level)))
 		jsal_error(JS_ERROR, "couldn't deflate byte array");
@@ -2729,9 +2728,12 @@ js_GetKey(int num_args, bool is_ctor, int magic)
 static bool
 js_GetKeyString(int num_args, bool is_ctor, int magic)
 {
-	int n_args = jsal_get_top();
-	int keycode = jsal_to_int(0);
-	bool shift = n_args >= 2 ? jsal_to_boolean(1) : false;
+	int  keycode;
+	bool shift = false;
+	
+	keycode = jsal_to_int(0);
+	if (num_args >= 2)
+		shift = jsal_to_boolean(1);
 
 	switch (keycode) {
 	case ALLEGRO_KEY_A: jsal_push_string(shift ? "A" : "a"); break;
@@ -4764,13 +4766,18 @@ js_OutlinedEllipse(int num_args, bool is_ctor, int magic)
 static bool
 js_OutlinedRectangle(int num_args, bool is_ctor, int magic)
 {
-	int n_args = jsal_get_top();
-	float x1 = jsal_to_int(0) + 0.5;
-	float y1 = jsal_to_int(1) + 0.5;
-	float x2 = x1 + jsal_to_int(2) - 1;
-	float y2 = y1 + jsal_to_int(3) - 1;
-	color_t color = jsal_require_sphere_color(4);
-	int thickness = n_args >= 6 ? jsal_to_int(5) : 1;
+	color_t color;
+	int     thickness = 1;
+	float   x1, y1;
+	float   x2, y2;
+
+	x1 = jsal_to_int(0) + 0.5;
+	y1 = jsal_to_int(1) + 0.5;
+	x2 = x1 + jsal_to_int(2) - 1;
+	y2 = y1 + jsal_to_int(3) - 1;
+	color = jsal_require_sphere_color(4);
+	if (num_args >= 6)
+		thickness = jsal_to_int(5);
 
 	if (screen_skip_frame(g_screen))
 		return false;

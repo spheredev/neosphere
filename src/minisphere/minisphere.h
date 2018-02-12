@@ -93,5 +93,5 @@ extern uint32_t             g_tick_count;
 no_return sphere_abort   (const char* message);
 no_return sphere_exit    (bool shutting_down);
 no_return sphere_restart (void);
-void      sphere_run     (bool allow_dispatch);
+void      sphere_run     (bool in_event_loop);
 void      sphere_sleep   (double time);

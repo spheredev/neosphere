@@ -8,6 +8,8 @@ vX.X.X - TBD
   capitalized for consistency and several messages have been clarified to make
   them easier to understand.
 * Fixes a bug which causes `Music.adjustVolume()` to throw a ReferenceError.
+* Fixes a bug where `Dispatch.now()` jobs and promise continuations can run
+  before the update phase instead of after it.
 
 
 v5.1.2 - February 7, 2018
