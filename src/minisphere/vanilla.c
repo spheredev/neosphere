@@ -2419,6 +2419,7 @@ js_FilledEllipse(int num_args, bool is_ctor, int magic)
 static bool
 js_FlipScreen(int num_args, bool is_ctor, int magic)
 {
+	sphere_run(true);
 	if (!screen_skip_frame(g_screen))
 		dispatch_run(JOB_RENDER);
 	screen_flip(g_screen, s_frame_rate, true);

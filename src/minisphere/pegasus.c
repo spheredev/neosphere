@@ -1271,6 +1271,7 @@ static bool
 run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
 {
 	while (dispatch_busy() || jsal_busy()) {
+		sphere_run(true);
 		if (!screen_skip_frame(g_screen))
 			dispatch_run(JOB_RENDER);
 		screen_flip(g_screen, s_frame_rate, true);
