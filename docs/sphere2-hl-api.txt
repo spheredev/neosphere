@@ -335,6 +335,13 @@ new Console(options);
             A `Key` value specifying which keyboard key will show and hide the
             console.  If not provided, defaults to `Key.Tilde`.
 
+        options.logFileName
+
+            The SphereFS path of the file used for logging console output.  If
+            not provided, no log file will be created.  Note that if the log
+            file already exists, it will be appended to instead of being
+            overwritten.
+
         options.prompt
 
             A string specifying the text to display in front of the command
