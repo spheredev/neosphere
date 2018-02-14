@@ -1294,7 +1294,7 @@ jsal_require_map_layer(int at_index)
 			goto have_index;
 		}
 		else {
-			jsal_error(JS_RANGE_ERROR, "layer name does not exist '%s'", name);
+			jsal_error(JS_RANGE_ERROR, "Layer name does not exist '%s'", name);
 		}
 	}
 	else {
@@ -1306,7 +1306,7 @@ jsal_require_map_layer(int at_index)
 
 have_index:
 	if (layer_index < 0 || layer_index >= map_num_layers())
-		jsal_error(JS_RANGE_ERROR, "layer index out of range");
+		jsal_error(JS_RANGE_ERROR, "Layer index out of range '%d'", layer_index);
 	return layer_index;
 }
 
@@ -1361,7 +1361,7 @@ jsal_require_sphere_script(int index, const char* name)
 	else if (jsal_is_null(index) || jsal_is_undefined(index))
 		return NULL;
 	else
-		jsal_error(JS_TYPE_ERROR, "expected string, function, or null/undefined");
+		jsal_error(JS_TYPE_ERROR, "Expected a string, function, or null/undefined");
 	return script;
 }
 
@@ -1508,9 +1508,9 @@ js_Abort(int num_args, bool is_ctor, int magic)
 
 	message = num_args >= 1
 		? jsal_to_string(0)
-		: "some type of eaty pig just ate your game\n\n\n...and you*munch*";
+		: "Some type of eaty pig just ate your game\n\n\n...and you*munch*";
 
-	text = strnewf("abort requested\n\n%s\n", message);
+	text = strnewf("abort requested...\n\n%s\n", message);
 	sphere_abort(text);
 }
 
@@ -1529,13 +1529,13 @@ js_AddTrigger(int num_args, bool is_ctor, int magic)
 	script = jsal_require_sphere_script(3, "%/triggerScript.js");
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	bounds = map_bounds();
 	if (x < bounds.x1 || y < bounds.y1 || x >= bounds.x2 || y >= bounds.y2)
-		jsal_error(JS_RANGE_ERROR, "X/Y out of bounds");
+		jsal_error(JS_RANGE_ERROR, "X/Y out of bounds (%d,%d)", x, y);
 
 	if (!map_add_trigger(x, y, layer, script))
-		jsal_error(JS_ERROR, "couldn't create trigger");
+		jsal_error(JS_ERROR, "Couldn't allocate new trigger");
 	jsal_push_number(map_num_triggers() - 1);
 	return true;
 }
@@ -1559,15 +1559,15 @@ js_AddZone(int num_args, bool is_ctor, int magic)
 	script = jsal_require_sphere_script(5, "%/zoneScript.js");
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	bounds = map_bounds();
 	if (width <= 0 || height <= 0)
-		jsal_error(JS_RANGE_ERROR, "invalid zone width/height");
+		jsal_error(JS_RANGE_ERROR, "Invalid zone width/height [%d,%d]", width, height);
 	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
-		jsal_error(JS_RANGE_ERROR, "zone out of bounds");
+		jsal_error(JS_RANGE_ERROR, "X/Y out of bounds (%d,%d)", x, y);
 
 	if (!map_add_zone(rect(x, y, width, height), layer, script, 8))
-		jsal_error(JS_ERROR, "couldn't create zone");
+		jsal_error(JS_ERROR, "Couldn't allocate new zone");
 	jsal_push_number(map_num_zones() - 1);
 	script_unref(script);
 	return true;
@@ -1622,7 +1622,7 @@ js_AttachCamera(int num_args, bool is_ctor, int magic)
 	name = jsal_to_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	map_engine_set_subject(person);
 	return false;
 }
@@ -1636,7 +1636,7 @@ js_AttachInput(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	map_engine_set_player(PLAYER_1, person);
 	return false;
 }
@@ -1652,9 +1652,9 @@ js_AttachPlayerInput(int num_args, bool is_ctor, int magic)
 	player = jsal_to_int(1);
 
 	if (player < 0 || player >= PLAYER_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid player constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid player constant");
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	map_engine_set_player(player, person);
 	return false;
 }
@@ -1722,9 +1722,9 @@ js_BindJoystickButton(int num_args, bool is_ctor, int magic)
 	script_t* on_up_script = jsal_require_sphere_script(3, "[button-up script]");
 
 	if (joy_index < 0 || joy_index >= MAX_JOYSTICKS)
-		jsal_error(JS_RANGE_ERROR, "joystick index '%d' out of range", joy_index);
+		jsal_error(JS_RANGE_ERROR, "Joystick index '%d' out of range", joy_index);
 	if (button < 0 || button >= MAX_JOY_BUTTONS)
-		jsal_error(JS_RANGE_ERROR, "button index '%d' out of range", button);
+		jsal_error(JS_RANGE_ERROR, "Button index '%d' out of range", button);
 	joy_bind_button(joy_index, button, on_down_script, on_up_script);
 	return false;
 }
@@ -1737,7 +1737,7 @@ js_BindKey(int num_args, bool is_ctor, int magic)
 	script_t* on_up_script = jsal_require_sphere_script(2, "[key-up script]");
 
 	if (keycode < 0 || keycode >= ALLEGRO_KEY_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid key constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid key constant");
 	kb_bind_key(keycode, on_down_script, on_up_script);
 	return false;
 }
@@ -1758,7 +1758,7 @@ js_BlendColors(int num_args, bool is_ctor, int magic)
 	}
 
 	if (w1 < 0.0 || w2 < 0.0)
-		jsal_error(JS_RANGE_ERROR, "invalid weight(s)", w1, w2);
+		jsal_error(JS_RANGE_ERROR, "Invalid weight(s) '%g'/'%g'", w1, w2);
 
 	jsal_push_sphere_color(color_mix(color1, color2, w1, w2));
 	return true;
@@ -1772,9 +1772,9 @@ js_CallDefaultMapScript(int num_args, bool is_ctor, int magic)
 	map_op = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (map_op < 0 || map_op >= MAP_SCRIPT_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid script type constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid script type constant");
 	map_call_default(map_op);
 	return false;
 }
@@ -1791,9 +1791,9 @@ js_CallDefaultPersonScript(int num_args, bool is_ctor, int magic)
 	type = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
-		jsal_error(JS_ERROR, "invalid script type constant");
+		jsal_error(JS_ERROR, "Invalid script type constant");
 	if (type == PERSON_SCRIPT_ON_TALK || type == PERSON_SCRIPT_ON_TOUCH)
 		actor = person;
 	person_call_default(person, type, actor);
@@ -1808,9 +1808,9 @@ js_CallMapScript(int num_args, bool is_ctor, int magic)
 	type = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (type < 0 || type >= MAP_SCRIPT_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid script type constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid script type constant");
 	map_activate(type, false);
 	return false;
 }
@@ -1826,9 +1826,9 @@ js_CallPersonScript(int num_args, bool is_ctor, int magic)
 	type = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
-		jsal_error(JS_ERROR, "invalid script type constant");
+		jsal_error(JS_ERROR, "Invalid script type constant");
 	if (type == PERSON_SCRIPT_ON_TALK || type == PERSON_SCRIPT_ON_TOUCH)
 		person_activate(person, type, person, false);
 	else
@@ -1844,9 +1844,9 @@ js_ChangeMap(int num_args, bool is_ctor, int magic)
 	filename = jsal_require_pathname(0, "maps", true, false);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (!map_engine_change_map(filename))
-		jsal_error(JS_ERROR, "couldn't load map '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't load map file '%s'", filename);
 	return false;
 }
 
@@ -1859,7 +1859,7 @@ js_ClearPersonCommands(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_clear_queue(person);
 	return false;
 }
@@ -1873,9 +1873,9 @@ js_CreateByteArray(int num_args, bool is_ctor, int magic)
 	size = jsal_to_int(0);
 
 	if (size < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid byte array size");
+		jsal_error(JS_RANGE_ERROR, "Invalid byte array size");
 	if (!(array = bytearray_new(size)))
-		jsal_error(JS_ERROR, "couldn't create byte array");
+		jsal_error(JS_ERROR, "Couldn't allocate byte array");
 	jsal_push_sphere_bytearray(array);
 	bytearray_unref(array);
 	return true;
@@ -1890,7 +1890,7 @@ js_CreateByteArrayFromString(int num_args, bool is_ctor, int magic)
 	string = jsal_require_lstring_t(0);
 
 	if (!(array = bytearray_from_lstring(string)))
-		jsal_error(JS_ERROR, "couldn't create byte array");
+		jsal_error(JS_ERROR, "Couldn't allocate byte array");
 	lstr_free(string);
 	jsal_push_sphere_bytearray(array);
 	bytearray_unref(array);
@@ -1957,7 +1957,7 @@ js_CreateDirectory(int num_args, bool is_ctor, int magic)
 	name = jsal_require_pathname(0, "save", true, true);
 
 	if (!game_mkdir(g_game, name))
-		jsal_error(JS_ERROR, "couldn't create directory '%s'", name);
+		jsal_error(JS_ERROR, "Couldn't create directory '%s'", name);
 	return false;
 }
 
@@ -1981,7 +1981,7 @@ js_CreatePerson(int num_args, bool is_ctor, int magic)
 	else {
 		filename = jsal_require_pathname(1, "spritesets", true, false);
 		if (!(spriteset = spriteset_load(filename)))
-			jsal_error(JS_ERROR, "couldn't load spriteset '%s'", filename);
+			jsal_error(JS_ERROR, "Couldn't load spriteset file '%s'", filename);
 	}
 
 	// create the person and its JS-side data object
@@ -2053,12 +2053,12 @@ js_CreateStringFromByteArray(int num_args, bool is_ctor, int magic)
 static bool
 js_CreateStringFromCode(int num_args, bool is_ctor, int magic)
 {
-	int  code;
+	int code;
 
 	code = jsal_to_int(0);
 
 	if (code < 0 || code > 255)
-		jsal_error(JS_RANGE_ERROR, "invalid ASCII character code");
+		jsal_error(JS_RANGE_ERROR, "Invalid ASCII character code '%d'", code);
 
 	jsal_push_sprintf("%c", code);
 	return true;
@@ -2077,7 +2077,7 @@ js_CreateSurface(int num_args, bool is_ctor, int magic)
 	fill_color = num_args >= 3 ? jsal_require_sphere_color(2) : color_new(0, 0, 0, 0);
 
 	if (!(image = image_new(width, height)))
-		jsal_error(JS_ERROR, "couldn't create surface");
+		jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	image_fill(image, fill_color);
 	jsal_push_class_obj(SV1_SURFACE, image, false);
 	return true;
@@ -2092,9 +2092,9 @@ js_DeflateByteArray(int num_args, bool is_ctor, int magic)
 	bytearray_t* new_array;
 
 	if ((level < 0 || level > 9) && num_args >= 2)
-		jsal_error(JS_RANGE_ERROR, "invalid compression level");
+		jsal_error(JS_RANGE_ERROR, "Invalid compression level '%d'", level);
 	if (!(new_array = bytearray_deflate(array, level)))
-		jsal_error(JS_ERROR, "couldn't deflate byte array");
+		jsal_error(JS_ERROR, "Couldn't deflate byte array");
 	jsal_push_sphere_bytearray(new_array);
 	return true;
 }
@@ -2107,8 +2107,8 @@ js_Delay(int num_args, bool is_ctor, int magic)
 	timeout = jsal_to_number(0);
 
 	if (timeout < 0.0)
-		jsal_error(JS_RANGE_ERROR, "invalid delay timeout");
-	sphere_sleep(floor(timeout) / 1000);
+		jsal_error(JS_RANGE_ERROR, "Invalid delay timeout '%g'", timeout);
+	sphere_sleep(floor(timeout) / 1000.0);
 	return false;
 }
 
@@ -2121,7 +2121,7 @@ js_DestroyPerson(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_free(person);
 	return false;
 }
@@ -2149,13 +2149,13 @@ js_DetachPlayerInput(int num_args, bool is_ctor, int magic)
 
 	int i;
 
-	if (jsal_get_top() < 1) {
-		jsal_error(JS_ERROR, "not a number or string");
+	if (num_args < 1) {
+		jsal_error(JS_ERROR, "Missing first argument");
 	}
 	else if (jsal_is_string(0)) {
 		name = jsal_get_string(0);
 		if (!(person = map_person_by_name(name)))
-			jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+			jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 		player = -1;
 		for (i = PLAYER_1; i < PLAYER_MAX; ++i) {
 			if (person == map_engine_get_player(i)) {
@@ -2170,10 +2170,10 @@ js_DetachPlayerInput(int num_args, bool is_ctor, int magic)
 		player = jsal_get_int(0);
 	}
 	else {
-		jsal_error(JS_ERROR, "not a number or string");
+		jsal_error(JS_ERROR, "First argument is not a number or string");
 	}
 	if (player < 0 || player >= PLAYER_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid player constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid player constant");
 	map_engine_set_player(player, NULL);
 	return false;
 }
@@ -2233,7 +2233,7 @@ js_EvaluateSystemScript(int num_args, bool is_ctor, int magic)
 	if (!game_file_exists(g_game, path))
 		sprintf(path, "#/scripts/%s", filename);
 	if (!game_file_exists(g_game, path))
-		jsal_error(JS_ERROR, "system script '%s' not found", filename);
+		jsal_error(JS_ERROR, "System script '%s' not found", filename);
 	if (!script_eval(path))
 		jsal_throw();
 	return true;
@@ -2276,7 +2276,7 @@ js_ExecuteTrigger(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if ((index = map_trigger_at(x, y, layer)) >= 0)
 		trigger_activate(index);
 	return false;
@@ -2290,9 +2290,9 @@ js_ExecuteZoneScript(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
-		jsal_error(JS_RANGE_ERROR, "invalid zone index");
+		jsal_error(JS_RANGE_ERROR, "Invalid zone index '%d'", zone_index);
 	zone_activate(zone_index);
 	return false;
 }
@@ -2312,7 +2312,7 @@ js_ExecuteZones(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	i = 0;
 	while ((index = map_zone_at(x, y, layer, i++)) >= 0)
 		zone_activate(index);
@@ -2331,7 +2331,7 @@ static bool
 js_ExitMapEngine(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	map_engine_exit();
 	return false;
 }
@@ -2375,7 +2375,7 @@ js_FilledCircle(int num_args, bool is_ctor, int magic)
 static bool
 js_FilledComplex(int num_args, bool is_ctor, int magic)
 {
-	jsal_error(JS_ERROR, "not implemented");
+	jsal_error(JS_ERROR, "Not implemented");
 	return false;
 }
 
@@ -2445,13 +2445,13 @@ js_FollowPerson(int num_args, bool is_ctor, int magic)
 		distance = jsal_require_int(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (!(leader_name[0] == '\0' || (leader = map_person_by_name(leader_name))))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", leader_name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", leader_name);
 	if (distance <= 0 && leader_name[0] != '\0')
-		jsal_error(JS_RANGE_ERROR, "invalid distance");
+		jsal_error(JS_RANGE_ERROR, "Invalid distance '%d'", distance);
 	if (!person_set_leader(person, leader, distance))
-		jsal_error(JS_ERROR, "invalid circular follow chain");
+		jsal_error(JS_ERROR, "Illegal cycle in FollowPerson train");
 	return false;
 }
 
@@ -2468,10 +2468,10 @@ js_GetActingPerson(int num_args, bool is_ctor, int magic)
 	const person_t* person;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	person = map_engine_acting_person();
 	if (person == NULL)
-		jsal_error(JS_ERROR, "no current person activation or actor unknown");
+		jsal_error(JS_ERROR, "No current person activation or actor unknown");
 	jsal_push_string(person_name(person));
 	return true;
 }
@@ -2483,7 +2483,7 @@ js_GetCameraPerson(int num_args, bool is_ctor, int magic)
 
 	subject = map_engine_get_subject();
 	if (subject == NULL)
-		jsal_error(JS_ERROR, "invalid operation, camera not attached");
+		jsal_error(JS_ERROR, "Camera is not attached");
 	jsal_push_string(person_name(subject));
 	return true;
 }
@@ -2494,7 +2494,7 @@ js_GetCameraX(int num_args, bool is_ctor, int magic)
 	point2_t position;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	position = map_get_camera_xy();
 	jsal_push_int(position.x);
 	return true;
@@ -2506,7 +2506,7 @@ js_GetCameraY(int num_args, bool is_ctor, int magic)
 	point2_t position;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	position = map_get_camera_xy();
 	jsal_push_int(position.y);
 	return true;
@@ -2537,7 +2537,7 @@ js_GetCurrentMap(int num_args, bool is_ctor, int magic)
 	path_t* path;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 
 	// GetCurrentMap() in Sphere 1.x returns the map path relative to the
 	// 'maps' directory.
@@ -2553,10 +2553,10 @@ js_GetCurrentPerson(int num_args, bool is_ctor, int magic)
 	const person_t* person;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	person = map_engine_active_person();
 	if (person == NULL)
-		jsal_error(JS_ERROR, "no current person activation");
+		jsal_error(JS_ERROR, "No current person activation");
 	jsal_push_string(person_name(person));
 	return true;
 }
@@ -2567,10 +2567,10 @@ js_GetCurrentTrigger(int num_args, bool is_ctor, int magic)
 	int trigger;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	trigger = map_engine_active_trigger();
 	if (trigger == -1)
-		jsal_error(JS_ERROR, "no current trigger activation");
+		jsal_error(JS_ERROR, "No current trigger activation");
 	jsal_push_int(trigger);
 	return true;
 }
@@ -2581,10 +2581,10 @@ js_GetCurrentZone(int num_args, bool is_ctor, int magic)
 	int zone;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	zone = map_engine_active_zone();
 	if (zone == -1)
-		jsal_error(JS_ERROR, "no current zone activation");
+		jsal_error(JS_ERROR, "No current zone activation");
 	jsal_push_int(zone);
 	return true;
 }
@@ -2697,10 +2697,10 @@ js_GetInputPerson(int num_args, bool is_ctor, int magic)
 		player = jsal_to_int(0);
 
 	if (player < 0 || player >= PLAYER_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid player constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid player constant");
 	person = map_engine_get_player(player);
 	if (person == NULL)
-		jsal_error(JS_ERROR, "player %d not attached", player + 1);
+		jsal_error(JS_ERROR, "Input is not attached for Player %d", player + 1);
 	jsal_push_string(person_name(person));
 	return true;
 }
@@ -2795,7 +2795,7 @@ js_GetKeyString(int num_args, bool is_ctor, int magic)
 static bool
 js_GetLayerAngle(int num_args, bool is_ctor, int magic)
 {
-	jsal_error(JS_ERROR, "not implemented");
+	jsal_error(JS_ERROR, "Not implemented");
 	return false;
 }
 
@@ -2807,7 +2807,7 @@ js_GetLayerHeight(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	jsal_push_int(layer_size(layer).height);
 	return true;
 }
@@ -2818,7 +2818,7 @@ js_GetLayerMask(int num_args, bool is_ctor, int magic)
 	int layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	jsal_push_sphere_color(layer_get_color_mask(layer));
 	return true;
 }
@@ -2829,7 +2829,7 @@ js_GetLayerName(int num_args, bool is_ctor, int magic)
 	int layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	jsal_push_string(layer_name(layer));
 	return true;
 }
@@ -2842,7 +2842,7 @@ js_GetLayerWidth(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	jsal_push_int(layer_size(layer).width);
 	return true;
 }
@@ -2864,7 +2864,7 @@ js_GetLocalName(int num_args, bool is_ctor, int magic)
 static bool
 js_GetMapEngine(int num_args, bool is_ctor, int magic)
 {
-	jsal_error(JS_ERROR, "not implemented");
+	jsal_error(JS_ERROR, "Not implemented");
 	return true;
 }
 
@@ -2922,7 +2922,7 @@ js_GetNextAnimatedTile(int num_args, bool is_ctor, int magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
@@ -2964,7 +2964,7 @@ static bool
 js_GetNumLayers(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	jsal_push_int(map_num_layers());
 	return true;
 }
@@ -2982,7 +2982,7 @@ js_GetNumTiles(int num_args, bool is_ctor, int magic)
 	tileset_t* tileset;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 
 	tileset = map_tileset();
 	jsal_push_int(tileset_len(tileset));
@@ -2993,7 +2993,7 @@ static bool
 js_GetNumTriggers(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 
 	jsal_push_number(map_num_triggers());
 	return true;
@@ -3003,7 +3003,7 @@ static bool
 js_GetNumZones(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 
 	jsal_push_number(map_num_zones());
 	return true;
@@ -3023,9 +3023,9 @@ js_GetObstructingPerson(int num_args, bool is_ctor, int magic)
 	y = jsal_require_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_obstructed_at(person, x, y, &obs_person, NULL);
 	jsal_push_string(obs_person != NULL ? person_name(obs_person) : "");
 	return true;
@@ -3045,9 +3045,9 @@ js_GetObstructingTile(int num_args, bool is_ctor, int magic)
 	y = jsal_require_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_obstructed_at(person, x, y, NULL, &tile_index);
 	jsal_push_int(tile_index);
 	return true;
@@ -3062,7 +3062,7 @@ js_GetPersonAngle(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_number(person_get_angle(person));
 	return true;
 }
@@ -3077,7 +3077,7 @@ js_GetPersonBase(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	base = spriteset_get_base(person_get_spriteset(person));
 	jsal_push_new_object();
 	jsal_push_int(base.x1); jsal_put_prop_string(-2, "x1");
@@ -3102,7 +3102,7 @@ js_GetPersonData(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	leader = person_get_leader(person);
 	spriteset = person_get_spriteset(person);
 	width = spriteset_width(spriteset);
@@ -3135,7 +3135,7 @@ js_GetPersonDirection(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_string(person_get_pose(person));
 	return true;
 }
@@ -3149,7 +3149,7 @@ js_GetPersonFollowDistance(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (person_get_leader(person) == NULL)
 		jsal_error(JS_TYPE_ERROR, "not a follower");
 	jsal_push_int(person_get_trailing(person));
@@ -3170,7 +3170,7 @@ js_GetPersonFollowers(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	all_persons = map_engine_persons();
 	jsal_push_new_array();
 	iter = vector_enum(all_persons);
@@ -3193,7 +3193,7 @@ js_GetPersonFrame(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_int(person_get_frame(person));
 	return true;
 }
@@ -3207,7 +3207,7 @@ js_GetPersonFrameNext(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_int(person_get_frame_delay(person));
 	return true;
 }
@@ -3221,7 +3221,7 @@ js_GetPersonFrameRevert(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_int(person_get_revert_delay(person));
 	return true;
 }
@@ -3238,7 +3238,7 @@ js_GetPersonIgnoreList(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	ignore_list = person_ignore_list(person);
 	iter = vector_enum(ignore_list);
 	jsal_push_new_array();
@@ -3258,7 +3258,7 @@ js_GetPersonLayer(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_int(person_get_layer(person));
 	return true;
 }
@@ -3273,7 +3273,7 @@ js_GetPersonLeader(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	leader = person_get_leader(person);
 	jsal_push_string(person_name(leader));
 	return true;
@@ -3307,7 +3307,7 @@ js_GetPersonMask(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_sphere_color(person_get_color(person));
 	return true;
 }
@@ -3322,7 +3322,7 @@ js_GetPersonOffsetX(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	offset = person_get_offset(person);
 	jsal_push_int(offset.x);
 	return true;
@@ -3338,7 +3338,7 @@ js_GetPersonOffsetY(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	offset = person_get_offset(person);
 	jsal_push_int(offset.y);
 	return true;
@@ -3354,7 +3354,7 @@ js_GetPersonSpriteset(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	spriteset = person_get_spriteset(person);
 	jsal_push_sphere_spriteset(spriteset);
 	return true;
@@ -3370,7 +3370,7 @@ js_GetPersonSpeedX(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_get_speed(person, &x_speed, NULL);
 	jsal_push_number(x_speed);
 	return true;
@@ -3386,7 +3386,7 @@ js_GetPersonSpeedY(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_get_speed(person, NULL, &y_speed);
 	jsal_push_number(y_speed);
 	return true;
@@ -3403,7 +3403,7 @@ js_GetPersonValue(int num_args, bool is_ctor, int magic)
 	key = jsal_to_string(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "personData");
 	if (!jsal_get_prop_string(-1, name)) {
@@ -3427,7 +3427,7 @@ js_GetPersonX(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_get_xy(person, &x, &y, true);
 	jsal_push_int(x);
 	return true;
@@ -3444,7 +3444,7 @@ js_GetPersonXFloat(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_get_xy(person, &x, &y, true);
 	jsal_push_number(x);
 	return true;
@@ -3461,7 +3461,7 @@ js_GetPersonY(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_get_xy(person, &x, &y, true);
 	jsal_push_int(y);
 	return true;
@@ -3478,7 +3478,7 @@ js_GetPersonYFloat(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_get_xy(person, &x, &y, true);
 	jsal_push_number(y);
 	return true;
@@ -3606,7 +3606,7 @@ js_GetTile(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	jsal_push_int(map_tile_at(x, y, layer));
 	return true;
 }
@@ -3620,7 +3620,7 @@ js_GetTileDelay(int num_args, bool is_ctor, int magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -3636,7 +3636,7 @@ js_GetTileHeight(int num_args, bool is_ctor, int magic)
 	int        width;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 
 	tileset = map_tileset();
 	tileset_get_size(tileset, &width, &height);
@@ -3654,7 +3654,7 @@ js_GetTileImage(int num_args, bool is_ctor, int magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -3674,7 +3674,7 @@ js_GetTileName(int num_args, bool is_ctor, int magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -3693,7 +3693,7 @@ js_GetTileSurface(int num_args, bool is_ctor, int magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -3711,7 +3711,7 @@ js_GetTileWidth(int num_args, bool is_ctor, int magic)
 	int        width;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 
 	tileset = map_tileset();
 	tileset_get_size(tileset, &width, &height);
@@ -3753,7 +3753,7 @@ js_GetTriggerLayer(int num_args, bool is_ctor, int magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, NULL, NULL, &layer);
@@ -3770,7 +3770,7 @@ js_GetTriggerX(int num_args, bool is_ctor, int magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, &x, NULL, NULL);
@@ -3787,7 +3787,7 @@ js_GetTriggerY(int num_args, bool is_ctor, int magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, NULL, &y, NULL);
@@ -3818,7 +3818,7 @@ js_GetZoneHeight(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
@@ -3834,7 +3834,7 @@ js_GetZoneLayer(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	jsal_push_int(zone_get_layer(zone_index));
@@ -3849,7 +3849,7 @@ js_GetZoneSteps(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	jsal_push_int(zone_get_steps(zone_index));
@@ -3865,7 +3865,7 @@ js_GetZoneWidth(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
@@ -3882,7 +3882,7 @@ js_GetZoneX(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
@@ -3899,7 +3899,7 @@ js_GetZoneY(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
@@ -4175,7 +4175,7 @@ js_IgnorePersonObstructions(int num_args, bool is_ctor, int magic)
 	ignoring = jsal_to_boolean(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_ignore_persons(person, ignoring);
 	return false;
 }
@@ -4191,7 +4191,7 @@ js_IgnoreTileObstructions(int num_args, bool is_ctor, int magic)
 	ignoring = jsal_to_boolean(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_ignore_tiles(person, ignoring);
 	return false;
 }
@@ -4237,7 +4237,7 @@ js_IsCommandQueueEmpty(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_boolean(!person_moving(person));
 	return true;
 }
@@ -4251,7 +4251,7 @@ js_IsIgnoringPersonObstructions(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_boolean(person_get_ignore_persons(person));
 	return true;
 }
@@ -4265,7 +4265,7 @@ js_IsIgnoringTileObstructions(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_boolean(person_get_ignore_tiles(person));
 	return true;
 }
@@ -4285,7 +4285,7 @@ js_IsInputAttached(int num_args, bool is_ctor, int magic)
 	else if (jsal_is_string(0)) {
 		name = jsal_get_string(0);
 		if (!(person = map_person_by_name(name)))
-			jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+			jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 		player = -1;
 		for (i = PLAYER_1; i < PLAYER_MAX; ++i) {
 			if (person == map_engine_get_player(i)) {
@@ -4337,7 +4337,7 @@ js_IsLayerReflective(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	jsal_push_boolean(layer_get_reflective(layer));
 	return true;
 }
@@ -4350,7 +4350,7 @@ js_IsLayerVisible(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	jsal_push_boolean(layer_get_visible(layer));
 	return true;
 }
@@ -4393,7 +4393,7 @@ js_IsPersonObstructed(int num_args, bool is_ctor, int magic)
 	y = jsal_require_int(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_boolean(person_obstructed_at(person, x, y, NULL, NULL));
 	return true;
 }
@@ -4407,7 +4407,7 @@ js_IsPersonVisible(int num_args, bool is_ctor, int magic)
 	name = jsal_require_string(0);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_boolean(person_get_visible(person));	return true;
 }
 
@@ -4641,7 +4641,7 @@ js_MapToScreenX(int num_args, bool is_ctor, int magic)
 	x = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	offset = map_xy_from_screen(point2(0, 0));
 	jsal_push_int(x - offset.x);
 	return true;
@@ -4658,7 +4658,7 @@ js_MapToScreenY(int num_args, bool is_ctor, int magic)
 	y = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	offset = map_xy_from_screen(point2(0, 0));
 	jsal_push_int(y - offset.y);
 	return true;
@@ -4890,7 +4890,7 @@ js_QueuePersonCommand(int num_args, bool is_ctor, int magic)
 		immediate = jsal_to_boolean(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (command < 0 || command >= COMMAND_RUN_SCRIPT)
 		jsal_error(JS_RANGE_ERROR, "invalid command type constant");
 	if (command >= COMMAND_MOVE_NORTH && command <= COMMAND_MOVE_NORTHWEST) {
@@ -4916,7 +4916,7 @@ js_QueuePersonScript(int num_args, bool is_ctor, int magic)
 		immediate = jsal_to_boolean(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (!person_queue_script(person, script, immediate))
 		jsal_error(JS_ERROR, "couldn't enqueue script");
 	return false;
@@ -4968,7 +4968,7 @@ js_RemoveTrigger(int num_args, bool is_ctor, int magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	map_remove_trigger(trigger_index);
@@ -4983,7 +4983,7 @@ js_RemoveZone(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	map_remove_zone(zone_index);
@@ -5007,7 +5007,7 @@ static bool
 js_RenderMap(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	map_engine_draw_map();
 	return false;
 }
@@ -5025,7 +5025,7 @@ js_ReplaceTilesOnLayer(int num_args, bool is_ctor, int magic)
 	new_index = jsal_to_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (old_index < 0 || old_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid old tile index");
@@ -5125,7 +5125,7 @@ js_ScreenToMapX(int num_args, bool is_ctor, int magic)
 	x = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	map_xy = map_xy_from_screen(point2(x, 0));
 	jsal_push_int(map_xy.x);
 	return true;
@@ -5142,7 +5142,7 @@ js_ScreenToMapY(int num_args, bool is_ctor, int magic)
 	y = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	map_xy = map_xy_from_screen(point2(0, y));
 	jsal_push_int(map_xy.y);
 	return true;
@@ -5157,7 +5157,7 @@ js_SetCameraX(int num_args, bool is_ctor, int magic)
 	new_x = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	position = map_get_camera_xy();
 	map_set_camera_xy(point2(new_x, position.y));
 	return false;
@@ -5172,7 +5172,7 @@ js_SetCameraY(int num_args, bool is_ctor, int magic)
 	new_y = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	position = map_get_camera_xy();
 	map_set_camera_xy(point2(position.x, new_y));
 	return false;
@@ -5206,7 +5206,7 @@ js_SetColorMask(int num_args, bool is_ctor, int magic)
 	num_frames = num_args >= 2 ? jsal_to_int(1) : 0;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (num_frames < 0)
 		jsal_error(JS_RANGE_ERROR, "invalid number of frames");
 	map_engine_fade_to(new_mask, num_frames);
@@ -5255,7 +5255,7 @@ js_SetDelayScript(int num_args, bool is_ctor, int magic)
 	script = jsal_require_sphere_script(1, "%/delayScript.js");
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (num_frames < 0)
 		jsal_error(JS_RANGE_ERROR, "invalid frame count");
 	map_engine_defer(script, num_frames);
@@ -5290,7 +5290,7 @@ js_SetLayerHeight(int num_args, bool is_ctor, int magic)
 	new_height = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (new_height <= 0)
 		jsal_error(JS_ERROR, "height must be positive and nonzero (got: %d)", new_height);
 	if (!layer_resize(layer, layer_size(layer).width, new_height))
@@ -5308,7 +5308,7 @@ js_SetLayerMask(int num_args, bool is_ctor, int magic)
 	mask = jsal_require_sphere_color(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	layer_set_color_mask(layer, mask);
 	return false;
 }
@@ -5323,7 +5323,7 @@ js_SetLayerReflective(int num_args, bool is_ctor, int magic)
 	reflective = jsal_to_boolean(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	layer_set_reflective(layer, reflective);
 	return false;
 }
@@ -5338,7 +5338,7 @@ js_SetLayerRenderer(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	sprintf(script_name, "[layer %d render script]", layer);
 	script = jsal_require_sphere_script(1, script_name);
 	layer_on_render(layer, script);
@@ -5372,7 +5372,7 @@ js_SetLayerSize(int num_args, bool is_ctor, int magic)
 	new_height = jsal_to_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (new_width <= 0 || new_height <= 0)
 		jsal_error(JS_ERROR, "invalid layer dimensions");
 	if (!layer_resize(layer, new_width, new_height))
@@ -5390,7 +5390,7 @@ js_SetLayerVisible(int num_args, bool is_ctor, int magic)
 	visible = jsal_to_boolean(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	layer_set_visible(layer, visible);
 	return false;
 }
@@ -5405,7 +5405,7 @@ js_SetLayerWidth(int num_args, bool is_ctor, int magic)
 	new_width = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (new_width <= 0)
 		jsal_error(JS_ERROR, "width must be positive and nonzero (got: %d)", new_width);
 	if (!layer_resize(layer, new_width, layer_size(layer).height))
@@ -5450,7 +5450,7 @@ js_SetNextAnimatedTile(int num_args, bool is_ctor, int magic)
 	next_index = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -5471,7 +5471,7 @@ js_SetPersonAngle(int num_args, bool is_ctor, int magic)
 	theta = jsal_to_number(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_angle(person, theta);
 	return false;
 }
@@ -5486,7 +5486,7 @@ js_SetPersonData(int num_args, bool is_ctor, int magic)
 
 	jsal_require_object_coercible(1);
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "personData");
 	jsal_dup(1); jsal_put_prop_string(-2, name);
@@ -5504,7 +5504,7 @@ js_SetPersonDirection(int num_args, bool is_ctor, int magic)
 	new_dir = jsal_require_string(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_pose(person, new_dir);
 	return false;
 }
@@ -5520,7 +5520,7 @@ js_SetPersonFollowDistance(int num_args, bool is_ctor, int magic)
 	distance = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (person_get_leader(person) == NULL)
 		jsal_error(JS_TYPE_ERROR, "person has no leader");
 	if (distance <= 0)
@@ -5540,7 +5540,7 @@ js_SetPersonFrame(int num_args, bool is_ctor, int magic)
 	frame_index = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_frame(person, frame_index);
 	return false;
 }
@@ -5556,7 +5556,7 @@ js_SetPersonFrameNext(int num_args, bool is_ctor, int magic)
 	num_frames = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (num_frames < 0)
 		jsal_error(JS_RANGE_ERROR, "invalid frame count");
 	person_set_frame_delay(person, num_frames);
@@ -5574,7 +5574,7 @@ js_SetPersonFrameRevert(int num_args, bool is_ctor, int magic)
 	num_frames = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (num_frames < 0)
 		jsal_error(JS_RANGE_ERROR, "invalid frame count");
 	person_set_revert_delay(person, num_frames);
@@ -5594,7 +5594,7 @@ js_SetPersonIgnoreList(int num_args, bool is_ctor, int magic)
 
 	jsal_require_object_coercible(1);
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (!jsal_is_array(1))
 		jsal_error(JS_RANGE_ERROR, "not an array");
 	person_clear_ignores(person);
@@ -5618,7 +5618,7 @@ js_SetPersonLayer(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_layer(person, layer);
 	return false;
 }
@@ -5634,7 +5634,7 @@ js_SetPersonMask(int num_args, bool is_ctor, int magic)
 	color = jsal_require_sphere_color(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_color(person, color);
 	return false;
 }
@@ -5651,7 +5651,7 @@ js_SetPersonOffsetX(int num_args, bool is_ctor, int magic)
 	new_x = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	offset = person_get_offset(person);
 	person_set_offset(person, point2(new_x, offset.y));
 	return false;
@@ -5669,7 +5669,7 @@ js_SetPersonOffsetY(int num_args, bool is_ctor, int magic)
 	new_y = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	offset = person_get_offset(person);
 	person_set_offset(person, point2(offset.x, new_y));
 	return false;
@@ -5691,7 +5691,7 @@ js_SetPersonScaleAbsolute(int num_args, bool is_ctor, int magic)
 	height = jsal_require_int(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (width < 0 || height < 0)
 		jsal_error(JS_RANGE_ERROR, "invalid scale dimensions");
 	spriteset = person_get_spriteset(person);
@@ -5714,7 +5714,7 @@ js_SetPersonScaleFactor(int num_args, bool is_ctor, int magic)
 	scale_y = jsal_to_number(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (scale_x < 0.0 || scale_y < 0.0)
 		jsal_error(JS_RANGE_ERROR, "invalid scale factor(s)");
 	person_set_scale(person, scale_x, scale_y);
@@ -5734,7 +5734,7 @@ js_SetPersonScript(int num_args, bool is_ctor, int magic)
 	type = jsal_require_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	if (type < 0 || type >= PERSON_SCRIPT_MAX)
 		jsal_error(JS_ERROR, "invalid script type constant");
 	if (jsal_is_string(2)) {
@@ -5760,7 +5760,7 @@ js_SetPersonSpeed(int num_args, bool is_ctor, int magic)
 	speed = jsal_to_number(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_speed(person, speed, speed);
 	return false;
 }
@@ -5778,7 +5778,7 @@ js_SetPersonSpeedXY(int num_args, bool is_ctor, int magic)
 	y_speed = jsal_to_number(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_speed(person, x_speed, y_speed);
 	return false;
 }
@@ -5795,7 +5795,7 @@ js_SetPersonSpriteset(int num_args, bool is_ctor, int magic)
 
 	if (!(person = map_person_by_name(name))) {
 		spriteset_unref(spriteset);
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	}
 	person_set_spriteset(person, spriteset);
 	spriteset_unref(spriteset);
@@ -5814,7 +5814,7 @@ js_SetPersonValue(int num_args, bool is_ctor, int magic)
 
 	jsal_normalize_index(2);
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "personData");
 	if (!jsal_get_prop_string(-1, name)) {
@@ -5840,7 +5840,7 @@ js_SetPersonVisible(int num_args, bool is_ctor, int magic)
 	visible = jsal_to_boolean(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_set_visible(person, visible);
 	return false;
 }
@@ -5859,7 +5859,7 @@ js_SetPersonX(int num_args, bool is_ctor, int magic)
 	new_x = jsal_to_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_get_xyz(person, &x, &y, &layer, false);
 	person_set_xyz(person, new_x, y, layer);
 	return false;
@@ -5879,7 +5879,7 @@ js_SetPersonXYFloat(int num_args, bool is_ctor, int magic)
 	y = jsal_to_number(2);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	layer = person_get_layer(person);
 	person_set_xyz(person, x, y, layer);
 	return false;
@@ -5899,7 +5899,7 @@ js_SetPersonY(int num_args, bool is_ctor, int magic)
 	new_y = jsal_to_int(1);
 
 	if (!(person = map_person_by_name(name)))
-		jsal_error(JS_REF_ERROR, "no such person '%s'", name);
+		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_get_xyz(person, &x, &y, &layer, false);
 	person_set_xyz(person, x, new_y, layer);
 	return false;
@@ -5974,7 +5974,7 @@ js_SetTile(int num_args, bool is_ctor, int magic)
 	tile_index = jsal_to_int(3);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -5994,7 +5994,7 @@ js_SetTileDelay(int num_args, bool is_ctor, int magic)
 	delay = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6019,7 +6019,7 @@ js_SetTileImage(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(1, SV1_IMAGE);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6043,7 +6043,7 @@ js_SetTileName(int num_args, bool is_ctor, int magic)
 	name = jsal_require_lstring_t(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6067,7 +6067,7 @@ js_SetTileSurface(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(1, SV1_SURFACE);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6090,7 +6090,7 @@ js_SetTriggerLayer(int num_args, bool is_ctor, int magic)
 	layer = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_set_layer(trigger_index, layer);
@@ -6107,7 +6107,7 @@ js_SetTriggerScript(int num_args, bool is_ctor, int magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	script_name = lstr_newf("%s/trigger~%d/onStep", map_pathname(), trigger_index);
@@ -6130,7 +6130,7 @@ js_SetTriggerXY(int num_args, bool is_ctor, int magic)
 	y = jsal_to_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_set_xy(trigger_index, x, y);
@@ -6166,7 +6166,7 @@ js_SetZoneDimensions(int num_args, bool is_ctor, int magic)
 	height = jsal_to_int(4);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = map_bounds();
@@ -6188,7 +6188,7 @@ js_SetZoneLayer(int num_args, bool is_ctor, int magic)
 	layer = jsal_require_map_layer(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	zone_set_layer(zone_index, layer);
@@ -6205,7 +6205,7 @@ js_SetZoneScript(int num_args, bool is_ctor, int magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	if (!(script_name = lstr_newf("%s/zone%d", map_pathname(), zone_index)))
@@ -6227,7 +6227,7 @@ js_SetZoneSteps(int num_args, bool is_ctor, int magic)
 	steps = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	if (steps <= 0)
@@ -6287,7 +6287,7 @@ static bool
 js_UpdateMapEngine(int num_args, bool is_ctor, int magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "no active map engine");
+		jsal_error(JS_ERROR, "Map engine is not running");
 	map_engine_update();
 	return false;
 }

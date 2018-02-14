@@ -104,6 +104,7 @@ static const char* const ERROR_TEXT[][2] =
 	{ "an exception was thrown", "miniSphere takes exception to sucky games" },
 	{ "honk. HONK. honk. HONK. :o)", "there's a clown behind you" },
 	{ "this game has over nine thousand errors", "what, 9000, there's no way that can be right" },
+	{ "a wild ERROR appeared and used CRASH", "it's super effective" },
 };
 
 int
@@ -374,7 +375,7 @@ on_js_error:
 	if (error_url != NULL)
 		jsal_push_sprintf("%s:%d:%d\n\n%s\n", error_url, error_line, error_column, error_text);
 	else
-		jsal_push_sprintf("JavaScript Exception\n\n%s\n", error_text);
+		jsal_push_sprintf("unhandled JavaScript exception.\n\n%s\n", error_text);
 	show_error_screen(jsal_get_string(-1));
 	sphere_exit(false);
 }
@@ -871,8 +872,7 @@ show_error_screen(const char* message)
 	num_lines = wraptext_len(error_info);
 
 	// reset the projection to pixel-perfect orthographic, switch to the default shader and disable
-	// clipping.  it's assumed that JavaScript execution won't continue after this point, so we shouldn't
-	// step on any toes by doing this.
+	// clipping.  no JavaScript code will execute past this point, so we won't step on any toes.
 	screen_unskip_frame(g_screen);
 	image_render_to(screen_backbuffer(g_screen), NULL);
 	shader_use(NULL, true);
@@ -885,14 +885,14 @@ show_error_screen(const char* message)
 	is_finished = false;
 	frames_till_close = 30;
 	while (!is_finished) {
-		al_draw_filled_rounded_rectangle(32, 48, resolution.width - 32, resolution.height - 32, 5, 5, al_map_rgba(16, 16, 16, 255));
+		al_draw_filled_rounded_rectangle(32, 48, resolution.width - 32, resolution.height - 32, 5, 5, al_map_rgba(32, 16, 16, 255));
 		font_draw_text(g_system_font, color_new(0, 0, 0, 255), resolution.width / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
-		font_draw_text(g_system_font, color_new(255, 255, 255, 255), resolution.width / 2, 10, TEXT_ALIGN_CENTER, title);
+		font_draw_text(g_system_font, color_new(192, 192, 192, 255), resolution.width / 2, 10, TEXT_ALIGN_CENTER, title);
 		font_draw_text(g_system_font, color_new(0, 0, 0, 255), resolution.width / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
-		font_draw_text(g_system_font, color_new(255, 255, 255, 255), resolution.width / 2, 22, TEXT_ALIGN_CENTER, subtitle);
+		font_draw_text(g_system_font, color_new(192, 192, 192, 255), resolution.width / 2, 22, TEXT_ALIGN_CENTER, subtitle);
 		for (i = 0; i < num_lines; ++i) {
 			line_text = wraptext_line(error_info, i);
-			font_draw_text(g_system_font, color_new(0, 0, 0, 255),
+			font_draw_text(g_system_font, color_new(16, 0, 0, 255),
 				resolution.width / 2 + 1, 59 + i * font_height(g_system_font),
 				TEXT_ALIGN_CENTER, line_text);
 			font_draw_text(g_system_font, color_new(192, 192, 192, 255),
@@ -900,10 +900,10 @@ show_error_screen(const char* message)
 				TEXT_ALIGN_CENTER, line_text);
 		}
 		if (frames_till_close <= 0) {
-			font_draw_text(g_system_font, color_new(255, 255, 255, 255),
+			font_draw_text(g_system_font, color_new(255, 255, 192, 255),
 				resolution.width / 2, resolution.height - 10 - font_height(g_system_font),
 				TEXT_ALIGN_CENTER,
-				is_copied ? "[Space]/[Esc] to close" : "[Ctrl+C] to copy, [Space]/[Esc] to close");
+				is_copied ? "[space]/[esc] to close" : "[ctrl+c] to copy   [space]/[esc] to close");
 		}
 		screen_flip(g_screen, 30, true);
 		if (frames_till_close <= 0) {
