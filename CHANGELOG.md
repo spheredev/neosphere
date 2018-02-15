@@ -4,6 +4,9 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Improves the fatal error screen.  The error message is displayed on a red
+  background both for greater emphasis and to make it more immediately obvious
+  that something went wrong.
 * Improves error messages.  The first letter of all error messages is now
   capitalized for consistency and several messages have been clarified to make
   them easier to understand.
