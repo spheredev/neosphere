@@ -588,7 +588,7 @@ handle_notify(inferior_t* inferior, const ki_message_t* msg)
 			if ((status_type = ki_message_int(msg, 1)) == 0)
 				break;
 			printf("\33[31;1m");
-			printf("uncaught: ");
+			printf("UNCAUGHT EXCEPTION: ");
 			printf("\33[m");
 			printf("%s\n", ki_message_string(msg, 2));
 			break;

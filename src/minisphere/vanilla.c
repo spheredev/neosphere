@@ -1581,7 +1581,7 @@ js_ApplyColorMask(int num_args, bool is_ctor, int magic)
 
 	color = jsal_require_sphere_color(0);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	resolution = screen_size(g_screen);
@@ -1687,7 +1687,7 @@ js_BezierCurve(int num_args, bool is_ctor, int magic)
 		y4 = jsal_to_number(9);
 	}
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	cp[0] = x1; cp[1] = y1;
 	cp[2] = x2; cp[3] = y2;
@@ -2351,7 +2351,7 @@ js_FilledCircle(int num_args, bool is_ctor, int magic)
 
 	int i;
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	vcount = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -2395,7 +2395,7 @@ js_FilledEllipse(int num_args, bool is_ctor, int magic)
 
 	int i;
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -2420,7 +2420,7 @@ static bool
 js_FlipScreen(int num_args, bool is_ctor, int magic)
 {
 	sphere_run(true);
-	if (!screen_skip_frame(g_screen))
+	if (!screen_skipping_frame(g_screen))
 		dispatch_run(JOB_RENDER);
 	screen_flip(g_screen, s_frame_rate, true);
 	dispatch_run(JOB_UPDATE);
@@ -3968,7 +3968,7 @@ js_GradientCircle(int num_args, bool is_ctor, int magic)
 	inner_color = jsal_require_sphere_color(3);
 	outer_color = jsal_require_sphere_color(4);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	num_verts = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -4017,7 +4017,7 @@ js_GradientEllipse(int num_args, bool is_ctor, int magic)
 	inner_color = jsal_require_sphere_color(4);
 	outer_color = jsal_require_sphere_color(5);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	num_verts = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
@@ -4057,7 +4057,7 @@ js_GradientLine(int num_args, bool is_ctor, int magic)
 	color1 = jsal_require_sphere_color(4);
 	color2 = jsal_require_sphere_color(5);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	length = hypotf(x2 - x1, y2 - y1);
 	tx = 0.5 * (y2 - y1) / length;
@@ -4092,7 +4092,7 @@ js_GradientRectangle(int num_args, bool is_ctor, int magic)
 	color_lr = jsal_require_sphere_color(6);
 	color_ll = jsal_require_sphere_color(7);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
@@ -4122,7 +4122,7 @@ js_GradientTriangle(int num_args, bool is_ctor, int magic)
 	color2 = jsal_require_sphere_color(7);
 	color3 = jsal_require_sphere_color(8);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color1) },
@@ -4439,7 +4439,7 @@ js_Line(int num_args, bool is_ctor, int magic)
 	y2 = trunc(jsal_to_number(3)) + 0.5;
 	color = jsal_require_sphere_color(4);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
@@ -4734,7 +4734,7 @@ js_OutlinedCircle(int num_args, bool is_ctor, int magic)
 	float radius = trunc(jsal_to_number(2));
 	color_t color = jsal_require_sphere_color(3);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
@@ -4757,7 +4757,7 @@ js_OutlinedEllipse(int num_args, bool is_ctor, int magic)
 	float ry = jsal_to_int(3);
 	color_t color = jsal_require_sphere_color(4);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
@@ -4780,7 +4780,7 @@ js_OutlinedRectangle(int num_args, bool is_ctor, int magic)
 	if (num_args >= 6)
 		thickness = jsal_to_int(5);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
@@ -4799,7 +4799,7 @@ js_OutlinedRoundRectangle(int num_args, bool is_ctor, int magic)
 	color_t color = jsal_require_sphere_color(5);
 	int thickness = n_args >= 7 ? jsal_to_int(6) : 1;
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
@@ -4813,7 +4813,7 @@ js_Point(int num_args, bool is_ctor, int magic)
 	float y = jsal_to_int(1) + 0.5;
 	color_t color = jsal_require_sphere_color(2);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_pixel(x, y, nativecolor(color));
@@ -4931,7 +4931,7 @@ js_Rectangle(int num_args, bool is_ctor, int magic)
 	int h = jsal_to_int(3);
 	color_t color = jsal_require_sphere_color(4);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
@@ -5107,7 +5107,7 @@ js_RoundRectangle(int num_args, bool is_ctor, int magic)
 	float radius = jsal_to_number(4);
 	color_t color = jsal_require_sphere_color(5);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
@@ -6251,7 +6251,7 @@ js_Triangle(int num_args, bool is_ctor, int magic)
 	y3 = trunc(jsal_to_number(5));
 	color = jsal_require_sphere_color(6);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_filled_triangle(x1, y1, x2, y2, x3, y3, nativecolor(color));
@@ -6758,7 +6758,7 @@ js_Font_drawText(int num_args, bool is_ctor, int magic)
 	jsal_get_prop_string(-1, "\xFF" "color_mask");
 	mask = jsal_require_sphere_color(-1);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	font_draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
@@ -6788,7 +6788,7 @@ js_Font_drawTextBox(int num_args, bool is_ctor, int magic)
 	jsal_get_prop_string(-1, "\xFF" "color_mask");
 	mask = jsal_require_sphere_color(-1);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	jsal_push_new_function(js_Font_wordWrapString, "wordWrapString", 0, 0);
 	jsal_push_this();
@@ -6832,7 +6832,7 @@ js_Font_drawZoomedText(int num_args, bool is_ctor, int magic)
 	scale = jsal_to_number(2);
 	text = jsal_to_string(3);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 
 	// render the text to a texture so we can scale it up.  not the most
@@ -7027,7 +7027,7 @@ js_Image_blit(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
@@ -7046,7 +7046,7 @@ js_Image_blitMask(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_tinted_bitmap(image_bitmap(image), nativecolor(mask), x, y, 0x0);
@@ -7084,7 +7084,7 @@ js_Image_rotateBlit(int num_args, bool is_ctor, int magic)
 	y = jsal_to_int(1);
 	angle = jsal_to_number(2);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	width = image_width(image);
 	height = image_height(image);
@@ -7112,7 +7112,7 @@ js_Image_rotateBlitMask(int num_args, bool is_ctor, int magic)
 	angle = jsal_to_number(2);
 	mask = jsal_require_sphere_color(3);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	width = image_width(image);
 	height = image_height(image);
@@ -7161,7 +7161,7 @@ js_Image_transformBlit(int num_args, bool is_ctor, int magic)
 		{ x4, y4, 0, 0, height, mask },
 		{ x3, y3, 0, width, height, mask }
 	};
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
@@ -7202,7 +7202,7 @@ js_Image_transformBlitMask(int num_args, bool is_ctor, int magic)
 		{ x4, y4, 0, 0, height, color },
 		{ x3, y3, 0, width, height, color }
 	};
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
@@ -7225,7 +7225,7 @@ js_Image_zoomBlit(int num_args, bool is_ctor, int magic)
 	y = jsal_to_int(1);
 	scale = jsal_to_number(2);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	width = image_width(image);
 	height = image_height(image);
@@ -7253,7 +7253,7 @@ js_Image_zoomBlitMask(int num_args, bool is_ctor, int magic)
 	scale = jsal_to_number(2);
 	mask = jsal_require_sphere_color(3);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	width = image_width(image);
 	height = image_height(image);
@@ -8162,7 +8162,7 @@ js_Surface_blit(int num_args, bool is_ctor, int magic)
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);

@@ -1272,7 +1272,7 @@ run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
 {
 	while (dispatch_busy() || jsal_busy()) {
 		sphere_run(true);
-		if (!screen_skip_frame(g_screen))
+		if (!screen_skipping_frame(g_screen))
 			dispatch_run(JOB_RENDER);
 		screen_flip(g_screen, s_frame_rate, true);
 		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
@@ -2387,7 +2387,7 @@ js_Font_drawText(int num_args, bool is_ctor, int magic)
 	if (num_args >= 6)
 		width = jsal_require_int(5);
 
-	if (surface == screen_backbuffer(g_screen) && screen_skip_frame(g_screen))
+	if (surface == screen_backbuffer(g_screen) && screen_skipping_frame(g_screen))
 		return false;
 	else {
 		image_render_to(surface, NULL);
@@ -2956,7 +2956,7 @@ js_Model_draw(int num_args, bool is_ctor, int magic)
 	surface = num_args >= 1 ? jsal_require_class_obj(0, PEGASUS_SURFACE)
 		: screen_backbuffer(g_screen);
 
-	if (!screen_skip_frame(g_screen))
+	if (!screen_skipping_frame(g_screen))
 		model_draw(group, surface);
 	return false;
 }

@@ -44,7 +44,7 @@ image_t*         screen_backbuffer        (const screen_t* it);
 rect_t           screen_bounds            (const screen_t* it);
 ALLEGRO_DISPLAY* screen_display           (const screen_t* it);
 size2_t          screen_size              (const screen_t* it);
-bool             screen_skip_frame        (const screen_t* it);
+bool             screen_skipping_frame    (const screen_t* it);
 int              screen_get_frameskip     (const screen_t* it);
 bool             screen_get_fullscreen    (const screen_t* it);
 void             screen_get_mouse_xy      (const screen_t* it, int* o_x, int* o_y);

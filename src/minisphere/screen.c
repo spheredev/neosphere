@@ -58,7 +58,7 @@ struct screen
 	int              num_frames;
 	int              num_skips;
 	bool             show_fps;
-	bool             skip_frame;
+	bool             skipping_frame;
 	bool             take_screenshot;
 	int              x_offset;
 	float            x_scale;
@@ -178,9 +178,9 @@ screen_size(const screen_t* it)
 }
 
 bool
-screen_skip_frame(const screen_t* it)
+screen_skipping_frame(const screen_t* it)
 {
-	return it->skip_frame;
+	return it->skipping_frame;
 }
 
 int
@@ -296,7 +296,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	}
 
 	// flip the backbuffer, unless the preceeding frame was skipped
-	is_backbuffer_valid = !it->skip_frame;
+	is_backbuffer_valid = !it->skipping_frame;
 	screen_cx = al_get_display_width(it->display);
 	screen_cy = al_get_display_height(it->display);
 	if (is_backbuffer_valid) {
@@ -361,7 +361,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	// the engine "can't catch up" (due to a slow machine, overloaded CPU, etc.). better
 	// that we lag instead of never rendering anything at all.
 	if (framerate > 0) {
-		it->skip_frame = it->last_flip_time > it->next_frame_time && it->num_skips < it->max_skips;
+		it->skipping_frame = it->last_flip_time > it->next_frame_time && it->num_skips < it->max_skips;
 		do {  // kill time while we wait for the next frame
 			time_left = it->next_frame_time - al_get_time();
 			if (!it->avoid_sleep && time_left > 0.0)
@@ -374,11 +374,11 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			it->next_frame_time += 1.0 / framerate;
 	}
 	else {
-		it->skip_frame = false;
+		it->skipping_frame = false;
 		it->next_frame_time = al_get_time();
 	}
 	++it->num_frames;
-	if (!it->skip_frame && need_clear) {
+	if (!it->skipping_frame && need_clear) {
 		// disable clipping so we can clear the whole backbuffer.
 		scissor = image_get_scissor(it->backbuffer);
 		image_set_scissor(it->backbuffer, rect(0, 0, it->x_size, it->y_size));
@@ -443,7 +443,7 @@ screen_toggle_fullscreen(screen_t* it)
 void
 screen_unskip_frame(screen_t* it)
 {
-	it->skip_frame = false;
+	it->skipping_frame = false;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 }
 

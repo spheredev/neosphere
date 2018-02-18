@@ -552,7 +552,7 @@ map_engine_draw_map(void)
 
 	int x, y, z;
 
-	if (screen_skip_frame(g_screen))
+	if (screen_skipping_frame(g_screen))
 		return;
 
 	resolution = screen_size(g_screen);
@@ -657,7 +657,7 @@ map_engine_start(const char* filename, int framerate)
 		// don't clear the backbuffer.  the Sphere 1.x map engine has a bug where it doesn't
 		// clear the backbuffer between frames; as it turns out, a good deal of of v1 code relies
 		// on that behavior.
-		if (!screen_skip_frame(g_screen))
+		if (!screen_skipping_frame(g_screen))
 			dispatch_run(JOB_RENDER);
 		screen_flip(g_screen, s_frame_rate, false);
 		dispatch_run(JOB_UPDATE);
