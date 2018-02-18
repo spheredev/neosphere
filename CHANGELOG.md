@@ -10,6 +10,9 @@ vX.X.X - TBD
 * Improves error messages.  The first letter of all error messages is now
   capitalized for consistency and several messages have been clarified to make
   them easier to understand.
+* Fixes an issue where using an `async` function as the main entry point
+  (`export default` from main module) will cause the game to crash on startup
+  with a TypeError.
 * Fixes a bug which causes `Music.adjustVolume()` to throw a ReferenceError.
 * Fixes a bug where `Dispatch.now()` jobs and promise continuations can run
   before the update phase instead of after it.

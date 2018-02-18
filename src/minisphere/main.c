@@ -317,7 +317,11 @@ main(int argc, char* argv[])
 		// modular mode (Sv2).  check for an exported Game class and instantiate it,
 		// then call game.start().
 		jsal_get_prop_string(-1, "default");
-		if (jsal_is_function(-1)) {
+		if (jsal_is_async_function(-1)) {
+			if (!jsal_try_call(0))
+				goto on_js_error;
+		}
+		else if (jsal_is_function(-1)) {
 			if (!jsal_try_construct(0))
 				goto on_js_error;
 			jsal_get_prop_string(-1, "start");

@@ -42,7 +42,7 @@ class Thread
 	static join(...threads)
 	{
 		let promises = from.array(threads)
-			.select(it => it._pact.promise);
+			.select(it => it._onExit);
 		return Promise.all(promises);
 	}
 
@@ -60,7 +60,7 @@ class Thread
 		this._busy = false;
 		this._focusTarget = new FocusTarget(options);
 		this._inBackground = options.inBackground;
-		this._pact = Pact.resolve();
+		this._onExit = Pact.resolve();
 		this._priority = options.priority;
 		this._renderJob = null;
 		this._started = false;
@@ -108,7 +108,7 @@ class Thread
 
 		this._bootstrapping = true;
 		this._started = true;
-		this._pact = new Pact();
+		this._onExit = new Pact();
 
 		this._renderJob = Dispatch.onRender(() => {
 			if (this._bootstrapping)
@@ -137,7 +137,7 @@ class Thread
 		});
 
 		// after thread terminates, remove it from the input queue
-		this._pact.promise.then(() => {
+		this._onExit.then(() => {
 			this._focusTarget.dispose();
 		});
 	}
@@ -151,7 +151,7 @@ class Thread
 		this._updateJob.cancel();
 		this._renderJob.cancel();
 		this._started = false;
-		this._pact.resolve();
+		this._onExit.resolve();
 	}
 
 	takeFocus()

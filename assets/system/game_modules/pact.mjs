@@ -30,45 +30,32 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+const ControllerSymbol = Symbol('Promise controller');
+
 export default
-class Pact
+class Pact extends Promise
 {
 	get [Symbol.toStringTag]() { return 'Pact'; }
+	get [Symbol.species]() { return Promise; }
 
-	static reject(reason)
+	constructor(executor = null)
 	{
-		let pact = new Pact();
-		pact.reject(reason);
-		return pact;
-	}
-	
-	static resolve(value)
-	{
-		let pact = new Pact();
-		pact.resolve(value);
-		return pact;
-	}
-	
-	constructor()
-	{
-		this._handler = null;
-		this._promise = new Promise((resolve, reject) => {
-			this._handler = { resolve, reject };
+		let promiseController;
+		super((resolve, reject) => {
+			promiseController = { resolve, reject };
+			if (typeof executor === 'function')
+				return executor(resolve, reject);
 		});
-	}
-
-	get promise()
-	{
-		return this._promise;
+		this[ControllerSymbol] = promiseController;
 	}
 
 	reject(reason)
 	{
-		this._handler.reject(reason);
+		this[ControllerSymbol].reject(reason);
 	}
 
 	resolve(value)
 	{
-		this._handler.resolve(value);
+		this[ControllerSymbol].resolve(value);
 	}
 }
