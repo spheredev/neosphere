@@ -1,22 +1,24 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v5.1.3 - February 18, 2018
+--------------------------
 
+* Adds support for `Promise#finally()` from ES2018.
 * Improves the fatal error screen.  The error message is displayed on a red
   background both for greater emphasis and to make it more immediately obvious
   that something went wrong.
 * Improves error messages.  The first letter of all error messages is now
   capitalized for consistency and several messages have been clarified to make
   them easier to understand.
+* Fixes an issue where uncaught exceptions in async functions aren't picked up
+  by SSj.
 * Fixes an issue where using an `async` function as the main entry point
   (`export default` from main module) will cause the game to crash on startup
   with a TypeError.
 * Fixes a bug which causes `Music.adjustVolume()` to throw a ReferenceError.
 * Fixes a bug where `Dispatch.now()` jobs and promise continuations can run
   before the update phase instead of after it.
-
 
 v5.1.2 - February 7, 2018
 -------------------------

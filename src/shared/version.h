@@ -37,6 +37,6 @@
 #define SPHERE_COMPILER_NAME "Cell"
 #define SPHERE_DEBUGGER_NAME "SSj"
 
-#define SPHERE_VERSION "X.X.X"
+#define SPHERE_VERSION "5.1.3"
 
 #endif // SPHERE__VERSION_H__INCLUDED
