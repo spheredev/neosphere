@@ -598,7 +598,7 @@ jsal_error_va(js_error_type_t type, const char* format, va_list ap)
 }
 
 void
-jsal_eval_module(const char* specifier)
+jsal_eval_module(const char* specifier, const char* url)
 {
 	/* [ ... source ] -> [ ... result ] */
 
@@ -606,17 +606,25 @@ jsal_eval_module(const char* specifier)
 	JsValueRef     exception;
 	bool           is_new_module;
 	JsModuleRecord module;
+	JsValueRef     namespace;
 	const char*    source;
 	size_t         source_len;
 
+	if (url == NULL)
+		url = specifier;
+	
 	source = jsal_require_lstring(-1, &source_len);
-	module = get_module_record(specifier, NULL, specifier, &is_new_module);
+	module = get_module_record(specifier, NULL, url, &is_new_module);
 	if (is_new_module) {
 		error_code = JsParseModuleSource(module,
 			s_next_source_context++, (BYTE*)source, (unsigned int)source_len,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
+		jsal_pop(1);
 		if (error_code == JsErrorScriptCompile)
 			goto on_exception;
+	}
+	else {
+		jsal_pop(1);
 	}
 	
 	// note: a single call to jsal_update() here is enough, as it will process
@@ -627,8 +635,8 @@ jsal_eval_module(const char* specifier)
 	if (exception != JS_INVALID_REFERENCE)
 		throw_value(exception);
 
-	jsal_push_undefined();
-	jsal_remove(-2);
+	JsGetModuleNamespace(module, &namespace);
+	push_value(namespace, true);
 	return;
 
 on_exception:
@@ -2034,7 +2042,7 @@ jsal_try_construct(int num_args)
 }
 
 bool
-jsal_try_eval_module(const char* filename)
+jsal_try_eval_module(const char* specifier, const char* url)
 {
 	/* [ ... source ] -> [ ... exports ] */
 
@@ -2042,7 +2050,7 @@ jsal_try_eval_module(const char* filename)
 
 	if (jsal_setjmp(label) == 0) {
 		vector_push(s_catch_stack, label);
-		jsal_eval_module(filename);
+		jsal_eval_module(specifier, url);
 		vector_pop(s_catch_stack, 1);
 		return true;
 	}

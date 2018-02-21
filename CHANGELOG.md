@@ -1,6 +1,11 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+No changes.
+
 v5.1.3 - February 18, 2018
 --------------------------
 

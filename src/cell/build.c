@@ -537,7 +537,6 @@ eval_module_file(fs_t* fs, const char* filename)
 	path_t*     dir_path;
 	path_t*     file_path;
 	bool        is_module_loaded;
-	char*       module_name;
 	size_t      source_size;
 	char*       source;
 
@@ -575,20 +574,18 @@ eval_module_file(fs_t* fs, const char* filename)
 
 	// evaluate .mjs scripts as ES6 modules
 	if (path_has_extension(file_path, ".mjs")) {
-		jsal_push_sprintf("import * as Module from \"%s\"; global.___exports = Module;",
-			filename);
-		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
-		is_module_loaded = jsal_try_eval_module(module_name);
-		free(module_name);
+		jsal_push_lstring_t(code_string);
+		is_module_loaded = jsal_try_eval_module(filename, NULL);
+		lstr_free(code_string);
 		if (!is_module_loaded)
 			goto on_error;
-		jsal_pop(2);
-		jsal_get_global_string("___exports");
-		jsal_del_global_string("___exports");
+		jsal_remove(-2);
 		return true;
 	}
 
 	// cache the module object in advance
+	// note: the reason this isn't done above is because we don't want mJS modules
+	//       to go into the CommonJS cache.
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "moduleCache");
 	jsal_dup(-3);

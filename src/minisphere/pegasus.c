@@ -881,7 +881,6 @@ pegasus_eval_module(const char* filename)
 	path_t*    dir_path;
 	path_t*    file_path;
 	bool       is_module_loaded;
-	char*      module_name;
 	size_t     source_size;
 	char*      source;
 
@@ -921,26 +920,19 @@ pegasus_eval_module(const char* filename)
 
 	// evaluate .mjs scripts as ES modules ("mJS")
 	if (path_has_extension(file_path, ".mjs")) {
-		lstr_free(code_string);
-		code_string = lstr_newf(
-			"/* synthesized by the mJS module loader */\n"
-			"import * as everything from \"%s\";\n"
-			"global.$EXPORTS = everything;", filename);
 		jsal_push_lstring_t(code_string);
-		module_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
-		debugger_add_source(module_name, code_string);
-		is_module_loaded = jsal_try_eval_module(module_name);
+		debugger_add_source(filename, code_string);
+		is_module_loaded = jsal_try_eval_module(filename, debugger_source_name(filename));
 		lstr_free(code_string);
-		free(module_name);
 		if (!is_module_loaded)
 			goto on_error;
-		jsal_pop(2);
-		jsal_get_global_string("$EXPORTS");
-		jsal_del_global_string("$EXPORTS");
+		jsal_remove(-2);
 		return true;
 	}
 
 	// cache the module object in advance
+	// note: the reason this isn't done above is because we don't want mJS modules
+	//       to go into the CommonJS cache.
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "moduleCache");
 	jsal_dup(-3);
@@ -1207,7 +1199,7 @@ handle_module_import(void)
 	}
 	free(caller_id);
 	if (path == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "couldn't find module '%s'", specifier);
+		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
 		free(specifier);
 		jsal_throw();
 	}
@@ -1224,7 +1216,7 @@ handle_module_import(void)
 		// ES module shim, allows 'import' to work with CommonJS modules
 		shim_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		shim_source = lstr_newf(
-			"/* synthesized by the mJS module loader */\n"
+			"/* ESM shim for CommonJS module */\n"
 			"export default require(\"%s\");", path_cstr(path));
 		debugger_add_source(shim_name, shim_source);
 		jsal_push_string(shim_name);

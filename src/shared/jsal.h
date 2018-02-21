@@ -114,7 +114,7 @@ int          jsal_dup                      (int from_index);
 bool         jsal_equal                    (int at_index, int to_index);
 void         jsal_error                    (js_error_type_t type, const char* message, ...);
 void         jsal_error_va                 (js_error_type_t type, const char* message, va_list ap);
-void         jsal_eval_module              (const char* filename);
+void         jsal_eval_module              (const char* specifier, const char* url);
 void         jsal_gc                       (void);
 bool         jsal_get_boolean              (int at_index);
 void*        jsal_get_buffer_ptr           (int at_index, size_t *out_size);
@@ -223,7 +223,7 @@ bool         jsal_try_call                 (int num_args);
 bool         jsal_try_call_method          (int num_args);
 bool         jsal_try_compile              (const char* filename);
 bool         jsal_try_construct            (int num_args);
-bool         jsal_try_eval_module          (const char* filename);
+bool         jsal_try_eval_module          (const char* specifier, const char* url);
 bool         jsal_try_parse                (int at_index);
 void         jsal_unref                    (js_ref_t* ref);
 
