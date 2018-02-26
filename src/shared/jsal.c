@@ -600,7 +600,7 @@ jsal_error_va(js_error_type_t type, const char* format, va_list ap)
 void
 jsal_eval_module(const char* specifier, const char* url)
 {
-	/* [ ... source ] -> [ ... result ] */
+	/* [ ... source ] -> [ ... exports ] */
 
 	JsErrorCode    error_code;
 	JsValueRef     exception;

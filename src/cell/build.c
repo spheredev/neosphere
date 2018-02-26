@@ -393,14 +393,15 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	// ensure there are no conflicting targets before building.  to simplify the check,
 	// we sort the targets by filename first and then look for runs of identical filenames.
 	// by doing this, we only have to walk the list once.
-	visor_begin_op(build->visor, "building targets", vector_len(build->targets));
+	visor_begin_op(build->visor, "building targets");
 	sorted_targets = vector_dup(build->targets);
 	vector_sort(sorted_targets, sort_targets_by_path);
 	iter = vector_enum(sorted_targets);
 	while (iter_next(&iter)) {
 		filename = path_cstr(target_path(*(target_t**)iter.ptr));
-		if (strcmp(filename, last_filename) == 0)
+		if (strcmp(filename, last_filename) == 0) {
 			++num_matches;
+		}
 		else {
 			if (num_matches > 1)
 				visor_error(build->visor, "%d-way conflict '%s'", num_matches, filename);

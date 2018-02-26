@@ -284,7 +284,7 @@ print_banner(bool want_copyright, bool want_deps)
 	printf("%s %s Sphere packaging compiler (%s)\n", SPHERE_COMPILER_NAME, SPHERE_VERSION,
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
-		printf("the JavaScript-powered build system for Sphere\n");
+		printf("the JavaScript-powered build engine for Sphere\n");
 		printf("(c) 2015-2018 Fat Cerberus\n");
 	}
 	if (want_deps) {
