@@ -1,6 +1,6 @@
 /**
  *  Sphere Runtime for Sphere games
- *  Copyright (c) 2015-2017, Fat Cerberus
+ *  Copyright (c) 2015-2018, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,11 @@ class Pact extends Promise
 				return executor(resolve, reject);
 		});
 		this[ControllerSymbol] = promiseController;
+	}
+
+	get promise()
+	{
+		return this;
 	}
 
 	reject(reason)

@@ -4,6 +4,7 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Adds back `Pact#promise`, which was accidentally removed in 5.1.3.
 * Reverts `Sphere.APILevel` to 1 as the APIs introduced in miniSphere 5.1 are
   still experimental.
 

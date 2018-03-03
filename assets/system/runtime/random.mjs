@@ -1,6 +1,6 @@
 /**
  *  Sphere Runtime for Sphere games
- *  Copyright (c) 2015-2017, Fat Cerberus
+ *  Copyright (c) 2015-2018, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -54,9 +54,9 @@ class Random
 		assert.ok(typeof min === 'number', "min must be a number");
 		assert.ok(typeof max === 'number', "max must be a number");
 
-		min >>= 0;
-		max >>= 0;
-		var range = Math.abs(max - min) + 1;
+		min = Math.trunc(min);
+		max = Math.trunc(max);
+		let range = Math.abs(max - min) + 1;
 		min = min < max ? min : max;
 		return min + Math.floor(generator.next().value * range);
 	}
@@ -69,7 +69,7 @@ class Random
 		// normal deviates are calculated in pairs.  we return the first one
 		// immediately, and save the second to be returned on the next call to
 		// random.normal().
-		var x, u, v, w;
+		let x, u, v, w;
 		if (this.normal.memo === undefined) {
 			do {
 				u = 2.0 * generator.next().value - 1.0;
@@ -91,23 +91,21 @@ class Random
 	{
 		assert.ok(Array.isArray(array), "argument must be an array");
 
-		var index = this.discrete(0, array.length - 1);
+		let index = this.discrete(0, array.length - 1);
 		return array[index];
 	}
 
-	static string(length)
+	static string(length = 10)
 	{
 		const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-
-		length = length !== undefined ? length : 10;
 
 		assert.ok(typeof length === 'number', "length must be a number");
 		assert.ok(length > 0, "length must be greater than zero");
 
 		length >>= 0;
-		var string = "";
-		for (var i = 0; i < length; ++i) {
-			var index = this.discrete(0, CORPUS.length - 1);
+		let string = "";
+		for (let i = 0; i < length; ++i) {
+			let index = this.discrete(0, CORPUS.length - 1);
 			string += CORPUS[index];
 		}
 		return string;
@@ -118,7 +116,7 @@ class Random
 		assert.ok(typeof mean === 'number', "mean must be a number");
 		assert.ok(typeof variance === 'number', "variance must be a number");
 
-		var error = variance * 2.0 * (0.5 - generator.next().value);
+		let error = variance * 2.0 * (0.5 - generator.next().value);
 		return mean + error;
 	}
 }

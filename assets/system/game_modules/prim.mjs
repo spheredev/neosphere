@@ -1,6 +1,6 @@
 /**
  *  Sphere Runtime for Sphere games
- *  Copyright (c) 2015-2017, Fat Cerberus
+ *  Copyright (c) 2015-2018, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -47,15 +47,15 @@ class Prim
 	{
 		mask = mask || Color.White;
 
-		var x1 = x;
-		var y1 = y;
-		var x2 = x1 + width;
-		var y2 = y1 + height;
-		var u1 = sx / texture.width;
-		var v1 = 1.0 - sy / texture.height;
-		var u2 = (sx + width) / texture.width;
-		var v2 = 1.0 - (sy + height) / texture.height;
-		var shape = new Shape(ShapeType.TriStrip, texture,
+		let x1 = x;
+		let y1 = y;
+		let x2 = x1 + width;
+		let y2 = y1 + height;
+		let u1 = sx / texture.width;
+		let v1 = 1.0 - sy / texture.height;
+		let u2 = (sx + width) / texture.width;
+		let v2 = 1.0 - (sy + height) / texture.height;
+		let shape = new Shape(ShapeType.TriStrip, texture,
 			new VertexList([
 				{ x: x1, y: y1, u: u1, v: v1, color: mask },
 				{ x: x2, y: y1, u: u2, v: v1, color: mask },
@@ -72,23 +72,23 @@ class Prim
 
 	static drawEllipse(surface, x, y, rx, ry, color)
 	{
-		var numSegments = Math.ceil(10 * Math.sqrt((rx + ry) / 2.0));
-		var vertices = [];
-		var tau = 2 * Math.PI;
-		var cos = Math.cos;
-		var sin = Math.sin;
-		for (var i = 0; i < numSegments - 1; ++i) {
-			var phi = tau * i / numSegments;
-			var c = cos(phi);
-			var s = sin(phi);
+		let numSegments = Math.ceil(10 * Math.sqrt((rx + ry) / 2.0));
+		let vertices = [];
+		let tau = 2 * Math.PI;
+		let cos = Math.cos;
+		let sin = Math.sin;
+		for (let i = 0; i < numSegments - 1; ++i) {
+			let phi = tau * i / numSegments;
+			let c = cos(phi);
+			let s = sin(phi);
 			vertices.push({
 				x: x + c * rx,
 				y: y - s * ry,
 				color: color
 			});
 		}
-		var vList = new VertexList(vertices);
-		var shape = new Shape(ShapeType.LineLoop, vList)
+		let vList = new VertexList(vertices);
+		let shape = new Shape(ShapeType.LineLoop, vList)
 		shape.draw(surface);
 	}
 
@@ -101,15 +101,15 @@ class Prim
 	{
 		color2 = color2 || color;
 
-		var numSegments = Math.ceil(10 * Math.sqrt((rx + ry) / 2.0));
-		var vertices = [ { x: x, y: y, color: color } ];
-		var tau = 2 * Math.PI;
-		var cos = Math.cos;
-		var sin = Math.sin;
-		for (var i = 0; i < numSegments; ++i) {
-			var phi = tau * i / numSegments;
-			var c = cos(phi);
-			var s = sin(phi);
+		let numSegments = Math.ceil(10 * Math.sqrt((rx + ry) / 2.0));
+		let vertices = [ { x: x, y: y, color: color } ];
+		let tau = 2 * Math.PI;
+		let cos = Math.cos;
+		let sin = Math.sin;
+		for (let i = 0; i < numSegments; ++i) {
+			let phi = tau * i / numSegments;
+			let c = cos(phi);
+			let s = sin(phi);
 			vertices[i + 1] = {
 				x: x + c * rx,
 				y: y - s * ry,
@@ -122,8 +122,8 @@ class Prim
 			color: color2
 		};
 
-		var vList = new VertexList(vertices);
-		var shape = new Shape(ShapeType.Fan, vList);
+		let vList = new VertexList(vertices);
+		let shape = new Shape(ShapeType.Fan, vList);
 		shape.draw(surface);
 	}
 
@@ -133,7 +133,7 @@ class Prim
 		color_lr = color_lr || color_ul;
 		color_ll = color_ll || color_ul;
 
-		var shape = new Shape(ShapeType.TriStrip,
+		let shape = new Shape(ShapeType.TriStrip,
 			new VertexList([
 				{ x: x, y: y, color: color_ul },
 				{ x: x + width, y: y, color: color_ur },
@@ -148,7 +148,7 @@ class Prim
 		color2 = color2 || color1;
 		color3 = color3 || color1;
 
-		var shape = new Shape(ShapeType.Triangles,
+		let shape = new Shape(ShapeType.Triangles,
 			new VertexList([
 				{ x: x1, y: y1, color: color1 },
 				{ x: x2, y: y2, color: color2 },
@@ -160,14 +160,14 @@ class Prim
 	{
 		color2 = color2 || color1;
 
-		var shape;
-		var xSize = x2 - x1;
-		var ySize = y2 - y1;
-		var length = Math.sqrt(xSize*xSize + ySize*ySize);
+		let shape;
+		let xSize = x2 - x1;
+		let ySize = y2 - y1;
+		let length = Math.sqrt(xSize*xSize + ySize*ySize);
 		if (length == 0.0)
 			return;
-		var tx = 0.5 * thickness * (y2 - y1) / length;
-		var ty = 0.5 * thickness * -(x2 - x1) / length;
+		let tx = 0.5 * thickness * (y2 - y1) / length;
+		let ty = 0.5 * thickness * -(x2 - x1) / length;
 		shape = new Shape(ShapeType.Fan,
 			new VertexList([
 				{ x: x1 + tx, y: y1 + ty, color: color1 },
@@ -185,12 +185,12 @@ class Prim
 
 	static drawRectangle(surface, x, y, width, height, thickness, color)
 	{
-		var t = 0.5 * thickness;
-		var x1 = x + t;
-		var y1 = y + t;
-		var x2 = x1 + width - thickness;
-		var y2 = y1 + height - thickness;
-		var shape = new Shape(ShapeType.TriStrip,
+		let t = 0.5 * thickness;
+		let x1 = x + t;
+		let y1 = y + t;
+		let x2 = x1 + width - thickness;
+		let y2 = y1 + height - thickness;
+		let shape = new Shape(ShapeType.TriStrip,
 			new VertexList([
 				{ x: x1 - t, y: y1 - t, color: color },
 				{ x: x1 + t, y: y1 + t, color: color },

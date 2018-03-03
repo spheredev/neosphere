@@ -95,8 +95,8 @@ game_open(const char* game_path)
 	package_t*  package;
 	path_t*     path;
 	size2_t     resolution;
-	size_t      sgm_size;
 	kev_file_t* sgm_file;
+	size_t      sgm_size;
 	char*       sgm_text = NULL;
 
 	console_log(1, "opening '%s' from game #%u", game_path, s_next_game_id);

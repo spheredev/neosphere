@@ -1,6 +1,6 @@
 /**
  *  Sphere Runtime for Sphere games
- *  Copyright (c) 2015-2017, Fat Cerberus
+ *  Copyright (c) 2015-2018, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -288,8 +288,7 @@ class OpThread extends Thread
 
 	async start()
 	{
-		await this.op.start.call(this.context, this.scene,
-			...this.op.arguments);
+		await this.op.start.call(this.context, this.scene, ...this.op.arguments);
 		if (this.op.update !== undefined) {
 			super.start();
 			if (this.op.getInput !== undefined)
@@ -509,8 +508,8 @@ Scene.defineOp('tween',
 		this.object = object;
 		this.startValues = {};
 		this.type = easingType in this.easers ? easingType : 'linear';
-		var isChanged = false;
-		for (var p in endValues) {
+		let isChanged = false;
+		for (const p in endValues) {
 			this.change[p] = endValues[p] - object[p];
 			this.startValues[p] = object[p];
 			isChanged = isChanged || this.change[p] != 0;
@@ -522,17 +521,15 @@ Scene.defineOp('tween',
 	update(scene) {
 		++this.elapsed;
 		if (this.elapsed < this.duration) {
-			for (var p in this.change) {
+			for (const p in this.change)
 				this.object[p] = this.easers[this.type](this.elapsed, this.startValues[p], this.change[p], this.duration);
-			}
 			return true;
 		} else {
 			return false;
 		}
 	},
 	finish(scene) {
-		for (var p in this.change) {
+		for (const p in this.change)
 			this.object[p] = this.startValues[p] + this.change[p];
-		}
-	}
+	},
 });
