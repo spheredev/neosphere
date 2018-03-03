@@ -4,7 +4,9 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-No changes.
+* Reverts `Sphere.APILevel` to 1 as the APIs introduced in miniSphere 5.1 are
+  still experimental.
+
 
 v5.1.3 - February 18, 2018
 --------------------------
