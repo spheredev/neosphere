@@ -313,11 +313,12 @@ main(int argc, char* argv[])
 	if (!eval_succeeded)
 		goto on_js_error;
 
-	if (game_version(g_game) >= 2 && jsal_is_object_coercible(-1)) {
-		// modular mode (Sv2).  check for an exported Game class and instantiate it,
-		// then call game.start().
+	// in Sphere v2 mode, the main script is loaded as a module (either CommonJS or mJS).
+	// check for a default export and `new` it if possible, then call newObj.start().
+	if (game_version(g_game) >= 2 && jsal_is_object(-1)) {
 		jsal_get_prop_string(-1, "default");
 		if (jsal_is_async_function(-1)) {
+			// async functions aren't constructible, so call those normally.
 			if (!jsal_try_call(0))
 				goto on_js_error;
 		}
@@ -332,7 +333,9 @@ main(int argc, char* argv[])
 		jsal_pop(2);
 	}
 
-	// in Sphere v1 mode only, call game() function (if it exists)
+	// if we're running in Sphere v1 mode, call the global game() function.  note
+	// that, in contrast to Sphere 1.x, it's not an error if this function doesn't
+	// exist.
 	if (game_version(g_game) <= 1) {
 		jsal_get_global_string("game");
 		if (jsal_is_function(-1) && !jsal_try_call(0))
@@ -425,7 +428,11 @@ sphere_run(bool in_event_loop)
 	while (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
-			sphere_exit(true);
+			path_free(g_last_game_path);
+			g_last_game_path = NULL;
+			dispatch_cancel_all(true, true);
+			jsal_disable(true);
+			break;
 		}
 	}
 }

@@ -873,9 +873,10 @@ pegasus_eval_module(const char* filename)
 	// notes:
 	//     - the final value of 'module.exports' is left on top of the JSAL value stack.
 	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
-	//       behavior, the filename should be in canonical form.
-	//     - this is a protected call.  if the module being loaded throws, the error will be
-	//       caught and left on top of the stack for the caller to deal with.
+	//       behavior, the filename should be canonicalized first.
+	//     - this is a protected call.  if the module being loaded throws, this function will
+	//       return false and the error will be left on top of the stack for the caller to deal
+	//       with.
 
 	lstring_t* code_string;
 	path_t*    dir_path;
