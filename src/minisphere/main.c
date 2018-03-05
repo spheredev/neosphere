@@ -78,6 +78,7 @@ static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
 static void show_error_screen   (const char* message);
 
+int                  g_event_loop_version = 1;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
 game_t*              g_game = NULL;
 path_t*              g_game_path = NULL;
@@ -302,6 +303,7 @@ main(int argc, char* argv[])
 	debugger_init(ssj_mode, false);
 #endif
 
+	g_event_loop_version = 1;
 	g_restarting = false;
 	
 	// evaluate the main script (v1) or module (v2)
@@ -421,17 +423,23 @@ sphere_run(bool in_event_loop)
 #endif
 		jsal_update(true);
 	}
+
 	update_input();
 	audio_update();
 
-	// process Allegro events
+	// check if the user closed the game window
 	while (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
 			path_free(g_last_game_path);
 			g_last_game_path = NULL;
-			dispatch_cancel_all(true, true);
-			jsal_disable(true);
+			if (g_event_loop_version >= 2) {
+				dispatch_cancel_all(true, false);
+			}
+			else {
+				dispatch_cancel_all(true, true);
+				jsal_disable(true);
+			}
 			break;
 		}
 	}

@@ -2718,10 +2718,8 @@ js_GetJoystickAxis(int num_args, bool is_ctor, int magic)
 static bool
 js_GetKey(int num_args, bool is_ctor, int magic)
 {
-	while (kb_queue_len() == 0) {
+	while (kb_queue_len() == 0)
 		sphere_sleep(0.05);
-		sphere_run(false);
-	}
 	jsal_push_int(kb_get_key());
 	return true;
 }
@@ -2881,10 +2879,8 @@ js_GetMouseWheelEvent(int num_args, bool is_ctor, int magic)
 	mouse_event_t event;
 
 	do {
-		while (mouse_queue_len() == 0) {
+		while (mouse_queue_len() == 0)
 			sphere_sleep(0.05);
-			sphere_run(false);
-		}
 		event = mouse_get_event();
 	} while (event.key != MOUSE_KEY_WHEEL_UP && event.key != MOUSE_KEY_WHEEL_DOWN);
 	jsal_push_int(event.key);

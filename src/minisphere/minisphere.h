@@ -79,8 +79,9 @@
 #endif
 
 // at some point some of these global variables need to get eaten, preferably by
-// an eaty pig.  they're a relic from the early stages of miniSphere development and
-// I've been too lazy to try to refactor them away.
+// some kind of eaty pig.  they're a relic from the early stages of miniSphere development
+// and I've been too lazy to try to refactor them away.
+extern int                  g_event_loop_version;
 extern ALLEGRO_EVENT_QUEUE* g_events;
 extern game_t*              g_game;
 extern path_t*              g_game_path;

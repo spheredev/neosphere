@@ -648,8 +648,8 @@ map_engine_start(const char* filename, int framerate)
 	while (!s_exiting && !jsal_disabled()) {
 		sphere_run(true);
 		
-		// order of operations matches Sphere 1.x.  yes, we check for input AFTER we
-		// do the update.  for some reason.
+		// order of operations matches Sphere 1.x.  not sure why, but Sphere 1.x
+		// checks for input AFTER an update for some reason...
 		update_map_engine(true);
 		process_map_input();
 		map_engine_draw_map();

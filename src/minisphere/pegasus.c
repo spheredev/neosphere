@@ -453,14 +453,14 @@ static void js_VertexList_finalize      (void* host_ptr);
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
 static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool es6_mode);
+static bool      handle_main_event_loop      (int num_args, bool is_ctor, int magic);
+static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
 static void      jsal_pegasus_push_require   (const char* module_id);
 static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
-static void      handle_module_import        (void);
 static path_t*   load_package_json           (const char* filename);
-static bool      run_sphere_v2_event_loop    (int num_args, bool is_ctor, int magic);
 
 static mixer_t*  s_def_mixer;
 static int       s_frame_rate = 60;
@@ -999,7 +999,8 @@ on_error:
 bool
 pegasus_start_event_loop(void)
 {
-	if (jsal_try(run_sphere_v2_event_loop, 0)) {
+	g_event_loop_version = 2;
+	if (jsal_try(handle_main_event_loop, 0)) {
 		jsal_pop(1);  // don't need return value
 		return true;
 	}
@@ -1161,6 +1162,22 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 	return NULL;
 }
 
+static bool
+handle_main_event_loop(int num_args, bool is_ctor, int magic)
+{
+	while (dispatch_busy() || jsal_busy()) {
+		sphere_run(true);
+		if (!screen_skipping_frame(g_screen))
+			dispatch_run(JOB_RENDER);
+		screen_flip(g_screen, s_frame_rate, true);
+		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
+		dispatch_run(JOB_UPDATE);
+		dispatch_run(JOB_TICK);
+		++g_tick_count;
+	}
+	return false;
+}
+
 static void
 handle_module_import(void)
 {
@@ -1258,22 +1275,6 @@ load_package_json(const char* filename)
 on_error:
 	jsal_set_top(jsal_top);
 	return NULL;
-}
-
-static bool
-run_sphere_v2_event_loop(int num_args, bool is_ctor, int magic)
-{
-	while (dispatch_busy() || jsal_busy()) {
-		sphere_run(true);
-		if (!screen_skipping_frame(g_screen))
-			dispatch_run(JOB_RENDER);
-		screen_flip(g_screen, s_frame_rate, true);
-		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
-		dispatch_run(JOB_UPDATE);
-		dispatch_run(JOB_TICK);
-		++g_tick_count;
-	}
-	return false;
 }
 
 static bool
