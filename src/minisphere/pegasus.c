@@ -336,6 +336,7 @@ static bool js_RNG_iterator                  (int num_args, bool is_ctor, int ma
 static bool js_RNG_next                      (int num_args, bool is_ctor, int magic);
 static bool js_SSj_flipScreen                (int num_args, bool is_ctor, int magic);
 static bool js_SSj_log                       (int num_args, bool is_ctor, int magic);
+static bool js_SSj_now                       (int num_args, bool is_ctor, int magic);
 static bool js_new_Sample                    (int num_args, bool is_ctor, int magic);
 static bool js_Sample_get_fileName           (int num_args, bool is_ctor, int magic);
 static bool js_Sample_play                   (int num_args, bool is_ctor, int magic);
@@ -624,6 +625,7 @@ pegasus_init(void)
 	api_define_method("RNG", "next", js_RNG_next, 0);
 	api_define_function("SSj", "flipScreen", js_SSj_flipScreen, 0);
 	api_define_function("SSj", "log", js_SSj_log, KI_LOG_NORMAL);
+	api_define_function("SSj", "now", js_SSj_now, 0);
 	api_define_function("SSj", "trace", js_SSj_log, KI_LOG_TRACE);
 	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize);
 	api_define_property("Sample", "fileName", false, js_Sample_get_fileName, NULL);
@@ -3405,6 +3407,17 @@ js_SSj_log(int num_args, bool is_ctor, int magic)
 	debugger_log(text, (ki_log_op_t)magic, true);
 #endif
 	return false;
+}
+
+static bool
+js_SSj_now(int num_args, bool is_ctor, int magic)
+{
+#if defined(MINISPHERE_SPHERUN)
+	jsal_push_number(floor(al_get_time() * 1000000000));
+#else
+	jsal_push_number(0.0);
+#endif
+	return true;
 }
 
 static bool

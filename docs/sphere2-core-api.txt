@@ -1165,7 +1165,9 @@ RNG#next();
 ---------------
 
 The `SSj` namespace provides functions that aid debugging and allow your game
-to communicate with an attached debugger such as SSj or SSj Blue.
+to communicate with an attached debugger such as SSj or SSj Blue.  Note that
+`SSj` methods only have an effect when called under SpheRun; in production they
+do nothing.
 
 SSj.flipScreen();
 
@@ -1179,6 +1181,16 @@ SSj.log(text_or_object);
 
     Note: If the game was started from the command line using SpheRun, the
           item is logged to the terminal as well.
+
+SSj.now();
+
+    Returns the time in nanoseconds since some arbitrary point in time, useful
+    for benchmarking.  In production, this will always be 0; use `Date.now()`
+    for in-game timing purposes.
+
+    Note: While the value returned is in nanoseconds, the actual precision of
+          the timer is almost certainly less, typically in the microsecond
+          range.  Don't assume this will be nanosecond precision.
 
 SSj.trace(text);
 
