@@ -496,12 +496,15 @@ Dispatch.now(callback);
 Dispatch.onExit(callback);
 
     Sets up a one-time job to call `callback` after the event loop exits.  This
-    is useful when you need some code to always before the engine terminates;
-    for example, automatically saving the game.
+    is useful when you need to ensure something always runs before the engine
+    terminates; for example, automatically saving the game or finalizing a log
+    file.
 
-    Note: Don't do anything too intensive in an `onExit` job if you can avoid
-          it; the game window won't close until all exit jobs have finished
-          running, so excessive delays here are likely to frustrate the player.
+    Returns a `JobToken` you can use to manage the job.
+
+    Note: Try not to do anything too intensive in an `onExit()` job if you can
+          avoid it; the engine won't close until all exit jobs have finished
+          running, so excessive delays here are likely to frustrate the user.
 
 Dispatch.onRender(fn[, options]);
 Dispatch.onUpdate(fn[, options]);
