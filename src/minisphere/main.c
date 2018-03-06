@@ -348,6 +348,7 @@ main(int argc, char* argv[])
 	// start up the event loop.  we can do this even in compatibility mode:
 	// the event loop terminates when there are no pending jobs or promises to settle,
 	// and neither one was available in Sphere 1.x.
+	jsal_disable(false);  // in case of early bailout, onExit() jobs still need to run
 	if (!pegasus_start_event_loop())
 		goto on_js_error;
 	if (g_restarting)
@@ -433,13 +434,9 @@ sphere_run(bool in_event_loop)
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
 			path_free(g_last_game_path);
 			g_last_game_path = NULL;
-			if (g_event_loop_version >= 2) {
-				dispatch_cancel_all(true, false);
-			}
-			else {
-				dispatch_cancel_all(true, true);
+			dispatch_cancel_all(true, false);
+			if (g_event_loop_version < 2)
 				jsal_disable(true);
-			}
 			break;
 		}
 	}
