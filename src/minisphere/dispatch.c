@@ -78,7 +78,13 @@ dispatch_uninit(void)
 bool
 dispatch_busy(void)
 {
-	return s_is_busy || vector_len(s_onetime) > 0;
+	return s_is_busy;
+}
+
+bool
+dispatch_finished(void)
+{
+	return !s_is_busy && vector_len(s_onetime) <= 0;
 }
 
 void

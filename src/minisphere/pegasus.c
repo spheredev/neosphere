@@ -264,6 +264,7 @@ static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, int ma
 static bool js_Dispatch_cancelAll            (int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_later                (int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_now                  (int num_args, bool is_ctor, int magic);
+static bool js_Dispatch_onExit               (int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_onRender             (int num_args, bool is_ctor, int magic);
 static bool js_Dispatch_onUpdate             (int num_args, bool is_ctor, int magic);
 static bool js_FS_createDirectory            (int num_args, bool is_ctor, int magic);
@@ -551,6 +552,7 @@ pegasus_init(void)
 	api_define_function("Dispatch", "cancelAll", js_Dispatch_cancelAll, 0);
 	api_define_function("Dispatch", "later", js_Dispatch_later, 0);
 	api_define_function("Dispatch", "now", js_Dispatch_now, 0);
+	api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 	api_define_function("Dispatch", "onRender", js_Dispatch_onRender, 0);
 	api_define_function("Dispatch", "onUpdate", js_Dispatch_onUpdate, 0);
 	api_define_class("FileStream", PEGASUS_FILE_STREAM, js_new_FileStream, js_FileStream_finalize);
@@ -1174,6 +1176,11 @@ handle_main_event_loop(int num_args, bool is_ctor, int magic)
 		dispatch_run(JOB_UPDATE);
 		dispatch_run(JOB_TICK);
 		++g_tick_count;
+	}
+	while (!dispatch_finished()) {
+		sphere_run(true);
+		dispatch_run(JOB_TICK);
+		dispatch_run(JOB_CLEANUP);
 	}
 	return false;
 }
@@ -1941,6 +1948,20 @@ js_Dispatch_now(int num_args, bool is_ctor, int magic)
 	script = jsal_pegasus_require_script(0);
 
 	if (!(token = dispatch_defer(script, 0, JOB_TICK, false)))
+		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
+	jsal_pegasus_push_job_token(token);
+	return true;
+}
+
+static bool
+js_Dispatch_onExit(int num_args, bool is_ctor, int magic)
+{
+	script_t* script;
+	int64_t   token;
+
+	script = jsal_pegasus_require_script(0);
+
+	if (!(token = dispatch_defer(script, 0, JOB_CLEANUP, true)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;

@@ -493,6 +493,16 @@ Dispatch.now(callback);
           latter runs at the beginning of the next frame; Dispatch.now() jobs
           always run during the same frame they were issued.
 
+Dispatch.onExit(callback);
+
+    Sets up a one-time job to call `callback` after the event loop exits.  This
+    is useful when you need some code to always before the engine terminates;
+    for example, automatically saving the game.
+
+    Note: Don't do anything too intensive in an `onExit` job if you can avoid
+          it; the game window won't close until all exit jobs have finished
+          running, so excessive delays here are likely to frustrate the player.
+
 Dispatch.onRender(fn[, options]);
 Dispatch.onUpdate(fn[, options]);
 
