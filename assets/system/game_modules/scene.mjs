@@ -38,13 +38,14 @@ import Thread from 'thread';
 let defaultPriority = 0.0,
     screenMask = Color.Transparent;
 
-Dispatch.onRender(() => {
-	if (screenMask.a > 0.0)
-		Prim.fill(Surface.Screen, screenMask);
-}, {
-	inBackground: true,
-	priority:     99,
-});
+Dispatch.onRender(
+	() => {
+		if (screenMask.a > 0.0)
+			Prim.fill(Surface.Screen, screenMask);
+	}, {
+		inBackground: true,
+		priority:     99,
+	});
 
 export default
 class Scene

@@ -470,9 +470,9 @@ can do with the token.
 
 Dispatch.cancelAll();
 
-    Cancels all one-time jobs currently in the job queue.  To help prevent
-    mishaps, recurring jobs are not affected by this call and must be cancelled
-    individually.
+    Cancels all one-time jobs (except `onExit`) in the job queue.  In order to
+    prevent mishaps, this does not cancel update, render and exit jobs.  Those
+    must be cancelled individually.
 
 Dispatch.later(num_frames, callback);
 

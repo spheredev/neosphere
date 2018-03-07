@@ -32,64 +32,65 @@
 
 import assert from 'assert';
 
-let generator = new RNG();
+const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+let normalVxW = NaN,
+    randomGenerator = new RNG();
 
 export default
 class Random
 {
 	constructor()
 	{
-		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
+		throw new TypeError(`'${new.target.name}' is static and cannot be instantiated`);
 	}
 
 	static chance(odds)
 	{
-		assert.ok(typeof odds === 'number', "odds must be a number");
+		assert(typeof odds === 'number', "odds must be a number");
 
-		return odds > generator.next().value;
+		return odds > randomGenerator.next().value;
 	}
 
 	static discrete(min, max)
 	{
-		assert.ok(typeof min === 'number', "min must be a number");
-		assert.ok(typeof max === 'number', "max must be a number");
+		assert(typeof min === 'number' && typeof max === 'number', "Min and Max must be numbers");
 
 		min = Math.trunc(min);
 		max = Math.trunc(max);
 		let range = Math.abs(max - min) + 1;
 		min = min < max ? min : max;
-		return min + Math.floor(generator.next().value * range);
+		return min + Math.floor(randomGenerator.next().value * range);
 	}
 
 	static normal(mean, sigma)
 	{
-		assert.ok(typeof mean === 'number', "mean must be a number");
-		assert.ok(typeof sigma === 'number', "sigma must be a number");
+		assert(typeof mean === 'number' && typeof sigma === 'number', "Mean and Sigma must be numbers");
 
 		// normal deviates are calculated in pairs.  we return the first one
 		// immediately, and save the second to be returned on the next call to
 		// random.normal().
 		let x, u, v, w;
-		if (this.normal.memo === undefined) {
+		if (Number.isNaN(normalVxW)) {
 			do {
-				u = 2.0 * generator.next().value - 1.0;
-				v = 2.0 * generator.next().value - 1.0;
+				u = 2.0 * randomGenerator.next().value - 1.0;
+				v = 2.0 * randomGenerator.next().value - 1.0;
 				w = u * u + v * v;
 			} while (w >= 1.0);
 			w = Math.sqrt(-2.0 * Math.log(w) / w);
 			x = u * w;
-			this.normal.memo = v * w;
+			normalVxW = v * w;
 		}
 		else {
-			x = this.normal.memo;
-			delete this.normal.memo;
+			x = normalVxW;
+			normalVxW = NaN;
 		}
 		return mean + x * sigma;
 	}
 
 	static sample(array)
 	{
-		assert.ok(Array.isArray(array), "argument must be an array");
+		assert(Array.isArray(array), "Sample source must be an array");
 
 		let index = this.discrete(0, array.length - 1);
 		return array[index];
@@ -97,12 +98,9 @@ class Random
 
 	static string(length = 10)
 	{
-		const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		assert(typeof length === 'number' && length > 0, "Length must be a number > 0");
 
-		assert.ok(typeof length === 'number', "length must be a number");
-		assert.ok(length > 0, "length must be greater than zero");
-
-		length >>= 0;
+		length = Math.floor(length);
 		let string = "";
 		for (let i = 0; i < length; ++i) {
 			let index = this.discrete(0, CORPUS.length - 1);
@@ -113,10 +111,9 @@ class Random
 
 	static uniform(mean, variance)
 	{
-		assert.ok(typeof mean === 'number', "mean must be a number");
-		assert.ok(typeof variance === 'number', "variance must be a number");
+		assert(typeof mean === 'number' && typeof variance == 'number', "Mean and Variance must be numbers");
 
-		let error = variance * 2.0 * (0.5 - generator.next().value);
+		let error = variance * 2.0 * (0.5 - randomGenerator.next().value);
 		return mean + error;
 	}
 }

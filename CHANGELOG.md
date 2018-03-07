@@ -6,8 +6,9 @@ v5.2.0 - TBD
 
 * Adds `Dispatch.onExit()`, which lets you run code after the event loop exits.
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
-* Fixes promise continuations getting eaten when the game window is closed.
-* Fixes missing `Pact#promise`, which was accidentally removed in 5.1.3.
+* Fixes a bug where outstanding promise continuations get eaten when the user
+  closes the game window.
+* Fixes a missing `Pact#promise`, which was accidentally removed in 5.1.3.
 * Reverts `Sphere.APILevel` to 1 as the level-2 APIs are still experimental.
 
 

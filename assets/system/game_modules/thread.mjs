@@ -52,9 +52,9 @@ class Thread
 			throw new Error(`'${new.target.name}' is abstract and cannot be instantiated`);
 
 		options = Object.assign({}, {
-			inBackground: false,
-			priority:     0.0,
-		}, options);
+				inBackground: false,
+				priority:     0.0,
+			}, options);
 
 		this._bootstrapping = false;
 		this._busy = false;
@@ -83,23 +83,23 @@ class Thread
 		return this._started;
 	}
 
+	on_startUp() {}
+	on_shutDown() {}
 	on_inputCheck() {}
 	on_render() {}
-	on_shutDown() {}
-	on_startUp() {}
 	on_update() {}
 
 	pause()
 	{
 		if (!this.running)
-			throw new Error("thread is currently stopped");
+			throw new Error("Thread is not running");
 		this._updateJob.pause();
 	}
 
 	resume()
 	{
 		if (!this.running)
-			throw new Error("thread is currently stopped");
+			throw new Error("Thread is not running");
 		this._updateJob.resume();
 	}
 
@@ -112,35 +112,36 @@ class Thread
 		this._started = true;
 		this._onThreadStop = new Pact();
 
-		this._exitJob = Dispatch.onExit(() => {
-			this.on_shutDown();
-		});
+		// Dispatch.onExit() ensures the shutdown handler is always called
+		this._exitJob = Dispatch.onExit(() => this.on_shutDown());
 
-		this._renderJob = Dispatch.onRender(() => {
-			if (this._bootstrapping)
-				return;
-			this.on_render();
-		}, {
-			inBackground: this._inBackground,
-			priority:     this._priority,
-		});
-
-		this._updateJob = Dispatch.onUpdate(async () => {
-			if (this._busy)
-				return;
-			this._busy = true;
-			if (this._bootstrapping) {
-				await this.on_startUp();
-				this._bootstrapping = false;
-			}
-			if (this.hasFocus)
-				await this.on_inputCheck();
-			await this.on_update();
-			this._busy = false;
-		}, {
-			inBackground: this._inBackground,
-			priority:     this._priority,
-		});
+		// set up the update and render callbacks
+		this._renderJob = Dispatch.onRender(
+			() => {
+				if (this._bootstrapping)
+					return;
+				this.on_render();
+			}, {
+				inBackground: this._inBackground,
+				priority:     this._priority,
+			});
+		this._updateJob = Dispatch.onUpdate(
+			async () => {
+				if (this._busy)
+					return;
+				this._busy = true;
+				if (this._bootstrapping) {
+					await this.on_startUp();
+					this._bootstrapping = false;
+				}
+				if (this.hasFocus)
+					await this.on_inputCheck();
+				await this.on_update();
+				this._busy = false;
+			}, {
+				inBackground: this._inBackground,
+				priority:     this._priority,
+			});
 
 		// after thread terminates, remove it from the input queue
 		this._onThreadStop.then(() => {
@@ -165,9 +166,9 @@ class Thread
 	takeFocus()
 	{
 		if (!this.running)
-			throw new Error("thread is currently stopped");
+			throw new Error("Thread is not running");
 		if (this.on_inputCheck === Thread.on_inputCheck)
-			throw new TypeError("thread not enabled for user input");
+			throw new TypeError("Thread is not enabled for user input");
 
 		this._focusTarget.takeFocus();
 	}
@@ -175,9 +176,9 @@ class Thread
 	yieldFocus()
 	{
 		if (!this.running)
-			throw new Error("thread is currently stopped");
+			throw new Error("Thread is not running");
 		if (this.on_inputCheck === Thread.on_inputCheck)
-			throw new TypeError("thread not enabled for user input");
+			throw new TypeError("Thread is not enabled for user input");
 
 		this._focusTarget.yield();
 	}
