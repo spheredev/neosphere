@@ -1171,6 +1171,19 @@ Thread#running [read-only]
     `true` if this thread is running (even if it's awaiting a promise),
     otherwise `false`.
 
+Thread#on_startUp(); [event handler]
+
+    Implement this in your subclass to provide code to run each time the thread
+    starts running.  This allows you to perform asynchronous operations on
+    thread start, since you can't use `await` in a constructor.
+
+Thread#on_shutDown(); [event handler]
+
+    Implement this in your subclass to provide code to run when the thread
+    terminates.  This handler will run both if the thread is stopped manually
+    (see `Thread#stop()`) and as a result of the event loop exiting, e.g., if
+    the user closes the game window.
+
 Thread#on_inputCheck(); [event handler]
 
     Implement this in your subclass to provide code to accept user input.  This
@@ -1186,12 +1199,6 @@ Thread#on_render(); [event handler]
 
     IMPORTANT: Do not use `await` in the render handler.  Doing so is undefined
                behavior; bad things will happen.
-
-Thread#on_startUp(); [event handler]
-
-    Implement this in your subclass to provide code to run each time the thread
-    starts running.  This allows you to perform asynchronous operations on
-    thread start, since you can't use `await` in a constructor.
 
 Thread#on_update(); [event handler]
 
