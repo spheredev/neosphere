@@ -1183,15 +1183,12 @@ handle_main_event_loop(int num_args, bool is_ctor, int magic)
 
 	// miniature "exit loop" to deal with onExit jobs
 	s_shutting_down = true;
-	while (!dispatch_finished()) {
+	while (!dispatch_finished() || jsal_busy()) {
 		sphere_heartbeat(true);
 		dispatch_run(JOB_ON_TICK);
 		dispatch_run(JOB_ON_EXIT);
 	}
 	
-	// allow one final heartbeat before giving up the ghost.  this enables us to catch
-	// any promise rejections generated during exit handling and report them.
-	sphere_heartbeat(true);
 	return false;
 }
 

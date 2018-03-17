@@ -8,8 +8,6 @@ v5.2.0 - TBD
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
 * Fixes a bug where outstanding promise continuations get eaten when the user
   closes the game window.
-* Fixes a bug where an uncaught promise rejection occurring on the same frame
-  the event loop exits won't be reported to the user.
 * Fixes a missing `Pact#promise`, which was accidentally removed in 5.1.3.
 * Reverts `Sphere.APILevel` to 1 as the level-2 APIs are still experimental.
 
