@@ -366,7 +366,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			time_left = it->next_frame_time - al_get_time();
 			if (!it->avoid_sleep && time_left > 0.0)
 				al_wait_for_event_timed(g_events, NULL, time_left);
-			sphere_run(false);
+			sphere_heartbeat(false);
 		} while (al_get_time() < it->next_frame_time);
 		if (it->num_skips >= it->max_skips)  // did we skip too many frames?
 			it->next_frame_time = al_get_time() + 1.0 / framerate;

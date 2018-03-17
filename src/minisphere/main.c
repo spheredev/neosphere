@@ -409,7 +409,7 @@ sphere_exit(bool shutting_down)
 }
 
 void
-sphere_run(bool in_event_loop)
+sphere_heartbeat(bool in_event_loop)
 {
 	// IMPORTANT: if `in_event_loop` is false, we MUST avoid doing anything that causes
 	//            JavaScript code to run, otherwise bad things will happen.
@@ -459,7 +459,7 @@ sphere_sleep(double time)
 		time_left = end_time - al_get_time();
 		if (time_left > 0.0)
 			al_wait_for_event_timed(g_events, NULL, time_left);
-		sphere_run(false);
+		sphere_heartbeat(false);
 	} while (al_get_time() < end_time);
 }
 
@@ -469,7 +469,7 @@ on_enqueue_js_job(void)
 	script_t* script;
 
 	script = script_new_function(0);
-	dispatch_defer(script, 0, JOB_TICK, true);
+	dispatch_defer(script, 0, JOB_ON_TICK, true);
 }
 
 static bool

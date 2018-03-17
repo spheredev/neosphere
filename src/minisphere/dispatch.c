@@ -161,7 +161,7 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 
 	if (s_recurring == NULL)
 		return 0;
-	if (hint == JOB_RENDER) {
+	if (hint == JOB_ON_RENDER) {
 		// invert priority for render jobs.  this ensures higher priority jobs
 		// get rendered later in a frame, i.e. closer to the screen.
 		priority = -priority;

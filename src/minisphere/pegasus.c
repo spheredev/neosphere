@@ -468,6 +468,7 @@ static mixer_t*  s_def_mixer;
 static int       s_frame_rate = 60;
 static int       s_next_module_id = 1;
 static js_ref_t* s_screen_obj;
+static bool      s_shutting_down = false;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
@@ -1170,20 +1171,27 @@ static bool
 handle_main_event_loop(int num_args, bool is_ctor, int magic)
 {
 	while (dispatch_busy() || jsal_busy()) {
-		sphere_run(true);
+		sphere_heartbeat(true);
 		if (!screen_skipping_frame(g_screen))
-			dispatch_run(JOB_RENDER);
+			dispatch_run(JOB_ON_RENDER);
 		screen_flip(g_screen, s_frame_rate, true);
 		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
-		dispatch_run(JOB_UPDATE);
-		dispatch_run(JOB_TICK);
+		dispatch_run(JOB_ON_UPDATE);
+		dispatch_run(JOB_ON_TICK);
 		++g_tick_count;
 	}
+
+	// miniature "exit loop" to deal with onExit jobs
+	s_shutting_down = true;
 	while (!dispatch_finished()) {
-		sphere_run(true);
-		dispatch_run(JOB_TICK);
-		dispatch_run(JOB_CLEANUP);
+		sphere_heartbeat(true);
+		dispatch_run(JOB_ON_TICK);
+		dispatch_run(JOB_ON_EXIT);
 	}
+	
+	// allow one final heartbeat before giving up the ghost.  this enables us to catch
+	// any promise rejections generated during exit handling and report them.
+	sphere_heartbeat(true);
 	return false;
 }
 
@@ -1500,7 +1508,7 @@ js_Sphere_sleep(int num_args, bool is_ctor, int magic)
 	script = script_new_function(-1);
 	jsal_pop(1);
 	jsal_unref(resolver);
-	dispatch_defer(script, num_frames, JOB_UPDATE, true);
+	dispatch_defer(script, num_frames, JOB_ON_UPDATE, true);
 	return true;
 }
 
@@ -1935,7 +1943,9 @@ js_Dispatch_later(int num_args, bool is_ctor, int magic)
 	timeout = jsal_require_int(0);
 	script = jsal_pegasus_require_script(1);
 
-	if (!(token = dispatch_defer(script, timeout, JOB_UPDATE, false)))
+	if (s_shutting_down)
+		jsal_error(JS_RANGE_ERROR, "Job creation not allowed during shutdown");
+	if (!(token = dispatch_defer(script, timeout, JOB_ON_UPDATE, false)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -1949,7 +1959,9 @@ js_Dispatch_now(int num_args, bool is_ctor, int magic)
 
 	script = jsal_pegasus_require_script(0);
 
-	if (!(token = dispatch_defer(script, 0, JOB_TICK, false)))
+	if (s_shutting_down)
+		jsal_error(JS_RANGE_ERROR, "Job creation not allowed during shutdown");
+	if (!(token = dispatch_defer(script, 0, JOB_ON_TICK, false)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -1963,7 +1975,7 @@ js_Dispatch_onExit(int num_args, bool is_ctor, int magic)
 
 	script = jsal_pegasus_require_script(0);
 
-	if (!(token = dispatch_defer(script, 0, JOB_CLEANUP, true)))
+	if (!(token = dispatch_defer(script, 0, JOB_ON_EXIT, true)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -1987,7 +1999,9 @@ js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 		jsal_pop(2);
 	}
 
-	if (!(token = dispatch_recur(script, priority, background, JOB_RENDER)))
+	if (s_shutting_down)
+		jsal_error(JS_RANGE_ERROR, "Job creation not allowed during shutdown");
+	if (!(token = dispatch_recur(script, priority, background, JOB_ON_RENDER)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;
@@ -2011,7 +2025,9 @@ js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
 		jsal_pop(2);
 	}
 
-	if (!(token = dispatch_recur(script, priority, background, JOB_UPDATE)))
+	if (s_shutting_down)
+		jsal_error(JS_RANGE_ERROR, "Job creation not allowed during shutdown");
+	if (!(token = dispatch_recur(script, priority, background, JOB_ON_UPDATE)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
 	jsal_pegasus_push_job_token(token);
 	return true;

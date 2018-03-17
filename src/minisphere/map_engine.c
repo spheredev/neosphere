@@ -646,7 +646,7 @@ map_engine_start(const char* filename, int framerate)
 	if (!change_map(filename, true))
 		goto on_error;
 	while (!s_exiting && !jsal_disabled()) {
-		sphere_run(true);
+		sphere_heartbeat(true);
 		
 		// order of operations matches Sphere 1.x.  not sure why, but Sphere 1.x
 		// checks for input AFTER an update for some reason...
@@ -658,10 +658,10 @@ map_engine_start(const char* filename, int framerate)
 		// clear the backbuffer between frames; as it turns out, a good deal of of v1 code relies
 		// on that behavior.
 		if (!screen_skipping_frame(g_screen))
-			dispatch_run(JOB_RENDER);
+			dispatch_run(JOB_ON_RENDER);
 		screen_flip(g_screen, s_frame_rate, false);
-		dispatch_run(JOB_UPDATE);
-		dispatch_run(JOB_TICK);
+		dispatch_run(JOB_ON_UPDATE);
+		dispatch_run(JOB_ON_TICK);
 		++g_tick_count;
 	}
 	reset_persons(false);

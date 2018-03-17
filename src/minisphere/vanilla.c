@@ -2181,7 +2181,7 @@ js_DetachPlayerInput(int num_args, bool is_ctor, int magic)
 static bool
 js_DoEvents(int num_args, bool is_ctor, int magic)
 {
-	sphere_run(true);
+	sphere_heartbeat(true);
 	jsal_push_boolean(true);
 	return true;
 }
@@ -2419,12 +2419,12 @@ js_FilledEllipse(int num_args, bool is_ctor, int magic)
 static bool
 js_FlipScreen(int num_args, bool is_ctor, int magic)
 {
-	sphere_run(true);
+	sphere_heartbeat(true);
 	if (!screen_skipping_frame(g_screen))
-		dispatch_run(JOB_RENDER);
+		dispatch_run(JOB_ON_RENDER);
 	screen_flip(g_screen, s_frame_rate, true);
-	dispatch_run(JOB_UPDATE);
-	dispatch_run(JOB_TICK);
+	dispatch_run(JOB_ON_UPDATE);
+	dispatch_run(JOB_ON_TICK);
 	++g_tick_count;
 	return false;
 }

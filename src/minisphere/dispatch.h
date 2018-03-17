@@ -38,10 +38,11 @@
 typedef
 enum job_type
 {
-	JOB_CLEANUP,
-	JOB_RENDER,
-	JOB_TICK,
-	JOB_UPDATE,
+	JOB_ON_EXIT,
+	JOB_ON_RENDER,
+	JOB_ON_TICK,
+	JOB_ON_UPDATE,
+	JOB_TYPE_MAX,
 } job_type_t;
 
 void    dispatch_init       (void);
