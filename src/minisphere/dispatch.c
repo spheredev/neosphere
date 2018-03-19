@@ -52,39 +52,45 @@ struct job
 static struct job* job_from_token (int64_t token);
 static int         sort_jobs      (const void* in_a, const void* in_b);
 
+static vector_t* s_exit_jobs;
 static bool      s_is_busy = false;
 static bool      s_need_sort = false;
 static int64_t   s_next_token = 1;
-static vector_t* s_onetime;
-static vector_t* s_recurring;
+static vector_t* s_onetime_jobs;
+static vector_t* s_recurring_jobs;
 
 void
 dispatch_init(void)
 {
 	console_log(1, "initializing dispatch manager");
-	s_onetime = vector_new(sizeof(struct job));
-	s_recurring = vector_new(sizeof(struct job));
-	vector_reserve(s_onetime, 32);
+	s_onetime_jobs = vector_new(sizeof(struct job));
+	s_recurring_jobs = vector_new(sizeof(struct job));
+	s_exit_jobs = vector_new(sizeof(struct job));
+	
+	// reserve extra slots for one-time jobs.  realloc() is fairly expensive and the
+	// one-time queue is likely to see very heavy traffic.
+	vector_reserve(s_onetime_jobs, 32);
 }
 
 void
 dispatch_uninit(void)
 {
 	console_log(1, "shutting down dispatch manager");
-	vector_free(s_onetime);
-	vector_free(s_recurring);
+	vector_free(s_onetime_jobs);
+	vector_free(s_recurring_jobs);
+	vector_free(s_exit_jobs);
 }
 
 bool
 dispatch_busy(void)
 {
-	return s_is_busy;
+	return s_is_busy || vector_len(s_onetime_jobs) > 0;
 }
 
 bool
 dispatch_finished(void)
 {
-	return !s_is_busy && vector_len(s_onetime) <= 0;
+	return !dispatch_busy() && vector_len(s_exit_jobs) == 0;
 }
 
 void
@@ -109,14 +115,14 @@ dispatch_cancel_all(bool recurring, bool also_critical)
 
 	iter_t iter;
 
-	iter = vector_enum(s_onetime);
+	iter = vector_enum(s_onetime_jobs);
 	while (job = iter_next(&iter)) {
 		if (!job->critical || also_critical)
 			job->finished = true;
 	}
 
 	if (recurring) {
-		iter = vector_enum(s_recurring);
+		iter = vector_enum(s_recurring_jobs);
 		while (job = iter_next(&iter))
 			job->finished = true;
 		s_need_sort = true;
@@ -128,8 +134,9 @@ int64_t
 dispatch_defer(script_t* script, uint32_t timeout, job_type_t hint, bool critical)
 {
 	struct job job;
+	vector_t*  queue;
 
-	if (s_onetime == NULL)
+	if (s_onetime_jobs == NULL)
 		return 0;
 	job.critical = critical;
 	job.finished = false;
@@ -138,7 +145,9 @@ dispatch_defer(script_t* script, uint32_t timeout, job_type_t hint, bool critica
 	job.paused = false;
 	job.timer = timeout;
 	job.token = s_next_token++;
-	vector_push(s_onetime, &job);
+	queue = hint == JOB_ON_EXIT ? s_exit_jobs
+		: s_onetime_jobs;
+	vector_push(queue, &job);
 	return job.token;
 }
 
@@ -159,7 +168,7 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 
 	iter_t iter;
 
-	if (s_recurring == NULL)
+	if (s_recurring_jobs == NULL)
 		return 0;
 	if (hint == JOB_ON_RENDER) {
 		// invert priority for render jobs.  this ensures higher priority jobs
@@ -173,11 +182,11 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 	job.script = script;
 	job.paused = false;
 	job.token = s_next_token++;
-	vector_push(s_recurring, &job);
+	vector_push(s_recurring_jobs, &job);
 
 	// check whether we should keep the event loop alive
 	s_is_busy = false;
-	iter = vector_enum(s_recurring);
+	iter = vector_enum(s_recurring_jobs);
 	while (iter_next(&iter))
 		s_is_busy |= !((struct job*)iter.ptr)->background;
 
@@ -190,42 +199,45 @@ void
 dispatch_run(job_type_t hint)
 {
 	struct job* job;
+	vector_t*   queue;
 
 	int i;
 
-	if (s_need_sort)
-		vector_sort(s_recurring, sort_jobs);
+	if (s_need_sort) {
+		vector_sort(s_recurring_jobs, sort_jobs);
+		s_need_sort = false;
+	}
 
 	// process recurring jobs
-	for (i = 0; i < vector_len(s_recurring); ++i) {
-		job = (struct job*)vector_get(s_recurring, i);
+	for (i = 0; i < vector_len(s_recurring_jobs); ++i) {
+		job = (struct job*)vector_get(s_recurring_jobs, i);
 		if (job->hint != hint)
 			continue;
 		if (!job->paused && !job->finished) {
 			script_run(job->script, true);  // invalidates job pointer
-			job = (struct job*)vector_get(s_recurring, i);
+			job = (struct job*)vector_get(s_recurring_jobs, i);
 		}
 		if (job->finished) {
 			script_unref(job->script);
-			vector_remove(s_recurring, i--);
+			vector_remove(s_recurring_jobs, i--);
 		}
 	}
 
 	// process one-time jobs
-	if (s_onetime != NULL) {
-		for (i = 0; i < vector_len(s_onetime); ++i) {
-			job = (struct job*)vector_get(s_onetime, i);
-			if (job->hint != hint)
-				continue;
-			if (!job->paused && job->timer-- == 0 && !job->finished) {
-				script_run(job->script, false);  // invalidates job pointer
-				job = (struct job*)vector_get(s_onetime, i);
-				job->finished = true;
-			}
-			if (job->finished) {
-				script_unref(job->script);
-				vector_remove(s_onetime, i--);
-			}
+	queue = hint == JOB_ON_EXIT ? s_exit_jobs
+		: s_onetime_jobs;
+	for (i = 0; i < vector_len(queue); ++i) {
+		job = (struct job*)vector_get(queue, i);
+		if (job->hint != hint)
+			continue;
+		if (!job->paused && job->timer-- == 0 && !job->finished) {
+			script_run(job->script, false);  // invalidates job pointer
+			job = (struct job*)vector_get(queue, i);
+			job->finished = true;
+		}
+		if (job->finished) {
+			script_unref(job->script);
+			vector_remove(queue, i--);
 		}
 	}
 }
@@ -237,12 +249,17 @@ job_from_token(int64_t token)
 	
 	iter_t iter;
 
-	iter = vector_enum(s_onetime);
+	iter = vector_enum(s_recurring_jobs);
 	while (job = iter_next(&iter)) {
 		if (token == job->token)
 			return job;
 	}
-	iter = vector_enum(s_recurring);
+	iter = vector_enum(s_onetime_jobs);
+	while (job = iter_next(&iter)) {
+		if (token == job->token)
+			return job;
+	}
+	iter = vector_enum(s_exit_jobs);
 	while (job = iter_next(&iter)) {
 		if (token == job->token)
 			return job;
