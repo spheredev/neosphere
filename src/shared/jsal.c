@@ -1367,16 +1367,21 @@ jsal_push_new_function(js_function_t callback, const char* name, int min_args, i
 int
 jsal_push_new_host_object(js_finalizer_t finalizer, size_t data_size, void* *out_data_ptr)
 {
+	/* [ ... prototype ] -> [ ... ] */
+	
 	void*          data_ptr;
 	JsValueRef     object;
 	struct object* object_info;
+	JsValueRef     prototype;
 
+	prototype = pop_value();
+	
 	object_info = calloc(1, sizeof(struct object) + data_size);
 	data_ptr = &object_info[1];
 	if (out_data_ptr != NULL)
 		*out_data_ptr = data_ptr;
 
-	JsCreateExternalObject(object_info, on_finalize_host_object, &object);
+	JsCreateExternalObjectWithPrototype(object_info, on_finalize_host_object, prototype, &object);
 	object_info->data = data_ptr;
 	object_info->finalizer = finalizer;
 	object_info->object = object;

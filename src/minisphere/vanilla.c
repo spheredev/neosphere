@@ -1203,9 +1203,8 @@ jsal_push_sphere_color(color_t color)
 {
 	color_t* color_ptr;
 
-	color_ptr = malloc(sizeof(color_t));
+	jsal_push_class_obj_fat(SV1_COLOR, false, sizeof(color_t), &color_ptr);
 	*color_ptr = color;
-	jsal_push_class_obj(SV1_COLOR, color_ptr, false);
 }
 
 void
@@ -6594,7 +6593,6 @@ js_ColorMatrix_toString(int num_args, bool is_ctor, int magic)
 static void
 js_Color_finalize(void* host_ptr)
 {
-	free(host_ptr);
 }
 
 static void
