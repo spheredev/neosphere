@@ -334,24 +334,25 @@ jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 			break;
 		}
 	}
-	
-	jsal_push_ref(prototype);
-	index = jsal_push_new_host_object(on_finalize_sphere_object, sizeof(struct object_data), &object_data);
-	object_data->class_id = class_id;
-	object_data->finalizer = finalizer;
-	object_data->ptr = udata;
 
-	// ChakraCore has really odd semantics for native functions: if the function
-	// is called as part of constructing a subclass, its `this` is equal to
-	// `new.target` instead of the object being constructed.
 	if (in_ctor) {
 		jsal_push_newtarget();
 		if (jsal_is_function(-1)) {
 			jsal_get_prop_key(-1, s_key_prototype);
-			jsal_set_prototype(-3);
+			jsal_remove(-2);
 		}
-		jsal_pop(1);
+		else {
+			jsal_push_ref(prototype);
+		}
 	}
+	else {
+		jsal_push_ref(prototype);
+	}
+
+	index = jsal_push_new_host_object(on_finalize_sphere_object, sizeof(struct object_data), &object_data);
+	object_data->class_id = class_id;
+	object_data->finalizer = finalizer;
+	object_data->ptr = udata;
 
 	return index;
 }
@@ -377,25 +378,26 @@ jsal_push_class_obj_fat(int class_id, bool in_ctor, size_t data_size, void* *out
 		}
 	}
 
-	jsal_push_ref(prototype);
+	if (in_ctor) {
+		jsal_push_newtarget();
+		if (jsal_is_function(-1)) {
+			jsal_get_prop_key(-1, s_key_prototype);
+			jsal_remove(-2);
+		}
+		else {
+			jsal_push_ref(prototype);
+		}
+	}
+	else {
+		jsal_push_ref(prototype);
+	}
+
 	index = jsal_push_new_host_object(on_finalize_sphere_object, sizeof(struct object_data) + data_size, &object_data);
 	object_data->class_id = class_id;
 	object_data->finalizer = finalizer;
 	object_data->ptr = &object_data[1];
 	if (out_data_ptr != NULL)
 		*out_data_ptr = object_data->ptr;
-
-	// ChakraCore has really odd semantics for native functions: if the function
-	// is called as part of constructing a subclass, its `this` is equal to
-	// `new.target` instead of the object being constructed.
-	if (in_ctor) {
-		jsal_push_newtarget();
-		if (jsal_is_function(-1)) {
-			jsal_get_prop_key(-1, s_key_prototype);
-			jsal_set_prototype(-3);
-		}
-		jsal_pop(1);
-	}
 
 	return index;
 }
