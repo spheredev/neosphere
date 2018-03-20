@@ -171,7 +171,7 @@ int          jsal_push_new_buffer          (js_buffer_type_t type, size_t length
 int          jsal_push_new_error           (js_error_type_t type, const char* format, ...);
 int          jsal_push_new_error_va        (js_error_type_t type, const char* format, va_list ap);
 int          jsal_push_new_function        (js_function_t callback, const char* name, int min_args, int magic);
-int          jsal_push_new_host_object     (void* data_ptr, js_finalizer_t finalizer);
+int          jsal_push_new_host_object     (js_finalizer_t finalizer, size_t data_size, void* *out_data_ptr);
 int          jsal_push_new_iterator        (int for_index);
 int          jsal_push_new_object          (void);
 int          jsal_push_new_promise         (js_ref_t* *out_resolver, js_ref_t* *out_rejector);

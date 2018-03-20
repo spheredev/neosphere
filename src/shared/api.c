@@ -335,11 +335,10 @@ jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 		}
 	}
 	
-	object_data = malloc(sizeof(struct object_data));
+	index = jsal_push_new_host_object(on_finalize_sphere_object, sizeof(struct object_data), &object_data);
 	object_data->class_id = class_id;
 	object_data->finalizer = finalizer;
 	object_data->ptr = udata;
-	index = jsal_push_new_host_object(object_data, on_finalize_sphere_object);
 
 	jsal_push_ref(prototype);
 	jsal_set_prototype(index);
@@ -408,7 +407,6 @@ on_finalize_sphere_object(void* host_ptr)
 	object = host_ptr;
 	if (object->finalizer != NULL) 
 		object->finalizer(object->ptr);
-	free(object);
 }
 
 static int

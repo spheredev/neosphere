@@ -1367,18 +1367,21 @@ jsal_push_new_function(js_function_t callback, const char* name, int min_args, i
 }
 
 int
-jsal_push_new_host_object(void* data, js_finalizer_t finalizer)
+jsal_push_new_host_object(js_finalizer_t finalizer, size_t data_size, void* *out_data_ptr)
 {
+	void*          data_ptr;
 	JsValueRef     object;
 	struct object* object_info;
 
-	object_info = calloc(1, sizeof(struct object));
-	JsCreateExternalObject(object_info, on_finalize_host_object, &object);
+	object_info = calloc(1, sizeof(struct object) + data_size);
+	data_ptr = &object_info[1];
+	if (out_data_ptr != NULL)
+		*out_data_ptr = data_ptr;
 
-	object_info->data = data;
+	JsCreateExternalObject(object_info, on_finalize_host_object, &object);
+	object_info->data = data_ptr;
 	object_info->finalizer = finalizer;
 	object_info->object = object;
-	
 	return push_value(object, false);
 }
 

@@ -67,8 +67,8 @@ dispatch_init(void)
 	s_recurring_jobs = vector_new(sizeof(struct job));
 	s_exit_jobs = vector_new(sizeof(struct job));
 	
-	// reserve extra slots for one-time jobs.  realloc() is fairly expensive and the
-	// one-time queue is likely to see very heavy traffic.
+	// reserve extra slots for one-time jobs.  realloc() is fairly expensive
+	// and the one-time queue gets very heavy traffic.
 	vector_reserve(s_onetime_jobs, 32);
 }
 
