@@ -390,15 +390,14 @@ jsal_call_method(int num_args)
 {
 	/* [ ... function this arg1..argN ] -> [ ... retval ] */
 
-	JsValueRef* arguments;
-	JsValueRef  function_ref;
-	int         offset;
-	JsValueRef  retval_ref;
+	JsValueRef arguments[16];
+	JsValueRef function_ref;
+	int        offset;
+	JsValueRef retval_ref;
 
 	int i;
 
 	num_args += 1;  // treat 'this' as first argument
-	arguments = malloc(num_args * sizeof(JsValueRef));
 	function_ref = get_value(-num_args - 1);
 	offset = -num_args;
 	for (i = 0; i < num_args; ++i)
@@ -414,9 +413,9 @@ jsal_compile(const char* filename)
 {
 	/* [ ... source ] -> [ ... function ] */
 
-	JsValueRef      function;
-	JsValueRef      name_string;
-	JsValueRef      source_string;
+	JsValueRef function;
+	JsValueRef name_string;
+	JsValueRef source_string;
 	
 	source_string = pop_value();
 	JsCreateString(filename, strlen(filename), &name_string);
@@ -431,15 +430,14 @@ jsal_construct(int num_args)
 {
 	/* [ ... constructor arg1..argN ] -> [ ... retval ] */
 
-	JsValueRef* arguments;
-	JsValueRef  function_ref;
-	int         offset;
-	JsValueRef  retval_ref;
-	JsValueRef  undefined;
+	JsValueRef arguments[16];
+	JsValueRef function_ref;
+	int        offset;
+	JsValueRef retval_ref;
+	JsValueRef undefined;
 
 	int i;
 
-	arguments = malloc((num_args + 1) * sizeof(JsValueRef));
 	function_ref = get_value(-num_args - 1);
 	offset = -num_args;
 	JsGetUndefinedValue(&undefined);

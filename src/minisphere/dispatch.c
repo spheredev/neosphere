@@ -88,7 +88,7 @@ dispatch_busy(void)
 }
 
 bool
-dispatch_finished(void)
+dispatch_can_exit(void)
 {
 	return !dispatch_busy() && vector_len(s_exit_jobs) == 0;
 }

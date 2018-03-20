@@ -1183,7 +1183,7 @@ handle_main_event_loop(int num_args, bool is_ctor, int magic)
 
 	// miniature "exit loop" to deal with onExit jobs
 	s_shutting_down = true;
-	while (!dispatch_finished() || jsal_busy()) {
+	while (!dispatch_can_exit() || jsal_busy()) {
 		sphere_heartbeat(true);
 		dispatch_run(JOB_ON_TICK);
 		dispatch_run(JOB_ON_EXIT);
