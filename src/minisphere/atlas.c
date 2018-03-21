@@ -125,10 +125,10 @@ atlas_xy(const atlas_t* atlas, int image_index)
 }
 
 void
-atlas_lock(atlas_t* atlas)
+atlas_lock(atlas_t* atlas, bool keep_contents)
 {
 	console_log(4, "locking atlas #%u for direct access", atlas->id);
-	atlas->lock = image_lock(atlas->image, true);
+	atlas->lock = image_lock(atlas->image, keep_contents);
 }
 
 void

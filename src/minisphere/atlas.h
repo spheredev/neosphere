@@ -42,7 +42,7 @@ void     atlas_free   (atlas_t* atlas);
 image_t* atlas_image  (const atlas_t* atlas);
 rect_t   atlas_xy     (const atlas_t* atlas, int image_index);
 image_t* atlas_load   (atlas_t* atlas, file_t* file, int index, int width, int height);
-void     atlas_lock   (atlas_t* atlas);
+void     atlas_lock   (atlas_t* atlas, bool keep_contents);
 void     atlas_unlock (atlas_t* atlas);
 
 #endif // SPHERE__ATLAS_H__INCLUDED

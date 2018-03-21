@@ -574,13 +574,13 @@ image_get_pixel(image_t* it, int x, int y)
 }
 
 image_lock_t*
-image_lock(image_t* it, bool readable)
+image_lock(image_t* it, bool keep_contents)
 {
 	ALLEGRO_LOCKED_REGION* ll_lock;
 	int                    lock_flag;
 
 	if (it->lock_count == 0) {
-		lock_flag = readable ? ALLEGRO_LOCK_READWRITE : ALLEGRO_LOCK_WRITEONLY;
+		lock_flag = keep_contents ? ALLEGRO_LOCK_READWRITE : ALLEGRO_LOCK_WRITEONLY;
 		if (!(ll_lock = al_lock_bitmap(it->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, lock_flag)))
 			return NULL;
 		image_ref(it);

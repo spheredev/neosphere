@@ -140,7 +140,7 @@ tileset_read(file_t* file)
 	// read in all the tile bitmaps (use atlasing)
 	if (!(atlas = atlas_new(rts.num_tiles, rts.tile_width, rts.tile_height)))
 		goto on_error;
-	atlas_lock(atlas);
+	atlas_lock(atlas, false);
 	for (i = 0; i < rts.num_tiles; ++i)
 		if (!(tiles[i].image = atlas_load(atlas, file, i, rts.tile_width, rts.tile_height)))
 			goto on_error;

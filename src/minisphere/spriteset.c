@@ -222,7 +222,7 @@ spriteset_load(const char* filename)
 	case 1: // RSSv1: very simple, 8 directions of 8 frames each
 		if (!(atlas = atlas_new(rss.num_images, rss.frame_width, rss.frame_height)))
 			goto on_error;
-		atlas_lock(atlas);
+		atlas_lock(atlas, false);
 		for (i = 0; i < rss.num_images; ++i) {
 			image = atlas_load(atlas, file, i, rss.frame_width, rss.frame_height);
 			spriteset_add_image(spriteset, image);
@@ -268,7 +268,7 @@ spriteset_load(const char* filename)
 			goto on_error;
 		file_seek(file, v2_data_offset, WHENCE_SET);
 		image_index = 0;
-		atlas_lock(atlas);
+		atlas_lock(atlas, false);
 		for (i = 0; i < rss.num_directions; ++i) {
 			if (file_read(file, &dir_v2, 1, sizeof(struct rss_dir_v2)) != 1)
 				goto on_error;
@@ -291,7 +291,7 @@ spriteset_load(const char* filename)
 	case 3: // RSSv3: can be done in a single pass thankfully
 		if (!(atlas = atlas_new(rss.num_images, rss.frame_width, rss.frame_height)))
 			goto on_error;
-		atlas_lock(atlas);
+		atlas_lock(atlas, false);
 		for (i = 0; i < rss.num_images; ++i) {
 			if (!(image = atlas_load(atlas, file, i, rss.frame_width, rss.frame_height)))
 				goto on_error;
