@@ -27,6 +27,7 @@ static void        on_finalize_sphere_object (void* host_ptr);
 static int         class_id_from_name        (const char* name);
 static const char* class_name_from_id        (int class_id);
 
+static int       s_class_index[4096];
 static vector_t* s_classes;
 static js_ref_t* s_key_prototype;
 
@@ -118,11 +119,15 @@ api_define_class(const char* name, int class_id, js_function_t constructor, js_f
 	jsal_push_new_object();
 	prototype = jsal_ref(-1);
 		
+	// IMPORTANT: `class_id` must NOT exceed 4095!
+	s_class_index[class_id] = vector_len(s_classes);
+
 	class_data.id = class_id;
 	class_data.finalizer = finalizer;
 	class_data.name = strdup(name);
 	class_data.prototype = prototype;
 	vector_push(s_classes, &class_data);
+
 
 	// register a global constructor, if applicable
 	if (constructor != NULL) {
@@ -333,17 +338,9 @@ jsal_push_class_fatobj(int class_id, bool in_ctor, size_t data_size, void* *out_
 	struct object_data* object_data;
 	js_ref_t*           prototype;
 
-	iter_t iter;
-
-	iter = vector_enum(s_classes);
-	while (iter_next(&iter)) {
-		class_data = iter.ptr;
-		if (class_id == class_data->id) {
-			finalizer = class_data->finalizer;
-			prototype = class_data->prototype;
-			break;
-		}
-	}
+	class_data = vector_get(s_classes, s_class_index[class_id]);
+	finalizer = class_data->finalizer;
+	prototype = class_data->prototype;
 
 	if (in_ctor) {
 		// note: accessing JS properties from native code is fairly expensive; if
