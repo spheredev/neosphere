@@ -8927,8 +8927,8 @@ js_Surface_setAlpha(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
 	jsal_pop(1);
-	if (!(lock = image_lock(image)))
-		jsal_error(JS_ERROR, "couldn't lock surface");
+	if (!(lock = image_lock(image, true)))
+		jsal_error(JS_ERROR, "Couldn't lock surface");
 	w = image_width(image);
 	h = image_height(image);
 	a = a < 0 ? 0 : a > 255 ? 255 : a;

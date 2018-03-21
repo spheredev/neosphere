@@ -4573,7 +4573,7 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 			jsal_error(JS_ERROR, "Not enough data in pixel buffer");
 		if (!(image = image_new(width, height)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-		if (!(lock = image_lock(image))) {
+		if (!(lock = image_lock(image, false))) {
 			image_unref(image);
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		}

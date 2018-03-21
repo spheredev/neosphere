@@ -147,7 +147,8 @@ font_load(const char* filename)
 
 	// pass 2: load glyph data
 	file_seek(file, glyph_start, WHENCE_SET);
-	if (!(lock = image_lock(atlas))) goto on_error;
+	if (!(lock = image_lock(atlas, false)))
+		goto on_error;
 	for (i = 0; i < rfn.num_chars; ++i) {
 		glyph = &font->glyphs[i];
 		if (file_read(file, &glyph_hdr, 1, sizeof(struct rfn_glyph_header)) != 1)
