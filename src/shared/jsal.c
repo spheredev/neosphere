@@ -1479,7 +1479,11 @@ jsal_push_number(double value)
 int
 jsal_push_ref(js_ref_t* ref)
 {
-	return push_value(ref->value, false);
+	// IMPORTANT: value is stored on the value stack as a weak reference.  to avoid a
+	//            nasty segfault, avoid calling jsal_unref() until you know for sure the
+	//            value is off the stack.
+	
+	return push_value(ref->value, true);
 }
 
 int

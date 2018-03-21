@@ -317,48 +317,15 @@ jsal_push_class_name(int class_id)
 int
 jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 {
-	struct class_data*  class_data;
-	js_finalizer_t      finalizer = NULL;
-	int                 index;
-	struct object_data* object_data;
-	js_ref_t*           prototype;
+	int index;
 	
-	iter_t iter;
-
-	iter = vector_enum(s_classes);
-	while (iter_next(&iter)) {
-		class_data = iter.ptr;
-		if (class_id == class_data->id) {
-			finalizer = class_data->finalizer;
-			prototype = class_data->prototype;
-			break;
-		}
-	}
-
-	if (in_ctor) {
-		jsal_push_newtarget();
-		if (jsal_is_function(-1)) {
-			jsal_get_prop_key(-1, s_key_prototype);
-			jsal_remove(-2);
-		}
-		else {
-			jsal_push_ref(prototype);
-		}
-	}
-	else {
-		jsal_push_ref(prototype);
-	}
-
-	index = jsal_push_new_host_object(on_finalize_sphere_object, sizeof(struct object_data), &object_data);
-	object_data->class_id = class_id;
-	object_data->finalizer = finalizer;
-	object_data->ptr = udata;
-
+	index = jsal_push_class_fatobj(class_id, in_ctor, 0, NULL);
+	jsal_set_class_ptr(index, udata);
 	return index;
 }
 
 int
-jsal_push_class_obj_fat(int class_id, bool in_ctor, size_t data_size, void* *out_data_ptr)
+jsal_push_class_fatobj(int class_id, bool in_ctor, size_t data_size, void* *out_data_ptr)
 {
 	struct class_data*  class_data;
 	js_finalizer_t      finalizer = NULL;
@@ -379,14 +346,14 @@ jsal_push_class_obj_fat(int class_id, bool in_ctor, size_t data_size, void* *out
 	}
 
 	if (in_ctor) {
+		jsal_push_callee();
 		jsal_push_newtarget();
-		if (jsal_is_function(-1)) {
+		if (!jsal_equal(-1, -2) && jsal_is_function(-1))
 			jsal_get_prop_key(-1, s_key_prototype);
-			jsal_remove(-2);
-		}
-		else {
+		else
 			jsal_push_ref(prototype);
-		}
+		jsal_remove(-2);
+		jsal_remove(-2);
 	}
 	else {
 		jsal_push_ref(prototype);

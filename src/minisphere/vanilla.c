@@ -1203,7 +1203,7 @@ jsal_push_sphere_color(color_t color)
 {
 	color_t* color_ptr;
 
-	jsal_push_class_obj_fat(SV1_COLOR, false, sizeof(color_t), &color_ptr);
+	jsal_push_class_fatobj(SV1_COLOR, false, sizeof(color_t), &color_ptr);
 	*color_ptr = color;
 }
 

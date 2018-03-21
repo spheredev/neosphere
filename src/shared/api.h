@@ -17,7 +17,7 @@ void   api_define_static_prop (const char* namespace_name, const char* name, js_
 bool  jsal_is_class_obj         (int index, int class_id);
 int   jsal_push_class_name      (int class_id);
 int   jsal_push_class_obj       (int class_id, void* udata, bool in_ctor);
-int   jsal_push_class_obj_fat   (int class_id, bool in_ctor, size_t data_size, void* *out_data_ptr);
+int   jsal_push_class_fatobj   (int class_id, bool in_ctor, size_t data_size, void* *out_data_ptr);
 int   jsal_push_class_prototype (int class_id);
 void* jsal_require_class_obj    (int index, int class_id);
 void  jsal_set_class_ptr        (int index, void* ptr);

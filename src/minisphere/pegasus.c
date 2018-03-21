@@ -1020,7 +1020,7 @@ jsal_pegasus_push_color(color_t color, bool in_ctor)
 {
 	color_t* color_ptr;
 	
-	jsal_push_class_obj_fat(PEGASUS_COLOR, in_ctor, sizeof(color_t), &color_ptr);
+	jsal_push_class_fatobj(PEGASUS_COLOR, in_ctor, sizeof(color_t), &color_ptr);
 	*color_ptr = color;
 }
 
@@ -1029,7 +1029,7 @@ jsal_pegasus_push_job_token(int64_t token)
 {
 	int64_t* ptr;
 
-	jsal_push_class_obj_fat(PEGASUS_JOB_TOKEN, false, sizeof(int64_t), &ptr);
+	jsal_push_class_fatobj(PEGASUS_JOB_TOKEN, false, sizeof(int64_t), &ptr);
 	*ptr = token;
 }
 
@@ -1092,7 +1092,7 @@ create_joystick_objects(void)
 	jsal_push_new_array();
 	num_devices = joy_num_devices();
 	for (i = 0; i < num_devices; ++i) {
-		jsal_push_class_obj_fat(PEGASUS_JOYSTICK, false, sizeof(int), &device);
+		jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), &device);
 		jsal_put_prop_index(-2, i);
 		*device = i;
 	}
@@ -2565,7 +2565,7 @@ js_Joystick_get_Null(int num_args, bool is_ctor, int magic)
 {
 	int* device;
 
-	jsal_push_class_obj_fat(PEGASUS_JOYSTICK, false, sizeof(int), &device);
+	jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), &device);
 	*device = -1;
 
 	cache_value_to_this("Null");
