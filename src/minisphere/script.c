@@ -191,7 +191,7 @@ script_run(script_t* script, bool allow_reentry)
 
 	// execute the script!
 	script->is_in_use = true;
-	jsal_push_ref(script->function);
+	jsal_push_ref_weak(script->function);
 	jsal_call(0);
 	jsal_pop(1);
 	script->is_in_use = was_in_use;

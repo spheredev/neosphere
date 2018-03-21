@@ -933,6 +933,7 @@ on_json_error:
 	error_ref = jsal_ref(-1);
 	jsal_set_top(stack_top);
 	jsal_push_ref(error_ref);
+	jsal_unref(error_ref);
 	return false;
 
 on_error:

@@ -346,17 +346,20 @@ jsal_push_class_fatobj(int class_id, bool in_ctor, size_t data_size, void* *out_
 	}
 
 	if (in_ctor) {
+		// note: accessing JS properties from native code is fairly expensive; if
+		//       `new.target` is the same as the constructor actually called (not a subclass),
+		//       just use the known prototype.  this speeds up object creation a bit.
 		jsal_push_callee();
 		jsal_push_newtarget();
 		if (!jsal_equal(-1, -2) && jsal_is_function(-1))
 			jsal_get_prop_key(-1, s_key_prototype);
 		else
-			jsal_push_ref(prototype);
+			jsal_push_ref_weak(prototype);
 		jsal_remove(-2);
 		jsal_remove(-2);
 	}
 	else {
-		jsal_push_ref(prototype);
+		jsal_push_ref_weak(prototype);
 	}
 
 	index = jsal_push_new_host_object(on_finalize_sphere_object, sizeof(struct object_data) + data_size, &object_data);
@@ -383,7 +386,7 @@ jsal_push_class_prototype(int class_id)
 			break;
 	}
 
-	return jsal_push_ref(class_data->prototype);
+	return jsal_push_ref_weak(class_data->prototype);
 }
 
 void*

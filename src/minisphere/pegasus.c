@@ -1470,7 +1470,7 @@ js_Sphere_setResolution(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid screen resolution '%dx%d'", width, height);
 	screen_resize(g_screen, width, height);
 
-	jsal_push_ref(s_screen_obj);
+	jsal_push_ref_weak(s_screen_obj);
 	jsal_del_prop_string(-1, "width");
 	jsal_del_prop_string(-1, "height");
 
@@ -1498,7 +1498,7 @@ js_Sphere_sleep(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid sleep timeout '%d'", num_frames);
 
 	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref(resolver);
+	jsal_push_ref_weak(resolver);
 	script = script_new_function(-1);
 	jsal_pop(1);
 	jsal_unref(resolver);

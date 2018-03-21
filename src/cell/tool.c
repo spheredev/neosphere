@@ -107,7 +107,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 
 	if (fs_stat(fs, path_cstr(out_path), &stats) == 0)
 		last_mtime = stats.st_mtime;
-	jsal_push_ref(tool->callback_ptr);
+	jsal_push_ref_weak(tool->callback_ptr);
 	jsal_push_string(path_cstr(out_path));
 	jsal_push_new_array();
 	iter = vector_enum(in_paths);

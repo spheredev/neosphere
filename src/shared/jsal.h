@@ -180,6 +180,7 @@ int          jsal_push_newtarget           (void);
 int          jsal_push_null                (void);
 int          jsal_push_number              (double value);
 int          jsal_push_ref                 (js_ref_t* ref);
+int          jsal_push_ref_weak            (js_ref_t* ref);
 int          jsal_push_sprintf             (const char* format, ...);
 int          jsal_push_string              (const char* value);
 int          jsal_push_this                (void);
