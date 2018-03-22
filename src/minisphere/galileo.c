@@ -148,7 +148,7 @@ galileo_reset(void)
 {
 	// note: this resets internal render state to the default settings for Sphere v1.
 	//       Sv1 APIs should call this before drawing anything; doing so avoids Galileo
-	//       haivng to undo its own state changes all the time, keeping things snappy.
+	//       having to undo its own state changes all the time, keeping things snappy.
 
 	image_render_to(screen_backbuffer(g_screen), NULL);
 	shader_use(NULL, false);

@@ -2417,13 +2417,15 @@ js_Font_drawText(int num_args, bool is_ctor, int magic)
 	if (num_args >= 6)
 		width = jsal_require_int(5);
 
-	if (surface == screen_backbuffer(g_screen) && screen_skipping_frame(g_screen))
+	if (surface == screen_backbuffer(g_screen) && screen_skipping_frame(g_screen)) {
 		return false;
+	}
 	else {
 		image_render_to(surface, NULL);
 		shader_use(galileo_shader(), false);
-		if (num_args < 6)
+		if (num_args < 6) {
 			font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
+		}
 		else {
 			wraptext = wraptext_new(text, font, width);
 			height = font_height(font);
@@ -2432,6 +2434,7 @@ js_Font_drawText(int num_args, bool is_ctor, int magic)
 			wraptext_free(wraptext);
 		}
 	}
+
 	return false;
 }
 

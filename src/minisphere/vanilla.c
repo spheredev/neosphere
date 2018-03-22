@@ -4785,19 +4785,27 @@ js_OutlinedRectangle(int num_args, bool is_ctor, int magic)
 static bool
 js_OutlinedRoundRectangle(int num_args, bool is_ctor, int magic)
 {
-	int n_args = jsal_get_top();
-	float x = jsal_to_int(0) + 0.5;
-	float y = jsal_to_int(1) + 0.5;
-	int w = jsal_to_int(2);
-	int h = jsal_to_int(3);
-	float radius = jsal_to_number(4);
-	color_t color = jsal_require_sphere_color(5);
-	int thickness = n_args >= 7 ? jsal_to_int(6) : 1;
+	color_t color;
+	double  height;
+	double  radius;
+	double  thickness = 1.0;
+	double  width;
+	double  x;
+	double  y;
+	
+	x = trunc(jsal_to_number(0)) + 0.5;
+	y = trunc(jsal_to_number(1)) + 0.5;
+	width = trunc(jsal_to_number(2));
+	height = trunc(jsal_to_number(3));
+	radius = jsal_to_number(4);
+	color = jsal_require_sphere_color(5);
+	if (num_args >= 7)
+		thickness = trunc(jsal_to_number(6));
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	al_draw_rounded_rectangle(x, y, x + w - 1, y + h - 1, radius, radius, nativecolor(color), thickness);
+	al_draw_rounded_rectangle(x, y, x + width - 1, y + height - 1, radius, radius, nativecolor(color), thickness);
 	return false;
 }
 
@@ -4920,16 +4928,22 @@ js_QueuePersonScript(int num_args, bool is_ctor, int magic)
 static bool
 js_Rectangle(int num_args, bool is_ctor, int magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-	int w = jsal_to_int(2);
-	int h = jsal_to_int(3);
-	color_t color = jsal_require_sphere_color(4);
+	color_t color;
+	double  height;
+	double  width;
+	double  x;
+	double  y;
+	
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	width = trunc(jsal_to_number(2));
+	height = trunc(jsal_to_number(3));
+	color = jsal_require_sphere_color(4);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
+	al_draw_filled_rectangle(x, y, x + width, y + height, nativecolor(color));
 	return false;
 }
 
@@ -4939,6 +4953,7 @@ js_RemoveDirectory(int num_args, bool is_ctor, int magic)
 	const char* name;
 
 	name = jsal_require_pathname(0, "save", true, true);
+
 	if (!game_rmdir(g_game, name))
 		jsal_error(JS_ERROR, "couldn't remove directory '%s'", name);
 	return false;
@@ -4950,6 +4965,7 @@ js_RemoveFile(int num_args, bool is_ctor, int magic)
 	const char* filename;
 
 	filename = jsal_require_pathname(0, "save", true, true);
+
 	if (!game_unlink(g_game, filename))
 		jsal_error(JS_ERROR, "couldn't delete file '%s'", filename);
 	return false;
@@ -5095,17 +5111,24 @@ js_RestartGame(int num_args, bool is_ctor, int magic)
 static bool
 js_RoundRectangle(int num_args, bool is_ctor, int magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-	int w = jsal_to_int(2);
-	int h = jsal_to_int(3);
-	float radius = jsal_to_number(4);
-	color_t color = jsal_require_sphere_color(5);
+	color_t color;
+	double  height;
+	double  radius;
+	double  width;
+	double  x;
+	double  y;
+
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	width = trunc(jsal_to_number(2));
+	height = trunc(jsal_to_number(3));
+	radius = jsal_to_number(4);
+	color = jsal_require_sphere_color(5);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	al_draw_filled_rounded_rectangle(x, y, x + w, y + h, radius, radius, nativecolor(color));
+	al_draw_filled_rounded_rectangle(x, y, x + width, y + height, radius, radius, nativecolor(color));
 	return false;
 }
 
