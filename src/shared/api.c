@@ -108,12 +108,12 @@ api_define_const(const char* enum_name, const char* name, double value)
 }
 
 void
-api_define_class(const char* name, int class_id, js_function_t constructor, js_finalizer_t finalizer)
+api_define_class(const char* name, int class_id, js_function_t constructor, js_finalizer_t finalizer, int magic)
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
 
-	api_define_subclass(name, class_id, -1, constructor, finalizer);
+	api_define_subclass(name, class_id, -1, constructor, finalizer, magic);
 }
 
 void
@@ -257,7 +257,7 @@ api_define_static_prop(const char* namespace_name, const char* name, js_function
 }
 
 void
-api_define_subclass(const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer)
+api_define_subclass(const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer, int magic)
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
@@ -285,7 +285,7 @@ api_define_subclass(const char* name, int class_id, int super_id, js_function_t 
 
 	// register a global constructor, if applicable
 	if (constructor != NULL) {
-		jsal_push_constructor(constructor, name, 0, 0);
+		jsal_push_constructor(constructor, name, 0, magic);
 
 		jsal_push_new_object();
 		jsal_dup(-3);

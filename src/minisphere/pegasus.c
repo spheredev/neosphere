@@ -397,7 +397,6 @@ static bool js_SoundStream_pause             (int num_args, bool is_ctor, int ma
 static bool js_SoundStream_stop              (int num_args, bool is_ctor, int magic);
 static bool js_SoundStream_write             (int num_args, bool is_ctor, int magic);
 static bool js_Surface_get_Screen            (int num_args, bool is_ctor, int magic);
-static bool js_new_Surface                   (int num_args, bool is_ctor, int magic);
 static bool js_Surface_get_height            (int num_args, bool is_ctor, int magic);
 static bool js_Surface_get_transform         (int num_args, bool is_ctor, int magic);
 static bool js_Surface_get_width             (int num_args, bool is_ctor, int magic);
@@ -416,8 +415,8 @@ static bool js_new_Texture                   (int num_args, bool is_ctor, int ma
 static bool js_Texture_get_fileName          (int num_args, bool is_ctor, int magic);
 static bool js_Texture_get_height            (int num_args, bool is_ctor, int magic);
 static bool js_Texture_get_width             (int num_args, bool is_ctor, int magic);
-static bool js_Texture_download              (int num_args, bool is_ctor, int magic);
-static bool js_Texture_upload                (int num_args, bool is_ctor, int magic);
+static bool js_Surface_download              (int num_args, bool is_ctor, int magic);
+static bool js_Surface_upload                (int num_args, bool is_ctor, int magic);
 static bool js_new_Transform                 (int num_args, bool is_ctor, int magic);
 static bool js_Transform_get_matrix          (int num_args, bool is_ctor, int magic);
 static bool js_Transform_set_matrix          (int num_args, bool is_ctor, int magic);
@@ -447,7 +446,6 @@ static void js_Shape_finalize           (void* host_ptr);
 static void js_Socket_finalize          (void* host_ptr);
 static void js_Sound_finalize           (void* host_ptr);
 static void js_SoundStream_finalize     (void* host_ptr);
-static void js_Surface_finalize         (void* host_ptr);
 static void js_TextDecoder_finalize     (void* host_ptr);
 static void js_TextEncoder_finalize     (void* host_ptr);
 static void js_Texture_finalize         (void* host_ptr);
@@ -534,7 +532,7 @@ pegasus_init(void)
 	api_define_function("Sphere", "setResolution", js_Sphere_setResolution, 0);
 	api_define_function("Sphere", "shutDown", js_Sphere_shutDown, 0);
 	api_define_function("Sphere", "sleep", js_Sphere_sleep, 0);
-	api_define_class("Color", PEGASUS_COLOR, js_new_Color, js_Color_finalize);
+	api_define_class("Color", PEGASUS_COLOR, js_new_Color, js_Color_finalize, 0);
 	api_define_function("Color", "is", js_Color_is, 0);
 	api_define_function("Color", "mix", js_Color_mix, 0);
 	api_define_function("Color", "of", js_Color_of, 0);
@@ -545,7 +543,7 @@ pegasus_init(void)
 	api_define_property("Color", "a", true, js_Color_get_a, js_Color_set_a);
 	api_define_method("Color", "clone", js_Color_clone, 0);
 	api_define_method("Color", "fadeTo", js_Color_fadeTo, 0);
-	api_define_class("DirectoryStream", PEGASUS_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize);
+	api_define_class("DirectoryStream", PEGASUS_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize, 0);
 	api_define_property("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
 	api_define_property("DirectoryStream", "fileName", false, js_DirectoryStream_get_fileName, NULL);
 	api_define_property("DirectoryStream", "position", false, js_DirectoryStream_get_position, js_DirectoryStream_set_position);
@@ -559,14 +557,14 @@ pegasus_init(void)
 	api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 	api_define_function("Dispatch", "onRender", js_Dispatch_onRender, 0);
 	api_define_function("Dispatch", "onUpdate", js_Dispatch_onUpdate, 0);
-	api_define_class("FileStream", PEGASUS_FILE_STREAM, js_new_FileStream, js_FileStream_finalize);
+	api_define_class("FileStream", PEGASUS_FILE_STREAM, js_new_FileStream, js_FileStream_finalize, 0);
 	api_define_method("FileStream", "dispose", js_FileStream_dispose, 0);
 	api_define_property("FileStream", "fileName", false, js_FileStream_get_fileName, NULL);
 	api_define_property("FileStream", "fileSize", false, js_FileStream_get_fileSize, NULL);
 	api_define_property("FileStream", "position", false, js_FileStream_get_position, js_FileStream_set_position);
 	api_define_method("FileStream", "read", js_FileStream_read, 0);
 	api_define_method("FileStream", "write", js_FileStream_write, 0);
-	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize);
+	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize, 0);
 	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL);
 	api_define_property("Font", "fileName", false, js_Font_get_fileName, NULL);
 	api_define_property("Font", "height", false, js_Font_get_height, NULL);
@@ -584,12 +582,12 @@ pegasus_init(void)
 	api_define_function("FS", "removeDirectory", js_FS_removeDirectory, 0);
 	api_define_function("FS", "rename", js_FS_rename, 0);
 	api_define_function("FS", "writeFile", js_FS_writeFile, 0);
-	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize);
-	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, js_JobToken_finalize);
+	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize, 0);
+	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, js_JobToken_finalize, 0);
 	api_define_method("JobToken", "cancel", js_JobToken_cancel, 0);
 	api_define_method("JobToken", "pause", js_JobToken_pause_resume, (int)true);
 	api_define_method("JobToken", "resume", js_JobToken_pause_resume, (int)false);
-	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, js_Joystick_finalize);
+	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, js_Joystick_finalize, 0);
 	api_define_static_prop("Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function("Joystick", "getDevices", js_Joystick_getDevices, 0);
 	api_define_property("Joystick", "name", false, js_Joystick_get_name, NULL);
@@ -597,7 +595,7 @@ pegasus_init(void)
 	api_define_property("Joystick", "numButtons", false, js_Joystick_get_numButtons, NULL);
 	api_define_method("Joystick", "getPosition", js_Joystick_getPosition, 0);
 	api_define_method("Joystick", "isPressed", js_Joystick_isPressed, 0);
-	api_define_class("Keyboard", PEGASUS_KEYBOARD, NULL, NULL);
+	api_define_class("Keyboard", PEGASUS_KEYBOARD, NULL, NULL, 0);
 	api_define_static_prop("Keyboard", "Default", js_Keyboard_get_Default, NULL);
 	api_define_property("Keyboard", "capsLock", false, js_Keyboard_get_capsLock, NULL);
 	api_define_property("Keyboard", "numLock", false, js_Keyboard_get_numLock, NULL);
@@ -606,21 +604,21 @@ pegasus_init(void)
 	api_define_method("Keyboard", "clearQueue", js_Keyboard_clearQueue, 0);
 	api_define_method("Keyboard", "getKey", js_Keyboard_getKey, 0);
 	api_define_method("Keyboard", "isPressed", js_Keyboard_isPressed, 0);
-	api_define_class("Mixer", PEGASUS_MIXER, js_new_Mixer, js_Mixer_finalize);
+	api_define_class("Mixer", PEGASUS_MIXER, js_new_Mixer, js_Mixer_finalize, 0);
 	api_define_static_prop("Mixer", "Default", js_Mixer_get_Default, NULL);
 	api_define_property("Mixer", "volume", false, js_Mixer_get_volume, js_Mixer_set_volume);
-	api_define_class("Model", PEGASUS_MODEL, js_new_Model, js_Model_finalize);
+	api_define_class("Model", PEGASUS_MODEL, js_new_Model, js_Model_finalize, 0);
 	api_define_property("Model", "shader", false, js_Model_get_shader, js_Model_set_shader);
 	api_define_property("Model", "transform", false, js_Model_get_transform, js_Model_set_transform);
 	api_define_method("Model", "draw", js_Model_draw, 0);
-	api_define_class("Mouse", PEGASUS_MOUSE, NULL, NULL);
+	api_define_class("Mouse", PEGASUS_MOUSE, NULL, NULL, 0);
 	api_define_static_prop("Mouse", "Default", js_Mouse_get_Default, NULL);
 	api_define_property("Mouse", "x", false, js_Mouse_get_x, NULL);
 	api_define_property("Mouse", "y", false, js_Mouse_get_y, NULL);
 	api_define_method("Mouse", "clearQueue", js_Mouse_clearQueue, 0);
 	api_define_method("Mouse", "getEvent", js_Mouse_getEvent, 0);
 	api_define_method("Mouse", "isPressed", js_Mouse_isPressed, 0);
-	api_define_class("RNG", PEGASUS_RNG, js_new_RNG, js_RNG_finalize);
+	api_define_class("RNG", PEGASUS_RNG, js_new_RNG, js_RNG_finalize, 0);
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed, 0);
 	api_define_function("RNG", "fromState", js_RNG_fromState, 0);
 	api_define_property("RNG", "state", false, js_RNG_get_state, js_RNG_set_state);
@@ -630,14 +628,14 @@ pegasus_init(void)
 	api_define_function("SSj", "log", js_SSj_log, KI_LOG_NORMAL);
 	api_define_function("SSj", "now", js_SSj_now, 0);
 	api_define_function("SSj", "trace", js_SSj_log, KI_LOG_TRACE);
-	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize);
+	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize, 0);
 	api_define_property("Sample", "fileName", false, js_Sample_get_fileName, NULL);
 	api_define_method("Sample", "play", js_Sample_play, 0);
 	api_define_method("Sample", "stopAll", js_Sample_stopAll, 0);
-	api_define_class("Server", PEGASUS_SERVER, js_new_Server, js_Server_finalize);
+	api_define_class("Server", PEGASUS_SERVER, js_new_Server, js_Server_finalize, 0);
 	api_define_method("Server", "close", js_Server_close, 0);
 	api_define_method("Server", "accept", js_Server_accept, 0);
-	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize);
+	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize, 0);
 	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL);
 	api_define_method("Shader", "clone", js_Shader_clone, 0);
 	api_define_method("Shader", "setBoolean", js_Shader_setBoolean, 0);
@@ -649,12 +647,12 @@ pegasus_init(void)
 	api_define_method("Shader", "setIntArray", js_Shader_setIntArray, 0);
 	api_define_method("Shader", "setIntVector", js_Shader_setIntVector, 0);
 	api_define_method("Shader", "setMatrix", js_Shader_setMatrix, 0);
-	api_define_class("Shape", PEGASUS_SHAPE, js_new_Shape, js_Shape_finalize);
+	api_define_class("Shape", PEGASUS_SHAPE, js_new_Shape, js_Shape_finalize, 0);
 	api_define_property("Shape", "indexList", false, js_Shape_get_indexList, js_Shape_set_indexList);
 	api_define_property("Shape", "texture", false, js_Shape_get_texture, js_Shape_set_texture);
 	api_define_property("Shape", "vertexList", false, js_Shape_get_vertexList, js_Shape_set_vertexList);
 	api_define_method("Shape", "draw", js_Shape_draw, 0);
-	api_define_class("Socket", PEGASUS_SOCKET, js_new_Socket, js_Socket_finalize);
+	api_define_class("Socket", PEGASUS_SOCKET, js_new_Socket, js_Socket_finalize, 0);
 	api_define_property("Socket", "bytesPending", false, js_Socket_get_bytesPending, NULL);
 	api_define_property("Socket", "connected", false, js_Socket_get_connected, NULL);
 	api_define_property("Socket", "remoteAddress", false, js_Socket_get_remoteAddress, NULL);
@@ -663,7 +661,7 @@ pegasus_init(void)
 	api_define_method("Socket", "connectTo", js_Socket_connectTo, 0);
 	api_define_method("Socket", "read", js_Socket_read, 0);
 	api_define_method("Socket", "write", js_Socket_write, 0);
-	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize);
+	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize, 0);
 	api_define_property("Sound", "fileName", false, js_Sound_get_fileName, NULL);
 	api_define_property("Sound", "length", false, js_Sound_get_length, NULL);
 	api_define_property("Sound", "pan", false, js_Sound_get_pan, js_Sound_set_pan);
@@ -675,32 +673,25 @@ pegasus_init(void)
 	api_define_method("Sound", "pause", js_Sound_pause, 0);
 	api_define_method("Sound", "play", js_Sound_play, 0);
 	api_define_method("Sound", "stop", js_Sound_stop, 0);
-	api_define_class("SoundStream", PEGASUS_SOUND_STREAM, js_new_SoundStream, js_SoundStream_finalize);
+	api_define_class("SoundStream", PEGASUS_SOUND_STREAM, js_new_SoundStream, js_SoundStream_finalize, 0);
 	api_define_property("SoundStream", "length", false, js_SoundStream_get_length, NULL);
 	api_define_method("SoundStream", "pause", js_SoundStream_pause, 0);
 	api_define_method("SoundStream", "play", js_SoundStream_play, 0);
 	api_define_method("SoundStream", "stop", js_SoundStream_stop, 0);
 	api_define_method("SoundStream", "write", js_SoundStream_write, 0);
-	api_define_class("TextDecoder", PEGASUS_TEXT_DEC, js_new_TextDecoder, js_TextDecoder_finalize);
+	api_define_class("TextDecoder", PEGASUS_TEXT_DEC, js_new_TextDecoder, js_TextDecoder_finalize, 0);
 	api_define_property("TextDecoder", "encoding", false, js_TextDecoder_get_encoding, NULL);
 	api_define_property("TextDecoder", "fatal", false, js_TextDecoder_get_fatal, NULL);
 	api_define_property("TextDecoder", "ignoreBOM", false, js_TextDecoder_get_ignoreBOM, NULL);
 	api_define_method("TextDecoder", "decode", js_TextDecoder_decode, 0);
-	api_define_class("TextEncoder", PEGASUS_TEXT_ENC, js_new_TextEncoder, js_TextEncoder_finalize);
+	api_define_class("TextEncoder", PEGASUS_TEXT_ENC, js_new_TextEncoder, js_TextEncoder_finalize, 0);
 	api_define_property("TextEncoder", "encoding", false, js_TextEncoder_get_encoding, NULL);
 	api_define_method("TextEncoder", "encode", js_TextEncoder_encode, 0);
-	api_define_class("Texture", PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize);
+	api_define_class("Texture", PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_TEXTURE);
 	api_define_property("Texture", "fileName", false, js_Texture_get_fileName, NULL);
 	api_define_property("Texture", "height", false, js_Texture_get_height, NULL);
 	api_define_property("Texture", "width", false, js_Texture_get_width, NULL);
-	api_define_method("Texture", "download", js_Texture_download, 0);
-	api_define_method("Texture", "upload", js_Texture_upload, 0);
-	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Surface, js_Surface_finalize);
-	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
-	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
-	api_define_method("Surface", "clipTo", js_Surface_clipTo, 0);
-	api_define_method("Surface", "toTexture", js_Surface_toTexture, 0);
-	api_define_class("Transform", PEGASUS_TRANSFORM, js_new_Transform, js_Transform_finalize);
+	api_define_class("Transform", PEGASUS_TRANSFORM, js_new_Transform, js_Transform_finalize, 0);
 	api_define_property("Transform", "matrix", false, js_Transform_get_matrix, NULL);
 	api_define_method("Transform", "compose", js_Transform_compose, 0);
 	api_define_method("Transform", "identity", js_Transform_identity, 0);
@@ -709,7 +700,15 @@ pegasus_init(void)
 	api_define_method("Transform", "rotate", js_Transform_rotate, 0);
 	api_define_method("Transform", "scale", js_Transform_scale, 0);
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
-	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize);
+	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
+
+	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
+	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
+	api_define_method("Surface", "clipTo", js_Surface_clipTo, 0);
+	api_define_method("Surface", "download", js_Surface_download, 0);
+	api_define_method("Surface", "toTexture", js_Surface_toTexture, 0);
+	api_define_method("Surface", "upload", js_Surface_upload, 0);
 
 	api_define_const("FileOp", "Read", FILE_OP_READ);
 	api_define_const("FileOp", "Write", FILE_OP_WRITE);
@@ -4251,45 +4250,6 @@ js_Surface_get_Screen(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Surface(int num_args, bool is_ctor, int magic)
-{
-	int         n_args;
-	const char* filename;
-	color_t     fill_color;
-	image_t*    image;
-	image_t*    src_image;
-	int         width, height;
-
-	n_args = jsal_get_top();
-	if (n_args >= 2) {
-		width = jsal_require_int(0);
-		height = jsal_require_int(1);
-		fill_color = n_args >= 3 ? jsal_pegasus_require_color(2) : color_new(0, 0, 0, 0);
-		if (!(image = image_new(width, height)))
-			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-		image_fill(image, fill_color);
-	}
-	else if (jsal_is_class_obj(0, PEGASUS_TEXTURE)) {
-		src_image = jsal_require_class_obj(0, PEGASUS_TEXTURE);
-		if (!(image = image_dup(src_image)))
-			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-	}
-	else {
-		filename = jsal_require_pathname(0, NULL, false, false);
-		if (!(image = image_load(filename)))
-			jsal_error(JS_ERROR, "Couldn't load image file '%s'", filename);
-	}
-	jsal_push_class_obj(PEGASUS_SURFACE, image, true);
-	return true;
-}
-
-static void
-js_Surface_finalize(void* host_ptr)
-{
-	image_unref(host_ptr);
-}
-
-static bool
 js_Surface_get_height(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
@@ -4364,6 +4324,37 @@ js_Surface_clipTo(int num_args, bool is_ctor, int magic)
 }
 
 static bool
+js_Surface_download(int num_args, bool is_ctor, int magic)
+{
+	int            height;
+	image_t*       image;
+	const color_t* in_ptr;
+	image_lock_t*  lock;
+	color_t*       out_ptr;
+	int            width;
+
+	int y;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
+
+	width = image_width(image);
+	height = image_height(image);
+	if (!(lock = image_lock(image, false, true)))
+		jsal_error(JS_ERROR, "Couldn't download from GPU texture");
+	jsal_push_new_buffer(JS_UINT8ARRAY, width * height * sizeof(color_t));
+	out_ptr = jsal_get_buffer_ptr(-1, NULL);
+	in_ptr = lock->pixels;
+	for (y = 0; y < height; ++y) {
+		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
+		out_ptr += width;
+		in_ptr += lock->pitch;
+	}
+	image_unlock(image, lock);
+	return true;
+}
+
+static bool
 js_Surface_toTexture(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
@@ -4376,6 +4367,41 @@ js_Surface_toTexture(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	jsal_push_class_obj(PEGASUS_TEXTURE, new_image, false);
 	return true;
+}
+
+static bool
+js_Surface_upload(int num_args, bool is_ctor, int magic)
+{
+	const color_t* buffer;
+	size_t         buffer_size;
+	int            height;
+	image_t*       image;
+	const color_t* in_ptr;
+	image_lock_t*  lock;
+	color_t*       out_ptr;
+	int            width;
+
+	int y;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
+	buffer = jsal_require_buffer_ptr(0, &buffer_size);
+
+	width = image_width(image);
+	height = image_height(image);
+	if (buffer_size < width * height * sizeof(color_t))
+		jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
+	if (!(lock = image_lock(image, true, false)))
+		jsal_error(JS_ERROR, "Couldn't upload to GPU texture");
+	out_ptr = lock->pixels;
+	in_ptr = buffer;
+	for (y = 0; y < height; ++y) {
+		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
+		out_ptr += lock->pitch;
+		in_ptr += width;
+	}
+	image_unlock(image, lock);
+	return false;
 }
 
 static bool
@@ -4550,6 +4576,7 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 {
 	const color_t* buffer;
 	size_t         buffer_size;
+	int            class_id;
 	const char*    filename;
 	color_t        fill_color;
 	int            height;
@@ -4562,16 +4589,9 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 
 	int y;
 
-	if (num_args >= 3 && jsal_is_class_obj(2, PEGASUS_COLOR)) {
-		// create an Image filled with a single pixel value
-		width = jsal_require_int(0);
-		height = jsal_require_int(1);
-		fill_color = jsal_pegasus_require_color(2);
-		if (!(image = image_new(width, height)))
-			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-		image_fill(image, fill_color);
-	}
-	else if (num_args >= 3 && (buffer = jsal_get_buffer_ptr(2, &buffer_size))) {
+	class_id = magic;
+	
+	if (num_args >= 3 && (buffer = jsal_get_buffer_ptr(2, &buffer_size))) {
 		// create an Image from an ArrayBuffer or similar object
 		width = jsal_require_int(0);
 		height = jsal_require_int(1);
@@ -4592,9 +4612,19 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 		}
 		image_unlock(image, lock);
 	}
-	else if (jsal_is_class_obj(0, PEGASUS_SURFACE)) {
-		// create an Image from a Surface
-		src_image = jsal_require_class_obj(0, PEGASUS_SURFACE);
+	else if (num_args >= 2) {
+		// create a Texture filled with a single pixel value
+		width = jsal_require_int(0);
+		height = jsal_require_int(1);
+		fill_color = num_args >= 3 ? jsal_pegasus_require_color(2)
+			: color_new(0, 0, 0, 0);
+		if (!(image = image_new(width, height)))
+			jsal_error(JS_ERROR, "Couldn't create GPU texture");
+		image_fill(image, fill_color);
+	}
+	else if (jsal_is_class_obj(0, PEGASUS_TEXTURE)) {
+		// create a Texture from a Surface (or another Texture)
+		src_image = jsal_require_class_obj(0, PEGASUS_TEXTURE);
 		if (!(image = image_dup(src_image)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	}
@@ -4604,7 +4634,7 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "Couldn't load image file '%s'", filename);
 	}
-	jsal_push_class_obj(PEGASUS_TEXTURE, image, true);
+	jsal_push_class_obj(class_id, image, true);
 	return true;
 }
 
@@ -4654,72 +4684,6 @@ js_Texture_get_width(int num_args, bool is_ctor, int magic)
 	jsal_push_int(image_width(image));
 	cache_value_to_this("width");
 	return true;
-}
-
-static bool
-js_Texture_download(int num_args, bool is_ctor, int magic)
-{
-	int            height;
-	image_t*       image;
-	const color_t* in_ptr;
-	image_lock_t*  lock;
-	color_t*       out_ptr;
-	int            width;
-
-	int y;
-
-	jsal_push_this();
-	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
-
-	width = image_width(image);
-	height = image_height(image);
-	if (!(lock = image_lock(image, false, true)))
-		jsal_error(JS_ERROR, "Couldn't download from GPU texture");
-	jsal_push_new_buffer(JS_UINT8ARRAY, width * height * sizeof(color_t));
-	out_ptr = jsal_get_buffer_ptr(-1, NULL);
-	in_ptr = lock->pixels;
-	for (y = 0; y < height; ++y) {
-		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
-		out_ptr += width;
-		in_ptr += lock->pitch;
-	}
-	image_unlock(image, lock);
-	return true;
-}
-
-static bool
-js_Texture_upload(int num_args, bool is_ctor, int magic)
-{
-	const color_t* buffer;
-	size_t         buffer_size;
-	int            height;
-	image_t*       image;
-	const color_t* in_ptr;
-	image_lock_t*  lock;
-	color_t*       out_ptr;
-	int            width;
-
-	int y;
-
-	jsal_push_this();
-	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
-	buffer = jsal_require_buffer_ptr(0, &buffer_size);
-
-	width = image_width(image);
-	height = image_height(image);
-	if (buffer_size < width * height * sizeof(color_t))
-		jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
-	if (!(lock = image_lock(image, true, false)))
-		jsal_error(JS_ERROR, "Couldn't upload to GPU texture");
-	out_ptr = lock->pixels;
-	in_ptr = buffer;
-	for (y = 0; y < height; ++y) {
-		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
-		out_ptr += lock->pitch;
-		in_ptr += width;
-	}
-	image_unlock(image, lock);
-	return false;
 }
 
 static bool

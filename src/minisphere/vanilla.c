@@ -839,7 +839,7 @@ vanilla_register_api(void)
 	api_define_function(NULL, "UnbindKey", js_UnbindKey, 0);
 	api_define_function(NULL, "UpdateMapEngine", js_UpdateMapEngine, 0);
 
-	api_define_class("v1Animation", SV1_ANIMATION, NULL, js_Animation_finalize);
+	api_define_class("v1Animation", SV1_ANIMATION, NULL, js_Animation_finalize, 0);
 	api_define_property("v1Animation", "width", false, js_Animation_get_width, NULL);
 	api_define_property("v1Animation", "height", false, js_Animation_get_height, NULL);
 	api_define_method("v1Animation", "getDelay", js_Animation_getDelay, 0);
@@ -848,23 +848,23 @@ vanilla_register_api(void)
 	api_define_method("v1Animation", "drawZoomedFrame", js_Animation_drawZoomedFrame, 0);
 	api_define_method("v1Animation", "readNextFrame", js_Animation_readNextFrame, 0);
 
-	api_define_class("v1ByteArray", SV1_BYTE_ARRAY, NULL, js_ByteArray_finalize);
+	api_define_class("v1ByteArray", SV1_BYTE_ARRAY, NULL, js_ByteArray_finalize, 0);
 	api_define_property("v1ByteArray", "length", false, js_ByteArray_get_length, NULL);
 	api_define_method("v1ByteArray", "concat", js_ByteArray_concat, 0);
 	api_define_method("v1ByteArray", "slice", js_ByteArray_slice, 0);
 	api_define_method("v1ByteArray", "toString", js_ByteArray_toString, 0);
 
-	api_define_class("v1Color", SV1_COLOR, NULL, NULL);
+	api_define_class("v1Color", SV1_COLOR, NULL, NULL, 0);
 	api_define_property("v1Color", "alpha", true, js_Color_get_alpha, js_Color_set_alpha);
 	api_define_property("v1Color", "blue", true, js_Color_get_blue, js_Color_set_blue);
 	api_define_property("v1Color", "green", true, js_Color_get_green, js_Color_set_green);
 	api_define_property("v1Color", "red", true, js_Color_get_red, js_Color_set_red);
 	api_define_method("v1Color", "toString", js_Color_toString, 0);
 
-	api_define_class("v1ColorMatrix", SV1_COLOR_MATRIX, NULL, NULL);
+	api_define_class("v1ColorMatrix", SV1_COLOR_MATRIX, NULL, NULL, 0);
 	api_define_method("v1ColorMatrix", "toString", js_ColorMatrix_toString, 0);
 
-	api_define_class("v1File", SV1_FILE, NULL, js_File_finalize);
+	api_define_class("v1File", SV1_FILE, NULL, js_File_finalize, 0);
 	api_define_method("v1File", "close", js_File_close, 0);
 	api_define_method("v1File", "flush", js_File_flush, 0);
 	api_define_method("v1File", "getKey", js_File_getKey, 0);
@@ -873,7 +873,7 @@ vanilla_register_api(void)
 	api_define_method("v1File", "toString", js_File_toString, 0);
 	api_define_method("v1File", "write", js_File_write, 0);
 
-	api_define_class("v1Font", SV1_FONT, NULL, js_Font_finalize);
+	api_define_class("v1Font", SV1_FONT, NULL, js_Font_finalize, 0);
 	api_define_method("v1Font", "clone", js_Font_clone, 0);
 	api_define_method("v1Font", "drawText", js_Font_drawText, 0);
 	api_define_method("v1Font", "drawTextBox", js_Font_drawTextBox, 0);
@@ -888,7 +888,7 @@ vanilla_register_api(void)
 	api_define_method("v1Font", "toString", js_Font_toString, 0);
 	api_define_method("v1Font", "wordWrapString", js_Font_wordWrapString, 0);
 
-	api_define_class("v1Image", SV1_IMAGE, NULL, js_Image_finalize);
+	api_define_class("v1Image", SV1_IMAGE, NULL, js_Image_finalize, 0);
 	api_define_property("v1Image", "height", false, js_Image_get_height, NULL);
 	api_define_property("v1Image", "width", false, js_Image_get_width, NULL);
 	api_define_method("v1Image", "blit", js_Image_blit, 0);
@@ -902,13 +902,13 @@ vanilla_register_api(void)
 	api_define_method("v1Image", "zoomBlit", js_Image_zoomBlit, 0);
 	api_define_method("v1Image", "zoomBlitMask", js_Image_zoomBlitMask, 0);
 
-	api_define_class("v1Logger", SV1_LOGGER, NULL, js_Logger_finalize);
+	api_define_class("v1Logger", SV1_LOGGER, NULL, js_Logger_finalize, 0);
 	api_define_method("v1Logger", "toString", js_Logger_toString, 0);
 	api_define_method("v1Logger", "beginBlock", js_Logger_beginBlock, 0);
 	api_define_method("v1Logger", "endBlock", js_Logger_endBlock, 0);
 	api_define_method("v1Logger", "write", js_Logger_write, 0);
 
-	api_define_class("v1RawFile", SV1_RAW_FILE, NULL, js_RawFile_finalize);
+	api_define_class("v1RawFile", SV1_RAW_FILE, NULL, js_RawFile_finalize, 0);
 	api_define_method("v1RawFile", "close", js_RawFile_close, 0);
 	api_define_method("v1RawFile", "getPosition", js_RawFile_getPosition, 0);
 	api_define_method("v1RawFile", "getSize", js_RawFile_getSize, 0);
@@ -917,7 +917,7 @@ vanilla_register_api(void)
 	api_define_method("v1RawFile", "toString", js_RawFile_toString, 0);
 	api_define_method("v1RawFile", "write", js_RawFile_write, 0);
 
-	api_define_class("v1Socket", SV1_SOCKET, NULL, js_Socket_finalize);
+	api_define_class("v1Socket", SV1_SOCKET, NULL, js_Socket_finalize, 0);
 	api_define_method("v1Socket", "close", js_Socket_close, 0);
 	api_define_method("v1Socket", "getPendingReadSize", js_Socket_getPendingReadSize, 0);
 	api_define_method("v1Socket", "isConnected", js_Socket_isConnected, 0);
@@ -925,7 +925,7 @@ vanilla_register_api(void)
 	api_define_method("v1Socket", "toString", js_Socket_toString, 0);
 	api_define_method("v1Socket", "write", js_Socket_write, 0);
 
-	api_define_class("v1Sound", SV1_SOUND, NULL, js_Sound_finalize);
+	api_define_class("v1Sound", SV1_SOUND, NULL, js_Sound_finalize, 0);
 	api_define_method("v1Sound", "getLength", js_Sound_getLength, 0);
 	api_define_method("v1Sound", "getPan", js_Sound_getPan, 0);
 	api_define_method("v1Sound", "getPitch", js_Sound_getPitch, 0);
@@ -945,7 +945,7 @@ vanilla_register_api(void)
 	api_define_method("v1Sound", "stop", js_Sound_stop, 0);
 	api_define_method("v1Sound", "toString", js_Sound_toString, 0);
 
-	api_define_class("v1SoundEffect", SV1_SOUND_EFFECT, NULL, js_SoundEffect_finalize);
+	api_define_class("v1SoundEffect", SV1_SOUND_EFFECT, NULL, js_SoundEffect_finalize, 0);
 	api_define_method("v1SoundEffect", "getPan", js_SoundEffect_getPan, 0);
 	api_define_method("v1SoundEffect", "getPitch", js_SoundEffect_getPitch, 0);
 	api_define_method("v1SoundEffect", "getVolume", js_SoundEffect_getVolume, 0);
@@ -956,13 +956,13 @@ vanilla_register_api(void)
 	api_define_method("v1SoundEffect", "stop", js_SoundEffect_stop, 0);
 	api_define_method("v1SoundEffect", "toString", js_SoundEffect_toString, 0);
 
-	api_define_class("v1Spriteset", SV1_SPRITESET, NULL, js_Spriteset_finalize);
+	api_define_class("v1Spriteset", SV1_SPRITESET, NULL, js_Spriteset_finalize, 0);
 	api_define_property("v1Spriteset", "filename", false, js_Spriteset_get_filename, NULL);
 	api_define_method("v1Spriteset", "clone", js_Spriteset_clone, 0);
 	api_define_method("v1Spriteset", "save", js_Spriteset_save, 0);
 	api_define_method("v1Spriteset", "toString", js_Spriteset_toString, 0);
 
-	api_define_class("v1Surface", SV1_SURFACE, NULL, js_Surface_finalize);
+	api_define_class("v1Surface", SV1_SURFACE, NULL, js_Surface_finalize, 0);
 	api_define_property("v1Surface", "height", false, js_Surface_get_height, NULL);
 	api_define_property("v1Surface", "width", false, js_Surface_get_width, NULL);
 	api_define_method("v1Surface", "applyColorFX", js_Surface_applyColorFX, 0);
@@ -1007,7 +1007,7 @@ vanilla_register_api(void)
 	api_define_method("v1Surface", "zoomBlitMaskSurface", js_Surface_zoomBlitMaskSurface, 0);
 	api_define_method("v1Surface", "zoomBlitSurface", js_Surface_zoomBlitSurface, 0);
 
-	api_define_class("v1WindowStyle", SV1_WINDOW_STYLE, NULL, js_WindowStyle_finalize);
+	api_define_class("v1WindowStyle", SV1_WINDOW_STYLE, NULL, js_WindowStyle_finalize, 0);
 	api_define_method("v1WindowStyle", "drawWindow", js_WindowStyle_drawWindow, 0);
 	api_define_method("v1WindowStyle", "getColorMask", js_WindowStyle_getColorMask, 0);
 	api_define_method("v1WindowStyle", "setColorMask", js_WindowStyle_setColorMask, 0);

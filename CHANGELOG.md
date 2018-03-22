@@ -5,8 +5,8 @@ v5.2.0 - TBD
 ------------
 
 * Adds `Dispatch.onExit()`, which lets you run code after the event loop exits.
-* Adds `Texture#upload()` and `Texture#download()` to allow direct manipulation
-  of a texture's RGBA bitmap.
+* Adds `Surface#upload()` and `Surface#download()` to allow direct manipulation
+  of a surface's RGBA bitmap.
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
 * Adds support for render-to-texture by allowing `Surface` objects to be used
   as textures, without calling `.toTexture()`.

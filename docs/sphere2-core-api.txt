@@ -1616,21 +1616,30 @@ need to draw directly to the screen; it sometimes makes sense to compose
 complex parts of a scene in advance, offscreen, so that you don't have to
 redraw them every frame.
 
+A Surface object can be used anywhere a texture is expected.  This avoids the
+need to make a copy of the surface and additionally enables render-to-texture
+effects to be implemented.
+
 Surface.Screen [non-replaceable]
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
     the event loop regains control.
 
-new Surface(width, height[, fill_color]);
+new Surface(width, height[, content]);
 
-    Constructs a new surface with the specified width and height, optionally
-    filled with 'fill_color'.  If a fill color is not provided, the created
-    surface will be filled with transparent pixels.
+    Constructs a new Surface with the specified content.  `width` and `height`
+    specify the size in pixels of the surface, and `content` is either a
+    `Color` (in which case the surface will be filled with that color) or a
+    buffer object holding the RGBA pixel data to use to initialize the image.
+    The pixel data should not be padded (i.e. stride equal to width).
 
-    Surfaces are meant to used as render targets from drawing operations.  This
-    enables static elements of a scene, such as a HUD, to be rendered in
-    advance, potentially improving performance.
+    If `content` is not specified, the surface will be filled with transparent
+    pixels (`Color.Transparent`).
+
+    Note: When passing a buffer for `content` and the buffer doesn't contain
+          enough pixel data to cover the entire surface, a RangeError will be
+          thrown.
 
 new Surface(filename);
 
@@ -1661,11 +1670,26 @@ Surface#clipTo(x, y, width, height);
     Note: When setting the clipping rectangle for the screen, the effect only
           lasts until the next frame.
 
+Surface#download();
+
+    Downloads the 32-bit RGBA pixel data from the surface and returns it as a
+	new Uint8Array.
+
+	Note: Downloading data from the GPU is a rather slow operation and
+	      shouldn't be done at render time if you can avoid it.  Use a Surface
+		  for render-to-texture effects if at all possible.
+
 Surface#toTexture();
 
     Returns a Texture created from the current contents of this Surface.  Note
     that drawing to the surface afterwards will not affect the texture, which
     is read-only.
+
+Surface#upload(content);
+
+    Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
+    array) to the surface.  Enough data must be provided to completely rewrite
+    the surface or a RangeError will be thrown.
 
 
 `Texture` Object
@@ -1684,15 +1708,26 @@ new Texture(filename);
     Note that Textures are read-only.  If you need a writable image, you should
     use a Surface object instead.
 
-new Texture(width, height, pixels);
+new Texture(width, height[, content]);
 
-    Constructs a new Texture from a pixel buffer.  `width` and `height` specify
-    the size of the texture image, and `pixels` is an ArrayBuffer containing
-    the RGBA pixel data to use to initialize the image.  The pixel data should
-    not be padded (i.e. stride is equal to width).
+    Constructs a new Texture with the specified content.  `width` and `height`
+    specify the size in pixels of the texture, and `content` is either a
+    `Color` (in which case the texture will be filled with that color) or a
+    buffer object holding the RGBA pixel data to use to initialize the image.
+    The pixel data should not be padded (i.e. stride equal to width).
 
-    An error is thrown if the ArrayBuffer doesn't contain enough pixel data to
-    describe the entire texture.
+    If `content` is not specified, the texture will be filled with transparent
+    pixels (`Color.Transparent`).
+
+    Note: When passing a buffer for `content` and the buffer doesn't contain
+          enough pixel data to cover the entire texture, a RangeError will be
+          thrown.
+
+new Texture(surface);
+
+    Constructs a new Texture from the contents of `surface`, a Surface object.
+    Subsequent modifications to the surface will not affect the contents of the
+    new texture.
 
 Texture#fileName [read-only]
 
@@ -1704,21 +1739,6 @@ Texture#width [read-only]
 Texture#height [read-only]
 
     Gets the width or height of the texture, in pixels.
-
-Texture#download();
-
-    Downloads the 32-bit RGBA pixel data from the texture and returns it as a
-	new Uint8Array.
-
-	Note: Downloading data from the GPU is a rather slow operation and
-	      shouldn't be done at render time if you can avoid it.  Use a Surface
-		  for render-to-texture effects if at all possible.
-
-Texture#upload(pixels);
-
-    Uploads 32-bit RGBA pixel data from `pixels` (an ArrayBuffer or typed
-    array) to the texture.  Enough data must be provided to completely rewrite
-    the texture or a RangeError will be thrown.
 
 
 `Transform` Object
