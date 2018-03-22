@@ -1670,26 +1670,11 @@ Surface#clipTo(x, y, width, height);
     Note: When setting the clipping rectangle for the screen, the effect only
           lasts until the next frame.
 
-Surface#download();
-
-    Downloads the 32-bit RGBA pixel data from the surface and returns it as a
-	new Uint8Array.
-
-	Note: Downloading data from the GPU is a rather slow operation and
-	      shouldn't be done at render time if you can avoid it.  Use a Surface
-		  for render-to-texture effects if at all possible.
-
 Surface#toTexture();
 
     Returns a Texture created from the current contents of this Surface.  Note
     that drawing to the surface afterwards will not affect the texture, which
     is read-only.
-
-Surface#upload(content);
-
-    Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
-    array) to the surface.  Enough data must be provided to completely rewrite
-    the surface or a RangeError will be thrown.
 
 
 `Texture` Object
@@ -1739,6 +1724,21 @@ Texture#width [read-only]
 Texture#height [read-only]
 
     Gets the width or height of the texture, in pixels.
+
+Texture#download();
+
+    Downloads the 32-bit RGBA pixel data from the texture and returns it as a
+	new Uint8ClampedArray.
+
+	Note: Downloading data from the GPU is a rather slow operation and
+	      shouldn't be done at render time if you can avoid it.  Use a Surface
+		  for render-to-texture effects if at all possible.
+
+Texture#upload(content);
+
+    Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
+    array) to the texture.  Enough data must be provided to completely rewrite
+    the texture or a RangeError will be thrown.
 
 
 `Transform` Object

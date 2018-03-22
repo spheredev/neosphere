@@ -415,8 +415,8 @@ static bool js_new_Texture                   (int num_args, bool is_ctor, int ma
 static bool js_Texture_get_fileName          (int num_args, bool is_ctor, int magic);
 static bool js_Texture_get_height            (int num_args, bool is_ctor, int magic);
 static bool js_Texture_get_width             (int num_args, bool is_ctor, int magic);
-static bool js_Surface_download              (int num_args, bool is_ctor, int magic);
-static bool js_Surface_upload                (int num_args, bool is_ctor, int magic);
+static bool js_Texture_download              (int num_args, bool is_ctor, int magic);
+static bool js_Texture_upload                (int num_args, bool is_ctor, int magic);
 static bool js_new_Transform                 (int num_args, bool is_ctor, int magic);
 static bool js_Transform_get_matrix          (int num_args, bool is_ctor, int magic);
 static bool js_Transform_set_matrix          (int num_args, bool is_ctor, int magic);
@@ -691,6 +691,8 @@ pegasus_init(void)
 	api_define_property("Texture", "fileName", false, js_Texture_get_fileName, NULL);
 	api_define_property("Texture", "height", false, js_Texture_get_height, NULL);
 	api_define_property("Texture", "width", false, js_Texture_get_width, NULL);
+	api_define_method("Texture", "download", js_Texture_download, 0);
+	api_define_method("Texture", "upload", js_Texture_upload, 0);
 	api_define_class("Transform", PEGASUS_TRANSFORM, js_new_Transform, js_Transform_finalize, 0);
 	api_define_property("Transform", "matrix", false, js_Transform_get_matrix, NULL);
 	api_define_method("Transform", "compose", js_Transform_compose, 0);
@@ -706,9 +708,7 @@ pegasus_init(void)
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
 	api_define_method("Surface", "clipTo", js_Surface_clipTo, 0);
-	api_define_method("Surface", "download", js_Surface_download, 0);
 	api_define_method("Surface", "toTexture", js_Surface_toTexture, 0);
-	api_define_method("Surface", "upload", js_Surface_upload, 0);
 
 	api_define_const("FileOp", "Read", FILE_OP_READ);
 	api_define_const("FileOp", "Write", FILE_OP_WRITE);
@@ -4324,37 +4324,6 @@ js_Surface_clipTo(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_download(int num_args, bool is_ctor, int magic)
-{
-	int            height;
-	image_t*       image;
-	const color_t* in_ptr;
-	image_lock_t*  lock;
-	color_t*       out_ptr;
-	int            width;
-
-	int y;
-
-	jsal_push_this();
-	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
-
-	width = image_width(image);
-	height = image_height(image);
-	if (!(lock = image_lock(image, false, true)))
-		jsal_error(JS_ERROR, "Couldn't download from GPU texture");
-	jsal_push_new_buffer(JS_UINT8ARRAY, width * height * sizeof(color_t));
-	out_ptr = jsal_get_buffer_ptr(-1, NULL);
-	in_ptr = lock->pixels;
-	for (y = 0; y < height; ++y) {
-		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
-		out_ptr += width;
-		in_ptr += lock->pitch;
-	}
-	image_unlock(image, lock);
-	return true;
-}
-
-static bool
 js_Surface_toTexture(int num_args, bool is_ctor, int magic)
 {
 	image_t* image;
@@ -4367,41 +4336,6 @@ js_Surface_toTexture(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	jsal_push_class_obj(PEGASUS_TEXTURE, new_image, false);
 	return true;
-}
-
-static bool
-js_Surface_upload(int num_args, bool is_ctor, int magic)
-{
-	const color_t* buffer;
-	size_t         buffer_size;
-	int            height;
-	image_t*       image;
-	const color_t* in_ptr;
-	image_lock_t*  lock;
-	color_t*       out_ptr;
-	int            width;
-
-	int y;
-
-	jsal_push_this();
-	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
-	buffer = jsal_require_buffer_ptr(0, &buffer_size);
-
-	width = image_width(image);
-	height = image_height(image);
-	if (buffer_size < width * height * sizeof(color_t))
-		jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
-	if (!(lock = image_lock(image, true, false)))
-		jsal_error(JS_ERROR, "Couldn't upload to GPU texture");
-	out_ptr = lock->pixels;
-	in_ptr = buffer;
-	for (y = 0; y < height; ++y) {
-		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
-		out_ptr += lock->pitch;
-		in_ptr += width;
-	}
-	image_unlock(image, lock);
-	return false;
 }
 
 static bool
@@ -4684,6 +4618,72 @@ js_Texture_get_width(int num_args, bool is_ctor, int magic)
 	jsal_push_int(image_width(image));
 	cache_value_to_this("width");
 	return true;
+}
+
+static bool
+js_Texture_download(int num_args, bool is_ctor, int magic)
+{
+	int            height;
+	image_t*       image;
+	const color_t* in_ptr;
+	image_lock_t*  lock;
+	color_t*       out_ptr;
+	int            width;
+
+	int y;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
+
+	width = image_width(image);
+	height = image_height(image);
+	if (!(lock = image_lock(image, false, true)))
+		jsal_error(JS_ERROR, "Couldn't download from GPU texture");
+	jsal_push_new_buffer(JS_UINT8ARRAY_CLAMPED, width * height * sizeof(color_t));
+	out_ptr = jsal_get_buffer_ptr(-1, NULL);
+	in_ptr = lock->pixels;
+	for (y = 0; y < height; ++y) {
+		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
+		out_ptr += width;
+		in_ptr += lock->pitch;
+	}
+	image_unlock(image, lock);
+	return true;
+}
+
+static bool
+js_Texture_upload(int num_args, bool is_ctor, int magic)
+{
+	const color_t* buffer;
+	size_t         buffer_size;
+	int            height;
+	image_t*       image;
+	const color_t* in_ptr;
+	image_lock_t*  lock;
+	color_t*       out_ptr;
+	int            width;
+
+	int y;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
+	buffer = jsal_require_buffer_ptr(0, &buffer_size);
+
+	width = image_width(image);
+	height = image_height(image);
+	if (buffer_size < width * height * sizeof(color_t))
+		jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
+	if (!(lock = image_lock(image, true, false)))
+		jsal_error(JS_ERROR, "Couldn't upload to GPU texture");
+	out_ptr = lock->pixels;
+	in_ptr = buffer;
+	for (y = 0; y < height; ++y) {
+		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
+		out_ptr += lock->pitch;
+		in_ptr += width;
+	}
+	image_unlock(image, lock);
+	return false;
 }
 
 static bool
