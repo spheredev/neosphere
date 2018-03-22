@@ -8,6 +8,8 @@ v5.2.0 - TBD
 * Adds `Texture#upload()` and `Texture#download()` to allow direct manipulation
   of a texture's RGBA bitmap.
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
+* Adds support for render-to-texture by allowing `Surface` objects to be used
+  as textures, without calling `.toTexture()`.
 * Improves performance of most native object constructors.
 * Fixes an internal memory leak mostly affecting Dispatch job execution.
 * Fixes a bug where outstanding promise continuations get eaten when the user

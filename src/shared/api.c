@@ -13,6 +13,7 @@ struct class_data
 	js_finalizer_t finalizer;
 	int            id;
 	char*          name;
+	int            super_id;
 	js_ref_t*      prototype;
 };
 
@@ -112,41 +113,7 @@ api_define_class(const char* name, int class_id, js_function_t constructor, js_f
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
 
-	struct class_data class_data;
-	js_ref_t*         prototype;
-
-	// create a prototype and leave it on the stack
-	jsal_push_new_object();
-	prototype = jsal_ref(-1);
-
-	// IMPORTANT: `class_id` should never exceed 999.
-	s_class_index[class_id] = vector_len(s_classes);
-
-	class_data.id = class_id;
-	class_data.finalizer = finalizer;
-	class_data.name = strdup(name);
-	class_data.prototype = prototype;
-	vector_push(s_classes, &class_data);
-
-
-	// register a global constructor, if applicable
-	if (constructor != NULL) {
-		jsal_push_constructor(constructor, name, 0, 0);
-
-		jsal_push_new_object();
-		jsal_dup(-3);
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "prototype");
-
-		jsal_push_global_object();
-		jsal_push_eval("({ writable: true, configurable: true })");
-		jsal_pull(-3);
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, name);
-		jsal_pop(1);
-	}
-
-	jsal_pop(1);
+	api_define_subclass(name, class_id, -1, constructor, finalizer);
 }
 
 void
@@ -289,17 +256,73 @@ api_define_static_prop(const char* namespace_name, const char* name, js_function
 	jsal_pop(1);
 }
 
+void
+api_define_subclass(const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer)
+{
+	// note: if no constructor function is given, a constructor binding will not be created.
+	//       this is useful for types which can only be created via factory methods.
+
+	struct class_data class_data;
+	js_ref_t*         prototype;
+
+	// create a prototype and leave it on the stack
+	jsal_push_new_object();
+	if (super_id >= 0) {
+		jsal_push_class_prototype(super_id);
+		jsal_set_prototype(-2);
+	}
+	prototype = jsal_ref(-1);
+
+	// IMPORTANT: `class_id` should never exceed 999.
+	s_class_index[class_id] = vector_len(s_classes);
+
+	class_data.id = class_id;
+	class_data.super_id = super_id;
+	class_data.finalizer = finalizer;
+	class_data.name = strdup(name);
+	class_data.prototype = prototype;
+	vector_push(s_classes, &class_data);
+
+	// register a global constructor, if applicable
+	if (constructor != NULL) {
+		jsal_push_constructor(constructor, name, 0, 0);
+
+		jsal_push_new_object();
+		jsal_dup(-3);
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "prototype");
+
+		jsal_push_global_object();
+		jsal_push_eval("({ writable: true, configurable: true })");
+		jsal_pull(-3);
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, name);
+		jsal_pop(1);
+	}
+
+	jsal_pop(1);
+}
+
 bool
 jsal_is_class_obj(int index, int class_id)
 {
+	struct class_data*  class_data;
 	struct object_data* data;
+	int                 super_id;
 
 	if (!jsal_is_object(index))
 		return false;
 
-	data = jsal_get_host_data(index);
-	return data != NULL
-		&& class_id == data->class_id;
+	if (!(data = jsal_get_host_data(index)))
+		return false;
+	super_id = data->class_id;
+	while (super_id >= 0) {
+		class_data = vector_get(s_classes, s_class_index[super_id]);
+		if (class_id == class_data->id)
+			return true;
+		super_id = class_data->super_id;
+	}
+	return false;
 }
 
 int
@@ -392,7 +415,7 @@ jsal_require_class_obj(int index, int class_id)
 	struct object_data* data;
 	
 	data = jsal_get_host_data(index);
-	if (data == NULL || data->class_id != class_id) {
+	if (data == NULL || !jsal_is_class_obj(index, class_id)) {
 		jsal_dup(index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a %s object", jsal_to_string(-1), class_name_from_id(class_id));
 		jsal_remove(-2);

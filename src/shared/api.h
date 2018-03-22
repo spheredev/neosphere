@@ -13,6 +13,7 @@ void   api_define_method      (const char* class_name, const char* name, js_func
 void   api_define_object      (const char* namespace_name, const char* name, int class_id, void* udata);
 void   api_define_property    (const char* class_name, const char* name, bool enumerable, js_function_t getter, js_function_t setter);
 void   api_define_static_prop (const char* namespace_name, const char* name, js_function_t getter, js_function_t setter);
+void   api_define_subclass    (const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer);
 
 bool  jsal_is_class_obj         (int index, int class_id);
 int   jsal_push_class_name      (int class_id);
