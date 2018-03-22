@@ -39,7 +39,7 @@
 
 enum vanilla_class
 {
-	SV1_ANIMATION = 0x100,
+	SV1_ANIMATION = 100,
 	SV1_BYTE_ARRAY,
 	SV1_COLOR,
 	SV1_COLOR_MATRIX,

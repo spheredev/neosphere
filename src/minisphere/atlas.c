@@ -128,7 +128,7 @@ void
 atlas_lock(atlas_t* atlas, bool keep_contents)
 {
 	console_log(4, "locking atlas #%u for direct access", atlas->id);
-	atlas->lock = image_lock(atlas->image, keep_contents);
+	atlas->lock = image_lock(atlas->image, true, keep_contents);
 }
 
 void

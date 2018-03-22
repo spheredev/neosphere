@@ -27,7 +27,7 @@ static void        on_finalize_sphere_object (void* host_ptr);
 static int         class_id_from_name        (const char* name);
 static const char* class_name_from_id        (int class_id);
 
-static int       s_class_index[4096];
+static int       s_class_index[1000];
 static vector_t* s_classes;
 static js_ref_t* s_key_prototype;
 
@@ -118,8 +118,8 @@ api_define_class(const char* name, int class_id, js_function_t constructor, js_f
 	// create a prototype and leave it on the stack
 	jsal_push_new_object();
 	prototype = jsal_ref(-1);
-		
-	// IMPORTANT: `class_id` must NOT exceed 4095!
+
+	// IMPORTANT: `class_id` should never exceed 999.
 	s_class_index[class_id] = vector_len(s_classes);
 
 	class_data.id = class_id;

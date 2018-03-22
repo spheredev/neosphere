@@ -239,7 +239,7 @@ image_read_slice(file_t* file, image_t* parent, int x, int y, int width, int hei
 	file_pos = file_position(file);
 	if (!(image = image_new_slice(parent, x, y, width, height)))
 		goto on_error;
-	if (!(lock = image_lock(parent, true)))
+	if (!(lock = image_lock(parent, true, true)))
 		goto on_error;
 	for (i_y = 0; i_y < height; ++i_y) {
 		p_line = lock->pixels + x + (i_y + y) * lock->pitch;
@@ -355,7 +355,7 @@ image_apply_colormat(image_t* it, colormatrix_t matrix, int x, int y, int width,
 
 	int i_x, i_y;
 
-	if (!(lock = image_lock(it, true)))
+	if (!(lock = image_lock(it, true, true)))
 		return false;
 	uncache_pixels(it);
 	for (i_x = x; i_x < x + width; ++i_x) for (i_y = y; i_y < y + height; ++i_y) {
@@ -381,7 +381,7 @@ image_apply_colormat_4(image_t* it, colormatrix_t ul_mat, colormatrix_t ur_mat, 
 
 	int i_x, i_y;
 
-	if (!(lock = image_lock(it, true)))
+	if (!(lock = image_lock(it, true, true)))
 		return false;
 	uncache_pixels(it);
 	for (i_y = y; i_y < y + h; ++i_y) {
@@ -574,13 +574,16 @@ image_get_pixel(image_t* it, int x, int y)
 }
 
 image_lock_t*
-image_lock(image_t* it, bool keep_contents)
+image_lock(image_t* it, bool uploading, bool downloading)
 {
 	ALLEGRO_LOCKED_REGION* ll_lock;
 	int                    lock_flag;
 
 	if (it->lock_count == 0) {
-		lock_flag = keep_contents ? ALLEGRO_LOCK_READWRITE : ALLEGRO_LOCK_WRITEONLY;
+		lock_flag = downloading && uploading ? ALLEGRO_LOCK_READWRITE
+			: downloading ? ALLEGRO_LOCK_READONLY
+			: uploading ? ALLEGRO_LOCK_WRITEONLY
+			: ALLEGRO_LOCK_READONLY;
 		if (!(ll_lock = al_lock_bitmap(it->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888_LE, lock_flag)))
 			return NULL;
 		image_ref(it);
@@ -740,7 +743,7 @@ image_write(image_t* it, file_t* file)
 	int i_y;
 
 	console_log(3, "writing %dx%d image #%u to open file", it->width, it->height, it->id);
-	if (!(lock = image_lock(it, true)))
+	if (!(lock = image_lock(it, false, true)))
 		goto on_error;
 	line_size = it->width * 4;
 	for (i_y = 0; i_y < it->height; ++i_y) {
@@ -767,7 +770,7 @@ cache_pixels(image_t* image)
 	int i;
 
 	free(image->pixel_cache); image->pixel_cache = NULL;
-	if (!(lock = image_lock(image, true)))
+	if (!(lock = image_lock(image, false, true)))
 		goto on_error;
 	if (!(cache = malloc(image->width * image->height * 4)))
 		goto on_error;

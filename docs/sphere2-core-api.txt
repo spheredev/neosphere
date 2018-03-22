@@ -1705,6 +1705,21 @@ Texture#height [read-only]
 
     Gets the width or height of the texture, in pixels.
 
+Texture#download();
+
+    Downloads the 32-bit RGBA pixel data from the texture and returns it as a
+	new Uint8Array.
+
+	Note: Downloading data from the GPU is a rather slow operation and
+	      shouldn't be done at render time if you can avoid it.  Use a Surface
+		  for render-to-texture effects if at all possible.
+
+Texture#upload(pixels);
+
+    Uploads 32-bit RGBA pixel data from `pixels` (an ArrayBuffer or typed
+    array) to the texture.  Enough data must be provided to completely rewrite
+    the texture or a RangeError will be thrown.
+
 
 `Transform` Object
 ------------------

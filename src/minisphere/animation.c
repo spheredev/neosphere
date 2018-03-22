@@ -160,7 +160,7 @@ animation_width(const animation_t* anim)
 bool
 animation_update(animation_t* anim)
 {
-	if (!(anim->lock = image_lock(anim->frame, false)))
+	if (!(anim->lock = image_lock(anim->frame, true, false)))
 		return false;
 	if (!anim->is_frame_ready)
 		mng_display(anim->stream);
