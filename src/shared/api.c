@@ -25,6 +25,7 @@ struct object_data
 };
 
 static void        on_finalize_sphere_object (void* host_ptr);
+static bool        get_obj_data_checked      (int stack_index, int class_id, struct object_data* *out_data_ptr);
 static int         class_id_from_name        (const char* name);
 static const char* class_name_from_id        (int class_id);
 
@@ -306,23 +307,7 @@ api_define_subclass(const char* name, int class_id, int super_id, js_function_t 
 bool
 jsal_is_class_obj(int index, int class_id)
 {
-	struct class_data*  class_data;
-	struct object_data* data;
-	int                 super_id;
-
-	if (!jsal_is_object(index))
-		return false;
-
-	if (!(data = jsal_get_host_data(index)))
-		return false;
-	super_id = data->class_id;
-	while (super_id >= 0) {
-		class_data = vector_get(s_classes, s_class_index[super_id]);
-		if (class_id == class_data->id)
-			return true;
-		super_id = class_data->super_id;
-	}
-	return false;
+	return get_obj_data_checked(index, class_id, NULL);
 }
 
 int
@@ -371,7 +356,7 @@ jsal_push_class_fatobj(int class_id, bool in_ctor, size_t data_size, void* *out_
 		//       just use the known prototype.  this speeds up object creation a bit.
 		jsal_push_callee();
 		jsal_push_newtarget();
-		if (!jsal_equal(-1, -2) && jsal_is_function(-1))
+		if (!jsal_same_value(-1, -2) && jsal_is_function(-1))
 			jsal_get_prop_key(-1, s_key_prototype);
 		else
 			jsal_push_ref_weak(prototype);
@@ -414,8 +399,7 @@ jsal_require_class_obj(int index, int class_id)
 {
 	struct object_data* data;
 	
-	data = jsal_get_host_data(index);
-	if (data == NULL || !jsal_is_class_obj(index, class_id)) {
+	if (!get_obj_data_checked(index, class_id, &data)) {
 		jsal_dup(index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a %s object", jsal_to_string(-1), class_name_from_id(class_id));
 		jsal_remove(-2);
@@ -473,4 +457,30 @@ class_name_from_id(int class_id)
 			return class->name;
 	}
 	return NULL;
+}
+
+static bool
+get_obj_data_checked(int stack_index, int class_id, struct object_data* *out_data_ptr)
+{
+	struct class_data*  class_data;
+	struct object_data* data;
+	int                 super_id;
+
+	if (!(data = jsal_get_host_data(stack_index)))
+		return false;
+	if (data->class_id == class_id)
+		goto found_it;  // fast path
+	super_id = data->class_id;
+	while (super_id >= 0) {
+		class_data = vector_get(s_classes, s_class_index[super_id]);
+		if (class_id == class_data->id)
+			goto found_it;
+		super_id = class_data->super_id;
+	}
+	return false;
+
+found_it:
+	if (out_data_ptr != NULL)
+		*out_data_ptr = data;
+	return true;
 }

@@ -567,18 +567,6 @@ jsal_dup(int from_index)
 	return push_value(ref->value, ref->weak_ref);
 }
 
-bool
-jsal_equal(int at_index, int to_index)
-{
-	JsValueRef a, b;
-	bool       result;
-
-	a = get_value(at_index);
-	b = get_value(to_index);
-	JsStrictEquals(a, b, &result);
-	return result;
-}
-
 void
 jsal_error(js_error_type_t type, const char* format, ...)
 {
@@ -717,9 +705,7 @@ jsal_get_host_data(int at_index)
 	void*          ptr;
 
 	object = get_value(at_index);
-	JsValueType type; JsGetValueType(object, &type);
-	JsErrorCode ec = JsGetExternalData(object, &ptr);
-	if (ec != JsNoError)
+	if (JsGetExternalData(object, &ptr) != JsNoError)
 		return NULL;
 	object_info = ptr;
 	return object_info->data;
@@ -1820,6 +1806,17 @@ jsal_require_undefined(int at_index)
 		jsal_remove(-2);
 		jsal_throw();
 	}
+}
+
+bool
+jsal_same_value(int at_index, int to_index)
+{
+	JsValueRef a;
+	JsValueRef b;
+
+	a = get_value(at_index);
+	b = get_value(to_index);
+	return a == b;
 }
 
 void
