@@ -153,11 +153,13 @@ static vector_t*            s_module_cache;
 static vector_t*            s_module_jobs;
 static JsValueRef           s_newtarget_value = JS_INVALID_REFERENCE;
 static JsSourceContext      s_next_source_context = 1;
+static JsValueRef           s_null_value;
 static js_reject_callback_t s_reject_callback = NULL;
 static vector_t*            s_rejections;
 static int                  s_stack_base;
 static JsValueRef           s_stash;
 static JsValueRef           s_this_value = JS_INVALID_REFERENCE;
+static JsValueRef           s_undefined_value;
 static vector_t*            s_value_stack;
 static js_throw_callback_t  s_throw_callback = NULL;
 
@@ -177,6 +179,8 @@ jsal_init(void)
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
+	JsGetUndefinedValue(&s_undefined_value);
+	JsGetNullValue(&s_null_value);
 	
 	// set up the callbacks
 	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
@@ -435,14 +439,12 @@ jsal_construct(int num_args)
 	JsValueRef function_ref;
 	int        offset;
 	JsValueRef retval_ref;
-	JsValueRef undefined;
 
 	int i;
 
 	function_ref = get_value(-num_args - 1);
 	offset = -num_args;
-	JsGetUndefinedValue(&undefined);
-	arguments[0] = undefined;
+	arguments[0] = s_undefined_value;
 	for (i = 0; i < num_args; ++i)
 		arguments[i + 1] = get_value(i + offset);
 	JsConstructObject(function_ref, arguments, (unsigned short)(num_args + 1), &retval_ref);
@@ -685,7 +687,7 @@ jsal_get_global(void)
 	JsObjectGetProperty(object, key, &value);
 	throw_on_error();
 	push_value(value, true);
-	return !jsal_is_undefined(-1);
+	return value != s_undefined_value;
 }
 
 bool
@@ -794,7 +796,7 @@ jsal_get_prop(int object_index)
 	}
 	throw_on_error();
 	push_value(value, object_ref->weak_ref);
-	return !jsal_is_undefined(-1);
+	return value != s_undefined_value;
 }
 
 bool
@@ -811,7 +813,7 @@ jsal_get_prop_index(int object_index, int name)
 	JsGetIndexedProperty(object_ref->value, index, &value);
 	throw_on_error();
 	push_value(value, object_ref->weak_ref);
-	return !jsal_is_undefined(-1);
+	return value != s_undefined_value;
 }
 
 bool
@@ -826,7 +828,7 @@ jsal_get_prop_key(int object_index, js_ref_t* key)
 	JsGetProperty(object_ref->value, key->value, &value);
 	throw_on_error();
 	push_value(value, object_ref->weak_ref);
-	return !jsal_is_undefined(-1);
+	return value != s_undefined_value;
 }
 
 bool
@@ -843,7 +845,7 @@ jsal_get_prop_string(int object_index, const char* name)
 	JsGetProperty(object_ref->value, key, &value);
 	throw_on_error();
 	push_value(value, object_ref->weak_ref);
-	return !jsal_is_undefined(-1);
+	return value != s_undefined_value;
 }
 
 void
@@ -1049,8 +1051,11 @@ jsal_is_object(int stack_index)
 bool
 jsal_is_object_coercible(int at_index)
 {
-	return !jsal_is_undefined(at_index)
-		&& !jsal_is_null(at_index);
+	JsValueRef value;
+
+	value = get_value(at_index);
+	return value != s_undefined_value
+		&& value != s_null_value;
 }
 
 bool
@@ -1078,12 +1083,10 @@ jsal_is_symbol(int stack_index)
 bool
 jsal_is_undefined(int stack_index)
 {
-	JsValueRef  ref;
-	JsValueType type;
+	JsValueRef  value;
 
-	ref = get_value(stack_index);
-	JsGetValueType(ref, &type);
-	return type == JsUndefined;
+	value = get_value(stack_index);
+	return value == s_undefined_value;
 }
 
 void
@@ -1528,10 +1531,7 @@ jsal_push_uint(unsigned int value)
 int
 jsal_push_undefined(void)
 {
-	JsValueRef ref;
-
-	JsGetUndefinedValue(&ref);
-	return push_value(ref, true);
+	return push_value(s_undefined_value, true);
 }
 
 void
@@ -1800,7 +1800,7 @@ jsal_require_uint(int at_index)
 void
 jsal_require_undefined(int at_index)
 {
-	if (!jsal_is_null(at_index)) {
+	if (!jsal_is_undefined(at_index)) {
 		jsal_dup(at_index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not 'undefined'", jsal_to_string(-1));
 		jsal_remove(-2);
@@ -2540,10 +2540,9 @@ push_value(JsValueRef value, bool weak_ref)
 static void
 resize_stack(int new_size)
 {
-	js_ref_t   ref;
-	js_ref_t*  ref_ptr;
-	int        old_size;
-	JsValueRef undefined;
+	js_ref_t  ref;
+	js_ref_t* ref_ptr;
+	int       old_size;
 
 	int i;
 
@@ -2557,8 +2556,7 @@ resize_stack(int new_size)
 	}
 	vector_resize(s_value_stack, new_size);
 	if (new_size > old_size) {
-		JsGetUndefinedValue(&undefined);
-		ref.value = undefined;
+		ref.value = s_undefined_value;
 		ref.weak_ref = true;
 		for (i = old_size; i < new_size; ++i)
 			vector_put(s_value_stack, i, &ref);

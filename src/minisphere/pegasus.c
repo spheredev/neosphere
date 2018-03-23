@@ -1985,7 +1985,7 @@ js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 
 	script = jsal_pegasus_require_script(0);
 	if (num_args >= 2) {
-		jsal_require_object(1);
+		jsal_require_object_coercible(1);
 		if (jsal_get_prop_key(1, s_key_inBackground))
 			background = jsal_require_boolean(-1);
 		if (jsal_get_prop_key(1, s_key_priority))
@@ -2011,7 +2011,7 @@ js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
 
 	script = jsal_pegasus_require_script(0);
 	if (num_args >= 2) {
-		jsal_require_object(1);
+		jsal_require_object_coercible(1);
 		if (jsal_get_prop_key(1, s_key_inBackground))
 			background = jsal_require_boolean(-1);
 		if (jsal_get_prop_key(1, s_key_priority))
@@ -3583,7 +3583,7 @@ js_new_Shader(int num_args, bool is_ctor, int magic)
 	shader_t*   shader;
 	const char* vertex_pathname;
 
-	jsal_require_object(0);
+	jsal_require_object_coercible(0);
 	jsal_get_prop_string(0, "fragmentFile");
 	jsal_require_string(-1);
 	jsal_get_prop_string(0, "vertexFile");
@@ -4937,7 +4937,7 @@ js_new_VertexList(int num_args, bool is_ctor, int magic)
 	vbo = vbo_new();
 	for (i = 0; i < num_entries; ++i) {
 		jsal_get_prop_index(0, i);
-		jsal_require_object(-1);
+		jsal_require_object_coercible(-1);
 		stack_idx = jsal_normalize_index(-1);
 		vertex.x = jsal_get_prop_key(stack_idx, s_key_x) ? jsal_require_number(-1) : 0.0;
 		vertex.y = jsal_get_prop_key(stack_idx, s_key_y) ? jsal_require_number(-1) : 0.0;
