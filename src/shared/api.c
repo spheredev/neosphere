@@ -285,7 +285,7 @@ api_define_subclass(const char* name, int class_id, int super_id, js_function_t 
 
 	// register a global constructor, if applicable
 	if (constructor != NULL) {
-		jsal_push_constructor(constructor, name, 0, magic);
+		jsal_push_new_constructor(constructor, name, 0, magic);
 
 		jsal_push_new_object();
 		jsal_dup(-3);

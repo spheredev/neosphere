@@ -120,6 +120,7 @@ static void CHAKRA_CALLBACK        on_resolve_reject_promise   (JsValueRef funct
 static const char*                 filename_from_script_id     (unsigned int script_id);
 static void                        free_ref                    (js_ref_t* ref);
 static JsModuleRecord              get_module_record           (const char* specifier, JsModuleRecord parent, const char* url, bool *out_is_new);
+static js_ref_t*                   get_ref                     (int stack_index);
 static JsValueRef                  get_value                   (int stack_index);
 static JsPropertyIdRef             make_property_id            (JsValueRef key_value);
 static js_ref_t*                   make_ref                    (JsRef value, bool weak_ref);
@@ -560,10 +561,10 @@ jsal_disable(bool disabled)
 int
 jsal_dup(int from_index)
 {
-	JsValueRef value;
+	js_ref_t* ref;
 
-	value = get_value(from_index);
-	return push_value(value, false);
+	ref = get_ref(from_index);
+	return push_value(ref->value, ref->weak_ref);
 }
 
 bool
@@ -687,15 +688,15 @@ jsal_get_global(void)
 {
 	/* [ ... key ] -> [ ... value ] */
 
-	JsPropertyIdRef key;
-	JsValueRef      object;
-	JsValueRef      value;
+	JsValueRef key;
+	JsValueRef object;
+	JsValueRef value;
 
-	key = make_property_id(pop_value());
+	key = pop_value();
 	JsGetGlobalObject(&object);
-	JsGetProperty(object, key, &value);
+	JsObjectGetProperty(object, key, &value);
 	throw_on_error();
-	push_value(value, false);
+	push_value(value, true);
 	return !jsal_is_undefined(-1);
 }
 
@@ -793,20 +794,20 @@ jsal_get_prop(int object_index)
 
 	JsPropertyIdRef key;
 	JsValueRef      key_value;
-	JsValueRef      object;
+	js_ref_t*       object_ref;
 	JsValueRef      value;
 
-	object = get_value(object_index);
+	object_ref = get_ref(object_index);
 	if (jsal_is_number(-1)) {
 		key_value = pop_value();
-		JsGetIndexedProperty(object, key_value, &value);
+		JsGetIndexedProperty(object_ref->value, key_value, &value);
 	}
 	else {
 		key = make_property_id(pop_value());
-		JsGetProperty(object, key, &value);
+		JsGetProperty(object_ref->value, key, &value);
 	}
 	throw_on_error();
-	push_value(value, false);
+	push_value(value, object_ref->weak_ref);
 	return !jsal_is_undefined(-1);
 }
 
@@ -816,14 +817,14 @@ jsal_get_prop_index(int object_index, int name)
 	/* [ ... ] -> [ ... value ] */
 
 	JsValueRef index;
-	JsValueRef object;
+	js_ref_t*  object_ref;
 	JsValueRef value;
 
-	object = get_value(object_index);
+	object_ref = get_ref(object_index);
 	JsIntToNumber(name, &index);
-	JsGetIndexedProperty(object, index, &value);
+	JsGetIndexedProperty(object_ref->value, index, &value);
 	throw_on_error();
-	push_value(value, false);
+	push_value(value, object_ref->weak_ref);
 	return !jsal_is_undefined(-1);
 }
 
@@ -832,13 +833,13 @@ jsal_get_prop_key(int object_index, js_ref_t* key)
 {
 	/* [ ... ] -> [ ... value ] */
 
-	JsValueRef      object;
-	JsValueRef      value;
+	js_ref_t*  object_ref;
+	JsValueRef value;
 
-	object = get_value(object_index);
-	JsGetProperty(object, key->value, &value);
+	object_ref = get_ref(object_index);
+	JsGetProperty(object_ref->value, key->value, &value);
 	throw_on_error();
-	push_value(value, false);
+	push_value(value, object_ref->weak_ref);
 	return !jsal_is_undefined(-1);
 }
 
@@ -848,14 +849,14 @@ jsal_get_prop_string(int object_index, const char* name)
 	/* [ ... ] -> [ ... value ] */
 
 	JsPropertyIdRef key;
-	JsValueRef      object;
+	js_ref_t*       object_ref;
 	JsValueRef      value;
 
-	object = get_value(object_index);
+	object_ref = get_ref(object_index);
 	JsCreatePropertyId(name, strlen(name), &key);
-	JsGetProperty(object, key, &value);
+	JsGetProperty(object_ref->value, key, &value);
 	throw_on_error();
-	push_value(value, false);
+	push_value(value, object_ref->weak_ref);
 	return !jsal_is_undefined(-1);
 }
 
@@ -1204,23 +1205,6 @@ jsal_push_callee(void)
 }
 
 int
-jsal_push_constructor(js_function_t callback, const char* name, int min_args, int magic)
-{
-	JsValueRef       function;
-	struct function* function_data;
-	JsValueRef       name_string;
-
-	function_data = calloc(1, sizeof(struct function));
-	function_data->callback = callback;
-	function_data->ctor_only = true;
-	function_data->magic = magic;
-	function_data->min_args = min_args;
-	JsCreateString(name, strlen(name), &name_string);
-	JsCreateEnhancedFunction(on_js_to_native_call, name_string, function_data, &function);
-	return push_value(function, false);
-}
-
-int
 jsal_push_eval(const char* source)
 {
 	JsValueRef name_string;
@@ -1315,6 +1299,23 @@ jsal_push_new_buffer(js_buffer_type_t type, size_t size)
 		: type == JS_FLOAT64ARRAY ? JsCreateTypedArray(JsArrayTypeFloat64, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
 		: JsCreateArrayBuffer((unsigned int)size, &buffer);
 	return push_value(buffer, false);
+}
+
+int
+jsal_push_new_constructor(js_function_t callback, const char* name, int min_args, int magic)
+{
+	JsValueRef       function;
+	struct function* function_data;
+	JsValueRef       name_string;
+
+	function_data = calloc(1, sizeof(struct function));
+	function_data->callback = callback;
+	function_data->ctor_only = true;
+	function_data->magic = magic;
+	function_data->min_args = min_args;
+	JsCreateString(name, strlen(name), &name_string);
+	JsCreateEnhancedFunction(on_js_to_native_call, name_string, function_data, &function);
+	return push_value(function, false);
 }
 
 int
@@ -2355,6 +2356,16 @@ free_ref(js_ref_t* ref)
 	if (!ref->weak_ref)
 		JsRelease(ref->value, NULL);
 	free(ref);
+}
+
+static js_ref_t*
+get_ref(int stack_index)
+{
+	js_ref_t* ref;
+
+	stack_index = jsal_normalize_index(stack_index);
+	ref = vector_get(s_value_stack, stack_index + s_stack_base);
+	return ref;
 }
 
 static JsValueRef
