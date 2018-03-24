@@ -2887,7 +2887,7 @@ js_Mixer_set_volume(int num_args, bool is_ctor, int magic)
 static bool
 js_new_Model(int num_args, bool is_ctor, int magic)
 {
-	model_t*  group;
+	model_t*  model;
 	int       num_shapes;
 	shader_t* shader;
 	shape_t*  shape;
@@ -2902,14 +2902,14 @@ js_new_Model(int num_args, bool is_ctor, int magic)
 	if (!jsal_is_array(0))
 		jsal_error(JS_TYPE_ERROR, "Expected an array as first argument");
 
-	group = model_new(shader);
+	model = model_new(shader);
 	num_shapes = jsal_get_length(0);
 	for (i = 0; i < num_shapes; ++i) {
 		jsal_get_prop_index(0, i);
 		shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
-		model_add_shape(group, shape);
+		model_add_shape(model, shape);
 	}
-	jsal_push_class_obj(PEGASUS_MODEL, group, true);
+	jsal_push_class_obj(PEGASUS_MODEL, model, true);
 	return true;
 }
 
@@ -2922,13 +2922,13 @@ js_Model_finalize(void* host_ptr)
 static bool
 js_Model_get_shader(int num_args, bool is_ctor, int magic)
 {
-	model_t*  group;
+	model_t*  model;
 	shader_t* shader;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	model = jsal_require_class_obj(-1, PEGASUS_MODEL);
 
-	shader = model_get_shader(group);
+	shader = model_get_shader(model);
 	jsal_push_class_obj(PEGASUS_SHADER, shader_ref(shader), false);
 	return true;
 }
@@ -2936,13 +2936,13 @@ js_Model_get_shader(int num_args, bool is_ctor, int magic)
 static bool
 js_Model_get_transform(int num_args, bool is_ctor, int magic)
 {
-	model_t*     group;
+	model_t*     model;
 	transform_t* transform;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	model = jsal_require_class_obj(-1, PEGASUS_MODEL);
 
-	transform = model_get_transform(group);
+	transform = model_get_transform(model);
 	jsal_push_class_obj(PEGASUS_TRANSFORM, transform_ref(transform), false);
 	return true;
 }
@@ -2950,44 +2950,44 @@ js_Model_get_transform(int num_args, bool is_ctor, int magic)
 static bool
 js_Model_set_shader(int num_args, bool is_ctor, int magic)
 {
-	model_t*  group;
+	model_t*  model;
 	shader_t* shader;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	model = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	shader = jsal_require_class_obj(0, PEGASUS_SHADER);
 
-	model_set_shader(group, shader);
+	model_set_shader(model, shader);
 	return false;
 }
 
 static bool
 js_Model_set_transform(int num_args, bool is_ctor, int magic)
 {
-	model_t*     group;
+	model_t*     model;
 	transform_t* transform;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	model = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	transform = jsal_require_class_obj(0, PEGASUS_TRANSFORM);
 
-	model_set_transform(group, transform);
+	model_set_transform(model, transform);
 	return false;
 }
 
 static bool
 js_Model_draw(int num_args, bool is_ctor, int magic)
 {
-	model_t* group;
+	model_t* model;
 	image_t* surface;
 
 	jsal_push_this();
-	group = jsal_require_class_obj(-1, PEGASUS_MODEL);
+	model = jsal_require_class_obj(-1, PEGASUS_MODEL);
 	surface = num_args >= 1 ? jsal_require_class_obj(0, PEGASUS_SURFACE)
 		: screen_backbuffer(g_screen);
 
 	if (!screen_skipping_frame(g_screen))
-		model_draw(group, surface);
+		model_draw(model, surface);
 	return false;
 }
 

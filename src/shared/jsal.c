@@ -1012,12 +1012,10 @@ jsal_is_function(int stack_index)
 bool
 jsal_is_null(int stack_index)
 {
-	JsValueRef  ref;
-	JsValueType type;
+	JsValueRef value;
 
-	ref = get_value(stack_index);
-	JsGetValueType(ref, &type);
-	return type == JsNull;
+	value = get_value(stack_index);
+	return value == s_null_value;
 }
 
 bool

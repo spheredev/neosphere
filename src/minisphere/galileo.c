@@ -112,7 +112,7 @@ struct vbo
 
 static shader_t*    s_def_shader;
 static shader_t*    s_last_shader;
-static unsigned int s_next_group_id = 1;
+static unsigned int s_next_model_id = 1;
 static unsigned int s_next_shader_id = 1;
 static unsigned int s_next_shape_id = 1;
 
@@ -241,14 +241,14 @@ model_new(shader_t* shader)
 {
 	model_t* model;
 
-	console_log(4, "creating new model #%u", s_next_group_id);
+	console_log(4, "creating new model #%u", s_next_model_id);
 
 	model = calloc(1, sizeof(model_t));
 	model->shapes = vector_new(sizeof(shape_t*));
 	model->transform = transform_new();
 	model->shader = shader_ref(shader);
 
-	model->id = s_next_group_id++;
+	model->id = s_next_model_id++;
 	return model_ref(model);
 }
 
