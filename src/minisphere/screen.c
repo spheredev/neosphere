@@ -110,7 +110,7 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 	}
 
 	if (icon != NULL) {
-		bitmap_flags = al_get_new_bitmap_flags();
+		bitmap_flags = al_get_new_bitmap_flags() | ALLEGRO_NO_PRESERVE_TEXTURE;
 		al_set_new_bitmap_flags(
 			ALLEGRO_NO_PREMULTIPLIED_ALPHA | ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR
 			| bitmap_flags);

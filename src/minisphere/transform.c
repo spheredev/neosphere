@@ -36,6 +36,7 @@
 struct transform
 {
 	unsigned int      refcount;
+	bool              dirty;
 	ALLEGRO_TRANSFORM matrix;
 };
 
@@ -45,6 +46,7 @@ transform_new(void)
 	transform_t* transform;
 
 	transform = calloc(1, sizeof(transform_t));
+	transform->dirty = true;
 	al_identity_transform(&transform->matrix);
 	return transform_ref(transform);
 }
@@ -62,6 +64,8 @@ transform_clone(const transform_t* it)
 transform_t*
 transform_ref(transform_t* it)
 {
+	if (it == NULL)
+		return NULL;
 	++it->refcount;
 	return it;
 }
@@ -72,6 +76,12 @@ transform_unref(transform_t* it)
 	if (it == NULL || --it->refcount > 0)
 		return;
 	free(it);
+}
+
+bool
+transform_dirty(const transform_t* it)
+{
+	return it != NULL ? it->dirty : false;
 }
 
 const ALLEGRO_TRANSFORM*
@@ -90,40 +100,54 @@ void
 transform_compose(transform_t* it, const transform_t* other)
 {
 	al_compose_transform(&it->matrix, &other->matrix);
+	it->dirty = true;
 }
 
 void
 transform_identity(transform_t* it)
 {
 	al_identity_transform(&it->matrix);
+	it->dirty = true;
+}
+
+void
+transform_make_clean(transform_t* it)
+{
+	if (it != NULL)
+		it->dirty = false;
 }
 
 void
 transform_orthographic(transform_t* it, float left, float top, float right, float bottom, float z_near, float z_far)
 {
 	al_orthographic_transform(&it->matrix, left, top, z_near, right, bottom, z_far);
+	it->dirty = true;
 }
 
 void
 transform_perspective(transform_t* it, float left, float top, float right, float bottom, float z_near, float z_far)
 {
 	al_perspective_transform(&it->matrix, left, top, z_near, right, bottom, z_far);
+	it->dirty = true;
 }
 
 void
 transform_rotate(transform_t* it, float theta, float vx, float vy, float vz)
 {
 	al_rotate_transform_3d(&it->matrix, vx, vy, vz, theta);
+	it->dirty = true;
 }
 
 void
 transform_scale(transform_t* it, float sx, float sy, float sz)
 {
 	al_scale_transform_3d(&it->matrix, sx, sy, sz);
+	it->dirty = true;
 }
 
 void
 transform_translate(transform_t* it, float dx, float dy, float dz)
 {
 	al_translate_transform_3d(&it->matrix, dx, dy, dz);
+	it->dirty = true;
 }

@@ -43,8 +43,10 @@ struct image
 	unsigned int    id;
 	ALLEGRO_BITMAP* bitmap;
 	unsigned int    cache_hits;
+	bool            clipping_set;
 	image_lock_t    lock;
 	unsigned int    lock_count;
+	transform_t*    modelview;
 	char*           path;
 	color_t*        pixel_cache;
 	rect_t          scissor_box;
@@ -322,19 +324,11 @@ image_get_transform(const image_t* it)
 void
 image_set_scissor(image_t* it, rect_t value)
 {
-	rect_t bounds;
-
 	it->scissor_box = value;
-	if (it == s_last_image) {
-		bounds = rect(0, 0, it->width, it->height);
-		if (!do_rects_intersect(value, bounds)) {
-			// workaround for Allegro bug: setting the clipping rectangle completely
-			// out of bounds will cause a GL_INVALID_VALUE error, leading to mysterious
-			// failures later.
-			value = rect(0, 0, 0, 0);
-		}
+	if (it == s_last_image)
 		al_set_clipping_rectangle(value.x1, value.y1, value.x2 - value.x1, value.y2 - value.y1);
-	}
+	else
+		it->clipping_set = false;
 }
 
 void
@@ -598,7 +592,6 @@ image_lock(image_t* it, bool uploading, bool downloading)
 void
 image_render_to(image_t* it, transform_t* transform)
 {
-	rect_t            bounds;
 	ALLEGRO_TRANSFORM matrix;
 	rect_t            scissor;
 
@@ -606,22 +599,26 @@ image_render_to(image_t* it, transform_t* transform)
 		al_set_target_bitmap(it->bitmap);
 		shader_use(NULL, true);
 	}
-	bounds = rect(0, 0, it->width, it->height);
 	scissor = it->scissor_box;
-	if (!do_rects_intersect(scissor, bounds)) {
-		// workaround for Allegro bug: setting the clipping rectangle completely
-		// out of bounds will cause a GL_INVALID_VALUE error, leading to mysterious
-		// failures later.
-		scissor = rect(0, 0, 0, 0);
+	if (!it->clipping_set) {
+		al_set_clipping_rectangle(scissor.x1, scissor.y1, scissor.x2 - scissor.x1, scissor.y2 - scissor.y1);
+		it->clipping_set = true;
 	}
-	al_set_clipping_rectangle(scissor.x1, scissor.y1, scissor.x2 - scissor.x1, scissor.y2 - scissor.y1);
-	al_use_projection_transform(transform_matrix(it->transform));
-	if (transform != NULL) {
-		al_use_transform(transform_matrix(transform));
+	if (transform_dirty(it->transform)) {
+		al_use_projection_transform(transform_matrix(it->transform));
+		transform_make_clean(it->transform);
 	}
-	else {
-		al_identity_transform(&matrix);
-		al_use_transform(&matrix);
+	if (transform != it->modelview || transform_dirty(transform)) {
+		if (transform != NULL) {
+			al_use_transform(transform_matrix(transform));
+		}
+		else {
+			al_identity_transform(&matrix);
+			al_use_transform(&matrix);
+		}
+		transform_unref(it->modelview);
+		it->modelview = transform_ref(transform);
+		transform_make_clean(transform);
 	}
 	s_last_image = it;
 }
