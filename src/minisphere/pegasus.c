@@ -1594,22 +1594,25 @@ js_Color_of(int num_args, bool is_ctor, int magic)
 static bool
 js_new_Color(int num_args, bool is_ctor, int magic)
 {
-	float   a = 1.0;
+	float   alpha = 1.0;
+	float   blue;
 	color_t color;
-	float   r, g, b;
+	float   green;
+	float   red;
 
-	r = jsal_require_number(0);
-	g = jsal_require_number(1);
-	b = jsal_require_number(2);
+	red = jsal_require_number(0);
+	green = jsal_require_number(1);
+	blue = jsal_require_number(2);
 	if (num_args >= 4)
-		a = jsal_require_number(3);
+		alpha = jsal_require_number(3);
 
-	// construct a Color object
-	color = color_new(
-		fmin(fmax(r, 0.0), 1.0) * 255,
-		fmin(fmax(g, 0.0), 1.0) * 255,
-		fmin(fmax(b, 0.0), 1.0) * 255,
-		fmin(fmax(a, 0.0), 1.0) * 255);
+	// clamp/convert color components to [0-255] (uint8_t range)
+	red = (red < 0.0 ? 0.0 : red > 1.0 ? 1.0 : red) * 255.0f;
+	green = (green < 0.0 ? 0.0 : green > 1.0 ? 1.0 : green) * 255.0f;
+	blue = (blue < 0.0 ? 0.0 : blue > 1.0 ? 1.0 : blue) * 255.0f;
+	alpha = (alpha < 0.0 ? 0.0 : alpha > 1.0 ? 1.0 : alpha) * 255.0f;
+
+	color = color_new(red, green, blue, alpha);
 	jsal_pegasus_push_color(color, true);
 	return true;
 }

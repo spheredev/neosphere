@@ -1899,19 +1899,25 @@ js_CreateByteArrayFromString(int num_args, bool is_ctor, int magic)
 static bool
 js_CreateColor(int num_args, bool is_ctor, int magic)
 {
-	int r = jsal_to_int(0);
-	int g = jsal_to_int(1);
-	int b = jsal_to_int(2);
-	int a = num_args >= 4 ? jsal_to_int(3) : 255;
+	int red;
+	int green;
+	int blue;
+	int alpha = 255;
+
+	red = jsal_to_int(0);
+	green = jsal_to_int(1);
+	blue = jsal_to_int(2);
+	if (num_args >= 4)
+		alpha = jsal_to_int(3);
 
 	// clamp components to 8-bit [0-255]
-	r = r < 0 ? 0 : r > 255 ? 255 : r;
-	g = g < 0 ? 0 : g > 255 ? 255 : g;
-	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	a = a < 0 ? 0 : a > 255 ? 255 : a;
+	red = red < 0 ? 0 : red > 255 ? 255 : red;
+	green = green < 0 ? 0 : green > 255 ? 255 : green;
+	blue = blue < 0 ? 0 : blue > 255 ? 255 : blue;
+	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
 
 	// construct a Color object
-	jsal_push_sphere_color(color_new(r, g, b, a));
+	jsal_push_sphere_color(color_new(red, green, blue, alpha));
 	return true;
 }
 
