@@ -1070,6 +1070,12 @@ jsal_is_string(int stack_index)
 }
 
 bool
+jsal_is_subclass_ctor(void)
+{
+	return s_newtarget_value != s_callee_value;
+}
+
+bool
 jsal_is_symbol(int stack_index)
 {
 	JsValueRef  ref;
@@ -1806,17 +1812,6 @@ jsal_require_undefined(int at_index)
 		jsal_remove(-2);
 		jsal_throw();
 	}
-}
-
-bool
-jsal_same_value(int at_index, int to_index)
-{
-	JsValueRef a;
-	JsValueRef b;
-
-	a = get_value(at_index);
-	b = get_value(to_index);
-	return a == b;
 }
 
 void

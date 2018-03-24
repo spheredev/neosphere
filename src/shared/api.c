@@ -350,17 +350,12 @@ jsal_push_class_fatobj(int class_id, bool in_ctor, size_t data_size, void* *out_
 	finalizer = class_data->finalizer;
 	prototype = class_data->prototype;
 
-	if (in_ctor) {
-		// note: accessing JS properties from native code is fairly expensive; if
-		//       `new.target` is the same as the constructor actually called (not a subclass),
-		//       just use the known prototype.  this speeds up object creation a bit.
-		jsal_push_callee();
+	// note: accessing JS properties from native code is reasonably expensive; if
+	//       `new.target` is the same as the constructor actually called (not a subclass),
+	//       we can just use the known prototype.  this speeds up object creation.
+	if (in_ctor && jsal_is_subclass_ctor()) {
 		jsal_push_newtarget();
-		if (!jsal_same_value(-1, -2) && jsal_is_function(-1))
-			jsal_get_prop_key(-1, s_key_prototype);
-		else
-			jsal_push_ref_weak(prototype);
-		jsal_remove(-2);
+		jsal_get_prop_key(-1, s_key_prototype);
 		jsal_remove(-2);
 	}
 	else {
