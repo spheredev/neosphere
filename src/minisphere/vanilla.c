@@ -7463,10 +7463,10 @@ js_RawFile_write(int num_args, bool is_ctor, int magic)
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
-	if (jsal_is_string(0))
+	if (jsal_is_string(0)) {
 		data = jsal_get_lstring(0, &write_size);
-	else if (jsal_is_class_obj(0, SV1_BYTE_ARRAY)) {
-		array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
+	}
+	else if (array = jsal_get_class_obj(0, SV1_BYTE_ARRAY)) {
 		data = bytearray_buffer(array);
 		write_size = bytearray_len(array);
 	}

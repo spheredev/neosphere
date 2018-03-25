@@ -3615,6 +3615,7 @@ static bool
 js_Shape_drawImmediate(int num_args, bool is_ctor, int magic)
 {
 	int             array_idx;
+	ALLEGRO_BITMAP* bitmap = NULL;
 	int             draw_mode;
 	int             item_idx;
 	int             num_entries;
@@ -3625,13 +3626,24 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, int magic)
 
 	int i;
 
-	surface = jsal_require_class_obj(0, PEGASUS_SURFACE);
-	type = jsal_require_int(1);
-	array_idx = 2;
-	if (num_args >= 4) {
-		if (!jsal_is_null(2) && !jsal_is_undefined(2))
-			texture = jsal_require_class_obj(2, PEGASUS_TEXTURE);
-		array_idx = 3;
+	if (surface = jsal_get_class_obj(0, PEGASUS_SURFACE)) {
+		type = jsal_require_int(1);
+		array_idx = 2;
+		if (num_args >= 4) {
+			if (!jsal_is_null(2) && !jsal_is_undefined(2))
+				texture = jsal_require_class_obj(2, PEGASUS_TEXTURE);
+			array_idx = 3;
+		}
+	}
+	else {
+		surface = screen_backbuffer(g_screen);
+		type = jsal_require_int(0);
+		array_idx = 1;
+		if (num_args >= 3) {
+			if (!jsal_is_null(1) && !jsal_is_undefined(1))
+				texture = jsal_require_class_obj(2, PEGASUS_TEXTURE);
+			array_idx = 2;
+		}
 	}
 	jsal_require_array(array_idx);
 
@@ -3661,9 +3673,11 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, int magic)
 		: type == SHAPE_TRI_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
 		: type == SHAPE_TRI_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
 		: ALLEGRO_PRIM_POINT_LIST;
+	if (texture != NULL)
+		bitmap = image_bitmap(texture);
 	image_render_to(surface, NULL);
 	shader_use(galileo_shader(), false);
-	al_draw_prim(vertices, NULL, texture != NULL ? image_bitmap(texture) : NULL, 0, num_entries, draw_mode);
+	al_draw_prim(vertices, NULL, bitmap, 0, num_entries, draw_mode);
 	return false;
 }
 
@@ -3672,13 +3686,12 @@ js_new_Shape(int num_args, bool is_ctor, int magic)
 {
 	ibo_t*       ibo = NULL;
 	shape_t*     shape;
-	image_t*     texture = NULL;
+	image_t*     texture;
 	shape_type_t type;
 	vbo_t*       vbo;
 
 	type = jsal_require_int(0);
-	if (jsal_is_class_obj(1, PEGASUS_TEXTURE) || jsal_is_null(1)) {
-		texture = !jsal_is_null(1) ? jsal_require_class_obj(1, PEGASUS_TEXTURE) : NULL;
+	if ((texture = jsal_get_class_obj(1, PEGASUS_TEXTURE)) || jsal_is_null(1)) {
 		vbo = jsal_require_class_obj(2, PEGASUS_VERTEX_LIST);
 		if (num_args >= 4)
 			ibo = jsal_require_class_obj(3, PEGASUS_INDEX_LIST);
@@ -4613,9 +4626,8 @@ js_new_Texture(int num_args, bool is_ctor, int magic)
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		image_fill(image, fill_color);
 	}
-	else if (jsal_is_class_obj(0, PEGASUS_TEXTURE)) {
+	else if (src_image = jsal_get_class_obj(0, PEGASUS_TEXTURE)) {
 		// create a Texture from a Surface (or another Texture)
-		src_image = jsal_require_class_obj(0, PEGASUS_TEXTURE);
 		if (!(image = image_dup(src_image)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	}

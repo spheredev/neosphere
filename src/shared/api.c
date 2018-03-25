@@ -304,6 +304,17 @@ api_define_subclass(const char* name, int class_id, int super_id, js_function_t 
 	jsal_pop(1);
 }
 
+void*
+jsal_get_class_obj(int index, int class_id)
+{
+	struct object_data* data;
+
+	if (get_obj_data_checked(index, class_id, &data))
+		return data->ptr;
+	else
+		return NULL;
+}
+
 bool
 jsal_is_class_obj(int index, int class_id)
 {

@@ -1385,6 +1385,19 @@ ShapeType [enumeration]
         ShapeType.Triangles
         ShapeType.TriStrip
 
+Shape.drawImmediate([surface, ]type[, texture], vertices);
+
+    Draws a shape to a surface in immediate mode (on-the-fly).  Useful when
+    you need to create shapes on demand (procedural generation, for instance)
+    without incurring the expense of creating Shape and VertexList objects
+    every frame.
+
+    `vertices` is an array in the same format as for `new VertexList()`.
+
+    Note: `.drawImmediate()` is significantly slower than drawing a pre-made
+          Shape object.  Keep this in mind when writing your rendering code as
+          immediate-mode rendering can very easily become a performance issue.
+
 new Shape(type[, texture], vertexList[, indexList]);
 
     Constructs a primitive shape from a vertex list and optional index list,
