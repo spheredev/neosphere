@@ -55,14 +55,12 @@ class Prim
 		let v1 = 1.0 - sy / texture.height;
 		let u2 = (sx + width) / texture.width;
 		let v2 = 1.0 - (sy + height) / texture.height;
-		let shape = new Shape(ShapeType.TriStrip, texture,
-			new VertexList([
-				{ x: x1, y: y1, u: u1, v: v1, color: mask },
-				{ x: x2, y: y1, u: u2, v: v1, color: mask },
-				{ x: x1, y: y2, u: u1, v: v2, color: mask },
-				{ x: x2, y: y2, u: u2, v: v2, color: mask },
-			]));
-		shape.draw(surface);
+		Shape.drawImmediate(surface, ShapeType.TriStrip, texture, [
+			{ x: x1, y: y1, u: u1, v: v1, color: mask },
+			{ x: x2, y: y1, u: u2, v: v1, color: mask },
+			{ x: x1, y: y2, u: u1, v: v2, color: mask },
+			{ x: x2, y: y2, u: u2, v: v2, color: mask },
+		]);
 	}
 
 	static drawCircle(surface, x, y, radius, color)
@@ -87,9 +85,7 @@ class Prim
 				color: color
 			});
 		}
-		let vList = new VertexList(vertices);
-		let shape = new Shape(ShapeType.LineLoop, vList)
-		shape.draw(surface);
+		Shape.drawImmediate(surface, ShapeType.LineLoop, vertices);
 	}
 
 	static drawSolidCircle(surface, x, y, radius, color, color2)
@@ -122,9 +118,7 @@ class Prim
 			color: color2
 		};
 
-		let vList = new VertexList(vertices);
-		let shape = new Shape(ShapeType.Fan, vList);
-		shape.draw(surface);
+		Shape.drawImmediate(surface, ShapeType.Fan, vertices)
 	}
 
 	static drawSolidRectangle(surface, x, y, width, height, color_ul, color_ur, color_lr, color_ll)
@@ -146,12 +140,11 @@ class Prim
 		color2 = color2 || color1;
 		color3 = color3 || color1;
 
-		let shape = new Shape(ShapeType.Triangles,
-			new VertexList([
-				{ x: x1, y: y1, color: color1 },
-				{ x: x2, y: y2, color: color2 },
-				{ x: x3, y: y3, color: color3 },
-			]));
+		Shape.drawImmediate(surface, ShapeType.Triangles, [
+			{ x: x1, y: y1, color: color1 },
+			{ x: x2, y: y2, color: color2 },
+			{ x: x3, y: y3, color: color3 },
+		]);
 	}
 
 	static drawLine(surface, x1, y1, x2, y2, thickness, color1, color2)
@@ -166,14 +159,12 @@ class Prim
 			return;
 		let tx = 0.5 * thickness * (y2 - y1) / length;
 		let ty = 0.5 * thickness * -(x2 - x1) / length;
-		shape = new Shape(ShapeType.Fan,
-			new VertexList([
-				{ x: x1 + tx, y: y1 + ty, color: color1 },
-				{ x: x1 - tx, y: y1 - ty, color: color1 },
-				{ x: x2 - tx, y: y2 - ty, color: color2 },
-				{ x: x2 + tx, y: y2 + ty, color: color2 },
-			]));
-		shape.draw(surface);
+		Shape.drawImmediate(surface, ShapeType.Fan, [
+			{ x: x1 + tx, y: y1 + ty, color: color1 },
+			{ x: x1 - tx, y: y1 - ty, color: color1 },
+			{ x: x2 - tx, y: y2 - ty, color: color2 },
+			{ x: x2 + tx, y: y2 + ty, color: color2 },
+		]);
 	}
 
 	static drawPoint(surface, x, y, color)
@@ -188,20 +179,18 @@ class Prim
 		let y1 = y + t;
 		let x2 = x1 + width - thickness;
 		let y2 = y1 + height - thickness;
-		let shape = new Shape(ShapeType.TriStrip,
-			new VertexList([
-				{ x: x1 - t, y: y1 - t, color: color },
-				{ x: x1 + t, y: y1 + t, color: color },
-				{ x: x2 + t, y: y1 - t, color: color },
-				{ x: x2 - t, y: y1 + t, color: color },
-				{ x: x2 + t, y: y2 + t, color: color },
-				{ x: x2 - t, y: y2 - t, color: color },
-				{ x: x1 - t, y: y2 + t, color: color },
-				{ x: x1 + t, y: y2 - t, color: color },
-				{ x: x1 - t, y: y1 - t, color: color },
-				{ x: x1 + t, y: y1 + t, color: color },
-			]));
-		shape.draw(surface);
+		Shape.drawImmediate(surface, ShapeType.TriStrip, [
+			{ x: x1 - t, y: y1 - t, color: color },
+			{ x: x1 + t, y: y1 + t, color: color },
+			{ x: x2 + t, y: y1 - t, color: color },
+			{ x: x2 - t, y: y1 + t, color: color },
+			{ x: x2 + t, y: y2 + t, color: color },
+			{ x: x2 - t, y: y2 - t, color: color },
+			{ x: x1 - t, y: y2 + t, color: color },
+			{ x: x1 + t, y: y2 - t, color: color },
+			{ x: x1 - t, y: y1 - t, color: color },
+			{ x: x1 + t, y: y1 + t, color: color },
+		]);
 	}
 
 	static fill(surface, color)

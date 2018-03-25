@@ -3621,7 +3621,7 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, int magic)
 	image_t*        surface;
 	image_t*        texture = NULL;
 	shape_type_t    type;
-	ALLEGRO_VERTEX  vertices[16];
+	ALLEGRO_VERTEX  vertices[128];
 
 	int i;
 
