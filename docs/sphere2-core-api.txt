@@ -1192,7 +1192,7 @@ SSj.now();
     for in-game timing purposes.
 
     Note: While the value returned is in nanoseconds, the actual precision of
-          the timer is almost certainly less, typically in the microsecond
+          the timer will almost certainly be less, typically in the microsecond
           range.  Don't assume this will be nanosecond precision.
 
 SSj.trace(text);
@@ -1392,10 +1392,12 @@ Shape.drawImmediate([surface, ]type[, texture], vertices);
     without incurring the expense of creating Shape and VertexList objects
     every frame.
 
-    `vertices` is an array in the same format as for `new VertexList()`.
+    `type` should be one of the ShapeType constants above and `vertices` is an
+    array in the same format as for `new VertexList()` (see below).  `texture`
+    can be either a Texture or Surface object.
 
-    Note: `.drawImmediate()` is significantly slower than drawing a pre-made
-          Shape object.  Keep this in mind when writing your rendering code as
+    Note: `.drawImmediate()` is significantly slower than drawing pre-made
+          Shapes.  Keep this in mind when writing your rendering code as
           immediate-mode rendering can very easily become a performance issue.
 
 new Shape(type[, texture], vertexList[, indexList]);

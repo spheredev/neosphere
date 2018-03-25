@@ -3431,7 +3431,7 @@ static bool
 js_SSj_now(int num_args, bool is_ctor, int magic)
 {
 #if defined(MINISPHERE_SPHERUN)
-	jsal_push_number(floor(al_get_time() * 1000000000));
+	jsal_push_number(floor(al_get_time() * 1.0e9));
 #else
 	jsal_push_number(0.0);
 #endif
