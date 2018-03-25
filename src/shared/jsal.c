@@ -2039,7 +2039,7 @@ jsal_try_compile(const char* filename)
 
 	last_catch_label = s_catch_label;
 	if (jsal_setjmp(label) == 0) {
-		s_catch_label = last_catch_label;
+		s_catch_label = &label;
 		jsal_compile(filename);
 		s_catch_label = last_catch_label;
 		return true;

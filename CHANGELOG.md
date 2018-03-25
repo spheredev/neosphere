@@ -4,6 +4,8 @@ miniSphere Changelog
 v5.2.0 - TBD
 ------------
 
+* Adds `Shape.drawImmediate()` function which avoids the overhead of creating
+  VertexList and Shape objects for immediate-mode drawing.
 * Adds `Dispatch.onExit()`, which lets you run code after the event loop exits.
 * Adds `Texture#upload()` and `Texture#download()` to allow direct manipulation
   of a texture's RGBA bitmap.
@@ -11,6 +13,7 @@ v5.2.0 - TBD
 * Adds support for render-to-texture by allowing `Surface` objects to be used
   as textures, without calling `.toTexture()` first.
 * Improves performance of most native object constructors.
+* Improves performance of all `Prim` drawing functions.
 * Fixes an internal memory leak mostly affecting Dispatch job execution.
 * Fixes a bug where outstanding promise continuations get eaten when the user
   closes the game window.

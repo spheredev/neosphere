@@ -133,14 +133,12 @@ class Prim
 		color_lr = color_lr || color_ul;
 		color_ll = color_ll || color_ul;
 
-		let shape = new Shape(ShapeType.TriStrip,
-			new VertexList([
-				{ x: x, y: y, color: color_ul },
-				{ x: x + width, y: y, color: color_ur },
-				{ x: x, y: y + height, color: color_ll },
-				{ x: x + width, y: y + height, color: color_lr },
-			]));
-		shape.draw(surface);
+		Shape.drawImmediate(surface, ShapeType.TriStrip, [
+			{ x: x, y: y, color: color_ul },
+			{ x: x + width, y: y, color: color_ur },
+			{ x: x, y: y + height, color: color_ll },
+			{ x: x + width, y: y + height, color: color_lr },
+		]);
 	}
 
 	static drawSolidTriangle(surface, x1, y1, x2, y2, x3, y3, color1, color2, color3)
