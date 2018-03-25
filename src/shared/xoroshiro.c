@@ -105,7 +105,6 @@ xoro_gen_double(xoro_t* xoro)
 	x = xoro_gen_uint(xoro);
 	u.i = 0x3ffULL << 52 | x >> 12;
 	return u.d - 1.0;
-
 }
 
 uint64_t

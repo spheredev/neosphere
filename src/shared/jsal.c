@@ -140,11 +140,15 @@ static int vasprintf (char* *out, const char* format, va_list ap);
 static js_break_callback_t  s_break_callback = NULL;
 static vector_t*            s_breakpoints;
 static JsValueRef           s_callee_value = JS_INVALID_REFERENCE;
-static vector_t*            s_catch_stack;
+static jsal_jmpbuf*         s_catch_label = NULL;
 static js_import_callback_t s_import_callback = NULL;
 static js_job_callback_t    s_job_callback = NULL;
 static JsContextRef         s_js_context;
+static JsValueRef           s_js_false;
+static JsValueRef           s_js_null;
 static JsRuntimeHandle      s_js_runtime = NULL;
+static JsValueRef           s_js_true;
+static JsValueRef           s_js_undefined;
 static js_ref_t*            s_key_done;
 static js_ref_t*            s_key_length;
 static js_ref_t*            s_key_next;
@@ -153,13 +157,11 @@ static vector_t*            s_module_cache;
 static vector_t*            s_module_jobs;
 static JsValueRef           s_newtarget_value = JS_INVALID_REFERENCE;
 static JsSourceContext      s_next_source_context = 1;
-static JsValueRef           s_null_value;
 static js_reject_callback_t s_reject_callback = NULL;
 static vector_t*            s_rejections;
 static int                  s_stack_base;
 static JsValueRef           s_stash;
 static JsValueRef           s_this_value = JS_INVALID_REFERENCE;
-static JsValueRef           s_undefined_value;
 static vector_t*            s_value_stack;
 static js_throw_callback_t  s_throw_callback = NULL;
 
@@ -179,8 +181,10 @@ jsal_init(void)
 	if (JsCreateContext(s_js_runtime, &s_js_context) != JsNoError)
 		goto on_error;
 	JsSetCurrentContext(s_js_context);
-	JsGetUndefinedValue(&s_undefined_value);
-	JsGetNullValue(&s_null_value);
+	JsGetUndefinedValue(&s_js_undefined);
+	JsGetNullValue(&s_js_null);
+	JsGetTrueValue(&s_js_true);
+	JsGetFalseValue(&s_js_false);
 	
 	// set up the callbacks
 	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
@@ -195,7 +199,6 @@ jsal_init(void)
 	JsAddRef(s_stash, NULL);
 
 	s_value_stack = vector_new(sizeof(js_ref_t));
-	s_catch_stack = vector_new(sizeof(jsal_jmpbuf));
 	s_stack_base = 0;
 	s_breakpoints = vector_new(sizeof(struct breakpoint));
 	s_module_cache = vector_new(sizeof(struct module));
@@ -203,7 +206,6 @@ jsal_init(void)
 	s_rejections = vector_new(sizeof(struct rejection));
 
 	vector_reserve(s_value_stack, 128);
-	vector_reserve(s_catch_stack, 32);
 
 	s_key_done = jsal_new_key("done");
 	s_key_length = jsal_new_key("length");
@@ -251,7 +253,6 @@ jsal_uninit(void)
 	vector_free(s_module_cache);
 	vector_free(s_module_jobs);
 	vector_free(s_value_stack);
-	vector_free(s_catch_stack);
 	vector_free(s_rejections);
 	JsRelease(s_stash, NULL);
 	JsSetCurrentContext(JS_INVALID_REFERENCE);
@@ -266,6 +267,7 @@ jsal_update(bool in_event_loop)
 	bool               have_error;
 	struct module_job* job;
 	jsal_jmpbuf        label;
+	jsal_jmpbuf*       last_catch_label;
 	int                last_stack_base;
 	JsModuleRecord     module_record;
 	JsValueRef         reason_value = JS_INVALID_REFERENCE;
@@ -316,17 +318,17 @@ jsal_update(bool in_event_loop)
 				JsRelease(rejection->promise, NULL);
 				continue;
 			}
+			last_catch_label = s_catch_label;
 			last_stack_base = s_stack_base;
 			s_stack_base = vector_len(s_value_stack);
 			push_value(rejection->promise, true);
 			push_value(rejection->value, true);
 			if (jsal_setjmp(label) == 0) {
-				vector_push(s_catch_stack, label);
+				s_catch_label = &label;
 				if (s_reject_callback != NULL) {
 					if (!s_reject_callback() && exception == JS_INVALID_REFERENCE)
 						exception = rejection->value;
 				}
-				vector_pop(s_catch_stack, 1);
 			}
 			else {
 				resize_stack(s_stack_base);
@@ -334,6 +336,7 @@ jsal_update(bool in_event_loop)
 				jsal_throw();  // rethrow
 			}
 			resize_stack(s_stack_base);
+			s_catch_label = last_catch_label;
 			s_stack_base = last_stack_base;
 			JsRelease(rejection->promise, NULL);
 		}
@@ -444,7 +447,7 @@ jsal_construct(int num_args)
 
 	function_ref = get_value(-num_args - 1);
 	offset = -num_args;
-	arguments[0] = s_undefined_value;
+	arguments[0] = s_js_undefined;
 	for (i = 0; i < num_args; ++i)
 		arguments[i + 1] = get_value(i + offset);
 	JsConstructObject(function_ref, arguments, (unsigned short)(num_args + 1), &retval_ref);
@@ -687,7 +690,7 @@ jsal_get_global(void)
 	JsObjectGetProperty(object, key, &value);
 	throw_on_error();
 	push_value(value, true);
-	return value != s_undefined_value;
+	return value != s_js_undefined;
 }
 
 bool
@@ -796,7 +799,7 @@ jsal_get_prop(int object_index)
 	}
 	throw_on_error();
 	push_value(value, object_ref->weak_ref);
-	return value != s_undefined_value;
+	return value != s_js_undefined;
 }
 
 bool
@@ -813,7 +816,7 @@ jsal_get_prop_index(int object_index, int name)
 	JsGetIndexedProperty(object_ref->value, index, &value);
 	throw_on_error();
 	push_value(value, object_ref->weak_ref);
-	return value != s_undefined_value;
+	return value != s_js_undefined;
 }
 
 bool
@@ -828,7 +831,7 @@ jsal_get_prop_key(int object_index, js_ref_t* key)
 	JsGetProperty(object_ref->value, key->value, &value);
 	throw_on_error();
 	push_value(value, object_ref->weak_ref);
-	return value != s_undefined_value;
+	return value != s_js_undefined;
 }
 
 bool
@@ -845,7 +848,7 @@ jsal_get_prop_string(int object_index, const char* name)
 	JsGetProperty(object_ref->value, key, &value);
 	throw_on_error();
 	push_value(value, object_ref->weak_ref);
-	return value != s_undefined_value;
+	return value != s_js_undefined;
 }
 
 void
@@ -1015,7 +1018,7 @@ jsal_is_null(int stack_index)
 	JsValueRef value;
 
 	value = get_value(stack_index);
-	return value == s_null_value;
+	return value == s_js_null;
 }
 
 bool
@@ -1052,8 +1055,8 @@ jsal_is_object_coercible(int at_index)
 	JsValueRef value;
 
 	value = get_value(at_index);
-	return value != s_undefined_value
-		&& value != s_null_value;
+	return value != s_js_undefined
+		&& value != s_js_null;
 }
 
 bool
@@ -1090,7 +1093,7 @@ jsal_is_undefined(int stack_index)
 	JsValueRef  value;
 
 	value = get_value(stack_index);
-	return value == s_undefined_value;
+	return value == s_js_undefined;
 }
 
 void
@@ -1185,10 +1188,19 @@ jsal_pop(int num_values)
 int
 jsal_push_boolean(bool value)
 {
-	JsValueRef ref;
+	return push_value(value ? s_js_true : s_js_false, true);
+}
 
-	JsBoolToBoolean(value, &ref);
-	return push_value(ref, false);
+int
+jsal_push_boolean_false(void)
+{
+	return push_value(s_js_false, true);
+}
+
+int
+jsal_push_boolean_true(void)
+{
+	return push_value(s_js_true, true);
 }
 
 int
@@ -1455,10 +1467,7 @@ jsal_push_newtarget(void)
 int
 jsal_push_null(void)
 {
-	JsValueRef ref;
-
-	JsGetNullValue(&ref);
-	return push_value(ref, true);
+	return push_value(s_js_null, true);
 }
 
 int
@@ -1535,7 +1544,7 @@ jsal_push_uint(unsigned int value)
 int
 jsal_push_undefined(void)
 {
-	return push_value(s_undefined_value, true);
+	return push_value(s_js_undefined, true);
 }
 
 void
@@ -1952,25 +1961,27 @@ jsal_try(js_function_t callback, int num_args)
 {
 	/* [ ... arg1..argN ] -> [ ... retval ] */
 
-	jsal_jmpbuf label;
-	int         last_stack_base;
-	JsValueRef  result;
-	bool        retval = true;
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
+	int          last_stack_base;
+	JsValueRef   result;
+	bool         retval = true;
 
+	last_catch_label = s_catch_label;
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_value_stack) - num_args;
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		if (!callback(num_args, false, 0))
 			jsal_push_undefined();
 		result = pop_value();
-		vector_pop(s_catch_stack, 1);
 	}
 	else {
 		result = pop_value();
 		retval = false;
 	}
 	resize_stack(s_stack_base);
+	s_catch_label = last_catch_label;
 	s_stack_base = last_stack_base;
 	push_value(result, false);
 	return retval;
@@ -1981,15 +1992,18 @@ jsal_try_call(int num_args)
 {
 	/* [ ... function arg1..argN ] -> [ ... retval ] */
 
-	jsal_jmpbuf label;
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
 
+	last_catch_label = s_catch_label;
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		jsal_call(num_args);
-		vector_pop(s_catch_stack, 1);
+		s_catch_label = last_catch_label;
 		return true;
 	}
 	else {
+		s_catch_label = last_catch_label;
 		return false;
 	}
 }
@@ -1999,15 +2013,18 @@ jsal_try_call_method(int num_args)
 {
 	/* [ ... function this arg1..argN ] -> [ ... retval ] */
 
-	jsal_jmpbuf label;
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
 
+	last_catch_label = s_catch_label;
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		jsal_call_method(num_args);
-		vector_pop(s_catch_stack, 1);
+		s_catch_label = last_catch_label;
 		return true;
 	}
 	else {
+		s_catch_label = last_catch_label;
 		return false;
 	}
 }
@@ -2017,15 +2034,18 @@ jsal_try_compile(const char* filename)
 {
 	/* [ ... source ] -> [ ... function ] */
 
-	jsal_jmpbuf label;
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
 
+	last_catch_label = s_catch_label;
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = last_catch_label;
 		jsal_compile(filename);
-		vector_pop(s_catch_stack, 1);
+		s_catch_label = last_catch_label;
 		return true;
 	}
 	else {
+		s_catch_label = last_catch_label;
 		return false;
 	}
 }
@@ -2035,15 +2055,18 @@ jsal_try_construct(int num_args)
 {
 	/* [ ... constructor arg1..argN ] -> [ ... retval ] */
 
-	jsal_jmpbuf label;
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
 
+	last_catch_label = s_catch_label;
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		jsal_construct(num_args);
-		vector_pop(s_catch_stack, 1);
+		s_catch_label = last_catch_label;
 		return true;
 	}
 	else {
+		s_catch_label = last_catch_label;
 		return false;
 	}
 }
@@ -2053,15 +2076,18 @@ jsal_try_eval_module(const char* specifier, const char* url)
 {
 	/* [ ... source ] -> [ ... exports ] */
 
-	jsal_jmpbuf label;
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
 
+	last_catch_label = s_catch_label;
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		jsal_eval_module(specifier, url);
-		vector_pop(s_catch_stack, 1);
+		s_catch_label = last_catch_label;
 		return true;
 	}
 	else {
+		s_catch_label = last_catch_label;
 		return false;
 	}
 }
@@ -2069,15 +2095,18 @@ jsal_try_eval_module(const char* specifier, const char* url)
 bool
 jsal_try_parse(int at_index)
 {
-	jsal_jmpbuf label;
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
 
+	last_catch_label = s_catch_label;
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		jsal_parse(at_index);
-		vector_pop(s_catch_stack, 1);
+		s_catch_label = last_catch_label;
 		return true;
 	}
 	else {
+		s_catch_label = last_catch_label;
 		return false;
 	}
 }
@@ -2549,7 +2578,7 @@ resize_stack(int new_size)
 	}
 	vector_resize(s_value_stack, new_size);
 	if (new_size > old_size) {
-		ref.value = s_undefined_value;
+		ref.value = s_js_undefined;
 		ref.weak_ref = true;
 		for (i = old_size; i < new_size; ++i)
 			vector_put(s_value_stack, i, &ref);
@@ -2573,15 +2602,9 @@ throw_on_error(void)
 static void
 throw_value(JsValueRef value)
 {
-	int         index;
-	jsal_jmpbuf label;
-
 	push_value(value, false);
-	index = vector_len(s_catch_stack) - 1;
-	if (index >= 0) {
-		memcpy(label, vector_get(s_catch_stack, index), sizeof(jsal_jmpbuf));
-		vector_pop(s_catch_stack, 1);
-		jsal_longjmp(label, 1);
+	if (s_catch_label != NULL) {
+		jsal_longjmp(*s_catch_label, 1);
 	}
 	else {
 		printf("JS exception thrown from unguarded C code!\n");
@@ -2598,6 +2621,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 	const char*        filename;
 	unsigned int       handle;
 	jsal_jmpbuf        label;
+	jsal_jmpbuf*       last_catch_label;
 	int                last_stack_base;
 	const char*        name;
 	JsValueRef         properties;
@@ -2630,6 +2654,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 			}
 			break;
 		case JsDiagDebugEventRuntimeException:
+			last_catch_label = s_catch_label;
 			last_stack_base = s_stack_base;
 			s_stack_base = vector_len(s_value_stack);
 			push_value(data, true);
@@ -2656,33 +2681,34 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 			jsal_push_string(traceback);
 			push_debug_callback_args(data);
 			if (jsal_setjmp(label) == 0) {
-				vector_push(s_catch_stack, label);
+				s_catch_label = &label;
 				if (s_throw_callback != NULL)
 					s_throw_callback();
-				vector_pop(s_catch_stack, 1);
 			}
 			else {
 				jsal_pop(1);
 			}
 			resize_stack(s_stack_base);
+			s_catch_label = last_catch_label;
 			s_stack_base = last_stack_base;
 			// fallthrough;
 		case JsDiagDebugEventAsyncBreak:
 		case JsDiagDebugEventBreakpoint:
 		case JsDiagDebugEventDebuggerStatement:
 		case JsDiagDebugEventStepComplete:
+			last_catch_label = s_catch_label;
 			last_stack_base = s_stack_base;
 			s_stack_base = vector_len(s_value_stack);
 			push_debug_callback_args(data);
 			if (jsal_setjmp(label) == 0) {
-				vector_push(s_catch_stack, label);
+				s_catch_label = &label;
 				step = s_break_callback();
-				vector_pop(s_catch_stack, 1);
 			}
 			else {
 				jsal_pop(1);
 			}
 			resize_stack(s_stack_base);
+			s_catch_label = last_catch_label;
 			s_stack_base = last_stack_base;
 			step_type = step == JS_STEP_IN ? JsDiagStepTypeStepIn
 				: step == JS_STEP_OUT ? JsDiagStepTypeStepOut
@@ -2710,6 +2736,7 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModu
 	const char*       specifier;
 	bool              is_new_module;
 	jsal_jmpbuf       label;
+	jsal_jmpbuf*      last_catch_label;
 	int               last_stack_base;
 	struct module_job job;
 	JsModuleRecord    module;
@@ -2720,6 +2747,7 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModu
 	if (s_import_callback == NULL)
 		return JsErrorInvalidArgument;
 
+	last_catch_label = s_catch_label;
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_value_stack);
 	push_value(module_name, true);
@@ -2731,7 +2759,7 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModu
 		jsal_push_null();
 	}
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		s_import_callback();
 		if (jsal_get_top() < 2)
 			jsal_error(JS_TYPE_ERROR, "Internal error in module callback");
@@ -2746,7 +2774,11 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModu
 			job.source_size = strlen(source);
 			vector_push(s_module_jobs, &job);
 		}
-		vector_pop(s_catch_stack, 1);
+		resize_stack(s_stack_base);
+		s_catch_label = last_catch_label;
+		s_stack_base = last_stack_base;
+		*out_module = module;
+		return JsNoError;
 	}
 	else {
 		exception = pop_value();
@@ -2755,14 +2787,11 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModu
 		module = get_module_record(specifier, importer, specifier, &is_new_module);
 		JsSetModuleHostInfo(module, JsModuleHostInfo_Exception, exception);
 		resize_stack(s_stack_base);
+		s_catch_label = last_catch_label;
 		s_stack_base = last_stack_base;
 		*out_module = module;
 		return JsNoError;
 	}
-	resize_stack(s_stack_base);
-	s_stack_base = last_stack_base;
-	*out_module = module;
-	return JsNoError;
 }
 
 static void CHAKRA_CALLBACK
@@ -2784,6 +2813,7 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	bool             has_return;
 	bool             is_ctor_call;
 	JsValueRef       last_callee_value;
+	jsal_jmpbuf*     last_catch_label;
 	JsValueRef       last_newtarget_value;
 	int              last_stack_base;
 	JsValueRef       last_this_value;
@@ -2796,6 +2826,7 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 
 	last_stack_base = s_stack_base;
 	last_callee_value = s_callee_value;
+	last_catch_label = s_catch_label;
 	last_newtarget_value = s_newtarget_value;
 	last_this_value = s_this_value;
 	s_stack_base = vector_len(s_value_stack);
@@ -2805,7 +2836,7 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	for (i = 1; i < argc; ++i)
 		push_value(argv[i], true);
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		is_ctor_call = env->isConstructCall;
 		if (!is_ctor_call && function_data->ctor_only) {
 			push_value(callee, true);  // note: gets popped during unwind
@@ -2820,7 +2851,6 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 		has_return = function_data->callback(argc - 1, is_ctor_call, function_data->magic);
 		if (has_return)
 			retval = get_value(-1);
-		vector_pop(s_catch_stack, 1);
 	}
 	else {
 		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
@@ -2831,6 +2861,7 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	}
 	resize_stack(s_stack_base);
 	s_callee_value = last_callee_value;
+	s_catch_label = last_catch_label;
 	s_newtarget_value = last_newtarget_value;
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
@@ -2878,19 +2909,20 @@ on_reject_promise_unhandled(JsValueRef promise, JsValueRef reason, bool handled,
 static void CHAKRA_CALLBACK
 on_resolve_reject_promise(JsValueRef task, void* userdata)
 {
-	JsValueRef  exception;
-	jsal_jmpbuf label;
-	int         last_stack_base;
+	JsValueRef   exception;
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
+	int          last_stack_base;
 
+	last_catch_label = s_catch_label;
 	last_stack_base = s_stack_base;
 	s_stack_base = vector_len(s_value_stack);
 	push_value(task, true);
 	if (jsal_setjmp(label) == 0) {
-		vector_push(s_catch_stack, label);
+		s_catch_label = &label;
 		if (s_job_callback == NULL)
 			jsal_error(JS_ERROR, "No async/promise continuation support");
 		s_job_callback();
-		vector_pop(s_catch_stack, 1);
 	}
 	else {
 		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
@@ -2899,6 +2931,7 @@ on_resolve_reject_promise(JsValueRef task, void* userdata)
 		JsSetException(exception);
 	}
 	resize_stack(s_stack_base);
+	s_catch_label = last_catch_label;
 	s_stack_base = last_stack_base;
 }
 

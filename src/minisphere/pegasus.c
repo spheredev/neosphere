@@ -920,7 +920,7 @@ pegasus_eval_module(const char* filename)
 	jsal_put_prop_string(-2, "filename");  // module.filename
 	jsal_push_string(filename);
 	jsal_put_prop_string(-2, "id");  // module.id
-	jsal_push_boolean(false);
+	jsal_push_boolean_false();
 	jsal_put_prop_string(-2, "loaded");  // module.loaded = false
 	jsal_pegasus_push_require(filename);
 	jsal_put_prop_string(-2, "require");  // module.require
@@ -982,7 +982,7 @@ pegasus_eval_module(const char* filename)
 	}
 
 	// module executed successfully, set 'module.loaded' to true
-	jsal_push_boolean(true);
+	jsal_push_boolean_true();
 	jsal_put_prop_string(-2, "loaded");
 
 have_module:
@@ -1889,7 +1889,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 	entry_path = directory_next(directory);
 	jsal_push_new_object();
 	if (entry_path != NULL) {
-		jsal_push_boolean(false);
+		jsal_push_boolean_false();
 		jsal_put_prop_key(-2, s_key_done);
 		jsal_push_new_object();
 		if (path_is_file(entry_path))
@@ -1904,7 +1904,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 		jsal_put_prop_key(-2, s_key_value);
 	}
 	else {
-		jsal_push_boolean(true);
+		jsal_push_boolean_true();
 		jsal_put_prop_key(-2, s_key_done);
 	}
 	return true;
@@ -3378,15 +3378,18 @@ js_RNG_iterator(int num_args, bool is_ctor, int magic)
 static bool
 js_RNG_next(int num_args, bool is_ctor, int magic)
 {
+	double  value;
 	xoro_t* xoro;
 
 	jsal_push_this();
 	xoro = jsal_require_class_obj(-1, PEGASUS_RNG);
 
+	value = xoro_gen_double(xoro);
+	
 	jsal_push_new_object();
-	jsal_push_boolean(false);
+	jsal_push_boolean_false();
 	jsal_put_prop_key(-2, s_key_done);
-	jsal_push_number(xoro_gen_double(xoro));
+	jsal_push_number(value);
 	jsal_put_prop_key(-2, s_key_value);
 	return true;
 }
@@ -3801,7 +3804,7 @@ js_Socket_get_connected(int num_args, bool is_ctor, int magic)
 	if (socket != NULL)
 		jsal_push_boolean(socket_connected(socket));
 	else
-		jsal_push_boolean(false);
+		jsal_push_boolean_false();
 	return true;
 }
 
@@ -4241,14 +4244,7 @@ js_Surface_get_Screen(int num_args, bool is_ctor, int magic)
 
 	backbuffer = screen_backbuffer(g_screen);
 	jsal_push_class_obj(PEGASUS_SURFACE, image_ref(backbuffer), false);
-
-	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "Screen");
-	jsal_pop(1);
-
+	cache_value_to_this("Screen");
 	return true;
 }
 
@@ -4638,6 +4634,8 @@ js_Texture_download(int num_args, bool is_ctor, int magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
+	if (image == screen_backbuffer(g_screen))
+		jsal_error(JS_RANGE_ERROR, "Cannot upload directly to the backbuffer");
 	width = image_width(image);
 	height = image_height(image);
 	if (!(lock = image_lock(image, false, true)))
@@ -4672,6 +4670,8 @@ js_Texture_upload(int num_args, bool is_ctor, int magic)
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 	buffer = jsal_require_buffer_ptr(0, &buffer_size);
 
+	if (image == screen_backbuffer(g_screen))
+		jsal_error(JS_RANGE_ERROR, "Cannot upload directly to the backbuffer");
 	width = image_width(image);
 	height = image_height(image);
 	if (buffer_size < width * height * sizeof(color_t))

@@ -157,6 +157,8 @@ int          jsal_normalize_index          (int index);
 void         jsal_parse                    (int at_index);
 void         jsal_pop                      (int num_values);
 int          jsal_push_boolean             (bool value);
+int          jsal_push_boolean_false       (void);
+int          jsal_push_boolean_true        (void);
 int          jsal_push_callee              (void);
 int          jsal_push_eval                (const char* source);
 int          jsal_push_global_object       (void);
