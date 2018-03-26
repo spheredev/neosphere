@@ -47,9 +47,11 @@ class Kami
 	finish()
 	{
 		SSj.log(`Profiling has completed for "${this.title}"`);
-		let nonzeroRecords = from(this.records).where(it => it.count > 0);
-		for (const record of nonzeroRecords) {
-			let averageTime = Math.round(record.totalTime/ record.count / 1000).toLocaleString();
+		let sortedRecords = from(this.records)
+			.where(it => it.count > 0)
+			.descending(it => it.totalTime / it.count);
+		for (const record of sortedRecords) {
+			let averageTime = Math.round(record.totalTime / record.count / 1000).toLocaleString();
 			let count = record.count.toLocaleString();
 			let totalTime = Math.round(record.totalTime / 1000).toLocaleString();
 			SSj.log(`  ${count} occurrences "${record.description}" took ${totalTime} mcs (avg. ${averageTime} mcs)`);
