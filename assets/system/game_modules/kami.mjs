@@ -30,24 +30,56 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-// miniSphere-specific modules
-export { default as Console } from 'console';
-export { default as FocusTarget } from 'focus-target';
-export { default as Image } from 'image';
-export { default as Joypad } from 'joypad';
-export { default as Kami } from 'kami';
-export { default as Music } from 'music';
-export { default as Pact } from 'pact';
-export { default as Prim } from 'prim';
-export { default as Scene } from 'scene';
-export { default as Thread } from 'thread';
+export default new
+class Kami
+{
+	constructor(title = Sphere.Game.name)
+	{
+		this.enabled = SSj.now() > 0;
+		this.title = title;
+		this.records = [];
+		if (this.enabled)
+			this.exitJob = Dispatch.onExit(() => this.finish());
+	}
 
-// Sphere Runtime shared modules
-export { default as assert } from 'assert';
-export { default as from } from 'from';
-export { default as DataStream } from 'data-stream';
-export { default as Delegate } from 'delegate';
-export { default as Logger } from 'logger';
-export { default as Random } from 'random';
-export { default as Test } from 'test';
-export { default as XML } from 'xml';
+	finish()
+	{
+		SSj.log(`Profiling has completed for "${this.title}"`);
+		for (const record of this.records) {
+			let averageTime = Math.round(record.totalTime/ record.count / 1000).toLocaleString();
+			let count = record.count.toLocaleString();
+			let totalTime = Math.round(record.totalTime / 1000).toLocaleString();
+			SSj.log(`  ${count} occurrences "${record.description}" took ${totalTime} mcs (avg. ${averageTime} mcs)`);
+			record.target[record.methodName] = record.originalFunction;
+		}
+		this.exitJob.cancel();
+	}
+
+	profile(target, methodName, description)
+	{
+		if (!this.enabled)
+			return;
+
+		let originalFunction = target[methodName];
+		let record = {
+			description: `${target.constructor.name}#${methodName}`,
+			count: 0,
+			methodName,
+			originalFunction,
+			target,
+			totalTime: 0,
+		}
+		if (typeof description === 'string')
+			record.description = description;
+
+		target[methodName] = function (...args) {
+			let startTime = SSj.now();
+			originalFunction.apply(this, args);
+			let endTime = SSj.now();
+			record.totalTime += endTime - startTime;
+			++record.count;
+		}
+
+		this.records.push(record);
+	}
+}

@@ -4,6 +4,9 @@ miniSphere Changelog
 v5.2.0 - TBD
 ------------
 
+* Adds a new `Kami` module which allows easily profiling the execution time of
+  your game's functions by automatically patching them with timing
+  instrumentation.
 * Adds `Shape.drawImmediate()` function which avoids the overhead of creating
   VertexList and Shape objects for immediate-mode drawing.
 * Adds `Dispatch.onExit()`, which lets you run code after the event loop exits.
