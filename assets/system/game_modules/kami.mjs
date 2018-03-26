@@ -30,6 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+import from from 'from';
+
 export default new
 class Kami
 {
@@ -45,7 +47,8 @@ class Kami
 	finish()
 	{
 		SSj.log(`Profiling has completed for "${this.title}"`);
-		for (const record of this.records) {
+		let nonzeroRecords = from(this.records).where(it => it.count > 0);
+		for (const record of nonzeroRecords) {
 			let averageTime = Math.round(record.totalTime/ record.count / 1000).toLocaleString();
 			let count = record.count.toLocaleString();
 			let totalTime = Math.round(record.totalTime / 1000).toLocaleString();
