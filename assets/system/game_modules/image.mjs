@@ -32,6 +32,9 @@
 
 import from from 'from';
 
+const white = Color.White;
+let color = null;
+
 let imageShader = new Shader({
 	fragmentFile: '#/shaders/image.frag.glsl',
 	vertexFile:   '#/shaders/image.vert.glsl',
@@ -52,13 +55,18 @@ class Image
 		let texture = new Texture(fullPath);
 		let shape = new Shape(ShapeType.TriStrip, texture,
 			new VertexList([
-				{ x: 0, y: 0, u: 0, v: 1 },
-				{ x: 1, y: 0, u: 1, v: 1 },
-				{ x: 0, y: 1, u: 0, v: 0 },
-				{ x: 1, y: 1, u: 1, v: 0 },
+				{ x: 0,             y: 0,              u: 0, v: 1 },
+				{ x: texture.width, y: 0,              u: 1, v: 1 },
+				{ x: 0,             y: texture.height, u: 0, v: 0 },
+				{ x: texture.width, y: texture.height, u: 1, v: 0 },
 			]));
+		
+		this._x = 0;
+		this._y = 0;
 
 		this.model = new Model([ shape ], imageShader);
+		this.transform = new Transform();
+		this.model.transform = this.transform;
 		this.texture = texture;
 	}
 
@@ -72,12 +80,17 @@ class Image
 		return this.texture.width;
 	}
 
-	blitTo(surface, x, y, tintColor = Color.White)
+	blitTo(surface, x, y, tintColor = white)
 	{
-		imageShader.setColorVector('tintColor', tintColor);
-		this.model.transform = new Transform()
-			.scale(this.texture.width, this.texture.height)
-			.translate(x, y);
+		if (color !== tintColor) {
+			imageShader.setColorVector('tintColor', tintColor);
+			color = tintColor;
+		}
+		if (this._x !== x || this._y !== y) {
+			this.transform.translate(x - this._x, y - this._y);
+			this._x = x;
+			this._y = y;
+		}
 		this.model.draw(surface);
 	}
 }
