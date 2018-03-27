@@ -189,7 +189,7 @@ function makeTable(table, bordered)
 			if (bordered === true)
 				column[j] += "|";
 		}
-		totalLength += (width + 3);
+		totalLength += width + (bordered ? 3 : 2);
 	}
 
 	let start = "\n";

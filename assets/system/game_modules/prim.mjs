@@ -30,6 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+const white = Color.White;
+
 export default
 class Prim
 {
@@ -43,10 +45,8 @@ class Prim
 		Prim.blitSection(surface, x, y, texture, 0, 0, texture.width, texture.height, mask);
 	}
 
-	static blitSection(surface, x, y, texture, sx, sy, width, height, mask)
+	static blitSection(surface, x, y, texture, sx, sy, width, height, mask = white)
 	{
-		mask = mask || Color.White;
-
 		let x1 = x;
 		let y1 = y;
 		let x2 = x1 + width;
