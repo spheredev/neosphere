@@ -81,7 +81,7 @@ namespace Sphere.Gdk.DockPanes
 
         public void Print(string text)
         {
-            m_lines.Add(text);
+            m_lines.AddRange(text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None));
             m_timer.Start();
         }
 
