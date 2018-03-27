@@ -4,9 +4,8 @@ miniSphere Changelog
 v5.2.0 - TBD
 ------------
 
-* Adds a new `Kami` module which allows easily profiling the execution time of
-  your game's functions by automatically patching them with timing
-  instrumentation.
+* Adds a new `Kami` module providing an easy way to profile the execution times
+  of your game's functions by dynamically patching in timing code.
 * Adds `Shape.drawImmediate()` function which avoids the overhead of creating
   VertexList and Shape objects for immediate-mode drawing.
 * Adds `Dispatch.onExit()`, which lets you run code after the event loop exits.
@@ -15,6 +14,7 @@ v5.2.0 - TBD
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
 * Adds support for render-to-texture by allowing `Surface` objects to be used
   as textures, without calling `.toTexture()` first.
+* Adds `[Symbol.toStringTag]` and `.constructor` for Sphere v2 objects.
 * Improves performance of most native object constructors.
 * Improves performance of all `Prim` drawing functions.
 * Fixes an internal memory leak mostly affecting Dispatch job execution.

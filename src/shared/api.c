@@ -266,13 +266,20 @@ api_define_subclass(const char* name, int class_id, int super_id, js_function_t 
 	struct class_data class_data;
 	js_ref_t*         prototype;
 
-	// create a prototype and leave it on the stack
+	// construct a prototype and leave it on the stack
 	jsal_push_new_object();
 	if (super_id >= 0) {
 		jsal_push_class_prototype(super_id);
 		jsal_set_prototype(-2);
 	}
 	prototype = jsal_ref(-1);
+
+	// <prototype>[Symbol.toStringTag] = <name>;
+	jsal_push_known_symbol("toStringTag");
+	jsal_push_new_object();
+	jsal_push_string(name);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop(-3);
 
 	// IMPORTANT: `class_id` should never exceed 999.
 	s_class_index[class_id] = vector_len(s_classes);
@@ -288,11 +295,19 @@ api_define_subclass(const char* name, int class_id, int super_id, js_function_t 
 	if (constructor != NULL) {
 		jsal_push_new_constructor(constructor, name, 0, magic);
 
+		// <prototype>.constructor = <ctor>;
+		jsal_push_new_object();
+		jsal_dup(-2);
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-3, "constructor");
+
+		// <ctor>.prototype = <prototype>
 		jsal_push_new_object();
 		jsal_dup(-3);
 		jsal_put_prop_string(-2, "value");
 		jsal_def_prop_string(-2, "prototype");
 
+		// global.<name> = <ctor>;
 		jsal_push_global_object();
 		jsal_push_eval("({ writable: true, configurable: true })");
 		jsal_pull(-3);
