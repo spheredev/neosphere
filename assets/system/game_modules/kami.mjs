@@ -30,6 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+import from from 'from';
+
 const now = SSj.now;
 
 export default new
@@ -43,6 +45,61 @@ class Kami
 		this.placeholder = new Record();
 		if (this.enabled)
 			this.exitJob = Dispatch.onExit(() => this.finish());
+	}
+
+	attachClass(constructor)
+	{
+		let allMethodKeys = from(Reflect.ownKeys(constructor.prototype))
+			.where(it => typeof it === 'string' && typeof constructor.prototype[it] === 'function')
+			.where(it => it !== 'constructor');
+		let allStaticKeys = from(Reflect.ownKeys(constructor))
+			.where(it => typeof it === 'string' && typeof constructor[it] === 'function');
+		for (const key of allStaticKeys)
+			this.attachMethod(constructor, key, `${constructor.name}.${key}`);
+		for (const key of allMethodKeys)
+			this.attachMethod(constructor.prototype, key);
+	}
+
+	attachMethod(target, methodName, description = `${target.constructor.name}#${methodName}`)
+	{
+		if (!this.enabled)
+			return;
+
+		let originalFunction = target[methodName];
+		let record = new Record(description, true, methodName, originalFunction, target);
+		this.records.push(record);
+
+		target[methodName] = function (...args) {
+			let startTime = now();
+			let result = originalFunction.apply(this, args);
+			record.totalTime += now() - startTime;
+			++record.count;
+			return result;
+		};
+	}
+
+	begin(description = "Unknown")
+	{
+		if (!this.enabled)
+			return this.placeholder;
+		
+		let record = findRecord(this.records, description);
+		if(record === undefined) {
+			record = new Record(description, false, undefined, undefined, undefined);
+			this.records.push(record);
+		}
+		if (record.startTime > 0)
+			throw new Error("Reentrant profiling not supported");
+		record.startTime = now();
+		return record;
+	}
+
+	end(record)
+	{
+		let end = now();
+		record.totalTime += end - record.startTime;
+		record.startTime = 0;
+		++record.count;
 	}
 
 	finish()
@@ -62,7 +119,7 @@ class Kami
 				totalAverage += record.averageTime;
 			}
 		}
-		this.records.sort(function(a, b) { return b.averageTime - a.averageTime; });
+		this.records.sort(function(a, b) { return b.totalTime - a.totalTime; });
 
 		let consoleOutput = [
 			[ "Event" ],
@@ -95,49 +152,7 @@ class Kami
 			+ `\n${makeTable(consoleOutput, this.useTableBorders)}\n`);
 		this.records.splice(0, this.records.length);
 	}
-
-	begin(description = "Unknown")
-	{
-		if (!this.enabled)
-			return this.placeholder;
-		
-		let record = findRecord(this.records, description);
-		if(record === undefined) {
-			record = new Record(description, false, undefined, undefined, undefined);
-			this.records.push(record);
-		}
-		if (record.startTime > 0)
-			throw new Error("Reentrant profiling not supported");
-		record.startTime = now();
-		return record;
-	}
-
-	end(record)
-	{
-		let end = now();
-		record.totalTime += end - record.startTime;
-		record.startTime = 0;
-		++record.count;
-	}
-
-	profile(target, methodName, description = `${target.constructor.name}#${methodName}`)
-	{
-		if (!this.enabled)
-			return;
-
-		let originalFunction = target[methodName];
-		let record = new Record(description, true, methodName, originalFunction, target);
-		this.records.push(record);
-
-		target[methodName] = function (...args) {
-			let startTime = now();
-			let result = originalFunction.apply(this, args);
-			record.totalTime += now() - startTime;
-			++record.count;
-			return result;
-		};
-	}
-};
+}
 
 function Record(description, attached, methodName, originalFunction, target)
 {
