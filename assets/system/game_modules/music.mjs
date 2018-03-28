@@ -80,7 +80,7 @@ class Music
 
 	static pop(fadeTime = 0)
 	{
-		if (oldSounds.length == 0)
+		if (oldSounds.length === 0)
 			return;
 		currentSound.fader.stop();
 		currentSound.fader = new Scene()
@@ -128,7 +128,7 @@ class Music
 function crossfade(fileName, frames = 0, forceChange)
 {
 	let allowChange = !haveOverride || forceChange;
-	if (currentSound != null && allowChange) {
+	if (currentSound !== null && allowChange) {
 		currentSound.fader.stop();
 		currentSound.fader = new Scene()
 			.tween(currentSound.stream, frames, 'linear', { volume: 0.0 });
@@ -138,7 +138,7 @@ function crossfade(fileName, frames = 0, forceChange)
 		let fullPath = FS.fullPath(fileName, '@/music');
 		fullPath = from.array([ '', '.ogg', '.mp3', '.it', '.mod', '.s3m', '.xm', '.flac' ])
 			.select(suffix => `${fullPath}${suffix}`)
-			.first(fileName => FS.fileExists(fileName))
+			.first(fileName => FS.fileExists(fileName));
 		if (fullPath === undefined)
 			throw new Error(`couldn't find music '${fileName}'`);
 		let stream = new Sound(fullPath);

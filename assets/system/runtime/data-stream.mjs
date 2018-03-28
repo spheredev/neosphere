@@ -121,7 +121,7 @@ class DataStream extends FileStream
 			let fieldDesc = desc[key];
 			let value;
 			switch (fieldDesc.type) {
-				case 'bool': value = this.readUint8() != 0; break;
+				case 'bool': value = this.readUint8() !== 0; break;
 				case 'float32be': value = this.readFloat32(); break;
 				case 'float32le': value = this.readFloat32(true); break;
 				case 'float64be': value = this.readFloat64(); break;
@@ -256,7 +256,7 @@ class DataStream extends FileStream
 		verifyStructDescriptor(desc);
 
 		for (const key of Object.keys(desc)) {
-			let value = key in object ? object[key] : desc[key].default
+			let value = key in object ? object[key] : desc[key].default;
 			switch (desc[key].type) {
 				case 'bool': this.writeUint8(value ? 1 : 0); break;
 				case 'float32be': this.writeFloat32(value); break;

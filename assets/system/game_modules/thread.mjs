@@ -52,9 +52,9 @@ class Thread
 			throw new Error(`'${new.target.name}' is abstract and cannot be instantiated`);
 
 		options = Object.assign({}, {
-				inBackground: false,
-				priority:     0.0,
-			}, options);
+			inBackground: false,
+			priority:     0.0,
+		}, options);
 
 		this._bootstrapping = false;
 		this._busy = false;

@@ -51,7 +51,7 @@ class XML
 		saxStream.onopentag = tag => {
 			parentNodes.push(currentNode);
 			currentNode = { type: 'tag', name: tag.name, nodes: [], attributes: {} };
-			for (const key in tag.attributes)
+			for (const key of Object.keys(tag.attributes))
 				currentNode.attributes[key] = tag.attributes[key];
 		};
 		saxStream.onclosetag = tag => {
@@ -61,10 +61,10 @@ class XML
 		};
 		saxStream.oncomment = text => {
 			currentNode.nodes.push({ type: 'comment', text: text });
-		}
+		};
 		saxStream.ontext = text => {
 			currentNode.nodes.push({ type: 'text', text: text });
-		}
+		};
 		saxStream.write(xmlText);
 		saxStream.close();
 

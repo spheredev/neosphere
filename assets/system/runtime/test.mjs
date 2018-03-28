@@ -40,11 +40,11 @@ class Test
 		let testJobs = from.object(tests)
 			.where((it, key) => key.startsWith('test'))
 			.where((it, key) => key !== 'test');
-		for (const job in testJobs) {
+		for (const job of testJobs) {
 			if (typeof job === 'function')
 				job();
-			else if (typeof test === 'object' && test !== null)
-				run(job);
+			else if (typeof job === 'object' && job !== null)
+				this.run(job);
 		}
 	}
 

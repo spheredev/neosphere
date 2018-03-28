@@ -82,7 +82,7 @@ class Kami
 	{
 		if (!this.enabled)
 			return this.placeholder;
-		
+
 		let record = findRecord(this.records, description);
 		if(record === undefined) {
 			record = new Record(description, false, undefined, undefined, undefined);
@@ -152,7 +152,7 @@ class Kami
 			+ `\n${makeTable(consoleOutput, this.useTableBorders)}\n`);
 		this.records.splice(0, this.records.length);
 	}
-}
+};
 
 function Record(description, attached, methodName, originalFunction, target)
 {
@@ -209,7 +209,7 @@ function makeTable(table, useFullBorders)
 	else {
 		startLine = `\n${"-".repeat(totalLength - 1)}`;
 	}
-	
+
 	for (let i = 0; i < rows; ++i) {
 		if (i === rows - 1)
 			output += startLine;

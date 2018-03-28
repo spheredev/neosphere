@@ -87,12 +87,12 @@ class Console extends Thread
 
 	defineObject(name, that, methods)
 	{
-		for (const instruction in methods) {
+		for (const [ key, value ] of Object.entries(methods)) {
 			this.commands.push({
 				entity: name,
-				instruction: instruction,
+				instruction: key,
 				that: that,
-				method: methods[instruction]
+				method: value,
 			});
 		}
 	}
@@ -136,7 +136,7 @@ class Console extends Thread
 	undefineObject(name)
 	{
 		from.array(this.commands)
-			.where(it => it.entity == name)
+			.where(it => it.entity === name)
 			.remove();
 	}
 
@@ -144,8 +144,8 @@ class Console extends Thread
 	{
 		if (this.view.visible) {
 			let mouseEvent = this.mouse.getEvent();
-			let wheelUp = mouseEvent !== null && mouseEvent.key == MouseKey.WheelUp;
-			let wheelDown = mouseEvent !== null && mouseEvent.key == MouseKey.WheelDown;
+			let wheelUp = mouseEvent !== null && mouseEvent.key === MouseKey.WheelUp;
+			let wheelDown = mouseEvent !== null && mouseEvent.key === MouseKey.WheelDown;
 			let speed = (wheelUp || wheelDown) ? 1.0 : 0.5;
 			if (this.keyboard.isPressed(Key.PageUp) || wheelUp) {
 				this.view.line = Math.min(this.view.line + speed, this.buffer.length - this.numLines);
@@ -157,33 +157,39 @@ class Console extends Thread
 			if (keycode === this.activationKey)
 				return;
 			switch (keycode) {
-				case Key.Enter:
+				case Key.Enter: {
 					this.log(`executing command line '${this.entry}'`);
 					executeCommand(this, this.entry);
 					this.entry = "";
 					break;
-				case Key.Backspace:
+				}
+				case Key.Backspace: {
 					this.entry = this.entry.slice(0, -1);
 					break;
-				case Key.Home:
+				}
+				case Key.Home: {
 					let newLine = this.buffer.length - this.numLines;
 					new Scene()
 						.tween(this.view, 0.125 * fps, 'easeOut', { line: newLine })
 						.run();
 					break;
-				case Key.End:
+				}
+				case Key.End: {
 					new Scene()
 						.tween(this.view, 0.125 * fps, 'easeOut', { line: 0.0 })
 						.run();
 					break;
+				}
 				case Key.Tab:
-				case null:
+				case null: {
 					break;
-				default:
+				}
+				default: {
 					let isShifted = this.keyboard.isPressed(Key.LShift) || this.keyboard.isPressed(Key.RShift);
 					let ch = this.keyboard.charOf(keycode, isShifted);
 					ch = this.keyboard.capsLock ? ch.toUpperCase() : ch;
 					this.entry += ch;
+				}
 			}
 		}
 	}
@@ -211,7 +217,7 @@ class Console extends Thread
 		for (let i = -1; i < this.numLines + 1; ++i) {
 			let lineToDraw = (this.nextLine - this.numLines) + i - Math.floor(this.view.line);
 			let lineInBuffer = lineToDraw % this.bufferSize;
-			if (lineToDraw >= 0 && this.buffer[lineInBuffer] != null) {
+			if (lineToDraw >= 0 && this.buffer[lineInBuffer] !== undefined) {
 				let y = boxY + 5 + i * this.font.height;
 				y += (this.view.line - Math.floor(this.view.line)) * this.font.height;
 				this.font.drawText(Surface.Screen, 6, y + 1, this.buffer[lineInBuffer], Color.Black.fadeTo(this.view.fade * 0.75));
@@ -240,7 +246,7 @@ function executeCommand(console, command)
 {
 	// tokenize the command string
 	let tokens = command.match(/'.*?'|".*?"|\S+/g);
-	if (tokens == null)
+	if (tokens === null)
 		return;
 	for (let i = 0; i < tokens.length; ++i) {
 		tokens[i] = tokens[i].replace(/'(.*)'/, "$1");
@@ -251,7 +257,7 @@ function executeCommand(console, command)
 
 	// check that the instruction is valid
 	if (!from.array(console.commands)
-		.any(it => it.entity == objectName))
+		.any(it => it.entity === objectName))
 	{
 		console.log(`unrecognized object name '${objectName}'`);
 		return;
@@ -261,8 +267,8 @@ function executeCommand(console, command)
 		return;
 	}
 	if (!from.array(console.commands)
-		.where(it => it.entity == objectName)
-		.any(it => it.instruction == instruction))
+		.where(it => it.entity === objectName)
+		.any(it => it.instruction === instruction))
 	{
 		console.log(`instruction '${instruction}' not valid for '${objectName}'`);
 		return;
@@ -276,8 +282,8 @@ function executeCommand(console, command)
 
 	// execute the command
 	let matches = from.array(console.commands)
-		.where(it => it.entity == objectName)
-		.where(it => it.instruction == instruction)
+		.where(it => it.entity === objectName)
+		.where(it => it.instruction === instruction);
 	for (const command of matches) {
 		Dispatch.now(() => {
 			try {

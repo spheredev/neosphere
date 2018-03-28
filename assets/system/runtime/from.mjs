@@ -30,7 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import assert from 'assert';
 import Random from 'random';
 
 export default
@@ -111,8 +110,7 @@ function FromQuery(source)
 	this.itemSource = source;
 }
 
-Object.defineProperties(FromQuery.prototype,
-{
+Object.defineProperties(FromQuery.prototype, {
 	[Symbol.iterator]:
 	PROPDESC('wc', function* enumerate(withKeys)
 	{
@@ -174,7 +172,7 @@ function ArraySource(target)
 			k: m_index++,
 			t: target,
 		};
-	}
+	};
 }
 
 function IterableSource(target)
@@ -201,7 +199,7 @@ function IterableSource(target)
 			k: null,
 			t: target,
 		};
-	}
+	};
 }
 
 function ObjectSource(target)
@@ -289,7 +287,7 @@ function FromSource(source, selector)
 	function next()
 	{
 		while (m_iterator === null) {
-			var item = source.next();
+			let item = source.next();
 			if (item !== null) {
 				var target = m_selector(item.v, item.k, item.t);
 				m_iterator = from(target)[Symbol.iterator](true);
@@ -300,7 +298,7 @@ function FromSource(source, selector)
 				return null;
 		}
 
-		var item = m_nextItem.value;
+		let item = m_nextItem.value;
 		if ((m_nextItem = m_iterator.next()).done)
 			m_iterator = null;
 		return item;
@@ -425,7 +423,7 @@ function OrderedSource(descending)
 				m_list[index] = {
 					index: index,  // to stabilize the sort
 					item:  item,
-					key:   keySelector(item.v, item.k, item.t)
+					key:   keySelector(item.v, item.k, item.t),
 				};
 			}
 
@@ -433,7 +431,7 @@ function OrderedSource(descending)
 			// we use the item's position in the input stream as a tiebreaker.
 			m_list.sort((a, b) => {
 				return a.key < b.key ? -1 * order
-					: a.key > b.key ? 1 * order
+					: a.key > b.key ? +1 * order
 					: a.index - b.index;
 			});
 			m_index = 0;
@@ -631,7 +629,7 @@ function anyOp(source)
 
 	source.init();
 	while (item = source.next()) {
-		if (!!item.v)
+		if (item.v)
 			return true;
 	}
 	return false;
@@ -677,7 +675,7 @@ function lastOp(source)
 		lastResult = item.v;
 	}
 	return lastResult;
-};
+}
 
 function nullOp(source)
 {
@@ -701,7 +699,7 @@ function removeOp(source)
 		if (typeof item.t.length === 'number')
 			splice.call(item.t, item.k, 1);
 		else
-			delete item.t[item.k]
+			delete item.t[item.k];
 	}
 }
 

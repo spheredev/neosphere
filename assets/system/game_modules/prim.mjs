@@ -82,7 +82,7 @@ class Prim
 			vertices.push({
 				x: x + c * rx,
 				y: y - s * ry,
-				color: color
+				color: color,
 			});
 		}
 		Shape.drawImmediate(surface, ShapeType.LineLoop, vertices);
@@ -109,16 +109,16 @@ class Prim
 			vertices[i + 1] = {
 				x: x + c * rx,
 				y: y - s * ry,
-				color: color2
+				color: color2,
 			};
 		}
 		vertices[numSegments + 1] = {
 			x: x + rx,  // cos(0) = 1.0
 			y: y,       // sin(0) = 0.0
-			color: color2
+			color: color2,
 		};
 
-		Shape.drawImmediate(surface, ShapeType.Fan, vertices)
+		Shape.drawImmediate(surface, ShapeType.Fan, vertices);
 	}
 
 	static drawSolidRectangle(surface, x, y, width, height, color_ul, color_ur, color_lr, color_ll)
@@ -151,11 +151,10 @@ class Prim
 	{
 		color2 = color2 || color1;
 
-		let shape;
 		let xSize = x2 - x1;
 		let ySize = y2 - y1;
-		let length = Math.sqrt(xSize*xSize + ySize*ySize);
-		if (length == 0.0)
+		let length = Math.sqrt(xSize * xSize + ySize * ySize);
+		if (length === 0.0)
 			return;
 		let tx = 0.5 * thickness * (y2 - y1) / length;
 		let ty = 0.5 * thickness * -(x2 - x1) / length;

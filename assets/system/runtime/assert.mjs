@@ -33,7 +33,7 @@
 export default
 function assert(guard, message)
 {
-	equal(!!guard, true, message);
+	equal(Boolean(guard), true, message);
 }
 
 assert.ok = assert;

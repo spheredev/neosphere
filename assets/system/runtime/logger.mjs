@@ -38,7 +38,7 @@ class Logger
 	constructor(fileName)
 	{
 		let fullPath = FS.fullPath(fileName, '~/logFiles');
-		if (fullPath.substr(0, 2) != fileName.substr(0, 2))  // SphereFS prefix?
+		if (fullPath.substr(0, 2) !== fileName.substr(0, 2))  // SphereFS prefix?
 			fullPath += '.log';
 
 		this._textEncoder = new TextEncoder();
@@ -69,7 +69,7 @@ class Logger
 		let timestamp = new Date().toISOString();
 		this._stream.write(this._textEncoder.encode(`${timestamp} .. `));
 		for (let i = 0; i < this._groups.length; ++i)
-			this._stream.write(_encoder.encode("  "));
+			this._stream.write(this._textEncoder.encode("  "));
 		this._stream.write(this._textEncoder.encode(`${text}\n`));
 	}
 }

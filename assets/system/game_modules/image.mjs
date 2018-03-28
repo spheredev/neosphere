@@ -48,7 +48,7 @@ class Image
 		let fullPath = FS.fullPath(fileName, '@/images');
 		fullPath = from.array([ '', '.png', '.jpg', '.bmp' ])
 			.select(suffix => `${fullPath}${suffix}`)
-			.first(fileName => FS.fileExists(fileName))
+			.first(fileName => FS.fileExists(fileName));
 		if (fullPath === undefined)
 			throw new Error(`couldn't find image '${fileName}'`);
 
@@ -60,7 +60,7 @@ class Image
 				{ x: 0,             y: texture.height, u: 0, v: 0 },
 				{ x: texture.width, y: texture.height, u: 1, v: 0 },
 			]));
-		
+
 		this._x = 0;
 		this._y = 0;
 

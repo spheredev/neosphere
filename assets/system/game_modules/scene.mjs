@@ -73,7 +73,7 @@ class Scene
 				getInput: def.getInput,
 				update: def.update,
 				render: def.render,
-				finish: def.finish
+				finish: def.finish,
 			});
 			return this;
 		};
@@ -109,7 +109,7 @@ class Scene
 				if (predicate.call(scene))
 					return;
 				timeline.goTo(jump.ifFalse);
-			}
+			},
 		};
 		this.enqueue(op);
 		this.openBlockTypes.push('branch');
@@ -130,7 +130,7 @@ class Scene
 				if (predicate.call(scene))
 					return;
 				timeline.goTo(jump.ifDone);
-			}
+			},
 		};
 		this.enqueue(op);
 		this.openBlockTypes.push('loop');
@@ -145,7 +145,7 @@ class Scene
 		let jump;
 		let op;
 		switch (blockType) {
-			case 'fork':
+			case 'fork': {
 				let forkedFrom = this.forkStack.pop();
 				op = {
 					arguments: [ this.timeline ],
@@ -153,26 +153,29 @@ class Scene
 						forkedFrom.children.push(timeline);
 						timeline.goTo(0);
 						timeline.start();
-					}
+					},
 				};
 				this.timeline = forkedFrom;
 				this.enqueue(op);
 				break;
-			case 'branch':
+			}
+			case 'branch': {
 				jump = this.jumpsToFix.pop();
 				jump.ifFalse = this.timeline.length;
 				break;
-			case 'loop':
+			}
+			case 'loop': {
 				jump = this.jumpsToFix.pop();
 				op = {
 					arguments: [ jump, this.timeline ],
 					start(scene, jump, timeline) {
 						timeline.goTo(jump.loopStart);
-					}
+					},
 				};
 				this.enqueue(op);
 				jump.ifDone = this.timeline.length;
 				break;
+			}
 		}
 		return this;
 	}
@@ -202,7 +205,7 @@ class Scene
 				return from.array(this.forks)
 					.where(it => it.running)
 					.count() > 0;
-			}
+			},
 		};
 		this.enqueue(op);
 		return this;
@@ -326,15 +329,13 @@ class OpThread extends Thread
 	}
 }
 
-Scene.defineOp('call',
-{
+Scene.defineOp('call', {
 	start(scene, method, ...args) {
 		method.apply(null, ...args);
-	}
+	},
 });
 
-Scene.defineOp('fadeTo',
-{
+Scene.defineOp('fadeTo', {
 	start(scene, color, frames) {
 		assert.ok(typeof frames === 'number');
 
@@ -344,11 +345,10 @@ Scene.defineOp('fadeTo',
 	},
 	update(scene) {
 		return this.fader.running;
-	}
+	},
 });
 
-Scene.defineOp('pause',
-{
+Scene.defineOp('pause', {
 	start(scene, frames) {
 		this.duration = frames;
 		this.elapsed = 0;
@@ -356,11 +356,10 @@ Scene.defineOp('pause',
 	update(scene) {
 		++this.elapsed;
 		return this.elapsed < this.duration;
-	}
+	},
 });
 
-Scene.defineOp('playSound',
-{
+Scene.defineOp('playSound', {
 	start(scene, fileName) {
 		this.sound = new Sound(fileName);
 		this.sound.play(Mixer.Default);
@@ -368,11 +367,10 @@ Scene.defineOp('playSound',
 	},
 	update(scene) {
 		return this.sound.playing;
-	}
+	},
 });
 
-Scene.defineOp('tween',
-{
+Scene.defineOp('tween', {
 	start(scene, object, frames, easingType, endValues) {
 		this.easers = {
 			linear(t, b, c, d) {
@@ -501,7 +499,7 @@ Scene.defineOp('tween',
 			easeInOutBounce(t, b, c, d) {
 				if (t < d/2) return this.easeInBounce(t*2, 0, c, d) * .5 + b;
 				return this.easeOutBounce(t*2-d, 0, c, d) * .5 + c*.5 + b;
-			}
+			},
 		};
 		this.change = {};
 		this.duration = Math.trunc(frames);
@@ -510,10 +508,10 @@ Scene.defineOp('tween',
 		this.startValues = {};
 		this.type = easingType in this.easers ? easingType : 'linear';
 		let isChanged = false;
-		for (const p in endValues) {
+		for (const p of Object.keys(endValues)) {
 			this.change[p] = endValues[p] - object[p];
 			this.startValues[p] = object[p];
-			isChanged = isChanged || this.change[p] != 0;
+			isChanged = isChanged || this.change[p] !== 0;
 		}
 		if (!isChanged) {
 			this.elapsed = this.duration;
@@ -522,7 +520,7 @@ Scene.defineOp('tween',
 	update(scene) {
 		++this.elapsed;
 		if (this.elapsed < this.duration) {
-			for (const p in this.change)
+			for (const p of Object.keys(this.change))
 				this.object[p] = this.easers[this.type](this.elapsed, this.startValues[p], this.change[p], this.duration);
 			return true;
 		} else {
@@ -530,7 +528,7 @@ Scene.defineOp('tween',
 		}
 	},
 	finish(scene) {
-		for (const p in this.change)
+		for (const p of Object.keys(this.change))
 			this.object[p] = this.startValues[p] + this.change[p];
 	},
 });

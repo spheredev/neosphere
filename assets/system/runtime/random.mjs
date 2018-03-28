@@ -111,7 +111,7 @@ class Random
 
 	static uniform(mean, variance)
 	{
-		assert(typeof mean === 'number' && typeof variance == 'number', "Mean and Variance must be numbers");
+		assert(typeof mean === 'number' && typeof variance === 'number', "Mean and Variance must be numbers");
 
 		let error = variance * 2.0 * (0.5 - randomGenerator.next().value);
 		return mean + error;
