@@ -1725,20 +1725,27 @@ jsal_require_function(int at_index)
 int
 jsal_require_int(int at_index)
 {
-	jsal_require_number(at_index);
+	if (!jsal_is_number(at_index)) {
+		jsal_dup(at_index);
+		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a number", jsal_to_string(-1));
+		jsal_remove(-2);
+		jsal_throw();
+	}
 	return jsal_get_int(at_index);
 }
 
 const char*
 jsal_require_lstring(int at_index, size_t *out_length)
 {
-	if (!jsal_is_string(at_index)) {
+	const char* retval;
+	
+	if (!(retval = jsal_get_lstring(at_index, out_length))) {
 		jsal_dup(at_index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a string", jsal_to_string(-1));
 		jsal_remove(-2);
 		jsal_throw();
 	}
-	return jsal_get_lstring(at_index, out_length);
+	return retval;
 }
 
 void
@@ -1806,7 +1813,12 @@ jsal_require_symbol(int at_index)
 unsigned int
 jsal_require_uint(int at_index)
 {
-	jsal_require_number(at_index);
+	if (!jsal_is_number(at_index)) {
+		jsal_dup(at_index);
+		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a number", jsal_to_string(-1));
+		jsal_remove(-2);
+		jsal_throw();
+	}
 	return jsal_get_uint(at_index);
 }
 

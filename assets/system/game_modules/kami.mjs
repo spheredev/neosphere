@@ -30,8 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
-
 const now = SSj.now;
 
 export default new
@@ -41,7 +39,6 @@ class Kami
 	{
 		this.enabled = now() > 0;
 		this.records = [];
-		this.useTableBorders = false;
 		this.placeholder = new Record();
 		if (this.enabled)
 			this.exitJob = Dispatch.onExit(() => this.finish());
@@ -49,20 +46,19 @@ class Kami
 
 	attachClass(constructor)
 	{
-		let allMethodKeys = from(Reflect.ownKeys(constructor.prototype))
-			.where(it => typeof it === 'string' && typeof constructor.prototype[it] === 'function')
-			.where(it => it !== 'constructor');
-		let allStaticKeys = from(Reflect.ownKeys(constructor))
-			.where(it => typeof it === 'string' && typeof constructor[it] === 'function');
-		for (const key of allStaticKeys)
-			this.attachMethod(constructor, key, `${constructor.name}.${key}`);
-		for (const key of allMethodKeys)
+		for (const key of Object.getOwnPropertyNames(constructor.prototype)) {
+			if (key === 'constructor')
+				continue;
 			this.attachMethod(constructor.prototype, key);
+		}
+		for (const key of Object.getOwnPropertyNames(constructor)) {
+			this.attachMethod(constructor, key, `${constructor.name}.${key}`);
+		}
 	}
 
 	attachMethod(target, methodName, description = `${target.constructor.name}#${methodName}`)
 	{
-		if (!this.enabled)
+		if (!this.enabled || typeof target[methodName] !== 'function')
 			return;
 
 		let originalFunction = target[methodName];
@@ -89,7 +85,7 @@ class Kami
 			this.records.push(record);
 		}
 		if (record.startTime > 0)
-			throw new Error("Reentrant profiling not supported");
+			throw RangeError("Reentrant profiling not supported");
 		record.startTime = now();
 		return record;
 	}
@@ -97,6 +93,8 @@ class Kami
 	end(record)
 	{
 		let end = now();
+		if (!(record instanceof Record))
+			throw TypeError("Must pass in record from Kami.begin()");
 		record.totalTime += end - record.startTime;
 		record.startTime = 0;
 		++record.count;
@@ -107,7 +105,9 @@ class Kami
 		if (!this.enabled)
 			return;
 
+		// cancel the onExit() so as not to print the table twice
 		this.exitJob.cancel();
+
 		let totalTime = 0;
 		let totalAverage = 0;
 		let calls = 0;
@@ -119,14 +119,14 @@ class Kami
 				totalAverage += record.averageTime;
 			}
 		}
-		this.records.sort(function(a, b) { return b.totalTime - a.totalTime; });
+		this.records.sort((a, b) => b.totalTime - a.totalTime);
 
 		let consoleOutput = [
 			[ "Event" ],
-			[ "Samples" ],
-			[ "Time [µs]" ],
+			[ "Count" ],
+			[ "Time (\u{3bc}s)" ],
 			[ "% Total" ],
-			[ "Avg [µs]" ],
+			[ "Avg (\u{3bc}s)" ],
 			[ "% Avg" ],
 		];
 		for (const record of this.records) {
@@ -138,8 +138,10 @@ class Kami
 				consoleOutput[4].push(toTimeString(record.averageTime));
 				consoleOutput[5].push(toPercentString(record.averageTime / totalAverage));
 			}
-			if (record.attached)
+			if (record.attached) {
+				// replace the original method now that we're done profiling.
 				record.target[record.methodName] = record.originalFunction;
+			}
 		}
 		consoleOutput[0].push("Total");
 		consoleOutput[1].push(toCountString(calls));
@@ -148,8 +150,8 @@ class Kami
 		consoleOutput[4].push(toTimeString(totalAverage));
 		consoleOutput[5].push(toPercentString(1.0));
 
-		SSj.log(`Profiling Results for '${Sphere.Game.name}' [Kami]`
-			+ `\n${makeTable(consoleOutput, this.useTableBorders)}\n`);
+		SSj.log(`Profiling Results for '${Sphere.Game.name}' - Kami`
+			+ `\n${makeTable(consoleOutput)}\n`);
 		this.records.splice(0, this.records.length);
 	}
 };
@@ -175,11 +177,11 @@ function findRecord(records, description)
 	return i < length ? records[i] : undefined;
 }
 
-function makeTable(table, useFullBorders)
+function makeTable(table)
 {
 	let totalLength = 1;
-	let rows = table[0].length;
-	let columns = table.length;
+	const rows = table[0].length;
+	const columns = table.length;
 	let output = "";
 
 	for (let i = 0; i < table.length; ++i) {
@@ -190,38 +192,26 @@ function makeTable(table, useFullBorders)
 		}
 		for (let j = 0; j < rows; ++j) {
 			if (i > 0)
-				column[j] = ` ${column[j].padStart(width)} `;
+				column[j] = `| ${column[j].padStart(width)} `;
 			else
 				column[j] = `${column[j].padEnd(width)} `;
-			if (useFullBorders)
-				column[j] += "|";
 		}
-		totalLength += useFullBorders ? width + 3 : width + 2;
+		totalLength += width + 3;
 	}
 
-	let start = "\n";
-	let line = "";
-	let startLine = "";
-	if (useFullBorders) {
-		start = "\n|";
-		line = `\n${"-".repeat(totalLength - 1)}`;
-	}
-	else {
-		startLine = `\n${"-".repeat(totalLength - 1)}`;
-	}
+	const startLine = `\n${"-".repeat(totalLength - 4)}`;
 
 	for (let i = 0; i < rows; ++i) {
 		if (i === rows - 1)
 			output += startLine;
 
-		output += line + start;
+		output += "\n";
 		for (let j = 0; j < columns; ++j)
 			output += table[j][i];
 
 		if (i === 0)
 			output += startLine;
 	}
-	output += line;
 	return output;
 }
 
@@ -232,14 +222,13 @@ function toCountString(value)
 
 function toPercentString(value)
 {
-	return value.toLocaleString(undefined, {
-		style: 'percent',
-		maximumFractionDigits: 2,
-		minimumFractionDigits: 2,
-	});
+	return `${(value * 100).toLocaleString(undefined, {
+		maximumFractionDigits: 1,
+		minimumFractionDigits: 1,
+	})} %`;
 }
 
 function toTimeString(value)
 {
-	return `${Math.round(value / 1000).toLocaleString()} µs`;
+	return Math.round(value / 1000).toLocaleString();
 }
