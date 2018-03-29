@@ -46,7 +46,7 @@ class Kami
 	{
 		options = Object.assign({
 			sortAlphabetically: false,
-		}, options);
+		}, Sphere.Game.kamiOptions, options);
 
 		this.enabled = SSj.now() > 0;
 		this.options = options;
