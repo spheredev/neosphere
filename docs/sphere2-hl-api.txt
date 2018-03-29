@@ -579,42 +579,6 @@ FocusTarget#yield();
     Yields the focus.  If the target is not in focus, this does nothing.
 
 
-`Image` Object
---------------
-
-When developing a sprite-based game, it's convenient to be able to draw images
-on-the-fly in arbitrary locations.  With the Core API, drawing an image means
-loading the image file, constructing a shape to texture with it, setting all
-its coordinates (including texture coordinates), and possibly constructing a
-model too.  Drawing the image in a different location means either recreating
-the shape, or else manipulating the model's transformation matrix.
-
-The `Image` object, part of the Sphere Runtime, handles all this for you,
-letting you concentrate on setting up your scene without having to juggle
-Shape, Model, and Transform objects.
-
-    import { Image } from 'sphere-runtime';
-
-new Image(fileName);
-
-    Constructs an Image object from the specified image file.
-
-    Note: `fileName` is relative to `@/images` unless it includes a SphereFS
-          prefix.  The file extension is optional; if no extension is included,
-          Sphere will try to find an appropriate file automatically.
-
-Image#width [read-only]
-Image#height [read-only]
-
-    Gets the width and height of the image, in pixels.
-
-Image#blitTo(surface, x, y[, tint_color);
-
-    Draws the image as a textured quad at (x, y) on the specified surface.
-    `tint_color`, if provided, specifies the color to combine with the image's
-    pixels.  The default is `Color.White`, which leaves the image unchanged.
-
-
 `Joypad` Namespace
 ------------------
 

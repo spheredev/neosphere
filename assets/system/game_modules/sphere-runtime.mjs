@@ -33,7 +33,6 @@
 // miniSphere-specific modules
 export { default as Console } from 'console';
 export { default as FocusTarget } from 'focus-target';
-export { default as Image } from 'image';
 export { default as Joypad } from 'joypad';
 export { default as Kami } from 'kami';
 export { default as Music } from 'music';
