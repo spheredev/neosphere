@@ -51,9 +51,8 @@ class Kami
 				continue;
 			this.attachMethod(constructor.prototype, key);
 		}
-		for (const key of Object.getOwnPropertyNames(constructor)) {
+		for (const key of Object.getOwnPropertyNames(constructor))
 			this.attachMethod(constructor, key, `${constructor.name}.${key}`);
-		}
 	}
 
 	attachMethod(target, methodName, description = `${target.constructor.name}#${methodName}`)
@@ -187,9 +186,8 @@ function makeTable(table)
 	for (let i = 0; i < table.length; ++i) {
 		let width = 0;
 		const column = table[i];
-		for (const value of column) {
+		for (const value of column)
 			width = Math.max(width, value.length);
-		}
 		for (let j = 0; j < rows; ++j) {
 			if (i > 0)
 				column[j] = `| ${column[j].padStart(width)} `;

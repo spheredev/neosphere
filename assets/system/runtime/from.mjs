@@ -96,8 +96,9 @@ function PROPDESC(flags, valueOrGetter, setter)
 		enumerable:   flags.indexOf('e') !== -1,
 		configurable: flags.indexOf('c') !== -1,
 	};
-	if (flags.indexOf('a') === -1)
+	if (flags.indexOf('a') === -1) {
 		desc.value = valueOrGetter;
+	}
 	else {
 		desc.get = valueOrGetter;
 		desc.set = setter;
@@ -294,8 +295,9 @@ function FromSource(source, selector)
 				if ((m_nextItem = m_iterator.next()).done)
 					m_iterator = null;
 			}
-			else
+			else {
 				return null;
+			}
 		}
 
 		let item = m_nextItem.value;
@@ -519,8 +521,9 @@ function SampleSource(uniqueOnly)
 					m_items.splice(index, 1);
 				return item;
 			}
-			else
+			else {
 				return null;
+			}
 		};
 	};
 }
@@ -671,9 +674,8 @@ function lastOp(source)
 	var item;
 
 	source.init();
-	while (item = source.next()) {
+	while (item = source.next())
 		lastResult = item.v;
-	}
 	return lastResult;
 }
 

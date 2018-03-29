@@ -34,8 +34,8 @@ import assert from 'assert';
 
 const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-let normalVxW = NaN,
-    randomGenerator = new RNG();
+let normalVxW = NaN;
+let randomGenerator = new RNG();
 
 export default
 class Random

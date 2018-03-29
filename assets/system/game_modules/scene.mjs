@@ -142,12 +142,10 @@ class Scene
 		if (this.openBlockTypes.length === 0)
 			throw new Error("extraneous end() in scene definition");
 		let blockType = this.openBlockTypes.pop();
-		let jump;
-		let op;
 		switch (blockType) {
 			case 'fork': {
 				let forkedFrom = this.forkStack.pop();
-				op = {
+				let op = {
 					arguments: [ this.timeline ],
 					start(scene, timeline) {
 						forkedFrom.children.push(timeline);
@@ -160,13 +158,13 @@ class Scene
 				break;
 			}
 			case 'branch': {
-				jump = this.jumpsToFix.pop();
+				let jump = this.jumpsToFix.pop();
 				jump.ifFalse = this.timeline.length;
 				break;
 			}
 			case 'loop': {
-				jump = this.jumpsToFix.pop();
-				op = {
+				let jump = this.jumpsToFix.pop();
+				let op = {
 					arguments: [ jump, this.timeline ],
 					start(scene, jump, timeline) {
 						timeline.goTo(jump.loopStart);
@@ -508,27 +506,30 @@ Scene.defineOp('tween', {
 		this.startValues = {};
 		this.type = easingType in this.easers ? easingType : 'linear';
 		let isChanged = false;
-		for (const p of Object.keys(endValues)) {
+		this.keyList = endValues instanceof Color ? [ 'r', 'g', 'b', 'a' ]
+			: endValues[Symbol.toStringTag] === 'v1Color' ? [ 'red', 'green', 'blue', 'alpha' ]
+			: Object.keys(endValues);
+		for (const p of this.keyList) {
 			this.change[p] = endValues[p] - object[p];
 			this.startValues[p] = object[p];
 			isChanged = isChanged || this.change[p] !== 0;
 		}
-		if (!isChanged) {
+		if (!isChanged)
 			this.elapsed = this.duration;
-		}
 	},
 	update(scene) {
 		++this.elapsed;
 		if (this.elapsed < this.duration) {
-			for (const p of Object.keys(this.change))
+			for (const p of this.keyList)
 				this.object[p] = this.easers[this.type](this.elapsed, this.startValues[p], this.change[p], this.duration);
 			return true;
-		} else {
+		}
+		else {
 			return false;
 		}
 	},
 	finish(scene) {
-		for (const p of Object.keys(this.change))
+		for (const p of this.keyList)
 			this.object[p] = this.startValues[p] + this.change[p];
 	},
 });

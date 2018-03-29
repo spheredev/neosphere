@@ -101,9 +101,8 @@ class Console extends Thread
 	{
 		let lineInBuffer = this.nextLine % this.bufferSize;
 		this.buffer[lineInBuffer] = texts[0];
-		for (let i = 1; i < texts.length; ++i) {
+		for (let i = 1; i < texts.length; ++i)
 			this.buffer[lineInBuffer] += ` >>${texts[i]}`;
-		}
 		++this.nextLine;
 		this.view.line = 0.0;
 		SSj.log(this.buffer[lineInBuffer]);
@@ -147,11 +146,10 @@ class Console extends Thread
 			let wheelUp = mouseEvent !== null && mouseEvent.key === MouseKey.WheelUp;
 			let wheelDown = mouseEvent !== null && mouseEvent.key === MouseKey.WheelDown;
 			let speed = (wheelUp || wheelDown) ? 1.0 : 0.5;
-			if (this.keyboard.isPressed(Key.PageUp) || wheelUp) {
+			if (this.keyboard.isPressed(Key.PageUp) || wheelUp)
 				this.view.line = Math.min(this.view.line + speed, this.buffer.length - this.numLines);
-			} else if (this.keyboard.isPressed(Key.PageDown) || wheelDown) {
+			else if (this.keyboard.isPressed(Key.PageDown) || wheelDown)
 				this.view.line = Math.max(this.view.line - speed, 0);
-			}
 			let keycode = this.keyboard.getKey();
 			let fps = Sphere.frameRate;
 			if (keycode === this.activationKey)

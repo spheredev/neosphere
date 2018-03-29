@@ -50,6 +50,10 @@ rules:
   comma-spacing: error
   complexity:
     - warn
+  curly:
+    - error
+    - multi-or-nest
+    - consistent
   func-style:
     - error
     - declaration
