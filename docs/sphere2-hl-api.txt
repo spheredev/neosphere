@@ -327,25 +327,25 @@ and hidden by the player using a hotkey (`~` by default).
 new Console(options);
 
     Constructs a new Console and starts it running, enabling the player to
-    access it while in-game.  `options` can have one or more of the following
-    properties:
+    access it while in-game.  `options` is an object specifying the settings
+    for the new console.
 
-        options.hotKey
+    options.hotKey [default: Key.Tilde]
 
-            A `Key` value specifying which keyboard key will show and hide the
-            console.  If not provided, defaults to `Key.Tilde`.
+        A `Key` value specifying which keyboard key will show and hide the
+        console.
 
-        options.logFileName
+    options.logFileName [default: none]
 
-            The SphereFS path of the file used for logging console output.  If
-            not provided, no log file will be created.  Note that if the log
-            file already exists, it will be appended to instead of being
-            overwritten.
+        The SphereFS path of the file used for logging console output.  If
+        not provided, no log file will be created.  Note that if the log
+        file already exists, it will be appended to instead of being
+        overwritten.
 
-        options.prompt
+    options.prompt [default: "$"]
 
-            A string specifying the text to display in front of the command
-            line.  The default is "$".
+        A string specifying the text to display in front of the command
+        line.
 
 Console#visible [read/write]
 
@@ -613,6 +613,20 @@ you're game is spending the most time so you know where you need to make
 changes to speed things up.
 
     import { Kami } from 'sphere-runtime';
+
+Kami.initialize([options]);
+
+    Initializes the profiler.  `options` is an object specifying the settings
+    for the profiler, as documented below.
+
+    options.sortAlphabetically [default: false]
+
+        Normally, Kami sorts the results by descending time cost.  If you want
+        the results ordered by name instead, set this to true.
+
+    Note: If you don't call this before attaching methods or taking samples,
+          Kami will call it internally and use its default settings.  Therefore
+          you must call this first if you want to use non-default options.
 
 Kami.attach(object, method_name[, display_name]);
 

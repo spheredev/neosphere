@@ -40,13 +40,18 @@ class Kami
 		this.initialized = false;
 
 		this.enabled = false;
-		this.placeholder = new Record();
-		this.records = [];
 	}
 
 	initialize(options = {})
 	{
+		options = Object.assign({
+			sortAlphabetically: false,
+		}, options);
+
 		this.enabled = SSj.now() > 0;
+		this.options = options;
+		this.placeholder = new Record();
+		this.records = [];
 		if (this.enabled)
 			this.exitJob = Dispatch.onExit(() => this.finish());
 
@@ -113,7 +118,7 @@ class Kami
 	{
 		let end = now();
 		if (!(record instanceof Record))
-			throw TypeError("Must pass in record from Kami.begin()");
+			throw TypeError("Expected sample record from Kami.begin()");
 		record.totalTime += end - record.startTime;
 		record.startTime = 0;
 		++record.count;
@@ -138,7 +143,16 @@ class Kami
 				totalAverage += record.averageTime;
 			}
 		}
-		this.records.sort((a, b) => b.totalTime - a.totalTime);
+		if (this.options.sortAlphabetically) {
+			this.records.sort((a, b) => {
+				return a.description > b.description ? 1
+					: a.description < b.description ? -1
+					: 0;
+			});
+		}
+		else {
+			this.records.sort((a, b) => b.totalTime - a.totalTime);
+		}
 
 		let consoleOutput = [
 			[ "Event" ],
@@ -158,7 +172,7 @@ class Kami
 				consoleOutput[5].push(toPercentString(record.averageTime / totalAverage));
 			}
 			if (record.attached) {
-				// replace the original method now that we're done profiling.
+				// reinstall the original method now that we're done profiling
 				record.target[record.methodName] = record.originalFunction;
 			}
 		}
