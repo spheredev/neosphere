@@ -37,26 +37,27 @@ class Kami
 {
 	constructor()
 	{
-		this.enabled = now() > 0;
-		this.records = [];
+		this.initialized = false;
+
+		this.enabled = false;
 		this.placeholder = new Record();
+		this.records = [];
+	}
+
+	initialize(options = {})
+	{
+		this.enabled = SSj.now() > 0;
 		if (this.enabled)
 			this.exitJob = Dispatch.onExit(() => this.finish());
+
+		this.initialized = true;
 	}
 
-	attachClass(constructor)
+	attach(target, methodName, description = `${target.constructor.name}#${methodName}`)
 	{
-		for (const key of Object.getOwnPropertyNames(constructor.prototype)) {
-			if (key === 'constructor')
-				continue;
-			this.attachMethod(constructor.prototype, key);
-		}
-		for (const key of Object.getOwnPropertyNames(constructor))
-			this.attachMethod(constructor, key, `${constructor.name}.${key}`);
-	}
+		if (!this.initialized)
+			this.initialize();
 
-	attachMethod(target, methodName, description = `${target.constructor.name}#${methodName}`)
-	{
 		if (!this.enabled || typeof target[methodName] !== 'function')
 			return;
 
@@ -73,20 +74,39 @@ class Kami
 		};
 	}
 
+	attachClass(constructor, name = constructor.name)
+	{
+		// attach all the static methods first
+		for (const key of Object.getOwnPropertyNames(constructor))
+			this.attach(constructor, key, `${name}.${key}`);
+
+		// attach instance methods
+		for (const key of Object.getOwnPropertyNames(constructor.prototype)) {
+			if (key === 'constructor')
+				continue;  // bad things will happen if we attach this
+			this.attach(constructor.prototype, key, `${name}#${key}`);
+		}
+	}
+
 	begin(description = "Unknown")
 	{
-		if (!this.enabled)
-			return this.placeholder;
+		if (!this.initialized)
+			this.initialize();
 
-		let record = findRecord(this.records, description);
-		if(record === undefined) {
-			record = new Record(description, false, undefined, undefined, undefined);
-			this.records.push(record);
+		if (this.enabled) {
+			let record = findRecord(this.records, description);
+			if(record === undefined) {
+				record = new Record(description, false, undefined, undefined, undefined);
+				this.records.push(record);
+			}
+			if (record.startTime > 0)
+				throw RangeError("Reentrant profiling not supported");
+			record.startTime = now();
+			return record;
 		}
-		if (record.startTime > 0)
-			throw RangeError("Reentrant profiling not supported");
-		record.startTime = now();
-		return record;
+		else {
+			return this.placeholder;
+		}
 	}
 
 	end(record)
