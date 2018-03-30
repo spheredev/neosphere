@@ -201,101 +201,104 @@ on_error:
 }
 
 font_t*
-font_clone(const font_t* src_font)
+font_clone(const font_t* it)
 {
-	font_t*                  font = NULL;
-	int                      max_x = 0, max_y = 0;
+	font_t*                  dolly = NULL;
+	int                      max_x = 0;
+	int                      max_y = 0;
 	int                      min_width = INT_MAX;
 	const struct font_glyph* src_glyph;
 
 	uint32_t i;
 
-	console_log(2, "cloning font #%u from source font #%u", s_next_font_id, src_font->id);
+	console_log(2, "cloning font #%u from source font #%u", s_next_font_id, it->id);
 
-	if (!(font = calloc(1, sizeof(font_t)))) goto on_error;
-	if (!(font->glyphs = calloc(src_font->num_glyphs, sizeof(struct font_glyph))))
+	if (!(dolly = calloc(1, sizeof(font_t))))
 		goto on_error;
-	font->num_glyphs = src_font->num_glyphs;
+	if (!(dolly->glyphs = calloc(it->num_glyphs, sizeof(struct font_glyph))))
+		goto on_error;
+	dolly->num_glyphs = it->num_glyphs;
 
 	// perform the clone
-	font_get_metrics(src_font, &min_width, &max_x, &max_y);
-	font->height = max_y;
-	font->min_width = min_width;
-	font->max_width = max_x;
-	for (i = 0; i < src_font->num_glyphs; ++i) {
-		src_glyph = &src_font->glyphs[i];
-		font->glyphs[i].image = image_ref(src_glyph->image);
-		font->glyphs[i].width = src_glyph->width;
-		font->glyphs[i].height = src_glyph->height;
+	font_get_metrics(it, &min_width, &max_x, &max_y);
+	dolly->height = max_y;
+	dolly->min_width = min_width;
+	dolly->max_width = max_x;
+	for (i = 0; i < it->num_glyphs; ++i) {
+		src_glyph = &it->glyphs[i];
+		dolly->glyphs[i].image = image_ref(src_glyph->image);
+		dolly->glyphs[i].width = src_glyph->width;
+		dolly->glyphs[i].height = src_glyph->height;
 	}
 
-	font->id = s_next_font_id++;
-	return font_ref(font);
+	dolly->id = s_next_font_id++;
+	return font_ref(dolly);
 
 on_error:
-	if (font != NULL) {
-		for (i = 0; i < font->num_glyphs; ++i) {
-			if (font->glyphs[i].image != NULL)
-				image_unref(font->glyphs[i].image);
+	if (dolly != NULL) {
+		for (i = 0; i < dolly->num_glyphs; ++i) {
+			if (dolly->glyphs[i].image != NULL)
+				image_unref(dolly->glyphs[i].image);
 		}
-		free(font->glyphs);
-		free(font);
+		free(dolly->glyphs);
+		free(dolly);
 	}
 	return NULL;
 }
 
 font_t*
-font_ref(font_t* font)
+font_ref(font_t* it)
 {
-	++font->refcount;
-	return font;
+	++it->refcount;
+	return it;
 }
 
 void
-font_unref(font_t* font)
+font_unref(font_t* it)
 {
 	uint32_t i;
 
-	if (font == NULL || --font->refcount > 0)
+	if (it == NULL || --it->refcount > 0)
 		return;
 
-	console_log(3, "disposing font #%u no longer in use", font->id);
-	for (i = 0; i < font->num_glyphs; ++i)
-		image_unref(font->glyphs[i].image);
-	free(font->glyphs);
-	free(font);
+	console_log(3, "disposing font #%u no longer in use", it->id);
+	for (i = 0; i < it->num_glyphs; ++i)
+		image_unref(it->glyphs[i].image);
+	free(it->glyphs);
+	free(it);
 }
 
 image_t*
-font_glyph(const font_t* font, uint32_t cp)
+font_glyph(const font_t* it, uint32_t cp)
 {
-	return font->glyphs[cp].image;
+	return it->glyphs[cp].image;
 }
 
 int
-font_height(const font_t* font)
+font_height(const font_t* it)
 {
-	return font->height;
+	return it->height;
 }
 
 const char*
-font_path(const font_t* font)
+font_path(const font_t* it)
 {
-	return font->path;
+	return it->path;
 }
 
 void
-font_set_glyph(font_t* font, uint32_t cp, image_t* image)
+font_set_glyph(font_t* it, uint32_t cp, image_t* image)
 {
 	image_t* old_image;
 
-	old_image = font->glyphs[cp].image;
-	font->glyphs[cp].image = image_ref(image);
+	old_image = it->glyphs[cp].image;
+	it->glyphs[cp].image = image_ref(image);
 	image_unref(old_image);
+	update_font_metrics(it);
 }
 
 void
-font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t alignment, const char* text)
+font_draw_text(const font_t* it, color_t color, int x, int y, text_align_t alignment, const char* text)
 {
 	uint32_t       cp;
 	utf8_ret_t     ret;
@@ -303,11 +306,11 @@ font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t ali
 	utf8_decode_t* utf8;
 
 	if (alignment == TEXT_ALIGN_CENTER)
-		x -= font_get_width(font, text) / 2;
+		x -= font_get_width(it, text) / 2;
 	else if (alignment == TEXT_ALIGN_RIGHT)
-		x -= font_get_width(font, text);
+		x -= font_get_width(it, text);
 
-	tab_width = font->glyphs[' '].width * 3;
+	tab_width = it->glyphs[' '].width * 3;
 	al_hold_bitmap_drawing(true);
 	utf8 = utf8_decode_start(true);
 	do {
@@ -343,13 +346,13 @@ font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t ali
 			: cp == 0x0178 ? 159
 			: cp;
 		cp = ret == UTF8_CODEPOINT
-			? cp < font->num_glyphs ? cp : 0x1A
+			? cp < it->num_glyphs ? cp : 0x1A
 			: 0x1A;
 		if (cp == '\t')
 			x += tab_width;
 		else if (cp != '\0') {
-			image_draw_masked(font->glyphs[cp].image, color, x, y);
-			x += font->glyphs[cp].width;
+			image_draw_masked(it->glyphs[cp].image, color, x, y);
+			x += it->glyphs[cp].width;
 		}
 	} while (cp != '\0');
 	utf8_decode_end(utf8);
@@ -357,15 +360,18 @@ font_draw_text(const font_t* font, color_t color, int x, int y, text_align_t ali
 }
 
 void
-font_get_metrics(const font_t* font, int* out_min_width, int* out_max_width, int* out_line_height)
+font_get_metrics(const font_t* it, int* out_min_width, int* out_max_width, int* out_line_height)
 {
-	if (out_min_width) *out_min_width = font->min_width;
-	if (out_max_width) *out_max_width = font->max_width;
-	if (out_line_height) *out_line_height = font->height;
+	if (out_min_width != NULL)
+		*out_min_width = it->min_width;
+	if (out_max_width != NULL)
+		*out_max_width = it->max_width;
+	if (out_line_height != NULL)
+		*out_line_height = it->height;
 }
 
 int
-font_get_width(const font_t* font, const char* text)
+font_get_width(const font_t* it, const char* text)
 {
 	uint32_t       cp;
 	utf8_ret_t     ret;
@@ -406,10 +412,10 @@ font_get_width(const font_t* font, const char* text)
 			: cp == 0x0178 ? 159
 			: cp;
 		cp = ret == UTF8_CODEPOINT
-			? cp < font->num_glyphs ? cp : 0x1A
+			? cp < it->num_glyphs ? cp : 0x1A
 			: 0x1A;
 		if (cp != '\0')
-			width += font->glyphs[cp].width;
+			width += it->glyphs[cp].width;
 	} while (cp != '\0');
 	utf8_decode_end(utf8);
 	return width;
@@ -559,22 +565,22 @@ on_error:
 }
 
 void
-wraptext_free(wraptext_t* wraptext)
+wraptext_free(wraptext_t* it)
 {
-	free(wraptext->buffer);
-	free(wraptext);
+	free(it->buffer);
+	free(it);
 }
 
 int
-wraptext_len(const wraptext_t* wraptext)
+wraptext_len(const wraptext_t* it)
 {
-	return wraptext->num_lines;
+	return it->num_lines;
 }
 
 const char*
-wraptext_line(const wraptext_t* wraptext, int line_index)
+wraptext_line(const wraptext_t* it, int line_index)
 {
-	return wraptext->buffer + line_index * wraptext->pitch;
+	return it->buffer + line_index * it->pitch;
 }
 
 static void
