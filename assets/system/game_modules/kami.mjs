@@ -32,6 +32,8 @@
 
 const now = SSj.now;
 
+let startUpTime = SSj.now();
+
 export default new
 class Kami
 {
@@ -45,7 +47,7 @@ class Kami
 	initialize(options = {})
 	{
 		options = Object.assign({
-			sortAlphabetically: false,
+			sortResultsByCost: true,
 		}, Sphere.Game.kamiOptions, options);
 
 		this.enabled = SSj.now() > 0;
@@ -129,6 +131,8 @@ class Kami
 		if (!this.enabled)
 			return;
 
+		let runningTime = SSj.now() - startUpTime;
+
 		// cancel the onExit() so as not to print the table twice
 		this.exitJob.cancel();
 
@@ -143,22 +147,22 @@ class Kami
 				totalAverage += record.averageTime;
 			}
 		}
-		if (this.options.sortAlphabetically) {
+		if (this.options.sortResultsByCost) {
+			this.records.sort((a, b) => b.totalTime - a.totalTime);
+		}
+		else {
 			this.records.sort((a, b) => {
 				return a.description > b.description ? 1
 					: a.description < b.description ? -1
 					: 0;
 			});
 		}
-		else {
-			this.records.sort((a, b) => b.totalTime - a.totalTime);
-		}
 
 		let consoleOutput = [
 			[ "Event" ],
 			[ "Count" ],
 			[ "Time (\u{3bc}s)" ],
-			[ "% Total" ],
+			[ "% Run" ],
 			[ "Avg (\u{3bc}s)" ],
 			[ "% Avg" ],
 		];
@@ -167,7 +171,7 @@ class Kami
 				consoleOutput[0].push(record.description);
 				consoleOutput[1].push(toCountString(record.count));
 				consoleOutput[2].push(toTimeString(record.totalTime));
-				consoleOutput[3].push(toPercentString(record.totalTime / totalTime));
+				consoleOutput[3].push(toPercentString(record.totalTime / runningTime));
 				consoleOutput[4].push(toTimeString(record.averageTime));
 				consoleOutput[5].push(toPercentString(record.averageTime / totalAverage));
 			}
@@ -179,11 +183,11 @@ class Kami
 		consoleOutput[0].push("Total");
 		consoleOutput[1].push(toCountString(calls));
 		consoleOutput[2].push(toTimeString(totalTime));
-		consoleOutput[3].push(toPercentString(1.0));
+		consoleOutput[3].push(toPercentString(totalTime / runningTime));
 		consoleOutput[4].push(toTimeString(totalAverage));
 		consoleOutput[5].push(toPercentString(1.0));
 
-		SSj.log(`Profiling Results for '${Sphere.Game.name}' - Kami`
+		SSj.log(`Profiling Results for '${Sphere.Game.name}' (Kami)`
 			+ `\n${makeTable(consoleOutput)}\n`);
 		this.records.splice(0, this.records.length);
 	}

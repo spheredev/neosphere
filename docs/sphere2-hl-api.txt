@@ -619,10 +619,10 @@ Kami.initialize([options]);
     Initializes the profiler.  `options` is an object specifying the settings
     for the profiler, as documented below.
 
-    options.sortAlphabetically [default: false]
+    options.sortResultsByCost [default: true]
 
         Normally, Kami sorts the results by descending time cost.  If you want
-        the results ordered by name instead, set this to true.
+        the results ordered alphabetically instead, set this to false.
 
     Note: If you don't call this before attaching methods or taking samples,
           Kami will call it internally and use its default settings.  Therefore
