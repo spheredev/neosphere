@@ -19,11 +19,12 @@ v5.2.0 - TBD
 * Adds `[Symbol.toStringTag]` and `.constructor` for Sphere v2 objects.
 * Improves performance of most native object constructors.
 * Improves performance of all `Prim` drawing functions.
+* Removes the `Image` class from the bundled Sphere Runtime.
 * Fixes an internal memory leak mostly affecting Dispatch job execution.
 * Fixes a bug where outstanding promise continuations get eaten when the user
   closes the game window.
-* Fixes a bug where `Font#setCharacterImage()` (Sphere v1) doesn't update the
-  font metrics, potentially causing text to be rendered incorrectly.
+* Fixes a bug where the v1 `Font#setCharacterImage()` API doesn't recalculate
+  the font metrics, causing text to be rendered incorrectly afterwards.
 * Fixes `Pact#promise` not existing, as it was accidentally removed in 5.1.3.
 * Reverts `Sphere.APILevel` to 1 as the level-2 APIs are still experimental.
 

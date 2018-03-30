@@ -161,6 +161,7 @@ class Kami
 			});
 		}
 
+		// compile and output the Profiling Results table
 		let consoleOutput = [
 			[ "Event" ],
 			[ "Count" ],
@@ -169,6 +170,8 @@ class Kami
 			[ "Avg (\u{3bc}s)" ],
 			[ "% Avg" ],
 		];
+		if (this.options.excludeLostTime)
+			consoleOutput[3][0] += "*";
 		for (const record of this.records) {
 			if (record.count > 0) {
 				consoleOutput[0].push(record.description);
@@ -190,8 +193,12 @@ class Kami
 		consoleOutput[4].push(toTimeString(totalAverage));
 		consoleOutput[5].push(toPercentString(1.0));
 
-		SSj.log(`Profiling Results for '${Sphere.Game.name}' (Kami)`
-			+ `\n${makeTable(consoleOutput)}\n`);
+		let compiledText = `Profiling Results for '${Sphere.Game.name}' (Kami)`
+			+ `\n${makeTable(consoleOutput)}\n`;
+		if (this.options.excludeLostTime)
+			compiledText += "\n(*) excludes time spent on frame-limiting and flip\n";
+		SSj.log(compiledText);
+
 		this.records.splice(0, this.records.length);
 	}
 };

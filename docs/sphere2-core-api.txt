@@ -1185,6 +1185,12 @@ SSj.log(text_or_object);
     Note: If the game was started from the command line using SpheRun, the
           item is logged to the terminal as well.
 
+SSj.lostTime();
+
+    Returns the amount of time in nanoseconds lost to backbuffer flips and
+	frame-limiting.  As the engine may spend a lot of time waiting for the next
+	frame, this information is often very useful for profilers.
+
 SSj.now();
 
     Returns the time in nanoseconds since some arbitrary point in time, useful
