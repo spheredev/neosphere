@@ -744,25 +744,30 @@ jsal_get_lstring(int index, size_t *out_length)
 {
 	static int   counter = 0;
 	static char* retval[25];
+	static char  retval_cache[25][256];
 
-	char*       buffer;
-	size_t      buffer_size;
-	size_t      num_bytes;
-	int         length;
-	JsValueRef  value;
+	char*      buffer;
+	size_t     length;
+	JsValueRef value;
 
 	value = get_value(index);
-	if (JsGetStringLength(value, &length) != JsNoError)
+	if (JsCopyString(value, NULL, 0, &length) != JsNoError)
 		return NULL;
-	buffer_size = length * 3 + 1;
-	buffer = malloc(buffer_size);
-	JsCopyString(value, buffer, buffer_size, &num_bytes);
-	buffer[num_bytes] = '\0';  // NUL terminator
-	free(retval[counter]);
-	retval[counter] = buffer;
-	counter = (counter + 1) % 25;
 	if (out_length != NULL)
 		*out_length = length;
+	if (length < sizeof retval_cache[0]) {
+		buffer = retval_cache[counter];
+		JsCopyString(value, buffer, sizeof retval_cache[counter], NULL);
+		counter = (counter + 1) % 25;
+	}
+	else {
+		buffer = malloc(length + 1);
+		JsCopyString(value, buffer, length + 1, NULL);
+		free(retval[counter]);
+		retval[counter] = buffer;
+		counter = (counter + 1) % 25;
+	}
+	buffer[length] = '\0';  // NUL terminator
 	return buffer;
 }
 
