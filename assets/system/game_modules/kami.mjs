@@ -47,6 +47,7 @@ class Kami
 	initialize(options = {})
 	{
 		options = Object.assign({
+			excludeLostTime:   false,
 			sortResultsByCost: true,
 		}, Sphere.Game.kamiOptions, options);
 
@@ -132,6 +133,8 @@ class Kami
 			return;
 
 		let runningTime = SSj.now() - startUpTime;
+		if (this.options.excludeLostTime)
+			runningTime -= SSj.lostTime();
 
 		// cancel the onExit() so as not to print the table twice
 		this.exitJob.cancel();

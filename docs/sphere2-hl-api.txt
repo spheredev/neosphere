@@ -619,6 +619,11 @@ Kami.initialize([options]);
     Initializes the profiler.  `options` is an object specifying the settings
     for the profiler, as documented below.
 
+    options.excludeLostTime [default: false]
+
+	    If this is set to `true`, Kami will exclude time lost to backbuffer
+	    flipping when calculating runtime percentages.
+
     options.sortResultsByCost [default: true]
 
         Normally, Kami sorts the results by descending time cost.  If you want

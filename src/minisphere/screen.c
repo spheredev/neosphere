@@ -52,6 +52,7 @@ struct screen
 	double           fps_poll_time;
 	bool             fullscreen;
 	double           last_flip_time;
+	double           lost_time;
 	int              max_skips;
 	double           next_frame_time;
 	int              num_flips;
@@ -171,6 +172,12 @@ screen_display(const screen_t* it)
 	return it->display;
 }
 
+double
+screen_lost_time(const screen_t* it)
+{
+	return it->lost_time;
+}
+
 size2_t
 screen_size(const screen_t* it)
 {
@@ -285,8 +292,16 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	char              timestamp[100];
 	int               x, y;
 
+#if defined(MINISPHERE_SPHERUN)
+	double            start_time;
+#endif
+
 	size_t i;
 
+#if defined(MINISPHERE_SPHERUN)
+	start_time = al_get_time();
+#endif
+	
 	// update FPS with 1s granularity
 	if (al_get_time() >= it->fps_poll_time) {
 		it->fps_flips = it->num_flips;
@@ -386,6 +401,10 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		image_set_scissor(it->backbuffer, scissor);
 	}
+
+#if defined(MINISPHERE_SPHERUN)
+	it->lost_time += al_get_time() - start_time;
+#endif
 }
 
 image_t*
