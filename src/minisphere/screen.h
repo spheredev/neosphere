@@ -43,7 +43,6 @@ void             screen_free              (screen_t* it);
 image_t*         screen_backbuffer        (const screen_t* it);
 rect_t           screen_bounds            (const screen_t* it);
 ALLEGRO_DISPLAY* screen_display           (const screen_t* it);
-double           screen_lost_time         (const screen_t* it);
 size2_t          screen_size              (const screen_t* it);
 bool             screen_skipping_frame    (const screen_t* it);
 int              screen_get_frameskip     (const screen_t* it);

@@ -86,6 +86,7 @@ extern ALLEGRO_EVENT_QUEUE* g_events;
 extern game_t*              g_game;
 extern path_t*              g_game_path;
 extern path_t*              g_last_game_path;
+extern double               g_lost_time;
 extern bool                 g_restarting;
 extern screen_t*            g_screen;
 extern font_t*              g_system_font;

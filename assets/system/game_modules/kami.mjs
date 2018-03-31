@@ -38,7 +38,6 @@ class Kami
 	constructor()
 	{
 		this.initialized = false;
-
 		this.enabled = false;
 	}
 
@@ -57,6 +56,9 @@ class Kami
 			this.exitJob = Dispatch.onExit(() => this.finish());
 
 		this.initialized = true;
+		this.frameOffset = Sphere.now();
+		this.lostTimeOffset = SSj.lostTime();
+		this.startTime = SSj.now();
 	}
 
 	attach(target, methodName, description = `${target.constructor.name}#${methodName}`)
@@ -130,19 +132,19 @@ class Kami
 		if (!this.enabled)
 			return;
 
-		let runningTime = SSj.now();
+		let runningTime = SSj.now() - this.startTime;
 
 		// cancel the onExit() so we don't end up printing the table twice
 		this.exitJob.cancel();
 
 		if (this.options.includeEventLoop) {
 			let record = new Record("[in Sphere event loop]", false);
-			record.numSamples = Sphere.now();
-			record.totalTime = SSj.lostTime();
+			record.numSamples = Sphere.now() - this.frameOffset;
+			record.totalTime = SSj.lostTime() - this.lostTimeOffset;
 			this.records.push(record);
 		}
 		else {
-			runningTime -= SSj.lostTime();
+			runningTime -= SSj.lostTime() - this.lostTimeOffset;
 		}
 
 		let totalTime = 0;
@@ -167,7 +169,7 @@ class Kami
 			});
 		}
 
-		// compile and output the Profiling Results table
+		// build a table for the profiling results
 		let consoleOutput = [
 			[ "Event" ],
 			[ "Count" ],
@@ -199,8 +201,8 @@ class Kami
 		consoleOutput[4].push(toTimeString(totalAverage));
 		consoleOutput[5].push(toPercentString(1.0));
 
-		let compiledText = `Profiling Results for '${Sphere.Game.name}' (Kami)`
-			+ `\n${makeTable(consoleOutput)}\n`;
+		let tableText = makeTable(consoleOutput);
+		let compiledText = `Profiling Results for '${Sphere.Game.name}' (Kami)\n${tableText}\n`;
 		if (!this.options.includeEventLoop)
 			compiledText += "\n(*) Excludes time spent in the Sphere event loop.\n";
 		SSj.log(compiledText);

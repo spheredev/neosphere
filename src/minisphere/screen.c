@@ -52,7 +52,6 @@ struct screen
 	double           fps_poll_time;
 	bool             fullscreen;
 	double           last_flip_time;
-	double           lost_time;
 	int              max_skips;
 	double           next_frame_time;
 	int              num_flips;
@@ -170,12 +169,6 @@ ALLEGRO_DISPLAY*
 screen_display(const screen_t* it)
 {
 	return it->display;
-}
-
-double
-screen_lost_time(const screen_t* it)
-{
-	return it->lost_time;
 }
 
 size2_t
@@ -403,7 +396,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	}
 
 #if defined(MINISPHERE_SPHERUN)
-	it->lost_time += al_get_time() - start_time;
+	g_lost_time += al_get_time() - start_time;
 #endif
 }
 

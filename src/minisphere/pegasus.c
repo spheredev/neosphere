@@ -3433,7 +3433,7 @@ static bool
 js_SSj_lostTime(int num_args, bool is_ctor, int magic)
 {
 #if defined(MINISPHERE_SPHERUN)
-	jsal_push_number(floor(screen_lost_time(g_screen) * 1.0e9));
+	jsal_push_number(floor(g_lost_time * 1.0e9));
 #else
 	jsal_push_number(0.0);
 #endif

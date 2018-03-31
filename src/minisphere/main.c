@@ -83,6 +83,7 @@ ALLEGRO_EVENT_QUEUE* g_events = NULL;
 game_t*              g_game = NULL;
 path_t*              g_game_path = NULL;
 path_t*              g_last_game_path = NULL;
+double               g_lost_time = 0.0;
 bool                 g_restarting = false;
 screen_t*            g_screen = NULL;
 font_t*              g_system_font = NULL;
@@ -415,7 +416,14 @@ sphere_heartbeat(bool in_event_loop)
 	//            JavaScript code to run, otherwise bad things will happen.
 
 	ALLEGRO_EVENT event;
+#if defined(MINISPHERE_SPHERUN)
+	double        start_time;
+#endif
 
+#if defined(MINISPHERE_SPHERUN)
+	start_time = al_get_time();
+#endif
+	
 	sockets_update();
 
 	if (in_event_loop) {
@@ -440,6 +448,10 @@ sphere_heartbeat(bool in_event_loop)
 			break;
 		}
 	}
+
+#if defined(MINISPHERE_SPHERUN)
+	g_lost_time += al_get_time() - start_time;
+#endif
 }
 
 no_return
