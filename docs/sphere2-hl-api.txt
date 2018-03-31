@@ -617,20 +617,22 @@ changes to speed things up.
 Kami.initialize([options]);
 
     Initializes the profiler.  `options` is an object specifying the settings
-    for the profiler, as documented below.
+    for the profiler, as documented below.  Any options not explicitly provided
+    will take on their default settings.
 
-    options.excludeLostTime [default: false]
+    options.includeEventLoop [default: true]
 
-	    If this is set to `true`, Kami will exclude time lost to backbuffer
-	    flipping when calculating runtime percentages.
+	    By default, time spent in the event loop is included when compiling the
+	    results table.  If you would like to exclude that time and only profile
+	    your own code, you can set this to `false`.
 
     options.sortResultsByCost [default: true]
 
-        Normally, Kami sorts the results by descending time cost.  If you want
-        the results ordered alphabetically instead, set this to false.
+        Normally, Kami sorts the results by descending time cost.  To have the
+        results ordered alphabetically instead, set this to `false`.
 
     Note: If you don't call this before attaching methods or taking samples,
-          Kami will call it internally and use its default settings.  Therefore
+          Kami will call it internally and use the default settings.  Therefore
           you must call this first if you want to use non-default options.
 
 Kami.attach(object, method_name[, display_name]);

@@ -1187,9 +1187,9 @@ SSj.log(text_or_object);
 
 SSj.lostTime();
 
-    Returns the amount of time in nanoseconds lost to backbuffer flips and
-	frame-limiting.  As the engine may spend a lot of time waiting for the next
-	frame, this information is often very useful for profilers.
+    Returns the amount of time in nanoseconds lost to internal event loop
+    handling.  As the engine may spend a lot of time in the event loop simply
+    waiting for the next frame, this information can be useful for profiling.
 
 SSj.now();
 

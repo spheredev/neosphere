@@ -47,7 +47,7 @@ class Kami
 	initialize(options = {})
 	{
 		options = Object.assign({
-			excludeLostTime:   false,
+			includeEventLoop:  true,
 			sortResultsByCost: true,
 		}, Sphere.Game.kamiOptions, options);
 
@@ -77,7 +77,7 @@ class Kami
 			let startTime = now();
 			let result = originalFunction.apply(this, args);
 			record.totalTime += now() - startTime;
-			++record.count;
+			++record.numSamples;
 			return result;
 		};
 	}
@@ -104,7 +104,7 @@ class Kami
 		if (this.enabled) {
 			let record = findRecord(this.records, description);
 			if(record === undefined) {
-				record = new Record(description, false, undefined, undefined, undefined);
+				record = new Record(description, false);
 				this.records.push(record);
 			}
 			if (record.startTime > 0)
@@ -124,7 +124,7 @@ class Kami
 			throw TypeError("Expected sample record from Kami.begin()");
 		record.totalTime += end - record.startTime;
 		record.startTime = 0;
-		++record.count;
+		++record.numSamples;
 	}
 
 	finish()
@@ -133,19 +133,27 @@ class Kami
 			return;
 
 		let runningTime = SSj.now() - startUpTime;
-		if (this.options.excludeLostTime)
-			runningTime -= SSj.lostTime();
 
-		// cancel the onExit() so as not to print the table twice
+		// cancel the onExit() so we don't end up printing the table twice
 		this.exitJob.cancel();
+
+		if (this.options.includeEventLoop) {
+			let record = new Record("[in Sphere event loop]", false);
+			record.numSamples = Sphere.now() + 1;
+			record.totalTime = SSj.lostTime();
+			this.records.push(record);
+		}
+		else {
+			runningTime -= SSj.lostTime();
+		}
 
 		let totalTime = 0;
 		let totalAverage = 0;
-		let calls = 0;
+		let totalSamples = 0;
 		for (const record of this.records) {
-			if (record.count > 0) {
-				record.averageTime = record.totalTime / record.count;
-				calls += record.count;
+			if (record.numSamples > 0) {
+				record.averageTime = record.totalTime / record.numSamples;
+				totalSamples += record.numSamples;
 				totalTime += record.totalTime;
 				totalAverage += record.averageTime;
 			}
@@ -170,12 +178,12 @@ class Kami
 			[ "Avg (\u{3bc}s)" ],
 			[ "% Avg" ],
 		];
-		if (this.options.excludeLostTime)
+		if (!this.options.includeEventLoop)
 			consoleOutput[3][0] += "*";
 		for (const record of this.records) {
-			if (record.count > 0) {
+			if (record.numSamples > 0) {
 				consoleOutput[0].push(record.description);
-				consoleOutput[1].push(toCountString(record.count));
+				consoleOutput[1].push(toCountString(record.numSamples));
 				consoleOutput[2].push(toTimeString(record.totalTime));
 				consoleOutput[3].push(toPercentString(record.totalTime / runningTime));
 				consoleOutput[4].push(toTimeString(record.averageTime));
@@ -187,7 +195,7 @@ class Kami
 			}
 		}
 		consoleOutput[0].push("Total");
-		consoleOutput[1].push(toCountString(calls));
+		consoleOutput[1].push(toCountString(totalSamples));
 		consoleOutput[2].push(toTimeString(totalTime));
 		consoleOutput[3].push(toPercentString(totalTime / runningTime));
 		consoleOutput[4].push(toTimeString(totalAverage));
@@ -195,8 +203,8 @@ class Kami
 
 		let compiledText = `Profiling Results for '${Sphere.Game.name}' (Kami)`
 			+ `\n${makeTable(consoleOutput)}\n`;
-		if (this.options.excludeLostTime)
-			compiledText += "\n(*) excludes time spent on frame-limiting and flip\n";
+		if (!this.options.includeEventLoop)
+			compiledText += "\n(*) Excludes time spent in the Sphere event loop.\n";
 		SSj.log(compiledText);
 
 		this.records.splice(0, this.records.length);
@@ -207,7 +215,7 @@ function Record(description, attached, methodName, originalFunction, target)
 {
 	this.description = description;
 	this.attached = attached;
-	this.count = 0;
+	this.numSamples = 0;
 	this.methodName = methodName;
 	this.originalFunction = originalFunction;
 	this.target = target;
