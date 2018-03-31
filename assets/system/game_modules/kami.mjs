@@ -32,8 +32,6 @@
 
 const now = SSj.now;
 
-let startUpTime = SSj.now();
-
 export default new
 class Kami
 {
@@ -132,14 +130,14 @@ class Kami
 		if (!this.enabled)
 			return;
 
-		let runningTime = SSj.now() - startUpTime;
+		let runningTime = SSj.now();
 
 		// cancel the onExit() so we don't end up printing the table twice
 		this.exitJob.cancel();
 
 		if (this.options.includeEventLoop) {
 			let record = new Record("[in Sphere event loop]", false);
-			record.numSamples = Sphere.now() + 1;
+			record.numSamples = Sphere.now();
 			record.totalTime = SSj.lostTime();
 			this.records.push(record);
 		}
