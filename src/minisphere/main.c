@@ -421,7 +421,8 @@ sphere_heartbeat(bool in_event_loop)
 #endif
 
 #if defined(MINISPHERE_SPHERUN)
-	start_time = al_get_time();
+	if (in_event_loop)
+		start_time = al_get_time();
 #endif
 	
 	sockets_update();
@@ -450,7 +451,8 @@ sphere_heartbeat(bool in_event_loop)
 	}
 
 #if defined(MINISPHERE_SPHERUN)
-	g_lost_time += al_get_time() - start_time;
+	if (in_event_loop)
+		g_lost_time += al_get_time() - start_time;
 #endif
 }
 
