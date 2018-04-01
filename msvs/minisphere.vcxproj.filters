@@ -141,6 +141,9 @@
     <ClCompile Include="..\src\minisphere\dispatch.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\minisphere\profiler.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\dyad.h">
@@ -276,6 +279,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\minisphere\dispatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\minisphere\profiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

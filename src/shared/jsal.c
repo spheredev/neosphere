@@ -555,7 +555,7 @@ jsal_del_prop_string(int object_index, const char* name)
 }
 
 void
-jsal_disable(bool disabled)
+jsal_disable_vm(bool disabled)
 {
 	if (disabled)
 		JsDisableRuntimeExecution(s_js_runtime);

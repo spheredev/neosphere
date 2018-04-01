@@ -45,6 +45,7 @@
 #include "image.h"
 #include "input.h"
 #include "jsal.h"
+#include "profiler.h"
 #include "sockets.h"
 #include "unicode.h"
 #include "xoroshiro.h"
@@ -338,6 +339,7 @@ static bool js_SSj_flipScreen                (int num_args, bool is_ctor, int ma
 static bool js_SSj_log                       (int num_args, bool is_ctor, int magic);
 static bool js_SSj_lostTime                  (int num_args, bool is_ctor, int magic);
 static bool js_SSj_now                       (int num_args, bool is_ctor, int magic);
+static bool js_SSj_profile                   (int num_args, bool is_ctor, int magic);
 static bool js_new_Sample                    (int num_args, bool is_ctor, int magic);
 static bool js_Sample_get_fileName           (int num_args, bool is_ctor, int magic);
 static bool js_Sample_play                   (int num_args, bool is_ctor, int magic);
@@ -630,6 +632,7 @@ pegasus_init(void)
 	api_define_function("SSj", "log", js_SSj_log, KI_LOG_NORMAL);
 	api_define_function("SSj", "lostTime", js_SSj_lostTime, 0);
 	api_define_function("SSj", "now", js_SSj_now, 0);
+	api_define_function("SSj", "profile", js_SSj_profile, 0);
 	api_define_function("SSj", "trace", js_SSj_log, KI_LOG_TRACE);
 	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize, 0);
 	api_define_property("Sample", "fileName", false, js_Sample_get_fileName, NULL);
@@ -1172,6 +1175,14 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 static bool
 handle_main_event_loop(int num_args, bool is_ctor, int magic)
 {
+	// SPHERE v2 UNIFIED EVENT LOOP
+	// once started, the event loop should continue to cycle until none of the
+	// following remain:
+	//    - Dispatch API jobs (either one-time or recurring)
+	//    - promise continuations (e.g. await completion or .then())
+	//    - JS module loader jobs
+	//    - unhandled promise rejections
+
 	while (dispatch_busy() || jsal_busy()) {
 		sphere_heartbeat(true);
 		if (!screen_skipping_frame(g_screen))
@@ -1183,7 +1194,7 @@ handle_main_event_loop(int num_args, bool is_ctor, int magic)
 		++g_tick_count;
 	}
 
-	// miniature "exit loop" to deal with onExit jobs
+	// miniature "exit loop" to deal with .onExit() jobs
 	s_shutting_down = true;
 	while (!dispatch_can_exit() || jsal_busy()) {
 		sphere_heartbeat(true);
@@ -3449,6 +3460,39 @@ js_SSj_now(int num_args, bool is_ctor, int magic)
 	jsal_push_number(0.0);
 #endif
 	return true;
+}
+
+static bool
+js_SSj_profile(int num_args, bool is_ctor, int magic)
+{
+#if defined(MINISPHERE_SPHERUN)
+	const char* class_name;
+	js_ref_t*   function_ref;
+	const char* key;
+	const char* name = NULL;
+	js_ref_t*   shim_ref;
+
+	jsal_require_object(0);
+	key = jsal_require_string(1);
+	if (num_args >= 3)
+		name = jsal_require_string(2);
+
+	if (name == NULL)
+		name = "the 8:12 express";
+
+	jsal_get_prop_string(0, key);
+	if (!jsal_is_function(-1))
+		jsal_error(JS_RANGE_ERROR, "Cannot profile non-function property '.%s'", key);
+	function_ref = jsal_ref(-1);
+	shim_ref = profiler_attach_to(function_ref, name);
+	jsal_push_new_object();
+	jsal_push_ref_weak(shim_ref);
+	jsal_put_prop_key(-2, s_key_value);
+	jsal_def_prop_string(0, key);
+	jsal_unref(shim_ref);
+#endif
+
+	return false;
 }
 
 static bool

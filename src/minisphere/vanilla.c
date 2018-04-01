@@ -2263,7 +2263,7 @@ js_ExecuteGame(int num_args, bool is_ctor, int magic)
 	path_free(games_path);
 
 	dispatch_cancel_all(true, false);
-	jsal_disable(true);
+	jsal_disable_vm(true);
 	g_restarting = true;
 	return false;
 }
@@ -2328,7 +2328,7 @@ static bool
 js_Exit(int num_args, bool is_ctor, int magic)
 {
 	dispatch_cancel_all(true, false);
-	jsal_disable(true);
+	jsal_disable_vm(true);
 	return false;
 }
 
@@ -5109,7 +5109,7 @@ static bool
 js_RestartGame(int num_args, bool is_ctor, int magic)
 {
 	dispatch_cancel_all(true, true);
-	jsal_disable(true);
+	jsal_disable_vm(true);
 	g_restarting = true;
 	return false;
 }

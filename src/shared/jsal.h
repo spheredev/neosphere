@@ -109,7 +109,7 @@ bool         jsal_del_global_string        (const char* name);
 bool         jsal_del_prop                 (int object_index);
 bool         jsal_del_prop_index           (int object_index, int name);
 bool         jsal_del_prop_string          (int object_index, const char* name);
-void         jsal_disable                  (bool disabled);
+void         jsal_disable_vm               (bool disabled);
 int          jsal_dup                      (int from_index);
 void         jsal_error                    (js_error_type_t type, const char* message, ...);
 void         jsal_error_va                 (js_error_type_t type, const char* message, va_list ap);

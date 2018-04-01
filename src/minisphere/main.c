@@ -44,6 +44,7 @@
 #include "legacy.h"
 #include "map_engine.h"
 #include "pegasus.h"
+#include "profiler.h"
 #include "sockets.h"
 #include "spriteset.h"
 #include "vanilla.h"
@@ -349,7 +350,7 @@ main(int argc, char* argv[])
 	// start up the event loop.  we can do this even in compatibility mode:
 	// the event loop terminates when there are no pending jobs or promises to settle,
 	// and neither one was available in Sphere 1.x.
-	jsal_disable(false);  // in case of early bailout, onExit() jobs still need to run
+	jsal_disable_vm(false);  // in case of early bailout, onExit() jobs still need to run
 	if (!pegasus_start_event_loop())
 		goto on_js_error;
 	if (g_restarting)
@@ -445,12 +446,15 @@ sphere_heartbeat(bool in_event_loop)
 			g_last_game_path = NULL;
 			dispatch_cancel_all(true, false);
 			if (g_event_loop_version < 2)
-				jsal_disable(true);
+				jsal_disable_vm(true);
 			break;
 		}
 	}
 
 #if defined(MINISPHERE_SPHERUN)
+	// only count a heartbeat as lost time if it occurs as part of event loop processing.
+	// most critically, screen_flip()--all of which is already lost time itself--generates benign
+	// heartbeats while waiting for the next frame so we want to avoid counting that time twice.
 	if (in_event_loop)
 		g_lost_time += al_get_time() - start_time;
 #endif
@@ -580,6 +584,10 @@ initialize_engine(void)
 	map_engine_init();
 	scripts_init();
 
+#if defined(MINISPHERE_SPHERUN)
+	profiler_init();
+#endif
+
 	legacy_init();
 
 	return true;
@@ -596,10 +604,11 @@ shutdown_engine(void)
 {
 	kb_save_keymap();
 
-	jsal_disable(false);
+	jsal_disable_vm(false);
 
 #if defined(MINISPHERE_SPHERUN)
 	debugger_uninit();
+	profiler_uninit();
 #endif
 
 	map_engine_uninit();
