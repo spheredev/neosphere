@@ -2131,6 +2131,8 @@ jsal_try_parse(int at_index)
 void
 jsal_unref(js_ref_t* ref)
 {
+	if (ref == NULL)
+		return;
 	JsRelease(ref->value, NULL);
 	free(ref);
 }

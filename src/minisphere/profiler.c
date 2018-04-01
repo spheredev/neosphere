@@ -13,6 +13,7 @@ struct record
 
 static bool js_instrumentedWrapper (int num_args, bool is_ctor, int magic);
 
+bool      s_initialized = false;
 vector_t* s_records;
 double    s_startup_time;
 
@@ -20,6 +21,7 @@ void
 profiler_init(void)
 {
 	s_records = vector_new(sizeof(struct record));
+	s_initialized = true;
 
 	s_startup_time = al_get_time();
 }
@@ -28,15 +30,38 @@ void
 profiler_uninit(void)
 {
 	struct record* record;
+	struct record  record_obj;
+	double         runtime;
 	
 	iter_t iter;
 
+	runtime = al_get_time() - s_startup_time;
+	
+	printf("Profiling Results for '%s' (ran for ~%g seconds)\n", game_name(g_game), round(runtime));
+	
+	record_obj.name = strdup("[in Sphere event loop]");
+	record_obj.num_hits = g_tick_count;
+	record_obj.total_cost = g_lost_time;
+	record_obj.function = NULL;
+	vector_push(s_records, &record_obj);
+	
 	iter = vector_enum(s_records);
 	while (record = iter_next(&iter)) {
 		jsal_unref(record->function);
+		printf("  %s - spent %g us (%g%%) - avg. %g us\n",
+			record->name,
+			round(record->total_cost * 1.0e6),
+			round(record->total_cost / runtime * 1000.0) / 10.0,
+			round(record->total_cost / record->num_hits * 1.0e6));
 		free(record->name);
 	}
 	vector_free(s_records);
+}
+
+bool
+profiler_enabled(void)
+{
+	return s_initialized;
 }
 
 js_ref_t*

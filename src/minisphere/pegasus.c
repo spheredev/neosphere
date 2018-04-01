@@ -3469,29 +3469,56 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 	const char* class_name;
 	js_ref_t*   function_ref;
 	const char* key;
-	const char* name = NULL;
-	js_ref_t*   shim_ref;
+	char*       name = NULL;
+	js_ref_t*   shim_ref = NULL;
+
+	if (!profiler_enabled())
+		return false;
 
 	jsal_require_object(0);
 	key = jsal_require_string(1);
 	if (num_args >= 3)
-		name = jsal_require_string(2);
+		name = strdup(jsal_require_string(2));
 
-	if (name == NULL)
-		name = "the 8:12 express";
-
+	// check if the property value is a function first...
 	jsal_get_prop_string(0, key);
 	if (!jsal_is_function(-1))
-		jsal_error(JS_RANGE_ERROR, "Cannot profile non-function property '.%s'", key);
+		jsal_error(JS_RANGE_ERROR, "Cannot profile non-function property '%s'", key);
 	function_ref = jsal_ref(-1);
+
+	if (name == NULL) {
+		// no name given, try to auto-detect method name
+		if (jsal_get_prop_string(0, "constructor")) {
+			jsal_get_prop_string(-1, "name");
+			class_name = jsal_get_string(-1);
+			name = strnewf("%s#%s", class_name, key);
+			jsal_pop(2);
+		}
+		else {
+			jsal_pop(1);
+		}
+		if (name == NULL) {
+			jsal_push_known_symbol("toStringTag");
+			jsal_get_prop(0);
+			if ((class_name = jsal_get_string(-1)))
+				name = strnewf("%s.%s", class_name, key);
+			jsal_pop(1);
+		}
+	}
+
+	if (name == NULL)
+		name = strdup("[unknown function]");
 	shim_ref = profiler_attach_to(function_ref, name);
+
+	// <object>.<key> = <instrumented shim>
 	jsal_push_new_object();
 	jsal_push_ref_weak(shim_ref);
 	jsal_put_prop_key(-2, s_key_value);
 	jsal_def_prop_string(0, key);
+	
 	jsal_unref(shim_ref);
+	free(name);
 #endif
-
 	return false;
 }
 

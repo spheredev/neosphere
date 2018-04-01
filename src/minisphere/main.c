@@ -303,6 +303,9 @@ main(int argc, char* argv[])
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
 	debugger_init(ssj_mode, false);
+
+	if (ssj_mode == SSJ_OFF)
+		profiler_init();
 #endif
 
 	g_event_loop_version = 1;
@@ -353,6 +356,12 @@ main(int argc, char* argv[])
 	jsal_disable_vm(false);  // in case of early bailout, onExit() jobs still need to run
 	if (!pegasus_start_event_loop())
 		goto on_js_error;
+	
+#if defined(MINISPHERE_SPHERUN)
+	if (ssj_mode == SSJ_OFF)
+		profiler_uninit();
+#endif
+
 	if (g_restarting)
 		sphere_restart();
 
@@ -584,10 +593,6 @@ initialize_engine(void)
 	map_engine_init();
 	scripts_init();
 
-#if defined(MINISPHERE_SPHERUN)
-	profiler_init();
-#endif
-
 	legacy_init();
 
 	return true;
@@ -608,7 +613,6 @@ shutdown_engine(void)
 
 #if defined(MINISPHERE_SPHERUN)
 	debugger_uninit();
-	profiler_uninit();
 #endif
 
 	map_engine_uninit();

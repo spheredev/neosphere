@@ -79,10 +79,20 @@ api_define_const(const char* enum_name, const char* name, double value)
 	if (enum_name != NULL) {
 		if (!jsal_get_prop_string(-1, enum_name)) {
 			jsal_pop(1);
-			jsal_push_eval("({ enumerable: false, writable: true, configurable: true })");
+			jsal_push_eval("({ writable: true, configurable: true })");
 			jsal_push_new_object();
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_new_object();
+			jsal_push_string(enum_name);
+			jsal_put_prop_string(-2, "value");
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
 			jsal_put_prop_string(-2, "value");
 			jsal_def_prop_string(-2, enum_name);
+
 			jsal_get_prop_string(-1, enum_name);
 		}
 	}
@@ -128,8 +138,18 @@ api_define_function(const char* namespace_name, const char* name, js_function_t 
 			jsal_pop(1);
 			jsal_push_eval("({ writable: true, configurable: true })");
 			jsal_push_new_object();
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_new_object();
+			jsal_push_string(namespace_name);
+			jsal_put_prop_string(-2, "value");
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
 			jsal_put_prop_string(-2, "value");
 			jsal_def_prop_string(-2, namespace_name);
+
 			jsal_get_prop_string(-1, namespace_name);
 		}
 	}
@@ -181,8 +201,18 @@ api_define_object(const char* namespace_name, const char* name, int class_id, vo
 			jsal_pop(1);
 			jsal_push_eval("({ writable: true, configurable: true })");
 			jsal_push_new_object();
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_new_object();
+			jsal_push_string(namespace_name);
+			jsal_put_prop_string(-2, "value");
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
 			jsal_put_prop_string(-2, "value");
 			jsal_def_prop_string(-2, namespace_name);
+
 			jsal_get_prop_string(-1, namespace_name);
 		}
 	}
@@ -235,8 +265,18 @@ api_define_static_prop(const char* namespace_name, const char* name, js_function
 			jsal_pop(1);
 			jsal_push_eval("({ writable: true, configurable: true })");
 			jsal_push_new_object();
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_new_object();
+			jsal_push_string(namespace_name);
+			jsal_put_prop_string(-2, "value");
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
 			jsal_put_prop_string(-2, "value");
 			jsal_def_prop_string(-2, namespace_name);
+
 			jsal_get_prop_string(-1, namespace_name);
 		}
 	}
