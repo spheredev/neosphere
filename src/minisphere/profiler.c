@@ -42,9 +42,9 @@ profiler_uninit(void)
 
 	runtime = al_get_time() - s_startup_time;
 	
-	record_obj.name = strdup("[event loop tick]");
+	record_obj.name = strdup("[event loop tick - idle]");
 	record_obj.num_hits = g_tick_count;
-	record_obj.total_cost = g_lost_time;
+	record_obj.total_cost = g_idle_time;
 	record_obj.function = NULL;
 	vector_push(s_records, &record_obj);
 	
@@ -144,7 +144,9 @@ print_results(double running_time)
 	table_add_number(table, 4, 1.0e6 * total_average);
 	table_add_percentage(table, 5, 1.0);
 
-	printf("\nProfiling Summary for '%s' (SpheRun)\n\n", game_name(g_game));
+	printf("\nProfiling Summary for '%s' (%.1f%% LF)\n\n",
+		game_name(g_game),
+		round(1000 * (1.0 - g_idle_time / running_time)) / 10);
 	table_print(table);
 
 	table_free(table);

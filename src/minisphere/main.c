@@ -83,8 +83,8 @@ int                  g_event_loop_version = 1;
 ALLEGRO_EVENT_QUEUE* g_events = NULL;
 game_t*              g_game = NULL;
 path_t*              g_game_path = NULL;
+double               g_idle_time = 0.0;
 path_t*              g_last_game_path = NULL;
-double               g_lost_time = 0.0;
 bool                 g_restarting = false;
 screen_t*            g_screen = NULL;
 font_t*              g_system_font = NULL;
@@ -465,7 +465,7 @@ sphere_heartbeat(bool in_event_loop)
 	// most critically, screen_flip()--all of which is already lost time itself--generates benign
 	// heartbeats while waiting for the next frame so we want to avoid counting that time twice.
 	if (in_event_loop)
-		g_lost_time += al_get_time() - start_time;
+		g_idle_time += al_get_time() - start_time;
 #endif
 }
 

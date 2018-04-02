@@ -396,7 +396,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	}
 
 #if defined(MINISPHERE_SPHERUN)
-	g_lost_time += al_get_time() - start_time;
+	g_idle_time += al_get_time() - start_time;
 #endif
 }
 
