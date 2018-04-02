@@ -3524,14 +3524,25 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_RANGE_ERROR, "Cannot profile non-function property '%s'", key);
 	function_ref = jsal_ref(-1);
 
+	// if no name was given, try to auto-detect method name.  in hindsight, this is
+	// probably a good candidate to be refactored out into a helper function...
 	if (name != NULL)
 		record_name = strdup(name);
 	if (record_name == NULL) {
-		// no name given, try to auto-detect method name
+		if (jsal_get_prop_string(0, "name")) {
+			if ((class_name = jsal_get_string(-1)))
+				record_name = strnewf("%s.%s", class_name, key);
+			jsal_pop(1);
+		}
+		else {
+			jsal_pop(1);
+		}
+	}
+	if (record_name == NULL) {
 		if (jsal_get_prop_string(0, "constructor")) {
 			jsal_get_prop_string(-1, "name");
-			class_name = jsal_get_string(-1);
-			record_name = strnewf("%s#%s", class_name, key);
+			if ((class_name = jsal_get_string(-1)))
+				record_name = strnewf("%s#%s", class_name, key);
 			jsal_pop(2);
 		}
 		else {

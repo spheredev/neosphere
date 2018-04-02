@@ -30,259 +30,31 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const now = SSj.now;
-
 export default new
 class Kami
 {
-	constructor()
+	attach(target, methodName, description)
 	{
-		this.initialized = false;
-		this.enabled = false;
+		if (description !== undefined)
+			SSj.profile(target, methodName, description);
+		else
+			SSj.profile(target, methodName);
 	}
 
-	initialize(options = {})
-	{
-		options = Object.assign({
-			includeEventLoop:  true,
-			sortResultsByCost: true,
-		}, Sphere.Game.kamiOptions, options);
-
-		this.enabled = SSj.now() > 0;
-		this.options = options;
-		this.placeholder = new Record();
-		this.records = [];
-		if (this.enabled)
-			this.exitJob = Dispatch.onExit(() => this.finish());
-
-		this.initialized = true;
-		this.frameOffset = Sphere.now();
-		this.lostTimeOffset = SSj.lostTime();
-		this.startTime = SSj.now();
-	}
-
-	attach(target, methodName, description = `${target.constructor.name}#${methodName}`)
-	{
-		if (!this.initialized)
-			this.initialize();
-
-		if (!this.enabled || typeof target[methodName] !== 'function')
-			return;
-
-		let originalFunction = target[methodName];
-		let record = new Record(description, true, methodName, originalFunction, target);
-		this.records.push(record);
-
-		target[methodName] = function (...args) {
-			let startTime = now();
-			let result = originalFunction.apply(this, args);
-			record.totalTime += now() - startTime;
-			++record.numSamples;
-			return result;
-		};
-	}
-
-	attachClass(constructor, name = constructor.name)
+	attachClass(constructor)
 	{
 		// attach all the static methods first
-		for (const key of Object.getOwnPropertyNames(constructor))
-			this.attach(constructor, key, `${name}.${key}`);
+		for (const key of Object.getOwnPropertyNames(constructor)) {
+			if (typeof constructor[key] !== 'function')
+				continue;
+			this.attach(constructor, key);
+		}
 
 		// attach instance methods
 		for (const key of Object.getOwnPropertyNames(constructor.prototype)) {
-			if (key === 'constructor')
-				continue;  // bad things will happen if we attach this
-			this.attach(constructor.prototype, key, `${name}#${key}`);
+			if (key === 'constructor' || typeof constructor.prototype[key] !== 'function')
+				continue;
+			this.attach(constructor.prototype, key);
 		}
-	}
-
-	begin(description = "Unknown")
-	{
-		if (!this.initialized)
-			this.initialize();
-
-		if (this.enabled) {
-			let record = findRecord(this.records, description);
-			if(record === undefined) {
-				record = new Record(description, false);
-				this.records.push(record);
-			}
-			if (record.startTime > 0)
-				throw RangeError("Reentrant profiling not supported");
-			record.startTime = now();
-			return record;
-		}
-		else {
-			return this.placeholder;
-		}
-	}
-
-	end(record)
-	{
-		let end = now();
-		if (!(record instanceof Record))
-			throw TypeError("Expected sample record from Kami.begin()");
-		record.totalTime += end - record.startTime;
-		record.startTime = 0;
-		++record.numSamples;
-	}
-
-	finish()
-	{
-		if (!this.enabled)
-			return;
-
-		let runningTime = SSj.now() - this.startTime;
-
-		// cancel the onExit() so we don't end up printing the table twice
-		this.exitJob.cancel();
-
-		if (this.options.includeEventLoop) {
-			let record = new Record("[in Sphere event loop]", false);
-			record.numSamples = Sphere.now() - this.frameOffset;
-			record.totalTime = SSj.lostTime() - this.lostTimeOffset;
-			this.records.push(record);
-		}
-		else {
-			runningTime -= SSj.lostTime() - this.lostTimeOffset;
-		}
-
-		let totalTime = 0;
-		let totalAverage = 0;
-		let totalSamples = 0;
-		for (const record of this.records) {
-			if (record.numSamples > 0) {
-				record.averageTime = record.totalTime / record.numSamples;
-				totalSamples += record.numSamples;
-				totalTime += record.totalTime;
-				totalAverage += record.averageTime;
-			}
-		}
-		if (this.options.sortResultsByCost) {
-			this.records.sort((a, b) => b.totalTime - a.totalTime);
-		}
-		else {
-			this.records.sort((a, b) => {
-				return a.description > b.description ? 1
-					: a.description < b.description ? -1
-					: 0;
-			});
-		}
-
-		// build a table for the profiling results
-		let consoleOutput = [
-			[ "Event" ],
-			[ "Count" ],
-			[ "Time (\u{3bc}s)" ],
-			[ "% Run" ],
-			[ "Avg (\u{3bc}s)" ],
-			[ "% Avg" ],
-		];
-		if (!this.options.includeEventLoop)
-			consoleOutput[3][0] += "*";
-		for (const record of this.records) {
-			if (record.numSamples > 0) {
-				consoleOutput[0].push(record.description);
-				consoleOutput[1].push(toCountString(record.numSamples));
-				consoleOutput[2].push(toTimeString(record.totalTime));
-				consoleOutput[3].push(toPercentString(record.totalTime / runningTime));
-				consoleOutput[4].push(toTimeString(record.averageTime));
-				consoleOutput[5].push(toPercentString(record.averageTime / totalAverage));
-			}
-			if (record.attached) {
-				// reinstall the original method now that we're done profiling
-				record.target[record.methodName] = record.originalFunction;
-			}
-		}
-		consoleOutput[0].push("Total");
-		consoleOutput[1].push(toCountString(totalSamples));
-		consoleOutput[2].push(toTimeString(totalTime));
-		consoleOutput[3].push(toPercentString(totalTime / runningTime));
-		consoleOutput[4].push(toTimeString(totalAverage));
-		consoleOutput[5].push(toPercentString(1.0));
-
-		let tableText = makeTable(consoleOutput);
-		let compiledText = `Profiling Results for '${Sphere.Game.name}' (Kami)\n${tableText}\n`;
-		if (!this.options.includeEventLoop)
-			compiledText += "\n(*) Excludes time spent in the Sphere event loop.\n";
-		SSj.log(compiledText);
-
-		this.records.splice(0, this.records.length);
 	}
 };
-
-function Record(description, attached, methodName, originalFunction, target)
-{
-	this.description = description;
-	this.attached = attached;
-	this.numSamples = 0;
-	this.methodName = methodName;
-	this.originalFunction = originalFunction;
-	this.target = target;
-	this.startTime = attached ? 1 : 0;
-	this.totalTime = 0;
-	this.averageTime = 0;
-}
-
-function findRecord(records, description)
-{
-	let i = 0;
-	let length = records.length;
-	for (; i < length && records[i].description !== description; ++i);
-	return i < length ? records[i] : undefined;
-}
-
-function makeTable(table)
-{
-	let totalLength = 1;
-	const rows = table[0].length;
-	const columns = table.length;
-	let output = "";
-
-	for (let i = 0; i < table.length; ++i) {
-		let width = 0;
-		const column = table[i];
-		for (const value of column)
-			width = Math.max(width, value.length);
-		for (let j = 0; j < rows; ++j) {
-			if (i > 0)
-				column[j] = `| ${column[j].padStart(width)} `;
-			else
-				column[j] = `${column[j].padEnd(width)} `;
-		}
-		totalLength += width + 3;
-	}
-
-	const startLine = `\n${"-".repeat(totalLength - 4)}`;
-
-	for (let i = 0; i < rows; ++i) {
-		if (i === rows - 1)
-			output += startLine;
-
-		output += "\n";
-		for (let j = 0; j < columns; ++j)
-			output += table[j][i];
-
-		if (i === 0)
-			output += startLine;
-	}
-	return output;
-}
-
-function toCountString(value)
-{
-	return value.toLocaleString();
-}
-
-function toPercentString(value)
-{
-	return `${(value * 100).toLocaleString(undefined, {
-		maximumFractionDigits: 1,
-		minimumFractionDigits: 1,
-	})} %`;
-}
-
-function toTimeString(value)
-{
-	return Math.round(value / 1000).toLocaleString();
-}
