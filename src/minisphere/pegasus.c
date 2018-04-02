@@ -336,6 +336,7 @@ static bool js_RNG_set_state                 (int num_args, bool is_ctor, int ma
 static bool js_RNG_iterator                  (int num_args, bool is_ctor, int magic);
 static bool js_RNG_next                      (int num_args, bool is_ctor, int magic);
 static bool js_SSj_flipScreen                (int num_args, bool is_ctor, int magic);
+static bool js_SSj_instrument                (int num_args, bool is_ctor, int magic);
 static bool js_SSj_log                       (int num_args, bool is_ctor, int magic);
 static bool js_SSj_lostTime                  (int num_args, bool is_ctor, int magic);
 static bool js_SSj_now                       (int num_args, bool is_ctor, int magic);
@@ -629,6 +630,7 @@ pegasus_init(void)
 	api_define_method("RNG", "@@iterator", js_RNG_iterator, 0);
 	api_define_method("RNG", "next", js_RNG_next, 0);
 	api_define_function("SSj", "flipScreen", js_SSj_flipScreen, 0);
+	api_define_function("SSj", "instrument", js_SSj_instrument, 0);
 	api_define_function("SSj", "log", js_SSj_log, KI_LOG_NORMAL);
 	api_define_function("SSj", "lostTime", js_SSj_lostTime, 0);
 	api_define_function("SSj", "now", js_SSj_now, 0);
@@ -3419,6 +3421,41 @@ js_SSj_flipScreen(int num_args, bool is_ctor, int magic)
 }
 
 static bool
+js_SSj_instrument(int num_args, bool is_ctor, int magic)
+{
+#if defined(MINISPHERE_SPHERUN)
+	static unsigned int next_function_id = 1;
+	
+	js_ref_t*   function_ref;
+	const char* name = NULL;
+	js_ref_t*   shim_ref;
+
+	jsal_require_function(0);
+	if (num_args >= 2)
+		name = jsal_require_string(1);
+
+	if (!profiler_enabled()) {
+		jsal_pull(0);
+		return true;
+	}
+
+	function_ref = jsal_ref(0);
+
+	if (name == NULL)
+		name = strnewf("[instrumented function %u]", next_function_id++);
+	shim_ref = profiler_attach_to(function_ref, name);
+	jsal_push_ref(shim_ref);
+	jsal_unref(shim_ref);
+#else
+	if (num_args >= 1)
+		jsal_pull(0);
+	else
+		jsal_push_undefined();
+#endif
+	return true;
+}
+
+static bool
 js_SSj_log(int num_args, bool is_ctor, int magic)
 {
 #if defined(MINISPHERE_SPHERUN)
@@ -3469,16 +3506,17 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 	const char* class_name;
 	js_ref_t*   function_ref;
 	const char* key;
-	char*       name = NULL;
+	const char* name = NULL;
+	char*       record_name = NULL;
 	js_ref_t*   shim_ref = NULL;
-
-	if (!profiler_enabled())
-		return false;
 
 	jsal_require_object(0);
 	key = jsal_require_string(1);
 	if (num_args >= 3)
-		name = strdup(jsal_require_string(2));
+		name = jsal_require_string(2);
+
+	if (!profiler_enabled())
+		return false;
 
 	// check if the property value is a function first...
 	jsal_get_prop_string(0, key);
@@ -3486,29 +3524,31 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_RANGE_ERROR, "Cannot profile non-function property '%s'", key);
 	function_ref = jsal_ref(-1);
 
-	if (name == NULL) {
+	if (name != NULL)
+		record_name = strdup(name);
+	if (record_name == NULL) {
 		// no name given, try to auto-detect method name
 		if (jsal_get_prop_string(0, "constructor")) {
 			jsal_get_prop_string(-1, "name");
 			class_name = jsal_get_string(-1);
-			name = strnewf("%s#%s", class_name, key);
+			record_name = strnewf("%s#%s", class_name, key);
 			jsal_pop(2);
 		}
 		else {
 			jsal_pop(1);
 		}
-		if (name == NULL) {
-			jsal_push_known_symbol("toStringTag");
-			jsal_get_prop(0);
-			if ((class_name = jsal_get_string(-1)))
-				name = strnewf("%s.%s", class_name, key);
-			jsal_pop(1);
-		}
+	}
+	if (record_name == NULL) {
+		jsal_push_known_symbol("toStringTag");
+		jsal_get_prop(0);
+		if ((class_name = jsal_get_string(-1)))
+			record_name = strnewf("%s.%s", class_name, key);
+		jsal_pop(1);
 	}
 
-	if (name == NULL)
-		name = strdup("[unknown function]");
-	shim_ref = profiler_attach_to(function_ref, name);
+	if (record_name == NULL)
+		record_name = strdup("[unknown function]");
+	shim_ref = profiler_attach_to(function_ref, record_name);
 
 	// <object>.<key> = <instrumented shim>
 	jsal_push_new_object();
@@ -3517,7 +3557,7 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 	jsal_def_prop_string(0, key);
 	
 	jsal_unref(shim_ref);
-	free(name);
+	free(record_name);
 #endif
 	return false;
 }

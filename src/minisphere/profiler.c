@@ -6,6 +6,7 @@
 
 struct record
 {
+	double    average_cost;
 	js_ref_t* function;
 	int       num_hits;
 	char*     name;
@@ -41,7 +42,7 @@ profiler_uninit(void)
 
 	runtime = al_get_time() - s_startup_time;
 	
-	record_obj.name = strdup("[in Pegasus event loop]");
+	record_obj.name = strdup("[event loop tick]");
 	record_obj.num_hits = g_tick_count;
 	record_obj.total_cost = g_lost_time;
 	record_obj.function = NULL;
@@ -100,36 +101,50 @@ static void
 print_results(double running_time)
 {
 	table_t*       table;
+	double         total_average = 0.0;
+	int            total_hits = 0;
+	double         total_time = 0.0;
 	struct record* record;
 
 	iter_t iter;
 
 	vector_sort(s_records, order_records);
-	
+	iter = vector_enum(s_records);
+	while (record = iter_next(&iter)) {
+		if (record->num_hits <= 0)
+			continue;
+		record->average_cost = record->total_cost / record->num_hits;
+		total_average += record->average_cost;
+		total_hits += record->num_hits;
+		total_time += record->total_cost;
+	}
+
 	table = table_new();
 	table_add_column(table, "Event");
 	table_add_column(table, "Count");
 	table_add_column(table, "Time (us)");
 	table_add_column(table, "% Run");
-	table_add_column(table, "Avg (\us)");
+	table_add_column(table, "Avg (us)");
 	table_add_column(table, "% Avg");
 	iter = vector_enum(s_records);
 	while (record = iter_next(&iter)) {
+		if (record->num_hits <= 0)
+			continue;
 		table_add_text(table, 0, record->name);
 		table_add_number(table, 1, record->num_hits);
 		table_add_number(table, 2, 1.0e6 * record->total_cost);
 		table_add_percentage(table, 3, record->total_cost / running_time);
-		table_add_number(table, 4, 1.0e6 * record->total_cost / record->num_hits);
-		table_add_percentage(table, 5, 0.0);
+		table_add_number(table, 4, 1.0e6 * record->average_cost);
+		table_add_percentage(table, 5, record->average_cost / total_average);
 	}
 	table_add_text(table, 0, "Total");
-	table_add_number(table, 1, 0);
-	table_add_number(table, 2, 0);
-	table_add_percentage(table, 3, 1.0);
-	table_add_number(table, 4, 0);
+	table_add_number(table, 1, total_hits);
+	table_add_number(table, 2, total_time);
+	table_add_percentage(table, 3, total_time / running_time);
+	table_add_number(table, 4, total_average);
 	table_add_percentage(table, 5, 1.0);
 
-	printf("\nProfiling Results for '%s'\n\n", game_name(g_game));
+	printf("\nProfiling Summary for '%s' (SpheRun)\n\n", game_name(g_game));
 	table_print(table);
 
 	table_free(table);
