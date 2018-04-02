@@ -2,6 +2,7 @@
 #include "profiler.h"
 
 #include "jsal.h"
+#include "table.h"
 
 struct record
 {
@@ -12,6 +13,9 @@ struct record
 };
 
 static bool js_instrumentedWrapper (int num_args, bool is_ctor, int magic);
+
+static int  order_records (const void* a_ptr, const void* b_ptr);
+static void print_results (double running_time);
 
 bool      s_initialized = false;
 vector_t* s_records;
@@ -37,22 +41,17 @@ profiler_uninit(void)
 
 	runtime = al_get_time() - s_startup_time;
 	
-	printf("Profiling Results for '%s' (ran for ~%g seconds)\n", game_name(g_game), round(runtime));
-	
-	record_obj.name = strdup("[in Sphere event loop]");
+	record_obj.name = strdup("[in Pegasus event loop]");
 	record_obj.num_hits = g_tick_count;
 	record_obj.total_cost = g_lost_time;
 	record_obj.function = NULL;
 	vector_push(s_records, &record_obj);
 	
+	print_results(runtime);
+	
 	iter = vector_enum(s_records);
 	while (record = iter_next(&iter)) {
 		jsal_unref(record->function);
-		printf("  %s - spent %g us (%g%%) - avg. %g us\n",
-			record->name,
-			round(record->total_cost * 1.0e6),
-			round(record->total_cost / runtime * 1000.0) / 10.0,
-			round(record->total_cost / record->num_hits * 1.0e6));
 		free(record->name);
 	}
 	vector_free(s_records);
@@ -82,6 +81,58 @@ profiler_attach_to(js_ref_t* function, const char* description)
 	shim_ref = jsal_ref(-1);
 	jsal_pop(1);
 	return shim_ref;
+}
+
+static int
+order_records(const void* a_ptr, const void* b_ptr)
+{
+	const struct record* a;
+	const struct record* b;
+
+	a = a_ptr;
+	b = b_ptr;
+	return b->total_cost > a->total_cost ? 1
+		: b->total_cost < a->total_cost ? -1
+		: 0;
+}
+
+static void
+print_results(double running_time)
+{
+	table_t*       table;
+	struct record* record;
+
+	iter_t iter;
+
+	vector_sort(s_records, order_records);
+	
+	table = table_new();
+	table_add_column(table, "Event");
+	table_add_column(table, "Count");
+	table_add_column(table, "Time (us)");
+	table_add_column(table, "% Run");
+	table_add_column(table, "Avg (\us)");
+	table_add_column(table, "% Avg");
+	iter = vector_enum(s_records);
+	while (record = iter_next(&iter)) {
+		table_add_text(table, 0, record->name);
+		table_add_number(table, 1, record->num_hits);
+		table_add_number(table, 2, 1.0e6 * record->total_cost);
+		table_add_percentage(table, 3, record->total_cost / running_time);
+		table_add_number(table, 4, 1.0e6 * record->total_cost / record->num_hits);
+		table_add_percentage(table, 5, 0.0);
+	}
+	table_add_text(table, 0, "Total");
+	table_add_number(table, 1, 0);
+	table_add_number(table, 2, 0);
+	table_add_percentage(table, 3, 1.0);
+	table_add_number(table, 4, 0);
+	table_add_percentage(table, 5, 1.0);
+
+	printf("\nProfiling Results for '%s'\n\n", game_name(g_game));
+	table_print(table);
+
+	table_free(table);
 }
 
 static bool

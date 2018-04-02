@@ -30,7 +30,7 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/map_engine.c src/minisphere/obstruction.c \
    src/minisphere/package.c src/minisphere/pegasus.c \
    src/minisphere/profiler.c src/minisphere/screen.c src/minisphere/script.c \
-   src/minisphere/spriteset.c src/minisphere/tileset.c \
+   src/minisphere/spriteset.c src/minisphere/table.c src/minisphere/tileset.c \
    src/minisphere/transform.c src/minisphere/utility.c \
    src/minisphere/vanilla.c src/minisphere/windowstyle.c
 engine_libs= \

@@ -255,6 +255,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <ClCompile Include="..\src\minisphere\legacy.c" />
     <ClCompile Include="..\src\minisphere\profiler.c" />
+    <ClCompile Include="..\src\minisphere\table.c" />
     <ClCompile Include="..\src\minisphere\vanilla.c" />
     <ClCompile Include="..\src\minisphere\transform.c" />
     <ClCompile Include="..\src\minisphere\pegasus.c" />
@@ -300,6 +301,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <ClInclude Include="..\src\minisphere\legacy.h" />
     <ClInclude Include="..\src\minisphere\profiler.h" />
+    <ClInclude Include="..\src\minisphere\table.h" />
     <ClInclude Include="..\src\minisphere\vanilla.h" />
     <ClInclude Include="..\src\minisphere\transform.h" />
     <ClInclude Include="..\src\minisphere\pegasus.h" />
