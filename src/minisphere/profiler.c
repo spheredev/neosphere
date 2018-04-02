@@ -139,9 +139,9 @@ print_results(double running_time)
 	}
 	table_add_text(table, 0, "Total");
 	table_add_number(table, 1, total_hits);
-	table_add_number(table, 2, total_time);
+	table_add_number(table, 2, 1.0e6 * total_time);
 	table_add_percentage(table, 3, total_time / running_time);
-	table_add_number(table, 4, total_average);
+	table_add_number(table, 4, 1.0e6 * total_average);
 	table_add_percentage(table, 5, 1.0);
 
 	printf("\nProfiling Summary for '%s' (SpheRun)\n\n", game_name(g_game));
