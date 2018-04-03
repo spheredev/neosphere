@@ -3531,7 +3531,7 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 	if (record_name == NULL) {
 		if (jsal_get_prop_string(0, "name")) {
 			if ((class_name = jsal_get_string(-1)))
-				record_name = strnewf("%s.%s", class_name, key);
+				record_name = strnewf("%s::%s", class_name, key);
 			jsal_pop(1);
 		}
 		else {
@@ -3542,7 +3542,7 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 		if (jsal_get_prop_string(0, "constructor")) {
 			jsal_get_prop_string(-1, "name");
 			if ((class_name = jsal_get_string(-1)))
-				record_name = strnewf("%s#%s", class_name, key);
+				record_name = strnewf("%s::%s", class_name, key);
 			jsal_pop(2);
 		}
 		else {
@@ -3553,7 +3553,7 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 		jsal_push_known_symbol("toStringTag");
 		jsal_get_prop(0);
 		if ((class_name = jsal_get_string(-1)))
-			record_name = strnewf("%s.%s", class_name, key);
+			record_name = strnewf("%s::%s", class_name, key);
 		jsal_pop(1);
 	}
 

@@ -55,6 +55,7 @@ struct table
 	struct column* columns;
 	int            max_columns;
 	int            num_columns;
+	char*          title;
 };
 
 #if !defined(__APPLE__)
@@ -63,12 +64,13 @@ static int vasprintf(char* *out, const char* format, va_list ap);
 #endif
 
 table_t*
-table_new(void)
+table_new(const char* title)
 {
 	table_t* table;
 
 	table = calloc(1, sizeof(table_t));
 	table->num_columns = 0;
+	table->title = strdup(title);
 	return table;
 }
 
@@ -80,8 +82,10 @@ table_free(table_t* it)
 	for (c = 0; c < it->num_columns; ++c) {
 		for (r = 0; r < it->columns[c].num_rows; ++r)
 			free(it->columns[c].rows[r]);
+		free(it->columns[c].rows);
 	}
 	free(it->columns);
+	free(it->title);
 	free(it);
 }
 
@@ -185,11 +189,14 @@ table_print(const table_t* it)
 		}
 		total_width += column->width;
 	}
-	total_width += 3 * (it->num_columns - 1);
+	total_width += 3 * (it->num_columns - 1) + 3;
 
 	// print the table to the console
+	for (i = (int)strlen(it->title) + 2; i >= 0; --i)
+		putchar('-');
+	printf("\n %s |\n", it->title);
 	for (r = 0; r < num_rows; ++r) {
-		if (r == 1 || r == num_rows - 1) {
+		if (r <= 1 || r == num_rows - 1) {
 			for (i = 0; i < total_width; ++i)
 				putchar('-');
 			putchar('\n');
@@ -198,12 +205,17 @@ table_print(const table_t* it)
 			column = &it->columns[c];
 			text = r < column->num_rows ? column->rows[r] : "";
 			if (c == 0)
-				printf("%-*s", column->width, text);
+				printf(" %-*s", column->width, text);
+			else if (c == it->num_columns - 1)
+				printf(" | %*s |", column->width, text);
 			else
 				printf(" | %*s", column->width, text);
 		}
 		putchar('\n');
 	}
+	for (i = 0; i < total_width; ++i)
+		putchar('-');
+	putchar('\n');
 }
 
 #if !defined(__APPLE__)

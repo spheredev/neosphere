@@ -100,6 +100,7 @@ order_records(const void* a_ptr, const void* b_ptr)
 static void
 print_results(double running_time)
 {
+	char*          heading;
 	table_t*       table;
 	double         total_average = 0.0;
 	int            total_hits = 0;
@@ -119,7 +120,12 @@ print_results(double running_time)
 		total_time += record->total_cost;
 	}
 
-	table = table_new();
+	printf("\n");
+	
+	heading = strnewf("Performance Report '%s' (LF: %.1f%%)",
+		game_name(g_game),
+		round(1000 * (1.0 - g_idle_time / running_time)) / 10);
+	table = table_new(heading);
 	table_add_column(table, "Event");
 	table_add_column(table, "Count");
 	table_add_column(table, "Time (us)");
@@ -143,13 +149,9 @@ print_results(double running_time)
 	table_add_percentage(table, 3, total_time / running_time);
 	table_add_number(table, 4, 1.0e6 * total_average);
 	table_add_percentage(table, 5, 1.0);
-
-	printf("\nProfiling Summary for '%s' (%.1f%% LF)\n\n",
-		game_name(g_game),
-		round(1000 * (1.0 - g_idle_time / running_time)) / 10);
 	table_print(table);
-
 	table_free(table);
+	free(heading);
 }
 
 static bool

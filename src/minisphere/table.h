@@ -35,7 +35,7 @@
 
 typedef struct table table_t;
 
-table_t* table_new            (void);
+table_t* table_new            (const char* title);
 void     table_free           (table_t* it);
 int      table_add_column     (table_t* it, const char* name);
 void     table_add_number     (table_t* it, int column, long long value);
