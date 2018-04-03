@@ -854,7 +854,8 @@ print_usage(void)
 	printf("       --frameskip    Set the maximum number of consecutive frames to skip.   \n");
 	printf("       --no-sleep     Prevent the engine from sleeping between frames.        \n");
 	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
-	printf("   -p, --performance  Run at full speed by disabling the single-step debugger.\n");
+	printf("   -p, --performance  Run at full performance.  This enables the profiler but \n");
+	printf("                      disables single-step debugging with SSj.                \n");
 	printf("       --verbose      Set the engine's verbosity level from 0 to 4.  This can \n");
 	printf("                      be abbreviated as '-n', where n is [0-4].               \n");
 	printf("       --version      Show which version of miniSphere is installed.          \n");

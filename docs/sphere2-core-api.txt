@@ -1185,12 +1185,6 @@ SSj.log(text_or_object);
     Note: If the game was started from the command line using SpheRun, the
           item is logged to the terminal as well.
 
-SSj.lostTime();
-
-    Returns the amount of time in nanoseconds lost to internal event loop
-    handling.  As the engine may spend a lot of time in the event loop simply
-    waiting for the next frame, this information can be useful for profiling.
-
 SSj.now();
 
     Returns the time in nanoseconds since some arbitrary point in time, useful
@@ -1200,6 +1194,24 @@ SSj.now();
     Note: While the value returned is in nanoseconds, the actual precision of
           the timer will almost certainly be less, typically in the microsecond
           range.  Don't assume this will be nanosecond precision.
+
+SSj.profile(object, method_name[, description]);
+
+    Adds a method to be automatically profiled (timed) by SpheRun.
+    `description` is an optional string to name the function in the performance
+    report; if no description is given, the engine will use the name of the
+    function.
+
+    `object` is the object whose method is being profiled, and `method_name` is
+    the name of the method.  Note that to profile a method for all instances of
+    a class, you can specify the prototype.  For example, to profile all calls
+    to `Font#drawText()`:
+
+        SSj.profile(Font.prototype, 'drawText');
+
+    Note: SpheRun must be started with the `--performance` option to enable the
+          profiler.  All `SSj.profile()` calls will be completely ignored if
+          the profiler is not enabled.
 
 SSj.trace(text);
 

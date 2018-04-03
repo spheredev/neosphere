@@ -4,17 +4,17 @@ miniSphere Changelog
 v5.2.0 - TBD
 ------------
 
-* Adds a new `Kami` module providing an easy way to profile the execution times
-  of your game's functions by dynamically patching in timing code.
+* Adds profiling support to SpheRun; call `SSj.profile()` and pass an object
+  and method name to have all subsequent calls to that function timed and
+  included in an overall performance report on shutdown.
 * Adds `Shape.drawImmediate()` function which avoids the overhead of creating
   VertexList and Shape objects for immediate-mode drawing.
 * Adds `Dispatch.onExit()`, which lets you run code after the event loop exits.
 * Adds `Texture#upload()` and `Texture#download()` to allow direct manipulation
   of a texture's RGBA bitmap.
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
-* Adds `SSj.now()` for getting nanosecond-resolution timestamps for profiling
-  when running under SpheRun.
-* Adds `SSj.lostTime()` which gets the time spent in event loop processing.
+* Adds `SSj.now()` for getting microsecond-accurate timestamps for debugging
+  or profiling.
 * Adds support for render-to-texture by allowing `Surface` objects to be used
   as textures, without calling `.toTexture()` first.
 * Adds `[Symbol.toStringTag]` and `.constructor` for Sphere v2 objects.
