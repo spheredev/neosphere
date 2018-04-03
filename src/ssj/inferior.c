@@ -121,13 +121,15 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	ki_message_add_int(request, 255);
 	ki_message_add_int(request, 224);
 	ki_message_add_int(request, 0);
-	reply = inferior_request(obj, request);
+	if (!(reply = inferior_request(obj, request)))
+		goto on_error;
 	ki_message_free(reply);
 
 	printf("downloading game information... ");
 	request = ki_message_new(KI_REQ);
 	ki_message_add_int(request, KI_REQ_GAME_INFO);
-	reply = inferior_request(obj, request);
+	if (!(reply = inferior_request(obj, request)))
+		goto on_error;
 	platform_name = strdup(ki_message_string(reply, 0));
 	obj->title = strdup(ki_message_string(reply, 1));
 	obj->author = strdup(ki_message_string(reply, 2));
