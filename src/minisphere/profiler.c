@@ -124,7 +124,7 @@ print_results(double running_time)
 	
 	heading = strnewf("performance report - %.1f%% LF",
 		round(1000 * (1.0 - g_idle_time / running_time)) / 10);
-	table = table_new(heading);
+	table = table_new(heading, true);
 	table_add_column(table, "event");
 	table_add_column(table, "count");
 	table_add_column(table, "time (us)");
@@ -142,7 +142,7 @@ print_results(double running_time)
 		table_add_number(table, 4, 1.0e6 * record->average_cost);
 		table_add_percentage(table, 5, record->average_cost / total_average);
 	}
-	table_add_text(table, 0, "total");
+	table_add_text(table, 0, "TOTAL");
 	table_add_number(table, 1, total_hits);
 	table_add_number(table, 2, 1.0e6 * total_time);
 	table_add_percentage(table, 3, total_time / running_time);

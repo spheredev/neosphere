@@ -39,6 +39,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -53,6 +54,7 @@ struct column
 struct table
 {
 	struct column* columns;
+	bool           has_totals;
 	int            max_columns;
 	int            num_columns;
 	char*          title;
@@ -64,11 +66,12 @@ static int vasprintf(char* *out, const char* format, va_list ap);
 #endif
 
 table_t*
-table_new(const char* title)
+table_new(const char* title, bool has_totals)
 {
 	table_t* table;
 
 	table = calloc(1, sizeof(table_t));
+	table->has_totals = has_totals;
 	table->num_columns = 0;
 	table->title = strdup(title);
 	return table;
@@ -189,11 +192,11 @@ table_print(const table_t* it)
 		}
 		total_width += column->width;
 	}
-	total_width += 3 * (it->num_columns - 1) + 3;
+	total_width += 2 * (it->num_columns - 1) + 3;
 
 	// print the table to the console
 	for (i = (int)strlen(it->title) + 2; i >= 0; --i)
-		putchar('-');
+		putchar('=');
 	printf("\n %s |\n", it->title);
 	for (r = 0; r < num_rows; ++r) {
 		// see if we need to print a divider line
@@ -203,10 +206,10 @@ table_print(const table_t* it)
 			if (length < (int)strlen(it->title) + 3)
 				length = (int)strlen(it->title) + 3;
 			for (i = 0; i < length; ++i)
-				putchar('-');
+				putchar('=');
 			putchar('\n');
 		}
-		else if (r == 1 || r == num_rows - 1) {
+		else if (r == 1 || (r == num_rows - 1 && it->has_totals)) {
 			for (i = 0; i < total_width; ++i)
 				putchar('-');
 			putchar('\n');
@@ -218,9 +221,9 @@ table_print(const table_t* it)
 			if (c == 0)
 				printf(" %-*s", column->width, text);
 			else if (c == it->num_columns - 1)
-				printf(" | %*s |", column->width, text);
+				printf("  %*s |", column->width, text);
 			else
-				printf(" | %*s", column->width, text);
+				printf("  %*s", column->width, text);
 		}
 		putchar('\n');
 	}

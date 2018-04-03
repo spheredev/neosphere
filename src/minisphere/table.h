@@ -33,9 +33,11 @@
 #ifndef SPHERE__TABLE_H__INCLUDED
 #define SPHERE__TABLE_H__INCLUDED
 
+#include <stdbool.h>
+
 typedef struct table table_t;
 
-table_t* table_new            (const char* title);
+table_t* table_new            (const char* title, bool has_totals);
 void     table_free           (table_t* it);
 int      table_add_column     (table_t* it, const char* name);
 void     table_add_number     (table_t* it, int column, long long value);

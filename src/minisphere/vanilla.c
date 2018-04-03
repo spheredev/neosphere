@@ -4201,16 +4201,17 @@ static bool
 js_InflateByteArray(int num_args, bool is_ctor, int magic)
 {
 	bytearray_t*  array;
-	int           max_size;
+	int           max_size = 0;
 	bytearray_t*  new_array;
 
 	array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
-	max_size = num_args >= 2 ? jsal_to_int(1) : 0;
+	if (num_args >= 2)
+		max_size = jsal_to_int(1);
 
 	if (max_size < 0)
-		jsal_error(JS_RANGE_ERROR, "negative buffer size");
+		jsal_error(JS_RANGE_ERROR, "Invalid maximum size '%d'", max_size);
 	if (!(new_array = bytearray_inflate(array, max_size)))
-		jsal_error(JS_ERROR, "couldn't inflate byte array");
+		jsal_error(JS_ERROR, "Couldn't inflate byte array");
 	jsal_push_sphere_bytearray(new_array);
 	return true;
 }
