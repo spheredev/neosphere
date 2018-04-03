@@ -196,11 +196,22 @@ table_print(const table_t* it)
 		putchar('-');
 	printf("\n %s |\n", it->title);
 	for (r = 0; r < num_rows; ++r) {
-		if (r <= 1 || r == num_rows - 1) {
+		// see if we need to print a divider line
+		if (r == 0) {
+			// top border should be no shorter than the heading
+			length = total_width;
+			if (length < (int)strlen(it->title) + 3)
+				length = (int)strlen(it->title) + 3;
+			for (i = 0; i < length; ++i)
+				putchar('-');
+			putchar('\n');
+		}
+		else if (r == 1 || r == num_rows - 1) {
 			for (i = 0; i < total_width; ++i)
 				putchar('-');
 			putchar('\n');
 		}
+
 		for (c = 0; c < it->num_columns; ++c) {
 			column = &it->columns[c];
 			text = r < column->num_rows ? column->rows[r] : "";

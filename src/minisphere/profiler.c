@@ -42,7 +42,7 @@ profiler_uninit(void)
 
 	runtime = al_get_time() - s_startup_time;
 	
-	record_obj.name = strdup("[event loop tick - idle]");
+	record_obj.name = strdup("[event loop - idle]");
 	record_obj.num_hits = g_tick_count;
 	record_obj.total_cost = g_idle_time;
 	record_obj.function = NULL;
@@ -122,8 +122,7 @@ print_results(double running_time)
 
 	printf("\n");
 	
-	heading = strnewf("Performance Report '%s' (LF: %.1f%%)",
-		game_name(g_game),
+	heading = strnewf("Performance Report - '%s' - LF: %.1f%%", game_name(g_game),
 		round(1000 * (1.0 - g_idle_time / running_time)) / 10);
 	table = table_new(heading);
 	table_add_column(table, "Event");
