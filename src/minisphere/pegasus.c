@@ -433,8 +433,8 @@ static bool js_Transform_rotate              (int num_args, bool is_ctor, intptr
 static bool js_Transform_scale               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Transform_translate           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_VertexList                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Z_deflate                    (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Z_inflate                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Z_deflate                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Z_inflate                     (int num_args, bool is_ctor, intptr_t magic);
 
 static void js_Color_finalize           (void* host_ptr);
 static void js_DirectoryStream_finalize (void* host_ptr);
@@ -713,8 +713,8 @@ pegasus_init(void)
 	api_define_method("Transform", "scale", js_Transform_scale, 0);
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
-	api_define_function("Z", "compress", js_Z_deflate, 0);
-	api_define_function("Z", "decompress", js_Z_inflate, 0);
+	api_define_function("Z", "deflate", js_Z_deflate, 0);
+	api_define_function("Z", "inflate", js_Z_inflate, 0);
 
 	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);

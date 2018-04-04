@@ -2,6 +2,7 @@
 #define SPHERE__API_H__INCLUDED
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "jsal.h"
 

@@ -36,6 +36,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct js_ref js_ref_t;
 
