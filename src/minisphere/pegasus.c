@@ -36,7 +36,7 @@
 #include "api.h"
 #include "audio.h"
 #include "color.h"
-#include "compression.h"
+#include "compress.h"
 #include "console.h"
 #include "debugger.h"
 #include "dispatch.h"

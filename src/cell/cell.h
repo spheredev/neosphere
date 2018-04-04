@@ -35,7 +35,6 @@
 
 #include "posix.h"
 
-#include <zlib.h>
 #include "lstring.h"
 #include "path.h"
 #include "utility.h"

@@ -33,7 +33,7 @@
 #include "minisphere.h"
 #include "byte_array.h"
 
-#include "compression.h"
+#include "compress.h"
 
 struct bytearray
 {

@@ -253,7 +253,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\minisphere\compression.c" />
+    <ClCompile Include="..\src\shared\compress.c" />
     <ClCompile Include="..\src\minisphere\legacy.c" />
     <ClCompile Include="..\src\minisphere\profiler.c" />
     <ClCompile Include="..\src\minisphere\table.c" />
@@ -300,7 +300,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\shared\xoroshiro.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\minisphere\compression.h" />
+    <ClInclude Include="..\src\shared\compress.h" />
     <ClInclude Include="..\src\minisphere\legacy.h" />
     <ClInclude Include="..\src\minisphere\profiler.h" />
     <ClInclude Include="..\src\minisphere\table.h" />

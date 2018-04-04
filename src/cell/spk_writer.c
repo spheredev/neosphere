@@ -33,6 +33,7 @@
 #include "cell.h"
 #include "spk_writer.h"
 
+#include "compress.h"
 #include "fs.h"
 #include "vector.h"
 
@@ -131,30 +132,35 @@ spk_close(spk_writer_t* writer)
 bool
 spk_add_file(spk_writer_t* writer, fs_t* fs, const char* filename, const char* spk_pathname)
 {
-	uLong            bufsize;
 	struct spk_entry idx_entry;
 	void*            file_data = NULL;
 	size_t           file_size;
 	long             offset;
-	void*            packdata;
+	void*            pack_data = NULL;
+	size_t           pack_size;
 
 	if (!(file_data = fs_fslurp(fs, filename, &file_size)))
 		goto on_error;
-	packdata = malloc(bufsize = compressBound((uLong)file_size));
-	compress(packdata, &bufsize, file_data, (uLong)file_size);
+	if (file_size > UINT32_MAX)
+		goto on_error;
+	if (!(pack_data = z_deflate(file_data, file_size, 9, &pack_size)))
+		goto on_error;
+	if (pack_size > UINT32_MAX)
+		goto on_error;
 	offset = ftell(writer->file);
-	fwrite(packdata, bufsize, 1, writer->file);
+	fwrite(pack_data, pack_size, 1, writer->file);
+	free(pack_data);
 	free(file_data);
-	free(packdata);
 
 	idx_entry.pathname = strdup(spk_pathname);
 	idx_entry.file_size = (uint32_t)file_size;
-	idx_entry.pack_size = bufsize;
+	idx_entry.pack_size = (uint32_t)pack_size;
 	idx_entry.offset = offset;
 	vector_push(writer->index, &idx_entry);
 	return true;
 
 on_error:
+	free(pack_data);
 	free(file_data);
 	return false;
 }

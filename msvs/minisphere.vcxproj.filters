@@ -147,7 +147,7 @@
     <ClCompile Include="..\src\minisphere\table.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\minisphere\compression.c">
+    <ClCompile Include="..\src\shared\compress.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -293,7 +293,7 @@
     <ClInclude Include="..\src\minisphere\table.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\minisphere\compression.h">
+    <ClInclude Include="..\src\shared\compress.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

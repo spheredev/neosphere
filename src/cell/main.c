@@ -32,6 +32,7 @@
 
 #include "cell.h"
 
+#include <zlib.h>
 #include "build.h"
 #include "jsal.h"
 

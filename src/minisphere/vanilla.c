@@ -41,7 +41,6 @@
 #include "api.h"
 #include "audio.h"
 #include "byte_array.h"
-#include "compression.h"
 #include "debugger.h"
 #include "dispatch.h"
 #include "font.h"

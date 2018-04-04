@@ -16,33 +16,32 @@ CFLAGS=-O3
 endif
 
 engine_sources=src/minisphere/main.c \
-   src/shared/api.c src/shared/console.c src/shared/dyad.c \
-   src/shared/encoding.c src/shared/jsal.c src/shared/ki.c \
+   src/shared/api.c src/shared/compress.c src/shared/console.c \
+   src/shared/dyad.c src/shared/encoding.c src/shared/jsal.c src/shared/ki.c \
    src/shared/lstring.c src/shared/md5.c src/shared/path.c \
    src/shared/sockets.c src/shared/unicode.c src/shared/vector.c \
    src/shared/xoroshiro.c \
    src/minisphere/animation.c src/minisphere/atlas.c src/minisphere/audio.c \
    src/minisphere/byte_array.c src/minisphere/color.c \
-   src/minisphere/compression.c src/minisphere/debugger.c \
-   src/minisphere/dispatch.c src/minisphere/font.c src/minisphere/galileo.c \
-   src/minisphere/game.c src/minisphere/geometry.c src/minisphere/image.c \
-   src/minisphere/input.c src/minisphere/kev_file.c src/minisphere/legacy.c \
-   src/minisphere/logger.c src/minisphere/map_engine.c \
-   src/minisphere/obstruction.c src/minisphere/package.c \
-   src/minisphere/pegasus.c src/minisphere/profiler.c src/minisphere/screen.c \
-   src/minisphere/script.c src/minisphere/spriteset.c src/minisphere/table.c \
-   src/minisphere/tileset.c src/minisphere/transform.c \
-   src/minisphere/utility.c src/minisphere/vanilla.c \
-   src/minisphere/windowstyle.c
+   src/minisphere/debugger.c src/minisphere/dispatch.c src/minisphere/font.c \
+   src/minisphere/galileo.c src/minisphere/game.c src/minisphere/geometry.c \
+   src/minisphere/image.c src/minisphere/input.c src/minisphere/kev_file.c \
+   src/minisphere/legacy.c src/minisphere/logger.c \
+   src/minisphere/map_engine.c src/minisphere/obstruction.c \
+   src/minisphere/package.c src/minisphere/pegasus.c \
+   src/minisphere/profiler.c src/minisphere/screen.c src/minisphere/script.c \
+   src/minisphere/spriteset.c src/minisphere/table.c src/minisphere/tileset.c \
+   src/minisphere/transform.c src/minisphere/utility.c \
+   src/minisphere/vanilla.c src/minisphere/windowstyle.c
 engine_libs= \
    -lallegro_acodec -lallegro_audio -lallegro_color -lallegro_dialog \
    -lallegro_image -lallegro_memfile -lallegro_primitives -lallegro \
    -lChakraCore -lmng -lz -lm
 
 cell_sources=src/cell/main.c \
-   src/shared/api.c src/shared/encoding.c src/shared/jsal.c \
-   src/shared/lstring.c src/shared/path.c src/shared/unicode.c \
-   src/shared/vector.c src/shared/xoroshiro.c \
+   src/shared/api.c src/shared/compress.c src/shared/encoding.c \
+   src/shared/jsal.c src/shared/lstring.c src/shared/path.c \
+   src/shared/unicode.c src/shared/vector.c src/shared/xoroshiro.c \
    src/cell/build.c src/cell/fs.c src/cell/spk_writer.c src/cell/target.c \
    src/cell/tool.c src/cell/utility.c src/cell/visor.c
 cell_libs= \

@@ -30,7 +30,7 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include "compression.h"
+#include "compress.h"
 
 #include <stdlib.h>
 #include <zlib.h>
@@ -100,7 +100,7 @@ z_inflate(const void* data, size_t size, size_t max_inflate, size_t *out_output_
 		if (z.avail_out == 0) {
 			if (buffer != NULL && max_inflate > 0)
 				goto on_error;  // inflated data exceeds maximum size
-			if (!(new_buffer = realloc(buffer, ++num_chunks * chunk_size)))
+			if (!(new_buffer = realloc(buffer, ++num_chunks * chunk_size + 1)))
 				goto on_error;
 			z.next_out = new_buffer + (num_chunks - 1) * chunk_size;
 			z.avail_out = chunk_size;
@@ -112,6 +112,7 @@ z_inflate(const void* data, size_t size, size_t max_inflate, size_t *out_output_
 			flush_flag = Z_FINISH;
 	} while (result != Z_STREAM_END);
 	inflated_size = num_chunks * chunk_size - z.avail_out;
+	buffer[inflated_size] = '\0';  // handy NUL terminator
 	inflateEnd(&z);
 
 	// create a byte array from the deflated data

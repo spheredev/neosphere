@@ -33,7 +33,7 @@
 #include "minisphere.h"
 #include "package.h"
 
-#include <zlib.h>
+#include "compress.h"
 #include "vector.h"
 
 struct asset
@@ -398,7 +398,7 @@ asset_fslurp(package_t* package, const char* path, size_t *out_size)
 	struct spk_entry* entry;
 	void*             packdata = NULL;
 	void*             unpacked = NULL;
-	uLong             unpack_size;
+	size_t            unpack_size;
 
 	iter_t iter;
 
@@ -416,12 +416,8 @@ asset_fslurp(package_t* package, const char* path, size_t *out_size)
 	al_fseek(package->file, entry->offset, ALLEGRO_SEEK_SET);
 	if (al_fread(package->file, packdata, entry->pack_size) < entry->pack_size)
 		goto on_error;
-	if (!(unpacked = malloc(entry->file_size + 1)))
+	if (!(unpacked = z_inflate(packdata, entry->pack_size, entry->file_size, &unpack_size)))
 		goto on_error;
-	unpack_size = (uLong)entry->file_size;
-	if (uncompress(unpacked, &unpack_size, packdata, (uLong)entry->pack_size) != Z_OK)
-		goto on_error;
-	*((char*)unpacked + unpack_size) = '\0';
 	free(packdata);
 
 	*out_size = unpack_size;
