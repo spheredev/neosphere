@@ -5172,7 +5172,7 @@ js_Z_deflate(int num_args, bool is_ctor, intptr_t magic)
 	void*       buffer;
 	const void* input_data;
 	size_t      input_size;
-	int         level = 7;
+	int         level = 6;
 	void*       output_data;
 	size_t      output_size;
 
@@ -5194,14 +5194,24 @@ js_Z_deflate(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Z_inflate(int num_args, bool is_ctor, intptr_t magic)
 {
-	const void* buffer;
-	size_t      in_size;
+	void*       buffer;
+	const void* input_data;
+	size_t      input_size;
 	int         max_size = 0;
+	void*       output_data;
+	size_t      output_size;
 	
-	buffer = jsal_require_buffer_ptr(0, &in_size);
+	input_data = jsal_require_buffer_ptr(0, &input_size);
 	if (num_args >= 2)
 		max_size = jsal_require_int(1);
 
-	jsal_error(JS_ERROR, "This API totally got eaten by the pig");
-	return false;
+	if (max_size < 0)
+		jsal_error(JS_RANGE_ERROR, "Invalid maximum size '%d'", max_size);
+
+	if (!(output_data = z_inflate(input_data, input_size, max_size, &output_size)))
+		jsal_error(JS_ERROR, "Couldn't inflate THE PIG (why would you even do this?)");
+	jsal_push_new_buffer(JS_ARRAYBUFFER, output_size, &buffer);
+	memcpy(buffer, output_data, output_size);
+	free(output_data);
+	return true;
 }

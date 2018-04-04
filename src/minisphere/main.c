@@ -32,6 +32,7 @@
 
 #include "minisphere.h"
 
+#include <dyad.h>
 #include <libmng.h>
 #include <zlib.h>
 #include "api.h"

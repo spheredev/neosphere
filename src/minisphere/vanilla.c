@@ -41,6 +41,7 @@
 #include "api.h"
 #include "audio.h"
 #include "byte_array.h"
+#include "compression.h"
 #include "debugger.h"
 #include "dispatch.h"
 #include "font.h"
@@ -2091,14 +2092,18 @@ js_CreateSurface(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_DeflateByteArray(int num_args, bool is_ctor, intptr_t magic)
 {
-	bytearray_t* array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
-	int level = num_args >= 2 ? jsal_to_int(1) : -1;
-
+	bytearray_t* input_array;
+	int          level = 6;
 	bytearray_t* new_array;
 
-	if ((level < 0 || level > 9) && num_args >= 2)
+	input_array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
+	if (num_args >= 2)
+		level = jsal_to_int(1);
+	
+	if (level < 0 || level > 9)
 		jsal_error(JS_RANGE_ERROR, "Invalid compression level '%d'", level);
-	if (!(new_array = bytearray_deflate(array, level)))
+
+	if (!(new_array = bytearray_deflate(input_array, level)))
 		jsal_error(JS_ERROR, "Couldn't deflate byte array");
 	jsal_push_sphere_bytearray(new_array);
 	return true;

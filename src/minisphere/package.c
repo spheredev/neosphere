@@ -33,6 +33,7 @@
 #include "minisphere.h"
 #include "package.h"
 
+#include <zlib.h>
 #include "vector.h"
 
 struct asset

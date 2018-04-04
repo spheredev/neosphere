@@ -33,6 +33,8 @@
 #include "minisphere.h"
 #include "byte_array.h"
 
+#include "compression.h"
+
 struct bytearray
 {
 	int          refcount;
@@ -87,7 +89,8 @@ bytearray_from_lstring(const lstring_t* string)
 
 	if (lstr_len(string) <= 65)  // log short strings only
 		console_log(4, "  String: \"%s\"", lstr_cstr(string));
-	if (lstr_len(string) > INT_MAX) return NULL;
+	if (lstr_len(string) > INT_MAX)
+		return NULL;
 	if (!(array = bytearray_new((int)lstr_len(string))))
 		return NULL;
 	memcpy(array->buffer, lstr_cstr(string), lstr_len(string));
@@ -159,105 +162,48 @@ bytearray_deflate(bytearray_t* array, int level)
 {
 	static const int CHUNK_SIZE = 65536;
 
-	uint8_t*     buffer = NULL;
-	int          flush_flag;
-	int          result;
+	uint8_t*     deflation;
 	bytearray_t* new_array;
-	uint8_t*     new_buffer;
-	int          n_chunks = 0;
-	size_t       out_size;
-	z_stream     z;
+	size_t       output_size;
 
 	console_log(3, "deflating byte array #%u from source byte array #%u",
 		s_next_array_id, array->id);
-
-	memset(&z, 0, sizeof(z_stream));
-	z.next_in = (Bytef*)array->buffer;
-	z.avail_in = array->size;
-	if (deflateInit(&z, level) != Z_OK)
+	deflation = z_deflate(array->buffer, array->size, level, &output_size);
+	if (deflation == NULL || output_size > INT_MAX)
 		goto on_error;
-	flush_flag = Z_NO_FLUSH;
-	do {
-		if (z.avail_out == 0) {
-			if (!(new_buffer = realloc(buffer, ++n_chunks * CHUNK_SIZE)))  // resize buffer
-				goto on_error;
-			z.next_out = new_buffer + (n_chunks - 1) * CHUNK_SIZE;
-			z.avail_out = CHUNK_SIZE;
-			buffer = new_buffer;
-		}
-		result = deflate(&z, flush_flag);
-		if (z.avail_out > 0)
-			flush_flag = Z_FINISH;
-	} while (result != Z_STREAM_END);
-	if ((out_size = CHUNK_SIZE * n_chunks - z.avail_out) > INT_MAX)
-		goto on_error;
-	deflateEnd(&z);
 
-	// create a byte array from the deflated data
 	new_array = calloc(1, sizeof(bytearray_t));
 	new_array->id = s_next_array_id++;
-	new_array->buffer = buffer;
-	new_array->size = (int)out_size;
+	new_array->buffer = deflation;
+	new_array->size = (int)output_size;
 	return bytearray_ref(new_array);
 
 on_error:
-	deflateEnd(&z);
-	free(buffer);
+	free(deflation);
 	return NULL;
 }
 
 bytearray_t*
 bytearray_inflate(bytearray_t* array, int max_size)
 {
-	uint8_t*     buffer = NULL;
-	size_t       chunk_size;
-	int          flush_flag;
-	int          result;
+	uint8_t*     inflation;
 	bytearray_t* new_array;
-	uint8_t*     new_buffer;
-	int          n_chunks = 0;
-	size_t       out_size;
-	z_stream     z;
+	size_t       output_size;
 
 	console_log(3, "inflating byte array #%u from source byte array #%u",
 		s_next_array_id, array->id);
-
-	memset(&z, 0, sizeof(z_stream));
-	z.next_in = (Bytef*)array->buffer;
-	z.avail_in = array->size;
-	if (inflateInit(&z) != Z_OK)
+	inflation = z_inflate(array->buffer, array->size, max_size, &output_size);
+	if (inflation == NULL || output_size > INT_MAX)
 		goto on_error;
-	flush_flag = Z_NO_FLUSH;
-	chunk_size = max_size != 0 ? max_size : 65536;
-	do {
-		if (z.avail_out == 0) {
-			if (buffer != NULL && max_size != 0)
-				goto on_error;
-			if (!(new_buffer = realloc(buffer, ++n_chunks * chunk_size)))  // resize buffer
-				goto on_error;
-			z.next_out = new_buffer + (n_chunks - 1) * chunk_size;
-			z.avail_out = (uInt)chunk_size;
-			buffer = new_buffer;
-		}
-		if ((result = inflate(&z, flush_flag)) == Z_DATA_ERROR)
-			goto on_error;
-		if (z.avail_out > 0)
-			flush_flag = Z_FINISH;
-	} while (result != Z_STREAM_END);
-	if ((out_size = chunk_size * n_chunks - z.avail_out) > INT_MAX)
-		goto on_error;
-	inflateEnd(&z);
 
-	// create a byte array from the deflated data
 	new_array = calloc(1, sizeof(bytearray_t));
 	new_array->id = s_next_array_id++;
-	new_array->buffer = buffer;
-	new_array->size = (int)out_size;
+	new_array->buffer = inflation;
+	new_array->size = (int)output_size;
 	return bytearray_ref(new_array);
 
 on_error:
-	inflateEnd(&z);
-	free(buffer);
+	free(inflation);
 	return NULL;
 }
 
