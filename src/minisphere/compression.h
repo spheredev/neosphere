@@ -30,12 +30,12 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__DEFLATE_H__INCLUDED
-#define SPHERE__DEFLATE_H__INCLUDED
+#ifndef SPHERE__COMPRESSION_H__INCLUDED
+#define SPHERE__COMPRESSION_H__INCLUDED
 
 #include <stddef.h>
 
 void* z_deflate (const void* data, size_t size, int level, size_t *out_output_size);
 void* z_inflate (const void* data, size_t size, size_t max_inflate, size_t *out_output_size);
 
-#endif // SPHERE__DEFLATE_H__INCLUDED
+#endif // SPHERE__COMPRESSION_H__INCLUDED

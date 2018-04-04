@@ -23,7 +23,7 @@ engine_sources=src/minisphere/main.c \
    src/shared/xoroshiro.c \
    src/minisphere/animation.c src/minisphere/atlas.c src/minisphere/audio.c \
    src/minisphere/byte_array.c src/minisphere/color.c \
-   src/minisphere/debugger.c src/minisphere/deflate.c \
+   src/minisphere/compression.c src/minisphere/debugger.c \
    src/minisphere/dispatch.c src/minisphere/font.c src/minisphere/galileo.c \
    src/minisphere/game.c src/minisphere/geometry.c src/minisphere/image.c \
    src/minisphere/input.c src/minisphere/kev_file.c src/minisphere/legacy.c \

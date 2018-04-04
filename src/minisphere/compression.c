@@ -30,7 +30,7 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include "deflate.h"
+#include "compression.h"
 
 #include <stdlib.h>
 #include <zlib.h>
