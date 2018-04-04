@@ -13,7 +13,7 @@ struct record
 	double    total_cost;
 };
 
-static bool js_instrumentedWrapper (int num_args, bool is_ctor, int magic);
+static bool js_instrumentedWrapper (int num_args, bool is_ctor, intptr_t magic);
 
 static int  order_records (const void* a_ptr, const void* b_ptr);
 static void print_results (double running_time);
@@ -154,7 +154,7 @@ print_results(double running_time)
 }
 
 static bool
-js_instrumentedWrapper(int num_args, bool is_ctor, int magic)
+js_instrumentedWrapper(int num_args, bool is_ctor, intptr_t magic)
 {
 	double         end_time;
 	struct record* record;

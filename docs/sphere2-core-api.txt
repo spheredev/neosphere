@@ -1873,3 +1873,25 @@ new VertexList(vertices);
     Note: The list of vertices stored on the GPU can't be modified later.  If
           you want to upload a new set of vertices, you must construct a new
           `VertexList`.
+
+
+`Z` Namespace
+-------------
+
+The somewhat cryptically-named `Z` namespace hosts functions used for data
+compression.
+
+Z.deflate(data[, level]);
+
+    Compresses the data in an ArrayBuffer or TypedArray using the DEFLATE
+    compression method.  `level` specifies the compression level from
+    0 (no compression) to 9 (maximum), with 7 being the default.  Returns an
+    ArrayBuffer containing the compressed data.
+
+Z.inflate(data[, max_size]);
+
+    Decompresses data in an ArrayBuffer or TypedArray which was previously
+    compressed using DEFLATE.  `max_size` is optional and specifies an upper
+    limit on the size of the decompressed data, useful for preventing
+    "zip bomb" attacks.  Returns an ArrayBuffer containing the decompressed
+    data.

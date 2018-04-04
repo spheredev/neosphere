@@ -61,59 +61,59 @@ enum file_op
 	FILE_OP_MAX,
 };
 
-static bool js_require                       (int num_args, bool is_ctor, int magic);
-static bool js_error                         (int num_args, bool is_ctor, int magic);
-static bool js_files                         (int num_args, bool is_ctor, int magic);
-static bool js_install                       (int num_args, bool is_ctor, int magic);
-static bool js_warn                          (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Game               (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Version            (int num_args, bool is_ctor, int magic);
-static bool js_new_DirectoryStream           (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_get_fileCount (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_get_fileName  (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_get_position  (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_set_position  (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_iterator      (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_dispose       (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_next          (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, int magic);
-static bool js_FS_createDirectory            (int num_args, bool is_ctor, int magic);
-static bool js_FS_deleteFile                 (int num_args, bool is_ctor, int magic);
-static bool js_FS_directoryExists            (int num_args, bool is_ctor, int magic);
-static bool js_FS_fileExists                 (int num_args, bool is_ctor, int magic);
-static bool js_FS_fullPath                   (int num_args, bool is_ctor, int magic);
-static bool js_FS_readFile                   (int num_args, bool is_ctor, int magic);
-static bool js_FS_relativePath               (int num_args, bool is_ctor, int magic);
-static bool js_FS_rename                     (int num_args, bool is_ctor, int magic);
-static bool js_FS_removeDirectory            (int num_args, bool is_ctor, int magic);
-static bool js_FS_writeFile                  (int num_args, bool is_ctor, int magic);
-static bool js_new_FileStream                (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_dispose            (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_get_fileSize       (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_get_position       (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_set_position       (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_read               (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_write              (int num_args, bool is_ctor, int magic);
-static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, int magic);
-static bool js_RNG_fromState                 (int num_args, bool is_ctor, int magic);
-static bool js_new_RNG                       (int num_args, bool is_ctor, int magic);
-static bool js_RNG_get_state                 (int num_args, bool is_ctor, int magic);
-static bool js_RNG_set_state                 (int num_args, bool is_ctor, int magic);
-static bool js_RNG_iterator                  (int num_args, bool is_ctor, int magic);
-static bool js_RNG_next                      (int num_args, bool is_ctor, int magic);
-static bool js_Target_get_fileName           (int num_args, bool is_ctor, int magic);
-static bool js_Target_get_name               (int num_args, bool is_ctor, int magic);
-static bool js_new_TextDecoder               (int num_args, bool is_ctor, int magic);
-static bool js_TextDecoder_get_encoding      (int num_args, bool is_ctor, int magic);
-static bool js_TextDecoder_get_fatal         (int num_args, bool is_ctor, int magic);
-static bool js_TextDecoder_get_ignoreBOM     (int num_args, bool is_ctor, int magic);
-static bool js_TextDecoder_decode            (int num_args, bool is_ctor, int magic);
-static bool js_new_TextEncoder               (int num_args, bool is_ctor, int magic);
-static bool js_TextEncoder_get_encoding      (int num_args, bool is_ctor, int magic);
-static bool js_TextEncoder_encode            (int num_args, bool is_ctor, int magic);
-static bool js_new_Tool                      (int num_args, bool is_ctor, int magic);
-static bool js_Tool_stage                    (int num_args, bool is_ctor, int magic);
+static bool js_require                       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_error                         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_files                         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_install                       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_warn                          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_Game               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_Version            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_DirectoryStream           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_get_fileCount (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_get_fileName  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_get_position  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_set_position  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_iterator      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_dispose       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_next          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_createDirectory            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_deleteFile                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_directoryExists            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_dispose            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_get_fileSize       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_get_position       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_set_position       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_read               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_write              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_fromState                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_RNG                       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_get_state                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_set_state                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_iterator                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_next                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Target_get_fileName           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Target_get_name               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_TextDecoder               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextDecoder_get_encoding      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextDecoder_get_fatal         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextDecoder_get_ignoreBOM     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextDecoder_decode            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_TextEncoder               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextEncoder_get_encoding      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextEncoder_encode            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Tool                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Tool_stage                    (int num_args, bool is_ctor, intptr_t magic);
 
 static void js_DirectoryStream_finalize (void* host_ptr);
 static void js_FileStream_finalize      (void* host_ptr);
@@ -127,7 +127,7 @@ static void    clean_old_artifacts  (build_t* build, bool keep_targets);
 static bool    eval_module_file      (fs_t* fs, const char* filename);
 static path_t* find_module_file     (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static void    handle_module_import (void);
-static bool    install_target       (int num_args, bool is_ctor, int magic);
+static bool    install_target       (int num_args, bool is_ctor, intptr_t magic);
 static path_t* load_package_json    (const char* filename);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void    package_dir          (build_t* build, spk_writer_t* spk, const char* base_dirname);
@@ -760,7 +760,7 @@ handle_module_import(void)
 }
 
 static bool
-install_target(int num_args, bool is_ctor, int magic)
+install_target(int num_args, bool is_ctor, intptr_t magic)
 {
 	// note: install targets never have more than one source because an individual
 	//       target is constructed for each file installed.
@@ -1034,7 +1034,7 @@ write_manifests(build_t* build)
 }
 
 static bool
-js_error(int num_args, bool is_ctor, int magic)
+js_error(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* message;
 
@@ -1045,7 +1045,7 @@ js_error(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_files(int num_args, bool is_ctor, int magic)
+js_files(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pattern;
 	path_t*     path;
@@ -1089,7 +1089,7 @@ js_files(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_install(int num_args, bool is_ctor, int magic)
+js_install(int num_args, bool is_ctor, intptr_t magic)
 {
 	path_t*   dest_path;
 	int       length;
@@ -1135,7 +1135,7 @@ js_install(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_require(int num_args, bool is_ctor, int magic)
+js_require(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* const PATHS[] =
 	{
@@ -1172,7 +1172,7 @@ js_require(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_warn(int num_args, bool is_ctor, int magic)
+js_warn(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* message;
 
@@ -1183,14 +1183,14 @@ js_warn(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_get_Compiler(int num_args, bool is_ctor, int magic)
+js_Sphere_get_Compiler(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_sprintf("%s %s", SPHERE_COMPILER_NAME, SPHERE_VERSION);
 	return true;
 }
 
 static bool
-js_Sphere_get_Game(int num_args, bool is_ctor, int magic)
+js_Sphere_get_Game(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "manifest");
@@ -1204,14 +1204,14 @@ js_Sphere_get_Game(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_get_Version(int num_args, bool is_ctor, int magic)
+js_Sphere_get_Version(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_int(2);
 	return true;
 }
 
 static bool
-js_new_DirectoryStream(int num_args, bool is_ctor, int magic)
+js_new_DirectoryStream(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char*  pathname;
 	directory_t* stream;
@@ -1231,7 +1231,7 @@ js_DirectoryStream_finalize(void* host_ptr)
 }
 
 static bool
-js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* stream;
 
@@ -1244,7 +1244,7 @@ js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_get_fileName(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* stream;
 
@@ -1257,7 +1257,7 @@ js_DirectoryStream_get_fileName(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_get_position(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_get_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* stream;
 
@@ -1270,7 +1270,7 @@ js_DirectoryStream_get_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_set_position(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_set_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	int          position;
 	directory_t* stream;
@@ -1286,7 +1286,7 @@ js_DirectoryStream_set_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_iterator(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_iterator(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* stream;
 	
@@ -1298,7 +1298,7 @@ js_DirectoryStream_iterator(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_dispose(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* directory;
 
@@ -1311,7 +1311,7 @@ js_DirectoryStream_dispose(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_next(int num_args, bool is_ctor, intptr_t magic)
 {
 	const path_t* entry_path;
 	directory_t*  stream;
@@ -1345,7 +1345,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_rewind(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* stream;
 
@@ -1358,7 +1358,7 @@ js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_createDirectory(int num_args, bool is_ctor, int magic)
+js_FS_createDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
@@ -1370,7 +1370,7 @@ js_FS_createDirectory(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_deleteFile(int num_args, bool is_ctor, int magic)
+js_FS_deleteFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
@@ -1382,7 +1382,7 @@ js_FS_deleteFile(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_directoryExists(int num_args, bool is_ctor, int magic)
+js_FS_directoryExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* dirname;
 
@@ -1393,7 +1393,7 @@ js_FS_directoryExists(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_fileExists(int num_args, bool is_ctor, int magic)
+js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
@@ -1404,7 +1404,7 @@ js_FS_fileExists(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_fullPath(int num_args, bool is_ctor, int magic)
+js_FS_fullPath(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 	const char* origin_pathname = NULL;
@@ -1418,7 +1418,7 @@ js_FS_fullPath(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_readFile(int num_args, bool is_ctor, int magic)
+js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	lstring_t*  content;
 	void*       file_data;
@@ -1435,7 +1435,7 @@ js_FS_readFile(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_relativePath(int num_args, bool is_ctor, int magic)
+js_FS_relativePath(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* base_pathname;
 	path_t*     path;
@@ -1451,7 +1451,7 @@ js_FS_relativePath(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_removeDirectory(int num_args, bool is_ctor, int magic)
+js_FS_removeDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
@@ -1463,7 +1463,7 @@ js_FS_removeDirectory(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_rename(int num_args, bool is_ctor, int magic)
+js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* old_name;
 	const char* new_name;
@@ -1477,7 +1477,7 @@ js_FS_rename(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_writeFile(int num_args, bool is_ctor, int magic)
+js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 	lstring_t*  text = NULL;
@@ -1492,7 +1492,7 @@ js_FS_writeFile(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_FileStream(int num_args, bool is_ctor, int magic)
+js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 {
 	FILE*        file;
 	enum file_op file_op;
@@ -1528,7 +1528,7 @@ js_FileStream_finalize(void* host_ptr)
 }
 
 static bool
-js_FileStream_get_position(int num_args, bool is_ctor, int magic)
+js_FileStream_get_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	FILE* file;
 
@@ -1541,7 +1541,7 @@ js_FileStream_get_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_get_fileSize(int num_args, bool is_ctor, int magic)
+js_FileStream_get_fileSize(int num_args, bool is_ctor, intptr_t magic)
 {
 	FILE* file;
 	long  file_pos;
@@ -1558,7 +1558,7 @@ js_FileStream_get_fileSize(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_set_position(int num_args, bool is_ctor, int magic)
+js_FileStream_set_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	FILE* file;
 	long  new_pos;
@@ -1575,7 +1575,7 @@ js_FileStream_set_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_dispose(int num_args, bool is_ctor, int magic)
+js_FileStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 {
 	FILE* file;
 
@@ -1589,13 +1589,12 @@ js_FileStream_dispose(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_read(int num_args, bool is_ctor, int magic)
+js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 {
 	void*  data_ptr;
 	FILE*  file;
 	int    num_bytes = 0;
 	long   position;
-	size_t size;
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
@@ -1611,8 +1610,7 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
 		fseek(file, 0, SEEK_SET);
 	}
-	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
-	data_ptr = jsal_get_buffer_ptr(-1, &size);
+	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &data_ptr);
 	num_bytes = (int)fread(data_ptr, 1, num_bytes, file);
 	if (num_args < 1)  // reset file position after whole-file read
 		fseek(file, position, SEEK_SET);
@@ -1620,7 +1618,7 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_write(int num_args, bool is_ctor, int magic)
+js_FileStream_write(int num_args, bool is_ctor, intptr_t magic)
 {
 	const void* data;
 	FILE*       file;
@@ -1637,7 +1635,7 @@ js_FileStream_write(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_fromSeed(int num_args, bool is_ctor, int magic)
+js_RNG_fromSeed(int num_args, bool is_ctor, intptr_t magic)
 {
 	uint64_t seed;
 	xoro_t*  xoro;
@@ -1650,7 +1648,7 @@ js_RNG_fromSeed(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_fromState(int num_args, bool is_ctor, int magic)
+js_RNG_fromState(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* state;
 	xoro_t*     xoro;
@@ -1667,7 +1665,7 @@ js_RNG_fromState(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_RNG(int num_args, bool is_ctor, int magic)
+js_new_RNG(int num_args, bool is_ctor, intptr_t magic)
 {
 	xoro_t* xoro;
 
@@ -1683,7 +1681,7 @@ js_RNG_finalize(void* host_ptr)
 }
 
 static bool
-js_RNG_get_state(int num_args, bool is_ctor, int magic)
+js_RNG_get_state(int num_args, bool is_ctor, intptr_t magic)
 {
 	char    state[33];
 	xoro_t* xoro;
@@ -1697,7 +1695,7 @@ js_RNG_get_state(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_set_state(int num_args, bool is_ctor, int magic)
+js_RNG_set_state(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* state;
 	xoro_t*     xoro;
@@ -1712,7 +1710,7 @@ js_RNG_set_state(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_iterator(int num_args, bool is_ctor, int magic)
+js_RNG_iterator(int num_args, bool is_ctor, intptr_t magic)
 {
 	xoro_t* xoro;
 
@@ -1723,7 +1721,7 @@ js_RNG_iterator(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_next(int num_args, bool is_ctor, int magic)
+js_RNG_next(int num_args, bool is_ctor, intptr_t magic)
 {
 	xoro_t* xoro;
 
@@ -1745,7 +1743,7 @@ js_Target_finalize(void* host_ptr)
 }
 
 static bool
-js_Target_get_fileName(int num_args, bool is_ctor, int magic)
+js_Target_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
 	target_t* target;
 
@@ -1757,7 +1755,7 @@ js_Target_get_fileName(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Target_get_name(int num_args, bool is_ctor, int magic)
+js_Target_get_name(int num_args, bool is_ctor, intptr_t magic)
 {
 	target_t* target;
 
@@ -1769,7 +1767,7 @@ js_Target_get_name(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_TextDecoder(int num_args, bool is_ctor, int magic)
+js_new_TextDecoder(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t*  decoder;
 	bool        fatal = false;
@@ -1807,7 +1805,7 @@ js_TextDecoder_finalize(void* host_ptr)
 }
 
 static bool
-js_TextDecoder_get_encoding(int num_args, bool is_ctor, int magic)
+js_TextDecoder_get_encoding(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t* decoder;
 
@@ -1819,7 +1817,7 @@ js_TextDecoder_get_encoding(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_TextDecoder_get_fatal(int num_args, bool is_ctor, int magic)
+js_TextDecoder_get_fatal(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t* decoder;
 
@@ -1831,7 +1829,7 @@ js_TextDecoder_get_fatal(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, int magic)
+js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t* decoder;
 
@@ -1843,7 +1841,7 @@ js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_TextDecoder_decode(int num_args, bool is_ctor, int magic)
+js_TextDecoder_decode(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t*  decoder;
 	lstring_t*  head;
@@ -1883,7 +1881,7 @@ js_TextDecoder_decode(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_TextEncoder(int num_args, bool is_ctor, int magic)
+js_new_TextEncoder(int num_args, bool is_ctor, intptr_t magic)
 {
 	encoder_t* encoder;
 
@@ -1899,7 +1897,7 @@ js_TextEncoder_finalize(void* host_ptr)
 }
 
 static bool
-js_TextEncoder_get_encoding(int num_args, bool is_ctor, int magic)
+js_TextEncoder_get_encoding(int num_args, bool is_ctor, intptr_t magic)
 {
 	encoder_t* encoder;
 
@@ -1911,14 +1909,13 @@ js_TextEncoder_get_encoding(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_TextEncoder_encode(int num_args, bool is_ctor, int magic)
+js_TextEncoder_encode(int num_args, bool is_ctor, intptr_t magic)
 {
 	void*      buffer;
+	encoder_t* encoder;
 	lstring_t* input;
 	uint8_t*   output;
 	size_t     size;
-
-	encoder_t* encoder;
 
 	jsal_push_this();
 	encoder = jsal_require_class_obj(-1, CELL_TEXT_ENC);
@@ -1928,15 +1925,14 @@ js_TextEncoder_encode(int num_args, bool is_ctor, int magic)
 		input = lstr_new("");
 
 	output = encoder_run(encoder, input, &size);
-	jsal_push_new_buffer(JS_UINT8ARRAY, size);
-	buffer = jsal_get_buffer_ptr(-1, NULL);
+	jsal_push_new_buffer(JS_UINT8ARRAY, size, &buffer);
 	memcpy(buffer, output, size);
 	lstr_free(input);
 	return true;
 }
 
 static bool
-js_new_Tool(int num_args, bool is_ctor, int magic)
+js_new_Tool(int num_args, bool is_ctor, intptr_t magic)
 {
 	tool_t*     tool;
 	const char* verb = "building";
@@ -1959,7 +1955,7 @@ js_Tool_finalize(void* host_ptr)
 }
 
 static bool
-js_Tool_stage(int num_args, bool is_ctor, int magic)
+js_Tool_stage(int num_args, bool is_ctor, intptr_t magic)
 {
 	int       length;
 	path_t*   name;

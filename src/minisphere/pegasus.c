@@ -38,6 +38,7 @@
 #include "color.h"
 #include "console.h"
 #include "debugger.h"
+#include "deflate.h"
 #include "dispatch.h"
 #include "encoding.h"
 #include "font.h"
@@ -219,221 +220,221 @@ COLORS[] =
 	{ NULL, 0, 0, 0, 0 }
 };
 
-static bool js_require                       (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_APILevel           (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Engine             (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Game               (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_Version            (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_frameRate          (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_frameSkip          (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_get_fullScreen         (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_set_frameRate          (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_set_frameSkip          (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_set_fullScreen         (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_abort                  (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_now                    (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_restart                (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_setResolution          (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_shutDown               (int num_args, bool is_ctor, int magic);
-static bool js_Sphere_sleep                  (int num_args, bool is_ctor, int magic);
-static bool js_Color_get_Color               (int num_args, bool is_ctor, int magic);
-static bool js_Color_is                      (int num_args, bool is_ctor, int magic);
-static bool js_Color_mix                     (int num_args, bool is_ctor, int magic);
-static bool js_Color_of                      (int num_args, bool is_ctor, int magic);
-static bool js_new_Color                     (int num_args, bool is_ctor, int magic);
-static bool js_Color_get_name                (int num_args, bool is_ctor, int magic);
-static bool js_Color_get_r                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_get_g                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_get_b                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_get_a                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_set_r                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_set_g                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_set_b                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_set_a                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_clone                   (int num_args, bool is_ctor, int magic);
-static bool js_Color_fadeTo                  (int num_args, bool is_ctor, int magic);
-static bool js_new_DirectoryStream           (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_get_fileCount (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_get_fileName  (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_get_position  (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_set_position  (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_iterator      (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_dispose       (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_next          (int num_args, bool is_ctor, int magic);
-static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, int magic);
-static bool js_Dispatch_cancelAll            (int num_args, bool is_ctor, int magic);
-static bool js_Dispatch_later                (int num_args, bool is_ctor, int magic);
-static bool js_Dispatch_now                  (int num_args, bool is_ctor, int magic);
-static bool js_Dispatch_onExit               (int num_args, bool is_ctor, int magic);
-static bool js_Dispatch_onRender             (int num_args, bool is_ctor, int magic);
-static bool js_Dispatch_onUpdate             (int num_args, bool is_ctor, int magic);
-static bool js_FS_createDirectory            (int num_args, bool is_ctor, int magic);
-static bool js_FS_deleteFile                 (int num_args, bool is_ctor, int magic);
-static bool js_FS_directoryExists            (int num_args, bool is_ctor, int magic);
-static bool js_FS_evaluateScript             (int num_args, bool is_ctor, int magic);
-static bool js_FS_fileExists                 (int num_args, bool is_ctor, int magic);
-static bool js_FS_fullPath                   (int num_args, bool is_ctor, int magic);
-static bool js_FS_readFile                   (int num_args, bool is_ctor, int magic);
-static bool js_FS_relativePath               (int num_args, bool is_ctor, int magic);
-static bool js_FS_rename                     (int num_args, bool is_ctor, int magic);
-static bool js_FS_removeDirectory            (int num_args, bool is_ctor, int magic);
-static bool js_FS_writeFile                  (int num_args, bool is_ctor, int magic);
-static bool js_new_FileStream                (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_dispose            (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_get_fileName       (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_get_fileSize       (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_get_position       (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_set_position       (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_read               (int num_args, bool is_ctor, int magic);
-static bool js_FileStream_write              (int num_args, bool is_ctor, int magic);
-static bool js_Font_get_Default              (int num_args, bool is_ctor, int magic);
-static bool js_new_Font                      (int num_args, bool is_ctor, int magic);
-static bool js_Font_get_fileName             (int num_args, bool is_ctor, int magic);
-static bool js_Font_get_height               (int num_args, bool is_ctor, int magic);
-static bool js_Font_drawText                 (int num_args, bool is_ctor, int magic);
-static bool js_Font_getTextSize              (int num_args, bool is_ctor, int magic);
-static bool js_Font_wordWrap                 (int num_args, bool is_ctor, int magic);
-static bool js_new_IndexList                 (int num_args, bool is_ctor, int magic);
-static bool js_JobToken_cancel               (int num_args, bool is_ctor, int magic);
-static bool js_JobToken_pause_resume         (int num_args, bool is_ctor, int magic);
-static bool js_Joystick_get_Null             (int num_args, bool is_ctor, int magic);
-static bool js_Joystick_getDevices           (int num_args, bool is_ctor, int magic);
-static bool js_Joystick_get_name             (int num_args, bool is_ctor, int magic);
-static bool js_Joystick_get_numAxes          (int num_args, bool is_ctor, int magic);
-static bool js_Joystick_get_numButtons       (int num_args, bool is_ctor, int magic);
-static bool js_Joystick_getPosition          (int num_args, bool is_ctor, int magic);
-static bool js_Joystick_isPressed            (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_get_Default          (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_get_capsLock         (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_get_numLock          (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_get_scrollLock       (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_charOf               (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_clearQueue           (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_getKey               (int num_args, bool is_ctor, int magic);
-static bool js_Keyboard_isPressed            (int num_args, bool is_ctor, int magic);
-static bool js_Mixer_get_Default             (int num_args, bool is_ctor, int magic);
-static bool js_new_Mixer                     (int num_args, bool is_ctor, int magic);
-static bool js_Mixer_get_volume              (int num_args, bool is_ctor, int magic);
-static bool js_Mixer_set_volume              (int num_args, bool is_ctor, int magic);
-static bool js_new_Model                     (int num_args, bool is_ctor, int magic);
-static bool js_Model_get_shader              (int num_args, bool is_ctor, int magic);
-static bool js_Model_get_transform           (int num_args, bool is_ctor, int magic);
-static bool js_Model_set_shader              (int num_args, bool is_ctor, int magic);
-static bool js_Model_set_transform           (int num_args, bool is_ctor, int magic);
-static bool js_Model_draw                    (int num_args, bool is_ctor, int magic);
-static bool js_Mouse_get_Default             (int num_args, bool is_ctor, int magic);
-static bool js_Mouse_get_x                   (int num_args, bool is_ctor, int magic);
-static bool js_Mouse_get_y                   (int num_args, bool is_ctor, int magic);
-static bool js_Mouse_clearQueue              (int num_args, bool is_ctor, int magic);
-static bool js_Mouse_getEvent                (int num_args, bool is_ctor, int magic);
-static bool js_Mouse_isPressed               (int num_args, bool is_ctor, int magic);
-static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, int magic);
-static bool js_RNG_fromState                 (int num_args, bool is_ctor, int magic);
-static bool js_new_RNG                       (int num_args, bool is_ctor, int magic);
-static bool js_RNG_get_state                 (int num_args, bool is_ctor, int magic);
-static bool js_RNG_set_state                 (int num_args, bool is_ctor, int magic);
-static bool js_RNG_iterator                  (int num_args, bool is_ctor, int magic);
-static bool js_RNG_next                      (int num_args, bool is_ctor, int magic);
-static bool js_SSj_flipScreen                (int num_args, bool is_ctor, int magic);
-static bool js_SSj_instrument                (int num_args, bool is_ctor, int magic);
-static bool js_SSj_log                       (int num_args, bool is_ctor, int magic);
-static bool js_SSj_now                       (int num_args, bool is_ctor, int magic);
-static bool js_SSj_profile                   (int num_args, bool is_ctor, int magic);
-static bool js_new_Sample                    (int num_args, bool is_ctor, int magic);
-static bool js_Sample_get_fileName           (int num_args, bool is_ctor, int magic);
-static bool js_Sample_play                   (int num_args, bool is_ctor, int magic);
-static bool js_Sample_stopAll                (int num_args, bool is_ctor, int magic);
-static bool js_new_Server                    (int num_args, bool is_ctor, int magic);
-static bool js_Server_close                  (int num_args, bool is_ctor, int magic);
-static bool js_Server_accept                 (int num_args, bool is_ctor, int magic);
-static bool js_Shader_get_Default            (int num_args, bool is_ctor, int magic);
-static bool js_new_Shader                    (int num_args, bool is_ctor, int magic);
-static bool js_Shader_clone                  (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setBoolean             (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setColorVector         (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setFloat               (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setFloatArray          (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setFloatVector         (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setInt                 (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setIntArray            (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setIntVector           (int num_args, bool is_ctor, int magic);
-static bool js_Shader_setMatrix              (int num_args, bool is_ctor, int magic);
-static bool js_Shape_drawImmediate           (int num_args, bool is_ctor, int magic);
-static bool js_new_Shape                     (int num_args, bool is_ctor, int magic);
-static bool js_Shape_get_indexList           (int num_args, bool is_ctor, int magic);
-static bool js_Shape_get_texture             (int num_args, bool is_ctor, int magic);
-static bool js_Shape_get_vertexList          (int num_args, bool is_ctor, int magic);
-static bool js_Shape_set_indexList           (int num_args, bool is_ctor, int magic);
-static bool js_Shape_set_texture             (int num_args, bool is_ctor, int magic);
-static bool js_Shape_set_vertexList          (int num_args, bool is_ctor, int magic);
-static bool js_Shape_draw                    (int num_args, bool is_ctor, int magic);
-static bool js_new_Socket                    (int num_args, bool is_ctor, int magic);
-static bool js_Socket_get_bytesPending       (int num_args, bool is_ctor, int magic);
-static bool js_Socket_get_connected          (int num_args, bool is_ctor, int magic);
-static bool js_Socket_get_remoteAddress      (int num_args, bool is_ctor, int magic);
-static bool js_Socket_get_remotePort         (int num_args, bool is_ctor, int magic);
-static bool js_Socket_close                  (int num_args, bool is_ctor, int magic);
-static bool js_Socket_connectTo              (int num_args, bool is_ctor, int magic);
-static bool js_Socket_read                   (int num_args, bool is_ctor, int magic);
-static bool js_Socket_write                  (int num_args, bool is_ctor, int magic);
-static bool js_new_Sound                     (int num_args, bool is_ctor, int magic);
-static bool js_Sound_get_fileName            (int num_args, bool is_ctor, int magic);
-static bool js_Sound_get_length              (int num_args, bool is_ctor, int magic);
-static bool js_Sound_get_pan                 (int num_args, bool is_ctor, int magic);
-static bool js_Sound_get_playing             (int num_args, bool is_ctor, int magic);
-static bool js_Sound_get_position            (int num_args, bool is_ctor, int magic);
-static bool js_Sound_get_repeat              (int num_args, bool is_ctor, int magic);
-static bool js_Sound_get_speed               (int num_args, bool is_ctor, int magic);
-static bool js_Sound_get_volume              (int num_args, bool is_ctor, int magic);
-static bool js_Sound_set_pan                 (int num_args, bool is_ctor, int magic);
-static bool js_Sound_set_position            (int num_args, bool is_ctor, int magic);
-static bool js_Sound_set_repeat              (int num_args, bool is_ctor, int magic);
-static bool js_Sound_set_speed               (int num_args, bool is_ctor, int magic);
-static bool js_Sound_set_volume              (int num_args, bool is_ctor, int magic);
-static bool js_Sound_pause                   (int num_args, bool is_ctor, int magic);
-static bool js_Sound_play                    (int num_args, bool is_ctor, int magic);
-static bool js_Sound_stop                    (int num_args, bool is_ctor, int magic);
-static bool js_new_SoundStream               (int num_args, bool is_ctor, int magic);
-static bool js_SoundStream_get_length        (int num_args, bool is_ctor, int magic);
-static bool js_SoundStream_play              (int num_args, bool is_ctor, int magic);
-static bool js_SoundStream_pause             (int num_args, bool is_ctor, int magic);
-static bool js_SoundStream_stop              (int num_args, bool is_ctor, int magic);
-static bool js_SoundStream_write             (int num_args, bool is_ctor, int magic);
-static bool js_Surface_get_Screen            (int num_args, bool is_ctor, int magic);
-static bool js_Surface_get_height            (int num_args, bool is_ctor, int magic);
-static bool js_Surface_get_transform         (int num_args, bool is_ctor, int magic);
-static bool js_Surface_get_width             (int num_args, bool is_ctor, int magic);
-static bool js_Surface_set_transform         (int num_args, bool is_ctor, int magic);
-static bool js_Surface_clipTo                (int num_args, bool is_ctor, int magic);
-static bool js_Surface_toTexture             (int num_args, bool is_ctor, int magic);
-static bool js_new_TextDecoder               (int num_args, bool is_ctor, int magic);
-static bool js_TextDecoder_get_encoding      (int num_args, bool is_ctor, int magic);
-static bool js_TextDecoder_get_fatal         (int num_args, bool is_ctor, int magic);
-static bool js_TextDecoder_get_ignoreBOM     (int num_args, bool is_ctor, int magic);
-static bool js_TextDecoder_decode            (int num_args, bool is_ctor, int magic);
-static bool js_new_TextEncoder               (int num_args, bool is_ctor, int magic);
-static bool js_TextEncoder_get_encoding      (int num_args, bool is_ctor, int magic);
-static bool js_TextEncoder_encode            (int num_args, bool is_ctor, int magic);
-static bool js_new_Texture                   (int num_args, bool is_ctor, int magic);
-static bool js_Texture_get_fileName          (int num_args, bool is_ctor, int magic);
-static bool js_Texture_get_height            (int num_args, bool is_ctor, int magic);
-static bool js_Texture_get_width             (int num_args, bool is_ctor, int magic);
-static bool js_Texture_download              (int num_args, bool is_ctor, int magic);
-static bool js_Texture_upload                (int num_args, bool is_ctor, int magic);
-static bool js_new_Transform                 (int num_args, bool is_ctor, int magic);
-static bool js_Transform_get_matrix          (int num_args, bool is_ctor, int magic);
-static bool js_Transform_set_matrix          (int num_args, bool is_ctor, int magic);
-static bool js_Transform_compose             (int num_args, bool is_ctor, int magic);
-static bool js_Transform_identity            (int num_args, bool is_ctor, int magic);
-static bool js_Transform_project2D           (int num_args, bool is_ctor, int magic);
-static bool js_Transform_project3D           (int num_args, bool is_ctor, int magic);
-static bool js_Transform_rotate              (int num_args, bool is_ctor, int magic);
-static bool js_Transform_scale               (int num_args, bool is_ctor, int magic);
-static bool js_Transform_translate           (int num_args, bool is_ctor, int magic);
-static bool js_new_VertexList                (int num_args, bool is_ctor, int magic);
-static bool js_Z_compress                    (int num_args, bool is_ctor, int magic);
-static bool js_Z_decompress                  (int num_args, bool is_ctor, int magic);
+static bool js_require                       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_APILevel           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_Engine             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_Game               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_Version            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_frameRate          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_frameSkip          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_fullScreen         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_set_frameRate          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_set_frameSkip          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_set_fullScreen         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_abort                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_now                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_restart                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_setResolution          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_shutDown               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_sleep                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_get_Color               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_is                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_mix                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_of                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Color                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_get_name                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_get_r                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_get_g                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_get_b                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_get_a                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_set_r                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_set_g                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_set_b                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_set_a                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_clone                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_fadeTo                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_DirectoryStream           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_get_fileCount (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_get_fileName  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_get_position  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_set_position  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_iterator      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_dispose       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_next          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Dispatch_cancelAll            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Dispatch_later                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Dispatch_now                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Dispatch_onExit               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Dispatch_onRender             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Dispatch_onUpdate             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_createDirectory            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_deleteFile                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_directoryExists            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_evaluateScript             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_dispose            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_get_fileName       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_get_fileSize       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_get_position       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_set_position       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_read               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_write              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_get_Default              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Font                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_get_fileName             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_get_height               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_drawText                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_getTextSize              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_JobToken_cancel               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_JobToken_pause_resume         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Joystick_get_Null             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Joystick_getDevices           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Joystick_get_name             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Joystick_get_numAxes          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Joystick_get_numButtons       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Joystick_getPosition          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Joystick_isPressed            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Keyboard_get_Default          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Keyboard_get_capsLock         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Keyboard_get_numLock          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Keyboard_get_scrollLock       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Keyboard_charOf               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Keyboard_clearQueue           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Keyboard_getKey               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Keyboard_isPressed            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mixer_get_Default             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Mixer                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mixer_get_volume              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mixer_set_volume              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Model                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Model_get_shader              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Model_get_transform           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Model_set_shader              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Model_set_transform           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Model_draw                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mouse_get_Default             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mouse_get_x                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mouse_get_y                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mouse_clearQueue              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mouse_getEvent                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mouse_isPressed               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_fromState                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_RNG                       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_get_state                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_set_state                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_iterator                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_RNG_next                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_flipScreen                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_instrument                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_log                       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_now                       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_profile                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Sample                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sample_get_fileName           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sample_play                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sample_stopAll                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Server                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Server_close                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Server_accept                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_get_Default            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Shader                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_clone                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setBoolean             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setColorVector         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setFloat               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setFloatArray          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setFloatVector         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setInt                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setIntArray            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setIntVector           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setMatrix              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shape_drawImmediate           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Shape                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shape_get_indexList           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shape_get_texture             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shape_get_vertexList          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shape_set_indexList           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shape_set_texture             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shape_set_vertexList          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shape_draw                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Socket                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_get_bytesPending       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_get_connected          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_get_remoteAddress      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_get_remotePort         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_close                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_connectTo              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_read                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_write                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Sound                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_fileName            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_length              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_pan                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_playing             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_position            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_repeat              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_speed               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_volume              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_set_pan                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_set_position            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_set_repeat              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_set_speed               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_set_volume              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_pause                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_play                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_stop                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_SoundStream               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SoundStream_get_length        (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SoundStream_play              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SoundStream_pause             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SoundStream_stop              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SoundStream_write             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_get_Screen            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_get_height            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_get_transform         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_get_width             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_set_transform         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_clipTo                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_toTexture             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_TextDecoder               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextDecoder_get_encoding      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextDecoder_get_fatal         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextDecoder_get_ignoreBOM     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextDecoder_decode            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_TextEncoder               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextEncoder_get_encoding      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TextEncoder_encode            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Texture                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_get_fileName          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_get_height            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_get_width             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_download              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_upload                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Transform                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_get_matrix          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_set_matrix          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_compose             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_identity            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_project2D           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_project3D           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_rotate              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_scale               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_translate           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_VertexList                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Z_deflate                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Z_inflate                  (int num_args, bool is_ctor, intptr_t magic);
 
 static void js_Color_finalize           (void* host_ptr);
 static void js_DirectoryStream_finalize (void* host_ptr);
@@ -461,7 +462,7 @@ static void js_VertexList_finalize      (void* host_ptr);
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
 static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool es6_mode);
-static bool      handle_main_event_loop      (int num_args, bool is_ctor, int magic);
+static bool      handle_main_event_loop      (int num_args, bool is_ctor, intptr_t magic);
 static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
@@ -712,8 +713,8 @@ pegasus_init(void)
 	api_define_method("Transform", "scale", js_Transform_scale, 0);
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
-	api_define_function("Z", "compress", js_Z_compress, 0);
-	api_define_function("Z", "decompress", js_Z_decompress, 0);
+	api_define_function("Z", "compress", js_Z_deflate, 0);
+	api_define_function("Z", "decompress", js_Z_inflate, 0);
 
 	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
@@ -1177,7 +1178,7 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 }
 
 static bool
-handle_main_event_loop(int num_args, bool is_ctor, int magic)
+handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 {
 	// SPHERE v2 UNIFIED EVENT LOOP
 	// once started, the event loop should continue to cycle until none of the
@@ -1309,7 +1310,7 @@ on_error:
 }
 
 static bool
-js_require(int num_args, bool is_ctor, int magic)
+js_require(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* const PATHS[] =
 	{
@@ -1344,14 +1345,14 @@ js_require(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_get_APILevel(int num_args, bool is_ctor, int magic)
+js_Sphere_get_APILevel(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_int(API_LEVEL);
 	return true;
 }
 
 static bool
-js_Sphere_get_Compiler(int num_args, bool is_ctor, int magic)
+js_Sphere_get_Compiler(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* compiler;
 
@@ -1363,14 +1364,14 @@ js_Sphere_get_Compiler(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_get_Engine(int num_args, bool is_ctor, int magic)
+js_Sphere_get_Engine(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_sprintf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 	return true;
 }
 
 static bool
-js_Sphere_get_Game(int num_args, bool is_ctor, int magic)
+js_Sphere_get_Game(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_lstring_t(game_manifest(g_game));
 	jsal_parse(-1);
@@ -1379,14 +1380,14 @@ js_Sphere_get_Game(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_get_Version(int num_args, bool is_ctor, int magic)
+js_Sphere_get_Version(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_int(API_VERSION);
 	return true;
 }
 
 static bool
-js_Sphere_get_frameRate(int num_args, bool is_ctor, int magic)
+js_Sphere_get_frameRate(int num_args, bool is_ctor, intptr_t magic)
 {
 	// as far as Sphere v2 code is concerned, infinity, not 0, means "unthrottled".
 	// that's stored as a zero internally though, so we need to translate.
@@ -1395,21 +1396,21 @@ js_Sphere_get_frameRate(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_get_frameSkip(int num_args, bool is_ctor, int magic)
+js_Sphere_get_frameSkip(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_number(screen_get_frameskip(g_screen));
 	return true;
 }
 
 static bool
-js_Sphere_get_fullScreen(int num_args, bool is_ctor, int magic)
+js_Sphere_get_fullScreen(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_boolean(screen_get_fullscreen(g_screen));
 	return true;
 }
 
 static bool
-js_Sphere_set_frameRate(int num_args, bool is_ctor, int magic)
+js_Sphere_set_frameRate(int num_args, bool is_ctor, intptr_t magic)
 {
 	double framerate;
 
@@ -1425,7 +1426,7 @@ js_Sphere_set_frameRate(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_set_frameSkip(int num_args, bool is_ctor, int magic)
+js_Sphere_set_frameSkip(int num_args, bool is_ctor, intptr_t magic)
 {
 	double max_skips;
 
@@ -1438,7 +1439,7 @@ js_Sphere_set_frameSkip(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_set_fullScreen(int num_args, bool is_ctor, int magic)
+js_Sphere_set_fullScreen(int num_args, bool is_ctor, intptr_t magic)
 {
 	bool fullscreen;
 
@@ -1449,7 +1450,7 @@ js_Sphere_set_fullScreen(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_abort(int num_args, bool is_ctor, int magic)
+js_Sphere_abort(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* message;
 	char*       text;
@@ -1463,14 +1464,14 @@ js_Sphere_abort(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_now(int num_args, bool is_ctor, int magic)
+js_Sphere_now(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_number(g_tick_count);
 	return true;
 }
 
 static bool
-js_Sphere_restart(int num_args, bool is_ctor, int magic)
+js_Sphere_restart(int num_args, bool is_ctor, intptr_t magic)
 {
 	g_restarting = true;
 	dispatch_cancel_all(true, false);
@@ -1478,7 +1479,7 @@ js_Sphere_restart(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_setResolution(int num_args, bool is_ctor, int magic)
+js_Sphere_setResolution(int num_args, bool is_ctor, intptr_t magic)
 {
 	int  width;
 	int  height;
@@ -1498,7 +1499,7 @@ js_Sphere_setResolution(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_shutDown(int num_args, bool is_ctor, int magic)
+js_Sphere_shutDown(int num_args, bool is_ctor, intptr_t magic)
 {
 	g_restarting = false;
 	dispatch_cancel_all(true, false);
@@ -1506,7 +1507,7 @@ js_Sphere_shutDown(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sphere_sleep(int num_args, bool is_ctor, int magic)
+js_Sphere_sleep(int num_args, bool is_ctor, intptr_t magic)
 {
 	int       num_frames;
 	js_ref_t* resolver;
@@ -1527,7 +1528,7 @@ js_Sphere_sleep(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_get_Color(int num_args, bool is_ctor, int magic)
+js_Color_get_Color(int num_args, bool is_ctor, intptr_t magic)
 {
 	const struct x11_color* data;
 
@@ -1537,7 +1538,7 @@ js_Color_get_Color(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_is(int num_args, bool is_ctor, int magic)
+js_Color_is(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t color1;
 	color_t color2;
@@ -1552,7 +1553,7 @@ js_Color_is(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_mix(int num_args, bool is_ctor, int magic)
+js_Color_mix(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t color1;
 	color_t color2;
@@ -1574,7 +1575,7 @@ js_Color_mix(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_of(int num_args, bool is_ctor, int magic)
+js_Color_of(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t     color;
 	size_t      hex_length;
@@ -1611,7 +1612,7 @@ js_Color_of(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Color(int num_args, bool is_ctor, int magic)
+js_new_Color(int num_args, bool is_ctor, intptr_t magic)
 {
 	float   alpha = 1.0;
 	float   blue;
@@ -1642,7 +1643,7 @@ js_Color_finalize(void* host_ptr)
 }
 
 static bool
-js_Color_get_name(int num_args, bool is_ctor, int magic)
+js_Color_get_name(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t color;
 
@@ -1665,7 +1666,7 @@ js_Color_get_name(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_get_r(int num_args, bool is_ctor, int magic)
+js_Color_get_r(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t* color;
 
@@ -1677,7 +1678,7 @@ js_Color_get_r(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_get_g(int num_args, bool is_ctor, int magic)
+js_Color_get_g(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t* color;
 
@@ -1689,7 +1690,7 @@ js_Color_get_g(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_get_b(int num_args, bool is_ctor, int magic)
+js_Color_get_b(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t* color;
 
@@ -1701,7 +1702,7 @@ js_Color_get_b(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_get_a(int num_args, bool is_ctor, int magic)
+js_Color_get_a(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t* color;
 
@@ -1713,7 +1714,7 @@ js_Color_get_a(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_set_r(int num_args, bool is_ctor, int magic)
+js_Color_set_r(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t* color;
 	double   value;
@@ -1727,7 +1728,7 @@ js_Color_set_r(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_set_g(int num_args, bool is_ctor, int magic)
+js_Color_set_g(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t* color;
 	double   value;
@@ -1741,7 +1742,7 @@ js_Color_set_g(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_set_b(int num_args, bool is_ctor, int magic)
+js_Color_set_b(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t* color;
 	double   value;
@@ -1755,7 +1756,7 @@ js_Color_set_b(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_set_a(int num_args, bool is_ctor, int magic)
+js_Color_set_a(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t* color;
 	double   value;
@@ -1769,7 +1770,7 @@ js_Color_set_a(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_clone(int num_args, bool is_ctor, int magic)
+js_Color_clone(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t color;
 
@@ -1781,7 +1782,7 @@ js_Color_clone(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Color_fadeTo(int num_args, bool is_ctor, int magic)
+js_Color_fadeTo(int num_args, bool is_ctor, intptr_t magic)
 {
 	float   a;
 	color_t color;
@@ -1796,7 +1797,7 @@ js_Color_fadeTo(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_DirectoryStream(int num_args, bool is_ctor, int magic)
+js_new_DirectoryStream(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char*  pathname;
 	directory_t* stream;
@@ -1816,7 +1817,7 @@ js_DirectoryStream_finalize(void* host_ptr)
 }
 
 static bool
-js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* directory;
 
@@ -1829,7 +1830,7 @@ js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_get_fileName(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* directory;
 
@@ -1842,7 +1843,7 @@ js_DirectoryStream_get_fileName(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_get_position(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_get_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* directory;
 
@@ -1855,7 +1856,7 @@ js_DirectoryStream_get_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_set_position(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_set_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* directory;
 	int          position;
@@ -1871,7 +1872,7 @@ js_DirectoryStream_set_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_iterator(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_iterator(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* directory;
 
@@ -1883,7 +1884,7 @@ js_DirectoryStream_iterator(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_dispose(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* directory;
 
@@ -1896,7 +1897,7 @@ js_DirectoryStream_dispose(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_next(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t*  directory;
 	const path_t* entry_path;
@@ -1930,7 +1931,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
+js_DirectoryStream_rewind(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* directory;
 
@@ -1943,14 +1944,14 @@ js_DirectoryStream_rewind(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Dispatch_cancelAll(int num_args, bool is_ctor, int magic)
+js_Dispatch_cancelAll(int num_args, bool is_ctor, intptr_t magic)
 {
 	dispatch_cancel_all(false, false);
 	return false;
 }
 
 static bool
-js_Dispatch_later(int num_args, bool is_ctor, int magic)
+js_Dispatch_later(int num_args, bool is_ctor, intptr_t magic)
 {
 	script_t* script;
 	int       timeout;
@@ -1968,7 +1969,7 @@ js_Dispatch_later(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Dispatch_now(int num_args, bool is_ctor, int magic)
+js_Dispatch_now(int num_args, bool is_ctor, intptr_t magic)
 {
 	script_t* script;
 	int64_t   token;
@@ -1984,7 +1985,7 @@ js_Dispatch_now(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Dispatch_onExit(int num_args, bool is_ctor, int magic)
+js_Dispatch_onExit(int num_args, bool is_ctor, intptr_t magic)
 {
 	script_t* script;
 	int64_t   token;
@@ -1998,7 +1999,7 @@ js_Dispatch_onExit(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
+js_Dispatch_onRender(int num_args, bool is_ctor, intptr_t magic)
 {
 	bool      background = false;
 	double    priority = 0.0;
@@ -2024,7 +2025,7 @@ js_Dispatch_onRender(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
+js_Dispatch_onUpdate(int num_args, bool is_ctor, intptr_t magic)
 {
 	bool      background = false;
 	double    priority = 0.0;
@@ -2050,7 +2051,7 @@ js_Dispatch_onUpdate(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_createDirectory(int num_args, bool is_ctor, int magic)
+js_FS_createDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
@@ -2062,7 +2063,7 @@ js_FS_createDirectory(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_deleteFile(int num_args, bool is_ctor, int magic)
+js_FS_deleteFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
@@ -2074,7 +2075,7 @@ js_FS_deleteFile(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_directoryExists(int num_args, bool is_ctor, int magic)
+js_FS_directoryExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
@@ -2085,7 +2086,7 @@ js_FS_directoryExists(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_evaluateScript(int num_args, bool is_ctor, int magic)
+js_FS_evaluateScript(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
@@ -2099,7 +2100,7 @@ js_FS_evaluateScript(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_fileExists(int num_args, bool is_ctor, int magic)
+js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
@@ -2110,7 +2111,7 @@ js_FS_fileExists(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_fullPath(int num_args, bool is_ctor, int magic)
+js_FS_fullPath(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* base_pathname = NULL;
 	const char* pathname;
@@ -2124,7 +2125,7 @@ js_FS_fullPath(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_readFile(int num_args, bool is_ctor, int magic)
+js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	lstring_t*  content;
 	void*       file_data;
@@ -2141,7 +2142,7 @@ js_FS_readFile(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_relativePath(int num_args, bool is_ctor, int magic)
+js_FS_relativePath(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* base_pathname;
 	path_t*     path;
@@ -2157,7 +2158,7 @@ js_FS_relativePath(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_removeDirectory(int num_args, bool is_ctor, int magic)
+js_FS_removeDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
@@ -2169,7 +2170,7 @@ js_FS_removeDirectory(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_rename(int num_args, bool is_ctor, int magic)
+js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* new_pathname;
 	const char* old_pathname;
@@ -2183,7 +2184,7 @@ js_FS_rename(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FS_writeFile(int num_args, bool is_ctor, int magic)
+js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	const void* file_data;
 	size_t      file_size;
@@ -2202,7 +2203,7 @@ js_FS_writeFile(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_FileStream(int num_args, bool is_ctor, int magic)
+js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 {
 	file_t*      file;
 	enum file_op file_op;
@@ -2236,7 +2237,7 @@ js_FileStream_finalize(void* host_ptr)
 }
 
 static bool
-js_FileStream_get_fileName(int num_args, bool is_ctor, int magic)
+js_FileStream_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
 	file_t* file;
 
@@ -2249,7 +2250,7 @@ js_FileStream_get_fileName(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_get_fileSize(int num_args, bool is_ctor, int magic)
+js_FileStream_get_fileSize(int num_args, bool is_ctor, intptr_t magic)
 {
 	file_t* file;
 	long    file_pos;
@@ -2266,7 +2267,7 @@ js_FileStream_get_fileSize(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_get_position(int num_args, bool is_ctor, int magic)
+js_FileStream_get_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	file_t* file;
 
@@ -2279,7 +2280,7 @@ js_FileStream_get_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_set_position(int num_args, bool is_ctor, int magic)
+js_FileStream_set_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	file_t*   file;
 	long long new_pos;
@@ -2294,7 +2295,7 @@ js_FileStream_set_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_dispose(int num_args, bool is_ctor, int magic)
+js_FileStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 {
 	file_t* file;
 
@@ -2307,13 +2308,12 @@ js_FileStream_dispose(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_read(int num_args, bool is_ctor, int magic)
+js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 {
-	void*     buffer;
-	size_t    buffer_size;
-	file_t*   file;
-	int       num_bytes;
-	long      pos;
+	void*   buffer;
+	file_t* file;
+	int     num_bytes;
+	long    pos;
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, PEGASUS_FILE_STREAM)))
@@ -2330,8 +2330,7 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 		file_seek(file, 0, WHENCE_SET);
 	}
 
-	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
-	buffer = jsal_get_buffer_ptr(-1, &buffer_size);
+	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
 	num_bytes = (int)file_read(file, buffer, num_bytes, 1);
 	if (num_args < 1)  // reset file position after whole-file read
 		file_seek(file, pos, WHENCE_SET);
@@ -2339,7 +2338,7 @@ js_FileStream_read(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_FileStream_write(int num_args, bool is_ctor, int magic)
+js_FileStream_write(int num_args, bool is_ctor, intptr_t magic)
 {
 	const void* data;
 	file_t*     file;
@@ -2357,7 +2356,7 @@ js_FileStream_write(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_get_Default(int num_args, bool is_ctor, int magic)
+js_Font_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_class_obj(PEGASUS_FONT, g_system_font, false);
 	cache_value_to_this("Default");
@@ -2365,7 +2364,7 @@ js_Font_get_Default(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Font(int num_args, bool is_ctor, int magic)
+js_new_Font(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 	font_t*     font;
@@ -2386,7 +2385,7 @@ js_Font_finalize(void* host_ptr)
 }
 
 static bool
-js_Font_get_fileName(int num_args, bool is_ctor, int magic)
+js_Font_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
 	font_t* font;
 
@@ -2398,7 +2397,7 @@ js_Font_get_fileName(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_get_height(int num_args, bool is_ctor, int magic)
+js_Font_get_height(int num_args, bool is_ctor, intptr_t magic)
 {
 	font_t* font;
 
@@ -2411,7 +2410,7 @@ js_Font_get_height(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_drawText(int num_args, bool is_ctor, int magic)
+js_Font_drawText(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t     color;
 	font_t*     font;
@@ -2458,7 +2457,7 @@ js_Font_drawText(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_getTextSize(int num_args, bool is_ctor, int magic)
+js_Font_getTextSize(int num_args, bool is_ctor, intptr_t magic)
 {
 	font_t*     font;
 	int         num_lines;
@@ -2492,7 +2491,7 @@ js_Font_getTextSize(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Font_wordWrap(int num_args, bool is_ctor, int magic)
+js_Font_wordWrap(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* text = jsal_to_string(0);
 	int         width = jsal_require_int(1);
@@ -2518,7 +2517,7 @@ js_Font_wordWrap(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_IndexList(int num_args, bool is_ctor, int magic)
+js_new_IndexList(int num_args, bool is_ctor, intptr_t magic)
 {
 	ibo_t* ibo;
 	int    index;
@@ -2563,7 +2562,7 @@ js_JobToken_finalize(void* host_ptr)
 }
 
 static bool
-js_JobToken_cancel(int num_args, bool is_ctor, int magic)
+js_JobToken_cancel(int num_args, bool is_ctor, intptr_t magic)
 {
 	int64_t* token;
 
@@ -2575,7 +2574,7 @@ js_JobToken_cancel(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_JobToken_pause_resume(int num_args, bool is_ctor, int magic)
+js_JobToken_pause_resume(int num_args, bool is_ctor, intptr_t magic)
 {
 	int64_t* token;
 
@@ -2587,7 +2586,7 @@ js_JobToken_pause_resume(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Joystick_get_Null(int num_args, bool is_ctor, int magic)
+js_Joystick_get_Null(int num_args, bool is_ctor, intptr_t magic)
 {
 	int* device;
 
@@ -2599,7 +2598,7 @@ js_Joystick_get_Null(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Joystick_getDevices(int num_args, bool is_ctor, int magic)
+js_Joystick_getDevices(int num_args, bool is_ctor, intptr_t magic)
 {
 	int num_devices;
 
@@ -2622,7 +2621,7 @@ js_Joystick_finalize(void* host_ptr)
 }
 
 static bool
-js_Joystick_get_name(int num_args, bool is_ctor, int magic)
+js_Joystick_get_name(int num_args, bool is_ctor, intptr_t magic)
 {
 	int* device;
 
@@ -2634,7 +2633,7 @@ js_Joystick_get_name(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Joystick_get_numAxes(int num_args, bool is_ctor, int magic)
+js_Joystick_get_numAxes(int num_args, bool is_ctor, intptr_t magic)
 {
 	int* device;
 
@@ -2649,7 +2648,7 @@ js_Joystick_get_numAxes(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Joystick_get_numButtons(int num_args, bool is_ctor, int magic)
+js_Joystick_get_numButtons(int num_args, bool is_ctor, intptr_t magic)
 {
 	int* device;
 
@@ -2664,7 +2663,7 @@ js_Joystick_get_numButtons(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Joystick_getPosition(int num_args, bool is_ctor, int magic)
+js_Joystick_getPosition(int num_args, bool is_ctor, intptr_t magic)
 {
 	int  index;
 	int* device;
@@ -2681,7 +2680,7 @@ js_Joystick_getPosition(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Joystick_isPressed(int num_args, bool is_ctor, int magic)
+js_Joystick_isPressed(int num_args, bool is_ctor, intptr_t magic)
 {
 	int  index;
 	int* device;
@@ -2698,7 +2697,7 @@ js_Joystick_isPressed(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_get_Default(int num_args, bool is_ctor, int magic)
+js_Keyboard_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_class_obj(PEGASUS_KEYBOARD, NULL, false);
 	cache_value_to_this("Default");
@@ -2706,7 +2705,7 @@ js_Keyboard_get_Default(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_get_capsLock(int num_args, bool is_ctor, int magic)
+js_Keyboard_get_capsLock(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
@@ -2716,7 +2715,7 @@ js_Keyboard_get_capsLock(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_get_numLock(int num_args, bool is_ctor, int magic)
+js_Keyboard_get_numLock(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
@@ -2726,7 +2725,7 @@ js_Keyboard_get_numLock(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_get_scrollLock(int num_args, bool is_ctor, int magic)
+js_Keyboard_get_scrollLock(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
@@ -2736,7 +2735,7 @@ js_Keyboard_get_scrollLock(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_charOf(int num_args, bool is_ctor, int magic)
+js_Keyboard_charOf(int num_args, bool is_ctor, intptr_t magic)
 {
 	int  keycode;
 	bool shifted = false;
@@ -2804,7 +2803,7 @@ js_Keyboard_charOf(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_clearQueue(int num_args, bool is_ctor, int magic)
+js_Keyboard_clearQueue(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
@@ -2814,7 +2813,7 @@ js_Keyboard_clearQueue(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_getKey(int num_args, bool is_ctor, int magic)
+js_Keyboard_getKey(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
@@ -2827,7 +2826,7 @@ js_Keyboard_getKey(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Keyboard_isPressed(int num_args, bool is_ctor, int magic)
+js_Keyboard_isPressed(int num_args, bool is_ctor, intptr_t magic)
 {
 	int keycode;
 
@@ -2840,7 +2839,7 @@ js_Keyboard_isPressed(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Mixer_get_Default(int num_args, bool is_ctor, int magic)
+js_Mixer_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_class_obj(PEGASUS_MIXER, mixer_ref(s_def_mixer), false);
 	cache_value_to_this("Default");
@@ -2848,7 +2847,7 @@ js_Mixer_get_Default(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Mixer(int num_args, bool is_ctor, int magic)
+js_new_Mixer(int num_args, bool is_ctor, intptr_t magic)
 {
 	int      bits;
 	int      channels = 2;
@@ -2878,7 +2877,7 @@ js_Mixer_finalize(void* host_ptr)
 }
 
 static bool
-js_Mixer_get_volume(int num_args, bool is_ctor, int magic)
+js_Mixer_get_volume(int num_args, bool is_ctor, intptr_t magic)
 {
 	mixer_t* mixer;
 
@@ -2890,7 +2889,7 @@ js_Mixer_get_volume(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Mixer_set_volume(int num_args, bool is_ctor, int magic)
+js_Mixer_set_volume(int num_args, bool is_ctor, intptr_t magic)
 {
 	float volume = jsal_require_number(0);
 
@@ -2904,7 +2903,7 @@ js_Mixer_set_volume(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Model(int num_args, bool is_ctor, int magic)
+js_new_Model(int num_args, bool is_ctor, intptr_t magic)
 {
 	model_t*  model;
 	int       num_shapes;
@@ -2939,7 +2938,7 @@ js_Model_finalize(void* host_ptr)
 }
 
 static bool
-js_Model_get_shader(int num_args, bool is_ctor, int magic)
+js_Model_get_shader(int num_args, bool is_ctor, intptr_t magic)
 {
 	model_t*  model;
 	shader_t* shader;
@@ -2953,7 +2952,7 @@ js_Model_get_shader(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Model_get_transform(int num_args, bool is_ctor, int magic)
+js_Model_get_transform(int num_args, bool is_ctor, intptr_t magic)
 {
 	model_t*     model;
 	transform_t* transform;
@@ -2967,7 +2966,7 @@ js_Model_get_transform(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Model_set_shader(int num_args, bool is_ctor, int magic)
+js_Model_set_shader(int num_args, bool is_ctor, intptr_t magic)
 {
 	model_t*  model;
 	shader_t* shader;
@@ -2981,7 +2980,7 @@ js_Model_set_shader(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Model_set_transform(int num_args, bool is_ctor, int magic)
+js_Model_set_transform(int num_args, bool is_ctor, intptr_t magic)
 {
 	model_t*     model;
 	transform_t* transform;
@@ -2995,7 +2994,7 @@ js_Model_set_transform(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Model_draw(int num_args, bool is_ctor, int magic)
+js_Model_draw(int num_args, bool is_ctor, intptr_t magic)
 {
 	model_t* model;
 	image_t* surface;
@@ -3011,7 +3010,7 @@ js_Model_draw(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_clone(int num_args, bool is_ctor, int magic)
+js_Shader_clone(int num_args, bool is_ctor, intptr_t magic)
 {
 	shader_t* dolly;
 	shader_t* shader;
@@ -3025,7 +3024,7 @@ js_Shader_clone(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setBoolean(int num_args, bool is_ctor, int magic)
+js_Shader_setBoolean(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* name;
 	shader_t*   shader;
@@ -3041,7 +3040,7 @@ js_Shader_setBoolean(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setColorVector(int num_args, bool is_ctor, int magic)
+js_Shader_setColorVector(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t     color;
 	const char* name;
@@ -3062,7 +3061,7 @@ js_Shader_setColorVector(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setFloat(int num_args, bool is_ctor, int magic)
+js_Shader_setFloat(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* name;
 	shader_t*   shader;
@@ -3078,7 +3077,7 @@ js_Shader_setFloat(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setFloatArray(int num_args, bool is_ctor, int magic)
+js_Shader_setFloatArray(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* name;
 	shader_t*   shader;
@@ -3107,7 +3106,7 @@ js_Shader_setFloatArray(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setFloatVector(int num_args, bool is_ctor, int magic)
+js_Shader_setFloatVector(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* name;
 	shader_t*   shader;
@@ -3135,7 +3134,7 @@ js_Shader_setFloatVector(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setInt(int num_args, bool is_ctor, int magic)
+js_Shader_setInt(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* name;
 	shader_t*   shader;
@@ -3151,7 +3150,7 @@ js_Shader_setInt(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setIntArray(int num_args, bool is_ctor, int magic)
+js_Shader_setIntArray(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* name;
 	shader_t*   shader;
@@ -3179,7 +3178,7 @@ js_Shader_setIntArray(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setIntVector(int num_args, bool is_ctor, int magic)
+js_Shader_setIntVector(int num_args, bool is_ctor, intptr_t magic)
 {
 	shader_t*   shader;
 	const char* name;
@@ -3208,7 +3207,7 @@ js_Shader_setIntVector(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_setMatrix(int num_args, bool is_ctor, int magic)
+js_Shader_setMatrix(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char*  name;
 	shader_t*    shader;
@@ -3224,7 +3223,7 @@ js_Shader_setMatrix(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Mouse_get_Default(int num_args, bool is_ctor, int magic)
+js_Mouse_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_class_obj(PEGASUS_MOUSE, NULL, false);
 	cache_value_to_this("Default");
@@ -3232,7 +3231,7 @@ js_Mouse_get_Default(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Mouse_get_x(int num_args, bool is_ctor, int magic)
+js_Mouse_get_x(int num_args, bool is_ctor, intptr_t magic)
 {
 	int x;
 	int y;
@@ -3246,7 +3245,7 @@ js_Mouse_get_x(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Mouse_get_y(int num_args, bool is_ctor, int magic)
+js_Mouse_get_y(int num_args, bool is_ctor, intptr_t magic)
 {
 	int x;
 	int y;
@@ -3260,7 +3259,7 @@ js_Mouse_get_y(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Mouse_clearQueue(int num_args, bool is_ctor, int magic)
+js_Mouse_clearQueue(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_MOUSE);
@@ -3270,7 +3269,7 @@ js_Mouse_clearQueue(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Mouse_getEvent(int num_args, bool is_ctor, int magic)
+js_Mouse_getEvent(int num_args, bool is_ctor, intptr_t magic)
 {
 	mouse_event_t event;
 
@@ -3293,7 +3292,7 @@ js_Mouse_getEvent(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Mouse_isPressed(int num_args, bool is_ctor, int magic)
+js_Mouse_isPressed(int num_args, bool is_ctor, intptr_t magic)
 {
 	mouse_key_t key;
 
@@ -3309,7 +3308,7 @@ js_Mouse_isPressed(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_fromSeed(int num_args, bool is_ctor, int magic)
+js_RNG_fromSeed(int num_args, bool is_ctor, intptr_t magic)
 {
 	uint64_t seed;
 	xoro_t*  xoro;
@@ -3322,7 +3321,7 @@ js_RNG_fromSeed(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_fromState(int num_args, bool is_ctor, int magic)
+js_RNG_fromState(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* state;
 	xoro_t*     xoro;
@@ -3339,7 +3338,7 @@ js_RNG_fromState(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_RNG(int num_args, bool is_ctor, int magic)
+js_new_RNG(int num_args, bool is_ctor, intptr_t magic)
 {
 	xoro_t* xoro;
 
@@ -3355,7 +3354,7 @@ js_RNG_finalize(void* host_ptr)
 }
 
 static bool
-js_RNG_get_state(int num_args, bool is_ctor, int magic)
+js_RNG_get_state(int num_args, bool is_ctor, intptr_t magic)
 {
 	char    state[33];
 	xoro_t* xoro;
@@ -3369,7 +3368,7 @@ js_RNG_get_state(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_set_state(int num_args, bool is_ctor, int magic)
+js_RNG_set_state(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* state;
 	xoro_t*     xoro;
@@ -3384,7 +3383,7 @@ js_RNG_set_state(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_iterator(int num_args, bool is_ctor, int magic)
+js_RNG_iterator(int num_args, bool is_ctor, intptr_t magic)
 {
 	xoro_t* xoro;
 
@@ -3395,7 +3394,7 @@ js_RNG_iterator(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_RNG_next(int num_args, bool is_ctor, int magic)
+js_RNG_next(int num_args, bool is_ctor, intptr_t magic)
 {
 	double  value;
 	xoro_t* xoro;
@@ -3414,7 +3413,7 @@ js_RNG_next(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SSj_flipScreen(int num_args, bool is_ctor, int magic)
+js_SSj_flipScreen(int num_args, bool is_ctor, intptr_t magic)
 {
 #if defined(MINISPHERE_SPHERUN)
 	screen_flip(g_screen, 0, false);
@@ -3423,7 +3422,7 @@ js_SSj_flipScreen(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SSj_instrument(int num_args, bool is_ctor, int magic)
+js_SSj_instrument(int num_args, bool is_ctor, intptr_t magic)
 {
 #if defined(MINISPHERE_SPHERUN)
 	static unsigned int next_function_id = 1;
@@ -3458,7 +3457,7 @@ js_SSj_instrument(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SSj_log(int num_args, bool is_ctor, int magic)
+js_SSj_log(int num_args, bool is_ctor, intptr_t magic)
 {
 #if defined(MINISPHERE_SPHERUN)
 	const char* text;
@@ -3480,7 +3479,7 @@ js_SSj_log(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SSj_now(int num_args, bool is_ctor, int magic)
+js_SSj_now(int num_args, bool is_ctor, intptr_t magic)
 {
 #if defined(MINISPHERE_SPHERUN)
 	jsal_push_number(al_get_time());
@@ -3491,7 +3490,7 @@ js_SSj_now(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SSj_profile(int num_args, bool is_ctor, int magic)
+js_SSj_profile(int num_args, bool is_ctor, intptr_t magic)
 {
 #if defined(MINISPHERE_SPHERUN)
 	const char* class_name;
@@ -3565,7 +3564,7 @@ js_SSj_profile(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Sample(int num_args, bool is_ctor, int magic)
+js_new_Sample(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 	sample_t*   sample;
@@ -3585,7 +3584,7 @@ js_Sample_finalize(void* host_ptr)
 }
 
 static bool
-js_Sample_get_fileName(int num_args, bool is_ctor, int magic)
+js_Sample_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
 	sample_t* sample;
 
@@ -3597,7 +3596,7 @@ js_Sample_get_fileName(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sample_play(int num_args, bool is_ctor, int magic)
+js_Sample_play(int num_args, bool is_ctor, intptr_t magic)
 {
 	mixer_t*  mixer;
 	float     pan = 0.0;
@@ -3629,7 +3628,7 @@ js_Sample_play(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sample_stopAll(int num_args, bool is_ctor, int magic)
+js_Sample_stopAll(int num_args, bool is_ctor, intptr_t magic)
 {
 	sample_t* sample;
 
@@ -3641,7 +3640,7 @@ js_Sample_stopAll(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Server(int num_args, bool is_ctor, int magic)
+js_new_Server(int num_args, bool is_ctor, intptr_t magic)
 {
 	int       max_backlog;
 	int       port;
@@ -3666,7 +3665,7 @@ js_Server_finalize(void* host_ptr)
 }
 
 static bool
-js_Server_accept(int num_args, bool is_ctor, int magic)
+js_Server_accept(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* new_socket;
 	server_t* server;
@@ -3685,7 +3684,7 @@ js_Server_accept(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Server_close(int num_args, bool is_ctor, int magic)
+js_Server_close(int num_args, bool is_ctor, intptr_t magic)
 {
 	server_t* server;
 
@@ -3698,7 +3697,7 @@ js_Server_close(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shader_get_Default(int num_args, bool is_ctor, int magic)
+js_Shader_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	shader_t* shader;
 
@@ -3711,7 +3710,7 @@ js_Shader_get_Default(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Shader(int num_args, bool is_ctor, int magic)
+js_new_Shader(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* fragment_pathname;
 	shader_t*   shader;
@@ -3738,7 +3737,7 @@ js_Shader_finalize(void* host_ptr)
 }
 
 static bool
-js_Shape_drawImmediate(int num_args, bool is_ctor, int magic)
+js_Shape_drawImmediate(int num_args, bool is_ctor, intptr_t magic)
 {
 	int             array_idx;
 	ALLEGRO_BITMAP* bitmap = NULL;
@@ -3808,7 +3807,7 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Shape(int num_args, bool is_ctor, int magic)
+js_new_Shape(int num_args, bool is_ctor, intptr_t magic)
 {
 	ibo_t*       ibo = NULL;
 	shape_t*     shape;
@@ -3843,7 +3842,7 @@ js_Shape_finalize(void* host_ptr)
 }
 
 static bool
-js_Shape_get_indexList(int num_args, bool is_ctor, int magic)
+js_Shape_get_indexList(int num_args, bool is_ctor, intptr_t magic)
 {
 	ibo_t*   ibo;
 	shape_t* shape;
@@ -3860,7 +3859,7 @@ js_Shape_get_indexList(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shape_get_texture(int num_args, bool is_ctor, int magic)
+js_Shape_get_texture(int num_args, bool is_ctor, intptr_t magic)
 {
 	shape_t* shape;
 	image_t* texture;
@@ -3877,7 +3876,7 @@ js_Shape_get_texture(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shape_get_vertexList(int num_args, bool is_ctor, int magic)
+js_Shape_get_vertexList(int num_args, bool is_ctor, intptr_t magic)
 {
 	shape_t* shape;
 
@@ -3889,7 +3888,7 @@ js_Shape_get_vertexList(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shape_set_indexList(int num_args, bool is_ctor, int magic)
+js_Shape_set_indexList(int num_args, bool is_ctor, intptr_t magic)
 {
 	ibo_t*   ibo = NULL;
 	shape_t* shape;
@@ -3904,7 +3903,7 @@ js_Shape_set_indexList(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shape_set_texture(int num_args, bool is_ctor, int magic)
+js_Shape_set_texture(int num_args, bool is_ctor, intptr_t magic)
 {
 	shape_t* shape;
 	image_t* texture = NULL;
@@ -3919,7 +3918,7 @@ js_Shape_set_texture(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shape_set_vertexList(int num_args, bool is_ctor, int magic)
+js_Shape_set_vertexList(int num_args, bool is_ctor, intptr_t magic)
 {
 	shape_t* shape;
 	vbo_t*   vbo;
@@ -3933,7 +3932,7 @@ js_Shape_set_vertexList(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Shape_draw(int num_args, bool is_ctor, int magic)
+js_Shape_draw(int num_args, bool is_ctor, intptr_t magic)
 {
 	shape_t*     shape;
 	image_t*     surface = NULL;
@@ -3951,7 +3950,7 @@ js_Shape_draw(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Socket(int num_args, bool is_ctor, int magic)
+js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* hostname = NULL;
 	int         port;
@@ -3977,7 +3976,7 @@ js_Socket_finalize(void* host_ptr)
 }
 
 static bool
-js_Socket_get_bytesPending(int num_args, bool is_ctor, int magic)
+js_Socket_get_bytesPending(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* socket;
 
@@ -3991,7 +3990,7 @@ js_Socket_get_bytesPending(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_get_connected(int num_args, bool is_ctor, int magic)
+js_Socket_get_connected(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* socket;
 
@@ -4006,7 +4005,7 @@ js_Socket_get_connected(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_get_remoteAddress(int num_args, bool is_ctor, int magic)
+js_Socket_get_remoteAddress(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* socket;
 
@@ -4022,7 +4021,7 @@ js_Socket_get_remoteAddress(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_get_remotePort(int num_args, bool is_ctor, int magic)
+js_Socket_get_remotePort(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* socket;
 
@@ -4038,7 +4037,7 @@ js_Socket_get_remotePort(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_close(int num_args, bool is_ctor, int magic)
+js_Socket_close(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* socket;
 
@@ -4051,7 +4050,7 @@ js_Socket_close(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_connectTo(int num_args, bool is_ctor, int magic)
+js_Socket_connectTo(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* hostname;
 	int         port;
@@ -4068,7 +4067,7 @@ js_Socket_connectTo(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Socket_read(int num_args, bool is_ctor, int magic)
+js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 {
 	void*     buffer;
 	size_t    bytes_read;
@@ -4083,14 +4082,13 @@ js_Socket_read(int num_args, bool is_ctor, int magic)
 		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
 		jsal_error(JS_ERROR, "Socket is not connected");
-	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes);
-	buffer = jsal_get_buffer_ptr(-1, NULL);
+	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
 	bytes_read = socket_read(socket, buffer, num_bytes);
 	return true;
 }
 
 static bool
-js_Socket_write(int num_args, bool is_ctor, int magic)
+js_Socket_write(int num_args, bool is_ctor, intptr_t magic)
 {
 	const uint8_t* payload;
 	socket_t*      socket;
@@ -4109,7 +4107,7 @@ js_Socket_write(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Sound(int num_args, bool is_ctor, int magic)
+js_new_Sound(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 	sound_t*    sound;
@@ -4129,7 +4127,7 @@ js_Sound_finalize(void* host_ptr)
 }
 
 static bool
-js_Sound_get_fileName(int num_args, bool is_ctor, int magic)
+js_Sound_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4141,7 +4139,7 @@ js_Sound_get_fileName(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_get_length(int num_args, bool is_ctor, int magic)
+js_Sound_get_length(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4153,7 +4151,7 @@ js_Sound_get_length(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_get_pan(int num_args, bool is_ctor, int magic)
+js_Sound_get_pan(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4165,7 +4163,7 @@ js_Sound_get_pan(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_set_pan(int num_args, bool is_ctor, int magic)
+js_Sound_set_pan(int num_args, bool is_ctor, intptr_t magic)
 {
 	float    new_pan;
 	sound_t* sound;
@@ -4179,7 +4177,7 @@ js_Sound_set_pan(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_get_speed(int num_args, bool is_ctor, int magic)
+js_Sound_get_speed(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4191,7 +4189,7 @@ js_Sound_get_speed(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_set_speed(int num_args, bool is_ctor, int magic)
+js_Sound_set_speed(int num_args, bool is_ctor, intptr_t magic)
 {
 	float new_speed = jsal_require_number(0);
 
@@ -4205,7 +4203,7 @@ js_Sound_set_speed(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_get_playing(int num_args, bool is_ctor, int magic)
+js_Sound_get_playing(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4217,7 +4215,7 @@ js_Sound_get_playing(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_get_position(int num_args, bool is_ctor, int magic)
+js_Sound_get_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4229,7 +4227,7 @@ js_Sound_get_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_set_position(int num_args, bool is_ctor, int magic)
+js_Sound_set_position(int num_args, bool is_ctor, intptr_t magic)
 {
 	double   new_pos;
 	sound_t* sound;
@@ -4243,7 +4241,7 @@ js_Sound_set_position(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_get_repeat(int num_args, bool is_ctor, int magic)
+js_Sound_get_repeat(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4255,7 +4253,7 @@ js_Sound_get_repeat(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_set_repeat(int num_args, bool is_ctor, int magic)
+js_Sound_set_repeat(int num_args, bool is_ctor, intptr_t magic)
 {
 	bool is_looped = jsal_require_boolean(0);
 
@@ -4269,7 +4267,7 @@ js_Sound_set_repeat(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_get_volume(int num_args, bool is_ctor, int magic)
+js_Sound_get_volume(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4281,7 +4279,7 @@ js_Sound_get_volume(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_set_volume(int num_args, bool is_ctor, int magic)
+js_Sound_set_volume(int num_args, bool is_ctor, intptr_t magic)
 {
 	float volume = jsal_require_number(0);
 
@@ -4295,7 +4293,7 @@ js_Sound_set_volume(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_pause(int num_args, bool is_ctor, int magic)
+js_Sound_pause(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4307,7 +4305,7 @@ js_Sound_pause(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_play(int num_args, bool is_ctor, int magic)
+js_Sound_play(int num_args, bool is_ctor, intptr_t magic)
 {
 	mixer_t* mixer;
 	sound_t* sound;
@@ -4325,7 +4323,7 @@ js_Sound_play(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Sound_stop(int num_args, bool is_ctor, int magic)
+js_Sound_stop(int num_args, bool is_ctor, intptr_t magic)
 {
 	sound_t* sound;
 
@@ -4337,7 +4335,7 @@ js_Sound_stop(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_SoundStream(int num_args, bool is_ctor, int magic)
+js_new_SoundStream(int num_args, bool is_ctor, intptr_t magic)
 {
 	stream_t* stream;
 	int       frequency;
@@ -4366,7 +4364,7 @@ js_SoundStream_finalize(void* host_ptr)
 }
 
 static bool
-js_SoundStream_get_length(int num_args, bool is_ctor, int magic)
+js_SoundStream_get_length(int num_args, bool is_ctor, intptr_t magic)
 {
 	stream_t*    stream;
 
@@ -4378,7 +4376,7 @@ js_SoundStream_get_length(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundStream_pause(int num_args, bool is_ctor, int magic)
+js_SoundStream_pause(int num_args, bool is_ctor, intptr_t magic)
 {
 	stream_t* stream;
 
@@ -4390,7 +4388,7 @@ js_SoundStream_pause(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundStream_play(int num_args, bool is_ctor, int magic)
+js_SoundStream_play(int num_args, bool is_ctor, intptr_t magic)
 {
 	mixer_t*  mixer;
 	stream_t* stream;
@@ -4408,7 +4406,7 @@ js_SoundStream_play(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundStream_stop(int num_args, bool is_ctor, int magic)
+js_SoundStream_stop(int num_args, bool is_ctor, intptr_t magic)
 {
 	stream_t* stream;
 
@@ -4420,7 +4418,7 @@ js_SoundStream_stop(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_SoundStream_write(int num_args, bool is_ctor, int magic)
+js_SoundStream_write(int num_args, bool is_ctor, intptr_t magic)
 {
 	const void* data;
 	size_t      size;
@@ -4435,7 +4433,7 @@ js_SoundStream_write(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_get_Screen(int num_args, bool is_ctor, int magic)
+js_Surface_get_Screen(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* backbuffer;
 
@@ -4446,7 +4444,7 @@ js_Surface_get_Screen(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_get_height(int num_args, bool is_ctor, int magic)
+js_Surface_get_height(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
 
@@ -4459,7 +4457,7 @@ js_Surface_get_height(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_get_transform(int num_args, bool is_ctor, int magic)
+js_Surface_get_transform(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t*     image;
 	transform_t* transform;
@@ -4473,7 +4471,7 @@ js_Surface_get_transform(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_get_width(int num_args, bool is_ctor, int magic)
+js_Surface_get_width(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
 
@@ -4486,7 +4484,7 @@ js_Surface_get_width(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_set_transform(int num_args, bool is_ctor, int magic)
+js_Surface_set_transform(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t*     image;
 	transform_t* transform;
@@ -4500,7 +4498,7 @@ js_Surface_set_transform(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_clipTo(int num_args, bool is_ctor, int magic)
+js_Surface_clipTo(int num_args, bool is_ctor, intptr_t magic)
 {
 	int      height;
 	image_t* image;
@@ -4520,7 +4518,7 @@ js_Surface_clipTo(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Surface_toTexture(int num_args, bool is_ctor, int magic)
+js_Surface_toTexture(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
 	image_t* new_image;
@@ -4535,7 +4533,7 @@ js_Surface_toTexture(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_TextDecoder(int num_args, bool is_ctor, int magic)
+js_new_TextDecoder(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t*  decoder;
 	bool        fatal = false;
@@ -4573,7 +4571,7 @@ js_TextDecoder_finalize(void* host_ptr)
 }
 
 static bool
-js_TextDecoder_get_encoding(int num_args, bool is_ctor, int magic)
+js_TextDecoder_get_encoding(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t* decoder;
 
@@ -4585,7 +4583,7 @@ js_TextDecoder_get_encoding(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_TextDecoder_get_fatal(int num_args, bool is_ctor, int magic)
+js_TextDecoder_get_fatal(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t* decoder;
 
@@ -4597,7 +4595,7 @@ js_TextDecoder_get_fatal(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, int magic)
+js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t* decoder;
 
@@ -4609,7 +4607,7 @@ js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_TextDecoder_decode(int num_args, bool is_ctor, int magic)
+js_TextDecoder_decode(int num_args, bool is_ctor, intptr_t magic)
 {
 	decoder_t*     decoder;
 	lstring_t*     head;
@@ -4649,7 +4647,7 @@ js_TextDecoder_decode(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_TextEncoder(int num_args, bool is_ctor, int magic)
+js_new_TextEncoder(int num_args, bool is_ctor, intptr_t magic)
 {
 	encoder_t* encoder;
 
@@ -4665,7 +4663,7 @@ js_TextEncoder_finalize(void* host_ptr)
 }
 
 static bool
-js_TextEncoder_get_encoding(int num_args, bool is_ctor, int magic)
+js_TextEncoder_get_encoding(int num_args, bool is_ctor, intptr_t magic)
 {
 	encoder_t* encoder;
 
@@ -4677,7 +4675,7 @@ js_TextEncoder_get_encoding(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_TextEncoder_encode(int num_args, bool is_ctor, int magic)
+js_TextEncoder_encode(int num_args, bool is_ctor, intptr_t magic)
 {
 	void*      buffer;
 	lstring_t* input;
@@ -4694,15 +4692,14 @@ js_TextEncoder_encode(int num_args, bool is_ctor, int magic)
 		input = lstr_new("");
 
 	output = encoder_run(encoder, input, &size);
-	jsal_push_new_buffer(JS_UINT8ARRAY, size);
-	buffer = jsal_get_buffer_ptr(-1, NULL);
+	jsal_push_new_buffer(JS_UINT8ARRAY, size, &buffer);
 	memcpy(buffer, output, size);
 	lstr_free(input);
 	return true;
 }
 
 static bool
-js_new_Texture(int num_args, bool is_ctor, int magic)
+js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 {
 	const color_t* buffer;
 	size_t         buffer_size;
@@ -4774,7 +4771,7 @@ js_Texture_finalize(void* host_ptr)
 }
 
 static bool
-js_Texture_get_fileName(int num_args, bool is_ctor, int magic)
+js_Texture_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t*    image;
 	const char* path;
@@ -4790,7 +4787,7 @@ js_Texture_get_fileName(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Texture_get_height(int num_args, bool is_ctor, int magic)
+js_Texture_get_height(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
 
@@ -4803,7 +4800,7 @@ js_Texture_get_height(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Texture_get_width(int num_args, bool is_ctor, int magic)
+js_Texture_get_width(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
 
@@ -4816,7 +4813,7 @@ js_Texture_get_width(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Texture_download(int num_args, bool is_ctor, int magic)
+js_Texture_download(int num_args, bool is_ctor, intptr_t magic)
 {
 	int            height;
 	image_t*       image;
@@ -4836,8 +4833,7 @@ js_Texture_download(int num_args, bool is_ctor, int magic)
 	height = image_height(image);
 	if (!(lock = image_lock(image, false, true)))
 		jsal_error(JS_ERROR, "Couldn't download from GPU texture");
-	jsal_push_new_buffer(JS_UINT8ARRAY_CLAMPED, width * height * sizeof(color_t));
-	out_ptr = jsal_get_buffer_ptr(-1, NULL);
+	jsal_push_new_buffer(JS_UINT8ARRAY_CLAMPED, width * height * sizeof(color_t), &out_ptr);
 	in_ptr = lock->pixels;
 	for (y = 0; y < height; ++y) {
 		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
@@ -4849,7 +4845,7 @@ js_Texture_download(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Texture_upload(int num_args, bool is_ctor, int magic)
+js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 {
 	const color_t* buffer;
 	size_t         buffer_size;
@@ -4886,7 +4882,7 @@ js_Texture_upload(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_Transform(int num_args, bool is_ctor, int magic)
+js_new_Transform(int num_args, bool is_ctor, intptr_t magic)
 {
 	transform_t* transform;
 
@@ -4902,7 +4898,7 @@ js_Transform_finalize(void* host_ptr)
 }
 
 static bool
-js_Transform_get_matrix(int num_args, bool is_ctor, int magic)
+js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 {
 	transform_t* transform;
 	float*       values;
@@ -4961,7 +4957,7 @@ js_Transform_get_matrix(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Transform_set_matrix(int num_args, bool is_ctor, int magic)
+js_Transform_set_matrix(int num_args, bool is_ctor, intptr_t magic)
 {
 	float        new_value;
 	transform_t* transform;
@@ -4978,7 +4974,7 @@ js_Transform_set_matrix(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Transform_compose(int num_args, bool is_ctor, int magic)
+js_Transform_compose(int num_args, bool is_ctor, intptr_t magic)
 {
 	transform_t* other;
 	transform_t* transform;
@@ -4992,7 +4988,7 @@ js_Transform_compose(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Transform_identity(int num_args, bool is_ctor, int magic)
+js_Transform_identity(int num_args, bool is_ctor, intptr_t magic)
 {
 	transform_t* transform;
 
@@ -5004,7 +5000,7 @@ js_Transform_identity(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Transform_project2D(int num_args, bool is_ctor, int magic)
+js_Transform_project2D(int num_args, bool is_ctor, intptr_t magic)
 {
 	transform_t* transform;
 	float        x1, x2;
@@ -5028,7 +5024,7 @@ js_Transform_project2D(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Transform_project3D(int num_args, bool is_ctor, int magic)
+js_Transform_project3D(int num_args, bool is_ctor, intptr_t magic)
 {
 	float        aspect;
 	float        fov;
@@ -5057,7 +5053,7 @@ js_Transform_project3D(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Transform_rotate(int num_args, bool is_ctor, int magic)
+js_Transform_rotate(int num_args, bool is_ctor, intptr_t magic)
 {
 	float        theta;
 	transform_t* transform;
@@ -5080,7 +5076,7 @@ js_Transform_rotate(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Transform_scale(int num_args, bool is_ctor, int magic)
+js_Transform_scale(int num_args, bool is_ctor, intptr_t magic)
 {
 	float        sx;
 	float        sy;
@@ -5099,7 +5095,7 @@ js_Transform_scale(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_Transform_translate(int num_args, bool is_ctor, int magic)
+js_Transform_translate(int num_args, bool is_ctor, intptr_t magic)
 {
 	float        dx;
 	float        dy;
@@ -5118,7 +5114,7 @@ js_Transform_translate(int num_args, bool is_ctor, int magic)
 }
 
 static bool
-js_new_VertexList(int num_args, bool is_ctor, int magic)
+js_new_VertexList(int num_args, bool is_ctor, intptr_t magic)
 {
 	int       num_entries;
 	int       stack_idx;
@@ -5171,19 +5167,32 @@ js_VertexList_finalize(void* host_ptr)
 }
 
 static bool
-js_Z_compress(int num_args, bool is_ctor, int magic)
+js_Z_deflate(int num_args, bool is_ctor, intptr_t magic)
 {
-	const void* buffer;
-	size_t      in_size;
+	void*       buffer;
+	const void* input_data;
+	size_t      input_size;
+	int         level = 7;
+	void*       output_data;
+	size_t      output_size;
 
-	buffer = jsal_require_buffer_ptr(0, &in_size);
+	input_data = jsal_require_buffer_ptr(0, &input_size);
+	if (num_args >= 2)
+		level = jsal_require_int(1);
 	
-	jsal_error(JS_ERROR, "This API totally got eaten by the pig");
-	return false;
+	if (level < 0 || level > 9)
+		jsal_error(JS_RANGE_ERROR, "Invalid compression level '%d'", level);
+	
+	if (!(output_data = z_deflate(input_data, input_size, level, &output_size)))
+		jsal_error(JS_ERROR, "Couldn't deflate THE PIG (it's too fat)");
+	jsal_push_new_buffer(JS_ARRAYBUFFER, output_size, &buffer);
+	memcpy(buffer, output_data, output_size);
+	free(output_data);
+	return true;
 }
 
 static bool
-js_Z_decompress(int num_args, bool is_ctor, int magic)
+js_Z_inflate(int num_args, bool is_ctor, intptr_t magic)
 {
 	const void* buffer;
 	size_t      in_size;

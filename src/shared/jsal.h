@@ -81,7 +81,7 @@ enum js_error_type
 	JS_URI_ERROR,
 } js_error_type_t;
 
-typedef bool      (* js_function_t)        (int num_args, bool is_ctor, int magic);
+typedef bool      (* js_function_t)        (int num_args, bool is_ctor, intptr_t magic);
 typedef js_step_t (* js_break_callback_t)  (void);
 typedef void      (* js_finalizer_t)       (void* host_ptr);
 typedef void      (* js_job_callback_t)    (void);
@@ -168,11 +168,11 @@ int          jsal_push_known_symbol        (const char* name);
 int          jsal_push_lstring             (const char* value, size_t length);
 int          jsal_push_new_array           (void);
 int          jsal_push_new_bare_object     (void);
-int          jsal_push_new_buffer          (js_buffer_type_t type, size_t length);
-int          jsal_push_new_constructor     (js_function_t callback, const char* name, int min_args, int magic);
+int          jsal_push_new_buffer          (js_buffer_type_t type, size_t length, void* *out_data_ptr);
+int          jsal_push_new_constructor     (js_function_t callback, const char* name, int min_args, intptr_t magic);
 int          jsal_push_new_error           (js_error_type_t type, const char* format, ...);
 int          jsal_push_new_error_va        (js_error_type_t type, const char* format, va_list ap);
-int          jsal_push_new_function        (js_function_t callback, const char* name, int min_args, int magic);
+int          jsal_push_new_function        (js_function_t callback, const char* name, int min_args, intptr_t magic);
 int          jsal_push_new_host_object     (js_finalizer_t finalizer, size_t data_size, void* *out_data_ptr);
 int          jsal_push_new_iterator        (int for_index);
 int          jsal_push_new_object          (void);

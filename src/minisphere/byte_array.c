@@ -119,7 +119,6 @@ bytearray_buffer(bytearray_t* array)
 	return array->buffer;
 }
 
-
 int
 bytearray_len(bytearray_t* array)
 {

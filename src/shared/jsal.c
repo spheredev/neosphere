@@ -77,7 +77,7 @@ struct function
 {
 	js_function_t callback;
 	bool          ctor_only;
-	int           magic;
+	intptr_t      magic;
 	int           min_args;
 };
 
@@ -1293,26 +1293,30 @@ jsal_push_new_bare_object(void)
 }
 
 int
-jsal_push_new_buffer(js_buffer_type_t type, size_t size)
+jsal_push_new_buffer(js_buffer_type_t type, size_t size, void* *out_data_ptr)
 {
-	JsValueRef  buffer;
+	JsValueRef  buffer_obj;
 	JsErrorCode result;
+	int         stack_index;
 
-	result = type == JS_INT8ARRAY ? JsCreateTypedArray(JsArrayTypeInt8, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: type == JS_INT16ARRAY ? JsCreateTypedArray(JsArrayTypeInt16, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: type == JS_INT32ARRAY ? JsCreateTypedArray(JsArrayTypeInt32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: type == JS_UINT8ARRAY ? JsCreateTypedArray(JsArrayTypeUint8, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: type == JS_UINT8ARRAY_CLAMPED ? JsCreateTypedArray(JsArrayTypeUint8Clamped, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: type == JS_UINT16ARRAY ? JsCreateTypedArray(JsArrayTypeUint16, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: type == JS_UINT32ARRAY ? JsCreateTypedArray(JsArrayTypeUint32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: type == JS_FLOAT32ARRAY ? JsCreateTypedArray(JsArrayTypeFloat32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: type == JS_FLOAT64ARRAY ? JsCreateTypedArray(JsArrayTypeFloat64, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer)
-		: JsCreateArrayBuffer((unsigned int)size, &buffer);
-	return push_value(buffer, false);
+	result = type == JS_INT8ARRAY ? JsCreateTypedArray(JsArrayTypeInt8, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: type == JS_INT16ARRAY ? JsCreateTypedArray(JsArrayTypeInt16, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: type == JS_INT32ARRAY ? JsCreateTypedArray(JsArrayTypeInt32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: type == JS_UINT8ARRAY ? JsCreateTypedArray(JsArrayTypeUint8, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: type == JS_UINT8ARRAY_CLAMPED ? JsCreateTypedArray(JsArrayTypeUint8Clamped, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: type == JS_UINT16ARRAY ? JsCreateTypedArray(JsArrayTypeUint16, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: type == JS_UINT32ARRAY ? JsCreateTypedArray(JsArrayTypeUint32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: type == JS_FLOAT32ARRAY ? JsCreateTypedArray(JsArrayTypeFloat32, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: type == JS_FLOAT64ARRAY ? JsCreateTypedArray(JsArrayTypeFloat64, JS_INVALID_REFERENCE, 0, (unsigned int)size, &buffer_obj)
+		: JsCreateArrayBuffer((unsigned int)size, &buffer_obj);
+	stack_index = push_value(buffer_obj, false);
+	if (out_data_ptr != NULL)
+		*out_data_ptr = jsal_get_buffer_ptr(stack_index, NULL);
+	return stack_index;
 }
 
 int
-jsal_push_new_constructor(js_function_t callback, const char* name, int min_args, int magic)
+jsal_push_new_constructor(js_function_t callback, const char* name, int min_args, intptr_t magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
@@ -1360,7 +1364,7 @@ jsal_push_new_error_va(js_error_type_t type, const char* format, va_list ap)
 }
 
 int
-jsal_push_new_function(js_function_t callback, const char* name, int min_args, int magic)
+jsal_push_new_function(js_function_t callback, const char* name, int min_args, intptr_t magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
@@ -1707,13 +1711,15 @@ jsal_require_boolean(int at_index)
 void*
 jsal_require_buffer_ptr(int at_index, size_t *out_size)
 {
-	if (!jsal_is_buffer(at_index)) {
+	void* retval;
+	
+	if (!(retval = jsal_get_buffer_ptr(at_index, out_size))) {
 		jsal_dup(at_index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a buffer", jsal_to_string(-1));
 		jsal_remove(-2);
 		jsal_throw();
 	}
-	return jsal_get_buffer_ptr(at_index, out_size);
+	return retval;
 }
 
 void
