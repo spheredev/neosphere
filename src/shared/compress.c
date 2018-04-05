@@ -42,38 +42,37 @@ z_deflate(const void* data, size_t size, int level, size_t *out_output_size)
 
 	Bytef*       buffer = NULL;
 	int          flush_flag = Z_NO_FLUSH;
-	int          result;
 	Bytef*       new_buffer;
 	int          num_chunks = 0;
 	size_t       out_size;
-	z_stream     z;
+	int          result;
+	z_stream     stream;
 
-	memset(&z, 0, sizeof(z_stream));
-	z.next_in = (Bytef*)data;
-	z.avail_in = (uInt)size;
-	if (deflateInit(&z, level) != Z_OK)
+	memset(&stream, 0, sizeof(z_stream));
+	stream.next_in = (Bytef*)data;
+	stream.avail_in = (uInt)size;
+	if (deflateInit(&stream, level) != Z_OK)
 		goto on_error;
 	do {
-		if (z.avail_out == 0) {
+		if (stream.avail_out == 0) {
 			if (!(new_buffer = realloc(buffer, ++num_chunks * CHUNK_SIZE)))
 				goto on_error;
-			z.next_out = new_buffer + (num_chunks - 1) * CHUNK_SIZE;
-			z.avail_out = CHUNK_SIZE;
+			stream.next_out = new_buffer + (num_chunks - 1) * CHUNK_SIZE;
+			stream.avail_out = CHUNK_SIZE;
 			buffer = new_buffer;
 		}
-		result = deflate(&z, flush_flag);
-		if (z.avail_out > 0)
+		result = deflate(&stream, flush_flag);
+		if (stream.avail_out > 0)
 			flush_flag = Z_FINISH;
 	} while (result != Z_STREAM_END);
-	out_size = num_chunks * CHUNK_SIZE - z.avail_out;
-	deflateEnd(&z);
+	out_size = num_chunks * CHUNK_SIZE - stream.avail_out;
+	deflateEnd(&stream);
 
-	// create a byte array from the deflated data
 	*out_output_size = out_size;
 	return buffer;
 
 on_error:
-	deflateEnd(&z);
+	deflateEnd(&stream);
 	free(buffer);
 	return NULL;
 }
@@ -88,39 +87,38 @@ z_inflate(const void* data, size_t size, size_t max_inflate, size_t *out_output_
 	Bytef*   new_buffer;
 	size_t   num_chunks = 0;
 	int      result;
-	z_stream z;
+	z_stream stream;
 
-	memset(&z, 0, sizeof(z_stream));
-	z.next_in = (Bytef*)data;
-	z.avail_in = (uInt)size;
-	if (inflateInit(&z) != Z_OK)
+	memset(&stream, 0, sizeof(z_stream));
+	stream.next_in = (Bytef*)data;
+	stream.avail_in = (uInt)size;
+	if (inflateInit(&stream) != Z_OK)
 		goto on_error;
 	chunk_size = max_inflate != 0 ? (uInt)max_inflate : 65536;
 	do {
-		if (z.avail_out == 0) {
+		if (stream.avail_out == 0) {
 			if (buffer != NULL && max_inflate > 0)
 				goto on_error;  // inflated data exceeds maximum size
 			if (!(new_buffer = realloc(buffer, ++num_chunks * chunk_size + 1)))
 				goto on_error;
-			z.next_out = new_buffer + (num_chunks - 1) * chunk_size;
-			z.avail_out = chunk_size;
+			stream.next_out = new_buffer + (num_chunks - 1) * chunk_size;
+			stream.avail_out = chunk_size;
 			buffer = new_buffer;
 		}
-		if ((result = inflate(&z, flush_flag)) == Z_DATA_ERROR)
+		if ((result = inflate(&stream, flush_flag)) == Z_DATA_ERROR)
 			goto on_error;
-		if (z.avail_out > 0)
+		if (stream.avail_out > 0)
 			flush_flag = Z_FINISH;
 	} while (result != Z_STREAM_END);
-	inflated_size = num_chunks * chunk_size - z.avail_out;
+	inflated_size = num_chunks * chunk_size - stream.avail_out;
 	buffer[inflated_size] = '\0';  // handy NUL terminator
-	inflateEnd(&z);
+	inflateEnd(&stream);
 
-	// create a byte array from the deflated data
 	*out_output_size = inflated_size;
 	return buffer;
 
 on_error:
-	inflateEnd(&z);
+	inflateEnd(&stream);
 	free(buffer);
 	return NULL;
 }

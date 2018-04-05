@@ -93,9 +93,11 @@ table_free(table_t* it)
 }
 
 int
-table_add_column(table_t* it, const char* name)
+table_add_column(table_t* it, const char* name_fmt, ...)
 {
-	int index;
+	va_list args;
+	int     index;
+	char*   name;
 	
 	index = it->num_columns++;
 	if (it->num_columns > it->max_columns) {
@@ -109,7 +111,11 @@ table_add_column(table_t* it, const char* name)
 	it->columns[index].max_rows = 0;
 	it->columns[index].rows = NULL;
 	it->columns[index].width = 0;
+	va_start(args, name_fmt);
+	vasprintf(&name, name_fmt, args);
+	va_end(args);
 	table_add_text(it, index, name);
+	free(name);
 	return index;
 }
 

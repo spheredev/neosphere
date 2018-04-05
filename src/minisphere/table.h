@@ -39,7 +39,7 @@ typedef struct table table_t;
 
 table_t* table_new            (const char* title, bool has_totals);
 void     table_free           (table_t* it);
-int      table_add_column     (table_t* it, const char* name);
+int      table_add_column     (table_t* it, const char* name_fmt, ...);
 void     table_add_number     (table_t* it, int column, long long value);
 void     table_add_percentage (table_t* it, int column, double value);
 void     table_add_text       (table_t* it, int column, const char* text);

@@ -4,6 +4,9 @@
 #include "jsal.h"
 #include "table.h"
 
+#define TIME_PRECISION 1.0e6    // microseconds
+#define UNIT_NAME      "\xB5s"
+
 struct record
 {
 	double    average_cost;
@@ -127,26 +130,26 @@ print_results(double running_time)
 	table = table_new(heading, true);
 	table_add_column(table, "event");
 	table_add_column(table, "count");
-	table_add_column(table, "time (us)");
-	table_add_column(table, "% run");
-	table_add_column(table, "avg (us)");
-	table_add_column(table, "% avg");
+	table_add_column(table, "time (%s)", UNIT_NAME);
+	table_add_column(table, "%% run");
+	table_add_column(table, "avg (%s)", UNIT_NAME);
+	table_add_column(table, "%% avg");
 	iter = vector_enum(s_records);
 	while (record = iter_next(&iter)) {
 		if (record->num_hits <= 0)
 			continue;
 		table_add_text(table, 0, record->name);
 		table_add_number(table, 1, record->num_hits);
-		table_add_number(table, 2, 1.0e6 * record->total_cost);
+		table_add_number(table, 2, record->total_cost * TIME_PRECISION);
 		table_add_percentage(table, 3, record->total_cost / running_time);
-		table_add_number(table, 4, 1.0e6 * record->average_cost);
+		table_add_number(table, 4, record->average_cost * TIME_PRECISION);
 		table_add_percentage(table, 5, record->average_cost / total_average);
 	}
 	table_add_text(table, 0, "TOTAL");
 	table_add_number(table, 1, total_hits);
-	table_add_number(table, 2, 1.0e6 * total_time);
+	table_add_number(table, 2, total_time * TIME_PRECISION);
 	table_add_percentage(table, 3, total_time / running_time);
-	table_add_number(table, 4, 1.0e6 * total_average);
+	table_add_number(table, 4, total_average * TIME_PRECISION);
 	table_add_percentage(table, 5, 1.0);
 	table_print(table);
 	table_free(table);
