@@ -116,14 +116,14 @@ dispatch_cancel_all(bool recurring, bool also_critical)
 	iter_t iter;
 
 	iter = vector_enum(s_onetime_jobs);
-	while (job = iter_next(&iter)) {
+	while ((job = iter_next(&iter))) {
 		if (!job->critical || also_critical)
 			job->finished = true;
 	}
 
 	if (recurring) {
 		iter = vector_enum(s_recurring_jobs);
-		while (job = iter_next(&iter))
+		while ((job = iter_next(&iter)))
 			job->finished = true;
 		s_need_sort = true;
 		s_is_busy = false;
@@ -250,17 +250,17 @@ job_from_token(int64_t token)
 	iter_t iter;
 
 	iter = vector_enum(s_recurring_jobs);
-	while (job = iter_next(&iter)) {
+	while ((job = iter_next(&iter))) {
 		if (token == job->token)
 			return job;
 	}
 	iter = vector_enum(s_onetime_jobs);
-	while (job = iter_next(&iter)) {
+	while ((job = iter_next(&iter))) {
 		if (token == job->token)
 			return job;
 	}
 	iter = vector_enum(s_exit_jobs);
-	while (job = iter_next(&iter)) {
+	while ((job = iter_next(&iter))) {
 		if (token == job->token)
 			return job;
 	}

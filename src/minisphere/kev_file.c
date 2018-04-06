@@ -54,7 +54,7 @@ kev_open(game_t* game, const char* filename, bool can_create)
 
 	console_log(2, "opening kevfile #%u '%s'", s_next_file_id, filename);
 	kev_file = calloc(1, sizeof(kev_file_t));
-	if (slurp = game_read_file(game, filename, &slurp_size)) {
+	if ((slurp = game_read_file(game, filename, &slurp_size))) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(kev_file->conf = al_load_config_file_f(memfile)))
 			goto on_error;

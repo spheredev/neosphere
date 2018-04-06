@@ -245,7 +245,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	// load artifacts from previous build
 	artifacts = vector_new(sizeof(char*));
-	if (json = fs_fslurp(fs, "@/artifacts.json", &json_size)) {
+	if ((json = fs_fslurp(fs, "@/artifacts.json", &json_size))) {
 		jsal_push_lstring(json, json_size);
 		free(json);
 		if (jsal_try_parse(-1) && jsal_is_array(-1)) {
@@ -739,7 +739,7 @@ handle_module_import(void)
 		jsal_error(JS_URI_ERROR, "relative import() outside of an mJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i]))
+		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i])))
 			break;  // short-circuit
 	}
 	if (path == NULL)
@@ -1081,7 +1081,7 @@ js_files(int num_args, bool is_ctor, intptr_t magic)
 	// return all the newly constructed targets as an array.
 	jsal_push_new_array();
 	iter = vector_enum(targets);
-	while (p = iter_next(&iter)) {
+	while ((p = iter_next(&iter))) {
 		jsal_push_class_obj(CELL_TARGET, *p, false);
 		jsal_put_prop_index(-2, iter.index);
 	}
@@ -1161,7 +1161,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_URI_ERROR, "relative require() outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i]))
+		if ((path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i])))
 			break;  // short-circuit
 	}
 	if (path == NULL)

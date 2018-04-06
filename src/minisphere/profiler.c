@@ -54,7 +54,7 @@ profiler_uninit(void)
 	print_results(runtime);
 	
 	iter = vector_enum(s_records);
-	while (record = iter_next(&iter)) {
+	while ((record = iter_next(&iter))) {
 		jsal_unref(record->function);
 		free(record->name);
 	}
@@ -114,7 +114,7 @@ print_results(double running_time)
 
 	vector_sort(s_records, order_records);
 	iter = vector_enum(s_records);
-	while (record = iter_next(&iter)) {
+	while ((record = iter_next(&iter))) {
 		if (record->num_hits <= 0)
 			continue;
 		record->average_cost = record->total_cost / record->num_hits;
@@ -135,7 +135,7 @@ print_results(double running_time)
 	table_add_column(table, "avg (%s)", UNIT_NAME);
 	table_add_column(table, "%% avg");
 	iter = vector_enum(s_records);
-	while (record = iter_next(&iter)) {
+	while ((record = iter_next(&iter))) {
 		if (record->num_hits <= 0)
 			continue;
 		table_add_text(table, 0, record->name);

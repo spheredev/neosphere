@@ -527,7 +527,7 @@ ki_message_recv(socket_t* socket)
 lost_dvalue:
 	if (message != NULL) {
 		iter = vector_enum(message->atoms);
-		while (atom = iter_next(&iter))
+		while ((atom = iter_next(&iter)))
 			ki_atom_free(atom);
 		vector_free(message->atoms);
 		free(message);

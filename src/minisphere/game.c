@@ -108,7 +108,7 @@ game_open(const char* game_path)
 	path = path_new(game_path);
 	if (!path_resolve(path, NULL))
 		goto on_error;
-	if (package = package_open(path_cstr(path))) {  // Sphere Package (.spk)
+	if ((package = package_open(path_cstr(path)))) {  // Sphere Package (.spk)
 		game->type = FS_PACKAGE;
 		game->root_path = path_dup(path);
 		game->package = package;

@@ -131,13 +131,14 @@ path_cstr(const path_t* path)
 const char*
 path_extension(const path_t* path)
 {
-	char* p;
+	char* extension;
 
-	if (path->filename == NULL)
+	if (path->filename == NULL) {
 		return NULL;
+	}
 	else {
-		if (p = strrchr(path->filename, '.'))
-			return p;
+		if ((extension = strrchr(path->filename, '.')))
+			return extension;
 		else
 			return "";
 	}
@@ -160,15 +161,14 @@ path_has_extension(const path_t* path, const char* extension)
 {
 	const char* my_extension;
 
-	if (!path_is_file(path))
+	if (!path_is_file(path)) {
 		return false;
+	}
 	else {
-		my_extension = strrchr(path->filename, '.');
-		if (my_extension == NULL)
-			return extension == NULL || extension[0] == '\0';
-		else {
+		if ((my_extension = strrchr(path->filename, '.')))
 			return strcasecmp(my_extension, extension) == 0;
-		}
+		else
+			return extension == NULL || extension[0] == '\0';
 	}
 }
 
@@ -314,8 +314,9 @@ path_collapse(path_t* path, bool collapse_uplevel)
 		collapse_ok = collapse_ok && i > 0;
 		if (strcmp(hop, "..") != 0)
 			collapse_ok = true;
-		if (strcmp(hop, ".") == 0)
+		if (strcmp(hop, ".") == 0) {
 			path_remove_hop(path, i--);
+		}
 		else if (strcmp(hop, "..") == 0 && collapse_uplevel && collapse_ok) {
 			path_remove_hop(path, i--);
 			if (i > 0 || !is_rooted)  // don't strip the root directory

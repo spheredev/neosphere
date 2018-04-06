@@ -241,7 +241,7 @@ jsal_uninit(void)
 	}
 	
 	iter = vector_enum(s_module_cache);
-	while (module = iter_next(&iter)) {
+	while ((module = iter_next(&iter))) {
 		JsRelease(module->record, NULL);
 		free(module->filename);
 	}
@@ -313,7 +313,7 @@ jsal_update(bool in_event_loop)
 		// (most likely by the pig).
 		exception = JS_INVALID_REFERENCE;
 		iter = vector_enum(s_rejections);
-		while (rejection = iter_next(&iter)) {
+		while ((rejection = iter_next(&iter))) {
 			if (rejection->handled) {  // does it have a .then()?
 				JsRelease(rejection->promise, NULL);
 				continue;
@@ -966,7 +966,7 @@ jsal_is_async_function(int stack_index)
 		return false;
 	}
 	jsal_get_prop_string(-1, "name");
-	if (name = jsal_get_string(-1))
+	if ((name = jsal_get_string(-1)))
 		is_async = strcmp(name, "AsyncFunction") == 0;
 	jsal_pop(2);
 	return is_async;
@@ -2550,7 +2550,7 @@ get_module_record(const char* specifier, JsModuleRecord parent_record, const cha
 
 	*out_is_new = false;
 	iter = vector_enum(s_module_cache);
-	while (cached = iter_next(&iter)) {
+	while ((cached = iter_next(&iter))) {
 		if (strcmp(specifier, cached->filename) == 0)
 			return cached->record;
 	}
@@ -2922,7 +2922,7 @@ on_reject_promise_unhandled(JsValueRef promise, JsValueRef reason, bool handled,
 	}
 	else {
 		iter = vector_enum(s_rejections);
-		while (entry = iter_next(&iter)) {
+		while ((entry = iter_next(&iter))) {
 			if (entry->promise == promise) {
 				entry->handled = true;
 				break;  // safe to short-circuit

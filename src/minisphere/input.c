@@ -160,8 +160,8 @@ initialize_input(void)
 void
 shutdown_input(void)
 {
-	struct bound_button* pbutton;
-	struct bound_key*    pkey;
+	struct bound_button* bound_button;
+	struct bound_key*    bound_key;
 
 	iter_t iter;
 
@@ -170,14 +170,14 @@ shutdown_input(void)
 
 	// free bound key scripts
 	iter = vector_enum(s_bound_buttons);
-	while (pbutton = iter_next(&iter)) {
-		script_unref(pbutton->on_down_script);
-		script_unref(pbutton->on_up_script);
+	while ((bound_button = iter_next(&iter))) {
+		script_unref(bound_button->on_down_script);
+		script_unref(bound_button->on_up_script);
 	}
 	iter = vector_enum(s_bound_keys);
-	while (pkey = iter_next(&iter)) {
-		script_unref(pkey->on_down_script);
-		script_unref(pkey->on_up_script);
+	while ((bound_key = iter_next(&iter))) {
+		script_unref(bound_key->on_down_script);
+		script_unref(bound_key->on_up_script);
 	}
 	vector_free(s_bound_buttons);
 	vector_free(s_bound_keys);
@@ -273,8 +273,8 @@ joy_position(int joy_index, int axis_index)
 void
 joy_bind_button(int joy_index, int button, script_t* on_down_script, script_t* on_up_script)
 {
+	struct bound_button* bound_button;
 	bool                 is_new_entry = true;
-	struct bound_button* bound;
 	struct bound_button  new_binding;
 	script_t*            old_down_script;
 	script_t*            old_up_script;
@@ -287,15 +287,15 @@ joy_bind_button(int joy_index, int button, script_t* on_down_script, script_t* o
 	new_binding.on_down_script = on_down_script;
 	new_binding.on_up_script = on_up_script;
 	iter = vector_enum(s_bound_buttons);
-	while (bound = iter_next(&iter)) {
-		if (bound->joystick_id == joy_index && bound->button == button) {
-			bound->is_pressed = false;
-			old_down_script = bound->on_down_script;
-			old_up_script = bound->on_up_script;
-			memcpy(bound, &new_binding, sizeof(struct bound_button));
-			if (old_down_script != bound->on_down_script)
+	while ((bound_button = iter_next(&iter))) {
+		if (bound_button->joystick_id == joy_index && bound_button->button == button) {
+			bound_button->is_pressed = false;
+			old_down_script = bound_button->on_down_script;
+			old_up_script = bound_button->on_up_script;
+			memcpy(bound_button, &new_binding, sizeof(struct bound_button));
+			if (old_down_script != bound_button->on_down_script)
 				script_unref(old_down_script);
-			if (old_up_script != bound->on_up_script)
+			if (old_up_script != bound_button->on_up_script)
 				script_unref(old_up_script);
 			is_new_entry = false;
 		}
@@ -510,8 +510,8 @@ set_player_key(int player, player_key_t vkey, int keycode)
 void
 update_bound_keys(bool use_map_keys)
 {
-	struct bound_button* button;
-	struct bound_key*    key;
+	struct bound_button* bound_button;
+	struct bound_key*    bound_key;
 	bool                 is_down;
 
 	iter_t iter;
@@ -519,25 +519,25 @@ update_bound_keys(bool use_map_keys)
 	// check bound keyboard keys
 	if (use_map_keys) {
 		iter = vector_enum(s_bound_keys);
-		while (key = iter_next(&iter)) {
-			is_down = s_key_state[key->keycode];
-			if (is_down && !key->is_pressed)
-				script_run(key->on_down_script, false);
-			if (!is_down && key->is_pressed)
-				script_run(key->on_up_script, false);
-			key->is_pressed = is_down;
+		while ((bound_key = iter_next(&iter))) {
+			is_down = s_key_state[bound_key->keycode];
+			if (is_down && !bound_key->is_pressed)
+				script_run(bound_key->on_down_script, false);
+			if (!is_down && bound_key->is_pressed)
+				script_run(bound_key->on_up_script, false);
+			bound_key->is_pressed = is_down;
 		}
 	}
 
 	// check bound joystick buttons
 	iter = vector_enum(s_bound_buttons);
-	while (button = iter_next(&iter)) {
-		is_down = joy_is_button_down(button->joystick_id, button->button);
-		if (is_down && !button->is_pressed)
-			script_run(button->on_down_script, false);
-		if (!is_down && button->is_pressed)
-			script_run(button->on_up_script, false);
-		button->is_pressed = is_down;
+	while ((bound_button = iter_next(&iter))) {
+		is_down = joy_is_button_down(bound_button->joystick_id, bound_button->button);
+		if (is_down && !bound_button->is_pressed)
+			script_run(bound_button->on_down_script, false);
+		if (!is_down && bound_button->is_pressed)
+			script_run(bound_button->on_up_script, false);
+		bound_button->is_pressed = is_down;
 	}
 }
 
@@ -633,8 +633,8 @@ update_input(void)
 void
 kb_bind_key(int keycode, script_t* on_down_script, script_t* on_up_script)
 {
+	struct bound_key* bound_key;
 	bool              is_new_key = true;
-	struct bound_key* key;
 	struct bound_key  new_binding;
 	script_t*         old_down_script;
 	script_t*         old_up_script;
@@ -646,15 +646,15 @@ kb_bind_key(int keycode, script_t* on_down_script, script_t* on_up_script)
 	new_binding.on_down_script = on_down_script;
 	new_binding.on_up_script = on_up_script;
 	iter = vector_enum(s_bound_keys);
-	while (key = iter_next(&iter)) {
-		if (key->keycode == keycode) {
-			key->is_pressed = false;
-			old_down_script = key->on_down_script;
-			old_up_script = key->on_up_script;
-			memcpy(key, &new_binding, sizeof(struct bound_key));
-			if (old_down_script != key->on_down_script)
+	while ((bound_key = iter_next(&iter))) {
+		if (bound_key->keycode == keycode) {
+			bound_key->is_pressed = false;
+			old_down_script = bound_key->on_down_script;
+			old_up_script = bound_key->on_up_script;
+			memcpy(bound_key, &new_binding, sizeof(struct bound_key));
+			if (old_down_script != bound_key->on_down_script)
 				script_unref(old_down_script);
-			if (old_up_script != key->on_up_script)
+			if (old_up_script != bound_key->on_up_script)
 				script_unref(old_up_script);
 			is_new_key = false;
 		}

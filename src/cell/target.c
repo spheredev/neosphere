@@ -82,7 +82,7 @@ target_free(target_t* target)
 		return;
 
 	iter = vector_enum(target->sources);
-	while (p = iter_next(&iter))
+	while ((p = iter_next(&iter)))
 		target_free(*p);
 	vector_free(target->sources);
 	tool_unref(target->tool);

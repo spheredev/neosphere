@@ -1033,7 +1033,7 @@ jsal_pegasus_push_color(color_t color, bool in_ctor)
 {
 	color_t* color_ptr;
 	
-	jsal_push_class_fatobj(PEGASUS_COLOR, in_ctor, sizeof(color_t), &color_ptr);
+	jsal_push_class_fatobj(PEGASUS_COLOR, in_ctor, sizeof(color_t), (void**)&color_ptr);
 	*color_ptr = color;
 }
 
@@ -1042,7 +1042,7 @@ jsal_pegasus_push_job_token(int64_t token)
 {
 	int64_t* ptr;
 
-	jsal_push_class_fatobj(PEGASUS_JOB_TOKEN, false, sizeof(int64_t), &ptr);
+	jsal_push_class_fatobj(PEGASUS_JOB_TOKEN, false, sizeof(int64_t), (void**)&ptr);
 	*ptr = token;
 }
 
@@ -1105,7 +1105,7 @@ create_joystick_objects(void)
 	jsal_push_new_array();
 	num_devices = joy_num_devices();
 	for (i = 0; i < num_devices; ++i) {
-		jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), &device);
+		jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), (void**)&device);
 		jsal_put_prop_index(-2, i);
 		*device = i;
 	}
@@ -1244,7 +1244,7 @@ handle_module_import(void)
 		jsal_error(JS_URI_ERROR, "Relative import() outside of an mJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module_file(specifier, caller_id, PATHS[i], true))
+		if ((path = find_module_file(specifier, caller_id, PATHS[i], true)))
 			break;  // short-circuit
 	}
 	free(caller_id);
@@ -1334,7 +1334,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if (path = find_module_file(id, parent_id, PATHS[i], false))
+		if ((path = find_module_file(id, parent_id, PATHS[i], false)))
 			break;  // short-circuit
 	}
 	if (path == NULL)
@@ -2590,7 +2590,7 @@ js_Joystick_get_Null(int num_args, bool is_ctor, intptr_t magic)
 {
 	int* device;
 
-	jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), &device);
+	jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), (void**)&device);
 	*device = -1;
 
 	cache_value_to_this("Null");
@@ -3751,7 +3751,7 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, intptr_t magic)
 
 	int i;
 
-	if (surface = jsal_get_class_obj(0, PEGASUS_SURFACE)) {
+	if ((surface = jsal_get_class_obj(0, PEGASUS_SURFACE))) {
 		type = jsal_require_int(1);
 		array_idx = 2;
 		if (num_args >= 4) {
@@ -4779,7 +4779,7 @@ js_Texture_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
-	if (path = image_path(image))
+	if ((path = image_path(image)))
 		jsal_push_string(path);
 	else
 		jsal_push_null();

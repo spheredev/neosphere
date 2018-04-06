@@ -167,7 +167,7 @@ debugger_update(void)
 	}
 	
 	// watch for incoming SSj client and attach debugger
-	if (client = server_accept(s_server)) {
+	if ((client = server_accept(s_server))) {
 		if (s_socket != NULL) {
 			console_log(2, "rejected connection from %s, debugger attached",
 				socket_hostname(client));
@@ -476,7 +476,7 @@ process_message(js_step_t* out_step)
 
 		// check if the data is in the source cache
 		iter = vector_enum(s_sources);
-		while (source = iter_next(&iter)) {
+		while ((source = iter_next(&iter))) {
 			if (strcmp(filename, source->name) == 0) {
 				ki_message_add_string(reply, lstr_cstr(source->text));
 				goto finished;

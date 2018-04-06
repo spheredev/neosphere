@@ -788,7 +788,7 @@ map_trigger_at(int x, int y, int layer)
 
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	iter = vector_enum(s_map->triggers);
-	while (trigger = iter_next(&iter)) {
+	while ((trigger = iter_next(&iter))) {
 		if (trigger->z != layer && false)  // layer ignored for compatibility
 			continue;
 		bounds.x1 = trigger->x - tile_w / 2;
@@ -821,7 +821,7 @@ map_zone_at(int x, int y, int layer, int which)
 	iter_t iter;
 
 	iter = vector_enum(s_map->zones);
-	while (zone = iter_next(&iter)) {
+	while ((zone = iter_next(&iter))) {
 		if (zone->layer != layer && false)  // layer ignored for compatibility
 			continue;
 		if (is_point_in_rect(x, y, zone->bounds) && --which < 0)
@@ -1188,7 +1188,7 @@ person_following(const person_t* person, const person_t* leader)
 	const person_t* node;
 
 	node = person;
-	while (node = node->leader)
+	while ((node = node->leader))
 		if (node == leader) return true;
 	return false;
 }
@@ -1493,7 +1493,7 @@ person_set_leader(person_t* person, person_t* leader, int distance)
 		do {
 			if (node == person)
 				return false;
-		} while (node = node->leader);
+		} while ((node = node->leader));
 	}
 
 	// add the person as a follower (or sever existing link if leader==NULL)
@@ -2171,10 +2171,10 @@ free_map(struct map* map)
 		lstr_free(map->persons[i].touch_script);
 	}
 	iter = vector_enum(s_map->triggers);
-	while (trigger = iter_next(&iter))
+	while ((trigger = iter_next(&iter)))
 		script_unref(trigger->script);
 	iter = vector_enum(s_map->zones);
-	while (zone = iter_next(&iter))
+	while ((zone = iter_next(&iter)))
 		script_unref(zone->script);
 	lstr_free(s_map->bgm_file);
 	tileset_free(map->tileset);
@@ -2212,7 +2212,7 @@ get_trigger_at(int x, int y, int layer, int* out_index)
 
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	iter = vector_enum(s_map->triggers);
-	while (trigger = iter_next(&iter)) {
+	while ((trigger = iter_next(&iter))) {
 		if (trigger->z != layer && false)  // layer ignored for compatibility reasons
 			continue;
 		bounds.x1 = trigger->x - tile_w / 2;
@@ -2239,7 +2239,7 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 	int    i;
 
 	iter = vector_enum(s_map->zones); i = -1;
-	while (zone = iter_next(&iter)) {
+	while ((zone = iter_next(&iter))) {
 		if (zone->layer != layer && false)  // layer ignored for compatibility
 			continue;
 		if (is_point_in_rect(x, y, zone->bounds) && which-- == 0) {
@@ -2853,7 +2853,7 @@ update_map_engine(bool in_main_loop)
 		num_zone_steps = px > py ? px : py;
 		for (i = 0; i < num_zone_steps; ++i) {
 			j = 0;
-			while (zone = get_zone_at(x, y, layer, j++, &index)) {
+			while ((zone = get_zone_at(x, y, layer, j++, &index))) {
 				if (zone->steps_left-- <= 0) {
 					last_zone = s_current_zone;
 					s_current_zone = index;

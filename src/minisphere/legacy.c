@@ -195,7 +195,7 @@ socket_v1_connected(socket_v1_t* it)
 	if (it->server != NULL) {
 		// note: Sphere v1 has "magic sockets": server sockets created using ListenOnPort()
 		//       automatically transform into normal client sockets upon first connection.
-		if (client = server_accept(it->server)) {
+		if ((client = server_accept(it->server))) {
 			it->client = client;
 			server_unref(it->server);
 			it->server = NULL;

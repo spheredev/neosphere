@@ -1203,7 +1203,7 @@ jsal_push_sphere_color(color_t color)
 {
 	color_t* color_ptr;
 
-	jsal_push_class_fatobj(SV1_COLOR, false, sizeof(color_t), &color_ptr);
+	jsal_push_class_fatobj(SV1_COLOR, false, sizeof(color_t), (void**)&color_ptr);
 	*color_ptr = color;
 }
 
@@ -2612,7 +2612,7 @@ js_GetDirectoryList(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_new_array();
 	if (!(dir = directory_open(g_game, dir_name)))
 		return true;
-	while (entry = directory_next(dir)) {
+	while ((entry = directory_next(dir))) {
 		if (path_is_file(entry))
 			continue;
 		jsal_push_string(path_hop(entry, path_num_hops(entry) - 1));
@@ -2636,7 +2636,7 @@ js_GetFileList(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_new_array();
 	if (!(dir = directory_open(g_game, dir_name)))
 		return true;
-	while (entry = directory_next(dir)) {
+	while ((entry = directory_next(dir))) {
 		if (!path_is_file(entry))
 			continue;
 		jsal_push_string(path_filename(entry));
@@ -2675,7 +2675,7 @@ js_GetGameList(int num_args, bool is_ctor, intptr_t magic)
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
 			while (file_info = al_read_directory(fse)) {
 				path = path_new(al_get_fs_entry_name(file_info));
-				if (game = game_open(path_cstr(path))) {
+				if ((game = game_open(path_cstr(path)))) {
 					jsal_push_lstring_t(game_manifest(game));
 					if (jsal_try_parse(-1)) {
 						jsal_push_string(path_cstr(path));
@@ -4503,7 +4503,7 @@ js_ListenOnPort(int num_args, bool is_ctor, intptr_t magic)
 
 	port = jsal_to_int(0);
 
-	if (socket = socket_v1_new_server(port))
+	if ((socket = socket_v1_new_server(port)))
 		jsal_push_class_obj(SV1_SOCKET, socket, false);
 	else
 		jsal_push_null();
@@ -4680,7 +4680,7 @@ js_OpenAddress(int num_args, bool is_ctor, intptr_t magic)
 	hostname = jsal_require_string(0);
 	port = jsal_to_int(1);
 
-	if (socket = socket_v1_new_client(hostname, port))
+	if ((socket = socket_v1_new_client(hostname, port)))
 		jsal_push_class_obj(SV1_SOCKET, socket, false);
 	else
 		jsal_push_null();
@@ -6675,7 +6675,7 @@ js_File_getKey(int num_args, bool is_ctor, intptr_t magic)
 	jsal_pop(1);
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
-	if (key = kev_get_key(file, index))
+	if ((key = kev_get_key(file, index)))
 		jsal_push_string(key);
 	else
 		jsal_push_null();
@@ -7471,7 +7471,7 @@ js_RawFile_write(int num_args, bool is_ctor, intptr_t magic)
 	if (jsal_is_string(0)) {
 		data = jsal_get_lstring(0, &write_size);
 	}
-	else if (array = jsal_get_class_obj(0, SV1_BYTE_ARRAY)) {
+	else if ((array = jsal_get_class_obj(0, SV1_BYTE_ARRAY))) {
 		data = bytearray_buffer(array);
 		write_size = bytearray_len(array);
 	}

@@ -592,7 +592,7 @@ shader_use(shader_t* it, bool force_set)
 	// set any uniforms defined while we were inactive
 	if (it != NULL) {
 		iter = vector_enum(it->uniforms);
-		while (uniform = iter_next(&iter)) {
+		while ((uniform = iter_next(&iter))) {
 			switch (uniform->type) {
 			case UNIFORM_BOOL:
 				al_set_shader_bool(uniform->name, uniform->bool_value);
@@ -818,12 +818,13 @@ vbo_upload(vbo_t* it)
 static void
 free_cached_uniform(shader_t* shader, const char* name)
 {
+	struct uniform* uniform;
+
 	iter_t iter;
-	struct uniform* p;
 
 	iter = vector_enum(shader->uniforms);
-	while (p = iter_next(&iter)) {
-		if (strcmp(p->name, name) == 0)
+	while ((uniform = iter_next(&iter))) {
+		if (strcmp(uniform->name, name) == 0)
 			iter_remove(&iter);
 	}
 }

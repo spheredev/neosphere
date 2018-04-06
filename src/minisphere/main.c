@@ -674,7 +674,7 @@ find_startup_game(path_t* *out_path)
 	*out_path = path_dup(assets_path());
 	engine_dir = al_create_fs_entry(path_cstr(*out_path));
 	al_open_directory(engine_dir);
-	while (fse = al_read_directory(engine_dir)) {
+	while ((fse = al_read_directory(engine_dir))) {
 		filename = al_get_fs_entry_name(fse);
 		file_ext = strrchr(filename, '.');
 		if (file_ext != NULL && strcmp(file_ext, ".spk") == 0) {

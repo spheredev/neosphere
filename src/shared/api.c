@@ -428,7 +428,7 @@ jsal_push_class_fatobj(int class_id, bool in_ctor, size_t data_size, void* *out_
 		jsal_push_ref_weak(prototype);
 	}
 
-	index = jsal_push_new_host_object(on_finalize_sphere_object, sizeof(struct object_data) + data_size, &object_data);
+	index = jsal_push_new_host_object(on_finalize_sphere_object, sizeof(struct object_data) + data_size, (void**)&object_data);
 	object_data->class_id = class_id;
 	object_data->finalizer = finalizer;
 	object_data->ptr = &object_data[1];
