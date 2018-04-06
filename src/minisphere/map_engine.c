@@ -2848,8 +2848,8 @@ update_map_engine(bool in_main_loop)
 	//       may be updated multiple times in a single frame.
 	for (k = 0; k < PLAYER_MAX; ++k) if (s_players[k].person != NULL) {
 		person_get_xy(s_players[k].person, &x, &y, false);
-		px = abs(x - start_x[k]);
-		py = abs(y - start_y[k]);
+		px = fabs(x - start_x[k]);
+		py = fabs(y - start_y[k]);
 		num_zone_steps = px > py ? px : py;
 		for (i = 0; i < num_zone_steps; ++i) {
 			j = 0;

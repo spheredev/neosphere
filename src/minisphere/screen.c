@@ -284,12 +284,9 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	double            time_left;
 	char              timestamp[100];
 	int               x, y;
-
 #if defined(MINISPHERE_SPHERUN)
 	double            start_time;
 #endif
-
-	size_t i;
 
 #if defined(MINISPHERE_SPHERUN)
 	start_time = al_get_time();
@@ -323,8 +320,6 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			strftime(timestamp, 100, "%Y%m%d", localtime(&datetime));
 			do {
 				filename = strnewf("%s-%s-%d.png", game_filename, timestamp, serial++);
-				for (i = 0; filename[i] != '\0'; ++i)
-					filename[i];
 				path_strip(path);
 				path_append(path, filename);
 				pathstr = path_cstr(path);

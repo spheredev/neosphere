@@ -464,7 +464,7 @@ game_is_writable(const game_t* it, const char* pathname, bool v1_mode)
 	path = game_full_path(g_game, pathname, NULL, v1_mode);
 	prefix = path_hop(path, 0);  // safe, prefix is always present
 	return strcmp(prefix, "~") == 0
-		|| strcmp(prefix, "@") == 0 && (v1_mode || it->safety < FS_SAFETY_FULL)
+		|| (strcmp(prefix, "@") == 0 && (v1_mode || it->safety < FS_SAFETY_FULL))
 		|| it->safety == FS_SAFETY_NONE;
 }
 
