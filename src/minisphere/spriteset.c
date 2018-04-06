@@ -119,16 +119,17 @@ spritesets_init(void)
 void
 spritesets_uninit(void)
 {
+	spriteset_t** spriteset_ptr;
+
 	iter_t        iter;
-	spriteset_t** p_spriteset;
 
 	console_log(1, "shutting down spriteset manager");
 	console_log(2, "    objects created: %u", s_next_spriteset_id);
 	console_log(2, "    cache hits: %u", s_num_cache_hits);
 	if (s_load_cache != NULL) {
 		iter = vector_enum(s_load_cache);
-		while (p_spriteset = iter_next(&iter))
-			spriteset_unref(*p_spriteset);
+		while ((spriteset_ptr = iter_next(&iter)))
+			spriteset_unref(*spriteset_ptr);
 		vector_free(s_load_cache);
 	}
 }
@@ -183,8 +184,8 @@ spriteset_load(const char* filename)
 	struct rss_header   rss;
 	long                skip_size;
 	spriteset_t*        spriteset = NULL;
+	spriteset_t**       spriteset_ptr;
 	long                v2_data_offset;
-	spriteset_t*        *p_spriteset;
 
 	iter_t iter;
 	int i, j;
@@ -192,11 +193,11 @@ spriteset_load(const char* filename)
 	// check load cache to see if we loaded this file once already
 	if (s_load_cache != NULL) {
 		iter = vector_enum(s_load_cache);
-		while (p_spriteset = iter_next(&iter)) {
-			if (strcmp(filename, (*p_spriteset)->filename) == 0) {
-				console_log(2, "using cached spriteset #%u for '%s'", (*p_spriteset)->id, filename);
+		while ((spriteset_ptr = iter_next(&iter))) {
+			if (strcmp(filename, (*spriteset_ptr)->filename) == 0) {
+				console_log(2, "using cached spriteset #%u for '%s'", (*spriteset_ptr)->id, filename);
 				++s_num_cache_hits;
-				return spriteset_clone(*p_spriteset);
+				return spriteset_clone(*spriteset_ptr);
 			}
 		}
 	}
@@ -321,8 +322,8 @@ spriteset_load(const char* filename)
 
 	if (s_load_cache != NULL) {
 		while (vector_len(s_load_cache) >= 10) {
-			p_spriteset = vector_get(s_load_cache, 0);
-			spriteset_unref(*p_spriteset);
+			spriteset_ptr = vector_get(s_load_cache, 0);
+			spriteset_unref(*spriteset_ptr);
 			vector_remove(s_load_cache, 0);
 		}
 		spriteset_ref(spriteset);

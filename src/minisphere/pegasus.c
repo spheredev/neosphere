@@ -4749,7 +4749,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		image_fill(image, fill_color);
 	}
-	else if (src_image = jsal_get_class_obj(0, PEGASUS_TEXTURE)) {
+	else if ((src_image = jsal_get_class_obj(0, PEGASUS_TEXTURE))) {
 		// create a Texture from a Surface (or another Texture)
 		if (!(image = image_dup(src_image)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
@@ -4815,6 +4815,7 @@ js_Texture_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Texture_download(int num_args, bool is_ctor, intptr_t magic)
 {
+	void*          buffer;
 	int            height;
 	image_t*       image;
 	const color_t* in_ptr;
@@ -4833,8 +4834,9 @@ js_Texture_download(int num_args, bool is_ctor, intptr_t magic)
 	height = image_height(image);
 	if (!(lock = image_lock(image, false, true)))
 		jsal_error(JS_ERROR, "Couldn't download from GPU texture");
-	jsal_push_new_buffer(JS_UINT8ARRAY_CLAMPED, width * height * sizeof(color_t), &out_ptr);
+	jsal_push_new_buffer(JS_UINT8ARRAY_CLAMPED, width * height * sizeof(color_t), &buffer);
 	in_ptr = lock->pixels;
+	out_ptr = buffer;
 	for (y = 0; y < height; ++y) {
 		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
 		out_ptr += width;

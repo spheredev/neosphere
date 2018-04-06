@@ -549,15 +549,15 @@ int tinydir_copy(const char *src, const char *dest, int skip_if_exists)
 	char        buffer[32768];
 	FILE*       f1;
 	FILE*       f2;
-	size_t      n_bytes;
+	size_t      num_bytes;
 	struct stat sb;
 
 	if (skip_if_exists && stat(dest, &sb) == 0)
 		return -1;
 	if (!(f1 = fopen(src, "rb"))) return -1;
 	if (!(f2 = fopen(dest, "wb"))) return -1;
-	while (n_bytes = fread(buffer, sizeof(char), sizeof(buffer), f1)) {
-		if (fwrite(buffer, sizeof(char), n_bytes, f2) != n_bytes)
+	while ((num_bytes = fread(buffer, sizeof(char), sizeof(buffer), f1))) {
+		if (fwrite(buffer, sizeof(char), num_bytes, f2) != num_bytes)
 			goto on_error;
 	}
 	fclose(f1);

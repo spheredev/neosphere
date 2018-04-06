@@ -214,6 +214,7 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs)
 	// as its filename.  as such we have to do some ugly parsing and de-duplication,
 	// particularly in the case of directories.
 
+	struct spk_entry* file_info;
 	lstring_t*        filename;
 	char*             found_dirname;
 	bool              is_in_set;
@@ -221,18 +222,17 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs)
 	const char*       maybe_dirname;
 	const char*       maybe_filename;
 	const char*       match;
-	struct spk_entry* p_entry;
 
 	iter_t iter, iter2;
 	lstring_t** item;
 
 	list = vector_new(sizeof(lstring_t*));
 	iter = vector_enum(package->index);
-	while (p_entry = iter_next(&iter)) {
+	while ((file_info = iter_next(&iter))) {
 		if (!want_dirs) {  // list files
-			if (!(match = strstr(p_entry->file_path, dirname)))
+			if (!(match = strstr(file_info->file_path, dirname)))
 				continue;
-			if (match != p_entry->file_path)
+			if (match != file_info->file_path)
 				continue;
 			maybe_filename = match + strlen(dirname);
 			if (dirname[strlen(dirname) - 1] != '/') {
@@ -248,9 +248,9 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs)
 			vector_push(list, &filename);
 		}
 		else {  // list directories
-			if (!(match = strstr(p_entry->file_path, dirname)))
+			if (!(match = strstr(file_info->file_path, dirname)))
 				continue;
-			if (match != p_entry->file_path)
+			if (match != file_info->file_path)
 				continue;
 			maybe_dirname = match + strlen(dirname);
 			if (dirname[strlen(dirname) - 1] != '/') {

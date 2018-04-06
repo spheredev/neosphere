@@ -89,11 +89,11 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	time_t        last_mtime = 0;
 	int           line_number;
 	int           num_errors;
+	path_t**      path_ptr;
 	bool          result_ok = true;
 	struct stat   stats;
 
 	iter_t iter;
-	path_t* *p_path;
 
 	if (tool == NULL)
 		return true;
@@ -111,9 +111,9 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	jsal_push_string(path_cstr(out_path));
 	jsal_push_new_array();
 	iter = vector_enum(in_paths);
-	while (p_path = iter_next(&iter)) {
+	while ((path_ptr = iter_next(&iter))) {
 		array_index = jsal_get_length(-1);
-		jsal_push_string(path_cstr(*p_path));
+		jsal_push_string(path_cstr(*path_ptr));
 		jsal_put_prop_index(-2, array_index);
 	}
 	num_errors = visor_num_errors(visor);

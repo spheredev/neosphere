@@ -2673,7 +2673,7 @@ js_GetGameList(int num_args, bool is_ctor, intptr_t magic)
 	for (i = sizeof paths / sizeof(path_t*) - 1; i >= 0; --i) {
 		fse = al_create_fs_entry(path_cstr(paths[i]));
 		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
-			while (file_info = al_read_directory(fse)) {
+			while ((file_info = al_read_directory(fse))) {
 				path = path_new(al_get_fs_entry_name(file_info));
 				if ((game = game_open(path_cstr(path)))) {
 					jsal_push_lstring_t(game_manifest(game));

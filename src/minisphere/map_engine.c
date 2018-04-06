@@ -1952,7 +1952,7 @@ change_map(const char* filename, bool preserve_persons)
 		lstr_free(s_last_bgm_file);
 		s_last_bgm_file = lstr_dup(s_map->bgm_file);
 		path = game_full_path(g_game, lstr_cstr(s_map->bgm_file), "sounds", true);
-		if (s_map_bgm_stream = sound_new(path_cstr(path))) {
+		if ((s_map_bgm_stream = sound_new(path_cstr(path)))) {
 			sound_set_repeat(s_map_bgm_stream, true);
 			sound_play(s_map_bgm_stream, s_bgm_mixer);
 		}

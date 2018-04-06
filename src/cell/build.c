@@ -346,9 +346,9 @@ build_package(build_t* build, const char* filename)
 	const path_t* in_path;
 	path_t*       out_path;
 	spk_writer_t* spk;
+	target_t**    target_ptr;
 
 	iter_t iter;
-	target_t** p_target;
 
 	visor_begin_op(build->visor, "packaging game to '%s'", filename);
 	spk = spk_create(filename);
@@ -356,15 +356,15 @@ build_package(build_t* build, const char* filename)
 	spk_add_file(spk, build->fs, "@/game.sgm", "game.sgm");
 	package_dir(build, spk, "#/");
 	iter = vector_enum(build->targets);
-	while (p_target = iter_next(&iter)) {
-		in_path = target_path(*p_target);
+	while ((target_ptr = iter_next(&iter))) {
+		in_path = target_path(*target_ptr);
 		if (path_num_hops(in_path) == 0 || !path_hop_is(in_path, 0, "@"))
 			continue;
-		out_path = path_dup(target_path(*p_target));
+		out_path = path_dup(target_path(*target_ptr));
 		path_remove_hop(out_path, 0);
 		visor_begin_op(build->visor, "packaging '%s'", path_cstr(out_path));
 		spk_add_file(spk, build->fs,
-			path_cstr(target_path(*p_target)),
+			path_cstr(target_path(*target_ptr)),
 			path_cstr(out_path));
 		path_free(out_path);
 		visor_end_op(build->visor);
@@ -386,9 +386,9 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	const path_t* path;
 	const path_t* source_path;
 	vector_t*     sorted_targets;
+	target_t**    target_ptr;
 
 	iter_t iter;
-	target_t** p_target;
 
 	// ensure there are no conflicting targets before building.  to simplify the check,
 	// we sort the targets by filename first and then look for runs of identical filenames.
@@ -419,11 +419,11 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 
 	// build all relevant targets
 	iter = vector_enum(build->targets);
-	while (p_target = iter_next(&iter)) {
-		path = target_path(*p_target);
+	while ((target_ptr = iter_next(&iter))) {
+		path = target_path(*target_ptr);
 		if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
 			continue;
-		target_build(*p_target, build->visor, rebuild_all);
+		target_build(*target_ptr, build->visor, rebuild_all);
 	}
 	visor_end_op(build->visor);
 
@@ -441,11 +441,11 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		jsal_get_prop_string(-1, "manifest");
 		jsal_push_new_object();
 		iter = vector_enum(build->targets);
-		while (p_target = iter_next(&iter)) {
-			path = target_path(*p_target);
+		while ((target_ptr = iter_next(&iter))) {
+			path = target_path(*target_ptr);
 			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
 				continue;
-			if (!(source_path = target_source_path(*p_target)))
+			if (!(source_path = target_source_path(*target_ptr)))
 				continue;
 			jsal_push_string(path_cstr(path));
 			jsal_push_string(path_cstr(source_path));
@@ -822,31 +822,31 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	bool         ignore_dir;
 	vector_t*    list;
 	path_t*      name;
+	path_t**     path_ptr;
 	target_t*    target;
 
 	iter_t iter;
-	path_t* *p_path;
 
 	if (!(list = fs_list_dir(fs, path_cstr(path))))
 		return;
 
 	iter = vector_enum(list);
-	while (p_path = iter_next(&iter)) {
-		ignore_dir = fs_is_game_dir(fs, path_cstr(*p_path))
+	while ((path_ptr = iter_next(&iter))) {
+		ignore_dir = fs_is_game_dir(fs, path_cstr(*path_ptr))
 			&& path_num_hops(path) > 0
 			&& !path_hop_is(path, 0, "@");
-		if (!path_is_file(*p_path) && !ignore_dir && recursive) {
-			name = path_new_dir(path_hop(*p_path, path_num_hops(*p_path) - 1));
-			file_path = path_dup(*p_path);
+		if (!path_is_file(*path_ptr) && !ignore_dir && recursive) {
+			name = path_new_dir(path_hop(*path_ptr, path_num_hops(*path_ptr) - 1));
+			file_path = path_dup(*path_ptr);
 			if (subdir_path != NULL)
 				path_rebase(name, subdir_path);
 			make_file_targets(fs, wildcard, file_path, name, targets, true, timestamp);
 			path_free(file_path);
 			path_free(name);
 		}
-		else if (path_is_file(*p_path) && wildcmp(path_filename(*p_path), wildcard)) {
-			name = path_new(path_filename(*p_path));
-			file_path = path_dup(*p_path);
+		else if (path_is_file(*path_ptr) && wildcmp(path_filename(*path_ptr), wildcard)) {
+			name = path_new(path_filename(*path_ptr));
+			file_path = path_dup(*path_ptr);
 			if (subdir_path != NULL)
 				path_rebase(name, subdir_path);
 			target = target_new(name, fs, file_path, NULL, timestamp, false);
@@ -857,8 +857,8 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	}
 
 	iter = vector_enum(list);
-	while (p_path = iter_next(&iter))
-		path_free(*p_path);
+	while ((path_ptr = iter_next(&iter)))
+		path_free(*path_ptr);
 	vector_free(list);
 }
 

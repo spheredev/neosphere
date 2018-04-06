@@ -269,26 +269,26 @@ debugger_source_name(const char* compiled_name)
 void
 debugger_add_source(const char* name, const lstring_t* text)
 {
-	struct source cache_entry;
+	struct source* source;
+	struct source  source_obj;
 
 	iter_t iter;
-	struct source* p_source;
 
 	if (s_sources == NULL)
 		return;
 
 	iter = vector_enum(s_sources);
-	while (p_source = iter_next(&iter)) {
-		if (strcmp(name, p_source->name) == 0) {
-			lstr_free(p_source->text);
-			p_source->text = lstr_dup(text);
+	while ((source = iter_next(&iter))) {
+		if (strcmp(name, source->name) == 0) {
+			lstr_free(source->text);
+			source->text = lstr_dup(text);
 			return;
 		}
 	}
 
-	cache_entry.name = strdup(name);
-	cache_entry.text = lstr_dup(text);
-	vector_push(s_sources, &cache_entry);
+	source_obj.name = strdup(name);
+	source_obj.text = lstr_dup(text);
+	vector_push(s_sources, &source_obj);
 }
 
 void

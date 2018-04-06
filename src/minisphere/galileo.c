@@ -263,7 +263,7 @@ model_ref(model_t* it)
 void
 model_unref(model_t* it)
 {
-	shape_t** i_shape;
+	shape_t** shape_ptr;
 
 	iter_t iter;
 
@@ -273,8 +273,8 @@ model_unref(model_t* it)
 	console_log(4, "disposing model #%u no longer in use", it->id);
 
 	iter = vector_enum(it->shapes);
-	while (i_shape = iter_next(&iter))
-		shape_unref(*i_shape);
+	while ((shape_ptr = iter_next(&iter)))
+		shape_unref(*shape_ptr);
 	vector_free(it->shapes);
 	shader_unref(it->shader);
 	transform_unref(it->transform);

@@ -538,11 +538,11 @@ lost_dvalue:
 bool
 ki_message_send(const ki_message_t* it, socket_t* socket)
 {
-	ki_atom_t* atom;
-	ki_type_t  lead_tag;
+	ki_atom_t*  atom;
+	ki_atom_t** atom_ptr;
+	ki_type_t   lead_tag;
 
 	iter_t iter;
-	ki_atom_t* *p_dvalue;
 
 	lead_tag = it->command == KI_REQ ? KI_REQ
 		: it->command == KI_REP ? KI_REP
@@ -553,8 +553,8 @@ ki_message_send(const ki_message_t* it, socket_t* socket)
 	ki_atom_send(atom, socket);
 	ki_atom_free(atom);
 	iter = vector_enum(it->atoms);
-	while (p_dvalue = iter_next(&iter))
-		ki_atom_send(*p_dvalue, socket);
+	while ((atom_ptr = iter_next(&iter)))
+		ki_atom_send(*atom_ptr, socket);
 	atom = ki_atom_new(KI_EOM);
 	ki_atom_send(atom, socket);
 	ki_atom_free(atom);

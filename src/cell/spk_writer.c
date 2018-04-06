@@ -83,10 +83,10 @@ spk_close(spk_writer_t* writer)
 {
 	const uint16_t VERSION = 1;
 
+	struct spk_entry* file_info;
 	struct spk_header hdr;
 	uint32_t          idx_offset;
 	uint16_t          path_size;
-	struct spk_entry  *p_entry;
 
 	iter_t iter;
 
@@ -96,22 +96,22 @@ spk_close(spk_writer_t* writer)
 	// write package index
 	idx_offset = ftell(writer->file);
 	iter = vector_enum(writer->index);
-	while (p_entry = iter_next(&iter)) {
+	while ((file_info = iter_next(&iter))) {
 		// for compatibility with Sphere 1.5, we have to include the NUL terminator
 		// in the filename. this, despite the fact that there is an explicit length
 		// field in the header...
-		path_size = (uint16_t)strlen(p_entry->pathname) + 1;
+		path_size = (uint16_t)strlen(file_info->pathname) + 1;
 
 		fwrite(&VERSION, sizeof(uint16_t), 1, writer->file);
 		fwrite(&path_size, sizeof(uint16_t), 1, writer->file);
-		fwrite(&p_entry->offset, sizeof(uint32_t), 1, writer->file);
-		fwrite(&p_entry->file_size, sizeof(uint32_t), 1, writer->file);
-		fwrite(&p_entry->pack_size, sizeof(uint32_t), 1, writer->file);
-		fwrite(p_entry->pathname, 1, path_size, writer->file);
+		fwrite(&file_info->offset, sizeof(uint32_t), 1, writer->file);
+		fwrite(&file_info->file_size, sizeof(uint32_t), 1, writer->file);
+		fwrite(&file_info->pack_size, sizeof(uint32_t), 1, writer->file);
+		fwrite(file_info->pathname, 1, path_size, writer->file);
 
 		// free the pathname buffer now, we no longer need it and
 		// it saves us a few lines of code later.
-		free(p_entry->pathname);
+		free(file_info->pathname);
 	}
 
 	// write the SPK header

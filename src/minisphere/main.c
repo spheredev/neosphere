@@ -291,7 +291,7 @@ main(int argc, char* argv[])
 	}
 
 	// switch to fullscreen if necessary and initialize clipping
-	if (fullscreen_mode == FULLSCREEN_ON || fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game))
+	if (fullscreen_mode == FULLSCREEN_ON || (fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game)))
 		screen_toggle_fullscreen(g_screen);
 	screen_show_mouse(g_screen, false);
 

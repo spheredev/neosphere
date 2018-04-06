@@ -87,7 +87,7 @@ source_new(const char* text)
 
 	p_source = text;
 	lines = vector_new(sizeof(char*));
-	while (line_text = read_line(&p_source))
+	while ((line_text = read_line(&p_source)))
 		vector_push(lines, &line_text);
 
 	source = calloc(1, sizeof(source_t));
@@ -98,13 +98,15 @@ source_new(const char* text)
 void
 source_free(source_t* source)
 {
-	iter_t it;
-	char*  *p_line;
+	char** text_ptr;
 
-	if (source == NULL) return;
-	it = vector_enum(source->lines);
-	while (p_line = iter_next(&it))
-		free(*p_line);
+	iter_t iter;
+
+	if (source == NULL)
+		return;
+	iter = vector_enum(source->lines);
+	while ((text_ptr = iter_next(&iter)))
+		free(*text_ptr);
 	vector_free(source->lines);
 	free(source);
 }

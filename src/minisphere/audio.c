@@ -125,9 +125,10 @@ audio_init(void)
 void
 audio_uninit(void)
 {
+	struct sample_instance* sample_instance;
+	sound_t**               sound_ptr;
+
 	iter_t iter;
-	struct sample_instance *p_sample;
-	sound_t*               *p_sound;
 
 	if (--s_num_refs > 0)
 		return;
@@ -135,14 +136,14 @@ audio_uninit(void)
 	console_log(1, "shutting down audio subsystem");
 
 	iter = vector_enum(s_active_sounds);
-	while (p_sound = iter_next(&iter))
-		sound_unref(*p_sound);
+	while ((sound_ptr = iter_next(&iter)))
+		sound_unref(*sound_ptr);
 	vector_free(s_active_sounds);
 	iter = vector_enum(s_active_samples);
-	while (p_sample = iter_next(&iter)) {
-		al_destroy_sample_instance(p_sample->ptr);
-		sample_unref(p_sample->sample);
-		mixer_unref(p_sample->mixer);
+	while ((sample_instance = iter_next(&iter))) {
+		al_destroy_sample_instance(sample_instance->ptr);
+		sample_unref(sample_instance->sample);
+		mixer_unref(sample_instance->mixer);
 	}
 	vector_free(s_active_samples);
 	vector_free(s_active_streams);
@@ -153,35 +154,37 @@ audio_uninit(void)
 void
 audio_resume(void)
 {
+	sound_t** sound_ptr;
+
 	iter_t iter;
-	sound_t*  *p_sound;
 
 	iter = vector_enum(s_active_sounds);
-	while (p_sound = iter_next(&iter)) {
-		if ((*p_sound)->suspended)
-			sound_pause(*p_sound, false);
+	while ((sound_ptr = iter_next(&iter))) {
+		if ((*sound_ptr)->suspended)
+			sound_pause(*sound_ptr, false);
 	}
 }
 
 void
 audio_suspend(void)
 {
+	sound_t** sound_ptr;
+
 	iter_t iter;
-	sound_t*  *p_sound;
 
 	iter = vector_enum(s_active_sounds);
-	while (p_sound = iter_next(&iter)) {
-		(*p_sound)->suspended = sound_playing(*p_sound);
-		sound_pause(*p_sound, true);
+	while ((sound_ptr = iter_next(&iter))) {
+		(*sound_ptr)->suspended = sound_playing(*sound_ptr);
+		sound_pause(*sound_ptr, true);
 	}
 }
 
 void
 audio_update(void)
 {
-	sound_t*               sound;
-	struct sample_instance *p_sample;
-	stream_t*              *p_stream;
+	sound_t*                sound;
+	struct sample_instance* sample_instance;
+	stream_t**              stream_ptr;
 
 	iter_t iter;
 
@@ -189,16 +192,16 @@ audio_update(void)
 		return;
 
 	iter = vector_enum(s_active_streams);
-	while (p_stream = iter_next(&iter))
-		update_stream(*p_stream);
+	while ((stream_ptr = iter_next(&iter)))
+		update_stream(*stream_ptr);
 
 	iter = vector_enum(s_active_samples);
-	while (p_sample = iter_next(&iter)) {
-		if (al_get_sample_instance_playing(p_sample->ptr))
+	while ((sample_instance = iter_next(&iter))) {
+		if (al_get_sample_instance_playing(sample_instance->ptr))
 			continue;
-		al_destroy_sample_instance(p_sample->ptr);
-		sample_unref(p_sample->sample);
-		mixer_unref(p_sample->mixer);
+		al_destroy_sample_instance(sample_instance->ptr);
+		sample_unref(sample_instance->sample);
+		mixer_unref(sample_instance->mixer);
 		iter_remove(&iter);
 	}
 
@@ -408,17 +411,18 @@ sample_play(sample_t* sample, mixer_t* mixer)
 void
 sample_stop_all(sample_t* sample)
 {
+	struct sample_instance* instance;
+
 	iter_t iter;
-	struct sample_instance* p_instance;
 
 	console_log(2, "stopping all instances of sample #%u", sample->id);
 	iter = vector_enum(s_active_samples);
-	while (p_instance = iter_next(&iter)) {
-		if (p_instance->sample != sample)
+	while ((instance = iter_next(&iter))) {
+		if (instance->sample != sample)
 			continue;
-		al_destroy_sample_instance(p_instance->ptr);
-		sample_unref(p_instance->sample);
-		mixer_unref(p_instance->mixer);
+		al_destroy_sample_instance(instance->ptr);
+		sample_unref(instance->sample);
+		mixer_unref(instance->mixer);
 		iter_remove(&iter);
 	}
 }
@@ -676,7 +680,7 @@ stream_ref(stream_t* stream)
 void
 stream_unref(stream_t* stream)
 {
-	stream_t* *p_stream;
+	stream_t** stream_ptr;
 
 	iter_t iter;
 
@@ -690,8 +694,8 @@ stream_unref(stream_t* stream)
 	free(stream->buffer);
 	free(stream);
 	iter = vector_enum(s_active_streams);
-	while (p_stream = iter_next(&iter)) {
-		if (*p_stream == stream) {
+	while ((stream_ptr = iter_next(&iter))) {
+		if (*stream_ptr == stream) {
 			vector_remove(s_active_streams, iter.index);
 			break;
 		}
