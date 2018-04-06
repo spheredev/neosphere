@@ -110,6 +110,7 @@ clean:
 bin/minisphere:
 	mkdir -p bin
 	$(CC) -o bin/minisphere $(CFLAGS) \
+	      -fno-omit-frame-pointer \
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
 	      -Ldep/lib/$(arch) \
 	      -Wl,-rpath=\$$ORIGIN \
@@ -120,6 +121,7 @@ bin/minisphere:
 bin/spherun:
 	mkdir -p bin
 	$(CC) -o bin/spherun $(CFLAGS) \
+	      -fno-omit-frame-pointer \
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
 	      -Ldep/lib/$(arch) \
 	      -Wl,-rpath=\$$ORIGIN \
@@ -130,6 +132,7 @@ bin/spherun:
 bin/cell:
 	mkdir -p bin
 	$(CC) -o bin/cell $(CFLAGS) \
+	      -fno-omit-frame-pointer \
 	      -Idep/include -Isrc/shared \
 	      -Ldep/lib/$(arch) \
 	      -Wl,-rpath=\$$ORIGIN \
