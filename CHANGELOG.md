@@ -6,7 +6,7 @@ v5.2.0 - TBD
 
 * Adds profiling support to SpheRun; call `SSj.profile()` and pass an object
   and method name to have all subsequent calls to that function timed and
-  included in an overall performance report on shutdown.
+  included in a detailed Performance Report on shutdown.
 * Adds new APIs for data compression, accessible through the `Z` namespace.
 * Adds `Shape.drawImmediate()` function which avoids the overhead of creating
   VertexList and Shape objects for immediate-mode drawing.
@@ -14,15 +14,14 @@ v5.2.0 - TBD
 * Adds `Texture#upload()` and `Texture#download()` to allow direct manipulation
   of a texture's RGBA bitmap.
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
-* Adds `SSj.now()` for getting microsecond-accurate timestamps for debugging
-  or profiling.
+* Adds `SSj.now()` for getting microsecond-accurate timestamps under SpheRun.
 * Adds support for render-to-texture by allowing `Surface` objects to be used
   as textures, without calling `.toTexture()` first.
 * Adds `[Symbol.toStringTag]` and `.constructor` for Sphere v2 objects.
-* Improves performance of most native object constructors.
+* Improves the overall performance of all API functions and constructors.
 * Improves performance of all `Prim` drawing functions.
 * Removes the `Image` class from the bundled Sphere Runtime.
-* Fixes an internal memory leak mostly affecting Dispatch job execution.
+* Fixes an internal memory leak mostly affecting `Dispatch` job execution.
 * Fixes a bug where outstanding promise continuations get eaten when the user
   closes the game window.
 * Fixes a bug where the v1 `Font#setCharacterImage()` API doesn't recalculate
