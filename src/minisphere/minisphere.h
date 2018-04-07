@@ -43,6 +43,12 @@
 #include <time.h>
 #include <sys/stat.h>
 
+#if !defined(_WIN32)
+#include <alloca.h>
+#else
+#include <malloc.h>
+#endif
+
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>

@@ -7419,7 +7419,7 @@ js_RawFile_read(int num_args, bool is_ctor, intptr_t magic)
 	}
 	if (num_bytes <= 0 || num_bytes > INT_MAX)
 		jsal_error(JS_RANGE_ERROR, "invalid read size");
-	if (!(read_buffer = malloc(num_bytes)))
+	if (!(read_buffer = alloca(num_bytes)))
 		jsal_error(JS_ERROR, "couldn't read from file");
 	num_bytes = (long)file_read(file, read_buffer, num_bytes, 1);
 	if (num_args < 1)  // reset file position after whole-file read
@@ -7551,7 +7551,7 @@ js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_ERROR, "socket has been closed");
 	if (!socket_v1_connected(socket))
 		jsal_error(JS_ERROR, "socket is not connected");
-	if (!(read_buffer = malloc(length)))
+	if (!(read_buffer = alloca(length)))
 		jsal_error(JS_ERROR, "couldn't allocate read buffer");
 	socket_v1_read(socket, read_buffer, length);
 	if (!(array = bytearray_from_buffer(read_buffer, length)))

@@ -45,6 +45,11 @@
 #include <limits.h>
 #include <math.h>
 #include <setjmp.h>
+#if !defined(_WIN32)
+#include <alloca.h>
+#else
+#include <malloc.h>
+#endif
 
 #include <ChakraCore.h>
 #include "vector.h"
@@ -398,16 +403,17 @@ jsal_call_method(int num_args)
 {
 	/* [ ... function this arg1..argN ] -> [ ... retval ] */
 
-	JsValueRef arguments[16];
-	JsValueRef function_ref;
-	int        offset;
-	JsValueRef retval_ref;
+	JsValueRef* arguments;
+	JsValueRef  function_ref;
+	int         offset;
+	JsValueRef  retval_ref;
 
 	int i;
 
 	num_args += 1;  // treat 'this' as first argument
 	function_ref = get_value(-num_args - 1);
 	offset = -num_args;
+	arguments = alloca(num_args * sizeof(JsValueRef));
 	for (i = 0; i < num_args; ++i)
 		arguments[i] = get_value(i + offset);
 	JsCallFunction(function_ref, arguments, (unsigned short)num_args, &retval_ref);
@@ -438,15 +444,16 @@ jsal_construct(int num_args)
 {
 	/* [ ... constructor arg1..argN ] -> [ ... retval ] */
 
-	JsValueRef arguments[16];
-	JsValueRef function_ref;
-	int        offset;
-	JsValueRef retval_ref;
+	JsValueRef* arguments;
+	JsValueRef  function_ref;
+	int         offset;
+	JsValueRef  retval_ref;
 
 	int i;
 
 	function_ref = get_value(-num_args - 1);
 	offset = -num_args;
+	arguments = alloca((num_args + 1) * sizeof(JsValueRef));
 	arguments[0] = s_js_undefined;
 	for (i = 0; i < num_args; ++i)
 		arguments[i + 1] = get_value(i + offset);
@@ -2436,10 +2443,9 @@ make_property_id(JsValueRef key)
 	}
 	else {
 		JsCopyString(key, NULL, 0, &key_length);
-		key_name = malloc(key_length);
+		key_name = alloca(key_length);
 		JsCopyString(key, key_name, key_length, NULL);
 		JsCreatePropertyId(key_name, key_length, &property_id);
-		free(key_name);
 	}
 	return property_id;
 }

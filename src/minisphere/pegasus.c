@@ -3094,14 +3094,13 @@ js_Shader_setFloatArray(int num_args, bool is_ctor, intptr_t magic)
 
 	size = (int)jsal_get_length(1);
 
-	values = malloc(size * sizeof(float));
+	values = alloca(size * sizeof(float));
 	for (i = 0; i < size; ++i) {
 		jsal_get_prop_index(1, (int)i);
 		values[i] = jsal_require_number(-1);
 		jsal_pop(1);
 	}
 	shader_put_float_array(shader, name, values, size);
-	free(values);
 	return false;
 }
 
@@ -3166,14 +3165,13 @@ js_Shader_setIntArray(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_TYPE_ERROR, "Expected array as second argument");
 
 	size = (int)jsal_get_length(1);
-	values = malloc(size * sizeof(int));
+	values = alloca(size * sizeof(int));
 	for (i = 0; i < size; ++i) {
 		jsal_get_prop_index(1, (int)i);
 		values[i] = jsal_require_int(-1);
 		jsal_pop(1);
 	}
 	shader_put_int_array(shader, name, values, size);
-	free(values);
 	return false;
 }
 
@@ -3747,7 +3745,7 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, intptr_t magic)
 	image_t*        surface;
 	image_t*        texture = NULL;
 	shape_type_t    type;
-	ALLEGRO_VERTEX  vertices[128];
+	ALLEGRO_VERTEX* vertices;
 
 	int i;
 
@@ -3776,6 +3774,7 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, intptr_t magic)
 	if (num_entries == 0)
 		jsal_error(JS_RANGE_ERROR, "Empty list is not allowed");
 
+	vertices = alloca(num_entries * sizeof(ALLEGRO_VERTEX));
 	for (i = 0; i < num_entries; ++i) {
 		jsal_get_prop_index(array_idx, i);
 		jsal_require_object_coercible(-1);
@@ -5118,10 +5117,10 @@ js_Transform_translate(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_VertexList(int num_args, bool is_ctor, intptr_t magic)
 {
-	int       num_entries;
-	int       stack_idx;
-	vbo_t*    vbo;
-	vertex_t  vertex;
+	int      num_entries;
+	int      stack_idx;
+	vbo_t*   vbo;
+	vertex_t vertex;
 
 	int i;
 
