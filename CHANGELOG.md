@@ -7,7 +7,8 @@ v5.2.0 - TBD
 * Adds profiling support to SpheRun; call `SSj.profile()` and pass an object
   and method name to have all subsequent calls to that function timed and
   included in a detailed Performance Report on shutdown.
-* Adds new APIs for data compression, accessible through the `Z` namespace.
+* Adds new APIs for data compression, accessible through the `Z` namespace and
+  available to both Sphere games and Cellscripts.
 * Adds `Shape.drawImmediate()` function which avoids the overhead of creating
   VertexList and Shape objects for immediate-mode drawing.
 * Adds `Dispatch.onExit()`, which lets you run code after the event loop exits.

@@ -43,8 +43,8 @@ following are provided:
     - Text Encoding API (`TextEncoder`, `TextDecoder`)
     - File System API (`FS`, 'DirectoryStream', `FileStream`)
     - Random Number Generator API (`RNG`)
-
-    - Several standard library modules:
+    - Data Compression API (`Z`)
+    - Standard library modules:
         - `assert` module
         - `dataStream` module
         - `delegate` module

@@ -34,6 +34,7 @@
 #include "build.h"
 
 #include "api.h"
+#include "compress.h"
 #include "encoding.h"
 #include "fs.h"
 #include "spk_writer.h"
@@ -114,6 +115,8 @@ static bool js_TextEncoder_get_encoding      (int num_args, bool is_ctor, intptr
 static bool js_TextEncoder_encode            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Tool                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Tool_stage                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Z_deflate                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Z_inflate                     (int num_args, bool is_ctor, intptr_t magic);
 
 static void js_DirectoryStream_finalize (void* host_ptr);
 static void js_FileStream_finalize      (void* host_ptr);
@@ -225,6 +228,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_method("TextEncoder", "encode", js_TextEncoder_encode, 0);
 	api_define_class("Tool", CELL_TOOL, js_new_Tool, js_Tool_finalize, 0);
 	api_define_method("Tool", "stage", js_Tool_stage, 0);
+	api_define_function("Z", "deflate", js_Z_deflate, 0);
+	api_define_function("Z", "inflate", js_Z_inflate, 0);
 
 	api_define_const("FileOp", "Read", FILE_OP_READ);
 	api_define_const("FileOp", "Write", FILE_OP_WRITE);
@@ -1994,5 +1999,55 @@ js_Tool_stage(int num_args, bool is_ctor, intptr_t magic)
 	vector_push(s_build->targets, &target);
 
 	jsal_push_class_obj(CELL_TARGET, target_ref(target), false);
+	return true;
+}
+
+static bool
+js_Z_deflate(int num_args, bool is_ctor, intptr_t magic)
+{
+	void*       buffer;
+	const void* input_data;
+	size_t      input_size;
+	int         level = 6;
+	void*       output_data;
+	size_t      output_size;
+
+	input_data = jsal_require_buffer_ptr(0, &input_size);
+	if (num_args >= 2)
+		level = jsal_require_int(1);
+
+	if (level < 0 || level > 9)
+		jsal_error(JS_RANGE_ERROR, "Invalid compression level '%d'", level);
+
+	if (!(output_data = z_deflate(input_data, input_size, level, &output_size)))
+		jsal_error(JS_ERROR, "Couldn't deflate THE PIG (it's too fat)");
+	jsal_push_new_buffer(JS_ARRAYBUFFER, output_size, &buffer);
+	memcpy(buffer, output_data, output_size);
+	free(output_data);
+	return true;
+}
+
+static bool
+js_Z_inflate(int num_args, bool is_ctor, intptr_t magic)
+{
+	void*       buffer;
+	const void* input_data;
+	size_t      input_size;
+	int         max_size = 0;
+	void*       output_data;
+	size_t      output_size;
+
+	input_data = jsal_require_buffer_ptr(0, &input_size);
+	if (num_args >= 2)
+		max_size = jsal_require_int(1);
+
+	if (max_size < 0)
+		jsal_error(JS_RANGE_ERROR, "Invalid maximum size '%d'", max_size);
+
+	if (!(output_data = z_inflate(input_data, input_size, max_size, &output_size)))
+		jsal_error(JS_ERROR, "Couldn't inflate THE PIG (why would you even do this?)");
+	jsal_push_new_buffer(JS_ARRAYBUFFER, output_size, &buffer);
+	memcpy(buffer, output_data, output_size);
+	free(output_data);
 	return true;
 }
