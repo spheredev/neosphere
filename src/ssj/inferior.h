@@ -35,8 +35,8 @@
 
 #include "backtrace.h"
 #include "ki.h"
+#include "listing.h"
 #include "objview.h"
-#include "source.h"
 
 typedef struct inferior inferior_t;
 
@@ -52,22 +52,22 @@ enum resume_op
 void               inferiors_init            (void);
 void               inferiors_uninit          (void);
 inferior_t*        inferior_new              (const char* hostname, int port, bool show_trace);
-void               inferior_free             (inferior_t* obj);
-bool               inferior_update           (inferior_t* obj);
-bool               inferior_attached         (const inferior_t* obj);
-const char*        inferior_author           (const inferior_t* obj);
-bool               inferior_running          (const inferior_t* obj);
-const char*        inferior_title            (const inferior_t* obj);
-const backtrace_t* inferior_get_calls        (inferior_t* obj);
-objview_t*         inferior_get_object       (inferior_t* obj, unsigned int handle, bool get_all);
-const source_t*    inferior_get_source       (inferior_t* obj, const char* filename);
-objview_t*         inferior_get_vars         (inferior_t* obj, int frame);
-int                inferior_add_breakpoint   (inferior_t* obj, const char* filename, int linenum);
-bool               inferior_clear_breakpoint (inferior_t* obj, int handle);
-void               inferior_detach           (inferior_t* obj);
-ki_atom_t*         inferior_eval             (inferior_t* obj, const char* expr, int frame, bool* out_is_error);
-bool               inferior_pause            (inferior_t* obj);
-ki_message_t*      inferior_request          (inferior_t* obj, ki_message_t* msg);
-bool               inferior_resume           (inferior_t* obj, resume_op_t op);
+void               inferior_free             (inferior_t* it);
+bool               inferior_update           (inferior_t* it);
+bool               inferior_attached         (const inferior_t* it);
+const char*        inferior_author           (const inferior_t* it);
+bool               inferior_running          (const inferior_t* it);
+const char*        inferior_title            (const inferior_t* it);
+const backtrace_t* inferior_get_calls        (inferior_t* it);
+const listing_t*   inferior_get_listing      (inferior_t* it, const char* filename);
+objview_t*         inferior_get_object       (inferior_t* it, unsigned int handle, bool get_all);
+objview_t*         inferior_get_vars         (inferior_t* it, int frame);
+int                inferior_add_breakpoint   (inferior_t* it, const char* filename, int linenum);
+bool               inferior_clear_breakpoint (inferior_t* it, int handle);
+void               inferior_detach           (inferior_t* it);
+ki_atom_t*         inferior_eval             (inferior_t* it, const char* expr, int frame, bool* out_is_error);
+bool               inferior_pause            (inferior_t* it);
+ki_message_t*      inferior_request          (inferior_t* it, ki_message_t* msg);
+bool               inferior_resume           (inferior_t* it, resume_op_t op);
 
 #endif // SPHERE__INFERIOR_H__INCLUDED

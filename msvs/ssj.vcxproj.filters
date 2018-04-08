@@ -27,9 +27,6 @@
     <ClCompile Include="..\src\ssj\main.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ssj\source.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ssj\help.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,6 +60,9 @@
     <ClCompile Include="..\src\shared\ki.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ssj\listing.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\dyad.h">
@@ -82,9 +82,6 @@
     </ClInclude>
     <ClInclude Include="resource2.h">
       <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ssj\source.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ssj\help.h">
       <Filter>Header Files</Filter>
@@ -120,6 +117,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\ki.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ssj\listing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

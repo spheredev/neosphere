@@ -155,7 +155,7 @@
     <ClCompile Include="..\src\ssj\help.c" />
     <ClCompile Include="..\src\ssj\main.c" />
     <ClCompile Include="..\src\ssj\inferior.c" />
-    <ClCompile Include="..\src\ssj\source.c" />
+    <ClCompile Include="..\src\ssj\listing.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\console.h" />
@@ -174,7 +174,7 @@
     <ClInclude Include="..\src\ssj\parser.h" />
     <ClInclude Include="..\src\ssj\help.h" />
     <ClInclude Include="..\src\ssj\inferior.h" />
-    <ClInclude Include="..\src\ssj\source.h" />
+    <ClInclude Include="..\src\ssj\listing.h" />
     <ClInclude Include="..\src\ssj\ssj.h" />
     <ClInclude Include="resource2.h" />
   </ItemGroup>

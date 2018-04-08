@@ -361,10 +361,10 @@ handle_backtrace(session_t* obj, command_t* cmd)
 static void
 handle_breakpoint(session_t* obj, command_t* cmd)
 {
-	const char*     filename;
-	int             handle;
-	int             linenum;
-	const source_t* source;
+	const char*      filename;
+	int              handle;
+	int              linenum;
+	const listing_t* listing;
 
 	int i;
 
@@ -393,8 +393,8 @@ handle_breakpoint(session_t* obj, command_t* cmd)
 			printf("breakpoint #%2d set at %s:%d.\n", i,
 				obj->breaks[i].filename,
 				obj->breaks[i].linenum);
-			if ((source = inferior_get_source(obj->inferior, filename)))
-				source_print(source, linenum, 1, 0);
+			if ((listing = inferior_get_listing(obj->inferior, filename)))
+				listing_print(listing, linenum, 1, 0);
 		}
 	}
 }
@@ -402,11 +402,11 @@ handle_breakpoint(session_t* obj, command_t* cmd)
 static void
 handle_clearbreak(session_t* obj, command_t* cmd)
 {
-	const char*     filename;
-	int             handle;
-	int             index;
-	int             linenum;
-	const source_t* source;
+	const char*      filename;
+	int              handle;
+	int              index;
+	int              linenum;
+	const listing_t* listing;
 
 	index = command_get_int(cmd, 1);
 	if (obj->num_breaks <= 0)
@@ -421,8 +421,8 @@ handle_clearbreak(session_t* obj, command_t* cmd)
 			return;
 		printf("cleared breakpoint #%2d at %s:%d.\n", index,
 			obj->breaks[index].filename, obj->breaks[index].linenum);
-		if ((source = inferior_get_source(obj->inferior, filename)))
-			source_print(source, linenum, 1, 0);
+		if ((listing = inferior_get_listing(obj->inferior, filename)))
+			listing_print(listing, linenum, 1, 0);
 	}
 }
 
@@ -571,8 +571,8 @@ handle_list(session_t* obj, command_t* cmd)
 	const backtrace_t* calls;
 	const char*        filename;
 	int                lineno;
+	const listing_t*   listing;
 	int                num_lines = 10;
-	const source_t*    source;
 
 	calls = inferior_get_calls(obj->inferior);
 	active_filename = backtrace_get_filename(calls, obj->frame);
@@ -585,12 +585,12 @@ handle_list(session_t* obj, command_t* cmd)
 		filename = command_get_string(cmd, 2);
 		lineno = command_get_int(cmd, 2);
 	}
-	if (!(source = inferior_get_source(obj->inferior, filename)))
+	if (!(listing = inferior_get_listing(obj->inferior, filename)))
 		printf("source unavailable for %s.\n", filename);
 	else {
 		if (strcmp(filename, active_filename) != 0)
 			active_lineno = 0;
-		source_print(source, lineno, num_lines, active_lineno);
+		listing_print(listing, lineno, num_lines, active_lineno);
 		obj->list_num_lines = num_lines;
 		obj->list_filename = strdup(filename);
 		obj->list_linenum = lineno + num_lines;
@@ -648,7 +648,7 @@ handle_vars(session_t* obj, command_t* cmd)
 	}
 	if (objview_len(vars) == 0) {
 		call_name = backtrace_get_call_name(calls, obj->frame);
-		printf("%s has no local variables.\n", call_name);
+		printf("no local variables in scope for %s\n", call_name);
 	}
 	for (i = 0; i < objview_len(vars); ++i) {
 		var_name = objview_get_key(vars, i);
@@ -685,7 +685,7 @@ preview_frame(session_t* obj, int frame)
 	const backtrace_t* calls;
 	const char*        filename;
 	int                lineno;
-	const source_t*    source;
+	const listing_t*   listing;
 
 	if (!(calls = inferior_get_calls(obj->inferior)))
 		return;
@@ -695,10 +695,10 @@ preview_frame(session_t* obj, int frame)
 	if (lineno == 0)
 		printf("system call, no source provided.\n");
 	else {
-		if (!(source = inferior_get_source(obj->inferior, filename)))
+		if (!(listing = inferior_get_listing(obj->inferior, filename)))
 			printf("source unavailable for %s.\n", filename);
 		else
-			source_print(source, lineno, 1, lineno);
+			listing_print(listing, lineno, 1, lineno);
 	}
 }
 

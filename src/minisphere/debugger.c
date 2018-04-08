@@ -470,7 +470,18 @@ process_message(js_step_t* out_step)
 		breakpoint_id = jsal_debug_breakpoint_add(filename, line_number, 1);
 		ki_message_add_int(reply, breakpoint_id);
 		break;
-	case KI_REQ_ASSET_DATA:
+	case KI_REQ_DEL_BREAK:
+		breakpoint_id = ki_message_int(request, 1);
+		jsal_debug_breakpoint_remove(breakpoint_id);
+		break;
+	case KI_REQ_DETACH:
+		ki_message_send(reply, s_socket);
+		ki_message_free(reply);
+		ki_message_free(request);
+		do_detach_debugger(false);
+		*out_step = JS_STEP_CONTINUE;
+		return true;
+	case KI_REQ_DOWNLOAD:
 		filename = ki_message_string(request, 1);
 		filename = debugger_compiled_name(filename);
 
@@ -495,17 +506,6 @@ process_message(js_step_t* out_step)
 			ki_message_add_string(reply, "no source code available");
 		}
 		break;
-	case KI_REQ_DEL_BREAK:
-		breakpoint_id = ki_message_int(request, 1);
-		jsal_debug_breakpoint_remove(breakpoint_id);
-		break;
-	case KI_REQ_DETACH:
-		ki_message_send(reply, s_socket);
-		ki_message_free(reply);
-		ki_message_free(request);
-		do_detach_debugger(false);
-		*out_step = JS_STEP_CONTINUE;
-		return true;
 	case KI_REQ_EVAL:
 		call_index = ki_message_int(request, 1);
 		eval_code = ki_message_string(request, 2);

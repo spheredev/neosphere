@@ -36,16 +36,16 @@
 #include "backtrace.h"
 #include "help.h"
 #include "ki.h"
+#include "listing.h"
 #include "objview.h"
 #include "parser.h"
 #include "session.h"
 #include "sockets.h"
-#include "source.h"
 
 struct source
 {
 	char*      filename;
-	source_t*  source;
+	listing_t* listing;
 };
 
 struct inferior
@@ -154,69 +154,69 @@ on_error:
 }
 
 void
-inferior_free(inferior_t* obj)
+inferior_free(inferior_t* it)
 {
 	int i;
 
-	clear_pause_cache(obj);
-	for (i = 0; i < obj->num_sources; ++i) {
-		source_free(obj->sources[i].source);
-		free(obj->sources[i].filename);
+	clear_pause_cache(it);
+	for (i = 0; i < it->num_sources; ++i) {
+		listing_free(it->sources[i].listing);
+		free(it->sources[i].filename);
 	}
-	socket_close(obj->socket);
-	free(obj->title);
-	free(obj->author);
-	free(obj);
+	socket_close(it->socket);
+	free(it->title);
+	free(it->author);
+	free(it);
 }
 
 bool
-inferior_update(inferior_t* obj)
+inferior_update(inferior_t* it)
 {
 	bool          is_active = true;
 	ki_message_t* notify = NULL;
 
-	if (obj->is_detached)
+	if (it->is_detached)
 		return false;
 
-	if (!(notify = ki_message_recv(obj->socket)))
+	if (!(notify = ki_message_recv(it->socket)))
 		goto detached;
-	if (!handle_notify(obj, notify))
+	if (!handle_notify(it, notify))
 		goto detached;
 	ki_message_free(notify);
 	return true;
 
 detached:
 	ki_message_free(notify);
-	obj->is_detached = true;
+	it->is_detached = true;
 	return false;
 }
 
 bool
-inferior_attached(const inferior_t* obj)
+inferior_attached(const inferior_t* it)
 {
-	return !obj->is_detached;
+	return !it->is_detached;
 }
 
 bool
-inferior_running(const inferior_t* obj)
+inferior_running(const inferior_t* it)
 {
-	return !obj->paused && inferior_attached(obj);
+	return !it->paused && inferior_attached(it);
 }
 
 const char*
-inferior_author(const inferior_t* obj)
+inferior_author(const inferior_t* it)
 {
-	return obj->author;
+	return it->author;
 }
 
 const char*
-inferior_title(const inferior_t* obj)
+inferior_title(const inferior_t* it)
 {
-	return obj->title;
+	return it->title;
 }
 
 const backtrace_t*
-inferior_get_calls(inferior_t* obj)
+inferior_get_calls(inferior_t* it)
 {
 	char*         call_name;
 	const char*   filename;
@@ -227,13 +227,13 @@ inferior_get_calls(inferior_t* obj)
 
 	int i;
 
-	if (obj->calls == NULL) {
+	if (it->calls == NULL) {
 		request = ki_message_new(KI_REQ);
 		ki_message_add_int(request, KI_REQ_INSPECT_STACK);
-		if (!(request = inferior_request(obj, request)))
+		if (!(request = inferior_request(it, request)))
 			return NULL;
 		num_frames = ki_message_len(request) / 4;
-		obj->calls = backtrace_new();
+		it->calls = backtrace_new();
 		for (i = 0; i < num_frames; ++i) {
 			function_name = ki_message_string(request, i * 4 + 1);
 			if (strcmp(function_name, "Anonymous function") == 0)
@@ -244,16 +244,53 @@ inferior_get_calls(inferior_t* obj)
 				call_name = strnewf("%s()", function_name);
 			filename = ki_message_string(request, i * 4);
 			line_no = ki_message_int(request, i * 4 + 2);
-			backtrace_add(obj->calls, call_name, filename, line_no);
+			backtrace_add(it->calls, call_name, filename, line_no);
 		}
 		ki_message_free(request);
 	}
 
-	return obj->calls;
+	return it->calls;
+}
+
+const listing_t*
+inferior_get_listing(inferior_t* it, const char* filename)
+{
+	int           cache_id;
+	listing_t*    listing;
+	ki_message_t* request;
+	const char*   text;
+
+	int i;
+
+	for (i = 0; i < it->num_sources; ++i) {
+		if (strcmp(filename, it->sources[i].filename) == 0)
+			return it->sources[i].listing;
+	}
+
+	request = ki_message_new(KI_REQ);
+	ki_message_add_int(request, KI_REQ_DOWNLOAD);
+	ki_message_add_string(request, filename);
+	if (!(request = inferior_request(it, request)))
+		goto on_error;
+	if (ki_message_tag(request) == KI_ERR)
+		goto on_error;
+	text = ki_message_string(request, 0);
+	listing = listing_new(text);
+
+	cache_id = it->num_sources++;
+	it->sources = realloc(it->sources, it->num_sources * sizeof(struct source));
+	it->sources[cache_id].filename = strdup(filename);
+	it->sources[cache_id].listing = listing;
+
+	return listing;
+
+on_error:
+	ki_message_free(request);
+	return NULL;
 }
 
 objview_t*
-inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
+inferior_get_object(inferior_t* it, unsigned int handle, bool get_all)
 {
 	int              attributes;
 	unsigned int     flags;
@@ -272,7 +309,7 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 	ki_message_add_ref(request, handle);
 	ki_message_add_int(request, 0);
 	ki_message_add_int(request, INT_MAX);
-	if (!(request = inferior_request(obj, request)))
+	if (!(request = inferior_request(it, request)))
 		return NULL;
 	view = objview_new();
 	while (index < ki_message_len(request)) {
@@ -309,45 +346,8 @@ inferior_get_object(inferior_t* obj, unsigned int handle, bool get_all)
 	return view;
 }
 
-const source_t*
-inferior_get_source(inferior_t* obj, const char* filename)
-{
-	int           cache_id;
-	ki_message_t* request;
-	source_t*     source;
-	const char*   text;
-
-	int i;
-
-	for (i = 0; i < obj->num_sources; ++i) {
-		if (strcmp(filename, obj->sources[i].filename) == 0)
-			return obj->sources[i].source;
-	}
-
-	request = ki_message_new(KI_REQ);
-	ki_message_add_int(request, KI_REQ_ASSET_DATA);
-	ki_message_add_string(request, filename);
-	if (!(request = inferior_request(obj, request)))
-		goto on_error;
-	if (ki_message_tag(request) == KI_ERR)
-		goto on_error;
-	text = ki_message_string(request, 0);
-	source = source_new(text);
-
-	cache_id = obj->num_sources++;
-	obj->sources = realloc(obj->sources, obj->num_sources * sizeof(struct source));
-	obj->sources[cache_id].filename = strdup(filename);
-	obj->sources[cache_id].source = source;
-
-	return source;
-
-on_error:
-	ki_message_free(request);
-	return NULL;
-}
-
 objview_t*
-inferior_get_vars(inferior_t* obj, int frame)
+inferior_get_vars(inferior_t* it, int frame)
 {
 	const char*      class_name;
 	ki_message_t*    msg;
@@ -361,7 +361,7 @@ inferior_get_vars(inferior_t* obj, int frame)
 	msg = ki_message_new(KI_REQ);
 	ki_message_add_int(msg, KI_REQ_INSPECT_LOCALS);
 	ki_message_add_int(msg, frame);
-	if (!(msg = inferior_request(obj, msg)))
+	if (!(msg = inferior_request(it, msg)))
 		return NULL;
 	vars = objview_new();
 	num_vars = ki_message_len(msg) / 3;
@@ -375,7 +375,7 @@ inferior_get_vars(inferior_t* obj, int frame)
 }
 
 int
-inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
+inferior_add_breakpoint(inferior_t* it, const char* filename, int linenum)
 {
 	int        handle;
 	ki_message_t* msg;
@@ -384,7 +384,7 @@ inferior_add_breakpoint(inferior_t* obj, const char* filename, int linenum)
 	ki_message_add_int(msg, KI_REQ_ADD_BREAK);
 	ki_message_add_string(msg, filename);
 	ki_message_add_int(msg, linenum);
-	if (!(msg = inferior_request(obj, msg)))
+	if (!(msg = inferior_request(it, msg)))
 		goto on_error;
 	if (ki_message_tag(msg) == KI_ERR)
 		goto on_error;
@@ -398,14 +398,14 @@ on_error:
 }
 
 bool
-inferior_clear_breakpoint(inferior_t* obj, int handle)
+inferior_clear_breakpoint(inferior_t* it, int handle)
 {
 	ki_message_t* msg;
 
 	msg = ki_message_new(KI_REQ);
 	ki_message_add_int(msg, KI_REQ_DEL_BREAK);
 	ki_message_add_int(msg, handle);
-	if (!(msg = inferior_request(obj, msg)))
+	if (!(msg = inferior_request(it, msg)))
 		goto on_error;
 	if (ki_message_tag(msg) == KI_ERR)
 		goto on_error;
@@ -418,21 +418,21 @@ on_error:
 }
 
 void
-inferior_detach(inferior_t* obj)
+inferior_detach(inferior_t* it)
 {
 	ki_message_t* msg;
 
 	msg = ki_message_new(KI_REQ);
 	ki_message_add_int(msg, KI_REQ_DETACH);
-	if (!(msg = inferior_request(obj, msg)))
+	if (!(msg = inferior_request(it, msg)))
 		return;
 	ki_message_free(msg);
-	while (inferior_attached(obj))
-		inferior_update(obj);
+	while (inferior_attached(it))
+		inferior_update(it);
 }
 
 ki_atom_t*
-inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
+inferior_eval(inferior_t* it, const char* expr, int frame, bool* out_is_error)
 {
 	ki_atom_t*  dvalue = NULL;
 	ki_message_t* msg;
@@ -441,7 +441,7 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 	ki_message_add_int(msg, KI_REQ_EVAL);
 	ki_message_add_int(msg, frame);
 	ki_message_add_string(msg, expr);
-	msg = inferior_request(obj, msg);
+	msg = inferior_request(it, msg);
 	dvalue = ki_atom_dup(ki_message_atom(msg, 1));
 	*out_is_error = !ki_message_bool(msg, 0);
 	ki_message_free(msg);
@@ -449,30 +449,30 @@ inferior_eval(inferior_t* obj, const char* expr, int frame, bool* out_is_error)
 }
 
 bool
-inferior_pause(inferior_t* obj)
+inferior_pause(inferior_t* it)
 {
 	ki_message_t* msg;
 
 	msg = ki_message_new(KI_REQ);
 	ki_message_add_int(msg, KI_REQ_PAUSE);
-	if (!(msg = inferior_request(obj, msg)))
+	if (!(msg = inferior_request(it, msg)))
 		return false;
 	return true;
 }
 
 ki_message_t*
-inferior_request(inferior_t* obj, ki_message_t* msg)
+inferior_request(inferior_t* it, ki_message_t* msg)
 {
 	ki_message_t* response = NULL;
 
-	if (!(ki_message_send(msg, obj->socket)))
+	if (!(ki_message_send(msg, it->socket)))
 		goto lost_connection;
 	do {
 		ki_message_free(response);
-		if (!(response = ki_message_recv(obj->socket)))
+		if (!(response = ki_message_recv(it->socket)))
 			goto lost_connection;
 		if (ki_message_tag(response) == KI_NFY)
-			handle_notify(obj, response);
+			handle_notify(it, response);
 	} while (ki_message_tag(response) == KI_NFY);
 	ki_message_free(msg);
 	return response;
@@ -480,12 +480,12 @@ inferior_request(inferior_t* obj, ki_message_t* msg)
 lost_connection:
 	printf("\33[31;1mSSj lost communication with the target.\33[m\n");
 	ki_message_free(msg);
-	obj->is_detached = true;
+	it->is_detached = true;
 	return NULL;
 }
 
 bool
-inferior_resume(inferior_t* obj, resume_op_t op)
+inferior_resume(inferior_t* it, resume_op_t op)
 {
 	ki_message_t* msg;
 
@@ -495,20 +495,20 @@ inferior_resume(inferior_t* obj, resume_op_t op)
 		: op == OP_STEP_IN ? KI_REQ_STEP_IN
 		: op == OP_STEP_OUT ? KI_REQ_STEP_OUT
 		: KI_REQ_RESUME);
-	if (!(msg = inferior_request(obj, msg)))
+	if (!(msg = inferior_request(it, msg)))
 		return false;
-	obj->frame_index = 0;
-	obj->paused = false;
-	while (inferior_running(obj))
-		inferior_update(obj);
+	it->frame_index = 0;
+	it->paused = false;
+	while (inferior_running(it))
+		inferior_update(it);
 	return true;
 }
 
 static void
-clear_pause_cache(inferior_t* obj)
+clear_pause_cache(inferior_t* inferior)
 {
-	backtrace_free(obj->calls);
-	obj->calls = NULL;
+	backtrace_free(inferior->calls);
+	inferior->calls = NULL;
 }
 
 static int

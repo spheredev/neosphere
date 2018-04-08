@@ -30,15 +30,15 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__SOURCE_H__INCLUDED
-#define SPHERE__SOURCE_H__INCLUDED
+#ifndef SPHERE__LISTING_H__INCLUDED
+#define SPHERE__LISTING_H__INCLUDED
 
-typedef struct source source_t;
+typedef struct listing listing_t;
 
-source_t*   source_new      (const char* text);
-void        source_free     (source_t* src);
-int         source_cloc     (const source_t* src);
-const char* source_get_line (const source_t* src, int line_index);
-void        source_print    (const source_t* src, int lineno, int num_lines, int active_lineno);
+listing_t*   listing_new      (const char* text);
+void         listing_free     (listing_t* it);
+int          listing_cloc     (const listing_t* it);
+const char*  listing_get_line (const listing_t* it, int line_index);
+void         listing_print    (const listing_t* it, int lineno, int num_lines, int active_lineno);
 
-#endif // SPHERE__SOURCE_H__INCLUDED
+#endif // SPHERE__LISTING_H__INCLUDED

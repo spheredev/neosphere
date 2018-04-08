@@ -31,12 +31,91 @@
 **/
 
 #include "ssj.h"
-#include "source.h"
+#include "listing.h"
 
-struct source
+struct listing
 {
 	vector_t* lines;
 };
+
+static char* read_line (const char** p_string);
+
+listing_t*
+listing_new(const char* text)
+{
+	char*       line_text;
+	vector_t*   lines;
+	listing_t*   source = NULL;
+	const char* p_source;
+
+	p_source = text;
+	lines = vector_new(sizeof(char*));
+	while ((line_text = read_line(&p_source)))
+		vector_push(lines, &line_text);
+
+	source = calloc(1, sizeof(listing_t));
+	source->lines = lines;
+	return source;
+}
+
+void
+listing_free(listing_t* it)
+{
+	char** text_ptr;
+
+	iter_t iter;
+
+	if (it == NULL)
+		return;
+	iter = vector_enum(it->lines);
+	while ((text_ptr = iter_next(&iter)))
+		free(*text_ptr);
+	vector_free(it->lines);
+	free(it);
+}
+
+int
+listing_cloc(const listing_t* it)
+{
+	return (int)vector_len(it->lines);
+}
+
+const char*
+listing_get_line(const listing_t* it, int line_index)
+{
+	if (line_index < 0 || line_index >= listing_cloc(it))
+		return NULL;
+	return *(char**)vector_get(it->lines, line_index);
+}
+
+void
+listing_print(const listing_t* it, int lineno, int num_lines, int active_lineno)
+{
+	const char* arrow;
+	int         line_count;
+	int         median;
+	int         start, end;
+	const char* text;
+
+	int i;
+
+	line_count = listing_cloc(it);
+	median = num_lines / 2;
+	start = lineno > median ? lineno - (median + 1) : 0;
+	end = start + num_lines < line_count ? start + num_lines : line_count;
+	for (i = start; i < end; ++i) {
+		text = listing_get_line(it, i);
+		arrow = i + 1 == active_lineno ? "->" : "  ";
+		if (num_lines == 1)
+			printf("%d %s\n", i + 1, text);
+		else {
+			if (i + 1 == active_lineno)
+				printf("\33[37;1m");
+			printf("%s %4d %s\n", arrow, i + 1, text);
+			printf("\33[m");
+		}
+	}
+}
 
 static char*
 read_line(const char** p_string)
@@ -75,81 +154,4 @@ hit_eof:
 	}
 	else
 		return buffer;
-}
-
-source_t*
-source_new(const char* text)
-{
-	char*       line_text;
-	vector_t*   lines;
-	source_t*   source = NULL;
-	const char* p_source;
-
-	p_source = text;
-	lines = vector_new(sizeof(char*));
-	while ((line_text = read_line(&p_source)))
-		vector_push(lines, &line_text);
-
-	source = calloc(1, sizeof(source_t));
-	source->lines = lines;
-	return source;
-}
-
-void
-source_free(source_t* source)
-{
-	char** text_ptr;
-
-	iter_t iter;
-
-	if (source == NULL)
-		return;
-	iter = vector_enum(source->lines);
-	while ((text_ptr = iter_next(&iter)))
-		free(*text_ptr);
-	vector_free(source->lines);
-	free(source);
-}
-
-int
-source_cloc(const source_t* source)
-{
-	return (int)vector_len(source->lines);
-}
-
-const char*
-source_get_line(const source_t* source, int line_index)
-{
-	if (line_index < 0 || line_index >= source_cloc(source))
-		return NULL;
-	return *(char**)vector_get(source->lines, line_index);
-}
-
-void
-source_print(const source_t* source, int lineno, int num_lines, int active_lineno)
-{
-	const char* arrow;
-	int         line_count;
-	int         median;
-	int         start, end;
-	const char* text;
-
-	int i;
-
-	line_count = source_cloc(source);
-	median = num_lines / 2;
-	start = lineno > median ? lineno - (median + 1) : 0;
-	end = start + num_lines < line_count ? start + num_lines : line_count;
-	for (i = start; i < end; ++i) {
-		text = source_get_line(source, i);
-		arrow = i + 1 == active_lineno ? "->" : "  ";
-		if (num_lines == 1)
-			printf("%d %s\n", i + 1, text);
-		else {
-			if (i + 1 == active_lineno)
-				printf("\33[37;1m");
-			printf("%s %4d %s\n", arrow, i + 1, text);
-			printf("\33[m");
-		}
-	}
 }
