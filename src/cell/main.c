@@ -217,6 +217,9 @@ parse_command_line(int argc, char* argv[])
 					have_debug_flag = true;
 					have_in_dir = true;
 					break;
+				case 'v':
+					print_banner(true, true);
+					return false;
 				default:
 					printf("cell: unknown option '-%c'\n", short_args[i_arg]);
 					return false;
@@ -314,6 +317,6 @@ print_usage(void)
 	printf("   -d, --debug     Include debugging information for use with SSj/SSj Blue.  \n");
 	printf("       --release   Build for distribution, without SSj debugging information.\n");
 	printf("                   This is the default when building a package.              \n");
-	printf("       --version   Print the version number of Cell and its dependencies.    \n");
+	printf("   -v, --version   Print the version number of Cell and its dependencies.    \n");
 	printf("       --help      Print this help text.                                     \n");
 }

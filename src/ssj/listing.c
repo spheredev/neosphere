@@ -77,7 +77,7 @@ listing_free(listing_t* it)
 int
 listing_cloc(const listing_t* it)
 {
-	return (int)vector_len(it->lines);
+	return vector_len(it->lines);
 }
 
 const char*
@@ -89,21 +89,18 @@ listing_get_line(const listing_t* it, int line_index)
 }
 
 void
-listing_print(const listing_t* it, int lineno, int num_lines, int active_lineno)
+listing_print(const listing_t* it, int line_number, int num_lines, int active_lineno)
 {
 	const char* arrow;
-	int         line_count;
-	int         median;
-	int         start, end;
+	int         start;
 	const char* text;
 
 	int i;
 
-	line_count = listing_cloc(it);
-	median = num_lines / 2;
-	start = lineno > median ? lineno - (median + 1) : 0;
-	end = start + num_lines < line_count ? start + num_lines : line_count;
-	for (i = start; i < end; ++i) {
+	start = line_number - 1;
+	for (i = start; i < start + num_lines; ++i) {
+		if (i >= listing_cloc(it))
+			break;  // EOF
 		text = listing_get_line(it, i);
 		arrow = i + 1 == active_lineno ? "->" : "  ";
 		if (num_lines == 1)

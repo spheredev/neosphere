@@ -30,6 +30,8 @@ v5.2.0 - TBD
 * Fixes a bug where the v1 `Font#setCharacterImage()` API doesn't recalculate
   the font metrics, causing text to be rendered incorrectly afterwards.
 * Fixes `Pact#promise` not existing, as it was accidentally removed in 5.1.3.
+* Fixes a bug where repeating a `list` command in SSj could show some of the
+  same lines again.
 * Reverts `Sphere.APILevel` to 1 as the level-2 APIs are still experimental.
 
 

@@ -239,6 +239,9 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 				case 't':
 					cmdline->show_trace = true;
 					break;
+				case 'v':
+					print_banner(true, true);
+					goto on_output_only;
 				default:
 					printf("ssj: error: unknown option '-%c'\n", short_args[i_arg]);
 					*out_retval = EXIT_FAILURE;
@@ -327,6 +330,6 @@ print_usage(void)
 	printf("                    connection can be made within 30 seconds, SSj will exit.   \n");
 	printf("   -r, --no-pause   Prevent SSj from pausing execution on attach.              \n");
 	printf("   -t, --trace      Show trace-level output, e.g., from SSj.trace().           \n");
-	printf("       --version    Print the version number of SSj and its dependencies.      \n");
+	printf("   -v, --version    Print the version number of SSj and its dependencies.      \n");
 	printf("       --help       Print this help text.                                      \n");
 }
