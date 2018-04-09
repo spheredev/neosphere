@@ -752,7 +752,7 @@ parse_command_line(
 			else if (strcmp(argv[i], "--debug") == 0) {
 				*out_ssj_mode = SSJ_ACTIVE;
 			}
-			else if (strcmp(argv[i], "--performance") == 0) {
+			else if (strcmp(argv[i], "--profile") == 0) {
 				*out_ssj_mode = SSJ_OFF;
 			}
 			else if (strcmp(argv[i], "--verbose") == 0) {
@@ -780,6 +780,9 @@ parse_command_line(
 				case 'p':
 					*out_ssj_mode = SSJ_OFF;
 					break;
+				case 'v':
+					print_banner(true, true);
+					return false;
 				default:
 					report_error("unrecognized option '-%c'\n", argv[i][j]);
 					return false;
@@ -847,7 +850,7 @@ print_usage(void)
 	printf("\n");
 	printf("USAGE:\n");
 	printf("   spherun [--fullscreen | --windowed] [--frameskip <n>] [--no-sleep]         \n");
-	printf("           [--debug | --performance] [--verbose <n>] <game_path>              \n");
+	printf("           [--debug | --profile] [--verbose <n>] <game_path>                  \n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --fullscreen   Start miniSphere in fullscreen mode.                    \n");
@@ -855,11 +858,11 @@ print_usage(void)
 	printf("       --frameskip    Set the maximum number of consecutive frames to skip.   \n");
 	printf("       --no-sleep     Prevent the engine from sleeping between frames.        \n");
 	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
-	printf("   -p, --performance  Run at full performance.  This enables the profiler but \n");
-	printf("                      disables single-step debugging with SSj.                \n");
+	printf("   -p, --profile      Enable SSj.profile() for this session.  The engine will \n");
+	printf("                      run in high-performance mode but debugging is disabled. \n");
 	printf("       --verbose      Set the engine's verbosity level from 0 to 4.  This can \n");
 	printf("                      be abbreviated as '-n', where n is [0-4].               \n");
-	printf("       --version      Show which version of miniSphere is installed.          \n");
+	printf("   -v, --version      Show which version of miniSphere is installed.          \n");
 	printf("       --help         Show this help text.                                    \n");
 	printf("\n");
 	printf("NOTE:\n");

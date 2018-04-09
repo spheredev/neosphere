@@ -21,6 +21,8 @@ v5.2.0 - TBD
 * Adds `[Symbol.toStringTag]` and `.constructor` for Sphere v2 objects.
 * Improves the overall performance of all API functions and constructors.
 * Improves performance of all `Prim` drawing functions.
+* Renames the `--performance` command-line option to `--profile` to reflect its
+  new purpose.
 * Removes the `Image` class from the bundled Sphere Runtime.
 * Fixes an internal memory leak mostly affecting `Dispatch` job execution.
 * Fixes a bug where outstanding promise continuations get eaten when the user
