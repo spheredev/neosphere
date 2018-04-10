@@ -15,6 +15,7 @@ v5.2.0 - TBD
 * Adds `Texture#upload()` and `Texture#download()` to allow direct manipulation
   of a texture's RGBA bitmap.
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
+* Adds `print()` as an alias for `SSj.log()`.
 * Adds `SSj.now()` for getting microsecond-accurate timestamps under SpheRun.
 * Adds support for render-to-texture by allowing `Surface` objects to be used
   as textures, without calling `.toTexture()` first.

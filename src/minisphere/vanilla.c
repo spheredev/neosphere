@@ -2330,7 +2330,7 @@ js_ExecuteZones(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Exit(int num_args, bool is_ctor, intptr_t magic)
 {
-	sphere_exit(false);
+	sphere_exit(true);
 	return false;
 }
 

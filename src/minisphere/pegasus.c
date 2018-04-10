@@ -526,6 +526,7 @@ pegasus_init(void)
 	jsal_pop(1);
 
 	// initialize the Sphere v2 API
+	api_define_function(NULL, "print", js_SSj_log, KI_LOG_NORMAL);
 	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
 	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL);
 	api_define_static_prop("Sphere", "Engine", js_Sphere_get_Engine, NULL);
@@ -1504,7 +1505,7 @@ js_Sphere_setResolution(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_shutDown(int num_args, bool is_ctor, intptr_t magic)
 {
-	sphere_exit(false);
+	sphere_exit(true);
 	return false;
 }
 

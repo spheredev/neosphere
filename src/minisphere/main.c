@@ -427,9 +427,9 @@ sphere_change_game(const char* pathname)
 }
 
 void
-sphere_exit(bool shutting_down)
+sphere_exit(bool allow_game_change)
 {
-	if (shutting_down) {
+	if (!allow_game_change) {
 		path_free(s_last_game_path);
 		s_last_game_path = NULL;
 	}
@@ -470,7 +470,7 @@ sphere_heartbeat(bool in_event_loop)
 	while (al_get_next_event(s_event_queue, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
-			sphere_exit(true);
+			sphere_exit(false);
 			break;
 		}
 	}
@@ -488,7 +488,7 @@ void
 sphere_restart(void)
 {
 	s_restart_game = true;
-	sphere_exit(false);
+	sphere_exit(true);
 }
 
 void
