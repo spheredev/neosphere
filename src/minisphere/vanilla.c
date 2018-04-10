@@ -1511,6 +1511,7 @@ js_Abort(int num_args, bool is_ctor, intptr_t magic)
 
 	text = strnewf("abort requested...\n\n%s\n", message);
 	sphere_abort(text);
+	return false;
 }
 
 static bool
@@ -2098,7 +2099,7 @@ js_DeflateByteArray(int num_args, bool is_ctor, intptr_t magic)
 	input_array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
 	if (num_args >= 2)
 		level = jsal_to_int(1);
-	
+
 	if (level < 0 || level > 9)
 		jsal_error(JS_RANGE_ERROR, "Invalid compression level '%d'", level);
 
@@ -2738,7 +2739,7 @@ js_GetKeyString(int num_args, bool is_ctor, intptr_t magic)
 {
 	int  keycode;
 	bool shift = false;
-	
+
 	keycode = jsal_to_int(0);
 	if (num_args >= 2)
 		shift = jsal_to_boolean(1);
@@ -4803,7 +4804,7 @@ js_OutlinedRoundRectangle(int num_args, bool is_ctor, intptr_t magic)
 	double  width;
 	double  x;
 	double  y;
-	
+
 	x = trunc(jsal_to_number(0)) + 0.5;
 	y = trunc(jsal_to_number(1)) + 0.5;
 	width = trunc(jsal_to_number(2));
@@ -4881,7 +4882,7 @@ static bool
 js_Print(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* text;
-	
+
 	if (jsal_is_object(0))
 		jsal_stringify(0);
 	text = jsal_to_string(0);
@@ -4944,7 +4945,7 @@ js_Rectangle(int num_args, bool is_ctor, intptr_t magic)
 	double  width;
 	double  x;
 	double  y;
-	
+
 	x = trunc(jsal_to_number(0));
 	y = trunc(jsal_to_number(1));
 	width = trunc(jsal_to_number(2));
@@ -6710,7 +6711,7 @@ js_File_read(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, SV1_FILE)))
 		jsal_error(JS_ERROR, "file is already closed");
-	
+
 	if (jsal_is_boolean(1)) {
 		def_bool = jsal_get_boolean(1);
 		jsal_push_boolean(kev_read_bool(file, key, def_bool));

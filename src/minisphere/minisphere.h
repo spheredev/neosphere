@@ -96,8 +96,7 @@ extern screen_t*            g_screen;
 extern font_t*              g_system_font;
 extern uint32_t             g_tick_count;
 
-no_return sphere_abort     (const char* message);
-no_return sphere_exit      (bool shutting_down);
-void      sphere_heartbeat (bool in_event_loop);
-no_return sphere_restart   (void);
-void      sphere_sleep     (double time);
+void sphere_abort     (const char* message);
+void sphere_exit      (bool shutting_down);
+void sphere_heartbeat (bool in_event_loop);
+void sphere_sleep     (double time);

@@ -255,7 +255,7 @@ main(int argc, char* argv[])
 #else
 		fprintf(stderr, "ERROR: couldn't start game '%s'\n", path_cstr(g_game_path));
 #endif
-		sphere_exit(false);
+		longjmp(s_jmp_exit, 1);
 	}
 
 	// set up the render context ("screen") so we can draw stuff
@@ -311,7 +311,7 @@ main(int argc, char* argv[])
 
 	g_event_loop_version = 1;
 	g_restarting = false;
-	
+
 	// evaluate the main script (v1) or module (v2)
 	script_path = game_script_path(g_game);
 	api_version = game_version(g_game);
@@ -354,19 +354,18 @@ main(int argc, char* argv[])
 	// start up the event loop.  we can do this even in compatibility mode:
 	// the event loop terminates when there are no pending jobs or promises to settle,
 	// and neither one was available in Sphere 1.x.
-	jsal_disable_vm(false);  // in case of early bailout, onExit() jobs still need to run
 	if (!pegasus_start_event_loop())
 		goto on_js_error;
-	
+
 #if defined(MINISPHERE_SPHERUN)
 	if (ssj_mode == SSJ_OFF)
 		profiler_uninit();
 #endif
 
 	if (g_restarting)
-		sphere_restart();
+		longjmp(s_jmp_restart, 1);
 
-	sphere_exit(false);
+	longjmp(s_jmp_exit, 1);
 
 on_js_error:
 	jsal_dup(-1);
@@ -400,24 +399,29 @@ on_js_error:
 	else
 		jsal_push_sprintf("uncaught JavaScript exception.\n\n%s\n", error_text);
 	show_error_screen(jsal_get_string(-1));
-	sphere_exit(false);
+	longjmp(s_jmp_exit, 1);
 }
 
-no_return
+void
 sphere_abort(const char* message)
 {
 	show_error_screen(message);
 	sphere_exit(false);
 }
 
-no_return
+void
 sphere_exit(bool shutting_down)
 {
+	// note: this won't exit immediately.  it merely cancels Dispatch jobs and
+	//       disables the JavaScript VM so that control will fall through the event
+	//       loop naturally.
+
 	if (shutting_down) {
 		path_free(g_last_game_path);
 		g_last_game_path = NULL;
 	}
-	longjmp(s_jmp_exit, 1);
+	dispatch_cancel_all(true, true);
+	jsal_disable_vm(true);
 }
 
 void
@@ -435,7 +439,7 @@ sphere_heartbeat(bool in_event_loop)
 	if (in_event_loop)
 		start_time = al_get_time();
 #endif
-	
+
 	sockets_update();
 
 	if (in_event_loop) {
@@ -468,12 +472,6 @@ sphere_heartbeat(bool in_event_loop)
 	if (in_event_loop)
 		g_idle_time += al_get_time() - start_time;
 #endif
-}
-
-no_return
-sphere_restart(void)
-{
-	longjmp(s_jmp_restart, 1);
 }
 
 void
@@ -653,7 +651,7 @@ find_startup_game(path_t* *out_path)
 		"startup/game.sgm",
 		"dist/game.sgm",
 	};
-	
+
 	ALLEGRO_FS_ENTRY* engine_dir;
 	const char*       file_ext;
 	const char*       filename;
@@ -930,7 +928,7 @@ show_error_screen(const char* message)
 	transform_orthographic(projection, 0, 0, resolution.width, resolution.height, -1.0f, 1.0f);
 	image_set_transform(screen_backbuffer(g_screen), projection);
 	transform_unref(projection);
-	
+
 	is_finished = false;
 	frames_till_close = 30;
 	while (!is_finished) {

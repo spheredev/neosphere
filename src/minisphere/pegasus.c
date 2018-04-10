@@ -841,7 +841,7 @@ pegasus_init(void)
 	jsal_push_eval("Surface.Screen");
 	s_screen_obj = jsal_ref(-1);
 	jsal_pop(1);
-	
+
 	// pre-create joystick objects for Joystick.getDevices().  this ensures that
 	// multiple requests for the device list return the same Joystick object(s).
 	create_joystick_objects();
@@ -863,7 +863,7 @@ void
 pegasus_uninit(void)
 {
 	jsal_unref(s_screen_obj);
-	
+
 	jsal_unref(s_key_color);
 	jsal_unref(s_key_done);
 	jsal_unref(s_key_inBackground);
@@ -1032,7 +1032,7 @@ static void
 jsal_pegasus_push_color(color_t color, bool in_ctor)
 {
 	color_t* color_ptr;
-	
+
 	jsal_push_class_fatobj(PEGASUS_COLOR, in_ctor, sizeof(color_t), (void**)&color_ptr);
 	*color_ptr = color;
 }
@@ -1050,7 +1050,7 @@ static void
 jsal_pegasus_push_require(const char* module_id)
 {
 	jsal_push_new_function(js_require, "require", 1, 0);
-	
+
 	// assign 'require.cache'
 	jsal_push_new_object();
 	jsal_push_hidden_stash();
@@ -1058,7 +1058,7 @@ jsal_pegasus_push_require(const char* module_id)
 	jsal_remove(-2);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(-2, "cache");
-	
+
 	if (module_id != NULL) {
 		jsal_push_new_object();
 		jsal_push_string(module_id);
@@ -1199,14 +1199,17 @@ handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 		++g_tick_count;
 	}
 
-	// miniature "exit loop" to deal with .onExit() jobs
+	// deal with Dispatch.onExit() jobs
+	// note: Sphere v1 Exit() disables the VM to cause the engine to fall out of
+	//       JavaScript naturally, so we need to re-enable it here.
+	jsal_disable_vm(false);
 	s_shutting_down = true;
 	while (!dispatch_can_exit() || jsal_busy()) {
 		sphere_heartbeat(true);
 		dispatch_run(JOB_ON_TICK);
 		dispatch_run(JOB_ON_EXIT);
 	}
-	
+
 	return false;
 }
 
@@ -1318,7 +1321,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		"#/game_modules",
 		"#/runtime",
 	};
-	
+
 	const char* id;
 	const char* parent_id = NULL;
 	path_t*     path;
@@ -1461,6 +1464,7 @@ js_Sphere_abort(int num_args, bool is_ctor, intptr_t magic)
 
 	text = strnewf("abort requested...\n\n%s\n", message);
 	sphere_abort(text);
+	return false;
 }
 
 static bool
@@ -2863,7 +2867,7 @@ js_new_Mixer(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid audio bit depth '%d'", bits);
 	if (channels < 1 || channels > 7)
 		jsal_error(JS_RANGE_ERROR, "Invalid channel count '%d'", channels);
-	
+
 	if (!(mixer = mixer_new(frequency, bits, channels)))
 		jsal_error(JS_ERROR, "Couldn't create %d-bit %dch voice", bits, channels);
 	jsal_push_class_obj(PEGASUS_MIXER, mixer, true);
@@ -3401,7 +3405,7 @@ js_RNG_next(int num_args, bool is_ctor, intptr_t magic)
 	xoro = jsal_require_class_obj(-1, PEGASUS_RNG);
 
 	value = xoro_gen_double(xoro);
-	
+
 	jsal_push_new_object();
 	jsal_push_boolean_false();
 	jsal_put_prop_key(-2, s_key_done);
@@ -3424,7 +3428,7 @@ js_SSj_instrument(int num_args, bool is_ctor, intptr_t magic)
 {
 #if defined(MINISPHERE_SPHERUN)
 	static unsigned int next_function_id = 1;
-	
+
 	js_ref_t*   function_ref;
 	const char* name = NULL;
 	js_ref_t*   shim_ref;
@@ -3465,11 +3469,11 @@ js_SSj_log(int num_args, bool is_ctor, intptr_t magic)
 			jsal_replace(0);
 		else
 			jsal_pop(1);
-	} 
+	}
 	else if (jsal_is_object(0) && !jsal_is_function(0)) {
 		jsal_stringify(0);
 	}
-	
+
 	text = jsal_to_string(0);
 	debugger_log(text, (ki_log_op_t)magic, true);
 #endif
@@ -3554,7 +3558,7 @@ js_SSj_profile(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_ref_weak(shim_ref);
 	jsal_put_prop_key(-2, s_key_value);
 	jsal_def_prop_string(0, key);
-	
+
 	jsal_unref(shim_ref);
 	free(record_name);
 #endif
@@ -3789,7 +3793,7 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, intptr_t magic)
 			: al_map_rgba_f(1.0f, 1.0f, 1.0f, 1.0f);
 		jsal_pop(7);
 	}
-	
+
 	draw_mode = type == SHAPE_LINES ? ALLEGRO_PRIM_LINE_LIST
 		: type == SHAPE_LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
 		: type == SHAPE_LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
@@ -4716,7 +4720,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 	int y;
 
 	class_id = magic;
-	
+
 	if (num_args >= 3 && (buffer = jsal_get_buffer_ptr(2, &buffer_size))) {
 		// create an Image from an ArrayBuffer or similar object
 		width = jsal_require_int(0);
@@ -4918,11 +4922,11 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 				jsal_push_new_function(js_Transform_get_matrix, "get", 0, 1 + (j * 4 + i));
 				jsal_push_this();
 				jsal_put_prop_string(-2, "\xFF" "transform");
-				
+
 				jsal_push_new_function(js_Transform_set_matrix, "set", 0, 1 + (j * 4 + i));
 				jsal_push_this();
 				jsal_put_prop_string(-2, "\xFF" "transform");
-				
+
 				jsal_push_eval("({ enumerable: true })");
 				jsal_pull(-2);
 				jsal_put_prop_string(-2, "set");
@@ -5129,7 +5133,7 @@ js_new_VertexList(int num_args, bool is_ctor, intptr_t magic)
 	num_entries = (int)jsal_get_length(0);
 	if (num_entries == 0)
 		jsal_error(JS_RANGE_ERROR, "Empty list is not allowed");
-	
+
 	vbo = vbo_new();
 	for (i = 0; i < num_entries; ++i) {
 		jsal_get_prop_index(0, i);
@@ -5156,7 +5160,7 @@ js_new_VertexList(int num_args, bool is_ctor, intptr_t magic)
 		vbo_unref(vbo);
 		jsal_error(JS_ERROR, "Couldn't upload VertexList to GPU");
 	}
-	
+
 	jsal_push_class_obj(PEGASUS_VERTEX_LIST, vbo, true);
 	return true;
 }
@@ -5180,10 +5184,10 @@ js_Z_deflate(int num_args, bool is_ctor, intptr_t magic)
 	input_data = jsal_require_buffer_ptr(0, &input_size);
 	if (num_args >= 2)
 		level = jsal_require_int(1);
-	
+
 	if (level < 0 || level > 9)
 		jsal_error(JS_RANGE_ERROR, "Invalid compression level '%d'", level);
-	
+
 	if (!(output_data = z_deflate(input_data, input_size, level, &output_size)))
 		jsal_error(JS_ERROR, "Couldn't deflate THE PIG (it's too fat)");
 	jsal_push_new_buffer(JS_ARRAYBUFFER, output_size, &buffer);
@@ -5201,7 +5205,7 @@ js_Z_inflate(int num_args, bool is_ctor, intptr_t magic)
 	int         max_size = 0;
 	void*       output_data;
 	size_t      output_size;
-	
+
 	input_data = jsal_require_buffer_ptr(0, &input_size);
 	if (num_args >= 2)
 		max_size = jsal_require_int(1);

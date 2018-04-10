@@ -66,7 +66,7 @@ dispatch_init(void)
 	s_onetime_jobs = vector_new(sizeof(struct job));
 	s_recurring_jobs = vector_new(sizeof(struct job));
 	s_exit_jobs = vector_new(sizeof(struct job));
-	
+
 	// reserve extra slots for one-time jobs.  realloc() is fairly expensive
 	// and the one-time queue gets very heavy traffic.
 	vector_reserve(s_onetime_jobs, 32);
@@ -116,6 +116,12 @@ dispatch_cancel_all(bool recurring, bool also_critical)
 	iter_t iter;
 
 	iter = vector_enum(s_onetime_jobs);
+	while ((job = iter_next(&iter))) {
+		if (!job->critical || also_critical)
+			job->finished = true;
+	}
+
+	iter = vector_enum(s_exit_jobs);
 	while ((job = iter_next(&iter))) {
 		if (!job->critical || also_critical)
 			job->finished = true;
@@ -246,7 +252,7 @@ static struct job*
 job_from_token(int64_t token)
 {
 	struct job* job;
-	
+
 	iter_t iter;
 
 	iter = vector_enum(s_recurring_jobs);
