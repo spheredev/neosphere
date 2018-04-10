@@ -58,10 +58,10 @@ static color_t      s_banner_color;
 static lstring_t*   s_banner_text;
 static bool         s_have_source_map = false;
 static bool         s_is_attached = false;
+static bool         s_needs_attachment;
 static server_t*    s_server;
 static socket_t*    s_socket = NULL;
 static vector_t*    s_sources;
-static bool         s_want_attach;
 
 void
 debugger_init(ssj_mode_t attach_mode, bool allow_remote)
@@ -118,9 +118,9 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 
 	// if the engine was started in debug mode, wait for a debugger to connect before
 	// beginning execution.
-	s_want_attach = attach_mode == SSJ_ACTIVE;
-	if (s_want_attach && !do_attach_debugger())
-		sphere_exit(true);
+	s_needs_attachment = attach_mode == SSJ_ACTIVE;
+	if (s_needs_attachment && !do_attach_debugger())
+		sphere_abort(NULL);  // no attachment, exit
 }
 
 void
@@ -427,8 +427,8 @@ do_detach_debugger(bool is_shutdown)
 	}
 	socket_unref(s_socket);
 	s_socket = NULL;
-	if (s_want_attach && !is_shutdown)
-		sphere_exit(true);  // clean detach, exit
+	if (s_needs_attachment && !is_shutdown)
+		sphere_abort(NULL);  // clean detach, exit
 }
 
 static bool

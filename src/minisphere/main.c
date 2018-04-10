@@ -86,13 +86,13 @@ game_t*              g_game = NULL;
 path_t*              g_game_path = NULL;
 double               g_idle_time = 0.0;
 path_t*              g_last_game_path = NULL;
-bool                 g_restarting = false;
 screen_t*            g_screen = NULL;
 font_t*              g_system_font = NULL;
 uint32_t             g_tick_count = 0;
 
 static jmp_buf s_jmp_exit;
 static jmp_buf s_jmp_restart;
+bool           s_restart_game = false;
 
 static const char* const ERROR_TEXT[][2] =
 {
@@ -310,7 +310,7 @@ main(int argc, char* argv[])
 #endif
 
 	g_event_loop_version = 1;
-	g_restarting = false;
+	s_restart_game = false;
 
 	// evaluate the main script (v1) or module (v2)
 	script_path = game_script_path(g_game);
@@ -362,7 +362,7 @@ main(int argc, char* argv[])
 		profiler_uninit();
 #endif
 
-	if (g_restarting)
+	if (s_restart_game)
 		longjmp(s_jmp_restart, 1);
 
 	longjmp(s_jmp_exit, 1);
@@ -405,23 +405,26 @@ on_js_error:
 void
 sphere_abort(const char* message)
 {
-	show_error_screen(message);
-	sphere_exit(false);
+	// note: this won't exit immediately.  it merely cancels Dispatch jobs and
+	//       disables the JavaScript VM so that control will fall through the event
+	//       loop naturally.
+
+	if (message != NULL)
+		show_error_screen(message);
+	dispatch_cancel_all(true, true);
+	jsal_disable_vm(true);
 }
 
 void
 sphere_exit(bool shutting_down)
 {
-	// note: this won't exit immediately.  it merely cancels Dispatch jobs and
-	//       disables the JavaScript VM so that control will fall through the event
-	//       loop naturally.
-
 	if (shutting_down) {
 		path_free(g_last_game_path);
 		g_last_game_path = NULL;
 	}
-	dispatch_cancel_all(true, true);
-	jsal_disable_vm(true);
+	dispatch_cancel_all(true, false);
+	if (g_event_loop_version < 2)
+		jsal_disable_vm(true);
 }
 
 void
@@ -456,11 +459,7 @@ sphere_heartbeat(bool in_event_loop)
 	while (al_get_next_event(g_events, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
-			path_free(g_last_game_path);
-			g_last_game_path = NULL;
-			dispatch_cancel_all(true, false);
-			if (g_event_loop_version < 2)
-				jsal_disable_vm(true);
+			sphere_exit(true);
 			break;
 		}
 	}
@@ -472,6 +471,13 @@ sphere_heartbeat(bool in_event_loop)
 	if (in_event_loop)
 		g_idle_time += al_get_time() - start_time;
 #endif
+}
+
+void
+sphere_restart(void)
+{
+	s_restart_game = true;
+	sphere_exit(false);
 }
 
 void

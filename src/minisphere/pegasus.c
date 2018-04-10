@@ -1477,8 +1477,7 @@ js_Sphere_now(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_restart(int num_args, bool is_ctor, intptr_t magic)
 {
-	g_restarting = true;
-	dispatch_cancel_all(true, false);
+	sphere_restart();
 	return false;
 }
 
@@ -1505,8 +1504,7 @@ js_Sphere_setResolution(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_shutDown(int num_args, bool is_ctor, intptr_t magic)
 {
-	g_restarting = false;
-	dispatch_cancel_all(true, false);
+	sphere_exit(false);
 	return false;
 }
 
