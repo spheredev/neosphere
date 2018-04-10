@@ -61,6 +61,12 @@
     "language='*'\"")
 #endif
 
+game_t*   g_game = NULL;
+double    g_idle_time = 0.0;
+screen_t* g_screen = NULL;
+font_t*   g_system_font = NULL;
+uint32_t  g_tick_count = 0;
+
 enum fullscreen_mode
 {
 	FULLSCREEN_AUTO,
@@ -79,12 +85,6 @@ static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
 static void show_error_screen   (const char* message);
-
-game_t*              g_game = NULL;
-double               g_idle_time = 0.0;
-screen_t*            g_screen = NULL;
-font_t*              g_system_font = NULL;
-uint32_t             g_tick_count = 0;
 
 static int                  s_event_loop_version;
 static ALLEGRO_EVENT_QUEUE* s_event_queue = NULL;
@@ -413,7 +413,7 @@ sphere_abort(const char* message)
 	if (message != NULL)
 		show_error_screen(message);
 	dispatch_cancel_all(true, true);
-	jsal_disable_vm(true);
+	jsal_enable_vm(false);
 }
 
 void
@@ -435,7 +435,7 @@ sphere_exit(bool allow_game_change)
 	}
 	dispatch_cancel_all(true, false);
 	if (s_event_loop_version < 2)
-		jsal_disable_vm(true);
+		jsal_enable_vm(false);
 }
 
 void
@@ -625,7 +625,7 @@ shutdown_engine(void)
 {
 	kb_save_keymap();
 
-	jsal_disable_vm(false);
+	jsal_enable_vm(true);
 
 #if defined(MINISPHERE_SPHERUN)
 	debugger_uninit();

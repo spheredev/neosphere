@@ -74,22 +74,14 @@
 
 #define SPHERE_PATH_MAX 1024
 
-#if defined(__GNUC__) || defined(__clang__)
-#define no_return __attribute__((noreturn)) void
-#elif defined(_MSC_VER)
-#define no_return __declspec(noreturn) void
-#else
-#define no_return void
-#endif
-
-// at some point some of these global variables need to get eaten, preferably by
-// some kind of eaty pig.  they're a relic from the early stages of miniSphere development
-// and I've been too lazy to try to refactor them away.
-extern game_t*              g_game;
-extern double               g_idle_time;
-extern screen_t*            g_screen;
-extern font_t*              g_system_font;
-extern uint32_t             g_tick_count;
+// at some point all of these global variables need to get eaten, preferably by some
+// type of eaty pig.  they're a relic from the early stages of engine development; while
+// I've pared this list down over time, ideally all of them should disappear.
+extern game_t*   g_game;
+extern double    g_idle_time;
+extern screen_t* g_screen;
+extern font_t*   g_system_font;
+extern uint32_t  g_tick_count;
 
 void sphere_abort       (const char* message);
 void sphere_change_game (const char* pathname);

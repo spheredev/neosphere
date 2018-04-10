@@ -25,11 +25,11 @@ v5.2.0 - TBD
 * Renames the `--performance` command-line option to `--profile` to reflect its
   new purpose.
 * Removes the `Image` class from the bundled Sphere Runtime.
+* Fixes a bug where calling Sphere v1 exit functions or closing the game window
+  can prevent promise reactions from running.
 * Fixes a bug where games are unable to create any Dispatch jobs after calling
   `Sphere.restart()` (or any other API that restarts the engine).
 * Fixes an internal memory leak mostly affecting `Dispatch` job execution.
-* Fixes a bug where outstanding promise continuations get eaten when the user
-  closes the game window.
 * Fixes a bug where the v1 `Font#setCharacterImage()` API doesn't recalculate
   the font metrics, causing text to be rendered incorrectly afterwards.
 * Fixes `Pact#promise` not existing, as it was accidentally removed in 5.1.3.

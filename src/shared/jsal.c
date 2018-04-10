@@ -361,12 +361,12 @@ jsal_busy(void)
 }
 
 bool
-jsal_disabled(void)
+jsal_vm_enabled(void)
 {
 	bool disabled;
 
 	JsIsRuntimeExecutionDisabled(s_js_runtime, &disabled);
-	return disabled;
+	return !disabled;
 }
 
 void
@@ -561,15 +561,6 @@ jsal_del_prop_string(int object_index, const char* name)
 	return jsal_del_prop(object_index);
 }
 
-void
-jsal_disable_vm(bool disabled)
-{
-	if (disabled)
-		JsDisableRuntimeExecution(s_js_runtime);
-	else
-		JsEnableRuntimeExecution(s_js_runtime);
-}
-
 int
 jsal_dup(int from_index)
 {
@@ -577,6 +568,15 @@ jsal_dup(int from_index)
 
 	ref = get_ref(from_index);
 	return push_value(ref->value, ref->weak_ref);
+}
+
+void
+jsal_enable_vm(bool enabled)
+{
+	if (enabled)
+		JsEnableRuntimeExecution(s_js_runtime);
+	else
+		JsDisableRuntimeExecution(s_js_runtime);
 }
 
 void

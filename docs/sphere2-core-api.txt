@@ -243,12 +243,12 @@ Sphere.fullScreen [read/write]
 
 Sphere.abort(message);
 
-    Unconditionally aborts execution and displays an error screen before
-    closing the engine.  `message` will be displayed on the error screen.
+    Aborts execution.  This is effectively a forced crash: JavaScript execution
+    will cease immediately, and the exception screen will be shown displaying
+    `message`.
 
     Note: Sphere.abort() bypasses all exception handling mechanisms, including
-          the debugger.  Be sure you know what you're doing before you call
-          this function.
+          the debugger if it's attached.  Be sure you know what you're doing!
 
 Sphere.now();
 

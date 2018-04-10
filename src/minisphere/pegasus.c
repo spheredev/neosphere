@@ -475,7 +475,7 @@ static mixer_t*  s_def_mixer;
 static int       s_frame_rate = 60;
 static int       s_next_module_id = 1;
 static js_ref_t* s_screen_obj;
-static bool      s_shutting_down;
+static bool      s_shutting_down = false;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
@@ -497,7 +497,6 @@ pegasus_init(void)
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
-	s_shutting_down = false;
 	jsal_on_import_module(handle_module_import);
 
 	s_key_color = jsal_new_key("color");
@@ -1189,6 +1188,10 @@ handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 	//    - JS module loader jobs
 	//    - unhandled promise rejections
 
+	// Sphere v1 exit paths disable the JavaScript VM to force the engine to
+	// bail, so we need to re-enable it here.
+	jsal_enable_vm(true);
+
 	while (dispatch_busy() || jsal_busy()) {
 		sphere_heartbeat(true);
 		if (!screen_skipping_frame(g_screen))
@@ -1201,15 +1204,13 @@ handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 	}
 
 	// deal with Dispatch.onExit() jobs
-	// note: Sphere v1 Exit() disables the VM to cause the engine to fall out of
-	//       JavaScript naturally, so we need to re-enable it here.
-	jsal_disable_vm(false);
 	s_shutting_down = true;
 	while (!dispatch_can_exit() || jsal_busy()) {
 		sphere_heartbeat(true);
 		dispatch_run(JOB_ON_TICK);
 		dispatch_run(JOB_ON_EXIT);
 	}
+	s_shutting_down = false;
 
 	return false;
 }

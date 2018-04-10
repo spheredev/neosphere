@@ -645,7 +645,7 @@ map_engine_start(const char* filename, int framerate)
 	s_frame_rate = framerate;
 	if (!change_map(filename, true))
 		goto on_error;
-	while (!s_exiting && !jsal_disabled()) {
+	while (!s_exiting && jsal_vm_enabled()) {
 		sphere_heartbeat(true);
 		
 		// order of operations matches Sphere 1.x.  not sure why, but Sphere 1.x
