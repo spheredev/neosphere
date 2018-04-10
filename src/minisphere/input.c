@@ -50,7 +50,7 @@ static void queue_mouse_event (mouse_key_t key, int x, int y);
 static vector_t*            s_bound_buttons;
 static vector_t*            s_bound_keys;
 static int                  s_default_key_map[4][PLAYER_KEY_MAX];
-static ALLEGRO_EVENT_QUEUE* s_events;
+static ALLEGRO_EVENT_QUEUE* s_event_queue;
 static bool                 s_have_joystick;
 static bool                 s_have_mouse;
 static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
@@ -96,12 +96,12 @@ initialize_input(void)
 
 	memset(s_key_state, 0, sizeof s_key_state);
 
-	s_events = al_create_event_queue();
-	al_register_event_source(s_events, al_get_keyboard_event_source());
+	s_event_queue = al_create_event_queue();
+	al_register_event_source(s_event_queue, al_get_keyboard_event_source());
 	if (s_have_mouse)
-		al_register_event_source(s_events, al_get_mouse_event_source());
+		al_register_event_source(s_event_queue, al_get_mouse_event_source());
 	if (s_have_joystick)
-		al_register_event_source(s_events, al_get_joystick_event_source());
+		al_register_event_source(s_event_queue, al_get_joystick_event_source());
 
 	// look for active joysticks
 	if (s_have_joystick) {
@@ -183,7 +183,7 @@ shutdown_input(void)
 	vector_free(s_bound_keys);
 
 	// shut down Allegro input
-	al_destroy_event_queue(s_events);
+	al_destroy_event_queue(s_event_queue);
 	al_uninstall_joystick();
 	al_uninstall_mouse();
 	al_uninstall_keyboard();
@@ -417,7 +417,7 @@ kb_save_keymap(void)
 
 	int i, j;
 
-	if (!s_has_keymap_changed || g_game_path == NULL)
+	if (!s_has_keymap_changed || g_game == NULL)
 		return;
 	console_log(1, "saving player key mappings");
 	file = kev_open(g_game, "@/keymap.conf", true);
@@ -496,7 +496,7 @@ get_player_key(int player, player_key_t vkey)
 void
 attach_input_display(void)
 {
-	al_register_event_source(s_events,
+	al_register_event_source(s_event_queue,
 		al_get_display_event_source(screen_display(g_screen)));
 }
 
@@ -504,7 +504,7 @@ void
 set_player_key(int player, player_key_t vkey, int keycode)
 {
 	s_key_map[player][vkey] = keycode;
-	s_has_keymap_changed = g_game_path != NULL;
+	s_has_keymap_changed = g_game != NULL;
 }
 
 void
@@ -549,7 +549,7 @@ update_input(void)
 	ALLEGRO_MOUSE_STATE    mouse_state;
 
 	// process Allegro input events
-	while (al_get_next_event(s_events, &event)) {
+	while (al_get_next_event(s_event_queue, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
 			// Alt+Tabbing out can cause keys to get "stuck", this works around it

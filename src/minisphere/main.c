@@ -80,19 +80,17 @@ static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
 static void show_error_screen   (const char* message);
 
-int                  g_event_loop_version = 1;
-ALLEGRO_EVENT_QUEUE* g_events = NULL;
 game_t*              g_game = NULL;
-path_t*              g_game_path = NULL;
 double               g_idle_time = 0.0;
-path_t*              g_last_game_path = NULL;
 screen_t*            g_screen = NULL;
 font_t*              g_system_font = NULL;
 uint32_t             g_tick_count = 0;
 
-static jmp_buf s_jmp_exit;
-static jmp_buf s_jmp_restart;
-bool           s_restart_game = false;
+static int                  s_event_loop_version;
+static ALLEGRO_EVENT_QUEUE* s_event_queue = NULL;
+static path_t*              s_game_path = NULL;
+static path_t*              s_last_game_path = NULL;
+static bool                 s_restart_game = false;
 
 static const char* const ERROR_TEXT[][2] =
 {
@@ -129,11 +127,13 @@ main(int argc, char* argv[])
 	const char*          error_stack = NULL;
 	const char*          error_text;
 	const char*          error_url = NULL;
+	jmp_buf              exit_jump;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	int                  fullscreen_mode;
 	path_t*              games_path;
 	image_t*             icon;
 	size2_t              resolution;
+	jmp_buf              restart_jump;
 	const path_t*        script_path;
 	ssj_mode_t           ssj_mode;
 	bool                 use_conserve_cpu;
@@ -141,7 +141,7 @@ main(int argc, char* argv[])
 	int                  use_verbosity;
 
 	// parse the command line
-	if (parse_command_line(argc, argv, &g_game_path,
+	if (parse_command_line(argc, argv, &s_game_path,
 		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &ssj_mode))
 	{
 		if (ssj_mode == SSJ_ACTIVE)
@@ -157,7 +157,7 @@ main(int argc, char* argv[])
 
 	// print out options
 	console_log(1, "parsing command line");
-	console_log(1, "    game path: %s", g_game_path != NULL ? path_cstr(g_game_path) : "<none provided>");
+	console_log(1, "    game path: %s", s_game_path != NULL ? path_cstr(s_game_path) : "<none provided>");
 	console_log(1, "    fullscreen: %s",
 		fullscreen_mode == FULLSCREEN_ON ? "on"
 			: fullscreen_mode == FULLSCREEN_OFF ? "off"
@@ -178,32 +178,32 @@ main(int argc, char* argv[])
 
 	// set up jump points for script bailout
 	console_log(1, "setting up jump points for longjmp");
-	if (setjmp(s_jmp_exit) != 0) {
+	if (setjmp(exit_jump) != 0) {
 		// JS code called Exit(), user closed engine, etc.
 		if (g_screen != NULL) {
 			fullscreen_mode = screen_get_fullscreen(g_screen)
 				? FULLSCREEN_ON : FULLSCREEN_OFF;
 		}
 		shutdown_engine();
-		if (g_last_game_path != NULL) {  // returning from ExecuteGame()?
+		if (s_last_game_path != NULL) {  // returning from ExecuteGame()?
 			if (!initialize_engine()) {
-				path_free(g_last_game_path);
+				path_free(s_last_game_path);
 				return EXIT_FAILURE;
 			}
-			g_game_path = g_last_game_path;
-			g_last_game_path = NULL;
+			s_game_path = s_last_game_path;
+			s_last_game_path = NULL;
 		}
 		else {
 			return EXIT_SUCCESS;
 		}
 	}
-	if (setjmp(s_jmp_restart) != 0) {
+	if (setjmp(restart_jump) != 0) {
 		// JS code called either RestartGame() or ExecuteGame()
 		fullscreen_mode = screen_get_fullscreen(g_screen)
 			? FULLSCREEN_ON : FULLSCREEN_OFF;
 		shutdown_engine();
 		console_log(1, "\nrestarting to launch new game");
-		console_log(1, "    path: %s", path_cstr(g_game_path));
+		console_log(1, "    path: %s", path_cstr(s_game_path));
 		screen_free(g_screen);
 		if (!initialize_engine())
 			return EXIT_FAILURE;
@@ -213,13 +213,13 @@ main(int argc, char* argv[])
 	console_log(1, "searching for a game to launch");
 	games_path = path_rebase(path_new("miniSphere/Games/"), home_path());
 	path_mkdir(games_path);
-	if (g_game_path == NULL) {
+	if (s_game_path == NULL) {
 		// no game specified on command line, see if we have a startup game
-		find_startup_game(&g_game_path);
+		find_startup_game(&s_game_path);
 	}
-	if (g_game_path != NULL) {
+	if (s_game_path != NULL) {
 		// user provided a path or startup game was found, attempt to load it
-		g_game = game_open(path_cstr(g_game_path));
+		g_game = game_open(path_cstr(s_game_path));
 	}
 	else {
 		// no game path provided and no startup game, let user find one
@@ -230,9 +230,9 @@ main(int argc, char* argv[])
 		al_show_native_file_dialog(NULL, file_dlg);
 		lstr_free(dialog_name);
 		if (al_get_native_file_dialog_count(file_dlg) > 0) {
-			path_free(g_game_path);
-			g_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
-			g_game = game_open(path_cstr(g_game_path));
+			path_free(s_game_path);
+			s_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
+			g_game = game_open(path_cstr(s_game_path));
 			al_destroy_native_file_dialog(file_dlg);
 		}
 		else {
@@ -248,14 +248,14 @@ main(int argc, char* argv[])
 		// if after all that, we still don't have a valid game_t pointer, bail out;
 		// there's not much else we can do.
 #if !defined(MINISPHERE_SPHERUN)
-		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(g_game_path),
+		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(s_game_path),
 			"miniSphere either couldn't read the game manifest or a manifest file was not found.  Check that the directory listed above contains a valid Sphere game manifest file.\n\n"
 			"For Sphere developers:\nUsing SpheRun to start the game from the command line may yield more insight.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
-		fprintf(stderr, "ERROR: couldn't start game '%s'\n", path_cstr(g_game_path));
+		fprintf(stderr, "ERROR: couldn't start game '%s'\n", path_cstr(s_game_path));
 #endif
-		longjmp(s_jmp_exit, 1);
+		longjmp(exit_jump, 1);
 	}
 
 	// set up the render context ("screen") so we can draw stuff
@@ -271,8 +271,8 @@ main(int argc, char* argv[])
 	}
 
 	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-	g_events = al_create_event_queue();
-	al_register_event_source(g_events,
+	s_event_queue = al_create_event_queue();
+	al_register_event_source(s_event_queue,
 		al_get_display_event_source(screen_display(g_screen)));
 	attach_input_display();
 	kb_load_keymap();
@@ -309,7 +309,7 @@ main(int argc, char* argv[])
 		profiler_init();
 #endif
 
-	g_event_loop_version = 1;
+	s_event_loop_version = 1;
 	s_restart_game = false;
 
 	// evaluate the main script (v1) or module (v2)
@@ -354,6 +354,7 @@ main(int argc, char* argv[])
 	// start up the event loop.  we can do this even in compatibility mode:
 	// the event loop terminates when there are no pending jobs or promises to settle,
 	// and neither one was available in Sphere 1.x.
+	s_event_loop_version = 2;
 	if (!pegasus_start_event_loop())
 		goto on_js_error;
 
@@ -363,9 +364,9 @@ main(int argc, char* argv[])
 #endif
 
 	if (s_restart_game)
-		longjmp(s_jmp_restart, 1);
+		longjmp(restart_jump, 1);
 
-	longjmp(s_jmp_exit, 1);
+	longjmp(exit_jump, 1);
 
 on_js_error:
 	jsal_dup(-1);
@@ -399,7 +400,7 @@ on_js_error:
 	else
 		jsal_push_sprintf("uncaught JavaScript exception.\n\n%s\n", error_text);
 	show_error_screen(jsal_get_string(-1));
-	longjmp(s_jmp_exit, 1);
+	longjmp(exit_jump, 1);
 }
 
 void
@@ -416,14 +417,24 @@ sphere_abort(const char* message)
 }
 
 void
+sphere_change_game(const char* pathname)
+{
+	// store the old game path so we can relaunch when the chained game exits
+	s_last_game_path = path_dup(game_path(g_game));
+
+	s_game_path = path_new(pathname);
+	sphere_restart();
+}
+
+void
 sphere_exit(bool shutting_down)
 {
 	if (shutting_down) {
-		path_free(g_last_game_path);
-		g_last_game_path = NULL;
+		path_free(s_last_game_path);
+		s_last_game_path = NULL;
 	}
 	dispatch_cancel_all(true, false);
-	if (g_event_loop_version < 2)
+	if (s_event_loop_version < 2)
 		jsal_disable_vm(true);
 }
 
@@ -456,7 +467,7 @@ sphere_heartbeat(bool in_event_loop)
 	audio_update();
 
 	// check if the user closed the game window
-	while (al_get_next_event(g_events, &event)) {
+	while (al_get_next_event(s_event_queue, &event)) {
 		switch (event.type) {
 		case ALLEGRO_EVENT_DISPLAY_CLOSE:
 			sphere_exit(true);
@@ -465,8 +476,8 @@ sphere_heartbeat(bool in_event_loop)
 	}
 
 #if defined(MINISPHERE_SPHERUN)
-	// only count a heartbeat as lost time if it occurs as part of event loop processing.
-	// most critically, screen_flip()--all of which is already lost time itself--generates benign
+	// only count a heartbeat as idle time if it occurs as part of event loop processing.
+	// most critically, screen_flip()--all of which is already idle time itself--generates benign
 	// heartbeats while waiting for the next frame so we want to avoid counting that time twice.
 	if (in_event_loop)
 		g_idle_time += al_get_time() - start_time;
@@ -490,7 +501,7 @@ sphere_sleep(double time)
 	do {
 		time_left = end_time - al_get_time();
 		if (time_left > 0.0)
-			al_wait_for_event_timed(g_events, NULL, time_left);
+			al_wait_for_event_timed(s_event_queue, NULL, time_left);
 		sphere_heartbeat(false);
 	} while (al_get_time() < end_time);
 }
@@ -639,9 +650,9 @@ shutdown_engine(void)
 	console_log(1, "shutting down Allegro");
 	screen_free(g_screen);
 	g_screen = NULL;
-	if (g_events != NULL)
-		al_destroy_event_queue(g_events);
-	g_events = NULL;
+	if (s_event_queue != NULL)
+		al_destroy_event_queue(s_event_queue);
+	s_event_queue = NULL;
 	game_unref(g_game);
 	g_game = NULL;
 	al_uninstall_system();

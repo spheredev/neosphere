@@ -85,18 +85,15 @@
 // at some point some of these global variables need to get eaten, preferably by
 // some kind of eaty pig.  they're a relic from the early stages of miniSphere development
 // and I've been too lazy to try to refactor them away.
-extern int                  g_event_loop_version;
-extern ALLEGRO_EVENT_QUEUE* g_events;
 extern game_t*              g_game;
-extern path_t*              g_game_path;
 extern double               g_idle_time;
-extern path_t*              g_last_game_path;
 extern screen_t*            g_screen;
 extern font_t*              g_system_font;
 extern uint32_t             g_tick_count;
 
-void sphere_abort     (const char* message);
-void sphere_exit      (bool shutting_down);
-void sphere_heartbeat (bool in_event_loop);
-void sphere_restart   (void);
-void sphere_sleep     (double time);
+void sphere_abort       (const char* message);
+void sphere_change_game (const char* pathname);
+void sphere_exit        (bool shutting_down);
+void sphere_heartbeat   (bool in_event_loop);
+void sphere_restart     (void);
+void sphere_sleep       (double time);

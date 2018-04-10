@@ -475,7 +475,7 @@ static mixer_t*  s_def_mixer;
 static int       s_frame_rate = 60;
 static int       s_next_module_id = 1;
 static js_ref_t* s_screen_obj;
-static bool      s_shutting_down = false;
+static bool      s_shutting_down;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
@@ -497,6 +497,7 @@ pegasus_init(void)
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
+	s_shutting_down = false;
 	jsal_on_import_module(handle_module_import);
 
 	s_key_color = jsal_new_key("color");
@@ -1017,7 +1018,6 @@ on_error:
 bool
 pegasus_start_event_loop(void)
 {
-	g_event_loop_version = 2;
 	if (jsal_try(handle_main_event_loop, 0)) {
 		jsal_pop(1);  // don't need return value
 		return true;

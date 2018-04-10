@@ -24,6 +24,8 @@ v5.2.0 - TBD
 * Renames the `--performance` command-line option to `--profile` to reflect its
   new purpose.
 * Removes the `Image` class from the bundled Sphere Runtime.
+* Fixes a bug where games are unable to create any Dispatch jobs after calling
+  `Sphere.restart()` (or any other API that restarts the engine).
 * Fixes an internal memory leak mostly affecting `Dispatch` job execution.
 * Fixes a bug where outstanding promise continuations get eaten when the user
   closes the game window.

@@ -365,12 +365,16 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	// that we lag instead of never rendering anything at all.
 	if (framerate > 0) {
 		it->skipping_frame = it->last_flip_time > it->next_frame_time && it->num_skips < it->max_skips;
-		do {  // kill time while we wait for the next frame
+		if (!it->avoid_sleep) {
 			time_left = it->next_frame_time - al_get_time();
-			if (!it->avoid_sleep && time_left > 0.0)
-				al_wait_for_event_timed(g_events, NULL, time_left);
-			sphere_heartbeat(false);
-		} while (al_get_time() < it->next_frame_time);
+			sphere_sleep(time_left);
+		}
+		else {
+			// `--no-sleep` enabled: spin until the next frame
+			while (al_get_time() < it->next_frame_time) {
+				sphere_heartbeat(false);
+			}
+		}
 		if (it->num_skips >= it->max_skips)  // did we skip too many frames?
 			it->next_frame_time = al_get_time() + 1.0 / framerate;
 		else

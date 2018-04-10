@@ -2235,15 +2235,16 @@ js_EvaluateScript(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_EvaluateSystemScript(int num_args, bool is_ctor, intptr_t magic)
 {
-	const char* filename = jsal_require_string(0);
+	char        path[SPHERE_PATH_MAX];
+	const char* pathname;
 
-	char path[SPHERE_PATH_MAX];
+	pathname = jsal_require_string(0);
 
-	sprintf(path, "@/scripts/lib/%s", filename);
+	sprintf(path, "@/scripts/lib/%s", pathname);
 	if (!game_file_exists(g_game, path))
-		sprintf(path, "#/scripts/%s", filename);
+		sprintf(path, "#/scripts/%s", pathname);
 	if (!game_file_exists(g_game, path))
-		jsal_error(JS_ERROR, "System script '%s' not found", filename);
+		jsal_error(JS_ERROR, "System script '%s' not found", pathname);
 	if (!script_eval(path))
 		jsal_throw();
 	return true;
@@ -2252,22 +2253,21 @@ js_EvaluateSystemScript(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_ExecuteGame(int num_args, bool is_ctor, intptr_t magic)
 {
-	path_t*     games_path;
-	const char* filename;
+	path_t*     base_path;
+	path_t*     path;
+	const char* pathname;
 
-	filename = jsal_require_string(0);
-
-	// store the old game path so we can relaunch when the chained game exits
-	g_last_game_path = path_dup(game_path(g_game));
+	pathname = jsal_require_string(0);
 
 	// if the passed-in path is relative, resolve it relative to <engine>/games.
 	// this is done for compatibility with Sphere 1.x.
-	g_game_path = path_new(filename);
-	games_path = path_rebase(path_new("games/"), assets_path());
-	path_rebase(g_game_path, games_path);
-	path_free(games_path);
+	path = path_new(pathname);
+	base_path = path_rebase(path_new("games/"), assets_path());
+	path_rebase(path, base_path);
+	path_free(base_path);
 
-	sphere_restart();
+	sphere_change_game(path_cstr(path));
+	path_free(path);
 	return false;
 }
 
