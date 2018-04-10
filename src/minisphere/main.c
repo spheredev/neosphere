@@ -354,7 +354,6 @@ main(int argc, char* argv[])
 	// start up the event loop.  we can do this even in compatibility mode:
 	// the event loop terminates when there are no pending jobs or promises to settle,
 	// and neither one was available in Sphere 1.x.
-	s_event_loop_version = 2;
 	if (!pegasus_start_event_loop())
 		goto on_js_error;
 
@@ -439,7 +438,7 @@ sphere_exit(bool allow_game_change)
 }
 
 void
-sphere_heartbeat(bool in_event_loop)
+sphere_heartbeat(bool in_event_loop, int api_version)
 {
 	// IMPORTANT: if `in_event_loop` is false, we MUST avoid doing anything that causes
 	//            JavaScript code to run, otherwise bad things will happen.
@@ -457,6 +456,7 @@ sphere_heartbeat(bool in_event_loop)
 	sockets_update();
 
 	if (in_event_loop) {
+		s_event_loop_version = api_version;
 #if defined(MINISPHERE_SPHERUN)
 		debugger_update();
 #endif
@@ -502,7 +502,7 @@ sphere_sleep(double time)
 		time_left = end_time - al_get_time();
 		if (time_left > 0.0)
 			al_wait_for_event_timed(s_event_queue, NULL, time_left);
-		sphere_heartbeat(false);
+		sphere_heartbeat(false, 0);
 	} while (al_get_time() < end_time);
 }
 

@@ -371,9 +371,8 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 		}
 		else {
 			// `--no-sleep` enabled: spin until the next frame
-			while (al_get_time() < it->next_frame_time) {
-				sphere_heartbeat(false);
-			}
+			while (al_get_time() < it->next_frame_time)
+				sphere_heartbeat(false, 0);
 		}
 		if (it->num_skips >= it->max_skips)  // did we skip too many frames?
 			it->next_frame_time = al_get_time() + 1.0 / framerate;

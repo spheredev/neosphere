@@ -1193,7 +1193,7 @@ handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 	jsal_enable_vm(true);
 
 	while (dispatch_busy() || jsal_busy()) {
-		sphere_heartbeat(true);
+		sphere_heartbeat(true, 2);
 		if (!screen_skipping_frame(g_screen))
 			dispatch_run(JOB_ON_RENDER);
 		screen_flip(g_screen, s_frame_rate, true);
@@ -1206,7 +1206,7 @@ handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 	// deal with Dispatch.onExit() jobs
 	s_shutting_down = true;
 	while (!dispatch_can_exit() || jsal_busy()) {
-		sphere_heartbeat(true);
+		sphere_heartbeat(true, 2);
 		dispatch_run(JOB_ON_TICK);
 		dispatch_run(JOB_ON_EXIT);
 	}

@@ -86,6 +86,6 @@ extern uint32_t  g_tick_count;
 void sphere_abort       (const char* message);
 void sphere_change_game (const char* pathname);
 void sphere_exit        (bool shutting_down);
-void sphere_heartbeat   (bool in_event_loop);
+void sphere_heartbeat   (bool in_event_loop, int api_version);
 void sphere_restart     (void);
 void sphere_sleep       (double time);

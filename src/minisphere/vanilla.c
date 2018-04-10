@@ -2191,7 +2191,7 @@ js_DetachPlayerInput(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_DoEvents(int num_args, bool is_ctor, intptr_t magic)
 {
-	sphere_heartbeat(true);
+	sphere_heartbeat(true, 1);
 	jsal_push_boolean(true);
 	return true;
 }
@@ -2426,7 +2426,7 @@ js_FilledEllipse(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FlipScreen(int num_args, bool is_ctor, intptr_t magic)
 {
-	sphere_heartbeat(true);
+	sphere_heartbeat(true, 1);
 	if (!screen_skipping_frame(g_screen))
 		dispatch_run(JOB_ON_RENDER);
 	screen_flip(g_screen, s_frame_rate, true);
