@@ -46,6 +46,17 @@ struct image_lock
 	int       num_lines;
 } image_lock_t;
 
+typedef
+enum blend_mode
+{
+	BLEND_NORMAL,
+	BLEND_ADD,
+	BLEND_MULTIPLY,
+	BLEND_REPLACE,
+	BLEND_SUBTRACT,
+	BLEND_MAX,
+} blend_mode_t;
+
 image_t*        image_new                (int width, int height);
 image_t*        image_new_slice          (image_t* parent, int x, int y, int width, int height);
 image_t*        image_dup                (const image_t* it);
@@ -58,8 +69,10 @@ ALLEGRO_BITMAP* image_bitmap             (image_t* it);
 int             image_height             (const image_t* it);
 const char*     image_path               (const image_t* it);
 int             image_width              (const image_t* it);
+blend_mode_t    image_get_blend_mode     (const image_t* it);
 rect_t          image_get_scissor        (const image_t* it);
 transform_t*    image_get_transform      (const image_t* it);
+void            image_set_blend_mode     (image_t* it, blend_mode_t mode);
 void            image_set_scissor        (image_t* it, rect_t value);
 void            image_set_transform      (image_t* it, transform_t* transform);
 bool            image_apply_colormat     (image_t* it, colormatrix_t matrix, int x, int y, int width, int height);

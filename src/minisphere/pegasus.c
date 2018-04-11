@@ -402,9 +402,11 @@ static bool js_SoundStream_pause             (int num_args, bool is_ctor, intptr
 static bool js_SoundStream_stop              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SoundStream_write             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_Screen            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_get_blendingMode      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_height            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_transform         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_width             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_set_blendingMode      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_set_transform         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_clipTo                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_toTexture             (int num_args, bool is_ctor, intptr_t magic);
@@ -719,10 +721,16 @@ pegasus_init(void)
 
 	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
+	api_define_property("Surface", "blendingMode", false, js_Surface_get_blendingMode, js_Surface_set_blendingMode);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
 	api_define_method("Surface", "clipTo", js_Surface_clipTo, 0);
 	api_define_method("Surface", "toTexture", js_Surface_toTexture, 0);
 
+	api_define_const("BlendOp", "AlphaBlend", BLEND_NORMAL);
+	api_define_const("BlendOp", "Add", BLEND_ADD);
+	api_define_const("BlendOp", "Multiply", BLEND_MULTIPLY);
+	api_define_const("BlendOp", "Replace", BLEND_REPLACE);
+	api_define_const("BlendOp", "Subtract", BLEND_SUBTRACT);
 	api_define_const("FileOp", "Read", FILE_OP_READ);
 	api_define_const("FileOp", "Write", FILE_OP_WRITE);
 	api_define_const("FileOp", "Update", FILE_OP_UPDATE);
@@ -4447,6 +4455,18 @@ js_Surface_get_Screen(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_Surface_get_blendingMode(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t*     image;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
+
+	jsal_push_int(image_get_blend_mode(image));
+	return true;
+}
+
+static bool
 js_Surface_get_height(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
@@ -4484,6 +4504,23 @@ js_Surface_get_width(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_int(image_width(image));
 	cache_value_to_this("width");
 	return true;
+}
+
+static bool
+js_Surface_set_blendingMode(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t*     image;
+	blend_mode_t mode;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
+	mode = jsal_require_int(0);
+
+	if (mode < 0 || mode >= BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blending mode constant '%d'", mode);
+	
+	image_set_blend_mode(image, mode);
+	return false;
 }
 
 static bool

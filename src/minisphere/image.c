@@ -42,6 +42,7 @@ struct image
 	unsigned int    refcount;
 	unsigned int    id;
 	ALLEGRO_BITMAP* bitmap;
+	blend_mode_t    blend_mode;
 	unsigned int    cache_hits;
 	bool            clipping_set;
 	image_lock_t    lock;
@@ -56,8 +57,9 @@ struct image
 	image_t*        parent;
 };
 
-static void cache_pixels   (image_t* image);
-static void uncache_pixels (image_t* image);
+static void apply_blend_mode (blend_mode_t mode);
+static void cache_pixels     (image_t* image);
+static void uncache_pixels   (image_t* image);
 
 static image_t*     s_last_image = NULL;
 static unsigned int s_next_image_id = 0;
@@ -203,10 +205,11 @@ image_read(file_t* file, int width, int height)
 	if (!(lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)))
 		goto on_error;
 	line_size = width * 4;
+	line_ptr = lock->data;
 	for (i_y = 0; i_y < height; ++i_y) {
-		line_ptr = (uint8_t*)lock->data + i_y * lock->pitch;
 		if (file_read(file, line_ptr, 1, line_size) != 1)
 			goto on_error;
+		line_ptr += lock->pitch;
 	}
 	al_unlock_bitmap(image->bitmap);
 	image->id = s_next_image_id++;
@@ -233,8 +236,8 @@ image_read_slice(file_t* file, image_t* parent, int x, int y, int width, int hei
 {
 	long          file_pos;
 	image_t*      image;
+	color_t*      line_ptr;
 	image_lock_t* lock = NULL;
-	color_t       *p_line;
 
 	int i_y;
 
@@ -243,10 +246,11 @@ image_read_slice(file_t* file, image_t* parent, int x, int y, int width, int hei
 		goto on_error;
 	if (!(lock = image_lock(parent, true, true)))
 		goto on_error;
+	line_ptr = lock->pixels + x + y * lock->pitch;
 	for (i_y = 0; i_y < height; ++i_y) {
-		p_line = lock->pixels + x + (i_y + y) * lock->pitch;
-		if (file_read(file, p_line, 1, width * 4) != 1)
+		if (file_read(file, line_ptr, 1, width * 4) != 1)
 			goto on_error;
+		line_ptr += lock->pitch;
 	}
 	image_unlock(parent, lock);
 	return image;
@@ -309,6 +313,12 @@ image_width(const image_t* it)
 	return it->width;
 }
 
+blend_mode_t
+image_get_blend_mode(const image_t* it)
+{
+	return it->blend_mode;
+}
+
 rect_t
 image_get_scissor(const image_t* it)
 {
@@ -319,6 +329,14 @@ transform_t*
 image_get_transform(const image_t* it)
 {
 	return it->transform;
+}
+
+void
+image_set_blend_mode(image_t* it, blend_mode_t mode)
+{
+	it->blend_mode = mode;
+	if (it == s_last_image)
+		apply_blend_mode(mode);
 }
 
 void
@@ -620,6 +638,7 @@ image_render_to(image_t* it, transform_t* transform)
 		it->modelview = transform_ref(transform);
 		transform_make_clean(transform);
 	}
+	apply_blend_mode(it->blend_mode);
 	s_last_image = it;
 }
 
@@ -722,7 +741,8 @@ image_unlock(image_t* it, image_lock_t* lock)
 {
 	// if the caller provides the wrong lock pointer, the image
 	// won't be unlocked. this prevents accidental unlocking.
-	if (lock != &it->lock) return;
+	if (lock != &it->lock)
+		return;
 
 	if (it->lock_count == 0 || --it->lock_count > 0)
 		return;
@@ -755,6 +775,28 @@ on_error:
 	console_log(3, "    couldn't write image to file");
 	image_unlock(it, lock);
 	return false;
+}
+
+static void
+apply_blend_mode(blend_mode_t mode)
+{
+	switch (mode) {
+	case BLEND_NORMAL:
+		al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+		break;
+	case BLEND_ADD:
+		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
+		break;
+	case BLEND_MULTIPLY:
+		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
+		break;
+	case BLEND_REPLACE:
+		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+		break;
+	case BLEND_SUBTRACT:
+		al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
+		break;
+	}
 }
 
 static void
