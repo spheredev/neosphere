@@ -177,11 +177,11 @@ script_run(script_t* script, bool allow_reentry)
 	// check whether an instance of the script is already running.
 	// if it is, but the script is reentrant, allow it.  otherwise, return early
 	// to prevent multiple invocation.
-	if (script->is_in_use && !allow_reentry) {
+	was_in_use = script->is_in_use;
+	if (was_in_use && !allow_reentry) {
 		console_log(3, "skipping execution of script #%u, already in use", script->id);
 		return;
 	}
-	was_in_use = script->is_in_use;
 
 	console_log(3, "executing script #%u", script->id);
 

@@ -43,7 +43,6 @@
 
 struct screen
 {
-	bool             avoid_sleep;
 	image_t*         backbuffer;
 	rect_t           clip_rect;
 	ALLEGRO_DISPLAY* display;
@@ -71,7 +70,7 @@ struct screen
 static void refresh_display (screen_t* screen);
 
 screen_t*
-screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, bool avoid_sleep)
+screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip)
 {
 	image_t*             backbuffer = NULL;
 	int                  bitmap_flags;
@@ -127,7 +126,6 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 	screen->x_size = resolution.width;
 	screen->y_size = resolution.height;
 	screen->max_skips = frameskip;
-	screen->avoid_sleep = avoid_sleep;
 
 	screen->fps_poll_time = al_get_time() + 1.0;
 	screen->next_frame_time = al_get_time();
@@ -275,13 +273,12 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	ALLEGRO_STATE     old_state;
 	ALLEGRO_BITMAP*   old_target;
 	path_t*           path;
-	const char*       pathstr;
+	const char*       pathname;
 	rect_t            scissor;
 	int               screen_cx;
 	int               screen_cy;
 	int               serial = 1;
 	ALLEGRO_BITMAP*   snapshot;
-	double            time_left;
 	char              timestamp[100];
 	int               x, y;
 #if defined(MINISPHERE_SPHERUN)
@@ -322,10 +319,10 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 				filename = strnewf("%s-%s-%d.png", game_filename, timestamp, serial++);
 				path_strip(path);
 				path_append(path, filename);
-				pathstr = path_cstr(path);
+				pathname = path_cstr(path);
 				free(filename);
-			} while (al_filename_exists(pathstr));
-			al_save_bitmap(pathstr, snapshot);
+			} while (al_filename_exists(pathname));
+			al_save_bitmap(pathname, snapshot);
 			al_destroy_bitmap(snapshot);
 			path_free(path);
 			it->take_screenshot = false;
@@ -365,15 +362,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	// that we lag instead of never rendering anything at all.
 	if (framerate > 0) {
 		it->skipping_frame = it->last_flip_time > it->next_frame_time && it->num_skips < it->max_skips;
-		if (!it->avoid_sleep) {
-			time_left = it->next_frame_time - al_get_time();
-			sphere_sleep(time_left);
-		}
-		else {
-			// `--no-sleep` enabled: spin until the next frame
-			while (al_get_time() < it->next_frame_time)
-				sphere_heartbeat(false, 0);
-		}
+		sphere_sleep(it->next_frame_time - al_get_time());
 		if (it->num_skips >= it->max_skips)  // did we skip too many frames?
 			it->next_frame_time = al_get_time() + 1.0 / framerate;
 		else

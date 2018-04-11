@@ -1,6 +1,42 @@
 Release Notes
 =============
 
+miniSphere 5.2
+--------------
+
+* SpheRun now supports profiling!  Call `SSj.profile()` and pass it an object
+  along with the name of a method and all subsequent calls to that method will
+  be profiled.  Then simply run your game with `spherun --profile` and When the
+  engine shuts down, a table showing the profiling results will be printed to
+  the terminal!
+
+* It is now possible for games to provide code to run on exit by using the new
+  `Dispatch.onExit` or `Thread#on_shutDown` APIs.  `onExit` jobs are guaranteed
+  to be called before the engine terminates, unless the game crashes with an
+  uncaught exception or calls `Sphere.abort`.
+
+* Data compression is now supported as a first-class citizen of Sphere v2:
+  `Z.deflate` and `Z.inflate` use the zlib DEFLATE compression algorithm, the
+  same one historically used for Sphere v1's `DeflateByteArray`.
+
+* `Surface` is now a proper subclass of `Texture`, allowing a surface to be
+  used anywhere a texture is expected.  This opens the door for awesome
+  render-to-texture effects and avoids the cost of making a copy incurred by
+  calling `.toTexture`.
+
+* Textures can now be manipulated directly at the pixel level using the new
+  `Texture#download` and `Texture#upload` methods.  Keep in mind that these are
+  both incredibly expensive so you probably don't want to call them every
+  frame.
+
+* `Shape.drawImmediate` has been added: this gives games the ability to draw
+  vectorized primitives on-the-fly without the overhead of creating VertexList
+  and Shape objects each time.
+
+* The `image` module has been removed from the Sphere Runtime.  Games currently
+  depending on the `Image` class should switch to using `Prim.blit` instead.
+
+
 miniSphere 5.1
 --------------
 

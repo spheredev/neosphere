@@ -80,7 +80,7 @@ static void on_socket_idle      (void);
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static bool find_startup_game   (path_t* *out_path);
-static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode);
+static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, ssj_mode_t *out_ssj_mode);
 static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
@@ -127,22 +127,21 @@ main(int argc, char* argv[])
 	const char*          error_stack = NULL;
 	const char*          error_text;
 	const char*          error_url = NULL;
-	jmp_buf              exit_jump;
-	ALLEGRO_FILECHOOSER* file_dlg;
+	jmp_buf              exit_label;
+	ALLEGRO_FILECHOOSER* file_dialog;
 	int                  fullscreen_mode;
 	path_t*              games_path;
 	image_t*             icon;
 	size2_t              resolution;
-	jmp_buf              restart_jump;
+	jmp_buf              restart_label;
 	const path_t*        script_path;
 	ssj_mode_t           ssj_mode;
-	bool                 use_conserve_cpu;
 	int                  use_frameskip;
 	int                  use_verbosity;
 
 	// parse the command line
 	if (parse_command_line(argc, argv, &s_game_path,
-		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &ssj_mode))
+		&fullscreen_mode, &use_frameskip, &use_verbosity, &ssj_mode))
 	{
 		if (ssj_mode == SSJ_ACTIVE)
 			fullscreen_mode = FULLSCREEN_OFF;
@@ -163,7 +162,6 @@ main(int argc, char* argv[])
 			: fullscreen_mode == FULLSCREEN_OFF ? "off"
 			: "auto");
 	console_log(1, "    frameskip limit: %d frames", use_frameskip);
-	console_log(1, "    sleep when idle: %s", use_conserve_cpu ? "yes" : "no");
 	console_log(1, "    console verbosity: V%d", use_verbosity);
 #if defined(MINISPHERE_SPHERUN)
 	console_log(1, "    debugger mode: %s",
@@ -178,7 +176,7 @@ main(int argc, char* argv[])
 
 	// set up jump points for script bailout
 	console_log(1, "setting up jump points for longjmp");
-	if (setjmp(exit_jump) != 0) {
+	if (setjmp(exit_label) != 0) {
 		// JS code called Exit(), user closed engine, etc.
 		if (g_screen != NULL) {
 			fullscreen_mode = screen_get_fullscreen(g_screen)
@@ -197,7 +195,7 @@ main(int argc, char* argv[])
 			return EXIT_SUCCESS;
 		}
 	}
-	if (setjmp(restart_jump) != 0) {
+	if (setjmp(restart_label) != 0) {
 		// JS code called either RestartGame() or ExecuteGame()
 		fullscreen_mode = screen_get_fullscreen(g_screen)
 			? FULLSCREEN_ON : FULLSCREEN_OFF;
@@ -224,20 +222,20 @@ main(int argc, char* argv[])
 	else {
 		// no game path provided and no startup game, let user find one
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", SPHERE_ENGINE_NAME);
-		file_dlg = al_create_native_file_dialog(path_cstr(games_path),
+		file_dialog = al_create_native_file_dialog(path_cstr(games_path),
 			lstr_cstr(dialog_name),
 			"game.sgm;game.s2gm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
-		al_show_native_file_dialog(NULL, file_dlg);
+		al_show_native_file_dialog(NULL, file_dialog);
 		lstr_free(dialog_name);
-		if (al_get_native_file_dialog_count(file_dlg) > 0) {
+		if (al_get_native_file_dialog_count(file_dialog) > 0) {
 			path_free(s_game_path);
-			s_game_path = path_new(al_get_native_file_dialog_path(file_dlg, 0));
+			s_game_path = path_new(al_get_native_file_dialog_path(file_dialog, 0));
 			g_game = game_open(path_cstr(s_game_path));
-			al_destroy_native_file_dialog(file_dlg);
+			al_destroy_native_file_dialog(file_dialog);
 		}
 		else {
 			// user cancelled the dialog box
-			al_destroy_native_file_dialog(file_dlg);
+			al_destroy_native_file_dialog(file_dialog);
 			path_free(games_path);
 			return EXIT_SUCCESS;
 		}
@@ -255,14 +253,14 @@ main(int argc, char* argv[])
 #else
 		fprintf(stderr, "ERROR: couldn't start game '%s'\n", path_cstr(s_game_path));
 #endif
-		longjmp(exit_jump, 1);
+		longjmp(exit_label, 1);
 	}
 
 	// set up the render context ("screen") so we can draw stuff
 	resolution = game_resolution(g_game);
 	if (!(icon = image_load("@/icon.png")))
 		icon = image_load("#/icon.png");
-	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip, !use_conserve_cpu);
+	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip);
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere couldn't create a render context.",
 			"Your hardware may be too old to run miniSphere, or there could be a problem with the drivers on this system.  Check that your graphics drivers in particular are fully installed and up-to-date.",
@@ -363,9 +361,9 @@ main(int argc, char* argv[])
 #endif
 
 	if (s_restart_game)
-		longjmp(restart_jump, 1);
+		longjmp(restart_label, 1);
 
-	longjmp(exit_jump, 1);
+	longjmp(exit_label, 1);
 
 on_js_error:
 	jsal_dup(-1);
@@ -399,7 +397,7 @@ on_js_error:
 	else
 		jsal_push_sprintf("uncaught JavaScript exception.\n\n%s\n", error_text);
 	show_error_screen(jsal_get_string(-1));
-	longjmp(exit_jump, 1);
+	longjmp(exit_label, 1);
 }
 
 void
@@ -456,10 +454,10 @@ sphere_heartbeat(bool in_event_loop, int api_version)
 	sockets_update();
 
 	if (in_event_loop) {
-		s_event_loop_version = api_version;
 #if defined(MINISPHERE_SPHERUN)
 		debugger_update();
 #endif
+		s_event_loop_version = api_version;
 		jsal_update(true);
 	}
 
@@ -723,7 +721,7 @@ static bool
 parse_command_line(
 	int argc, char* argv[],
 	path_t* *out_game_path, int *out_fullscreen, int *out_frameskip,
-	int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode)
+	int *out_verbosity, ssj_mode_t *out_ssj_mode)
 {
 	bool parse_options = true;
 
@@ -735,7 +733,6 @@ parse_command_line(
 	*out_game_path = NULL;
 	*out_ssj_mode = SSJ_PASSIVE;
 	*out_verbosity = 0;
-	*out_want_throttle = true;
 
 	// process command line arguments
 	for (i = 1; i < argc; ++i) {
@@ -745,9 +742,6 @@ parse_command_line(
 			else if (strcmp(argv[i], "--frameskip") == 0) {
 				if (++i >= argc) goto missing_argument;
 				*out_frameskip = atoi(argv[i]);
-			}
-			else if (strcmp(argv[i], "--no-sleep") == 0) {
-				*out_want_throttle = false;
 			}
 			else if (strcmp(argv[i], "--fullscreen") == 0) {
 				*out_fullscreen = FULLSCREEN_ON;
@@ -864,14 +858,13 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   spherun [--fullscreen | --windowed] [--frameskip <n>] [--no-sleep]         \n");
-	printf("           [--debug | --profile] [--verbose <n>] <game_path>                  \n");
+	printf("   spherun [--fullscreen | --windowed] [--frameskip <n>] [--debug | --profile]\n");
+	printf("           [--verbose <n>] <game_path>                                        \n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --fullscreen   Start miniSphere in fullscreen mode.                    \n");
 	printf("       --windowed     Start miniSphere in windowed mode.  This is the default.\n");
 	printf("       --frameskip    Set the maximum number of consecutive frames to skip.   \n");
-	printf("       --no-sleep     Prevent the engine from sleeping between frames.        \n");
 	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
 	printf("   -p, --profile      Enable SSj.profile() for this session.  The engine will \n");
 	printf("                      run in high-performance mode but debugging is disabled. \n");
