@@ -6408,7 +6408,7 @@ js_Animation_getDelay(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	anim = jsal_require_class_obj(-1, SV1_ANIMATION);
-	jsal_pop(1);
+
 	jsal_push_int(animation_delay(anim));
 	return true;
 }
@@ -6432,7 +6432,7 @@ js_Animation_readNextFrame(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	anim = jsal_require_class_obj(-1, SV1_ANIMATION);
-	jsal_pop(1);
+
 	animation_update(anim);
 	return false;
 }
@@ -6450,7 +6450,7 @@ js_ByteArray_get_length(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	array = jsal_require_class_obj(-1, SV1_BYTE_ARRAY);
-	jsal_pop(1);
+
 	jsal_push_int(bytearray_len(array));
 	return true;
 }
@@ -6623,7 +6623,7 @@ js_ColorMatrix_apply(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	matrix = jsal_require_sphere_colormatrix(-1);
-	jsal_pop(1);
+
 	jsal_push_sphere_color(color_transform(color, matrix));
 	return true;
 }
@@ -6666,7 +6666,7 @@ js_File_flush(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	file = jsal_require_class_obj(-1, SV1_FILE);
-	jsal_pop(1);
+
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
 	kev_save(file);
@@ -6683,7 +6683,7 @@ js_File_getKey(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	file = jsal_require_class_obj(-1, SV1_FILE);
-	jsal_pop(1);
+
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
 	if ((key = kev_get_key(file, index)))
@@ -6700,7 +6700,7 @@ js_File_getNumKeys(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	file = jsal_require_class_obj(-1, SV1_FILE);
-	jsal_pop(1);
+
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
 	jsal_push_int(kev_num_keys(file));
@@ -6754,7 +6754,7 @@ js_File_write(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	file = jsal_require_class_obj(-1, SV1_FILE);
-	jsal_pop(1);
+
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
 	kev_write_string(file, key, jsal_to_string(1));
@@ -6775,7 +6775,7 @@ js_Font_clone(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
-	jsal_pop(1);
+
 	if (!(dolly_font = font_clone(font)))
 		jsal_error(JS_ERROR, "couldn't clone font");
 	jsal_push_sphere_font(dolly_font);
@@ -6919,7 +6919,7 @@ js_Font_getHeight(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
-	jsal_pop(1);
+
 	jsal_push_int(font_height(font));
 	return true;
 }
@@ -6957,7 +6957,7 @@ js_Font_getStringWidth(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
-	jsal_pop(1);
+
 	jsal_push_int(font_get_width(font, text));
 	return true;
 }
@@ -7013,7 +7013,7 @@ js_Font_wordWrapString(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
-	jsal_pop(1);
+
 	wraptext = wraptext_new(text, font, width);
 	num_lines = wraptext_len(wraptext);
 	jsal_push_new_array();
@@ -7038,7 +7038,7 @@ js_Image_get_height(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
-	jsal_pop(1);
+
 	jsal_push_int(image_height(image));
 	return true;
 }
@@ -7050,7 +7050,7 @@ js_Image_get_width(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
-	jsal_pop(1);
+
 	jsal_push_int(image_width(image));
 	return true;
 }
@@ -7058,6 +7058,7 @@ js_Image_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 {
+	int      blend_mode = V1_BLEND_NORMAL;
 	image_t* image;
 	int      x;
 	int      y;
@@ -7066,10 +7067,16 @@ js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
+	if (num_args >= 3)
+		blend_mode = jsal_to_int(2);
 
+	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
+	
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
+	apply_blend_mode(blend_mode);
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
 	return false;
 }
@@ -7077,6 +7084,7 @@ js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_blitMask(int num_args, bool is_ctor, intptr_t magic)
 {
+	int      blend_mode = V1_BLEND_NORMAL;
 	image_t* image;
 	color_t  mask;
 	int      x;
@@ -7087,10 +7095,16 @@ js_Image_blitMask(int num_args, bool is_ctor, intptr_t magic)
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	mask = jsal_require_sphere_color(2);
+	if (num_args >= 4)
+		blend_mode = jsal_to_int(3);
+
+	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
+	apply_blend_mode(blend_mode);
 	al_draw_tinted_bitmap(image_bitmap(image), nativecolor(mask), x, y, 0x0);
 	return false;
 }
@@ -7114,6 +7128,7 @@ static bool
 js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 {
 	float    angle;
+	int      blend_mode = V1_BLEND_NORMAL;
 	float    height;
 	image_t* image;
 	float    width;
@@ -7125,12 +7140,18 @@ js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 	x = trunc(jsal_to_number(0));
 	y = trunc(jsal_to_number(1));
 	angle = jsal_to_number(2);
+	if (num_args >= 4)
+		blend_mode = jsal_to_int(3);
+
+	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
+	apply_blend_mode(blend_mode);
 	al_draw_rotated_bitmap(image_bitmap(image), width / 2, height / 2,
 		x + width / 2, y + height / 2, angle, 0x0);
 	return false;
@@ -7139,13 +7160,14 @@ js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_rotateBlitMask(int num_args, bool is_ctor, intptr_t magic)
 {
+	float    angle;
+	int      blend_mode = V1_BLEND_NORMAL;
 	float    height;
 	image_t* image;
+	color_t  mask;
 	float    width;
 	float    x;
 	float    y;
-	float    angle;
-	color_t  mask;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
@@ -7153,12 +7175,18 @@ js_Image_rotateBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	y = trunc(jsal_to_number(1));
 	angle = jsal_to_number(2);
 	mask = jsal_require_sphere_color(3);
+	if (num_args >= 5)
+		blend_mode = jsal_to_int(4);
+
+	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
+	apply_blend_mode(blend_mode);
 	al_draw_tinted_rotated_bitmap(image_bitmap(image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
 	return false;
@@ -7174,6 +7202,7 @@ js_Image_toString(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 {
+	int           blend_mode = V1_BLEND_NORMAL;
 	int           height;
 	image_t*      image;
 	ALLEGRO_COLOR mask;
@@ -7193,6 +7222,11 @@ js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 	y3 = trunc(jsal_to_number(5));
 	x4 = trunc(jsal_to_number(6));
 	y4 = trunc(jsal_to_number(7));
+	if (num_args >= 9)
+		blend_mode = jsal_to_int(8);
+
+	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	width = image_width(image);
 	height = image_height(image);
@@ -7206,6 +7240,7 @@ js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
+	apply_blend_mode(blend_mode);
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return false;
 }
@@ -7213,6 +7248,7 @@ js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_transformBlitMask(int num_args, bool is_ctor, intptr_t magic)
 {
+	int           blend_mode = V1_BLEND_NORMAL;
 	ALLEGRO_COLOR color;
 	int           height;
 	image_t*      image;
@@ -7234,6 +7270,11 @@ js_Image_transformBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	x4 = trunc(jsal_to_number(6));
 	y4 = trunc(jsal_to_number(7));
 	mask = jsal_require_sphere_color(8);
+	if (num_args >= 10)
+		blend_mode = jsal_to_int(9);
+
+	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	width = image_width(image);
 	height = image_height(image);
@@ -7254,6 +7295,7 @@ js_Image_transformBlitMask(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_zoomBlit(int num_args, bool is_ctor, intptr_t magic)
 {
+	int      blend_mode = V1_BLEND_NORMAL;
 	int      height;
 	image_t* image;
 	float    scale;
@@ -7266,12 +7308,18 @@ js_Image_zoomBlit(int num_args, bool is_ctor, intptr_t magic)
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	scale = jsal_to_number(2);
+	if (num_args >= 4)
+		blend_mode = jsal_to_int(3);
+
+	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
+	apply_blend_mode(blend_mode);
 	al_draw_scaled_bitmap(image_bitmap(image), 0, 0, width, height,
 		x, y, width * scale, height * scale, 0x0);
 	return false;
@@ -7280,6 +7328,7 @@ js_Image_zoomBlit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_zoomBlitMask(int num_args, bool is_ctor, intptr_t magic)
 {
+	int      blend_mode = V1_BLEND_NORMAL;
 	int      height;
 	image_t* image;
 	color_t  mask;
@@ -7294,12 +7343,18 @@ js_Image_zoomBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_to_int(1);
 	scale = jsal_to_number(2);
 	mask = jsal_require_sphere_color(3);
+	if (num_args >= 5)
+		blend_mode = jsal_to_int(4);
+
+	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
+	apply_blend_mode(blend_mode);
 	al_draw_tinted_scaled_bitmap(image_bitmap(image), nativecolor(mask),
 		0, 0, width, height, x, y, width * scale, height * scale, 0x0);
 	return false;
@@ -7384,7 +7439,7 @@ js_RawFile_getPosition(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	file = jsal_require_class_obj(-1, SV1_RAW_FILE);
-	jsal_pop(1);
+
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
 	jsal_push_int(file_position(file));
@@ -7399,7 +7454,7 @@ js_RawFile_getSize(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	file = jsal_require_class_obj(-1, SV1_RAW_FILE);
-	jsal_pop(1);
+
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
 	file_pos = file_position(file);
@@ -7479,7 +7534,7 @@ js_RawFile_write(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	file = jsal_require_class_obj(-1, SV1_RAW_FILE);
-	jsal_pop(1);
+
 	if (file == NULL)
 		jsal_error(JS_ERROR, "file is already closed");
 	if (jsal_is_string(0)) {
@@ -8226,7 +8281,7 @@ js_Surface_blitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1); jsal_pop(1);
+	blend_mode = jsal_get_int(-1);
 
 	image_render_to(image, NULL);
 	apply_blend_mode(blend_mode);
@@ -8458,8 +8513,8 @@ js_Surface_gradientCircle(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1); jsal_pop(1);
-	jsal_pop(1);
+	blend_mode = jsal_get_int(-1);
+
 	vcount = fmin(radius, 126);
 	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
 	s_vbuf[0].color = nativecolor(in_color);
@@ -8740,8 +8795,8 @@ js_Surface_pointSeries(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
 	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1); jsal_pop(1);
-	jsal_pop(1);
+	blend_mode = jsal_get_int(-1);
+
 	if (!jsal_is_array(0))
 		jsal_error(JS_ERROR, "first argument must be an array");
 	num_points = jsal_get_length(0);
@@ -8801,7 +8856,7 @@ js_Surface_replaceColor(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_pop(1);
+
 	if (!image_replace_color(image, color, new_color))
 		jsal_error(JS_ERROR, "couldn't perform color replacement");
 	return false;
@@ -8817,7 +8872,7 @@ js_Surface_rescale(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_pop(1);
+
 	if (!image_rescale(image, width, height))
 		jsal_error(JS_ERROR, "couldn't rescale image");
 	jsal_push_this();
@@ -8953,7 +9008,7 @@ js_Surface_save(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_pop(1);
+
 	filename = jsal_require_pathname(0, "images", true, false);
 	image_save(image, filename);
 	return true;
@@ -8975,7 +9030,7 @@ js_Surface_setAlpha(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_pop(1);
+
 	if (!(lock = image_lock(image, true, true)))
 		jsal_error(JS_ERROR, "Couldn't lock surface");
 	w = image_width(image);
