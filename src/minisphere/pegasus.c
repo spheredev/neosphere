@@ -2374,6 +2374,8 @@ js_FileStream_write(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Font_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
+	if (g_system_font == NULL)
+		jsal_error(JS_REF_ERROR, "No default font is available");
 	jsal_push_class_obj(PEGASUS_FONT, g_system_font, false);
 	cache_value_to_this("Default");
 	return true;

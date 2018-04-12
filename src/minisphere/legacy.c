@@ -49,7 +49,7 @@ struct socket_v1
 image_t*       s_default_arrow = NULL;
 image_t*       s_default_arrow_down = NULL;
 image_t*       s_default_arrow_up = NULL;
-font_t*        s_default_font;
+font_t*        s_default_font = NULL;
 windowstyle_t* s_default_windowstyle = NULL;
 
 bool
@@ -60,38 +60,38 @@ legacy_init(void)
 
 	console_log(1, "initializing legacy support module");
 
-	system_ini = kev_open(NULL, "#/system.ini", false);
+	system_ini = kev_open(g_game, "#/system.ini", false);
 
 	// system default font
-	path = game_full_path(NULL,
+	path = game_full_path(g_game,
 		kev_read_string(system_ini, "Font", "system.rfn"),
 		"#/", true);
 	s_default_font = font_load(path_cstr(path));
 	path_free(path);
 
 	// system default windowstyle
-	path = game_full_path(NULL,
+	path = game_full_path(g_game,
 		kev_read_string(system_ini, "WindowStyle", "system.rws"),
 		"#/", true);
 	s_default_windowstyle = winstyle_load(path_cstr(path));
 	path_free(path);
 
 	// system default pointer image
-	path = game_full_path(NULL,
+	path = game_full_path(g_game,
 		kev_read_string(system_ini, "Arrow", "pointer.png"),
 		"#/", true);
 	s_default_arrow = image_load(path_cstr(path));
 	path_free(path);
 
 	// system default up arrow image
-	path = game_full_path(NULL,
+	path = game_full_path(g_game,
 		kev_read_string(system_ini, "UpArrow", "up_arrow.png"),
 		"#/", true);
 	s_default_arrow_up = image_load(path_cstr(path));
 	path_free(path);
 
 	// system default down arrow image
-	path = game_full_path(NULL,
+	path = game_full_path(g_game,
 		kev_read_string(system_ini, "DownArrow", "down_arrow.png"),
 		"#/", true);
 	s_default_arrow_down = image_load(path_cstr(path));
@@ -105,6 +105,18 @@ void
 legacy_uninit(void)
 {
 	console_log(1, "shutting down legacy support");
+
+	image_unref(s_default_arrow);
+	image_unref(s_default_arrow_down);
+	image_unref(s_default_arrow_up);
+	winstyle_unref(s_default_windowstyle);
+	font_unref(s_default_font);
+
+	s_default_arrow = NULL;
+	s_default_arrow_down = NULL;
+	s_default_arrow_up = NULL;
+	s_default_font = NULL;
+	s_default_windowstyle = NULL;
 }
 
 image_t*

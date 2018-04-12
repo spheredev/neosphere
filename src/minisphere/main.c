@@ -182,6 +182,7 @@ main(int argc, char* argv[])
 			fullscreen_mode = screen_get_fullscreen(g_screen)
 				? FULLSCREEN_ON : FULLSCREEN_OFF;
 		}
+		legacy_uninit();
 		shutdown_engine();
 		if (s_last_game_path != NULL) {  // returning from ExecuteGame()?
 			if (!initialize_engine()) {
@@ -199,6 +200,7 @@ main(int argc, char* argv[])
 		// JS code called either RestartGame() or ExecuteGame()
 		fullscreen_mode = screen_get_fullscreen(g_screen)
 			? FULLSCREEN_ON : FULLSCREEN_OFF;
+		legacy_uninit();
 		shutdown_engine();
 		console_log(1, "\nrestarting to launch new game");
 		console_log(1, "    path: %s", path_cstr(s_game_path));
@@ -275,18 +277,12 @@ main(int argc, char* argv[])
 	attach_input_display();
 	kb_load_keymap();
 
+	legacy_init();
 	api_init();
 	vanilla_register_api();
 	pegasus_init();
 
-	// attempt to locate and load system font
-	console_log(1, "loading system default font");
-	if (!(g_system_font = legacy_default_font())) {
-		al_show_native_message_box(screen_display(g_screen), "No System Font Available", "The system font couldn't be loaded.",
-			"miniSphere was unable to find the system font or an error occurred while loading it.  As a default font is required for normal operation, the engine will now close.",
-			NULL, ALLEGRO_MESSAGEBOX_ERROR);
-		return EXIT_FAILURE;
-	}
+	g_system_font = legacy_default_font();
 
 	// switch to fullscreen if necessary and initialize clipping
 	if (fullscreen_mode == FULLSCREEN_ON || (fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game)))
@@ -606,8 +602,6 @@ initialize_engine(void)
 	spritesets_init();
 	map_engine_init();
 	scripts_init();
-
-	legacy_init();
 
 	return true;
 

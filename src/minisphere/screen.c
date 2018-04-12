@@ -242,6 +242,9 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 	int               width;
 	int               height;
 
+	if (g_system_font == NULL)
+		return;
+
 	screen_cx = al_get_display_width(it->display);
 	screen_cy = al_get_display_height(it->display);
 	width = font_get_width(g_system_font, text) + 20;
@@ -335,7 +338,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			0x0);
 		if (debugger_attached())
 			screen_draw_status(it, debugger_name(), debugger_color());
-		if (it->show_fps) {
+		if (it->show_fps && g_system_font != NULL) {
 			if (framerate > 0)
 				sprintf(fps_text, "%d/%d fps", it->fps_flips, it->fps_frames);
 			else

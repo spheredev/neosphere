@@ -21,6 +21,8 @@ v5.2.0 - TBD
   as textures, without calling `.toTexture()` first.
 * Adds long-overdue support for all of the Sphere 1.x Surface blend modes.
 * Adds `[Symbol.toStringTag]` and `.constructor` for Sphere v2 objects.
+* Improves font handling so that the default font can be loaded from an SPK
+  package, avoiding the need to distribute the physical `system/` directory.
 * Improves the overall performance of all API functions and constructors.
 * Improves performance of all `Prim` drawing functions.
 * Renames the `--performance` command-line option to `--profile` to reflect its
