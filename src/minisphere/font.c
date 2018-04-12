@@ -46,6 +46,7 @@ struct font
 	int                height;
 	int                min_width;
 	int                max_width;
+	bool               modified;
 	char*              path;
 	uint32_t           num_glyphs;
 	struct font_glyph* glyphs;
@@ -294,17 +295,20 @@ font_set_glyph(font_t* it, uint32_t cp, image_t* image)
 	old_image = it->glyphs[cp].image;
 	it->glyphs[cp].image = image_ref(image);
 	image_unref(old_image);
-	update_font_metrics(it);
+	it->modified = true;
 }
 
 void
-font_draw_text(const font_t* it, color_t color, int x, int y, text_align_t alignment, const char* text)
+font_draw_text(font_t* it, color_t color, int x, int y, text_align_t alignment, const char* text)
 {
 	uint32_t       cp;
 	utf8_ret_t     ret;
 	int            tab_width;
 	utf8_decode_t* utf8;
 
+	if (it->modified)
+		update_font_metrics(it);
+	
 	if (alignment == TEXT_ALIGN_CENTER)
 		x -= font_get_width(it, text) / 2;
 	else if (alignment == TEXT_ALIGN_RIGHT)
@@ -601,4 +605,6 @@ update_font_metrics(font_t* font)
 	font->min_width = min_width;
 	font->max_width = max_x;
 	font->height = max_y;
+
+	font->modified = false;
 }
