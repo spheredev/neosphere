@@ -102,7 +102,7 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 		jsal_put_prop_string(-2, "origin");
 		jsal_put_prop_string(-2, "debugMap");
 	}
-	
+
 	jsal_pop(2);
 
 	// listen for SSj connection on TCP port 1208. the listening socket will remain active
@@ -156,7 +156,7 @@ debugger_update(void)
 
 	if (s_attach_mode == SSJ_OFF)
 		return;
-	
+
 	if (s_is_attached) {
 		if (s_socket != NULL && socket_closed(s_socket)) {
 			socket_unref(s_socket);
@@ -165,7 +165,7 @@ debugger_update(void)
 		if (s_socket == NULL)
 			do_detach_debugger(false);
 	}
-	
+
 	// watch for incoming SSj client and attach debugger
 	if ((client = server_accept(s_server))) {
 		if (s_socket != NULL) {
@@ -325,7 +325,7 @@ on_breakpoint_hit(void)
 		return JS_STEP_CONTINUE;
 
 	audio_suspend();
-	
+
 	filename = jsal_get_string(0);
 	line = jsal_get_int(1) + 1;
 	column = jsal_get_int(2) + 1;
@@ -349,7 +349,7 @@ on_breakpoint_hit(void)
 	}
 
 	audio_resume();
-	
+
 	return step_op;
 }
 
@@ -457,7 +457,7 @@ process_message(js_step_t* out_step)
 		*out_step = JS_STEP_CONTINUE;
 		return false;
 	}
-	
+
 	if (!(request = ki_message_recv(s_socket)))
 		goto on_error;
 	if (ki_message_tag(request) != KI_REQ)

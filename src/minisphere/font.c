@@ -308,7 +308,7 @@ font_draw_text(font_t* it, color_t color, int x, int y, text_align_t alignment, 
 
 	if (it->modified)
 		update_font_metrics(it);
-	
+
 	if (alignment == TEXT_ALIGN_CENTER)
 		x -= font_get_width(it, text) / 2;
 	else if (alignment == TEXT_ALIGN_RIGHT)

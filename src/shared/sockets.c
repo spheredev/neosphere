@@ -386,7 +386,7 @@ on_dyad_receive(dyad_Event* e)
 {
 	size_t    new_size;
 	socket_t* socket;
-	
+
 	socket = e->udata;
 
 	// buffer any data received until read() is called

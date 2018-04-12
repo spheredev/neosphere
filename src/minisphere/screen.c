@@ -288,7 +288,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 #if defined(MINISPHERE_SPHERUN)
 	start_time = al_get_time();
 #endif
-	
+
 	// update FPS with 1s granularity
 	if (al_get_time() >= it->fps_poll_time) {
 		it->fps_flips = it->num_flips;

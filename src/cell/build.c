@@ -1204,7 +1204,7 @@ js_Sphere_get_Game(int num_args, bool is_ctor, intptr_t magic)
 	jsal_dup(-2);
 	jsal_put_prop_string(-2, "value");
 	jsal_def_prop_string(0, "Game");
-	
+
 	return true;
 }
 
@@ -1294,7 +1294,7 @@ static bool
 js_DirectoryStream_iterator(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t* stream;
-	
+
 	jsal_push_this();
 	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
 		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
@@ -1948,7 +1948,7 @@ js_new_Tool(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_dup(0);
 	tool = tool_new(verb);
-	
+
 	jsal_push_class_obj(CELL_TOOL, tool, true);
 	return true;
 }

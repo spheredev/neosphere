@@ -144,7 +144,7 @@ game_open(const char* game_path)
 		jsal_put_prop_string(-2, "resolution");
 		jsal_push_string(path_cstr(game->script_path));
 		jsal_put_prop_string(-2, "main");
-		
+
 		jsal_stringify(-1);
 		game->manifest = lstr_new(jsal_get_string(-1));
 		jsal_pop(1);
@@ -195,7 +195,7 @@ game_open(const char* game_path)
 			jsal_put_prop_string(-2, "resolution");
 			jsal_push_string(path_cstr(game->script_path));
 			jsal_put_prop_string(-2, "main");
-			
+
 			jsal_stringify(-1);
 			game->manifest = lstr_new(jsal_get_string(-1));
 			jsal_pop(1);
@@ -808,7 +808,7 @@ size_t
 file_read(file_t* it, void* buf, size_t count, size_t size)
 {
 	size_t num_bytes;
-	
+
 	if (size == 0 || count == 0)
 		return 0;  // dodges an Allegro assert
 
@@ -1039,7 +1039,7 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 	}
 	else if (strlen(filename) >= 2 && memcmp(filename, "#/", 2) == 0) {
 		// the #/ prefix refers to the engine's "system" directory.
-		
+
 		// for an SPK package, see if the asset has been packaged and use it if so
 		*out_path = path_new(filename);
 		if (game != NULL && game->type == FS_PACKAGE
@@ -1051,7 +1051,7 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 		else {
 			path_free(*out_path);
 		}
-		
+
 		// asset not in SPK package, use physical system directory
 		*out_path = path_new(filename + 2);
 		origin = path_rebase(path_new("system/"), assets_path());

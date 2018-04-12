@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2015 rxi
  *
  * This library is free software; you can redistribute it and/or modify it

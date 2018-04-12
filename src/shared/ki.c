@@ -359,7 +359,7 @@ void
 ki_message_free(ki_message_t* it)
 {
 	ki_atom_t* atom;
-	
+
 	iter_t iter;
 
 	if (it== NULL)

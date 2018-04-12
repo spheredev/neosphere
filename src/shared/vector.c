@@ -1,3 +1,35 @@
+/**
+ *  miniSphere JavaScript game engine
+ *  Copyright (c) 2015-2018, Fat Cerberus
+ *  All rights reserved.
+ *
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions are met:
+ *
+ *  * Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  * Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ *  * Neither the name of miniSphere nor the names of its contributors may be
+ *    used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ *  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ *  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ *  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ *  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ *  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ *  POSSIBILITY OF SUCH DAMAGE.
+**/
+
 // WARNING: be careful when using this!
 // to cut down on the number of casts needed when using this generic vector implementation,
 // void pointers are thrown around with abandon.  as a result, it is not type safe at all
@@ -203,14 +235,14 @@ ensure_space(vector_t* vector, int min_items, bool compacting)
 		new_max = vector->reserve;
 	while (new_max < min_items)  // is the buffer too small?
 		new_max *= 2;
-	
+
 	// if the vector drops below 1/4 load, shrink the buffer so it doesn't
 	// grow unbounded
 	if (compacting && min_items < vector->max_items / 4)
 		new_max = min_items * 2;
 	if (new_max < vector->reserve)
 		new_max = vector->reserve;
-	
+
 	if (new_max != vector->max_items) {
 		if (!(new_buffer = realloc(vector->buffer, new_max * vector->pitch)) && new_max > 0)
 			return false;

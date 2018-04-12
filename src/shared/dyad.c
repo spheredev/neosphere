@@ -1,4 +1,4 @@
-/** 
+/**
  * Copyright (c) 2015 rxi
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -498,7 +498,7 @@ static int stream_initSocket(
 ) {
   stream->sockfd = socket(domain, type, protocol);
   if (stream->sockfd == INVALID_SOCKET) {
-    stream_error(stream, "could not create socket", errno); 
+    stream_error(stream, "could not create socket", errno);
     return -1;
   }
   stream_setSocket(stream, stream->sockfd);
@@ -647,7 +647,7 @@ static int stream_flushWriteBuffer(dyad_Stream *stream) {
     /* Update status */
     stream->bytesSent += size;
     stream->lastActivity = dyad_getTime();
-  } 
+  }
 
   if (stream->writeBuffer.length == 0) {
     dyad_Event e;
@@ -910,7 +910,7 @@ void dyad_removeListener(
 
 void dyad_removeAllListeners(dyad_Stream *stream, int event) {
   if (event == DYAD_EVENT_NULL) {
-    vec_clear(&stream->listeners); 
+    vec_clear(&stream->listeners);
   } else {
     int i = stream->listeners.length;
     while (i--) {
@@ -967,7 +967,7 @@ int dyad_listenEx(
   sprintf(buf, "%d", port);
   err = getaddrinfo(host, buf, &hints, &ai);
   if (err) {
-    stream_error(stream, "could not get addrinfo", errno); 
+    stream_error(stream, "could not get addrinfo", errno);
     goto fail;
   }
   /* Init socket */

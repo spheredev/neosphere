@@ -470,7 +470,7 @@ int tinydir_file_open(tinydir_file *file, const char *path)
 	char drive_buf[_TINYDIR_PATH_MAX];
 	char ext_buf[_TINYDIR_FILENAME_MAX];
 #endif
-	
+
 	if (file == NULL || path == NULL || strlen(path) == 0)
 	{
 		errno = EINVAL;
@@ -506,7 +506,7 @@ int tinydir_file_open(tinydir_file *file, const char *path)
 	strcpy(file_name_buf, path);
 	base_name = basename(file_name_buf);
 #endif
-	
+
 	/* Open the parent directory */
 	if (tinydir_open(&dir, dir_name) == -1)
 	{
@@ -534,7 +534,7 @@ int tinydir_file_open(tinydir_file *file, const char *path)
 		result = -1;
 		errno = ENOENT;
 	}
-	
+
 bail:
 	tinydir_close(&dir);
 	return result;
@@ -586,7 +586,7 @@ int tinydir_mkdir(const char *path)
 {
 #ifdef _WIN32
 	BOOL ok;
-	
+
 	ok = CreateDirectoryA(path, NULL);
 	return ok || GetLastError() == ERROR_ALREADY_EXISTS
 		? 0 : -1;

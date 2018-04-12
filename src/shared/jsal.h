@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef FATCERBERUS__JSAL_H__INCLUDED
-#define FATCERBERUS__JSAL_H__INCLUDED
+#ifndef SPHERE__JSAL_H__INCLUDED
+#define SPHERE__JSAL_H__INCLUDED
 
 #include <stddef.h>
 #include <stdarg.h>
@@ -244,4 +244,4 @@ bool jsal_debug_inspect_eval       (int call_index, const char* source, bool *ou
 bool jsal_debug_inspect_object     (unsigned int object_id, int property_index);
 bool jsal_debug_inspect_var        (int call_index, int var_index);
 
-#endif // FATCERBERUS__JSAL_H__INCLUDED
+#endif // SPHERE__JSAL_H__INCLUDED

@@ -175,7 +175,7 @@ jsal_init(void)
 {
 	JsModuleRecord module_record;
 	JsErrorCode    result;
-	
+
 	result = JsCreateRuntime(
 		JsRuntimeAttributeAllowScriptInterrupt
 			| JsRuntimeAttributeDispatchSetExceptionsToDebugger
@@ -190,7 +190,7 @@ jsal_init(void)
 	JsGetNullValue(&s_js_null);
 	JsGetTrueValue(&s_js_true);
 	JsGetFalseValue(&s_js_false);
-	
+
 	// set up the callbacks
 	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
 	JsSetHostPromiseRejectionTracker(on_reject_promise_unhandled, NULL);
@@ -244,16 +244,16 @@ jsal_uninit(void)
 		breakpoint = iter.ptr;
 		free(breakpoint->filename);
 	}
-	
+
 	iter = vector_enum(s_module_cache);
 	while ((module = iter_next(&iter))) {
 		JsRelease(module->record, NULL);
 		free(module->filename);
 	}
-	
+
 	// clear value stack, releasing all references
 	resize_stack(0);
-	
+
 	vector_free(s_breakpoints);
 	vector_free(s_module_cache);
 	vector_free(s_module_jobs);
@@ -430,7 +430,7 @@ jsal_compile(const char* filename)
 	JsValueRef function;
 	JsValueRef name_string;
 	JsValueRef source_string;
-	
+
 	source_string = pop_value();
 	JsCreateString(filename, strlen(filename), &name_string);
 	JsParse(source_string, s_next_source_context, name_string, JsParseScriptAttributeNone, &function);
@@ -611,7 +611,7 @@ jsal_eval_module(const char* specifier, const char* url)
 
 	if (url == NULL)
 		url = specifier;
-	
+
 	source = jsal_require_lstring(-1, &source_len);
 	module = get_module_record(specifier, NULL, url, &is_new_module);
 	if (is_new_module) {
@@ -625,11 +625,11 @@ jsal_eval_module(const char* specifier, const char* url)
 	else {
 		jsal_pop(1);
 	}
-	
+
 	// note: a single call to jsal_update() here is enough, as it will process
 	//       the entire dependency graph before returning.
 	jsal_update(false);
-	
+
 	JsGetModuleHostInfo(module, JsModuleHostInfo_Exception, &exception);
 	if (exception != JS_INVALID_REFERENCE)
 		throw_value(exception);
@@ -905,7 +905,7 @@ bool
 jsal_has_prop(int object_index)
 {
 	/* [ ... key ] -> [ ... ] */
-	
+
 	bool            has_property;
 	JsPropertyIdRef key_ref;
 	JsValueRef      object_ref;
@@ -936,9 +936,9 @@ void
 jsal_insert(int at_index)
 {
 	/* [ ... value ] -> [ ... value ... ] */
-	
+
 	js_ref_t ref;
-	
+
 	at_index = jsal_normalize_index(at_index);
 
 	if (at_index == jsal_get_top() - 1)
@@ -1141,7 +1141,7 @@ bool
 jsal_next(int iter_index)
 {
 	bool finished;
-	
+
 	iter_index = jsal_normalize_index(iter_index);
 	jsal_get_prop_key(iter_index, s_key_next);
 	jsal_dup(iter_index);
@@ -1165,7 +1165,7 @@ jsal_normalize_index(int index)
 {
 	int real_index;
 	int top;
-	
+
 	real_index = index;
 	top = jsal_get_top();
 	if (real_index < 0)
@@ -1190,7 +1190,7 @@ void
 jsal_pop(int num_values)
 {
 	int top;
-	
+
 	top = jsal_get_top();
 	if (num_values > top)
 		jsal_error(JS_RANGE_ERROR, "Too many values popped ('%d')", num_values);
@@ -1390,14 +1390,14 @@ int
 jsal_push_new_host_object(js_finalizer_t finalizer, size_t data_size, void* *out_data_ptr)
 {
 	/* [ ... prototype ] -> [ ... ] */
-	
+
 	void*          data_ptr;
 	JsValueRef     object;
 	struct object* object_info;
 	JsValueRef     prototype;
 
 	prototype = pop_value();
-	
+
 	object_info = calloc(1, sizeof(struct object) + data_size);
 	data_ptr = &object_info[1];
 	if (out_data_ptr != NULL)
@@ -1415,7 +1415,7 @@ jsal_push_new_iterator(int for_index)
 {
 	JsValueRef key_list;
 	JsValueRef object;
-	
+
 	for_index = jsal_normalize_index(for_index);
 	jsal_push_known_symbol("iterator");
 	if (jsal_get_prop(for_index)) {
@@ -1490,7 +1490,7 @@ int
 jsal_push_number(double value)
 {
 	JsValueRef ref;
-	
+
 	JsDoubleToNumber(value, &ref);
 	return push_value(ref, false);
 }
@@ -1507,7 +1507,7 @@ jsal_push_ref_weak(js_ref_t* ref)
 	// IMPORTANT: value is stored on the value stack as a weak reference.  to avoid a
 	//            nasty segfault, avoid calling jsal_unref() until you know for sure the
 	//            value is off the stack.
-	
+
 	return push_value(ref->value, true);
 }
 
@@ -1540,7 +1540,7 @@ jsal_push_this(void)
 {
 	if (s_this_value == JS_INVALID_REFERENCE)
 		jsal_error(JS_REF_ERROR, "No known 'this' binding");
-	
+
 	// it's safe for this to be a weak reference: `this` can't be garbage collected
 	// while the function using it runs and anything pushed onto the value stack
 	// is unwound on return, so the stack entry can't persist beyond that point by
@@ -1719,7 +1719,7 @@ void*
 jsal_require_buffer_ptr(int at_index, size_t *out_size)
 {
 	void* retval;
-	
+
 	if (!(retval = jsal_get_buffer_ptr(at_index, out_size))) {
 		jsal_dup(at_index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a buffer", jsal_to_string(-1));
@@ -1756,7 +1756,7 @@ const char*
 jsal_require_lstring(int at_index, size_t *out_length)
 {
 	const char* retval;
-	
+
 	if (!(retval = jsal_get_lstring(at_index, out_length))) {
 		jsal_dup(at_index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a string", jsal_to_string(-1));
@@ -2161,7 +2161,7 @@ bool
 jsal_debug_init(js_break_callback_t on_breakpoint)
 {
 	s_break_callback = on_breakpoint;
-	
+
 	if (JsDiagStartDebugging(s_js_runtime, on_debugger_event, NULL) != JsNoError)
 		return false;
 	JsDiagSetBreakOnException(s_js_runtime, JsDiagBreakOnExceptionAttributeUncaught);
@@ -2220,9 +2220,9 @@ jsal_debug_breakpoint_remove(int index)
 	struct breakpoint* breakpoint;
 	unsigned int       id;
 	JsValueRef         list;
-	
+
 	breakpoint = vector_get(s_breakpoints, index);
-	
+
 	JsDiagGetBreakpoints(&list);
 	push_value(list, true);
 	jsal_push_new_iterator(-1);
@@ -2241,7 +2241,7 @@ bool
 jsal_debug_inspect_call(int call_index)
 {
 	/* [ ... ] -> [ ... filename function_name line column ] */
-	
+
 	JsValueRef   backtrace;
 	unsigned int handle;
 	JsValueRef   function_data;
@@ -2461,7 +2461,7 @@ js_ref_t*
 make_ref(JsRef value, bool weak_ref)
 {
 	js_ref_t* ref;
-	
+
 	if (!weak_ref)
 		JsAddRef(value, NULL);
 
@@ -2530,7 +2530,7 @@ filename_from_script_id(unsigned int script_id)
 {
 	const char* filename = NULL;
 	JsValueRef  script_list;
-	
+
 	JsDiagGetScripts(&script_list);
 	push_value(script_list, true);
 	jsal_push_new_iterator(-1);
@@ -2558,7 +2558,7 @@ get_module_record(const char* specifier, JsModuleRecord parent_record, const cha
 	JsModuleRecord module_record;
 	JsValueRef     specifier_ref;
 	JsValueRef     url_ref;
-	
+
 	iter_t iter;
 
 	*out_is_new = false;
@@ -2567,7 +2567,7 @@ get_module_record(const char* specifier, JsModuleRecord parent_record, const cha
 		if (strcmp(specifier, cached->filename) == 0)
 			return cached->record;
 	}
-	
+
 	*out_is_new = true;
 	JsCreateString(specifier, strlen(specifier), &specifier_ref);
 	JsCreateString(url, strlen(url), &url_ref);
@@ -2588,7 +2588,7 @@ static int
 push_value(JsValueRef value, bool weak_ref)
 {
 	js_ref_t ref;
-	
+
 	if (!weak_ref)
 		JsAddRef(value, NULL);
 	ref.value = value;

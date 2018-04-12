@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef FATCERBERUS__SOCKETS_H__INCLUDED
-#define FATCERBERUS__SOCKETS_H__INCLUDED
+#ifndef SPHERE__SOCKETS_H__INCLUDED
+#define SPHERE__SOCKETS_H__INCLUDED
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -61,4 +61,4 @@ size_t      socket_peek      (const socket_t* it);
 size_t      socket_read      (socket_t* it, void* buffer, size_t num_bytes);
 size_t      socket_write     (socket_t* it, const void* data, size_t num_bytes);
 
-#endif // FATCERBERUS__SOCKETS_H__INCLUDED
+#endif // SPHERE__SOCKETS_H__INCLUDED

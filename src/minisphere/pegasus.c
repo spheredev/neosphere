@@ -4522,7 +4522,7 @@ js_Surface_set_blendingMode(int num_args, bool is_ctor, intptr_t magic)
 
 	if (mode < 0 || mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blending mode constant '%d'", mode);
-	
+
 	image_set_blend_mode(image, mode);
 	return false;
 }

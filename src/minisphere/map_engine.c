@@ -648,13 +648,13 @@ map_engine_start(const char* filename, int framerate)
 		goto on_error;
 	while (!s_exiting && jsal_vm_enabled()) {
 		sphere_heartbeat(true, 1);
-		
+
 		// order of operations matches Sphere 1.x.  not sure why, but Sphere 1.x
 		// checks for input AFTER an update for some reason...
 		update_map_engine(true);
 		process_map_input();
 		map_engine_draw_map();
-		
+
 		// don't clear the backbuffer.  the Sphere 1.x map engine has a bug where it doesn't
 		// clear the backbuffer between frames; as it turns out, a good deal of of v1 code relies
 		// on that behavior.

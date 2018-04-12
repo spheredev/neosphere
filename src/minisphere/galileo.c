@@ -588,7 +588,7 @@ shader_use(shader_t* it, bool force_set)
 	al_shader = it != NULL ? it->program : NULL;
 	if (!al_use_shader(al_shader))
 		return false;
-	
+
 	// set any uniforms defined while we were inactive
 	if (it != NULL) {
 		iter = vector_enum(it->uniforms);

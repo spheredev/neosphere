@@ -199,7 +199,7 @@ static mng_ptr
 mng_cb_getcanvasline(mng_handle stream, mng_uint32 line_num)
 {
 	animation_t* anim;
-	
+
 	anim = mng_get_userdata(stream);
 	return anim->lock->pixels + line_num * anim->lock->pitch;
 }
@@ -214,7 +214,7 @@ static mng_bool
 mng_cb_processheader(mng_handle stream, mng_uint32 width, mng_uint32 height)
 {
 	animation_t* anim;
-	
+
 	anim = mng_get_userdata(stream);
 	anim->w = width;
 	anim->h = height;
@@ -234,7 +234,7 @@ mng_cb_readdata(mng_handle stream, mng_ptr buf, mng_uint32 n_bytes, mng_uint32p 
 {
 	animation_t* anim;
 	mng_uint32   read_size;
-	
+
 	anim = mng_get_userdata(stream);
 	read_size = (mng_uint32)file_read(anim->file, buf, n_bytes, 1);
 	*out_readsize = read_size;
@@ -251,7 +251,7 @@ static mng_bool
 mng_cb_settimer(mng_handle stream, mng_uint32 msecs)
 {
 	animation_t* anim;
-	
+
 	anim = mng_get_userdata(stream);
 	anim->delay = msecs;
 	return MNG_TRUE;

@@ -7016,7 +7016,7 @@ js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 
 	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
-	
+
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
@@ -8963,7 +8963,7 @@ js_Surface_setBlendMode(int num_args, bool is_ctor, intptr_t magic)
 {
 	int      blend_mode;
 	image_t* image;
-	
+
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
 	blend_mode = jsal_to_int(0);
