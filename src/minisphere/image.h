@@ -49,11 +49,17 @@ struct image_lock
 typedef
 enum blend_mode
 {
+	// note: these are in the same order as their Sphere 1.x equivalents
+	//       for maximum compatibility.
 	BLEND_NORMAL,
+	BLEND_COPY_RGBA,
+	BLEND_COPY_RGB,
+	BLEND_COPY_ALPHA,
 	BLEND_ADD,
-	BLEND_MULTIPLY,
-	BLEND_REPLACE,
 	BLEND_SUBTRACT,
+	BLEND_MULTIPLY,
+	BLEND_AVERAGE,
+	BLEND_INVERT,
 	BLEND_MAX,
 } blend_mode_t;
 

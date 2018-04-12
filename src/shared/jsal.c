@@ -1986,6 +1986,13 @@ jsal_to_string(int at_index)
 	return jsal_get_string(at_index);
 }
 
+unsigned int
+jsal_to_uint(int at_index)
+{
+	jsal_to_number(at_index);
+	return jsal_get_uint(at_index);
+}
+
 bool
 jsal_try(js_function_t callback, int num_args)
 {

@@ -781,21 +781,42 @@ static void
 apply_blend_mode(blend_mode_t mode)
 {
 	switch (mode) {
-	case BLEND_NORMAL:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-		break;
-	case BLEND_ADD:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
-		break;
-	case BLEND_MULTIPLY:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
-		break;
-	case BLEND_REPLACE:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-		break;
-	case BLEND_SUBTRACT:
-		al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
-		break;
+		case BLEND_NORMAL:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+			break;
+		case BLEND_ADD:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
+			break;
+		case BLEND_AVERAGE:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_CONST_COLOR, ALLEGRO_CONST_COLOR);
+			al_set_blend_color(al_map_rgba_f(0.5, 0.5, 0.5, 0.5));
+			break;
+		case BLEND_COPY_ALPHA:
+			al_set_separate_blender(
+				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE,
+				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+			break;
+		case BLEND_COPY_RGB:
+			al_set_separate_blender(
+				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO,
+				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE);
+			break;
+		case BLEND_COPY_RGBA:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+			break;
+		case BLEND_INVERT:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_INVERSE_SRC_COLOR);
+			break;
+		case BLEND_MULTIPLY:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
+			break;
+		case BLEND_SUBTRACT:
+			al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
+			break;
+		default:
+			// this shouldn't happen, but in case it does, just output nothing to make it
+			// obvious something went wrong.
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ZERO);
 	}
 }
 

@@ -728,8 +728,12 @@ pegasus_init(void)
 
 	api_define_const("BlendOp", "AlphaBlend", BLEND_NORMAL);
 	api_define_const("BlendOp", "Add", BLEND_ADD);
+	api_define_const("BlendOp", "Average", BLEND_AVERAGE);
+	api_define_const("BlendOp", "CopyAlpha", BLEND_COPY_ALPHA);
+	api_define_const("BlendOp", "CopyRGB", BLEND_COPY_RGB);
+	api_define_const("BlendOp", "Invert", BLEND_INVERT);
 	api_define_const("BlendOp", "Multiply", BLEND_MULTIPLY);
-	api_define_const("BlendOp", "Replace", BLEND_REPLACE);
+	api_define_const("BlendOp", "Replace", BLEND_COPY_RGBA);
 	api_define_const("BlendOp", "Subtract", BLEND_SUBTRACT);
 	api_define_const("FileOp", "Read", FILE_OP_READ);
 	api_define_const("FileOp", "Write", FILE_OP_WRITE);

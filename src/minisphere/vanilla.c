@@ -504,20 +504,6 @@ static void js_Spriteset_finalize   (void* host_ptr);
 static void js_Surface_finalize     (void* host_ptr);
 static void js_WindowStyle_finalize (void* host_ptr);
 
-enum v1_blend_mode
-{
-	V1_BLEND_NORMAL,
-	V1_BLEND_REPLACE,
-	V1_BLEND_RGB_ONLY,
-	V1_BLEND_ALPHA_ONLY,
-	V1_BLEND_ADD,
-	V1_BLEND_SUBTRACT,
-	V1_BLEND_MULTIPLY,
-	V1_BLEND_AVERAGE,
-	V1_BLEND_INVERT,
-	V1_BLEND_MAX
-};
-
 enum line_series_type
 {
 	LINE_MULTIPLE,
@@ -1014,15 +1000,15 @@ vanilla_register_api(void)
 	api_define_method("v1WindowStyle", "toString", js_WindowStyle_toString, 0);
 
 	// blend modes for Surfaces
-	api_define_const(NULL, "BLEND", V1_BLEND_NORMAL);
-	api_define_const(NULL, "REPLACE", V1_BLEND_REPLACE);
-	api_define_const(NULL, "RGB_ONLY", V1_BLEND_RGB_ONLY);
-	api_define_const(NULL, "ALPHA_ONLY", V1_BLEND_ALPHA_ONLY);
-	api_define_const(NULL, "ADD", V1_BLEND_ADD);
-	api_define_const(NULL, "SUBTRACT", V1_BLEND_SUBTRACT);
-	api_define_const(NULL, "MULTIPLY", V1_BLEND_MULTIPLY);
-	api_define_const(NULL, "AVERAGE", V1_BLEND_AVERAGE);
-	api_define_const(NULL, "INVERT", V1_BLEND_INVERT);
+	api_define_const(NULL, "BLEND", BLEND_NORMAL);
+	api_define_const(NULL, "REPLACE", BLEND_COPY_RGBA);
+	api_define_const(NULL, "RGB_ONLY", BLEND_COPY_RGB);
+	api_define_const(NULL, "ALPHA_ONLY", BLEND_COPY_ALPHA);
+	api_define_const(NULL, "ADD", BLEND_ADD);
+	api_define_const(NULL, "SUBTRACT", BLEND_SUBTRACT);
+	api_define_const(NULL, "MULTIPLY", BLEND_MULTIPLY);
+	api_define_const(NULL, "AVERAGE", BLEND_AVERAGE);
+	api_define_const(NULL, "INVERT", BLEND_INVERT);
 
 	// person movement commands
 	api_define_const(NULL, "COMMAND_WAIT", COMMAND_WAIT);
@@ -1463,55 +1449,6 @@ jsal_require_rgba_lut(int index)
 		jsal_pop(1);
 	}
 	return lut;
-}
-
-static void
-apply_blend_mode(int blend_mode)
-{
-	switch (blend_mode) {
-		case V1_BLEND_NORMAL:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-			break;
-		case V1_BLEND_ADD:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
-			break;
-		case V1_BLEND_ALPHA_ONLY:
-			al_set_separate_blender(
-				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE,
-				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-			break;
-		case V1_BLEND_AVERAGE:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_CONST_COLOR, ALLEGRO_CONST_COLOR);
-			al_set_blend_color(al_map_rgba_f(0.5, 0.5, 0.5, 0.5));
-			break;
-		case V1_BLEND_INVERT:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_INVERSE_SRC_COLOR);
-			break;
-		case V1_BLEND_MULTIPLY:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_DEST_COLOR, ALLEGRO_ZERO);
-			break;
-		case V1_BLEND_REPLACE:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-			break;
-		case V1_BLEND_RGB_ONLY:
-			al_set_separate_blender(
-				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO,
-				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE);
-			break;
-		case V1_BLEND_SUBTRACT:
-			al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
-			break;
-		default:
-			// this shouldn't happen, but in case it does, just output nothing to make it
-			// obvious something went wrong.
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ZERO);
-	}
-}
-
-static void
-reset_blend_modes(void)
-{
-	al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
 }
 
 static bool
@@ -4470,41 +4407,42 @@ js_LineSeries(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t         color;
 	int             num_points;
-	int             type;
-	int             x, y;
+	int             type = LINE_MULTIPLE;
 	ALLEGRO_VERTEX* vertices;
 	ALLEGRO_COLOR   vtx_color;
+	float           x;
+	float           y;
 
 	int i;
 
+	jsal_require_array(0);
 	color = jsal_require_sphere_color(1);
-	type = num_args >= 3 ? jsal_to_int(2) : LINE_MULTIPLE;
+	if (num_args >= 3)
+		type = jsal_to_int(2);
 
-	if (!jsal_is_array(0))
-		jsal_error(JS_ERROR, "first argument must be an array");
-	num_points = jsal_get_length(0);
-	if (num_points < 2)
+	if ((num_points = jsal_get_length(0)) < 2)
 		jsal_error(JS_RANGE_ERROR, "two or more vertices required");
-	if (num_points > INT_MAX)
-		jsal_error(JS_RANGE_ERROR, "too many vertices");
-	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		jsal_error(JS_ERROR, "couldn't allocate vertex buffer");
+	vertices = alloca(num_points * sizeof(ALLEGRO_VERTEX));
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		jsal_get_prop_index(0, i);
-		jsal_get_prop_string(-1, "x"); x = jsal_to_int(-1); jsal_pop(1);
-		jsal_get_prop_string(-1, "y"); y = jsal_to_int(-1); jsal_pop(1);
-		jsal_pop(1);
-		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
+		jsal_get_prop_string(-1, "x");
+		jsal_get_prop_string(-2, "y");
+		x = trunc(jsal_to_number(-2));
+		y = trunc(jsal_to_number(-1));
+		jsal_pop(3);
+		vertices[i].x = x + 0.5f;
+		vertices[i].y = y + 0.5f;
+		vertices[i].z = 0.0f;
+		vertices[i].u = 0.0f;
+		vertices[i].v = 0.0f;
 		vertices[i].color = vtx_color;
 	}
 	galileo_reset();
-	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
+	al_draw_prim(vertices, NULL, NULL, 0, num_points,
 		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
-		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
-		: ALLEGRO_PRIM_LINE_LIST
-	);
-	free(vertices);
+			: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
+			: ALLEGRO_PRIM_LINE_LIST);
 	return false;
 }
 
@@ -4850,36 +4788,38 @@ js_Point(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_PointSeries(int num_args, bool is_ctor, intptr_t magic)
 {
-	color_t color = jsal_require_sphere_color(1);
-
+	color_t         color;
 	int             num_points;
-	int             x, y;
 	ALLEGRO_VERTEX* vertices;
 	ALLEGRO_COLOR   vtx_color;
+	float           x;
+	float           y;
 
 	int i;
 
-	if (!jsal_is_array(0))
-		jsal_error(JS_ERROR, "first argument must be an array");
-	num_points = jsal_get_length(0);
-	if (num_points < 1)
+	jsal_require_array(0);
+	color = jsal_require_sphere_color(1);
+
+	if ((num_points = jsal_get_length(0)) < 1)
 		jsal_error(JS_RANGE_ERROR, "one or more vertices required");
-	if (num_points > INT_MAX)
-		jsal_error(JS_RANGE_ERROR, "too many vertices");
-	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		jsal_error(JS_ERROR, "couldn't allocate vertex buffer");
+	vertices = alloca(num_points * sizeof(ALLEGRO_VERTEX));
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		jsal_get_prop_index(0, i);
-		jsal_get_prop_string(-1, "x"); x = jsal_to_int(-1); jsal_pop(1);
-		jsal_get_prop_string(-1, "y"); y = jsal_to_int(-1); jsal_pop(1);
-		jsal_pop(1);
-		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
+		jsal_get_prop_string(-1, "x");
+		jsal_get_prop_string(-2, "y");
+		x = trunc(jsal_to_number(-2));
+		y = trunc(jsal_to_number(-1));
+		jsal_pop(3);
+		vertices[i].x = x + 0.5f;
+		vertices[i].y = y + 0.5f;
+		vertices[i].z = 0.0f;
+		vertices[i].u = 0.0f;
+		vertices[i].v = 0.0f;
 		vertices[i].color = vtx_color;
 	}
 	galileo_reset();
-	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
-	free(vertices);
+	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
 	return false;
 }
 
@@ -6898,7 +6838,7 @@ js_Font_getCharacterImage(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
-	cp = (uint32_t)jsal_require_number(0);
+	cp = jsal_to_uint(0);
 
 	jsal_push_class_obj(SV1_IMAGE, image_ref(font_glyph(font, cp)), false);
 	return true;
@@ -6951,12 +6891,12 @@ js_Font_getStringHeight(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Font_getStringWidth(int num_args, bool is_ctor, intptr_t magic)
 {
-	const char* text = jsal_to_string(0);
-
-	font_t* font;
+	font_t*     font;
+	const char* text;
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
+	text = jsal_to_string(0);
 
 	jsal_push_int(font_get_width(font, text));
 	return true;
@@ -6965,13 +6905,14 @@ js_Font_getStringWidth(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Font_setCharacterImage(int num_args, bool is_ctor, intptr_t magic)
 {
-	int cp = jsal_to_int(0);
-	image_t* image = jsal_require_class_obj(1, SV1_IMAGE);
-
-	font_t* font;
+	uint32_t cp;
+	font_t*  font;
+	image_t* image;
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
+	cp = jsal_to_uint(0);
+	image = jsal_require_class_obj(1, SV1_IMAGE);
 
 	font_set_glyph(font, cp, image);
 	return false;
@@ -7002,17 +6943,18 @@ js_Font_toString(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Font_wordWrapString(int num_args, bool is_ctor, intptr_t magic)
 {
-	const char* text = jsal_to_string(0);
-	int         width = jsal_to_int(1);
-
 	font_t*     font;
 	int         num_lines;
+	const char* text;
+	int         width;
 	wraptext_t* wraptext;
 
 	int i;
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
+	text = jsal_to_string(0);
+	width = jsal_to_int(1);
 
 	wraptext = wraptext_new(text, font, width);
 	num_lines = wraptext_len(wraptext);
@@ -7058,7 +7000,7 @@ js_Image_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode = V1_BLEND_NORMAL;
+	int      blend_mode = BLEND_NORMAL;
 	image_t* image;
 	int      x;
 	int      y;
@@ -7070,13 +7012,13 @@ js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 3)
 		blend_mode = jsal_to_int(2);
 
-	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 	
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	apply_blend_mode(blend_mode);
+	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
 	return false;
 }
@@ -7084,7 +7026,7 @@ js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_blitMask(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode = V1_BLEND_NORMAL;
+	int      blend_mode = BLEND_NORMAL;
 	image_t* image;
 	color_t  mask;
 	int      x;
@@ -7098,13 +7040,13 @@ js_Image_blitMask(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 4)
 		blend_mode = jsal_to_int(3);
 
-	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	apply_blend_mode(blend_mode);
+	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_tinted_bitmap(image_bitmap(image), nativecolor(mask), x, y, 0x0);
 	return false;
 }
@@ -7128,7 +7070,7 @@ static bool
 js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 {
 	float    angle;
-	int      blend_mode = V1_BLEND_NORMAL;
+	int      blend_mode = BLEND_NORMAL;
 	float    height;
 	image_t* image;
 	float    width;
@@ -7143,7 +7085,7 @@ js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 4)
 		blend_mode = jsal_to_int(3);
 
-	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
@@ -7151,7 +7093,7 @@ js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	apply_blend_mode(blend_mode);
+	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_rotated_bitmap(image_bitmap(image), width / 2, height / 2,
 		x + width / 2, y + height / 2, angle, 0x0);
 	return false;
@@ -7161,7 +7103,7 @@ static bool
 js_Image_rotateBlitMask(int num_args, bool is_ctor, intptr_t magic)
 {
 	float    angle;
-	int      blend_mode = V1_BLEND_NORMAL;
+	int      blend_mode = BLEND_NORMAL;
 	float    height;
 	image_t* image;
 	color_t  mask;
@@ -7178,7 +7120,7 @@ js_Image_rotateBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 5)
 		blend_mode = jsal_to_int(4);
 
-	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
@@ -7186,7 +7128,7 @@ js_Image_rotateBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	apply_blend_mode(blend_mode);
+	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_tinted_rotated_bitmap(image_bitmap(image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
 	return false;
@@ -7202,7 +7144,7 @@ js_Image_toString(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 {
-	int           blend_mode = V1_BLEND_NORMAL;
+	int           blend_mode = BLEND_NORMAL;
 	int           height;
 	image_t*      image;
 	ALLEGRO_COLOR mask;
@@ -7225,7 +7167,7 @@ js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 9)
 		blend_mode = jsal_to_int(8);
 
-	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	width = image_width(image);
@@ -7240,7 +7182,7 @@ js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	apply_blend_mode(blend_mode);
+	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return false;
 }
@@ -7248,7 +7190,7 @@ js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_transformBlitMask(int num_args, bool is_ctor, intptr_t magic)
 {
-	int           blend_mode = V1_BLEND_NORMAL;
+	int           blend_mode = BLEND_NORMAL;
 	ALLEGRO_COLOR color;
 	int           height;
 	image_t*      image;
@@ -7273,7 +7215,7 @@ js_Image_transformBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 10)
 		blend_mode = jsal_to_int(9);
 
-	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	width = image_width(image);
@@ -7288,6 +7230,7 @@ js_Image_transformBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
+	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return false;
 }
@@ -7295,7 +7238,7 @@ js_Image_transformBlitMask(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_zoomBlit(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode = V1_BLEND_NORMAL;
+	int      blend_mode = BLEND_NORMAL;
 	int      height;
 	image_t* image;
 	float    scale;
@@ -7311,7 +7254,7 @@ js_Image_zoomBlit(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 4)
 		blend_mode = jsal_to_int(3);
 
-	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
@@ -7319,7 +7262,7 @@ js_Image_zoomBlit(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	apply_blend_mode(blend_mode);
+	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_scaled_bitmap(image_bitmap(image), 0, 0, width, height,
 		x, y, width * scale, height * scale, 0x0);
 	return false;
@@ -7328,7 +7271,7 @@ js_Image_zoomBlit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_zoomBlitMask(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode = V1_BLEND_NORMAL;
+	int      blend_mode = BLEND_NORMAL;
 	int      height;
 	image_t* image;
 	color_t  mask;
@@ -7346,7 +7289,7 @@ js_Image_zoomBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 5)
 		blend_mode = jsal_to_int(4);
 
-	if (blend_mode < 0 || blend_mode >= V1_BLEND_MAX)
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
 	if (screen_skipping_frame(g_screen))
@@ -7354,7 +7297,7 @@ js_Image_zoomBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	apply_blend_mode(blend_mode);
+	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_tinted_scaled_bitmap(image_bitmap(image), nativecolor(mask),
 		0, 0, width, height, x, y, width * scale, height * scale, 0x0);
 	return false;
@@ -8236,15 +8179,14 @@ js_Surface_bezierCurve(int num_args, bool is_ctor, intptr_t magic)
 	}
 	step_size = step_size < 0.001 ? 0.001 : step_size > 1.0 ? 1.0 : step_size;
 	num_points = 1.0 / step_size;
-	vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX));
+	vertices = alloca(num_points * sizeof(ALLEGRO_VERTEX));
+	memset(vertices, 0, num_points * sizeof(ALLEGRO_VERTEX));
 	al_calculate_spline(&vertices[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
 	for (i = 0; i < num_points; ++i)
 		vertices[i].color = nativecolor(color);
+	image_set_blend_mode(image, blend_mode);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
-	reset_blend_modes();
-	free(vertices);
 	return false;
 }
 
@@ -8252,13 +8194,13 @@ static bool
 js_Surface_blit(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
-	int      x;
-	int      y;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	x = jsal_to_int(0);
-	y = jsal_to_int(1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
 
 	if (screen_skipping_frame(g_screen))
 		return false;
@@ -8270,45 +8212,40 @@ js_Surface_blit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_blitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 {
-	image_t* src_image = jsal_require_class_obj(0, SV1_SURFACE);
-	int x = jsal_to_int(1);
-	int y = jsal_to_int(2);
-	color_t mask = jsal_require_sphere_color(3);
-
-	int      blend_mode;
 	image_t* image;
+	color_t  mask;
+	image_t* src_image;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	src_image = jsal_require_class_obj(0, SV1_SURFACE);
+	x = trunc(jsal_to_number(1));
+	y = trunc(jsal_to_number(2));
+	mask = jsal_require_sphere_color(3);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_tinted_bitmap(image_bitmap(src_image), nativecolor(mask), x, y, 0x0);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_blitSurface(int num_args, bool is_ctor, intptr_t magic)
 {
-	image_t* src_image = jsal_require_class_obj(0, SV1_SURFACE);
-	int x = jsal_to_int(1);
-	int y = jsal_to_int(2);
-
-	int      blend_mode;
 	image_t* image;
+	image_t* src_image;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	src_image = jsal_require_class_obj(0, SV1_SURFACE);
+	x = trunc(jsal_to_number(1));
+	y = trunc(jsal_to_number(2));
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_bitmap(image_bitmap(src_image), x, y, 0x0);
-	reset_blend_modes();
 	return false;
 }
 
@@ -8371,7 +8308,6 @@ js_Surface_createImage(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_drawText(int num_args, bool is_ctor, intptr_t magic)
 {
-	int         blend_mode;
 	color_t     color;
 	font_t*     font;
 	image_t*    image;
@@ -8381,8 +8317,6 @@ js_Surface_drawText(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	font = jsal_require_class_obj(0, SV1_FONT);
 	x = jsal_to_int(1);
 	y = jsal_to_int(2);
@@ -8391,56 +8325,51 @@ js_Surface_drawText(int num_args, bool is_ctor, intptr_t magic)
 	jsal_get_prop_string(0, "\xFF" "color_mask");
 	color = jsal_require_sphere_color(-1);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_filledCircle(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_number(0);
-	int y = jsal_to_number(1);
-	int radius = jsal_to_number(2);
-	color_t color = jsal_require_sphere_color(3);
-
-	int      blend_mode;
+	color_t  color;
 	image_t* image;
+	float    radius;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	radius = trunc(jsal_to_number(2));
+	color = jsal_require_sphere_color(3);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_filled_circle(x, y, radius, nativecolor(color));
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_filledEllipse(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_number(0);
-	int y = jsal_to_number(1);
-	int rx = jsal_to_number(2);
-	int ry = jsal_to_number(3);
-	color_t color = jsal_require_sphere_color(4);
-
-	int      blend_mode;
+	color_t  color;
 	image_t* image;
+	float    radius_y;
+	float    radius_x;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	radius_x = trunc(jsal_to_number(2));
+	radius_y = trunc(jsal_to_number(3));
+	color = jsal_require_sphere_color(4);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
-	al_draw_filled_ellipse(x, y, rx, ry, nativecolor(color));
-	reset_blend_modes();
+	al_draw_filled_ellipse(x, y, radius_x, radius_y, nativecolor(color));
 	return false;
 }
 
@@ -8495,111 +8424,114 @@ js_Surface_getPixel(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_gradientCircle(int num_args, bool is_ctor, intptr_t magic)
 {
-	static ALLEGRO_VERTEX s_vbuf[128];
+	static ALLEGRO_VERTEX vertices[128];
 
-	int x = jsal_to_number(0);
-	int y = jsal_to_number(1);
-	int radius = jsal_to_number(2);
-	color_t in_color = jsal_require_sphere_color(3);
-	color_t out_color = jsal_require_sphere_color(4);
-
-	int      blend_mode;
 	image_t* image;
+	color_t  inner_color;
+	int      num_points;
+	color_t  outer_color;
 	double   phi;
-	int      vcount;
+	float    radius;
+	float    x;
+	float    y;
 
 	int i;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	radius = trunc(jsal_to_number(2));
+	inner_color = jsal_require_sphere_color(3);
+	outer_color = jsal_require_sphere_color(4);
 
-	vcount = fmin(radius, 126);
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(in_color);
-	for (i = 0; i < vcount; ++i) {
-		phi = 2 * M_PI * i / vcount;
-		s_vbuf[i + 1].x = x + cos(phi) * radius;
-		s_vbuf[i + 1].y = y - sin(phi) * radius;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(out_color);
+	num_points = fmin(radius, 126);
+	vertices[0].x = x; vertices[0].y = y; vertices[0].z = 0;
+	vertices[0].color = nativecolor(inner_color);
+	for (i = 0; i < num_points; ++i) {
+		phi = 2 * M_PI * i / num_points;
+		vertices[i + 1].x = x + cos(phi) * radius;
+		vertices[i + 1].y = y - sin(phi) * radius;
+		vertices[i + 1].z = 0;
+		vertices[i + 1].color = nativecolor(outer_color);
 	}
-	s_vbuf[i + 1].x = x + cos(0) * radius;
-	s_vbuf[i + 1].y = y - sin(0) * radius;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(out_color);
+	vertices[i + 1].x = x + cos(0) * radius;
+	vertices[i + 1].y = y - sin(0) * radius;
+	vertices[i + 1].z = 0;
+	vertices[i + 1].color = nativecolor(outer_color);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
-	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	reset_blend_modes();
+	al_draw_prim(vertices, NULL, NULL, 0, num_points + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return false;
 }
 
 static bool
 js_Surface_gradientEllipse(int num_args, bool is_ctor, intptr_t magic)
 {
-	static ALLEGRO_VERTEX s_vbuf[128];
+	static ALLEGRO_VERTEX vertices[128];
 
-	int x = jsal_to_number(0);
-	int y = jsal_to_number(1);
-	int rx = jsal_to_number(2);
-	int ry = jsal_to_number(3);
-	color_t in_color = jsal_require_sphere_color(4);
-	color_t out_color = jsal_require_sphere_color(5);
-
-	int      blend_mode;
 	image_t* image;
+	color_t  inner_color;
+	int      num_points;
+	color_t  outer_color;
 	double   phi;
-	int      vcount;
+	float    radius_x;
+	float    radius_y;
+	float    x;
+	float    y;
 
 	int i;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	radius_x = trunc(jsal_to_number(2));
+	radius_y = trunc(jsal_to_number(3));
+	inner_color = jsal_require_sphere_color(4);
+	outer_color = jsal_require_sphere_color(5);
 
-	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(in_color);
-	for (i = 0; i < vcount; ++i) {
-		phi = 2 * M_PI * i / vcount;
-		s_vbuf[i + 1].x = x + cos(phi) * rx;
-		s_vbuf[i + 1].y = y - sin(phi) * ry;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(out_color);
+	num_points = ceil(fmin(10 * sqrt((radius_x + radius_y) / 2), 126));
+	vertices[0].x = x; vertices[0].y = y; vertices[0].z = 0;
+	vertices[0].color = nativecolor(inner_color);
+	for (i = 0; i < num_points; ++i) {
+		phi = 2 * M_PI * i / num_points;
+		vertices[i + 1].x = x + cos(phi) * radius_x;
+		vertices[i + 1].y = y - sin(phi) * radius_y;
+		vertices[i + 1].z = 0;
+		vertices[i + 1].color = nativecolor(outer_color);
 	}
-	s_vbuf[i + 1].x = x + cos(0) * rx;
-	s_vbuf[i + 1].y = y - sin(0) * ry;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(out_color);
+	vertices[i + 1].x = x + cos(0) * radius_x;
+	vertices[i + 1].y = y - sin(0) * radius_y;
+	vertices[i + 1].z = 0;
+	vertices[i + 1].color = nativecolor(outer_color);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
-	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
-	reset_blend_modes();
+	al_draw_prim(vertices, NULL, NULL, 0, num_points + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return false;
 }
 
 static bool
 js_Surface_gradientRectangle(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x1 = jsal_to_int(0);
-	int y1 = jsal_to_int(1);
-	int x2 = x1 + jsal_to_int(2);
-	int y2 = y1 + jsal_to_int(3);
-	color_t color_ul = jsal_require_sphere_color(4);
-	color_t color_ur = jsal_require_sphere_color(5);
-	color_t color_lr = jsal_require_sphere_color(6);
-	color_t color_ll = jsal_require_sphere_color(7);
-
-	int           blend_mode;
-	image_t*      image;
+	color_t  color_ll;
+	color_t  color_lr;
+	color_t  color_ul;
+	color_t  color_ur;
+	image_t* image;
+	float    x1;
+	float    x2;
+	float    y1;
+	float    y2;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x1 = trunc(jsal_to_number(0));
+	y1 = trunc(jsal_to_number(1));
+	x2 = x1 + trunc(jsal_to_number(2));
+	y2 = y1 + trunc(jsal_to_number(3));
+	color_ul = jsal_require_sphere_color(4);
+	color_ur = jsal_require_sphere_color(5);
+	color_lr = jsal_require_sphere_color(6);
+	color_ll = jsal_require_sphere_color(7);
 
 	ALLEGRO_VERTEX verts[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(color_ul) },
@@ -8609,16 +8541,13 @@ js_Surface_gradientRectangle(int num_args, bool is_ctor, intptr_t magic)
 	};
 	galileo_reset();
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_gradientLine(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode;
 	color_t  color1;
 	color_t  color2;
 	image_t* image;
@@ -8631,8 +8560,6 @@ js_Surface_gradientLine(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	x1 = jsal_to_int(0);
 	y1 = jsal_to_int(1);
 	x2 = jsal_to_int(2);
@@ -8650,212 +8577,201 @@ js_Surface_gradientLine(int num_args, bool is_ctor, intptr_t magic)
 		{ x2 + tx, y2 + ty, 0, 0, 0, nativecolor(color2) }
 	};
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_FAN);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_line(int num_args, bool is_ctor, intptr_t magic)
 {
-	float x1 = jsal_to_int(0) + 0.5;
-	float y1 = jsal_to_int(1) + 0.5;
-	float x2 = jsal_to_int(2) + 0.5;
-	float y2 = jsal_to_int(3) + 0.5;
-	color_t color = jsal_require_sphere_color(4);
-
-	int      blend_mode;
+	color_t  color;
 	image_t* image;
+	float    x1;
+	float    x2;
+	float    y1;
+	float    y2;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x1 = trunc(jsal_to_number(0)) + 0.5;
+	y1 = trunc(jsal_to_number(1)) + 0.5;
+	x2 = trunc(jsal_to_number(2)) + 0.5;
+	y2 = trunc(jsal_to_number(3)) + 0.5;
+	color = jsal_require_sphere_color(4);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_lineSeries(int num_args, bool is_ctor, intptr_t magic)
 {
-	int             blend_mode;
 	color_t         color;
 	image_t*        image;
 	int             num_points;
-	int             type;
-	int             x, y;
+	int             type = LINE_MULTIPLE;
 	ALLEGRO_VERTEX* vertices;
 	ALLEGRO_COLOR   vtx_color;
+	float           x;
+	float           y;
 
 	int i;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	jsal_require_array(0);
 	color = jsal_require_sphere_color(1);
-	type = num_args >= 3 ? jsal_to_int(2) : LINE_MULTIPLE;
+	if (num_args >= 3)
+		type = jsal_to_int(2);
 
-	if (!jsal_is_array(0))
-		jsal_error(JS_ERROR, "first argument must be an array");
-	num_points = jsal_get_length(0);
-	if (num_points < 2)
+	if ((num_points = jsal_get_length(0)) < 2)
 		jsal_error(JS_RANGE_ERROR, "two or more vertices required");
-	if (num_points > INT_MAX)
-		jsal_error(JS_RANGE_ERROR, "too many vertices");
-	if ((vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX))) == NULL)
-		jsal_error(JS_ERROR, "couldn't allocate vertex buffer");
+	vertices = alloca(num_points * sizeof(ALLEGRO_VERTEX));
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		jsal_get_prop_index(0, i);
-		jsal_get_prop_string(-1, "x"); x = jsal_to_int(-1); jsal_pop(1);
-		jsal_get_prop_string(-1, "y"); y = jsal_to_int(-1); jsal_pop(1);
-		jsal_pop(1);
-		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
+		jsal_get_prop_string(-1, "x");
+		jsal_get_prop_string(-2, "y");
+		x = trunc(jsal_to_number(-2));
+		y = trunc(jsal_to_number(-1));
+		jsal_pop(3);
+		vertices[i].x = x + 0.5f;
+		vertices[i].y = y + 0.5f;
+		vertices[i].z = 0.0f;
+		vertices[i].u = 0.0f;
+		vertices[i].v = 0.0f;
 		vertices[i].color = vtx_color;
 	}
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
-	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points,
+	al_draw_prim(vertices, NULL, NULL, 0, num_points,
 		type == LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
-		: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
-		: ALLEGRO_PRIM_LINE_LIST
-	);
-	reset_blend_modes();
-	free(vertices);
+			: type == LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
+			: ALLEGRO_PRIM_LINE_LIST);
 	return false;
 }
 
 static bool
 js_Surface_outlinedCircle(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_number(0);
-	int y = jsal_to_number(1);
-	int radius = jsal_to_number(2);
-	color_t color = jsal_require_sphere_color(3);
-
-	int      blend_mode;
+	color_t  color;
 	image_t* image;
+	float    radius;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	radius = trunc(jsal_to_number(2));
+	color = jsal_require_sphere_color(3);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_circle(x, y, radius, nativecolor(color), 1.0);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_outlinedEllipse(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_number(0);
-	int y = jsal_to_number(1);
-	int rx = jsal_to_number(2);
-	int ry = jsal_to_number(3);
-	color_t color = jsal_require_sphere_color(4);
-
-	int      blend_mode;
+	color_t  color;
 	image_t* image;
+	float    radius_x;
+	float    radius_y;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	radius_x = trunc(jsal_to_number(2));
+	radius_y = trunc(jsal_to_number(3));
+	color = jsal_require_sphere_color(4);
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
-	al_draw_ellipse(x, y, rx, ry, nativecolor(color), 1.0);
-	reset_blend_modes();
+	al_draw_ellipse(x, y, radius_x, radius_y, nativecolor(color), 1.0);
 	return false;
 }
 
 static bool
 js_Surface_pointSeries(int num_args, bool is_ctor, intptr_t magic)
 {
-	color_t color = jsal_require_sphere_color(1);
-
-	int             blend_mode;
+	color_t         color;
 	image_t*        image;
 	int             num_points;
-	int             x, y;
 	ALLEGRO_VERTEX* vertices;
 	ALLEGRO_COLOR   vtx_color;
+	float           x;
+	float           y;
 
 	int i;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	jsal_require_array(0);
+	color = jsal_require_sphere_color(1);
 
-	if (!jsal_is_array(0))
-		jsal_error(JS_ERROR, "first argument must be an array");
 	num_points = jsal_get_length(0);
-	if (num_points > INT_MAX)
-		jsal_error(JS_RANGE_ERROR, "too many vertices (%u)", num_points);
-	vertices = calloc(num_points, sizeof(ALLEGRO_VERTEX));
+	vertices = alloca(num_points * sizeof(ALLEGRO_VERTEX));
 	vtx_color = nativecolor(color);
 	for (i = 0; i < num_points; ++i) {
 		jsal_get_prop_index(0, i);
-		jsal_get_prop_string(-1, "x"); x = jsal_to_int(-1); jsal_pop(1);
-		jsal_get_prop_string(-1, "y"); y = jsal_to_int(-1); jsal_pop(1);
-		jsal_pop(1);
-		vertices[i].x = x + 0.5; vertices[i].y = y + 0.5;
+		jsal_get_prop_string(-1, "x");
+		jsal_get_prop_string(-2, "y");
+		x = trunc(jsal_to_number(-2));
+		y = trunc(jsal_to_number(-1));
+		jsal_pop(3);
+		vertices[i].x = x + 0.5f;
+		vertices[i].y = y + 0.5f;
+		vertices[i].z = 0.0f;
+		vertices[i].u = 0.0f;
+		vertices[i].v = 0.0f;
 		vertices[i].color = vtx_color;
 	}
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
-	al_draw_prim(vertices, NULL, NULL, 0, (int)num_points, ALLEGRO_PRIM_POINT_LIST);
-	reset_blend_modes();
-	free(vertices);
+	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
 	return false;
 }
 
 static bool
 js_Surface_outlinedRectangle(int num_args, bool is_ctor, intptr_t magic)
 {
-	int n_args = jsal_get_top();
-	float x1 = jsal_to_int(0) + 0.5;
-	float y1 = jsal_to_int(1) + 0.5;
-	float x2 = x1 + jsal_to_int(2) - 1;
-	float y2 = y1 + jsal_to_int(3) - 1;
-	color_t color = jsal_require_sphere_color(4);
-	int thickness = n_args >= 6 ? jsal_to_int(5) : 1;
-
-	int      blend_mode;
+	color_t  color;
 	image_t* image;
+	float    thickness = 1.0f;
+	float    x1;
+	float    y1;
+	float    x2;
+	float    y2;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x1 = trunc(jsal_to_number(0)) + 0.5;
+	y1 = trunc(jsal_to_number(1)) + 0.5;
+	x2 = x1 + trunc(jsal_to_number(2)) - 1.0;
+	y2 = y1 + trunc(jsal_to_number(3)) - 1.0;
+	color = jsal_require_sphere_color(4);
+	if (num_args >= 6)
+		thickness = trunc(jsal_to_number(5));
 
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_rectangle(x1, y1, x2, y2, nativecolor(color), thickness);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_replaceColor(int num_args, bool is_ctor, intptr_t magic)
 {
-	color_t color = jsal_require_sphere_color(0);
-	color_t new_color = jsal_require_sphere_color(1);
-
+	color_t  color;
 	image_t* image;
+	color_t  new_color;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
+	color = jsal_require_sphere_color(0);
+	new_color = jsal_require_sphere_color(1);
 
 	if (!image_replace_color(image, color, new_color))
 		jsal_error(JS_ERROR, "couldn't perform color replacement");
@@ -8865,13 +8781,14 @@ js_Surface_replaceColor(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_rescale(int num_args, bool is_ctor, intptr_t magic)
 {
-	int width = jsal_to_int(0);
-	int height = jsal_to_int(1);
-
+	int      height;
 	image_t* image;
+	int      width;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
+	width = jsal_to_int(0);
+	height = jsal_to_int(1);
 
 	if (!image_rescale(image, width, height))
 		jsal_error(JS_ERROR, "couldn't rescale image");
@@ -8882,29 +8799,32 @@ js_Surface_rescale(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_rotate(int num_args, bool is_ctor, intptr_t magic)
 {
-	int n_args = jsal_get_top();
-	float angle = jsal_to_number(0);
-	bool want_resize = n_args >= 2 ? jsal_to_boolean(1) : true;
-
+	float    angle;
+	float    height;
 	image_t* image;
+	float    new_height;
 	image_t* new_image;
-	int      new_w, new_h;
-	int      w, h;
+	float    new_width;
+	float    width;
+	bool     want_resize = false;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
+	angle = jsal_to_number(0);
+	if (num_args >= 2)
+		want_resize = jsal_to_boolean(1);
 
-	w = new_w = image_width(image);
-	h = new_h = image_height(image);
+	width = new_width = image_width(image);
+	height = new_height = image_height(image);
 	if (want_resize) {
 		// FIXME: implement in-place resizing for Surface#rotate()
-		jsal_error(JS_ERROR, "not implemented");
+		jsal_error(JS_ERROR, "Resizing not implemented for Surface#rotate()");
 	}
-	if ((new_image = image_new(new_w, new_h)) == NULL)
-		jsal_error(JS_ERROR, "couldn't create new surface");
+	if ((new_image = image_new(new_width, new_height)) == NULL)
+		jsal_error(JS_ERROR, "Couldn't create new surface");
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
-	al_draw_rotated_bitmap(image_bitmap(image), (float)w / 2, (float)h / 2, (float)new_w / 2, (float)new_h / 2, angle, 0x0);
+	al_draw_rotated_bitmap(image_bitmap(image), width / 2, height / 2, new_width / 2, new_height / 2, angle, 0x0);
 
 	// swap out the image pointer and free old image
 	jsal_set_class_ptr(-1, new_image);
@@ -8916,32 +8836,28 @@ static bool
 js_Surface_rotateBlitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 {
 	float    angle;
-	int      blend_mode;
-	int      height;
+	float    height;
 	image_t* image;
 	color_t  mask;
 	image_t* source_image;
-	int      width;
-	int      x;
-	int      y;
+	float    width;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	source_image = jsal_require_class_obj(0, SV1_SURFACE);
-	x = jsal_to_int(1);
-	y = jsal_to_int(2);
+	x = trunc(jsal_to_number(1));
+	y = trunc(jsal_to_number(2));
 	angle = jsal_to_number(3);
 	mask = jsal_require_sphere_color(4);
 
 	width = image_width(source_image);
 	height = image_height(source_image);
+	galileo_reset();
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_tinted_rotated_bitmap(image_bitmap(source_image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	reset_blend_modes();
 	return false;
 }
 
@@ -8949,54 +8865,49 @@ static bool
 js_Surface_rotateBlitSurface(int num_args, bool is_ctor, intptr_t magic)
 {
 	float    angle;
-	int      blend_mode;
-	int      height;
+	float    height;
 	image_t* image;
 	image_t* source_image;
-	int      width;
-	int      x;
-	int      y;
+	float    width;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	source_image = jsal_require_class_obj(0, SV1_SURFACE);
-	x = jsal_to_int(1);
-	y = jsal_to_int(2);
+	x = trunc(jsal_to_number(1));
+	y = trunc(jsal_to_number(2));
 	angle = jsal_to_number(3);
 
 	width = image_width(source_image);
 	height = image_height(source_image);
+	galileo_reset();
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_rotated_bitmap(image_bitmap(source_image), width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_rectangle(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-	int w = jsal_to_int(2);
-	int h = jsal_to_int(3);
-	color_t color = jsal_require_sphere_color(4);
-
+	color_t  color;
+	float    height;
 	image_t* image;
-	int      blend_mode;
+	float    width;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	width = trunc(jsal_to_number(2));
+	height = trunc(jsal_to_number(3));
+	color = jsal_require_sphere_color(4);
 
 	galileo_reset();
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
-	al_draw_filled_rectangle(x, y, x + w, y + h, nativecolor(color));
-	reset_blend_modes();
+	al_draw_filled_rectangle(x, y, x + width, y + height, nativecolor(color));
 	return false;
 }
 
@@ -9048,23 +8959,33 @@ js_Surface_setAlpha(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_setBlendMode(int num_args, bool is_ctor, intptr_t magic)
 {
+	int      blend_mode;
+	image_t* image;
+	
 	jsal_push_this();
-	jsal_dup(0);
-	jsal_put_prop_string(-2, "\xFF" "blend_mode");
+	image = jsal_require_class_obj(-1, SV1_SURFACE);
+	blend_mode = jsal_to_int(0);
+
+	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
+
+	image_set_blend_mode(image, blend_mode);
 	return false;
 }
 
 static bool
 js_Surface_setPixel(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-	color_t color = jsal_require_sphere_color(2);
-
+	color_t  color;
 	image_t* image;
+	int      x;
+	int      y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
+	x = jsal_to_int(0);
+	y = jsal_to_int(1);
+	color = jsal_require_sphere_color(2);
 
 	image_set_pixel(image, x, y, color);
 	return false;
@@ -9080,7 +9001,6 @@ js_Surface_toString(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_transformBlitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode;
 	int      height;
 	image_t* image;
 	color_t  mask;
@@ -9091,8 +9011,6 @@ js_Surface_transformBlitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	source_image = jsal_require_class_obj(0, SV1_SURFACE);
 	x1 = jsal_to_int(1);
 	y1 = jsal_to_int(2);
@@ -9107,7 +9025,6 @@ js_Surface_transformBlitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(mask) },
 		{ x2, y2, 0, width, 0, nativecolor(mask) },
@@ -9115,39 +9032,34 @@ js_Surface_transformBlitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 		{ x3, y3, 0, width, height, nativecolor(mask) },
 	};
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_transformBlitSurface(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode;
-	int      height;
+	float    height;
 	image_t* image;
 	image_t* source_image;
-	int      width;
-	int      x1, x2, x3, x4;
-	int      y1, y2, y3, y4;
+	float    width;
+	float    x1, x2, x3, x4;
+	float    y1, y2, y3, y4;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	source_image = jsal_require_class_obj(0, SV1_SURFACE);
-	x1 = jsal_to_int(1);
-	y1 = jsal_to_int(2);
-	x2 = jsal_to_int(3);
-	y2 = jsal_to_int(4);
-	x3 = jsal_to_int(5);
-	y3 = jsal_to_int(6);
-	x4 = jsal_to_int(7);
-	y4 = jsal_to_int(8);
+	x1 = trunc(jsal_to_number(1));
+	y1 = trunc(jsal_to_number(2));
+	x2 = trunc(jsal_to_number(3));
+	y2 = trunc(jsal_to_number(4));
+	x3 = trunc(jsal_to_number(5));
+	y3 = trunc(jsal_to_number(6));
+	x4 = trunc(jsal_to_number(7));
+	y4 = trunc(jsal_to_number(8));
 
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, al_map_rgba(255, 255, 255, 255) },
 		{ x2, y2, 0, width, 0, al_map_rgba(255, 255, 255, 255) },
@@ -9155,74 +9067,63 @@ js_Surface_transformBlitSurface(int num_args, bool is_ctor, intptr_t magic)
 		{ x3, y3, 0, width, height, al_map_rgba(255, 255, 255, 255) },
 	};
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_zoomBlitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode;
-	int      height;
+	float    height;
 	image_t* image;
 	color_t  mask;
 	float    scale;
 	image_t* source_image;
-	int      width;
-	int      x;
-	int      y;
+	float    width;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	source_image = jsal_require_class_obj(0, SV1_SURFACE);
-	x = jsal_to_int(1);
-	y = jsal_to_int(2);
+	x = trunc(jsal_to_number(1));
+	y = trunc(jsal_to_number(2));
 	scale = jsal_to_number(3);
 	mask = jsal_require_sphere_color(4);
 
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_tinted_scaled_bitmap(image_bitmap(source_image),
 		nativecolor(mask),
 		0, 0, width, height, x, y, width * scale, height * scale,
 		0x0);
-	reset_blend_modes();
 	return false;
 }
 
 static bool
 js_Surface_zoomBlitSurface(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode;
-	int      height;
+	float    height;
 	image_t* image;
 	float    scale;
 	image_t* source_image;
-	int      width;
-	int      x;
-	int      y;
+	float    width;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	source_image = jsal_require_class_obj(0, SV1_SURFACE);
-	x = jsal_to_int(1);
-	y = jsal_to_int(2);
+	x = trunc(jsal_to_number(1));
+	y = trunc(jsal_to_number(2));
 	scale = jsal_to_number(3);
 
 	width = image_width(source_image);
 	height = image_height(source_image);
 	image_render_to(image, NULL);
-	apply_blend_mode(blend_mode);
 	al_draw_scaled_bitmap(image_bitmap(source_image),
 		0, 0, width, height, x, y, width * scale, height * scale,
 		0x0);
-	reset_blend_modes();
 	return false;
 }
 

@@ -222,6 +222,7 @@ int          jsal_to_int                   (int at_index);
 double       jsal_to_number                (int at_index);
 void         jsal_to_object                (int at_index);
 const char*  jsal_to_string                (int at_index);
+unsigned int jsal_to_uint                  (int at_index);
 bool         jsal_try                      (js_function_t callback, int num_args);
 bool         jsal_try_call                 (int num_args);
 bool         jsal_try_call_method          (int num_args);
