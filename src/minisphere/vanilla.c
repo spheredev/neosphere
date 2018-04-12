@@ -1537,8 +1537,8 @@ js_ApplyColorMask(int num_args, bool is_ctor, intptr_t magic)
 
 	if (screen_skipping_frame(g_screen))
 		return false;
-	galileo_reset();
 	resolution = screen_size(g_screen);
+	galileo_reset();
 	al_draw_filled_rectangle(0, 0, resolution.width, resolution.height,
 		nativecolor(color));
 	return false;
@@ -1618,9 +1618,9 @@ js_BezierCurve(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t         color;
 	float           cp[8];
-	bool            is_quadratic = true;
 	int             num_points;
 	ALLEGRO_VERTEX* points;
+	bool            quadratic = true;
 	double          step_size;
 	float           x1, x2, x3, x4;
 	float           y1, y2, y3, y4;
@@ -1629,16 +1629,16 @@ js_BezierCurve(int num_args, bool is_ctor, intptr_t magic)
 
 	color = jsal_require_sphere_color(0);
 	step_size = jsal_to_number(1);
-	x1 = jsal_to_number(2);
-	y1 = jsal_to_number(3);
-	x2 = jsal_to_number(4);
-	y2 = jsal_to_number(5);
-	x3 = jsal_to_number(6);
-	y3 = jsal_to_number(7);
+	x1 = trunc(jsal_to_number(2));
+	y1 = trunc(jsal_to_number(3));
+	x2 = trunc(jsal_to_number(4));
+	y2 = trunc(jsal_to_number(5));
+	x3 = trunc(jsal_to_number(6));
+	y3 = trunc(jsal_to_number(7));
 	if (num_args >= 10) {
-		is_quadratic = false;
-		x4 = jsal_to_number(8);
-		y4 = jsal_to_number(9);
+		quadratic = false;
+		x4 = trunc(jsal_to_number(8));
+		y4 = trunc(jsal_to_number(9));
 	}
 
 	if (screen_skipping_frame(g_screen))
@@ -1647,7 +1647,7 @@ js_BezierCurve(int num_args, bool is_ctor, intptr_t magic)
 	cp[2] = x2; cp[3] = y2;
 	cp[4] = x3; cp[5] = y3;
 	cp[6] = x4; cp[7] = y4;
-	if (is_quadratic) {
+	if (quadratic) {
 		// convert quadratic Bezier curve to cubic
 		cp[6] = x3; cp[7] = y3;
 		cp[2] = x1 + (2.0 / 3.0) * (x2 - x1);
@@ -1655,15 +1655,17 @@ js_BezierCurve(int num_args, bool is_ctor, intptr_t magic)
 		cp[4] = x3 + (2.0 / 3.0) * (x2 - x3);
 		cp[5] = y3 + (2.0 / 3.0) * (y2 - y3);
 	}
-	step_size = step_size < 0.001 ? 0.001 : step_size > 1.0 ? 1.0 : step_size;
+	step_size = step_size < 0.001 ? 0.001
+		: step_size > 1.0 ? 1.0
+		: step_size;
 	num_points = 1.0 / step_size;
-	points = calloc(num_points, sizeof(ALLEGRO_VERTEX));
+	points = alloca(num_points * sizeof(ALLEGRO_VERTEX));
+	memset(points, 0, num_points * sizeof(ALLEGRO_VERTEX));
 	al_calculate_spline(&points[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
 	for (i = 0; i < num_points; ++i)
 		points[i].color = nativecolor(color);
 	galileo_reset();
 	al_draw_prim(points, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
-	free(points);
 	return false;
 }
 
@@ -2300,36 +2302,42 @@ js_ExitMapEngine(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FilledCircle(int num_args, bool is_ctor, intptr_t magic)
 {
-	static ALLEGRO_VERTEX s_vbuf[128];
-
-	int x = jsal_to_number(0);
-	int y = jsal_to_number(1);
-	int radius = jsal_to_number(2);
-	color_t color = jsal_require_sphere_color(3);
-
-	double phi;
-	int    vcount;
+	color_t         color;
+	int             num_points;
+	double          phi;
+	float           radius;
+	ALLEGRO_VERTEX* vertices;
+	float           x;
+	float           y;
 
 	int i;
 
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	radius = trunc(jsal_to_number(2));
+	color = jsal_require_sphere_color(3);
+
 	if (screen_skipping_frame(g_screen))
 		return false;
-	vcount = fmin(radius, 126);
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(color);
-	for (i = 0; i < vcount; ++i) {
-		phi = 2 * M_PI * i / vcount;
-		s_vbuf[i + 1].x = x + cos(phi) * radius;
-		s_vbuf[i + 1].y = y - sin(phi) * radius;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(color);
+	num_points = fmin(radius, 126);
+	vertices = alloca((num_points + 2) * sizeof(ALLEGRO_VERTEX));
+	vertices[0].x = x;
+	vertices[0].y = y;
+	vertices[0].z = 0.0f;
+	vertices[0].color = nativecolor(color);
+	for (i = 0; i < num_points; ++i) {
+		phi = 2 * M_PI * i / num_points;
+		vertices[i + 1].x = x + cosf(phi) * radius;
+		vertices[i + 1].y = y - sinf(phi) * radius;
+		vertices[i + 1].z = 0.0f;
+		vertices[i + 1].color = nativecolor(color);
 	}
-	s_vbuf[i + 1].x = x + cos(0) * radius;
-	s_vbuf[i + 1].y = y - sin(0) * radius;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(color);
+	vertices[i + 1].x = x + cosf(0) * radius;
+	vertices[i + 1].y = y - sinf(0) * radius;
+	vertices[i + 1].z = 0.0f;
+	vertices[i + 1].color = nativecolor(color);
 	galileo_reset();
-	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	al_draw_prim(vertices, NULL, NULL, 0, num_points + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return false;
 }
 
@@ -2343,37 +2351,44 @@ js_FilledComplex(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FilledEllipse(int num_args, bool is_ctor, intptr_t magic)
 {
-	static ALLEGRO_VERTEX s_vbuf[128];
-
-	int x = trunc(jsal_to_number(0));
-	int y = trunc(jsal_to_number(1));
-	int rx = trunc(jsal_to_number(2));
-	int ry = trunc(jsal_to_number(3));
-	color_t color = jsal_require_sphere_color(4);
-
-	double phi;
-	int    vcount;
+	color_t         color;
+	int             num_points;
+	double          phi;
+	float           radius_x;
+	float           radius_y;
+	ALLEGRO_VERTEX* vertices;
+	float           x;
+	float           y;
 
 	int i;
 
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
+	radius_x = trunc(jsal_to_number(2));
+	radius_y = trunc(jsal_to_number(3));
+	color = jsal_require_sphere_color(4);
+
 	if (screen_skipping_frame(g_screen))
 		return false;
-	vcount = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(color);
-	for (i = 0; i < vcount; ++i) {
-		phi = 2 * M_PI * i / vcount;
-		s_vbuf[i + 1].x = x + cos(phi) * rx;
-		s_vbuf[i + 1].y = y - sin(phi) * ry;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(color);
+	num_points = ceil(fmin(10 * sqrt((radius_x + radius_y) / 2), 126));
+	vertices = alloca((num_points + 2) * sizeof(ALLEGRO_VERTEX));
+	vertices[0].x = x;
+	vertices[0].y = y;
+	vertices[0].z = 0.0f;
+	vertices[0].color = nativecolor(color);
+	for (i = 0; i < num_points; ++i) {
+		phi = 2 * M_PI * i / num_points;
+		vertices[i + 1].x = x + cosf(phi) * radius_x;
+		vertices[i + 1].y = y - sinf(phi) * radius_y;
+		vertices[i + 1].z = 0.0f;
+		vertices[i + 1].color = nativecolor(color);
 	}
-	s_vbuf[i + 1].x = x + cos(0) * rx;
-	s_vbuf[i + 1].y = y - sin(0) * ry;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(color);
+	vertices[i + 1].x = x + cosf(0) * radius_x;
+	vertices[i + 1].y = y - sinf(0) * radius_y;
+	vertices[i + 1].z = 0.0f;
+	vertices[i + 1].color = nativecolor(color);
 	galileo_reset();
-	al_draw_prim(s_vbuf, NULL, NULL, 0, vcount + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	al_draw_prim(vertices, NULL, NULL, 0, num_points + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return false;
 }
 
@@ -3955,43 +3970,46 @@ js_GradientComplex(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_GradientEllipse(int num_args, bool is_ctor, intptr_t magic)
 {
-	static ALLEGRO_VERTEX s_vbuf[128];
-
-	color_t inner_color;
-	int     num_verts;
-	color_t outer_color;
-	double  phi;
-	float   rx, ry;
-	float   x;
-	float   y;
+	color_t         inner_color;
+	int             num_points;
+	color_t         outer_color;
+	double          phi;
+	float           radius_x;
+	float           radius_y;
+	ALLEGRO_VERTEX* vertices;
+	float           x;
+	float           y;
 
 	int i;
 
 	x = trunc(jsal_to_number(0));
 	y = trunc(jsal_to_number(1));
-	rx = trunc(jsal_to_number(2));
-	ry = trunc(jsal_to_number(3));
+	radius_x = trunc(jsal_to_number(2));
+	radius_y = trunc(jsal_to_number(3));
 	inner_color = jsal_require_sphere_color(4);
 	outer_color = jsal_require_sphere_color(5);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
-	num_verts = ceil(fmin(10 * sqrt((rx + ry) / 2), 126));
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(inner_color);
-	for (i = 0; i < num_verts; ++i) {
-		phi = 2 * M_PI * i / num_verts;
-		s_vbuf[i + 1].x = x + cos(phi) * rx;
-		s_vbuf[i + 1].y = y - sin(phi) * ry;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(outer_color);
+	num_points = ceil(fmin(10 * sqrt((radius_x + radius_y) / 2), 126));
+	vertices = alloca((num_points + 2) * sizeof(ALLEGRO_VERTEX));
+	vertices[0].x = x;
+	vertices[0].y = y;
+	vertices[0].z = 0.0f;
+	vertices[0].color = nativecolor(inner_color);
+	for (i = 0; i < num_points; ++i) {
+		phi = 2 * M_PI * i / num_points;
+		vertices[i + 1].x = x + cosf(phi) * radius_x;
+		vertices[i + 1].y = y - sinf(phi) * radius_y;
+		vertices[i + 1].z = 0.0f;
+		vertices[i + 1].color = nativecolor(outer_color);
 	}
-	s_vbuf[i + 1].x = x + cos(0) * rx;
-	s_vbuf[i + 1].y = y - sin(0) * ry;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(outer_color);
+	vertices[i + 1].x = x + cosf(0) * radius_x;
+	vertices[i + 1].y = y - sinf(0) * radius_y;
+	vertices[i + 1].z = 0.0f;
+	vertices[i + 1].color = nativecolor(outer_color);
 	galileo_reset();
-	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	al_draw_prim(vertices, NULL, NULL, 0, num_points + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return false;
 }
 
@@ -8426,16 +8444,15 @@ js_Surface_getPixel(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_gradientCircle(int num_args, bool is_ctor, intptr_t magic)
 {
-	static ALLEGRO_VERTEX vertices[128];
-
-	image_t* image;
-	color_t  inner_color;
-	int      num_points;
-	color_t  outer_color;
-	double   phi;
-	float    radius;
-	float    x;
-	float    y;
+	image_t*        image;
+	color_t         inner_color;
+	int             num_points;
+	color_t         outer_color;
+	double          phi;
+	float           radius;
+	ALLEGRO_VERTEX* vertices;
+	float           x;
+	float           y;
 
 	int i;
 
@@ -8448,18 +8465,21 @@ js_Surface_gradientCircle(int num_args, bool is_ctor, intptr_t magic)
 	outer_color = jsal_require_sphere_color(4);
 
 	num_points = fmin(radius, 126);
-	vertices[0].x = x; vertices[0].y = y; vertices[0].z = 0;
+	vertices = alloca((num_points + 2) * sizeof(ALLEGRO_VERTEX));
+	vertices[0].x = x;
+	vertices[0].y = y;
+	vertices[0].z = 0.0f;
 	vertices[0].color = nativecolor(inner_color);
 	for (i = 0; i < num_points; ++i) {
-		phi = 2 * M_PI * i / num_points;
-		vertices[i + 1].x = x + cos(phi) * radius;
-		vertices[i + 1].y = y - sin(phi) * radius;
-		vertices[i + 1].z = 0;
+		phi = 2.0 * M_PI * i / num_points;
+		vertices[i + 1].x = x + cosf(phi) * radius;
+		vertices[i + 1].y = y - sinf(phi) * radius;
+		vertices[i + 1].z = 0.0f;
 		vertices[i + 1].color = nativecolor(outer_color);
 	}
-	vertices[i + 1].x = x + cos(0) * radius;
-	vertices[i + 1].y = y - sin(0) * radius;
-	vertices[i + 1].z = 0;
+	vertices[i + 1].x = x + cosf(0.0f) * radius;
+	vertices[i + 1].y = y - sinf(0.0f) * radius;
+	vertices[i + 1].z = 0.0f;
 	vertices[i + 1].color = nativecolor(outer_color);
 	image_render_to(image, NULL);
 	al_draw_prim(vertices, NULL, NULL, 0, num_points + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
@@ -8469,17 +8489,16 @@ js_Surface_gradientCircle(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_gradientEllipse(int num_args, bool is_ctor, intptr_t magic)
 {
-	static ALLEGRO_VERTEX vertices[128];
-
-	image_t* image;
-	color_t  inner_color;
-	int      num_points;
-	color_t  outer_color;
-	double   phi;
-	float    radius_x;
-	float    radius_y;
-	float    x;
-	float    y;
+	image_t*        image;
+	color_t         inner_color;
+	int             num_points;
+	color_t         outer_color;
+	double          phi;
+	float           radius_x;
+	float           radius_y;
+	ALLEGRO_VERTEX* vertices;
+	float           x;
+	float           y;
 
 	int i;
 
@@ -8493,18 +8512,21 @@ js_Surface_gradientEllipse(int num_args, bool is_ctor, intptr_t magic)
 	outer_color = jsal_require_sphere_color(5);
 
 	num_points = ceil(fmin(10 * sqrt((radius_x + radius_y) / 2), 126));
-	vertices[0].x = x; vertices[0].y = y; vertices[0].z = 0;
+	vertices = alloca((num_points + 2) * sizeof(ALLEGRO_VERTEX));
+	vertices[0].x = x;
+	vertices[0].y = y;
+	vertices[0].z = 0.0f;
 	vertices[0].color = nativecolor(inner_color);
 	for (i = 0; i < num_points; ++i) {
-		phi = 2 * M_PI * i / num_points;
-		vertices[i + 1].x = x + cos(phi) * radius_x;
-		vertices[i + 1].y = y - sin(phi) * radius_y;
-		vertices[i + 1].z = 0;
+		phi = 2.0 * M_PI * i / num_points;
+		vertices[i + 1].x = x + cosf(phi) * radius_x;
+		vertices[i + 1].y = y - sinf(phi) * radius_y;
+		vertices[i + 1].z = 0.0f;
 		vertices[i + 1].color = nativecolor(outer_color);
 	}
-	vertices[i + 1].x = x + cos(0) * radius_x;
-	vertices[i + 1].y = y - sin(0) * radius_y;
-	vertices[i + 1].z = 0;
+	vertices[i + 1].x = x + cosf(0.0f) * radius_x;
+	vertices[i + 1].y = y - sinf(0.0f) * radius_y;
+	vertices[i + 1].z = 0.0f;
 	vertices[i + 1].color = nativecolor(outer_color);
 	image_render_to(image, NULL);
 	al_draw_prim(vertices, NULL, NULL, 0, num_points + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
