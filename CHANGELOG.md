@@ -19,6 +19,7 @@ v5.2.0 - TBD
 * Adds `SSj.now()` for getting microsecond-accurate timestamps under SpheRun.
 * Adds support for render-to-texture by allowing `Surface` objects to be used
   as textures, without calling `.toTexture()` first.
+* Adds long-overdue support for all of the Sphere 1.x Surface blend modes.
 * Adds `[Symbol.toStringTag]` and `.constructor` for Sphere v2 objects.
 * Improves the overall performance of all API functions and constructors.
 * Improves performance of all `Prim` drawing functions.

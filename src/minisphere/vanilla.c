@@ -1469,21 +1469,42 @@ static void
 apply_blend_mode(int blend_mode)
 {
 	switch (blend_mode) {
-	case V1_BLEND_NORMAL:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-		break;
-	case V1_BLEND_ADD:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
-		break;
-	case V1_BLEND_MULTIPLY:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_DEST_COLOR, ALLEGRO_ZERO);
-		break;
-	case V1_BLEND_REPLACE:
-		al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-		break;
-	case V1_BLEND_SUBTRACT:
-		al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
-		break;
+		case V1_BLEND_NORMAL:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
+			break;
+		case V1_BLEND_ADD:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
+			break;
+		case V1_BLEND_ALPHA_ONLY:
+			al_set_separate_blender(
+				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE,
+				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+			break;
+		case V1_BLEND_AVERAGE:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_CONST_COLOR, ALLEGRO_CONST_COLOR);
+			al_set_blend_color(al_map_rgba_f(0.5, 0.5, 0.5, 0.5));
+			break;
+		case V1_BLEND_INVERT:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_INVERSE_SRC_COLOR);
+			break;
+		case V1_BLEND_MULTIPLY:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_DEST_COLOR, ALLEGRO_ZERO);
+			break;
+		case V1_BLEND_REPLACE:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+			break;
+		case V1_BLEND_RGB_ONLY:
+			al_set_separate_blender(
+				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO,
+				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE);
+			break;
+		case V1_BLEND_SUBTRACT:
+			al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
+			break;
+		default:
+			// this shouldn't happen, but in case it does, just output nothing to make it
+			// obvious something went wrong.
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ZERO);
 	}
 }
 
@@ -2186,7 +2207,7 @@ static bool
 js_DoEvents(int num_args, bool is_ctor, intptr_t magic)
 {
 	sphere_heartbeat(true, 1);
-	jsal_push_boolean(true);
+	jsal_push_boolean_true();
 	return true;
 }
 
@@ -4292,7 +4313,7 @@ js_IsInputAttached(int num_args, bool is_ctor, intptr_t magic)
 			}
 		}
 		if (player == -1) {
-			jsal_push_boolean(false);
+			jsal_push_boolean_false();
 			return true;
 		}
 	}
@@ -5064,7 +5085,7 @@ js_RequireScript(int num_args, bool is_ctor, intptr_t magic)
 	is_required = jsal_get_boolean(-1);
 	jsal_pop(1);
 	if (!is_required) {
-		jsal_push_boolean(true);
+		jsal_push_boolean_true();
 		jsal_put_prop_string(-2, filename);
 		if (!script_eval(filename))
 			jsal_throw();
@@ -5093,7 +5114,7 @@ js_RequireSystemScript(int num_args, bool is_ctor, intptr_t magic)
 	is_required = jsal_get_boolean(-1);
 	jsal_pop(1);
 	if (!is_required) {
-		jsal_push_boolean(true);
+		jsal_push_boolean_true();
 		jsal_put_prop_string(-2, path);
 		if (!script_eval(path))
 			jsal_throw();
@@ -7037,13 +7058,14 @@ js_Image_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-
 	image_t* image;
+	int      x;
+	int      y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
+	x = jsal_to_int(0);
+	y = jsal_to_int(1);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
@@ -7055,14 +7077,16 @@ js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_blitMask(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-	color_t mask = jsal_require_sphere_color(2);
-
 	image_t* image;
+	color_t  mask;
+	int      x;
+	int      y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
+	x = jsal_to_int(0);
+	y = jsal_to_int(1);
+	mask = jsal_require_sphere_color(2);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
@@ -7090,16 +7114,16 @@ static bool
 js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 {
 	float    angle;
-	int      height;
+	float    height;
 	image_t* image;
-	int      width;
-	int      x;
-	int      y;
+	float    width;
+	float    x;
+	float    y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
-	x = jsal_to_int(0);
-	y = jsal_to_int(1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
 	angle = jsal_to_number(2);
 
 	if (screen_skipping_frame(g_screen))
@@ -7115,18 +7139,18 @@ js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_rotateBlitMask(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      height;
+	float    height;
 	image_t* image;
-	int      width;
-	int      x;
-	int      y;
+	float    width;
+	float    x;
+	float    y;
 	float    angle;
 	color_t  mask;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
-	x = jsal_to_int(0);
-	y = jsal_to_int(1);
+	x = trunc(jsal_to_number(0));
+	y = trunc(jsal_to_number(1));
 	angle = jsal_to_number(2);
 	mask = jsal_require_sphere_color(3);
 
@@ -7519,7 +7543,7 @@ js_Socket_isConnected(int num_args, bool is_ctor, intptr_t magic)
 	if (socket != NULL)
 		jsal_push_boolean(socket_v1_connected(socket));
 	else
-		jsal_push_boolean(false);
+		jsal_push_boolean_false();
 	return true;
 }
 
@@ -7597,7 +7621,7 @@ js_Sound_getLength(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	sound = jsal_require_class_obj(-1, SV1_SOUND);
 
-	jsal_push_number(floor(sound_len(sound) * 1000000));
+	jsal_push_number(floor(sound_len(sound) * 1.0e6));
 	return true;
 }
 
@@ -7633,7 +7657,7 @@ js_Sound_getPosition(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	sound = jsal_require_class_obj(-1, SV1_SOUND);
 
-	jsal_push_number(floor(sound_tell(sound) * 1000000));
+	jsal_push_number(floor(sound_tell(sound) * 1.0e6));
 	return true;
 }
 
@@ -7676,7 +7700,8 @@ js_Sound_isPlaying(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sound_isSeekable(int num_args, bool is_ctor, intptr_t magic)
 {
-	jsal_push_boolean(true);
+	// all supported formats are seekable, so just return true.
+	jsal_push_boolean_true();
 	return true;
 }
 
@@ -7761,9 +7786,9 @@ js_Sound_setPosition(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	sound = jsal_require_class_obj(-1, SV1_SOUND);
-	new_pos = jsal_to_number(0);
+	new_pos = trunc(jsal_to_number(0));
 
-	sound_seek(sound, floor(new_pos) / 1000000);
+	sound_seek(sound, new_pos / 1.0e6);
 	return false;
 }
 
