@@ -48,9 +48,11 @@
 #include "image.h"
 #include "input.h"
 #include "jsal.h"
+#include "kev_file.h"
 #include "legacy.h"
 #include "logger.h"
 #include "map_engine.h"
+#include "script.h"
 #include "spriteset.h"
 #include "windowstyle.h"
 

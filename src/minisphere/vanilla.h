@@ -35,6 +35,7 @@
 
 #include "byte_array.h"
 #include "jsal.h"
+#include "script.h"
 #include "spriteset.h"
 
 enum vanilla_class

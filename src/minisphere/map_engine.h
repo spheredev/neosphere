@@ -36,6 +36,7 @@
 #include "color.h"
 #include "geometry.h"
 #include "obstruction.h"
+#include "script.h"
 #include "spriteset.h"
 #include "tileset.h"
 

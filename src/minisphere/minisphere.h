@@ -30,6 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+#include "version.h"
+
 #include "posix.h"
 
 #include <stdlib.h>
@@ -61,15 +63,10 @@
 #include "path.h"
 #include "vector.h"
 
-#include "version.h"
-
-#include "geometry.h"
 #include "console.h"
-#include "game.h"
-#include "kev_file.h"
 #include "font.h"
+#include "game.h"
 #include "screen.h"
-#include "script.h"
 #include "utility.h"
 
 #define SPHERE_PATH_MAX 1024

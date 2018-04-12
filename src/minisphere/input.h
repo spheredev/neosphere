@@ -33,6 +33,8 @@
 #ifndef SPHERE__INPUT_H__INCLUDED
 #define SPHERE__INPUT_H__INCLUDED
 
+#include "script.h"
+
 #define MAX_JOYSTICKS   16
 #define MAX_JOY_BUTTONS 64
 

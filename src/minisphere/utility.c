@@ -33,9 +33,11 @@
 #include "minisphere.h"
 #include "utility.h"
 
-#include "api.h"
+#include "geometry.h"
 #include "jsal.h"
+#include "lstring.h"
 #include "md5.h"
+#include "path.h"
 
 const path_t*
 assets_path(void)

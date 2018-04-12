@@ -33,6 +33,11 @@
 #ifndef SPHERE__UTILITY_H__INCLUDED
 #define SPHERE__UTILITY_H__INCLUDED
 
+#include "game.h"
+#include "geometry.h"
+#include "lstring.h"
+#include "path.h"
+
 const path_t* assets_path (void);
 const path_t* engine_path (void);
 const path_t* home_path   (void);
@@ -44,7 +49,7 @@ lstring_t*  jsal_require_lstring_t (int index);
 const char* jsal_require_pathname  (int index, const char* origin_name, bool v1_mode, bool need_write);
 const char* md5sum                 (const void* data, size_t size);
 lstring_t*  read_lstring           (file_t* file, bool trim_null);
-lstring_t*  read_lstring_raw       (file_t* file, size_t length, bool trim_null);
+lstring_t*  read_lstring_raw       (file_t* file, size_t length, bool trim_nul);
 char*       strnewf                (const char* fmt, ...);
 bool        write_lstring          (file_t* file, const lstring_t* string, bool include_nul);
 

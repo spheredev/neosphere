@@ -33,6 +33,7 @@
 #ifndef SPHERE__IMAGE_H__INCLUDED
 #define SPHERE__IMAGE_H__INCLUDED
 
+#include "game.h"
 #include "geometry.h"
 #include "transform.h"
 
@@ -41,9 +42,9 @@ typedef struct image image_t;
 typedef
 struct image_lock
 {
+	int       num_lines;
 	color_t*  pixels;
 	ptrdiff_t pitch;
-	int       num_lines;
 } image_lock_t;
 
 typedef

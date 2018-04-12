@@ -36,6 +36,7 @@
 #include "debugger.h"
 #include "jsal.h"
 #include "kev_file.h"
+#include "script.h"
 #include "vector.h"
 
 struct key_queue

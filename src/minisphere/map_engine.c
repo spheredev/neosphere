@@ -37,6 +37,7 @@
 #include "audio.h"
 #include "color.h"
 #include "dispatch.h"
+#include "geometry.h"
 #include "image.h"
 #include "input.h"
 #include "obstruction.h"
