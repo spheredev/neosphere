@@ -55,6 +55,10 @@ windowstyle_t* s_default_windowstyle = NULL;
 bool
 legacy_init(void)
 {
+	// IMPORTANT: this should be called *after* assigning a valid game pointer to
+	//            `g_game` to allow for system files to be loaded from an SPK
+	//            package.
+
 	path_t*     path;
 	kev_file_t* system_ini;
 

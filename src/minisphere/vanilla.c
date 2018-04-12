@@ -2332,8 +2332,8 @@ js_FilledCircle(int num_args, bool is_ctor, intptr_t magic)
 		vertices[i + 1].z = 0.0f;
 		vertices[i + 1].color = nativecolor(color);
 	}
-	vertices[i + 1].x = x + cosf(0) * radius;
-	vertices[i + 1].y = y - sinf(0) * radius;
+	vertices[i + 1].x = x + cosf(0.0f) * radius;
+	vertices[i + 1].y = y - sinf(0.0f) * radius;
 	vertices[i + 1].z = 0.0f;
 	vertices[i + 1].color = nativecolor(color);
 	galileo_reset();
@@ -2383,8 +2383,8 @@ js_FilledEllipse(int num_args, bool is_ctor, intptr_t magic)
 		vertices[i + 1].z = 0.0f;
 		vertices[i + 1].color = nativecolor(color);
 	}
-	vertices[i + 1].x = x + cosf(0) * radius_x;
-	vertices[i + 1].y = y - sinf(0) * radius_y;
+	vertices[i + 1].x = x + cosf(0.0f) * radius_x;
+	vertices[i + 1].y = y - sinf(0.0f) * radius_y;
 	vertices[i + 1].z = 0.0f;
 	vertices[i + 1].color = nativecolor(color);
 	galileo_reset();
@@ -3922,15 +3922,14 @@ js_GrabSurface(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_GradientCircle(int num_args, bool is_ctor, intptr_t magic)
 {
-	static ALLEGRO_VERTEX s_vbuf[128];
-
-	color_t inner_color;
-	int     num_verts;
-	color_t outer_color;
-	double  phi;
-	float   radius;
-	float   x;
-	float   y;
+	color_t         inner_color;
+	int             num_points;
+	color_t         outer_color;
+	double          phi;
+	float           radius;
+	ALLEGRO_VERTEX* vertices;
+	float           x;
+	float           y;
 
 	int i;
 
@@ -3942,21 +3941,24 @@ js_GradientCircle(int num_args, bool is_ctor, intptr_t magic)
 
 	if (screen_skipping_frame(g_screen))
 		return false;
-	num_verts = fmin(radius, 126);
-	s_vbuf[0].x = x; s_vbuf[0].y = y; s_vbuf[0].z = 0;
-	s_vbuf[0].color = nativecolor(inner_color);
-	for (i = 0; i < num_verts; ++i) {
-		phi = 2 * M_PI * i / num_verts;
-		s_vbuf[i + 1].x = x + cos(phi) * radius;
-		s_vbuf[i + 1].y = y - sin(phi) * radius;
-		s_vbuf[i + 1].z = 0;
-		s_vbuf[i + 1].color = nativecolor(outer_color);
+	num_points = fmin(radius, 126);
+	vertices = alloca((num_points + 2) * sizeof(ALLEGRO_VERTEX));
+	vertices[0].x = x;
+	vertices[0].y = y;
+	vertices[0].z = 0.0f;
+	vertices[0].color = nativecolor(inner_color);
+	for (i = 0; i < num_points; ++i) {
+		phi = 2.0 * M_PI * i / num_points;
+		vertices[i + 1].x = x + cosf(phi) * radius;
+		vertices[i + 1].y = y - sinf(phi) * radius;
+		vertices[i + 1].z = 0.0f;
+		vertices[i + 1].color = nativecolor(outer_color);
 	}
-	s_vbuf[i + 1].x = x + cos(0) * radius;
-	s_vbuf[i + 1].y = y - sin(0) * radius;
-	s_vbuf[i + 1].z = 0;
-	s_vbuf[i + 1].color = nativecolor(outer_color);
-	al_draw_prim(s_vbuf, NULL, NULL, 0, num_verts + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
+	vertices[i + 1].x = x + cosf(0.0f) * radius;
+	vertices[i + 1].y = y - sinf(0.0f) * radius;
+	vertices[i + 1].z = 0.0f;
+	vertices[i + 1].color = nativecolor(outer_color);
+	al_draw_prim(vertices, NULL, NULL, 0, num_points + 2, ALLEGRO_PRIM_TRIANGLE_FAN);
 	return false;
 }
 
@@ -4004,8 +4006,8 @@ js_GradientEllipse(int num_args, bool is_ctor, intptr_t magic)
 		vertices[i + 1].z = 0.0f;
 		vertices[i + 1].color = nativecolor(outer_color);
 	}
-	vertices[i + 1].x = x + cosf(0) * radius_x;
-	vertices[i + 1].y = y - sinf(0) * radius_y;
+	vertices[i + 1].x = x + cosf(0.0f) * radius_x;
+	vertices[i + 1].y = y - sinf(0.0f) * radius_y;
 	vertices[i + 1].z = 0.0f;
 	vertices[i + 1].color = nativecolor(outer_color);
 	galileo_reset();
@@ -5591,14 +5593,12 @@ js_SetPersonIgnoreList(int num_args, bool is_ctor, intptr_t magic)
 	int i;
 
 	name = jsal_require_string(0);
+	jsal_require_array(1);
 
-	jsal_require_object_coercible(1);
 	if (!(person = map_person_by_name(name)))
 		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
-	if (!jsal_is_array(1))
-		jsal_error(JS_RANGE_ERROR, "not an array");
 	person_clear_ignores(person);
-	num_ignores = (int)jsal_get_length(1);
+	num_ignores = jsal_get_length(1);
 	for (i = 0; i < num_ignores; ++i) {
 		jsal_get_prop_index(1, i);
 		person_ignore_name(person, jsal_require_string(-1));

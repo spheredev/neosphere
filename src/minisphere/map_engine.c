@@ -1208,7 +1208,7 @@ person_ignore_list(person_t* person)
 
 	int i;
 
-	if (person->ignore_list != NULL)
+	if (person->ignore_list == NULL)
 		person->ignore_list = vector_new(sizeof(const char*));
 	vector_clear(person->ignore_list);
 	for (i = 0; i < person->num_ignores; ++i)
@@ -1660,6 +1660,10 @@ person_ignore_name(person_t* person, const char* name)
 	index = person->num_ignores++;
 	person->ignores = realloc(person->ignores, person->num_ignores * sizeof(char*));
 	person->ignores[index] = strdup(name);
+
+	// ignore list changed, delete cache
+	vector_free(person->ignore_list);
+	person->ignore_list = NULL;
 }
 
 bool
