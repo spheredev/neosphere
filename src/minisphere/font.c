@@ -214,6 +214,9 @@ font_clone(const font_t* it)
 
 	uint32_t i;
 
+	if (it == NULL)
+		return NULL;
+	
 	console_log(2, "cloning font #%u from source font #%u", s_next_font_id, it->id);
 
 	if (!(dolly = calloc(1, sizeof(font_t))))
@@ -224,6 +227,7 @@ font_clone(const font_t* it)
 
 	// perform the clone
 	font_get_metrics(it, &min_width, &max_x, &max_y);
+	dolly->color_mask = it->color_mask;
 	dolly->height = max_y;
 	dolly->min_width = min_width;
 	dolly->max_width = max_x;
@@ -313,7 +317,7 @@ font_set_mask(font_t* it, color_t color)
 }
 
 void
-font_draw_text(font_t* it, color_t color, int x, int y, text_align_t alignment, const char* text)
+font_draw_text(font_t* it, int x, int y, text_align_t alignment, const char* text)
 {
 	uint32_t       cp;
 	utf8_ret_t     ret;
@@ -369,18 +373,12 @@ font_draw_text(font_t* it, color_t color, int x, int y, text_align_t alignment, 
 		if (cp == '\t')
 			x += tab_width;
 		else if (cp != '\0') {
-			image_draw_masked(it->glyphs[cp].image, color, x, y);
+			image_draw_masked(it->glyphs[cp].image, it->color_mask, x, y);
 			x += it->glyphs[cp].width;
 		}
 	} while (cp != '\0');
 	utf8_decode_end(utf8);
 	al_hold_bitmap_drawing(false);
-}
-
-void
-font_draw_text_v1(font_t* it, int x, int y, text_align_t alignment, const char* text)
-{
-	font_draw_text(it, it->color_mask, x, y, alignment, text);
 }
 
 void

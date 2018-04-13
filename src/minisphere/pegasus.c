@@ -2460,13 +2460,15 @@ js_Font_drawText(int num_args, bool is_ctor, intptr_t magic)
 		image_render_to(surface, NULL);
 		shader_use(galileo_shader(), false);
 		if (num_args < 6) {
-			font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
+			font_set_mask(font, color);
+			font_draw_text(font, x, y, TEXT_ALIGN_LEFT, text);
 		}
 		else {
 			wraptext = wraptext_new(text, font, width);
 			height = font_height(font);
+			font_set_mask(font, color);
 			for (i = 0; i < wraptext_len(wraptext); ++i)
-				font_draw_text(font, color, x, y + i * height, TEXT_ALIGN_LEFT, wraptext_line(wraptext, i));
+				font_draw_text(font, x, y + i * height, TEXT_ALIGN_LEFT, wraptext_line(wraptext, i));
 			wraptext_free(wraptext);
 		}
 	}

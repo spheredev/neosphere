@@ -519,6 +519,7 @@ enum sound_effect_mode
 	SE_MULTIPLE,
 };
 
+static font_t*  s_default_font;
 static int      s_frame_rate = 0;
 static mixer_t* s_sound_mixer;
 
@@ -527,6 +528,7 @@ vanilla_register_api(void)
 {
 	console_log(1, "initializing Sphere v1 API (%s)", API_VERSION_STRING);
 
+	s_default_font = font_clone(legacy_default_font());
 	s_sound_mixer = mixer_new(44100, 16, 2);
 
 	// set up a dictionary to track RequireScript() calls
@@ -3508,7 +3510,9 @@ js_GetSystemDownArrow(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_GetSystemFont(int num_args, bool is_ctor, intptr_t magic)
 {
-	jsal_push_sphere_font(legacy_default_font());
+	if (s_default_font == NULL)
+		jsal_error(JS_REF_ERROR, "No default system font available");
+	jsal_push_sphere_font(s_default_font);
 	return true;
 }
 
@@ -6752,7 +6756,7 @@ js_Font_drawText(int num_args, bool is_ctor, intptr_t magic)
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	font_draw_text_v1(font, x, y, TEXT_ALIGN_LEFT, text);
+	font_draw_text(font, x, y, TEXT_ALIGN_LEFT, text);
 	return false;
 }
 
@@ -6790,7 +6794,7 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 	galileo_reset();
 	for (i = 0; i < num_lines; ++i) {
 		jsal_get_prop_index(-1, i); line_text = jsal_get_string(-1); jsal_pop(1);
-		font_draw_text_v1(font, x + offset, y, TEXT_ALIGN_LEFT, line_text);
+		font_draw_text(font, x + offset, y, TEXT_ALIGN_LEFT, line_text);
 		y += line_height;
 	}
 	jsal_pop(1);
@@ -6827,7 +6831,7 @@ js_Font_drawZoomedText(int num_args, bool is_ctor, intptr_t magic)
 	bitmap = al_create_bitmap(width, height);
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(bitmap);
-	font_draw_text_v1(font, 0, 0, TEXT_ALIGN_LEFT, text);
+	font_draw_text(font, 0, 0, TEXT_ALIGN_LEFT, text);
 	al_set_target_bitmap(old_target);
 
 	galileo_reset();
@@ -8327,7 +8331,7 @@ js_Surface_drawText(int num_args, bool is_ctor, intptr_t magic)
 	text = jsal_to_string(3);
 
 	image_render_to(image, NULL);
-	font_draw_text_v1(font, x, y, TEXT_ALIGN_LEFT, text);
+	font_draw_text(font, x, y, TEXT_ALIGN_LEFT, text);
 	return false;
 }
 
