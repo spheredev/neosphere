@@ -1199,8 +1199,6 @@ void
 jsal_push_sphere_font(font_t* font)
 {
 	jsal_push_class_obj(SV1_FONT, font_ref(font), false);
-	jsal_push_sphere_color(color_new(255, 255, 255, 255));
-	jsal_put_prop_string(-2, "\xFF" "color_mask");
 }
 
 void
@@ -1428,8 +1426,6 @@ static void
 jsal_push_sphere_windowstyle(windowstyle_t* winstyle)
 {
 	jsal_push_class_obj(SV1_WINDOW_STYLE, winstyle_ref(winstyle), false);
-	jsal_push_sphere_color(color_new(255, 255, 255, 255));
-	jsal_put_prop_string(-2, "\xFF" "color_mask");
 }
 
 static uint8_t*
@@ -6745,22 +6741,18 @@ js_Font_clone(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Font_drawText(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
+	font_t*     font;
 	const char* text = jsal_to_string(2);
-
-	font_t* font;
-	color_t mask;
+	int         x = jsal_to_int(0);
+	int         y = jsal_to_int(1);
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
-	jsal_get_prop_string(-1, "\xFF" "color_mask");
-	mask = jsal_require_sphere_color(-1);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	font_draw_text(font, mask, x, y, TEXT_ALIGN_LEFT, text);
+	font_draw_text_v1(font, x, y, TEXT_ALIGN_LEFT, text);
 	return false;
 }
 
@@ -6777,15 +6769,12 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 	font_t*     font;
 	int         line_height;
 	const char* line_text;
-	color_t     mask;
 	int         num_lines;
 
 	int i;
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
-	jsal_get_prop_string(-1, "\xFF" "color_mask");
-	mask = jsal_require_sphere_color(-1);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
@@ -6801,7 +6790,7 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 	galileo_reset();
 	for (i = 0; i < num_lines; ++i) {
 		jsal_get_prop_index(-1, i); line_text = jsal_get_string(-1); jsal_pop(1);
-		font_draw_text(font, mask, x + offset, y, TEXT_ALIGN_LEFT, line_text);
+		font_draw_text_v1(font, x + offset, y, TEXT_ALIGN_LEFT, line_text);
 		y += line_height;
 	}
 	jsal_pop(1);
@@ -6814,7 +6803,6 @@ js_Font_drawZoomedText(int num_args, bool is_ctor, intptr_t magic)
 	ALLEGRO_BITMAP* bitmap;
 	font_t*         font;
 	int             height;
-	color_t         mask;
 	ALLEGRO_BITMAP* old_target;
 	float           scale;
 	const char*     text;
@@ -6824,8 +6812,6 @@ js_Font_drawZoomedText(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
-	jsal_get_prop_string(-1, "\xFF" "color_mask");
-	mask = jsal_require_sphere_color(-1);
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	scale = jsal_to_number(2);
@@ -6841,7 +6827,7 @@ js_Font_drawZoomedText(int num_args, bool is_ctor, intptr_t magic)
 	bitmap = al_create_bitmap(width, height);
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(bitmap);
-	font_draw_text(font, mask, 0, 0, TEXT_ALIGN_LEFT, text);
+	font_draw_text_v1(font, 0, 0, TEXT_ALIGN_LEFT, text);
 	al_set_target_bitmap(old_target);
 
 	galileo_reset();
@@ -6867,8 +6853,12 @@ js_Font_getCharacterImage(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Font_getColorMask(int num_args, bool is_ctor, intptr_t magic)
 {
+	font_t* font;
+	
 	jsal_push_this();
-	jsal_get_prop_string(-1, "\xFF" "color_mask");
+	font = jsal_require_class_obj(-1, SV1_FONT);
+
+	jsal_push_sphere_color(font_get_mask(font));
 	return true;
 }
 
@@ -6948,8 +6938,7 @@ js_Font_setColorMask(int num_args, bool is_ctor, intptr_t magic)
 	font = jsal_require_class_obj(-1, SV1_FONT);
 	mask = jsal_require_sphere_color(0);
 
-	jsal_push_sphere_color(mask);
-	jsal_put_prop_string(-2, "\xFF" "color_mask");
+	font_set_mask(font, mask);
 	return false;
 }
 
@@ -8154,7 +8143,6 @@ js_Surface_applyLookup(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_bezierCurve(int num_args, bool is_ctor, intptr_t magic)
 {
-	int             blend_mode;
 	color_t         color;
 	float           cp[8];
 	image_t*        image;
@@ -8169,8 +8157,6 @@ js_Surface_bezierCurve(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
-	jsal_get_prop_string(-1, "\xFF" "blend_mode");
-	blend_mode = jsal_get_int(-1);
 	color = jsal_require_sphere_color(0);
 	step_size = jsal_to_number(1);
 	x1 = jsal_to_number(2);
@@ -8204,7 +8190,6 @@ js_Surface_bezierCurve(int num_args, bool is_ctor, intptr_t magic)
 	al_calculate_spline(&vertices[0].x, sizeof(ALLEGRO_VERTEX), cp, 0.0, num_points);
 	for (i = 0; i < num_points; ++i)
 		vertices[i].color = nativecolor(color);
-	image_set_blend_mode(image, blend_mode);
 	image_render_to(image, NULL);
 	al_draw_prim(vertices, NULL, NULL, 0, num_points, ALLEGRO_PRIM_POINT_LIST);
 	return false;
@@ -8328,7 +8313,6 @@ js_Surface_createImage(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_drawText(int num_args, bool is_ctor, intptr_t magic)
 {
-	color_t     color;
 	font_t*     font;
 	image_t*    image;
 	const char* text;
@@ -8342,10 +8326,8 @@ js_Surface_drawText(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_to_int(2);
 	text = jsal_to_string(3);
 
-	jsal_get_prop_string(0, "\xFF" "color_mask");
-	color = jsal_require_sphere_color(-1);
 	image_render_to(image, NULL);
-	font_draw_text(font, color, x, y, TEXT_ALIGN_LEFT, text);
+	font_draw_text_v1(font, x, y, TEXT_ALIGN_LEFT, text);
 	return false;
 }
 
@@ -8563,7 +8545,6 @@ js_Surface_gradientRectangle(int num_args, bool is_ctor, intptr_t magic)
 		{ x1, y2, 0, 0, 0, nativecolor(color_ll) },
 		{ x2, y2, 0, 0, 0, nativecolor(color_lr) }
 	};
-	galileo_reset();
 	image_render_to(image, NULL);
 	al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return false;
@@ -8878,7 +8859,6 @@ js_Surface_rotateBlitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	galileo_reset();
 	image_render_to(image, NULL);
 	al_draw_tinted_rotated_bitmap(image_bitmap(source_image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
@@ -8905,7 +8885,6 @@ js_Surface_rotateBlitSurface(int num_args, bool is_ctor, intptr_t magic)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	galileo_reset();
 	image_render_to(image, NULL);
 	al_draw_rotated_bitmap(image_bitmap(source_image), width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
 	return false;
@@ -8929,7 +8908,6 @@ js_Surface_rectangle(int num_args, bool is_ctor, intptr_t magic)
 	height = trunc(jsal_to_number(3));
 	color = jsal_require_sphere_color(4);
 
-	galileo_reset();
 	image_render_to(image, NULL);
 	al_draw_filled_rectangle(x, y, x + width, y + height, nativecolor(color));
 	return false;
@@ -9030,31 +9008,31 @@ js_Surface_transformBlitMaskSurface(int num_args, bool is_ctor, intptr_t magic)
 	color_t  mask;
 	image_t* source_image;
 	int      width;
-	int      x1, x2, x3, x4;
-	int      y1, y2, y3, y4;
+	float    x1, x2, x3, x4;
+	float    y1, y2, y3, y4;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
 	source_image = jsal_require_class_obj(0, SV1_SURFACE);
-	x1 = jsal_to_int(1);
-	y1 = jsal_to_int(2);
-	x2 = jsal_to_int(3);
-	y2 = jsal_to_int(4);
-	x3 = jsal_to_int(5);
-	y3 = jsal_to_int(6);
-	x4 = jsal_to_int(7);
-	y4 = jsal_to_int(8);
+	x1 = trunc(jsal_to_number(1));
+	y1 = trunc(jsal_to_number(2));
+	x2 = trunc(jsal_to_number(3));
+	y2 = trunc(jsal_to_number(4));
+	x3 = trunc(jsal_to_number(5));
+	y3 = trunc(jsal_to_number(6));
+	x4 = trunc(jsal_to_number(7));
+	y4 = trunc(jsal_to_number(8));
 	mask = jsal_require_sphere_color(9);
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	image_render_to(image, NULL);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, nativecolor(mask) },
 		{ x2, y2, 0, width, 0, nativecolor(mask) },
 		{ x4, y4, 0, 0, height, nativecolor(mask) },
 		{ x3, y3, 0, width, height, nativecolor(mask) },
 	};
+	image_render_to(image, NULL);
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return false;
 }
@@ -9083,13 +9061,13 @@ js_Surface_transformBlitSurface(int num_args, bool is_ctor, intptr_t magic)
 
 	width = image_width(source_image);
 	height = image_height(source_image);
-	image_render_to(image, NULL);
 	ALLEGRO_VERTEX v[] = {
 		{ x1, y1, 0, 0, 0, al_map_rgba(255, 255, 255, 255) },
 		{ x2, y2, 0, width, 0, al_map_rgba(255, 255, 255, 255) },
 		{ x4, y4, 0, 0, height, al_map_rgba(255, 255, 255, 255) },
 		{ x3, y3, 0, width, height, al_map_rgba(255, 255, 255, 255) },
 	};
+	image_render_to(image, NULL);
 	al_draw_prim(v, NULL, image_bitmap(source_image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return false;
 }
@@ -9161,7 +9139,6 @@ static bool
 js_WindowStyle_drawWindow(int num_args, bool is_ctor, intptr_t magic)
 {
 	int            height;
-	color_t        mask;
 	int            width;
 	windowstyle_t* winstyle;
 	int            x;
@@ -9169,15 +9146,13 @@ js_WindowStyle_drawWindow(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	winstyle = jsal_require_class_obj(-1, SV1_WINDOW_STYLE);
-	jsal_get_prop_string(-1, "\xFF" "color_mask");
-	mask = jsal_require_sphere_color(-1);
 	x = jsal_to_int(0);
 	y = jsal_to_int(1);
 	width = jsal_to_int(2);
 	height = jsal_to_int(3);
 
 	galileo_reset();
-	winstyle_draw(winstyle, mask, x, y, width, height);
+	winstyle_draw(winstyle, x, y, width, height);
 	return false;
 }
 
@@ -9189,7 +9164,7 @@ js_WindowStyle_getColorMask(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	winstyle = jsal_require_class_obj(-1, SV1_WINDOW_STYLE);
 
-	jsal_get_prop_string(-2, "\xFF" "color_mask");
+	jsal_push_sphere_color(winstyle_get_mask(winstyle));
 	return true;
 }
 
@@ -9203,8 +9178,7 @@ js_WindowStyle_setColorMask(int num_args, bool is_ctor, intptr_t magic)
 	winstyle = jsal_require_class_obj(-1, SV1_WINDOW_STYLE);
 	mask = jsal_require_sphere_color(0);
 
-	jsal_push_sphere_color(mask);
-	jsal_put_prop_string(-2, "\xFF" "color_mask");
+	winstyle_set_mask(winstyle, mask);
 	return false;
 }
 

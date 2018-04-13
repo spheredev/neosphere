@@ -37,9 +37,11 @@
 
 typedef struct windowstyle windowstyle_t;
 
-windowstyle_t* winstyle_load  (const char* filename);
-windowstyle_t* winstyle_ref   (windowstyle_t* winstyle);
-void           winstyle_unref (windowstyle_t* windowstyle);
-void           winstyle_draw  (windowstyle_t* winstyle, color_t mask, int x, int y, int width, int height);
+windowstyle_t* winstyle_load     (const char* filename);
+windowstyle_t* winstyle_ref      (windowstyle_t* it);
+void           winstyle_unref    (windowstyle_t* it);
+color_t        winstyle_get_mask (const windowstyle_t* it);
+void           winstyle_set_mask (windowstyle_t* it, color_t color);
+void           winstyle_draw     (windowstyle_t* it, int x, int y, int width, int height);
 
 #endif // SPHERE__WINDOWSTYLE_H__INCLUDED

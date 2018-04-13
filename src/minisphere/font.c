@@ -43,9 +43,10 @@ struct font
 {
 	unsigned int       refcount;
 	unsigned int       id;
+	color_t            color_mask;
 	int                height;
-	int                min_width;
 	int                max_width;
+	int                min_width;
 	bool               modified;
 	char*              path;
 	uint32_t           num_glyphs;
@@ -182,8 +183,9 @@ font_load(const char* filename)
 	file_close(file);
 	image_unref(atlas);
 
-	font->path = strdup(filename);
 	font->id = s_next_font_id++;
+	font->color_mask = color_new(255, 255, 255, 255);
+	font->path = strdup(filename);
 	return font_ref(font);
 
 on_error:
@@ -287,6 +289,12 @@ font_path(const font_t* it)
 	return it->path;
 }
 
+color_t
+font_get_mask(const font_t* it)
+{
+	return it->color_mask;
+}
+
 void
 font_set_glyph(font_t* it, uint32_t cp, image_t* image)
 {
@@ -296,6 +304,12 @@ font_set_glyph(font_t* it, uint32_t cp, image_t* image)
 	it->glyphs[cp].image = image_ref(image);
 	image_unref(old_image);
 	it->modified = true;
+}
+
+void
+font_set_mask(font_t* it, color_t color)
+{
+	it->color_mask = color;
 }
 
 void
@@ -361,6 +375,12 @@ font_draw_text(font_t* it, color_t color, int x, int y, text_align_t alignment, 
 	} while (cp != '\0');
 	utf8_decode_end(utf8);
 	al_hold_bitmap_drawing(false);
+}
+
+void
+font_draw_text_v1(font_t* it, int x, int y, text_align_t alignment, const char* text)
+{
+	font_draw_text(it, it->color_mask, x, y, alignment, text);
 }
 
 void

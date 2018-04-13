@@ -49,6 +49,7 @@ struct windowstyle
 {
 	int       refcount;
 	int       bg_style;
+	color_t   color_mask;
 	color_t   gradient[4];
 	image_t*  images[9];
 };
@@ -106,6 +107,7 @@ winstyle_load(const char* filename)
 	}
 	file_close(file);
 	winstyle->bg_style = rws.background_mode;
+	winstyle->color_mask = color_new(255, 255, 255, 255);
 	for (i = 0; i < 4; ++i)
 		winstyle->gradient[i] = rws.corner_colors[i];
 	return winstyle_ref(winstyle);
@@ -121,29 +123,42 @@ on_error:
 }
 
 windowstyle_t*
-winstyle_ref(windowstyle_t* winstyle)
+winstyle_ref(windowstyle_t* it)
 {
-	++winstyle->refcount;
-	return winstyle;
+	++it->refcount;
+	return it;
 }
 
 void
-winstyle_unref(windowstyle_t* winstyle)
+winstyle_unref(windowstyle_t* it)
 {
 	int i;
 
-	if (winstyle == NULL || --winstyle->refcount > 0)
+	if (it == NULL || --it->refcount > 0)
 		return;
 	for (i = 0; i < 9; ++i) {
-		image_unref(winstyle->images[i]);
+		image_unref(it->images[i]);
 	}
-	free(winstyle);
+	free(it);
+}
+
+color_t
+winstyle_get_mask(const windowstyle_t* it)
+{
+	return it->color_mask;
 }
 
 void
-winstyle_draw(windowstyle_t* winstyle, color_t mask, int x, int y, int width, int height)
+winstyle_set_mask(windowstyle_t* it, color_t color)
+{
+	it->color_mask = color;
+}
+
+void
+winstyle_draw(windowstyle_t* it, int x, int y, int width, int height)
 {
 	color_t gradient[4];
+	color_t mask;
 	int     w[9], h[9];
 
 	int i;
@@ -158,15 +173,17 @@ winstyle_draw(windowstyle_t* winstyle, color_t mask, int x, int y, int width, in
 	// 7 - left
 	// 8 - background
 
+	mask = it->color_mask;
+	
 	for (i = 0; i < 9; ++i) {
-		w[i] = image_width(winstyle->images[i]);
-		h[i] = image_height(winstyle->images[i]);
+		w[i] = image_width(it->images[i]);
+		h[i] = image_height(it->images[i]);
 	}
 	for (i = 0; i < 4; ++i) {
-		gradient[i].r = mask.r * winstyle->gradient[i].r / 255;
-		gradient[i].g = mask.g * winstyle->gradient[i].g / 255;
-		gradient[i].b = mask.b * winstyle->gradient[i].b / 255;
-		gradient[i].a = mask.a * winstyle->gradient[i].a / 255;
+		gradient[i].r = mask.r * it->gradient[i].r / 255;
+		gradient[i].g = mask.g * it->gradient[i].g / 255;
+		gradient[i].b = mask.b * it->gradient[i].b / 255;
+		gradient[i].a = mask.a * it->gradient[i].a / 255;
 	}
 	ALLEGRO_VERTEX verts[] = {
 		{ x, y, 0, 0, 0, nativecolor(gradient[0]) },
@@ -175,31 +192,31 @@ winstyle_draw(windowstyle_t* winstyle, color_t mask, int x, int y, int width, in
 		{ x + width, y + height, 0, 0, 0, nativecolor(gradient[3]) },
 	};
 
-	switch (winstyle->bg_style) {
+	switch (it->bg_style) {
 	case BG_TILE:
-		image_draw_tiled_masked(winstyle->images[8], mask, x, y, width, height);
+		image_draw_tiled_masked(it->images[8], mask, x, y, width, height);
 		break;
 	case BG_STRETCH:
-		image_draw_scaled_masked(winstyle->images[8], mask, x, y, width, height);
+		image_draw_scaled_masked(it->images[8], mask, x, y, width, height);
 		break;
 	case BG_GRADIENT:
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
 	case BG_TILE_GRADIENT:
-		image_draw_tiled_masked(winstyle->images[8], mask, x, y, width, height);
+		image_draw_tiled_masked(it->images[8], mask, x, y, width, height);
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
 	case BG_STRETCH_GRADIENT:
-		image_draw_scaled_masked(winstyle->images[8], mask, x, y, width, height);
+		image_draw_scaled_masked(it->images[8], mask, x, y, width, height);
 		al_draw_prim(verts, NULL, NULL, 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 		break;
 	}
-	image_draw_masked(winstyle->images[0], mask, x - w[0], y - h[0]);
-	image_draw_masked(winstyle->images[2], mask, x + width, y - h[2]);
-	image_draw_masked(winstyle->images[4], mask, x + width, y + height);
-	image_draw_masked(winstyle->images[6], mask, x - w[6], y + height);
-	image_draw_tiled_masked(winstyle->images[1], mask, x, y - h[1], width, h[1]);
-	image_draw_tiled_masked(winstyle->images[3], mask, x + width, y, w[3], height);
-	image_draw_tiled_masked(winstyle->images[5], mask, x, y + height, width, h[5]);
-	image_draw_tiled_masked(winstyle->images[7], mask, x - w[7], y, w[7], height);
+	image_draw_masked(it->images[0], mask, x - w[0], y - h[0]);
+	image_draw_masked(it->images[2], mask, x + width, y - h[2]);
+	image_draw_masked(it->images[4], mask, x + width, y + height);
+	image_draw_masked(it->images[6], mask, x - w[6], y + height);
+	image_draw_tiled_masked(it->images[1], mask, x, y - h[1], width, h[1]);
+	image_draw_tiled_masked(it->images[3], mask, x + width, y, w[3], height);
+	image_draw_tiled_masked(it->images[5], mask, x, y + height, width, h[5]);
+	image_draw_tiled_masked(it->images[7], mask, x - w[7], y, w[7], height);
 }
