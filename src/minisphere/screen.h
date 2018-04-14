@@ -33,12 +33,13 @@
 #ifndef SPHERE__DISPLAY_H__INCLUDED
 #define SPHERE__DISPLAY_H__INCLUDED
 
+#include "font.h"
 #include "geometry.h"
 #include "image.h"
 
 typedef struct screen screen_t;
 
-screen_t*        screen_new               (const char* title, image_t* icon, size2_t resolution, int frameskip);
+screen_t*        screen_new               (const char* title, image_t* icon, size2_t resolution, int frameskip, font_t* font);
 void             screen_free              (screen_t* it);
 image_t*         screen_backbuffer        (const screen_t* it);
 rect_t           screen_bounds            (const screen_t* it);

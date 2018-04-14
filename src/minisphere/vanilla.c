@@ -528,7 +528,10 @@ vanilla_register_api(void)
 {
 	console_log(1, "initializing Sphere v1 API (%s)", API_VERSION_STRING);
 
+	// note: `font_clone` is used purposely here to prevent the color mask from getting
+	//       clobbered by internal text rendering (e.g. the FPS counter).
 	s_default_font = font_clone(legacy_default_font());
+
 	s_sound_mixer = mixer_new(44100, 16, 2);
 
 	// set up a dictionary to track RequireScript() calls

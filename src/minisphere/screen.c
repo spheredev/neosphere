@@ -39,6 +39,7 @@
 #include "screen.h"
 
 #include "debugger.h"
+#include "font.h"
 #include "image.h"
 
 struct screen
@@ -46,6 +47,7 @@ struct screen
 	image_t*         backbuffer;
 	rect_t           clip_rect;
 	ALLEGRO_DISPLAY* display;
+	font_t*          font;
 	int              fps_flips;
 	int              fps_frames;
 	double           fps_poll_time;
@@ -70,7 +72,7 @@ struct screen
 static void refresh_display (screen_t* screen);
 
 screen_t*
-screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip)
+screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, font_t* font)
 {
 	image_t*             backbuffer = NULL;
 	int                  bitmap_flags;
@@ -123,6 +125,7 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip)
 	screen = calloc(1, sizeof(screen_t));
 	screen->display = display;
 	screen->backbuffer = backbuffer;
+	screen->font = font;
 	screen->x_size = resolution.width;
 	screen->y_size = resolution.height;
 	screen->max_skips = frameskip;
@@ -242,13 +245,13 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 	int               width;
 	int               height;
 
-	if (g_system_font == NULL)
+	if (it->font == NULL)
 		return;
 
 	screen_cx = al_get_display_width(it->display);
 	screen_cy = al_get_display_height(it->display);
-	width = font_get_width(g_system_font, text) + 20;
-	height = font_height(g_system_font) + 10;
+	width = font_get_width(it->font, text) + 20;
+	height = font_height(it->font) + 10;
 	bounds.x1 = 8 + it->x_offset;
 	bounds.y1 = screen_cy - it->y_offset - height - 8;
 	bounds.x2 = bounds.x1 + width;
@@ -257,11 +260,11 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 	al_set_target_backbuffer(it->display);
 	al_draw_filled_rounded_rectangle(bounds.x1, bounds.y1, bounds.x2, bounds.y2, 4, 4,
 		al_map_rgba(16, 16, 16, 192));
-	font_set_mask(g_system_font, color_new(0, 0, 0, 255));
-	font_draw_text(g_system_font, (bounds.x1 + bounds.x2) / 2 + 1,
+	font_set_mask(it->font, color_new(0, 0, 0, 255));
+	font_draw_text(it->font, (bounds.x1 + bounds.x2) / 2 + 1,
 		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
-	font_set_mask(g_system_font, color);
-	font_draw_text(g_system_font, (bounds.x2 + bounds.x1) / 2,
+	font_set_mask(it->font, color);
+	font_draw_text(it->font, (bounds.x2 + bounds.x1) / 2,
 		bounds.y1 + 5, TEXT_ALIGN_CENTER, text);
 	al_set_target_bitmap(old_target);
 }
@@ -340,7 +343,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			0x0);
 		if (debugger_attached())
 			screen_draw_status(it, debugger_name(), debugger_color());
-		if (it->show_fps && g_system_font != NULL) {
+		if (it->show_fps && it->font != NULL) {
 			if (framerate > 0)
 				sprintf(fps_text, "%d/%d fps", it->fps_flips, it->fps_frames);
 			else
@@ -348,10 +351,10 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			x = screen_cx - it->x_offset - 108;
 			y = screen_cy - it->y_offset - 24;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
-			font_set_mask(g_system_font, color_new(0, 0, 0, 255));
-			font_draw_text(g_system_font, x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
-			font_set_mask(g_system_font, color_new(255, 255, 255, 255));
-			font_draw_text(g_system_font, x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
+			font_set_mask(it->font, color_new(0, 0, 0, 255));
+			font_draw_text(it->font, x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
+			font_set_mask(it->font, color_new(255, 255, 255, 255));
+			font_draw_text(it->font, x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 		}
 		al_set_target_bitmap(old_target);
 		al_flip_display();

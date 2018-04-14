@@ -64,7 +64,6 @@
 game_t*   g_game = NULL;
 double    g_idle_time = 0.0;
 screen_t* g_screen = NULL;
-font_t*   g_system_font = NULL;
 uint32_t  g_tick_count = 0;
 
 enum fullscreen_mode
@@ -258,11 +257,16 @@ main(int argc, char* argv[])
 		longjmp(exit_label, 1);
 	}
 
+	// note: this call always needs to happen *after* `g_game` has been set.  if the system
+	//       assets are packaged into an SPK, we want them to get loaded from the package and
+	//       and NOT the physical `system` directory.
+	legacy_init_system();
+
 	// set up the render context ("screen") so we can draw stuff
 	resolution = game_resolution(g_game);
 	if (!(icon = image_load("@/icon.png")))
 		icon = image_load("#/icon.png");
-	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip);
+	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip, legacy_default_font());
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere couldn't create a render context.",
 			"Your hardware may be too old to run miniSphere, or there could be a problem with the drivers on this system.  Check that your graphics drivers in particular are fully installed and up-to-date.",
@@ -277,12 +281,9 @@ main(int argc, char* argv[])
 	attach_input_display();
 	kb_load_keymap();
 
-	legacy_init();
 	api_init();
 	vanilla_register_api();
 	pegasus_init();
-
-	g_system_font = legacy_default_font();
 
 	// switch to fullscreen if necessary and initialize clipping
 	if (fullscreen_mode == FULLSCREEN_ON || (fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game)))
@@ -896,6 +897,7 @@ static void
 show_error_screen(const char* message)
 {
 	wraptext_t*            error_info;
+	font_t*                font;
 	bool                   is_copied = false;
 	bool                   is_finished;
 	int                    frames_till_close;
@@ -913,12 +915,12 @@ show_error_screen(const char* message)
 	title_index = rand() % (sizeof ERROR_TEXT / sizeof(const char*) / 2);
 	title = ERROR_TEXT[title_index][0];
 	subtitle = ERROR_TEXT[title_index][1];
-	if (g_system_font == NULL)
+	if (!(font = legacy_default_font()))
 		goto show_error_box;
 
 	// word-wrap the error message to fit inside the error box
 	resolution = screen_size(g_screen);
-	if (!(error_info = wraptext_new(message, g_system_font, resolution.width - 84)))
+	if (!(error_info = wraptext_new(message, font, resolution.width - 84)))
 		goto show_error_box;
 	num_lines = wraptext_len(error_info);
 
@@ -937,27 +939,27 @@ show_error_screen(const char* message)
 	frames_till_close = 30;
 	while (!is_finished) {
 		al_draw_filled_rounded_rectangle(32, 48, resolution.width - 32, resolution.height - 32, 5, 5, al_map_rgba(48, 16, 16, 255));
-		font_set_mask(g_system_font, color_new(0, 0, 0, 255));
-		font_draw_text(g_system_font, resolution.width / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
-		font_draw_text(g_system_font, resolution.width / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
-		font_set_mask(g_system_font, color_new(192, 192, 192, 255));
-		font_draw_text(g_system_font, resolution.width / 2, 10, TEXT_ALIGN_CENTER, title);
-		font_draw_text(g_system_font, resolution.width / 2, 22, TEXT_ALIGN_CENTER, subtitle);
+		font_set_mask(font, color_new(0, 0, 0, 255));
+		font_draw_text(font, resolution.width / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
+		font_draw_text(font, resolution.width / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
+		font_set_mask(font, color_new(192, 192, 192, 255));
+		font_draw_text(font, resolution.width / 2, 10, TEXT_ALIGN_CENTER, title);
+		font_draw_text(font, resolution.width / 2, 22, TEXT_ALIGN_CENTER, subtitle);
 		for (i = 0; i < num_lines; ++i) {
 			line_text = wraptext_line(error_info, i);
-			font_set_mask(g_system_font, color_new(16, 0, 0, 255));
-			font_draw_text(g_system_font,
-				resolution.width / 2 + 1, 59 + i * font_height(g_system_font),
+			font_set_mask(font, color_new(16, 0, 0, 255));
+			font_draw_text(font,
+				resolution.width / 2 + 1, 59 + i * font_height(font),
 				TEXT_ALIGN_CENTER, line_text);
-			font_set_mask(g_system_font, color_new(192, 192, 192, 255));
-			font_draw_text(g_system_font,
-				resolution.width / 2, 58 + i * font_height(g_system_font),
+			font_set_mask(font, color_new(192, 192, 192, 255));
+			font_draw_text(font,
+				resolution.width / 2, 58 + i * font_height(font),
 				TEXT_ALIGN_CENTER, line_text);
 		}
 		if (frames_till_close <= 0) {
-			font_set_mask(g_system_font, color_new(255, 255, 192, 255));
-			font_draw_text(g_system_font,
-				resolution.width / 2, resolution.height - 10 - font_height(g_system_font),
+			font_set_mask(font, color_new(255, 255, 192, 255));
+			font_draw_text(font,
+				resolution.width / 2, resolution.height - 10 - font_height(font),
 				TEXT_ALIGN_CENTER,
 				is_copied ? "[space]/[esc] to close" : "[ctrl+c] to copy  [space]/[esc] to close");
 		}

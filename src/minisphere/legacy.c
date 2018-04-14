@@ -53,7 +53,7 @@ font_t*        s_default_font = NULL;
 windowstyle_t* s_default_windowstyle = NULL;
 
 bool
-legacy_init(void)
+legacy_init_system(void)
 {
 	// IMPORTANT: this should be called *after* assigning a valid game pointer to
 	//            `g_game` to allow for system files to be loaded from an SPK

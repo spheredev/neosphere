@@ -77,7 +77,6 @@
 extern game_t*   g_game;
 extern double    g_idle_time;
 extern screen_t* g_screen;
-extern font_t*   g_system_font;
 extern uint32_t  g_tick_count;
 
 void sphere_abort       (const char* message);

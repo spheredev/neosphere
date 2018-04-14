@@ -39,7 +39,7 @@
 
 typedef struct socket_v1 socket_v1_t;
 
-bool           legacy_init                     (void);
+bool           legacy_init_system              (void);
 void           legacy_uninit                   (void);
 font_t*        legacy_default_font             (void);
 windowstyle_t* legacy_default_windowstyle      (void);
