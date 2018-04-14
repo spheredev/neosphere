@@ -41,19 +41,19 @@ static void update_font_metrics (font_t* font);
 
 struct font
 {
-	unsigned int       refcount;
-	unsigned int       id;
-	color_t            color_mask;
-	int                height;
-	int                max_width;
-	int                min_width;
-	bool               modified;
-	char*              path;
-	uint32_t           num_glyphs;
-	struct font_glyph* glyphs;
+	unsigned int  refcount;
+	unsigned int  id;
+	color_t       color_mask;
+	int           height;
+	int           max_width;
+	int           min_width;
+	bool          modified;
+	char*         path;
+	uint32_t      num_glyphs;
+	struct glyph* glyphs;
 };
 
-struct font_glyph
+struct glyph
 {
 	int      width, height;
 	image_t* image;
@@ -93,7 +93,7 @@ font_load(const char* filename)
 	int                     atlas_size_x, atlas_size_y;
 	file_t*                 file;
 	font_t*                 font = NULL;
-	struct font_glyph*      glyph;
+	struct glyph*           glyph;
 	struct rfn_glyph_header glyph_hdr;
 	long                    glyph_start;
 	uint8_t*                grayscale;
@@ -119,7 +119,7 @@ font_load(const char* filename)
 	if (file_read(file, &rfn, 1, sizeof(struct rfn_header)) != 1)
 		goto on_error;
 	pixel_size = (rfn.version == 1) ? 1 : 4;
-	if (!(font->glyphs = calloc(rfn.num_chars, sizeof(struct font_glyph))))
+	if (!(font->glyphs = calloc(rfn.num_chars, sizeof(struct glyph))))
 		goto on_error;
 
 	// pass 1: load glyph headers and find largest glyph
@@ -144,7 +144,7 @@ font_load(const char* filename)
 	n_glyphs_per_row = ceil(sqrt(rfn.num_chars));
 	atlas_size_x = max_x * n_glyphs_per_row;
 	atlas_size_y = max_y * n_glyphs_per_row;
-	if ((atlas = image_new(atlas_size_x, atlas_size_y)) == NULL)
+	if ((atlas = image_new(atlas_size_x, atlas_size_y, NULL)) == NULL)
 		goto on_error;
 
 	// pass 2: load glyph data
@@ -174,7 +174,7 @@ font_load(const char* filename)
 			}
 			break;
 		case 2: // RFN v2: 32-bit truecolor glyphs
-			if (!(glyph->image = image_read_slice(file, atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
+			if (!(glyph->image = fread_image_slice(file, atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
 				goto on_error;
 			break;
 		}
@@ -206,11 +206,11 @@ on_error:
 font_t*
 font_clone(const font_t* it)
 {
-	font_t*                  dolly = NULL;
-	int                      max_x = 0;
-	int                      max_y = 0;
-	int                      min_width = INT_MAX;
-	const struct font_glyph* src_glyph;
+	font_t*             dolly = NULL;
+	int                 max_x = 0;
+	int                 max_y = 0;
+	int                 min_width = INT_MAX;
+	const struct glyph* src_glyph;
 
 	uint32_t i;
 
@@ -221,7 +221,7 @@ font_clone(const font_t* it)
 
 	if (!(dolly = calloc(1, sizeof(font_t))))
 		goto on_error;
-	if (!(dolly->glyphs = calloc(it->num_glyphs, sizeof(struct font_glyph))))
+	if (!(dolly->glyphs = calloc(it->num_glyphs, sizeof(struct glyph))))
 		goto on_error;
 	dolly->num_glyphs = it->num_glyphs;
 
@@ -468,7 +468,8 @@ wraptext_new(const char* text, const font_t* font, int width)
 	wraptext_t*    wraptext;
 	const char     *p, *start;
 
-	if (!(wraptext = calloc(1, sizeof(wraptext_t)))) goto on_error;
+	if (!(wraptext = calloc(1, sizeof(wraptext_t))))
+		goto on_error;
 
 	// allocate initial buffer
 	font_get_metrics(font, &glyph_width, NULL, NULL);

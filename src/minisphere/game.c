@@ -33,10 +33,13 @@
 #include "minisphere.h"
 #include "game.h"
 
+#include "font.h"
 #include "geometry.h"
+#include "image.h"
 #include "jsal.h"
 #include "kev_file.h"
 #include "package.h"
+#include "windowstyle.h"
 
 enum fs_type
 {
@@ -47,22 +50,27 @@ enum fs_type
 
 struct game
 {
-	unsigned int refcount;
-	unsigned int id;
-	lstring_t*   author;
-	char*        compiler;
-	bool         fullscreen;
-	lstring_t*   manifest;
-	lstring_t*   name;
-	size2_t      resolution;
-	path_t*      root_path;
-	fs_safety_t  safety;
-	lstring_t*   save_id;
-	path_t*      script_path;
-	package_t*   package;
-	lstring_t*   summary;
-	int          type;
-	int          version;
+	unsigned int   refcount;
+	unsigned int   id;
+	lstring_t*     author;
+	char*          compiler;
+	image_t*       default_arrow;
+	image_t*       default_arrow_down;
+	image_t*       default_arrow_up;
+	font_t*        default_font;
+	windowstyle_t* default_windowstyle;
+	bool           fullscreen;
+	lstring_t*     manifest;
+	lstring_t*     name;
+	size2_t        resolution;
+	path_t*        root_path;
+	fs_safety_t    safety;
+	lstring_t*     save_id;
+	path_t*        script_path;
+	package_t*     package;
+	lstring_t*     summary;
+	int            type;
+	int            version;
 };
 
 struct directory
@@ -82,9 +90,10 @@ struct file
 	const char*   path;
 };
 
-static vector_t* read_directory (const game_t* game, const char* dirname, bool want_dirs);
-static bool      resolve_path   (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
-static bool      try_load_s2gm  (game_t* game, const lstring_t* json_text);
+static void      load_default_assets (game_t* game);
+static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs);
+static bool      resolve_path        (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
+static bool      try_load_s2gm       (game_t* game, const lstring_t* json_text);
 
 static unsigned int s_next_game_id = 1;
 
@@ -200,10 +209,13 @@ game_open(const char* game_path)
 			game->manifest = lstr_new(jsal_get_string(-1));
 			jsal_pop(1);
 		}
-		else
+		else {
 			goto on_error;
+		}
 	}
 
+	load_default_assets(game);
+	
 	resolution = game_resolution(game);
 	console_log(1, "         title: %s", game_name(game));
 	console_log(1, "        author: %s", game_author(game));
@@ -287,6 +299,36 @@ game_dir_exists(const game_t* it, const char* dirname)
 on_error:
 	path_free(dir_path);
 	return false;
+}
+
+image_t*
+game_default_arrow(const game_t* it)
+{
+	return it->default_arrow;
+}
+
+image_t*
+game_default_arrow_down(const game_t* it)
+{
+	return it->default_arrow_down;
+}
+
+image_t*
+game_default_arrow_up(const game_t* it)
+{
+	return it->default_arrow_up;
+}
+
+font_t*
+game_default_font(const game_t* it)
+{
+	return it->default_font;
+}
+
+windowstyle_t*
+game_default_windowstyle(const game_t* it)
+{
+	return it->default_windowstyle;
 }
 
 bool
@@ -849,6 +891,52 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 	default:
 		return 0;
 	}
+}
+
+static void
+load_default_assets(game_t* game)
+{
+	path_t*     path;
+	kev_file_t* system_ini;
+
+	system_ini = kev_open(game, "#/system.ini", false);
+
+	// system default font
+	path = game_full_path(game,
+		kev_read_string(system_ini, "Font", "system.rfn"),
+		"#/", true);
+	game->default_font = font_load(path_cstr(path));
+	path_free(path);
+
+	// system default windowstyle
+	path = game_full_path(game,
+		kev_read_string(system_ini, "WindowStyle", "system.rws"),
+		"#/", true);
+	game->default_windowstyle = winstyle_load(path_cstr(path));
+	path_free(path);
+
+	// system default pointer image
+	path = game_full_path(game,
+		kev_read_string(system_ini, "Arrow", "pointer.png"),
+		"#/", true);
+	game->default_arrow = image_load(path_cstr(path));
+	path_free(path);
+
+	// system default up arrow image
+	path = game_full_path(game,
+		kev_read_string(system_ini, "UpArrow", "up_arrow.png"),
+		"#/", true);
+	game->default_arrow_up = image_load(path_cstr(path));
+	path_free(path);
+
+	// system default down arrow image
+	path = game_full_path(game,
+		kev_read_string(system_ini, "DownArrow", "down_arrow.png"),
+		"#/", true);
+	game->default_arrow_down = image_load(path_cstr(path));
+	path_free(path);
+
+	kev_close(system_ini);
 }
 
 static bool

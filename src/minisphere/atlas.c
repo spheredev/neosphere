@@ -60,7 +60,7 @@ atlas_new(int num_images, int max_width, int max_height)
 	atlas->max_width = max_width;
 	atlas->max_height = max_height;
 	atlas->size = mk_rect(0, 0, atlas->pitch * atlas->max_width, atlas->pitch * atlas->max_height);
-	if (!(atlas->image = image_new(atlas->size.x2, atlas->size.y2)))
+	if (!(atlas->image = image_new(atlas->size.x2, atlas->size.y2, NULL)))
 		goto on_error;
 
 	atlas->id = s_next_atlas_id++;
@@ -149,5 +149,5 @@ atlas_load(atlas_t* atlas, file_t* file, int index, int width, int height)
 	if (index >= atlas->pitch * atlas->pitch) return NULL;
 	off_x = index % atlas->pitch * atlas->max_width;
 	off_y = index / atlas->pitch * atlas->max_height;
-	return image_read_slice(file, atlas->image, off_x, off_y, width, height);
+	return fread_image_slice(file, atlas->image, off_x, off_y, width, height);
 }

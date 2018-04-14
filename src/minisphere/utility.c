@@ -34,6 +34,7 @@
 #include "utility.h"
 
 #include "geometry.h"
+#include "image.h"
 #include "jsal.h"
 #include "lstring.h"
 #include "md5.h"
@@ -129,6 +130,76 @@ md5sum(const void* data, size_t size)
 		p += 2;
 	}
 	return output;
+}
+
+image_t*
+fread_image(file_t* file, int width, int height)
+{
+	long long     file_pos;
+	image_t*      image;
+	size_t        line_size;
+	image_lock_t* lock = NULL;
+	color_t*      out_ptr;
+
+	int i_y;
+
+	console_log(3, "reading %dx%d image from open file", width, height);
+	if (!(image = image_new(width, height, NULL)))
+		goto on_error;
+	file_pos = file_position(file);
+	if (!(lock = image_lock(image, true, false)))
+		goto on_error;
+	line_size = width * sizeof(color_t);
+	out_ptr = lock->pixels;
+	for (i_y = 0; i_y < height; ++i_y) {
+		if (file_read(file, out_ptr, 1, line_size) != 1)
+			goto on_error;
+		out_ptr += lock->pitch;
+	}
+	image_unlock(image, lock);
+	return image;
+
+on_error:
+	file_seek(file, file_pos, WHENCE_SET);
+	if (lock != NULL)
+		image_unlock(image, lock);
+	image_unref(image);
+	return NULL;
+}
+
+image_t*
+fread_image_slice(file_t* file, image_t* parent, int x, int y, int width, int height)
+{
+	long          file_pos;
+	image_t*      image;
+	size_t        line_size;
+	image_lock_t* lock = NULL;
+	color_t*      out_ptr;
+
+	int i_y;
+
+	file_pos = file_position(file);
+	if (!(image = image_new_slice(parent, x, y, width, height)))
+		goto on_error;
+	file_pos = file_position(file);
+	if (!(lock = image_lock(parent, true, false)))
+		goto on_error;
+	line_size = width * sizeof(color_t);
+	out_ptr = lock->pixels + x + y * lock->pitch;
+	for (i_y = 0; i_y < height; ++i_y) {
+		if (file_read(file, out_ptr, 1, line_size) != 1)
+			goto on_error;
+		out_ptr += lock->pitch;
+	}
+	image_unlock(parent, lock);
+	return image;
+
+on_error:
+	file_seek(file, file_pos, WHENCE_SET);
+	if (lock != NULL)
+		image_unlock(parent, lock);
+	image_unref(image);
+	return NULL;
 }
 
 lstring_t*
@@ -294,4 +365,33 @@ fread_rect32(file_t* file, rect_t* out_rect)
 		return false;
 	*out_rect = mk_rect(x1, y1, x2, y2);
 	return true;
+}
+
+bool
+fwrite_image(file_t* file, image_t* image)
+{
+	size_t        line_size;
+	image_lock_t* lock;
+	color_t*      out_ptr;
+
+	int y;
+
+	console_log(3, "writing %dx%d image to open file", image_width(image), image_height(image));
+
+	if (!(lock = image_lock(image, false, true)))
+		goto on_error;
+	line_size = image_width(image) * sizeof(color_t);
+	out_ptr = lock->pixels;
+	for (y = 0; y < lock->num_lines; ++y) {
+		if (file_write(file, out_ptr, 1, line_size) != 1)
+			goto on_error;
+		out_ptr += lock->pitch;
+	}
+	image_unlock(image, lock);
+	return true;
+
+on_error:
+	console_log(3, "    couldn't write image to file");
+	image_unlock(image, lock);
+	return false;
 }

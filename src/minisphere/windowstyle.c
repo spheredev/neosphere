@@ -88,7 +88,7 @@ winstyle_load(const char* filename)
 	switch (rws.version) {
 	case 1:
 		for (i = 0; i < 9; ++i) {
-			if (!(image = image_read(file, rws.edge_w_h, rws.edge_w_h)))
+			if (!(image = fread_image(file, rws.edge_w_h, rws.edge_w_h)))
 				goto on_error;
 			winstyle->images[i] = image;
 		}
@@ -97,7 +97,7 @@ winstyle_load(const char* filename)
 		for (i = 0; i < 9; ++i) {
 			if (file_read(file, &w, 1, 2) != 1 || file_read(file, &h, 1, 2) != 1)
 				goto on_error;
-			if (!(image = image_read(file, w, h)))
+			if (!(image = fread_image(file, w, h)))
 				goto on_error;
 			winstyle->images[i] = image;
 		}

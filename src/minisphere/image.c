@@ -65,7 +65,7 @@ static image_t*     s_last_image = NULL;
 static unsigned int s_next_image_id = 0;
 
 image_t*
-image_new(int width, int height)
+image_new(int width, int height, const color_t* pixels)
 {
 	image_t* image;
 
@@ -79,6 +79,10 @@ image_new(int width, int height)
 	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
+
+	if (pixels != NULL)
+		image_upload(image, pixels);
+
 	return image_ref(image);
 
 on_error:
@@ -184,82 +188,6 @@ on_error:
 		al_fclose(al_file);
 	free(slurp);
 	free(image);
-	return NULL;
-}
-
-image_t*
-image_read(file_t* file, int width, int height)
-{
-	long                   file_pos;
-	image_t*               image;
-	uint8_t*               line_ptr;
-	size_t                 line_size;
-	ALLEGRO_LOCKED_REGION* lock = NULL;
-
-	int i_y;
-
-	console_log(3, "reading %dx%d image #%u from open file", width, height, s_next_image_id);
-	image = calloc(1, sizeof(image_t));
-	file_pos = file_position(file);
-	if (!(image->bitmap = al_create_bitmap(width, height))) goto on_error;
-	if (!(lock = al_lock_bitmap(image->bitmap, ALLEGRO_PIXEL_FORMAT_ABGR_8888, ALLEGRO_LOCK_WRITEONLY)))
-		goto on_error;
-	line_size = width * 4;
-	line_ptr = lock->data;
-	for (i_y = 0; i_y < height; ++i_y) {
-		if (file_read(file, line_ptr, 1, line_size) != 1)
-			goto on_error;
-		line_ptr += lock->pitch;
-	}
-	al_unlock_bitmap(image->bitmap);
-	image->id = s_next_image_id++;
-	image->width = al_get_bitmap_width(image->bitmap);
-	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = mk_rect(0, 0, image->width, image->height);
-	image->transform = transform_new();
-	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
-	return image_ref(image);
-
-on_error:
-	console_log(3, "    failed!");
-	file_seek(file, file_pos, WHENCE_SET);
-	if (lock != NULL) al_unlock_bitmap(image->bitmap);
-	if (image != NULL) {
-		if (image->bitmap != NULL) al_destroy_bitmap(image->bitmap);
-		free(image);
-	}
-	return NULL;
-}
-
-image_t*
-image_read_slice(file_t* file, image_t* parent, int x, int y, int width, int height)
-{
-	long          file_pos;
-	image_t*      image;
-	color_t*      line_ptr;
-	image_lock_t* lock = NULL;
-
-	int i_y;
-
-	file_pos = file_position(file);
-	if (!(image = image_new_slice(parent, x, y, width, height)))
-		goto on_error;
-	if (!(lock = image_lock(parent, true, true)))
-		goto on_error;
-	line_ptr = lock->pixels + x + y * lock->pitch;
-	for (i_y = 0; i_y < height; ++i_y) {
-		if (file_read(file, line_ptr, 1, width * 4) != 1)
-			goto on_error;
-		line_ptr += lock->pitch;
-	}
-	image_unlock(parent, lock);
-	return image;
-
-on_error:
-	file_seek(file, file_pos, WHENCE_SET);
-	if (lock != NULL)
-		image_unlock(parent, lock);
-	image_unref(image);
 	return NULL;
 }
 
@@ -751,30 +679,25 @@ image_unlock(image_t* it, image_lock_t* lock)
 }
 
 bool
-image_write(image_t* it, file_t* file)
+image_upload(image_t* it, const color_t* pixels)
 {
-	color_t*      line_ptr;
-	size_t        line_size;
-	image_lock_t* lock;
+	const color_t* in_ptr;
+	image_lock_t*  lock;
+	color_t*       out_ptr;
 
-	int i_y;
-
-	console_log(3, "writing %dx%d image #%u to open file", it->width, it->height, it->id);
-	if (!(lock = image_lock(it, false, true)))
-		goto on_error;
-	line_size = it->width * 4;
-	for (i_y = 0; i_y < it->height; ++i_y) {
-		line_ptr = lock->pixels + i_y * lock->pitch;
-		if (file_write(file, line_ptr, 1, line_size) != 1)
-			goto on_error;
+	int y;
+	
+	if (!(lock = image_lock(it, true, false)))
+		return false;
+	out_ptr = lock->pixels;
+	in_ptr = pixels;
+	for (y = 0; y < it->height; ++y) {
+		memcpy(out_ptr, in_ptr, it->width * sizeof(color_t));
+		out_ptr += lock->pitch;
+		in_ptr += it->width;
 	}
 	image_unlock(it, lock);
 	return true;
-
-on_error:
-	console_log(3, "    couldn't write image to file");
-	image_unlock(it, lock);
-	return false;
 }
 
 static void

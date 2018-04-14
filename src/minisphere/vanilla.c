@@ -530,7 +530,7 @@ vanilla_register_api(void)
 
 	// note: `font_clone` is used purposely here to prevent the color mask from getting
 	//       clobbered by internal text rendering (e.g. the FPS counter).
-	s_default_font = font_clone(legacy_default_font());
+	s_default_font = font_clone(game_default_font(g_game));
 
 	s_sound_mixer = mixer_new(44100, 16, 2);
 
@@ -1979,7 +1979,7 @@ js_CreateSpriteset(int num_args, bool is_ctor, intptr_t magic)
 
 	spriteset = spriteset_new();
 	spriteset_set_base(spriteset, mk_rect(0, 0, width, height));
-	image = image_new(width, height);
+	image = image_new(width, height, NULL);
 	for (i = 0; i < num_images; ++i) {
 		// use the same image in all slots to save memory.  this works because
 		// images are read-only, so it doesn't matter that they all share the same
@@ -2039,7 +2039,7 @@ js_CreateSurface(int num_args, bool is_ctor, intptr_t magic)
 	height = jsal_to_int(1);
 	fill_color = num_args >= 3 ? jsal_require_sphere_color(2) : mk_color(0, 0, 0, 0);
 
-	if (!(image = image_new(width, height)))
+	if (!(image = image_new(width, height, NULL)))
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	image_fill(image, fill_color);
 	jsal_push_class_obj(SV1_SURFACE, image, false);
@@ -3493,7 +3493,7 @@ js_GetSystemArrow(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
 
-	if (!(image = legacy_default_arrow_image()))
+	if (!(image = game_default_arrow(g_game)))
 		jsal_error(JS_REF_ERROR, "missing system arrow image");
 	jsal_push_class_obj(SV1_IMAGE, image_ref(image), false);
 	return true;
@@ -3504,7 +3504,7 @@ js_GetSystemDownArrow(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
 
-	if (!(image = legacy_default_arrow_down_image()))
+	if (!(image = game_default_arrow_down(g_game)))
 		jsal_error(JS_REF_ERROR, "missing system down arrow image");
 	jsal_push_class_obj(SV1_IMAGE, image_ref(image), false);
 	return true;
@@ -3524,7 +3524,7 @@ js_GetSystemUpArrow(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
 
-	if (!(image = legacy_default_arrow_up_image()))
+	if (!(image = game_default_arrow_up(g_game)))
 		jsal_error(JS_REF_ERROR, "missing system up arrow image");
 	jsal_push_class_obj(SV1_IMAGE, image_ref(image), false);
 	return true;
@@ -3535,7 +3535,7 @@ js_GetSystemWindowStyle(int num_args, bool is_ctor, intptr_t magic)
 {
 	windowstyle_t* windowstyle;
 
-	if (!(windowstyle = legacy_default_windowstyle()))
+	if (!(windowstyle = game_default_windowstyle(g_game)))
 		jsal_error(JS_REF_ERROR, "missing system windowstyle");
 	jsal_push_sphere_windowstyle(windowstyle);
 	return true;
@@ -4535,7 +4535,7 @@ js_LoadSound(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, "sounds", true, false);
 
 	if (!(sound = sound_new(filename)))
-		jsal_error(JS_ERROR, "couldn't load sound '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't load sound '%s'", filename);
 	jsal_push_class_obj(SV1_SOUND, sound, false);
 	return true;
 }
@@ -4551,7 +4551,7 @@ js_LoadSoundEffect(int num_args, bool is_ctor, intptr_t magic)
 	mode = num_args >= 2 ? jsal_to_int(1) : SE_SINGLE;
 
 	if (!(sample = sample_new(filename, mode == SE_MULTIPLE)))
-		jsal_error(JS_ERROR, "couldn't load sound effect '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't load sound effect '%s'", filename);
 	jsal_push_class_obj(SV1_SOUND_EFFECT, sample, false);
 	return true;
 }
@@ -8312,7 +8312,7 @@ js_Surface_cloneSection(int num_args, bool is_ctor, intptr_t magic)
 	width = jsal_to_int(2);
 	height = jsal_to_int(3);
 
-	if ((new_image = image_new(width, height)) == NULL)
+	if (!(new_image = image_new(width, height, NULL)))
 		jsal_error(JS_ERROR, "couldn't create surface");
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
@@ -8851,7 +8851,7 @@ js_Surface_rotate(int num_args, bool is_ctor, intptr_t magic)
 		// FIXME: implement in-place resizing for Surface#rotate()
 		jsal_error(JS_ERROR, "Resizing not implemented for Surface#rotate()");
 	}
-	if ((new_image = image_new(new_width, new_height)) == NULL)
+	if (!(new_image = image_new(new_width, new_height, NULL)))
 		jsal_error(JS_ERROR, "Couldn't create new surface");
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));

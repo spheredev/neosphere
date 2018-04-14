@@ -42,7 +42,6 @@
 #include "galileo.h"
 #include "input.h"
 #include "jsal.h"
-#include "legacy.h"
 #include "map_engine.h"
 #include "pegasus.h"
 #include "profiler.h"
@@ -181,7 +180,6 @@ main(int argc, char* argv[])
 			fullscreen_mode = screen_get_fullscreen(g_screen)
 				? FULLSCREEN_ON : FULLSCREEN_OFF;
 		}
-		legacy_uninit();
 		shutdown_engine();
 		if (s_last_game_path != NULL) {  // returning from ExecuteGame()?
 			if (!initialize_engine()) {
@@ -199,7 +197,6 @@ main(int argc, char* argv[])
 		// JS code called either RestartGame() or ExecuteGame()
 		fullscreen_mode = screen_get_fullscreen(g_screen)
 			? FULLSCREEN_ON : FULLSCREEN_OFF;
-		legacy_uninit();
 		shutdown_engine();
 		console_log(1, "\nrestarting to launch new game");
 		console_log(1, "    path: %s", path_cstr(s_game_path));
@@ -257,16 +254,11 @@ main(int argc, char* argv[])
 		longjmp(exit_label, 1);
 	}
 
-	// note: this call always needs to happen *after* `g_game` has been set.  if the system
-	//       assets are packaged into an SPK, we want them to get loaded from the package and
-	//       and NOT the physical `system` directory.
-	legacy_init_system();
-
 	// set up the render context ("screen") so we can draw stuff
 	resolution = game_resolution(g_game);
 	if (!(icon = image_load("@/icon.png")))
 		icon = image_load("#/icon.png");
-	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip, legacy_default_font());
+	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip, game_default_font(g_game));
 	if (g_screen == NULL) {
 		al_show_native_message_box(NULL, "Unable to Create Render Context", "miniSphere couldn't create a render context.",
 			"Your hardware may be too old to run miniSphere, or there could be a problem with the drivers on this system.  Check that your graphics drivers in particular are fully installed and up-to-date.",
@@ -915,7 +907,7 @@ show_error_screen(const char* message)
 	title_index = rand() % (sizeof ERROR_TEXT / sizeof(const char*) / 2);
 	title = ERROR_TEXT[title_index][0];
 	subtitle = ERROR_TEXT[title_index][1];
-	if (!(font = legacy_default_font()))
+	if (!(font = game_default_font(g_game)))
 		goto show_error_box;
 
 	// word-wrap the error message to fit inside the error box

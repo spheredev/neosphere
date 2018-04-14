@@ -219,7 +219,7 @@ mng_cb_processheader(mng_handle stream, mng_uint32 width, mng_uint32 height)
 	anim->w = width;
 	anim->h = height;
 	image_unref(anim->frame);
-	if (!(anim->frame = image_new(anim->w, anim->h)))
+	if (!(anim->frame = image_new(anim->w, anim->h, NULL)))
 		goto on_error;
 	mng_set_canvasstyle(stream, MNG_CANVAS_RGBA8);
 	return MNG_TRUE;

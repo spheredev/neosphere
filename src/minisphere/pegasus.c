@@ -45,7 +45,6 @@
 #include "galileo.h"
 #include "image.h"
 #include "input.h"
-#include "legacy.h"
 #include "jsal.h"
 #include "profiler.h"
 #include "sockets.h"
@@ -2377,7 +2376,7 @@ js_Font_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	font_t* font;
 	
-	if (!(font = legacy_default_font()))
+	if (!(font = game_default_font(g_game)))
 		jsal_error(JS_REF_ERROR, "No default font is available");
 	jsal_push_class_obj(PEGASUS_FONT, font, false);
 	cache_value_to_this("Default");
@@ -4759,13 +4758,8 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 	color_t        fill_color;
 	int            height;
 	image_t*       image;
-	const color_t* in_ptr;
-	image_lock_t*  lock;
-	color_t*       out_ptr;
 	image_t*       src_image;
 	int            width;
-
-	int y;
 
 	class_id = magic;
 
@@ -4775,20 +4769,8 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		height = jsal_require_int(1);
 		if (buffer_size < width * height * sizeof(color_t))
 			jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
-		if (!(image = image_new(width, height)))
+		if (!(image = image_new(width, height, buffer)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-		if (!(lock = image_lock(image, true, false))) {
-			image_unref(image);
-			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-		}
-		out_ptr = lock->pixels;
-		in_ptr = buffer;
-		for (y = 0; y < height; ++y) {
-			memcpy(out_ptr, in_ptr, width * sizeof(color_t));
-			out_ptr += lock->pitch;
-			in_ptr += width;
-		}
-		image_unlock(image, lock);
 	}
 	else if (num_args >= 2) {
 		// create a Texture filled with a single pixel value
@@ -4796,7 +4778,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		height = jsal_require_int(1);
 		fill_color = num_args >= 3 ? jsal_pegasus_require_color(2)
 			: mk_color(0, 0, 0, 0);
-		if (!(image = image_new(width, height)))
+		if (!(image = image_new(width, height, NULL)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		image_fill(image, fill_color);
 	}
@@ -4904,12 +4886,7 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 	size_t         buffer_size;
 	int            height;
 	image_t*       image;
-	const color_t* in_ptr;
-	image_lock_t*  lock;
-	color_t*       out_ptr;
 	int            width;
-
-	int y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
@@ -4921,16 +4898,8 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 	height = image_height(image);
 	if (buffer_size < width * height * sizeof(color_t))
 		jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
-	if (!(lock = image_lock(image, true, false)))
+	if (!image_upload(image, buffer))
 		jsal_error(JS_ERROR, "Couldn't upload to GPU texture");
-	out_ptr = lock->pixels;
-	in_ptr = buffer;
-	for (y = 0; y < height; ++y) {
-		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
-		out_ptr += lock->pitch;
-		in_ptr += width;
-	}
-	image_unlock(image, lock);
 	return false;
 }
 

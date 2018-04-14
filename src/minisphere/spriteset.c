@@ -595,7 +595,7 @@ spriteset_save(const spriteset_t* it, const char* filename)
 
 	for (i = 0; i < vector_len(it->images); ++i) {
 		image = *(image_t**)vector_get(it->images, i);
-		image_write(image, file);
+		fwrite_image(file, image);
 	}
 
 	for (i = 0; i < vector_len(it->poses); ++i) {

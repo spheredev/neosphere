@@ -102,7 +102,7 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 		// and the screen-grab functions.
 		al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
 		al_set_new_bitmap_format(ALLEGRO_PIXEL_FORMAT_ANY_24_NO_ALPHA);
-		backbuffer = image_new(resolution.width, resolution.height);
+		backbuffer = image_new(resolution.width, resolution.height, NULL);
 		al_restore_state(&old_state);
 	}
 	if (backbuffer == NULL) {
@@ -402,7 +402,7 @@ screen_grab(screen_t* it, int x, int y, int width, int height)
 {
 	image_t* image;
 
-	if (!(image = image_new(width, height)))
+	if (!(image = image_new(width, height, NULL)))
 		goto on_error;
 	image_render_to(image, NULL);
 	al_draw_bitmap_region(image_bitmap(it->backbuffer), x, y, width, height, 0, 0, 0x0);

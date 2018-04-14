@@ -44,6 +44,10 @@ const path_t* home_path   (void);
 
 bool        fread_rect16           (file_t* file, rect_t* out_rect);
 bool        fread_rect32           (file_t* file, rect_t* out_rect);
+image_t*    fread_image            (file_t* file, int width, int height);
+image_t*    fread_image_slice      (file_t* file, image_t* parent, int x, int y, int width, int height);
+bool        fwrite_image           (file_t* file, image_t* image);
+
 int         jsal_push_lstring_t    (const lstring_t* string);
 lstring_t*  jsal_require_lstring_t (int index);
 const char* jsal_require_pathname  (int index, const char* origin_name, bool v1_mode, bool need_write);

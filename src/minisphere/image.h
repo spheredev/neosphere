@@ -33,7 +33,6 @@
 #ifndef SPHERE__IMAGE_H__INCLUDED
 #define SPHERE__IMAGE_H__INCLUDED
 
-#include "game.h"
 #include "geometry.h"
 #include "transform.h"
 
@@ -64,12 +63,10 @@ enum blend_mode
 	BLEND_MAX,
 } blend_mode_t;
 
-image_t*        image_new                (int width, int height);
+image_t*        image_new                (int width, int height, const color_t* pixels);
 image_t*        image_new_slice          (image_t* parent, int x, int y, int width, int height);
 image_t*        image_dup                (const image_t* it);
 image_t*        image_load               (const char* filename);
-image_t*        image_read               (file_t* file, int width, int height);
-image_t*        image_read_slice         (file_t* file, image_t* parent, int x, int y, int width, int height);
 image_t*        image_ref                (image_t* it);
 void            image_unref              (image_t* it);
 ALLEGRO_BITMAP* image_bitmap             (image_t* it);
@@ -102,6 +99,6 @@ bool            image_rescale            (image_t* it, int width, int height);
 bool            image_save               (image_t* it, const char* filename);
 void            image_set_pixel          (image_t* it, int x, int y, color_t color);
 void            image_unlock             (image_t* it, image_lock_t* lock);
-bool            image_write              (image_t* it, file_t* file);
+bool            image_upload             (image_t* it, const color_t* pixels);
 
 #endif // SPHERE__IMAGE_H__INCLUDED
