@@ -49,11 +49,6 @@ class Pact extends Promise
 		this[ControllerSymbol] = promiseController;
 	}
 
-	get promise()
-	{
-		return this;
-	}
-
 	reject(reason)
 	{
 		this[ControllerSymbol].reject(reason);
@@ -62,5 +57,10 @@ class Pact extends Promise
 	resolve(value)
 	{
 		this[ControllerSymbol].resolve(value);
+	}
+
+	toPromise()
+	{
+		return Promise.resolve(this);
 	}
 }

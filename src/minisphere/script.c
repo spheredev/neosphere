@@ -43,8 +43,8 @@ struct script
 {
 	unsigned int  refcount;
 	unsigned int  id;
-	bool          is_in_use;
 	js_ref_t*     function;
+	bool          in_use;
 };
 
 static int s_next_script_id = 1;
@@ -177,7 +177,7 @@ script_run(script_t* script, bool allow_reentry)
 	// check whether an instance of the script is already running.
 	// if it is, but the script is reentrant, allow it.  otherwise, return early
 	// to prevent multiple invocation.
-	was_in_use = script->is_in_use;
+	was_in_use = script->in_use;
 	if (was_in_use && !allow_reentry) {
 		console_log(3, "skipping execution of script #%u, already in use", script->id);
 		return;
@@ -190,11 +190,11 @@ script_run(script_t* script, bool allow_reentry)
 	script_ref(script);
 
 	// execute the script!
-	script->is_in_use = true;
+	script->in_use = true;
 	jsal_push_ref_weak(script->function);
 	jsal_call(0);
 	jsal_pop(1);
-	script->is_in_use = was_in_use;
+	script->in_use = was_in_use;
 
 	script_unref(script);
 }

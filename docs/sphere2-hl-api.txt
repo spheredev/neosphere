@@ -823,10 +823,6 @@ new Pact();
     Constructs a new pact.  The pact encapsulates a promise which can be
     settled by calling either `Pact#resolve()` or `Pact#reject()`.
 
-Pact#promise [read-only]
-
-    Gets the promise underlying this pact.
-
 Pact#reject([reason]);
 
     Settles `promise` with a rejection value of `reason` (typically this is a
@@ -844,6 +840,13 @@ Pact#resolve([result]);
 
     Note: If this pact's promise has already been settled, calling this method
           has no effect.
+
+Pact#toPromise();
+
+    Returns a standard Promise which resolves to the same value as this pact.
+    Use this when you want to provide outside code with access to the pact's
+	resolution or rejection value without also giving access to the settlement
+	methods described above.
 
 
 `Prim` Namespace

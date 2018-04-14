@@ -41,9 +41,9 @@ class Thread
 
 	static join(...threads)
 	{
-		let promises = from.array(threads)
+		let threadPacts = from.array(threads)
 			.select(it => it._onThreadStop);
-		return Promise.all(promises);
+		return Promise.all(threadPacts);
 	}
 
 	constructor(options = {})

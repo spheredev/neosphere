@@ -15,6 +15,8 @@ v5.2.0 - TBD
 * Adds `Texture#upload()` and `Texture#download()` to allow direct manipulation
   of a texture's RGBA bitmap.
 * Adds `Thread#on_shutDown()` for running code when a thread terminates.
+* Adds `Pact#toPromise()` for cases where you don't want to allow outside code
+  to prematurely resolve a pact.
 * Adds `print()` as an alias for `SSj.log()`.
 * Adds `SSj.now()` for getting microsecond-accurate timestamps under SpheRun.
 * Adds support for render-to-texture by allowing `Surface` objects to be used
@@ -24,11 +26,12 @@ v5.2.0 - TBD
 * Improves font handling so that the default font can be loaded from an SPK
   package, avoiding the need to distribute the physical `system/` directory.
 * Improves the overall performance of all API functions and constructors.
-* Improves performance of all `Prim` drawing functions.
+* Improves performance for all `Prim` drawing functions.
 * Renames the `--performance` command-line option to `--profile` to reflect its
   new purpose.
 * Removes the pointless `--no-sleep` command-line option.
-* Removes the `Image` class from the bundled Sphere Runtime.
+* Removes the Sphere Runtime `Image` class from the API.
+* Reverts `Sphere.APILevel` to 1 as the level 2 APIs are still experimental.
 * Fixes an internal memory leak mostly affecting `Dispatch` job execution.
 * Fixes a bug where Sphere v1 `Font#drawTextBox` output isn't properly clipped.
 * Fixes a bug where calling Sphere v1 exit functions or closing the game window
@@ -36,10 +39,8 @@ v5.2.0 - TBD
 * Fixes a bug where the Sphere v1 `Font#setCharacterImage()` API fails to
   recalculate the font metrics after changing the image, causing text to be
   rendered incorrectly afterwards.
-* Fixes `Pact#promise` not existing, as it was accidentally removed in 5.1.3.
 * Fixes a bug where repeating a `list` command in SSj could show some of the
   same lines again.
-* Reverts `Sphere.APILevel` to 1 as the level-2 APIs are still experimental.
 
 
 v5.1.3 - February 18, 2018
