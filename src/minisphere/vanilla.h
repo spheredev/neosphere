@@ -59,13 +59,13 @@ enum vanilla_class
 
 void vanilla_register_api (void);
 
-void          jsal_push_sphere_bytearray      (bytearray_t* array);
-void          jsal_push_sphere_color          (color_t color);
-void          jsal_push_sphere_font           (font_t* font);
-void          jsal_push_sphere_spriteset      (spriteset_t* spriteset);
-color_t       jsal_require_sphere_color       (int index);
-color_fx_t jsal_require_sphere_colormatrix (int index);
-script_t*     jsal_require_sphere_script      (int index, const char* name);
-spriteset_t*  jsal_require_sphere_spriteset   (int index);
+void         jsal_push_sphere_bytearray    (bytearray_t* array);
+void         jsal_push_sphere_color        (color_t color);
+void         jsal_push_sphere_font         (font_t* font);
+void         jsal_push_sphere_spriteset    (spriteset_t* spriteset);
+color_t      jsal_require_sphere_color     (int index);
+color_fx_t   jsal_require_sphere_color_fx  (int index);
+script_t*    jsal_require_sphere_script    (int index, const char* name);
+spriteset_t* jsal_require_sphere_spriteset (int index);
 
 #endif // SPHERE__VANILLA_H__INCLUDED

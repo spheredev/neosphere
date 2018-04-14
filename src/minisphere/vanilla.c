@@ -1310,7 +1310,7 @@ jsal_require_sphere_color(int index)
 }
 
 color_fx_t
-jsal_require_sphere_colormatrix(int index)
+jsal_require_sphere_color_fx(int index)
 {
 	color_fx_t matrix;
 
@@ -6328,13 +6328,14 @@ js_Animation_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Animation_drawFrame(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_number(0);
-	int y = jsal_to_number(1);
-
 	animation_t* anim;
+	int          x;
+	int          y;
 
 	jsal_push_this();
 	anim = jsal_require_class_obj(-1, SV1_ANIMATION);
+	x = jsal_to_int(0);
+	y = jsal_to_int(1);
 
 	image_draw(animation_frame(anim), x, y);
 	return false;
@@ -6585,7 +6586,7 @@ js_ColorMatrix_apply(int num_args, bool is_ctor, intptr_t magic)
 	color_fx_t matrix;
 
 	jsal_push_this();
-	matrix = jsal_require_sphere_colormatrix(-1);
+	matrix = jsal_require_sphere_color_fx(-1);
 
 	jsal_push_sphere_color(color_transform(color, matrix));
 	return true;
@@ -8077,13 +8078,12 @@ js_Surface_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_applyColorFX(int num_args, bool is_ctor, intptr_t magic)
 {
+	int        height;
+	image_t*   image;
 	color_fx_t matrix;
-	int           height;
-	int           width;
-	int           x;
-	int           y;
-
-	image_t* image;
+	int        width;
+	int        x;
+	int        y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
@@ -8091,60 +8091,74 @@ js_Surface_applyColorFX(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_to_int(1);
 	width = jsal_to_int(2);
 	height = jsal_to_int(3);
-	matrix = jsal_require_sphere_colormatrix(4);
+	matrix = jsal_require_sphere_color_fx(4);
 
 	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
 		jsal_error(JS_RANGE_ERROR, "FX area of effect out of bounds");
 	if (!image_apply_color_fx(image, matrix, x, y, width, height))
-		jsal_error(JS_ERROR, "couldn't apply color FX");
+		jsal_error(JS_ERROR, "Couldn't apply color FX");
 	return false;
 }
 
 static bool
 js_Surface_applyColorFX4(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-	int w = jsal_to_int(2);
-	int h = jsal_to_int(3);
-	color_fx_t ul_mat = jsal_require_sphere_colormatrix(4);
-	color_fx_t ur_mat = jsal_require_sphere_colormatrix(5);
-	color_fx_t ll_mat = jsal_require_sphere_colormatrix(6);
-	color_fx_t lr_mat = jsal_require_sphere_colormatrix(7);
-
-	image_t* image;
+	int        height;
+	image_t*   image;
+	color_fx_t ll_mat;
+	color_fx_t lr_mat;
+	color_fx_t ul_mat;
+	color_fx_t ur_mat;
+	int        width;
+	int        x;
+	int        y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
+	x = jsal_to_int(0);
+	y = jsal_to_int(1);
+	width = jsal_to_int(2);
+	height = jsal_to_int(3);
+	ul_mat = jsal_require_sphere_color_fx(4);
+	ur_mat = jsal_require_sphere_color_fx(5);
+	ll_mat = jsal_require_sphere_color_fx(6);
+	lr_mat = jsal_require_sphere_color_fx(7);
 
-	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
+	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
 		jsal_error(JS_RANGE_ERROR, "FX area of effect out of bounds");
-	if (!image_apply_color_fx_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
-		jsal_error(JS_ERROR, "couldn't apply color FX");
+	if (!image_apply_color_fx_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, width, height))
+		jsal_error(JS_ERROR, "Couldn't apply color FX");
 	return false;
 }
 
 static bool
 js_Surface_applyLookup(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-	int w = jsal_to_int(2);
-	int h = jsal_to_int(3);
-	uint8_t* red_lu = jsal_require_rgba_lut(4);
-	uint8_t* green_lu = jsal_require_rgba_lut(5);
-	uint8_t* blue_lu = jsal_require_rgba_lut(6);
-	uint8_t* alpha_lu = jsal_require_rgba_lut(7);
-
+	uint8_t* alpha_lu;
+	uint8_t* blue_lu;
+	uint8_t* green_lu;
+	int      height;
 	image_t* image;
+	uint8_t* red_lu;
+	int      width;
+	int      x;
+	int      y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
+	x = jsal_to_int(0);
+	y = jsal_to_int(1);
+	width = jsal_to_int(2);
+	height = jsal_to_int(3);
+	red_lu = jsal_require_rgba_lut(4);
+	green_lu = jsal_require_rgba_lut(5);
+	blue_lu = jsal_require_rgba_lut(6);
+	alpha_lu = jsal_require_rgba_lut(7);
 
-	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
+	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
 		jsal_error(JS_RANGE_ERROR, "FX area of effect out of bounds");
-	if (!image_apply_lookup(image, x, y, w, h, red_lu, green_lu, blue_lu, alpha_lu))
-		jsal_error(JS_ERROR, "couldn't apply color FX");
+	if (!image_apply_lookup(image, x, y, width, height, red_lu, green_lu, blue_lu, alpha_lu))
+		jsal_error(JS_ERROR, "Couldn't apply color FX");
 	free(red_lu);
 	free(green_lu);
 	free(blue_lu);
@@ -8158,8 +8172,8 @@ js_Surface_bezierCurve(int num_args, bool is_ctor, intptr_t magic)
 	color_t         color;
 	float           cp[8];
 	image_t*        image;
-	bool            is_quadratic = true;
 	int             num_points;
+	bool            quadratic = true;
 	double          step_size;
 	ALLEGRO_VERTEX* vertices;
 	float           x1, x2, x3, x4;
@@ -8178,7 +8192,7 @@ js_Surface_bezierCurve(int num_args, bool is_ctor, intptr_t magic)
 	x3 = jsal_to_number(6);
 	y3 = jsal_to_number(7);
 	if (num_args >= 10) {
-		is_quadratic = false;
+		quadratic = false;
 		x4 = jsal_to_number(8);
 		y4 = jsal_to_number(9);
 	}
@@ -8187,7 +8201,7 @@ js_Surface_bezierCurve(int num_args, bool is_ctor, intptr_t magic)
 	cp[2] = x2; cp[3] = y2;
 	cp[4] = x3; cp[5] = y3;
 	cp[6] = x4; cp[7] = y4;
-	if (is_quadratic) {
+	if (quadratic) {
 		// convert quadratic Bezier curve to cubic
 		cp[6] = x3; cp[7] = y3;
 		cp[2] = x1 + (2.0 / 3.0) * (x2 - x1);
