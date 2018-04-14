@@ -59,7 +59,7 @@ atlas_new(int num_images, int max_width, int max_height)
 	atlas->pitch = ceil(sqrt(num_images));
 	atlas->max_width = max_width;
 	atlas->max_height = max_height;
-	atlas->size = rect(0, 0, atlas->pitch * atlas->max_width, atlas->pitch * atlas->max_height);
+	atlas->size = mk_rect(0, 0, atlas->pitch * atlas->max_width, atlas->pitch * atlas->max_height);
 	if (!(atlas->image = image_new(atlas->size.x2, atlas->size.y2)))
 		goto on_error;
 
@@ -92,12 +92,12 @@ atlas_image(const atlas_t* atlas)
 	return atlas->image;
 }
 
-float_rect_t
+rectf_t
 atlas_uv(const atlas_t* atlas, int image_index)
 {
-	float        atlas_height;
-	float        atlas_width;
-	float_rect_t uv;
+	float   atlas_height;
+	float   atlas_width;
+	rectf_t uv;
 
 	atlas_width = image_width(atlas->image);
 	atlas_height = image_height(atlas->image);

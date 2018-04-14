@@ -218,7 +218,7 @@ spriteset_load(const char* filename)
 	spriteset->base.y1 = rss.base_y1;
 	spriteset->base.x2 = rss.base_x2;
 	spriteset->base.y2 = rss.base_y2;
-	normalize_rect(&spriteset->base);
+	rect_normalize(&spriteset->base);
 	switch (rss.version) {
 	case 1: // RSSv1: very simple, 8 directions of 8 frames each
 		if (!(atlas = atlas_new(rss.num_images, rss.frame_width, rss.frame_height)))
@@ -549,7 +549,7 @@ spriteset_draw(const spriteset_t* it, color_t mask, bool is_flipped, double thet
 	frame_index = frame_index % vector_len(pose->frames);
 	frame = vector_get(pose->frames, frame_index);
 	image_index = frame->image_idx;
-	base = zoom_rect(it->base, scale_x, scale_y);
+	base = rect_zoom(it->base, scale_x, scale_y);
 	x -= (base.x1 + base.x2) / 2;
 	if (!is_flipped)
 		y -= (base.y1 + base.y2) / 2;

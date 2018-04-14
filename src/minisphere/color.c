@@ -40,7 +40,7 @@ nativecolor(color_t color)
 }
 
 color_t
-color_new(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+mk_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
 	color_t color;
 
@@ -66,7 +66,7 @@ color_mix(color_t color, color_t other, float w1, float w2)
 }
 
 color_t
-color_transform(color_t color, colormatrix_t mat)
+color_transform(color_t color, color_fx_t mat)
 {
 	int r, g, b;
 
@@ -76,13 +76,13 @@ color_transform(color_t color, colormatrix_t mat)
 	r = r < 0 ? 0 : r > 255 ? 255 : r;
 	g = g < 0 ? 0 : g > 255 ? 255 : g;
 	b = b < 0 ? 0 : b > 255 ? 255 : b;
-	return color_new(r, g, b, color.a);
+	return mk_color(r, g, b, color.a);
 }
 
-colormatrix_t
-colormatrix_new(int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int bn, int br, int bg, int bb)
+color_fx_t
+mk_color_fx(int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int bn, int br, int bg, int bb)
 {
-	colormatrix_t matrix = {
+	color_fx_t matrix = {
 		rn, rr, rg, rb,
 		gn, gr, gg, gb,
 		bn, br, bg, bb,
@@ -90,24 +90,24 @@ colormatrix_new(int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, 
 	return matrix;
 }
 
-colormatrix_t
-colormatrix_lerp(colormatrix_t mat, colormatrix_t other, int w1, int w2)
+color_fx_t
+color_fx_mix(color_fx_t mat, color_fx_t other, int w1, int w2)
 {
-	colormatrix_t blend;
-	int           sigma;
+	color_fx_t output;
+	int        sigma;
 
 	sigma = w1 + w2;
-	blend.rn = (mat.rn * w1 + other.rn * w2) / sigma;
-	blend.rr = (mat.rr * w1 + other.rr * w2) / sigma;
-	blend.rg = (mat.rg * w1 + other.rg * w2) / sigma;
-	blend.rb = (mat.rb * w1 + other.rb * w2) / sigma;
-	blend.gn = (mat.gn * w1 + other.gn * w2) / sigma;
-	blend.gr = (mat.gr * w1 + other.gr * w2) / sigma;
-	blend.gg = (mat.gg * w1 + other.gg * w2) / sigma;
-	blend.gb = (mat.gb * w1 + other.gb * w2) / sigma;
-	blend.bn = (mat.bn * w1 + other.bn * w2) / sigma;
-	blend.br = (mat.br * w1 + other.br * w2) / sigma;
-	blend.bg = (mat.bg * w1 + other.bg * w2) / sigma;
-	blend.bb = (mat.bb * w1 + other.bb * w2) / sigma;
-	return blend;
+	output.rn = (mat.rn * w1 + other.rn * w2) / sigma;
+	output.rr = (mat.rr * w1 + other.rr * w2) / sigma;
+	output.rg = (mat.rg * w1 + other.rg * w2) / sigma;
+	output.rb = (mat.rb * w1 + other.rb * w2) / sigma;
+	output.gn = (mat.gn * w1 + other.gn * w2) / sigma;
+	output.gr = (mat.gr * w1 + other.gr * w2) / sigma;
+	output.gg = (mat.gg * w1 + other.gg * w2) / sigma;
+	output.gb = (mat.gb * w1 + other.gb * w2) / sigma;
+	output.bn = (mat.bn * w1 + other.bn * w2) / sigma;
+	output.br = (mat.br * w1 + other.br * w2) / sigma;
+	output.bg = (mat.bg * w1 + other.bg * w2) / sigma;
+	output.bb = (mat.bb * w1 + other.bb * w2) / sigma;
+	return output;
 }

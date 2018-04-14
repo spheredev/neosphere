@@ -76,7 +76,7 @@ image_new(int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = rect(0, 0, image->width, image->height);
+	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -99,7 +99,7 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = image_ref(parent);
-	image->scissor_box = rect(0, 0, image->width, image->height);
+	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -123,7 +123,7 @@ image_dup(const image_t* it)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = rect(0, 0, image->width, image->height);
+	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
@@ -170,7 +170,7 @@ image_load(const char* filename)
 	free(slurp);
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = rect(0, 0, image->width, image->height);
+	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
@@ -215,7 +215,7 @@ image_read(file_t* file, int width, int height)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = rect(0, 0, image->width, image->height);
+	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
@@ -360,7 +360,7 @@ image_set_transform(image_t* it, transform_t* transform)
 }
 
 bool
-image_apply_colormat(image_t* it, colormatrix_t matrix, int x, int y, int width, int height)
+image_apply_color_fx(image_t* it, color_fx_t matrix, int x, int y, int width, int height)
 {
 	image_lock_t* lock;
 	color_t*      pixel;
@@ -379,7 +379,7 @@ image_apply_colormat(image_t* it, colormatrix_t matrix, int x, int y, int width,
 }
 
 bool
-image_apply_colormat_4(image_t* it, colormatrix_t ul_mat, colormatrix_t ur_mat, colormatrix_t ll_mat, colormatrix_t lr_mat, int x, int y, int w, int h)
+image_apply_color_fx_4(image_t* it, color_fx_t ul_mat, color_fx_t ur_mat, color_fx_t ll_mat, color_fx_t lr_mat, int x, int y, int w, int h)
 {
 	// this function might be difficult to understand at first. the implementation
 	// is, however, much easier to follow than the one in Sphere. basically what it
@@ -388,7 +388,7 @@ image_apply_colormat_4(image_t* it, colormatrix_t ul_mat, colormatrix_t ur_mat, 
 
 	int           i1, i2;
 	image_lock_t* lock;
-	colormatrix_t mat_1, mat_2, mat_3;
+	color_fx_t mat_1, mat_2, mat_3;
 	color_t*      pixel;
 
 	int i_x, i_y;
@@ -403,13 +403,13 @@ image_apply_colormat_4(image_t* it, colormatrix_t ul_mat, colormatrix_t ur_mat, 
 		// pixels.
 		i1 = y + h - 1 - i_y;
 		i2 = i_y - y;
-		mat_1 = colormatrix_lerp(ul_mat, ll_mat, i1, i2);
-		mat_2 = colormatrix_lerp(ur_mat, lr_mat, i1, i2);
+		mat_1 = color_fx_mix(ul_mat, ll_mat, i1, i2);
+		mat_2 = color_fx_mix(ur_mat, lr_mat, i1, i2);
 		for (i_x = x; i_x < x + w; ++i_x) {
 			// calculate the final matrix for this pixel and transform it
 			i1 = x + w - 1 - i_x;
 			i2 = i_x - x;
-			mat_3 = colormatrix_lerp(mat_1, mat_2, i1, i2);
+			mat_3 = color_fx_mix(mat_1, mat_2, i1, i2);
 			pixel = &lock->pixels[i_x + i_y * lock->pitch];
 			*pixel = color_transform(*pixel, mat_3);
 
@@ -490,7 +490,7 @@ image_draw_scaled_masked(image_t* it, color_t mask, int x, int y, int width, int
 void
 image_draw_tiled(image_t* it, int x, int y, int width, int height)
 {
-	image_draw_tiled_masked(it, color_new(255, 255, 255, 255), x, y, width, height);
+	image_draw_tiled_masked(it, mk_color(255, 255, 255, 255), x, y, width, height);
 }
 
 void

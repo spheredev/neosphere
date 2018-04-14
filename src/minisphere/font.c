@@ -168,7 +168,7 @@ font_load(const char* filename)
 			pdest = lock->pixels + atlas_x + atlas_y * lock->pitch;
 			for (y = 0; y < glyph_hdr.height; ++y) {
 				for (x = 0; x < glyph_hdr.width; ++x)
-					pdest[x] = color_new(255, 255, 255, psrc[x]);
+					pdest[x] = mk_color(255, 255, 255, psrc[x]);
 				pdest += lock->pitch;
 				psrc += glyph_hdr.width;
 			}
@@ -184,7 +184,7 @@ font_load(const char* filename)
 	image_unref(atlas);
 
 	font->id = s_next_font_id++;
-	font->color_mask = color_new(255, 255, 255, 255);
+	font->color_mask = mk_color(255, 255, 255, 255);
 	font->path = strdup(filename);
 	return font_ref(font);
 

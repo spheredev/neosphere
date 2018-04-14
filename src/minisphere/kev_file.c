@@ -39,7 +39,7 @@ struct kev_file
 	game_t*         game;
 	ALLEGRO_CONFIG* conf;
 	char*           filename;
-	bool            is_dirty;
+	bool            modified;
 };
 
 static unsigned int s_next_file_id = 0;
@@ -87,7 +87,7 @@ kev_close(kev_file_t* it)
 		return;
 
 	console_log(3, "disposing kevfile #%u no longer in use", it->id);
-	if (it->is_dirty)
+	if (it->modified)
 		kev_save(it);
 	al_destroy_config(it->conf);
 	game_unref(it->game);
@@ -213,7 +213,7 @@ kev_write_bool(kev_file_t* it, const char* key, bool value)
 {
 	console_log(3, "writing boolean to kevfile #%u, key '%s'", it->id, key);
 	al_set_config_value(it->conf, NULL, key, value ? "true" : "false");
-	it->is_dirty = true;
+	it->modified = true;
 }
 
 void
@@ -224,7 +224,7 @@ kev_write_float(kev_file_t* it, const char* key, double value)
 	console_log(3, "writing number to kevfile #%u, key '%s'", it->id, key);
 	sprintf(string, "%g", value);
 	al_set_config_value(it->conf, NULL, key, string);
-	it->is_dirty = true;
+	it->modified = true;
 }
 
 void
@@ -232,5 +232,5 @@ kev_write_string(kev_file_t* it, const char* key, const char* value)
 {
 	console_log(3, "writing string to kevfile #%u, key '%s'", it->id, key);
 	al_set_config_value(it->conf, NULL, key, value);
-	it->is_dirty = true;
+	it->modified = true;
 }

@@ -33,63 +33,8 @@
 #include "minisphere.h"
 #include "geometry.h"
 
-point2_t
-point2(int x, int y)
-{
-	point2_t point;
-
-	point.x = x;
-	point.y = y;
-	return point;
-}
-
-point3_t
-point3(int x, int y, int z)
-{
-	point3_t point;
-
-	point.x = x;
-	point.y = y;
-	point.z = z;
-	return point;
-}
-
-size2_t
-size2(int width, int height)
-{
-	size2_t size;
-
-	size.width = width;
-	size.height = height;
-	return size;
-}
-
-rect_t
-rect(int x1, int y1, int x2, int y2)
-{
-	rect_t rectangle;
-
-	rectangle.x1 = x1;
-	rectangle.y1 = y1;
-	rectangle.x2 = x2;
-	rectangle.y2 = y2;
-	return rectangle;
-}
-
-float_rect_t
-rectf(float x1, float y1, float x2, float y2)
-{
-	float_rect_t rectangle;
-
-	rectangle.x1 = x1;
-	rectangle.y1 = y1;
-	rectangle.x2 = x2;
-	rectangle.y2 = y2;
-	return rectangle;
-}
-
 bool
-do_lines_intersect(rect_t a, rect_t b)
+do_lines_overlap(rect_t a, rect_t b)
 {
 	float d, q, r, s;
 
@@ -104,7 +49,7 @@ do_lines_intersect(rect_t a, rect_t b)
 }
 
 bool
-do_rects_intersect(rect_t a, rect_t b)
+do_rects_overlap(rect_t a, rect_t b)
 {
 	return !(a.x1 > b.x2 || a.x2 < b.x1 || a.y1 > b.y2 || a.y2 < b.y1);
 }
@@ -116,8 +61,54 @@ is_point_in_rect(int x, int y, rect_t bounds)
 		&& y >= bounds.y1 && y < bounds.y2;
 }
 
+point2_t
+mk_point2(int x, int y)
+{
+	point2_t point;
+
+	point.x = x;
+	point.y = y;
+	return point;
+}
+
+point3_t
+mk_point3(int x, int y, int z)
+{
+	point3_t point;
+
+	point.x = x;
+	point.y = y;
+	point.z = z;
+	return point;
+}
+
+rect_t
+mk_rect(int x1, int y1, int x2, int y2)
+{
+	rect_t rectangle;
+
+	rectangle.x1 = x1;
+	rectangle.y1 = y1;
+	rectangle.x2 = x2;
+	rectangle.y2 = y2;
+	return rectangle;
+}
+
+rect_t
+rect_intersect(rect_t rect1, rect_t rect2)
+{
+	int x1, x2;
+	int y1, y2;
+
+	x1 = rect1.x1 > rect2.x1 ? rect1.x1 : rect2.x1;
+	y1 = rect1.y1 > rect2.y1 ? rect1.y1 : rect2.y1;
+	x2 = rect1.x2 < rect2.x2 ? rect1.x2 : rect2.x2;
+	y2 = rect1.y2 < rect2.y2 ? rect1.y2 : rect2.y2;
+	return mk_rect(x1, y1, x2, y2);
+}
+
 void
-normalize_rect(rect_t* inout_rect)
+rect_normalize(rect_t* inout_rect)
 {
 	int tmp;
 
@@ -133,47 +124,56 @@ normalize_rect(rect_t* inout_rect)
 	}
 }
 
-float_rect_t
-scale_float_rect(float_rect_t in_rect, float x_scale, float y_scale)
-{
-	return rectf(
-		in_rect.x1 * x_scale, in_rect.y1 * y_scale,
-		in_rect.x2 * x_scale, in_rect.y2 * y_scale);
-}
-
 rect_t
-translate_rect(rect_t in_rect, int x_offset, int y_offset)
+rect_translate(rect_t in_rect, int x_offset, int y_offset)
 {
-	return rect(
+	return mk_rect(
 		in_rect.x1 + x_offset, in_rect.y1 + y_offset,
 		in_rect.x2 + x_offset, in_rect.y2 + y_offset);
 }
 
-float_rect_t
-translate_float_rect(float_rect_t rect, float x_offset, float y_offset)
-{
-	return rectf(
-		rect.x1 + x_offset, rect.y1 + y_offset,
-		rect.x2 + x_offset, rect.y2 + y_offset);
-}
-
 rect_t
-zoom_rect(rect_t in_rect, double scale_x, double scale_y)
+rect_zoom(rect_t in_rect, double scale_x, double scale_y)
 {
-	return rect(
+	return mk_rect(
 		in_rect.x1 * scale_x, in_rect.y1 * scale_y,
 		in_rect.x2 * scale_x, in_rect.y2 * scale_y);
 }
 
-rect_t
-rect_intersect(rect_t rect1, rect_t rect2)
+rectf_t
+mk_rectf(float x1, float y1, float x2, float y2)
 {
-	int x1, x2;
-	int y1, y2;
-	
-	x1 = rect1.x1 > rect2.x1 ? rect1.x1 : rect2.x1;
-	y1 = rect1.y1 > rect2.y1 ? rect1.y1 : rect2.y1;
-	x2 = rect1.x2 < rect2.x2 ? rect1.x2 : rect2.x2;
-	y2 = rect1.y2 < rect2.y2 ? rect1.y2 : rect2.y2;
-	return rect(x1, y1, x2, y2);
+	rectf_t rectangle;
+
+	rectangle.x1 = x1;
+	rectangle.y1 = y1;
+	rectangle.x2 = x2;
+	rectangle.y2 = y2;
+	return rectangle;
+}
+
+rectf_t
+rectf_scale(rectf_t in_rect, float x_scale, float y_scale)
+{
+	return mk_rectf(
+		in_rect.x1 * x_scale, in_rect.y1 * y_scale,
+		in_rect.x2 * x_scale, in_rect.y2 * y_scale);
+}
+
+rectf_t
+rectf_translate(rectf_t rect, float x_offset, float y_offset)
+{
+	return mk_rectf(
+		rect.x1 + x_offset, rect.y1 + y_offset,
+		rect.x2 + x_offset, rect.y2 + y_offset);
+}
+
+size2_t
+mk_size2(int width, int height)
+{
+	size2_t size;
+
+	size.width = width;
+	size.height = height;
+	return size;
 }

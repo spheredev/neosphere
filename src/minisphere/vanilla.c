@@ -1309,10 +1309,10 @@ jsal_require_sphere_color(int index)
 	return *color_ptr;
 }
 
-colormatrix_t
+color_fx_t
 jsal_require_sphere_colormatrix(int index)
 {
-	colormatrix_t matrix;
+	color_fx_t matrix;
 
 	jsal_require_class_obj(index, SV1_COLOR_MATRIX);
 	jsal_get_prop_string(index, "rn"); matrix.rn = jsal_get_int(-1); jsal_pop(1);
@@ -1521,7 +1521,7 @@ js_AddZone(int num_args, bool is_ctor, intptr_t magic)
 	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
 		jsal_error(JS_RANGE_ERROR, "X/Y out of bounds (%d,%d)", x, y);
 
-	if (!map_add_zone(rect(x, y, width, height), layer, script, 8))
+	if (!map_add_zone(mk_rect(x, y, width, height), layer, script, 8))
 		jsal_error(JS_ERROR, "Couldn't allocate new zone");
 	jsal_push_number(map_num_zones() - 1);
 	script_unref(script);
@@ -1875,7 +1875,7 @@ js_CreateColor(int num_args, bool is_ctor, intptr_t magic)
 	alpha = alpha < 0 ? 0 : alpha > 255 ? 255 : alpha;
 
 	// construct a Color object
-	jsal_push_sphere_color(color_new(red, green, blue, alpha));
+	jsal_push_sphere_color(mk_color(red, green, blue, alpha));
 	return true;
 }
 
@@ -1978,7 +1978,7 @@ js_CreateSpriteset(int num_args, bool is_ctor, intptr_t magic)
 	num_frames = jsal_to_int(4);
 
 	spriteset = spriteset_new();
-	spriteset_set_base(spriteset, rect(0, 0, width, height));
+	spriteset_set_base(spriteset, mk_rect(0, 0, width, height));
 	image = image_new(width, height);
 	for (i = 0; i < num_images; ++i) {
 		// use the same image in all slots to save memory.  this works because
@@ -2037,7 +2037,7 @@ js_CreateSurface(int num_args, bool is_ctor, intptr_t magic)
 
 	width = jsal_to_int(0);
 	height = jsal_to_int(1);
-	fill_color = num_args >= 3 ? jsal_require_sphere_color(2) : color_new(0, 0, 0, 0);
+	fill_color = num_args >= 3 ? jsal_require_sphere_color(2) : mk_color(0, 0, 0, 0);
 
 	if (!(image = image_new(width, height)))
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
@@ -4624,7 +4624,7 @@ js_MapToScreenX(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "Map engine is not running");
-	offset = map_xy_from_screen(point2(0, 0));
+	offset = map_xy_from_screen(mk_point2(0, 0));
 	jsal_push_int(x - offset.x);
 	return true;
 }
@@ -4641,7 +4641,7 @@ js_MapToScreenY(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "Map engine is not running");
-	offset = map_xy_from_screen(point2(0, 0));
+	offset = map_xy_from_screen(mk_point2(0, 0));
 	jsal_push_int(y - offset.y);
 	return true;
 }
@@ -5131,7 +5131,7 @@ js_ScreenToMapX(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "Map engine is not running");
-	map_xy = map_xy_from_screen(point2(x, 0));
+	map_xy = map_xy_from_screen(mk_point2(x, 0));
 	jsal_push_int(map_xy.x);
 	return true;
 }
@@ -5148,7 +5148,7 @@ js_ScreenToMapY(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "Map engine is not running");
-	map_xy = map_xy_from_screen(point2(0, y));
+	map_xy = map_xy_from_screen(mk_point2(0, y));
 	jsal_push_int(map_xy.y);
 	return true;
 }
@@ -5164,7 +5164,7 @@ js_SetCameraX(int num_args, bool is_ctor, intptr_t magic)
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "Map engine is not running");
 	position = map_get_camera_xy();
-	map_set_camera_xy(point2(new_x, position.y));
+	map_set_camera_xy(mk_point2(new_x, position.y));
 	return false;
 }
 
@@ -5179,7 +5179,7 @@ js_SetCameraY(int num_args, bool is_ctor, intptr_t magic)
 	if (!map_engine_running())
 		jsal_error(JS_ERROR, "Map engine is not running");
 	position = map_get_camera_xy();
-	map_set_camera_xy(point2(position.x, new_y));
+	map_set_camera_xy(mk_point2(position.x, new_y));
 	return false;
 }
 
@@ -5197,7 +5197,7 @@ js_SetClippingRectangle(int num_args, bool is_ctor, intptr_t magic)
 	height = jsal_to_int(3);
 
 	image_set_scissor(screen_backbuffer(g_screen),
-		rect(x, y, x + width, y + height));
+		mk_rect(x, y, x + width, y + height));
 	return false;
 }
 
@@ -5656,7 +5656,7 @@ js_SetPersonOffsetX(int num_args, bool is_ctor, intptr_t magic)
 	if (!(person = map_person_by_name(name)))
 		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	offset = person_get_offset(person);
-	person_set_offset(person, point2(new_x, offset.y));
+	person_set_offset(person, mk_point2(new_x, offset.y));
 	return false;
 }
 
@@ -5674,7 +5674,7 @@ js_SetPersonOffsetY(int num_args, bool is_ctor, intptr_t magic)
 	if (!(person = map_person_by_name(name)))
 		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	offset = person_get_offset(person);
-	person_set_offset(person, point2(offset.x, new_y));
+	person_set_offset(person, mk_point2(offset.x, new_y));
 	return false;
 }
 
@@ -6177,7 +6177,7 @@ js_SetZoneDimensions(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "invalid zone size");
 	if (x < bounds.x1 || y < bounds.y1 || x + width > bounds.x2 || y + height > bounds.y2)
 		jsal_error(JS_RANGE_ERROR, "zone area out of bounds");
-	zone_set_bounds(zone_index, rect(x, y, x + width, y + height));
+	zone_set_bounds(zone_index, mk_rect(x, y, x + width, y + height));
 	return false;
 }
 
@@ -6582,7 +6582,7 @@ js_ColorMatrix_apply(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t color = jsal_require_sphere_color(0);
 
-	colormatrix_t matrix;
+	color_fx_t matrix;
 
 	jsal_push_this();
 	matrix = jsal_require_sphere_colormatrix(-1);
@@ -6798,7 +6798,7 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 	backbuffer = screen_backbuffer(g_screen);
 	old_clip_box = image_get_scissor(backbuffer);
 	image_set_scissor(backbuffer, 
-		rect_intersect(rect(x, y, x + width, y + height), old_clip_box));
+		rect_intersect(mk_rect(x, y, x + width, y + height), old_clip_box));
 
 	wraptext = wraptext_new(text, font, width);
 	line_height = font_height(font);
@@ -8077,7 +8077,7 @@ js_Surface_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_applyColorFX(int num_args, bool is_ctor, intptr_t magic)
 {
-	colormatrix_t matrix;
+	color_fx_t matrix;
 	int           height;
 	int           width;
 	int           x;
@@ -8095,7 +8095,7 @@ js_Surface_applyColorFX(int num_args, bool is_ctor, intptr_t magic)
 
 	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
 		jsal_error(JS_RANGE_ERROR, "FX area of effect out of bounds");
-	if (!image_apply_colormat(image, matrix, x, y, width, height))
+	if (!image_apply_color_fx(image, matrix, x, y, width, height))
 		jsal_error(JS_ERROR, "couldn't apply color FX");
 	return false;
 }
@@ -8107,10 +8107,10 @@ js_Surface_applyColorFX4(int num_args, bool is_ctor, intptr_t magic)
 	int y = jsal_to_int(1);
 	int w = jsal_to_int(2);
 	int h = jsal_to_int(3);
-	colormatrix_t ul_mat = jsal_require_sphere_colormatrix(4);
-	colormatrix_t ur_mat = jsal_require_sphere_colormatrix(5);
-	colormatrix_t ll_mat = jsal_require_sphere_colormatrix(6);
-	colormatrix_t lr_mat = jsal_require_sphere_colormatrix(7);
+	color_fx_t ul_mat = jsal_require_sphere_colormatrix(4);
+	color_fx_t ur_mat = jsal_require_sphere_colormatrix(5);
+	color_fx_t ll_mat = jsal_require_sphere_colormatrix(6);
+	color_fx_t lr_mat = jsal_require_sphere_colormatrix(7);
 
 	image_t* image;
 
@@ -8119,7 +8119,7 @@ js_Surface_applyColorFX4(int num_args, bool is_ctor, intptr_t magic)
 
 	if (x < 0 || y < 0 || x + w > image_width(image) || y + h > image_height(image))
 		jsal_error(JS_RANGE_ERROR, "FX area of effect out of bounds");
-	if (!image_apply_colormat_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
+	if (!image_apply_color_fx_4(image, ul_mat, ur_mat, ll_mat, lr_mat, x, y, w, h))
 		jsal_error(JS_ERROR, "couldn't apply color FX");
 	return false;
 }

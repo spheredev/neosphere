@@ -1550,7 +1550,7 @@ js_Color_get_Color(int num_args, bool is_ctor, intptr_t magic)
 	const struct x11_color* data;
 
 	data = &COLORS[magic];
-	jsal_pegasus_push_color(color_new(data->r, data->g, data->b, data->a), false);
+	jsal_pegasus_push_color(mk_color(data->r, data->g, data->b, data->a), false);
 	return true;
 }
 
@@ -1607,7 +1607,7 @@ js_Color_of(int num_args, bool is_ctor, intptr_t magic)
 	p = &COLORS[0];
 	while (p->name != NULL) {
 		if (strcasecmp(name, p->name) == 0) {
-			jsal_pegasus_push_color(color_new(p->r, p->g, p->b, p->a), false);
+			jsal_pegasus_push_color(mk_color(p->r, p->g, p->b, p->a), false);
 			return true;
 		}
 		++p;
@@ -1649,7 +1649,7 @@ js_new_Color(int num_args, bool is_ctor, intptr_t magic)
 	blue = (blue < 0.0 ? 0.0 : blue > 1.0 ? 1.0 : blue) * 255.0f;
 	alpha = (alpha < 0.0 ? 0.0 : alpha > 1.0 ? 1.0 : alpha) * 255.0f;
 
-	color = color_new(red, green, blue, alpha);
+	color = mk_color(red, green, blue, alpha);
 	jsal_pegasus_push_color(color, true);
 	return true;
 }
@@ -2452,7 +2452,7 @@ js_Font_drawText(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_require_int(2);
 	text = jsal_to_string(3);
 	color = num_args >= 5 ? jsal_pegasus_require_color(4)
-		: color_new(255, 255, 255, 255);
+		: mk_color(255, 255, 255, 255);
 	if (num_args >= 6)
 		width = jsal_require_int(5);
 
@@ -4564,7 +4564,7 @@ js_Surface_clipTo(int num_args, bool is_ctor, intptr_t magic)
 	width = jsal_require_int(2);
 	height = jsal_require_int(3);
 
-	image_set_scissor(image, rect(x, y, x + width, y + height));
+	image_set_scissor(image, mk_rect(x, y, x + width, y + height));
 	return false;
 }
 
@@ -4795,7 +4795,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		width = jsal_require_int(0);
 		height = jsal_require_int(1);
 		fill_color = num_args >= 3 ? jsal_pegasus_require_color(2)
-			: color_new(0, 0, 0, 0);
+			: mk_color(0, 0, 0, 0);
 		if (!(image = image_new(width, height)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		image_fill(image, fill_color);
@@ -5200,7 +5200,7 @@ js_new_VertexList(int num_args, bool is_ctor, intptr_t magic)
 			vertex.v = 0;
 		vertex.color = jsal_get_prop_key(stack_idx, s_key_color)
 			? jsal_pegasus_require_color(-1)
-			: color_new(255, 255, 255, 255);
+			: mk_color(255, 255, 255, 255);
 		vbo_add_vertex(vbo, vertex);
 		jsal_pop(7);
 	}

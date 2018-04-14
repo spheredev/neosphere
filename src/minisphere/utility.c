@@ -272,7 +272,7 @@ fread_rect16(file_t* file, rect_t* out_rect)
 		return false;
 	if (file_read(file, &y2, 1, 2) != 1)
 		return false;
-	*out_rect = rect(x1, y1, x2, y2);
+	*out_rect = mk_rect(x1, y1, x2, y2);
 	return true;
 }
 
@@ -292,6 +292,6 @@ fread_rect32(file_t* file, rect_t* out_rect)
 		return false;
 	if (file_read(file, &y2, 1, 4) != 1)
 		return false;
-	*out_rect = rect(x1, y1, x2, y2);
+	*out_rect = mk_rect(x1, y1, x2, y2);
 	return true;
 }

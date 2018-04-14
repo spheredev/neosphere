@@ -58,36 +58,37 @@ struct rect
 	int y2;
 } rect_t;
 
-typedef struct size2
-{
-	int width;
-	int height;
-} size2_t;
-
 typedef
-struct float_rect
+struct rectf
 {
 	float x1;
 	float y1;
 	float x2;
 	float y2;
-} float_rect_t;
+} rectf_t;
 
-point2_t     point2               (int x, int y);
-point3_t     point3               (int x, int y, int z);
-rect_t       rect                 (int x1, int y1, int x2, int y2);
-float_rect_t rectf                (float x1, float y1, float x2, float y2);
-size2_t      size2                (int width, int height);
-bool         do_lines_intersect   (rect_t a, rect_t b);
-bool         do_rects_intersect   (rect_t a, rect_t b);
-bool         is_point_in_rect     (int x, int y, rect_t bounds);
-void         normalize_rect       (rect_t* inout_rect);
-float_rect_t scale_float_rect     (float_rect_t rect, float x_scale, float y_scale);
-rect_t       translate_rect       (rect_t rect, int x_offset, int y_offset);
-float_rect_t translate_float_rect (float_rect_t rect, float x_offset, float y_offset);
-rect_t       zoom_rect            (rect_t rect, double scale_x, double scale_y);
+typedef
+struct size2
+{
+	int width;
+	int height;
+} size2_t;
 
-rect_t rect_intersect (rect_t rect1, rect_t rect2);
+bool     do_lines_overlap   (rect_t a, rect_t b);
+bool     do_rects_overlap   (rect_t a, rect_t b);
+bool     is_point_in_rect   (int x, int y, rect_t bounds);
+
+point2_t mk_point2          (int x, int y);
+point3_t mk_point3          (int x, int y, int z);
+rect_t   mk_rect            (int x1, int y1, int x2, int y2);
+rect_t   rect_intersect     (rect_t rect1, rect_t rect2);
+void     rect_normalize     (rect_t* inout_rect);
+rect_t   rect_translate     (rect_t rect, int x_offset, int y_offset);
+rect_t   rect_zoom          (rect_t rect, double scale_x, double scale_y);
+rectf_t  mk_rectf           (float x1, float y1, float x2, float y2);
+rectf_t  rectf_scale        (rectf_t rect, float x_scale, float y_scale);
+rectf_t  rectf_translate    (rectf_t rect, float x_offset, float y_offset);
+size2_t  mk_size2           (int width, int height);
 
 
 #endif // SPHERE__GEOMETRY_H__INCLUDED

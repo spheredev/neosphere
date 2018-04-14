@@ -107,7 +107,7 @@ winstyle_load(const char* filename)
 	}
 	file_close(file);
 	winstyle->bg_style = rws.background_mode;
-	winstyle->color_mask = color_new(255, 255, 255, 255);
+	winstyle->color_mask = mk_color(255, 255, 255, 255);
 	for (i = 0; i < 4; ++i)
 		winstyle->gradient[i] = rws.corner_colors[i];
 	return winstyle_ref(winstyle);

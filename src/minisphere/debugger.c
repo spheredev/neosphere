@@ -78,7 +78,7 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 	}
 
 	s_banner_text = lstr_new("debugger");
-	s_banner_color = color_new(192, 192, 192, 255);
+	s_banner_color = mk_color(192, 192, 192, 255);
 	s_sources = vector_new(sizeof(struct source));
 
 	// load the source map, if one is available
@@ -594,7 +594,7 @@ process_message(js_step_t* out_step)
 		break;
 	case KI_REQ_WATERMARK:
 		s_banner_text = lstr_new(ki_message_string(request, 1));
-		s_banner_color = color_new(
+		s_banner_color = mk_color(
 			ki_message_int(request, 2),
 			ki_message_int(request, 3),
 			ki_message_int(request, 4),

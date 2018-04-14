@@ -294,7 +294,7 @@ main(int argc, char* argv[])
 #if defined(MINISPHERE_SPHERUN)
 	if (ssj_mode == SSJ_ACTIVE) {
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
-		screen_draw_status(g_screen, "waiting for debugger...", color_new(255, 255, 255, 255));
+		screen_draw_status(g_screen, "waiting for debugger...", mk_color(255, 255, 255, 255));
 		al_flip_display();
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 	}
@@ -929,7 +929,7 @@ show_error_screen(const char* message)
 	screen_unskip_frame(g_screen);
 	image_render_to(screen_backbuffer(g_screen), NULL);
 	shader_use(NULL, true);
-	image_set_scissor(screen_backbuffer(g_screen), rect(0, 0, resolution.width, resolution.height));
+	image_set_scissor(screen_backbuffer(g_screen), mk_rect(0, 0, resolution.width, resolution.height));
 	projection = transform_new();
 	transform_orthographic(projection, 0, 0, resolution.width, resolution.height, -1.0f, 1.0f);
 	image_set_transform(screen_backbuffer(g_screen), projection);
@@ -939,25 +939,25 @@ show_error_screen(const char* message)
 	frames_till_close = 30;
 	while (!is_finished) {
 		al_draw_filled_rounded_rectangle(32, 48, resolution.width - 32, resolution.height - 32, 5, 5, al_map_rgba(48, 16, 16, 255));
-		font_set_mask(font, color_new(0, 0, 0, 255));
+		font_set_mask(font, mk_color(0, 0, 0, 255));
 		font_draw_text(font, resolution.width / 2 + 1, 11, TEXT_ALIGN_CENTER, title);
 		font_draw_text(font, resolution.width / 2 + 1, 23, TEXT_ALIGN_CENTER, subtitle);
-		font_set_mask(font, color_new(192, 192, 192, 255));
+		font_set_mask(font, mk_color(192, 192, 192, 255));
 		font_draw_text(font, resolution.width / 2, 10, TEXT_ALIGN_CENTER, title);
 		font_draw_text(font, resolution.width / 2, 22, TEXT_ALIGN_CENTER, subtitle);
 		for (i = 0; i < num_lines; ++i) {
 			line_text = wraptext_line(error_info, i);
-			font_set_mask(font, color_new(16, 0, 0, 255));
+			font_set_mask(font, mk_color(16, 0, 0, 255));
 			font_draw_text(font,
 				resolution.width / 2 + 1, 59 + i * font_height(font),
 				TEXT_ALIGN_CENTER, line_text);
-			font_set_mask(font, color_new(192, 192, 192, 255));
+			font_set_mask(font, mk_color(192, 192, 192, 255));
 			font_draw_text(font,
 				resolution.width / 2, 58 + i * font_height(font),
 				TEXT_ALIGN_CENTER, line_text);
 		}
 		if (frames_till_close <= 0) {
-			font_set_mask(font, color_new(255, 255, 192, 255));
+			font_set_mask(font, mk_color(255, 255, 192, 255));
 			font_draw_text(font,
 				resolution.width / 2, resolution.height - 10 - font_height(font),
 				TEXT_ALIGN_CENTER,

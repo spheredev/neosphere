@@ -40,6 +40,7 @@
 #include "geometry.h"
 #include "image.h"
 #include "input.h"
+#include "jsal.h"
 #include "obstruction.h"
 #include "script.h"
 #include "spriteset.h"
@@ -316,7 +317,7 @@ map_engine_init(void)
 	s_deferreds = NULL;
 	s_talk_button = 0;
 	s_is_map_running = false;
-	s_color_mask = color_new(0, 0, 0, 0);
+	s_color_mask = mk_color(0, 0, 0, 0);
 	s_on_trigger = NULL;
 
 	s_num_persons = s_max_persons = 0;
@@ -639,7 +640,7 @@ map_engine_start(const char* filename, int framerate)
 {
 	s_is_map_running = true;
 	s_exiting = false;
-	s_color_mask = color_new(0, 0, 0, 0);
+	s_color_mask = mk_color(0, 0, 0, 0);
 	s_fade_color_to = s_fade_color_from = s_color_mask;
 	s_fade_progress = s_fade_frames = 0;
 	al_clear_to_color(al_map_rgba(0, 0, 0, 255));
@@ -733,7 +734,7 @@ point3_t
 map_origin(void)
 {
 	return s_map != NULL ? s_map->origin
-		: point3(0, 0, 0);
+		: mk_point3(0, 0, 0);
 }
 
 const char*
@@ -811,7 +812,7 @@ map_xy_from_screen(point2_t screen_xy)
 	x = screen_xy.x;
 	y = screen_xy.y;
 	map_screen_to_map(s_camera_x, s_camera_y, &x, &y);
-	return point2(x, y);
+	return mk_point2(x, y);
 }
 
 int
@@ -834,7 +835,7 @@ map_zone_at(int x, int y, int layer, int which)
 point2_t
 map_get_camera_xy(void)
 {
-	return point2(s_camera_x, s_camera_y);
+	return mk_point2(s_camera_x, s_camera_y);
 }
 
 void
@@ -949,7 +950,7 @@ layer_size(int layer)
 	struct map_layer* layer_data;
 
 	layer_data = &s_map->layers[layer];
-	return size2(layer_data->width, layer_data->height);
+	return mk_size2(layer_data->width, layer_data->height);
 }
 
 color_t
@@ -1126,7 +1127,7 @@ person_new(const char* name, spriteset_t* spriteset, bool is_persistent, script_
 	person->speed_x = 1.0;
 	person->speed_y = 1.0;
 	person->anim_frames = spriteset_frame_delay(person->sprite, person->direction, 0);
-	person->mask = color_new(255, 255, 255, 255);
+	person->mask = mk_color(255, 255, 255, 255);
 	person->scale_x = person->scale_y = 1.0;
 	person->scripts[PERSON_SCRIPT_ON_CREATE] = create_script;
 	person_activate(person, PERSON_SCRIPT_ON_CREATE, NULL, true);
@@ -1174,7 +1175,7 @@ person_base(const person_t* person)
 	double x;
 	double y;
 
-	base_rect = zoom_rect(spriteset_get_base(person->sprite), person->scale_x, person->scale_y);
+	base_rect = rect_zoom(spriteset_get_base(person->sprite), person->scale_x, person->scale_y);
 	person_get_xy(person, &x, &y, true);
 	base_x = x - (base_rect.x1 + (base_rect.x2 - base_rect.x1) / 2);
 	base_y = y - (base_rect.y1 + (base_rect.y2 - base_rect.y1) / 2);
@@ -1260,7 +1261,7 @@ person_obstructed_at(const person_t* person, double x, double y, person_t** out_
 
 	map_normalize_xy(&x, &y, person->layer);
 	person_get_xyz(person, &cur_x, &cur_y, &layer, true);
-	my_base = translate_rect(person_base(person), x - cur_x, y - cur_y);
+	my_base = rect_translate(person_base(person), x - cur_x, y - cur_y);
 	if (out_obstructing_person != NULL)
 		*out_obstructing_person = NULL;
 	if (out_tile_index != NULL)
@@ -1276,7 +1277,7 @@ person_obstructed_at(const person_t* person, double x, double y, person_t** out_
 			if (person_following(s_persons[i], person))
 				continue;  // ignore own followers
 			base = person_base(s_persons[i]);
-			if (do_rects_intersect(my_base, base) && !person_ignored_by(person, s_persons[i])) {
+			if (do_rects_overlap(my_base, base) && !person_ignored_by(person, s_persons[i])) {
 				is_obstructed = true;
 				if (out_obstructing_person)
 					*out_obstructing_person = s_persons[i];
@@ -1301,7 +1302,7 @@ person_obstructed_at(const person_t* person, double x, double y, person_t** out_
 		area.x2 = area.x1 + (my_base.x2 - my_base.x1) / tile_w + 2;
 		area.y2 = area.y1 + (my_base.y2 - my_base.y1) / tile_h + 2;
 		for (i_x = area.x1; i_x < area.x2; ++i_x) for (i_y = area.y1; i_y < area.y2; ++i_y) {
-			base = translate_rect(my_base, -(i_x * tile_w), -(i_y * tile_h));
+			base = rect_translate(my_base, -(i_x * tile_w), -(i_y * tile_h));
 			obsmap = tileset_obsmap(tileset, map_tile_at(i_x, i_y, layer));
 			if (obsmap != NULL && obsmap_test_rect(obsmap, base)) {
 				is_obstructed = true;
@@ -1369,7 +1370,7 @@ person_get_leader(const person_t* person)
 point2_t
 person_get_offset(const person_t* person)
 {
-	return point2(person->x_offset, person->y_offset);
+	return mk_point2(person->x_offset, person->y_offset);
 }
 
 const char*
@@ -1835,7 +1836,7 @@ zone_set_bounds(int zone_index, rect_t bounds)
 	struct map_zone* zone;
 
 	zone = vector_get(s_map->zones, zone_index);
-	normalize_rect(&bounds);
+	rect_normalize(&bounds);
 	zone->bounds = bounds;
 }
 
@@ -2328,7 +2329,7 @@ load_map(const char* filename)
 			layer->is_parallax = (layer_hdr.flags & 2) != 0x0;
 			layer->is_reflective = layer_hdr.is_reflective;
 			layer->is_visible = (layer_hdr.flags & 1) == 0x0;
-			layer->color_mask = color_new(255, 255, 255, 255);
+			layer->color_mask = mk_color(255, 255, 255, 255);
 			layer->width = layer_hdr.width;
 			layer->height = layer_hdr.height;
 			layer->autoscroll_x = layer->is_parallax ? layer_hdr.scrolling_x : 0.0;
@@ -2414,11 +2415,11 @@ load_map(const char* filename)
 			if (zone_hdr.layer < 0 || zone_hdr.layer >= rmp.num_layers)
 				zone_hdr.layer = 0;
 			zone.layer = zone_hdr.layer;
-			zone.bounds = rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
+			zone.bounds = mk_rect(zone_hdr.x1, zone_hdr.y1, zone_hdr.x2, zone_hdr.y2);
 			zone.interval = zone_hdr.interval;
 			zone.steps_left = 0;
 			zone.script = script_new(script, "%s/zone%d", filename, vector_len(map->zones));
-			normalize_rect(&zone.bounds);
+			rect_normalize(&zone.bounds);
 			if (!vector_push(map->zones, &zone))
 				return false;
 			lstr_free(script);

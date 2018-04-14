@@ -130,7 +130,7 @@ game_open(const char* game_path)
 		game->name = lstr_new(path_filename(path));
 		game->author = lstr_new("Author Unknown");
 		game->summary = lstr_new(path_cstr(path));
-		game->resolution = size2(320, 240);
+		game->resolution = mk_size2(320, 240);
 		game->script_path = path_insert_hop(path_new(path_filename(path)), 0, "@");
 		game->fullscreen = false;
 		jsal_push_new_object();
@@ -176,7 +176,7 @@ game_open(const char* game_path)
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			game->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
-			game->resolution = size2(
+			game->resolution = mk_size2(
 				kev_read_float(sgm_file, "screen_width", 320),
 				kev_read_float(sgm_file, "screen_height", 240));
 			game->script_path = game_full_path(game, kev_read_string(sgm_file, "script", "main.js"), "@/scripts", true);
@@ -878,7 +878,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	if (!jsal_get_prop_string(-2, "resolution") || !jsal_is_string(-1))
 		goto on_error;
 	sscanf(jsal_get_string(-1), "%dx%d", &res_x, &res_y);
-	game->resolution = size2(res_x, res_y);
+	game->resolution = mk_size2(res_x, res_y);
 
 	if (!jsal_get_prop_string(-3, "main") || !jsal_is_string(-1))
 		goto on_error;

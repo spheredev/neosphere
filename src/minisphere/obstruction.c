@@ -95,7 +95,7 @@ obsmap_test_line(const obsmap_t* obsmap, rect_t line)
 	int i;
 
 	for (i = 0; i < obsmap->num_lines; ++i) {
-		if (do_lines_intersect(line, obsmap->lines[i]))
+		if (do_lines_overlap(line, obsmap->lines[i]))
 			return true;
 	}
 	return false;
@@ -106,8 +106,8 @@ obsmap_test_rect(const obsmap_t* obsmap, rect_t rectangle)
 {
 	// this treats 'rect' as hollow, which differs from the usual treatment of rectangles
 	// in the engine but matches the behavior of Sphere 1.x.
-	return obsmap_test_line(obsmap, rect(rectangle.x1, rectangle.y1, rectangle.x2, rectangle.y1))
-		|| obsmap_test_line(obsmap, rect(rectangle.x2, rectangle.y1, rectangle.x2, rectangle.y2))
-		|| obsmap_test_line(obsmap, rect(rectangle.x1, rectangle.y2, rectangle.x2, rectangle.y2))
-		|| obsmap_test_line(obsmap, rect(rectangle.x1, rectangle.y1, rectangle.x1, rectangle.y2));
+	return obsmap_test_line(obsmap, mk_rect(rectangle.x1, rectangle.y1, rectangle.x2, rectangle.y1))
+		|| obsmap_test_line(obsmap, mk_rect(rectangle.x2, rectangle.y1, rectangle.x2, rectangle.y2))
+		|| obsmap_test_line(obsmap, mk_rect(rectangle.x1, rectangle.y2, rectangle.x2, rectangle.y2))
+		|| obsmap_test_line(obsmap, mk_rect(rectangle.x1, rectangle.y1, rectangle.x1, rectangle.y2));
 }

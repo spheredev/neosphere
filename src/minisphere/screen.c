@@ -163,7 +163,7 @@ screen_backbuffer(const screen_t* it)
 rect_t
 screen_bounds(const screen_t* it)
 {
-	return rect(0, 0, it->x_size, it->y_size);
+	return mk_rect(0, 0, it->x_size, it->y_size);
 }
 
 ALLEGRO_DISPLAY*
@@ -175,7 +175,7 @@ screen_display(const screen_t* it)
 size2_t
 screen_size(const screen_t* it)
 {
-	return size2(it->x_size, it->y_size);
+	return mk_size2(it->x_size, it->y_size);
 }
 
 bool
@@ -260,7 +260,7 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 	al_set_target_backbuffer(it->display);
 	al_draw_filled_rounded_rectangle(bounds.x1, bounds.y1, bounds.x2, bounds.y2, 4, 4,
 		al_map_rgba(16, 16, 16, 192));
-	font_set_mask(it->font, color_new(0, 0, 0, 255));
+	font_set_mask(it->font, mk_color(0, 0, 0, 255));
 	font_draw_text(it->font, (bounds.x1 + bounds.x2) / 2 + 1,
 		bounds.y1 + 6, TEXT_ALIGN_CENTER, text);
 	font_set_mask(it->font, color);
@@ -351,9 +351,9 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			x = screen_cx - it->x_offset - 108;
 			y = screen_cy - it->y_offset - 24;
 			al_draw_filled_rounded_rectangle(x, y, x + 100, y + 16, 4, 4, al_map_rgba(16, 16, 16, 192));
-			font_set_mask(it->font, color_new(0, 0, 0, 255));
+			font_set_mask(it->font, mk_color(0, 0, 0, 255));
 			font_draw_text(it->font, x + 51, y + 3, TEXT_ALIGN_CENTER, fps_text);
-			font_set_mask(it->font, color_new(255, 255, 255, 255));
+			font_set_mask(it->font, mk_color(255, 255, 255, 255));
 			font_draw_text(it->font, x + 50, y + 2, TEXT_ALIGN_CENTER, fps_text);
 		}
 		al_set_target_bitmap(old_target);
@@ -386,7 +386,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	if (!it->skipping_frame && need_clear) {
 		// disable clipping so we can clear the whole backbuffer.
 		scissor = image_get_scissor(it->backbuffer);
-		image_set_scissor(it->backbuffer, rect(0, 0, it->x_size, it->y_size));
+		image_set_scissor(it->backbuffer, mk_rect(0, 0, it->x_size, it->y_size));
 		image_render_to(it->backbuffer, NULL);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		image_set_scissor(it->backbuffer, scissor);
