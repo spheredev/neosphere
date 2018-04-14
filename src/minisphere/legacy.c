@@ -33,12 +33,7 @@
 #include "minisphere.h"
 #include "legacy.h"
 
-#include "font.h"
-#include "game.h"
-#include "image.h"
-#include "kev_file.h"
 #include "sockets.h"
-#include "windowstyle.h"
 
 struct socket_v1
 {

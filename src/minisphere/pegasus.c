@@ -4848,34 +4848,21 @@ js_Texture_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Texture_download(int num_args, bool is_ctor, intptr_t magic)
 {
-	void*          buffer;
-	int            height;
-	image_t*       image;
-	const color_t* in_ptr;
-	image_lock_t*  lock;
-	color_t*       out_ptr;
-	int            width;
-
-	int y;
+	void*    buffer;
+	int      height;
+	image_t* image;
+	int      width;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	if (image == screen_backbuffer(g_screen))
-		jsal_error(JS_RANGE_ERROR, "Cannot upload directly to the backbuffer");
+		jsal_error(JS_RANGE_ERROR, "Cannot download directly from the backbuffer");
 	width = image_width(image);
 	height = image_height(image);
-	if (!(lock = image_lock(image, false, true)))
-		jsal_error(JS_ERROR, "Couldn't download from GPU texture");
 	jsal_push_new_buffer(JS_UINT8ARRAY_CLAMPED, width * height * sizeof(color_t), &buffer);
-	in_ptr = lock->pixels;
-	out_ptr = buffer;
-	for (y = 0; y < height; ++y) {
-		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
-		out_ptr += width;
-		in_ptr += lock->pitch;
-	}
-	image_unlock(image, lock);
+	if (!image_download(image, buffer))
+		jsal_error(JS_ERROR, "Couldn't download texture from GPU");
 	return true;
 }
 
@@ -4899,7 +4886,7 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 	if (buffer_size < width * height * sizeof(color_t))
 		jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
 	if (!image_upload(image, buffer))
-		jsal_error(JS_ERROR, "Couldn't upload to GPU texture");
+		jsal_error(JS_ERROR, "Couldn't upload data to GPU texture");
 	return false;
 }
 

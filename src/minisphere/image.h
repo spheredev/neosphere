@@ -83,6 +83,7 @@ bool            image_apply_color_fx     (image_t* it, color_fx_t matrix, int x,
 bool            image_apply_color_fx_4   (image_t* it, color_fx_t ul_mat, color_fx_t ur_mat, color_fx_t ll_mat, color_fx_t lr_mat, int x, int y, int width, int height);
 bool            image_apply_lookup       (image_t* it, int x, int y, int width, int height, uint8_t red_lu[256], uint8_t green_lu[256], uint8_t blue_lu[256], uint8_t alpha_lu[256]);
 void            image_blit               (image_t* it, image_t* target_image, int x, int y);
+bool            image_download           (image_t* it, color_t* buffer);
 void            image_draw               (image_t* it, int x, int y);
 void            image_draw_masked        (image_t* it, color_t mask, int x, int y);
 void            image_draw_scaled        (image_t* it, int x, int y, int width, int height);

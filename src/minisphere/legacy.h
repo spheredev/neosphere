@@ -33,11 +33,6 @@
 #ifndef SPHERE__LEGACY_H__INCLUDED
 #define SPHERE__LEGACY_H__INCLUDED
 
-#include "font.h"
-#include "game.h"
-#include "image.h"
-#include "windowstyle.h"
-
 typedef struct socket_v1 socket_v1_t;
 
 socket_v1_t*   socket_v1_new_client (const char* hostname, int port);

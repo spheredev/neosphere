@@ -387,6 +387,35 @@ image_blit(image_t* it, image_t* target_image, int x, int y)
 	al_set_target_bitmap(old_target);
 }
 
+bool
+image_download(image_t* it, color_t* buffer)
+{
+	int            height;
+	const color_t* in_ptr;
+	image_lock_t*  lock;
+	color_t*       out_ptr;
+	int            width;
+
+	int y;
+
+	width = image_width(it);
+	height = image_height(it);
+	if (!(lock = image_lock(it, false, true)))
+		goto on_error;
+	in_ptr = lock->pixels;
+	out_ptr = buffer;
+	for (y = 0; y < height; ++y) {
+		memcpy(out_ptr, in_ptr, width * sizeof(color_t));
+		out_ptr += width;
+		in_ptr += lock->pitch;
+	}
+	image_unlock(it, lock);
+	return true;
+
+on_error:
+	return false;
+}
+
 void
 image_draw(image_t* it, int x, int y)
 {

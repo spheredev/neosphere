@@ -36,9 +36,9 @@
 struct obsmap
 {
 	unsigned int id;
-	int          num_lines;
+	rect_t*      lines;
 	int          max_lines;
-	rect_t       *lines;
+	int          num_lines;
 };
 
 static unsigned int s_next_obsmap_id = 0;
