@@ -87,4 +87,7 @@ rect_t       translate_rect       (rect_t rect, int x_offset, int y_offset);
 float_rect_t translate_float_rect (float_rect_t rect, float x_offset, float y_offset);
 rect_t       zoom_rect            (rect_t rect, double scale_x, double scale_y);
 
+rect_t rect_intersect (rect_t rect1, rect_t rect2);
+
+
 #endif // SPHERE__GEOMETRY_H__INCLUDED

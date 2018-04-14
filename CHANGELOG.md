@@ -29,9 +29,10 @@ v5.2.0 - TBD
   new purpose.
 * Removes the pointless `--no-sleep` command-line option.
 * Removes the `Image` class from the bundled Sphere Runtime.
+* Fixes an internal memory leak mostly affecting `Dispatch` job execution.
+* Fixes a bug where Sphere v1 `Font#drawTextBox` output isn't properly clipped.
 * Fixes a bug where calling Sphere v1 exit functions or closing the game window
   can prevent promise reactions from running.
-* Fixes an internal memory leak mostly affecting `Dispatch` job execution.
 * Fixes a bug where the Sphere v1 `Font#setCharacterImage()` API fails to
   recalculate the font metrics after changing the image, causing text to be
   rendered incorrectly afterwards.

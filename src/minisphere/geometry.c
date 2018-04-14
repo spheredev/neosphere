@@ -164,3 +164,16 @@ zoom_rect(rect_t in_rect, double scale_x, double scale_y)
 		in_rect.x1 * scale_x, in_rect.y1 * scale_y,
 		in_rect.x2 * scale_x, in_rect.y2 * scale_y);
 }
+
+rect_t
+rect_intersect(rect_t rect1, rect_t rect2)
+{
+	int x1, x2;
+	int y1, y2;
+	
+	x1 = rect1.x1 > rect2.x1 ? rect1.x1 : rect2.x1;
+	y1 = rect1.y1 > rect2.y1 ? rect1.y1 : rect2.y1;
+	x2 = rect1.x2 < rect2.x2 ? rect1.x2 : rect2.x2;
+	y2 = rect1.y2 < rect2.y2 ? rect1.y2 : rect2.y2;
+	return rect(x1, y1, x2, y2);
+}

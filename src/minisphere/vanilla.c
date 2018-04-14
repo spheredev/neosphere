@@ -6763,41 +6763,51 @@ js_Font_drawText(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 {
-	int x = jsal_to_int(0);
-	int y = jsal_to_int(1);
-	int w = jsal_to_int(2);
-	int h = jsal_to_int(3);
-	int offset = jsal_to_int(4);
-	const char* text = jsal_to_string(5);
-
+	image_t*    backbuffer;
 	font_t*     font;
+	int         height;
 	int         line_height;
 	const char* line_text;
-	int         num_lines;
+	rect_t      old_clip_box;
+	int         width;
+	int         x;
+	int         y;
+	int         y_offset;
+	const char* text;
+	wraptext_t* wraptext;
 
 	int i;
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
+	x = jsal_to_int(0);
+	y = jsal_to_int(1);
+	width = jsal_to_int(2);
+	height = jsal_to_int(3);
+	y_offset = jsal_to_int(4);
+	text = jsal_to_string(5);
 
 	if (screen_skipping_frame(g_screen))
 		return false;
-	jsal_push_new_function(js_Font_wordWrapString, "wordWrapString", 0, 0);
-	jsal_push_this();
-	jsal_push_string(text);
-	jsal_push_int(w);
-	jsal_call_method(2);
-	jsal_get_prop_string(-1, "length");
-	num_lines = jsal_get_int(-1);
-	jsal_pop(1);
+	
+	// intersect our own clipping box with the one set by the user to ensure we
+	// don't accidentally draw outside of it
+	backbuffer = screen_backbuffer(g_screen);
+	old_clip_box = image_get_scissor(backbuffer);
+	image_set_scissor(backbuffer, 
+		rect_intersect(rect(x, y, x + width, y + height), old_clip_box));
+
+	wraptext = wraptext_new(text, font, width);
 	line_height = font_height(font);
 	galileo_reset();
-	for (i = 0; i < num_lines; ++i) {
-		jsal_get_prop_index(-1, i); line_text = jsal_get_string(-1); jsal_pop(1);
-		font_draw_text(font, x + offset, y, TEXT_ALIGN_LEFT, line_text);
+	y += y_offset;
+	for (i = 0; i < wraptext_len(wraptext); ++i) {
+		line_text = wraptext_line(wraptext, i);
+		font_draw_text(font, x, y, TEXT_ALIGN_LEFT, line_text);
 		y += line_height;
 	}
-	jsal_pop(1);
+	wraptext_free(wraptext);
+	image_set_scissor(backbuffer, old_clip_box);
 	return false;
 }
 
@@ -6882,23 +6892,18 @@ static bool
 js_Font_getStringHeight(int num_args, bool is_ctor, intptr_t magic)
 {
 	font_t*     font;
-	int         num_lines;
 	const char* text;
 	int         width;
+	wraptext_t* wraptext;
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
 	text = jsal_to_string(0);
 	width = jsal_to_int(1);
 
-	jsal_push_new_function(js_Font_wordWrapString, "wordWrapString", 0, 0);
-	jsal_push_this();
-	jsal_push_string(text);
-	jsal_push_int(width);
-	jsal_call_method(2);
-	jsal_get_prop_string(-1, "length"); num_lines = jsal_get_int(-1); jsal_pop(1);
-	jsal_pop(1);
-	jsal_push_int(font_height(font) * num_lines);
+	wraptext = wraptext_new(text, font, width);
+	jsal_push_int(font_height(font) * wraptext_len(wraptext));
+	wraptext_free(wraptext);
 	return true;
 }
 
