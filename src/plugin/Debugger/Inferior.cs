@@ -290,7 +290,7 @@ namespace Sphere.Gdk.Debugger
 
         public async Task<string> GetSource(string fileName)
         {
-            var reply = await DoRequest(KiTag.REQ, KiRequest.AssetData, fileName);
+            var reply = await DoRequest(KiTag.REQ, KiRequest.Download, fileName);
             return reply[0].Tag != KiTag.ERR ? (string)reply[1] : null;
         }
 

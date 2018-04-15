@@ -25,9 +25,9 @@ namespace Sphere.Gdk.Debugger
     {
         None,
         AddBreakpoint,
-        AssetData,
         DeleteBreakpoint,
         Detach,
+        Download,
         Eval,
         GameInfo,
         InspectBreakpoints,
