@@ -1,4 +1,4 @@
-.TH SPHERUN 1 "2018-04-14" "miniSphere-5.2b2" "Sphere Game Development Kit"
+.TH SPHERUN 1 "xxxx-xx-xx" "miniSphere-X.X.X" "Sphere Game Development Kit"
 .SH NAME
 spherun \- run a Sphere game in a dev-friendly environment
 .SH SYNOPSIS
@@ -6,7 +6,7 @@ spherun \- run a Sphere game in a dev-friendly environment
 .na
 .TP 8
 .B spherun
-[\fB\-\-debug\fR | \fB\-\-performance]
+[\fB\-\-debug\fR | \fB\-\-profile]
 [\fB\-\-fullscreen\fR | \fB\-\-window\fR]
 [\fB\-\-frameskip \fImaxframes\fR]
 [\fB\-\-no\-sleep]
@@ -41,7 +41,7 @@ Instruct the engine to wait for the
 debugger to attach before beginning game execution.
 If no debugger attaches within 30 seconds, miniSphere will exit.
 .TP
-.BR \-p ", " \-\-performance
+.BR \-p ", " \-\-profile
 Enables full-performance JavaScript execution by disabling the single-step debugger.
 Note that this comes at the cost of SSj support.
 You will not be able to attach an SSj instance later if you use this option.

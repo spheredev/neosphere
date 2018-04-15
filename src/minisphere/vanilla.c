@@ -235,6 +235,7 @@ static bool js_IsPersonObstructed               (int num_args, bool is_ctor, int
 static bool js_IsPersonVisible                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_IsTriggerAt                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Line                             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_LineIntersects                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_LineSeries                       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_ListenOnPort                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_LoadAnimation                    (int num_args, bool is_ctor, intptr_t magic);
@@ -724,6 +725,7 @@ vanilla_register_api(void)
 	api_define_function(NULL, "IsPersonVisible", js_IsPersonVisible, 0);
 	api_define_function(NULL, "IsTriggerAt", js_IsTriggerAt, 0);
 	api_define_function(NULL, "Line", js_Line, 0);
+	api_define_function(NULL, "LineIntersects", js_LineIntersects, 0);
 	api_define_function(NULL, "LineSeries", js_LineSeries, 0);
 	api_define_function(NULL, "ListenOnPort", js_ListenOnPort, 0);
 	api_define_function(NULL, "LoadAnimation", js_LoadAnimation, 0);
@@ -4425,6 +4427,39 @@ js_Line(int num_args, bool is_ctor, intptr_t magic)
 	galileo_reset();
 	al_draw_line(x1, y1, x2, y2, nativecolor(color), 1);
 	return false;
+}
+
+static bool
+js_LineIntersects(int num_args, bool is_ctor, intptr_t magic)
+{
+	bool overlapping;
+	int  x1, x2, x3, x4;
+	int  y1, y2, y3, y4;
+
+	jsal_require_object(0);
+	jsal_require_object(1);
+	jsal_require_object(2);
+	jsal_require_object(3);
+
+	jsal_get_prop_string(0, "x");
+	jsal_get_prop_string(0, "y");
+	x1 = jsal_require_int(-2);
+	y1 = jsal_require_int(-1);
+	jsal_get_prop_string(1, "x");
+	jsal_get_prop_string(1, "y");
+	x2 = jsal_require_int(-2);
+	y2 = jsal_require_int(-1);
+	jsal_get_prop_string(2, "x");
+	jsal_get_prop_string(2, "y");
+	x3 = jsal_require_int(-2);
+	y3 = jsal_require_int(-1);
+	jsal_get_prop_string(3, "x");
+	jsal_get_prop_string(3, "y");
+	x4 = jsal_require_int(-2);
+	y4 = jsal_require_int(-1);
+	overlapping = do_lines_overlap(mk_rect(x1, y1, x2, y2), mk_rect(x3, y3, x4, y4));
+	jsal_push_boolean(overlapping);
+	return true;
 }
 
 static bool
