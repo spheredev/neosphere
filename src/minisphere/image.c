@@ -80,10 +80,14 @@ image_new(int width, int height, const color_t* pixels)
 	image->transform = transform_new();
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
-	if (pixels != NULL)
-		image_upload(image, pixels);
+	// the image must be fully constructed with a nonzero refcount before we call
+	// image_upload(), otherwise the lock-unlock mechanism will free it by accident.
+	image_ref(image);
 
-	return image_ref(image);
+	if (pixels != NULL && !image_upload(image, pixels))
+		goto on_error;
+
+	return image;
 
 on_error:
 	free(image);
