@@ -215,7 +215,7 @@ game_open(const char* game_path)
 	}
 
 	load_default_assets(game);
-	
+
 	resolution = game_resolution(game);
 	console_log(1, "         title: %s", game_name(game));
 	console_log(1, "        author: %s", game_author(game));

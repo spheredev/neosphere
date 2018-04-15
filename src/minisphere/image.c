@@ -394,6 +394,9 @@ image_blit(image_t* it, image_t* target_image, int x, int y)
 bool
 image_download(image_t* it, color_t* buffer)
 {
+	// IMPORTANT: the buffer passed in must be big enough to hold the entire RGBA bitmap.
+	//            in other words, [width * height * 4] bytes.
+
 	int            height;
 	const color_t* in_ptr;
 	image_lock_t*  lock;
@@ -714,12 +717,15 @@ image_unlock(image_t* it, image_lock_t* lock)
 bool
 image_upload(image_t* it, const color_t* pixels)
 {
+	// IMPORTANT: `pixels` buffer must contain enough data to describe the entire image.
+	//            in other words, [width * height * 4] bytes.
+
 	const color_t* in_ptr;
 	image_lock_t*  lock;
 	color_t*       out_ptr;
 
 	int y;
-	
+
 	if (!(lock = image_lock(it, true, false)))
 		return false;
 	out_ptr = lock->pixels;

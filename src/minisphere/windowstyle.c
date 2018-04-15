@@ -174,7 +174,7 @@ winstyle_draw(windowstyle_t* it, int x, int y, int width, int height)
 	// 8 - background
 
 	mask = it->color_mask;
-	
+
 	for (i = 0; i < 9; ++i) {
 		w[i] = image_width(it->images[i]);
 		h[i] = image_height(it->images[i]);

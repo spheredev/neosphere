@@ -6793,12 +6793,12 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 
 	if (screen_skipping_frame(g_screen))
 		return false;
-	
+
 	// intersect our own clipping box with the one set by the user to ensure we
 	// don't accidentally draw outside of it
 	backbuffer = screen_backbuffer(g_screen);
 	old_clip_box = image_get_scissor(backbuffer);
-	image_set_scissor(backbuffer, 
+	image_set_scissor(backbuffer,
 		rect_intersect(mk_rect(x, y, x + width, y + height), old_clip_box));
 
 	wraptext = wraptext_new(text, font, width);
@@ -6872,7 +6872,7 @@ static bool
 js_Font_getColorMask(int num_args, bool is_ctor, intptr_t magic)
 {
 	font_t* font;
-	
+
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, SV1_FONT);
 
