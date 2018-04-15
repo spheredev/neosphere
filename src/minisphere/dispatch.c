@@ -44,7 +44,7 @@ struct job
 	job_type_t hint;
 	double     priority;
 	bool       paused;
-	uint32_t   timer;
+	int        timer;
 	int64_t    token;
 	script_t*  script;
 };
@@ -137,7 +137,7 @@ dispatch_cancel_all(bool recurring, bool also_critical)
 }
 
 int64_t
-dispatch_defer(script_t* script, uint32_t timeout, job_type_t hint, bool critical)
+dispatch_defer(script_t* script, int timeout, job_type_t hint, bool critical)
 {
 	struct job job;
 	vector_t*  queue;
@@ -236,8 +236,8 @@ dispatch_run(job_type_t hint)
 		job = (struct job*)vector_get(queue, i);
 		if (job->hint != hint)
 			continue;
-		if (!job->paused && job->timer-- == 0 && !job->finished) {
-			script_run(job->script, false);  // invalidates job pointer
+		if (!job->paused && job->timer-- <= 0 && !job->finished) {
+			script_run(job->script, true);  // invalidates job pointer
 			job = (struct job*)vector_get(queue, i);
 			job->finished = true;
 		}
