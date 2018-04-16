@@ -201,13 +201,21 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 	return job.token;
 }
 
-void
+bool
 dispatch_run(job_type_t hint)
 {
-	struct job* job;
-	vector_t*   queue;
+	static unsigned int last_call_id = 0;
+
+	unsigned int call_id;
+	struct job*  job;
+	vector_t*    queue;
 
 	int i;
+
+	// each call to `dispatch_run` gets a unique call ID.  this is used to detect
+	// reentrancy: if at any time `call_id` differs from `last_call_id`, that means another
+	// call to `dispatch_run` happened before this one returned.
+	call_id = ++last_call_id;
 
 	if (s_need_sort) {
 		vector_sort(s_recurring_jobs, sort_jobs);
@@ -219,13 +227,18 @@ dispatch_run(job_type_t hint)
 		job = (struct job*)vector_get(s_recurring_jobs, i);
 		if (job->hint != hint)
 			continue;
-		if (!job->paused && !job->finished) {
+		if (!job->paused && !job->finished)
 			script_run(job->script, true);  // invalidates job pointer
+		if (last_call_id == call_id) {
 			job = (struct job*)vector_get(s_recurring_jobs, i);
+			if (job->finished) {
+				script_unref(job->script);
+				vector_remove(s_recurring_jobs, i--);
+			}
 		}
-		if (job->finished) {
-			script_unref(job->script);
-			vector_remove(s_recurring_jobs, i--);
+		else {
+			// reentrancy detected; bail out since it's unsafe to continue
+			return false;
 		}
 	}
 
@@ -237,15 +250,23 @@ dispatch_run(job_type_t hint)
 		if (job->hint != hint)
 			continue;
 		if (!job->paused && job->timer-- <= 0 && !job->finished) {
-			script_run(job->script, true);  // invalidates job pointer
-			job = (struct job*)vector_get(queue, i);
 			job->finished = true;
+			script_run(job->script, false);  // invalidates job pointer
 		}
-		if (job->finished) {
-			script_unref(job->script);
-			vector_remove(queue, i--);
+		if (last_call_id == call_id) {
+			job = (struct job*)vector_get(queue, i);
+			if (job->finished) {
+				script_unref(job->script);
+				vector_remove(queue, i--);
+			}
+		}
+		else {
+			// reentrancy detected; bail out since it's unsafe to continue
+			return false;
 		}
 	}
+
+	return true;
 }
 
 static struct job*

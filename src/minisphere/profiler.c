@@ -37,7 +37,7 @@
 #include "table.h"
 
 #define TIME_PRECISION 1.0e6    // microseconds
-#define UNIT_NAME      "\xB5s"
+#define UNIT_NAME      "us"
 
 struct record
 {

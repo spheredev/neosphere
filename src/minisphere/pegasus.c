@@ -1206,12 +1206,16 @@ handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 
 	while (dispatch_busy() || jsal_busy()) {
 		sphere_heartbeat(true, 2);
-		if (!screen_skipping_frame(g_screen))
-			dispatch_run(JOB_ON_RENDER);
+		if (!screen_skipping_frame(g_screen)) {
+			if (!dispatch_run(JOB_ON_RENDER))
+				continue;
+		}
 		screen_flip(g_screen, s_frame_rate, true);
 		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
-		dispatch_run(JOB_ON_UPDATE);
-		dispatch_run(JOB_ON_TICK);
+		if (!dispatch_run(JOB_ON_UPDATE))
+			continue;
+		if (!dispatch_run(JOB_ON_TICK))
+			continue;
 		++g_tick_count;
 	}
 

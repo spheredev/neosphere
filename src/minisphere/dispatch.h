@@ -54,6 +54,6 @@ void    dispatch_cancel_all (bool recurring, bool also_critical);
 int64_t dispatch_defer      (script_t* script, int timeout, job_type_t hint, bool critical);
 void    dispatch_pause      (int64_t token, bool paused);
 int64_t dispatch_recur      (script_t* script, double priority, bool background, job_type_t hint);
-void    dispatch_run        (job_type_t hint);
+bool    dispatch_run        (job_type_t hint);
 
 #endif // SPHERE__DISPATCH_H__INCLUDED
