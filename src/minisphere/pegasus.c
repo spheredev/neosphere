@@ -1220,6 +1220,9 @@ handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 	}
 
 	// deal with Dispatch.onExit() jobs
+	// note: the JavaScript VM might have been disabled due to a Sphere v1
+	//       bailout; we'll need to re-enable it if so.
+	jsal_enable_vm(true);
 	s_shutting_down = true;
 	while (!dispatch_can_exit() || jsal_busy()) {
 		sphere_heartbeat(true, 2);
