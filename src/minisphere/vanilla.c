@@ -2399,17 +2399,7 @@ js_FilledEllipse(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FlipScreen(int num_args, bool is_ctor, intptr_t magic)
 {
-	sphere_heartbeat(true, 1);
-	if (!screen_skipping_frame(g_screen)) {
-		if (!dispatch_run(JOB_ON_RENDER))
-			return false;
-	}
-	screen_flip(g_screen, s_frame_rate, true);
-	if (!dispatch_run(JOB_ON_UPDATE))
-		return false;
-	if (!dispatch_run(JOB_ON_TICK))
-		return false;
-	++g_tick_count;
+	sphere_tick(1, true, s_frame_rate);
 	return false;
 }
 

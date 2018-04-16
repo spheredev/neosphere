@@ -493,6 +493,24 @@ sphere_sleep(double time)
 	} while (al_get_time() < end_time);
 }
 
+void
+sphere_tick(int api_version, bool clear_screen, int framerate)
+{
+	sphere_heartbeat(true, api_version);
+	if (!screen_skipping_frame(g_screen)) {
+		if (!dispatch_run(JOB_ON_RENDER))
+			return;
+	}
+	screen_flip(g_screen, framerate, clear_screen);
+	if (api_version >= 2)
+		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
+	if (!dispatch_run(JOB_ON_UPDATE))
+		return;
+	if (!dispatch_run(JOB_ON_TICK))
+		return;
+	++g_tick_count;
+}
+
 static void
 on_enqueue_js_job(void)
 {

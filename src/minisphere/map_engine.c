@@ -659,16 +659,7 @@ map_engine_start(const char* filename, int framerate)
 		// don't clear the backbuffer.  the Sphere 1.x map engine has a bug where it doesn't
 		// clear the backbuffer between frames; as it turns out, a good deal of of v1 code relies
 		// on that behavior.
-		if (!screen_skipping_frame(g_screen)) {
-			if (!dispatch_run(JOB_ON_RENDER))
-				continue;
-		}
-		screen_flip(g_screen, s_frame_rate, false);
-		if (!dispatch_run(JOB_ON_UPDATE))
-			continue;
-		if (!dispatch_run(JOB_ON_TICK))
-			continue;
-		++g_tick_count;
+		sphere_tick(1, false, s_frame_rate);
 	}
 	reset_persons(false);
 	s_is_map_running = false;

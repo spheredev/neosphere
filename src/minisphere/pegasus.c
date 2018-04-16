@@ -1204,20 +1204,8 @@ handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 	// bail, so we need to re-enable it here.
 	jsal_enable_vm(true);
 
-	while (dispatch_busy() || jsal_busy()) {
-		sphere_heartbeat(true, 2);
-		if (!screen_skipping_frame(g_screen)) {
-			if (!dispatch_run(JOB_ON_RENDER))
-				continue;
-		}
-		screen_flip(g_screen, s_frame_rate, true);
-		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
-		if (!dispatch_run(JOB_ON_UPDATE))
-			continue;
-		if (!dispatch_run(JOB_ON_TICK))
-			continue;
-		++g_tick_count;
-	}
+	while (dispatch_busy() || jsal_busy())
+		sphere_tick(2, true, s_frame_rate);
 
 	// deal with Dispatch.onExit() jobs
 	// note: the JavaScript VM might have been disabled due to a Sphere v1
