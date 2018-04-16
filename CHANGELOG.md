@@ -35,6 +35,7 @@ v5.2.0 - TBD
 * Fixes an internal memory leak mostly affecting `Dispatch` job execution.
 * Fixes a bug in which calling `FlipScreen()`, `DoEvents()`, or `MapEngine()`
   after entering the event loop leads to a segmentation fault.
+* Fixes a bug in which calling `DoEvents()` doesn't run promise reaction jobs.
 * Fixes a bug where Sphere v1 `Font#drawTextBox` output isn't properly clipped.
 * Fixes a bug where calling Sphere v1 exit functions or closing the game window
   can prevent promise reactions from running.

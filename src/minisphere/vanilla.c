@@ -2151,6 +2151,7 @@ static bool
 js_DoEvents(int num_args, bool is_ctor, intptr_t magic)
 {
 	sphere_heartbeat(true, 1);
+	dispatch_run(JOB_ON_TICK);
 	jsal_push_boolean_true();
 	return true;
 }
