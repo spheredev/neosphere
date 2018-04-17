@@ -65,6 +65,7 @@ enum file_op
 static const
 struct x11_color
 {
+	int         api_level;
 	const char* name;
 	uint8_t     r;
 	uint8_t     g;
@@ -73,151 +74,151 @@ struct x11_color
 }
 COLORS[] =
 {
-	{ "AliceBlue", 240, 248, 255, 255 },
-	{ "AntiqueWhite", 250, 235, 215, 255 },
-	{ "Aqua", 0, 255, 255, 255 },
-	{ "Aquamarine", 127, 255, 212, 255 },
-	{ "Azure", 240, 255, 255, 255 },
-	{ "Beige", 245, 245, 220, 255 },
-	{ "Bisque", 255, 228, 196, 255 },
-	{ "Black", 0, 0, 0, 255 },
-	{ "BlanchedAlmond", 255, 235, 205, 255 },
-	{ "Blue", 0, 0, 255, 255 },
-	{ "BlueViolet", 138, 43, 226, 255 },
-	{ "Brown", 165, 42, 42, 255 },
-	{ "BurlyWood", 222, 184, 135, 255 },
-	{ "CadetBlue", 95, 158, 160, 255 },
-	{ "Chartreuse", 127, 255, 0, 255 },
-	{ "Chocolate", 210, 105, 30, 255 },
-	{ "Coral", 255, 127, 80, 255 },
-	{ "CornflowerBlue", 100, 149, 237, 255 },
-	{ "Cornsilk", 255, 248, 220, 255 },
-	{ "Crimson", 220, 20, 60, 255 },
-	{ "Cyan", 0, 255, 255, 255 },
-	{ "DarkBlue", 0, 0, 139, 255 },
-	{ "DarkCyan", 0, 139, 139, 255 },
-	{ "DarkGoldenrod", 184, 134, 11, 255 },
-	{ "DarkGray", 169, 169, 169, 255 },
-	{ "DarkGreen", 0, 100, 0, 255 },
-	{ "DarkKhaki", 189, 183, 107, 255 },
-	{ "DarkMagenta", 139, 0, 139, 255 },
-	{ "DarkOliveGreen", 85, 107, 47, 255 },
-	{ "DarkOrange", 255, 140, 0, 255 },
-	{ "DarkOrchid", 153, 50, 204, 255 },
-	{ "DarkRed", 139, 0, 0, 255 },
-	{ "DarkSalmon", 233, 150, 122, 255 },
-	{ "DarkSeaGreen", 143, 188, 143, 255 },
-	{ "DarkSlateBlue", 72, 61, 139, 255 },
-	{ "DarkSlateGray", 47, 79, 79, 255 },
-	{ "DarkTurquoise", 0, 206, 209, 255 },
-	{ "DarkViolet", 148, 0, 211, 255 },
-	{ "DeepPink", 255, 20, 147, 255 },
-	{ "DeepSkyBlue", 0, 191, 255, 255 },
-	{ "DimGray", 105, 105, 105, 255 },
-	{ "DodgerBlue", 30, 144, 255, 255 },
-	{ "FireBrick", 178, 34, 34, 255 },
-	{ "FloralWhite", 255, 250, 240, 255 },
-	{ "ForestGreen", 34, 139, 34, 255 },
-	{ "Fuchsia", 255, 0, 255, 255 },
-	{ "Gainsboro", 220, 220, 220, 255 },
-	{ "GhostWhite", 248, 248, 255, 255 },
-	{ "Gold", 255, 215, 0, 255 },
-	{ "Goldenrod", 218, 165, 32, 255 },
-	{ "Gray", 128, 128, 128, 255 },
-	{ "Green", 0, 128, 0, 255 },
-	{ "GreenYellow", 173, 255, 47, 255 },
-	{ "Honeydew", 240, 255, 240, 255 },
-	{ "HotPink", 255, 105, 180, 255 },
-	{ "IndianRed", 205, 92, 92, 255 },
-	{ "Indigo", 75, 0, 130, 255 },
-	{ "Ivory", 255, 255, 240, 255 },
-	{ "Khaki", 240, 230, 140, 255 },
-	{ "Lavender", 230, 230, 250, 255 },
-	{ "LavenderBlush", 255, 240, 245, 255 },
-	{ "LawnGreen", 124, 252, 0, 255 },
-	{ "LemonChiffon", 255, 250, 205, 255 },
-	{ "LightBlue", 173, 216, 230, 255 },
-	{ "LightCoral", 240, 128, 128, 255 },
-	{ "LightCyan", 224, 255, 255, 255 },
-	{ "LightGoldenrodYellow", 250, 250, 210, 255 },
-	{ "LightGray", 211, 211, 211, 255 },
-	{ "LightGreen", 144, 238, 144, 255 },
-	{ "LightPink", 255, 182, 193, 255 },
-	{ "LightSalmon", 255, 160, 122, 255 },
-	{ "LightSeaGreen", 32, 178, 170, 255 },
-	{ "LightSkyBlue", 135, 206, 250, 255 },
-	{ "LightSlateGray", 119, 136, 153, 255 },
-	{ "LightSteelBlue", 176, 196, 222, 255 },
-	{ "LightYellow", 255, 255, 224, 255 },
-	{ "Lime", 0, 255, 0, 255 },
-	{ "LimeGreen", 50, 205, 50, 255 },
-	{ "Linen", 250, 240, 230, 255 },
-	{ "Magenta", 255, 0, 255, 255 },
-	{ "Maroon", 128, 0, 0, 255 },
-	{ "MediumAquamarine", 102, 205, 170, 255 },
-	{ "MediumBlue", 0, 0, 205, 255 },
-	{ "MediumOrchid", 186, 85, 211, 255 },
-	{ "MediumPurple", 147, 112, 219, 255 },
-	{ "MediumSeaGreen", 60, 179, 113, 255 },
-	{ "MediumSlateBlue", 123, 104, 238, 255 },
-	{ "MediumSpringGreen", 0, 250, 154, 255 },
-	{ "MediumTurquoise", 72, 209, 204, 255 },
-	{ "MediumVioletRed", 199, 21, 133, 255 },
-	{ "MidnightBlue", 25, 25, 112, 255 },
-	{ "MintCream", 245, 255, 250, 255 },
-	{ "MistyRose", 255, 228, 225, 255 },
-	{ "Moccasin", 255, 228, 181, 255 },
-	{ "NavajoWhite", 255, 222, 173, 255 },
-	{ "Navy", 0, 0, 128, 255 },
-	{ "OldLace", 253, 245, 230, 255 },
-	{ "Olive", 128, 128, 0, 255 },
-	{ "OliveDrab", 107, 142, 35, 255 },
-	{ "Orange", 255, 165, 0, 255 },
-	{ "OrangeRed", 255, 69, 0, 255 },
-	{ "Orchid", 218, 112, 214, 255 },
-	{ "PaleGoldenrod", 238, 232, 170, 255 },
-	{ "PaleGreen", 152, 251, 152, 255 },
-	{ "PaleTurquoise", 175, 238, 238, 255 },
-	{ "PaleVioletRed", 219, 112, 147, 255 },
-	{ "PapayaWhip", 225, 239, 213, 255 },
-	{ "PeachPuff", 255, 218, 185, 255 },
-	{ "Peru", 205, 133, 63, 255 },
-	{ "Pink", 255, 192, 203, 255 },
-	{ "Plum", 221, 160, 221, 255 },
-	{ "PowderBlue", 176, 224, 230, 255 },
-	{ "Purple", 128, 0, 128, 255 },
-	{ "PurwaBlue", 155, 225, 255, 255 },
-	{ "RebeccaPurple", 102, 51, 153, 255 },
-	{ "Red", 255, 0, 0, 255 },
-	{ "RosyBrown", 188, 143, 143, 255 },
-	{ "RoyalBlue", 65, 105, 225, 255 },
-	{ "SaddleBrown", 139, 69, 19, 255 },
-	{ "Salmon", 250, 128, 114, 255 },
-	{ "SandyBrown", 244, 164, 96, 255 },
-	{ "SeaGreen", 46, 139, 87, 255 },
-	{ "Seashell", 255, 245, 238, 255 },
-	{ "Sienna", 160, 82, 45, 255 },
-	{ "Silver", 192, 192, 192, 255 },
-	{ "SkyBlue", 135, 206, 235, 255 },
-	{ "SlateBlue", 106, 90, 205, 255 },
-	{ "SlateGray", 112, 128, 144, 255 },
-	{ "Snow", 255, 250, 250, 255 },
-	{ "SpringGreen", 0, 255, 127, 255 },
-	{ "StankyBean", 197, 162, 171, 255 },
-	{ "SteelBlue", 70, 130, 180, 255 },
-	{ "Tan", 210, 180, 140, 255 },
-	{ "Teal", 0, 128, 128, 255 },
-	{ "Thistle", 216, 191, 216, 255 },
-	{ "Tomato", 255, 99, 71, 255 },
-	{ "Transparent", 0, 0, 0, 0 },
-	{ "Turquoise", 64, 224, 208, 255 },
-	{ "Violet", 238, 130, 238, 255 },
-	{ "Wheat", 245, 222, 179, 255 },
-	{ "White", 255, 255, 255, 255 },
-	{ "WhiteSmoke", 245, 245, 245, 255 },
-	{ "Yellow", 255, 255, 0, 255 },
-	{ "YellowGreen", 154, 205, 50, 255 },
-	{ NULL, 0, 0, 0, 0 }
+	{ 1, "AliceBlue", 240, 248, 255, 255 },
+	{ 1, "AntiqueWhite", 250, 235, 215, 255 },
+	{ 1, "Aqua", 0, 255, 255, 255 },
+	{ 1, "Aquamarine", 127, 255, 212, 255 },
+	{ 1, "Azure", 240, 255, 255, 255 },
+	{ 1, "Beige", 245, 245, 220, 255 },
+	{ 1, "Bisque", 255, 228, 196, 255 },
+	{ 1, "Black", 0, 0, 0, 255 },
+	{ 1, "BlanchedAlmond", 255, 235, 205, 255 },
+	{ 1, "Blue", 0, 0, 255, 255 },
+	{ 1, "BlueViolet", 138, 43, 226, 255 },
+	{ 1, "Brown", 165, 42, 42, 255 },
+	{ 1, "BurlyWood", 222, 184, 135, 255 },
+	{ 1, "CadetBlue", 95, 158, 160, 255 },
+	{ 1, "Chartreuse", 127, 255, 0, 255 },
+	{ 1, "Chocolate", 210, 105, 30, 255 },
+	{ 1, "Coral", 255, 127, 80, 255 },
+	{ 1, "CornflowerBlue", 100, 149, 237, 255 },
+	{ 1, "Cornsilk", 255, 248, 220, 255 },
+	{ 1, "Crimson", 220, 20, 60, 255 },
+	{ 1, "Cyan", 0, 255, 255, 255 },
+	{ 1, "DarkBlue", 0, 0, 139, 255 },
+	{ 1, "DarkCyan", 0, 139, 139, 255 },
+	{ 1, "DarkGoldenrod", 184, 134, 11, 255 },
+	{ 1, "DarkGray", 169, 169, 169, 255 },
+	{ 1, "DarkGreen", 0, 100, 0, 255 },
+	{ 1, "DarkKhaki", 189, 183, 107, 255 },
+	{ 1, "DarkMagenta", 139, 0, 139, 255 },
+	{ 1, "DarkOliveGreen", 85, 107, 47, 255 },
+	{ 1, "DarkOrange", 255, 140, 0, 255 },
+	{ 1, "DarkOrchid", 153, 50, 204, 255 },
+	{ 1, "DarkRed", 139, 0, 0, 255 },
+	{ 1, "DarkSalmon", 233, 150, 122, 255 },
+	{ 1, "DarkSeaGreen", 143, 188, 143, 255 },
+	{ 1, "DarkSlateBlue", 72, 61, 139, 255 },
+	{ 1, "DarkSlateGray", 47, 79, 79, 255 },
+	{ 1, "DarkTurquoise", 0, 206, 209, 255 },
+	{ 1, "DarkViolet", 148, 0, 211, 255 },
+	{ 1, "DeepPink", 255, 20, 147, 255 },
+	{ 1, "DeepSkyBlue", 0, 191, 255, 255 },
+	{ 1, "DimGray", 105, 105, 105, 255 },
+	{ 1, "DodgerBlue", 30, 144, 255, 255 },
+	{ 1, "FireBrick", 178, 34, 34, 255 },
+	{ 1, "FloralWhite", 255, 250, 240, 255 },
+	{ 1, "ForestGreen", 34, 139, 34, 255 },
+	{ 1, "Fuchsia", 255, 0, 255, 255 },
+	{ 1, "Gainsboro", 220, 220, 220, 255 },
+	{ 1, "GhostWhite", 248, 248, 255, 255 },
+	{ 1, "Gold", 255, 215, 0, 255 },
+	{ 1, "Goldenrod", 218, 165, 32, 255 },
+	{ 1, "Gray", 128, 128, 128, 255 },
+	{ 1, "Green", 0, 128, 0, 255 },
+	{ 1, "GreenYellow", 173, 255, 47, 255 },
+	{ 1, "Honeydew", 240, 255, 240, 255 },
+	{ 1, "HotPink", 255, 105, 180, 255 },
+	{ 1, "IndianRed", 205, 92, 92, 255 },
+	{ 1, "Indigo", 75, 0, 130, 255 },
+	{ 1, "Ivory", 255, 255, 240, 255 },
+	{ 1, "Khaki", 240, 230, 140, 255 },
+	{ 1, "Lavender", 230, 230, 250, 255 },
+	{ 1, "LavenderBlush", 255, 240, 245, 255 },
+	{ 1, "LawnGreen", 124, 252, 0, 255 },
+	{ 1, "LemonChiffon", 255, 250, 205, 255 },
+	{ 1, "LightBlue", 173, 216, 230, 255 },
+	{ 1, "LightCoral", 240, 128, 128, 255 },
+	{ 1, "LightCyan", 224, 255, 255, 255 },
+	{ 1, "LightGoldenrodYellow", 250, 250, 210, 255 },
+	{ 1, "LightGray", 211, 211, 211, 255 },
+	{ 1, "LightGreen", 144, 238, 144, 255 },
+	{ 1, "LightPink", 255, 182, 193, 255 },
+	{ 1, "LightSalmon", 255, 160, 122, 255 },
+	{ 1, "LightSeaGreen", 32, 178, 170, 255 },
+	{ 1, "LightSkyBlue", 135, 206, 250, 255 },
+	{ 1, "LightSlateGray", 119, 136, 153, 255 },
+	{ 1, "LightSteelBlue", 176, 196, 222, 255 },
+	{ 1, "LightYellow", 255, 255, 224, 255 },
+	{ 1, "Lime", 0, 255, 0, 255 },
+	{ 1, "LimeGreen", 50, 205, 50, 255 },
+	{ 1, "Linen", 250, 240, 230, 255 },
+	{ 1, "Magenta", 255, 0, 255, 255 },
+	{ 1, "Maroon", 128, 0, 0, 255 },
+	{ 1, "MediumAquamarine", 102, 205, 170, 255 },
+	{ 1, "MediumBlue", 0, 0, 205, 255 },
+	{ 1, "MediumOrchid", 186, 85, 211, 255 },
+	{ 1, "MediumPurple", 147, 112, 219, 255 },
+	{ 1, "MediumSeaGreen", 60, 179, 113, 255 },
+	{ 1, "MediumSlateBlue", 123, 104, 238, 255 },
+	{ 1, "MediumSpringGreen", 0, 250, 154, 255 },
+	{ 1, "MediumTurquoise", 72, 209, 204, 255 },
+	{ 1, "MediumVioletRed", 199, 21, 133, 255 },
+	{ 1, "MidnightBlue", 25, 25, 112, 255 },
+	{ 1, "MintCream", 245, 255, 250, 255 },
+	{ 1, "MistyRose", 255, 228, 225, 255 },
+	{ 1, "Moccasin", 255, 228, 181, 255 },
+	{ 1, "NavajoWhite", 255, 222, 173, 255 },
+	{ 1, "Navy", 0, 0, 128, 255 },
+	{ 1, "OldLace", 253, 245, 230, 255 },
+	{ 1, "Olive", 128, 128, 0, 255 },
+	{ 1, "OliveDrab", 107, 142, 35, 255 },
+	{ 1, "Orange", 255, 165, 0, 255 },
+	{ 1, "OrangeRed", 255, 69, 0, 255 },
+	{ 1, "Orchid", 218, 112, 214, 255 },
+	{ 1, "PaleGoldenrod", 238, 232, 170, 255 },
+	{ 1, "PaleGreen", 152, 251, 152, 255 },
+	{ 1, "PaleTurquoise", 175, 238, 238, 255 },
+	{ 1, "PaleVioletRed", 219, 112, 147, 255 },
+	{ 1, "PapayaWhip", 225, 239, 213, 255 },
+	{ 1, "PeachPuff", 255, 218, 185, 255 },
+	{ 1, "Peru", 205, 133, 63, 255 },
+	{ 1, "Pink", 255, 192, 203, 255 },
+	{ 1, "Plum", 221, 160, 221, 255 },
+	{ 1, "PowderBlue", 176, 224, 230, 255 },
+	{ 1, "Purple", 128, 0, 128, 255 },
+	{ 1, "PurwaBlue", 155, 225, 255, 255 },
+	{ 1, "RebeccaPurple", 102, 51, 153, 255 },
+	{ 1, "Red", 255, 0, 0, 255 },
+	{ 1, "RosyBrown", 188, 143, 143, 255 },
+	{ 1, "RoyalBlue", 65, 105, 225, 255 },
+	{ 1, "SaddleBrown", 139, 69, 19, 255 },
+	{ 1, "Salmon", 250, 128, 114, 255 },
+	{ 1, "SandyBrown", 244, 164, 96, 255 },
+	{ 1, "SeaGreen", 46, 139, 87, 255 },
+	{ 1, "Seashell", 255, 245, 238, 255 },
+	{ 1, "Sienna", 160, 82, 45, 255 },
+	{ 1, "Silver", 192, 192, 192, 255 },
+	{ 1, "SkyBlue", 135, 206, 235, 255 },
+	{ 1, "SlateBlue", 106, 90, 205, 255 },
+	{ 1, "SlateGray", 112, 128, 144, 255 },
+	{ 1, "Snow", 255, 250, 250, 255 },
+	{ 1, "SpringGreen", 0, 255, 127, 255 },
+	{ 1, "SteelBlue", 70, 130, 180, 255 },
+	{ 1, "Tan", 210, 180, 140, 255 },
+	{ 1, "Teal", 0, 128, 128, 255 },
+	{ 1, "Thistle", 216, 191, 216, 255 },
+	{ 1, "Tomato", 255, 99, 71, 255 },
+	{ 1, "Transparent", 0, 0, 0, 0 },
+	{ 1, "Turquoise", 64, 224, 208, 255 },
+	{ 1, "Violet", 238, 130, 238, 255 },
+	{ 1, "Wheat", 245, 222, 179, 255 },
+	{ 1, "White", 255, 255, 255, 255 },
+	{ 1, "WhiteSmoke", 245, 245, 245, 255 },
+	{ 1, "Yellow", 255, 255, 0, 255 },
+	{ 1, "YellowGreen", 154, 205, 50, 255 },
+	{ 2, "StankyBean", 197, 162, 171, 255 },
+	{ 0, NULL, 0, 0, 0, 0 }
 };
 
 static bool js_require                       (int num_args, bool is_ctor, intptr_t magic);
@@ -492,11 +493,11 @@ static js_ref_t* s_key_y;
 static js_ref_t* s_key_z;
 
 void
-pegasus_init(void)
+pegasus_init(int api_level)
 {
 	const struct x11_color* p;
 
-	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, API_LEVEL);
+	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, api_level);
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 	jsal_on_import_module(handle_module_import);
@@ -564,7 +565,6 @@ pegasus_init(void)
 	api_define_function("Dispatch", "cancelAll", js_Dispatch_cancelAll, 0);
 	api_define_function("Dispatch", "later", js_Dispatch_later, 0);
 	api_define_function("Dispatch", "now", js_Dispatch_now, 0);
-	api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 	api_define_function("Dispatch", "onRender", js_Dispatch_onRender, 0);
 	api_define_function("Dispatch", "onUpdate", js_Dispatch_onUpdate, 0);
 	api_define_class("FileStream", PEGASUS_FILE_STREAM, js_new_FileStream, js_FileStream_finalize, 0);
@@ -595,8 +595,6 @@ pegasus_init(void)
 	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize, 0);
 	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, js_JobToken_finalize, 0);
 	api_define_method("JobToken", "cancel", js_JobToken_cancel, 0);
-	api_define_method("JobToken", "pause", js_JobToken_pause_resume, (int)true);
-	api_define_method("JobToken", "resume", js_JobToken_pause_resume, (int)false);
 	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, js_Joystick_finalize, 0);
 	api_define_static_prop("Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function("Joystick", "getDevices", js_Joystick_getDevices, 0);
@@ -660,7 +658,6 @@ pegasus_init(void)
 	api_define_method("Shader", "setIntVector", js_Shader_setIntVector, 0);
 	api_define_method("Shader", "setMatrix", js_Shader_setMatrix, 0);
 	api_define_class("Shape", PEGASUS_SHAPE, js_new_Shape, js_Shape_finalize, 0);
-	api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 	api_define_property("Shape", "indexList", false, js_Shape_get_indexList, js_Shape_set_indexList);
 	api_define_property("Shape", "texture", false, js_Shape_get_texture, js_Shape_set_texture);
 	api_define_property("Shape", "vertexList", false, js_Shape_get_vertexList, js_Shape_set_vertexList);
@@ -704,8 +701,6 @@ pegasus_init(void)
 	api_define_property("Texture", "fileName", false, js_Texture_get_fileName, NULL);
 	api_define_property("Texture", "height", false, js_Texture_get_height, NULL);
 	api_define_property("Texture", "width", false, js_Texture_get_width, NULL);
-	api_define_method("Texture", "download", js_Texture_download, 0);
-	api_define_method("Texture", "upload", js_Texture_upload, 0);
 	api_define_class("Transform", PEGASUS_TRANSFORM, js_new_Transform, js_Transform_finalize, 0);
 	api_define_property("Transform", "matrix", false, js_Transform_get_matrix, NULL);
 	api_define_method("Transform", "compose", js_Transform_compose, 0);
@@ -716,13 +711,16 @@ pegasus_init(void)
 	api_define_method("Transform", "scale", js_Transform_scale, 0);
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
-	api_define_function("Z", "deflate", js_Z_deflate, 0);
-	api_define_function("Z", "inflate", js_Z_inflate, 0);
 
-	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	if (api_level >= 2)
+		api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	else
+		api_define_class("Surface", PEGASUS_SURFACE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
+	api_define_property("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
+	api_define_property("Surface", "width", false, js_Surface_get_width, 0);
 	api_define_method("Surface", "clipTo", js_Surface_clipTo, 0);
 	api_define_method("Surface", "toTexture", js_Surface_toTexture, 0);
 
@@ -850,6 +848,17 @@ pegasus_init(void)
 	api_define_const("ShapeType", "Triangles", SHAPE_TRIANGLES);
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
+	if (api_level >= 2) {
+		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
+		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (int)true);
+		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (int)false);
+		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
+		api_define_method("Texture", "download", js_Texture_download, 0);
+		api_define_method("Texture", "upload", js_Texture_upload, 0);
+		api_define_function("Z", "deflate", js_Z_deflate, 0);
+		api_define_function("Z", "inflate", js_Z_inflate, 0);
+	}
+	
 	// keep a local reference to Surface.Screen
 	jsal_push_eval("Surface.Screen");
 	s_screen_obj = jsal_ref(-1);
@@ -863,8 +872,12 @@ pegasus_init(void)
 	jsal_get_global_string("Color");
 	p = COLORS;
 	while (p->name != NULL) {
+		if (p->api_level > api_level) {
+			++p;
+			continue;
+		}
 		jsal_push_eval("({ enumerable: false, configurable: true })");
-		jsal_push_new_function(js_Color_get_Color, "get", 0, (int)(p - COLORS));
+		jsal_push_new_function(js_Color_get_Color, "get", 0, (intptr_t)(p - COLORS));
 		jsal_put_prop_string(-2, "get");
 		jsal_def_prop_string(-2, p->name);
 		++p;
@@ -1359,7 +1372,8 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_get_APILevel(int num_args, bool is_ctor, intptr_t magic)
 {
-	jsal_push_int(API_LEVEL);
+	jsal_push_int(game_api_level(g_game));
+	cache_value_to_this("APILevel");
 	return true;
 }
 
@@ -1395,6 +1409,7 @@ static bool
 js_Sphere_get_Version(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_int(API_VERSION);
+	cache_value_to_this("Version");
 	return true;
 }
 

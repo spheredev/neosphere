@@ -91,6 +91,8 @@ class Thread
 
 	pause()
 	{
+		if (Sphere.APILevel < 2)
+			throw new RangeError("Thread#pause requires API level >= 2");
 		if (!this.running)
 			throw new Error("Thread is not running");
 		this._updateJob.pause();
@@ -98,6 +100,8 @@ class Thread
 
 	resume()
 	{
+		if (Sphere.APILevel < 2)
+			throw new RangeError("Thread#resume requires API level >= 2");
 		if (!this.running)
 			throw new Error("Thread is not running");
 		this._updateJob.resume();
@@ -113,7 +117,8 @@ class Thread
 		this._onThreadStop = new Pact();
 
 		// Dispatch.onExit() ensures the shutdown handler is always called
-		this._exitJob = Dispatch.onExit(() => this.on_shutDown());
+		if (Sphere.APILevel >= 2)
+			this._exitJob = Dispatch.onExit(() => this.on_shutDown());
 
 		// set up the update and render callbacks
 		this._renderJob = Dispatch.onRender(
@@ -155,7 +160,8 @@ class Thread
 			return;
 
 		this.yieldFocus();
-		this._exitJob.cancel();
+		if (Sphere.APILevel >= 2)
+			this._exitJob.cancel();
 		this._updateJob.cancel();
 		this._renderJob.cancel();
 		this._started = false;

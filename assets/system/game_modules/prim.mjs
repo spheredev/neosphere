@@ -55,7 +55,7 @@ class Prim
 		let v1 = 1.0 - sy / texture.height;
 		let u2 = (sx + width) / texture.width;
 		let v2 = 1.0 - (sy + height) / texture.height;
-		Shape.drawImmediate(surface, ShapeType.TriStrip, texture, [
+		drawTexturedShape(surface, ShapeType.TriStrip, texture, [
 			{ x: x1, y: y1, u: u1, v: v1, color: mask },
 			{ x: x2, y: y1, u: u2, v: v1, color: mask },
 			{ x: x1, y: y2, u: u1, v: v2, color: mask },
@@ -85,7 +85,7 @@ class Prim
 				color: color,
 			});
 		}
-		Shape.drawImmediate(surface, ShapeType.LineLoop, vertices);
+		drawShape(surface, ShapeType.LineLoop, vertices);
 	}
 
 	static drawSolidCircle(surface, x, y, radius, color, color2)
@@ -118,7 +118,7 @@ class Prim
 			color: color2,
 		};
 
-		Shape.drawImmediate(surface, ShapeType.Fan, vertices);
+		drawShape(surface, ShapeType.Fan, vertices);
 	}
 
 	static drawSolidRectangle(surface, x, y, width, height, color_ul, color_ur, color_lr, color_ll)
@@ -127,7 +127,7 @@ class Prim
 		color_lr = color_lr || color_ul;
 		color_ll = color_ll || color_ul;
 
-		Shape.drawImmediate(surface, ShapeType.TriStrip, [
+		drawShape(surface, ShapeType.TriStrip, [
 			{ x: x, y: y, color: color_ul },
 			{ x: x + width, y: y, color: color_ur },
 			{ x: x, y: y + height, color: color_ll },
@@ -140,7 +140,7 @@ class Prim
 		color2 = color2 || color1;
 		color3 = color3 || color1;
 
-		Shape.drawImmediate(surface, ShapeType.Triangles, [
+		drawShape(surface, ShapeType.Triangles, [
 			{ x: x1, y: y1, color: color1 },
 			{ x: x2, y: y2, color: color2 },
 			{ x: x3, y: y3, color: color3 },
@@ -158,7 +158,7 @@ class Prim
 			return;
 		let tx = 0.5 * thickness * (y2 - y1) / length;
 		let ty = 0.5 * thickness * -(x2 - x1) / length;
-		Shape.drawImmediate(surface, ShapeType.Fan, [
+		drawShape(surface, ShapeType.Fan, [
 			{ x: x1 + tx, y: y1 + ty, color: color1 },
 			{ x: x1 - tx, y: y1 - ty, color: color1 },
 			{ x: x2 - tx, y: y2 - ty, color: color2 },
@@ -178,7 +178,7 @@ class Prim
 		let y1 = y + t;
 		let x2 = x1 + width - thickness;
 		let y2 = y1 + height - thickness;
-		Shape.drawImmediate(surface, ShapeType.TriStrip, [
+		drawShape(surface, ShapeType.TriStrip, [
 			{ x: x1 - t, y: y1 - t, color: color },
 			{ x: x1 + t, y: y1 + t, color: color },
 			{ x: x2 + t, y: y1 - t, color: color },
@@ -195,5 +195,29 @@ class Prim
 	static fill(surface, color)
 	{
 		Prim.drawSolidRectangle(surface, 0, 0, surface.width, surface.height, color);
+	}
+}
+
+function drawShape(surface, type, vertices)
+{
+	if (Sphere.APILevel >= 2) {
+		Shape.drawImmediate(surface, type, vertices);
+	}
+	else {
+		let vertexList = new VertexList(vertices);
+		let shape = new Shape(type, vertexList);
+		shape.draw(surface);
+	}
+}
+
+function drawTexturedShape(surface, type, texture, vertices)
+{
+	if (Sphere.APILevel >= 2) {
+		Shape.drawImmediate(surface, type, texture, vertices);
+	}
+	else {
+		let vertexList = new VertexList(vertices);
+		let shape = new Shape(type, texture, vertexList);
+		shape.draw(surface);
 	}
 }

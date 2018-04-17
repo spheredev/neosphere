@@ -62,7 +62,7 @@ enum pegasus_type
 	PEGASUS_VERTEX_LIST,
 };
 
-void pegasus_init             (void);
+void pegasus_init             (int api_level);
 void pegasus_uninit           (void);
 bool pegasus_eval_module      (const char* filename);
 bool pegasus_start_event_loop (void);
