@@ -1010,7 +1010,7 @@ vanilla_register_api(void)
 
 	// blend modes for Surfaces
 	api_define_const(NULL, "BLEND", BLEND_NORMAL);
-	api_define_const(NULL, "REPLACE", BLEND_COPY_RGBA);
+	api_define_const(NULL, "REPLACE", BLEND_REPLACE);
 	api_define_const(NULL, "RGB_ONLY", BLEND_COPY_RGB);
 	api_define_const(NULL, "ALPHA_ONLY", BLEND_COPY_ALPHA);
 	api_define_const(NULL, "ADD", BLEND_ADD);

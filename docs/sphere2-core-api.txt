@@ -1679,7 +1679,7 @@ new Surface(filename);
     Constructs a new Surface whose initial contents are taken from the
     specified image file.
 
-Surface#blendingMode [read/write]
+Surface#blendOp [read/write]
 
     Gets or sets the blending operation for objects drawn to this surface.  The
     value specifies how the colors of the object being drawn will be combined
@@ -1693,7 +1693,7 @@ Surface#blendingMode [read/write]
 
 	The default is `BlendOp.AlphaBlend` which combines the source and
 	destination pixels using the source's alpha value as a weighting factor
-	(usually referred to as "alpha blending").
+	(commonly referred to as "alpha blending").
 
 Surface#transform [read/write]
 

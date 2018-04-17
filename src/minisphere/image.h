@@ -52,7 +52,7 @@ enum blend_mode
 	// note: these are in the same order as their Sphere 1.x equivalents
 	//       for maximum compatibility.
 	BLEND_NORMAL,
-	BLEND_COPY_RGBA,
+	BLEND_REPLACE,
 	BLEND_COPY_RGB,
 	BLEND_COPY_ALPHA,
 	BLEND_ADD,

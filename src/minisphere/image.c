@@ -763,14 +763,14 @@ apply_blend_mode(blend_mode_t mode)
 				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO,
 				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE);
 			break;
-		case BLEND_COPY_RGBA:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-			break;
 		case BLEND_INVERT:
 			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_INVERSE_SRC_COLOR);
 			break;
 		case BLEND_MULTIPLY:
 			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
+			break;
+		case BLEND_REPLACE:
+			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
 			break;
 		case BLEND_SUBTRACT:
 			al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
