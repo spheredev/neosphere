@@ -989,10 +989,9 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 		game->version = jsal_get_number(-1);
 	else
 		game->version = 2;
+
 	if (jsal_get_prop_string(-5, "apiLevel") && jsal_is_number(-1))
 		game->api_level = jsal_get_number(-1);
-	else
-		game->api_level = 1;
 
 	if (jsal_get_prop_string(-6, "author") && jsal_is_string(-1))
 		game->author = lstr_new(jsal_get_string(-1));

@@ -1395,7 +1395,7 @@ jsal_require_sphere_spriteset(int index)
 	jsal_pop(5);
 
 	jsal_get_prop_string(index, "images");
-	num_images = (int)jsal_get_length(-1);
+	num_images = jsal_get_length(-1);
 	for (i = 0; i < num_images; ++i) {
 		jsal_get_prop_index(-1, i);
 		image = jsal_require_class_obj(-1, SV1_IMAGE);
@@ -1405,14 +1405,14 @@ jsal_require_sphere_spriteset(int index)
 	jsal_pop(1);
 
 	jsal_get_prop_string(index, "directions");
-	num_poses = (int)jsal_get_length(-1);
+	num_poses = jsal_get_length(-1);
 	for (i = 0; i < num_poses; ++i) {
 		jsal_get_prop_index(-1, i);
 		jsal_get_prop_string(-1, "name");
 		pose_name = jsal_require_string(-1);
 		spriteset_add_pose(spriteset, pose_name);
 		jsal_get_prop_string(-2, "frames");
-		num_frames = (int)jsal_get_length(-1);
+		num_frames = jsal_get_length(-1);
 		for (j = 0; j < num_frames; ++j) {
 			jsal_get_prop_index(-1, j);
 			jsal_get_prop_string(-1, "index");

@@ -850,8 +850,8 @@ pegasus_init(int api_level)
 
 	if (api_level >= 2) {
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
-		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (int)true);
-		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (int)false);
+		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
+		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
@@ -2560,7 +2560,7 @@ js_new_IndexList(int num_args, bool is_ctor, intptr_t magic)
 	if (!jsal_is_array(0))
 		jsal_error(JS_TYPE_ERROR, "Expected an array as first argument");
 
-	num_entries = (int)jsal_get_length(0);
+	num_entries = jsal_get_length(0);
 	if (num_entries == 0)
 		jsal_error(JS_RANGE_ERROR, "Empty list is not allowed");
 	ibo = ibo_new();
@@ -2638,7 +2638,7 @@ js_Joystick_getDevices(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "joystickObjects");
-	num_devices = (int)jsal_get_length(-1);
+	num_devices = jsal_get_length(-1);
 	jsal_push_new_array();
 	for (i = 0; i < num_devices; ++i) {
 		jsal_get_prop_index(-2, i);
@@ -3124,11 +3124,11 @@ js_Shader_setFloatArray(int num_args, bool is_ctor, intptr_t magic)
 	if (!jsal_is_array(1))
 		jsal_error(JS_TYPE_ERROR, "Expected an array as second argument");
 
-	size = (int)jsal_get_length(1);
+	size = jsal_get_length(1);
 
 	values = alloca(size * sizeof(float));
 	for (i = 0; i < size; ++i) {
-		jsal_get_prop_index(1, (int)i);
+		jsal_get_prop_index(1, i);
 		values[i] = jsal_require_number(-1);
 		jsal_pop(1);
 	}
@@ -3156,7 +3156,7 @@ js_Shader_setFloatVector(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid number of components '%d'", size);
 
 	for (i = 0; i < size; ++i) {
-		jsal_get_prop_index(1, (int)i);
+		jsal_get_prop_index(1, i);
 		values[i] = jsal_require_number(-1);
 		jsal_pop(1);
 	}
@@ -3196,10 +3196,10 @@ js_Shader_setIntArray(int num_args, bool is_ctor, intptr_t magic)
 	if (!jsal_is_array(1))
 		jsal_error(JS_TYPE_ERROR, "Expected array as second argument");
 
-	size = (int)jsal_get_length(1);
+	size = jsal_get_length(1);
 	values = alloca(size * sizeof(int));
 	for (i = 0; i < size; ++i) {
-		jsal_get_prop_index(1, (int)i);
+		jsal_get_prop_index(1, i);
 		values[i] = jsal_require_int(-1);
 		jsal_pop(1);
 	}
@@ -3228,7 +3228,7 @@ js_Shader_setIntVector(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid number of components '%d'", size);
 
 	for (i = 0; i < size; ++i) {
-		jsal_get_prop_index(1, (int)i);
+		jsal_get_prop_index(1, i);
 		values[i] = jsal_require_int(-1);
 		jsal_pop(1);
 	}
@@ -3802,7 +3802,7 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, intptr_t magic)
 	}
 	jsal_require_array(array_idx);
 
-	num_entries = (int)jsal_get_length(array_idx);
+	num_entries = jsal_get_length(array_idx);
 	if (num_entries == 0)
 		jsal_error(JS_RANGE_ERROR, "Empty list is not allowed");
 
@@ -5144,7 +5144,7 @@ js_new_VertexList(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_require_array(0);
 
-	num_entries = (int)jsal_get_length(0);
+	num_entries = jsal_get_length(0);
 	if (num_entries == 0)
 		jsal_error(JS_RANGE_ERROR, "Empty list is not allowed");
 
