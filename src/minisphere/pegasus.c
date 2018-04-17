@@ -717,22 +717,12 @@ pegasus_init(int api_level)
 	else
 		api_define_class("Surface", PEGASUS_SURFACE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
-	api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 	api_define_property("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
 	api_define_property("Surface", "width", false, js_Surface_get_width, 0);
 	api_define_method("Surface", "clipTo", js_Surface_clipTo, 0);
 	api_define_method("Surface", "toTexture", js_Surface_toTexture, 0);
 
-	api_define_const("BlendOp", "AlphaBlend", BLEND_NORMAL);
-	api_define_const("BlendOp", "Add", BLEND_ADD);
-	api_define_const("BlendOp", "Average", BLEND_AVERAGE);
-	api_define_const("BlendOp", "CopyAlpha", BLEND_COPY_ALPHA);
-	api_define_const("BlendOp", "CopyRGB", BLEND_COPY_RGB);
-	api_define_const("BlendOp", "Invert", BLEND_INVERT);
-	api_define_const("BlendOp", "Multiply", BLEND_MULTIPLY);
-	api_define_const("BlendOp", "Replace", BLEND_REPLACE);
-	api_define_const("BlendOp", "Subtract", BLEND_SUBTRACT);
 	api_define_const("FileOp", "Read", FILE_OP_READ);
 	api_define_const("FileOp", "Write", FILE_OP_WRITE);
 	api_define_const("FileOp", "Update", FILE_OP_UPDATE);
@@ -853,10 +843,21 @@ pegasus_init(int api_level)
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
+		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_function("Z", "deflate", js_Z_deflate, 0);
 		api_define_function("Z", "inflate", js_Z_inflate, 0);
+
+		api_define_const("BlendOp", "AlphaBlend", BLEND_NORMAL);
+		api_define_const("BlendOp", "Add", BLEND_ADD);
+		api_define_const("BlendOp", "Average", BLEND_AVERAGE);
+		api_define_const("BlendOp", "CopyAlpha", BLEND_COPY_ALPHA);
+		api_define_const("BlendOp", "CopyRGB", BLEND_COPY_RGB);
+		api_define_const("BlendOp", "Invert", BLEND_INVERT);
+		api_define_const("BlendOp", "Multiply", BLEND_MULTIPLY);
+		api_define_const("BlendOp", "Replace", BLEND_REPLACE);
+		api_define_const("BlendOp", "Subtract", BLEND_SUBTRACT);
 	}
 	
 	// keep a local reference to Surface.Screen
