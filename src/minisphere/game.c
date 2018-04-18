@@ -132,6 +132,7 @@ game_open(const char* game_path)
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 		game->safety = FS_SAFETY_RELAXED;
+		game->api_level = 2;
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
 		// a bare script transparent to the rest of the engine, keeping things simple.
@@ -151,6 +152,8 @@ game_open(const char* game_path)
 		jsal_put_prop_string(-2, "author");
 		jsal_push_lstring_t(game->summary);
 		jsal_put_prop_string(-2, "summary");
+		jsal_push_int(game->api_level);
+		jsal_put_prop_string(-2, "apiLevel");
 		jsal_push_sprintf("%dx%d", game->resolution.width, game->resolution.height);
 		jsal_put_prop_string(-2, "resolution");
 		jsal_push_string(path_cstr(game->script_path));
@@ -184,6 +187,7 @@ game_open(const char* game_path)
 		else if ((sgm_file = kev_open(game, "@/game.sgm", false))) {
 			console_log(1, "parsing SGM manifest for game #%u", s_next_game_id);
 			game->version = 1;
+			game->api_level = 1;
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			game->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));

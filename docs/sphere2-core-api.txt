@@ -25,6 +25,7 @@ Here's a sample manifest:
     {
         "name": "Spectacles: Bruce's Story",
         "version": 2,
+        "apiLevel": 1,
         "saveID": "fatCerberus.spectacles",
         "author": "Fat Cerberus",
         "summary": "Follow Scott Starcross in his quest to stop the Primus.",
@@ -51,6 +52,10 @@ needed, and their values can be accessed from JavaScript through `Sphere.Game`.
     Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
           be available for use by game code.  The standards version merely
           tells the engine how to load the main module.
+
+"apiLevel" [default: 1]
+
+    The minimum API level required to run the game.
 
 "author" [default: none]
 
@@ -205,6 +210,9 @@ Sphere.APILevel [read-only]
     while the API level reflects the evolutionary stage.  Whenever new classes,
     methods, or properties are added to the Core API, the API level is
     increased.
+    
+    Note: The value of `Sphere.APILevel` will never exceed the value specified
+          in the game manifest.
 
 Sphere.Compiler [read-only]
 
