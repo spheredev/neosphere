@@ -926,6 +926,7 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 static bool
 write_manifests(build_t* build)
 {
+	int          api_level;
 	FILE*        file;
 	int          height;
 	size_t       json_size;
@@ -961,8 +962,20 @@ write_manifests(build_t* build)
 		jsal_remove(-2);
 	}
 
+	jsal_get_prop_string(-4, "apiLevel");
+	if (jsal_is_number(-1)) {
+		api_level = jsal_get_int(-1);
+		if (api_level < 1)
+			visor_error(build->visor, "'apiLevel': must be greater than zero, found '%d'", api_level);
+		else if (api_level > 2)
+			visor_warn(build->visor, "'apiLevel': level '%d' targets future Sphere version", api_level);
+	}
+	else {
+		visor_error(build->visor, "'apiLevel': must be a number greater than zero, found '%s'", jsal_to_string(-1));
+	}
+	
 	// note: SGMv1 encodes the resolution width and height as separate fields.
-	jsal_get_prop_string(-4, "resolution");
+	jsal_get_prop_string(-5, "resolution");
 	if (!jsal_is_string(-1)
 		|| sscanf(jsal_to_string(-1), "%dx%d", &width, &height) != 2)
 	{
@@ -972,7 +985,7 @@ write_manifests(build_t* build)
 		return false;
 	}
 
-	jsal_get_prop_string(-5, "main");
+	jsal_get_prop_string(-6, "main");
 	if (jsal_is_string(-1)) {
 		// explicitly rebase onto '@/', as Cell uses '$/' by default.
 		main_path = fs_full_path(jsal_to_string(-1), "@/");
@@ -998,7 +1011,7 @@ write_manifests(build_t* build)
 		return false;
 	}
 
-	if (jsal_get_prop_string(-6, "sandbox")) {
+	if (jsal_get_prop_string(-7, "sandbox")) {
 		sandbox_mode = jsal_to_string(-1);
 		if (strcmp(sandbox_mode, "full") != 0
 			&& strcmp(sandbox_mode, "relaxed") != 0
@@ -1011,21 +1024,20 @@ write_manifests(build_t* build)
 		}
 	}
 
-
 	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
 	// note: SGMv1 requires the main script path to be relative to '@/scripts'.
 	//       this differs from Sv2 (game.json), where it's relative to '@/'.
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
 	script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
-	fprintf(file, "name=%s\n", jsal_to_string(-6));
-	fprintf(file, "author=%s\n", jsal_to_string(-5));
-	fprintf(file, "description=%s\n", jsal_to_string(-4));
+	fprintf(file, "name=%s\n", jsal_to_string(-7));
+	fprintf(file, "author=%s\n", jsal_to_string(-6));
+	fprintf(file, "description=%s\n", jsal_to_string(-5));
 	fprintf(file, "screen_width=%d\n", width);
 	fprintf(file, "screen_height=%d\n", height);
 	fprintf(file, "script=%s\n", path_cstr(script_path));
 	fclose(file);
 	path_free(script_path);
-	jsal_pop(6);
+	jsal_pop(7);
 
 	// write game.json (Sphere v2 JSON manifest)
 	jsal_stringify(-1);

@@ -474,6 +474,7 @@ static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
 static path_t*   load_package_json           (const char* filename);
 
+static int       s_api_level;
 static mixer_t*  s_def_mixer;
 static int       s_frame_rate = 60;
 static int       s_next_module_id = 1;
@@ -499,7 +500,9 @@ pegasus_init(int api_level)
 
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, api_level);
 
+	s_api_level = api_level;
 	s_def_mixer = mixer_new(44100, 16, 2);
+
 	jsal_on_import_module(handle_module_import);
 
 	s_key_color = jsal_new_key("color");
@@ -712,10 +715,7 @@ pegasus_init(int api_level)
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
 
-	if (api_level >= 2)
-		api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
-	else
-		api_define_class("Surface", PEGASUS_SURFACE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	api_define_subclass("Surface", PEGASUS_SURFACE, s_api_level >= 2 ? PEGASUS_TEXTURE : -1, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
@@ -838,7 +838,7 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "Triangles", SHAPE_TRIANGLES);
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
-	if (api_level >= 2) {
+	if (s_api_level >= 2) {
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
@@ -873,7 +873,7 @@ pegasus_init(int api_level)
 	jsal_get_global_string("Color");
 	p = COLORS;
 	while (p->name != NULL) {
-		if (p->api_level > api_level) {
+		if (s_api_level < p->api_level) {
 			++p;
 			continue;
 		}
@@ -1373,7 +1373,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_get_APILevel(int num_args, bool is_ctor, intptr_t magic)
 {
-	jsal_push_int(game_api_level(g_game));
+	jsal_push_int(s_api_level);
 	cache_value_to_this("APILevel");
 	return true;
 }
