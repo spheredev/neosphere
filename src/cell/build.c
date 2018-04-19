@@ -962,16 +962,20 @@ write_manifests(build_t* build)
 		jsal_remove(-2);
 	}
 
-	jsal_get_prop_string(-4, "apiLevel");
-	if (jsal_is_number(-1)) {
-		api_level = jsal_get_int(-1);
-		if (api_level < 1)
-			visor_error(build->visor, "'apiLevel': must be greater than zero, found '%d'", api_level);
-		else if (api_level > 2)
-			visor_warn(build->visor, "'apiLevel': level '%d' targets future Sphere version", api_level);
+	if (jsal_get_prop_string(-4, "apiLevel")) {
+		if (jsal_is_number(-1)) {
+			api_level = jsal_get_int(-1);
+			if (api_level < 1)
+				visor_error(build->visor, "'apiLevel': must be greater than zero, found '%d'", api_level);
+			else if (api_level > 2)
+				visor_warn(build->visor, "'apiLevel': level '%d' targets future Sphere version", api_level);
+		}
+		else {
+			visor_error(build->visor, "'apiLevel': must be a number greater than zero, found '%s'", jsal_to_string(-1));
+		}
 	}
 	else {
-		visor_error(build->visor, "'apiLevel': must be a number greater than zero, found '%s'", jsal_to_string(-1));
+		visor_warn(build->visor, "'apiLevel': missing value, targeting L1 by default");
 	}
 	
 	// note: SGMv1 encodes the resolution width and height as separate fields.
@@ -979,7 +983,7 @@ write_manifests(build_t* build)
 	if (!jsal_is_string(-1)
 		|| sscanf(jsal_to_string(-1), "%dx%d", &width, &height) != 2)
 	{
-		visor_error(build->visor, "'resolution': missing 'resolution' field or value invalid");
+		visor_error(build->visor, "'resolution': missing or invalid 'resolution' value");
 		jsal_pop(6);
 		visor_end_op(build->visor);
 		return false;
@@ -1005,7 +1009,7 @@ write_manifests(build_t* build)
 		jsal_put_prop_string(-7, "main");
 	}
 	else {
-		visor_error(build->visor, "missing or invalid 'main' field");
+		visor_error(build->visor, "'main': missing or invalid 'main' value");
 		jsal_pop(7);
 		visor_end_op(build->visor);
 		return false;

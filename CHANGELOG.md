@@ -33,7 +33,6 @@ v5.2.0 - TBD
   new purpose.
 * Removes the pointless `--no-sleep` command-line option.
 * Removes the Sphere Runtime `Image` class from the API.
-* Reverts `Sphere.APILevel` to 1 as the level 2 APIs are still experimental.
 * Fixes an internal memory leak mostly affecting `Dispatch` job execution.
 * Fixes a bug in which calling `FlipScreen()`, `DoEvents()`, or `MapEngine()`
   after entering the event loop leads to a segmentation fault.
