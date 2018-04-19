@@ -967,7 +967,7 @@ write_manifests(build_t* build)
 			api_level = jsal_get_int(-1);
 			if (api_level < 1)
 				visor_error(build->visor, "'apiLevel': must be greater than zero, found '%d'", api_level);
-			else if (api_level > 2)
+			else if (api_level > SPHERE_API_LEVEL)
 				visor_warn(build->visor, "'apiLevel': level '%d' targets future Sphere version", api_level);
 		}
 		else {

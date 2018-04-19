@@ -33,9 +33,6 @@
 #ifndef SPHERE__PEGASUS_H__INCLUDED
 #define SPHERE__PEGASUS_H__INCLUDED
 
-#define SPHERE_API_VERSION 2
-#define SPHERE_API_LEVEL   2
-
 enum pegasus_type
 {
 	PEGASUS_COLOR = 200,

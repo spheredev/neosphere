@@ -132,7 +132,7 @@ game_open(const char* game_path)
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 		game->safety = FS_SAFETY_RELAXED;
-		game->api_level = 2;
+		game->api_level = SPHERE_API_LEVEL;
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
 		// a bare script transparent to the rest of the engine, keeping things simple.
