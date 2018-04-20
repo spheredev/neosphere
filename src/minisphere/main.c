@@ -289,13 +289,20 @@ main(int argc, char* argv[])
 	attach_input_display();
 	kb_load_keymap();
 	
-	api_level = SPHERE_API_LEVEL;
-	if (legacy_mode)
+	// in legacy mode, only provide access to functions up to the targeted
+	// API level, nothing newer.
+	if (legacy_mode) {
+		api_version = game_version(g_game);
 		api_level = game_api_level(g_game);
+	}
+	else {
+		api_version = SPHERE_API_VERSION;
+		api_level = SPHERE_API_LEVEL;
+	}
 	
 	api_init();
 	vanilla_init();
-	if (api_level > 0)
+	if (api_version >= 2)
 		pegasus_init(api_level);
 
 	// switch to fullscreen if necessary and initialize clipping
