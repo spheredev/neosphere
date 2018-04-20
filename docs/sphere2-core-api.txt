@@ -188,6 +188,20 @@ the event loop represents one frame and consists of three phases:
               next frame.
 
 
+API Levels
+----------
+
+Each API function and property described below has an API level, denoted by an
+`L` and a number in braces next to the name of the API, like this: {L1}.  The
+API level corresponds with the age of the API; higher API levels require a more
+recent engine.  The `apiLevel` field in the JSON manifest specifies the minimum
+API level your game needs to run; support for higher levels can then be tested
+for at runtime by reading the value of `Sphere.APILevel`.
+
+IMPORTANT: The current stable API level is L1.  APIs marked as {L2} should be
+           considered experimental, and may change or be removed in the future.
+
+
 `Sphere` Namespace
 ------------------
 
@@ -196,37 +210,37 @@ communicate with the underlying Sphere platform.  The properties provide access
 to the engine's name, version number, and API level, and there are several
 methods for managing execution.
 
-Sphere.Engine [read-only]
+Sphere.Engine [read-only] {L1}
 
     A string specifying the name and version number of the game engine.  The
     version number takes the form X.Y.Z, where X is the major version, Y is the
     minor version, and Z is the patch level.
 
-Sphere.Version [read-only]
-Sphere.APILevel [read-only]
+Sphere.Version [read-only] {L1}
+Sphere.APILevel [read-only] {L1}
 
     The Sphere API version and level supported by the engine, respectively.
     `Version` indicates which version of the Sphere API is supported (e.g., 2),
     while the API level reflects the evolutionary stage.  Whenever new classes,
     methods, or properties are added to the Core API, the API level is
     increased.
-    
+
     Note: The value of `Sphere.APILevel` will never exceed the value specified
           in the game manifest.
 
-Sphere.Compiler [read-only]
+Sphere.Compiler [read-only] {L1}
 
     A string specifying the name and version number of the compiler or build
     tool used to make the game distribution.  If no compiler information is
     available for the current game, this evaluates to `undefined`.
 
-Sphere.Game [non-replaceable]
+Sphere.Game [non-replaceable] {L1}
 
     An object whose properties describe the currently running game.  The object
     consists of everything in the JSON manifest plus any fields synthesized by
     the engine.
 
-Sphere.frameRate [read/write]
+Sphere.frameRate [read/write] {L1}
 
     Gets or sets the frame rate.  Set this to Infinity to disable the frame
     limiter.  The default is 60 FPS.
@@ -235,12 +249,12 @@ Sphere.frameRate [read/write]
     set to 60 (the default), the event loop will perform 60 iterations per
     second, skipping renders as necessary to meet that goal.
 
-Sphere.frameSkip [read/write]
+Sphere.frameSkip [read/write] {L1}
 
     Gets or sets the maximum number of frames the engine is allowed to skip in
     order to maintain the desired frame rate.
 
-Sphere.fullScreen [read/write]
+Sphere.fullScreen [read/write] {L1}
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
@@ -249,7 +263,7 @@ Sphere.fullScreen [read/write]
           windowed mode and any change to the value of `screen.fullScreen` will
           be silently ignored.
 
-Sphere.abort(message);
+Sphere.abort(message); {L1}
 
     Aborts execution.  This is effectively a forced crash: JavaScript execution
     will cease immediately, and the exception screen will be shown displaying
@@ -258,7 +272,7 @@ Sphere.abort(message);
     Note: Sphere.abort() bypasses all exception handling mechanisms, including
           the debugger if it's attached.  Be sure you know what you're doing!
 
-Sphere.now();
+Sphere.now(); {L1}
 
     Returns the number of frames (including skipped frames) processed by the
     engine since it started running.  To measure wall clock time instead, use
@@ -268,7 +282,7 @@ Sphere.now();
           That typically isn't an issue: at 60 FPS, a game would need to run
           continuously for *over 2 years* before the timer would roll over.
 
-Sphere.restart();
+Sphere.restart(); {L1}
 
     Restarts the engine.  All in-flight Dispatch jobs are canceled so that once
     control returns to the event loop, the engine will initiate a restart.
@@ -277,7 +291,7 @@ Sphere.restart();
           after control has returned to the event loop.  Note that dispatching
           new update or render jobs before then will cancel the request!
 
-Sphere.setResolution(width, height);
+Sphere.setResolution(width, height); {L1}
 
     Changes the game's resolution.  This determines the width and height of
     the backbuffer (see `Surface.Screen` below); higher resolutions allow you
@@ -286,7 +300,7 @@ Sphere.setResolution(width, height);
     Note: This change is not persistent and lasts only until the engine is
           closed.
 
-Sphere.shutDown();
+Sphere.shutDown(); {L1}
 
     Shuts down the engine.  All in-flight Dispatch jobs are canceled so that
     once control returns to the event loop, the engine will close.
@@ -295,7 +309,7 @@ Sphere.shutDown();
           after control has returned to the event loop.  Note that dispatching
           new update or render jobs before then will cancel the request!
 
-Sphere.sleep(frames);
+Sphere.sleep(frames); {L1}
 
     Returns a promise which resolves after the specified number of frames have
     elapsed.  Can be used with `await`.  This is useful to delay execution of a
@@ -308,10 +322,10 @@ Sphere.sleep(frames);
 The `Color` object represents an RGB color value.  It also has an alpha
 component and can therefore represent translucent colors.
 
-Color.Red [read-only]
-Color.Green [read-only]
-Color.Blue [read-only]
-Color.Transparent [read-only]
+Color.Red [read-only] {L1}
+Color.Green [read-only] {L1}
+Color.Blue [read-only] {L1}
+Color.Transparent [read-only] {L1}
 etc...
 
     Gets a copy of a predefined color.  The entire X11 color set is provided,
@@ -328,7 +342,7 @@ etc...
     The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
     false, but this is rarely an issue in practice.
 
-Color.is(color1, color2);
+Color.is(color1, color2); {L1}
 
     Returns true if `color1` refers to the same physical color as `color2`
     without regard to their alpha components.  Otherwise returns false.
@@ -337,48 +351,48 @@ Color.is(color1, color2);
           because Color#name encodes the alpha channel in addition to the
           physical color.
 
-Color.mix(color1, color2[, w1, w2]);
+Color.mix(color1, color2[, w1, w2]); {L1}
 
     Calculates a weighted average of two colors.  `w1` and `w2` are optional
     and specify the relative weights of `color1` and `color2` respectively.  If
     the weights are omitted, the mix is 50/50.
 
-Color.of(name);
+Color.of(name); {L1}
 
     Returns a Color object from `name`, which can either be the name of a
     predefined X11 color without spaces (e.g. "chartreuse"), or an ARGB
     signature such as "#800000FF".  If `name` cannot be resolved to a color,
     throws a TypeError.
 
-new Color(red, green, blue[, alpha]);
+new Color(red, green, blue[, alpha]); {L1}
 
     Constructs a new Color object.  Color objects are used to specify the color
     of elements such as vertices and primitives.  Color components should be in
     the range [0.0,1.0]; out-of-range values are silently clamped.  `alpha`
     specifies the color's opacity and defaults to 1.0 if not provided.
 
-Color#r [read/write]
-Color#g [read/write]
-Color#b [read/write]
-Color#a [read/write]
+Color#r [read/write] {L1}
+Color#g [read/write] {L1}
+Color#b [read/write] {L1}
+Color#a [read/write] {L1}
 
     Gets or sets the individual components of the color (red, green, blue, or
     alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
     HDR is not supported and the engine will automatically clamp such colors
     when rendered.
 
-Color#name [read-only]
+Color#name [read-only] {L1}
 
     Gets the name of the Color according to its component values such that
     Color.of(color.name) will give back a Color with the same values.  Useful
     for saving and reading back colors from save files.
 
-Color#clone();
+Color#clone(); {L1}
 
     Returns a copy of this Color object.  Changes to the clone will not affect
     the original object.
 
-Color#fadeTo(alpha_factor);
+Color#fadeTo(alpha_factor); {L1}
 
     Scales this color's alpha channel by `alpha_factor`, between 0.0 and 1.0,
     and returns the result.  The red, green, and blue components are not
@@ -397,17 +411,17 @@ read directory entries one at a time.  `DirectoryStream` also implements the
 JavaScript ES6 iterator protocol, so you can use it in a `from()` query or
 `for...of` loop.
 
-new DirectoryStream(dir_name);
+new DirectoryStream(dir_name); {L1}
 
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
 
-DirectoryStream#fileCount [read-only]
+DirectoryStream#fileCount [read-only] {L1}
 
     Gets the number of entries (both files and directories) in the directory
     listing.
 
-DirectoryStream#fileName [read-only]
+DirectoryStream#fileName [read-only] {L1}
 
     Gets the full SphereFS pathname of the directory whose entries are being
     enumerated.
@@ -415,12 +429,12 @@ DirectoryStream#fileName [read-only]
     Note: Under SphereFS canonicalization rules, the pathname of a directory
           always ends in a slash (`/`).
 
-DirectoryStream#position [read/write]
+DirectoryStream#position [read/write] {L1}
 
     Gets or sets the position within the stream.  This is an index into the
     directory specifying which entry will be read next.
 
-DirectoryStream#dispose();
+DirectoryStream#dispose(); {L1}
 
     Disposes of the DirectoryStream object, closing the underlying directory.
     Attempting to the object afterwards will throw an error.
@@ -430,7 +444,7 @@ DirectoryStream#dispose();
           them.  If there's an active DirectoryStream for a given directory, an
           error may be thrown if you try to construct another one.
 
-DirectoryStream#next();
+DirectoryStream#next(); {L1}
 
     Reads the next entry from the directory and advances the stream position.
     This returns an object.  If there are no entries remaining, the object's
@@ -457,7 +471,7 @@ DirectoryStream#next();
           Refer to the Sphere Runtime API documentation for more information
           about `from()`.
 
-DirectoryStream#rewind();
+DirectoryStream#rewind(); {L1}
 
     Rewinds the stream and resets the position to 0.  If the directory contents
     have changed, rewinding the DirectoryStream will allow you to enumerate the
@@ -476,20 +490,20 @@ When queueing a job, a token is returned which allows you to manage the
 in-flight job.  See the documentation for `JobToken` below to find out what you
 can do with the token.
 
-Dispatch.cancelAll();
+Dispatch.cancelAll(); {L1}
 
     Cancels all one-time jobs (except `onExit`) in the job queue.  In order to
     prevent mishaps, this does not cancel update, render and exit jobs.  Those
     must be cancelled individually.
 
-Dispatch.later(num_frames, callback);
+Dispatch.later(num_frames, callback); {L1}
 
     Sets up a one-time job to call `callback` from the event loop after
     `num_frames` frames have passed.
 
     Returns a `JobToken` you can use the manage the job.
 
-Dispatch.now(callback);
+Dispatch.now(callback); {L1}
 
     Sets up a one-time job to call `callback` from the event loop during the
     current frame.  This is useful for performing operations that need to be
@@ -501,7 +515,7 @@ Dispatch.now(callback);
           latter runs at the beginning of the next frame; Dispatch.now() jobs
           always run during the same frame they were issued.
 
-Dispatch.onExit(callback);
+Dispatch.onExit(callback); {L2}
 
     Sets up a one-time job to call `callback` after the event loop exits.  This
     is useful when you need to ensure something always runs before the engine
@@ -514,8 +528,8 @@ Dispatch.onExit(callback);
           avoid it; the engine won't close until all exit jobs have finished
           running, so excessive delays here are likely to frustrate the user.
 
-Dispatch.onRender(fn[, options]);
-Dispatch.onUpdate(fn[, options]);
+Dispatch.onRender(fn[, options]); {L1}
+Dispatch.onUpdate(fn[, options]); {L1}
 
     Sets up a recurring job to call `fn` during a specified event loop phase.
     For example, `onRender()` jobs are called before the backbuffer is flipped,
@@ -545,7 +559,7 @@ The `FS` namespace allows your game to access asset and save files, create or
 remove directories, etc.  All file system operations are sandboxed to prevent
 damage to the system.
 
-FS.createDirectory(dir_name);
+FS.createDirectory(dir_name); {L1}
 
     Creates a directory and any of its parent directories that don't already
     exist.  If the directory already exists, this function does nothing.
@@ -555,16 +569,16 @@ FS.createDirectory(dir_name);
           that case.  This allows you to call it to ensure a directory exists
           before you access it, without needing an explicit check beforehand.
 
-FS.deleteFile(filename);
+FS.deleteFile(filename); {L1}
 
     Deletes `filename` from the file system.
 
-FS.directoryExists(dir_name);
+FS.directoryExists(dir_name); {L1}
 
     Checks whether the specified directory exists and returns true if it does.
     Otherwise, returns false.
 
-FS.evaluateScript(filename);
+FS.evaluateScript(filename); {L1}
 
     Executes a JavaScript file in the global scope and returns the result.
     This is useful for executing scripts originally written for the Web, where
@@ -574,12 +588,12 @@ FS.evaluateScript(filename);
           can--and likely will--create new global functions and variables.  Be
           sure you know what you're doing!
 
-FS.fileExists(filename);
+FS.fileExists(filename); {L1}
 
     Checks whether the specified file exists and returns true if it does.
     Otherwise, returns false.
 
-FS.fullPath(filename[, base_dir]);
+FS.fullPath(filename[, base_dir]); {L1}
 
     Resolves a filename (which may contain relative path components, or even be
     relative itself) to its full, canonical SphereFS pathname.  `base_dir` is
@@ -590,7 +604,7 @@ FS.fullPath(filename[, base_dir]);
     without regard to `base_dir`.  Otherwise, `fileName` is considered to be
     relative to `base_dir`.
 
-FS.readFile(filename);
+FS.readFile(filename); {L1}
 
     Reads an entire UTF-8 text file into a JavaScript string.  This is a
     convenience to avoid the need to explicitly construct a FileStream and
@@ -600,24 +614,24 @@ FS.readFile(filename);
           binary data.  To work with binary files, use a FileStream object
           instead.
 
-FS.relativePath(filename, base_dir);
+FS.relativePath(filename, base_dir); {L1}
 
     Abbreviates a full SphereFS pathname by returning its path relative to
     `base_dir`.  This can be useful when logging filenames or displaying track
     names, for example.
 
-FS.removeDirectory(dir_name);
+FS.removeDirectory(dir_name); {L1}
 
     Deletes the specified directory.  The directory must be empty or an error
     will be thrown.
 
-FS.rename(orig_name, new_name);
+FS.rename(orig_name, new_name); {L1}
 
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full paths.  This can also be used to move a file between
     directories; if so, the destination directory must already exist.
 
-FS.writeFile(filename, string);
+FS.writeFile(filename, string); {L1}
 
     Writes a string out to a UTF-8 text file.  If a file already exists with
     the specified filename, it will be overwritten.
@@ -630,7 +644,7 @@ FS.writeFile(filename, string);
 `FileStream` Object
 -------------------
 
-new FileStream(filename, file_op);
+new FileStream(filename, file_op); {L1}
 
     Constructs a FileStream that provides access to the contents of a specified
     file.  `file_op` specifies the file operation requested and must be one of
@@ -657,7 +671,7 @@ new FileStream(filename, file_op);
     Requesting write access to a file residing in a read-only directory (e.g.,
     the system directory `#/`) will throw a TypeError.
 
-FileStream#dispose();
+FileStream#dispose(); {L1}
 
     Disposes of the FileStream object, closing the underlying file.  Attempting
     to the object afterwards will throw an error.
@@ -668,15 +682,15 @@ FileStream#dispose();
           if the file is opened in write mode, an error may be thrown if you
           try to construct another one.
 
-FileStream#fileName [read-only]
+FileStream#fileName [read-only] {L1}
 
     Gets the full SphereFS pathname of the underlying file.
 
-FileStream#fileSize [read-only]
+FileStream#fileSize [read-only] {L1}
 
     Gets the size of the underlying file, in bytes.
 
-FileStream#position [read/write]
+FileStream#position [read/write] {L1}
 
     Gets or sets the file position, which determines where in the file the next
     read or write will start from.  Expressed in bytes.
@@ -685,12 +699,12 @@ FileStream#position [read/write]
           stream.  In this case the next write will be at the new position and
           the intervening space filled with NUL bytes.
 
-FileStream#read(num_bytes);
+FileStream#read(num_bytes); {L1}
 
     Reads data from the file, up to the specified number of bytes, and returns
     it as an ArrayBuffer.  The file must be opened for reading.
 
-FileStream#write(data);
+FileStream#write(data); {L1}
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
@@ -703,39 +717,39 @@ The `Font` object specifies a typeface that can be used when drawing text.
 Sphere provides a default font which is the same for all games, or you can load
 one from an RFN font file.
 
-Font.Default [read-only]
+Font.Default [read-only] {L1}
 
     Gets the default engine font.  This is the font used for the FPS counter
     and system messages.
 
-new Font(filename);
+new Font(filename); {L1}
 
     Constructs a Font object from a font file.  Currently only the Sphere RFN
     font format is supported.
 
-Font#fileName [read-only]
+Font#fileName [read-only] {L1}
 
     Gets the full SphereFS pathname of the file used to construct this Font
     object.
 
-Font#height [read-only]
+Font#height [read-only] {L1}
 
     Gets the line height, in pixels, for text rendered using this font.
 
-Font#drawText(surface, x, y, text[, color[, wrap_width]]);
+Font#drawText(surface, x, y, text[, color[, wrap_width]]); {L1}
 
     Renders `text` to the specified surface at (x,y).  `color` defaults to
     Color.White if not provided, and `wrap_width` specifies the width in which
     to constrain the text.  If `wrap_width` is not provided, no wrapping is
     performed.
 
-Font#getTextSize(text, wrap_width);
+Font#getTextSize(text, wrap_width); {L1}
 
     Gets the size, in pixels, of `text` if it were rendered by Font:drawText()
     with the specified wrap width.  Return value is an object with `width` and
     `height` properties.
 
-Font#wordWrap(text, wrap_width);
+Font#wordWrap(text, wrap_width); {L1}
 
     Wraps `text` as if it were drawn with Font#drawText() using the specified
     wrap width.  Returns an array of strings, representing the lines in the
@@ -755,7 +769,7 @@ all the vertices for a scene in a single `VertexList` and construct different
 shapes from it.  The index list specifies which vertices from the list to use
 to create a shape.
 
-new IndexList(indices);
+new IndexList(indices); {L1}
 
     Constructs a new index list from `indices`, an array of integers in the
     range [0,65535].  If `indices` is not an array or any element is not a
@@ -773,18 +787,18 @@ A JobToken represents a job queued using one of the `Dispatch` functions above.
 When queuing a job, you must keep a reference to the token if you want to be
 able to manage the job later.
 
-JobToken#cancel();
+JobToken#cancel(); {L1}
 
     Cancels the dispatch job associated with this token.  If the job was queued
     using either `Dispatch.now()` or `Dispatch.later()` and has already started
     running, calling this has no effect.
 
-JobToken#pause();
+JobToken#pause(); {L2}
 
     Pauses the job.  Paused jobs will not run, but do keep the event loop alive
     and can be resumed at any time without the need to dispatch a new job.
 
-JobToken#resume();
+JobToken#resume(); {L2}
 
     Resumes the job associated with this token after it's been paused with
     JobToken#pause().  If the job is not currently paused, this does nothing.
@@ -793,31 +807,31 @@ JobToken#resume();
 `Joystick` Object
 -----------------
 
-Joystick.Null [read-only]
+Joystick.Null [read-only] {L1}
 
     Gets the null joystick.  When polled, a null joystick returns neutral
     values for all inputs.  Joystick.Null can be used in place of a real
     Joystick object to simplify input code.
 
-Joystick.getDevices();
+Joystick.getDevices(); {L1}
 
     Gets an array of Joystick objects, one for each connected gamepad or
     joystick.
 
-Joystick#name [read-only]
+Joystick#name [read-only] {L1}
 
     Gets the name of the device, as reported by the Allegro backend.  Xbox
     controllers are reported as "XInput Joystick <n>"
 
-Joystick#numAxes [read-only]
+Joystick#numAxes [read-only] {L1}
 
     Gets the number of analog axes supported by the device.
 
-Joystick#numButtons [read-only]
+Joystick#numButtons [read-only] {L1}
 
     Gets the number of buttons supported by the device.
 
-Joystick#getPosition(axisID);
+Joystick#getPosition(axisID); {L1}
 
     Polls the device and gets the current position along the specified analog
     axis.  To get the number of axes supported by a device, use the `numAxes`
@@ -828,7 +842,7 @@ Joystick#getPosition(axisID);
           For gamepads with analog sticks, though, it's generally a safe bet
           that the primary analog stick will be mapped to the first two axes.
 
-Joystick#isPressed(buttonID);
+Joystick#isPressed(buttonID); {L1}
 
     Polls the device and returns true if the specified button is currently
     depressed.  To get the number of buttons supported by a device, use the
@@ -846,7 +860,7 @@ What would a game be without the ability for the player to control it?  The
 `Keyboard` object allows your game to accept input via the keyboard, the most
 common input method for a PC game.
 
-Key [enumeration]
+Key [enumeration] {L1}
 
     Specifies a keyboard key.  Can be one of the following:
 
@@ -954,20 +968,20 @@ Key [enumeration]
           below the function keys, while NumPad0-NumPad9 refer to the numbers
           on the numeric keypad.
 
-Keyboard.Default [read-only]
+Keyboard.Default [read-only] {L1}
 
     Gets a `Keyboard` object for the default keyboard device.
 
     Note: miniSphere currently only supports a single keyboard.
 
-Keyboard#capsLock [read-only]
-Keyboard#numLock [read-only]
-Keyboard#scrollLock [read-only]
+Keyboard#capsLock [read-only] {L1}
+Keyboard#numLock [read-only] {L1}
+Keyboard#scrollLock [read-only] {L1}
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
 
-Keyboard#charOf(key[, shifted]);
+Keyboard#charOf(key[, shifted]); {L1}
 
     Gets the character(s) that would be generated if a specified key is pressed
     on this keyboard.  For example, Key.A becomes "a" (or "A" if shifted).
@@ -977,16 +991,16 @@ Keyboard#charOf(key[, shifted]);
     An empty string is returned if the specified key is not associated with a
     character (a modifier key, for example).
 
-Keyboard#clearQueue();
+Keyboard#clearQueue(); {L1}
 
     Removes all keys from the keyboard queue.  If another key is not pressed
     in the interim, the next getKey() will return null.
 
-Keyboard#getKey();
+Keyboard#getKey(); {L1}
 
     Gets the next key in the keyboard queue, or null if the queue is empty.
 
-Keyboard#isPressed(key);
+Keyboard#isPressed(key); {L1}
 
     Returns true if the user is currently pressing the specified key.  `key`
     should be a member of the Key enumeration.
@@ -999,12 +1013,12 @@ Mixers are used to group related audio together and adjust their parameters as
 a class; this is useful, for example, for implementing global volume controls
 in your game.
 
-Mixer.Default [read-only]
+Mixer.Default [read-only] {L1}
 
     Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
     16-bit stereo sound, i.e. CD quality.
 
-new Mixer(frequency, bits[, channels]);
+new Mixer(frequency, bits[, channels]); {L1}
 
     Constructs a new Mixer object.  Any sounds played through the mixer will use
     the format specified by the parameters above.  `frequency` is the sample
@@ -1016,7 +1030,7 @@ new Mixer(frequency, bits[, channels]);
     not supported by the system, an error will be thrown ("unable to create
     hardware voice").
 
-Mixer#volume [read/write]
+Mixer#volume [read/write] {L1}
 
     Gets or sets the output volume of the mixer.  This will affect the volume
     of any sounds played through the mixer.
@@ -1030,7 +1044,7 @@ which are drawn to a surface as a single unit.  Used well, this can improve
 your game's rendering performance by grouping together operations using similar
 parameters.
 
-new Model(shapes[, shader]);
+new Model(shapes[, shader]); {L1}
 
     Constructs a Model out of the provided array of Shape objects.  `shader` is
     the Shader to use when rendering the model.  See below for more information
@@ -1040,15 +1054,15 @@ new Model(shapes[, shader]);
     identity matrix.  If `shader` is not provided, the default shader program
     will be used (see `Shader.Default`).
 
-Model#shader [read/write]
+Model#shader [read/write] {L1}
 
     Gets or sets the Shader to use when drawing this model.
 
-Model#transform [read/write]
+Model#transform [read/write] {L1}
 
     Gets or sets the transformation matrix to use when drawing this model.
 
-Model#draw([surface]);
+Model#draw([surface]); {L1}
 
     Draws the model on `surface`, or the backbuffer if no surface is specified.
     Any transformations defined for the model (see below) are applied as if all
@@ -1063,7 +1077,7 @@ common input method for games.  As with the `Keyboard` object, `Mouse` provides
 an event queue which accumulates clicks and other events until the game is
 ready to process them.
 
-MouseKey [enumeration]
+MouseKey [enumeration] {L1}
 
     Specifies a mouse click or other event (such as a wheel movement).  Can
     be one of the following:
@@ -1074,24 +1088,24 @@ MouseKey [enumeration]
         MouseKey.WheelUp
         MouseKey.WheelDown
 
-Mouse.Default [read-only]
+Mouse.Default [read-only] {L1}
 
     Gets a `Mouse` object for the default mouse device.
 
     Note: miniSphere currently only supports a single mouse.
 
-Mouse#x [read-only]
-Mouse#y [read-only]
+Mouse#x [read-only] {L1}
+Mouse#y [read-only] {L1}
 
     Gets the immediate X and Y position of the mouse cursor relative to the
     game's rendering area.
 
-Mouse#clearQueue();
+Mouse#clearQueue(); {L1}
 
     Removes all events from this mouse's event queue.  If another event is not
     received in the interim, the next getEvent() will return null.
 
-Mouse#getEvent();
+Mouse#getEvent(); {L1}
 
     Gets the next event in this mouse's event queue.  `null` is returned if the
     queue is empty.
@@ -1109,7 +1123,7 @@ Mouse#getEvent();
             The X and Y position of the mouse cursor relative to the rendering
             area at the time the event was received.
 
-Mouse#isPressed(key);
+Mouse#isPressed(key); {L1}
 
     Gets whether the specified mouse button is currently pressed.  `key` is one
     of the MouseKey constants listed above.
@@ -1131,7 +1145,7 @@ and allows manually seeding the generator, as well as saving and restoring the
 exact state of the generator at any time.  RNG state is often saved along with
 other save data as a way to deter save scumming.
 
-RNG.fromSeed(seed);
+RNG.fromSeed(seed); {L1}
 
     Constructs a new random number generator seeded using the specified value.
     The specific sequence of numbers generated is entirely defined by the seed:
@@ -1141,17 +1155,17 @@ RNG.fromSeed(seed);
     `seed` is a number greater than zero.  If the seed is fractional, only the
     integer part is used; everything after the decimal point is ignored.
 
-RNG.fromState(state);
+RNG.fromState(state); {L1}
 
     Constructs a new random number generator which starts in the specified
     state.  See RNG#state for more information.
 
-new RNG();
+new RNG(); {L1}
 
     Constructs a new random number generator seeded from the current system
     time.
 
-RNG#state [read/write]
+RNG#state [read/write] {L1}
 
     Gets or sets the current state of this generator.  State is encoded as
     a 32-digit hexadecimal string which makes it easy to save and restore.
@@ -1160,7 +1174,7 @@ RNG#state [read/write]
     and consist only of hexadecimal digits (0-9, A-F), otherwise a TypeError
     will be thrown.
 
-RNG#next();
+RNG#next(); {L1}
 
     Generates the next random number in the sequence.  This returns an object
     whose `done` property is always false, and whose `value` property is a
@@ -1180,12 +1194,12 @@ to communicate with an attached debugger such as SSj or SSj Blue.  Note that
 `SSj` methods only have an effect when called under SpheRun; in production they
 do nothing.
 
-SSj.flipScreen();
+SSj.flipScreen(); {L1}
 
     Immediately flips the contents of the backbuffer to the screen.  The
     backbuffer is not cleared afterwards.  Useful for debugging graphics code.
 
-SSj.log(text_or_object);
+SSj.log(text_or_object); {L1}
 
     Logs `text_or_object` to an attached SSj or SSj Blue session.  If an object
     is passed in, logs the result of calling `JSON.stringify()` on the object.
@@ -1193,7 +1207,7 @@ SSj.log(text_or_object);
     Note: If the game was started from the command line using SpheRun, the
           item is logged to the terminal as well.
 
-SSj.now();
+SSj.now(); {L2}
 
     Returns the time in nanoseconds since some arbitrary point in time, useful
     for benchmarking.  In production, this will always be 0; use `Date.now()`
@@ -1203,7 +1217,7 @@ SSj.now();
           the timer will almost certainly be less, typically in the microsecond
           range.  Don't assume this will be nanosecond precision.
 
-SSj.profile(object, method_name[, description]);
+SSj.profile(object, method_name[, description]); {L2}
 
     Adds a method to be automatically profiled (timed) by SpheRun.
     `description` is an optional string to name the function in the performance
@@ -1221,7 +1235,7 @@ SSj.profile(object, method_name[, description]);
           profiler.  All `SSj.profile()` calls will be completely ignored if
           the profiler is not enabled.
 
-SSj.trace(text);
+SSj.trace(text); {L1}
 
     Logs `text` to an attached SSj or SSj Blue session.  This is intended for
     low-level, detailed logging; by default, traces will not be displayed, even
@@ -1235,7 +1249,7 @@ A `Sample` represents a sound effect.  Multiple instances of a sample can be
 played simultaneously, on any mixer.  This is often more desirable than using a
 `Sound` object, which only allows one instance to play at a time.
 
-new Sample(filename);
+new Sample(filename); {L1}
 
     Constructs a Sample from the specified audio file.  The audio data is
     loaded into memory in its entirety and multiple instances can be played
@@ -1247,12 +1261,12 @@ new Sample(filename);
           recommend to use `Sample` objects for, e.g., background music.  Use a
           `Sound` instead.
 
-Sample#fileName [read-only]
+Sample#fileName [read-only] {L1}
 
     Gets the full SphereFS pathname of the audio file used to construct this
     Sample object.
 
-Sample#play(mixer[, options]);
+Sample#play(mixer[, options]); {L1}
 
     Plays the sample on the specified mixer.  Each time this is called, a new
     stream is started, allowing many instances of the sound to be playing
@@ -1278,7 +1292,7 @@ Sample#play(mixer[, options]);
             Playback speed, where 1.0 is normal speed.  Also affects pitch.
             Speed is 1.0x if not specified.
 
-Sample#stopAll();
+Sample#stopAll(); {L1}
 
     Stops playback of all active instances of this sample.
 
@@ -1290,20 +1304,20 @@ A `Server` represents a basic TCP server which listens for connections on a
 specified port.  Clients connecting to the server are placed in a backlog and
 must be explicitly accepted by game code.
 
-new Server(port[, backlog_size]);
+new Server(port[, backlog_size]); {L1}
 
     Constructs a new server to listen for connections on the specified port.
     `backlog_size` specifies the size of the backlog.  If the backlog fills,
     new connections will be dropped.
 
-Server#accept();
+Server#accept(); {L1}
 
     If one or more connections are waiting in the backlog, removes it from the
     queue and returns a `Socket` object representing the connection; otherwise,
     this returns `null`.  This method should be called regularly to prevent the
     backlog from filling up.
 
-Server#close();
+Server#close(); {L1}
 
     Shuts down the server.  Any connections in the backlog will be dropped and
     no new connections can be made until a new server is started on the same
@@ -1318,12 +1332,12 @@ manipulates vertices and pixels as they are rendered to a surface.  Shaders are
 written in the GLSL shader programming language, which is beyond the scope of
 this document.
 
-Shader.Default [read-only]
+Shader.Default [read-only] {L1}
 
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
 
-new Shader(options);
+new Shader(options); {L1}
 
     Constructs a shader program from a set of GLSL shader sources.  `options`
     specifies the shader sources.
@@ -1338,7 +1352,7 @@ new Shader(options);
         The name of a file containing GLSL source code for the program's
         fragment shader.
 
-Shader#clone();
+Shader#clone(); {L1}
 
     Creates a copy of this shader.  The new shader is distinct from the first
     and can have its own independent uniform values.  As uniform values are
@@ -1347,25 +1361,25 @@ Shader#clone();
     Note: Uniform values are not copied; the cloned shader will be constructed
           with all of its uniforms set to their default values.
 
-Shader#setBoolean(name, value);
+Shader#setBoolean(name, value); {L1}
 
     Sets the value of a GLSL boolean-valued (`bool`) uniform.  `value` is
     either `true` or `false`.
 
-Shader#setColorVector(name, color);
+Shader#setColorVector(name, color); {L1}
 
     Sets the value of a GLSL floating point 4-vector uniform (`vec4`) from the
     components of a `Color` object.  Order is assumed to be RGBA.
 
-Shader#setFloat(name, value);
-Shader#setInt(name, value);
+Shader#setFloat(name, value); {L1}
+Shader#setInt(name, value); {L1}
 
     Sets the value of a GLSL scalar uniform.
 
     Note: Only `float` and `int` types are currently supported.
 
-Shader#setFloatArray(name, values);
-Shader#setIntArray(name, values);
+Shader#setFloatArray(name, values); {L1}
+Shader#setIntArray(name, values); {L1}
 
     Sets the values of a GLSL array uniform.  `values` should be an array
     containing a number of values equal to the size of the array, otherwise
@@ -1373,8 +1387,8 @@ Shader#setIntArray(name, values);
 
     Note: Only `float` and `int` types are currently supported.
 
-Shader#setFloatVector(name, values);
-Shader#setIntVector(name, values);
+Shader#setFloatVector(name, values); {L1}
+Shader#setIntVector(name, values); {L1}
 
     Sets the value of a GLSL vector uniform.  `values` must be an array and
     contain between 2 and 4 values, inclusive.  If not, an error will be
@@ -1383,7 +1397,7 @@ Shader#setIntVector(name, values);
     Note: Only `vecN` (float) and `ivecN` (integer) types are currently
           supported.
 
-Shader#setMatrix(name, transform);
+Shader#setMatrix(name, transform); {L1}
 
     Sets the value of 4x4 matrix uniform (`mat4`) using the underlying matrix
     cells of a `Transform` object.
@@ -1398,7 +1412,7 @@ A `Shape` represents a group of textured triangles, line segments, or points to
 be drawn to a surface.  Shapes can be drawn directly, or added to a `Model` to
 group related rendering operations together.
 
-ShapeType [enumeration]
+ShapeType [enumeration] {L1}
 
     Specifies the type of graphics primitive represented by a Shape object.
     Can be one of the following:
@@ -1411,7 +1425,7 @@ ShapeType [enumeration]
         ShapeType.Triangles
         ShapeType.TriStrip
 
-Shape.drawImmediate([surface, ]type[, texture], vertices);
+Shape.drawImmediate([surface, ]type[, texture], vertices); {L2}
 
     Draws a shape to a surface in immediate mode (on-the-fly).  Useful when
     you need to create shapes on demand (procedural generation, for instance)
@@ -1426,7 +1440,7 @@ Shape.drawImmediate([surface, ]type[, texture], vertices);
           Shapes.  Keep this in mind when writing your rendering code as
           immediate-mode rendering can very easily become a performance issue.
 
-new Shape(type[, texture], vertexList[, indexList]);
+new Shape(type[, texture], vertexList[, indexList]); {L1}
 
     Constructs a primitive shape from a vertex list and optional index list,
     textured with a specified `Texture` image.  `type` specifies the type of
@@ -1437,21 +1451,21 @@ new Shape(type[, texture], vertexList[, indexList]);
     the vertex list will comprise the shape.  If `indexList` is not specified,
     all vertices from `vertexList` will be used.
 
-Shape#indexList [read/write]
+Shape#indexList [read/write] {L1}
 
     Gets or sets the index list used to select vertices for this shape.  Set
     this to `null` to use the entire vertex list.
 
-Shape#texture [read/write]
+Shape#texture [read/write] {L1}
 
     The Image to use when texturing the shape. This can be null, in which case
     the vertex colors alone will determine the shape's appearance.
 
-Shape#vertexList [read/write]
+Shape#vertexList [read/write] {L1}
 
     Gets or sets the vertex list containing vertices for this shape.
 
-Shape#draw([surface[, transform]]);
+Shape#draw([surface[, transform]]); {L1}
 
     Draws the shape onto `surface`, or the backbuffer if no surface is
     specified.  `transform` is the Transform to use.
@@ -1467,14 +1481,14 @@ A `Socket` represents a TCP connection to another computer.  Sockets can either
 be created manually (if the game is initiating the connection), or returned by
 `Server#accept()` to represent an incoming connection.
 
-new Socket([hostname, port]);
+new Socket([hostname, port]); {L1}
 
     Constructs a TCP socket object.  If no arguments are provided, the socket
     starts in a disconnected state, otherwise attempts to connect to `hostname`
     on `port` and throws an error if the attempt fails. See the documentation
     for `Socket#connectTo()` for more information on socket connections.
 
-Socket#bytesPending [read-only]
+Socket#bytesPending [read-only] {L1}
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     Call `Socket#read()` to retrieve this data.
@@ -1484,29 +1498,29 @@ Socket#bytesPending [read-only]
           to time and perform reads in order to keep the size of the receive
           buffer down.
 
-Socket#connected [read-only]
+Socket#connected [read-only] {L1}
 
     Gets whether the connection has been established.  As long as this is
     false, you cannot call any other methods on the socket object.  Doing so
     will cause an error to be thrown.
 
-Socket#remoteAddress [read-only]
+Socket#remoteAddress [read-only] {L1}
 
     Gets the IP address of the upstream end of the socket.  Throws an error if
     accessed before a connection has been established.
 
-Socket#remotePort [read-only]
+Socket#remotePort [read-only] {L1}
 
     Gets the port that the remote machine is using for the connection.
     Generally not a useful statistic, but it's there if you need it.  Throws an
     error if accessed before a connection is established.
 
-Socket#close();
+Socket#close(); {L1}
 
     Disconnects the socket.  Note that any given Socket object is tied to a
     specific session and so cannot be reused after it has been closed.
 
-Socket#connectTo(hostname, port);
+Socket#connectTo(hostname, port); {L1}
 
     Connects the socket to `hostname` on `port` and throws an error if the
     initial connection attempt fails.  `hostname` can either be a domain name
@@ -1518,13 +1532,13 @@ Socket#connectTo(hostname, port);
           the socket is already connected when `Socket#connectTo()` is called,
           that connection will be closed.
 
-Socket#read(num_bytes);
+Socket#read(num_bytes); {L1}
 
     Reads up to `num_bytes` bytes from the socket and returns an ArrayBuffer
     containing the data received.  This method is non-blocking: If more bytes
     are requested than are available, only the available data will be returned.
 
-Socket#write(data);
+Socket#write(data); {L1}
 
     Writes data to the socket, which can be read at the other end.  `data` can
     be either an ArrayBuffer, TypedArray view, or DataView.
@@ -1537,62 +1551,62 @@ A `Sound` represents a streaming audio file.  Because the sound is streamed, it
 remains compressed, saving RAM; however, only one instance of the sound can be
 played at a time.
 
-new Sound(filename);
+new Sound(filename); {L1}
 
     Constructs a Sound object from the specified audio file.  Supported sound
     formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that
     unlike in Sphere 1.x, mp3 and MIDI formats are not supported.
 
-Sound#fileName [read-only]
+Sound#fileName [read-only] {L1}
 
     Gets the full SphereFS pathname of the file used to construct this Sound
     object.
 
-Sound#length [read-only]
+Sound#length [read-only] {L1}
 
     Gets the length of the sound in microseconds.
 
-Sound#pan [read/write]
+Sound#pan [read/write] {L1}
 
     Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
     left, and 1.0 is full right.
 
-Sound#playing [read-only]
+Sound#playing [read-only] {L1}
 
     true if the sound is currently playing, false otherwise.
 
-Sound#position [read/write]
+Sound#position [read/write] {L1}
 
     Gets or sets the playback position within the sound, in seconds.
 
-Sound#repeat [read/write]
+Sound#repeat [read/write] {L1}
 
     Gets or sets whether the sound will automatically repeat when it reaches
     the end.
 
-Sound#speed [read/write]
+Sound#speed [read/write] {L1}
 
     Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
     speed, etc.  Note that changing the playback speed affects the pitch as
     well.
 
-Sound#volume [read/write]
+Sound#volume [read/write] {L1}
 
     Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
     volume.  Higher values are allowed, but may introduce distortion due to
     clipping.
 
-Sound#pause();
+Sound#pause(); {L1}
 
     Pauses the sound.  If it is already paused, this has no effect.
 
-Sound#play([mixer]);
+Sound#play([mixer]); {L1}
 
     Begins or resumes sound playback.  When called with no `mixer` argument,
     Sound#play() will resume playback for a paused sound.  Otherwise, the sound
     is started from the beginning on the specified mixer.
 
-Sound#stop();
+Sound#stop(); {L1}
 
     Stops the sound.  Playback position will be reset to the beginning (0.0s),
     even if the sound was not playing.
@@ -1605,7 +1619,7 @@ A `SoundStream` represents a dynamic audio stream which can be used to play
 arbitrary audio data, fed to the stream by your game in realtime.  This can be
 used to implement procedural audio, for example.
 
-new SoundStream([frequency[, bits[, channels]]]);
+new SoundStream([frequency[, bits[, channels]]]); {L1}
 
     Constructs an audio stream, which plays arbitrary sound data provided by
     the game at runtime.  This may be used, for example, to generate sound
@@ -1616,19 +1630,19 @@ new SoundStream([frequency[, bits[, channels]]]);
 
     The default stream format is 8-bit 22050Hz with 1 channel.
 
-SoundStream#length [read-only]
+SoundStream#length [read-only] {L1}
 
     Gets the amount of audio currently buffered into the stream, in seconds.
     Playback will pause if the buffer is exhausted; To ensure skip-free
     playback, you should monitor the stream and write more data before `length`
     reaches zero.
 
-SoundStream#pause();
+SoundStream#pause(); {L1}
 
     Pauses playback of the stream.  Has no effect if the stream is already
     paused.
 
-SoundStream#play([mixer]);
+SoundStream#play([mixer]); {L1}
 
     Starts the stream playing, or if no mixer is specified, resumes a paused
     stream.  Before beginning playback, it is recommended to pre-buffer a few
@@ -1636,13 +1650,13 @@ SoundStream#play([mixer]);
     will minimize the risk of a buffer underrun and subsequent skipping during
     playback.
 
-SoundStream#stop();
+SoundStream#stop(); {L1}
 
     Stops playback of the stream and frees its buffer.  This should be called
     when you are done using a stream.  The stream may be reused after a stop()
     call, but you will have to feed new audio data.
 
-SoundStream#write(data);
+SoundStream#write(data); {L1}
 
     Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
     TypedArray or DataView containing the data to write.  While a stream is
@@ -1655,19 +1669,20 @@ SoundStream#write(data);
 The `Surface` object represents a rendering target.  Your game doesn't always
 need to draw directly to the screen; it sometimes makes sense to compose
 complex parts of a scene in advance, offscreen, so that you don't have to
-redraw them every frame.
+redraw them every frame.  A Surface object can be used anywhere a texture is
+expected.  This avoids the need to make a copy of the surface and additionally
+enables render-to-texture effects to be implemented.
 
-A Surface object can be used anywhere a texture is expected.  This avoids the
-need to make a copy of the surface and additionally enables render-to-texture
-effects to be implemented.
+Note: Surfaces can only be used as textures under API level 2 or higher.  When
+      targeting API level 1 you must call `.toTexture()` (see below) first.
 
-Surface.Screen [non-replaceable]
+Surface.Screen [non-replaceable] {L1}
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
     the event loop regains control.
 
-new Surface(width, height[, content]);
+new Surface(width, height[, content]); {L1}
 
     Constructs a new Surface with the specified content.  `width` and `height`
     specify the size in pixels of the surface, and `content` is either a
@@ -1682,12 +1697,12 @@ new Surface(width, height[, content]);
           enough pixel data to cover the entire surface, a RangeError will be
           thrown.
 
-new Surface(filename);
+new Surface(filename); {L1}
 
     Constructs a new Surface whose initial contents are taken from the
     specified image file.
 
-Surface#blendOp [read/write]
+Surface#blendOp [read/write] {L2}
 
     Gets or sets the blending operation for objects drawn to this surface.  The
     value specifies how the colors of the object being drawn will be combined
@@ -1703,7 +1718,7 @@ Surface#blendOp [read/write]
 	destination pixels using the source's alpha value as a weighting factor
 	(commonly referred to as "alpha blending").
 
-Surface#transform [read/write]
+Surface#transform [read/write] {L1}
 
     Gets or sets a `Transform` representing the surface's projection matrix.
     When rendering is done on the surface, the projection matrix is the last
@@ -1713,13 +1728,13 @@ Surface#transform [read/write]
           When a surface is created, Sphere sets its transform to an
           orthographic matrix suitable for pixel-perfect 2D rendering.
 
-Surface#width [read-only]
-Surface#height [read-only]
+Surface#width [read-only] {L1}
+Surface#height [read-only] {L1}
 
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
 
-Surface#clipTo(x, y, width, height);
+Surface#clipTo(x, y, width, height); {L1}
 
     Sets the surface's clipping rectangle.  Values are expressed in pixels.
     Anything drawn outside of the clipping rectangle won't be rendered.
@@ -1727,11 +1742,14 @@ Surface#clipTo(x, y, width, height);
     Note: When setting the clipping rectangle for the screen, the effect only
           lasts until the next frame.
 
-Surface#toTexture();
+Surface#toTexture(); {L1}
 
     Returns a Texture created from the current contents of this Surface.  Note
     that drawing to the surface afterwards will not affect the texture, which
     is read-only.
+
+    Note: It is not necessary to call this when targeting API level 2 or later;
+          as noted above, the surface itself can be used as a texture.
 
 
 `Texture` Object
@@ -1741,7 +1759,7 @@ A `Texture` is an image which can used to as a texture for shapes drawn using
 the Sphere v2 graphics API.  Unlike in Sphere v1, you cannot draw an image
 directly using the Core API; it must be used to texture a `Shape`.
 
-new Texture(filename);
+new Texture(filename); {L1}
 
     Constructs a new Texture object from an image file.  Unlike images in
     Sphere v1, these cannot be rendered directly but instead must be used to
@@ -1750,7 +1768,7 @@ new Texture(filename);
     Note that Textures are read-only.  If you need a writable image, you should
     use a Surface object instead.
 
-new Texture(width, height[, content]);
+new Texture(width, height[, content]); {L1}
 
     Constructs a new Texture with the specified content.  `width` and `height`
     specify the size in pixels of the texture, and `content` is either a
@@ -1765,24 +1783,24 @@ new Texture(width, height[, content]);
           enough pixel data to cover the entire texture, a RangeError will be
           thrown.
 
-new Texture(surface);
+new Texture(surface); {L1}
 
     Constructs a new Texture from the contents of `surface`, a Surface object.
     Subsequent modifications to the surface will not affect the contents of the
     new texture.
 
-Texture#fileName [read-only]
+Texture#fileName [read-only] {L1}
 
     Gets the full SphereFS pathname of the file used to construct this Texture
     object.  For synthesized textures, e.g. those created from a surface, this
     is `null`.
 
-Texture#width [read-only]
-Texture#height [read-only]
+Texture#width [read-only] {L1}
+Texture#height [read-only] {L1}
 
     Gets the width or height of the texture, in pixels.
 
-Texture#download();
+Texture#download(); {L1}
 
     Downloads the 32-bit RGBA pixel data from the texture and returns it as a
 	new Uint8ClampedArray.
@@ -1791,7 +1809,7 @@ Texture#download();
 	      shouldn't be done at render time if you can avoid it.  Use a Surface
 		  for render-to-texture effects if at all possible.
 
-Texture#upload(content);
+Texture#upload(content); {L1}
 
     Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
     array) to the texture.  Enough data must be provided to completely rewrite
@@ -1804,12 +1822,12 @@ Texture#upload(content);
 A `Transform` represents a transformation matrix used to convert vertex
 coordinates for shapes drawn to a surface.
 
-new Transform();
+new Transform(); {L1}
 
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
 
-Transform#matrix [non-replacable]
+Transform#matrix [non-replacable] {L1}
 
     Gets an object you can use to access the cells of the underlying matrix.
     The object is used like a two-dimensional array:
@@ -1817,21 +1835,21 @@ Transform#matrix [non-replacable]
         cellValue = transform_obj.matrix[i][j];
         transform_obj.matrix[i][j] = newValue;
 
-Transform#identity();
+Transform#identity(); {L1}
 
     Re-initializes this matrix as an identity matrix.
 
-Transform#compose(otherMatrix);
+Transform#compose(otherMatrix); {L1}
 
     Composes this transform with another.  `otherMatrix` is multiplied from the
     left such that transformations are performed in the order you specify.
 
-Transform#project2D(left, top, right, bottom[, near, far]);
+Transform#project2D(left, top, right, bottom[, near, far]); {L1}
 
     Multiplies this transform's matrix with an orthographic (parallel)
     projection.
 
-Transform#project3D(fov, aspect, near, far);
+Transform#project3D(fov, aspect, near, far); {L1}
 
     Multiplies this transform's matrix with a 3D perspective projection.  `fov`
     is the size of the vertical field of view, in degrees.  `aspect` should
@@ -1842,19 +1860,19 @@ Transform#project3D(fov, aspect, near, far);
     objects will be clipped.  They must be nonzero and positive, or an error
     will be thrown.
 
-Transform#rotate(angle[, vx, vy, vz]);
+Transform#rotate(angle[, vx, vy, vz]); {L1}
 
     Applies a rotation transformation to this matrix.  `angle` is the amount of
     rotation to apply, in degrees.  (vx, vy, vz) is the vector to rotate about.
     For example, the default is (0, 0, 1) which rotates about the Z axis.
 
-Transform#scale(sx, sy[, sz]);
+Transform#scale(sx, sy[, sz]); {L1}
 
     Applies a scaling transformation to this matrix.  `sx`, `sy`, and `sz` are
     the scaling factors for each axis.  If `sz` is omitted, it defaults to 1.0
     and the Z axis is not scaled.
 
-Transform#translate(tx, ty[, tz]);
+Transform#translate(tx, ty[, tz]); {L1}
 
     Applies a translation transformation to this matrix.  `tx`, `ty`, and `tz`
     are the amount of translation to apply along each axis.  If `tz` is
@@ -1868,7 +1886,7 @@ A `VertexList` contains a collection of vertices for use when constructing a
 `Shape`.  The vertices in the vertex list are stored on the GPU for fast access
 at render time.
 
-new VertexList(vertices);
+new VertexList(vertices); {L1}
 
     Constructs a new vertex list from `vertices`, an array of objects with the
     following properties:
@@ -1905,14 +1923,14 @@ new VertexList(vertices);
 The somewhat cryptically-named `Z` namespace hosts functions used for data
 compression.
 
-Z.deflate(data[, level]);
+Z.deflate(data[, level]); {L2}
 
     Compresses the data in an ArrayBuffer or TypedArray using the DEFLATE
     compression method.  `level` specifies the compression level from
     0 (no compression) to 9 (maximum), with 7 being the default.  Returns an
     ArrayBuffer containing the compressed data.
 
-Z.inflate(data[, max_size]);
+Z.inflate(data[, max_size]); {L2}
 
     Decompresses data in an ArrayBuffer or TypedArray which was previously
     compressed using DEFLATE.  `max_size` is optional and specifies an upper

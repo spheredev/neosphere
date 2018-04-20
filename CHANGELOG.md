@@ -9,6 +9,7 @@ v5.2.0 - TBD
   included in a detailed Performance Report on shutdown.
 * Adds an `apiLevel` field to the JSON manifest format which allows you to
   specify the minimum Sphere v2 API level supported by your game.
+* Adds a command-line option, `--legacy`, used for emulating older API levels.
 * Adds new APIs for data compression, accessible through the `Z` namespace and
   available to both Sphere games and Cellscripts.
 * Adds `Shape.drawImmediate()` function which avoids the overhead of creating
