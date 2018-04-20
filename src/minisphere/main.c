@@ -78,7 +78,7 @@ static void on_socket_idle      (void);
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static bool find_startup_game   (path_t* *out_path);
-static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, ssj_mode_t *out_ssj_mode, bool *out_legacy_mode);
+static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, ssj_mode_t *out_ssj_mode, bool *out_retro_mode);
 static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
@@ -131,9 +131,9 @@ main(int argc, char* argv[])
 	int                  fullscreen_mode;
 	path_t*              games_path;
 	image_t*             icon;
-	bool                 legacy_mode;
 	size2_t              resolution;
 	jmp_buf              restart_label;
+	bool                 retro_mode;
 	const path_t*        script_path;
 	ssj_mode_t           ssj_mode;
 	int                  use_frameskip;
@@ -141,7 +141,7 @@ main(int argc, char* argv[])
 
 	// parse the command line
 	if (parse_command_line(argc, argv, &s_game_path,
-		&fullscreen_mode, &use_frameskip, &use_verbosity, &ssj_mode, &legacy_mode))
+		&fullscreen_mode, &use_frameskip, &use_verbosity, &ssj_mode, &retro_mode))
 	{
 		if (ssj_mode == SSJ_ACTIVE)
 			fullscreen_mode = FULLSCREEN_OFF;
@@ -157,7 +157,7 @@ main(int argc, char* argv[])
 	// print out options
 	console_log(1, "parsing command line");
 	console_log(1, "    game path: %s", s_game_path != NULL ? path_cstr(s_game_path) : "<none provided>");
-	console_log(1, "    legacy mode: %s", legacy_mode ? "on" : "off");
+	console_log(1, "    retrograde API: %s", retro_mode ? "yes" : "no");
 	console_log(1, "    fullscreen: %s",
 		fullscreen_mode == FULLSCREEN_ON ? "on"
 			: fullscreen_mode == FULLSCREEN_OFF ? "off"
@@ -289,9 +289,9 @@ main(int argc, char* argv[])
 	attach_input_display();
 	kb_load_keymap();
 	
-	// in legacy mode, only provide access to functions up to the targeted
+	// in retrograde mode, only provide access to functions up to the targeted
 	// API level, nothing newer.
-	if (legacy_mode) {
+	if (retro_mode) {
 		api_version = game_version(g_game);
 		api_level = game_api_level(g_game);
 	}
@@ -754,7 +754,7 @@ static bool
 parse_command_line(
 	int argc, char* argv[],
 	path_t* *out_game_path, int *out_fullscreen, int *out_frameskip,
-	int *out_verbosity, ssj_mode_t *out_ssj_mode, bool *out_legacy_mode)
+	int *out_verbosity, ssj_mode_t *out_ssj_mode, bool *out_retro_mode)
 {
 	bool parse_options = true;
 
@@ -764,7 +764,7 @@ parse_command_line(
 	*out_fullscreen = FULLSCREEN_AUTO;
 	*out_frameskip = 20;
 	*out_game_path = NULL;
-	*out_legacy_mode = false;
+	*out_retro_mode = false;
 	*out_ssj_mode = SSJ_PASSIVE;
 	*out_verbosity = 0;
 
@@ -796,8 +796,8 @@ parse_command_line(
 			else if (strcmp(argv[i], "--debug") == 0) {
 				*out_ssj_mode = SSJ_ACTIVE;
 			}
-			else if (strcmp(argv[i], "--legacy") == 0) {
-				*out_legacy_mode = true;
+			else if (strcmp(argv[i], "--retro") == 0) {
+				*out_retro_mode = true;
 			}
 			else if (strcmp(argv[i], "--profile") == 0) {
 				*out_ssj_mode = SSJ_OFF;
@@ -828,6 +828,9 @@ parse_command_line(
 					break;
 				case 'p':
 					*out_ssj_mode = SSJ_OFF;
+					break;
+				case 'r':
+					*out_retro_mode = true;
 					break;
 				case 'v':
 					print_banner(true, true);
@@ -899,7 +902,7 @@ print_usage(void)
 	printf("\n");
 	printf("USAGE:\n");
 	printf("   spherun [--fullscreen | --windowed] [--frameskip <n>] [--debug | --profile]\n");
-	printf("           [--legacy] [--verbose <n>] <game_path>                             \n");
+	printf("           [--retro] [--verbose <n>] <game_path>                              \n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --fullscreen   Start miniSphere in fullscreen mode.                    \n");
@@ -908,7 +911,7 @@ print_usage(void)
 	printf("   -d, --debug        Wait up to 30 seconds for the debugger to attach.       \n");
 	printf("   -p, --profile      Enable SSj.profile() for this session.  The engine will \n");
 	printf("                      run in high-performance mode but debugging is disabled. \n");
-	printf("       --legacy       Emulate the game's targeted API level (legacy mode).    \n");
+	printf("   -r, --retro        Emulate the game's targeted API level (retrograde mode).\n");
 	printf("       --verbose      Set the engine's verbosity level from 0 to 4.  This can \n");
 	printf("                      be abbreviated as '-n', where n is [0-4].               \n");
 	printf("   -v, --version      Show which version of miniSphere is installed.          \n");
