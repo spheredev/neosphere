@@ -525,7 +525,7 @@ static int      s_frame_rate = 0;
 static mixer_t* s_sound_mixer;
 
 void
-vanilla_register_api(void)
+vanilla_init(void)
 {
 	console_log(1, "initializing Sphere v1 API (%s)", API_VERSION_STRING);
 

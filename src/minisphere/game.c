@@ -112,7 +112,6 @@ game_open(const char* game_path)
 	console_log(1, "opening '%s' from game #%u", game_path, s_next_game_id);
 
 	game = game_ref(calloc(1, sizeof(game_t)));
-	game->api_level = 1;
 	game->safety = FS_SAFETY_FULL;
 
 	game->id = s_next_game_id;
@@ -132,13 +131,13 @@ game_open(const char* game_path)
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 		game->safety = FS_SAFETY_RELAXED;
-		game->api_level = SPHERE_API_LEVEL;
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
 		// a bare script transparent to the rest of the engine, keeping things simple.
 		console_log(1, "synthesizing manifest for '%s' from game #%u", path_cstr(path),
 			s_next_game_id);
 		game->version = path_has_extension(path, ".mjs") ? 2 : 1;
+		game->api_level = SPHERE_API_LEVEL;
 		game->name = lstr_new(path_filename(path));
 		game->author = lstr_new("Author Unknown");
 		game->summary = lstr_new(path_cstr(path));
@@ -146,14 +145,16 @@ game_open(const char* game_path)
 		game->script_path = path_insert_hop(path_new(path_filename(path)), 0, "@");
 		game->fullscreen = false;
 		jsal_push_new_object();
+		jsal_push_int(game->version);
+		jsal_put_prop_string(-2, "version");
+		jsal_push_int(game->api_level);
+		jsal_put_prop_string(-2, "apiLevel");
 		jsal_push_lstring_t(game->name);
 		jsal_put_prop_string(-2, "name");
 		jsal_push_lstring_t(game->author);
 		jsal_put_prop_string(-2, "author");
 		jsal_push_lstring_t(game->summary);
 		jsal_put_prop_string(-2, "summary");
-		jsal_push_int(game->api_level);
-		jsal_put_prop_string(-2, "apiLevel");
 		jsal_push_sprintf("%dx%d", game->resolution.width, game->resolution.height);
 		jsal_put_prop_string(-2, "resolution");
 		jsal_push_string(path_cstr(game->script_path));
@@ -187,7 +188,6 @@ game_open(const char* game_path)
 		else if ((sgm_file = kev_open(game, "@/game.sgm", false))) {
 			console_log(1, "parsing SGM manifest for game #%u", s_next_game_id);
 			game->version = 1;
-			game->api_level = 1;
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			game->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
@@ -200,6 +200,8 @@ game_open(const char* game_path)
 
 			// generate a JSON manifest (used by, e.g., Sphere.Game)
 			jsal_push_new_object();
+			jsal_push_int(game->version);
+			jsal_put_prop_string(-2, "version");
 			jsal_push_lstring_t(game->name);
 			jsal_put_prop_string(-2, "name");
 			jsal_push_lstring_t(game->author);
@@ -271,7 +273,7 @@ game_unref(game_t* it)
 int
 game_api_level(const game_t* it)
 {
-	return it->api_level;
+	return it->version >= 2 ? it->api_level : 0;
 }
 
 const char*
@@ -996,6 +998,8 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 
 	if (jsal_get_prop_string(-5, "apiLevel") && jsal_is_number(-1))
 		game->api_level = jsal_get_number(-1);
+	else
+		game->api_level = 1;
 
 	if (jsal_get_prop_string(-6, "author") && jsal_is_string(-1))
 		game->author = lstr_new(jsal_get_string(-1));

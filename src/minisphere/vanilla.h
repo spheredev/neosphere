@@ -57,7 +57,7 @@ enum vanilla_class
 	SV1_WINDOW_STYLE,
 };
 
-void vanilla_register_api (void);
+void vanilla_init (void);
 
 void         jsal_push_sphere_bytearray    (bytearray_t* array);
 void         jsal_push_sphere_color        (color_t color);

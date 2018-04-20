@@ -257,14 +257,15 @@ main(int argc, char* argv[])
 		longjmp(exit_label, 1);
 	}
 
-	if (game_api_level(g_game) > SPHERE_API_LEVEL) {
+	if (game_version(g_game) > SPHERE_API_VERSION || game_api_level(g_game) > SPHERE_API_LEVEL) {
 #if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Start Game", game_name(g_game),
 			"This game was developed for a newer version of the Sphere platform than your installed version of miniSphere (v"SPHERE_VERSION") supports.\n\n"
 			"You'll need to upgrade miniSphere before you can play this game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
-		fprintf(stderr, "ERROR: API level %d or higher required\n", game_api_level(g_game));
+		fprintf(stderr, "ERROR: Sphere v%d L%d or higher API required\n",
+			game_version(g_game), game_api_level(g_game));
 #endif
 		longjmp(exit_label, 1);
 	}
@@ -293,8 +294,9 @@ main(int argc, char* argv[])
 		api_level = game_api_level(g_game);
 	
 	api_init();
-	vanilla_register_api();
-	pegasus_init(api_level);
+	vanilla_init();
+	if (api_level > 0)
+		pegasus_init(api_level);
 
 	// switch to fullscreen if necessary and initialize clipping
 	if (fullscreen_mode == FULLSCREEN_ON || (fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game)))
@@ -329,7 +331,7 @@ main(int argc, char* argv[])
 
 	// in Sphere v2 mode, the main script is loaded as a module (either CommonJS or mJS).
 	// check for a default export and `new` it if possible, then call newObj.start().
-	if (game_version(g_game) >= 2 && jsal_is_object(-1)) {
+	if (api_version >= 2 && jsal_is_object(-1)) {
 		jsal_get_prop_string(-1, "default");
 		if (jsal_is_async_function(-1)) {
 			// async functions aren't constructible, so call those normally.
@@ -350,7 +352,7 @@ main(int argc, char* argv[])
 	// if we're running in Sphere v1 mode, call the global game() function.  note
 	// that, in contrast to Sphere 1.x, it's not an error if this function doesn't
 	// exist.
-	if (game_version(g_game) <= 1) {
+	if (api_version <= 1) {
 		jsal_get_global_string("game");
 		if (jsal_is_function(-1) && !jsal_try_call(0))
 			goto on_js_error;
