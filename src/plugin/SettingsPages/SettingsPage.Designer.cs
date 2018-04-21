@@ -36,6 +36,7 @@
             this.MakeDebugPackageCheckBox = new System.Windows.Forms.CheckBox();
             this.editorLabel3 = new SphereStudio.UI.DialogHeader();
             this.panel3 = new System.Windows.Forms.Panel();
+            this.UseRetroModeCheckBox = new System.Windows.Forms.CheckBox();
             this.VerbosityComboBox = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.TestWithConsoleCheckBox = new System.Windows.Forms.CheckBox();
@@ -84,9 +85,9 @@
             this.panel2.Controls.Add(this.TestInWindowCheckBox);
             this.panel2.Controls.Add(this.MakeDebugPackageCheckBox);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel2.Location = new System.Drawing.Point(3, 191);
+            this.panel2.Location = new System.Drawing.Point(3, 210);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(562, 135);
+            this.panel2.Size = new System.Drawing.Size(562, 116);
             this.panel2.TabIndex = 3;
             // 
             // ShowTraceCheckBox
@@ -125,7 +126,7 @@
             this.editorLabel3.Dock = System.Windows.Forms.DockStyle.Top;
             this.editorLabel3.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.editorLabel3.ForeColor = System.Drawing.Color.White;
-            this.editorLabel3.Location = new System.Drawing.Point(3, 168);
+            this.editorLabel3.Location = new System.Drawing.Point(3, 187);
             this.editorLabel3.Name = "editorLabel3";
             this.editorLabel3.Size = new System.Drawing.Size(562, 23);
             this.editorLabel3.TabIndex = 4;
@@ -134,14 +135,25 @@
             // 
             // panel3
             // 
+            this.panel3.Controls.Add(this.UseRetroModeCheckBox);
             this.panel3.Controls.Add(this.VerbosityComboBox);
             this.panel3.Controls.Add(this.label2);
             this.panel3.Controls.Add(this.TestWithConsoleCheckBox);
             this.panel3.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel3.Location = new System.Drawing.Point(3, 126);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(562, 42);
+            this.panel3.Size = new System.Drawing.Size(562, 61);
             this.panel3.TabIndex = 5;
+            // 
+            // UseRetroModeCheckBox
+            // 
+            this.UseRetroModeCheckBox.AutoSize = true;
+            this.UseRetroModeCheckBox.Location = new System.Drawing.Point(12, 35);
+            this.UseRetroModeCheckBox.Name = "UseRetroModeCheckBox";
+            this.UseRetroModeCheckBox.Size = new System.Drawing.Size(238, 17);
+            this.UseRetroModeCheckBox.TabIndex = 1;
+            this.UseRetroModeCheckBox.Text = "Emulate game\'s minimum supported API level";
+            this.UseRetroModeCheckBox.UseVisualStyleBackColor = true;
             // 
             // VerbosityComboBox
             // 
@@ -158,7 +170,7 @@
             this.VerbosityComboBox.Location = new System.Drawing.Point(401, 10);
             this.VerbosityComboBox.Name = "VerbosityComboBox";
             this.VerbosityComboBox.Size = new System.Drawing.Size(148, 21);
-            this.VerbosityComboBox.TabIndex = 1;
+            this.VerbosityComboBox.TabIndex = 3;
             // 
             // label2
             // 
@@ -167,7 +179,7 @@
             this.label2.Location = new System.Drawing.Point(345, 13);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(50, 13);
-            this.label2.TabIndex = 0;
+            this.label2.TabIndex = 2;
             this.label2.Text = "Verbosity";
             // 
             // TestWithConsoleCheckBox
@@ -175,9 +187,9 @@
             this.TestWithConsoleCheckBox.AutoSize = true;
             this.TestWithConsoleCheckBox.Location = new System.Drawing.Point(12, 12);
             this.TestWithConsoleCheckBox.Name = "TestWithConsoleCheckBox";
-            this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(199, 17);
+            this.TestWithConsoleCheckBox.Size = new System.Drawing.Size(248, 17);
             this.TestWithConsoleCheckBox.TabIndex = 0;
-            this.TestWithConsoleCheckBox.Text = "\"Test Game\" using SpheRun engine";
+            this.TestWithConsoleCheckBox.Text = "Use SpheRun to handle \'Test Game\' command";
             this.TestWithConsoleCheckBox.UseVisualStyleBackColor = true;
             // 
             // editorLabel2
@@ -190,7 +202,7 @@
             this.editorLabel2.Name = "editorLabel2";
             this.editorLabel2.Size = new System.Drawing.Size(562, 23);
             this.editorLabel2.TabIndex = 2;
-            this.editorLabel2.Text = "SpheRun (terminal mode) settings";
+            this.editorLabel2.Text = "SpheRun-specific settings";
             this.editorLabel2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // panel1
@@ -289,5 +301,6 @@
         private System.Windows.Forms.ComboBox VerbosityComboBox;
         private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.CheckBox ShowTraceCheckBox;
-	}
+        private System.Windows.Forms.CheckBox UseRetroModeCheckBox;
+    }
 }

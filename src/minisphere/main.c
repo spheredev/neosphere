@@ -264,7 +264,7 @@ main(int argc, char* argv[])
 			"You'll need to upgrade miniSphere before you can play this game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
-		fprintf(stderr, "ERROR: Sphere v%d L%d or higher API required\n",
+		fprintf(stderr, "ERROR: Sphere v%d level %d API required\n",
 			game_version(g_game), game_api_level(g_game));
 #endif
 		longjmp(exit_label, 1);
