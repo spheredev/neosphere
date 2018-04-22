@@ -323,13 +323,12 @@ print_usage(void)
 	printf("\n");
 	printf("USAGE:\n");
 	printf("   ssj [--no-pause] <game-path>\n");
-	printf("   ssj -a [--no-pause]\n");
+	printf("   ssj --attach [--no-pause]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("   -a, --attach     Attach to a target which has already been started.  If no  \n");
-	printf("                    connection can be made within 30 seconds, SSj will exit.   \n");
-	printf("   -r, --no-pause   Prevent SSj from pausing execution on attach.              \n");
-	printf("   -t, --trace      Show trace-level output, e.g., from SSj.trace().           \n");
-	printf("   -v, --version    Print the version number of SSj and its dependencies.      \n");
-	printf("       --help       Print this help text.                                      \n");
+	printf("   -a  --attach     Attach to a SpheRun instance which is already running      \n");
+	printf("   -r  --no-pause   Prevent the debugger from triggering a breakpoint on attach\n");
+	printf("   -t  --trace      Show trace-level output, for example, from SSj.trace()     \n");
+	printf("   -v  --version    Show the version number of SSj and its dependencies        \n");
+	printf("       --help       Show this help text                                        \n");
 }

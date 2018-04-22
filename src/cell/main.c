@@ -307,16 +307,13 @@ print_usage(void)
 	printf("   cell -c [-i <in-dir>] [-o <out-dir>]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("   -i, --in-dir    Set the input directory.  If not provided, Cell will look \n");
-	printf("                   for sources in the current working directory.             \n");
-	printf("   -o, --out-dir   Set the output directory.  If not provided, the output    \n");
-	printf("                   directory defaults to './dist'.                           \n");
-	printf("   -p, --package   Build a Sphere game package (.spk).                       \n");
-	printf("   -r, --rebuild   Rebuild all targets, even when already up to date.        \n");
-	printf("   -c, --clean     Clean up all artifacts from the previous build.           \n");
-	printf("   -d, --debug     Include debugging information for use with SSj/SSj Blue.  \n");
-	printf("       --release   Build for distribution, without SSj debugging information.\n");
-	printf("                   This is the default when building a package.              \n");
-	printf("   -v, --version   Print the version number of Cell and its dependencies.    \n");
+	printf("   -i  --in-dir    Set the input directory (default is current working dir)  \n");
+	printf("   -o  --out-dir   Set the output directory (default is './dist')            \n");
+	printf("   -p  --package   Create an SPK game package with the result of the build   \n");
+	printf("   -r  --rebuild   Rebuild all targets, even those already up to date        \n");
+	printf("   -c  --clean     Clean up all artifacts from the previous build            \n");
+	printf("   -d  --debug     Include debugging information for use with SSj or SSj Blue\n");
+	printf("       --release   Build for distribution, without any debugging information \n");
+	printf("   -v  --version   Print the version number of Cell and its dependencies.    \n");
 	printf("       --help      Print this help text.                                     \n");
 }
