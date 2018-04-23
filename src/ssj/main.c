@@ -75,7 +75,7 @@ main(int argc, char* argv[])
 	print_banner(true, false);
 	printf("\n");
 
-	if (cmdline->path != NULL && !launch_minisphere(cmdline->path))
+	if (cmdline->path != NULL && !launch_game(cmdline->path))
 		return EXIT_FAILURE;
 
 	inferiors_init();
@@ -95,7 +95,7 @@ main(int argc, char* argv[])
 }
 
 bool
-launch_minisphere(path_t* game_path)
+launch_game(path_t* game_path)
 {
 #if defined(_WIN32)
 	char*               command_line;

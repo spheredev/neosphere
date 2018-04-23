@@ -9,11 +9,13 @@ v5.2.0 - TBD
   included in a detailed Performance Report on shutdown.
 * Adds an `apiLevel` field to the JSON manifest format which allows you to
   specify the minimum Sphere v2 API level supported by your game.
-* Adds a command-line option, `--retro`, used for emulating older API levels.
+* Adds a command-line option, `--retro`, used to emulate older API levels.
 * Adds new APIs for data compression, accessible through the `Z` namespace and
   available to both Sphere games and Cellscripts.
 * Adds `Shape.drawImmediate()` function which avoids the overhead of creating
   VertexList and Shape objects for immediate-mode drawing.
+* Adds an experimental `Surface#blendOp` property for setting the blending mode
+  for objects drawn to a surface, à la Sphere v1 surfaces.
 * Adds `Dispatch.onExit()`, which lets you run code after the event loop exits.
 * Adds `Texture#upload()` and `Texture#download()` to allow direct manipulation
   of a texture's RGBA bitmap.
@@ -22,9 +24,9 @@ v5.2.0 - TBD
   to prematurely resolve a pact.
 * Adds `print()` as an alias for `SSj.log()`.
 * Adds `SSj.now()` for getting microsecond-accurate timestamps under SpheRun.
-* Adds support for render-to-texture by allowing `Surface` objects to be used
-  as textures, without calling `.toTexture()` first.
-* Adds long-overdue support for all of the Sphere 1.x Surface blend modes.
+* Adds the ability to use `Surface` objects as textures, without the need to
+  call `.toTexture()` first.
+* Adds long-overdue support for all Sphere 1.x Surface blend modes.
 * Adds `[Symbol.toStringTag]` and `.constructor` for Sphere v2 objects.
 * Improves font handling so that the default font can be loaded from an SPK
   package, avoiding the need to distribute the physical `system/` directory.
