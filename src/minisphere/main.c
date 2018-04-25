@@ -78,7 +78,7 @@ static void on_socket_idle      (void);
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static bool find_startup_game   (path_t* *out_path);
-static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, ssj_mode_t *out_ssj_mode, bool *out_retro_mode);
+static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, ssj_mode_t *out_ssj_mode, bool *out_retro_mode, int *out_extras_offset);
 static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
@@ -129,6 +129,7 @@ main(int argc, char* argv[])
 	jmp_buf              exit_label;
 	ALLEGRO_FILECHOOSER* file_dialog;
 	int                  fullscreen_mode;
+	int                  game_args_offset;
 	path_t*              games_path;
 	image_t*             icon;
 	size2_t              resolution;
@@ -139,9 +140,12 @@ main(int argc, char* argv[])
 	int                  use_frameskip;
 	int                  use_verbosity;
 
+	int i;
+
 	// parse the command line
 	if (parse_command_line(argc, argv, &s_game_path,
-		&fullscreen_mode, &use_frameskip, &use_verbosity, &ssj_mode, &retro_mode))
+		&fullscreen_mode, &use_frameskip, &use_verbosity, &ssj_mode, &retro_mode,
+		&game_args_offset))
 	{
 		if (ssj_mode == SSJ_ACTIVE)
 			fullscreen_mode = FULLSCREEN_OFF;
@@ -342,7 +346,9 @@ main(int argc, char* argv[])
 		jsal_get_prop_string(-1, "default");
 		if (jsal_is_async_function(-1)) {
 			// async functions aren't constructible, so call those normally.
-			if (!jsal_try_call(0))
+			for (i = game_args_offset; i < argc; ++i)
+				jsal_push_string(argv[i]);
+			if (!jsal_try_call(argc - game_args_offset))
 				goto on_js_error;
 		}
 		else if (jsal_is_function(-1)) {
@@ -350,8 +356,12 @@ main(int argc, char* argv[])
 				goto on_js_error;
 			jsal_get_prop_string(-1, "start");
 			jsal_pull(-2);
-			if (jsal_is_function(-2) && !jsal_try_call_method(0))
-				goto on_js_error;
+			if (jsal_is_function(-2)) {
+				for (i = game_args_offset; i < argc; ++i)
+					jsal_push_string(argv[i]);
+				if (!jsal_try_call_method(argc - game_args_offset))
+					goto on_js_error;
+			}
 		}
 		jsal_pop(2);
 	}
@@ -361,8 +371,12 @@ main(int argc, char* argv[])
 	// exist.
 	if (api_version <= 1) {
 		jsal_get_global_string("game");
-		if (jsal_is_function(-1) && !jsal_try_call(0))
-			goto on_js_error;
+		if (jsal_is_function(-1)) {
+			for (i = game_args_offset; i < argc; ++i)
+				jsal_push_string(argv[i]);
+			if (!jsal_try_call(argc - game_args_offset))
+				goto on_js_error;
+		}
 		jsal_pop(2);
 	}
 
@@ -754,7 +768,8 @@ static bool
 parse_command_line(
 	int argc, char* argv[],
 	path_t* *out_game_path, int *out_fullscreen, int *out_frameskip,
-	int *out_verbosity, ssj_mode_t *out_ssj_mode, bool *out_retro_mode)
+	int *out_verbosity, ssj_mode_t *out_ssj_mode, bool *out_retro_mode,
+	int *out_extras_offset)
 {
 	bool parse_options = true;
 
@@ -850,10 +865,8 @@ parse_command_line(
 					*out_game_path = NULL;
 					return false;
 				}
-			}
-			else {
-				report_error("more than one game specified on command line\n");
-				return false;
+				*out_extras_offset = i + 1;
+				parse_options = false;
 			}
 		}
 	}
@@ -902,7 +915,7 @@ print_usage(void)
 	printf("\n");
 	printf("USAGE:\n");
 	printf("   spherun [--fullscreen | --windowed] [--frameskip <n>] [--debug | --profile]\n");
-	printf("           [--retro] [--verbose <n>] <game_path>                              \n");
+	printf("           [--retro] [--verbose <n>] <game_path> [<game_args>]                \n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --fullscreen   Start the game in fullscreen mode                       \n");
