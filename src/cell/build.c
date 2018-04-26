@@ -37,6 +37,7 @@
 #include "compress.h"
 #include "encoding.h"
 #include "fs.h"
+#include "image.h"
 #include "spk_writer.h"
 #include "target.h"
 #include "tool.h"
@@ -96,6 +97,12 @@ static bool js_FileStream_get_position       (int num_args, bool is_ctor, intptr
 static bool js_FileStream_set_position       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_read               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_write              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Image                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Image_get_bitmap              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Image_get_height              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Image_get_width               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Image_saveAs                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Image_slice                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromState                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_RNG                       (int num_args, bool is_ctor, intptr_t magic);
@@ -120,14 +127,16 @@ static bool js_Z_inflate                     (int num_args, bool is_ctor, intptr
 
 static void js_DirectoryStream_finalize (void* host_ptr);
 static void js_FileStream_finalize      (void* host_ptr);
+static void js_Image_finalize           (void* host_ptr);
 static void js_RNG_finalize             (void* host_ptr);
 static void js_Target_finalize          (void* host_ptr);
 static void js_TextDecoder_finalize     (void* host_ptr);
 static void js_TextEncoder_finalize     (void* host_ptr);
 static void js_Tool_finalize            (void* host_ptr);
 
+static void    cache_value_to_this  (const char* key);
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
-static bool    eval_module_file      (fs_t* fs, const char* filename);
+static bool    eval_module_file     (fs_t* fs, const char* filename);
 static path_t* find_module_file     (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static void    handle_module_import (void);
 static bool    install_target       (int num_args, bool is_ctor, intptr_t magic);
@@ -209,6 +218,12 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_method("FileStream", "dispose", js_FileStream_dispose, 0);
 	api_define_method("FileStream", "read", js_FileStream_read, 0);
 	api_define_method("FileStream", "write", js_FileStream_write, 0);
+	api_define_class("Image", CELL_IMAGE, js_new_Image, js_Image_finalize, 0);
+	api_define_property("Image", "bitmap", false, js_Image_get_bitmap, NULL);
+	api_define_property("Image", "height", false, js_Image_get_height, NULL);
+	api_define_property("Image", "width", false, js_Image_get_width, NULL);
+	api_define_method("Image", "saveAs", js_Image_saveAs, 0);
+	api_define_method("Image", "slice", js_Image_slice, 0);
 	api_define_class("RNG", CELL_RNG, js_new_RNG, js_RNG_finalize, 0);
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed, 0);
 	api_define_function("RNG", "fromState", js_RNG_fromState, 0);
@@ -492,6 +507,17 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 
 finished:
 	return visor_num_errors(build->visor) == 0;
+}
+
+static void
+cache_value_to_this(const char* key)
+{
+	jsal_push_this();
+	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
+	jsal_dup(-3);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, key);
+	jsal_pop(1);
 }
 
 static void
@@ -1200,14 +1226,14 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		parent_id = jsal_get_string(-1);
 
 	if (parent_id == NULL && (strncmp(module_id, "./", 2) == 0 || strncmp(module_id, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "relative require() outside of a CommonJS module");
+		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if ((path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i])))
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "couldn't find module '%s'", module_id);
+		jsal_error(JS_URI_ERROR, "Couldn't find JS module '%s'", module_id);
 	if (!eval_module_file(s_build->fs, path_cstr(path)))
 		jsal_throw();
 	return true;
@@ -1261,7 +1287,7 @@ js_new_DirectoryStream(int num_args, bool is_ctor, intptr_t magic)
 	pathname = jsal_require_pathname(0, NULL);
 
 	if (!(stream = directory_open(s_build->fs, pathname)))
-		jsal_error(JS_ERROR, "couldn't open directory '%s'", pathname);
+		jsal_error(JS_ERROR, "Couldn't open directory '%s'", pathname);
 	jsal_push_class_obj(CELL_DIR_STREAM, stream, true);
 	return true;
 }
@@ -1279,7 +1305,7 @@ js_DirectoryStream_get_fileCount(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_num_files(stream));
 	return true;
@@ -1292,7 +1318,7 @@ js_DirectoryStream_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	jsal_push_string(directory_pathname(stream));
 	return true;
@@ -1305,7 +1331,7 @@ js_DirectoryStream_get_position(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	jsal_push_int(directory_position(stream));
 	return true;
@@ -1319,11 +1345,11 @@ js_DirectoryStream_set_position(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 	position = jsal_require_int(0);
 
 	if (!directory_seek(stream, position))
-		jsal_error(JS_ERROR, "couldn't set stream position");
+		jsal_error(JS_ERROR, "Couldn't set stream position");
 	return false;
 }
 
@@ -1334,7 +1360,7 @@ js_DirectoryStream_iterator(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	return true;
 }
@@ -1360,7 +1386,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	entry_path = directory_next(stream);
 	jsal_push_new_object();
@@ -1393,7 +1419,7 @@ js_DirectoryStream_rewind(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(stream = jsal_require_class_obj(-1, CELL_DIR_STREAM)))
-		jsal_error(JS_ERROR, "the DirectoryStream has already been disposed");
+		jsal_error(JS_ERROR, "DirectoryStream has already been disposed");
 
 	directory_rewind(stream);
 	return false;
@@ -1407,7 +1433,7 @@ js_FS_createDirectory(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	if (fs_mkdir(s_build->fs, filename) != 0)
-		jsal_error(JS_ERROR, "couldn't create directory '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't create directory '%s'", filename);
 	return false;
 }
 
@@ -1419,7 +1445,7 @@ js_FS_deleteFile(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	if (!fs_unlink(s_build->fs, filename))
-		jsal_error(JS_ERROR, "couldn't delete file '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't delete file '%s'", filename);
 	return false;
 }
 
@@ -1470,7 +1496,7 @@ js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	if (!(file_data = fs_fslurp(s_build->fs, filename, &file_size)))
-		jsal_error(JS_ERROR, "couldn't read file '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't read file '%s'", filename);
 	content = lstr_from_utf8(file_data, file_size, true);
 	jsal_push_lstring_t(content);
 	return true;
@@ -1500,7 +1526,7 @@ js_FS_removeDirectory(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	if (!fs_rmdir(s_build->fs, filename))
-		jsal_error(JS_ERROR, "couldn't remove directory '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't remove directory '%s'", filename);
 	return false;
 }
 
@@ -1514,7 +1540,7 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	new_name = jsal_require_pathname(1, NULL);
 
 	if (!fs_rename(s_build->fs, old_name, new_name))
-		jsal_error(JS_ERROR, "couldn't rename '%s' to '%s'", old_name, new_name);
+		jsal_error(JS_ERROR, "Couldn't rename '%s' to '%s'", old_name, new_name);
 	return false;
 }
 
@@ -1528,7 +1554,7 @@ js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 	text = jsal_require_lstring_t(1);
 
 	if (!fs_fspew(s_build->fs, filename, lstr_cstr(text), lstr_len(text)))
-		jsal_error(JS_ERROR, "couldn't write file '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't write file '%s'", filename);
 	lstr_free(text);
 	return false;
 }
@@ -1545,7 +1571,7 @@ js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 	file_op = jsal_require_int(1);
 
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
-		jsal_error(JS_RANGE_ERROR, "invalid file-op constant");
+		jsal_error(JS_RANGE_ERROR, "Invalid file-op constant");
 
 	if (file_op == FILE_OP_UPDATE && !fs_fexist(s_build->fs, filename))
 		file_op = FILE_OP_WRITE;  // ...because 'r+b' requires the file to exist.
@@ -1554,7 +1580,7 @@ js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 		: file_op == FILE_OP_UPDATE ? "r+b"
 		: NULL;
 	if (!(file = fs_fopen(s_build->fs, filename, mode)))
-		jsal_error(JS_ERROR, "couldn't open file '%s'", filename);
+		jsal_error(JS_ERROR, "Couldn't open file '%s' in mode '%s'", filename, mode);
 	if (file_op == FILE_OP_UPDATE)
 		fseek(file, 0, SEEK_END);
 
@@ -1576,7 +1602,7 @@ js_FileStream_get_position(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 
 	jsal_push_number(ftell(file));
 	return true;
@@ -1590,7 +1616,7 @@ js_FileStream_get_fileSize(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 
 	file_pos = ftell(file);
 	fseek(file, 0, SEEK_END);
@@ -1607,11 +1633,11 @@ js_FileStream_set_position(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 	new_pos = (long)jsal_require_number(0);
 
 	if (new_pos < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid file position '%ld'", new_pos);
+		jsal_error(JS_RANGE_ERROR, "Invalid file position '%ld'", new_pos);
 	fseek(file, new_pos, SEEK_SET);
 	return false;
 }
@@ -1640,12 +1666,12 @@ js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 	if (num_args >= 1)
 		num_bytes = jsal_require_int(0);
 
 	if (num_bytes < 0)
-		jsal_error(JS_RANGE_ERROR, "invalid read size '%d'", num_bytes);
+		jsal_error(JS_RANGE_ERROR, "Invalid read size '%d'", num_bytes);
 
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		position = ftell(file);
@@ -1668,12 +1694,143 @@ js_FileStream_write(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
-		jsal_error(JS_ERROR, "FileStream cannot be used after disposal");
+		jsal_error(JS_ERROR, "FileStream has already been disposed");
 	data = jsal_require_buffer_ptr(0, &num_bytes);
 
 	if (fwrite(data, 1, num_bytes, file) != num_bytes)
-		jsal_error(JS_ERROR, "failure to write to file");
+		jsal_error(JS_ERROR, "Couldn't write '%zu' bytes to file", num_bytes);
 	return false;
+}
+
+static bool
+js_new_Image(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* pathname;
+	image_t*    image;
+
+	pathname = jsal_require_pathname(0, NULL);
+
+	if (!(image = image_load(s_build->fs, pathname)))
+		jsal_error(JS_ERROR, "Couldn't open image file '%s'", pathname);
+
+	jsal_push_class_obj(CELL_IMAGE, image, true);
+	return true;
+}
+
+static void
+js_Image_finalize(void* host_ptr)
+{
+	if (host_ptr != NULL)
+		image_free(host_ptr);
+}
+
+static bool
+js_Image_get_bitmap(int num_args, bool is_ctor, intptr_t magic)
+{
+	void*     buffer_ptr;
+	size_t    data_size;
+	int       height;
+	image_t*  image;
+	uint8_t*  pixel_data;
+	int       width;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, CELL_IMAGE);
+
+	pixel_data = (uint8_t*)image_bitmap(image, &data_size);
+	width = image_width(image);
+	height = image_height(image);
+	jsal_push_new_buffer(JS_UINT8ARRAY, data_size, &buffer_ptr);
+	memcpy(buffer_ptr, pixel_data, data_size);
+	cache_value_to_this("bitmap");
+	return true;
+}
+
+static bool
+js_Image_get_height(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t* image;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, CELL_IMAGE);
+
+	jsal_push_int(image_height(image));
+	return true;
+}
+
+static bool
+js_Image_get_width(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t* image;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, CELL_IMAGE);
+
+	jsal_push_int(image_width(image));
+	return true;
+}
+
+static bool
+js_Image_saveAs(int num_args, bool is_ctor, intptr_t magic)
+{
+	size_t      bitmap_size;
+	int         height;
+	image_t*    image;
+	uint32_t*   in_buffer;
+	uint32_t*   out_buffer;
+	const char* pathname;
+	int         width;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, CELL_IMAGE);
+	pathname = jsal_require_pathname(0, NULL);
+
+	// if the image's pixel buffer has ever been accessed in JavaScript, make sure
+	// the modified data gets written back before saving.
+	if (jsal_has_own_prop_string(-1, "bitmap")) {
+		jsal_get_prop_string(-1, "bitmap");
+		width = image_width(image);
+		height = image_height(image);
+		in_buffer = jsal_get_buffer_ptr(-1, &bitmap_size);
+
+		// ensure we have a valid input buffer and that it's the right size
+		if (in_buffer != NULL && bitmap_size == width * height * sizeof(uint32_t)) {
+			out_buffer = image_bitmap(image, NULL);
+			memcpy(out_buffer, in_buffer, bitmap_size);
+		}
+	}
+
+	if (!image_save(image, s_build->fs, pathname))
+		jsal_error(JS_ERROR, "Couldn't write image file '%s'", pathname);
+	return false;
+}
+
+static bool
+js_Image_slice(int num_args, bool is_ctor, intptr_t magic)
+{
+	int      height;
+	image_t* image;
+	image_t* slice;
+	int      width;
+	int      x;
+	int      y;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, CELL_IMAGE);
+	x = jsal_require_int(0);
+	y = jsal_require_int(1);
+	width = jsal_require_int(2);
+	height = jsal_require_int(3);
+
+	if (width < 0 || height < 0)
+		jsal_error(JS_RANGE_ERROR, "Invalid slice size '%dx%d'", width, height);
+	if (x < 0 || y < 0 || x + width > image_width(image) || y + height > image_height(image))
+		jsal_error(JS_RANGE_ERROR, "Invalid slice dimensions '(%d,%d) %dx%d'", x, y, width, height);
+
+	if (!(slice = image_slice(image, x, y, width, height)))
+		jsal_error(JS_ERROR, "Couldn't allocate memory for Image#slice");
+	jsal_push_class_obj(CELL_IMAGE, slice, false);
+	return true;
 }
 
 static bool
@@ -1700,7 +1857,7 @@ js_RNG_fromState(int num_args, bool is_ctor, intptr_t magic)
 	xoro = xoro_new(0);
 	if (!xoro_set_state(xoro, state)) {
 		xoro_unref(xoro);
-		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
+		jsal_error(JS_TYPE_ERROR, "Invalid RNG state string '%s'", state);
 	}
 	jsal_push_class_obj(CELL_RNG, xoro, false);
 	return true;
@@ -1747,7 +1904,7 @@ js_RNG_set_state(int num_args, bool is_ctor, intptr_t magic)
 	state = jsal_require_string(0);
 
 	if (!xoro_set_state(xoro, state))
-		jsal_error(JS_TYPE_ERROR, "invalid RNG state string");
+		jsal_error(JS_TYPE_ERROR, "Invalid RNG state string '%s'", state);
 	return false;
 }
 
@@ -1904,10 +2061,10 @@ js_TextDecoder_decode(int num_args, bool is_ctor, intptr_t magic)
 	}
 
 	if (!(string = decoder_run(decoder, input, length)))
-		jsal_error(JS_TYPE_ERROR, "data is not valid utf-8");
+		jsal_error(JS_TYPE_ERROR, "Data to be decoded is not valid UTF-8 text");
 	if (!streaming) {
 		if (!(tail = decoder_finish(decoder)))
-			jsal_error(JS_TYPE_ERROR, "data is not valid utf-8");
+			jsal_error(JS_TYPE_ERROR, "Data to be decoded is not valid UTF-8 text");
 		head = string;
 		string = lstr_cat(head, tail);
 		lstr_free(head);

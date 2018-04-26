@@ -1,3 +1,4 @@
+sudo: required
 language: c
 compiler:
   - clang
@@ -8,4 +9,5 @@ before_install:
 install:
   - sudo apt-get install -qq liballegro5-dev
   - sudo apt-get install -qq libmng-dev
+  - sudo apt-get install -qq libpng-dev
 script: make && sudo make install

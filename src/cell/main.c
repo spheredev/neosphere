@@ -32,6 +32,7 @@
 
 #include "cell.h"
 
+#include <png.h>
 #include <zlib.h>
 #include "build.h"
 #include "jsal.h"
@@ -285,6 +286,9 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
+	png_uint_32 png_version;
+	char*       png_version_string;
+	
 	printf("%s %s Sphere packaging compiler (%s)\n", SPHERE_COMPILER_NAME, SPHERE_VERSION,
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
@@ -292,8 +296,13 @@ print_banner(bool want_copyright, bool want_deps)
 		printf("(c) 2015-2018 Fat Cerberus\n");
 	}
 	if (want_deps) {
+		png_version = png_access_version_number();
+		png_version_string = strnewf("%d.%d.%d",
+			png_version / 10000,
+			png_version / 100 % 100,
+			png_version % 100);
 		printf("\n");
-		printf("    zlib: v%s\n", zlibVersion());
+		printf("    libpng: v%-8s   zlib: v%s\n", png_version_string, zlibVersion());
 	}
 }
 

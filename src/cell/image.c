@@ -30,76 +30,173 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+#include "cell.h"
 #include "image.h"
 
-#include "cell.h"
+#include <png.h>
+#include "fs.h"
 
 struct image
 {
-	uint32_t*  pixels;
-	size_t     pitch;
-	png_image* png;
+	int       height;
+	uint32_t* pixels;
+	int       width;
 };
 
 image_t*
-image_open(const path_t* path)
+image_load(const fs_t* fs, const char* pathname)
 {
-	image_t*   image;
-	uint32_t*  pixelbuf = NULL;
-	png_image* png;
+	png_byte    bit_depth;
+	png_byte    color_type;
+	FILE*       file;
+	int         height;
+	image_t*    image;
+	uint32_t*   pixels;
+	png_structp png;
+	png_infop   png_info;
+	png_bytep*  row_ptrs;
+	int         width;
+
+	int i;
+
+	if (!(file = fs_fopen(fs, pathname, "rb")))
+		return NULL;
+
+	png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_info = png_create_info_struct(png);
+	if (setjmp(png_jmpbuf(png)) == 0) {
+		png_init_io(png, file);
+		png_read_info(png, png_info);
+		width = (int)png_get_image_width(png, png_info);
+		height = (int)png_get_image_height(png, png_info);
+		color_type = png_get_color_type(png, png_info);
+		bit_depth = png_get_bit_depth(png, png_info);
+
+		if (bit_depth == 16)
+			png_set_strip_16(png);
+		if (color_type == PNG_COLOR_TYPE_PALETTE)
+			png_set_palette_to_rgb(png);
+		if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+			png_set_expand_gray_1_2_4_to_8(png);
+		if (png_get_valid(png, png_info, PNG_INFO_tRNS))
+			png_set_tRNS_to_alpha(png);
+		if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_PALETTE)
+			png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
+		if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+			png_set_gray_to_rgb(png);
+		png_read_update_info(png, png_info);
+
+		pixels = malloc(width * height * sizeof(uint32_t));
+		row_ptrs = alloca(sizeof(png_bytep) * height);
+		for (i = 0; i < height; ++i)
+			row_ptrs[i] = (png_bytep)(pixels + i * width);
+		png_read_image(png, row_ptrs);
+	}
+	else {
+		fclose(file);
+		png_destroy_read_struct(&png, &png_info, NULL);
+		return NULL;
+	}
+
+	png_destroy_read_struct(&png, &png_info, NULL);
+	fclose(file);
 
 	image = calloc(1, sizeof(image_t));
-
-	png = calloc(1, sizeof(png_image));
-	png->version = PNG_IMAGE_VERSION;
-	png->format = PNG_FORMAT_RGBA;
-	if (!png_image_begin_read_from_file(png, path_cstr(path)))
-		goto on_error;
-	pixelbuf = malloc(PNG_IMAGE_SIZE(*png));
-	if (!png_image_finish_read(png, NULL, pixelbuf, 0, NULL))
-		goto on_error;
-
-	image->png = png;
-	image->pixels = pixelbuf;
-	image->pitch = PNG_IMAGE_ROW_STRIDE(*png) / 4;
+	image->width = width;
+	image->height = height;
+	image->pixels = pixels;
 	return image;
-
-on_error:
-	free(pixelbuf);
-	png_image_free(png);
-	return NULL;
 }
 
 void
-image_close(image_t* image)
+image_free(image_t* image)
 {
 	if (image == NULL)
 		return;
-	png_image_free(image->png);
 	free(image->pixels);
 	free(image);
 }
 
-const ptrdiff_t
-image_get_pitch(const image_t* image)
+uint32_t*
+image_bitmap(const image_t* image, size_t *out_size)
 {
-	return image->pitch;
-}
-
-const uint32_t*
-image_get_pixelbuf(const image_t* image)
-{
+	if (out_size != NULL)
+		*out_size = image->width * image->height * sizeof(uint32_t);
 	return image->pixels;
 }
 
 int
-image_get_height(const image_t* image)
+image_height(const image_t* image)
 {
-	return image->png->height;
+	return image->height;
 }
 
 int
-image_get_width(const image_t* image)
+image_width(const image_t* image)
 {
-	return image->png->width;
+	return image->width;
+}
+
+bool
+image_save(const image_t* it, const fs_t* fs, const char* pathname)
+{
+	FILE*       file;
+	png_structp png;
+	png_infop   png_info;
+	png_bytep*  row_ptrs;
+
+	int i;
+
+	if (!(file = fs_fopen(fs, pathname, "wb")))
+		return false;
+
+	png = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	png_info = png_create_info_struct(png);
+
+	if (setjmp(png_jmpbuf(png)) == 0) {
+		row_ptrs = alloca(sizeof(png_bytep) * it->height);
+		for (i = 0; i < it->height; ++i)
+			row_ptrs[i] = (png_bytep)(it->pixels + i * it->width);
+		png_init_io(png, file);
+		png_set_IHDR(png, png_info,
+			it->width, it->height, 8,
+			PNG_COLOR_TYPE_RGBA,
+			PNG_INTERLACE_NONE,
+			PNG_COMPRESSION_TYPE_DEFAULT,
+			PNG_FILTER_TYPE_DEFAULT);
+		png_write_info(png, png_info);
+		png_write_image(png, row_ptrs);
+		png_write_end(png, png_info);
+		png_destroy_write_struct(&png, &png_info);
+		fclose(file);
+		return true;
+	}
+	else {
+		fclose(file);
+		png_destroy_write_struct(&png, &png_info);
+		return false;
+	}
+}
+
+image_t*
+image_slice(const image_t* image, int x, int y, int width, int height)
+{
+	uint32_t* in;
+	uint32_t* out;
+	image_t*  slice;
+	size_t    stride;
+
+	int i;
+
+	slice = calloc(1, sizeof(image_t));
+	slice->width = width;
+	slice->height = height;
+	slice->pixels = malloc(width * height * sizeof(uint32_t));
+	stride = width * sizeof(uint32_t);
+	for (i = 0; i < height; ++i) {
+		in = image->pixels + (y + i) * image->width + x;
+		out = slice->pixels + i * width;
+		memcpy(out, in, stride);
+	}
+	return slice;
 }

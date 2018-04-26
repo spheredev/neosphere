@@ -902,6 +902,37 @@ jsal_get_uint(int index)
 }
 
 bool
+jsal_has_own_prop(int object_index)
+{
+	/* [ ... key ] -> [ ... ] */
+
+	bool            has_property;
+	JsPropertyIdRef key_ref;
+	JsValueRef      object_ref;
+
+	object_ref = get_value(object_index);
+	key_ref = make_property_id(pop_value());
+	JsHasOwnProperty(object_ref, key_ref, &has_property);
+	return has_property;
+}
+
+bool
+jsal_has_own_prop_index(int object_index, int name)
+{
+	object_index = jsal_normalize_index(object_index);
+	jsal_push_sprintf("%d", name);
+	return jsal_has_own_prop(object_index);
+}
+
+bool
+jsal_has_own_prop_string(int object_index, const char* name)
+{
+	object_index = jsal_normalize_index(object_index);
+	jsal_push_string(name);
+	return jsal_has_own_prop(object_index);
+}
+
+bool
 jsal_has_prop(int object_index)
 {
 	/* [ ... key ] -> [ ... ] */

@@ -8,6 +8,7 @@ v5.2.0 - TBD
 * Adds profiling support to SpheRun; call `SSj.profile()` and pass an object
   and method name to have all subsequent calls to that function timed and
   included in a detailed Performance Report on shutdown.
+* Adds `Image` to the Cellscript API for manipulating PNG images at build time.
 * Adds an `apiLevel` field to the JSON manifest format which allows you to
   specify the minimum Sphere v2 API level supported by your game.
 * Adds a command-line option, `--retro`, used to emulate older API levels.

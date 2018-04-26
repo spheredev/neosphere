@@ -49,10 +49,12 @@
 #include <time.h>
 #include <sys/stat.h>
 
-#if defined(_WIN32)
-#include <sys/utime.h>
-#else
+#if !defined(_WIN32)
+#include <alloca.h>
 #include <utime.h>
+#else
+#include <malloc.h>
+#include <sys/utime.h>
 #endif
 
 #include "version.h"

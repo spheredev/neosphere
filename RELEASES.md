@@ -10,14 +10,19 @@ miniSphere 5.2
   engine shuts down, a table showing the profiling results will be printed to
   the terminal!
 
-* It is now possible for games to provide code to run on exit by using the new
-  `Dispatch.onExit` or `Thread#on_shutDown` APIs.  `onExit` jobs are guaranteed
-  to be called before the engine terminates, unless the game crashes with an
-  uncaught exception or calls `Sphere.abort`.
+* Using the new `Dispatch.onExit()` API, or `Thread#on_shutDown()`, your game
+  can set up cleanup code which will run before the engine closes.  This makes
+  it easier to implement autosave systems, for example, and can be used in both
+  Sphere v1 and Sphere v2 codebases.
 
 * Data compression is now supported as a first-class citizen of Sphere v2:
   `Z.deflate` and `Z.inflate` use the zlib DEFLATE compression algorithm, the
-  same one historically used for Sphere v1's `DeflateByteArray`.
+  same one historically used for Sphere v1's `DeflateByteArray`.  These APIs
+  are also available for use in Cellscripts!
+
+* You can now read and write PNG images in a Cellscript, and even work directly
+  at the pixel level, using the new `Image` API.  Images are loaded as 32-bit
+  RGBA to keep manipulation of individual pixels simple.
 
 * `Surface` is now a proper subclass of `Texture`, allowing a surface to be
   used anywhere a texture is expected.  This opens the door for awesome

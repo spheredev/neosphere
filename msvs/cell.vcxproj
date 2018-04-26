@@ -89,7 +89,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ChakraCore.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ChakraCore.lib;libpng16.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>LIBCMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
@@ -116,7 +116,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ChakraCore.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ChakraCore.lib;libpng16.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -144,7 +144,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
       <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ChakraCore.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ChakraCore.lib;libpng16.lib;zlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -156,6 +156,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <ClCompile Include="..\src\cell\fs.c" />
     <ClCompile Include="..\src\cell\build.c" />
+    <ClCompile Include="..\src\cell\image.c" />
     <ClCompile Include="..\src\cell\target.c" />
     <ClCompile Include="..\src\cell\tool.c" />
     <ClCompile Include="..\src\cell\visor.c" />
@@ -175,6 +176,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <ClInclude Include="..\src\cell\fs.h" />
     <ClInclude Include="..\src\cell\build.h" />
+    <ClInclude Include="..\src\cell\image.h" />
     <ClInclude Include="..\src\cell\target.h" />
     <ClInclude Include="..\src\cell\tool.h" />
     <ClInclude Include="..\src\cell\visor.h" />

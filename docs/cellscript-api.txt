@@ -44,7 +44,8 @@ following are provided:
     - File System API (`FS`, 'DirectoryStream', `FileStream`)
     - Random Number Generator API (`RNG`)
     - Data Compression API (`Z`)
-    - Standard library modules:
+
+    - Sphere Runtime modules:
         - `assert` module
         - `dataStream` module
         - `delegate` module
@@ -113,6 +114,32 @@ warn(message);
 
     Produces a warning.  Warnings will be reported to the user but will not
     prevent a successful build.
+
+new Image(fileName);
+
+    Constructs a new Image object from the image file named by `fileName`.  The
+    `Image` class allows you to work with images directly at the pixel level.
+
+    Note: Cell currently only supports loading PNG images.
+
+Image#bitmap [non-replaceable]
+
+    A Uint8Array containing the pixel data for the image.  The pixel format is
+    always RGBA and pixels are encoded from left-to-right, top-to-bottom.
+
+Image#width [read-only]
+Image#height [read-only]
+
+    The width and height of the image, in pixels.
+
+Image#saveAs(fileName);
+
+    Writes the image out to a PNG file named `fileName`.  Be careful: if a file
+    by the specified name already exists, it will be overwritten!
+
+Image#slice(x, y, width, height);
+
+    Returns a new Image object from the specified portion of this image.
 
 Target#fileName [read-only]
 
