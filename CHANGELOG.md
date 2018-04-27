@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.2.0 - TBD
-------------
+v5.2.0 - April 27, 2018
+-----------------------
 
 * Adds support for passing command-line arguments to a game's `main()`.
 * Adds profiling support to SpheRun; call `SSj.profile()` and pass an object

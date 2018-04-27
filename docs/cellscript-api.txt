@@ -125,7 +125,8 @@ new Image(fileName);
 Image#bitmap [non-replaceable]
 
     A Uint8Array containing the pixel data for the image.  The pixel format is
-    always RGBA and pixels are encoded from left-to-right, top-to-bottom.
+    always RGBA and pixels are encoded from left-to-right, top-to-bottom.  Each
+    four bytes in the array represent a single pixel of the image.
 
 Image#width [read-only]
 Image#height [read-only]

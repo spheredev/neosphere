@@ -49,16 +49,6 @@ assets_path(void)
 
 	if (retval == NULL) {
 		al_path = al_get_standard_path(ALLEGRO_RESOURCES_PATH);
-#if defined(__APPLE__) && !defined(MINISPHERE_SPHERUN)
-		// for macOS, we want the directory containing miniSphere.app and NOT one
-		// of the subdirectories that's buried inside.  to get there, we need to
-		// go 3 levels up:
-		//     miniSphere.app/Contents/Resources/
-		//     ^3             ^2       ^1        ^0
-		al_drop_path_tail(al_path);
-		al_drop_path_tail(al_path);
-		al_drop_path_tail(al_path);
-#endif
 		retval = path_new_dir(al_path_cstr(al_path, '/'));
 		al_destroy_path(al_path);
 	}
