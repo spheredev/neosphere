@@ -23,7 +23,7 @@ namespace Sphere.Gdk.Components
             bool wantConsole = m_main.Conf.AlwaysUseConsole;
             bool wantWindow = m_main.Conf.TestInWindow || wantConsole;
 
-            string enginePath = Path.Combine(gdkPath, wantConsole ? "spherun.exe" : "minisphere.exe");
+            string enginePath = Path.Combine(gdkPath, wantConsole ? "spherun.exe" : "miniSphere.exe");
             string options = string.Format(@"{0} --verbose {1} {2} {3} ""{4}""",
                 wantWindow ? "--windowed" : "",
                 m_main.Conf.Verbosity,
