@@ -4774,8 +4774,9 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 
 	class_id = magic;
 
-	if (num_args >= 3 && (buffer = jsal_get_buffer_ptr(2, &buffer_size))) {
+	if (num_args >= 3 && jsal_is_buffer(2)) {
 		// create an Image from an ArrayBuffer or similar object
+		buffer = jsal_get_buffer_ptr(2, &buffer_size);
 		width = jsal_require_int(0);
 		height = jsal_require_int(1);
 		if (buffer_size < width * height * sizeof(color_t))

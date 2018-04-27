@@ -1751,12 +1751,13 @@ jsal_require_buffer_ptr(int at_index, size_t *out_size)
 {
 	void* retval;
 
-	if (!(retval = jsal_get_buffer_ptr(at_index, out_size))) {
+	if (!jsal_is_buffer(at_index)) {
 		jsal_dup(at_index);
 		jsal_push_new_error(JS_TYPE_ERROR, "'%s' is not a buffer", jsal_to_string(-1));
 		jsal_remove(-2);
 		jsal_throw();
 	}
+	retval = jsal_get_buffer_ptr(at_index, out_size);
 	return retval;
 }
 
