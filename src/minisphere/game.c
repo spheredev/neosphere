@@ -986,8 +986,14 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 		goto on_error;
 	game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
 	if (!path_hop_is(game->script_path, 0, "@")) {
-		jsal_error(JS_TYPE_ERROR, "illegal SphereFS prefix '%s/' in '%s'", path_hop(game->script_path, 0),
+		jsal_push_new_error(JS_TYPE_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
+			path_hop(game->script_path, 0));
+		goto on_json_error;
+	}
+	if (!game_file_exists(game, path_cstr(game->script_path))) {
+		jsal_push_new_error(JS_TYPE_ERROR, "Main script not found '%s'",
 			path_cstr(game->script_path));
+		goto on_json_error;
 	}
 
 	// game summary is optional, use a default summary if one is not provided.
@@ -1037,6 +1043,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	return true;
 
 on_json_error:
+	printf("ERROR in game manifest '%s'\n", path_cstr(game_path(game)));
 	error_ref = jsal_ref(-1);
 	jsal_set_top(stack_top);
 	jsal_push_ref(error_ref);

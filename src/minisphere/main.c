@@ -255,8 +255,6 @@ main(int argc, char* argv[])
 			"miniSphere either couldn't read the game manifest or a manifest file was not found.  Check that the directory listed above contains a valid Sphere game manifest file.\n\n"
 			"For Sphere developers:\nUsing SpheRun to start the game from the command line may yield more insight.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
-#else
-		fprintf(stderr, "ERROR: couldn't start game '%s'\n", path_cstr(s_game_path));
 #endif
 		longjmp(exit_label, 1);
 	}

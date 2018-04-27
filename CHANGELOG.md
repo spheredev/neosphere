@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+v5.2.1 - TBD
+------------
+
+* Fixes a bug that causes miniSphere to crash on startup when a game's main
+  script file doesn't exist.
+
 v5.2.0 - April 27, 2018
 -----------------------
 
