@@ -1007,7 +1007,7 @@ write_manifests(build_t* build)
 
 	if (jsal_get_prop_string(-5, "apiLevel")) {
 		if (api_version < 2) {
-			visor_error(build->visor, "'apiLevel': API level not applicable for Sphere v1");
+			visor_warn(build->visor, "'apiLevel': value doesn't apply for Sphere v1, ignored");
 		}
 		else if (jsal_is_number(-1)) {
 			api_level = jsal_get_int(-1);

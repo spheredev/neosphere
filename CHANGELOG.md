@@ -5,6 +5,7 @@ v5.2.1 - TBD
 ------------
 
 * Adds a warning to v1 builds for which the main script has a `.mjs` extension.
+* Fixes `apiLevel` in a Sphere v1 build causing an error rather than a warning.
 * Fixes a bug that causes miniSphere to crash on startup when a game's main
   script file doesn't exist.
 
