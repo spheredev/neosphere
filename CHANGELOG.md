@@ -4,6 +4,7 @@ miniSphere Changelog
 v5.2.1 - TBD
 ------------
 
+* Adds a warning to v1 builds for which the main script has a `.mjs` extension.
 * Fixes a bug that causes miniSphere to crash on startup when a game's main
   script file doesn't exist.
 

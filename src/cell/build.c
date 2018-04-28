@@ -1002,7 +1002,7 @@ write_manifests(build_t* build)
 		}
 	}
 	else {
-		visor_warn(build->visor, "'version': missing value; targeting Sphere v2");
+		visor_warn(build->visor, "'version': missing value: targeting Sphere v2");
 	}
 
 	if (jsal_get_prop_string(-5, "apiLevel")) {
@@ -1022,7 +1022,7 @@ write_manifests(build_t* build)
 	}
 	else {
 		if (api_version >= 2)
-			visor_warn(build->visor, "'apiLevel': missing value; targeting API L1");
+			visor_warn(build->visor, "'apiLevel': missing value: targeting API L1");
 	}
 	
 	// note: SGMv1 encodes the resolution width and height as separate fields.
@@ -1052,6 +1052,8 @@ write_manifests(build_t* build)
 			visor_end_op(build->visor);
 			return false;
 		}
+		if (api_version <= 1 && path_has_extension(main_path, ".mjs"))
+			visor_warn(build->visor, "'main': '%s' will not run as a module", path_cstr(main_path));
 		jsal_push_string(path_cstr(main_path));
 		jsal_put_prop_string(-7, "main");
 	}
