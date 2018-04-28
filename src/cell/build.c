@@ -995,7 +995,7 @@ write_manifests(build_t* build)
 			if (api_version < 1)
 				visor_error(build->visor, "'version': must be greater than zero, found '%d'", api_version);
 			else if (api_version > SPHERE_API_VERSION)
-				visor_warn(build->visor, "'version': version '%d' targets future Sphere version", api_version);
+				visor_warn(build->visor, "'version': value '%d' targets future Sphere version", api_version);
 		}
 		else {
 			visor_error(build->visor, "'version': must be a number greater than zero, found '%s'", jsal_to_string(-1));
@@ -1007,14 +1007,14 @@ write_manifests(build_t* build)
 
 	if (jsal_get_prop_string(-5, "apiLevel")) {
 		if (api_version < 2) {
-			visor_warn(build->visor, "'apiLevel': value doesn't apply for Sphere v1, ignored");
+			visor_warn(build->visor, "'apiLevel': value doesn't apply to Sphere v1, ignored");
 		}
 		else if (jsal_is_number(-1)) {
 			api_level = jsal_get_int(-1);
 			if (api_level < 1)
 				visor_error(build->visor, "'apiLevel': must be greater than zero, found '%d'", api_level);
 			else if (api_level > SPHERE_API_LEVEL && api_version <= SPHERE_API_VERSION)
-				visor_warn(build->visor, "'apiLevel': level '%d' targets future Sphere version", api_level);
+				visor_warn(build->visor, "'apiLevel': value '%d' targets future Sphere version", api_level);
 		}
 		else {
 			visor_error(build->visor, "'apiLevel': must be a number greater than zero, found '%s'", jsal_to_string(-1));
