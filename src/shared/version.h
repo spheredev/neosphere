@@ -39,7 +39,8 @@
 
 #define SPHERE_VERSION "X.X.X"
 
-#define SPHERE_API_VERSION 2
-#define SPHERE_API_LEVEL   2
+#define SPHERE_API_VERSION      2
+#define SPHERE_API_LEVEL        2
+#define SPHERE_API_LEVEL_STABLE 1
 
 #endif // SPHERE__VERSION_H__INCLUDED

@@ -1015,6 +1015,8 @@ write_manifests(build_t* build)
 				visor_error(build->visor, "'apiLevel': must be greater than zero, found '%d'", api_level);
 			else if (api_level > SPHERE_API_LEVEL && api_version <= SPHERE_API_VERSION)
 				visor_warn(build->visor, "'apiLevel': value '%d' targets future Sphere version", api_level);
+			else if (api_level > SPHERE_API_LEVEL_STABLE && api_version <= SPHERE_API_VERSION)
+				visor_warn(build->visor, "'apiLevel': value '%d' targets experimental API", api_level);
 		}
 		else {
 			visor_error(build->visor, "'apiLevel': must be a number greater than zero, found '%s'", jsal_to_string(-1));
