@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.2.1 - TBD
-------------
+v5.2.1 - April 29, 2018
+-----------------------
 
 * Adds a warning to Sphere v1 Cell builds for which the main script has a
   `.mjs` extension, since it will not run as module code.
