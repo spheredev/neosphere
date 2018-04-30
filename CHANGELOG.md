@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+v5.2.2 - TBD
+------------
+
+* Fixes a regression in 5.2.0 which causes miniSphere to crash or otherwise
+  misbehave when run with no command-line arguments.
+
 v5.2.1 - April 29, 2018
 -----------------------
 

@@ -774,6 +774,7 @@ parse_command_line(
 	int i, j;
 
 	// establish default settings
+	*out_extras_offset = argc;
 	*out_fullscreen = FULLSCREEN_AUTO;
 	*out_frameskip = 20;
 	*out_game_path = NULL;
