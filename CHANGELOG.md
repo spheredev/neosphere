@@ -6,6 +6,7 @@ v5.2.2 - TBD
 
 * Fixes a regression in 5.2.0 which causes miniSphere to crash or otherwise
   misbehave when run with no command-line arguments.
+* Fixes a segfault when stopping a sound at verbosity level 3 or higher.
 
 v5.2.1 - April 29, 2018
 -----------------------

@@ -611,7 +611,7 @@ sound_seek(sound_t* sound, double position)
 void
 sound_stop(sound_t* sound)
 {
-	console_log(3, "stopping playback of sound #%s", sound->id);
+	console_log(3, "stopping playback of sound #%u", sound->id);
 	if (sound->stream == NULL)
 		return;
 	al_set_audio_stream_playing(sound->stream, false);
