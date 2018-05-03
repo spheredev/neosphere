@@ -720,7 +720,7 @@ pegasus_init(int api_level)
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
 
-	api_define_subclass("Surface", PEGASUS_SURFACE, api_level >= 2 ? PEGASUS_TEXTURE : -1, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	api_define_subclass("Surface", PEGASUS_SURFACE, api_level >= 3 ? PEGASUS_TEXTURE : -1, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
@@ -844,9 +844,12 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
-		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
+	}
+
+	if (api_level >= 3) {
+		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_method("Texture", "download", js_Texture_download, 0);

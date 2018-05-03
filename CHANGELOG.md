@@ -4,11 +4,9 @@ miniSphere Changelog
 v5.2.3 - TBD
 ------------
 
-* Changes the semantics of `Sphere.APILevel` such that the engine will
-  only advertise support for the most recent stable API level, fixing a
-  major forward and backward compatibility hazard.
-* Fixes an issue where SPK packages built using Cell 5.2.0 through 5.2.2
-  won't run under miniSphere 5.1.
+* Changes the API level to 3 of all APIs introduced in miniSphere 5.2.
+* Fixes an issue where SPK packages built using Cell 5.2.0 through 5.2.2 won't
+  run under miniSphere 5.1.
 
 v5.2.2 - May 1, 2018
 --------------------

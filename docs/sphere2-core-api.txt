@@ -198,7 +198,7 @@ recent engine.  The `apiLevel` field in the JSON manifest specifies the minimum
 API level your game needs to run; support for higher levels can then be tested
 for at runtime by reading the value of `Sphere.APILevel`.
 
-IMPORTANT: The current stable API level is L1.  APIs marked as {L2} should be
+IMPORTANT: The current stable API level is L2.  APIs marked as {L3} should be
            considered experimental, and may change or be removed in the future.
 
 
@@ -221,12 +221,9 @@ Sphere.APILevel [read-only] {L1}
 
     The Sphere API version and level supported by the engine, respectively.
     `Version` indicates which version of the Sphere API is supported (e.g., 2),
-    while the API level reflects the evolutionary stage.  Whenever new classes,
+    while `APILevel` reflects the evolutionary stage.  Whenever new classes,
     methods, or properties are added to the Core API, the API level is
     increased.
-
-    Note: The value of `Sphere.APILevel` will never exceed the value specified
-          in the game manifest.
 
 Sphere.Compiler [read-only] {L1}
 
@@ -515,7 +512,7 @@ Dispatch.now(callback); {L1}
           latter runs at the beginning of the next frame; Dispatch.now() jobs
           always run during the same frame they were issued.
 
-Dispatch.onExit(callback); {L2}
+Dispatch.onExit(callback); {L3}
 
     Sets up a one-time job to call `callback` after the event loop exits.  This
     is useful when you need to ensure something always runs before the engine
@@ -1207,7 +1204,7 @@ SSj.log(text_or_object); {L1}
     Note: If the game was started from the command line using SpheRun, the
           item is logged to the terminal as well.
 
-SSj.now(); {L2}
+SSj.now(); {L3}
 
     Returns the time in nanoseconds since some arbitrary point in time, useful
     for benchmarking.  In production, this will always be 0; use `Date.now()`
@@ -1217,7 +1214,7 @@ SSj.now(); {L2}
           the timer will almost certainly be less, typically in the microsecond
           range.  Don't assume this will be nanosecond precision.
 
-SSj.profile(object, method_name[, description]); {L2}
+SSj.profile(object, method_name[, description]); {L3}
 
     Adds a method to be automatically profiled (timed) by SpheRun.
     `description` is an optional string to name the function in the performance
@@ -1425,7 +1422,7 @@ ShapeType [enumeration] {L1}
         ShapeType.Triangles
         ShapeType.TriStrip
 
-Shape.drawImmediate([surface, ]type[, texture], vertices); {L2}
+Shape.drawImmediate([surface, ]type[, texture], vertices); {L3}
 
     Draws a shape to a surface in immediate mode (on-the-fly).  Useful when
     you need to create shapes on demand (procedural generation, for instance)
@@ -1702,7 +1699,7 @@ new Surface(filename); {L1}
     Constructs a new Surface whose initial contents are taken from the
     specified image file.
 
-Surface#blendOp [read/write] {L2}
+Surface#blendOp [read/write] {L3}
 
     Gets or sets the blending operation for objects drawn to this surface.  The
     value specifies how the colors of the object being drawn will be combined
@@ -1923,14 +1920,14 @@ new VertexList(vertices); {L1}
 The somewhat cryptically-named `Z` namespace hosts functions used for data
 compression.
 
-Z.deflate(data[, level]); {L2}
+Z.deflate(data[, level]); {L3}
 
     Compresses the data in an ArrayBuffer or TypedArray using the DEFLATE
     compression method.  `level` specifies the compression level from
     0 (no compression) to 9 (maximum), with 7 being the default.  Returns an
     ArrayBuffer containing the compressed data.
 
-Z.inflate(data[, max_size]); {L2}
+Z.inflate(data[, max_size]); {L3}
 
     Decompresses data in an ArrayBuffer or TypedArray which was previously
     compressed using DEFLATE.  `max_size` is optional and specifies an upper
