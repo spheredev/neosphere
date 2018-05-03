@@ -30,7 +30,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const White = Color.White;
+const
+	HaveFastDraw = 'drawImmediate' in Shape,
+	White = Color.White;
 
 export default
 class Prim
@@ -200,7 +202,7 @@ class Prim
 
 function drawShape(surface, type, vertices)
 {
-	if (Sphere.APILevel >= 2) {
+	if (HaveFastDraw) {
 		Shape.drawImmediate(surface, type, vertices);
 	}
 	else {
@@ -212,7 +214,7 @@ function drawShape(surface, type, vertices)
 
 function drawTexturedShape(surface, type, texture, vertices)
 {
-	if (Sphere.APILevel >= 2) {
+	if (HaveFastDraw) {
 		Shape.drawImmediate(surface, type, texture, vertices);
 	}
 	else {

@@ -34,6 +34,10 @@ import from from 'from';
 import FocusTarget from 'focus-target';
 import Pact from 'pact';
 
+const
+	CanDispatchOnExit = 'onExit' in Dispatch,
+	CanPauseResumeJob = 'pause' in Dispatch.now(() => {});
+
 export default
 class Thread
 {
@@ -91,8 +95,8 @@ class Thread
 
 	pause()
 	{
-		if (Sphere.APILevel < 2)
-			throw new RangeError("Thread#pause requires API level >= 2");
+		if (!CanPauseResumeJob)
+			throw new RangeError("Thread#pause requires newer Sphere version");
 		if (!this.running)
 			throw new Error("Thread is not running");
 		this._updateJob.pause();
@@ -100,8 +104,8 @@ class Thread
 
 	resume()
 	{
-		if (Sphere.APILevel < 2)
-			throw new RangeError("Thread#resume requires API level >= 2");
+		if (!CanPauseResumeJob)
+			throw new RangeError("Thread#resume requires newer Sphere version");
 		if (!this.running)
 			throw new Error("Thread is not running");
 		this._updateJob.resume();
@@ -117,7 +121,7 @@ class Thread
 		this._onThreadStop = new Pact();
 
 		// Dispatch.onExit() ensures the shutdown handler is always called
-		if (Sphere.APILevel >= 2)
+		if (CanDispatchOnExit)
 			this._exitJob = Dispatch.onExit(() => this.on_shutDown());
 
 		// set up the update and render callbacks
@@ -160,7 +164,7 @@ class Thread
 			return;
 
 		this.yieldFocus();
-		if (Sphere.APILevel >= 2)
+		if (CanDispatchOnExit)
 			this._exitJob.cancel();
 		this._updateJob.cancel();
 		this._renderJob.cancel();
