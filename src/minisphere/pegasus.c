@@ -502,6 +502,11 @@ pegasus_init(int api_level)
 
 	s_api_level = api_level;
 	s_def_mixer = mixer_new(44100, 16, 2);
+	
+	// only advertise highest stable API level; games must test for experimental
+	// features on an individual basis.
+	if (s_api_level > SPHERE_API_LEVEL_STABLE)
+		s_api_level = SPHERE_API_LEVEL_STABLE;
 
 	jsal_on_import_module(handle_module_import);
 
@@ -715,7 +720,7 @@ pegasus_init(int api_level)
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
 
-	api_define_subclass("Surface", PEGASUS_SURFACE, s_api_level >= 2 ? PEGASUS_TEXTURE : -1, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	api_define_subclass("Surface", PEGASUS_SURFACE, api_level >= 2 ? PEGASUS_TEXTURE : -1, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
@@ -838,7 +843,7 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "Triangles", SHAPE_TRIANGLES);
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
-	if (s_api_level >= 2) {
+	if (api_level >= 2) {
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
@@ -873,14 +878,12 @@ pegasus_init(int api_level)
 	jsal_get_global_string("Color");
 	p = COLORS;
 	while (p->name != NULL) {
-		if (s_api_level < p->api_level) {
-			++p;
-			continue;
+		if (api_level >= p->api_level) {
+			jsal_push_eval("({ enumerable: false, configurable: true })");
+			jsal_push_new_function(js_Color_get_Color, "get", 0, (intptr_t)(p - COLORS));
+			jsal_put_prop_string(-2, "get");
+			jsal_def_prop_string(-2, p->name);
 		}
-		jsal_push_eval("({ enumerable: false, configurable: true })");
-		jsal_push_new_function(js_Color_get_Color, "get", 0, (intptr_t)(p - COLORS));
-		jsal_put_prop_string(-2, "get");
-		jsal_def_prop_string(-2, p->name);
 		++p;
 	}
 	jsal_pop(1);

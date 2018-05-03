@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+v5.2.3 - TBD
+------------
+
+* Changes the semantics of `Sphere.APILevel` such that the engine will
+  only advertise support for the most recent stable API level, fixing a
+  major forward and backward compatibility hazard.
+
 v5.2.2 - May 1, 2018
 --------------------
 
