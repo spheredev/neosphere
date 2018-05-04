@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.2.3 - TBD
-------------
+v5.2.3 - May 4, 2018
+--------------------
 
 * Adds a warning when a Cell build produces any output files named `index.mjs`
   and targets API level 1.
