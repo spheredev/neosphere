@@ -4,6 +4,8 @@ miniSphere Changelog
 v5.2.3 - TBD
 ------------
 
+* Adds a warning when a Cell build produces any output files named `index.mjs`
+  and targets API level 1.
 * Changes the API level to 3 of all APIs introduced in miniSphere 5.2.
 * Fixes an issue where SPK packages built using Cell 5.2.0 through 5.2.2 won't
   run under miniSphere 5.1.

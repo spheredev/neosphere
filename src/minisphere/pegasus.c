@@ -52,7 +52,6 @@
 #include "xoroshiro.h"
 
 #define API_VERSION 2
-#define API_LEVEL   1
 
 enum file_op
 {
@@ -475,6 +474,7 @@ static script_t* jsal_pegasus_require_script (int index);
 static path_t*   load_package_json           (const char* filename);
 
 static int       s_api_level;
+static int       s_api_level_nominal;
 static mixer_t*  s_def_mixer;
 static int       s_frame_rate = 60;
 static int       s_next_module_id = 1;
@@ -505,8 +505,9 @@ pegasus_init(int api_level)
 	
 	// only advertise highest stable API level; games must test for experimental
 	// features on an individual basis.
-	if (s_api_level > SPHERE_API_LEVEL_STABLE)
-		s_api_level = SPHERE_API_LEVEL_STABLE;
+	s_api_level_nominal = s_api_level;
+	if (s_api_level_nominal > SPHERE_API_LEVEL_STABLE)
+		s_api_level_nominal = SPHERE_API_LEVEL_STABLE;
 
 	jsal_on_import_module(handle_module_import);
 
@@ -843,12 +844,12 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "Triangles", SHAPE_TRIANGLES);
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
-	if (api_level >= 2) {
+	if (s_api_level >= 2) {
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 	}
 
-	if (api_level >= 3) {
+	if (s_api_level >= 3) {
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
@@ -881,7 +882,7 @@ pegasus_init(int api_level)
 	jsal_get_global_string("Color");
 	p = COLORS;
 	while (p->name != NULL) {
-		if (api_level >= p->api_level) {
+		if (s_api_level >= p->api_level) {
 			jsal_push_eval("({ enumerable: false, configurable: true })");
 			jsal_push_new_function(js_Color_get_Color, "get", 0, (intptr_t)(p - COLORS));
 			jsal_put_prop_string(-2, "get");
@@ -1148,16 +1149,22 @@ create_joystick_objects(void)
 static path_t*
 find_module_file(const char* id, const char* origin, const char* sys_origin, bool es6_mode)
 {
-	const char* const PATTERNS[] =
+	static const
+	struct pattern
 	{
-		"%s",
-		"%s.mjs",
-		"%s.js",
-		"%s.json",
-		"%s/package.json",
-		"%s/index.mjs",
-		"%s/index.js",
-		"%s/index.json",
+		int         api_level;
+		const char* name;
+	}
+	PATTERNS[] =
+	{
+		{ 1, "%s" },
+		{ 1, "%s.mjs" },
+		{ 1, "%s.js" },
+		{ 1, "%s.json" },
+		{ 1, "%s/package.json" },
+		{ 2, "%s/index.mjs" },
+		{ 1, "%s/index.js" },
+		{ 1, "%s/index.json" },
 	};
 
 	path_t*      origin_path;
@@ -1177,7 +1184,9 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 	}
 
 	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
-		filename = strnewf(PATTERNS[i], id);
+		if (s_api_level < PATTERNS[i].api_level)
+			continue;
+		filename = strnewf(PATTERNS[i].name, id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
 			path = game_full_path(g_game, filename, NULL, false);
 		}
@@ -1379,7 +1388,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_get_APILevel(int num_args, bool is_ctor, intptr_t magic)
 {
-	jsal_push_int(s_api_level);
+	jsal_push_int(s_api_level_nominal);
 	cache_value_to_this("APILevel");
 	return true;
 }
