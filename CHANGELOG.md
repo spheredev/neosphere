@@ -1,6 +1,17 @@
 miniSphere Changelog
 ====================
 
+v5.0.2 - TBD
+------------
+
+* Adds `index.mjs` to the list of filenames recognized by the module loader.
+* Adds `print()` as an alias for `SSj.log()`.
+* Adds support for passing command-line arguments to a game's `main()`.
+* Adds support for `Promise#finally()` from ES2018.
+* Fixes an issue where using an `async` function as the main entry point
+  (`export default` from main module) will cause the game to crash on startup
+  with a TypeError.
+
 v5.0.1 - November 2, 2017
 -------------------------
 
