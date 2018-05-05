@@ -8,6 +8,7 @@ v5.0.2 - TBD
 * Adds `print()` as an alias for `SSj.log()`.
 * Adds support for passing command-line arguments to a game's `main()`.
 * Adds support for `Promise#finally()` from ES2018.
+* Adds support for SPK packages with a packaged `#/` directory.
 * Fixes an issue where using an `async` function as the main entry point
   (`export default` from main module) will cause the game to crash on startup
   with a TypeError.
