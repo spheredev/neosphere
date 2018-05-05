@@ -1038,6 +1038,20 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 	}
 	else if (strlen(filename) >= 2 && memcmp(filename, "#/", 2) == 0) {
 		// the #/ prefix refers to the engine's "system" directory.
+
+		// for an SPK package, see if the asset has been packaged and use it if so
+		*out_path = path_new(filename);
+		if (game != NULL && game->type == FS_PACKAGE
+			&& package_file_exists(game->package, path_cstr(*out_path)))
+		{
+			*out_fs_type = FS_PACKAGE;
+			return true;
+		}
+		else {
+			path_free(*out_path);
+		}
+
+		// asset not in SPK package, use physical system directory
 		*out_path = path_new(filename + 2);
 		origin = path_rebase(path_new("system/"), assets_path());
 		if (!path_resolve(origin, NULL)) {
