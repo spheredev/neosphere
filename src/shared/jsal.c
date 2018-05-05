@@ -923,6 +923,27 @@ jsal_is_array(int stack_index)
 }
 
 bool
+jsal_is_async_function(int stack_index)
+{
+	bool        is_async = false;
+	const char* name;
+
+
+	if (!jsal_is_function(stack_index))
+		return false;
+	jsal_get_prop_string(stack_index, "constructor");
+	if (!jsal_is_object(-1)) {
+		jsal_pop(1);
+		return false;
+	}
+	jsal_get_prop_string(-1, "name");
+	if ((name = jsal_get_string(-1)))
+		is_async = strcmp(name, "AsyncFunction") == 0;
+	jsal_pop(2);
+	return is_async;
+}
+
+bool
 jsal_is_boolean(int stack_index)
 {
 	JsValueRef  ref;

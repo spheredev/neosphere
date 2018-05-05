@@ -134,6 +134,8 @@ main(int argc, char* argv[])
 	int                  use_frameskip;
 	int                  use_verbosity;
 
+	int i;
+
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
 		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &ssj_mode,
@@ -317,13 +319,24 @@ main(int argc, char* argv[])
 		// modular mode (Sv2).  check for an exported Game class and instantiate it,
 		// then call game.start().
 		jsal_get_prop_string(-1, "default");
-		if (jsal_is_function(-1)) {
+		if (jsal_is_async_function(-1)) {
+			// async functions aren't constructible, so call those normally.
+			for (i = game_args_offset; i < argc; ++i)
+				jsal_push_string(argv[i]);
+			if (!jsal_try_call(argc - game_args_offset))
+				goto on_js_error;
+		}
+		else if (jsal_is_function(-1)) {
 			if (!jsal_try_construct(0))
 				goto on_js_error;
 			jsal_get_prop_string(-1, "start");
 			jsal_pull(-2);
-			if (jsal_is_function(-2) && !jsal_try_call_method(0))
-				goto on_js_error;
+			if (jsal_is_function(-2)) {
+				for (i = game_args_offset; i < argc; ++i)
+					jsal_push_string(argv[i]);
+				if (!jsal_try_call_method(argc - game_args_offset))
+					goto on_js_error;
+			}
 		}
 		jsal_pop(2);
 	}
