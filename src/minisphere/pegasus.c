@@ -184,8 +184,6 @@ COLORS[] =
 	{ "Plum", 221, 160, 221, 255 },
 	{ "PowderBlue", 176, 224, 230, 255 },
 	{ "Purple", 128, 0, 128, 255 },
-	{ "PurwaBlue", 155, 225, 255, 255 },
-	{ "RebeccaPurple", 102, 51, 153, 255 },
 	{ "Red", 255, 0, 0, 255 },
 	{ "RosyBrown", 188, 143, 143, 255 },
 	{ "RoyalBlue", 65, 105, 225, 255 },
@@ -352,6 +350,7 @@ static bool js_Shader_setInt                 (int num_args, bool is_ctor, int ma
 static bool js_Shader_setIntArray            (int num_args, bool is_ctor, int magic);
 static bool js_Shader_setIntVector           (int num_args, bool is_ctor, int magic);
 static bool js_Shader_setMatrix              (int num_args, bool is_ctor, int magic);
+static bool js_Shape_drawImmediate           (int num_args, bool is_ctor, int magic);
 static bool js_new_Shape                     (int num_args, bool is_ctor, int magic);
 static bool js_Shape_get_indexList           (int num_args, bool is_ctor, int magic);
 static bool js_Shape_get_texture             (int num_args, bool is_ctor, int magic);
@@ -638,6 +637,7 @@ pegasus_init(void)
 	api_define_method("Shader", "setIntVector", js_Shader_setIntVector, 0);
 	api_define_method("Shader", "setMatrix", js_Shader_setMatrix, 0);
 	api_define_class("Shape", PEGASUS_SHAPE, js_new_Shape, js_Shape_finalize);
+	api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 	api_define_property("Shape", "indexList", false, js_Shape_get_indexList, js_Shape_set_indexList);
 	api_define_property("Shape", "texture", false, js_Shape_get_texture, js_Shape_set_texture);
 	api_define_property("Shape", "vertexList", false, js_Shape_get_vertexList, js_Shape_set_vertexList);
@@ -3568,6 +3568,78 @@ static void
 js_Shader_finalize(void* host_ptr)
 {
 	shader_unref(host_ptr);
+}
+
+static bool
+js_Shape_drawImmediate(int num_args, bool is_ctor, int magic)
+{
+	int             array_idx;
+	ALLEGRO_BITMAP* bitmap = NULL;
+	int             draw_mode;
+	int             item_idx;
+	int             num_entries;
+	image_t*        surface;
+	image_t*        texture = NULL;
+	shape_type_t    type;
+	ALLEGRO_VERTEX* vertices;
+
+	int i;
+
+	if ((jsal_is_class_obj(0, PEGASUS_SURFACE))) {
+		surface = jsal_require_class_obj(0, PEGASUS_SURFACE);
+		type = jsal_require_int(1);
+		array_idx = 2;
+		if (num_args >= 4) {
+			if (!jsal_is_null(2) && !jsal_is_undefined(2))
+				texture = jsal_require_class_obj(2, PEGASUS_TEXTURE);
+			array_idx = 3;
+		}
+	}
+	else {
+		surface = screen_backbuffer(g_screen);
+		type = jsal_require_int(0);
+		array_idx = 1;
+		if (num_args >= 3) {
+			if (!jsal_is_null(1) && !jsal_is_undefined(1))
+				texture = jsal_require_class_obj(2, PEGASUS_TEXTURE);
+			array_idx = 2;
+		}
+	}
+	jsal_require_array(array_idx);
+
+	num_entries = jsal_get_length(array_idx);
+	if (num_entries == 0)
+		jsal_error(JS_RANGE_ERROR, "Empty list is not allowed");
+
+	vertices = alloca(num_entries * sizeof(ALLEGRO_VERTEX));
+	for (i = 0; i < num_entries; ++i) {
+		jsal_get_prop_index(array_idx, i);
+		jsal_require_object_coercible(-1);
+		item_idx = jsal_normalize_index(-1);
+		vertices[i].x = jsal_get_prop_key(item_idx, s_key_x) ? jsal_require_number(-1) : 0.0f;
+		vertices[i].y = jsal_get_prop_key(item_idx, s_key_y) ? jsal_require_number(-1) : 0.0f;
+		vertices[i].z = jsal_get_prop_key(item_idx, s_key_z) ? jsal_require_number(-1) : 0.0f;
+		vertices[i].u = jsal_get_prop_key(item_idx, s_key_u) ? jsal_require_number(-1) : 0.0f;
+		vertices[i].v = jsal_get_prop_key(item_idx, s_key_v) ? jsal_require_number(-1) : 0.0f;
+		vertices[i].color = jsal_get_prop_key(item_idx, s_key_color)
+			? nativecolor(jsal_pegasus_require_color(-1))
+			: al_map_rgba_f(1.0f, 1.0f, 1.0f, 1.0f);
+		jsal_pop(7);
+	}
+
+	draw_mode = type == SHAPE_LINES ? ALLEGRO_PRIM_LINE_LIST
+		: type == SHAPE_LINE_LOOP ? ALLEGRO_PRIM_LINE_LOOP
+		: type == SHAPE_LINE_STRIP ? ALLEGRO_PRIM_LINE_STRIP
+		: type == SHAPE_TRIANGLES ? ALLEGRO_PRIM_TRIANGLE_LIST
+		: type == SHAPE_TRI_STRIP ? ALLEGRO_PRIM_TRIANGLE_STRIP
+		: type == SHAPE_TRI_FAN ? ALLEGRO_PRIM_TRIANGLE_FAN
+		: ALLEGRO_PRIM_POINT_LIST;
+	if (texture != NULL)
+		bitmap = image_bitmap(texture);
+	image_render_to(surface, NULL);
+	shader_use(galileo_shader(), false);
+	al_draw_prim(vertices, NULL, bitmap, 0, num_entries, draw_mode);
+	return false;
 }
 
 static bool

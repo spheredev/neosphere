@@ -4,6 +4,8 @@ miniSphere Changelog
 v5.0.2 - TBD
 ------------
 
+* Adds `Shape.drawImmediate()` function which avoids the overhead of creating
+  VertexList and Shape objects for immediate-mode drawing.
 * Adds `index.mjs` to the list of filenames recognized by the module loader.
 * Adds `print()` as an alias for `SSj.log()`.
 * Adds support for passing command-line arguments to a game's `main()`.
