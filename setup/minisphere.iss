@@ -1,5 +1,5 @@
 ;  miniSphere JavaScript game engine
-;  Copyright (c) 2015-2017, Fat Cerberus
+;  Copyright (c) 2015-2018, Fat Cerberus
 ;  All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 ; solution configurations.
 #define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.0.1"
+#define AppVersion3 "5.0.2"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -64,7 +64,7 @@ LicenseFile=../LICENSE.txt
 SetupIconFile=..\msvs\spherical.ico
 SolidCompression=yes
 UninstallDisplayName={#AppName} {#AppVersion3}
-UninstallDisplayIcon={app}\minisphere.exe,0
+UninstallDisplayIcon={app}\miniSphere.exe,0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -94,13 +94,13 @@ Name: "assoc_ss/ssproj"; Description: ".ssproj - Sphere Studio project file"; Gr
 Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescription: "Develop on the command line:"; Components: spherun/cli; Flags: checkedonce unchecked
 
 [Files]
-Source: "..\msw\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
+Source: "..\msw\miniSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
 Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
 Source: "..\msw\gdk-cp.bat"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
-Source: "..\msw64\minisphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
+Source: "..\msw64\miniSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: IsWin64
 Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
 Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
 Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: IsWin64
@@ -118,16 +118,16 @@ Source: "..\msw\ide\*"; DestDir: "{app}\ide"; Flags: ignoreversion recursesubdir
 ; miniSphere associations
 Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SPK"; Flags: uninsdeletevalue; Tasks: assoc/spk
 Root: HKCR; Subkey: "miniSphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc/spk
-Root: HKCR; Subkey: "miniSphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/spk
-Root: HKCR; Subkey: "miniSphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/spk
+Root: HKCR; Subkey: "miniSphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\miniSphere.exe,0"; Tasks: assoc/spk
+Root: HKCR; Subkey: "miniSphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\miniSphere.exe"" ""%1"""; Tasks: assoc/spk
 Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/sgm
 Root: HKCR; Subkey: "miniSphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
-Root: HKCR; Subkey: "miniSphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/sgm
-Root: HKCR; Subkey: "miniSphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/sgm
+Root: HKCR; Subkey: "miniSphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\miniSphere.exe,0"; Tasks: assoc/sgm
+Root: HKCR; Subkey: "miniSphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\miniSphere.exe"" ""%1"""; Tasks: assoc/sgm
 Root: HKCR; Subkey: ".s2gm"; ValueType: string; ValueName: ""; ValueData: "miniSphere.S2GM"; Flags: uninsdeletevalue; Tasks: assoc/s2gm
 Root: HKCR; Subkey: "miniSphere.S2GM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/s2gm
-Root: HKCR; Subkey: "miniSphere.S2GM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\minisphere.exe,0"; Tasks: assoc/s2gm
-Root: HKCR; Subkey: "miniSphere.S2GM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\minisphere.exe"" ""%1"""; Tasks: assoc/s2gm
+Root: HKCR; Subkey: "miniSphere.S2GM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\miniSphere.exe,0"; Tasks: assoc/s2gm
+Root: HKCR; Subkey: "miniSphere.S2GM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\miniSphere.exe"" ""%1"""; Tasks: assoc/s2gm
 ; Sphere Studio associations
 #ifdef INCLUDE_SPHERE_STUDIO
 Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SSPROJ"; Flags: uninsdeletevalue; Tasks: assoc_ss/ssproj
@@ -139,7 +139,7 @@ Root: HKCR; Subkey: "miniSphere.SSPROJ\shell\open\command"; ValueType: string; V
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app};{olddata}"; Tasks: path
 
 [Icons]
-Name: "{commonprograms}\{#AppName}"; Filename: "{app}\minisphere.exe"
+Name: "{commonprograms}\{#AppName}"; Filename: "{app}\miniSphere.exe"
 #ifdef INCLUDE_SPHERE_STUDIO
 Name: "{commonprograms}\Sphere Studio"; Filename: "{app}\ide\Sphere Studio.exe"; Components: spherun/ide
 #endif

@@ -156,7 +156,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>minisphere</TargetName>
+    <TargetName>miniSphere</TargetName>
     <OutDir>..\msw64\</OutDir>
     <IntDir>obj64\release\minisphere\</IntDir>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -178,7 +178,7 @@
     <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
     <Allegro_AddonColor>true</Allegro_AddonColor>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>minisphere</TargetName>
+    <TargetName>miniSphere</TargetName>
     <OutDir>..\msw\</OutDir>
     <IntDir>obj\release\minisphere\</IntDir>
   </PropertyGroup>
