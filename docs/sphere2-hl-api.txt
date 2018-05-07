@@ -44,17 +44,17 @@ assert.deepStrictEqual(value, expected[, error_text]);
 assert.equal(value, expected[, error_text]);
 assert.strictEqual(value, expected[, error_text]);
 assert.notEqual(value, unexpected[, error_text]);
-assert.notStrictEqual(value, expected[, error_text]);
+assert.notStrictEqual(value, unexpected[, error_text]);
 
     Asserts that two values either match or do not match, respectively.
     The standard variants test for loose equality (`==`), while the "strict"
     variants test for strict equality (`===`).
 
 assert.throws(func, expected[, error_text]);
-assert.doesNotThrow(func, expected[, error_text]);
+assert.doesNotThrow(func, unexpected[, error_text]);
 
     Asserts that the specified function either throws or does not throw a
-    specified class of exception.  `expected` can either be an error
+    specified class of exception.  `[un]expected` can either be an error
     constructor such as `TypeError` or `ReferenceError`, or a predicate
     function.  If it's a predicate function, the function should return true if
     the thrown exception matches, or false otherwise.
@@ -362,10 +362,10 @@ Console#defineObject(objectName, thisObj, commands);
     specifies a `this` binding to use when calling a command function.
 
     As this API is complex and difficult to explain, an example might help
-    illuminate things.  A sample term.define() call might look something like
-    this:
+    illuminate things.  A sample `Console#defineObject` call might look
+    something like this:
 
-        term.define('sound', null, {
+        console.defineObject('sound', null, {
             'play': function(filename) {
                 if (fs.exists(filename)) {
                     new Sound(filename).play(Mixer.Default);
