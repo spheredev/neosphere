@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* Removes the Cell warning for `index.mjs` when targeting API level 1.
+
+
 v5.2.3 - May 4, 2018
 --------------------
 

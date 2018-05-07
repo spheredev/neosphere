@@ -957,20 +957,16 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 static bool
 write_manifests(build_t* build)
 {
-	int           api_level;
-	int           api_version = 2;
-	FILE*         file;
-	int           height;
-	size_t        json_size;
-	const char*   json_text;
-	path_t*       main_path;
-	const path_t* path;
-	const char*   sandbox_mode;
-	path_t*       script_path;
-	target_t*     target;
-	int           width;
-
-	iter_t iter;
+	int         api_level;
+	int         api_version = 2;
+	FILE*       file;
+	int         height;
+	size_t      json_size;
+	const char* json_text;
+	path_t*     main_path;
+	const char* sandbox_mode;
+	path_t*     script_path;
+	int         width;
 
 	visor_begin_op(build->visor, "writing Sphere manifest files");
 
@@ -1108,16 +1104,6 @@ write_manifests(build_t* build)
 	json_text = jsal_get_lstring(-1, &json_size);
 	fs_fspew(build->fs, "@/game.json", json_text, json_size);
 	jsal_pop(2);
-
-	iter = vector_enum(build->targets);
-	while (iter_next(&iter)) {
-		target = *(target_t**)iter.ptr;
-		path = target_path(target);
-		if (path_filename_is(path, "index.mjs")) {
-			if (api_version < 2 || (api_version == 2 && api_level < 2))
-				visor_warn(build->visor, "target '%s': 'index.mjs' support requires API L2+", path_cstr(path));
-		}
-	}
 
 	visor_end_op(build->visor);
 	path_free(main_path);
