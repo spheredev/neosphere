@@ -255,6 +255,19 @@ main(int argc, char* argv[])
 		sphere_exit(false);
 	}
 
+	if (game_version(g_game) > 2 || game_api_level(g_game) > 1) {
+#if !defined(MINISPHERE_SPHERUN)
+		al_show_native_message_box(NULL, "Unable to Start Game", game_name(g_game),
+			"This game was developed for a newer version of the Sphere platform than your installed version of miniSphere (v"SPHERE_VERSION") supports.\n\n"
+			"You'll need to upgrade miniSphere before you can play this game.",
+			NULL, ALLEGRO_MESSAGEBOX_ERROR);
+#else
+		fprintf(stderr, "ERROR: Sphere v%d level %d API required\n",
+			game_version(g_game), game_api_level(g_game));
+#endif
+		sphere_exit(false);
+	}
+
 	// set up the render context ("screen") so we can draw stuff
 	resolution = game_resolution(g_game);
 	if (!(icon = image_load("@/icon.png")))

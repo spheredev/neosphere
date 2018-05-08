@@ -49,6 +49,7 @@ struct game
 {
 	unsigned int refcount;
 	unsigned int id;
+	int          api_level;
 	lstring_t*   author;
 	char*        compiler;
 	bool         fullscreen;
@@ -248,6 +249,12 @@ game_unref(game_t* it)
 	path_free(it->root_path);
 	lstr_free(it->manifest);
 	free(it);
+}
+
+int
+game_api_level(const game_t* it)
+{
+	return it->version >= 2 ? it->api_level : 0;
 }
 
 const char*
@@ -894,25 +901,30 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	else
 		game->version = 2;
 
-	if (jsal_get_prop_string(-5, "author") && jsal_is_string(-1))
+	if (jsal_get_prop_string(-5, "apiLevel") && jsal_is_number(-1))
+		game->api_level = jsal_get_number(-1);
+	else
+		game->api_level = 1;
+
+	if (jsal_get_prop_string(-6, "author") && jsal_is_string(-1))
 		game->author = lstr_new(jsal_get_string(-1));
 	else
 		game->author = lstr_new("Author Unknown");
 
-	if (jsal_get_prop_string(-6, "summary") && jsal_is_string(-1))
+	if (jsal_get_prop_string(-7, "summary") && jsal_is_string(-1))
 		game->summary = lstr_new(jsal_get_string(-1));
 	else
 		game->summary = lstr_new("No information available.");
 
-	if (jsal_get_prop_string(-7, "saveID") && jsal_is_string(-1))
+	if (jsal_get_prop_string(-8, "saveID") && jsal_is_string(-1))
 		game->save_id = lstr_new(jsal_get_string(-1));
 
-	if (jsal_get_prop_string(-8, "fullScreen") && jsal_is_boolean(-1))
+	if (jsal_get_prop_string(-9, "fullScreen") && jsal_is_boolean(-1))
 		game->fullscreen = jsal_get_boolean(-1);
 	else
 		game->fullscreen = game->version < 2;
 
-	if (jsal_get_prop_string(-9, "sandbox") && jsal_is_string(-1)) {
+	if (jsal_get_prop_string(-10, "sandbox") && jsal_is_string(-1)) {
 		sandbox_mode = jsal_get_string(-1);
 		game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
 			: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED
@@ -923,7 +935,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	}
 
 	// load build metadata
-	if (jsal_get_prop_string(-10, "$COMPILER") && jsal_is_string(-1))
+	if (jsal_get_prop_string(-11, "$COMPILER") && jsal_is_string(-1))
 		game->compiler = strdup(jsal_get_string(-1));
 
 	jsal_set_top(stack_top);

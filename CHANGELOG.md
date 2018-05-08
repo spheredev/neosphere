@@ -9,6 +9,8 @@ v5.0.2 - TBD
 * Adds support for passing command-line arguments to a game's `main()`.
 * Adds support for `Promise#finally()` from ES2018.
 * Adds support for SPK packages with a packaged `#/` directory.
+* Adds an error message when attempting to run a game targeting a higher API
+  level than the engine supports.
 * Cell will now package the entire `#/` directory when making an SPK package.
 * Fixes an issue where using an `async` function as the main entry point
   (`export default` from main module) will cause the game to crash on startup
