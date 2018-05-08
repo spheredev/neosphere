@@ -72,7 +72,7 @@ static void on_socket_idle      (void);
 static bool initialize_engine   (void);
 static void shutdown_engine     (void);
 static bool find_startup_game   (path_t* *out_path);
-static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode);
+static bool parse_command_line  (int argc, char* argv[], path_t* *out_game_path, int *out_fullscreen, int *out_frameskip, int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode, int *out_args_offset);
 static void print_banner        (bool want_copyright, bool want_deps);
 static void print_usage         (void);
 static void report_error        (const char* fmt, ...);
@@ -127,6 +127,7 @@ main(int argc, char* argv[])
 	const char*          error_url = NULL;
 	ALLEGRO_FILECHOOSER* file_dlg;
 	int                  fullscreen_mode;
+	int                  game_args_offset;
 	path_t*              games_path;
 	image_t*             icon;
 	size2_t              resolution;
@@ -136,9 +137,12 @@ main(int argc, char* argv[])
 	int                  use_frameskip;
 	int                  use_verbosity;
 
+	int i;
+
 	// parse the command line
 	if (parse_command_line(argc, argv, &g_game_path,
-		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &ssj_mode))
+		&fullscreen_mode, &use_frameskip, &use_verbosity, &use_conserve_cpu, &ssj_mode,
+		&game_args_offset))
 	{
 		if (ssj_mode == SSJ_ACTIVE)
 			fullscreen_mode = FULLSCREEN_OFF;
@@ -331,7 +335,10 @@ main(int argc, char* argv[])
 		// then call game.start().
 		jsal_get_prop_string(-1, "default");
 		if (jsal_is_async_function(-1)) {
-			if (!jsal_try_call(0))
+			// async functions aren't constructible, so call those normally.
+			for (i = game_args_offset; i < argc; ++i)
+				jsal_push_string(argv[i]);
+			if (!jsal_try_call(argc - game_args_offset))
 				goto on_js_error;
 		}
 		else if (jsal_is_function(-1)) {
@@ -341,15 +348,27 @@ main(int argc, char* argv[])
 			jsal_pull(-2);
 			if (jsal_is_function(-2) && !jsal_try_call_method(0))
 				goto on_js_error;
+			if (jsal_is_function(-2)) {
+				for (i = game_args_offset; i < argc; ++i)
+					jsal_push_string(argv[i]);
+				if (!jsal_try_call_method(argc - game_args_offset))
+					goto on_js_error;
+			}
 		}
 		jsal_pop(2);
 	}
 
-	// in Sphere v1 mode only, call game() function (if it exists)
+	// if we're running in Sphere v1 mode, call the global game() function.  note
+	// that, in contrast to Sphere 1.x, it's not an error if this function doesn't
+	// exist.
 	if (game_version(g_game) <= 1) {
 		jsal_get_global_string("game");
-		if (jsal_is_function(-1) && !jsal_try_call(0))
-			goto on_js_error;
+		if (jsal_is_function(-1)) {
+			for (i = game_args_offset; i < argc; ++i)
+				jsal_push_string(argv[i]);
+			if (!jsal_try_call(argc - game_args_offset))
+				goto on_js_error;
+		}
 		jsal_pop(2);
 	}
 
@@ -681,7 +700,8 @@ static bool
 parse_command_line(
 	int argc, char* argv[],
 	path_t* *out_game_path, int *out_fullscreen, int *out_frameskip,
-	int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode)
+	int *out_verbosity, bool *out_want_throttle, ssj_mode_t *out_ssj_mode,
+	int *out_args_offset)
 {
 	bool parse_options = true;
 
@@ -694,12 +714,14 @@ parse_command_line(
 	*out_ssj_mode = SSJ_PASSIVE;
 	*out_verbosity = 0;
 	*out_want_throttle = true;
+	*out_args_offset = argc;
 
 	// process command line arguments
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i] && parse_options) {
-			if (strcmp(argv[i], "--") == 0)
+			if (strcmp(argv[i], "--") == 0) {
 				parse_options = false;
+			}
 			else if (strcmp(argv[i], "--frameskip") == 0) {
 				if (++i >= argc) goto missing_argument;
 				*out_frameskip = atoi(argv[i]);
@@ -760,18 +782,16 @@ parse_command_line(
 			}
 		}
 		else {
+			parse_options = false;
 			if (*out_game_path == NULL) {
 				*out_game_path = path_new(argv[i]);
+				*out_args_offset = i + 1;
 				if (!path_resolve(*out_game_path, NULL)) {
 					report_error("pathname not found '%s'\n", path_cstr(*out_game_path));
 					path_free(*out_game_path);
 					*out_game_path = NULL;
 					return false;
 				}
-			}
-			else {
-				report_error("more than one game specified on command line\n");
-				return false;
 			}
 		}
 	}
@@ -820,7 +840,7 @@ print_usage(void)
 	printf("\n");
 	printf("USAGE:\n");
 	printf("   spherun [--fullscreen | --windowed] [--frameskip <n>] [--no-sleep]         \n");
-	printf("           [--debug | --performance] [--verbose <n>] <game_path>              \n");
+	printf("           [--debug | --performance] [--verbose <n>] <game_path> [<game_args>]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("       --fullscreen   Start miniSphere in fullscreen mode.                    \n");
