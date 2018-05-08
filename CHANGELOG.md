@@ -12,6 +12,7 @@ v5.0.2 - TBD
 * Adds an error message when attempting to run a game targeting a higher API
   level than the engine supports.
 * Cell will now package the entire `#/` directory when making an SPK package.
+* Removes experimental `Color.PurwaBlue` and `Color.RebeccaPurple` colors.
 * Fixes an issue where using an `async` function as the main entry point
   (`export default` from main module) will cause the game to crash on startup
   with a TypeError.
