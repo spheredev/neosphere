@@ -1,6 +1,15 @@
 miniSphere Changelog
 ====================
 
+v5.1.4 - May 9, 2018
+--------------------
+
+* Adds support for passing command-line arguments to a game's `main()`.
+* Adds an error message when attempting to run a game targeting a higher API
+  level than the engine supports.
+* Adds `print()` as an alias for `SSj.log()`.
+* Changes the value of `Sphere.APILevel` back to 1.
+
 v5.1.3 - February 18, 2018
 --------------------------
 
