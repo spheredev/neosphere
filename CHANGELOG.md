@@ -5,7 +5,9 @@ vX.X.X - TBD
 ------------
 
 * Adds back support for `index.mjs` when running at API level 1.
-* Moves `Color.PurwaBlue` and `Color.RebeccaPurple` to API level 2.
+* Changes the API level check on startup to only accept games targeting the
+  current stable API level, to avoid a forward compatibility issue.
+* Changes the API level of `Color.PurwaBlue` and `Color.RebeccaPurple` to 2.
 * Removes the Cell warning for `index.mjs` when targeting API level 1.
 
 
