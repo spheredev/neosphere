@@ -31,7 +31,6 @@
 **/
 
 import from from 'from';
-import Logger from 'logger';
 import Prim from 'prim';
 import Scene from 'scene';
 import Thread from 'thread';
@@ -57,7 +56,6 @@ class Console extends Thread
 		this.cursorColor = Color.Gold;
 		this.entry = "";
 		this.font = Font.Default;
-		this.logger = null;
 		this.keyboard = Keyboard.Default;
 		this.mouse = Mouse.Default;
 		this.nextLine = 0;
@@ -104,10 +102,6 @@ class Console extends Thread
 		++this.nextLine;
 		this.view.line = 0.0;
 		SSj.log(this.buffer[lineInBuffer]);
-
-		// if we have a logger, write the line to the log file
-		if (this.logger !== null)
-			this.logger.write(this.buffer[lineInBuffer]);
 	}
 
 	start()
@@ -121,10 +115,6 @@ class Console extends Thread
 				.tween(this.cursorColor, 0.25 * Sphere.frameRate, 'easeOutSine', { a: 0.5 })
 			.end()
 			.run();
-
-		// create a log file only if the game has a save ID defined
-		if ('saveID' in Sphere.Game)
-			this.logger = new Logger('consoleOutput');
 
 		this.log(`initializing the Sphere Runtime Console`);
 		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);

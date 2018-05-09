@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.0.2 - TBD
-------------
+v5.0.2 - May 8, 2018
+--------------------
 
 * Adds `index.mjs` to the list of filenames recognized by the module loader.
 * Adds `print()` as an alias for `SSj.log()`.

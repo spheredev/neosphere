@@ -152,7 +152,9 @@ jsal_init(void)
 	JsErrorCode    result;
 	
 	result = JsCreateRuntime(
-		JsRuntimeAttributeDispatchSetExceptionsToDebugger | JsRuntimeAttributeAllowScriptInterrupt,
+		JsRuntimeAttributeAllowScriptInterrupt
+			| JsRuntimeAttributeDispatchSetExceptionsToDebugger
+			| JsRuntimeAttributeEnableExperimentalFeatures,
 		NULL, &s_js_runtime);
 	if (result != JsNoError)
 		goto on_error;

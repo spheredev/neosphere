@@ -156,7 +156,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>minisphere</TargetName>
+    <TargetName>miniSphere</TargetName>
     <OutDir>..\msw64\</OutDir>
     <IntDir>obj64\release\minisphere\</IntDir>
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -178,7 +178,7 @@
     <Allegro_AddonMemfile>true</Allegro_AddonMemfile>
     <Allegro_AddonColor>true</Allegro_AddonColor>
     <LinkIncremental>false</LinkIncremental>
-    <TargetName>minisphere</TargetName>
+    <TargetName>miniSphere</TargetName>
     <OutDir>..\msw\</OutDir>
     <IntDir>obj\release\minisphere\</IntDir>
   </PropertyGroup>
@@ -595,13 +595,13 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="packages\AllegroDeps.1.7.0.0\build\native\AllegroDeps.targets" Condition="Exists('packages\AllegroDeps.1.7.0.0\build\native\AllegroDeps.targets')" />
-    <Import Project="packages\Allegro.5.2.3.1\build\native\Allegro.targets" Condition="Exists('packages\Allegro.5.2.3.1\build\native\Allegro.targets')" />
+    <Import Project="packages\Allegro.5.2.4.0\build\native\Allegro.targets" Condition="Exists('packages\Allegro.5.2.4.0\build\native\Allegro.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('packages\AllegroDeps.1.7.0.0\build\native\AllegroDeps.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\AllegroDeps.1.7.0.0\build\native\AllegroDeps.targets'))" />
-    <Error Condition="!Exists('packages\Allegro.5.2.3.1\build\native\Allegro.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Allegro.5.2.3.1\build\native\Allegro.targets'))" />
+    <Error Condition="!Exists('packages\Allegro.5.2.4.0\build\native\Allegro.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Allegro.5.2.4.0\build\native\Allegro.targets'))" />
   </Target>
 </Project>
