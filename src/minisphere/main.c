@@ -258,7 +258,7 @@ main(int argc, char* argv[])
 		sphere_exit(false);
 	}
 
-	if (game_version(g_game) > 2 || game_api_level(g_game) > 2) {
+	if (game_version(g_game) > 2 || game_api_level(g_game) > 1) {
 #if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Start Game", game_name(g_game),
 			"This game was developed for a newer version of the Sphere platform than your installed version of miniSphere (v"SPHERE_VERSION") supports.\n\n"
