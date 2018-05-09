@@ -35,7 +35,8 @@ import FocusTarget from 'focus-target';
 import Pact from 'pact';
 
 const
-	CanDispatchOnExit = 'onExit' in Dispatch;
+	CanDispatchOnExit = 'onExit' in Dispatch,
+	CanPauseResumeJob = 'pause' in Dispatch.now(() => {});
 
 export default
 class Thread
@@ -94,8 +95,8 @@ class Thread
 
 	pause()
 	{
-		if (Sphere.APILevel < 2)
-			throw new RangeError("Thread#pause requires API L2 or higher");
+		if (!CanPauseResumeJob)
+			throw new RangeError("Thread#pause requires newer Sphere version");
 		if (!this.running)
 			throw new Error("Thread is not running");
 		this._updateJob.pause();
@@ -103,8 +104,8 @@ class Thread
 
 	resume()
 	{
-		if (Sphere.APILevel < 2)
-			throw new RangeError("Thread#resume requires API L2 or higher");
+		if (!CanPauseResumeJob)
+			throw new RangeError("Thread#resume requires newer Sphere version");
 		if (!this.running)
 			throw new Error("Thread is not running");
 		this._updateJob.resume();
