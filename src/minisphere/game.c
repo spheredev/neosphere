@@ -137,7 +137,7 @@ game_open(const char* game_path)
 		console_log(1, "synthesizing manifest for '%s' from game #%u", path_cstr(path),
 			s_next_game_id);
 		game->version = path_has_extension(path, ".mjs") ? 2 : 1;
-		game->api_level = SPHERE_API_LEVEL;
+		game->api_level = SPHERE_API_LEVEL_STABLE;
 		game->name = lstr_new(path_filename(path));
 		game->author = lstr_new("Author Unknown");
 		game->summary = lstr_new(path_cstr(path));
