@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v5.2.4 - May 11, 2018
+---------------------
 
 * Adds back support for `index.mjs` when running at API level 1.
 * Changes the API level check on startup to only accept games targeting the
@@ -10,7 +10,6 @@ vX.X.X - TBD
 * Changes the maximum advertised API level back to 1.
 * Changes the API level of `Color.PurwaBlue` and `Color.RebeccaPurple` to 2.
 * Removes the Cell warning for `index.mjs` when targeting API level 1.
-
 
 v5.2.3 - May 4, 2018
 --------------------
