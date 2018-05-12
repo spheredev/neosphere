@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+v5.2.5 - May 12, 2018
+---------------------
+
+* Fixes a bug in which the engine refuses to run a bare `.js` or `.mjs`
+  file citing an API level mismatch.
+
 v5.2.4 - May 11, 2018
 ---------------------
 
