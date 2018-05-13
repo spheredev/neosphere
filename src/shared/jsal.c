@@ -267,7 +267,6 @@ jsal_uninit(void)
 void
 jsal_update(bool in_event_loop)
 {
-	JsErrorCode        error_code;
 	JsValueRef         exception;
 	bool               have_error;
 	struct module_job* job;
@@ -289,7 +288,7 @@ jsal_update(bool in_event_loop)
 		if (job->source != NULL) {
 			// module parse job: parse and compile an imported module
 			source = job->source;  // ...because 'job' may be invalidated
-			error_code = JsParseModuleSource(job->module_record, job->source_context,
+			JsParseModuleSource(job->module_record, job->source_context,
 				(BYTE*)job->source, (unsigned int)job->source_size,
 				JsParseModuleSourceFlags_DataIsUTF8, &exception);
 			free(source);
@@ -601,7 +600,6 @@ jsal_eval_module(const char* specifier, const char* url)
 {
 	/* [ ... source ] -> [ ... exports ] */
 
-	JsErrorCode    error_code;
 	JsValueRef     exception;
 	bool           is_new_module;
 	JsModuleRecord module;
@@ -615,16 +613,11 @@ jsal_eval_module(const char* specifier, const char* url)
 	source = jsal_require_lstring(-1, &source_len);
 	module = get_module_record(specifier, NULL, url, &is_new_module);
 	if (is_new_module) {
-		error_code = JsParseModuleSource(module,
+		JsParseModuleSource(module,
 			s_next_source_context++, (BYTE*)source, (unsigned int)source_len,
 			JsParseModuleSourceFlags_DataIsUTF8, &exception);
-		jsal_pop(1);
-		if (error_code == JsErrorScriptCompile)
-			goto on_exception;
 	}
-	else {
-		jsal_pop(1);
-	}
+	jsal_pop(1);
 
 	// note: a single call to jsal_update() here is enough, as it will process
 	//       the entire dependency graph before returning.
@@ -636,12 +629,6 @@ jsal_eval_module(const char* specifier, const char* url)
 
 	JsGetModuleNamespace(module, &namespace);
 	push_value(namespace, true);
-	return;
-
-on_exception:
-	vector_clear(s_module_jobs);
-	throw_on_error();
-	throw_value(exception);
 }
 
 void
