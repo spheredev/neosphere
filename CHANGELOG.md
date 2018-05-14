@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+v5.2.6 - May 14, 2018
+---------------------
+
+* Fixes a bug where specifying a nonexistent module ID for `import`
+  sometimes produces a nondescript SyntaxError instead of the proper
+  error message.
+
 v5.2.5 - May 12, 2018
 ---------------------
 
