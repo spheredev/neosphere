@@ -154,7 +154,8 @@ jsal_init(void)
 	result = JsCreateRuntime(
 		JsRuntimeAttributeAllowScriptInterrupt
 			| JsRuntimeAttributeDispatchSetExceptionsToDebugger
-			| JsRuntimeAttributeEnableExperimentalFeatures,
+			| JsRuntimeAttributeEnableExperimentalFeatures
+			| JsRuntimeAttributeEnableIdleProcessing,
 		NULL, &s_js_runtime);
 	if (result != JsNoError)
 		goto on_error;
@@ -318,6 +319,9 @@ jsal_update(bool in_event_loop)
 			}
 		}
 	}
+
+	if (in_event_loop)
+		JsIdle(NULL);
 }
 
 bool
