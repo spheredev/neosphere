@@ -787,7 +787,7 @@ handle_module_import(void)
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "couldn't find module '%s'", specifier);
+		jsal_error(JS_URI_ERROR, "Couldn't find JS module '%s' imported by '%s'", specifier, caller_id);
 	if (path_has_extension(path, ".mjs")) {
 		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
