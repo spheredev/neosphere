@@ -320,7 +320,10 @@ build_free(build_t* build)
 bool
 build_eval(build_t* build, const char* filename)
 {
+	int         column;
 	char*       error_stack = NULL;
+	char*       error_url = NULL;
+	int         line_number = 0;
 	bool        is_ok = true;
 	struct stat stats;
 
@@ -335,16 +338,26 @@ build_eval(build_t* build, const char* filename)
 		if (jsal_is_error(-1)) {
 			if (jsal_get_prop_string(-1, "stack"))
 				error_stack = strdup(jsal_get_string(-1));
-			jsal_pop(1);
+			if (jsal_get_prop_string(-2, "url"))
+				error_url = strdup(jsal_get_string(-1));
+			if (jsal_get_prop_string(-3, "line"))
+				line_number = jsal_get_int(-1);
+			if (jsal_get_prop_string(-4, "column"))
+				column = jsal_get_int(-1);
+			jsal_pop(4);
 		}
-		visor_error(build->visor, "unhandled JavaScript exception");
+		visor_error(build->visor, "uncaught JavaScript exception!");
 		visor_end_op(build->visor);
-		visor_print(build->visor, "BUILD CRASH: unhandled JavaScript exception.");
-		if (error_stack != NULL)
-			visor_print(build->visor, "%s", error_stack);
+		if (error_url != NULL)
+			printf("\nBUILD CRASH: error at '%s':%d:%d\n", error_url, line_number, column);
 		else
-			visor_print(build->visor, "%s", jsal_to_string(-1));
+			printf("\nBUILD CRASH: uncaught JavaScript exception.\n");
+		if (error_stack != NULL)
+			printf("%s\n", error_stack);
+		else
+			printf("%s\n", jsal_to_string(-1));
 		free(error_stack);
+		free(error_url);
 	}
 	jsal_pop(1);
 	if (is_ok)
