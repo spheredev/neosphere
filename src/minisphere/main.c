@@ -415,16 +415,16 @@ on_js_error:
 			error_text = error_stack;
 	}
 	if (error_url != NULL && error_line > 0) {
-		fprintf(stderr, "GAME CRASH: parse error at '%s':%d:%d\n", error_url, error_line, error_column);
+		fprintf(stderr, "GAME CRASH: error at '%s':%d:%d\n", error_url, error_line, error_column);
 		fprintf(stderr, "%s\n", error_text);
 		fprintf(stderr, "   %d %s\n", error_line, error_source);
 	}
 	else if (error_url != NULL) {
-		fprintf(stderr, "GAME CRASH: parse error in '%s'\n", error_url);
+		fprintf(stderr, "GAME CRASH: error in '%s'\n", error_url);
 		fprintf(stderr, "%s\n", error_text);
 	}
 	else {
-		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception\n");
+		fprintf(stderr, "GAME CRASH: uncaught JavaScript exception\n");
 		fprintf(stderr, "%s\n", error_text);
 	}
 	if (error_url != NULL && error_line > 0)

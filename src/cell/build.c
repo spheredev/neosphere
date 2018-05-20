@@ -349,9 +349,9 @@ build_eval(build_t* build, const char* filename)
 		visor_error(build->visor, "error in JavaScript code detected");
 		visor_end_op(build->visor);
 		if (error_url != NULL && error_line > 0)
-			printf("\nBUILD CRASH: parse error at '%s':%d:%d\n", error_url, error_line, error_column);
+			printf("\nBUILD CRASH: error at '%s':%d:%d\n", error_url, error_line, error_column);
 		else if (error_url != NULL)
-			printf("\nBUILD CRASH: parse error in '%s'\n", error_url);
+			printf("\nBUILD CRASH: error in '%s'\n", error_url);
 		else
 			printf("\nBUILD CRASH: uncaught JavaScript exception\n");
 		if (error_stack != NULL)
