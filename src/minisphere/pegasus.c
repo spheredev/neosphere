@@ -1291,7 +1291,7 @@ handle_module_import(void)
 	free(caller_id);
 	if (path == NULL) {
 		jsal_push_new_error(JS_URI_ERROR, "Couldn't load JS module '%s'", specifier);
-		jsal_push_string(caller_id);
+		jsal_push_string(debugger_source_name(caller_id));
 		jsal_put_prop_string(-2, "url");
 		free(specifier);
 		jsal_throw();
