@@ -320,10 +320,10 @@ build_free(build_t* build)
 bool
 build_eval(build_t* build, const char* filename)
 {
-	int         column;
+	int         error_column;
+	int         error_line = 0;
 	char*       error_stack = NULL;
 	char*       error_url = NULL;
-	int         line_number = 0;
 	bool        is_ok = true;
 	struct stat stats;
 
@@ -341,17 +341,19 @@ build_eval(build_t* build, const char* filename)
 			if (jsal_get_prop_string(-2, "url"))
 				error_url = strdup(jsal_get_string(-1));
 			if (jsal_get_prop_string(-3, "line"))
-				line_number = jsal_get_int(-1);
+				error_line = jsal_get_int(-1) + 1;
 			if (jsal_get_prop_string(-4, "column"))
-				column = jsal_get_int(-1);
+				error_column = jsal_get_int(-1) + 1;
 			jsal_pop(4);
 		}
-		visor_error(build->visor, "uncaught JavaScript exception!");
+		visor_error(build->visor, "error in JavaScript code detected");
 		visor_end_op(build->visor);
-		if (error_url != NULL)
-			printf("\nBUILD CRASH: error at '%s':%d:%d\n", error_url, line_number, column);
+		if (error_url != NULL && error_line > 0)
+			printf("\nBUILD CRASH: parse error at '%s':%d:%d\n", error_url, error_line, error_column);
+		else if (error_url != NULL)
+			printf("\nBUILD CRASH: parse error in '%s'\n", error_url);
 		else
-			printf("\nBUILD CRASH: uncaught JavaScript exception.\n");
+			printf("\nBUILD CRASH: uncaught JavaScript exception\n");
 		if (error_stack != NULL)
 			printf("%s\n", error_stack);
 		else
@@ -786,8 +788,12 @@ handle_module_import(void)
 		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i])))
 			break;  // short-circuit
 	}
-	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find JS module '%s' imported by '%s'", specifier, caller_id);
+	if (path == NULL) {
+		jsal_push_new_error(JS_URI_ERROR, "Couldn't load JS module '%s'", specifier);
+		jsal_push_string(caller_id);
+		jsal_put_prop_string(-2, "url");
+		jsal_throw();
+	}
 	if (path_has_extension(path, ".mjs")) {
 		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
@@ -1253,7 +1259,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find JS module '%s'", module_id);
+		jsal_error(JS_URI_ERROR, "Couldn't load JS module '%s'", module_id);
 	if (!eval_module_file(s_build->fs, path_cstr(path)))
 		jsal_throw();
 	return true;

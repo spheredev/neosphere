@@ -404,27 +404,35 @@ on_js_error:
 		jsal_get_prop_string(-4, "source");
 		jsal_get_prop_string(-5, "stack");
 		jsal_get_prop_string(-6, "url");
-		error_column = jsal_get_int(-5) + 1;
-		error_line = jsal_get_int(-4) + 1;
+		if (jsal_is_number(-5))
+			error_column = jsal_get_int(-5) + 1;
+		if (jsal_is_number(-4))
+			error_line = jsal_get_int(-4) + 1;
 		error_source = jsal_get_string(-3);
 		error_stack = jsal_get_string(-2);
 		error_url = jsal_get_string(-1);
 		if (error_stack != NULL)
 			error_text = error_stack;
 	}
-	if (error_url != NULL) {
-		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception at %s:%d:%d.\n", error_url, error_line, error_column);
+	if (error_url != NULL && error_line > 0) {
+		fprintf(stderr, "GAME CRASH: parse error at '%s':%d:%d\n", error_url, error_line, error_column);
 		fprintf(stderr, "%s\n", error_text);
 		fprintf(stderr, "   %d %s\n", error_line, error_source);
 	}
-	else {
-		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception.\n");
+	else if (error_url != NULL) {
+		fprintf(stderr, "GAME CRASH: parse error in '%s'\n", error_url);
 		fprintf(stderr, "%s\n", error_text);
 	}
-	if (error_url != NULL)
-		jsal_push_sprintf("%s:%d:%d\n\n%s\n", error_url, error_line, error_column, error_text);
+	else {
+		fprintf(stderr, "GAME CRASH: unhandled JavaScript exception\n");
+		fprintf(stderr, "%s\n", error_text);
+	}
+	if (error_url != NULL && error_line > 0)
+		jsal_push_sprintf("error at '%s':%d:%d\n\n%s\n", error_url, error_line, error_column, error_text);
+	else if (error_url != NULL)
+		jsal_push_sprintf("error in '%s'\n\n%s\n", error_url, error_text);
 	else
-		jsal_push_sprintf("uncaught JavaScript exception.\n\n%s\n", error_text);
+		jsal_push_sprintf("uncaught JavaScript exception\n\n%s\n", error_text);
 	show_error_screen(jsal_get_string(-1));
 	longjmp(exit_label, 1);
 }

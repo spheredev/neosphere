@@ -1290,7 +1290,9 @@ handle_module_import(void)
 	}
 	free(caller_id);
 	if (path == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s' imported by '%s'", specifier, caller_id);
+		jsal_push_new_error(JS_URI_ERROR, "Couldn't load JS module '%s'", specifier);
+		jsal_push_string(caller_id);
+		jsal_put_prop_string(-2, "url");
 		free(specifier);
 		jsal_throw();
 	}
@@ -1379,7 +1381,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find JS module '%s'", id);
+		jsal_error(JS_URI_ERROR, "Couldn't load JS module '%s'", id);
 	if (!pegasus_eval_module(path_cstr(path)))
 		jsal_throw();
 	return true;
