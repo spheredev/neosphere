@@ -1,6 +1,15 @@
 miniSphere Changelog
 ====================
 
+v5.2.7 - May 20, 2018
+---------------------
+
+* Improves JavaScript performance by enabling idle processing in ChakraCore.
+* Fixes an issue where errors for failed mJS module imports don't include the
+  filename of the importing module.
+* Fixes a bug where Cell doesn't show the offending script filename when a
+  build fails due to a JavaScript syntax error.
+
 v5.2.6 - May 14, 2018
 ---------------------
 

@@ -16,7 +16,7 @@ this new commit.
 * Version number in `src/plugin/Properties/AssemblyInfo.cs`
 * Version number and release date in `README.md`
 * Version number and release date in manual pages (`manpages/*`)
-* Version number and release date in `CHANGELOG.md`
+* Version number, release date, and changelog entries in `CHANGELOG.md`
 * Version number in `setup/minisphere.iss`
 
 
