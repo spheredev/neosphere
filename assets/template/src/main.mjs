@@ -3,7 +3,7 @@
  *  (c) <year> <whoever made the game>
  */
 
-import { Image, Music, Prim, Thread } from 'sphere-runtime';
+import { Music, Prim, Thread } from 'sphere-runtime';
 
 export default
 class MyNewGame extends Thread
@@ -20,14 +20,14 @@ class MyNewGame extends Thread
 		 */
 
 		// initialize data for our session
-		this.image = new Image('justSaiyan');
+		this.image = new Texture('@/images/justSaiyan.png');
 		this.x = 0;
 		this.y = 0;
 		this.xVel = 1;
 		this.yVel = 1;
 
 		// avoid boredom by playing some background music!
-		Music.play('vegeta');
+		Music.play('@/music/vegetaSSj.ogg');
 	}
 
 	on_update()
@@ -44,16 +44,16 @@ class MyNewGame extends Thread
 			this.x = 0;
 			this.xVel = 1;
 		}
-		else if (this.x >= screen.width - this.image.width) {
-			this.x = screen.width - this.image.width;
+		else if (this.x >= Surface.Screen.width - this.image.width) {
+			this.x = Surface.Screen.width - this.image.width;
 			this.xVel = -1;
 		}
 		if (this.y <= 0) {
 			this.y = 0;
 			this.yVel = 1;
 		}
-		else if (this.y >= screen.height - this.image.height) {
-			this.y = screen.height - this.image.height;
+		else if (this.y >= Surface.Screen.height - this.image.height) {
+			this.y = Surface.Screen.height - this.image.height;
 			this.yVel = -1;
 		}
 	}
@@ -66,17 +66,17 @@ class MyNewGame extends Thread
 		 *  skipped and are not guaranteed to match the frame rate.
 		 */
 
-		Prim.fill(screen, Color.DodgerBlue);
-		Prim.drawSolidEllipse(screen,
-			screen.width / 2, screen.height / 2,
-			screen.width / 4, screen.height / 4,
+		Prim.fill(Surface.Screen, Color.DodgerBlue);
+		Prim.drawSolidEllipse(Surface.Screen,
+			Surface.Screen.width / 2, Surface.Screen.height / 2,
+			Surface.Screen.width / 4, Surface.Screen.height / 4,
 			Color.Chartreuse, Color.DarkGreen);
-		Prim.drawEllipse(screen,
-			screen.width / 2, screen.height / 2,
-			screen.width / 4, screen.height / 4,
+		Prim.drawEllipse(Surface.Screen,
+			Surface.Screen.width / 2, Surface.Screen.height / 2,
+			Surface.Screen.width / 4, Surface.Screen.height / 4,
 			Color.Black);
 
-		this.image.blitTo(screen, this.x, this.y);
-		Prim.drawRectangle(screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
+		Prim.blit(Surface.Screen, this.x, this.y, this.image);
+		Prim.drawRectangle(Surface.Screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
 	}
 }
