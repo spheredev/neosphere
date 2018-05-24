@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+v5.2.8 - May 24, 2018
+---------------------
+
+* Fixes a regression which prevented using most of the experimental API.
+* Fixes a few errors in the Sphere Studio new project template which prevented
+  it from running without changes.
+
 v5.2.7 - May 20, 2018
 ---------------------
 
