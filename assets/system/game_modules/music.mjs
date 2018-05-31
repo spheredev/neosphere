@@ -33,12 +33,13 @@
 import from from 'from';
 import Scene from 'scene';
 
-let adjuster = null,
-    currentSound = null,
-    haveOverride = false,
-    mixer = new Mixer(44100, 16, 2),
-    oldSounds = [],
-    topmostSound = null;
+let
+	adjuster = null,
+	currentSound = null,
+	haveOverride = false,
+	mixer = new Mixer(44100, 16, 2),
+	oldSounds = [],
+	topmostSound = null;
 
 export default
 class Music

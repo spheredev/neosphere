@@ -35,8 +35,9 @@ import from from 'from';
 import Prim from 'prim';
 import Thread from 'thread';
 
-let defaultPriority = 0.0,
-    screenMask = Color.Transparent;
+let
+	defaultPriority = 0.0,
+	screenMask = Color.Transparent;
 
 Dispatch.onRender(
 	() => {
