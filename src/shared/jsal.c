@@ -122,6 +122,7 @@ static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call        (JsValueRef calle
 static JsErrorCode CHAKRA_CALLBACK on_notify_module_ready      (JsModuleRecord module, JsValueRef exception);
 static void CHAKRA_CALLBACK        on_reject_promise_unhandled (JsValueRef promise, JsValueRef reason, bool handled, void* userdata);
 static void CHAKRA_CALLBACK        on_resolve_reject_promise   (JsValueRef function, void* userdata);
+static void                        decode_debugger_value       (void);
 static const char*                 filename_from_script_id     (unsigned int script_id);
 static void                        free_ref                    (js_ref_t* ref);
 static JsModuleRecord              get_module_record           (const char* specifier, JsModuleRecord parent, const char* url, bool *out_is_new);
@@ -2320,12 +2321,9 @@ jsal_debug_inspect_eval(int call_index, const char* source, bool *out_errored)
 {
 	/* [ ... ] -> [ type value_summary handle ] */
 
-	const char* display_name;
 	JsErrorCode error_code;
-	bool        is_object;
 	JsValueRef  result;
 	JsValueRef  source_string;
-	const char* type;
 
 	JsCreateString(source, strlen(source), &source_string);
 	error_code = JsDiagEvaluate(source_string, call_index, JsParseScriptAttributeNone, false, &result);
@@ -2333,31 +2331,8 @@ jsal_debug_inspect_eval(int call_index, const char* source, bool *out_errored)
 		return false;
 	*out_errored = error_code != JsNoError;
 	push_value(result, true);
-	if (jsal_has_prop_string(-1, "type"))
-		jsal_get_prop_string(-1, "type");
-	else
-		jsal_push_string("unknown");
-	type = jsal_get_string(-1);
-	is_object = strcmp(type, "object") == 0 || strcmp(type, "function") == 0;
-	if (strcmp(type, "undefined") == 0) {
-		jsal_push_undefined();
-	}
-	else if (jsal_has_prop_string(-2, "display")) {
-		jsal_get_prop_string(-2, "display");
-		display_name = jsal_get_string(-1);
-		if (is_object && strcmp(display_name, "null") == 0) {
-			jsal_pop(1);
-			jsal_push_null();
-		}
-	}
-	else {
-		jsal_get_prop_string(-2, "value");
-	}
-	if (is_object)
-		jsal_get_prop_string(-3, "handle");
-	else
-		jsal_push_null();
-	jsal_remove(-4);
+	decode_debugger_value();
+	jsal_remove(-4);  // remove 'name' from result (not relevant)
 	return true;
 }
 
@@ -2366,10 +2341,7 @@ jsal_debug_inspect_object(unsigned int handle, int property_index)
 {
 	/* [ ... ] -> [ ... key value handle ] */
 
-	const char* display_name;
-	bool        is_object = false;
-	JsValueRef  results;
-	const char* type;
+	JsValueRef results;
 
 	if (JsDiagGetProperties(handle, property_index, 1, &results) != JsNoError)
 		return false;
@@ -2379,29 +2351,8 @@ jsal_debug_inspect_object(unsigned int handle, int property_index)
 		jsal_pop(3);
 		return false;
 	}
-	jsal_get_prop_string(-1, "type");
-	type = jsal_get_string(-1);
-	is_object = strcmp(type, "object") == 0 || strcmp(type, "function") == 0;
-	jsal_pop(1);
-	jsal_get_prop_string(-1, "name");
-	if (strcmp(type, "undefined") == 0) {
-		jsal_push_undefined();
-	} else if (jsal_has_prop_string(-2, "display")) {
-		jsal_get_prop_string(-2, "display");
-		display_name = jsal_get_string(-1);
-		if (is_object && strcmp(display_name, "null") == 0) {
-			jsal_pop(1);
-			jsal_push_null();
-		}
-	}
-	else {
-		jsal_get_prop_string(-2, "value");
-	}
-	if (is_object)
-		jsal_get_prop_string(-3, "handle");
-	else
-		jsal_push_null();
-	jsal_remove(-4);
+	decode_debugger_value();
+	jsal_remove(-3);  // remove 'type' from result (not relevant...?)
 	jsal_remove(-4);
 	jsal_remove(-4);
 	return true;
@@ -2410,46 +2361,16 @@ jsal_debug_inspect_object(unsigned int handle, int property_index)
 bool
 jsal_debug_inspect_var(int call_index, int var_index)
 {
-	/* [ ... ] -> [ ... name type value_summary handle ] */
+	/* [ ... ] -> [ ... name type value handle ] */
 
-	const char* display_name;
-	JsValueRef  frame_info;
-	bool        is_object = false;
-	const char* type;
+	JsValueRef frame_info;
 
 	if (JsDiagGetStackProperties(call_index, &frame_info) != JsNoError)
 		return false;
 	push_value(frame_info, true);
 	jsal_get_prop_string(-1, "locals");
 	if (jsal_get_prop_index(-1, var_index)) {
-		jsal_get_prop_string(-1, "type");
-		type = jsal_get_string(-1);
-		is_object = strcmp(type, "object") == 0 || strcmp(type, "function") == 0;
-		jsal_pop(1);
-		jsal_get_prop_string(-1, "name");
-		if (jsal_has_prop_string(-2, "type"))
-			jsal_get_prop_string(-2, "type");
-		else
-			jsal_push_string("unknown");
-		if (strcmp(type, "undefined") == 0) {
-			jsal_push_undefined();
-		}
-		else if (jsal_has_prop_string(-3, "display")) {
-			jsal_get_prop_string(-3, "display");
-			display_name = jsal_get_string(-1);
-			if (is_object && strcmp(display_name, "null") == 0) {
-				jsal_pop(1);
-				jsal_push_null();
-			}
-		}
-		else {
-			jsal_get_prop_string(-3, "value");
-		}
-		if (is_object)
-			jsal_get_prop_string(-4, "handle");
-		else
-			jsal_push_null();
-		jsal_remove(-5);
+		decode_debugger_value();
 		jsal_remove(-5);
 		jsal_remove(-5);
 		return true;
@@ -2458,6 +2379,47 @@ jsal_debug_inspect_var(int call_index, int var_index)
 		jsal_pop(3);
 		return false;
 	}
+}
+
+static void
+decode_debugger_value(void)
+{
+	/* [ ... descriptor ] -> [ ... name type value handle ] */
+
+	bool        is_object;
+	const char* summary;
+	const char* type;
+
+	jsal_get_prop_string(-1, "name");
+	jsal_get_prop_string(-2, "type");
+	type = jsal_get_string(-1);
+	is_object = strcmp(type, "object") == 0 || strcmp(type, "function") == 0;
+	if (strcmp(type, "undefined") == 0) {
+		jsal_push_undefined();
+	}
+	else if (jsal_has_prop_string(-3, "display")) {
+		jsal_get_prop_string(-3, "display");
+		summary = jsal_get_string(-1);
+		if (is_object && strcmp(summary, "null") == 0) {
+			is_object = false;
+			jsal_pop(1);
+			jsal_push_null();
+		}
+	}
+	else {
+		jsal_get_prop_string(-3, "value");
+	}
+	
+	// if the value is an object, 'value' will just be the string "{...}" and the caller
+	// will need to use 'handle' (an integer) to inspect the object.  for primitive values push
+	// `null` for the handle.
+	if (is_object)
+		jsal_get_prop_string(-4, "handle");
+	else
+		jsal_push_null();
+
+	// remove the descriptor from the stack
+	jsal_remove(-5);
 }
 
 static void
