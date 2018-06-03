@@ -38,6 +38,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <math.h>
 #include <string.h>
 #include "vector.h"
 
@@ -208,7 +209,12 @@ ki_atom_print(const ki_atom_t* it, bool verbose)
 		printf("null");
 		break;
 	case KI_NUMBER:
-		printf("%g", it->float_value);
+		if (isnan(it->float_value))
+			printf("NaN");
+		else if (isinf(it->float_value))
+			printf("%sInfinity", it->float_value < 0.0 ? "-" : "");
+		else
+			printf("%g", it->float_value);
 		break;
 	case KI_REF:
 		if (!verbose)

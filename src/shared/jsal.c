@@ -2386,33 +2386,30 @@ decode_debugger_value(void)
 {
 	/* [ ... descriptor ] -> [ ... name type value handle ] */
 
-	bool        is_object;
+	bool        is_object = false;
 	const char* summary;
 	const char* type;
 
 	jsal_get_prop_string(-1, "name");
 	jsal_get_prop_string(-2, "type");
 	type = jsal_get_string(-1);
-	is_object = strcmp(type, "object") == 0 || strcmp(type, "function") == 0;
 	if (strcmp(type, "undefined") == 0) {
 		jsal_push_undefined();
 	}
-	else if (jsal_has_prop_string(-3, "display")) {
-		jsal_get_prop_string(-3, "display");
-		summary = jsal_get_string(-1);
-		if (is_object && strcmp(summary, "null") == 0) {
-			is_object = false;
-			jsal_pop(1);
-			jsal_push_null();
-		}
-	}
-	else {
+	else if (jsal_has_prop_string(-3, "value")) {
+		// if the 'value' key is present then it always encodes the exact value.
 		jsal_get_prop_string(-3, "value");
 	}
+	else {
+		jsal_get_prop_string(-3, "display");
+		summary = jsal_get_string(-1);
+		is_object = strcmp(type, "object") == 0
+			|| strcmp(type, "function") == 0;
+	}
 	
-	// if the value is an object, 'value' will just be the string "{...}" and the caller
-	// will need to use 'handle' (an integer) to inspect the object.  for primitive values push
-	// `null` for the handle.
+	// if the value is an object, 'display' will just be the string "{...}" and the caller
+	// will need to use its handle to actually inspect the object.  for non-objects, push
+	// `null` in lieu of a handle.
 	if (is_object)
 		jsal_get_prop_string(-4, "handle");
 	else
