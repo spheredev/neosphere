@@ -23,7 +23,7 @@ this new commit.
 Build the Release
 -----------------
 
-* In Windows using Visual Studio 2015:
+* In Windows using Visual Studio 2017:
     - Run `git clean -xdf`, then build the following project configurations:
         + **minisphere:** x64 Redist, x64 Console, Win32 Redist, Win32 Console
         + **Cell:** x64 Console, Win32 Console
@@ -33,7 +33,7 @@ Build the Release
     - Compile `setup/minisphere.iss` using the latest version of Inno Setup
     - `minisphereSetup-X.Y.Z.exe` will be in `setup/`
 
-* Using a 64-bit installation of Ubuntu 14.04:
+* Using a 64-bit installation of Ubuntu 16.04:
     - Run `make clean all dist`
     - `minisphere_X.Y.Z.tar.gz` will be in `dist/`
 

@@ -1,6 +1,15 @@
 miniSphere Changelog
 ====================
 
+v5.2.9 - June 5, 2018
+---------------------
+
+* Fixes a bug that can cause the engine to segfault upon calling `import()` or
+  `require()` in the presence of circular module dependencies.
+* Fixes a bug where `null` is treated as an empty object in the debugger.
+* Fixes bugs which cause `Infinity`, `NaN` and `undefined` values to be
+  rendered as strings in the debugger.
+
 v5.2.8 - May 24, 2018
 ---------------------
 
