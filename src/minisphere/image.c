@@ -157,7 +157,7 @@ image_load(const char* filename)
 		file_ext = ".bmp";
 	if (memcmp(first_16, "\211PNG\r\n\032\n", 8) == 0)
 		file_ext = ".png";
-	if (memcmp(first_16, "\0xFF\0xD8", 2) == 0)
+	if (memcmp(first_16, "\xFF\xD8", 2) == 0)
 		file_ext = ".jpg";
 
 	if (!(image->bitmap = al_load_bitmap_flags_f(al_file, file_ext, ALLEGRO_NO_PREMULTIPLIED_ALPHA)))
