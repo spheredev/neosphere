@@ -1046,7 +1046,8 @@ layer_resize(int layer, int x_size, int y_size)
 	// allocate a new tilemap and copy the old layer tiles into it.  we can't simply realloc
 	// because the tilemap is a 2D array.
 	tilemap_size = x_size * y_size * sizeof(struct map_tile);
-	if (x_size == 0 || tilemap_size / x_size / sizeof(struct map_tile) != y_size || !(tilemap = malloc(tilemap_size)))
+	if (x_size == 0 || tilemap_size / x_size / sizeof(struct map_tile) != y_size
+		|| !(tilemap = malloc(tilemap_size)))
 		return false;
 	for (x = 0; x < x_size; ++x) {
 		for (y = 0; y < y_size; ++y) {
