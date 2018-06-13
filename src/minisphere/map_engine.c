@@ -1047,8 +1047,9 @@ layer_resize(int layer, int x_size, int y_size)
 	// allocate a new tilemap and copy the old layer tiles into it.  we can't simply realloc
 	// because the tilemap is a 2D array.
 	tilemap_size = x_size * y_size * sizeof(struct map_tile);
-	if (x_size == 0 || tilemap_size / x_size / sizeof(struct map_tile) != y_size
-		|| !(tilemap = malloc(tilemap_size)))
+	if (x_size == 0 || tilemap_size / x_size / sizeof(struct map_tile) != y_size)
+		return false;  // overflow detected
+	if (!(tilemap = malloc(tilemap_size)))
 		return false;
 	for (x = 0; x < x_size; ++x) {
 		for (y = 0; y < y_size; ++y) {
@@ -1083,10 +1084,11 @@ layer_resize(int layer, int x_size, int y_size)
 
 	// ensure zones and triggers remain in-bounds.  if any are completely
 	// out-of-bounds, delete them.
-	for (i = (int)vector_len(s_map->zones) - 1; i >= 0; --i) {
+	for (i = vector_len(s_map->zones) - 1; i >= 0; --i) {
 		zone = vector_get(s_map->zones, i);
-		if (zone->bounds.x1 >= s_map->width || zone->bounds.y1 >= s_map->height)
+		if (zone->bounds.x1 >= s_map->width || zone->bounds.y1 >= s_map->height) {
 			vector_remove(s_map->zones, i);
+		}
 		else {
 			if (zone->bounds.x2 > s_map->width)
 				zone->bounds.x2 = s_map->width;
@@ -1094,7 +1096,7 @@ layer_resize(int layer, int x_size, int y_size)
 				zone->bounds.y2 = s_map->height;
 		}
 	}
-	for (i = (int)vector_len(s_map->triggers) - 1; i >= 0; --i) {
+	for (i = vector_len(s_map->triggers) - 1; i >= 0; --i) {
 		trigger = vector_get(s_map->triggers, i);
 		if (trigger->x >= s_map->width || trigger->y >= s_map->height)
 			vector_remove(s_map->triggers, i);
@@ -2223,7 +2225,7 @@ get_trigger_at(int x, int y, int layer, int* out_index)
 		if (is_point_in_rect(x, y, bounds)) {
 			found_item = trigger;
 			if (out_index != NULL)
-				*out_index = (int)iter.index;
+				*out_index = iter.index;
 			break;
 		}
 	}
@@ -2245,7 +2247,8 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 			continue;
 		if (is_point_in_rect(x, y, zone->bounds) && which-- == 0) {
 			found_item = zone;
-			if (out_index) *out_index = (int)iter.index;
+			if (out_index)
+				*out_index = iter.index;
 			break;
 		}
 	}
