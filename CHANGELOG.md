@@ -1,6 +1,14 @@
 miniSphere Changelog
 ====================
 
+v5.2.10 - June 18, 2018
+-----------------------
+
+* Fixes a bug where passing insanely large values to `SetLayerSize` could cause
+  an exploitable buffer overflow.
+* Fixes a bug which sometimes causes miniSphere to be unable to load JPEG
+  images.
+
 v5.2.9 - June 5, 2018
 ---------------------
 

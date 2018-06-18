@@ -383,7 +383,7 @@ ki_message_free(ki_message_t* it)
 int
 ki_message_len(const ki_message_t* it)
 {
-	return (int)vector_len(it->atoms);
+	return vector_len(it->atoms);
 }
 
 ki_type_t
