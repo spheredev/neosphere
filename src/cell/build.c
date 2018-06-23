@@ -790,8 +790,10 @@ handle_module_import(void)
 	}
 	if (path == NULL) {
 		jsal_push_new_error(JS_URI_ERROR, "Couldn't load JS module '%s'", specifier);
-		jsal_push_string(caller_id);
-		jsal_put_prop_string(-2, "url");
+		if (caller_id != NULL) {
+			jsal_push_string(caller_id);
+			jsal_put_prop_string(-2, "url");
+		}
 		jsal_throw();
 	}
 	if (path_has_extension(path, ".mjs")) {
