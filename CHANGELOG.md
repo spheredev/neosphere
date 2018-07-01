@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+v5.2.11 - July 1, 2018
+----------------------
+
+* Updates ChakraCore to version 1.10.0.
+* Fixes an issue where miniSphere crashes with a segfault when a `.js` script
+  attempts to dynamically import a module that doesn't exist.
+
 v5.2.10 - June 18, 2018
 -----------------------
 
