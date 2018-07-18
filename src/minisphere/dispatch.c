@@ -49,8 +49,9 @@ struct job
 	script_t*  script;
 };
 
-static struct job* job_from_token (int64_t token);
-static int         sort_jobs      (const void* in_a, const void* in_b);
+static struct job* job_from_token    (int64_t token);
+static void        recheck_busy_flag (void);
+static int         sort_jobs         (const void* in_a, const void* in_b);
 
 static vector_t* s_exit_jobs;
 static bool      s_is_busy = false;
@@ -101,6 +102,8 @@ dispatch_cancel(int64_t token)
 	if (!(job = job_from_token(token)))
 		return;
 	job->finished = true;
+
+	recheck_busy_flag();
 	s_need_sort = true;
 }
 
@@ -172,8 +175,6 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 {
 	struct job job;
 
-	iter_t iter;
-
 	if (s_recurring_jobs == NULL)
 		return 0;
 	if (hint == JOB_ON_RENDER) {
@@ -190,12 +191,7 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 	job.token = s_next_token++;
 	vector_push(s_recurring_jobs, &job);
 
-	// check whether we should keep the event loop alive
-	s_is_busy = false;
-	iter = vector_enum(s_recurring_jobs);
-	while (iter_next(&iter))
-		s_is_busy |= !((struct job*)iter.ptr)->background;
-
+	recheck_busy_flag();
 	s_need_sort = true;
 
 	return job.token;
@@ -292,6 +288,20 @@ job_from_token(int64_t token)
 			return job;
 	}
 	return NULL;
+}
+
+static void
+recheck_busy_flag(void)
+{
+	struct job* job;
+
+	iter_t iter;
+
+	// check for recurring jobs that should keep the event loop alive
+	s_is_busy = false;
+	iter = vector_enum(s_recurring_jobs);
+	while (job = iter_next(&iter))
+		s_is_busy |= !job->finished && !job->background;
 }
 
 static int
