@@ -3515,6 +3515,16 @@ js_SSj_log(int num_args, bool is_ctor, intptr_t magic)
 		else
 			jsal_pop(1);
 	}
+	else if (jsal_is_symbol(0)) {
+		// HACK: jsal_to_string() on a symbol will throw, so we call the symbol's .toString()
+		//       in advance.  it would be more elegant if we could get the symbol's description 
+		//       and stringify it ourselves, but this will do for now.
+		jsal_to_object(0);
+		jsal_get_prop_string(0, "toString");
+		jsal_dup(0);
+		jsal_call_method(0);
+		jsal_replace(0);
+	}
 	else if (jsal_is_object(0) && !jsal_is_function(0)) {
 		jsal_stringify(0);
 	}
