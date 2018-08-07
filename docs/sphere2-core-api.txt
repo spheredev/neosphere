@@ -726,11 +726,14 @@ Font#drawText(surface, x, y, text[, color[, wrap_width]]);
     to constrain the text.  If `wrap_width` is not provided, no wrapping is
     performed.
 
-Font#getTextSize(text, wrap_width);
+Font#getTextSize(text[, wrap_width]);
 
     Gets the size, in pixels, of `text` if it were rendered by Font:drawText()
     with the specified wrap width.  Return value is an object with `width` and
     `height` properties.
+
+    Note: If `wrap_width` is not provided, no word wrap processing will be
+          performed.
 
 Font#wordWrap(text, wrap_width);
 
