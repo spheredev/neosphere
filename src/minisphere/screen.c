@@ -270,6 +270,13 @@ screen_draw_status(screen_t* it, const char* text, color_t color)
 }
 
 void
+screen_fix_mouse_xy(const screen_t* it, int *inout_x, int *inout_y)
+{
+	*inout_x = (*inout_x - it->x_offset) / it->x_scale;
+	*inout_y = (*inout_y - it->y_offset) / it->y_scale;
+}
+
+void
 screen_flip(screen_t* it, int framerate, bool need_clear)
 {
 	time_t            datetime;

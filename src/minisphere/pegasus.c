@@ -3323,10 +3323,12 @@ js_Mouse_getEvent(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_MOUSE);
 
-	if (mouse_queue_len() == 0)
+	if (mouse_queue_len() == 0) {
 		jsal_push_null();
+	}
 	else {
 		event = mouse_get_event();
+		screen_fix_mouse_xy(g_screen, &event.x, &event.y);
 		jsal_push_new_object();
 		jsal_push_int(event.key);
 		jsal_put_prop_string(-2, "key");

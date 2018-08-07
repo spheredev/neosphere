@@ -53,6 +53,7 @@ void             screen_set_frameskip     (screen_t* it, int max_skips);
 void             screen_set_fullscreen    (screen_t* it, bool fullscreen);
 void             screen_set_mouse_xy      (screen_t* it, int x, int y);
 void             screen_draw_status       (screen_t* it, const char* text, color_t color);
+void             screen_fix_mouse_xy      (const screen_t* it, int *inout_x, int *inout_y);
 void             screen_flip              (screen_t* it, int framerate, bool need_clear);
 image_t*         screen_grab              (screen_t* it, int x, int y, int width, int height);
 void             screen_queue_screenshot  (screen_t* it);
