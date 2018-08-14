@@ -52,6 +52,7 @@ static vector_t*            s_bound_buttons;
 static vector_t*            s_bound_keys;
 static int                  s_default_key_map[4][PLAYER_KEY_MAX];
 static ALLEGRO_EVENT_QUEUE* s_event_queue;
+static bool                 s_has_keymap_changed = false;
 static bool                 s_have_joystick;
 static bool                 s_have_mouse;
 static ALLEGRO_JOYSTICK*    s_joy_handles[MAX_JOYSTICKS];
@@ -63,7 +64,9 @@ static int                  s_last_wheel_pos = 0;
 static mouse_event_t        s_mouse_queue[255];
 static int                  s_num_joysticks = 0;
 static int                  s_num_mouse_events = 0;
-static bool                 s_has_keymap_changed = false;
+static bool                 s_was_left_mouse_down = false;
+static bool                 s_was_middle_mouse_down = false;
+static bool                 s_was_right_mouse_down = false;
 
 struct bound_button
 {
@@ -546,6 +549,9 @@ void
 update_input(void)
 {
 	ALLEGRO_EVENT          event;
+	bool                   is_left_down;
+	bool                   is_middle_down;
+	bool                   is_right_down;
 	int                    keycode;
 	ALLEGRO_MOUSE_STATE    mouse_state;
 
@@ -621,12 +627,18 @@ update_input(void)
 
 		// check for mouse clicks.  clicks are queued in order of left->right->middle.
 		if (mouse_state.display == screen_display(g_screen)) {
-			if (al_mouse_button_down(&mouse_state, 1))
+			is_left_down = al_mouse_button_down(&mouse_state, 1);
+			is_middle_down = al_mouse_button_down(&mouse_state, 3);
+			is_right_down = al_mouse_button_down(&mouse_state, 2);
+			if (is_left_down && !s_was_left_mouse_down)
 				queue_mouse_event(MOUSE_KEY_LEFT, mouse_state.x, mouse_state.y);
-			if (al_mouse_button_down(&mouse_state, 2))
+			if (is_right_down && !s_was_right_mouse_down)
 				queue_mouse_event(MOUSE_KEY_RIGHT, mouse_state.x, mouse_state.y);
-			if (al_mouse_button_down(&mouse_state, 3))
+			if (is_middle_down && !s_was_middle_mouse_down)
 				queue_mouse_event(MOUSE_KEY_MIDDLE, mouse_state.x, mouse_state.y);
+			s_was_left_mouse_down = is_left_down;
+			s_was_middle_mouse_down = is_middle_down;
+			s_was_right_mouse_down = is_right_down;
 		}
 	}
 }
