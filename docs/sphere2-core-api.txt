@@ -1696,6 +1696,10 @@ Surface#blendOp [read/write]
 
         BlendOp.AlphaBlend
         BlendOp.Add
+        BlendOp.Average
+        BlendOp.CopyAlpha
+        BlendOp.CopyRGB
+        BlendOp.Invert
         BlendOp.Multiply
         BlendOp.Replace
         BlendOp.Subtract
