@@ -1655,7 +1655,7 @@ SoundStream#play([mixer]); [L1]
 
     Starts the stream playing, or if no mixer is specified, resumes a paused
     stream.  Before beginning playback, it is recommended to pre-buffer a few
-    seconds of audio into the stream (see SoundStream:buffer() below).  This
+    seconds of audio into the stream (see SoundStream#write() below).  This
     will minimize the risk of a buffer underrun and subsequent skipping during
     playback.
 
