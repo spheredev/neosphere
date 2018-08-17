@@ -1267,6 +1267,9 @@ jsal_require_map_layer(int at_index)
 	const char* name;
 	char*       p_end;
 
+	if (!map_engine_running())
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
+
 	if (jsal_is_number(at_index)) {
 		layer_index = jsal_get_int(at_index);
 		goto have_index;
@@ -1486,7 +1489,7 @@ js_AddTrigger(int num_args, bool is_ctor, intptr_t magic)
 	script = jsal_require_sphere_script(3, "%/triggerScript.js");
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	bounds = map_bounds();
 	if (x < bounds.x1 || y < bounds.y1 || x >= bounds.x2 || y >= bounds.y2)
 		jsal_error(JS_RANGE_ERROR, "X/Y out of bounds (%d,%d)", x, y);
@@ -1516,7 +1519,7 @@ js_AddZone(int num_args, bool is_ctor, intptr_t magic)
 	script = jsal_require_sphere_script(5, "%/zoneScript.js");
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	bounds = map_bounds();
 	if (width <= 0 || height <= 0)
 		jsal_error(JS_RANGE_ERROR, "Invalid zone width/height [%d,%d]", width, height);
@@ -1731,7 +1734,7 @@ js_CallDefaultMapScript(int num_args, bool is_ctor, intptr_t magic)
 	map_op = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (map_op < 0 || map_op >= MAP_SCRIPT_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid script type constant");
 	map_call_default(map_op);
@@ -1767,7 +1770,7 @@ js_CallMapScript(int num_args, bool is_ctor, intptr_t magic)
 	type = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (type < 0 || type >= MAP_SCRIPT_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid script type constant");
 	map_activate(type, false);
@@ -1803,7 +1806,7 @@ js_ChangeMap(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, "maps", true, false);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (!map_engine_change_map(filename))
 		jsal_error(JS_ERROR, "Couldn't load map file '%s'", filename);
 	return false;
@@ -2244,7 +2247,7 @@ js_ExecuteTrigger(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if ((index = map_trigger_at(x, y, layer)) >= 0)
 		trigger_activate(index);
 	return false;
@@ -2258,7 +2261,7 @@ js_ExecuteZoneScript(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "Invalid zone index '%d'", zone_index);
 	zone_activate(zone_index);
@@ -2280,7 +2283,7 @@ js_ExecuteZones(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	i = 0;
 	while ((index = map_zone_at(x, y, layer, i++)) >= 0)
 		zone_activate(index);
@@ -2298,7 +2301,7 @@ static bool
 js_ExitMapEngine(int num_args, bool is_ctor, intptr_t magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	map_engine_exit();
 	return false;
 }
@@ -2442,7 +2445,7 @@ js_GetActingPerson(int num_args, bool is_ctor, intptr_t magic)
 	const person_t* person;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	person = map_engine_acting_person();
 	if (person == NULL)
 		jsal_error(JS_ERROR, "No current person activation or actor unknown");
@@ -2468,7 +2471,7 @@ js_GetCameraX(int num_args, bool is_ctor, intptr_t magic)
 	point2_t position;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	position = map_get_camera_xy();
 	jsal_push_int(position.x);
 	return true;
@@ -2480,7 +2483,7 @@ js_GetCameraY(int num_args, bool is_ctor, intptr_t magic)
 	point2_t position;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	position = map_get_camera_xy();
 	jsal_push_int(position.y);
 	return true;
@@ -2511,7 +2514,7 @@ js_GetCurrentMap(int num_args, bool is_ctor, intptr_t magic)
 	path_t* path;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 
 	// GetCurrentMap() in Sphere 1.x returns the map path relative to the
 	// 'maps' directory.
@@ -2527,7 +2530,7 @@ js_GetCurrentPerson(int num_args, bool is_ctor, intptr_t magic)
 	const person_t* person;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	person = map_engine_active_person();
 	if (person == NULL)
 		jsal_error(JS_ERROR, "No current person activation");
@@ -2541,7 +2544,7 @@ js_GetCurrentTrigger(int num_args, bool is_ctor, intptr_t magic)
 	int trigger;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	trigger = map_engine_active_trigger();
 	if (trigger == -1)
 		jsal_error(JS_ERROR, "No current trigger activation");
@@ -2555,7 +2558,7 @@ js_GetCurrentZone(int num_args, bool is_ctor, intptr_t magic)
 	int zone;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	zone = map_engine_active_zone();
 	if (zone == -1)
 		jsal_error(JS_ERROR, "No current zone activation");
@@ -2779,7 +2782,7 @@ js_GetLayerHeight(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	jsal_push_int(layer_size(layer).height);
 	return true;
 }
@@ -2790,7 +2793,7 @@ js_GetLayerMask(int num_args, bool is_ctor, intptr_t magic)
 	int layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	jsal_push_sphere_color(layer_get_color_mask(layer));
 	return true;
 }
@@ -2801,7 +2804,7 @@ js_GetLayerName(int num_args, bool is_ctor, intptr_t magic)
 	int layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	jsal_push_string(layer_name(layer));
 	return true;
 }
@@ -2814,7 +2817,7 @@ js_GetLayerWidth(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	jsal_push_int(layer_size(layer).width);
 	return true;
 }
@@ -2892,7 +2895,7 @@ js_GetNextAnimatedTile(int num_args, bool is_ctor, intptr_t magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
@@ -2934,7 +2937,7 @@ static bool
 js_GetNumLayers(int num_args, bool is_ctor, intptr_t magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	jsal_push_int(map_num_layers());
 	return true;
 }
@@ -2952,7 +2955,7 @@ js_GetNumTiles(int num_args, bool is_ctor, intptr_t magic)
 	tileset_t* tileset;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 
 	tileset = map_tileset();
 	jsal_push_int(tileset_len(tileset));
@@ -2963,7 +2966,7 @@ static bool
 js_GetNumTriggers(int num_args, bool is_ctor, intptr_t magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 
 	jsal_push_number(map_num_triggers());
 	return true;
@@ -2973,7 +2976,7 @@ static bool
 js_GetNumZones(int num_args, bool is_ctor, intptr_t magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 
 	jsal_push_number(map_num_zones());
 	return true;
@@ -2993,7 +2996,7 @@ js_GetObstructingPerson(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_require_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (!(person = map_person_by_name(name)))
 		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_obstructed_at(person, x, y, &obs_person, NULL);
@@ -3015,7 +3018,7 @@ js_GetObstructingTile(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_require_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (!(person = map_person_by_name(name)))
 		jsal_error(JS_REF_ERROR, "No such person '%s'", name);
 	person_obstructed_at(person, x, y, NULL, &tile_index);
@@ -3578,7 +3581,7 @@ js_GetTile(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	jsal_push_int(map_tile_at(x, y, layer));
 	return true;
 }
@@ -3592,7 +3595,7 @@ js_GetTileDelay(int num_args, bool is_ctor, intptr_t magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -3608,7 +3611,7 @@ js_GetTileHeight(int num_args, bool is_ctor, intptr_t magic)
 	int        width;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 
 	tileset = map_tileset();
 	tileset_get_size(tileset, &width, &height);
@@ -3626,7 +3629,7 @@ js_GetTileImage(int num_args, bool is_ctor, intptr_t magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -3646,7 +3649,7 @@ js_GetTileName(int num_args, bool is_ctor, intptr_t magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -3665,7 +3668,7 @@ js_GetTileSurface(int num_args, bool is_ctor, intptr_t magic)
 	tile_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -3683,7 +3686,7 @@ js_GetTileWidth(int num_args, bool is_ctor, intptr_t magic)
 	int        width;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 
 	tileset = map_tileset();
 	tileset_get_size(tileset, &width, &height);
@@ -3725,7 +3728,7 @@ js_GetTriggerLayer(int num_args, bool is_ctor, intptr_t magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, NULL, NULL, &layer);
@@ -3742,7 +3745,7 @@ js_GetTriggerX(int num_args, bool is_ctor, intptr_t magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, &x, NULL, NULL);
@@ -3759,7 +3762,7 @@ js_GetTriggerY(int num_args, bool is_ctor, intptr_t magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_get_xyz(trigger_index, NULL, &y, NULL);
@@ -3790,7 +3793,7 @@ js_GetZoneHeight(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
@@ -3806,7 +3809,7 @@ js_GetZoneLayer(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	jsal_push_int(zone_get_layer(zone_index));
@@ -3821,7 +3824,7 @@ js_GetZoneSteps(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	jsal_push_int(zone_get_steps(zone_index));
@@ -3837,7 +3840,7 @@ js_GetZoneWidth(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
@@ -3854,7 +3857,7 @@ js_GetZoneX(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
@@ -3871,7 +3874,7 @@ js_GetZoneY(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = zone_get_bounds(zone_index);
@@ -4315,7 +4318,7 @@ js_IsLayerReflective(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	jsal_push_boolean(layer_get_reflective(layer));
 	return true;
 }
@@ -4328,7 +4331,7 @@ js_IsLayerVisible(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	jsal_push_boolean(layer_get_visible(layer));
 	return true;
 }
@@ -4653,7 +4656,7 @@ js_MapToScreenX(int num_args, bool is_ctor, intptr_t magic)
 	x = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	offset = map_xy_from_screen(mk_point2(0, 0));
 	jsal_push_int(x - offset.x);
 	return true;
@@ -4670,7 +4673,7 @@ js_MapToScreenY(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	offset = map_xy_from_screen(mk_point2(0, 0));
 	jsal_push_int(y - offset.y);
 	return true;
@@ -4998,7 +5001,7 @@ js_RemoveTrigger(int num_args, bool is_ctor, intptr_t magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	map_remove_trigger(trigger_index);
@@ -5013,7 +5016,7 @@ js_RemoveZone(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	map_remove_zone(zone_index);
@@ -5037,7 +5040,7 @@ static bool
 js_RenderMap(int num_args, bool is_ctor, intptr_t magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	map_engine_draw_map();
 	return false;
 }
@@ -5055,7 +5058,7 @@ js_ReplaceTilesOnLayer(int num_args, bool is_ctor, intptr_t magic)
 	new_index = jsal_to_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (old_index < 0 || old_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid old tile index");
@@ -5160,7 +5163,7 @@ js_ScreenToMapX(int num_args, bool is_ctor, intptr_t magic)
 	x = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	map_xy = map_xy_from_screen(mk_point2(x, 0));
 	jsal_push_int(map_xy.x);
 	return true;
@@ -5177,7 +5180,7 @@ js_ScreenToMapY(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	map_xy = map_xy_from_screen(mk_point2(0, y));
 	jsal_push_int(map_xy.y);
 	return true;
@@ -5192,7 +5195,7 @@ js_SetCameraX(int num_args, bool is_ctor, intptr_t magic)
 	new_x = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	position = map_get_camera_xy();
 	map_set_camera_xy(mk_point2(new_x, position.y));
 	return false;
@@ -5207,7 +5210,7 @@ js_SetCameraY(int num_args, bool is_ctor, intptr_t magic)
 	new_y = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	position = map_get_camera_xy();
 	map_set_camera_xy(mk_point2(position.x, new_y));
 	return false;
@@ -5241,7 +5244,7 @@ js_SetColorMask(int num_args, bool is_ctor, intptr_t magic)
 	num_frames = num_args >= 2 ? jsal_to_int(1) : 0;
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (num_frames < 0)
 		jsal_error(JS_RANGE_ERROR, "invalid number of frames");
 	map_engine_fade_to(new_mask, num_frames);
@@ -5290,7 +5293,7 @@ js_SetDelayScript(int num_args, bool is_ctor, intptr_t magic)
 	script = jsal_require_sphere_script(1, "%/delayScript.js");
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (num_frames < 0)
 		jsal_error(JS_RANGE_ERROR, "invalid frame count");
 	map_engine_defer(script, num_frames);
@@ -5325,7 +5328,7 @@ js_SetLayerHeight(int num_args, bool is_ctor, intptr_t magic)
 	new_height = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (new_height <= 0)
 		jsal_error(JS_ERROR, "height must be positive and nonzero (got: %d)", new_height);
 	if (!layer_resize(layer, layer_size(layer).width, new_height))
@@ -5343,7 +5346,7 @@ js_SetLayerMask(int num_args, bool is_ctor, intptr_t magic)
 	mask = jsal_require_sphere_color(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	layer_set_color_mask(layer, mask);
 	return false;
 }
@@ -5358,7 +5361,7 @@ js_SetLayerReflective(int num_args, bool is_ctor, intptr_t magic)
 	reflective = jsal_to_boolean(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	layer_set_reflective(layer, reflective);
 	return false;
 }
@@ -5373,7 +5376,7 @@ js_SetLayerRenderer(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	sprintf(script_name, "[layer %d render script]", layer);
 	script = jsal_require_sphere_script(1, script_name);
 	layer_on_render(layer, script);
@@ -5407,7 +5410,7 @@ js_SetLayerSize(int num_args, bool is_ctor, intptr_t magic)
 	new_height = jsal_to_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (new_width <= 0 || new_height <= 0)
 		jsal_error(JS_ERROR, "invalid layer dimensions");
 	if (!layer_resize(layer, new_width, new_height))
@@ -5425,7 +5428,7 @@ js_SetLayerVisible(int num_args, bool is_ctor, intptr_t magic)
 	visible = jsal_to_boolean(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	layer_set_visible(layer, visible);
 	return false;
 }
@@ -5440,7 +5443,7 @@ js_SetLayerWidth(int num_args, bool is_ctor, intptr_t magic)
 	new_width = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (new_width <= 0)
 		jsal_error(JS_ERROR, "width must be positive and nonzero (got: %d)", new_width);
 	if (!layer_resize(layer, new_width, layer_size(layer).height))
@@ -5485,7 +5488,7 @@ js_SetNextAnimatedTile(int num_args, bool is_ctor, intptr_t magic)
 	next_index = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6007,7 +6010,7 @@ js_SetTile(int num_args, bool is_ctor, intptr_t magic)
 	tile_index = jsal_to_int(3);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6027,7 +6030,7 @@ js_SetTileDelay(int num_args, bool is_ctor, intptr_t magic)
 	delay = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6052,7 +6055,7 @@ js_SetTileImage(int num_args, bool is_ctor, intptr_t magic)
 	image = jsal_require_class_obj(1, SV1_IMAGE);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6076,7 +6079,7 @@ js_SetTileName(int num_args, bool is_ctor, intptr_t magic)
 	name = jsal_require_lstring_t(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6100,7 +6103,7 @@ js_SetTileSurface(int num_args, bool is_ctor, intptr_t magic)
 	image = jsal_require_class_obj(1, SV1_SURFACE);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	tileset = map_tileset();
 	if (tile_index < 0 || tile_index >= tileset_len(tileset))
 		jsal_error(JS_RANGE_ERROR, "invalid tile index");
@@ -6123,7 +6126,7 @@ js_SetTriggerLayer(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_set_layer(trigger_index, layer);
@@ -6140,7 +6143,7 @@ js_SetTriggerScript(int num_args, bool is_ctor, intptr_t magic)
 	trigger_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	script_name = lstr_newf("%s/trigger~%d/onStep", map_pathname(), trigger_index);
@@ -6163,7 +6166,7 @@ js_SetTriggerXY(int num_args, bool is_ctor, intptr_t magic)
 	y = jsal_to_int(2);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (trigger_index < 0 || trigger_index >= map_num_triggers())
 		jsal_error(JS_RANGE_ERROR, "invalid trigger index");
 	trigger_set_xy(trigger_index, x, y);
@@ -6199,7 +6202,7 @@ js_SetZoneDimensions(int num_args, bool is_ctor, intptr_t magic)
 	height = jsal_to_int(4);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	bounds = map_bounds();
@@ -6221,7 +6224,7 @@ js_SetZoneLayer(int num_args, bool is_ctor, intptr_t magic)
 	layer = jsal_require_map_layer(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	zone_set_layer(zone_index, layer);
@@ -6238,7 +6241,7 @@ js_SetZoneScript(int num_args, bool is_ctor, intptr_t magic)
 	zone_index = jsal_to_int(0);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	if (!(script_name = lstr_newf("%s/zone%d", map_pathname(), zone_index)))
@@ -6260,7 +6263,7 @@ js_SetZoneSteps(int num_args, bool is_ctor, intptr_t magic)
 	steps = jsal_to_int(1);
 
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	if (zone_index < 0 || zone_index >= map_num_zones())
 		jsal_error(JS_RANGE_ERROR, "invalid zone index");
 	if (steps <= 0)
@@ -6320,7 +6323,7 @@ static bool
 js_UpdateMapEngine(int num_args, bool is_ctor, intptr_t magic)
 {
 	if (!map_engine_running())
-		jsal_error(JS_ERROR, "Map engine is not running");
+		jsal_error(JS_RANGE_ERROR, "Map engine not running");
 	map_engine_update();
 	return false;
 }
