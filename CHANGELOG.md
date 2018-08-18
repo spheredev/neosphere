@@ -1,6 +1,22 @@
 miniSphere Changelog
 ====================
 
+v5.2.12 - August 17, 2018
+-------------------------
+
+* Improves the Core API documentation by adding minimum API levels for each
+  function and property documented.
+* Fixes a crash bug where calling certain Sphere v1 map engine functions
+  without the map engine running causes a null pointer dereference and ensuing
+  segfault.
+* Fixes a bug where cancelling the last recurring job using `JobToken#cancel`
+  leaves the event loop spinning indefinitely, forcing the user to close the
+  game window manually.
+* Fixes a bug where passing a Symbol to `SSj.log()` throws an exception.
+* Fixes a bug where `Mouse#getEvent()` returns the wrong cursor coordinates
+  when the game window is scaled or in fullscreen mode.
+* Fixes a bug where `Mouse#getEvent()` produces way too many click events.
+
 v5.2.11 - July 1, 2018
 ----------------------
 
