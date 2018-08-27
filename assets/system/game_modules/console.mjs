@@ -45,7 +45,7 @@ class Console extends Thread
 			hotKey:       Key.Tilde,
 			inBackground: true,
 			logFileName:  null,
-			prompt:       "$",
+			prompt:       ">",
 			priority:     Infinity,
 		}, options);
 
