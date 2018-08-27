@@ -269,6 +269,12 @@ Sphere.fullScreen [read/write] [L1]
           windowed mode and any change to the value of `screen.fullScreen` will
           be silently ignored.
 
+Sphere.main [read-only] [experimental]
+
+    Gets a reference to the game's main object, when the main module exports a
+    constructor or class.  This object is created by the engine on startup by
+    instantiating the exported class using `new`.
+
 Sphere.abort(message); [L1]
 
     Aborts execution.  This is effectively a forced crash: JavaScript execution

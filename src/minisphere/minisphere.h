@@ -66,6 +66,7 @@
 #include "console.h"
 #include "font.h"
 #include "game.h"
+#include "jsal.h"
 #include "screen.h"
 #include "utility.h"
 
@@ -76,6 +77,7 @@
 // I've pared this list down over time, ideally all of them should disappear.
 extern game_t*   g_game;
 extern double    g_idle_time;
+extern js_ref_t* g_main_object;
 extern screen_t* g_screen;
 extern uint32_t  g_tick_count;
 

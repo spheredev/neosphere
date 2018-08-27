@@ -62,6 +62,7 @@
 
 game_t*   g_game = NULL;
 double    g_idle_time = 0.0;
+js_ref_t* g_main_object = NULL;
 screen_t* g_screen = NULL;
 uint32_t  g_tick_count = 0;
 
@@ -352,6 +353,7 @@ main(int argc, char* argv[])
 		else if (jsal_is_function(-1)) {
 			if (!jsal_try_construct(0))
 				goto on_js_error;
+			g_main_object = jsal_ref(-1);
 			jsal_get_prop_string(-1, "start");
 			jsal_pull(-2);
 			if (jsal_is_function(-2)) {

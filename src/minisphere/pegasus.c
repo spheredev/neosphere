@@ -229,6 +229,7 @@ static bool js_Sphere_get_Version            (int num_args, bool is_ctor, intptr
 static bool js_Sphere_get_frameRate          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_frameSkip          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_fullScreen         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sphere_get_main               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_set_frameRate          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_set_frameSkip          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_set_fullScreen         (int num_args, bool is_ctor, intptr_t magic);
@@ -845,6 +846,7 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
+		api_define_static_prop("Sphere", "main", js_Sphere_get_main, NULL);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
@@ -1450,6 +1452,17 @@ static bool
 js_Sphere_get_fullScreen(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_boolean(screen_get_fullscreen(g_screen));
+	return true;
+}
+
+static bool
+js_Sphere_get_main(int num_args, bool is_ctor, intptr_t magic)
+{
+	if (g_main_object != NULL)
+		jsal_push_ref(g_main_object);
+	else
+		jsal_push_undefined();
+	cache_value_to_this("main");
 	return true;
 }
 
