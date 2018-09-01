@@ -1579,7 +1579,7 @@ js_Sphere_sleep(int num_args, bool is_ctor, intptr_t magic)
 	script = script_new_function(-1);
 	jsal_pop(1);
 	jsal_unref(resolver);
-	dispatch_defer(script, num_frames, JOB_ON_UPDATE, true);
+	dispatch_defer(script, num_frames, JOB_ON_UPDATE, false);
 	return true;
 }
 
