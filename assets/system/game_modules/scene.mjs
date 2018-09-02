@@ -329,8 +329,8 @@ class OpThread extends Thread
 }
 
 Scene.defineOp('call', {
-	start(scene, method, ...args) {
-		method.apply(null, ...args);
+	async start(scene, method, ...args) {
+		await method.apply(null, ...args);
 	},
 });
 
