@@ -65,6 +65,7 @@ class Thread
 		this._exitJob = null;
 		this._focusTarget = new FocusTarget(options);
 		this._inBackground = options.inBackground;
+		this._onThreadStart = null;
 		this._onThreadStop = Pact.resolve();
 		this._priority = options.priority;
 		this._renderJob = null;
@@ -111,13 +112,14 @@ class Thread
 		this._updateJob.resume();
 	}
 
-	start()
+	async start()
 	{
 		if (this._started)
 			return;
 
 		this._bootstrapping = true;
 		this._started = true;
+		this._onThreadStart = new Pact();
 		this._onThreadStop = new Pact();
 
 		// Dispatch.onExit() ensures the shutdown handler is always called
@@ -141,6 +143,7 @@ class Thread
 				this._busy = true;
 				if (this._bootstrapping) {
 					await this.on_startUp();
+					this._onThreadStart.resolve();
 					this._bootstrapping = false;
 				}
 				if (this.hasFocus)
@@ -156,6 +159,8 @@ class Thread
 		this._onThreadStop.then(() => {
 			this._focusTarget.dispose();
 		});
+
+		await this._onThreadStart;
 	}
 
 	async stop()

@@ -1268,6 +1268,8 @@ Thread#start();
 
     Starts the thread.  All threads are created in stopped state and must be
     started by calling Thread#start() before their handlers will execute.
+    Returns a promise that resolves after the thread's `on_startUp()` handler
+    has run to completion.
 
 Thread#stop();
 
