@@ -35,6 +35,8 @@
 
 #include "api.h"
 #include "fs.h"
+#include "path.h"
+#include "tinydir.h"
 
 static bool do_decode_json (void* udata);
 
@@ -81,6 +83,47 @@ jsal_require_pathname(int index, const char* origin_name)
 	s_paths[s_index] = path;
 	s_index = (s_index + 1) % 10;
 	return path_cstr(path);
+}
+
+bool
+dircopy(const char* src, const char* dest)
+{
+	tinydir_dir dir;
+	if(tinydir_open(&dir, src) == -1) return false;
+
+	while (dir.has_next) {
+		tinydir_file file;
+		tinydir_readfile(&dir, &file);
+
+		if (strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0) {
+			path_t* src_path;
+			path_t* dest_path;
+
+			src_path = path_new_dir(src);
+			dest_path = path_new_dir(dest);
+			
+			if (file.is_dir) {
+				path_append_dir(src_path, file.name);
+				path_append_dir(dest_path, file.name);
+				path_mkdir(dest_path);
+				if (!dircopy(path_cstr(src_path), path_cstr(dest_path))) {
+					tinydir_close(&dir);
+					path_free(src_path);
+					path_free(dest_path);
+					return false;
+				}
+			}
+			else {
+				path_append(dest_path, file.name);
+				tinydir_copy(file.path, path_cstr(dest_path), 1);
+			}
+			path_free(src_path);
+			path_free(dest_path);
+		}
+		tinydir_next(&dir);
+	}
+	tinydir_close(&dir);
+	return true;
 }
 
 bool
