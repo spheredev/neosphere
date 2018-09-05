@@ -47,18 +47,25 @@ struct script
 	bool          in_use;
 };
 
-static int s_next_script_id = 1;
+static bool js_onScriptFinished (int num_args, bool is_ctor, intptr_t magic);
+
+static js_ref_t* s_key_then;
+static int       s_next_script_id = 1;
 
 void
 scripts_init(void)
 {
 	console_log(1, "initializing JS script manager");
+
+	s_key_then = jsal_new_key("then");
 }
 
 void
 scripts_uninit(void)
 {
 	console_log(1, "shutting down JS script manager");
+
+	jsal_unref(s_key_then);
 }
 
 bool
@@ -170,7 +177,7 @@ void
 script_run(script_t* script, bool allow_reentry)
 {
 	bool was_in_use;
-
+	
 	if (script == NULL)  // NULL is allowed, it's a no-op
 		return;
 
@@ -193,8 +200,28 @@ script_run(script_t* script, bool allow_reentry)
 	script->in_use = true;
 	jsal_push_ref_weak(script->function);
 	jsal_call(0);
-	jsal_pop(1);
-	script->in_use = was_in_use;
+	if (jsal_is_object(-1) && jsal_has_prop_key(-1, s_key_then)) {
+		jsal_get_prop_string(-1, "then");
+		jsal_pull(-2);
+		jsal_push_new_function(js_onScriptFinished, "", 0, (intptr_t)script);
+		jsal_call_method(1);
+		jsal_pop(1);
+	}
+	else {
+		jsal_pop(1);
+		script->in_use = was_in_use;
+		script_unref(script);
+	}
 
+}
+
+static bool
+js_onScriptFinished(int num_args, bool is_ctor, intptr_t magic)
+{
+	script_t* script;
+
+	script = (script_t*)magic;
+	script->in_use = false;
 	script_unref(script);
+	return false;
 }

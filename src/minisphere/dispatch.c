@@ -224,7 +224,7 @@ dispatch_run(job_type_t hint)
 		if (job->hint != hint)
 			continue;
 		if (!job->paused && !job->finished)
-			script_run(job->script, true);  // invalidates job pointer
+			script_run(job->script, false);  // invalidates job pointer
 		if (last_call_id == call_id) {
 			job = (struct job*)vector_get(s_recurring_jobs, i);
 			if (job->finished) {

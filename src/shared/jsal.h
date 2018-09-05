@@ -138,6 +138,7 @@ bool         jsal_has_own_prop_index       (int object_index, int name);
 bool         jsal_has_own_prop_string      (int object_index, const char* name);
 bool         jsal_has_prop                 (int object_index);
 bool         jsal_has_prop_index           (int object_index, int name);
+bool         jsal_has_prop_key             (int object_index, js_ref_t* key);
 bool         jsal_has_prop_string          (int object_index, const char* name);
 void         jsal_insert                   (int at_index);
 bool         jsal_is_array                 (int stack_index);

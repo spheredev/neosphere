@@ -947,6 +947,17 @@ jsal_has_prop_index(int object_index, int name)
 }
 
 bool
+jsal_has_prop_key(int object_index, js_ref_t* key)
+{
+	bool       has_property;
+	JsValueRef object_ref;
+
+	object_ref = get_value(object_index);
+	JsHasProperty(object_ref, key->value, &has_property);
+	return has_property;
+}
+
+bool
 jsal_has_prop_string(int object_index, const char* name)
 {
 	object_index = jsal_normalize_index(object_index);
