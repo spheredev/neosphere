@@ -547,6 +547,7 @@ pegasus_init(int api_level)
 	api_define_static_prop("Sphere", "frameRate", js_Sphere_get_frameRate, js_Sphere_set_frameRate);
 	api_define_static_prop("Sphere", "frameSkip", js_Sphere_get_frameSkip, js_Sphere_set_frameSkip);
 	api_define_static_prop("Sphere", "fullScreen", js_Sphere_get_fullScreen, js_Sphere_set_fullScreen);
+	api_define_static_prop("Sphere", "main", js_Sphere_get_main, NULL);
 	api_define_function("Sphere", "abort", js_Sphere_abort, 0);
 	api_define_function("Sphere", "now", js_Sphere_now, 0);
 	api_define_function("Sphere", "restart", js_Sphere_restart, 0);
@@ -846,7 +847,6 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
-		api_define_static_prop("Sphere", "main", js_Sphere_get_main, NULL);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
