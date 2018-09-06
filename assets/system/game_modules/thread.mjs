@@ -61,7 +61,6 @@ class Thread
 		}, options);
 
 		this._bootstrapping = false;
-		this._busy = false;
 		this._exitJob = null;
 		this._focusTarget = new FocusTarget(options);
 		this._inBackground = options.inBackground;
@@ -138,9 +137,6 @@ class Thread
 			});
 		this._updateJob = Dispatch.onUpdate(
 			async () => {
-				if (this._busy)
-					return;
-				this._busy = true;
 				if (this._bootstrapping) {
 					await this.on_startUp();
 					this._onThreadStart.resolve();
@@ -149,7 +145,6 @@ class Thread
 				if (this.hasFocus)
 					await this.on_inputCheck();
 				await this.on_update();
-				this._busy = false;
 			}, {
 				inBackground: this._inBackground,
 				priority:     this._priority,
