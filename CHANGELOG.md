@@ -9,6 +9,8 @@ v5.2.13 - September 6, 2018
 * Changes the default `Console` prompt from `$` to `>`.
 * Changes `Thread#start()` to an async function which returns only after the
   Thread's startup handler has run to completion.
+* Fixes a bug where `Sphere.sleep()` prevents the engine from shutting down
+  until the sleep period expires.
 * Fixes a bug in which `Scene#call()` doesn't await `async` functions.
 * Fixes a bug where an `async` function used for a recurring Dispatch job can
   be re-entered before an earlier invocation has completed.
