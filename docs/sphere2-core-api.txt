@@ -549,6 +549,12 @@ Dispatch.onUpdate(fn[, options]); [L1]
 
     Returns a `JobToken` you can use to manage the job.
 
+	Note: If you pass an `async` function to one of these and it takes multiple
+	      frames to complete, the engine will await completion of the previous
+	      invocation before invoking it again.  Avoid using `await` in a render
+	      handler as the function will resume at the end of a frame, after the
+	      backbuffer has already been flipped.
+
     options.inBackground [default: false]
 
         If this is `true`, the job won't keep the event loop alive.  This is
