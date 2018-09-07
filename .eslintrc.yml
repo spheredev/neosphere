@@ -81,9 +81,12 @@ rules:
     - ForInStatement
   no-unused-expressions: error
   no-unused-vars: warn
+  no-var: error
   object-curly-spacing:
     - error
     - always
+  prefer-rest-params: error
+  prefer-spread: error
   require-await: warn
   semi:
     - error
