@@ -1270,19 +1270,6 @@ jsal_push_callee(void)
 	return push_value(s_callee_value, true);
 }
 
-int
-jsal_push_eval(const char* source)
-{
-	JsValueRef name_string;
-	JsValueRef source_string;
-	JsValueRef value;
-
-	JsCreateString(source, strlen(source), &source_string);
-	JsCreateString("eval()", 6, &name_string);
-	JsRun(source_string, s_next_source_context++, name_string, JsParseScriptAttributeLibraryCode, &value);
-	throw_on_error();
-	return push_value(value, false);
-}
 
 int
 jsal_push_global_object(void)
@@ -1542,44 +1529,6 @@ jsal_push_number(double value)
 
 	JsDoubleToNumber(value, &ref);
 	return push_value(ref, false);
-}
-
-int
-jsal_push_accessor_desc(bool enumerable, bool configurable)
-{
-	/* [ ... getter setter ] -> [ ... prop_desc ] */
-
-	int index;
-
-	index = jsal_push_new_object();
-	jsal_push_boolean(enumerable);
-	jsal_put_prop_key(-2, s_key_enumerable);
-	jsal_push_boolean(configurable);
-	jsal_put_prop_key(-2, s_key_configurable);
-	jsal_pull(-3);
-	jsal_put_prop_key(-2, s_key_get);
-	jsal_pull(-2);
-	jsal_put_prop_key(-2, s_key_set);
-	return index;
-}
-
-int
-jsal_push_value_desc(bool writable, bool enumerable, bool configurable)
-{
-	/* [ ... value ] -> [ ... prop_desc ] */
-
-	int index;
-
-	index = jsal_push_new_object();
-	jsal_push_boolean(writable);
-	jsal_put_prop_key(-2, s_key_writable);
-	jsal_push_boolean(enumerable);
-	jsal_put_prop_key(-2, s_key_enumerable);
-	jsal_push_boolean(configurable);
-	jsal_put_prop_key(-2, s_key_configurable);
-	jsal_pull(-2);
-	jsal_put_prop_key(-2, s_key_value);
-	return index;
 }
 
 int
@@ -2059,6 +2008,78 @@ jsal_to_object(int at_index)
 	throw_on_error();
 	push_value(value, false);
 	jsal_replace(at_index);
+}
+
+int
+jsal_to_propdesc_get(bool enumerable, bool configurable)
+{
+	/* [ ... getter ] -> [ ... prop_desc ] */
+
+	int index;
+
+	index = jsal_push_new_object();
+	jsal_push_boolean(enumerable);
+	jsal_put_prop_key(-2, s_key_enumerable);
+	jsal_push_boolean(configurable);
+	jsal_put_prop_key(-2, s_key_configurable);
+	jsal_pull(-2);
+	jsal_put_prop_key(-2, s_key_get);
+	return index;
+}
+
+int
+jsal_to_propdesc_get_set(bool enumerable, bool configurable)
+{
+	/* [ ... getter setter ] -> [ ... prop_desc ] */
+
+	int index;
+
+	index = jsal_push_new_object();
+	jsal_push_boolean(enumerable);
+	jsal_put_prop_key(-2, s_key_enumerable);
+	jsal_push_boolean(configurable);
+	jsal_put_prop_key(-2, s_key_configurable);
+	jsal_pull(-3);
+	jsal_put_prop_key(-2, s_key_get);
+	jsal_pull(-2);
+	jsal_put_prop_key(-2, s_key_set);
+	return index;
+}
+
+int
+jsal_to_propdesc_set(bool enumerable, bool configurable)
+{
+	/* [ ... setter ] -> [ ... prop_desc ] */
+
+	int index;
+
+	index = jsal_push_new_object();
+	jsal_push_boolean(enumerable);
+	jsal_put_prop_key(-2, s_key_enumerable);
+	jsal_push_boolean(configurable);
+	jsal_put_prop_key(-2, s_key_configurable);
+	jsal_pull(-2);
+	jsal_put_prop_key(-2, s_key_set);
+	return index;
+}
+
+int
+jsal_to_propdesc_value(bool writable, bool enumerable, bool configurable)
+{
+	/* [ ... value ] -> [ ... prop_desc ] */
+
+	int index;
+
+	index = jsal_push_new_object();
+	jsal_push_boolean(writable);
+	jsal_put_prop_key(-2, s_key_writable);
+	jsal_push_boolean(enumerable);
+	jsal_put_prop_key(-2, s_key_enumerable);
+	jsal_push_boolean(configurable);
+	jsal_put_prop_key(-2, s_key_configurable);
+	jsal_pull(-2);
+	jsal_put_prop_key(-2, s_key_value);
+	return index;
 }
 
 const char*

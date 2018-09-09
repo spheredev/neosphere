@@ -531,9 +531,8 @@ pegasus_init(int api_level)
 	jsal_pop(1);
 
 	jsal_push_global_object();
-	jsal_push_eval("({ enumerable: false, writable: true, configurable: true })");
 	jsal_pegasus_push_require(NULL);
-	jsal_put_prop_string(-2, "value");
+	jsal_to_propdesc_value(true, false, true);
 	jsal_def_prop_string(-2, "require");
 	jsal_pop(1);
 
@@ -869,9 +868,10 @@ pegasus_init(int api_level)
 	}
 	
 	// keep a local reference to Surface.Screen
-	jsal_push_eval("Surface.Screen");
+	jsal_get_global_string("Surface");
+	jsal_get_prop_string(-1, "Screen");
 	s_screen_obj = jsal_ref(-1);
-	jsal_pop(1);
+	jsal_pop(2);
 
 	// pre-create joystick objects for Joystick.getDevices().  this ensures that
 	// multiple requests for the device list return the same Joystick object(s).
@@ -882,9 +882,8 @@ pegasus_init(int api_level)
 	p = COLORS;
 	while (p->name != NULL) {
 		if (s_api_level >= p->api_level) {
-			jsal_push_eval("({ enumerable: false, configurable: true })");
 			jsal_push_new_function(js_Color_get_Color, "get", 0, (intptr_t)(p - COLORS));
-			jsal_put_prop_string(-2, "get");
+			jsal_to_propdesc_get(false, true);
 			jsal_def_prop_string(-2, p->name);
 		}
 		++p;
@@ -1119,7 +1118,7 @@ cache_value_to_this(const char* key)
 {
 	jsal_push_this();
 	jsal_dup(-2);
-	jsal_push_value_desc(false, false, true);
+	jsal_to_propdesc_value(false, false, true);
 	jsal_def_prop_string(-2, key);
 	jsal_pop(1);
 }
@@ -4983,11 +4982,11 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 				jsal_push_this();
 				jsal_put_prop_string(-2, "\xFF" "transform");
 
-				jsal_push_accessor_desc(true, false);
+				jsal_to_propdesc_get_set(true, false);
 				jsal_def_prop_index(-2, j);
 
 			}
-			jsal_push_value_desc(false, true, false);
+			jsal_to_propdesc_value(false, true, false);
 			jsal_def_prop_index(-2, i);
 		}
 

@@ -180,7 +180,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	jsal_push_global_object();
 	push_require(NULL);
-	jsal_push_value_desc(true, false, true);
+	jsal_to_propdesc_value(true, false, true);
 	jsal_def_prop_string(-2, "require");
 	jsal_pop(1);
 
@@ -528,7 +528,7 @@ cache_value_to_this(const char* key)
 {
 	jsal_push_this();
 	jsal_dup(-2);
-	jsal_push_value_desc(false, false, true);
+	jsal_to_propdesc_value(false, false, true);
 	jsal_def_prop_string(-2, key);
 	jsal_pop(1);
 }
