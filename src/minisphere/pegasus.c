@@ -4974,14 +4974,8 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 		for (i = 0; i < 4; ++i) {
 			jsal_push_new_object();
 			for (j = 0; j < 4; ++j) {
-				jsal_push_new_function(js_Transform_get_matrix, "get", 0, 1 + (j * 4 + i));
-				jsal_push_this();
-				jsal_put_prop_string(-2, "\xFF" "transform");
-
-				jsal_push_new_function(js_Transform_set_matrix, "set", 0, 1 + (j * 4 + i));
-				jsal_push_this();
-				jsal_put_prop_string(-2, "\xFF" "transform");
-
+				jsal_push_new_function(js_Transform_get_matrix, "get", 0, (intptr_t)&values[j * 4 + i]);
+				jsal_push_new_function(js_Transform_set_matrix, "set", 0, (intptr_t)&values[j * 4 + i]);
 				jsal_to_propdesc_get_set(true, false);
 				jsal_def_prop_index(-2, j);
 
@@ -4996,11 +4990,7 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 		return true;
 	}
 	else {
-		jsal_push_callee();
-		jsal_get_prop_string(-1, "\xFF" "transform");
-		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
-		values = transform_values(transform);
-		jsal_push_number(values[magic - 1]);
+		jsal_push_number(*(float*)magic);
 		return true;
 	}
 }
@@ -5008,17 +4998,11 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Transform_set_matrix(int num_args, bool is_ctor, intptr_t magic)
 {
-	float        new_value;
-	transform_t* transform;
-	float*       values;
+	float new_value;
 
 	new_value = jsal_require_number(0);
 
-	jsal_push_callee();
-	jsal_get_prop_string(-1, "\xFF" "transform");
-	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
-	values = transform_values(transform);
-	values[magic - 1] = new_value;
+	*(float*)magic = new_value;
 	return false;
 }
 
