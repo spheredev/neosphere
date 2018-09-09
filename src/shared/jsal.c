@@ -155,10 +155,15 @@ static JsValueRef           s_js_null;
 static JsRuntimeHandle      s_js_runtime = NULL;
 static JsValueRef           s_js_true;
 static JsValueRef           s_js_undefined;
+static js_ref_t*            s_key_configurable;
 static js_ref_t*            s_key_done;
+static js_ref_t*            s_key_enumerable;
+static js_ref_t*            s_key_get;
 static js_ref_t*            s_key_length;
 static js_ref_t*            s_key_next;
+static js_ref_t*            s_key_set;
 static js_ref_t*            s_key_value;
+static js_ref_t*            s_key_writable;
 static vector_t*            s_module_cache;
 static vector_t*            s_module_jobs;
 static JsValueRef           s_newtarget_value = JS_INVALID_REFERENCE;
@@ -214,10 +219,15 @@ jsal_init(void)
 
 	vector_reserve(s_value_stack, 128);
 
+	s_key_configurable = jsal_new_key("configurable");
 	s_key_done = jsal_new_key("done");
+	s_key_enumerable = jsal_new_key("enumerable");
+	s_key_get = jsal_new_key("get");
 	s_key_length = jsal_new_key("length");
 	s_key_next = jsal_new_key("next");
+	s_key_set = jsal_new_key("set");
 	s_key_value = jsal_new_key("value");
+	s_key_writable = jsal_new_key("writable");
 
 	return true;
 
@@ -236,10 +246,15 @@ jsal_uninit(void)
 
 	iter_t iter;
 
+	jsal_unref(s_key_configurable);
 	jsal_unref(s_key_done);
+	jsal_unref(s_key_enumerable);
+	jsal_unref(s_key_get);
 	jsal_unref(s_key_length);
 	jsal_unref(s_key_next);
+	jsal_unref(s_key_set);
 	jsal_unref(s_key_value);
+	jsal_unref(s_key_writable);
 
 	iter = vector_enum(s_breakpoints);
 	while (iter_next(&iter)) {
@@ -1212,8 +1227,9 @@ void
 jsal_parse(int at_index)
 {
 	at_index = jsal_normalize_index(at_index);
-	jsal_push_eval("JSON.parse");
-	jsal_push_eval("JSON");
+	jsal_get_global_string("JSON");
+	jsal_get_prop_string(-1, "parse");
+	jsal_pull(-2);
 	jsal_dup(at_index);
 	jsal_call_method(1);
 	jsal_replace(at_index);
@@ -1526,6 +1542,44 @@ jsal_push_number(double value)
 
 	JsDoubleToNumber(value, &ref);
 	return push_value(ref, false);
+}
+
+int
+jsal_push_accessor_desc(bool enumerable, bool configurable)
+{
+	/* [ ... getter setter ] -> [ ... prop_desc ] */
+
+	int index;
+
+	index = jsal_push_new_object();
+	jsal_push_boolean(enumerable);
+	jsal_put_prop_key(-2, s_key_enumerable);
+	jsal_push_boolean(configurable);
+	jsal_put_prop_key(-2, s_key_configurable);
+	jsal_pull(-3);
+	jsal_put_prop_key(-2, s_key_get);
+	jsal_pull(-2);
+	jsal_put_prop_key(-2, s_key_set);
+	return index;
+}
+
+int
+jsal_push_value_desc(bool writable, bool enumerable, bool configurable)
+{
+	/* [ ... value ] -> [ ... prop_desc ] */
+
+	int index;
+
+	index = jsal_push_new_object();
+	jsal_push_boolean(writable);
+	jsal_put_prop_key(-2, s_key_writable);
+	jsal_push_boolean(enumerable);
+	jsal_put_prop_key(-2, s_key_enumerable);
+	jsal_push_boolean(configurable);
+	jsal_put_prop_key(-2, s_key_configurable);
+	jsal_pull(-2);
+	jsal_put_prop_key(-2, s_key_value);
+	return index;
 }
 
 int
@@ -1940,8 +1994,9 @@ void
 jsal_stringify(int at_index)
 {
 	at_index = jsal_normalize_index(at_index);
-	jsal_push_eval("JSON.stringify");
-	jsal_push_eval("JSON");
+	jsal_get_global_string("JSON");
+	jsal_get_prop_string(-1, "stringify");
+	jsal_pull(-2);
 	jsal_dup(at_index);
 	jsal_call_method(1);
 	jsal_replace(at_index);

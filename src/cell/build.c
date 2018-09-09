@@ -179,9 +179,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 	jsal_pop(1);
 
 	jsal_push_global_object();
-	jsal_push_eval("({ enumerable: false, writable: true, configurable: true })");
 	push_require(NULL);
-	jsal_put_prop_string(-2, "value");
+	jsal_push_value_desc(true, false, true);
 	jsal_def_prop_string(-2, "require");
 	jsal_pop(1);
 
@@ -528,9 +527,8 @@ static void
 cache_value_to_this(const char* key)
 {
 	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
+	jsal_dup(-2);
+	jsal_push_value_desc(false, false, true);
 	jsal_def_prop_string(-2, key);
 	jsal_pop(1);
 }
@@ -1290,12 +1288,7 @@ js_Sphere_get_Game(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "manifest");
-
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-2);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(0, "Game");
-
+	cache_value_to_this("Game");
 	return true;
 }
 

@@ -1118,9 +1118,8 @@ static void
 cache_value_to_this(const char* key)
 {
 	jsal_push_this();
-	jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, "value");
+	jsal_dup(-2);
+	jsal_push_value_desc(false, false, true);
 	jsal_def_prop_string(-2, key);
 	jsal_pop(1);
 }
@@ -4984,28 +4983,17 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 				jsal_push_this();
 				jsal_put_prop_string(-2, "\xFF" "transform");
 
-				jsal_push_eval("({ enumerable: true })");
-				jsal_pull(-2);
-				jsal_put_prop_string(-2, "set");
-				jsal_pull(-2);
-				jsal_put_prop_string(-2, "get");
+				jsal_push_accessor_desc(true, false);
 				jsal_def_prop_index(-2, j);
 
 			}
-			jsal_push_eval("({ enumerable: true })");
-			jsal_pull(-2);
-			jsal_put_prop_string(-2, "value");
+			jsal_push_value_desc(false, true, false);
 			jsal_def_prop_index(-2, i);
 		}
 
 		// store the generated object so we don't have to keep generating it on
 		// every access
-		jsal_push_this();
-		jsal_push_eval("({ enumerable: false, writable: false, configurable: true })");
-		jsal_dup(-3);
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "matrix");
-		jsal_pop(1);
+		cache_value_to_this("matrix");
 		return true;
 	}
 	else {
