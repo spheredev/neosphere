@@ -123,16 +123,17 @@ parse_command_line(int argc, char* argv[])
 	if (argc >= 2 && argv[1][0] != '-') {
 		args_index = 2;
 		command = argv[1];
-		if (strcmp(command, "build") == 0) {
+		if (strcmp(command, "build") == 0 || strcmp(command, "b") == 0) {
 			s_mode = MODE_BUILD;
+			have_in_dir = true;
 		}
-		else if (strcmp(command, "clean") == 0) {
+		else if (strcmp(command, "clean") == 0 || strcmp(command, "c") == 0) {
 			s_mode = MODE_CLEAN;
 		}
-		else if (strcmp(command, "pack") == 0) {
+		else if (strcmp(command, "pack") == 0 || strcmp(command, "p") == 0) {
 			s_mode = MODE_PACK;
 		}
-		else if (strcmp(command, "version") == 0) {
+		else if (strcmp(command, "version") == 0 || strcmp(command, "v") == 0) {
 			print_banner(true, true);
 			return false;
 		}
@@ -140,7 +141,7 @@ parse_command_line(int argc, char* argv[])
 			print_cell_quote();
 			return false;
 		}
-		else if (strcmp(command, "help") == 0) {
+		else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0) {
 			print_usage();
 			return false;
 		}
@@ -162,13 +163,10 @@ parse_command_line(int argc, char* argv[])
 				return false;
 			}
 			else if (strcmp(argv[i], "--in-dir") == 0) {
-				if (++i >= argc) goto missing_argument;
+				if (++i >= argc)
+					goto missing_argument;
 				path_free(s_in_path);
 				s_in_path = path_new_dir(argv[i]);
-				have_in_dir = true;
-			}
-			else if (strcmp(argv[i], "--rebuild") == 0) {
-				s_want_rebuild = true;
 				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--out-dir") == 0) {
@@ -176,6 +174,10 @@ parse_command_line(int argc, char* argv[])
 					goto missing_argument;
 				path_free(s_out_path);
 				s_out_path = path_new_dir(argv[i]);
+			}
+			else if (strcmp(argv[i], "--rebuild") == 0) {
+				s_want_rebuild = true;
+				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--debug") == 0) {
 				if (have_debug_flag && !s_debug_build) {
@@ -205,15 +207,18 @@ parse_command_line(int argc, char* argv[])
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
 				case 'i':
-					if (++i >= argc) goto missing_argument;
+					if (++i >= argc)
+						goto missing_argument;
 					path_free(s_in_path);
 					s_in_path = path_new_dir(argv[i]);
 					have_in_dir = true;
 					break;
 				case 'o':
-					if (++i >= argc) goto missing_argument;
+					if (++i >= argc)
+						goto missing_argument;
 					path_free(s_out_path);
 					s_out_path = path_new_dir(argv[i]);
+					have_in_dir = true;
 					break;
 				case 'r':
 					s_want_rebuild = true;
@@ -256,7 +261,7 @@ parse_command_line(int argc, char* argv[])
 	if (!have_debug_flag)
 		s_debug_build = s_mode == MODE_PACK;
 	if (s_mode == MODE_PACK && s_package_path == NULL) {
-		printf("cell: no filename was provided for 'cell %s'\n", command);
+		printf("cell: no SPK filename was provided for 'cell %s'\n", command);
 		return false;
 	}
 
@@ -267,7 +272,7 @@ parse_command_line(int argc, char* argv[])
 		path_free(mjs_path);
 		path_free(js_path);
 		if (have_in_dir)
-			printf("no Cellscript found in source directory.\n");
+			printf("cell: no Cellscript found in source directory '%s'.\n", path_cstr(s_in_path));
 		else
 			print_usage();
 		return false;
@@ -333,13 +338,16 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   cell build [-i <in-dir>] [-o <out-dir>] [options]\n");
-	printf("   cell clean [-i <in-dir>] [-o <out-dir>]\n");
-	printf("   cell pack [-i <in-dir>] [-o <out-dir>] [options] <packfile-name>\n");
+	printf("   cell build [options]\n");
+	printf("   cell clean [options]\n");
+	printf("   cell pack [options] <packfile-name>\n");
+	printf("   cell help\n");
 	printf("\n");
-	printf("BUILD/PACK OPTIONS:\n");
+	printf("OPTIONS:\n");
 	printf("   -i  --in-dir    Set the input directory (default is current working dir)  \n");
 	printf("   -o  --out-dir   Set the output directory (default is './dist')            \n");
+	printf("\n");
+	printf("   for build/pack:\n");
 	printf("   -r  --rebuild   Rebuild all targets, even those already up to date        \n");
 	printf("   -d  --debug     Include debugging information for use with SSj or SSj Blue\n");
 	printf("       --release   Build for distribution, without any debugging information \n");
