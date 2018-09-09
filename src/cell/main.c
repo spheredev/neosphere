@@ -39,7 +39,7 @@
 
 enum mode
 {
-	MODE_BUILD,
+	MODE_BUILD_ONLY,
 	MODE_CLEAN,
 	MODE_PACK,
 };
@@ -76,7 +76,7 @@ main(int argc, char* argv[])
 	if (!build_eval(build, "$/Cellscript.mjs") && !build_eval(build, "$/Cellscript.js"))
 		goto shutdown;
 	switch (s_mode) {
-	case MODE_BUILD:
+	case MODE_BUILD_ONLY:
 	case MODE_PACK:
 		if (!build_run(build, s_debug_build, s_want_rebuild))
 			goto shutdown;
@@ -101,7 +101,7 @@ static bool
 parse_command_line(int argc, char* argv[])
 {
 	int         args_index = 1;
-	const char* command;
+	const char* command = "build";
 	bool        have_debug_flag = false;
 	bool        have_in_dir = false;
 	path_t*     js_path;
@@ -113,7 +113,7 @@ parse_command_line(int argc, char* argv[])
 	size_t i_arg;
 
 	// establish default options
-	s_mode = MODE_BUILD;
+	s_mode = MODE_BUILD_ONLY;
 	s_in_path = path_new("./");
 	s_out_path = NULL;
 	s_package_path = NULL;
@@ -124,13 +124,17 @@ parse_command_line(int argc, char* argv[])
 		args_index = 2;
 		command = argv[1];
 		if (strcmp(command, "build") == 0 || strcmp(command, "b") == 0) {
-			s_mode = MODE_BUILD;
+			command = "build";
+			s_mode = MODE_BUILD_ONLY;
 			have_in_dir = true;
 		}
 		else if (strcmp(command, "clean") == 0 || strcmp(command, "c") == 0) {
+			command = "clean";
 			s_mode = MODE_CLEAN;
+			have_in_dir = true;
 		}
 		else if (strcmp(command, "pack") == 0 || strcmp(command, "p") == 0) {
+			command = "pack";
 			s_mode = MODE_PACK;
 		}
 		else if (strcmp(command, "version") == 0 || strcmp(command, "v") == 0) {
@@ -198,7 +202,7 @@ parse_command_line(int argc, char* argv[])
 				have_in_dir = true;
 			}
 			else {
-				printf("cell: unknown option '%s'\n", argv[i]);
+				printf("cell: invalid option '%s' for 'cell %s'\n", argv[i], command);
 				return false;
 			}
 		}
@@ -240,7 +244,7 @@ parse_command_line(int argc, char* argv[])
 					print_banner(true, true);
 					return false;
 				default:
-					printf("cell: unknown option '-%c'\n", short_args[i_arg]);
+					printf("cell: invalid option '-%c' for 'cell %s'\n", short_args[i_arg], command);
 					return false;
 				}
 			}
@@ -262,7 +266,7 @@ parse_command_line(int argc, char* argv[])
 	if (s_out_path == NULL)
 		s_out_path = path_new("dist/");
 	if (!have_debug_flag)
-		s_debug_build = s_mode == MODE_PACK;
+		s_debug_build = s_mode == MODE_BUILD_ONLY;
 	if (s_mode == MODE_PACK && s_package_path == NULL) {
 		printf("cell: no SPK filename was provided for 'cell %s'\n", command);
 		return false;
