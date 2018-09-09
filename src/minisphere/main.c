@@ -850,6 +850,9 @@ parse_command_line(
 				case 'd':
 					*out_ssj_mode = SSJ_ACTIVE;
 					break;
+				case 'h':
+					print_usage();
+					return false;
 				case 'p':
 					*out_ssj_mode = SSJ_OFF;
 					break;
@@ -935,7 +938,7 @@ print_usage(void)
 	printf("   -r  --retro        Emulate the game's targeted API level (retrograde mode) \n");
 	printf("       --verbose      Set the engine's verbosity level from 0 to 4            \n");
 	printf("   -v  --version      Show which version of miniSphere is installed           \n");
-	printf("       --help         Show this help text                                     \n");
+	printf("   -h  --help         Show this help text                                     \n");
 	printf("\n");
 	printf("NOTE:\n");
 	printf("   spherun(1) is used to execute Sphere games in a development environment. If\n");

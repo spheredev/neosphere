@@ -233,6 +233,9 @@ parse_command_line(int argc, char* argv[])
 					have_debug_flag = true;
 					have_in_dir = true;
 					break;
+				case 'h':
+					print_usage();
+					return false;
 				case 'v':
 					print_banner(true, true);
 					return false;
@@ -344,8 +347,8 @@ print_usage(void)
 	printf("   cell help\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("   -i  --in-dir    Set the input directory (default is current working dir)  \n");
-	printf("   -o  --out-dir   Set the output directory (default is './dist')            \n");
+	printf("   -i  --in-dir    Set the source directory (default is current working dir) \n");
+	printf("   -o  --out-dir   Set the build directory (default is './dist')             \n");
 	printf("\n");
 	printf("   for build/pack:\n");
 	printf("   -r  --rebuild   Rebuild all targets, even those already up to date        \n");

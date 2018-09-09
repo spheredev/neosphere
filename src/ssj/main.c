@@ -233,6 +233,9 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 				case 'a':
 					have_target = true;
 					break;
+				case 'h':
+					print_usage();
+					goto on_output_only;
 				case 'r':
 					cmdline->run_now = true;
 					break;
@@ -330,5 +333,5 @@ print_usage(void)
 	printf("   -r  --no-pause   Prevent the debugger from triggering a breakpoint on attach\n");
 	printf("   -t  --trace      Show trace-level output, for example, from SSj.trace()     \n");
 	printf("   -v  --version    Show the version number of SSj and its dependencies        \n");
-	printf("       --help       Show this help text                                        \n");
+	printf("   -h  --help       Show this help text                                        \n");
 }
