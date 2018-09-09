@@ -90,6 +90,7 @@ install: all
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
 	cp bin/libChakraCore.so $(installdir)/lib
 	cp -r bin/system $(installdir)/share/minisphere
+	cp -r bin/template $(installdir)/share/minisphere
 	gzip docs/sphere2-core-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-core-api.gz
 	gzip docs/sphere2-hl-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-hl-api.gz
 	gzip docs/cellscript-api.txt -c > $(installdir)/share/doc/minisphere/cellscript-api.gz
@@ -138,6 +139,7 @@ bin/cell:
 	      -Wl,-rpath=\$$ORIGIN \
 	      $(cell_sources) $(cell_libs)
 	cp dep/lib/$(arch)/libChakraCore.so bin
+	cp -r assets/template bin
 
 bin/ssj:
 	mkdir -p bin

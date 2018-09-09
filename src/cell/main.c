@@ -35,8 +35,11 @@
 #include <png.h>
 #include <zlib.h>
 #include "build.h"
+#include "path.h"
 #include "jsal.h"
+#include "utility.h"
 
+static bool generate_project   (char* path);
 static bool parse_command_line (int argc, char* argv[]);
 static void print_banner       (bool want_copyright, bool want_deps);
 static void print_cell_quote   (void);
@@ -87,6 +90,124 @@ shutdown:
 }
 
 static bool
+generate_project(char* path)
+{
+	char* project_name;
+	char* author;
+	char* width;
+	char* height;
+	char* summary;
+	path_t* app_path;
+	path_t* project_path;
+	path_t* template_path;
+	path_t* tmpl_path;
+	path_t* mjs_path;
+	FILE* mjs_file = NULL;
+	char* tmpl_str;
+	char* mjs_str;
+	bool success = false;
+
+	printf("Enter game name: ");
+	project_name = malloc(256);
+	fgets(project_name, 256, stdin);
+	project_name[strcspn(project_name, "\r\n")] = 0;
+
+	printf("Enter author: ");
+	author = malloc(256);
+	fgets(author, 256, stdin);
+	author[strcspn(author, "\r\n")] = 0;
+
+	printf("Enter screen width: ");
+	width = malloc(256);
+	fgets(width, 256, stdin);
+	width[strcspn(width, "\r\n")] = 0;
+
+	printf("Enter screen height: ");
+	height = malloc(256);
+	fgets(height, 256, stdin);
+	height[strcspn(height, "\r\n")] = 0;
+
+	printf("Enter game summary: ");
+	summary = malloc(256);
+	fgets(summary, 256, stdin);
+	summary[strcspn(summary, "\r\n")] = 0;
+
+	project_path = path_new_dir(path);
+	path_mkdir(project_path);
+
+	app_path = path_new_self();
+	template_path = path_rebase(path_new("template/"), app_path);
+	if (!path_resolve(template_path, NULL)) {
+		path_free(template_path);
+		template_path = path_rebase(path_new("../share/minisphere/template"), app_path);
+		path_resolve(template_path, NULL);
+	}
+
+	if (!dircopy(path_cstr(template_path), path)) {
+		printf("Failed copying directory\n");
+		goto cleanup;
+	}
+
+	tmpl_path = path_rebase(path_new("./Cellscript.mjs.tmpl"), project_path);
+	path_resolve(tmpl_path, NULL);
+	mjs_path = path_rebase(path_new("./Cellscript.mjs"), project_path);
+	path_resolve(mjs_path, NULL);
+
+	mjs_file = fopen(path_cstr(mjs_path), "w");
+	if (mjs_file == NULL)
+		goto cleanup;
+
+	size_t size;
+	tmpl_str = (char*)fslurp(path_cstr(tmpl_path), &size);
+
+	size_t openbrk = strstr(tmpl_str, "{{") - tmpl_str;
+	size_t pos0 = strstr(tmpl_str, "{0}") - tmpl_str;
+	size_t pos1 = strstr(tmpl_str, "{1}") - tmpl_str;
+	size_t pos2 = strstr(tmpl_str, "{2}") - tmpl_str;
+	size_t pos3 = strstr(tmpl_str, "{3}") - tmpl_str;
+	size_t pos4 = strstr(tmpl_str, "{4}") - tmpl_str;
+	size_t closebrk = strstr(tmpl_str, "}}") - tmpl_str;
+
+	fwrite(tmpl_str, openbrk, 1, mjs_file);
+	fwrite(tmpl_str + openbrk + 1, pos0 - openbrk - 1, 1, mjs_file);
+	
+	fwrite(project_name, strlen(project_name), 1, mjs_file);
+	fwrite(tmpl_str + pos0 + 3, pos1 - pos0 - 3, 1, mjs_file);
+
+	fwrite(author, strlen(author), 1, mjs_file);
+	fwrite(tmpl_str + pos1 + 3, pos2 - pos1 - 3, 1, mjs_file);
+
+	fwrite(summary, strlen(summary), 1, mjs_file);
+	fwrite(tmpl_str + pos2 + 3, pos3 - pos2 - 3, 1, mjs_file);
+
+	fwrite(width, strlen(width), 1, mjs_file);
+	fwrite(tmpl_str + pos3 + 3, pos4 - pos3 - 3, 1, mjs_file);
+
+	fwrite(height, strlen(height), 1, mjs_file);
+	fwrite(tmpl_str + pos4 + 3, closebrk - pos4 - 3, 1, mjs_file);
+
+	fwrite(tmpl_str + closebrk + 1, size - closebrk - 1, 1, mjs_file);
+
+	fclose(mjs_file);
+	success = (remove(path_cstr(tmpl_path)) == 0);
+
+cleanup: 
+	free(project_name);
+	free(author);
+	free(width);
+	free(height);
+	free(summary);
+	free(mjs_str);
+	free(tmpl_str);
+	path_free(app_path);
+	path_free(project_path);
+	path_free(template_path);
+	path_free(tmpl_path);
+	path_free(mjs_path);
+	return success;
+}
+
+static bool
 parse_command_line(int argc, char* argv[])
 {
 	bool        have_debug_flag = false;
@@ -116,6 +237,18 @@ parse_command_line(int argc, char* argv[])
 			}
 			else if (strcmp(argv[i], "--version") == 0) {
 				print_banner(true, true);
+				return false;
+			}
+			else if (strcmp(argv[i], "--init") == 0) {
+				printf("Generating new project\n");
+				if (++i >= argc) goto missing_argument;
+				if (fexist(argv[i])) {
+					printf("cell: directory '%s' already exists\n", argv[i]);
+					return false;
+				}
+				if (!generate_project(argv[i])) {
+					printf("Error generating new project\n");
+				}
 				return false;
 			}
 			else if (strcmp(argv[i], "--in-dir") == 0) {
@@ -323,6 +456,7 @@ print_usage(void)
 	printf("   -c  --clean     Clean up all artifacts from the previous build            \n");
 	printf("   -d  --debug     Include debugging information for use with SSj or SSj Blue\n");
 	printf("       --release   Build for distribution, without any debugging information \n");
+	printf("       --init      Create a new project in the given path using a template   \n");
 	printf("   -v  --version   Print the version number of Cell and its dependencies.    \n");
 	printf("       --help      Print this help text.                                     \n");
 }
