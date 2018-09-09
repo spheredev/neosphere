@@ -503,10 +503,17 @@ jsal_def_prop_index(int object_index, int name)
 {
 	/* [ ... descriptor ] -> [ ... ] */
 
-	object_index = jsal_normalize_index(object_index);
-	jsal_push_sprintf("%d", name);
-	jsal_insert(-2);
-	jsal_def_prop(object_index);
+	JsValueRef descriptor;
+	JsValueRef key;
+	JsValueRef object;
+	bool       result;
+
+	object = get_value(object_index);
+	descriptor = pop_value();
+	JsIntToNumber(name, &key);
+	JsConvertValueToString(key, &key);
+	JsObjectDefineProperty(object, key, descriptor, &result);
+	throw_on_error();
 }
 
 void
@@ -514,10 +521,16 @@ jsal_def_prop_string(int object_index, const char* name)
 {
 	/* [ ... descriptor ] -> [ ... ] */
 
-	object_index = jsal_normalize_index(object_index);
-	jsal_push_string(name);
-	jsal_insert(-2);
-	jsal_def_prop(object_index);
+	JsValueRef descriptor;
+	JsValueRef key;
+	JsValueRef object;
+	bool       result;
+
+	object = get_value(object_index);
+	descriptor = pop_value();
+	JsCreateString(name, strlen(name), &key);
+	JsObjectDefineProperty(object, key, descriptor, &result);
+	throw_on_error();
 }
 
 bool

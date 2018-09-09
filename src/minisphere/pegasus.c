@@ -484,8 +484,10 @@ static bool      s_shutting_down = false;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
+static js_ref_t* s_key_get;
 static js_ref_t* s_key_inBackground;
 static js_ref_t* s_key_priority;
+static js_ref_t* s_key_set;
 static js_ref_t* s_key_stack;
 static js_ref_t* s_key_u;
 static js_ref_t* s_key_v;
@@ -514,8 +516,10 @@ pegasus_init(int api_level)
 
 	s_key_color = jsal_new_key("color");
 	s_key_done = jsal_new_key("done");
+	s_key_get = jsal_new_key("get");
 	s_key_inBackground = jsal_new_key("inBackground");
 	s_key_priority = jsal_new_key("priority");
+	s_key_set = jsal_new_key("set");
 	s_key_stack = jsal_new_key("stack");
 	s_key_u = jsal_new_key("u");
 	s_key_v = jsal_new_key("v");
@@ -898,8 +902,10 @@ pegasus_uninit(void)
 
 	jsal_unref(s_key_color);
 	jsal_unref(s_key_done);
+	jsal_unref(s_key_get);
 	jsal_unref(s_key_inBackground);
 	jsal_unref(s_key_priority);
+	jsal_unref(s_key_set);
 	jsal_unref(s_key_stack);
 	jsal_unref(s_key_u);
 	jsal_unref(s_key_v);
@@ -4960,6 +4966,8 @@ js_Transform_finalize(void* host_ptr)
 static bool
 js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 {
+	int          cell_desc_idx;
+	int          row_desc_idx;
 	transform_t* transform;
 	float*       values;
 
@@ -4967,6 +4975,14 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 
 	if (magic == 0) {
 		// on first access: set up getters and setters
+		jsal_push_undefined();
+		jsal_push_undefined();
+		jsal_to_propdesc_get_set(true, false);
+		jsal_push_undefined();
+		jsal_to_propdesc_value(false, true, false);
+		cell_desc_idx = jsal_normalize_index(-2);
+		row_desc_idx = jsal_normalize_index(-1);
+
 		jsal_push_this();
 		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
 		values = transform_values(transform);
@@ -4974,13 +4990,17 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 		for (i = 0; i < 4; ++i) {
 			jsal_push_new_object();
 			for (j = 0; j < 4; ++j) {
+				jsal_dup(cell_desc_idx);
 				jsal_push_new_function(js_Transform_get_matrix, "get", 0, (intptr_t)&values[j * 4 + i]);
 				jsal_push_new_function(js_Transform_set_matrix, "set", 0, (intptr_t)&values[j * 4 + i]);
-				jsal_to_propdesc_get_set(true, false);
+				jsal_put_prop_key(-3, s_key_set);
+				jsal_put_prop_key(-2, s_key_get);
 				jsal_def_prop_index(-2, j);
 
 			}
-			jsal_to_propdesc_value(false, true, false);
+			jsal_dup(row_desc_idx);
+			jsal_pull(-2);
+			jsal_put_prop_key(-2, s_key_value);
 			jsal_def_prop_index(-2, i);
 		}
 
