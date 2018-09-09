@@ -37,17 +37,24 @@
 #include "build.h"
 #include "jsal.h"
 
+enum mode
+{
+	MODE_BUILD,
+	MODE_CLEAN,
+	MODE_PACK,
+};
+
 static bool parse_command_line (int argc, char* argv[]);
 static void print_banner       (bool want_copyright, bool want_deps);
 static void print_cell_quote   (void);
 static void print_usage        (void);
 
-static bool    s_debug_build;
-static path_t* s_in_path;
-static path_t* s_out_path;
-static path_t* s_package_path;
-static bool    s_want_clean;
-static bool    s_want_rebuild;
+static bool      s_debug_build;
+static path_t*   s_in_path;
+static enum mode s_mode;
+static path_t*   s_out_path;
+static path_t*   s_package_path;
+static bool      s_want_rebuild;
 
 int
 main(int argc, char* argv[])
@@ -68,13 +75,17 @@ main(int argc, char* argv[])
 	build = build_new(s_in_path, s_out_path);
 	if (!build_eval(build, "$/Cellscript.mjs") && !build_eval(build, "$/Cellscript.js"))
 		goto shutdown;
-	if (s_want_clean)
-		build_clean(build);
-	else {
+	switch (s_mode) {
+	case MODE_BUILD:
+	case MODE_PACK:
 		if (!build_run(build, s_debug_build, s_want_rebuild))
 			goto shutdown;
-		if (s_package_path != NULL)
+		if (s_mode == MODE_PACK)
 			build_package(build, path_cstr(s_package_path));
+		break;
+	case MODE_CLEAN:
+		build_clean(build);
+		break;
 	}
 	retval = EXIT_SUCCESS;
 
@@ -89,6 +100,8 @@ shutdown:
 static bool
 parse_command_line(int argc, char* argv[])
 {
+	int         args_index = 1;
+	const char* command;
 	bool        have_debug_flag = false;
 	bool        have_in_dir = false;
 	path_t*     js_path;
@@ -100,15 +113,45 @@ parse_command_line(int argc, char* argv[])
 	size_t i_arg;
 
 	// establish default options
+	s_mode = MODE_BUILD;
 	s_in_path = path_new("./");
 	s_out_path = NULL;
 	s_package_path = NULL;
-	s_want_clean = false;
 	s_want_rebuild = false;
 	s_debug_build = false;
 
+	if (argc >= 2 && argv[1][0] != '-') {
+		args_index = 2;
+		command = argv[1];
+		if (strcmp(command, "build") == 0) {
+			s_mode = MODE_BUILD;
+		}
+		else if (strcmp(command, "clean") == 0) {
+			s_mode = MODE_CLEAN;
+		}
+		else if (strcmp(command, "pack") == 0) {
+			s_mode = MODE_PACK;
+		}
+		else if (strcmp(command, "version") == 0) {
+			print_banner(true, true);
+			return false;
+		}
+		else if (strcmp(command, "explode") == 0) {
+			print_cell_quote();
+			return false;
+		}
+		else if (strcmp(command, "help") == 0) {
+			print_usage();
+			return false;
+		}
+		else {
+			printf("cell: '%s' is not a valid Cell command\n", command);
+			return false;
+		}
+	}
+	
 	// validate and parse the command line
-	for (i = 1; i < argc; ++i) {
+	for (i = args_index; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
 			if (strcmp(argv[i], "--help") == 0) {
 				print_usage();
@@ -124,27 +167,8 @@ parse_command_line(int argc, char* argv[])
 				s_in_path = path_new_dir(argv[i]);
 				have_in_dir = true;
 			}
-			else if (strcmp(argv[i], "--explode") == 0) {
-				print_cell_quote();
-				return false;
-			}
-			else if (strcmp(argv[i], "--clean") == 0) {
-				s_want_clean = true;
-				have_in_dir = true;
-			}
 			else if (strcmp(argv[i], "--rebuild") == 0) {
 				s_want_rebuild = true;
-				have_in_dir = true;
-			}
-			else if (strcmp(argv[i], "--package") == 0) {
-				if (++i >= argc)
-					goto missing_argument;
-				path_free(s_package_path);
-				s_package_path = path_new(argv[i]);
-				if (path_filename(s_package_path) == NULL) {
-					printf("cell: '%s' argument cannot be a directory\n", argv[i - 1]);
-					return false;
-				}
 				have_in_dir = true;
 			}
 			else if (strcmp(argv[i], "--out-dir") == 0) {
@@ -191,20 +215,6 @@ parse_command_line(int argc, char* argv[])
 					path_free(s_out_path);
 					s_out_path = path_new_dir(argv[i]);
 					break;
-				case 'p':
-					if (++i >= argc) goto missing_argument;
-					path_free(s_package_path);
-					s_package_path = path_new(argv[i]);
-					if (path_filename(s_package_path) == NULL) {
-						printf("cell: '%s' argument cannot be a directory\n", short_args);
-						return false;
-					}
-					have_in_dir = true;
-					break;
-				case 'c':
-					s_want_clean = true;
-					have_in_dir = true;
-					break;
 				case 'r':
 					s_want_rebuild = true;
 					have_in_dir = true;
@@ -227,7 +237,14 @@ parse_command_line(int argc, char* argv[])
 				}
 			}
 		}
-		else {
+		else if (s_mode == MODE_PACK && s_package_path == NULL) {
+			s_package_path = path_new(argv[i]);
+			if (path_filename(s_package_path) == NULL) {
+				printf("cell: 'cell pack' target '%s' cannot be a directory\n", argv[i - 1]);
+				return false;
+			}
+			have_in_dir = true;
+		} else {
 			printf("cell: unexpected argument '%s'\n", argv[i]);
 			return false;
 		}
@@ -237,7 +254,11 @@ parse_command_line(int argc, char* argv[])
 	if (s_out_path == NULL)
 		s_out_path = path_new("dist/");
 	if (!have_debug_flag)
-		s_debug_build = s_package_path == NULL;
+		s_debug_build = s_mode == MODE_PACK;
+	if (s_mode == MODE_PACK && s_package_path == NULL) {
+		printf("cell: no filename was provided for 'cell %s'\n", command);
+		return false;
+	}
 
 	// check if a Cellscript exists
 	mjs_path = path_rebase(path_new("Cellscript.mjs"), s_in_path);
@@ -312,17 +333,14 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   cell [-i <in-dir>] [-o <out-dir>] [-p <out-pkgfile>] [options]\n");
-	printf("   cell -c [-i <in-dir>] [-o <out-dir>]\n");
+	printf("   cell build [-i <in-dir>] [-o <out-dir>] [options]\n");
+	printf("   cell clean [-i <in-dir>] [-o <out-dir>]\n");
+	printf("   cell pack [-i <in-dir>] [-o <out-dir>] [options] <packfile-name>\n");
 	printf("\n");
-	printf("OPTIONS:\n");
+	printf("BUILD/PACK OPTIONS:\n");
 	printf("   -i  --in-dir    Set the input directory (default is current working dir)  \n");
 	printf("   -o  --out-dir   Set the output directory (default is './dist')            \n");
-	printf("   -p  --package   Create an SPK game package with the result of the build   \n");
 	printf("   -r  --rebuild   Rebuild all targets, even those already up to date        \n");
-	printf("   -c  --clean     Clean up all artifacts from the previous build            \n");
 	printf("   -d  --debug     Include debugging information for use with SSj or SSj Blue\n");
 	printf("       --release   Build for distribution, without any debugging information \n");
-	printf("   -v  --version   Print the version number of Cell and its dependencies.    \n");
-	printf("       --help      Print this help text.                                     \n");
 }
