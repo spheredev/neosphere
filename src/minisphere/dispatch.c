@@ -36,6 +36,13 @@
 #include "script.h"
 #include "vector.h"
 
+struct then
+{
+	js_ref_t* callback;
+	js_ref_t* resolver;
+	js_ref_t* rejector;
+};
+
 struct job
 {
 	bool       background;
@@ -47,10 +54,13 @@ struct job
 	int        timer;
 	int64_t    token;
 	script_t*  script;
+	vector_t*  then_scripts;
 };
 
+static bool        do_then_callback  (int num_args, bool is_ctor, intptr_t magic);
 static struct job* job_from_token    (int64_t token);
 static void        recheck_busy_flag (void);
+static void        run_thens         (struct job* job);
 static int         sort_jobs         (const void* in_a, const void* in_b);
 
 static vector_t* s_exit_jobs;
@@ -152,6 +162,7 @@ dispatch_defer(script_t* script, int timeout, job_type_t hint, bool critical)
 	job.hint = hint;
 	job.script = script;
 	job.paused = false;
+	job.then_scripts = NULL;
 	job.timer = timeout;
 	job.token = s_next_token++;
 	queue = hint == JOB_ON_EXIT ? s_exit_jobs
@@ -188,6 +199,7 @@ dispatch_recur(script_t* script, double priority, bool background, job_type_t hi
 	job.priority = priority;
 	job.script = script;
 	job.paused = false;
+	job.then_scripts = NULL;
 	job.token = s_next_token++;
 	vector_push(s_recurring_jobs, &job);
 
@@ -229,6 +241,7 @@ dispatch_run(job_type_t hint)
 			job = (struct job*)vector_get(s_recurring_jobs, i);
 			if (job->finished) {
 				script_unref(job->script);
+				run_thens(job);
 				vector_remove(s_recurring_jobs, i--);
 			}
 		}
@@ -253,6 +266,7 @@ dispatch_run(job_type_t hint)
 			job = (struct job*)vector_get(queue, i);
 			if (job->finished) {
 				script_unref(job->script);
+				run_thens(job);
 				vector_remove(queue, i--);
 			}
 		}
@@ -263,6 +277,64 @@ dispatch_run(job_type_t hint)
 	}
 
 	return true;
+}
+
+js_ref_t*
+dispatch_then(int64_t token, js_ref_t* callback)
+{
+	// IMPORTANT: `callback` reference is stolen; the caller must not use its own reference
+	//            afterwards, not even to call jsal_unref()!
+	
+	struct job*  job;
+	js_ref_t*    promise;
+	js_ref_t*    rejector;
+	js_ref_t*    resolver;
+	script_t*    script;
+	struct then* then;
+
+	then = malloc(sizeof(struct then));
+	jsal_push_new_promise(&resolver, &rejector);
+	promise = jsal_ref(-1);
+	then->callback = callback;
+	then->resolver = resolver;
+	then->rejector = rejector;
+	jsal_push_new_function(do_then_callback, "", 0, false, (intptr_t)then);
+	script = script_new_function(-1);
+	jsal_pop(2);
+
+	if ((job = job_from_token(token))) {
+		if (job->then_scripts == NULL)
+			job->then_scripts = vector_new(sizeof(script_t*));
+		vector_push(job->then_scripts, &script);
+	}
+	else {
+		// job already finished, dispatch callback immediately
+		dispatch_defer(script, 0, JOB_ON_TICK, true);
+	}
+
+	return promise;
+}
+
+static bool
+do_then_callback(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t*    handler;
+	struct then* then;
+
+	then = (struct then*)magic;
+	jsal_push_ref_weak(then->callback);
+	jsal_push_undefined();
+	handler = jsal_try_call(1)
+		? then->resolver   // success, resolve promise with return value
+		: then->rejector;  // callback threw, reject promise
+	jsal_push_ref_weak(handler);
+	jsal_pull(-2);
+	jsal_call(1);
+	jsal_unref(then->callback);
+	jsal_unref(then->resolver);
+	jsal_unref(then->rejector);
+	free(then);
+	return false;
 }
 
 static struct job*
@@ -302,6 +374,24 @@ recheck_busy_flag(void)
 	iter = vector_enum(s_recurring_jobs);
 	while (job = iter_next(&iter))
 		s_is_busy |= !job->finished && !job->background;
+}
+
+static void
+run_thens(struct job* job)
+{
+	script_t* script;
+
+	iter_t iter;
+
+	if (job->then_scripts == NULL)
+		return;
+	
+	iter = vector_enum(job->then_scripts);
+	while (iter_next(&iter)) {
+		script = *(script_t**)iter.ptr;
+		dispatch_defer(script, 0, JOB_ON_TICK, true);
+	}
+	vector_free(job->then_scripts);
 }
 
 static int

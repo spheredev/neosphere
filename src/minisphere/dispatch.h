@@ -45,15 +45,16 @@ enum job_type
 	JOB_TYPE_MAX,
 } job_type_t;
 
-void    dispatch_init       (void);
-void    dispatch_uninit     (void);
-bool    dispatch_busy       (void);
-bool    dispatch_can_exit   (void);
-void    dispatch_cancel     (int64_t token);
-void    dispatch_cancel_all (bool recurring, bool also_critical);
-int64_t dispatch_defer      (script_t* script, int timeout, job_type_t hint, bool critical);
-void    dispatch_pause      (int64_t token, bool paused);
-int64_t dispatch_recur      (script_t* script, double priority, bool background, job_type_t hint);
-bool    dispatch_run        (job_type_t hint);
+void      dispatch_init       (void);
+void      dispatch_uninit     (void);
+bool      dispatch_busy       (void);
+bool      dispatch_can_exit   (void);
+void      dispatch_cancel     (int64_t token);
+void      dispatch_cancel_all (bool recurring, bool also_critical);
+int64_t   dispatch_defer      (script_t* script, int timeout, job_type_t hint, bool critical);
+void      dispatch_pause      (int64_t token, bool paused);
+int64_t   dispatch_recur      (script_t* script, double priority, bool background, job_type_t hint);
+bool      dispatch_run        (job_type_t hint);
+js_ref_t* dispatch_then       (int64_t token, js_ref_t* callback);
 
 #endif // SPHERE__DISPATCH_H__INCLUDED

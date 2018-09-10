@@ -344,6 +344,7 @@ static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr
 static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JobToken_cancel               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JobToken_pause_resume         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_JobToken_then                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Joystick_get_Default          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Joystick_getDevices           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Joystick_get_name             (int num_args, bool is_ctor, intptr_t magic);
@@ -994,6 +995,7 @@ pegasus_init(int api_level)
 		api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
+		api_define_method("JobToken", "then", js_JobToken_then, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
@@ -3024,6 +3026,23 @@ js_JobToken_pause_resume(int num_args, bool is_ctor, intptr_t magic)
 
 	dispatch_pause(*token, (bool)magic);
 	return false;
+}
+
+static bool
+js_JobToken_then(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* callback;
+	js_ref_t* promise;
+	int64_t*  token;
+
+	jsal_push_this();
+	token = jsal_require_class_obj(-1, PEGASUS_JOB_TOKEN);
+	callback = jsal_ref(0);
+
+	promise = dispatch_then(*token, callback);
+	jsal_push_ref(promise);
+	jsal_unref(promise);
+	return true;
 }
 
 static bool
