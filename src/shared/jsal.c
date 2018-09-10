@@ -1696,13 +1696,17 @@ js_ref_t*
 jsal_ref(int at_index)
 {
 	js_ref_t*  ref;
-	JsValueRef value;
+	js_ref_t*  stack_ref;
 
-	value = get_value(at_index);
-	JsAddRef(value, NULL);
+	// IMPORTANT: stack entry becomes a weak reference after this; to avoid a segfault, make
+	//            sure the value is off the stack before calling jsal_unref().
+	stack_ref = get_ref(at_index);
+	if (stack_ref->weak_ref)
+		JsAddRef(stack_ref->value, NULL);  // stack ref is weak, pin it
+	stack_ref->weak_ref = true;
 
 	ref = calloc(1, sizeof(js_ref_t));
-	ref->value = value;
+	ref->value = stack_ref->value;
 	return ref;
 }
 
