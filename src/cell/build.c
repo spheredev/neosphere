@@ -618,7 +618,7 @@ eval_module_file(fs_t* fs, const char* filename)
 	jsal_put_prop_string(-2, "require");  // module.require
 
 	// evaluate .mjs scripts as ES6 modules
-	if (path_has_extension(file_path, ".mjs")) {
+	if (path_has_extension(file_path, ".mjs") || path_filename_is(file_path, "Cellscript")) {
 		jsal_push_lstring_t(code_string);
 		is_module_loaded = jsal_try_eval_module(filename, NULL);
 		lstr_free(code_string);

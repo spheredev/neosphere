@@ -49,17 +49,27 @@ static void print_banner       (bool want_copyright, bool want_deps);
 static void print_cell_quote   (void);
 static void print_usage        (void);
 
+static
+const char* const CELLSCRIPT_NAMES[] =
+{
+	"Cellscript",
+	"Cellscript.mjs",
+	"Cellscript.js",
+};
+
 static bool      s_debug_build;
 static path_t*   s_in_path;
 static enum mode s_mode;
 static path_t*   s_out_path;
 static path_t*   s_package_path;
+static path_t*   s_script_path;
 static bool      s_want_rebuild;
 
 int
 main(int argc, char* argv[])
 {
 	build_t* build = NULL;
+	bool     evaled = false;
 	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
@@ -73,7 +83,7 @@ main(int argc, char* argv[])
 	printf("\n");
 
 	build = build_new(s_in_path, s_out_path);
-	if (!build_eval(build, "$/Cellscript.mjs") && !build_eval(build, "$/Cellscript.js"))
+	if (!build_eval(build, path_cstr(s_script_path)))
 		goto shutdown;
 	switch (s_mode) {
 	case MODE_BUILD_ONLY:
@@ -102,11 +112,11 @@ parse_command_line(int argc, char* argv[])
 {
 	int         args_index = 1;
 	const char* command = "build";
+	bool        found_script = false;
 	bool        have_debug_flag = false;
 	bool        have_in_dir = false;
-	path_t*     js_path;
-	path_t*     mjs_path;
 	int         num_targets = 0;
+	path_t*     script_path;
 	const char* short_args;
 
 	int    i;
@@ -117,6 +127,7 @@ parse_command_line(int argc, char* argv[])
 	s_in_path = path_new("./");
 	s_out_path = NULL;
 	s_package_path = NULL;
+	s_script_path = NULL;
 	s_want_rebuild = false;
 	s_debug_build = false;
 
@@ -273,11 +284,17 @@ parse_command_line(int argc, char* argv[])
 	}
 
 	// check if a Cellscript exists
-	mjs_path = path_rebase(path_new("Cellscript.mjs"), s_in_path);
-	js_path = path_rebase(path_new("Cellscript.js"), s_in_path);
-	if (!path_resolve(mjs_path, NULL) && !path_resolve(js_path, NULL)) {
-		path_free(mjs_path);
-		path_free(js_path);
+	for (i = 0; i < (int)(sizeof CELLSCRIPT_NAMES / sizeof(const char*)); ++i) {
+		script_path = path_rebase(path_new(CELLSCRIPT_NAMES[i]), s_in_path);
+		if (path_resolve(script_path, NULL)) {
+			s_script_path = path_new(CELLSCRIPT_NAMES[i]);
+			path_insert_hop(s_script_path, 0, "$");
+		}
+		path_free(script_path);
+		if (s_script_path != NULL)
+			break;  // found a Cellscript!
+	}
+	if (s_script_path == NULL) {
 		if (have_in_dir)
 			printf("cell: no Cellscript found in source directory '%s'.\n", path_cstr(s_in_path));
 		else
@@ -285,8 +302,6 @@ parse_command_line(int argc, char* argv[])
 		return false;
 	}
 
-	path_free(mjs_path);
-	path_free(js_path);
 	return true;
 
 missing_argument:
