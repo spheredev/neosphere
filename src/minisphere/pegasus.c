@@ -1163,10 +1163,12 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 		{ 1, "%s" },
 		{ 1, "%s.mjs" },
 		{ 1, "%s.js" },
+		{ 1, "%s.cjs" },
 		{ 1, "%s.json" },
 		{ 1, "%s/package.json" },
 		{ 1, "%s/index.mjs" },
 		{ 1, "%s/index.js" },
+		{ 1, "%s/index.cjs" },
 		{ 1, "%s/index.json" },
 	};
 

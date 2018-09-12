@@ -701,10 +701,12 @@ find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_o
 		"%s",
 		"%s.mjs",
 		"%s.js",
+		"%s.cjs",
 		"%s.json",
 		"%s/package.json",
 		"%s/index.mjs",
 		"%s/index.js",
+		"%s/index.cjs",
 		"%s/index.json",
 	};
 

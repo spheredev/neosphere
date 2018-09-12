@@ -55,6 +55,7 @@ const char* const CELLSCRIPT_NAMES[] =
 	"Cellscript",
 	"Cellscript.mjs",
 	"Cellscript.js",
+	"Cellscript.cjs",
 };
 
 static bool      s_debug_build;
