@@ -726,7 +726,7 @@ pegasus_init(int api_level)
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
 
-	api_define_subclass("Surface", PEGASUS_SURFACE, api_level >= 2 ? PEGASUS_TEXTURE : -1, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
