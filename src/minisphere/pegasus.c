@@ -975,8 +975,8 @@ pegasus_eval_module(const char* filename)
 	jsal_pegasus_push_require(filename);
 	jsal_put_prop_string(-2, "require");  // module.require
 
-	// evaluate .mjs scripts as ES modules ("mJS")
-	if (path_has_extension(file_path, ".mjs")) {
+	// evaluate anything other than *.cjs or *.json as an ES module
+	if (!path_has_extension(file_path, ".cjs") && !path_has_extension(file_path, ".json")) {
 		jsal_push_lstring_t(code_string);
 		debugger_add_source(filename, code_string);
 		is_module_loaded = jsal_try_eval_module(filename, debugger_source_name(filename));
@@ -1161,13 +1161,13 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 	PATTERNS[] =
 	{
 		{ 1, "%s" },
-		{ 1, "%s.mjs" },
 		{ 1, "%s.js" },
+		{ 1, "%s.mjs" },
 		{ 1, "%s.cjs" },
 		{ 1, "%s.json" },
 		{ 1, "%s/package.json" },
-		{ 1, "%s/index.mjs" },
 		{ 1, "%s/index.js" },
+		{ 1, "%s/index.mjs" },
 		{ 1, "%s/index.cjs" },
 		{ 1, "%s/index.json" },
 	};
@@ -1305,7 +1305,7 @@ handle_module_import(void)
 	}
 	free(specifier);
 
-	if (path_has_extension(path, ".mjs")) {
+	if (!path_has_extension(path, ".cjs")) {
 		source = game_read_file(g_game, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
 		jsal_push_string(debugger_source_name(path_cstr(path)));
@@ -1314,7 +1314,7 @@ handle_module_import(void)
 	}
 	else {
 		// ES module shim, allows 'import' to work with CommonJS modules
-		shim_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
 		shim_source = lstr_newf(
 			"/* ESM shim for CommonJS module */\n"
 			"export default require(\"%s\");", path_cstr(path));

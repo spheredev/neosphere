@@ -617,8 +617,8 @@ eval_module_file(fs_t* fs, const char* filename)
 	push_require(filename);
 	jsal_put_prop_string(-2, "require");  // module.require
 
-	// evaluate .mjs scripts as ES6 modules
-	if (path_has_extension(file_path, ".mjs") || path_filename_is(file_path, "Cellscript")) {
+	// evaluate anything other than *.cjs or *.json as an ES module
+	if (!path_has_extension(file_path, ".cjs") && !path_has_extension(file_path, ".json")) {
 		jsal_push_lstring_t(code_string);
 		is_module_loaded = jsal_try_eval_module(filename, NULL);
 		lstr_free(code_string);
@@ -699,13 +699,13 @@ find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_o
 	const char* const filenames[] =
 	{
 		"%s",
-		"%s.mjs",
 		"%s.js",
+		"%s.mjs",
 		"%s.cjs",
 		"%s.json",
 		"%s/package.json",
-		"%s/index.mjs",
 		"%s/index.js",
+		"%s/index.mjs",
 		"%s/index.cjs",
 		"%s/index.json",
 	};
@@ -796,7 +796,7 @@ handle_module_import(void)
 		}
 		jsal_throw();
 	}
-	if (path_has_extension(path, ".mjs")) {
+	if (!path_has_extension(path, ".cjs")) {
 		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
 		jsal_dup(-1);
@@ -805,7 +805,7 @@ handle_module_import(void)
 	}
 	else {
 		// ES module shim to allow 'import' of CommonJS modules
-		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		jsal_push_sprintf("%%/moduleShim-%d.js", s_next_module_id++);
 		jsal_dup(-1);
 		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
 	}
