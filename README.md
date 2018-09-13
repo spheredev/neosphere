@@ -64,22 +64,23 @@ features like arrow functions, destructuring, and modules.  A basic Cellscript
 might look like this:
 
 ```js
-/* Cellscript.mjs */
+/* Cellscript.js */
 
 // all values defined on Sphere.Game are JSON encoded at the end of the build
 // and written to game.json.
-Object.assign(Sphere.Game,
-{
+Object.assign(Sphere.Game, {
+    version:  2,  // target Sphere v2
+    apiLevel: 1,  // API L1 or higher
+
     name:       "My Game",
     author:     "Some Guy",
     summary:    "This game is awesome.",
     resolution: '320x240',
-    main:       '@/scripts/main.mjs',
+    main:       '@/scripts/main.js',
 });
 
 // install modules and scripts.  starting with miniSphere 5.0, Sphere supports
 // ES2015+ out of the box so no transpile is necessary!
-install('@/scripts', files('src/*.mjs', true));
 install('@/scripts', files('src/*.js', true));
 
 // install game assets
