@@ -934,15 +934,17 @@ pegasus_eval_module(const char* filename)
 	//       return false and the error will be left on top of the stack for the caller to deal
 	//       with.
 
-	lstring_t* code_string;
-	path_t*    dir_path;
-	path_t*    file_path;
-	bool       is_module_loaded;
-	size_t     source_size;
-	char*      source;
+	lstring_t*  code_string;
+	path_t*     dir_path;
+	path_t*     file_path;
+	const char* file_type;
+	bool        is_module_loaded;
+	size_t      source_size;
+	char*       source;
 
 	file_path = path_new(filename);
 	dir_path = path_strip(path_dup(file_path));
+	file_type = game_file_type(g_game, filename);
 
 	// is the requested module already in the cache?
 	jsal_push_hidden_stash();
@@ -975,8 +977,8 @@ pegasus_eval_module(const char* filename)
 	jsal_pegasus_push_require(filename);
 	jsal_put_prop_string(-2, "require");  // module.require
 
-	// evaluate anything other than *.cjs or *.json as an ES module
-	if (!path_has_extension(file_path, ".cjs") && !path_has_extension(file_path, ".json")) {
+	// evaluate `javascript-module` file type as an ES module
+	if (strcmp(file_type, "javascript-module") == 0) {
 		jsal_push_lstring_t(code_string);
 		debugger_add_source(filename, code_string);
 		is_module_loaded = jsal_try_eval_module(filename, debugger_source_name(filename));
@@ -996,7 +998,7 @@ pegasus_eval_module(const char* filename)
 	jsal_put_prop_string(-2, filename);
 	jsal_pop(2);
 
-	if (strcmp(path_extension(file_path), ".json") == 0) {
+	if (strcmp(file_type, "json") == 0) {
 		// JSON file, decode to JavaScript object
 		jsal_push_lstring_t(code_string);
 		lstr_free(code_string);
@@ -1268,13 +1270,14 @@ handle_module_import(void)
 		"#/runtime",
 	};
 
-	char*      caller_id = NULL;
-	path_t*    path;
-	char*      shim_name;
-	lstring_t* shim_source;
-	char*      source;
-	size_t     source_len;
-	char*      specifier;
+	char*       caller_id = NULL;
+	const char* file_type;
+	path_t*     path;
+	char*       shim_name;
+	lstring_t*  shim_source;
+	char*       source;
+	size_t      source_len;
+	char*       specifier;
 
 	int i;
 
@@ -1305,7 +1308,8 @@ handle_module_import(void)
 	}
 	free(specifier);
 
-	if (!path_has_extension(path, ".cjs")) {
+	file_type = game_file_type(g_game, path_cstr(path));
+	if (strcmp(file_type, "javascript-module") == 0) {
 		source = game_read_file(g_game, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
 		jsal_push_string(debugger_source_name(path_cstr(path)));
