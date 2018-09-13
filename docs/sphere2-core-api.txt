@@ -240,7 +240,7 @@ Sphere.Compiler [read-only] [L1]
     tool used to make the game distribution.  If no compiler information is
     available for the current game, this evaluates to `undefined`.
 
-Sphere.Game [non-replaceable]
+Sphere.Game [non-replaceable] [L1]
 
     An object whose properties describe the currently running game.  The object
     consists of everything in the JSON manifest plus any fields synthesized by
@@ -881,7 +881,7 @@ What would a game be without the ability for the player to control it?  The
 `Keyboard` object allows your game to accept input via the keyboard, the most
 common input method for a PC game.
 
-Key [enumeration]
+Key [enumeration] [L1]
 
     Specifies a keyboard key.  Can be one of the following:
 
@@ -1098,7 +1098,7 @@ common input method for games.  As with the `Keyboard` object, `Mouse` provides
 an event queue which accumulates clicks and other events until the game is
 ready to process them.
 
-MouseKey [enumeration]
+MouseKey [enumeration] [L1]
 
     Specifies a mouse click or other event (such as a wheel movement).  Can
     be one of the following:
@@ -1433,7 +1433,7 @@ A `Shape` represents a group of textured triangles, line segments, or points to
 be drawn to a surface.  Shapes can be drawn directly, or added to a `Model` to
 group related rendering operations together.
 
-ShapeType [enumeration]
+ShapeType [enumeration] [L1]
 
     Specifies the type of graphics primitive represented by a Shape object.
     Can be one of the following:
@@ -1697,7 +1697,7 @@ enables render-to-texture effects to be implemented.
 Note: Surfaces can only be used as textures under API level 2 or higher.  When
       targeting API level 1 you must call `.toTexture()` (see below) first.
 
-Surface.Screen [non-replaceable]
+Surface.Screen [non-replaceable] [L1]
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
