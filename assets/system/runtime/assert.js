@@ -160,8 +160,8 @@ function AssertionError(options)
 
 function _checkIfThrows(block, expected)
 {
-	var hasThrown = false;
-	var actual;
+	let hasThrown = false;
+	let actual;
 	try {
 		block();
 	}
@@ -204,19 +204,19 @@ function _equiv(a, b, strict)
 
 	// if we reach this point, it means both values are object references, so
 	// we perform a recursive memberwise comparison to test equivalence.
-	var aPrototype = Object.getPrototypeOf(a);
-	var bPrototype = Object.getPrototypeOf(b);
+	let aPrototype = Object.getPrototypeOf(a);
+	let bPrototype = Object.getPrototypeOf(b);
 	if (strict && aPrototype !== bPrototype)
 		return false;
-	var aKeys = Object.keys(a).sort();
-	var bKeys = Object.keys(b).sort();
+	let aKeys = Object.keys(a).sort();
+	let bKeys = Object.keys(b).sort();
 	if (aKeys.length !== bKeys.length)
 		return false;
-	for (var i = aKeys.length - 1; i >= 0; --i) {
+	for (let i = aKeys.length - 1; i >= 0; --i) {
 		if (aKeys[i] !== bKeys[i])
 			return false;
-		var valueA = a[aKeys[i]];
-		var valueB = b[bKeys[i]];
+		let valueA = a[aKeys[i]];
+		let valueB = b[bKeys[i]];
 		if (!_equiv(valueA, valueB, strict))
 			return false;
 	}
