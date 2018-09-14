@@ -401,6 +401,7 @@ const char*
 game_file_type(const game_t* it, const char* filename)
 {
 	const char* extension;
+	bool        in_system;
 	const char* map_from;
 	const char* map_to;
 	path_t*     path;
@@ -410,12 +411,13 @@ game_file_type(const game_t* it, const char* filename)
 	int    i;
 
 	path = path_new(filename);
+	in_system = path_num_hops(path) > 0 && path_hop_is(path, 0, "#");
 	extension = path_extension(path);
 	if (!path_is_file(path)) {
 		type_name = "directory";
 		goto finished;
 	}
-	else if (it->file_type_map != NULL) {
+	else if (it->file_type_map != NULL && !in_system) {
 		iter = vector_enum(it->file_type_map);
 		while (iter_next(&iter)) {
 			map_from = *(const char**)iter.ptr;
@@ -428,7 +430,7 @@ game_file_type(const game_t* it, const char* filename)
 		}
 	}
 
-	// not found in game manifest, check default mappings
+	// no fileTypes table or file is in `#/`, check default mappings
 	i = 0;
 	while ((map_from = DEFAULT_TYPE_MAP[i++]) != NULL) {
 		map_to = DEFAULT_TYPE_MAP[i++];
