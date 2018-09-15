@@ -1163,14 +1163,12 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 	PATTERNS[] =
 	{
 		{ 1, "%s" },
-		{ 1, "%s.js" },
 		{ 1, "%s.mjs" },
-		{ 1, "%s.cjs" },
+		{ 1, "%s.js" },
 		{ 1, "%s.json" },
 		{ 1, "%s/package.json" },
-		{ 1, "%s/index.js" },
 		{ 1, "%s/index.mjs" },
-		{ 1, "%s/index.cjs" },
+		{ 1, "%s/index.js" },
 		{ 1, "%s/index.json" },
 	};
 
@@ -1318,7 +1316,7 @@ handle_module_import(void)
 	}
 	else {
 		// ES module shim, allows 'import' to work with CommonJS modules
-		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
+		shim_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
 		shim_source = lstr_newf(
 			"/* ESM shim for CommonJS module */\n"
 			"export default require(\"%s\");", path_cstr(path));
