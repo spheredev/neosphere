@@ -1426,8 +1426,7 @@ js_Sphere_get_Engine(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_get_Game(int num_args, bool is_ctor, intptr_t magic)
 {
-	jsal_push_lstring_t(game_manifest(g_game));
-	jsal_parse(-1);
+	jsal_push_ref_weak(game_manifest(g_game));
 	cache_value_to_this("Game");
 	return true;
 }

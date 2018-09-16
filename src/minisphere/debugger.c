@@ -83,8 +83,7 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 
 	// load the source map, if one is available
 	s_have_source_map = false;
-	json_index = jsal_push_lstring_t(game_manifest(g_game));
-	jsal_parse(json_index);
+	json_index = jsal_push_ref_weak(game_manifest(g_game));
 
 	jsal_push_hidden_stash();
 	jsal_del_prop_string(-1, "debugMap");

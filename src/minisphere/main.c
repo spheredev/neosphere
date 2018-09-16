@@ -676,13 +676,16 @@ on_error:
 static void
 shutdown_engine(void)
 {
-	kb_save_keymap();
-
 	jsal_enable_vm(true);
+	
+	kb_save_keymap();
 
 #if defined(MINISPHERE_SPHERUN)
 	debugger_uninit();
 #endif
+
+	game_unref(g_game);
+	g_game = NULL;
 
 	map_engine_uninit();
 	shutdown_input();
@@ -706,8 +709,6 @@ shutdown_engine(void)
 	if (s_event_queue != NULL)
 		al_destroy_event_queue(s_event_queue);
 	s_event_queue = NULL;
-	game_unref(g_game);
-	g_game = NULL;
 	al_uninstall_system();
 }
 

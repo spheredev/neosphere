@@ -1545,13 +1545,13 @@ jsal_push_number(double value)
 }
 
 int
-jsal_push_ref(js_ref_t* ref)
+jsal_push_ref(const js_ref_t* ref)
 {
 	return push_value(ref->value, false);
 }
 
 int
-jsal_push_ref_weak(js_ref_t* ref)
+jsal_push_ref_weak(const js_ref_t* ref)
 {
 	// IMPORTANT: value is stored on the value stack as a weak reference.  to avoid a
 	//            nasty segfault, avoid calling jsal_unref() until you know for sure the
@@ -2280,7 +2280,8 @@ jsal_unref(js_ref_t* ref)
 {
 	if (ref == NULL)
 		return;
-	JsRelease(ref->value, NULL);
+	if (!ref->weak_ref)
+		JsRelease(ref->value, NULL);
 	free(ref);
 }
 

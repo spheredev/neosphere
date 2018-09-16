@@ -62,7 +62,7 @@ struct game
 	windowstyle_t* default_windowstyle;
 	vector_t*      file_type_map;
 	bool           fullscreen;
-	lstring_t*     manifest;
+	js_ref_t*      manifest;
 	lstring_t*     name;
 	size2_t        resolution;
 	path_t*        root_path;
@@ -112,6 +112,7 @@ game_t*
 game_open(const char* game_path)
 {
 	game_t*     game;
+	lstring_t*  json_text;
 	package_t*  package;
 	path_t*     path;
 	size2_t     resolution;
@@ -170,8 +171,7 @@ game_open(const char* game_path)
 		jsal_push_string(path_cstr(game->script_path));
 		jsal_put_prop_string(-2, "main");
 
-		jsal_stringify(-1);
-		game->manifest = lstr_new(jsal_get_string(-1));
+		game->manifest = jsal_ref(-1);
 		jsal_pop(1);
 	}
 	else {  // default case, unpacked game folder
@@ -185,13 +185,14 @@ game_open(const char* game_path)
 	if (game->name == NULL) {
 		if ((sgm_text = game_read_file(game, "@/game.json", &sgm_size))) {
 			console_log(1, "parsing JSON manifest for game #%u", s_next_game_id);
-			game->manifest = lstr_from_cp1252(sgm_text, sgm_size);
-			if (!try_load_s2gm(game, game->manifest)) {
+			json_text = lstr_from_utf8(sgm_text, sgm_size, true);
+			if (!try_load_s2gm(game, json_text)) {
 				console_log(0, "%s", jsal_to_string(-1));
 				console_log(0, "   @ [@/game.json:0]");
 				jsal_pop(1);
 				goto on_error;
 			}
+			lstr_free(json_text);
 			free(sgm_text);
 			sgm_text = NULL;
 		}
@@ -223,8 +224,7 @@ game_open(const char* game_path)
 			jsal_push_string(path_cstr(game->script_path));
 			jsal_put_prop_string(-2, "main");
 
-			jsal_stringify(-1);
-			game->manifest = lstr_new(jsal_get_string(-1));
+			game->manifest = jsal_ref(-1);
 			jsal_pop(1);
 		}
 		else {
@@ -290,7 +290,7 @@ game_unref(game_t* it)
 	free(it->compiler);
 	path_free(it->script_path);
 	path_free(it->root_path);
-	lstr_free(it->manifest);
+	jsal_unref(it->manifest);
 	free(it);
 }
 
@@ -511,7 +511,7 @@ game_fullscreen(const game_t* it)
 	return it->fullscreen;
 }
 
-const lstring_t*
+const js_ref_t*
 game_manifest(const game_t* it)
 {
 	return it->manifest;
@@ -1050,6 +1050,8 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	if (!jsal_try_parse(-1))
 		goto on_json_error;
 
+	game->manifest = jsal_ref(-1);
+	
 	if (!jsal_get_prop_string(-1, "name") || !jsal_is_string(-1))
 		goto on_error;
 	game->name = lstr_new(jsal_get_string(-1));

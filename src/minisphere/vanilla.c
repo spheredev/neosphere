@@ -2644,15 +2644,10 @@ js_GetGameList(int num_args, bool is_ctor, intptr_t magic)
 			while ((file_info = al_read_directory(fse))) {
 				path = path_new(al_get_fs_entry_name(file_info));
 				if ((game = game_open(path_cstr(path)))) {
-					jsal_push_lstring_t(game_manifest(game));
-					if (jsal_try_parse(-1)) {
-						jsal_push_string(path_cstr(path));
-						jsal_put_prop_string(-2, "directory");
-						jsal_put_prop_index(-2, j++);
-					}
-					else {
-						jsal_pop(1);
-					}
+					jsal_push_ref_weak(game_manifest(game));
+					jsal_push_string(path_cstr(path));
+					jsal_put_prop_string(-2, "directory");
+					jsal_put_prop_index(-2, j++);
 					game_unref(game);
 				}
 				path_free(path);
