@@ -334,13 +334,13 @@ main(int argc, char* argv[])
 	script_path = game_script_path(g_game);
 	api_version = game_version(g_game);
 	eval_succeeded = api_version >= 2
-		? pegasus_eval_module(path_cstr(script_path))
+		? pegasus_try_require(path_cstr(script_path))
 		: script_eval(path_cstr(script_path));
 	if (!eval_succeeded)
 		goto on_js_error;
 
-	// in Sphere v2 mode, the main script is loaded as a module (either CommonJS or mJS).
-	// check for a default export and `new` it if possible, then call newObj.start().
+	// in Sphere v2 mode, the main script is loaded as a module (either CommonJS or ESM).
+	// check for a default export and `new` it if possible, then call obj.start().
 	if (api_version >= 2 && jsal_is_object(-1)) {
 		jsal_get_prop_string(-1, "default");
 		if (jsal_is_async_function(-1)) {

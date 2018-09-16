@@ -136,7 +136,7 @@ static void js_Tool_finalize            (void* host_ptr);
 
 static void    cache_value_to_this  (const char* key);
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
-static bool    eval_module_file     (fs_t* fs, const char* filename);
+static bool    try_eval_module     (fs_t* fs, const char* filename);
 static path_t* find_module_file     (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
 static void    handle_module_import (void);
 static bool    install_target       (int num_args, bool is_ctor, intptr_t magic);
@@ -331,7 +331,7 @@ build_eval(build_t* build, const char* filename)
 
 	visor_begin_op(build->visor, "evaluating '%s'", filename);
 	build->timestamp = stats.st_mtime;
-	if (!eval_module_file(build->fs, filename)) {
+	if (!try_eval_module(build->fs, filename)) {
 		build->crashed = true;
 		is_ok = false;
 		if (jsal_is_error(-1)) {
@@ -562,137 +562,6 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 	visor_end_op(build->visor);
 }
 
-static bool
-eval_module_file(fs_t* fs, const char* filename)
-{
-	// HERE BE DRAGONS!
-	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
-	// very messy very quickly when dealing with object properties.  I tried to add
-	// comments to illuminate what's going on, but it's still likely to be confusing for
-	// someone not familiar with Duktape code.  proceed with caution.
-
-	// notes:
-	//     - the final value of 'module.exports' is left on top of the Duktape value stack.
-	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
-	//       behavior, the filename should be in canonical form.
-	//     - this is a protected call.  if the module being loaded throws, the error will be
-	//       caught and left on top of the stack for the caller to deal with.
-
-	lstring_t*  code_string;
-	path_t*     dir_path;
-	path_t*     file_path;
-	bool        is_module_loaded;
-	size_t      source_size;
-	char*       source;
-
-	file_path = path_new(filename);
-	dir_path = path_strip(path_dup(file_path));
-
-	// is the requested module already in the cache?
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	if (jsal_get_prop_string(-1, filename)) {
-		jsal_remove(-2);
-		jsal_remove(-2);
-		goto have_module;
-	}
-	else {
-		jsal_pop(3);
-	}
-
-	source = fs_fslurp(fs, filename, &source_size);
-	code_string = lstr_from_utf8(source, source_size, true);
-	free(source);
-
-	// construct a module object for the new module
-	jsal_push_new_object();  // module object
-	jsal_push_new_object();
-	jsal_put_prop_string(-2, "exports");  // module.exports = {}
-	jsal_push_string(filename);
-	jsal_put_prop_string(-2, "filename");  // module.filename
-	jsal_push_string(filename);
-	jsal_put_prop_string(-2, "id");  // module.id
-	jsal_push_boolean(false);
-	jsal_put_prop_string(-2, "loaded");  // module.loaded = false
-	push_require(filename);
-	jsal_put_prop_string(-2, "require");  // module.require
-
-	// evaluate anything matching the pattern *.mjs as an ES module
-	if (path_has_extension(file_path, ".mjs") || path_filename_is(file_path, "Cellscript")) {
-		jsal_push_lstring_t(code_string);
-		is_module_loaded = jsal_try_eval_module(filename, NULL);
-		lstr_free(code_string);
-		if (!is_module_loaded)
-			goto on_error;
-		jsal_remove(-2);
-		return true;
-	}
-
-	// cache the module object in advance
-	// note: the reason this isn't done above is because we don't want mJS modules
-	//       to go into the CommonJS cache.
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, filename);
-	jsal_pop(2);
-
-	if (path_has_extension(file_path, ".json")) {
-		// JSON file, decode to JavaScript object
-		jsal_push_lstring_t(code_string);
-		lstr_free(code_string);
-		if (!jsal_try_parse(-1))
-			goto on_error;
-		jsal_put_prop_string(-2, "exports");
-	}
-	else {
-		// synthesize a function to wrap the module code.  this is the simplest way to
-		// implement CommonJS semantics and matches the behavior of Node.js.
-		jsal_push_sprintf("(function (exports, require, module, __filename, __dirname) {%s%s\n})",
-			strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
-			lstr_cstr(code_string));
-		if (!jsal_try_compile(filename))
-			goto on_error;
-		jsal_call(0);
-		jsal_push_new_object();
-		jsal_push_string("main");
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "name");
-		lstr_free(code_string);
-
-		// go, go, go!
-		jsal_dup(-2);                           // this = module
-		jsal_get_prop_string(-3, "exports");     // exports
-		jsal_get_prop_string(-4, "require");     // require
-		jsal_dup(-5);                           // module
-		jsal_push_string(filename);             // __filename
-		jsal_push_string(path_cstr(dir_path));  // __dirname
-		if (!jsal_try_call_method(5))
-			goto on_error;
-		jsal_pop(1);
-	}
-
-	// module executed successfully, set 'module.loaded' to true
-	jsal_push_boolean(true);
-	jsal_put_prop_string(-2, "loaded");
-
-have_module:
-	// 'module' is on the stack, we need 'module.exports'
-	jsal_get_prop_string(-1, "exports");
-	jsal_remove(-2);
-	return true;
-
-on_error:
-	// note: it's assumed that at this point, the only things left in our portion of the
-	//       value stack are the module object and the thrown error.
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	jsal_del_prop_string(-1, filename);
-	jsal_pop(2);
-	jsal_remove(-2);  // leave the error on the stack
-	return false;
-}
-
 static path_t*
 find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_origin)
 {
@@ -780,7 +649,7 @@ handle_module_import(void)
 		caller_id = jsal_require_string(1);
 
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "relative import() outside of an mJS module");
+		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of an ESM module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i])))
@@ -971,6 +840,143 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 	a = *(const target_t**)p_a;
 	b = *(const target_t**)p_b;
 	return strcmp(path_cstr(target_path(a)), path_cstr(target_path(b)));
+}
+
+static bool
+try_eval_module(fs_t* fs, const char* filename)
+{
+	// HERE BE DRAGONS!
+	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
+	// very messy very quickly when dealing with object properties.  I tried to add
+	// comments to illuminate what's going on, but it's still likely to be confusing for
+	// someone not familiar with Duktape code.  proceed with caution.
+
+	// notes:
+	//     - the final value of 'module.exports' is left on top of the Duktape value stack.
+	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
+	//       behavior, the filename should be in canonical form.
+	//     - this is a protected call.  if the module being loaded throws, the error will be
+	//       caught and left on top of the stack for the caller to deal with.
+
+	lstring_t*  code_string;
+	path_t*     dir_path;
+	path_t*     file_path;
+	bool        is_esm_module;
+	bool        is_module_loaded;
+	size_t      source_size;
+	char*       source;
+
+	file_path = path_new(filename);
+	dir_path = path_strip(path_dup(file_path));
+
+	// evaluate anything matching the pattern *.mjs as an ES module
+	is_esm_module = path_has_extension(file_path, ".mjs") || path_filename_is(file_path, "Cellscript");
+	if (is_esm_module) {
+		source = fs_fslurp(fs, filename, &source_size);
+		code_string = lstr_from_utf8(source, source_size, true);
+		free(source);
+		jsal_push_lstring_t(code_string);
+		is_module_loaded = jsal_try_eval_module(filename, NULL);
+		lstr_free(code_string);
+		if (!is_module_loaded)
+			goto on_error;
+		goto have_module;
+	}
+
+	// is the requested module already in the cache?
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "moduleCache");
+	if (jsal_get_prop_string(-1, filename)) {
+		jsal_remove(-2);
+		jsal_remove(-2);
+		goto have_module;
+	}
+	else {
+		jsal_pop(3);
+	}
+
+	source = fs_fslurp(fs, filename, &source_size);
+	code_string = lstr_from_utf8(source, source_size, true);
+	free(source);
+
+	// construct a CommonJS module object for the new module
+	jsal_push_new_object();  // module object
+	jsal_push_new_object();
+	jsal_put_prop_string(-2, "exports");  // module.exports = {}
+	jsal_push_string(filename);
+	jsal_put_prop_string(-2, "filename");  // module.filename
+	jsal_push_string(filename);
+	jsal_put_prop_string(-2, "id");  // module.id
+	jsal_push_boolean(false);
+	jsal_put_prop_string(-2, "loaded");  // module.loaded = false
+	push_require(filename);
+	jsal_put_prop_string(-2, "require");  // module.require
+
+	// cache the module object in advance
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "moduleCache");
+	jsal_dup(-3);
+	jsal_put_prop_string(-2, filename);
+	jsal_pop(2);
+
+	if (path_has_extension(file_path, ".json")) {
+		// JSON file, decode to JavaScript object
+		jsal_push_lstring_t(code_string);
+		lstr_free(code_string);
+		if (!jsal_try_parse(-1))
+			goto on_error;
+		jsal_put_prop_string(-2, "exports");
+	}
+	else {
+		// synthesize a function to wrap the module code.  this is the simplest way to
+		// implement CommonJS semantics and matches the behavior of Node.js.
+		jsal_push_sprintf("(function (exports, require, module, __filename, __dirname) {%s%s\n})",
+			strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
+			lstr_cstr(code_string));
+		if (!jsal_try_compile(filename))
+			goto on_error;
+		jsal_call(0);
+		jsal_push_new_object();
+		jsal_push_string("main");
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "name");
+		lstr_free(code_string);
+
+		// go, go, go!
+		jsal_dup(-2);                           // this = module
+		jsal_get_prop_string(-3, "exports");     // exports
+		jsal_get_prop_string(-4, "require");     // require
+		jsal_dup(-5);                           // module
+		jsal_push_string(filename);             // __filename
+		jsal_push_string(path_cstr(dir_path));  // __dirname
+		if (!jsal_try_call_method(5))
+			goto on_error;
+		jsal_pop(1);
+	}
+
+	// module executed successfully, set 'module.loaded' to true
+	jsal_push_boolean(true);
+	jsal_put_prop_string(-2, "loaded");
+
+have_module:
+	if (!is_esm_module) {
+		// 'module` is on the stack; we need `module.exports'.
+		jsal_get_prop_string(-1, "exports");
+		jsal_replace(-2);
+	}
+	return true;
+
+on_error:
+	// note: it's assumed that at this point, the only thing(s) left in our portion of the
+	//       value stack are the module object (for CommonJS) and the thrown error.
+	if (!is_esm_module) {
+		jsal_push_hidden_stash();
+		jsal_get_prop_string(-1, "moduleCache");
+		jsal_del_prop_string(-1, filename);
+		jsal_pop(2);
+		jsal_replace(-2);  // leave the error on the stack
+	}
+	return false;
 }
 
 static bool
@@ -1260,7 +1266,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	}
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't load JS module '%s'", module_id);
-	if (!eval_module_file(s_build->fs, path_cstr(path)))
+	if (!try_eval_module(s_build->fs, path_cstr(path)))
 		jsal_throw();
 	return true;
 }

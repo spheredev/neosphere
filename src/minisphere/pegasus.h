@@ -64,7 +64,7 @@ enum pegasus_type
 
 void pegasus_init             (int api_level);
 void pegasus_uninit           (void);
-bool pegasus_eval_module      (const char* filename);
 bool pegasus_start_event_loop (void);
+bool pegasus_try_require      (const char* filename);
 
 #endif // SPHERE__PEGASUS_H__INCLUDED

@@ -918,7 +918,20 @@ pegasus_uninit(void)
 }
 
 bool
-pegasus_eval_module(const char* filename)
+pegasus_start_event_loop(void)
+{
+	if (jsal_try(handle_main_event_loop, 0)) {
+		jsal_pop(1);  // don't need return value
+		return true;
+	}
+	else {
+		// leave the error for the caller, don't pop it off
+		return false;
+	}
+}
+
+bool
+pegasus_try_require(const char* filename)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  JSAL's stack-based API is powerful, but gets very
@@ -938,6 +951,7 @@ pegasus_eval_module(const char* filename)
 	path_t*     dir_path;
 	path_t*     file_path;
 	const char* file_type;
+	bool        is_esm_module = false;
 	bool        is_module_loaded;
 	size_t      source_size;
 	char*       source;
@@ -945,6 +959,21 @@ pegasus_eval_module(const char* filename)
 	file_path = path_new(filename);
 	dir_path = path_strip(path_dup(file_path));
 	file_type = game_file_type(g_game, filename);
+
+	// evaluate `javascript-module` file type as an ES module
+	is_esm_module = strcmp(file_type, "javascript-module") == 0;
+	if (is_esm_module) {
+		source = game_read_file(g_game, filename, &source_size);
+		code_string = lstr_from_utf8(source, source_size, true);
+		free(source);
+		jsal_push_lstring_t(code_string);
+		debugger_add_source(filename, code_string);
+		is_module_loaded = jsal_try_eval_module(filename, debugger_source_name(filename));
+		lstr_free(code_string);
+		if (!is_module_loaded)
+			goto on_error;
+		goto have_module;
+	}
 
 	// is the requested module already in the cache?
 	jsal_push_hidden_stash();
@@ -964,7 +993,7 @@ pegasus_eval_module(const char* filename)
 	code_string = lstr_from_utf8(source, source_size, true);
 	free(source);
 
-	// construct a module object for the new module
+	// construct a CommonJS module object for the new module
 	jsal_push_new_object();  // module object
 	jsal_push_new_object();
 	jsal_put_prop_string(-2, "exports");  // module.exports = {}
@@ -977,21 +1006,7 @@ pegasus_eval_module(const char* filename)
 	jsal_pegasus_push_require(filename);
 	jsal_put_prop_string(-2, "require");  // module.require
 
-	// evaluate `javascript-module` file type as an ES module
-	if (strcmp(file_type, "javascript-module") == 0) {
-		jsal_push_lstring_t(code_string);
-		debugger_add_source(filename, code_string);
-		is_module_loaded = jsal_try_eval_module(filename, debugger_source_name(filename));
-		lstr_free(code_string);
-		if (!is_module_loaded)
-			goto on_error;
-		jsal_remove(-2);
-		return true;
-	}
-
 	// cache the module object in advance
-	// note: the reason this isn't done above is because we don't want mJS modules
-	//       to go into the CommonJS cache.
 	jsal_push_hidden_stash();
 	jsal_get_prop_string(-1, "moduleCache");
 	jsal_dup(-3);
@@ -1038,33 +1053,24 @@ pegasus_eval_module(const char* filename)
 	jsal_put_prop_string(-2, "loaded");
 
 have_module:
-	// 'module` is on the stack, we need `module.exports'
-	jsal_get_prop_string(-1, "exports");
-	jsal_remove(-2);
+	if (!is_esm_module) {
+		// 'module` is on the stack; we need `module.exports'.
+		jsal_get_prop_string(-1, "exports");
+		jsal_replace(-2);
+	}
 	return true;
 
 on_error:
-	// note: it's assumed that at this point, the only things left in our portion of the
-	//       value stack are the module object and the thrown error.
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	jsal_del_prop_string(-1, filename);
-	jsal_pop(2);
-	jsal_remove(-2);  // leave the error on the stack
+	// note: it's assumed that at this point, the only thing(s) left in our portion of the
+	//       value stack are the module object (for CommonJS) and the thrown error.
+	if (!is_esm_module) {
+		jsal_push_hidden_stash();
+		jsal_get_prop_string(-1, "moduleCache");
+		jsal_del_prop_string(-1, filename);
+		jsal_pop(2);
+		jsal_replace(-2);  // leave the error on the stack
+	}
 	return false;
-}
-
-bool
-pegasus_start_event_loop(void)
-{
-	if (jsal_try(handle_main_event_loop, 0)) {
-		jsal_pop(1);  // don't need return value
-		return true;
-	}
-	else {
-		// leave the error for the caller, don't pop it off
-		return false;
-	}
 }
 
 static void
@@ -1288,7 +1294,7 @@ handle_module_import(void)
 	// relative path is nonsensical is a non-module context because the JS engine
 	// doesn't know where the request came from in that case
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "Relative import() outside of an mJS module");
+		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of an ESM module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if ((path = find_module_file(specifier, caller_id, PATHS[i], true)))
@@ -1391,7 +1397,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	}
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't load JS module '%s'", id);
-	if (!pegasus_eval_module(path_cstr(path)))
+	if (!pegasus_try_require(path_cstr(path)))
 		jsal_throw();
 	return true;
 }
