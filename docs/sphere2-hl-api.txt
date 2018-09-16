@@ -603,82 +603,6 @@ Joypad.P4 [read-only]
           considered.
 
 
-`Kami` Namespace
-----------------
-
-The Sphere Runtime comes with a powerful profiler called Kami which can track
-the execution time of functions in your codebase and compile it all into an
-easy-to-read table when the engine shuts down.  This allows you to see where
-you're game is spending the most time so you know where you need to make
-changes to speed things up.
-
-    import { Kami } from 'sphere-runtime';
-
-Kami.initialize([options]);
-
-    Initializes the profiler.  `options` is an object specifying the settings
-    for the profiler, as documented below.  Any options not explicitly provided
-    will take on their default settings.
-
-    options.includeEventLoop [default: true]
-
-	    By default, time spent in the event loop is included when compiling the
-	    results table.  If you would like to exclude that time and only profile
-	    your own code, you can set this to `false`.
-
-    options.sortResultsByCost [default: true]
-
-        Normally, Kami sorts the results by descending time cost.  To have the
-        results ordered alphabetically instead, set this to `false`.
-
-    Note: If you don't call this before attaching methods or taking samples,
-          Kami will call it internally and use the default settings.  Therefore
-          you must call this first if you want to use non-default options.
-
-Kami.attach(object, method_name[, display_name]);
-
-    Attaches the profiler to the specified method.  `object` is any JavaScript
-    object whose method is being profiled, and `method_name` is the name of the
-    method.  To profile all calls to a method regardless of the object they are
-    called on, you can call this on the prototype rather than a specific
-    object.
-
-    `display_name`, if provided, specifies how to display the profiled method
-    in the results table.  If no display name is given, Kami will try to detect
-    the name automatically, which doesn't always work correctly.
-
-Kami.attachClass(class[, display_name])
-
-    Attaches the profiler to all named methods of `class`, both static and
-    instance methods.  As above, if `display_name` is not provided, Kami will
-    try to auto-detect the class name.
-
-    Note: This will not attach to `Symbol` methods.  If you want to profile
-          those, use `Kami.attach()` (see above) to attach them manually.
-
-Kami.begin(description);
-
-    Begins a profiling sample.  This can be used to profile arbitrary sections
-    of code without needing to move them out into a separate function.  Returns
-    a sample token for you to pass to `Kami.end()` once the sampled operation
-    completes.
-
-Kami.end(sample_token);
-
-    Signals to Kami that the operation associated with `sample_token` has
-    completed.  The profiler will measure time elapsed since the corresponding
-    `Kami.begin()` and record it in the profile.
-
-Kami.finish();
-
-    Signals to Kami that profiling has finished.  All collected profiling data
-    will be compiled into a table and output to the console using `SSj.log()`.
-    All instrumented methods will be returned to their original state.
-
-    Note: Normally there is no need to call this manually, as the engine will
-          do so automatically before shutting down.
-
-
 `Logger` Object
 ---------------
 
@@ -949,12 +873,12 @@ Random.sample(array);
 
     Returns a randomly chosen item from the specified array.
 
-Random.string(length);
+Random.string([length]);
 
-    Returns a randomly generated string consisting of alphanumeric characters.
-    The generated string looks something like a YouTube video hash (e.g.
-    YlHRHDrKS) and is useful for uniquely identifying things, for example to
-    generate temporary filenames.
+    Returns a randomly generated string of consisting of `length` alphanumeric
+    characters.  The generated string looks something like a YouTube video hash
+    (e.g. YlHRHDrKS) and is useful for uniquely identifying things, for example
+    to generate temporary filenames.  `length` defaults to 10 if not specified.
 
 Random.uniform(mean, variance);
 
