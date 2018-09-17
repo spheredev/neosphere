@@ -35,6 +35,7 @@
 #include <dyad.h>
 #include "inferior.h"
 #include "session.h"
+#include "xoroshiro.h"
 
 struct cmdline
 {
@@ -286,9 +287,12 @@ print_cell_quote(void)
 		"I am the universe's END!!",
 		"I expected the end to be a little more dramatic...",
 		"Chanting a little prayer before you die?",
+		"Worst case scenario: You die and get stronger. IT DID WONDERS FOR ME!",
 		"Don't you realize yet you're up against the perfect weapon?!",
 		"YES! I can feel you slipping...!",
 		"These are your last minutes, boy. So try to make them COUNT!",
+		"What's this, your second wind? Or your dying gasp?",
+		"Behold the power... of TWO HANDS!",
 		"Would you stop interfering!?",
 		"You're all so anxious to die, aren't you? Well all you had to do WAS ASK!",
 		"Why can't you people JUST STAY DOWN!!",
@@ -298,10 +302,25 @@ print_cell_quote(void)
 		"I WAS PERFECT...!",
 	};
 
-	srand((unsigned int)time(NULL));
-	printf("Release it, Gohan--release everything! Remember all the pain he's caused, the\n");
-	printf("people he's hurt--now MAKE THAT YOUR POWER!!\n\n");
-	printf("    Cell says:\n    \"%s\"\n", MESSAGES[rand() % (sizeof MESSAGES / sizeof(const char*))]);
+	uint64_t header_id;
+	size_t   quote_id;
+	xoro_t*  rng;
+
+	rng = xoro_new((uint64_t)time(NULL));
+	header_id = xoro_gen_uint(rng) % 2;
+	quote_id = (size_t)xoro_gen_uint(rng) % (sizeof MESSAGES / sizeof(const char*));
+	xoro_unref(rng);
+
+	switch (header_id) {
+	case 0:
+		printf("Release it, Gohan--release everything! Remember all the pain he's caused, the\n");
+		printf("people he's hurt--now MAKE THAT YOUR POWER!!\n\n");
+		break;
+	case 1:
+		printf("You are more than just my son. You... are Son Gohan! Now: Plant your feet, grit\n");
+		printf("your teeth, and EAT! THAT! HORSE!\n\n");
+	}
+	printf("    Cell says:\n    \"%s\"\n", MESSAGES[quote_id]);
 }
 
 static void
