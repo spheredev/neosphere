@@ -596,6 +596,12 @@ FS.directoryExists(dir_name); [L1]
     Checks whether the specified directory exists and returns true if it does.
     Otherwise, returns false.
 
+FS.directoryOf(filename); [experimental]
+
+    Returns the full SphereFS path of the directory containing `filename`.  The
+    filename is resolved via the usual SphereFS rules, so if no directory info
+    is present, this function will return "@/".
+
 FS.evaluateScript(filename); [L1]
 
     Executes a JavaScript file in the global scope and returns the result.
@@ -610,6 +616,11 @@ FS.fileExists(filename); [L1]
 
     Checks whether the specified file exists and returns true if it does.
     Otherwise, returns false.
+
+FS.fileNameOf(filename); [experimental]
+
+    If `filename` contains a directory path, returns only the filename portion,
+    or `undefined` if there is no filename in the path.
 
 FS.fullPath(filename[, base_dir]); [L1]
 

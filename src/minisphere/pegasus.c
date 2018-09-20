@@ -273,8 +273,10 @@ static bool js_Dispatch_onUpdate             (int num_args, bool is_ctor, intptr
 static bool js_FS_createDirectory            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_deleteFile                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_directoryExists            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_directoryOf                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_evaluateScript             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_fileNameOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
@@ -850,9 +852,11 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
+		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
+		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
+		api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
-		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_method("Texture", "download", js_Texture_download, 0);
@@ -2155,6 +2159,20 @@ js_FS_directoryExists(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_FS_directoryOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	path_t*     path;
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+
+	path = path_strip(path_new(pathname));
+	jsal_push_string(path_cstr(path));
+	path_free(path);
+	return true;
+}
+
+static bool
 js_FS_evaluateScript(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
@@ -2176,6 +2194,26 @@ js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	jsal_push_boolean(game_file_exists(g_game, pathname));
+	return true;
+}
+
+static bool
+js_FS_fileNameOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* filename;
+	path_t*     path;
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+
+	path = path_new(pathname);
+	filename = path_filename(path);
+	path_free(path);
+
+	if (filename != NULL)
+		jsal_push_string(filename);
+	else
+		jsal_push_undefined();
 	return true;
 }
 
