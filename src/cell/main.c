@@ -296,7 +296,7 @@ parse_command_line(int argc, char* argv[])
 	}
 	if (s_script_path == NULL) {
 		if (have_in_dir)
-			printf("cell: no Cellscript found in source directory '%s'.\n", path_cstr(s_in_path));
+			printf("cell: no Cellscript found in source directory '%s'\n", path_cstr(s_in_path));
 		else
 			print_usage();
 		return false;
