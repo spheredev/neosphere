@@ -633,6 +633,10 @@ FS.fullPath(filename[, base_dir]); [L1]
     without regard to `base_dir`.  Otherwise, `fileName` is considered to be
     relative to `base_dir`.
 
+    Note: If `filename` refers to a known directory, the path string returned
+          by this function will end in a forward slash (`/`) even if `filename`
+          did not.
+
 FS.readFile(filename); [L1]
 
     Reads an entire UTF-8 text file into a JavaScript string.  This is a

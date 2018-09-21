@@ -502,6 +502,9 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 	path_insert_hop(path, 0, prefix);
 	free(prefix);
 	path_free(base_path);
+	
+	if (game_dir_exists(it, path_cstr(path)))
+		path_to_dir(path);
 	return path;
 }
 
