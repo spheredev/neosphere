@@ -47,14 +47,14 @@ FILE*         fs_fopen            (const fs_t* fs, const char* filename, const c
 void*         fs_fslurp           (const fs_t* fs, const char* filename, size_t* out_size);
 bool          fs_fspew            (const fs_t* fs, const char* filename, const void* data, size_t size);
 bool          fs_is_game_dir      (const fs_t* fs, const char* dirname);
-vector_t*     fs_list_dir         (const fs_t* fs, const char* dirname);
+vector_t*     fs_list_dir         (const fs_t* fs, const char* dirname, bool recursive);
 int           fs_mkdir            (const fs_t* fs, const char* dirname);
 int           fs_rename           (const fs_t* fs, const char* old_name, const char* new_name);
 int           fs_rmdir            (const fs_t* fs, const char* dirname);
 int           fs_stat             (const fs_t* fs, const char* filename, struct stat* p_stat);
 int           fs_unlink           (const fs_t* fs, const char* filename);
 int           fs_utime            (const fs_t* fs, const char* filename, struct utimbuf* in_times);
-directory_t*  directory_open      (fs_t* fs, const char* dirname);
+directory_t*  directory_open      (fs_t* fs, const char* dirname, bool recursive);
 void          directory_close     (directory_t* it);
 int           directory_num_files (directory_t* it);
 const char*   directory_pathname  (const directory_t* it);

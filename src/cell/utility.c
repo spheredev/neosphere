@@ -36,8 +36,6 @@
 #include "api.h"
 #include "fs.h"
 
-static bool do_decode_json (void* udata);
-
 void
 jsal_push_lstring_t(const lstring_t* string)
 {
@@ -51,7 +49,7 @@ jsal_require_lstring_t(int index)
 	size_t      length;
 
 	buffer = jsal_require_lstring(index, &length);
-	return lstr_from_cp1252(buffer, length);
+	return lstr_from_utf8(buffer, length, false);
 }
 
 const char*
@@ -102,7 +100,8 @@ fslurp(const char* filename, size_t *out_size)
 	if (!(file = fopen(filename, "rb")))
 		return false;
 	*out_size = (fseek(file, 0, SEEK_END), ftell(file));
-	if (!(buffer = malloc(*out_size))) goto on_error;
+	if (!(buffer = malloc(*out_size)))
+		goto on_error;
 	fseek(file, 0, SEEK_SET);
 	if (fread(buffer, 1, *out_size, file) != *out_size)
 		goto on_error;

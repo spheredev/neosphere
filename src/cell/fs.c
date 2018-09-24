@@ -53,9 +53,11 @@ struct directory
 	fs_t*     fs;
 	int       position;
 	path_t*   path;
+	bool      recursive;
 };
 
-static char* resolve (const fs_t* fs, const char* filename);
+static bool  help_list_dir (vector_t* list, const char* dirname, const path_t* origin_path, bool recursive);
+static char* resolve       (const fs_t* fs, const char* filename);
 
 fs_t*
 fs_new(const char* root_dir, const char* game_dir, const char* home_dir)
@@ -249,36 +251,34 @@ fs_is_game_dir(const fs_t* fs, const char* dirname)
 }
 
 vector_t*
-fs_list_dir(const fs_t* fs, const char* dirname)
+fs_list_dir(const fs_t* fs, const char* dirname, bool recursive)
 {
-	tinydir_dir  dir_info;
-	tinydir_file file_info;
-	vector_t*    list;
-	path_t*      origin_path;
-	path_t*      path;
-	char*        resolved_name;
+	vector_t* list = NULL;
+	path_t*   origin_path = NULL;
+	char*     resolved_name;
+
+	iter_t iter;
 
 	if (!(resolved_name = resolve(fs, dirname)))
-		return NULL;
+		goto on_error;
 
-	if (tinydir_open(&dir_info, resolved_name) != 0)
-		return NULL;
 	origin_path = path_new_dir(dirname);
 	list = vector_new(sizeof(path_t*));
-	while (dir_info.has_next) {
-		tinydir_readfile(&dir_info, &file_info);
-		tinydir_next(&dir_info);
-		if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
-			continue;
-		path = file_info.is_dir
-			? path_new_dir(file_info.name)
-			: path_new(file_info.name);
-		path_rebase(path, origin_path);
-		vector_push(list, &path);
-	}
+	if (!help_list_dir(list, resolved_name, origin_path, recursive))
+		goto on_error;
 	path_free(origin_path);
 	free(resolved_name);
 	return list;
+
+on_error:
+	if (list != NULL) {
+		iter = vector_enum(list);
+		while (iter_next(&iter))
+			path_free(*(path_t**)iter.ptr);
+		vector_free(list);
+	}
+	free(resolved_name);
+	return NULL;
 }
 
 int
@@ -386,7 +386,7 @@ fs_utime(const fs_t* fs, const char* filename, struct utimbuf* in_times)
 }
 
 directory_t*
-directory_open(fs_t* fs, const char* dirname)
+directory_open(fs_t* fs, const char* dirname, bool recursive)
 {
 	directory_t* directory;
 
@@ -396,6 +396,7 @@ directory_open(fs_t* fs, const char* dirname)
 	directory = calloc(1, sizeof(directory_t));
 	directory->fs = fs;
 	directory->path = path_new_dir(dirname);
+	directory->recursive = recursive;
 	return directory;
 }
 
@@ -406,9 +407,8 @@ directory_close(directory_t* it)
 
 	if (it->entries != NULL) {
 		iter = vector_enum(it->entries);
-		while (iter_next(&iter)) {
+		while (iter_next(&iter))
 			path_free(*(path_t**)iter.ptr);
-		}
 		vector_free(it->entries);
 	}
 	path_free(it->path);
@@ -445,7 +445,9 @@ directory_next(directory_t* it)
 
 	if (it->position >= vector_len(it->entries))
 		return NULL;
-	path = *(path_t**)vector_get(it->entries, it->position++);
+	do {
+		path = *(path_t**)vector_get(it->entries, it->position++);
+	} while (!it->recursive || !path_is_file(path));
 	return path;
 }
 
@@ -456,13 +458,12 @@ directory_rewind(directory_t* it)
 
 	iter_t iter;
 
-	path_list = fs_list_dir(it->fs, path_cstr(it->path));
+	path_list = fs_list_dir(it->fs, path_cstr(it->path), it->recursive);
 
 	if (it->entries != NULL) {
 		iter = vector_enum(it->entries);
-		while (iter_next(&iter)) {
+		while (iter_next(&iter))
 			path_free(*(path_t**)iter.ptr);
-		}
 		vector_free(it->entries);
 	}
 	it->entries = path_list;
@@ -479,6 +480,46 @@ directory_seek(directory_t* it, int position)
 		return false;
 	it->position = position;
 	return true;
+}
+
+static bool
+help_list_dir(vector_t* list, const char* dirname, const path_t* origin_path, bool recursive)
+{
+	tinydir_dir  dir_info;
+	tinydir_file file_info;
+	path_t*      path;
+	path_t*      subdir_origin;
+	path_t*      subdir_path;
+
+	if (tinydir_open(&dir_info, dirname) != 0)
+		return false;
+	while (dir_info.has_next) {
+		tinydir_readfile(&dir_info, &file_info);
+		tinydir_next(&dir_info);
+		if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
+			continue;
+		path = file_info.is_dir
+			? path_new_dir(file_info.name)
+			: path_new(file_info.name);
+		path_rebase(path, origin_path);
+		vector_push(list, &path);
+		if (file_info.is_dir && recursive) {
+			subdir_path = path_new_dir(dirname);
+			subdir_origin = path_dup(origin_path);
+			path_append_dir(subdir_path, file_info.name);
+			path_append_dir(subdir_origin, file_info.name);
+			if (!help_list_dir(list, path_cstr(subdir_path), subdir_origin, recursive))
+				goto on_error;
+			path_free(subdir_path);
+			path_free(subdir_origin);
+		}
+	}
+	tinydir_close(&dir_info);
+	return true;
+
+on_error:
+	tinydir_close(&dir_info);
+	return false;
 }
 
 static char*

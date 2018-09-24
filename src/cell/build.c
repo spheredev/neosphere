@@ -168,7 +168,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	visor = visor_new();
 	fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
 
-	visor_begin_op(visor, "setting up Cellscript environment");
+	visor_begin_op(visor, "setting up Cell's build environment");
 
 	jsal_on_import_module(handle_module_import);
 
@@ -348,11 +348,11 @@ build_eval(build_t* build, const char* filename)
 		visor_error(build->visor, "error in JavaScript code detected");
 		visor_end_op(build->visor);
 		if (error_url != NULL && error_line > 0)
-			printf("\nBUILD CRASH: error at '%s':%d:%d\n", error_url, error_line, error_column);
+			printf("\nSCRIPT CRASH: error at '%s':%d:%d\n", error_url, error_line, error_column);
 		else if (error_url != NULL)
-			printf("\nBUILD CRASH: error in '%s'\n", error_url);
+			printf("\nSCRIPT CRASH: error in '%s'\n", error_url);
 		else
-			printf("\nBUILD CRASH: uncaught JavaScript exception\n");
+			printf("\nSCRIPT CRASH: uncaught JavaScript exception\n");
 		if (error_stack != NULL)
 			printf("%s\n", error_stack);
 		else
@@ -746,7 +746,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 
 	iter_t iter;
 
-	if (!(list = fs_list_dir(fs, path_cstr(path))))
+	if (!(list = fs_list_dir(fs, path_cstr(path), false)))
 		return;
 
 	iter = vector_enum(list);
@@ -794,7 +794,7 @@ package_dir(build_t* build, spk_writer_t* spk, const char* from_dirname, const c
 
 	from_dir_path = path_new_dir(from_dirname);
 	to_dir_path = path_new_dir(to_dirname);
-	file_list = fs_list_dir(build->fs, path_cstr(from_dir_path));
+	file_list = fs_list_dir(build->fs, path_cstr(from_dir_path), false);
 	iter = vector_enum(file_list);
 	while (iter_next(&iter)) {
 		from_path = *(path_t**)iter.ptr;
@@ -1313,7 +1313,7 @@ js_new_DirectoryStream(int num_args, bool is_ctor, intptr_t magic)
 
 	pathname = jsal_require_pathname(0, NULL);
 
-	if (!(stream = directory_open(s_build->fs, pathname)))
+	if (!(stream = directory_open(s_build->fs, pathname, false)))
 		jsal_error(JS_ERROR, "Couldn't open directory '%s'", pathname);
 	jsal_push_class_obj(CELL_DIR_STREAM, stream, true);
 	return true;
