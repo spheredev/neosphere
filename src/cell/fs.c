@@ -500,11 +500,12 @@ help_list_dir(vector_t* list, const char* dirname, const path_t* origin_path, bo
 	path_t*      subdir_origin;
 	path_t*      subdir_path;
 
-	if (tinydir_open(&dir_info, dirname) != 0)
+	size_t i;
+
+	if (tinydir_open_sorted(&dir_info, dirname) != 0)
 		return false;
-	while (dir_info.has_next) {
-		tinydir_readfile(&dir_info, &file_info);
-		tinydir_next(&dir_info);
+	for (i = 0; i < dir_info.n_files; ++i) {
+		tinydir_readfile_n(&dir_info, &file_info, i);
 		if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
 			continue;
 		path = file_info.is_dir

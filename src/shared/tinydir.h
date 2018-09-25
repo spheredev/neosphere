@@ -620,7 +620,7 @@ int _tinydir_file_cmp(const void *a, const void *b)
 	const tinydir_file *fb = (const tinydir_file *)b;
 	if (fa->is_dir != fb->is_dir)
 	{
-		return -(fa->is_dir - fb->is_dir);
+		return fa->is_dir - fb->is_dir;
 	}
 	return strncmp(fa->name, fb->name, _TINYDIR_FILENAME_MAX);
 }
