@@ -321,6 +321,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\shared\path.h" />
     <ClInclude Include="..\src\shared\posix.h" />
     <ClInclude Include="..\src\shared\sockets.h" />
+    <ClInclude Include="..\src\shared\tinydir.h" />
     <ClInclude Include="..\src\shared\unicode.h" />
     <ClInclude Include="..\src\shared\vector.h" />
     <ClInclude Include="..\src\shared\version.h" />

@@ -39,6 +39,7 @@
 #include "jsal.h"
 #include "kev_file.h"
 #include "package.h"
+#include "tinydir.h"
 #include "windowstyle.h"
 
 enum fs_type
@@ -1154,14 +1155,14 @@ on_error:
 static vector_t*
 read_directory(const game_t* game, const char* dirname, bool want_dirs)
 {
-	path_t*           dir_path;
-	ALLEGRO_FS_ENTRY* file_info;
-	path_t*           file_path;
-	lstring_t*        filename;
-	enum fs_type      fs_type;
-	ALLEGRO_FS_ENTRY* fse = NULL;
-	vector_t*         list = NULL;
-	int               type_flag;
+	tinydir_dir  dir_info;
+	path_t*      dir_path;
+	tinydir_file file_info;
+	lstring_t*   filename;
+	enum fs_type fs_type;
+	vector_t*    list = NULL;
+
+	size_t i;
 
 	if (!resolve_path(game, dirname, &dir_path, &fs_type))
 		goto on_error;
@@ -1169,19 +1170,17 @@ read_directory(const game_t* game, const char* dirname, bool want_dirs)
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
-		type_flag = want_dirs ? ALLEGRO_FILEMODE_ISDIR : ALLEGRO_FILEMODE_ISFILE;
-		fse = al_create_fs_entry(path_cstr(dir_path));
-		if (al_get_fs_entry_mode(fse) & ALLEGRO_FILEMODE_ISDIR && al_open_directory(fse)) {
-			while ((file_info = al_read_directory(fse))) {
-				file_path = path_new(al_get_fs_entry_name(file_info));
-				filename = lstr_new(path_filename(file_path));
-				if (al_get_fs_entry_mode(file_info) & type_flag)
+		if (tinydir_open_sorted(&dir_info, path_cstr(dir_path)) == 0) {
+			for (i = 0; i < dir_info.n_files; ++i) {
+				tinydir_readfile_n(&dir_info, &file_info, i);
+				if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
+					continue;
+				filename = lstr_new(file_info.name);
+				if ((file_info.is_reg && !want_dirs) || (file_info.is_dir && want_dirs))
 					vector_push(list, &filename);
-				path_free(file_path);
-				al_destroy_fs_entry(file_info);
 			}
 		}
-		al_destroy_fs_entry(fse);
+		tinydir_close(&dir_info);
 		break;
 	case FS_PACKAGE:
 		list = package_list_dir(game->package, path_cstr(dir_path), want_dirs);
@@ -1191,7 +1190,6 @@ read_directory(const game_t* game, const char* dirname, bool want_dirs)
 	return list;
 
 on_error:
-	al_destroy_fs_entry(fse);
 	path_free(dir_path);
 	vector_free(list);
 	return NULL;
