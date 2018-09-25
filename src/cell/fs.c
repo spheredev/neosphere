@@ -423,6 +423,12 @@ directory_num_files(directory_t* it)
 	return vector_len(it->entries);
 }
 
+const path_t*
+directory_path(const directory_t* it)
+{
+	return it->path;
+}
+
 const char*
 directory_pathname(const directory_t* it)
 {
@@ -438,16 +444,19 @@ directory_position(const directory_t* it)
 const path_t*
 directory_next(directory_t* it)
 {
+	int     num_entries;
 	path_t* path;
 
 	if (it->entries == NULL)
 		directory_rewind(it);
-
-	if (it->position >= vector_len(it->entries))
-		return NULL;
+	num_entries = vector_len(it->entries);
 	do {
+		if (it->position >= num_entries) {
+			path = NULL;
+			break;
+		}
 		path = *(path_t**)vector_get(it->entries, it->position++);
-	} while (!it->recursive || !path_is_file(path));
+	} while (it->recursive && !path_is_file(path));
 	return path;
 }
 

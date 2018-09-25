@@ -423,10 +423,16 @@ read directory entries one at a time.  `DirectoryStream` also implements the
 JavaScript ES6 iterator protocol, so you can use it in a `from()` query or
 `for...of` loop.
 
-new DirectoryStream(dir_name); [L1]
+new DirectoryStream(dir_name[, options]); [L1]
 
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
+
+    options.recursive [default: false] [experimental]
+
+        If `recursive` is true, the DirectoryStream will descend into
+        subdirectories to list files they contain.  The output will not contain
+        any directory entries in this case, only file entries.
 
 DirectoryStream#fileCount [read-only] [L1]
 
