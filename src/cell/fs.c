@@ -174,7 +174,7 @@ fs_fcopy(const fs_t* fs, const char* destination, const char* source, int overwr
 	dest_path = path_new(resolved_dest);
 	path_mkdir(dest_path);
 	path_free(dest_path);
-	return tinydir_copy(resolved_src, resolved_dest, !overwrite);
+	return fcopy(resolved_src, resolved_dest, !overwrite);
 }
 
 bool

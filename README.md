@@ -2,6 +2,7 @@ miniSphere
 ==========
 
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)](https://travis-ci.org/fatcerberus/minisphere)
+[![Release](https://img.shields.io/github/release/fatcerberus/minisphere.svg)](https://github.com/fatcerberus/minisphere/releases/latest)
 
 **miniSphere** is a lightweight JavaScript-powered game engine and the official
 successor to Chad Austin's original *Sphere* game engine, written from the

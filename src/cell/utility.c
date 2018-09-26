@@ -33,6 +33,11 @@
 #include "cell.h"
 #include "utility.h"
 
+#if defined(_WIN32)
+#define _WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0501
+#include <windows.h>
+#endif
 #include "api.h"
 #include "fs.h"
 
@@ -79,6 +84,41 @@ jsal_require_pathname(int index, const char* origin_name)
 	s_paths[s_index] = path;
 	s_index = (s_index + 1) % 10;
 	return path_cstr(path);
+}
+
+int
+fcopy(const char* src_filename, const char* dst_filename, int skip_if_exists)
+{
+#if defined(_WIN32)
+	return CopyFileA(src_filename, dst_filename, (BOOL)skip_if_exists) ? 0 : -1;
+#else
+	char        buffer[32768];
+	FILE*       f1;
+	FILE*       f2;
+	size_t      num_bytes;
+	struct stat sb;
+
+	if (skip_if_exists && stat(dst_filename, &sb) == 0) {
+		errno = EEXIST;
+		return -1;
+	}
+	if (!(f1 = fopen(src_filename, "rb")))
+		return -1;
+	if (!(f2 = fopen(dst_filename, "wb")))
+		return -1;
+	while ((num_bytes = fread(buffer, sizeof(char), sizeof(buffer), f1))) {
+		if (fwrite(buffer, sizeof(char), num_bytes, f2) != num_bytes)
+			goto on_error;
+	}
+	fclose(f1);
+	fclose(f2);
+	return 0;
+
+on_error:
+	fclose(f1);
+	fclose(f2);
+	return -1;
+#endif
 }
 
 bool
