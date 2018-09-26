@@ -1873,11 +1873,18 @@ static bool
 js_new_DirectoryStream(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char*  pathname;
+	bool         recursive = false;
 	directory_t* stream;
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
+	if (num_args >= 2 && jsal_is_object_coercible(1)) {
+		jsal_require_object(1);
+		jsal_get_prop_string(1, "recursive");
+		if (!jsal_is_undefined(-1))
+			recursive = jsal_require_boolean(-1);
+	}
 
-	if (!(stream = directory_open(g_game, pathname)))
+	if (!(stream = directory_open(g_game, pathname, recursive)))
 		jsal_error(JS_ERROR, "Couldn't open directory '%s'", pathname);
 	jsal_push_class_obj(PEGASUS_DIR_STREAM, stream, true);
 	return true;
@@ -1974,6 +1981,7 @@ js_DirectoryStream_next(int num_args, bool is_ctor, intptr_t magic)
 {
 	directory_t*  directory;
 	const path_t* entry_path;
+	path_t*       rel_path;
 
 	jsal_push_this();
 	if (!(directory = jsal_require_class_obj(-1, PEGASUS_DIR_STREAM)))
@@ -1982,19 +1990,21 @@ js_DirectoryStream_next(int num_args, bool is_ctor, intptr_t magic)
 	entry_path = directory_next(directory);
 	jsal_push_new_object();
 	if (entry_path != NULL) {
+		rel_path = path_dup(entry_path);
+		path_relativize(rel_path, directory_path(directory));
+
 		jsal_push_boolean_false();
 		jsal_put_prop_key(-2, s_key_done);
 		jsal_push_new_object();
-		if (path_is_file(entry_path))
-			jsal_push_string(path_filename(entry_path));
-		else
-			jsal_push_sprintf("%s/", path_hop(entry_path, path_num_hops(entry_path) - 1));
+		jsal_push_string(path_cstr(rel_path));
 		jsal_put_prop_string(-2, "fileName");
 		jsal_push_string(path_cstr(entry_path));
 		jsal_put_prop_string(-2, "fullPath");
 		jsal_push_boolean(!path_is_file(entry_path));
 		jsal_put_prop_string(-2, "isDirectory");
 		jsal_put_prop_key(-2, s_key_value);
+
+		path_free(rel_path);
 	}
 	else {
 		jsal_push_boolean_true();

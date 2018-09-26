@@ -693,9 +693,10 @@ install_target(int num_args, bool is_ctor, intptr_t magic)
 	source_path = jsal_require_string(-1);
 
 	result = fs_fcopy(s_build->fs, target_path, source_path, true);
-	if (result == 0)
+	if (result == 0) {
 		// touch file to prevent "target file unchanged" warning
 		fs_utime(s_build->fs, target_path, NULL);
+	}
 	jsal_push_boolean(result == 0);
 	return true;
 }

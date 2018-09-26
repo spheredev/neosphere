@@ -92,9 +92,10 @@ bool            game_rename              (game_t* it, const char* filename1, con
 bool            game_rmdir               (game_t* it, const char* dirname);
 bool            game_unlink              (game_t* it, const char* filename);
 bool            game_write_file          (game_t* it, const char* filename, const void* buf, size_t size);
-directory_t*    directory_open           (game_t* game, const char* dirname);
+directory_t*    directory_open           (game_t* game, const char* dirname, bool recursive);
 void            directory_close          (directory_t* it);
 int             directory_num_files      (directory_t* it);
+const path_t*   directory_path           (const directory_t* it);
 const char*     directory_pathname       (const directory_t* it);
 int             directory_position       (const directory_t* it);
 const path_t*   directory_next           (directory_t* it);

@@ -2578,7 +2578,7 @@ js_GetDirectoryList(int num_args, bool is_ctor, intptr_t magic)
 		dir_name = jsal_require_pathname(0, NULL, true, false);
 
 	jsal_push_new_array();
-	if (!(dir = directory_open(g_game, dir_name)))
+	if (!(dir = directory_open(g_game, dir_name, false)))
 		return true;
 	while ((entry = directory_next(dir))) {
 		if (path_is_file(entry))
@@ -2602,7 +2602,7 @@ js_GetFileList(int num_args, bool is_ctor, intptr_t magic)
 		dir_name = jsal_require_pathname(0, NULL, true, false);
 
 	jsal_push_new_array();
-	if (!(dir = directory_open(g_game, dir_name)))
+	if (!(dir = directory_open(g_game, dir_name, false)))
 		return true;
 	while ((entry = directory_next(dir))) {
 		if (!path_is_file(entry))

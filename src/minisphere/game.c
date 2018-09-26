@@ -82,6 +82,7 @@ struct directory
 	game_t*   game;
 	int       position;
 	path_t*   path;
+	bool      recursive;
 };
 
 struct file
@@ -93,8 +94,9 @@ struct file
 	const char*   path;
 };
 
+static bool      help_list_dir       (vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive);
 static void      load_default_assets (game_t* game);
-static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs);
+static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs, bool recursive);
 static bool      resolve_path        (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
 static bool      try_load_s2gm       (game_t* game, const lstring_t* json_text);
 
@@ -728,7 +730,7 @@ game_unlink(game_t* it, const char* filename)
 }
 
 directory_t*
-directory_open(game_t* game, const char* dirname)
+directory_open(game_t* game, const char* dirname, bool recursive)
 {
 	directory_t* directory;
 
@@ -738,6 +740,7 @@ directory_open(game_t* game, const char* dirname)
 	directory = calloc(1, sizeof(directory_t));
 	directory->game = game_ref(game);
 	directory->path = path_new_dir(dirname);
+	directory->recursive = recursive;
 	return directory;
 }
 
@@ -763,6 +766,12 @@ directory_num_files(directory_t* it)
 	if (it->entries == NULL)
 		directory_rewind(it);
 	return vector_len(it->entries);
+}
+
+const path_t*
+directory_path(const directory_t* it)
+{
+	return it->path;
 }
 
 const char*
@@ -804,7 +813,7 @@ directory_rewind(directory_t* it)
 
 	path_list = vector_new(sizeof(path_t*));
 
-	file_list = read_directory(it->game, path_cstr(it->path), false);
+	file_list = read_directory(it->game, path_cstr(it->path), false, it->recursive);
 	iter = vector_enum(file_list);
 	while (iter_next(&iter)) {
 		entry_name = *(lstring_t**)iter.ptr;
@@ -815,16 +824,18 @@ directory_rewind(directory_t* it)
 	}
 	vector_free(file_list);
 
-	dir_list = read_directory(it->game, path_cstr(it->path), true);
-	iter = vector_enum(dir_list);
-	while (iter_next(&iter)) {
-		entry_name = *(lstring_t**)iter.ptr;
-		entry_path = path_new_dir(lstr_cstr(entry_name));
-		path_rebase(entry_path, it->path);
-		vector_push(path_list, &entry_path);
-		lstr_free(entry_name);
+	if (!it->recursive) {
+		dir_list = read_directory(it->game, path_cstr(it->path), true, false);
+		iter = vector_enum(dir_list);
+		while (iter_next(&iter)) {
+			entry_name = *(lstring_t**)iter.ptr;
+			entry_path = path_new_dir(lstr_cstr(entry_name));
+			path_rebase(entry_path, it->path);
+			vector_push(path_list, &entry_path);
+			lstr_free(entry_name);
+		}
+		vector_free(dir_list);
 	}
-	vector_free(dir_list);
 
 	if (it->entries != NULL) {
 		iter = vector_enum(it->entries);
@@ -982,6 +993,52 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 	default:
 		return 0;
 	}
+}
+
+static bool
+help_list_dir(vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive)
+{
+	tinydir_dir  dir_info;
+	tinydir_file file_info;
+	path_t*      path;
+	lstring_t*   path_str;
+	path_t*      subdir_origin;
+	path_t*      subdir_path;
+
+	size_t i;
+
+	if (tinydir_open_sorted(&dir_info, dirname) != 0)
+		return false;
+	for (i = 0; i < dir_info.n_files; ++i) {
+		tinydir_readfile_n(&dir_info, &file_info, i);
+		if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
+			continue;
+		if ((bool)file_info.is_dir == want_dirs) {
+			path = file_info.is_dir
+				? path_new_dir(file_info.name)
+				: path_new(file_info.name);
+			path_rebase(path, origin_path);
+			path_str = lstr_new(path_cstr(path));
+			path_free(path);
+			vector_push(list, &path_str);
+		}
+		if (file_info.is_dir && recursive) {
+			subdir_path = path_new_dir(dirname);
+			subdir_origin = path_dup(origin_path);
+			path_append_dir(subdir_path, file_info.name);
+			path_append_dir(subdir_origin, file_info.name);
+			if (!help_list_dir(list, path_cstr(subdir_path), subdir_origin, want_dirs, recursive))
+				goto on_error;
+			path_free(subdir_path);
+			path_free(subdir_origin);
+		}
+	}
+	tinydir_close(&dir_info);
+	return true;
+
+on_error:
+	tinydir_close(&dir_info);
+	return false;
 }
 
 static void
@@ -1153,44 +1210,34 @@ on_error:
 }
 
 static vector_t*
-read_directory(const game_t* game, const char* dirname, bool want_dirs)
+read_directory(const game_t* game, const char* dirname, bool want_dirs, bool recursive)
 {
-	tinydir_dir  dir_info;
 	path_t*      dir_path;
-	tinydir_file file_info;
-	lstring_t*   filename;
 	enum fs_type fs_type;
 	vector_t*    list = NULL;
-
-	size_t i;
+	path_t*      origin_path;
 
 	if (!resolve_path(game, dirname, &dir_path, &fs_type))
 		goto on_error;
+	origin_path = path_new("./");
 	if (!(list = vector_new(sizeof(lstring_t*))))
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
-		if (tinydir_open_sorted(&dir_info, path_cstr(dir_path)) == 0) {
-			for (i = 0; i < dir_info.n_files; ++i) {
-				tinydir_readfile_n(&dir_info, &file_info, i);
-				if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
-					continue;
-				filename = lstr_new(file_info.name);
-				if ((file_info.is_reg && !want_dirs) || (file_info.is_dir && want_dirs))
-					vector_push(list, &filename);
-			}
-		}
-		tinydir_close(&dir_info);
+		if (!help_list_dir(list, path_cstr(dir_path), origin_path, want_dirs, recursive))
+			goto on_error;
 		break;
 	case FS_PACKAGE:
 		list = package_list_dir(game->package, path_cstr(dir_path), want_dirs);
 		break;
 	}
 	path_free(dir_path);
+	path_free(origin_path);
 	return list;
 
 on_error:
 	path_free(dir_path);
+	path_free(origin_path);
 	vector_free(list);
 	return NULL;
 }
