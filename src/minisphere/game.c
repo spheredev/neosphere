@@ -505,7 +505,7 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 	path_insert_hop(path, 0, prefix);
 	free(prefix);
 	path_free(base_path);
-	
+
 	if (game_dir_exists(it, path_cstr(path)))
 		path_to_dir(path);
 	return path;
@@ -1110,7 +1110,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 		goto on_json_error;
 
 	game->manifest = jsal_ref(-1);
-	
+
 	if (!jsal_get_prop_string(-1, "name") || !jsal_is_string(-1))
 		goto on_error;
 	game->name = lstr_new(jsal_get_string(-1));
@@ -1228,7 +1228,7 @@ read_directory(const game_t* game, const char* dirname, bool want_dirs, bool rec
 			goto on_error;
 		break;
 	case FS_PACKAGE:
-		list = package_list_dir(game->package, path_cstr(dir_path), want_dirs);
+		list = package_list_dir(game->package, path_cstr(dir_path), want_dirs, recursive);
 		break;
 	}
 	path_free(dir_path);

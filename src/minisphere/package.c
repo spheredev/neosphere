@@ -206,7 +206,7 @@ package_file_exists(const package_t* it, const char* filename)
 }
 
 vector_t*
-package_list_dir(package_t* package, const char* dirname, bool want_dirs)
+package_list_dir(package_t* package, const char* dirname, bool want_dirs, bool recursive)
 {
 	// HERE BE DRAGONS!
 	// this function is kind of a monstrosity because the SPK format doesn't have
@@ -240,10 +240,10 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs)
 					continue;  // oops, matched a partial file name
 				++maybe_filename;  // account for directory separator
 			}
-			if (strchr(maybe_filename, '/'))
+			if (strchr(maybe_filename, '/') && !recursive)
 				continue;  // ignore files in subdirectories
 
-						   // if we got to this point, we have a valid filename
+			// if we got to this point, we have a valid filename
 			filename = lstr_newf("%s", maybe_filename);
 			vector_push(list, &filename);
 		}
@@ -260,10 +260,10 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs)
 			}
 			if (!(maybe_filename = strchr(maybe_dirname, '/')))
 				continue;  // ignore files
-			if (strchr(++maybe_filename, '/'))
+			if (strchr(++maybe_filename, '/') && !recursive)
 				continue;  // ignore subdirectories
 
-						   // if we got to this point, we have a valid directory name
+			// if we got to this point, we have a valid directory name
 			found_dirname = strdup(maybe_dirname);
 			*strchr(found_dirname, '/') = '\0';
 			filename = lstr_newf("%s", found_dirname);

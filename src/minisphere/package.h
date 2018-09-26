@@ -49,7 +49,7 @@ package_t*  package_ref         (package_t* it);
 void        package_unref       (package_t* it);
 bool        package_dir_exists  (const package_t* it, const char* dirname);
 bool        package_file_exists (const package_t* it, const char* filename);
-vector_t*   package_list_dir    (package_t* it, const char* dirname, bool want_dirs);
+vector_t*   package_list_dir    (package_t* it, const char* dirname, bool want_dirs, bool recursive);
 asset_t*    asset_fopen         (package_t* package, const char* path, const char* mode);
 void        asset_fclose        (asset_t* file);
 int         asset_fputc         (int ch, asset_t* file);
