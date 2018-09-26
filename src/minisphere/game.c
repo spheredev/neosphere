@@ -804,7 +804,6 @@ void
 directory_rewind(directory_t* it)
 {
 	vector_t*  dir_list;
-	lstring_t* entry_name;
 	path_t*    entry_path;
 	vector_t*  file_list;
 	vector_t*  path_list;
@@ -816,11 +815,8 @@ directory_rewind(directory_t* it)
 	file_list = read_directory(it->game, path_cstr(it->path), false, it->recursive);
 	iter = vector_enum(file_list);
 	while (iter_next(&iter)) {
-		entry_name = *(lstring_t**)iter.ptr;
-		entry_path = path_new(lstr_cstr(entry_name));
-		path_rebase(entry_path, it->path);
+		entry_path = *(path_t**)iter.ptr;
 		vector_push(path_list, &entry_path);
-		lstr_free(entry_name);
 	}
 	vector_free(file_list);
 
@@ -828,11 +824,8 @@ directory_rewind(directory_t* it)
 		dir_list = read_directory(it->game, path_cstr(it->path), true, false);
 		iter = vector_enum(dir_list);
 		while (iter_next(&iter)) {
-			entry_name = *(lstring_t**)iter.ptr;
-			entry_path = path_new_dir(lstr_cstr(entry_name));
-			path_rebase(entry_path, it->path);
+			entry_path = *(path_t**)iter.ptr;
 			vector_push(path_list, &entry_path);
-			lstr_free(entry_name);
 		}
 		vector_free(dir_list);
 	}
@@ -1001,7 +994,6 @@ help_list_dir(vector_t* list, const char* dirname, const path_t* origin_path, bo
 	tinydir_dir  dir_info;
 	tinydir_file file_info;
 	path_t*      path;
-	lstring_t*   path_str;
 	path_t*      subdir_origin;
 	path_t*      subdir_path;
 
@@ -1018,9 +1010,7 @@ help_list_dir(vector_t* list, const char* dirname, const path_t* origin_path, bo
 				? path_new_dir(file_info.name)
 				: path_new(file_info.name);
 			path_rebase(path, origin_path);
-			path_str = lstr_new(path_cstr(path));
-			path_free(path);
-			vector_push(list, &path_str);
+			vector_push(list, &path);
 		}
 		if (file_info.is_dir && recursive) {
 			subdir_path = path_new_dir(dirname);
@@ -1216,11 +1206,14 @@ read_directory(const game_t* game, const char* dirname, bool want_dirs, bool rec
 	enum fs_type fs_type;
 	vector_t*    list = NULL;
 	path_t*      origin_path;
+	path_t*      path;
+
+	int i;
 
 	if (!resolve_path(game, dirname, &dir_path, &fs_type))
 		goto on_error;
-	origin_path = path_new("./");
-	if (!(list = vector_new(sizeof(lstring_t*))))
+	origin_path = path_new_dir(dirname);
+	if (!(list = vector_new(sizeof(path_t*))))
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -1229,6 +1222,10 @@ read_directory(const game_t* game, const char* dirname, bool want_dirs, bool rec
 		break;
 	case FS_PACKAGE:
 		list = package_list_dir(game->package, path_cstr(dir_path), want_dirs, recursive);
+		for (i = 0; i < vector_len(list); ++i) {
+			path = *(path_t**)vector_get(list, i);
+			path_rebase(path, origin_path);
+		}
 		break;
 	}
 	path_free(dir_path);

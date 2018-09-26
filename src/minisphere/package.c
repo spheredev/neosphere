@@ -215,18 +215,18 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs, bool r
 	// particularly in the case of directories.
 
 	struct spk_entry* file_info;
-	lstring_t*        filename;
 	char*             found_dirname;
 	bool              is_in_set;
 	vector_t*         list;
 	const char*       maybe_dirname;
 	const char*       maybe_filename;
 	const char*       match;
+	path_t*           path;
 
 	iter_t iter, iter2;
-	lstring_t** item;
+	path_t** item;
 
-	list = vector_new(sizeof(lstring_t*));
+	list = vector_new(sizeof(path_t*));
 	iter = vector_enum(package->index);
 	while ((file_info = iter_next(&iter))) {
 		if (!want_dirs) {  // list files
@@ -244,8 +244,8 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs, bool r
 				continue;  // ignore files in subdirectories
 
 			// if we got to this point, we have a valid filename
-			filename = lstr_newf("%s", maybe_filename);
-			vector_push(list, &filename);
+			path = path_new(maybe_filename);
+			vector_push(list, &path);
 		}
 		else {  // list directories
 			if (!(match = strstr(file_info->file_path, dirname)))
@@ -266,13 +266,13 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs, bool r
 			// if we got to this point, we have a valid directory name
 			found_dirname = strdup(maybe_dirname);
 			*strchr(found_dirname, '/') = '\0';
-			filename = lstr_newf("%s", found_dirname);
+			path = path_new(found_dirname);
 			iter2 = vector_enum(list);
 			is_in_set = false;
 			while ((item = iter_next(&iter2)))
-				is_in_set |= lstr_cmp(filename, *item) == 0;
+				is_in_set |= path_is(path, *item) == 0;
 			if (!is_in_set)  // avoid duplicate listings
-				vector_push(list, &filename);
+				vector_push(list, &path);
 			free(found_dirname);
 		}
 	}
