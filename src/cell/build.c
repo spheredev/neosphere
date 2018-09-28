@@ -83,7 +83,10 @@ static bool js_DirectoryStream_rewind        (int num_args, bool is_ctor, intptr
 static bool js_FS_createDirectory            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_deleteFile                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_directoryExists            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_directoryOf                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_extensionOf                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_fileNameOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
@@ -204,7 +207,10 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_function("FS", "createDirectory", js_FS_createDirectory, 0);
 	api_define_function("FS", "deleteFile", js_FS_deleteFile, 0);
 	api_define_function("FS", "directoryExists", js_FS_directoryExists, 0);
+	api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
+	api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
 	api_define_function("FS", "fileExists", js_FS_fileExists, 0);
+	api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
 	api_define_function("FS", "fullPath", js_FS_fullPath, 0);
 	api_define_function("FS", "readFile", js_FS_readFile, 0);
 	api_define_function("FS", "relativePath", js_FS_relativePath, 0);
@@ -1563,6 +1569,50 @@ js_FS_directoryExists(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_FS_directoryOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	path_t*     path;
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL);
+
+	path = path_strip(path_new(pathname));
+	jsal_push_string(path_cstr(path));
+	path_free(path);
+	return true;
+}
+
+static bool
+js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* extension;
+	path_t*     path;
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL);
+
+	path = path_new(pathname);
+	extension = path_extension(path);
+
+	if (extension != NULL) {
+		jsal_push_string(extension);
+	}
+	else {
+		// path has no extension; normally in this case we'd return `null`, but if the
+		// user specified a directory, throw a TypeError instead.
+		if (path_is_file(path)) {
+			jsal_push_null();
+		}
+		else {
+			path_free(path);
+			jsal_error(JS_TYPE_ERROR, "'FS.extensionOf' cannot be called on a directory");
+		}
+	}
+	path_free(path);
+	return true;
+}
+
+static bool
 js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
@@ -1570,6 +1620,26 @@ js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, NULL);
 
 	jsal_push_boolean(fs_fexist(s_build->fs, filename));
+	return true;
+}
+
+static bool
+js_FS_fileNameOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* filename;
+	path_t*     path;
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL);
+
+	path = path_new(pathname);
+	filename = path_filename(path);
+
+	if (filename != NULL)
+		jsal_push_string(filename);
+	else
+		jsal_push_undefined();
+	path_free(path);
 	return true;
 }
 
