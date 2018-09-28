@@ -624,6 +624,15 @@ FS.evaluateScript(pathname); [L1]
           can--and likely will--create new global functions and variables.  Be
           sure you know what you're doing!
 
+FS.extensionOf(pathname); [experimental]
+
+    If `pathname` refers to a file, returns the filename extension of the named
+    file (i.e. everything starting from the last dot `.` in the filename).  If
+    the file has no filename extension, returns `null`.
+
+    Note: If `pathname` ends in a forward slash `/` or names a known existing
+          directory, a TypeError will be thrown.
+
 FS.fileExists(pathname); [L1]
 
     Checks whether a file by the name of `pathname` exists and returns `true`
@@ -682,6 +691,20 @@ FS.rename(orig_name, new_name); [L1]
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full paths.  This can also be used to move a file between
     directories; if so, the destination directory must already exist.
+
+FS.typeOf(pathname); [experimental]
+
+    If `pathname` refers to a file, returns a string describing the type of the
+    file, e.g. "javascript-module" or "json".  The type string returned is
+    based on both the filename extension and the contents of the `fileTypes`
+    table in the manifest, which directly maps extensions to types.
+
+    If the pathname refers to a file which is part of the engine (e.g., any
+    name beginning with `#/`), the `fileTypes` table will be ignored and only
+    the built-in type mappings will be used.
+
+    Note: If `pathname` ends in a forward slash `/` or names a known existing
+          directory, a TypeError will be thrown.
 
 FS.writeFile(pathname, string); [L1]
 

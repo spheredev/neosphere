@@ -275,6 +275,7 @@ static bool js_FS_deleteFile                 (int num_args, bool is_ctor, intptr
 static bool js_FS_directoryExists            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_directoryOf                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_evaluateScript             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_extensionOf                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileNameOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
@@ -282,6 +283,7 @@ static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_typeOf                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_dispose            (int num_args, bool is_ctor, intptr_t magic);
@@ -854,7 +856,9 @@ pegasus_init(int api_level)
 	if (api_level >= 2) {
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
+		api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
 		api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
+		api_define_function("FS", "typeOf", js_FS_typeOf, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
@@ -2197,6 +2201,36 @@ js_FS_evaluateScript(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* extension;
+	path_t*     path;
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+
+	path = path_new(pathname);
+	extension = path_extension(path);
+
+	if (extension != NULL) {
+		jsal_push_string(extension);
+	}
+	else {
+		// path has no extension; normally in this case we'd return `null`, but if the
+		// user specified a directory, throw a TypeError instead.
+		if (path_is_file(path)) {
+			jsal_push_null();
+		}
+		else {
+			path_free(path);
+			jsal_error(JS_TYPE_ERROR, "'FS.extensionOf' cannot be called on a directory");
+		}
+	}
+	path_free(path);
+	return true;
+}
+
+static bool
 js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
@@ -2218,12 +2252,12 @@ js_FS_fileNameOf(int num_args, bool is_ctor, intptr_t magic)
 
 	path = path_new(pathname);
 	filename = path_filename(path);
-	path_free(path);
 
 	if (filename != NULL)
 		jsal_push_string(filename);
 	else
 		jsal_push_undefined();
+	path_free(path);
 	return true;
 }
 
@@ -2298,6 +2332,28 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	if (!game_rename(g_game, old_pathname, new_pathname))
 		jsal_error(JS_ERROR, "Couldn't rename '%s' to '%s'", old_pathname, new_pathname);
 	return false;
+}
+
+static bool
+js_FS_typeOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	path_t*     path;
+	const char* pathname;
+	const char* type_name;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+
+	path = path_new(pathname);
+	if (path_is_file(path)) {
+		type_name = game_file_type(g_game, pathname);
+		jsal_push_string(type_name);
+	}
+	else {
+		path_free(path);
+		jsal_error(JS_TYPE_ERROR, "'FS.typeOf' cannot be called on a directory");
+	}
+	path_free(path);
+	return true;
 }
 
 static bool
