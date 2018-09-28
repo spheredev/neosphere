@@ -168,7 +168,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	visor = visor_new();
 	fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
 
-	visor_begin_op(visor, "setting up Cell's build environment");
+	visor_begin_op(visor, "setting up the Cell build environment");
 
 	jsal_on_import_module(handle_module_import);
 
@@ -371,6 +371,69 @@ build_clean(build_t* build)
 {
 	clean_old_artifacts(build, false);
 	fs_unlink(build->fs, "@/artifacts.json");
+	return true;
+}
+
+bool
+build_init_dir(build_t* it)
+{
+	directory_t*  dir;
+	FILE*         file;
+	const path_t* in_path;
+	path_t*       origin_path;
+	path_t*       out_path;
+	bool          overwriting = false;
+	char*         template;
+	size_t        template_len;
+
+	fs_mkdir(it->fs, "$/");
+
+	visor_begin_op(it->visor, "checking for existing files");
+	origin_path = path_new("#/template/");
+	dir = directory_open(it->fs, path_cstr(origin_path), true);
+	while (in_path = directory_next(dir)) {
+		out_path = path_dup(in_path);
+		path_relativize(out_path, origin_path);
+		path_insert_hop(out_path, 0, "$");
+		if (fs_fexist(it->fs, path_cstr(out_path))) {
+			visor_print(it->visor, "found existing file '%s'", path_cstr(out_path));
+			overwriting = true;
+		}
+		path_free(out_path);
+	}
+
+	if (overwriting) {
+		// existing files would be overwritten, not safe to continue
+		visor_error(it->visor, "initialization would overwrite existing files");
+		visor_end_op(it->visor);
+		directory_close(dir);
+		path_free(origin_path);
+		return false;
+	}
+	else {
+		visor_end_op(it->visor);
+	}
+
+	visor_begin_op(it->visor, "copying in files from template");
+	directory_rewind(dir);
+	while (in_path = directory_next(dir)) {
+		out_path = path_dup(in_path);
+		path_relativize(out_path, origin_path);
+		path_insert_hop(out_path, 0, "$");
+		visor_begin_op(it->visor, "copying in '%s'", path_cstr(out_path));
+		fs_fcopy(it->fs, path_cstr(out_path), path_cstr(in_path), false);
+		visor_end_op(it->visor);
+		path_free(out_path);
+	}
+	directory_close(dir);
+	path_free(origin_path);
+	visor_end_op(it->visor);
+
+	template = fs_fslurp(it->fs, "$/Cellscript.tmpl", &template_len);
+	file = fs_fopen(it->fs, "$/Cellscript.mjs", "w");
+	fclose(file);
+	free(template);
+
 	return true;
 }
 

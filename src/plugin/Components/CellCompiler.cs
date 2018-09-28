@@ -24,11 +24,11 @@ namespace Sphere.Gdk.Components
         public bool Prep(IProject project, IConsole con)
         {
             con.Print("Installing project template... ");
-            CopyDirectory(Path.Combine(m_main.Conf.GdkPath, "template"), project.RootPath);
+            CopyDirectory(Path.Combine(m_main.Conf.GdkPath, "system", "template"), project.RootPath);
             con.Print("OK.\n");
 
             con.Print("Generating Cellscript.mjs... ");
-            var cellTemplatePath = Path.Combine(project.RootPath, "Cellscript.mjs.tmpl");
+            var cellTemplatePath = Path.Combine(project.RootPath, "Cellscript.tmpl");
             try
             {
                 var scriptPath = Path.Combine(project.RootPath, "Cellscript.mjs");

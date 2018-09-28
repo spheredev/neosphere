@@ -135,6 +135,7 @@ visor_print(visor_t* visor, const char* fmt, ...)
 
 	va_start(ap, fmt);
 	print_indent(visor->indent_level);
+	printf("i: ");
 	vprintf(fmt, ap);
 	printf("\n");
 	fflush(stdout);

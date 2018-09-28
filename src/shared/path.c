@@ -556,13 +556,14 @@ refresh_pathname(path_t* path)
 
 	size_t i;
 
-	strcpy(buffer, path->num_hops == 0 && path->filename == NULL
-		? "./" : "");
+	strcpy(buffer, path->num_hops == 0 && path->filename == NULL ? "./" : "");
 	for (i = 0; i < path->num_hops; ++i) {
-		if (i > 0) strcat(buffer, "/");
+		if (i > 0)
+			strcat(buffer, "/");
 		strcat(buffer, path->hops[i]);
 	}
-	if (path->num_hops > 0) strcat(buffer, "/");
+	if (path->num_hops > 0)
+		strcat(buffer, "/");
 	if (path->filename != NULL)
 		strcat(buffer, path->filename);
 	free(path->pathname);

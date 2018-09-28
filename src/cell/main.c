@@ -35,12 +35,14 @@
 #include <png.h>
 #include <zlib.h>
 #include "build.h"
+#include "fs.h"
 #include "jsal.h"
 
 enum mode
 {
 	MODE_BUILD_ONLY,
 	MODE_CLEAN,
+	MODE_INIT,
 	MODE_PACK,
 };
 
@@ -68,9 +70,9 @@ static bool      s_want_rebuild;
 int
 main(int argc, char* argv[])
 {
-	build_t* build = NULL;
-	bool     evaled = false;
-	int      retval = EXIT_FAILURE;
+	build_t*  build = NULL;
+	bool      evaled = false;
+	int       retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
 	jsal_init();
@@ -83,7 +85,7 @@ main(int argc, char* argv[])
 	printf("\n");
 
 	build = build_new(s_in_path, s_out_path);
-	if (!build_eval(build, path_cstr(s_script_path)))
+	if (s_script_path != NULL && !build_eval(build, path_cstr(s_script_path)))
 		goto shutdown;
 	switch (s_mode) {
 	case MODE_BUILD_ONLY:
@@ -95,6 +97,9 @@ main(int argc, char* argv[])
 		break;
 	case MODE_CLEAN:
 		build_clean(build);
+		break;
+	case MODE_INIT:
+		build_init_dir(build);
 		break;
 	}
 	retval = EXIT_SUCCESS;
@@ -143,6 +148,10 @@ parse_command_line(int argc, char* argv[])
 			command = "clean";
 			s_mode = MODE_CLEAN;
 			have_in_dir = true;
+		}
+		else if (strcmp(command, "init") == 0) {
+			command = "init";
+			s_mode = MODE_INIT;
 		}
 		else if (strcmp(command, "pack") == 0 || strcmp(command, "p") == 0) {
 			command = "pack";
@@ -295,10 +304,16 @@ parse_command_line(int argc, char* argv[])
 			break;  // found a Cellscript!
 	}
 	if (s_script_path == NULL) {
-		if (have_in_dir)
-			printf("cell: no Cellscript found in source directory '%s'\n", path_cstr(s_in_path));
-		else
-			print_usage();
+		if (s_mode != MODE_INIT) {
+			if (have_in_dir)
+				printf("cell: no Cellscript found in source directory '%s'\n", path_cstr(s_in_path));
+			else
+				print_usage();
+			return false;
+		}
+	}
+	else if (s_mode == MODE_INIT) {
+		printf("cell %s: directory '%s' already contains a Cellscript\n", command, path_cstr(s_in_path));
 		return false;
 	}
 
@@ -360,6 +375,7 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
+	printf("   cell init [<dir-name>]\n");
 	printf("   cell build [options]\n");
 	printf("   cell clean [options]\n");
 	printf("   cell pack [options] <packfile-name>\n");
