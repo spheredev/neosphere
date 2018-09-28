@@ -555,11 +555,11 @@ Dispatch.onUpdate(fn[, options]); [L1]
 
     Returns a `JobToken` you can use to manage the job.
 
-	Note: If you pass an `async` function to one of these and it takes multiple
-	      frames to complete, the engine will await completion of the previous
-	      invocation before invoking it again.  Avoid using `await` in a render
-	      handler as the function will resume at the end of a frame, after the
-	      backbuffer has already been flipped.
+    Note: If you pass an `async` function to one of these and it takes multiple
+          frames to complete, the engine will await completion of the previous
+          invocation before invoking it again.  Avoid using `await` in a render
+          handler as the function will resume at the end of a frame, after the
+          backbuffer has already been flipped.
 
     options.inBackground [default: false]
 
@@ -583,67 +583,79 @@ The `FS` namespace allows your game to access asset and save files, create or
 remove directories, etc.  All file system operations are sandboxed to prevent
 damage to the system.
 
-FS.createDirectory(dir_name); [L1]
+FS.createDirectory(pathname); [L1]
 
     Creates a directory and any of its parent directories that don't already
     exist.  If the directory already exists, this function does nothing.
 
-    Note: As indicated above, `FS.createDirectory()` is safe to call even if
-          the specified directory already exists; no error will be thrown in
-          that case.  This allows you to call it to ensure a directory exists
-          before you access it, without needing an explicit check beforehand.
+    Note: As noted above, `FS.createDirectory()` is safe to call even if the
+          specified directory already exists; no error will be thrown in that
+          case.  This allows you to call it to ensure a directory exists before
+          you access it, without needing an explicit check beforehand.
 
-FS.deleteFile(filename); [L1]
+FS.deleteFile(pathname); [L1]
 
-    Deletes `filename` from the file system.
+    Deletes the file named by `pathname` from the file system.
 
-FS.directoryExists(dir_name); [L1]
+FS.directoryExists(pathname); [L1]
 
-    Checks whether the specified directory exists and returns true if it does.
-    Otherwise, returns false.
+    Checks whether a directory by the name of `pathname` exists and returns
+    `true` if it does.  Otherwise, returns `false`.
 
-FS.directoryOf(filename); [experimental]
+FS.directoryOf(pathname); [experimental]
 
-    Returns the full SphereFS path of the directory containing `filename`.  The
-    filename is resolved via the usual SphereFS rules, so if no directory info
-    is present, this function will return "@/".
+    Returns the full SphereFS path of the directory containing `pathname`.  The
+    pathname is resolved via the usual SphereFS rules, so if no directory info
+    is present, this function will return "@/".  If `pathname` ends in a
+    forward slash `/`, then it names a directory and the function will simply
+    return its canonical path.
 
-FS.evaluateScript(filename); [L1]
+    Note: If `pathname` doesn't end in a forward slash `/` but names a known
+          existing directory, the function will act as if the trailing slash
+          was present.
 
-    Executes a JavaScript file in the global scope and returns the result.
-    This is useful for executing scripts originally written for the Web, where
-    modules are not supported.
+FS.evaluateScript(pathname); [L1]
+
+    Executes the JavaScript file named by `pathname` in the global scope and
+    returns the result.  This is useful for executing scripts originally
+    written for the Web, where modules are not supported.
 
     Note: Depending on the particular script being evaluated, this function
           can--and likely will--create new global functions and variables.  Be
           sure you know what you're doing!
 
-FS.fileExists(filename); [L1]
+FS.fileExists(pathname); [L1]
 
-    Checks whether the specified file exists and returns true if it does.
-    Otherwise, returns false.
+    Checks whether a file by the name of `pathname` exists and returns `true`
+    if it does.  Otherwise, returns `false`.
 
-FS.fileNameOf(filename); [experimental]
+FS.fileNameOf(pathname); [experimental]
 
-    If `filename` contains a directory path, returns only the filename portion,
-    or `undefined` if there is no filename in the path.
+    If `pathname` is a full or partial path to a file, returns only the
+    filename portion, or `undefined` if there is no filename in the path (for
+    example, because it ends in a forward slash `/` and therefore refers to a
+    directory).
 
-FS.fullPath(filename[, base_dir]); [L1]
+    Note: If `pathname` doesn't end in a forward slash `/` but names a known
+          existing directory, the function will act as if the trailing slash
+          was present and return `undefined`.
 
-    Resolves a filename (which may contain relative path components, or even be
-    relative itself) to its full, canonical SphereFS pathname.  `base_dir` is
-    optional and specifies a base directory for relative paths.  The file or
+FS.fullPath(pathname[, base_dir]); [L1]
+
+    Resolves `pathname` (which may contain relative path components, or even be
+    relative itself) to a fully canonicalized SphereFS pathname.  `base_dir`
+    is optional and specifies a base directory for relative paths.  The file or
     directory ultimately referred to doesn't need to exist.
 
-    If `fileName` begins with a SphereFS prefix, it's resolved normally,
-    without regard to `base_dir`.  Otherwise, `fileName` is considered to be
+    If `pathname` begins with a SphereFS prefix, it's resolved normally,
+    without regard to `base_dir`.  Otherwise, `pathname` is considered to be
     relative to `base_dir`.
 
-    Note: If `filename` refers to a known directory, the path string returned
-          by this function will end in a forward slash (`/`) even if `filename`
-          did not.
+    Note: If `pathname` refers to a known existing directory, the path string
+          returned by this function will end in a forward slash (`/`) even if
+          the input pathname did not.
 
-FS.readFile(filename); [L1]
+FS.readFile(pathname); [L1]
 
     Reads an entire UTF-8 text file into a JavaScript string.  This is a
     convenience to avoid the need to explicitly construct a FileStream and
@@ -653,16 +665,17 @@ FS.readFile(filename); [L1]
           binary data.  To work with binary files, use a FileStream object
           instead.
 
-FS.relativePath(filename, base_dir); [L1]
+FS.relativePath(pathname, base_dir); [L1]
 
     Abbreviates a full SphereFS pathname by returning its path relative to
     `base_dir`.  This can be useful when logging filenames or displaying track
     names, for example.
 
-FS.removeDirectory(dir_name); [L1]
+FS.removeDirectory(pathname); [L1]
 
-    Deletes the specified directory.  The directory must be empty or an error
-    will be thrown.
+    Deletes the directory named by `pathname`.  If the directory doesn't
+    exist--or *does* exist but is not empty (this function will not delete a
+    non-empty directory)--an error will be thrown.
 
 FS.rename(orig_name, new_name); [L1]
 
@@ -670,10 +683,10 @@ FS.rename(orig_name, new_name); [L1]
     assumed to be full paths.  This can also be used to move a file between
     directories; if so, the destination directory must already exist.
 
-FS.writeFile(filename, string); [L1]
+FS.writeFile(pathname, string); [L1]
 
-    Writes a string out to a UTF-8 text file.  If a file already exists with
-    the specified filename, it will be overwritten.
+    Writes a string out to a UTF-8 text file.  If a file already exists under
+    the specified pathname, it will be overwritten.
 
     Note: This performs UTF-8 encoding, making it unsuitable for use with
           binary data.  To work with binary files, use a FileStream object
@@ -1760,9 +1773,9 @@ Surface#blendOp [read/write] [experimental]
         BlendOp.Replace
         BlendOp.Subtract
 
-	The default is `BlendOp.AlphaBlend` which combines the source and
-	destination pixels using the source's alpha value as a weighting factor
-	(commonly referred to as "alpha blending").
+    The default is `BlendOp.AlphaBlend` which combines the source and
+    destination pixels using the source's alpha value as a weighting factor
+    (commonly referred to as "alpha blending").
 
 Surface#transform [read/write] [L1]
 
@@ -1849,11 +1862,11 @@ Texture#height [read-only] [L1]
 Texture#download(); [experimental]
 
     Downloads the 32-bit RGBA pixel data from the texture and returns it as a
-	new Uint8ClampedArray.
+    new Uint8ClampedArray.
 
-	Note: Downloading data from the GPU is a rather slow operation and
-	      shouldn't be done at render time if you can avoid it.  Use a Surface
-		  for render-to-texture effects if at all possible.
+    Note: Downloading data from the GPU is a rather slow operation and
+          shouldn't be done at render time if you can avoid it.  Use a Surface
+          for render-to-texture effects if at all possible.
 
 Texture#upload(content); [experimental]
 
