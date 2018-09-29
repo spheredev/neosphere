@@ -2210,24 +2210,21 @@ js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	path = path_new(pathname);
-	extension = path_extension(path);
-
-	if (extension != NULL) {
-		jsal_push_string(extension);
+	if (path_is_file(path)) {
+		extension = path_extension(path);
+		if (extension != NULL)
+			jsal_push_string(extension);
+		else
+			jsal_push_null();
+		path_free(path);
+		return true;
 	}
 	else {
-		// path has no extension; normally in this case we'd return `null`, but if the
-		// user specified a directory, throw a TypeError instead.
-		if (path_is_file(path)) {
-			jsal_push_null();
-		}
-		else {
-			path_free(path);
-			jsal_error(JS_TYPE_ERROR, "'FS.extensionOf' cannot be called on a directory");
-		}
+		// there's no meaningful answer we can give for the filename extension of a directory;
+		// throw a TypeError in that case.
+		path_free(path);
+		jsal_error(JS_TYPE_ERROR, "'FS.extensionOf' cannot be called on a directory");
 	}
-	path_free(path);
-	return true;
 }
 
 static bool
@@ -2347,13 +2344,13 @@ js_FS_typeOf(int num_args, bool is_ctor, intptr_t magic)
 	if (path_is_file(path)) {
 		type_name = game_file_type(g_game, pathname);
 		jsal_push_string(type_name);
+		path_free(path);
+		return true;
 	}
 	else {
 		path_free(path);
 		jsal_error(JS_TYPE_ERROR, "'FS.typeOf' cannot be called on a directory");
 	}
-	path_free(path);
-	return true;
 }
 
 static bool
