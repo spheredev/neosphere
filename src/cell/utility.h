@@ -43,6 +43,7 @@ int         fcopy                  (const char* src_filename, const char* dst_fi
 bool        fexist                 (const char* filename);
 void*       fslurp                 (const char* filename, size_t *out_size);
 bool        fspew                  (const void* buffer, size_t size, const char* filename);
+char*       strfmt                 (const char* format, ...);
 char*       strnewf                (const char* fmt, ...);
 bool        wildcmp                (const char* filename, const char* pattern);
 
