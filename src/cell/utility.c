@@ -210,32 +210,32 @@ strfmt(const char* format, ...)
 	va_end(ap);
 	
 	// find out how big a buffer we need so we don't have to resize it as we go.
-	// while we're at it we can validate the input string to avoid doing extra checks during the
+	// while we're at it we can validate the input string to avoid some extra checks during the
 	// replacement phase.
 	p_in = format;
 	while (p_next_in = strpbrk(p_in, "{}")) {
 		out_len += p_next_in - p_in;
 		if (p_next_in[1] == p_next_in[0]) {  // "{{" or "}}"
 			out_len += 1;
-			p_in = p_next_in + 2;
+			p_next_in += 2;
 		}
 		else if (p_next_in[0] == '{' && p_next_in[1] >= '0' && p_next_in[1] <= '9' && p_next_in[2] == '}') {
-			// a substring of form "{[0-9]}" is a format item and should be replaced with the
+			// anything in brackets {...} is a format item and should be replaced with the
 			// corresponding replacement string.
 			index = p_next_in[1] - '0';
 			if (index >= 0 && index < num_items) {
 				out_len += item_len[index];
+				p_next_in += 3;
 			}
 			else {
-				// if a format item has no corresponding replacement string, treat it
-				// as a syntax error.
+				// if a format item has no corresponding replacement string, that's an error.
 				goto syntax_error;
 			}
-			p_in = p_next_in + 3;
 		}
 		else {
 			goto syntax_error;
 		}
+		p_in = p_next_in;
 	}
 	out_len += strlen(p_in);
 	buffer = malloc(out_len + 1);
@@ -248,18 +248,19 @@ strfmt(const char* format, ...)
 		memcpy(p_out, p_in, in_len);
 		p_out += in_len;
 		if (p_next_in[1] == p_next_in[0]) {  // "{{" or "}}"
-			memcpy(p_out++, p_next_in, 1);
-			p_in = p_next_in + 2;
+			memcpy(p_out, p_next_in, 1);
+			p_out += 1;
+			p_next_in += 2;
 		}
 		else if (p_next_in[0] == '{') {  // format item "{n}"
+			// note: `index` is guaranteed to be in range as we checked for that above.
 			index = p_next_in[1] - '0';
 			memcpy(p_out, items[index], item_len[index]);
 			p_out += item_len[index];
-			p_in = p_next_in + 3;
+			p_next_in += 3;
 		}
+		p_in = p_next_in;
 	}
-
-	// copy the remainder of the input string
 	strcpy(p_out, p_in);
 	return buffer;
 

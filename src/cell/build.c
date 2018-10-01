@@ -384,10 +384,10 @@ bool
 build_init_dir(build_t* it)
 {
 	directory_t*  dir;
-	FILE*         file;
 	const path_t* in_path;
 	path_t*       origin_path;
 	path_t*       out_path;
+	char*         output;
 	bool          overwriting = false;
 	char*         template;
 	size_t        template_len;
@@ -435,10 +435,14 @@ build_init_dir(build_t* it)
 	path_free(origin_path);
 	visor_end_op(it->visor);
 
+	visor_begin_op(it->visor, "initializing new Cellscript");
 	template = fs_fslurp(it->fs, "$/Cellscript.tmpl", &template_len);
-	file = fs_fopen(it->fs, "$/Cellscript.mjs", "w");
-	fclose(file);
+	output = strfmt(template, "Untitled Sphere project", "Somebody once told me...", "The world is gonna roll me.", "320", "240", NULL);
+	fs_fspew(it->fs, "$/Cellscript.mjs", output, strlen(output));
+	fs_unlink(it->fs, "$/Cellscript.tmpl");
+	free(output);
 	free(template);
+	visor_end_op(it->visor);
 
 	return true;
 }
