@@ -88,7 +88,7 @@ int             game_version             (const game_t* it);
 bool            game_is_writable         (const game_t* it, const char* pathname, bool v1_mode);
 bool            game_mkdir               (game_t* it, const char* dirname);
 void*           game_read_file           (game_t* it, const char* filename, size_t *out_size);
-bool            game_rename              (game_t* it, const char* filename1, const char* filename2);
+bool            game_rename              (game_t* it, const char* old_pathname, const char* new_pathname);
 bool            game_rmdir               (game_t* it, const char* dirname);
 bool            game_unlink              (game_t* it, const char* filename);
 bool            game_write_file          (game_t* it, const char* filename, const void* buf, size_t size);

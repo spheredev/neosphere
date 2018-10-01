@@ -280,7 +280,7 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs, bool r
 }
 
 asset_t*
-asset_fopen(package_t* package, const char* path, const char* mode)
+asset_fopen(package_t* package, const char* pathname, const char* mode)
 {
 	ALLEGRO_FILE* al_file = NULL;
 	asset_t*      asset = NULL;
@@ -290,12 +290,12 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 	const char*   local_filename;
 	path_t*       local_path;
 
-	console_log(4, "opening '%s' (%s) from package #%u", path, mode, package->id);
+	console_log(4, "opening '%s' (%s) from package #%u", pathname, mode, package->id);
 
 	// get path to local cache file
 	cache_path = path_rebase(path_new("miniSphere/.spkCache/"), home_path());
 	path_append_dir(cache_path, path_filename(package->path));
-	local_path = path_rebase(path_new(path), cache_path);
+	local_path = path_rebase(path_new(pathname), cache_path);
 	path_free(cache_path);
 
 	// ensure all subdirectories exist
@@ -308,19 +308,19 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 
 	if (al_filename_exists(local_filename)) {
 		// local cache file already exists, open it	directly
-		console_log(4, "using locally cached file for #%u:'%s'", package->id, path);
+		console_log(4, "using locally cached file for #%u:'%s'", package->id, pathname);
 		if (!(al_file = al_fopen(local_filename, mode)))
 			goto on_error;
 	}
 	else {
-		if (!(buffer = asset_fslurp(package, path, &file_size)) && mode[0] == 'r')
+		if (!(buffer = asset_fslurp(package, pathname, &file_size)) && mode[0] == 'r')
 			goto on_error;
 		if (strcmp(mode, "r") != 0 && strcmp(mode, "rb") != 0) {
 			if (buffer != NULL && mode[0] != 'w') {
 				// if a game requests write access to an existing file,
 				// we extract it. this ensures file operations originating from
 				// inside an SPK are transparent to the game.
-				console_log(4, "extracting #%u:'%s', write access requested", package->id, path);
+				console_log(4, "extracting #%u:'%s', write access requested", package->id, pathname);
 				if (!(al_file = al_fopen(local_filename, "w")))
 					goto on_error;
 				al_fwrite(al_file, buffer, file_size);
@@ -340,13 +340,13 @@ asset_fopen(package_t* package, const char* path, const char* mode)
 	path_free(local_path);
 
 	asset->buffer = buffer;
-	asset->filename = strdup(path);
+	asset->filename = strdup(pathname);
 	asset->handle = al_file;
 	asset->package = package_ref(package);
 	return asset;
 
 on_error:
-	console_log(4, "failed to open '%s' from package #%u", path, package->id);
+	console_log(4, "failed to open '%s' from package #%u", pathname, package->id);
 	path_free(local_path);
 	if (al_file != NULL)
 		al_fclose(al_file);

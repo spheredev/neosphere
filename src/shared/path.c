@@ -189,18 +189,21 @@ path_hop(const path_t* path, size_t idx)
 }
 
 bool
-path_has_extension(const path_t* path, const char* extension)
+path_extension_is(const path_t* path, const char* extension)
 {
+	// note: unlike path_filename_is(), it's safe to call this on a directory
+	//       path, in which case it will always return false.
+
 	const char* my_extension;
 
-	if (!path_is_file(path)) {
-		return false;
-	}
-	else {
+	if (path_is_file(path)) {
 		if ((my_extension = strrchr(path->filename, '.')))
 			return strcasecmp(my_extension, extension) == 0;
 		else
 			return extension == NULL || extension[0] == '\0';
+	}
+	else {
+		return false;
 	}
 }
 
@@ -211,7 +214,7 @@ path_is_file(const path_t* path)
 }
 
 bool
-path_is_rooted(const path_t* path)
+path_rooted(const path_t* path)
 {
 	const char* first_hop = path->num_hops >= 1 ? path->hops[0] : "-";
 	return (strlen(first_hop) >= 2 && first_hop[1] == ':')
@@ -340,7 +343,7 @@ path_collapse(path_t* path, bool collapse_uplevel)
 
 	size_t i;
 
-	is_rooted = path_is_rooted(path);
+	is_rooted = path_rooted(path);
 	for (i = 0; i < path_num_hops(path); ++i) {
 		hop = path_hop(path, i);
 		collapse_ok = collapse_ok && i > 0;
@@ -405,7 +408,7 @@ path_rebase(path_t* path, const path_t* root)
 
 	size_t i;
 
-	if (path_is_rooted(path))
+	if (path_rooted(path))
 		return path;
 	new_hops = malloc(PATH_MAX_HOPS * sizeof(char*));
 	num_root_hops = path_num_hops(root);

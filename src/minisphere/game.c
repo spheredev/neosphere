@@ -97,7 +97,7 @@ struct file
 static bool      help_list_dir       (vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive);
 static void      load_default_assets (game_t* game);
 static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs, bool recursive);
-static bool      resolve_path        (const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type);
+static bool      resolve_pathname    (const game_t* game, const char* pathname, path_t* *out_path, enum fs_type *out_fs_type);
 static bool      try_load_s2gm       (game_t* game, const lstring_t* json_text);
 
 static unsigned int s_next_game_id = 1;
@@ -137,7 +137,7 @@ game_open(const char* game_path)
 		game->root_path = path_dup(path);
 		game->package = package;
 	}
-	else if (path_has_extension(path, ".sgm") || path_filename_is(path, "game.json")) {  // game manifest
+	else if (path_extension_is(path, ".sgm") || path_filename_is(path, "game.json")) {  // game manifest
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 	}
@@ -150,7 +150,7 @@ game_open(const char* game_path)
 		// a bare script transparent to the rest of the engine, keeping things simple.
 		console_log(1, "synthesizing manifest for '%s' from game #%u", path_cstr(path),
 			s_next_game_id);
-		game->version = path_has_extension(path, ".mjs") ? 2 : 1;
+		game->version = path_extension_is(path, ".mjs") ? 2 : 1;
 		game->api_level = SPHERE_API_LEVEL_STABLE;
 		game->name = lstr_new(path_filename(path));
 		game->author = lstr_new("Author Unknown");
@@ -322,7 +322,7 @@ game_dir_exists(const game_t* it, const char* dirname)
 	enum fs_type fs_type;
 	struct stat  stats;
 
-	if (!resolve_path(it, dirname, &dir_path, &fs_type))
+	if (!resolve_pathname(it, dirname, &dir_path, &fs_type))
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -379,7 +379,7 @@ game_file_exists(const game_t* it, const char* filename)
 	path_t*      path = NULL;
 	struct stat  stats;
 
-	if (!resolve_path(it, filename, &path, &fs_type))
+	if (!resolve_pathname(it, filename, &path, &fs_type))
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -462,7 +462,7 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 	char*   prefix;
 
 	path = path_new(filename);
-	if (path_is_rooted(path))  // absolute path?
+	if (path_rooted(path))  // absolute path?
 		return path;
 	if (base_dir_name != NULL) {
 		base_path = game_full_path(it, base_dir_name, NULL, v1_mode);
@@ -536,13 +536,13 @@ game_path(const game_t* it)
 }
 
 path_t*
-game_relative_path(const game_t* it, const char* filename, const char* base_dir_name)
+game_relative_path(const game_t* it, const char* pathname, const char* base_dir_name)
 {
 	path_t* base_path;
 	path_t* path;
 
-	path = game_full_path(it, filename, NULL, false);
-	if (path_is_rooted(path))
+	path = game_full_path(it, pathname, NULL, false);
+	if (path_rooted(path))
 		return path;
 	base_path = game_full_path(it, base_dir_name, NULL, false);
 	path_to_dir(base_path);
@@ -611,7 +611,7 @@ game_mkdir(game_t* it, const char* dirname)
 	enum fs_type  fs_type;
 	path_t*       path;
 
-	if (!resolve_path(it, dirname, &path, &fs_type))
+	if (!resolve_pathname(it, dirname, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -651,29 +651,29 @@ on_error:
 }
 
 bool
-game_rename(game_t* it, const char* name1, const char* name2)
+game_rename(game_t* it, const char* old_pathname, const char* new_pathname)
 {
-	enum fs_type fs_type_1;
-	enum fs_type fs_type_2;
-	path_t*      path1;
-	path_t*      path2;
+	enum fs_type new_fs_type;
+	path_t*      new_path;
+	enum fs_type old_fs_type;
+	path_t*      old_path;
 
-	if (!resolve_path(it, name1, &path1, &fs_type_1))
+	if (!resolve_pathname(it, old_pathname, &old_path, &old_fs_type))
 		return false;
-	if (!resolve_path(it, name2, &path2, &fs_type_2))
+	if (!resolve_pathname(it, new_pathname, &new_path, &new_fs_type))
 		return false;
-	if (fs_type_2 != fs_type_1)
+	if (new_fs_type != old_fs_type)
 		return false;  // can't cross file system boundaries
-	switch (fs_type_1) {
+	switch (old_fs_type) {
 	case FS_LOCAL:
 		// here's where we have to be careful.  on some platforms rename() with the same
 		// filename for old and new will delete the file (!), and it will also happily overwrite
 		// any existing file with the same name.
-		if (path_is(path1, path2))
-			return true;  // avoid rename() deleting file if name1 == name2
-		if (game_file_exists(it, name2) || game_dir_exists(it, name2))
+		if (path_is(old_path, new_path))
+			return true;  // avoid rename() deleting file if oldname == newname
+		if (game_file_exists(it, new_pathname) || game_dir_exists(it, new_pathname))
 			return false; // don't overwrite existing file
-		return rename(path_cstr(path1), path_cstr(path2)) == 0;
+		return rename(path_cstr(old_path), path_cstr(new_path)) == 0;
 	case FS_PACKAGE:
 		return false;  // SPK packages are not writable
 	default:
@@ -687,7 +687,7 @@ game_rmdir(game_t* it, const char* dirname)
 	enum fs_type fs_type;
 	path_t*      path;
 
-	if (!resolve_path(it, dirname, &path, &fs_type))
+	if (!resolve_pathname(it, dirname, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -717,7 +717,7 @@ game_unlink(game_t* it, const char* filename)
 	enum fs_type fs_type;
 	path_t*      path;
 
-	if (!resolve_path(it, filename, &path, &fs_type))
+	if (!resolve_pathname(it, filename, &path, &fs_type))
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
@@ -861,7 +861,7 @@ file_open(game_t* game, const char* filename, const char* mode)
 
 	file = calloc(1, sizeof(file_t));
 
-	if (!resolve_path(game, filename, &file_path, &file->fs_type))
+	if (!resolve_pathname(game, filename, &file_path, &file->fs_type))
 		goto on_error;
 	switch (file->fs_type) {
 	case FS_LOCAL:
@@ -1210,7 +1210,7 @@ read_directory(const game_t* game, const char* dirname, bool want_dirs, bool rec
 
 	int i;
 
-	if (!resolve_path(game, dirname, &dir_path, &fs_type))
+	if (!resolve_pathname(game, dirname, &dir_path, &fs_type))
 		goto on_error;
 	origin_path = path_new_dir(dirname);
 	if (!(list = vector_new(sizeof(path_t*))))
@@ -1240,7 +1240,7 @@ on_error:
 }
 
 static bool
-resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum fs_type *out_fs_type)
+resolve_pathname(const game_t* game, const char* pathname, path_t* *out_path, enum fs_type *out_fs_type)
 {
 	// the path resolver is the core of SphereFS. it handles all canonization of paths
 	// so that the game doesn't have to care whether it's running from a local directory,
@@ -1248,8 +1248,8 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 
 	path_t* origin;
 
-	*out_path = path_new(filename);
-	if (path_is_rooted(*out_path)) {  // absolute path
+	*out_path = path_new(pathname);
+	if (path_rooted(*out_path)) {  // absolute path
 		*out_fs_type = FS_LOCAL;
 		return true;
 	}
@@ -1257,19 +1257,19 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 	*out_path = NULL;
 
 	// process SphereFS path
-	if (strlen(filename) >= 2 && memcmp(filename, "@/", 2) == 0) {
+	if (strlen(pathname) >= 2 && memcmp(pathname, "@/", 2) == 0) {
 		// the @/ prefix is an alias for the game directory.  it is used in contexts
 		// where a bare SphereFS filename may be ambiguous, e.g. in a require() call.
 		if (game == NULL)
 			goto on_error;
-		*out_path = path_new(filename + 2);
+		*out_path = path_new(&pathname[2]);
 		if (game->type == FS_LOCAL)
 			path_rebase(*out_path, game->root_path);
 		*out_fs_type = game->type;
 	}
-	else if (strlen(filename) >= 2 && memcmp(filename, "$/", 2) == 0) {
+	else if (strlen(pathname) >= 2 && memcmp(pathname, "$/", 2) == 0) {
 		// the $/ prefix refers to the location of the game's startup script.
-		*out_path = path_new(filename + 2);
+		*out_path = path_new(&pathname[2]);
 		origin = path_strip(path_dup(game_script_path(game)));
 		path_rebase(*out_path, origin);
 		if (game->type == FS_LOCAL)
@@ -1277,22 +1277,22 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 		path_free(origin);
 		*out_fs_type = game->type;
 	}
-	else if (strlen(filename) >= 2 && memcmp(filename, "~/", 2) == 0) {
+	else if (strlen(pathname) >= 2 && memcmp(pathname, "~/", 2) == 0) {
 		// the ~/ prefix refers to the game's save data directory.  to improve sandboxing and
 		// make things easier for developers using stock code, each game gets its own save data
 		// directory.
-		*out_path = path_new(filename + 2);
+		*out_path = path_new(&pathname[2]);
 		origin = path_rebase(path_new("miniSphere/Save Data/"), home_path());
 		path_append_dir(origin, game_save_id(game));
 		path_rebase(*out_path, origin);
 		path_free(origin);
 		*out_fs_type = FS_LOCAL;
 	}
-	else if (strlen(filename) >= 2 && memcmp(filename, "#/", 2) == 0) {
+	else if (strlen(pathname) >= 2 && memcmp(pathname, "#/", 2) == 0) {
 		// the #/ prefix refers to the engine's "system" directory.
 
 		// for an SPK package, see if the asset has been packaged and use it if so
-		*out_path = path_new(filename);
+		*out_path = path_new(pathname);
 		if (game != NULL && game->type == FS_PACKAGE
 		    && package_file_exists(game->package, path_cstr(*out_path)))
 		{
@@ -1304,7 +1304,7 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 		}
 
 		// asset not in SPK package, use physical system directory
-		*out_path = path_new(filename + 2);
+		*out_path = path_new(&pathname[2]);
 		origin = path_rebase(path_new("system/"), assets_path());
 		if (!path_resolve(origin, NULL)) {
 			path_free(origin);
@@ -1320,7 +1320,7 @@ resolve_path(const game_t* game, const char* filename, path_t* *out_path, enum f
 		//       used, so better to handle it here.
 		if (game == NULL)
 			goto on_error;
-		*out_path = game_full_path(game, filename, NULL, false);
+		*out_path = game_full_path(game, pathname, NULL, false);
 		if (path_num_hops(*out_path) > 0 && path_hop_is(*out_path, 0, "@"))
 			path_remove_hop(*out_path, 0);
 		if (game->type == FS_LOCAL)  // convert to absolute path

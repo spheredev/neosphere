@@ -732,7 +732,7 @@ handle_module_import(void)
 		}
 		jsal_throw();
 	}
-	if (path_has_extension(path, ".mjs")) {
+	if (path_extension_is(path, ".mjs")) {
 		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
 		jsal_push_string(path_cstr(path));
 		jsal_dup(-1);
@@ -940,7 +940,7 @@ try_eval_module(fs_t* fs, const char* filename)
 	dir_path = path_strip(path_dup(file_path));
 
 	// evaluate anything matching the pattern *.mjs as an ES module
-	is_esm_module = path_has_extension(file_path, ".mjs") || path_filename_is(file_path, "Cellscript");
+	is_esm_module = path_extension_is(file_path, ".mjs") || path_filename_is(file_path, "Cellscript");
 	if (is_esm_module) {
 		source = fs_fslurp(fs, filename, &source_size);
 		code_string = lstr_from_utf8(source, source_size, true);
@@ -989,7 +989,7 @@ try_eval_module(fs_t* fs, const char* filename)
 	jsal_put_prop_string(-2, filename);
 	jsal_pop(2);
 
-	if (path_has_extension(file_path, ".json")) {
+	if (path_extension_is(file_path, ".json")) {
 		// JSON file, decode to JavaScript object
 		jsal_push_lstring_t(code_string);
 		lstr_free(code_string);
@@ -1152,7 +1152,7 @@ write_manifests(build_t* build)
 			visor_end_op(build->visor);
 			return false;
 		}
-		if (api_version <= 1 && path_has_extension(main_path, ".mjs"))
+		if (api_version <= 1 && path_extension_is(main_path, ".mjs"))
 			visor_warn(build->visor, "'main': '%s' will not run as a module", path_cstr(main_path));
 		jsal_push_string(path_cstr(main_path));
 		jsal_put_prop_string(-7, "main");

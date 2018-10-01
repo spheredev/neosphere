@@ -113,7 +113,7 @@ fs_full_path(const char* filename, const char* base_dir_name)
 	char*   prefix;
 
 	path = path_new(filename);
-	if (path_is_rooted(path))  // absolute path?
+	if (path_rooted(path))  // absolute path?
 		return path;
 
 	if (base_dir_name != NULL) {
@@ -147,7 +147,7 @@ fs_relative_path(const char* filename, const char* base_dir_name)
 	path_t* path;
 
 	path = fs_full_path(filename, NULL);
-	if (path_is_rooted(path))
+	if (path_rooted(path))
 		return path;
 	base_path = fs_full_path(base_dir_name, NULL);
 	path_to_dir(base_path);
@@ -539,7 +539,7 @@ resolve(const fs_t* fs, const char* filename)
 	path_t* path;
 
 	path = path_new(filename);
-	if (path_is_rooted(path))
+	if (path_rooted(path))
 		goto on_error;
 
 	if (path_num_hops(path) == 0)
