@@ -234,9 +234,10 @@ do_command_line(session_t* session)
 	idx = 0;
 	ch = getchar();
 	while (ch != '\n') {
-		if (idx >= 4095) {
+		if (idx >= sizeof buffer - 1) {
 			printf("string is too long to parse.\n");
 			buffer[0] = '\0';
+			while (getchar() != '\n');
 			break;
 		}
 		buffer[idx++] = ch;
