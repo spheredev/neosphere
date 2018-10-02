@@ -232,8 +232,7 @@ do_command_line(session_t* session)
 	else
 		printf("\n\33[36;1msyscall %s\33[m\n\33[33;1m(ssj)\33[m ", function_name);
 	idx = 0;
-	ch = getchar();
-	while (ch != '\n') {
+	while ((ch = getchar()) != '\n') {
 		if (idx >= sizeof buffer - 1) {
 			printf("string is too long to parse.\n");
 			buffer[0] = '\0';
@@ -241,7 +240,6 @@ do_command_line(session_t* session)
 			break;
 		}
 		buffer[idx++] = ch;
-		ch = getchar();
 	}
 	buffer[idx] = '\0';
 	if (!(command = command_parse(buffer)))

@@ -383,18 +383,21 @@ build_clean(build_t* build)
 bool
 build_init_dir(build_t* it)
 {
+	char          author[256];
 	directory_t*  dir;
 	const path_t* in_path;
 	path_t*       origin_path;
 	path_t*       out_path;
 	char*         output;
 	bool          overwriting = false;
+	char          summary[256];
 	char*         template;
 	size_t        template_len;
+	char          title[256];
 
 	fs_mkdir(it->fs, "$/");
 
-	visor_begin_op(it->visor, "checking for existing files");
+	visor_begin_op(it->visor, "gathering information");
 	origin_path = path_new("#/template/");
 	dir = directory_open(it->fs, path_cstr(origin_path), true);
 	while (in_path = directory_next(dir)) {
@@ -408,7 +411,13 @@ build_init_dir(build_t* it)
 		path_free(out_path);
 	}
 
-	if (overwriting) {
+	if (!overwriting) {
+		visor_prompt(it->visor, "name of project? :", title, sizeof title);
+		visor_prompt(it->visor, "author's name? :", author, sizeof author);
+		visor_prompt(it->visor, "short summary? :", summary, sizeof summary);
+		visor_end_op(it->visor);
+	}
+	else {
 		// existing files would be overwritten, not safe to continue
 		visor_error(it->visor, "initialization would overwrite existing files");
 		visor_end_op(it->visor);
@@ -416,11 +425,8 @@ build_init_dir(build_t* it)
 		path_free(origin_path);
 		return false;
 	}
-	else {
-		visor_end_op(it->visor);
-	}
-
-	visor_begin_op(it->visor, "copying in files from template");
+	
+	visor_begin_op(it->visor, "copying in template files");
 	directory_rewind(dir);
 	while (in_path = directory_next(dir)) {
 		out_path = path_dup(in_path);
@@ -437,7 +443,7 @@ build_init_dir(build_t* it)
 
 	visor_begin_op(it->visor, "initializing new Cellscript");
 	template = fs_fslurp(it->fs, "$/Cellscript.tmpl", &template_len);
-	output = strfmt(template, "Untitled Sphere project", "Somebody once told me...", "The world is gonna roll me.", "320", "240", NULL);
+	output = strfmt(template, title, author, summary, "320", "240", NULL);
 	fs_fspew(it->fs, "$/Cellscript.mjs", output, strlen(output));
 	fs_unlink(it->fs, "$/Cellscript.tmpl");
 	free(output);

@@ -45,6 +45,7 @@ void      visor_begin_op   (visor_t* visor, const char* fmt, ...);
 void      visor_end_op     (visor_t* visor);
 void      visor_error      (visor_t* visor, const char* fmt, ...);
 void      visor_print      (visor_t* visor, const char* fmt, ...);
+void      visor_prompt     (visor_t* visor, const char* prompt, char* buffer, size_t bufsize);
 void      visor_warn       (visor_t* visor, const char* fmt, ...);
 
 #endif // SPHERE__VISOR_H__INCLUDED

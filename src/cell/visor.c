@@ -143,6 +143,25 @@ visor_print(visor_t* visor, const char* fmt, ...)
 }
 
 void
+visor_prompt(visor_t* visor, const char* prompt, char* buffer, size_t bufsize)
+{
+	char  ch;
+	char* p_out;
+	
+	print_indent(visor->indent_level);
+	printf("%s ", prompt);
+	p_out = buffer;
+	while ((ch = getchar()) != '\n') {
+		if (p_out >= buffer + bufsize - 1) {
+			while (getchar() != '\n');
+			break;
+		}
+		*p_out++ = ch;
+	}
+	*p_out = '\0';
+}
+
+void
 visor_warn(visor_t* visor, const char* fmt, ...)
 {
 	va_list ap;
