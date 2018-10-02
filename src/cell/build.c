@@ -386,16 +386,14 @@ build_init_dir(build_t* it)
 	char          author[256];
 	directory_t*  dir;
 	const path_t* in_path;
+	int           num_overwriting = 0;
 	path_t*       origin_path;
 	path_t*       out_path;
 	char*         output;
-	bool          overwriting = false;
 	char          summary[256];
 	char*         template;
 	size_t        template_len;
 	char          title[256];
-
-	fs_mkdir(it->fs, "$/");
 
 	visor_begin_op(it->visor, "gathering information");
 	origin_path = path_new("#/template/");
@@ -406,12 +404,12 @@ build_init_dir(build_t* it)
 		path_insert_hop(out_path, 0, "$");
 		if (fs_fexist(it->fs, path_cstr(out_path))) {
 			visor_print(it->visor, "found existing file '%s'", path_cstr(out_path));
-			overwriting = true;
+			++num_overwriting;
 		}
 		path_free(out_path);
 	}
 
-	if (!overwriting) {
+	if (num_overwriting <= 0) {
 		visor_prompt(it->visor, "name of project? :", title, sizeof title);
 		visor_prompt(it->visor, "author's name? :", author, sizeof author);
 		visor_prompt(it->visor, "short summary? :", summary, sizeof summary);
@@ -419,7 +417,7 @@ build_init_dir(build_t* it)
 	}
 	else {
 		// existing files would be overwritten, not safe to continue
-		visor_error(it->visor, "initialization would overwrite existing files");
+		visor_error(it->visor, "initialization would overwrite %d existing file(s)", num_overwriting);
 		visor_end_op(it->visor);
 		directory_close(dir);
 		path_free(origin_path);
@@ -427,6 +425,7 @@ build_init_dir(build_t* it)
 	}
 	
 	visor_begin_op(it->visor, "copying in template files");
+	fs_mkdir(it->fs, "$/");
 	directory_rewind(dir);
 	while (in_path = directory_next(dir)) {
 		out_path = path_dup(in_path);
