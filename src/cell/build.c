@@ -410,9 +410,9 @@ build_init_dir(build_t* it)
 	}
 
 	if (num_overwriting <= 0) {
-		visor_prompt(it->visor, "name of project? :", title, sizeof title);
-		visor_prompt(it->visor, "author's name? :", author, sizeof author);
-		visor_prompt(it->visor, "short summary? :", summary, sizeof summary);
+		visor_prompt(it->visor, "name of project?", title, sizeof title);
+		visor_prompt(it->visor, "author's name?", author, sizeof author);
+		visor_prompt(it->visor, "short summary?", summary, sizeof summary);
 		visor_end_op(it->visor);
 	}
 	else {

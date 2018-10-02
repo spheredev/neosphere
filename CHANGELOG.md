@@ -1,6 +1,30 @@
 miniSphere Changelog
 ====================
 
+v5.3.0 - TBD
+------------
+
+* Adds a `cell init` command, for initializing a new Sphere project directory
+  directly from the command line.
+* Adds support for `-h` as an alias for `--help` for all command-line tools.
+* Adds support for Cellscript files with no `.js` or `.mjs` extension.
+* Adds a `fileTypes` manifest field which allows a game to tell the engine how
+  to load different types of files based on their extension; currently this is
+  used only for JavaScript files but may be expanded in the future.
+* Adds `FS.typeOf` API to get the `fileTypes` mapping for a specified file.
+* Adds `FS.directoryOf`, `FS.extensionOf` and `FS.fileNameOf` APIs for taking
+  apart path strings.
+* Adds `recursive` option for DirectoryStream, to list files in subdirectories.
+* Adds `apiVersion` and `apiLevel` to the example Cellscript.
+* Improves the performance of code using the `Transform#matrix` property.
+* Improves first-access performance of `Sphere.Game` by avoiding an unnecessary
+  JSON round-trip conversion.
+* Improves Cell's command-line syntax.  Many options have been replaced with
+  easy-to-remember commands like `cell build` or `cell pack`.
+* Fixes a bug where `FS.fullPath` doesn't automatically add a trailing slash
+  when passed the path of a known directory.
+
+
 v5.2.13 - September 6, 2018
 ---------------------------
 
