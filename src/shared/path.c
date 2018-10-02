@@ -79,7 +79,7 @@ struct path
 {
 	char*  filename;
 	char** hops;
-	size_t num_hops;
+	int    num_hops;
 	char*  pathname;
 };
 
@@ -136,7 +136,7 @@ path_dup(const path_t* path)
 void
 path_free(path_t* path)
 {
-	size_t i;
+	int i;
 
 	if (path == NULL)
 		return;
@@ -183,7 +183,7 @@ path_filename(const path_t* path)
 }
 
 const char*
-path_hop(const path_t* path, size_t idx)
+path_hop(const path_t* path, int idx)
 {
 	return path->hops[idx];
 }
@@ -221,7 +221,7 @@ path_rooted(const path_t* path)
 		|| strcmp(first_hop, "") == 0;
 }
 
-size_t
+int
 path_num_hops(const path_t* path)
 {
 	return path->num_hops;
@@ -236,7 +236,7 @@ path_filename_is(const path_t* path, const char* name)
 }
 
 bool
-path_hop_is(const path_t* path, size_t idx, const char* name)
+path_hop_is(const path_t* path, int idx, const char* name)
 {
 	return strcmp(path->hops[idx], name) == 0;
 }
@@ -248,8 +248,8 @@ path_append(path_t* path, const char* pathname)
 	char* token;
 	char  *p_filename;
 
-	char   *p;
-	size_t i;
+	char *p;
+	int  i;
 
 	if (path->filename != NULL)
 		goto on_error;
@@ -341,7 +341,7 @@ path_collapse(path_t* path, bool collapse_uplevel)
 	const char* hop;
 	bool        is_rooted;
 
-	size_t i;
+	int i;
 
 	is_rooted = path_rooted(path);
 	for (i = 0; i < path_num_hops(path); ++i) {
@@ -363,9 +363,9 @@ path_collapse(path_t* path, bool collapse_uplevel)
 }
 
 path_t*
-path_insert_hop(path_t* path, size_t idx, const char* name)
+path_insert_hop(path_t* path, int idx, const char* name)
 {
-	size_t i;
+	int i;
 
 	for (i = path->num_hops; i > idx; --i)
 		path->hops[i] = path->hops[i - 1];
@@ -381,7 +381,7 @@ path_mkdir(const path_t* path)
 	bool    is_ok = true;
 	path_t* parent_path;
 
-	size_t i;
+	int i;
 
 	// appending an empty string to a path is a no-op, so we have to
 	// explicitly check for an empty string in the first hop and root the
@@ -404,9 +404,9 @@ path_t*
 path_rebase(path_t* path, const path_t* root)
 {
 	char** new_hops;
-	size_t num_root_hops;
+	int    num_root_hops;
 
-	size_t i;
+	int i;
 
 	if (path_rooted(path))
 		return path;
@@ -427,10 +427,10 @@ path_rebase(path_t* path, const path_t* root)
 path_t*
 path_relativize(path_t* path, const path_t* origin)
 {
-	size_t  num_backhops;
+	int     num_backhops;
 	path_t* origin_path;
 
-	size_t i;
+	int i;
 
 	origin_path = path_collapse(path_strip(path_dup(origin)), false);
 	num_backhops = path_num_hops(origin_path);
@@ -448,9 +448,9 @@ path_relativize(path_t* path, const path_t* origin)
 }
 
 path_t*
-path_remove_hop(path_t* path, size_t idx)
+path_remove_hop(path_t* path, int idx)
 {
-	size_t i;
+	int i;
 
 	free(path->hops[idx]);
 	--path->num_hops;
@@ -518,7 +518,7 @@ path_to_dir(path_t* path)
 static path_t*
 construct_path(path_t* path, const char* pathname, bool force_dir)
 {
-	size_t i;
+	int i;
 
 	// construct_path() may be used to replace a path in-place. in that
 	// case we have to free the existing components.
@@ -555,20 +555,32 @@ refresh_pathname(path_t* path)
 	//        * the canonical path separator is the forward slash (/).
 	//        * directory paths are always reported with a trailing slash.
 
-	char  buffer[PATH_MAX_LENGTH];  // FIXME: security risk
+	char   buffer[PATH_MAX_LENGTH];  // FIXME: security risk
+	size_t len;
+	char*  p_out;
 
-	size_t i;
+	int i;
 
-	strcpy(buffer, path->num_hops == 0 && path->filename == NULL ? "./" : "");
-	for (i = 0; i < path->num_hops; ++i) {
-		if (i > 0)
-			strcat(buffer, "/");
-		strcat(buffer, path->hops[i]);
+	p_out = buffer;
+	if (path->num_hops > 0 || path->filename != NULL) {
+		for (i = 0; i < path->num_hops; ++i) {
+			if (i > 0)
+				*p_out++ = '/';
+			len = strlen(path->hops[i]);
+			memcpy(p_out, path->hops[i], len);
+			p_out += len;
+		}
+		if (path->num_hops > 0)
+			*p_out++ = '/';
+		if (path->filename != NULL)
+			strcpy(p_out, path->filename);
+		else
+			*p_out = '\0';
 	}
-	if (path->num_hops > 0)
-		strcat(buffer, "/");
-	if (path->filename != NULL)
-		strcat(buffer, path->filename);
+	else {
+		strcpy(p_out, "./");
+	}
+	
 	free(path->pathname);
 	path->pathname = strdup(buffer);
 }
