@@ -419,9 +419,9 @@ Color#fadeTo(alpha_factor); [L1]
 
 The `DirectoryStream` object allows you to read the contents of a directory.
 This works a lot like reading data from a `FileStream` (see below) in that you
-read directory entries one at a time.  `DirectoryStream` also implements the
-JavaScript ES6 iterator protocol, so you can use it in a `from()` query or
-`for...of` loop.
+read file and directory entries one at a time.  `DirectoryStream` also
+implements the JavaScript ES6 iterator protocol, so you can use it in a
+`from()` query or `for...of` loop.
 
 new DirectoryStream(dir_name[, options]); [L1]
 
@@ -455,7 +455,7 @@ DirectoryStream#position [read/write] [L1]
 DirectoryStream#dispose(); [L1]
 
     Disposes of the DirectoryStream object, closing the underlying directory.
-    Attempting to the object afterwards will throw an error.
+    Attempting to use the object afterwards will throw an error.
 
     Note: While it's not strictly necessary to call `dispose()` on stream
           objects,  it may take some time for the garbage collector to get to
@@ -475,8 +475,9 @@ DirectoryStream#next(); [L1]
 
         value.fileName
 
-            The file or directory name of the entry.  Directory names always
-            end in a slash (`/`).
+            The file or directory name of the entry.  Directory names will end
+            in a slash (`/`).  For streams in recursive mode, `.fileName` can
+            include relative path information, e.g., `subdir/file.ext`.
 
         value.fullPath
 
