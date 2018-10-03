@@ -16,7 +16,7 @@ v5.3.0 - TBD
   apart path strings.
 * Adds `recursive` option for DirectoryStream, to list files in subdirectories.
 * Adds `apiVersion` and `apiLevel` to the example Cellscript.
-* Improves the performance of code using the `Transform#matrix` property.
+* Improves performance greatly for code using the `Transform#matrix` property.
 * Improves first-access performance of `Sphere.Game` by avoiding an unnecessary
   JSON round-trip conversion.
 * Improves Cell's command-line syntax.  Many options have been replaced with

@@ -1,6 +1,20 @@
 Release Notes
 =============
 
+miniSphere 5.3
+--------------
+
+* Cell's command-line syntax has changed to accommodate new commands.  Notably,
+  a few options have been promoted to full commands, e.g. `cell -c` is now
+  `cell clean`.  If you need a quick primer on the new syntax, you can type
+  `cell help` on the command-line.
+
+* `DirectoryStream` objects can now be initialized in recursive mode.  In this
+  mode, instead of listing subdirectories along with files, it will recursively
+  descend into subdirectories to list the files in them.  This provides a
+  convenient way to find files at any level of a directory structure using a
+  single DirectoryStream.
+
 miniSphere 5.2
 --------------
 

@@ -351,14 +351,14 @@ build_eval(build_t* build, const char* filename)
 				error_column = jsal_get_int(-1) + 1;
 			jsal_pop(4);
 		}
-		visor_error(build->visor, "error in JavaScript code detected");
+		visor_error(build->visor, "Cellscript crash due to uncaught exception");
 		visor_end_op(build->visor);
 		if (error_url != NULL && error_line > 0)
-			printf("\nSCRIPT CRASH: error at '%s':%d:%d\n", error_url, error_line, error_column);
+			printf("\nCRASH: error at '%s':%d:%d\n", error_url, error_line, error_column);
 		else if (error_url != NULL)
-			printf("\nSCRIPT CRASH: error in '%s'\n", error_url);
+			printf("\nCRASH: error in '%s'\n", error_url);
 		else
-			printf("\nSCRIPT CRASH: uncaught JavaScript exception\n");
+			printf("\nCRASH: uncaught JavaScript exception\n");
 		if (error_stack != NULL)
 			printf("%s\n", error_stack);
 		else
