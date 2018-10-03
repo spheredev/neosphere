@@ -429,7 +429,7 @@ build_init_dir(build_t* it)
 	
 	visor_begin_op(it->visor, "copying in template files");
 	fs_mkdir(it->fs, "$/");
-	directory_rewind(dir);
+	directory_seek(dir, 0);
 	while (in_path = directory_next(dir)) {
 		out_path = path_dup(in_path);
 		path_relativize(out_path, origin_path);
