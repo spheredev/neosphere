@@ -165,21 +165,42 @@ fspew(const void* buffer, size_t size, const char* filename)
 }
 
 char*
-strnewf(const char* fmt, ...)
+strescp(const char* input, char quote_char)
 {
-	va_list ap, apc;
-	char* buffer;
-	int   buf_size;
+	char*       buffer;
+	const char* escapables;
+	size_t      len;
+	size_t      out_len = 0;
+	const char* p_in;
+	const char* p_next_in;
+	char*       p_out;
 
-	va_start(ap, fmt);
-	va_copy(apc, ap);
-	buf_size = vsnprintf(NULL, 0, fmt, apc) + 1;
-	va_end(apc);
-	buffer = malloc(buf_size);
-	va_copy(apc, ap);
-	vsnprintf(buffer, buf_size, fmt, apc);
-	va_end(apc);
-	va_end(ap);
+	if (quote_char == '"')
+		escapables = "\"\r\n\\";
+	else if (quote_char == '\'')
+		escapables = "'\r\n\\";
+	else
+		escapables = "`$\\";
+	p_in = input;
+	while (p_next_in = strpbrk(p_in, escapables)) {
+		out_len += p_next_in - p_in + 1;
+		p_in = p_next_in + 1;
+	}
+
+	buffer = malloc(out_len + 1);
+	p_in = input;
+	p_out = buffer;
+	while (p_next_in = strpbrk(p_in, escapables)) {
+		len = p_next_in - p_in;
+		memcpy(p_out, p_in, len);
+		p_out += len;
+		*p_out++ = '\\';
+		*p_out++ = *p_next_in == '\r' ? 'r'
+			: *p_next_in == '\n' ? 'n'
+			: *p_next_in;
+		p_in = p_next_in + 1;
+	}
+	strcpy(p_out, p_in);  // copy remainder of string
 	return buffer;
 }
 
@@ -267,6 +288,25 @@ strfmt(const char* format, ...)
 syntax_error:
 	free(buffer);
 	return NULL;
+}
+
+char*
+strnewf(const char* fmt, ...)
+{
+	va_list ap;
+
+	char* buffer;
+	int   buf_size;
+
+	va_start(ap, fmt);
+	buf_size = vsnprintf(NULL, 0, fmt, ap) + 1;
+	va_end(ap);
+	buffer = malloc(buf_size);
+
+	va_start(ap, fmt);
+	vsnprintf(buffer, buf_size, fmt, ap);
+	va_end(ap);
+	return buffer;
 }
 
 bool

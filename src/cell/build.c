@@ -384,6 +384,7 @@ bool
 build_init_dir(build_t* it)
 {
 	char          author[256];
+	char*         author_for_js;
 	directory_t*  dir;
 	const path_t* in_path;
 	int           num_overwriting = 0;
@@ -391,9 +392,11 @@ build_init_dir(build_t* it)
 	path_t*       out_path;
 	char*         output;
 	char          summary[256];
+	char*         summary_for_js;
 	char*         template;
 	size_t        template_len;
 	char          title[256];
+	char*         title_for_js;
 
 	visor_begin_op(it->visor, "gathering information");
 	origin_path = path_new("#/template/");
@@ -410,9 +413,9 @@ build_init_dir(build_t* it)
 	}
 
 	if (num_overwriting <= 0) {
-		visor_prompt(it->visor, "name of project?", title, sizeof title);
+		visor_prompt(it->visor, "title of new game?", title, sizeof title);
 		visor_prompt(it->visor, "author's name?", author, sizeof author);
-		visor_prompt(it->visor, "short summary?", summary, sizeof summary);
+		visor_prompt(it->visor, "one-line summary?", summary, sizeof summary);
 		visor_end_op(it->visor);
 	}
 	else {
@@ -441,10 +444,16 @@ build_init_dir(build_t* it)
 	visor_end_op(it->visor);
 
 	visor_begin_op(it->visor, "initializing new Cellscript");
+	title_for_js = strescp(title, '"');
+	author_for_js = strescp(author, '"');
+	summary_for_js = strescp(summary, '"');
 	template = fs_fslurp(it->fs, "$/Cellscript.tmpl", &template_len);
-	output = strfmt(template, title, author, summary, "320", "240", NULL);
+	output = strfmt(template, title_for_js, author_for_js, summary_for_js, "320", "240", NULL);
 	fs_fspew(it->fs, "$/Cellscript.mjs", output, strlen(output));
 	fs_unlink(it->fs, "$/Cellscript.tmpl");
+	free(title_for_js);
+	free(author_for_js);
+	free(summary_for_js);
 	free(output);
 	free(template);
 	visor_end_op(it->visor);
