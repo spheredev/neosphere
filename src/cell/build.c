@@ -427,7 +427,7 @@ build_init_dir(build_t* it)
 		return false;
 	}
 	
-	visor_begin_op(it->visor, "copying in template files");
+	visor_begin_op(it->visor, "copying in project files");
 	fs_mkdir(it->fs, "$/");
 	directory_seek(dir, 0);
 	while (in_path = directory_next(dir)) {
@@ -443,10 +443,10 @@ build_init_dir(build_t* it)
 	path_free(origin_path);
 	visor_end_op(it->visor);
 
-	visor_begin_op(it->visor, "initializing new Cellscript");
-	title_for_js = strescp(title, '"');
-	author_for_js = strescp(author, '"');
-	summary_for_js = strescp(summary, '"');
+	visor_begin_op(it->visor, "preparing Cellscript for use");
+	title_for_js = strescq(title, '"');
+	author_for_js = strescq(author, '"');
+	summary_for_js = strescq(summary, '"');
 	template = fs_fslurp(it->fs, "$/Cellscript.tmpl", &template_len);
 	output = strfmt(template, title_for_js, author_for_js, summary_for_js, "320", "240", NULL);
 	fs_fspew(it->fs, "$/Cellscript.mjs", output, strlen(output));

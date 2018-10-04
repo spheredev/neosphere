@@ -165,7 +165,7 @@ fspew(const void* buffer, size_t size, const char* filename)
 }
 
 char*
-strescp(const char* input, char quote_char)
+strescq(const char* input, char quote_char)
 {
 	char*       buffer;
 	const char* escapables;
@@ -183,9 +183,10 @@ strescp(const char* input, char quote_char)
 		escapables = "`$\\";
 	p_in = input;
 	while (p_next_in = strpbrk(p_in, escapables)) {
-		out_len += p_next_in - p_in + 1;
+		out_len += p_next_in - p_in + 2;
 		p_in = p_next_in + 1;
 	}
+	out_len += strlen(p_in);
 
 	buffer = malloc(out_len + 1);
 	p_in = input;

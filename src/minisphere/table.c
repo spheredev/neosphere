@@ -149,11 +149,10 @@ table_add_number(table_t* it, int column_index, long long value)
 void
 table_add_percentage(table_t* it, int column_index, double value)
 {
-	char* text;
+	char text[32];
 
-	asprintf(&text, "%.1f %%", value * 100.0);
+	sprintf(text, "%.1f %%", value * 100.0);
 	table_add_text(it, column_index, text);
-	free(text);
 }
 
 void
