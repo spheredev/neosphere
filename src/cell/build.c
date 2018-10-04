@@ -1120,7 +1120,7 @@ write_manifests(build_t* build)
 		}
 	}
 	else {
-		visor_warn(build->visor, "'version': missing value: targeting Sphere v2");
+		visor_warn(build->visor, "'version': missing value: targeting Sphere v2 platform");
 	}
 
 	if (jsal_get_prop_string(-5, "apiLevel")) {
@@ -1140,7 +1140,7 @@ write_manifests(build_t* build)
 	}
 	else {
 		if (api_version >= 2)
-			visor_warn(build->visor, "'apiLevel': missing value: targeting API L1");
+			visor_warn(build->visor, "'apiLevel': missing value: targeting API level 1");
 	}
 	
 	// note: SGMv1 encodes the resolution width and height as separate fields.
