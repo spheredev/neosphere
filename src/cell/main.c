@@ -284,7 +284,7 @@ parse_command_line(int argc, char* argv[])
 
 	// validate command line
 	if (s_out_path == NULL)
-		s_out_path = path_new("dist/");
+		s_out_path = path_rebase(path_new("dist/"), s_in_path);
 	if (!have_debug_flag)
 		s_debug_build = s_mode == MODE_BUILD_ONLY;
 	if (s_mode == MODE_PACK && s_package_path == NULL) {
