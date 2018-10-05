@@ -969,7 +969,7 @@ pegasus_try_require(const char* filename, bool node_compatible)
 	file_type = game_file_type(g_game, filename);
 
 	// always evaluate `javascript-module` file type as ESM code
-	is_esm_module = !node_compatible || strcmp(file_type, "javascript-module") == 0;
+	is_esm_module = !node_compatible || strcmp(file_type, "script/es-module") == 0;
 	if (is_esm_module) {
 		source = game_read_file(g_game, filename, &source_size);
 		code_string = lstr_from_utf8(source, source_size, true);
@@ -1021,7 +1021,7 @@ pegasus_try_require(const char* filename, bool node_compatible)
 	jsal_put_prop_string(-2, filename);
 	jsal_pop(2);
 
-	if (strcmp(file_type, "json") == 0) {
+	if (strcmp(file_type, "data/json") == 0) {
 		// JSON file, decode to JavaScript object
 		jsal_push_lstring_t(code_string);
 		lstr_free(code_string);

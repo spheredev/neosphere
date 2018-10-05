@@ -105,9 +105,9 @@ static unsigned int s_next_game_id = 1;
 static
 const char* const DEFAULT_TYPE_MAP[] =
 {
-	".js",   "node-module",
-	".json", "json",
-	".mjs",  "javascript-module",
+	".js",   "script/javascript",
+	".json", "data/json",
+	".mjs",  "script/es-module",
 	NULL, NULL
 };
 

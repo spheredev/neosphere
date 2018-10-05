@@ -653,7 +653,7 @@ static path_t*
 find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_origin, bool node_compatible)
 {
 	static const
-		struct pattern
+	struct pattern
 	{
 		bool        esm_aware;
 		const char* name;
