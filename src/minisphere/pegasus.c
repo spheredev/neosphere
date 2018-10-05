@@ -468,7 +468,7 @@ static void js_VertexList_finalize      (void* host_ptr);
 
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
-static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool es6_mode);
+static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool node_compatible);
 static bool      handle_main_event_loop      (int num_args, bool is_ctor, intptr_t magic);
 static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
@@ -939,7 +939,7 @@ pegasus_start_event_loop(void)
 }
 
 bool
-pegasus_try_require(const char* filename)
+pegasus_try_require(const char* filename, bool node_compatible)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  JSAL's stack-based API is powerful, but gets very
@@ -959,7 +959,7 @@ pegasus_try_require(const char* filename)
 	path_t*     dir_path;
 	path_t*     file_path;
 	const char* file_type;
-	bool        is_esm_module = false;
+	bool        is_esm_module;
 	bool        is_module_loaded;
 	size_t      source_size;
 	char*       source;
@@ -968,8 +968,8 @@ pegasus_try_require(const char* filename)
 	dir_path = path_strip(path_dup(file_path));
 	file_type = game_file_type(g_game, filename);
 
-	// evaluate `javascript-module` file type as an ES module
-	is_esm_module = strcmp(file_type, "javascript-module") == 0;
+	// always evaluate `javascript-module` file type as ESM code
+	is_esm_module = !node_compatible || strcmp(file_type, "javascript-module") == 0;
 	if (is_esm_module) {
 		source = game_read_file(g_game, filename, &source_size);
 		code_string = lstr_from_utf8(source, source_size, true);
@@ -1166,24 +1166,24 @@ create_joystick_objects(void)
 }
 
 static path_t*
-find_module_file(const char* id, const char* origin, const char* sys_origin, bool es6_mode)
+find_module_file(const char* id, const char* origin, const char* sys_origin, bool node_compatible)
 {
 	static const
 	struct pattern
 	{
-		int         api_level;
+		bool        esm_aware;
 		const char* name;
 	}
 	PATTERNS[] =
 	{
-		{ 1, "%s" },
-		{ 1, "%s.mjs" },
-		{ 1, "%s.js" },
-		{ 1, "%s.json" },
-		{ 1, "%s/package.json" },
-		{ 1, "%s/index.mjs" },
-		{ 1, "%s/index.js" },
-		{ 1, "%s/index.json" },
+		{ true,  "%s" },
+		{ true,  "%s.mjs" },
+		{ true,  "%s.js" },
+		{ false, "%s.json" },
+		{ false, "%s/package.json" },
+		{ true,  "%s/index.mjs" },
+		{ true,  "%s/index.js" },
+		{ false, "%s/index.json" },
 	};
 
 	path_t*      origin_path;
@@ -1203,7 +1203,7 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 	}
 
 	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
-		if (s_api_level < PATTERNS[i].api_level)
+		if (!node_compatible && !PATTERNS[i].esm_aware)
 			continue;
 		filename = strnewf(PATTERNS[i].name, id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
@@ -1283,18 +1283,15 @@ handle_module_import(void)
 	};
 
 	char*       caller_id = NULL;
-	const char* file_type;
 	path_t*     path;
-	char*       shim_name;
-	lstring_t*  shim_source;
 	char*       source;
 	size_t      source_len;
 	char*       specifier;
 
 	int i;
 
-	// strdup() here because the JSAL-managed strings may get overwritten
-	// in the course of a filename lookup.
+	// strdup() here because the JSAL-managed strings may get overwritten in the course
+	// of a filename lookup.
 	specifier = strdup(jsal_require_string(0));
 	if (!jsal_is_null(1))
 		caller_id = strdup(jsal_require_string(1));
@@ -1305,7 +1302,7 @@ handle_module_import(void)
 		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of an ESM module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(specifier, caller_id, PATHS[i], true)))
+		if ((path = find_module_file(specifier, caller_id, PATHS[i], false)))
 			break;  // short-circuit
 	}
 	free(caller_id);
@@ -1320,27 +1317,11 @@ handle_module_import(void)
 	}
 	free(specifier);
 
-	file_type = game_file_type(g_game, path_cstr(path));
-	if (strcmp(file_type, "javascript-module") == 0) {
-		source = game_read_file(g_game, path_cstr(path), &source_len);
-		jsal_push_string(path_cstr(path));
-		jsal_push_string(debugger_source_name(path_cstr(path)));
-		jsal_push_lstring(source, source_len);
-		free(source);
-	}
-	else {
-		// ES module shim, allows 'import' to work with CommonJS modules
-		shim_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
-		shim_source = lstr_newf(
-			"/* ESM shim for CommonJS module */\n"
-			"export default require(\"%s\");", path_cstr(path));
-		debugger_add_source(shim_name, shim_source);
-		jsal_push_string(shim_name);
-		jsal_dup(-1);
-		jsal_push_lstring_t(shim_source);
-		free(shim_name);
-		lstr_free(shim_source);
-	}
+	source = game_read_file(g_game, path_cstr(path), &source_len);
+	jsal_push_string(path_cstr(path));
+	jsal_push_string(debugger_source_name(path_cstr(path)));
+	jsal_push_lstring(source, source_len);
+	free(source);
 }
 
 static path_t*
@@ -1400,12 +1381,12 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(id, parent_id, PATHS[i], false)))
+		if ((path = find_module_file(id, parent_id, PATHS[i], true)))
 			break;  // short-circuit
 	}
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't load JS module '%s'", id);
-	if (!pegasus_try_require(path_cstr(path)))
+	if (!pegasus_try_require(path_cstr(path), true))
 		jsal_throw();
 	return true;
 }

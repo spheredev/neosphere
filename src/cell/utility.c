@@ -181,6 +181,7 @@ strescq(const char* input, char quote_char)
 		escapables = "'\r\n\\";
 	else
 		escapables = "`$\\";
+
 	p_in = input;
 	while (p_next_in = strpbrk(p_in, escapables)) {
 		out_len += p_next_in - p_in + 2;

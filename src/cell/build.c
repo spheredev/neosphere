@@ -139,8 +139,8 @@ static void js_Tool_finalize            (void* host_ptr);
 
 static void    cache_value_to_this  (const char* key);
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
-static bool    try_eval_module     (fs_t* fs, const char* filename);
-static path_t* find_module_file     (fs_t* fs, const char* id, const char* origin, const char* sys_origin);
+static bool    try_eval_module      (fs_t* fs, const char* filename, bool node_compatible);
+static path_t* find_module_file     (fs_t* fs, const char* id, const char* origin, const char* sys_origin, bool node_compatible);
 static void    handle_module_import (void);
 static bool    install_target       (int num_args, bool is_ctor, intptr_t magic);
 static path_t* load_package_json    (const char* filename);
@@ -337,7 +337,7 @@ build_eval(build_t* build, const char* filename)
 
 	visor_begin_op(build->visor, "evaluating '%s'", filename);
 	build->timestamp = stats.st_mtime;
-	if (!try_eval_module(build->fs, filename)) {
+	if (!try_eval_module(build->fs, filename, false)) {
 		build->crashed = true;
 		is_ok = false;
 		if (jsal_is_error(-1)) {
@@ -650,18 +650,24 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 }
 
 static path_t*
-find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_origin)
+find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_origin, bool node_compatible)
 {
-	const char* const filenames[] =
+	static const
+		struct pattern
 	{
-		"%s",
-		"%s.mjs",
-		"%s.js",
-		"%s.json",
-		"%s/package.json",
-		"%s/index.mjs",
-		"%s/index.js",
-		"%s/index.json",
+		bool        esm_aware;
+		const char* name;
+	}
+	PATTERNS[] =
+	{
+		{ true,  "%s" },
+		{ true,  "%s.mjs" },
+		{ true,  "%s.js" },
+		{ false, "%s.json" },
+		{ false, "%s/package.json" },
+		{ true,  "%s/index.mjs" },
+		{ true,  "%s/index.js" },
+		{ false, "%s/index.json" },
 	};
 
 	path_t*     origin_path;
@@ -671,15 +677,19 @@ find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_o
 
 	int i;
 
-	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0)
+	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0) {
 		// resolve module relative to calling module
 		origin_path = path_new(origin != NULL ? origin : "./");
-	else
+	}
+	else {
 		// resolve module from designated module repository
 		origin_path = path_new_dir(sys_origin);
+	}
 
-	for (i = 0; i < (int)(sizeof(filenames) / sizeof(filenames[0])); ++i) {
-		filename = strnewf(filenames[i], id);
+	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
+		if (!node_compatible && !PATTERNS[i].esm_aware)
+			continue;
+		filename = strnewf(PATTERNS[i].name, id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
 			path = fs_full_path(filename, NULL);
 		}
@@ -739,7 +749,7 @@ handle_module_import(void)
 		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of an ESM module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i])))
+		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i], false)))
 			break;  // short-circuit
 	}
 	if (path == NULL) {
@@ -931,7 +941,7 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 }
 
 static bool
-try_eval_module(fs_t* fs, const char* filename)
+try_eval_module(fs_t* fs, const char* filename, bool node_compatible)
 {
 	// HERE BE DRAGONS!
 	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
@@ -958,7 +968,7 @@ try_eval_module(fs_t* fs, const char* filename)
 	dir_path = path_strip(path_dup(file_path));
 
 	// evaluate anything matching the pattern *.mjs as an ES module
-	is_esm_module = path_extension_is(file_path, ".mjs") || path_filename_is(file_path, "Cellscript");
+	is_esm_module = !node_compatible || path_extension_is(file_path, ".mjs") || path_filename_is(file_path, "Cellscript");
 	if (is_esm_module) {
 		source = fs_fslurp(fs, filename, &source_size);
 		code_string = lstr_from_utf8(source, source_size, true);
@@ -1350,12 +1360,12 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i])))
+		if ((path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i], true)))
 			break;  // short-circuit
 	}
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't load JS module '%s'", module_id);
-	if (!try_eval_module(s_build->fs, path_cstr(path)))
+	if (!try_eval_module(s_build->fs, path_cstr(path), true))
 		jsal_throw();
 	return true;
 }

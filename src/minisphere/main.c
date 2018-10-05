@@ -334,7 +334,7 @@ main(int argc, char* argv[])
 	script_path = game_script_path(g_game);
 	api_version = game_version(g_game);
 	eval_succeeded = api_version >= 2
-		? pegasus_try_require(path_cstr(script_path))
+		? pegasus_try_require(path_cstr(script_path), false)
 		: script_eval(path_cstr(script_path));
 	if (!eval_succeeded)
 		goto on_js_error;
