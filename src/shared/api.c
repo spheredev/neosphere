@@ -102,6 +102,39 @@ api_uninit(void)
 }
 
 void
+api_define_async_func(const char* namespace_name, const char* name, js_function_t callback, intptr_t magic)
+{
+	jsal_push_global_object();
+
+	// ensure the namespace object exists
+	if (namespace_name != NULL) {
+		if (!jsal_get_prop_string(-1, namespace_name)) {
+			jsal_push_new_object();
+			jsal_replace(-2);
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_string(namespace_name);
+			jsal_to_propdesc_value(false, false, false);
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
+			jsal_dup(-1);
+			jsal_to_propdesc_value(true, false, true);
+			jsal_def_prop_string(-3, namespace_name);
+		}
+	}
+
+	jsal_push_new_function_async(callback, name, 0, magic);
+	jsal_to_propdesc_value(true, false, true);
+	jsal_def_prop_string(-2, name);
+
+	if (namespace_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
 api_define_const(const char* enum_name, const char* name, double value)
 {
 	jsal_push_global_object();
