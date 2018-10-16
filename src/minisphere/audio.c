@@ -496,7 +496,7 @@ sound_len(sound_t* sound)
 mixer_t*
 sound_mixer(sound_t* sound)
 {
-	return sound_playing(sound) ? sound->mixer : NULL;
+	return sound->mixer;
 }
 
 const char*

@@ -4483,8 +4483,12 @@ js_Sound_play(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
-	if (num_args < 1)
-		sound_pause(sound, false);
+	if (num_args < 1) {
+		if (sound_mixer(sound) != NULL)
+			sound_pause(sound, false);
+		else
+			sound_play(sound, s_def_mixer);
+	}
 	else {
 		mixer = jsal_require_class_obj(0, PEGASUS_MIXER);
 		sound_play(sound, mixer);
