@@ -423,7 +423,6 @@ static bool js_TextDecoder_decode            (int num_args, bool is_ctor, intptr
 static bool js_new_TextEncoder               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_TextEncoder_get_encoding      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_TextEncoder_encode            (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Texture_fromFile              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Texture                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_fileName          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_height            (int num_args, bool is_ctor, intptr_t magic);
@@ -717,7 +716,6 @@ pegasus_init(int api_level)
 	api_define_property("TextEncoder", "encoding", false, js_TextEncoder_get_encoding, NULL);
 	api_define_method("TextEncoder", "encode", js_TextEncoder_encode, 0);
 	api_define_class("Texture", PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_TEXTURE);
-	api_define_async_func("Texture", "fromFile", js_Texture_fromFile, 0);
 	api_define_property("Texture", "fileName", false, js_Texture_get_fileName, NULL);
 	api_define_property("Texture", "height", false, js_Texture_get_height, NULL);
 	api_define_property("Texture", "width", false, js_Texture_get_width, NULL);
@@ -4898,20 +4896,6 @@ js_TextEncoder_encode(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_new_buffer(JS_UINT8ARRAY, size, &buffer);
 	memcpy(buffer, output, size);
 	lstr_free(input);
-	return true;
-}
-
-static bool
-js_Texture_fromFile(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* filename;
-	image_t*    image;
-	
-	filename = jsal_require_pathname(0, NULL, false, false);
-
-	if (!(image = image_load(filename)))
-		jsal_error(JS_ERROR, "Couldn't load image file '%s'", filename);
-	jsal_push_class_obj(PEGASUS_TEXTURE, image, false);
 	return true;
 }
 
