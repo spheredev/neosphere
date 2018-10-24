@@ -5203,7 +5203,7 @@ js_Transform_project3D(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Transform_rotate(int num_args, bool is_ctor, intptr_t magic)
 {
-	float        length;
+	float        norm;
 	float        theta;
 	transform_t* transform;
 	float        vx = 0.0;
@@ -5220,11 +5220,11 @@ js_Transform_rotate(int num_args, bool is_ctor, intptr_t magic)
 	}
 
 	// normalize the vector describing the rotation axis
-	length = sqrtf(vx * vx + vy * vy + vz * vz);
-	if (length != 1.0) {
-		vx = abs(vx / length);
-		vy = abs(vy / length);
-		vz = abs(vz / length);
+	norm = sqrtf(vx * vx + vy * vy + vz * vz);
+	if (norm > 0.0) {
+		vx = vx / norm;
+		vy = vy / norm;
+		vz = vz / norm;
 	}
 
 	theta *= M_PI / 180;  // convert to radians
