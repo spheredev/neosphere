@@ -21,8 +21,17 @@ v5.3.0 - TBD
   JSON round-trip conversion.
 * Improves Cell's command-line syntax.  Many options have been replaced with
   easy-to-remember commands like `cell build` or `cell pack`.
+* Fixes an issue where `import` loaded `.js` files as CommonJS instead of ESM.
+  `require()` should always be used to load CommonJS modules.
 * Fixes a bug where `FS.fullPath` doesn't automatically add a trailing slash
   when passed the path of a known directory.
+* Fixes a bug where Cell defaults to putting `dist/` in the current working
+  directory instead of the directory of the project being built.
+* Fixes a bug where calling `.play` on a newly constructed `Sound` object
+  without specifying a mixer doesn't work.
+* Fixes a bug where the axis vector passed to `Transform#rotate` is not
+  normalized before calculating the rotation matrix, leading to unpredictable
+  behavior when using a non-basis vector.
 
 
 v5.2.13 - September 6, 2018
