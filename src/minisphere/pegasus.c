@@ -276,6 +276,7 @@ static bool js_FS_directoryExists            (int num_args, bool is_ctor, intptr
 static bool js_FS_directoryOf                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_evaluateScript             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_extensionOf                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_fetch                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileNameOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
@@ -510,7 +511,7 @@ pegasus_init(int api_level)
 
 	s_api_level = api_level;
 	s_def_mixer = mixer_new(44100, 16, 2);
-	
+
 	// only advertise highest stable API level; games must test for experimental
 	// features on an individual basis.
 	s_api_level_nominal = s_api_level;
@@ -606,6 +607,7 @@ pegasus_init(int api_level)
 	api_define_function("FS", "deleteFile", js_FS_deleteFile, 0);
 	api_define_function("FS", "directoryExists", js_FS_directoryExists, 0);
 	api_define_function("FS", "evaluateScript", js_FS_evaluateScript, 0);
+	api_define_async_func("FS", "fetch", js_FS_fetch, 0);
 	api_define_function("FS", "fileExists", js_FS_fileExists, 0);
 	api_define_function("FS", "fullPath", js_FS_fullPath, 0);
 	api_define_function("FS", "readFile", js_FS_readFile, 0);
@@ -886,7 +888,7 @@ pegasus_init(int api_level)
 		api_define_const("BlendOp", "Replace", BLEND_REPLACE);
 		api_define_const("BlendOp", "Subtract", BLEND_SUBTRACT);
 	}
-	
+
 	// keep a local reference to Surface.Screen
 	jsal_get_global_string("Surface");
 	jsal_get_prop_string(-1, "Screen");
@@ -2214,6 +2216,18 @@ js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
 		path_free(path);
 		jsal_error(JS_TYPE_ERROR, "'FS.extensionOf' cannot be called on a directory");
 	}
+}
+
+static bool
+js_FS_fetch(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+
+	if (!pegasus_try_require(pathname, false))
+		jsal_throw();
+	return true;
 }
 
 static bool
@@ -3634,7 +3648,7 @@ js_SSj_log(int num_args, bool is_ctor, intptr_t magic)
 	}
 	else if (jsal_is_symbol(0)) {
 		// HACK: jsal_to_string() on a symbol will throw, so we call the symbol's .toString()
-		//       in advance.  it would be more elegant if we could get the symbol's description 
+		//       in advance.  it would be more elegant if we could get the symbol's description
 		//       and stringify it ourselves, but this will do for now.
 		jsal_to_object(0);
 		jsal_get_prop_string(0, "toString");

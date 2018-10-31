@@ -634,6 +634,17 @@ FS.extensionOf(pathname); [experimental]
     Note: If `pathname` ends in a forward slash `/` or names a known existing
           directory, a TypeError will be thrown.
 
+FS.fetch(filename); [async] [experimental]
+
+	Loads the resource named by `filename` and returns a promise which resolves
+	to an object based on the type of file loaded.  For example, image files
+	will be loaded as `Texture` objects and audio files will be loaded as
+	`Sound` objects.
+	
+	The type of object returned is determined by the filename extension.  For
+	example, `.png` files will be loaded as textures by default.  If the file
+	type cannot be determined, it will be loaded as an ArrayBuffer.
+
 FS.fileExists(pathname); [L1]
 
     Checks whether a file by the name of `pathname` exists and returns `true`
