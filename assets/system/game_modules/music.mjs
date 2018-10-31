@@ -37,18 +37,13 @@ let
 	adjuster = null,
 	currentSound = null,
 	haveOverride = false,
-	mixer = new Mixer(44100, 16, 2),
+	mixer = null,
 	oldSounds = [],
 	topmostSound = null;
 
 export default
-class Music
+class Music extends null
 {
-	constructor()
-	{
-		throw new TypeError(`'${new.target.name}' is a static class and cannot be instantiated`);
-	}
-
 	static get adjustingVolume()
 	{
 		return adjuster !== null && adjuster.running;
@@ -56,6 +51,7 @@ class Music
 
 	static async adjustVolume(newVolume, fadeTime = 0)
 	{
+		appearifyMixer();
 		newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
 		if (this.adjusting)
 			adjuster.stop();
@@ -126,8 +122,16 @@ class Music
 	}
 }
 
+function appearifyMixer()
+{
+	// lazy mixer creation, works around Web Audio autoplay policy
+	if (mixer === null)
+		mixer = new Mixer(44100, 16, 2);
+}
+
 function crossfade(fileName, frames = 0, forceChange)
 {
+	appearifyMixer();
 	let allowChange = !haveOverride || forceChange;
 	if (currentSound !== null && allowChange) {
 		currentSound.fader.stop();

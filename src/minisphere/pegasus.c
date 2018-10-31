@@ -423,6 +423,7 @@ static bool js_TextDecoder_decode            (int num_args, bool is_ctor, intptr
 static bool js_new_TextEncoder               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_TextEncoder_get_encoding      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_TextEncoder_encode            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_fromFile              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Texture                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_fileName          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_height            (int num_args, bool is_ctor, intptr_t magic);
@@ -586,6 +587,7 @@ pegasus_init(int api_level)
 	api_define_function("Dispatch", "onRender", js_Dispatch_onRender, 0);
 	api_define_function("Dispatch", "onUpdate", js_Dispatch_onUpdate, 0);
 	api_define_class("FileStream", PEGASUS_FILE_STREAM, js_new_FileStream, js_FileStream_finalize, 0);
+	api_define_async_func("FileStream", "open", js_new_FileStream, 0);
 	api_define_method("FileStream", "dispose", js_FileStream_dispose, 0);
 	api_define_property("FileStream", "fileName", false, js_FileStream_get_fileName, NULL);
 	api_define_property("FileStream", "fileSize", false, js_FileStream_get_fileSize, NULL);
@@ -593,6 +595,7 @@ pegasus_init(int api_level)
 	api_define_method("FileStream", "read", js_FileStream_read, 0);
 	api_define_method("FileStream", "write", js_FileStream_write, 0);
 	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize, 0);
+	api_define_async_func("Font", "fromFile", js_new_Font, 0);
 	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL);
 	api_define_property("Font", "fileName", false, js_Font_get_fileName, NULL);
 	api_define_property("Font", "height", false, js_Font_get_height, NULL);
@@ -657,6 +660,7 @@ pegasus_init(int api_level)
 	api_define_function("SSj", "profile", js_SSj_profile, 0);
 	api_define_function("SSj", "trace", js_SSj_log, KI_LOG_TRACE);
 	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize, 0);
+	api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
 	api_define_property("Sample", "fileName", false, js_Sample_get_fileName, NULL);
 	api_define_method("Sample", "play", js_Sample_play, 0);
 	api_define_method("Sample", "stopAll", js_Sample_stopAll, 0);
@@ -664,6 +668,7 @@ pegasus_init(int api_level)
 	api_define_method("Server", "close", js_Server_close, 0);
 	api_define_method("Server", "accept", js_Server_accept, 0);
 	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize, 0);
+	api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
 	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL);
 	api_define_method("Shader", "clone", js_Shader_clone, 0);
 	api_define_method("Shader", "setBoolean", js_Shader_setBoolean, 0);
@@ -690,6 +695,7 @@ pegasus_init(int api_level)
 	api_define_method("Socket", "read", js_Socket_read, 0);
 	api_define_method("Socket", "write", js_Socket_write, 0);
 	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize, 0);
+	api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
 	api_define_property("Sound", "fileName", false, js_Sound_get_fileName, NULL);
 	api_define_property("Sound", "length", false, js_Sound_get_length, NULL);
 	api_define_property("Sound", "pan", false, js_Sound_get_pan, js_Sound_set_pan);
@@ -716,6 +722,7 @@ pegasus_init(int api_level)
 	api_define_property("TextEncoder", "encoding", false, js_TextEncoder_get_encoding, NULL);
 	api_define_method("TextEncoder", "encode", js_TextEncoder_encode, 0);
 	api_define_class("Texture", PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_TEXTURE);
+	api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
 	api_define_property("Texture", "fileName", false, js_Texture_get_fileName, NULL);
 	api_define_property("Texture", "height", false, js_Texture_get_height, NULL);
 	api_define_property("Texture", "width", false, js_Texture_get_width, NULL);
@@ -731,6 +738,7 @@ pegasus_init(int api_level)
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
 
 	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
@@ -2377,7 +2385,7 @@ js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_ERROR, "Couldn't open file '%s' in mode '%s'", pathname, mode);
 	if (file_op == FILE_OP_UPDATE)
 		file_seek(file, 0, WHENCE_END);
-	jsal_push_class_obj(PEGASUS_FILE_STREAM, file, true);
+	jsal_push_class_obj(PEGASUS_FILE_STREAM, file, is_ctor);
 	return true;
 }
 
@@ -2528,8 +2536,7 @@ js_new_Font(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!(font = font_load(filename)))
 		jsal_error(JS_ERROR, "Couldn't load font file '%s'", filename);
-	jsal_push_this();
-	jsal_push_class_obj(PEGASUS_FONT, font, true);
+	jsal_push_class_obj(PEGASUS_FONT, font, is_ctor);
 	return true;
 }
 
@@ -3740,7 +3747,7 @@ js_new_Sample(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!(sample = sample_new(filename, true)))
 		jsal_error(JS_ERROR, "Couldn't load sample file '%s'", filename);
-	jsal_push_class_obj(PEGASUS_SAMPLE, sample, true);
+	jsal_push_class_obj(PEGASUS_SAMPLE, sample, is_ctor);
 	return true;
 }
 
@@ -3893,7 +3900,7 @@ js_new_Shader(int num_args, bool is_ctor, intptr_t magic)
 	vertex_pathname = jsal_require_pathname(-1, NULL, false, false);
 	if (!(shader = shader_new(vertex_pathname, fragment_pathname)))
 		jsal_error(JS_ERROR, "Couldn't build shader program");
-	jsal_push_class_obj(PEGASUS_SHADER, shader, true);
+	jsal_push_class_obj(PEGASUS_SHADER, shader, is_ctor);
 	return true;
 }
 
@@ -4284,7 +4291,7 @@ js_new_Sound(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!(sound = sound_new(filename)))
 		jsal_error(JS_ERROR, "Couldn't load sound file '%s'", filename);
-	jsal_push_class_obj(PEGASUS_SOUND, sound, true);
+	jsal_push_class_obj(PEGASUS_SOUND, sound, is_ctor);
 	return true;
 }
 
@@ -4744,10 +4751,12 @@ js_new_TextDecoder(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 1)
 		label = jsal_require_string(0);
 	if (num_args >= 2) {
-		jsal_require_object_coercible(1);
-		if (jsal_get_prop_string(1, "fatal"))
-			fatal = jsal_require_boolean(-1);
-		if (jsal_get_prop_string(1, "ignoreBOM"))
+		jsal_require_object(1);
+		jsal_get_prop_string(1, "fatal");
+		jsal_get_prop_string(1, "ignoreBOM");
+		if (!jsal_is_undefined(-2));
+			fatal = jsal_require_boolean(-2);
+		if (!jsal_is_undefined(-1))
 			ignore_bom = jsal_require_boolean(-1);
 	}
 
@@ -4823,8 +4832,9 @@ js_TextDecoder_decode(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 1)
 		input = jsal_require_buffer_ptr(0, &length);
 	if (num_args >= 2) {
-		jsal_require_object_coercible(1);
-		if (jsal_get_prop_string(1, "stream"))
+		jsal_require_object(1);
+		jsal_get_prop_string(1, "stream");
+		if (!jsal_is_undefined(-1))
 			streaming = jsal_require_boolean(-1);
 	}
 
@@ -4900,6 +4910,22 @@ js_TextEncoder_encode(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_Texture_fromFile(int num_args, bool is_ctor, intptr_t magic)
+{
+	int         class_id;
+	const char* filename;
+	image_t*    image;
+
+	filename = jsal_require_pathname(0, NULL, false, false);
+
+	class_id = (int)magic;
+	if (!(image = image_load(filename)))
+		jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);
+	jsal_push_class_obj(class_id, image, false);
+	return true;
+}
+
+static bool
 js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 {
 	const color_t* buffer;
@@ -4943,7 +4969,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		// create an Image by loading an image file
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
-			jsal_error(JS_ERROR, "Couldn't load image file '%s'", filename);
+			jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);
 	}
 	jsal_push_class_obj(class_id, image, true);
 	return true;
