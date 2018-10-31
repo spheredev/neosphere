@@ -2225,6 +2225,8 @@ js_FS_fetch(int num_args, bool is_ctor, intptr_t magic)
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
+	if (!game_file_exists(g_game, pathname))
+		jsal_error(JS_ERROR, "File not found '%s'", pathname);
 	if (!pegasus_try_require(pathname, false))
 		jsal_throw();
 	return true;
