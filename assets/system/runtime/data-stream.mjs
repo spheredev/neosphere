@@ -38,6 +38,15 @@ class DataStream extends FileStream
 {
 	get [Symbol.toStringTag]() { return 'DataStream'; }
 
+	static async open(fileName, fileOp)
+	{
+		let fs = await FileStream.open(fileName, fileOp);
+		Object.setPrototypeOf(fs, this.prototype);
+		fs._textDecoder = new TextDecoder('utf-8');
+		fs._textEncoder = new TextEncoder();
+		return fs;
+	}
+
 	constructor(fileName, fileOp)
 	{
 		super(fileName, fileOp);
