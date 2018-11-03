@@ -150,7 +150,7 @@ game_open(const char* game_path)
 		// a bare script transparent to the rest of the engine, keeping things simple.
 		console_log(1, "synthesizing manifest for '%s' from game #%u", path_cstr(path),
 			s_next_game_id);
-		game->version = path_extension_is(path, ".mjs") ? 2 : 1;
+		game->version = 2;
 		game->api_level = SPHERE_API_LEVEL_STABLE;
 		game->name = lstr_new(path_filename(path));
 		game->author = lstr_new("Author Unknown");
