@@ -356,7 +356,7 @@ main(int argc, char* argv[])
 			g_main_object = jsal_ref(-1);
 			jsal_get_prop_string(-1, "start");
 			jsal_pull(-2);
-			if (jsal_is_function(-2)) {
+			if (jsal_vm_enabled() && jsal_is_function(-2)) {
 				for (i = game_args_offset; i < argc; ++i)
 					jsal_push_string(argv[i]);
 				if (!jsal_try_call_method(argc - game_args_offset))
