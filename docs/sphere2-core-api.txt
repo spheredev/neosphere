@@ -634,17 +634,6 @@ FS.extensionOf(pathname); [experimental]
     Note: If `pathname` ends in a forward slash `/` or names a known existing
           directory, a TypeError will be thrown.
 
-FS.fetch(filename); [async] [experimental]
-
-	Loads the resource named by `filename` and returns a promise which resolves
-	to an object based on the type of file loaded.  For example, image files
-	will be loaded as `Texture` objects and audio files will be loaded as
-	`Sound` objects.
-	
-	The type of object returned is determined by the filename extension.  For
-	example, `.png` files will be loaded as textures by default.  If the file
-	type cannot be determined, it will be loaded as an ArrayBuffer.
-
 FS.fileExists(pathname); [L1]
 
     Checks whether a file by the name of `pathname` exists and returns `true`
@@ -703,6 +692,14 @@ FS.rename(orig_name, new_name); [L1]
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full paths.  This can also be used to move a file between
     directories; if so, the destination directory must already exist.
+
+FS.require(filename); [experimental]
+
+	Loads the JavaScript module or JSON file named by `filename` and returns
+	the module namespace (for JS modules) or decoded object (for JSON).
+	
+	Note: This does not support loading CommonJS modules.  If you need to load
+          a module that was written for Node.js, use `require()` instead.
 
 FS.typeOf(pathname); [experimental]
 
@@ -838,6 +835,11 @@ Font#getTextSize(text[, wrap_width]); [L1]
 
     Note: If `wrap_width` is not provided, no word wrap processing will be
           performed.
+
+Font#widthOf(text); [experimental]
+
+    Returns the width, in pixels, of `text` when rendered by `Font#drawText`
+    without wrapping.
 
 Font#wordWrap(text, wrap_width); [L1]
 

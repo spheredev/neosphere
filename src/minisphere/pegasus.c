@@ -276,7 +276,6 @@ static bool js_FS_directoryExists            (int num_args, bool is_ctor, intptr
 static bool js_FS_directoryOf                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_evaluateScript             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_extensionOf                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_fetch                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileNameOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
@@ -284,6 +283,7 @@ static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_require                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_typeOf                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
@@ -300,6 +300,7 @@ static bool js_Font_get_fileName             (int num_args, bool is_ctor, intptr
 static bool js_Font_get_height               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_drawText                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_getTextSize              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_widthOf                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JobToken_cancel               (int num_args, bool is_ctor, intptr_t magic);
@@ -602,18 +603,19 @@ pegasus_init(int api_level)
 	api_define_property("Font", "height", false, js_Font_get_height, NULL);
 	api_define_method("Font", "drawText", js_Font_drawText, 0);
 	api_define_method("Font", "getTextSize", js_Font_getTextSize, 0);
+	api_define_method("Font", "widthOf", js_Font_widthOf, 0);
 	api_define_method("Font", "wordWrap", js_Font_wordWrap, 0);
 	api_define_function("FS", "createDirectory", js_FS_createDirectory, 0);
 	api_define_function("FS", "deleteFile", js_FS_deleteFile, 0);
 	api_define_function("FS", "directoryExists", js_FS_directoryExists, 0);
 	api_define_function("FS", "evaluateScript", js_FS_evaluateScript, 0);
-	api_define_async_func("FS", "fetch", js_FS_fetch, 0);
 	api_define_function("FS", "fileExists", js_FS_fileExists, 0);
 	api_define_function("FS", "fullPath", js_FS_fullPath, 0);
 	api_define_function("FS", "readFile", js_FS_readFile, 0);
 	api_define_function("FS", "relativePath", js_FS_relativePath, 0);
 	api_define_function("FS", "removeDirectory", js_FS_removeDirectory, 0);
 	api_define_function("FS", "rename", js_FS_rename, 0);
+	api_define_function("FS", "require", js_FS_require, 0);
 	api_define_function("FS", "writeFile", js_FS_writeFile, 0);
 	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize, 0);
 	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, js_JobToken_finalize, 0);
@@ -979,7 +981,8 @@ pegasus_try_require(const char* filename, bool node_compatible)
 	file_type = game_file_type(g_game, filename);
 
 	// always evaluate `javascript-module` file type as ESM code
-	is_esm_module = !node_compatible || strcmp(file_type, "script/es-module") == 0;
+	is_esm_module = (!node_compatible && strcmp(file_type, "data/json") != 0)
+		|| strcmp(file_type, "script/es-module") == 0;
 	if (is_esm_module) {
 		source = game_read_file(g_game, filename, &source_size);
 		code_string = lstr_from_utf8(source, source_size, true);
@@ -2219,20 +2222,6 @@ js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_FS_fetch(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* pathname;
-
-	pathname = jsal_require_pathname(0, NULL, false, false);
-
-	if (!game_file_exists(g_game, pathname))
-		jsal_error(JS_ERROR, "File not found '%s'", pathname);
-	if (!pegasus_try_require(pathname, false))
-		jsal_throw();
-	return true;
-}
-
-static bool
 js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
@@ -2334,6 +2323,20 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	if (!game_rename(g_game, old_pathname, new_pathname))
 		jsal_error(JS_ERROR, "Couldn't rename '%s' to '%s'", old_pathname, new_pathname);
 	return false;
+}
+
+static bool
+js_FS_require(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+
+	if (!game_file_exists(g_game, pathname))
+		jsal_error(JS_ERROR, "Couldn't load JS module '%s'", pathname);
+	if (!pegasus_try_require(pathname, false))
+		jsal_throw();
+	return true;
 }
 
 static bool
@@ -2667,6 +2670,20 @@ js_Font_getTextSize(int num_args, bool is_ctor, intptr_t magic)
 		jsal_push_int(font_height(font));
 		jsal_put_prop_string(-2, "height");
 	}
+	return true;
+}
+
+static bool
+js_Font_widthOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	font_t*     font;
+	const char* text;
+
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
+	text = jsal_to_string(0);
+
+	jsal_push_int(font_get_width(font, text));
 	return true;
 }
 
