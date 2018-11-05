@@ -564,8 +564,9 @@ wraptext_new(const char* text, const font_t* font, int width)
 				buffer = new_buffer;
 				line_buffer = buffer + line_idx * pitch;
 			}
-			else
+			else {
 				line_buffer += pitch;
+			}
 
 			memset(line_buffer, 0, pitch);  // fill line with NULs
 
