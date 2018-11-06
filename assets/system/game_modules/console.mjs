@@ -126,7 +126,7 @@ class Console extends Thread
 
 		this.log(`initializing the Sphere Runtime Console`);
 		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
-		this.log(`  Sphere v${Sphere.Version} API L${Sphere.APILevel} (${Sphere.Engine})`);
+		this.log(`  Sphere v${Sphere.Version} API level ${Sphere.APILevel} (${Sphere.Engine})`);
 		this.log("");
 
 		super.start();

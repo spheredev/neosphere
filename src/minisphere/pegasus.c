@@ -283,7 +283,8 @@ static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
-static bool js_JSON_fromFile                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_require                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_JSON_fromFile                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_typeOf                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
@@ -615,6 +616,7 @@ pegasus_init(int api_level)
 	api_define_function("FS", "relativePath", js_FS_relativePath, 0);
 	api_define_function("FS", "removeDirectory", js_FS_removeDirectory, 0);
 	api_define_function("FS", "rename", js_FS_rename, 0);
+	api_define_async_func("FS", "require", js_FS_require, 0);
 	api_define_function("FS", "writeFile", js_FS_writeFile, 0);
 	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize, 0);
 	api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
@@ -2323,6 +2325,20 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	if (!game_rename(g_game, old_pathname, new_pathname))
 		jsal_error(JS_ERROR, "Couldn't rename '%s' to '%s'", old_pathname, new_pathname);
 	return false;
+}
+
+static bool
+js_FS_require(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+
+	if (!game_file_exists(g_game, pathname))
+		jsal_error(JS_ERROR, "Couldn't find JS module '%s'", pathname);
+	if (!pegasus_try_require(pathname, false))
+		jsal_throw();
+	return true;
 }
 
 static bool
