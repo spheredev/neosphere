@@ -240,11 +240,15 @@ Sphere.Compiler [read-only] [L1]
     tool used to make the game distribution.  If no compiler information is
     available for the current game, this evaluates to `undefined`.
 
-Sphere.Game [non-replaceable] [L1]
+Sphere.Game [read-only] [L1]
 
     An object whose properties describe the currently running game.  The object
     consists of everything in the JSON manifest plus any fields synthesized by
     the engine.
+
+    Note: This object is completely frozen from the time the game is loaded;
+          any attempt to add, remove, or change any properties of `Sphere.Game`
+          will cause a TypeError to be thrown.
 
 Sphere.frameRate [read/write] [L1]
 
@@ -697,7 +701,7 @@ FS.require(filename); [experimental]
 
 	Loads the JavaScript module or JSON file named by `filename` and returns
 	the module namespace (for JS modules) or decoded object (for JSON).
-	
+
 	Note: This does not support loading CommonJS modules.  If you need to load
           a module that was written for Node.js, use `require()` instead.
 
@@ -1768,7 +1772,7 @@ enables render-to-texture effects to be implemented.
 Note: Surfaces can only be used as textures under API level 2 or higher.  When
       targeting API level 1 you must call `.toTexture()` (see below) first.
 
-Surface.Screen [non-replaceable] [L1]
+Surface.Screen [read-only] [L1]
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
@@ -1923,7 +1927,7 @@ new Transform(); [L1]
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
 
-Transform#matrix [non-replacable]
+Transform#matrix [read-only]
 
     Gets an object you can use to access the cells of the underlying matrix.
     The object is used like a two-dimensional array:

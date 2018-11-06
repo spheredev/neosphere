@@ -665,6 +665,18 @@ jsal_eval_module(const char* specifier, const char* url)
 }
 
 void
+jsal_freeze(int at_index)
+{
+	at_index = jsal_normalize_index(at_index);
+	jsal_get_global_string("Object");
+	jsal_get_prop_string(-1, "freeze");
+	jsal_pull(-2);
+	jsal_dup(at_index);
+	jsal_call_method(1);
+	jsal_pop(1);
+}
+
+void
 jsal_gc(void)
 {
 	JsCollectGarbage(s_js_runtime);
