@@ -45,8 +45,8 @@ struct key_queue
 	int keys[255];
 };
 
-static void queue_key         (int keycode);
-static void queue_mouse_event (mouse_key_t key, int x, int y, int delta);
+static void queue_key       (int keycode);
+static void queue_mouse_key (mouse_key_t key, int x, int y, int delta);
 
 static vector_t*            s_bound_buttons;
 static vector_t*            s_bound_keys;
@@ -63,12 +63,9 @@ static int                  s_keymod_state;
 static int                  s_last_wheel_pos = 0;
 static mouse_event_t        s_mouse_queue[255];
 static int                  s_num_joysticks = 0;
+static int                  s_num_mouse_buttons;
 static int                  s_num_mouse_events = 0;
-static bool                 s_was_back_mouse_down = false;
-static bool                 s_was_forward_mouse_down = false;
-static bool                 s_was_left_mouse_down = false;
-static bool                 s_was_middle_mouse_down = false;
-static bool                 s_was_right_mouse_down = false;
+static bool                 s_was_button_down[MAX_MOUSE_BUTTONS];
 
 struct bound_button
 {
@@ -100,7 +97,12 @@ initialize_input(void)
 	if (!(s_have_joystick = al_install_joystick()))
 		console_log(1, "  joystick initialization failed");
 
+	s_num_mouse_buttons = (int)al_get_mouse_num_buttons();
+	if (s_num_mouse_buttons > MAX_MOUSE_BUTTONS)
+		s_num_mouse_buttons = MAX_MOUSE_BUTTONS;
+
 	memset(s_key_state, 0, sizeof s_key_state);
+	memset(s_was_button_down, 0, sizeof s_was_button_down);
 
 	s_event_queue = al_create_event_queue();
 	al_register_event_source(s_event_queue, al_get_keyboard_event_source());
@@ -554,14 +556,13 @@ update_bound_keys(bool use_map_keys)
 void
 update_input(void)
 {
-	ALLEGRO_EVENT          event;
-	bool                   is_back_down;
-	bool                   is_forward_down;
-	bool                   is_left_down;
-	bool                   is_middle_down;
-	bool                   is_right_down;
-	int                    keycode;
-	ALLEGRO_MOUSE_STATE    mouse_state;
+	ALLEGRO_EVENT       event;
+	bool                is_button_down;
+	int                 keycode;
+	mouse_key_t         mouse_key;
+	ALLEGRO_MOUSE_STATE mouse_state;
+
+	int i;
 
 	// process Allegro input events
 	while (al_get_next_event(s_event_queue, &event)) {
@@ -628,33 +629,27 @@ update_input(void)
 		// check for mouse wheel movement
 		al_get_mouse_state(&mouse_state);
 		if (mouse_state.z > s_last_wheel_pos)
-			queue_mouse_event(MOUSE_KEY_WHEEL_UP, mouse_state.x, mouse_state.y, mouse_state.z - s_last_wheel_pos);
+			queue_mouse_key(MOUSE_KEY_WHEEL_UP, mouse_state.x, mouse_state.y, mouse_state.z - s_last_wheel_pos);
 		if (mouse_state.z < s_last_wheel_pos)
-			queue_mouse_event(MOUSE_KEY_WHEEL_DOWN, mouse_state.x, mouse_state.y, s_last_wheel_pos - mouse_state.z);
+			queue_mouse_key(MOUSE_KEY_WHEEL_DOWN, mouse_state.x, mouse_state.y, s_last_wheel_pos - mouse_state.z);
 		s_last_wheel_pos = mouse_state.z;
 
-		// check for mouse clicks.  clicks are queued in order of left->right->middle.
+		// check for clicks on all mouse buttons
 		if (mouse_state.display == screen_display(g_screen)) {
-			is_back_down = al_mouse_button_down(&mouse_state, 4);
-			is_forward_down = al_mouse_button_down(&mouse_state, 5);
-			is_left_down = al_mouse_button_down(&mouse_state, 1);
-			is_middle_down = al_mouse_button_down(&mouse_state, 3);
-			is_right_down = al_mouse_button_down(&mouse_state, 2);
-			if (is_left_down && !s_was_left_mouse_down)
-				queue_mouse_event(MOUSE_KEY_LEFT, mouse_state.x, mouse_state.y, 0);
-			if (is_right_down && !s_was_right_mouse_down)
-				queue_mouse_event(MOUSE_KEY_RIGHT, mouse_state.x, mouse_state.y, 0);
-			if (is_middle_down && !s_was_middle_mouse_down)
-				queue_mouse_event(MOUSE_KEY_MIDDLE, mouse_state.x, mouse_state.y, 0);
-			if (is_back_down && !s_was_back_mouse_down)
-				queue_mouse_event(MOUSE_KEY_BACK, mouse_state.x, mouse_state.y, 0);
-			if (is_forward_down && !s_was_forward_mouse_down)
-				queue_mouse_event(MOUSE_KEY_FORWARD, mouse_state.x, mouse_state.y, 0);
-			s_was_back_mouse_down = is_back_down;
-			s_was_forward_mouse_down = is_forward_down;
-			s_was_left_mouse_down = is_left_down;
-			s_was_middle_mouse_down = is_middle_down;
-			s_was_right_mouse_down = is_right_down;
+			for (i = 0; i < s_num_mouse_buttons; ++i) {
+				is_button_down = al_mouse_button_down(&mouse_state, 1 + i);
+				mouse_key = i == 0 ? MOUSE_KEY_LEFT
+					: i == 1 ? MOUSE_KEY_RIGHT
+					: i == 2 ? MOUSE_KEY_MIDDLE
+					: i == 3 ? MOUSE_KEY_BACK
+					: i == 4 ? MOUSE_KEY_FORWARD
+					: MOUSE_KEY_NONE;
+				if (is_button_down && !s_was_button_down[i]) {
+					if (i < 5)
+						queue_mouse_key(mouse_key, mouse_state.x, mouse_state.y, 0);
+				}
+				s_was_button_down[i] = is_button_down;
+			}
 		}
 	}
 }
@@ -705,7 +700,7 @@ queue_key(int keycode)
 }
 
 static void
-queue_mouse_event(mouse_key_t key, int x, int y, int delta)
+queue_mouse_key(mouse_key_t key, int x, int y, int delta)
 {
 	mouse_event_t* p_event;
 

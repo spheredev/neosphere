@@ -35,8 +35,9 @@
 
 #include "script.h"
 
-#define MAX_JOYSTICKS   16
-#define MAX_JOY_BUTTONS 64
+#define MAX_JOYSTICKS     16
+#define MAX_JOY_BUTTONS   64
+#define MAX_MOUSE_BUTTONS 32
 
 typedef
 enum player_key
