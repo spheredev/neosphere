@@ -68,6 +68,8 @@ enum mouse_key
 	MOUSE_KEY_LEFT,
 	MOUSE_KEY_RIGHT,
 	MOUSE_KEY_MIDDLE,
+	MOUSE_KEY_BACK,
+	MOUSE_KEY_FORWARD,
 	MOUSE_KEY_WHEEL_UP,
 	MOUSE_KEY_WHEEL_DOWN,
 	MOUSE_KEY_MAX,
@@ -77,6 +79,7 @@ typedef
 struct mouse_event
 {
 	mouse_key_t key;
+	int         delta;
 	int         x;
 	int         y;
 } mouse_event_t;

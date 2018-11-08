@@ -1184,6 +1184,11 @@ MouseKey [enumeration] [L1]
         MouseKey.WheelUp
         MouseKey.WheelDown
 
+	The following values are currently supported experimentally:
+
+        MouseKey.Back
+        MouseKey.Forward
+
 Mouse.Default [read-only] [L1]
 
     Gets a `Mouse` object for the default mouse device.
@@ -1218,6 +1223,11 @@ Mouse#getEvent(); [L1]
 
             The X and Y position of the mouse cursor relative to the rendering
             area at the time the event was received.
+
+		event.delta [experimental]
+
+		    For mouse wheel events, specifies how much the wheel has moved.
+		    For any other event, this will be `undefined`.
 
 Mouse#isPressed(key); [L1]
 

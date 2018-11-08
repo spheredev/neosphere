@@ -857,6 +857,8 @@ pegasus_init(int api_level)
 	api_define_const("MouseKey", "Left", MOUSE_KEY_LEFT);
 	api_define_const("MouseKey", "Right", MOUSE_KEY_RIGHT);
 	api_define_const("MouseKey", "Middle", MOUSE_KEY_MIDDLE);
+	api_define_const("MouseKey", "Back", MOUSE_KEY_BACK);
+	api_define_const("MouseKey", "Forward", MOUSE_KEY_FORWARD);
 	api_define_const("MouseKey", "WheelUp", MOUSE_KEY_WHEEL_UP);
 	api_define_const("MouseKey", "WheelDown", MOUSE_KEY_WHEEL_DOWN);
 	api_define_const("ShapeType", "Fan", SHAPE_TRI_FAN);
@@ -3486,6 +3488,7 @@ static bool
 js_Mouse_getEvent(int num_args, bool is_ctor, intptr_t magic)
 {
 	mouse_event_t event;
+	bool          ok;
 
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_MOUSE);
@@ -3494,7 +3497,12 @@ js_Mouse_getEvent(int num_args, bool is_ctor, intptr_t magic)
 		jsal_push_null();
 	}
 	else {
-		event = mouse_get_event();
+		do {
+			event = mouse_get_event();
+			ok = true;
+			if ((event.key == MOUSE_KEY_BACK || event.key == MOUSE_KEY_FORWARD) && s_api_level < 2)
+				ok = false;
+		} while (!ok);
 		screen_fix_mouse_xy(g_screen, &event.x, &event.y);
 		jsal_push_new_object();
 		jsal_push_int(event.key);
@@ -3503,6 +3511,10 @@ js_Mouse_getEvent(int num_args, bool is_ctor, intptr_t magic)
 		jsal_put_prop_string(-2, "x");
 		jsal_push_int(event.y);
 		jsal_put_prop_string(-2, "y");
+		if (s_api_level >= 2 && (event.key == MOUSE_KEY_WHEEL_DOWN || event.key == MOUSE_KEY_WHEEL_UP)) {
+			jsal_push_int(event.delta);
+			jsal_put_prop_string(-2, "delta");
+		}
 	}
 	return true;
 }
