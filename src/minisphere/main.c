@@ -311,7 +311,6 @@ main(int argc, char* argv[])
 	// switch to fullscreen if necessary and initialize clipping
 	if (fullscreen_mode == FULLSCREEN_ON || (fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game)))
 		screen_toggle_fullscreen(g_screen);
-	screen_show_mouse(g_screen, false);
 
 	// enable the SSj debug server, wait for a connection if requested.
 #if defined(MINISPHERE_SPHERUN)
@@ -399,7 +398,6 @@ main(int argc, char* argv[])
 on_js_error:
 	jsal_dup(-1);
 	error_text = jsal_to_string(-1);
-	screen_show_mouse(g_screen, true);
 	if (jsal_is_error(-2)) {
 		jsal_get_prop_string(-2, "column");
 		jsal_get_prop_string(-3, "line");
