@@ -35,6 +35,7 @@ import Logger from 'logger';
 import Prim from 'prim';
 import Scene from 'scene';
 import Thread from 'thread';
+import Tween from 'tween';
 
 export default
 class Console extends Thread
@@ -67,6 +68,7 @@ class Console extends Thread
 		this.numLines = Math.floor((Surface.Screen.height - 32) / this.font.height);
 		this.prompt = options.prompt;
 		this.view = { visible: false, fade: 0.0, line: 0.0 };
+		this.tween = new Tween(this.view);
 		this.wasKeyDown = false;
 
 		this.start();
@@ -167,15 +169,11 @@ class Console extends Thread
 				}
 				case Key.Home: {
 					let newLine = this.buffer.length - this.numLines;
-					new Scene()
-						.tween(this.view, 0.125 * fps, 'easeOut', { line: newLine })
-						.run();
+					this.tween.tweenTo({ line: newLine }, 0.125 * fps);
 					break;
 				}
 				case Key.End: {
-					new Scene()
-						.tween(this.view, 0.125 * fps, 'easeOut', { line: 0.0 })
-						.run();
+					this.tween.tweenTo({ line: 0.0 }, 0.125 * fps);
 					break;
 				}
 				case Key.Tab:
@@ -289,24 +287,21 @@ function executeCommand(console, command)
 	}
 }
 
-function hideConsole(console)
+async function hideConsole(console)
 {
 	console.yieldFocus();
 	let fps = Sphere.frameRate;
-	new Scene()
-		.tween(console.view, 0.25 * fps, 'easeInQuad', { fade: 0.0 })
-		.call(() => { console.view.visible = false; console.entry = ""; })
-		.run();
+	await console.tween.tweenTo({ fade: 0.0 }, 0.25 * fps);
+	console.view.visible = false;
+	console.entry = "";
 }
 
-function showConsole(console)
+async function showConsole(console)
 {
 	console.keyboard.clearQueue();
 	console.mouse.clearQueue();
 	console.takeFocus();
 	let fps = Sphere.frameRate;
-	new Scene()
-		.tween(console.view, 0.25 * fps, 'easeOutQuad', { fade: 1.0 })
-		.call(() => console.view.visible = true)
-		.run();
+	await console.tween.tweenTo({ fade: 1.0 }, 0.25 * fps);
+	console.view.visible = true;
 }

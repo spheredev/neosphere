@@ -39,6 +39,7 @@ export { default as Pact } from 'pact';
 export { default as Prim } from 'prim';
 export { default as Scene } from 'scene';
 export { default as Thread } from 'thread';
+export { default as Tween } from 'tween';
 
 // Sphere Runtime shared modules
 export { default as from } from 'from';

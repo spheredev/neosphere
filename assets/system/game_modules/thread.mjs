@@ -34,9 +34,8 @@ import from from 'from';
 import FocusTarget from 'focus-target';
 import Pact from 'pact';
 
-const
-	CanDispatchOnExit = 'onExit' in Dispatch,
-	CanPauseResumeJob = 'pause' in Dispatch.now(() => {});
+const canDispatchOnExit = 'onExit' in Dispatch;
+const canPauseJobs = 'pause' in Dispatch.now(() => {});
 
 export default
 class Thread
@@ -94,7 +93,7 @@ class Thread
 
 	pause()
 	{
-		if (!CanPauseResumeJob)
+		if (!canPauseJobs)
 			throw new RangeError("Thread#pause requires newer Sphere version");
 		if (!this.running)
 			throw new Error("Thread is not running");
@@ -103,7 +102,7 @@ class Thread
 
 	resume()
 	{
-		if (!CanPauseResumeJob)
+		if (!canPauseJobs)
 			throw new RangeError("Thread#resume requires newer Sphere version");
 		if (!this.running)
 			throw new Error("Thread is not running");
@@ -121,7 +120,7 @@ class Thread
 		this._onThreadStop = new Pact();
 
 		// Dispatch.onExit() ensures the shutdown handler is always called
-		if (CanDispatchOnExit)
+		if (canDispatchOnExit)
 			this._exitJob = Dispatch.onExit(() => this.on_shutDown());
 
 		// set up the update and render callbacks
@@ -163,7 +162,7 @@ class Thread
 			return;
 
 		this.yieldFocus();
-		if (CanDispatchOnExit)
+		if (canDispatchOnExit)
 			this._exitJob.cancel();
 		this._updateJob.cancel();
 		this._renderJob.cancel();
