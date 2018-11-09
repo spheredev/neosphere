@@ -34,18 +34,7 @@ import from from 'from';
 import Prim from 'prim';
 import Thread from 'thread';
 
-let
-	defaultPriority = 0.0,
-	screenMask = Color.Transparent;
-
-Dispatch.onRender(
-	() => {
-		if (screenMask.a > 0.0)
-			Prim.fill(Surface.Screen, screenMask);
-	}, {
-		inBackground: true,
-		priority:     99,
-	});
+let defaultPriority = 0.0;
 
 export default
 class Scene
@@ -65,7 +54,7 @@ class Scene
 	static defineOp(name, def)
 	{
 		if (name in this.prototype)
-			throw new Error("scene op `" + name + "` is already defined");
+			throw new Error(`Scene op '${name}' is already defined`);
 		this.prototype[name] = function (...args) {
 			this.enqueue({
 				arguments: [ ...args ],
@@ -244,7 +233,7 @@ class Timeline extends Thread
 	enqueue(op)
 	{
 		if (this.running)
-			throw new Error("cannot enqueue scene op while running");
+			throw new Error("Cannot enqueue while scene is running");
 		this.ops.push(op);
 	}
 
@@ -331,17 +320,6 @@ Scene.defineOp('call', {
 	},
 });
 
-Scene.defineOp('fadeTo', {
-	start(scene, color, frames) {
-		this.fader = new Scene()
-			.tween(screenMask, frames, 'linear', color);
-		this.fader.run();
-	},
-	update(scene) {
-		return this.fader.running;
-	},
-});
-
 Scene.defineOp('pause', {
 	start(scene, frames) {
 		this.duration = frames;
@@ -350,17 +328,6 @@ Scene.defineOp('pause', {
 	update(scene) {
 		++this.elapsed;
 		return this.elapsed < this.duration;
-	},
-});
-
-Scene.defineOp('playSound', {
-	start(scene, fileName) {
-		this.sound = new Sound(fileName);
-		this.sound.play(Mixer.Default);
-		return true;
-	},
-	update(scene) {
-		return this.sound.playing;
 	},
 });
 
