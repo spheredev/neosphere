@@ -30,7 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const ControllerSymbol = Symbol('Promise controller');
+const kController = Symbol('Promise controller');
 
 export default
 class Pact extends Promise
@@ -40,23 +40,23 @@ class Pact extends Promise
 
 	constructor(executor = null)
 	{
-		let promiseController;
+		let controller;
 		super((resolve, reject) => {
-			promiseController = { resolve, reject };
+			controller = { resolve, reject };
 			if (typeof executor === 'function')
 				return executor(resolve, reject);
 		});
-		this[ControllerSymbol] = promiseController;
+		this[kController] = controller;
 	}
 
 	reject(reason)
 	{
-		this[ControllerSymbol].reject(reason);
+		this[kController].reject(reason);
 	}
 
 	resolve(value)
 	{
-		this[ControllerSymbol].resolve(value);
+		this[kController].resolve(value);
 	}
 
 	toPromise()

@@ -30,7 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
 import Scene from 'scene';
 
 let
@@ -140,13 +139,7 @@ function crossfade(fileName, frames = 0, forceChange)
 		currentSound.fader.run();
 	}
 	if (fileName !== null) {
-		let fullPath = FS.fullPath(fileName, '@/music');
-		fullPath = from.array([ '', '.ogg', '.mp3', '.it', '.mod', '.s3m', '.xm', '.flac' ])
-			.select(suffix => `${fullPath}${suffix}`)
-			.first(fileName => FS.fileExists(fileName));
-		if (fullPath === undefined)
-			throw new Error(`couldn't find music '${fileName}'`);
-		let stream = new Sound(fullPath);
+		let stream = new Sound(fileName);
 		stream.repeat = true;
 		stream.volume = 0.0;
 		stream.play(mixer);

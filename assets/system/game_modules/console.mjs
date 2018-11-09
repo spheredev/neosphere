@@ -134,7 +134,7 @@ class Console extends Thread
 
 	undefineObject(name)
 	{
-		from.array(this.commands)
+		from(this.commands)
 			.where(it => it.entity === name)
 			.remove();
 	}
@@ -254,9 +254,7 @@ function executeCommand(console, command)
 	let instruction = tokens[1];
 
 	// check that the instruction is valid
-	if (!from.array(console.commands)
-		.any(it => it.entity === objectName))
-	{
+	if (!from(console.commands).any(it => it.entity === objectName)) {
 		console.log(`unrecognized object name '${objectName}'`);
 		return;
 	}
@@ -264,10 +262,7 @@ function executeCommand(console, command)
 		console.log(`missing instruction for '${objectName}'`);
 		return;
 	}
-	if (!from.array(console.commands)
-		.where(it => it.entity === objectName)
-		.any(it => it.instruction === instruction))
-	{
+	if (!from(console.commands).any(it => it.entity === objectName && it.instruction == instruction)) {
 		console.log(`instruction '${instruction}' not valid for '${objectName}'`);
 		return;
 	}
@@ -279,7 +274,7 @@ function executeCommand(console, command)
 	}
 
 	// execute the command
-	let matches = from.array(console.commands)
+	let matches = from(console.commands)
 		.where(it => it.entity === objectName)
 		.where(it => it.instruction === instruction);
 	for (const command of matches) {

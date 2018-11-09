@@ -45,8 +45,7 @@ class Thread
 
 	static join(...threads)
 	{
-		let threadPacts = from.array(threads)
-			.select(it => it._onThreadStop);
+		let threadPacts = from(threads).select(it => it._onThreadStop);
 		return Promise.all(threadPacts);
 	}
 

@@ -63,7 +63,7 @@ class Delegate
 	{
 		if (!haveHandler(this, handler, thisObj))
 			throw new Error("handler is not registered");
-		from.array(this._invokeList)
+		from(this._invokeList)
 			.where(it => it.handler === handler)
 			.where(it => it.thisObj === thisObj)
 			.remove();
@@ -73,6 +73,6 @@ class Delegate
 
 function haveHandler(delegate, handler, thisObj)
 {
-	return from.array(delegate._invokeList)
+	return from(delegate._invokeList)
 		.any(it => it.handler === handler && it.thisObj === thisObj);
 }

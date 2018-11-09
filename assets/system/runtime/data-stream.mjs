@@ -30,8 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import assert from 'assert';
-import from   from 'from';
+import from from 'from';
 
 export default
 class DataStream extends FileStream
@@ -74,22 +73,16 @@ class DataStream extends FileStream
 
 	readInt16(littleEndian)
 	{
-		assert.equal(typeof littleEndian, 'boolean');
-
 		return readInteger(this, 2, true, littleEndian);
 	}
 
 	readInt32(littleEndian)
 	{
-		assert.equal(typeof littleEndian, 'boolean');
-
 		return readInteger(this, 4, true, littleEndian);
 	}
 
 	readStringRaw(length)
 	{
-		assert.equal(typeof length, 'number');
-
 		let bytes = this.read(length);
 		let string = this._textDecoder.decode(bytes);
 		let nulIndex = string.indexOf('\0');
@@ -107,16 +100,12 @@ class DataStream extends FileStream
 
 	readString16(littleEndian)
 	{
-		assert.equal(typeof littleEndian, 'boolean');
-
 		let length = readInteger(this, 2, false, littleEndian);
 		return this.readStringRaw(length);
 	}
 
 	readString32(littleEndian)
 	{
-		assert.equal(typeof littleEndian, 'boolean');
-
 		let length = readInteger(this, 4, false, littleEndian);
 		return this.readStringRaw(length);
 	}
@@ -165,22 +154,16 @@ class DataStream extends FileStream
 
 	readUint16(littleEndian)
 	{
-		assert.equal(typeof littleEndian, 'boolean');
-
 		return readInteger(this, 2, false, littleEndian);
 	}
 
 	readUint32(littleEndian)
 	{
-		assert.equal(typeof littleEndian, 'boolean');
-
 		return readInteger(this, 4, false, littleEndian);
 	}
 
 	writeFloat32(value, littleEndian)
 	{
-		assert.equal(typeof value, 'number');
-
 		let dv = new DataView(new ArrayBuffer(4));
 		dv.setFloat32(0, value, littleEndian);
 		this.write(dv.buffer);
@@ -188,8 +171,6 @@ class DataStream extends FileStream
 
 	writeFloat64(value, littleEndian)
 	{
-		assert.equal(typeof value, 'number');
-
 		let dv = new DataView(new ArrayBuffer(8));
 		dv.setFloat64(0, value, littleEndian);
 		this.write(dv.buffer);
@@ -197,8 +178,6 @@ class DataStream extends FileStream
 
 	writeInt8(value)
 	{
-		assert.equal(typeof value, 'number');
-
 		let dv = new DataView(new ArrayBuffer(1));
 		dv.setInt8(0, value);
 		this.write(dv.buffer);
@@ -206,8 +185,6 @@ class DataStream extends FileStream
 
 	writeInt16(value, littleEndian)
 	{
-		assert.equal(typeof value, 'number');
-
 		let dv = new DataView(new ArrayBuffer(2));
 		dv.setInt16(0, value, littleEndian);
 		this.write(dv.buffer);
@@ -215,8 +192,6 @@ class DataStream extends FileStream
 
 	writeInt32(value, littleEndian)
 	{
-		assert.equal(typeof value, 'number');
-
 		let dv = new DataView(new ArrayBuffer(4));
 		dv.setInt32(0, value, littleEndian);
 		this.write(dv.buffer);
@@ -224,9 +199,6 @@ class DataStream extends FileStream
 
 	writeStringRaw(value, length)
 	{
-		assert.equal(typeof value, 'string');
-		assert.equal(typeof length, 'number');
-
 		let encoded = this._textEncoder.encode(value);
 		let bytes = new Uint8Array(length);
 		bytes.set(encoded.subarray(0, length));
@@ -235,8 +207,6 @@ class DataStream extends FileStream
 
 	writeString8(value)
 	{
-		assert.equal(typeof value, 'string');
-
 		let bytes = this._textEncoder.encode(value);
 		this.writeUint8(bytes.length);
 		this.write(bytes);
@@ -244,8 +214,6 @@ class DataStream extends FileStream
 
 	writeString16(value, littleEndian)
 	{
-		assert.equal(typeof value, 'string');
-
 		let bytes = this._textEncoder.encode(value);
 		this.writeUint16(bytes.length, littleEndian);
 		this.write(bytes);
@@ -253,8 +221,6 @@ class DataStream extends FileStream
 
 	writeString32(value, littleEndian)
 	{
-		assert.equal(typeof value, 'string');
-
 		let bytes = this._textEncoder.encode(value);
 		this.writeUint32(bytes.length, littleEndian);
 		this.write(bytes);
@@ -295,8 +261,6 @@ class DataStream extends FileStream
 
 	writeUint8(value)
 	{
-		assert.equal(typeof value, 'number');
-
 		let dv = new DataView(new ArrayBuffer(1));
 		dv.setUint8(0, value);
 		this.write(dv.buffer);
@@ -304,8 +268,6 @@ class DataStream extends FileStream
 
 	writeUint16(value, littleEndian)
 	{
-		assert.equal(typeof value, 'number');
-
 		let dv = new DataView(new ArrayBuffer(2));
 		dv.setUint16(0, value, littleEndian);
 		this.write(dv.buffer);
@@ -313,8 +275,6 @@ class DataStream extends FileStream
 
 	writeUint32(value, littleEndian)
 	{
-		assert.equal(typeof value, 'number');
-
 		let dv = new DataView(new ArrayBuffer(4));
 		dv.setUint32(0, value, littleEndian);
 		this.write(dv.buffer);
@@ -325,8 +285,6 @@ function readInteger(stream, size, signed, littleEndian)
 {
 	// variable-size two's complement integer decoding algorithm jacked from
 	// Node.js.  this allows us to read integer values up to 48 bits in size.
-
-	assert(size >= 1 && size <= 6, `(u)int size ${size} out of range`);
 
 	let bytes = new Uint8Array(stream.read(size));
 	let mul = 1;
@@ -365,13 +323,11 @@ function verifyStructDescriptor(desc)
 	for (const key of Object.keys(desc)) {
 		let fieldDesc = desc[key];
 		let fieldType = fieldDesc.type;
-		if (!from.array(FieldTypes).any(it => it === fieldType))
-			throw new TypeError(`invalid field type '${fieldType}'`);
+		if (!from(FieldTypes).any(it => it === fieldType))
+			throw new TypeError(`Invalid field type '${fieldType}'`);
 		if (fieldType in Attributes) {
-			let haveAttributes = from.array(Attributes[fieldType])
-				.all(it => it in fieldDesc);
-			if (!haveAttributes)
-				throw new TypeError(`missing attributes for '${fieldType}'`);
+			if (!from(Attributes[fieldType]).all(it => it in fieldDesc))
+				throw new TypeError(`Missing attributes for '${fieldType}'`);
 		}
 	}
 }

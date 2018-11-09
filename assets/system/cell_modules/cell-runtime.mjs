@@ -31,11 +31,9 @@
 **/
 
 // Sphere Runtime shared modules
-export { default as assert } from 'assert';
 export { default as from } from 'from';
 export { default as DataStream } from 'data-stream';
 export { default as Delegate } from 'delegate';
 export { default as Logger } from 'logger';
 export { default as Random } from 'random';
-export { default as Test } from 'test';
 export { default as XML } from 'xml';

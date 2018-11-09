@@ -30,7 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import assert from 'assert';
 import from from 'from';
 import Prim from 'prim';
 import Thread from 'thread';
@@ -201,9 +200,7 @@ class Scene
 				this.forks = timeline.children;
 			},
 			update(scene) {
-				return from.array(this.forks)
-					.where(it => it.running)
-					.count() > 0;
+				return from(this.forks).any(it => it.running);
 			},
 		};
 		this.enqueue(op);
@@ -336,8 +333,6 @@ Scene.defineOp('call', {
 
 Scene.defineOp('fadeTo', {
 	start(scene, color, frames) {
-		assert.ok(typeof frames === 'number');
-
 		this.fader = new Scene()
 			.tween(screenMask, frames, 'linear', color);
 		this.fader.run();
