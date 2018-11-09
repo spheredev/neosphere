@@ -2333,13 +2333,31 @@ static bool
 js_FS_require(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
+	char*       file_data;
+	size_t      file_size;
+	const char* type;
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
-	if (!game_file_exists(g_game, pathname))
-		jsal_error(JS_ERROR, "Couldn't find JS module '%s'", pathname);
-	if (!pegasus_try_require(pathname, false))
-		jsal_throw();
+	type = game_file_type(g_game, pathname);
+
+	if (strcasecmp(type, "script/javascript") == 0 || strcasecmp(type, "script/es-module") == 0) {
+		// JavaScript file type: evaluate as ES module
+		if (!game_file_exists(g_game, pathname))
+			jsal_error(JS_ERROR, "Couldn't find JS module '%s'", pathname);
+		if (!pegasus_try_require(pathname, false))
+			jsal_throw();
+	}
+	else if (strcasecmp(type, "data/json") == 0) {
+		// 'data/json' file type: parse as JSON
+		if (!(file_data = game_read_file(g_game, pathname, &file_size)))
+			jsal_error(JS_ERROR, "Couldn't read JSON file '%s'", pathname);
+		jsal_push_lstring(file_data, file_size);
+		jsal_parse(-1);
+	}
+	else {
+		jsal_error(JS_TYPE_ERROR, "Unsupported file type for '%s' (%s)", pathname, type);
+	}
 	return true;
 }
 
