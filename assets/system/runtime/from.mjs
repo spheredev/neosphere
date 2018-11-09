@@ -30,8 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import Random from 'random';
-
 export default
 function from(...targets)
 {
@@ -514,7 +512,7 @@ function SampleSource(uniqueOnly)
 			let item;
 
 			if (m_numSamples++ < m_count) {
-				index = Random.discrete(0, m_items.length - 1);
+				index = Math.floor(Math.random() * m_items.length);
 				item = m_items[index];
 				if (uniqueOnly)
 					m_items.splice(index, 1);
@@ -548,7 +546,7 @@ function ShuffledSource(source)
 			m_list[index] = item;
 		}
 		for (let i = m_list.length - 1; i >= 1; --i) {
-			index = Random.discrete(0, i);
+			index = Math.floor(Math.random() * i);
 			temp = m_list[index];
 			m_list[index] = m_list[i];
 			m_list[i] = temp;

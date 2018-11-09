@@ -35,7 +35,6 @@ import assert from 'assert';
 const CORPUS = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 let normalVxW = NaN;
-let randomGenerator = new RNG();
 
 export default
 class Random
@@ -49,7 +48,7 @@ class Random
 	{
 		assert(typeof odds === 'number', "odds must be a number");
 
-		return odds > randomGenerator.next().value;
+		return odds > Math.random();
 	}
 
 	static discrete(min, max)
@@ -60,7 +59,7 @@ class Random
 		max = Math.trunc(max);
 		let range = Math.abs(max - min) + 1;
 		min = min < max ? min : max;
-		return min + Math.floor(randomGenerator.next().value * range);
+		return min + Math.floor(Math.random() * range);
 	}
 
 	static normal(mean, sigma)
@@ -73,8 +72,8 @@ class Random
 		let x, u, v, w;
 		if (Number.isNaN(normalVxW)) {
 			do {
-				u = 2.0 * randomGenerator.next().value - 1.0;
-				v = 2.0 * randomGenerator.next().value - 1.0;
+				u = 2.0 * Math.random() - 1.0;
+				v = 2.0 * Math.random() - 1.0;
 				w = u * u + v * v;
 			} while (w >= 1.0);
 			w = Math.sqrt(-2.0 * Math.log(w) / w);
@@ -113,7 +112,7 @@ class Random
 	{
 		assert(typeof mean === 'number' && typeof variance === 'number', "Mean and Variance must be numbers");
 
-		let error = variance * 2.0 * (0.5 - randomGenerator.next().value);
+		let error = variance * 2.0 * (0.5 - Math.random());
 		return mean + error;
 	}
 }
