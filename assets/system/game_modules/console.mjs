@@ -68,7 +68,7 @@ class Console extends Thread
 		this.numLines = Math.floor((Surface.Screen.height - 32) / this.font.height);
 		this.prompt = options.prompt;
 		this.view = { visible: false, fade: 0.0, line: 0.0 };
-		this.tween = new Tween(this.view, Easing.Cubic);
+		this.tween = new Tween(this.view, Easing.Sine);
 		this.wasKeyDown = false;
 
 		this.start();

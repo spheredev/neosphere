@@ -30,8 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import Pact from 'pact';
-
 let activeTweens = [];
 let job = null;
 
@@ -39,7 +37,7 @@ export
 const Easing =
 {
 	Linear: 0,
-	BackUp: 1,
+	Back: 1,
 	Bounce: 2,
 	Circular: 3,
 	Cubic: 4,
@@ -54,52 +52,40 @@ const Easing =
 export default
 class Tween
 {
-	constructor(target, easing = Easing.Linear)
+	constructor(target, easing = Easing.Sine)
 	{
-		this.easing = easing;
+		const easeIn = easing === Easing.Back ? easeInBack
+			: easing === Easing.Bounce ? easeInBounce
+			: easing === Easing.Circular ? easeInCircular
+			: easing === Easing.Cubic ? easeInCubic
+			: easing === Easing.Elastic ? easeInElastic
+			: easing === Easing.Exponential ? easeInExponential
+			: easing === Easing.Quadratic ? easeInQuadratic
+			: easing === Easing.Quartic ? easeInQuartic
+			: easing === Easing.Quintic ? easeInQuintic
+			: easing === Easing.Sine ? easeInSine
+			: easeLinear;
+		const easeOut = (t) => 1.0 - easeIn(1.0 - t);
+		const easeInOut = (t) => t < 0.5 ? 0.5 * easeIn(t * 2.0) : 0.5 + 0.5 * easeOut(t * 2.0 - 1.0);
+		this.inEaser = easeIn;
+		this.inOutEaser = easeInOut;
+		this.outEaser = easeInOut;
 		this.target = target;
 	}
 
 	async easeIn(newValues, numFrames)
 	{
-		const easer = this.easing === Easing.BackUp ? easeInBack
-			: this.easing === Easing.Cubic ? easeInCubic
-			: this.easing === Easing.Elastic ? easeInElastic
-			: this.easing === Easing.Exponential ? easeInExponential
-			: this.easing === Easing.Quadratic ? easeInQuadratic
-			: this.easing === Easing.Quartic ? easeInQuartic
-			: this.easing === Easing.Quintic ? easeInQuintic
-			: easeLinear;
-		await runTween(this.target, newValues, easer, numFrames);
+		await runTween(this.target, newValues, this.inEaser, numFrames);
 	}
 
 	async easeInOut(newValues, numFrames)
 	{
-		const easeIn = this.easing === Easing.BackUp ? easeInBack
-			: this.easing === Easing.Cubic ? easeInCubic
-			: this.easing === Easing.Elastic ? easeInElastic
-			: this.easing === Easing.Exponential ? easeInExponential
-			: this.easing === Easing.Quadratic ? easeInQuadratic
-			: this.easing === Easing.Quartic ? easeInQuartic
-			: this.easing === Easing.Quintic ? easeInQuintic
-			: easeLinear;
-		const easeOut = t => 1.0 - easeIn(1.0 - t);
-		const easer = t => t < 0.5 ? 0.5 * easeIn(t * 2.0) : 0.5 + 0.5 * easeOut(t * 2.0 - 1.0);
-		await runTween(this.target, newValues, easer, numFrames);
+		await runTween(this.target, newValues, this.inOutEaser, numFrames);
 	}
 
 	async easeOut(newValues, numFrames)
 	{
-		const easeIn = this.easing === Easing.BackUp ? easeInBack
-			: this.easing === Easing.Cubic ? easeInCubic
-			: this.easing === Easing.Elastic ? easeInElastic
-			: this.easing === Easing.Exponential ? easeInExponential
-			: this.easing === Easing.Quadratic ? easeInQuadratic
-			: this.easing === Easing.Quartic ? easeInQuartic
-			: this.easing === Easing.Quintic ? easeInQuintic
-			: easeLinear;
-		const easer = t => 1.0 - easeIn(1.0 - t);
-		await runTween(this.target, newValues, easer, numFrames);
+		await runTween(this.target, newValues, this.outEaser, numFrames);
 	}
 }
 
@@ -124,7 +110,7 @@ function appearifyUpdateJob()
 			else {
 				for (const p of Object.keys(tween.targetValues))
 					tween.targetObject[p] = tween.targetValues[p];
-				tween.pact.resolve();
+				tween.resolve();
 			}
 		}
 		activeTweens.length = ptr;
@@ -134,6 +120,21 @@ function appearifyUpdateJob()
 function easeInBack(t)
 {
 	return t * t * t - t * Math.sin(t * Math.PI);
+}
+
+function easeInBounce(t)
+{
+	t = 1.0 - t;
+	const p = t < (1.0 / 2.75) ? 7.5625 * t * t
+		: t < (2.0 / 2.75) ? 7.5625 * (t -= 1.5 / 2.75) * t + 0.75
+		: t < (2.5 / 2.75) ? 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375
+		: 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+	return 1.0 - p;
+}
+
+function easeInCircular(t)
+{
+	return 1.0 - Math.sqrt(1.0 - t * t);
 }
 
 function easeInCubic(t)
@@ -171,6 +172,11 @@ function easeInQuintic(t)
 	return t * t * t * t * t;
 }
 
+function easeInSine(t)
+{
+	return Math.sin((t - 1.0) * Math.PI / 2) + 1.0;
+}
+
 function runTween(targetObject, newValues, easer, numFrames)
 {
 	const initialValues = {};
@@ -179,16 +185,17 @@ function runTween(targetObject, newValues, easer, numFrames)
 		initialValues[p] = targetObject[p];
 		targetValues[p] = newValues[p];
 	}
-	const pact = new Pact();
-	activeTweens.push({
-		initialValues,
-		targetValues,
-		easer,
-		pact,
-		targetObject,
-		startTime: Sphere.now(),
-		endTime: Sphere.now() + numFrames,
+	const promise = new Promise((resolve, reject) => {
+		activeTweens.push({
+			initialValues,
+			targetValues,
+			easer,
+			resolve,
+			targetObject,
+			startTime: Sphere.now(),
+			endTime: Sphere.now() + numFrames,
+		});
 	});
 	appearifyUpdateJob();
-	return pact;
+	return promise;
 }
