@@ -69,7 +69,7 @@ class Tween
 		const easeInOut = (t) => t < 0.5 ? 0.5 * easeIn(t * 2.0) : 0.5 + 0.5 * easeOut(t * 2.0 - 1.0);
 		this.inEaser = easeIn;
 		this.inOutEaser = easeInOut;
-		this.outEaser = easeInOut;
+		this.outEaser = easeOut;
 		this.target = target;
 	}
 

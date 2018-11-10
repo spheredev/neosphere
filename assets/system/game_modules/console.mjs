@@ -32,7 +32,6 @@
 
 import Logger from 'logger';
 import Prim from 'prim';
-import Scene from 'scene';
 import Thread from 'thread';
 import Tween, { Easing } from 'tween';
 
@@ -67,7 +66,8 @@ class Console extends Thread
 		this.numLines = Math.floor((Surface.Screen.height - 32) / this.font.height);
 		this.prompt = options.prompt;
 		this.view = { visible: false, fade: 0.0, line: 0.0 };
-		this.tween = new Tween(this.view, Easing.Sine);
+		this.tween = new Tween(this.view, Easing.Exponential);
+		this.cursorTween = new Tween(this.cursorColor, Easing.Sine);
 		this.wasKeyDown = false;
 
 		this.start();
@@ -118,12 +118,13 @@ class Console extends Thread
 		if (this.running)
 			throw new Error("the Console has already been started");
 
-		new Scene({ inBackground: true })
-			.doWhile(() => true)
-				.tween(this.cursorColor, 0.25 * Sphere.frameRate, 'easeInSine', { a: 1.0 })
-				.tween(this.cursorColor, 0.25 * Sphere.frameRate, 'easeOutSine', { a: 0.5 })
-			.end()
-			.run();
+		(async () => {
+			const fps = Sphere.frameRate;
+			while (true) {
+				await this.cursorTween.easeInOut({ a: 1.0 }, 0.25 * fps);
+				await this.cursorTween.easeInOut({ a: 0.5 }, 0.25 * fps);
+			}
+		})();
 
 		this.log(`initializing the Sphere Runtime Console`);
 		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
