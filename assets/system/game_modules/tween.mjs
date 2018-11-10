@@ -32,87 +32,163 @@
 
 import Pact from 'pact';
 
+let activeTweens = [];
+let job = null;
+
+export
+const Easing =
+{
+	Linear: 0,
+	BackUp: 1,
+	Bounce: 2,
+	Circular: 3,
+	Cubic: 4,
+	Elastic: 5,
+	Exponential: 6,
+	Quadratic: 7,
+	Quartic: 8,
+	Quintic: 9,
+	Sine: 10,
+};
+
 export default
 class Tween
 {
-	constructor(target, options = {})
+	constructor(target, easing = Easing.Linear)
 	{
-		options = Object.assign({}, {
-			priority: Infinity,
-		}, options);
-
-		this.endTime = this.startTime;
-		this.job = null;
-		this.next = {};
-		this.priority = options.priority;
-		this.start = {};
-		this.startTime = Sphere.now();
+		this.easing = easing;
 		this.target = target;
 	}
 
-	get tweening()
+	async easeIn(newValues, numFrames)
 	{
-		return this.job !== null;
+		const easer = this.easing === Easing.BackUp ? easeInBack
+			: this.easing === Easing.Cubic ? easeInCubic
+			: this.easing === Easing.Elastic ? easeInElastic
+			: this.easing === Easing.Exponential ? easeInExponential
+			: this.easing === Easing.Quadratic ? easeInQuadratic
+			: this.easing === Easing.Quartic ? easeInQuartic
+			: this.easing === Easing.Quintic ? easeInQuintic
+			: easeLinear;
+		await runTween(this.target, newValues, easer, numFrames);
 	}
 
-	stop(finishTween = true)
+	async easeInOut(newValues, numFrames)
 	{
-		if (this.job !== null) {
-			this.pact.resolve();
-			this.job.cancel();
-			this.job = null;
-			if (finishTween) {
-				for (const p of Object.keys(this.next))
-					this.target[p] = this.next[p];
-			}
-		}
+		const easeIn = this.easing === Easing.BackUp ? easeInBack
+			: this.easing === Easing.Cubic ? easeInCubic
+			: this.easing === Easing.Elastic ? easeInElastic
+			: this.easing === Easing.Exponential ? easeInExponential
+			: this.easing === Easing.Quadratic ? easeInQuadratic
+			: this.easing === Easing.Quartic ? easeInQuartic
+			: this.easing === Easing.Quintic ? easeInQuintic
+			: easeLinear;
+		const easeOut = t => 1.0 - easeIn(1.0 - t);
+		const easer = t => t < 0.5 ? 0.5 * easeIn(t * 2.0) : 0.5 + 0.5 * easeOut(t * 2.0 - 1.0);
+		await runTween(this.target, newValues, easer, numFrames);
 	}
 
-	async tweenTo(newValues, numFrames)
+	async easeOut(newValues, numFrames)
 	{
-		this.startTime = Sphere.now();
-		this.endTime = this.startTime + numFrames;
-		if (this.job !== null) {
-			this.stop(false);
-			for (const p of Object.keys(this.next)) {
-				if (!(p in newValues))
-					this.target[p] = this.next[p];
-			}
-		}
-		if (this.endTime > this.startTime) {
-			this.start = {};
-			this.next = {};
-			for (const p of Object.keys(newValues)) {
-				this.start[p] = this.target[p];
-				this.next[p] = newValues[p];
-			}
-			this.pact = new Pact();
-			this.job = Dispatch.onUpdate(() => {
-				const t = Sphere.now() - this.startTime;
-				const d = this.endTime - this.startTime;
-				for (const p of Object.keys(this.next)) {
-					const delta = this.next[p] - this.start[p];
-					this.target[p] = lerp(this.start[p], delta, t, d);
-				}
-				if (t === d) {
-					this.pact.resolve();
-					this.job.cancel();
-					this.job = null;
-				}
-			}, {
-				inBackground: true,
-				priority: this.priority,
-			});
-			await this.pact;
-		}
-		else {
-			for (const p of Object.keys(newValues))
-				this.target[p] = newValues[p];
-		}
+		const easeIn = this.easing === Easing.BackUp ? easeInBack
+			: this.easing === Easing.Cubic ? easeInCubic
+			: this.easing === Easing.Elastic ? easeInElastic
+			: this.easing === Easing.Exponential ? easeInExponential
+			: this.easing === Easing.Quadratic ? easeInQuadratic
+			: this.easing === Easing.Quartic ? easeInQuartic
+			: this.easing === Easing.Quintic ? easeInQuintic
+			: easeLinear;
+		const easer = t => 1.0 - easeIn(1.0 - t);
+		await runTween(this.target, newValues, easer, numFrames);
 	}
 }
 
-function lerp(start, delta, t, d)
+function appearifyUpdateJob()
 {
-	return start + delta * (t / d);
+	if (job !== null)
+		return;
+	job = Dispatch.onUpdate(() => {
+		let ptr = 0;
+		for (let i = 0, len = activeTweens.length; i < len; ++i) {
+			const tween = activeTweens[i];
+			const len = tween.endTime - tween.startTime;
+			const t = (Sphere.now() - tween.startTime) / len;
+			if (t < 1.0) {
+				activeTweens[ptr++] = tween;
+				for (const p of Object.keys(tween.targetValues)) {
+					const base = tween.initialValues[p];
+					const delta = tween.targetValues[p] - base;
+					tween.targetObject[p] = tween.easer(t) * delta + base;
+				}
+			}
+			else {
+				for (const p of Object.keys(tween.targetValues))
+					tween.targetObject[p] = tween.targetValues[p];
+				tween.pact.resolve();
+			}
+		}
+		activeTweens.length = ptr;
+	});
+}
+
+function easeInBack(t)
+{
+	return t * t * t - t * Math.sin(t * Math.PI);
+}
+
+function easeInCubic(t)
+{
+	return t * t * t;
+}
+
+function easeInElastic(t)
+{
+	return Math.sin(t * 7.5 * Math.PI) * 2.0 ** (10 * (t - 1.0));
+}
+
+function easeInExponential(t)
+{
+	return t === 0.0 ? t : 2 ** (10 * (t - 1.0));
+}
+
+function easeLinear(t)
+{
+	return t;
+}
+
+function easeInQuadratic(t)
+{
+	return t * t;
+}
+
+function easeInQuartic(t)
+{
+	return t * t * t * t;
+}
+
+function easeInQuintic(t)
+{
+	return t * t * t * t * t;
+}
+
+function runTween(targetObject, newValues, easer, numFrames)
+{
+	const initialValues = {};
+	const targetValues = {};
+	for (const p of Object.keys(newValues)) {
+		initialValues[p] = targetObject[p];
+		targetValues[p] = newValues[p];
+	}
+	const pact = new Pact();
+	activeTweens.push({
+		initialValues,
+		targetValues,
+		easer,
+		pact,
+		targetObject,
+		startTime: Sphere.now(),
+		endTime: Sphere.now() + numFrames,
+	});
+	appearifyUpdateJob();
+	return pact;
 }

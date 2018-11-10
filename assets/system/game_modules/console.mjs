@@ -35,7 +35,7 @@ import Logger from 'logger';
 import Prim from 'prim';
 import Scene from 'scene';
 import Thread from 'thread';
-import Tween from 'tween';
+import Tween, { Easing } from 'tween';
 
 export default
 class Console extends Thread
@@ -68,7 +68,7 @@ class Console extends Thread
 		this.numLines = Math.floor((Surface.Screen.height - 32) / this.font.height);
 		this.prompt = options.prompt;
 		this.view = { visible: false, fade: 0.0, line: 0.0 };
-		this.tween = new Tween(this.view);
+		this.tween = new Tween(this.view, Easing.Cubic);
 		this.wasKeyDown = false;
 
 		this.start();
@@ -169,11 +169,11 @@ class Console extends Thread
 				}
 				case Key.Home: {
 					let newLine = this.buffer.length - this.numLines;
-					this.tween.tweenTo({ line: newLine }, 0.125 * fps);
+					this.tween.easeInOut({ line: newLine }, 0.125 * fps);
 					break;
 				}
 				case Key.End: {
-					this.tween.tweenTo({ line: 0.0 }, 0.125 * fps);
+					this.tween.easeInOut({ line: 0.0 }, 0.125 * fps);
 					break;
 				}
 				case Key.Tab:
@@ -260,7 +260,7 @@ function executeCommand(console, command)
 		console.log(`missing instruction for '${objectName}'`);
 		return;
 	}
-	if (!from(console.commands).any(it => it.entity === objectName && it.instruction == instruction)) {
+	if (!from(console.commands).any(it => it.entity === objectName && it.instruction === instruction)) {
 		console.log(`instruction '${instruction}' not valid for '${objectName}'`);
 		return;
 	}
@@ -291,7 +291,7 @@ async function hideConsole(console)
 {
 	console.yieldFocus();
 	let fps = Sphere.frameRate;
-	await console.tween.tweenTo({ fade: 0.0 }, 0.25 * fps);
+	await console.tween.easeIn({ fade: 0.0 }, 0.25 * fps);
 	console.view.visible = false;
 	console.entry = "";
 }
@@ -302,6 +302,6 @@ async function showConsole(console)
 	console.mouse.clearQueue();
 	console.takeFocus();
 	let fps = Sphere.frameRate;
-	await console.tween.tweenTo({ fade: 1.0 }, 0.25 * fps);
+	await console.tween.easeOut({ fade: 1.0 }, 0.25 * fps);
 	console.view.visible = true;
 }

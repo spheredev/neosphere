@@ -30,7 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import Tween from 'tween';
+import Tween, { Easing } from 'tween';
 
 let
 	adjuster = null,
@@ -53,7 +53,7 @@ class Music extends null
 		appearifyMixer();
 		newVolume = Math.min(Math.max(newVolume, 0.0), 1.0);
 		if (fadeTime > 0)
-			await adjuster.tweenTo({ volume: newVolume }, fadeTime);
+			await adjuster.easeIn({ volume: newVolume }, fadeTime);
 		else
 			mixer.volume = newVolume;
 	}
@@ -73,12 +73,12 @@ class Music extends null
 	{
 		if (oldSounds.length === 0)
 			return;
-		currentSound.tween.tweenTo({ volume: 0.0 }, fadeTime);
+		currentSound.tween.easeIn({ volume: 0.0 }, fadeTime);
 		topmostSound = oldSounds.pop();
 		currentSound = topmostSound;
 		if (currentSound !== null) {
 			currentSound.stream.volume = 0.0;
-			currentSound.tween.tweenTo({ volume: 1.0 }, fadeTime);
+			currentSound.tween.easeIn({ volume: 1.0 }, fadeTime);
 		}
 	}
 
@@ -95,11 +95,11 @@ class Music extends null
 			return;
 		haveOverride = false;
 
-		currentSound.tween.tweenTo({ volume: 0.0 }, fadeTime);
+		currentSound.tween.easeIn({ volume: 0.0 }, fadeTime);
 		currentSound = topmostSound;
 		if (currentSound !== null) {
 			currentSound.stream.volume = 0.0;
-			currentSound.tween.tweenTo({ volume: 1.0 }, fadeTime);
+			currentSound.tween.easeIn({ volume: 1.0 }, fadeTime);
 		}
 	}
 }
@@ -109,7 +109,7 @@ function appearifyMixer()
 	// lazy mixer creation, works around Web Audio autoplay policy
 	if (mixer === null) {
 		mixer = new Mixer(44100, 16, 2);
-		adjuster = new Tween(mixer);
+		adjuster = new Tween(mixer, Easing.Exponential);
 	}
 }
 
@@ -118,15 +118,15 @@ function crossfade(fileName, frames = 0, forceChange)
 	appearifyMixer();
 	let allowChange = !haveOverride || forceChange;
 	if (currentSound !== null && allowChange)
-		currentSound.tween.tweenTo({ volume: 0.0 }, frames);
+		currentSound.tween.easeIn({ volume: 0.0 }, frames);
 	if (fileName !== null) {
 		let stream = new Sound(fileName);
 		stream.repeat = true;
 		stream.volume = 0.0;
 		stream.play(mixer);
-		let newSound = { stream, tween: new Tween(stream) };
+		let newSound = { stream, tween: new Tween(stream, Easing.Exponential) };
 		if (allowChange) {
-			newSound.tween.tweenTo({ volume: 1.0 }, frames);
+			newSound.tween.easeIn({ volume: 1.0 }, frames);
 			currentSound = newSound;
 		}
 		return newSound;
