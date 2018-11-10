@@ -30,8 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
-
 export default
 class DataStream extends FileStream
 {
@@ -323,10 +321,10 @@ function verifyStructDescriptor(desc)
 	for (const key of Object.keys(desc)) {
 		let fieldDesc = desc[key];
 		let fieldType = fieldDesc.type;
-		if (!from(FieldTypes).any(it => it === fieldType))
+		if (!FieldTypes.some(it => fieldType === it))
 			throw new TypeError(`Invalid field type '${fieldType}'`);
 		if (fieldType in Attributes) {
-			if (!from(Attributes[fieldType]).all(it => it in fieldDesc))
+			if (!Attributes[fieldType].every(it => it in fieldDesc))
 				throw new TypeError(`Missing attributes for '${fieldType}'`);
 		}
 	}

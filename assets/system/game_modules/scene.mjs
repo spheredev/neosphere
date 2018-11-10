@@ -30,7 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
 import Thread from 'thread';
 
 let defaultPriority = 0.0;
@@ -188,7 +187,7 @@ class Scene
 				this.forks = timeline.children;
 			},
 			update(scene) {
-				return from(this.forks).any(it => it.running);
+				return this.forks.some(it => it.running);
 			},
 		};
 		this.enqueue(op);

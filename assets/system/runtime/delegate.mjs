@@ -30,7 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
+const kInvokeList = Symbol("invocation list");
 
 export default
 class Delegate
@@ -39,20 +39,20 @@ class Delegate
 
 	constructor()
 	{
-		this._invokeList = [];
+		this[kInvokeList] = [];
 	}
 
 	addHandler(handler, thisObj)
 	{
 		if (haveHandler(this, handler, thisObj))
-			throw new Error("cannot add handler more than once");
-		this._invokeList.push({ thisObj, handler });
+			throw new Error("Cannot add the same handler more than once");
+		this[kInvokeList].push({ thisObj, handler });
 	}
 
 	call(...args)
 	{
 		let lastResult = undefined;
-		for (const entry of this._invokeList)
+		for (const entry of this[kInvokeList])
 			lastResult = entry.handler.apply(entry.thisObj, args);
 
 		// use the return value of the last handler called
@@ -62,17 +62,15 @@ class Delegate
 	removeHandler(handler, thisObj)
 	{
 		if (!haveHandler(this, handler, thisObj))
-			throw new Error("handler is not registered");
-		from(this._invokeList)
-			.where(it => it.handler === handler)
-			.where(it => it.thisObj === thisObj)
-			.remove();
+			throw new Error("Handler is not registered");
+		this[kInvokeList] = this[kInvokeList]
+			.filter(it => it.handler !== handler || it.thisObj !== thisObj)
 	}
 
 }
 
 function haveHandler(delegate, handler, thisObj)
 {
-	return from(delegate._invokeList)
-		.any(it => it.handler === handler && it.thisObj === thisObj);
+	return delegate[kInvokeList]
+		.some(it => it.handler === handler && it.thisObj === thisObj);
 }

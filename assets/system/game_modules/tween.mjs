@@ -114,6 +114,9 @@ function appearifyUpdateJob()
 			}
 		}
 		activeTweens.length = ptr;
+	}, {
+		inBackground: true,
+		priority: Infinity,
 	});
 }
 

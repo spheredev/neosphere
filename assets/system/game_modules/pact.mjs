@@ -30,7 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const kController = Symbol('Promise controller');
+const kResolve = Symbol('promise resolve');
+const kReject = Symbol('promise reject');
 
 export default
 class Pact extends Promise
@@ -40,23 +41,26 @@ class Pact extends Promise
 
 	constructor(executor = null)
 	{
-		let controller;
+		let resolveFunction;
+		let rejectFunction;
 		super((resolve, reject) => {
-			controller = { resolve, reject };
+			resolveFunction = resolve;
+			rejectFunction = reject;
 			if (typeof executor === 'function')
 				return executor(resolve, reject);
 		});
-		this[kController] = controller;
+		this[kResolve] = resolveFunction;
+		this[kReject] = rejectFunction;
 	}
 
 	reject(reason)
 	{
-		this[kController].reject(reason);
+		this[kReject](reason);
 	}
 
 	resolve(value)
 	{
-		this[kController].resolve(value);
+		this[kResolve](value);
 	}
 
 	toPromise()

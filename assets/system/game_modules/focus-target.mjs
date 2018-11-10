@@ -30,8 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
-
 let focusQueue = [];
 
 export default
@@ -60,15 +58,14 @@ class FocusTarget
 
 	takeFocus()
 	{
-		focusQueue = from(focusQueue)
-			.where(it => it !== this)
-			.including([ this ])
-			.ascending(it => it._priority)
-			.toArray();
+		focusQueue = focusQueue
+			.filter(it => it !== this)
+			.concat([ this ])
+			.sort((a, b) => a._priority - b._priority);
 	}
 
 	yield()
 	{
-		from(focusQueue).remove(it => it === this);
+		focusQueue = focusQueue.filter(it => it !== this);
 	}
 }

@@ -30,7 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
 import FocusTarget from 'focus-target';
 import Pact from 'pact';
 
@@ -44,7 +43,7 @@ class Thread
 
 	static join(...threads)
 	{
-		let threadPacts = from(threads).select(it => it._onThreadStop);
+		let threadPacts = threads.map(it => it._onThreadStop);
 		return Promise.all(threadPacts);
 	}
 

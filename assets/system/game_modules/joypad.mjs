@@ -30,14 +30,10 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
-
 // historically, Sphere requires a gamepad with at least 2 axes (X/Y) and
 // 5 buttons (A, B, X, Y, Start) for full operation.
-let devices = from(Joystick.getDevices())
-	.where(it => it.numAxes >= 2)
-	.where(it => it.numButtons >= 5)
-	.toArray();
+let devices = Joystick.getDevices()
+	.filter(it => it.numAxes >= 2 && it.numButtons >= 5)
 
 export default
 class Joypad

@@ -30,7 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import from from 'from';
 import Logger from 'logger';
 import Prim from 'prim';
 import Scene from 'scene';
@@ -136,9 +135,7 @@ class Console extends Thread
 
 	undefineObject(name)
 	{
-		from(this.commands)
-			.where(it => it.entity === name)
-			.remove();
+		this.commands = this.commands.filter(it => it.entity !== name);
 	}
 
 	on_inputCheck()
@@ -252,7 +249,7 @@ function executeCommand(console, command)
 	let instruction = tokens[1];
 
 	// check that the instruction is valid
-	if (!from(console.commands).any(it => it.entity === objectName)) {
+	if (!console.commands.some(it => it.entity === objectName)) {
 		console.log(`unrecognized object name '${objectName}'`);
 		return;
 	}
@@ -260,7 +257,7 @@ function executeCommand(console, command)
 		console.log(`missing instruction for '${objectName}'`);
 		return;
 	}
-	if (!from(console.commands).any(it => it.entity === objectName && it.instruction === instruction)) {
+	if (!console.commands.some(it => it.entity === objectName && it.instruction === instruction)) {
 		console.log(`instruction '${instruction}' not valid for '${objectName}'`);
 		return;
 	}
@@ -272,9 +269,8 @@ function executeCommand(console, command)
 	}
 
 	// execute the command
-	let matches = from(console.commands)
-		.where(it => it.entity === objectName)
-		.where(it => it.instruction === instruction);
+	let matches = console.commands.filter((it) =>
+		it.entity === objectName && it.instruction === instruction);
 	for (const command of matches) {
 		Dispatch.now(() => {
 			try {
