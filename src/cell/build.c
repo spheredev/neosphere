@@ -745,6 +745,8 @@ handle_module_import(void)
 	if (!jsal_is_null(1))
 		caller_id = jsal_require_string(1);
 
+	// relative path is nonsensical in a non-module context because the JS engine
+	// doesn't know where the request came from in that case
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of an ESM module");
 
@@ -760,19 +762,12 @@ handle_module_import(void)
 		}
 		jsal_throw();
 	}
-	if (path_extension_is(path, ".mjs")) {
-		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
-		jsal_push_string(path_cstr(path));
-		jsal_dup(-1);
-		jsal_push_lstring(source, source_len);
-		free(source);
-	}
-	else {
-		// ES module shim to allow 'import' of CommonJS modules
-		jsal_push_sprintf("%%/moduleShim-%d.mjs", s_next_module_id++);
-		jsal_dup(-1);
-		jsal_push_sprintf("export default require(\"%s\");", path_cstr(path));
-	}
+
+	source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
+	jsal_push_string(path_cstr(path));
+	jsal_dup(-1);
+	jsal_push_lstring(source, source_len);
+	free(source);
 }
 
 static bool

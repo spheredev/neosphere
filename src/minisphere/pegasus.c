@@ -1313,7 +1313,7 @@ handle_module_import(void)
 	if (!jsal_is_null(1))
 		caller_id = strdup(jsal_require_string(1));
 
-	// relative path is nonsensical is a non-module context because the JS engine
+	// relative path is nonsensical in a non-module context because the JS engine
 	// doesn't know where the request came from in that case
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of an ESM module");
