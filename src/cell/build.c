@@ -755,7 +755,7 @@ handle_module_import(void)
 			break;  // short-circuit
 	}
 	if (path == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "Couldn't load JS module '%s'", specifier);
+		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
 		if (caller_id != NULL) {
 			jsal_push_string(caller_id);
 			jsal_put_prop_string(-2, "url");
@@ -1334,8 +1334,6 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	const char* const PATHS[] =
 	{
 		"$/lib",
-		"#/cell_modules",
-		"#/runtime",
 	};
 
 	const char* module_id;
@@ -1359,7 +1357,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't load JS module '%s'", module_id);
+		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", module_id);
 	if (!try_eval_module(s_build->fs, path_cstr(path), true))
 		jsal_throw();
 	return true;

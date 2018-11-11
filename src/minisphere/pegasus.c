@@ -1324,7 +1324,7 @@ handle_module_import(void)
 	}
 	free(caller_id);
 	if (path == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "Couldn't load JS module '%s'", specifier);
+		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
 		if (caller_id != NULL) {
 			jsal_push_string(debugger_source_name(caller_id));
 			jsal_put_prop_string(-2, "url");
@@ -1379,8 +1379,6 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	const char* const PATHS[] =
 	{
 		"@/lib",
-		"#/game_modules",
-		"#/runtime",
 	};
 
 	const char* id;
@@ -1402,7 +1400,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 			break;  // short-circuit
 	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't load JS module '%s'", id);
+		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", id);
 	if (!pegasus_try_require(path_cstr(path), true))
 		jsal_throw();
 	return true;
