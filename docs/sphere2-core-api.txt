@@ -697,14 +697,6 @@ FS.rename(orig_name, new_name); [L1]
     assumed to be full paths.  This can also be used to move a file between
     directories; if so, the destination directory must already exist.
 
-FS.require(filename); [experimental]
-
-	Loads the JavaScript module or JSON file named by `filename` and returns
-	the module namespace (for JS modules) or decoded object (for JSON).
-
-	Note: This does not support loading CommonJS modules.  If you need to load
-          a module that was written for Node.js, use `require()` instead.
-
 FS.typeOf(pathname); [experimental]
 
     If `pathname` refers to a file, returns a string describing the type of the
