@@ -1337,6 +1337,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	};
 
 	const char* module_id;
+	path_t*     npm_path;
 	const char* parent_id = NULL;
 	path_t*     path;
 
@@ -1356,8 +1357,21 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		if ((path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i], true)))
 			break;  // short-circuit
 	}
+	if (path == NULL) {
+		// look for npm-installed modules (`node_modules`)
+		npm_path = parent_id != NULL ? path_strip(path_new(parent_id))
+			: path_new("$/");
+		path_append(npm_path, "node_modules/");
+		while (path_num_hops(npm_path) >= 2) {
+			if ((path = find_module_file(s_build->fs, module_id, parent_id, path_cstr(npm_path), true)))
+				break;  // short-circuit
+			path_remove_hop(npm_path, path_num_hops(npm_path) - 2);
+		}
+		path_free(npm_path);
+	}
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", module_id);
+	
 	if (!try_eval_module(s_build->fs, path_cstr(path), true))
 		jsal_throw();
 	return true;

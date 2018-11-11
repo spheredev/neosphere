@@ -7,6 +7,7 @@ v5.3.0 - TBD
 * Adds asynchronous asset loading functions, e.g. `Sound.fromFile()`, to
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
   notes for further information.
+* Adds preliminary, experimental support for npm's `node_modules` directory.
 * Adds a new `Tween` standard module for handling simple animations.
 * Adds `JSON.fromFile`, for loading JSON files without using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.

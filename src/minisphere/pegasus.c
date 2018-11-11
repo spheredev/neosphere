@@ -1380,6 +1380,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	};
 
 	const char* id;
+	path_t*     npm_path;
 	const char* parent_id = NULL;
 	path_t*     path;
 
@@ -1393,12 +1394,26 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
+	
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if ((path = find_module_file(id, parent_id, PATHS[i], true)))
 			break;  // short-circuit
 	}
+	if (path == NULL) {
+		// look for npm-installed modules (`node_modules`)
+		npm_path = parent_id != NULL ? path_strip(path_new(parent_id))
+			: path_new("@/");
+		path_append(npm_path, "node_modules/");
+		while (path_num_hops(npm_path) >= 2) {
+			if ((path = find_module_file(id, parent_id, path_cstr(npm_path), true)))
+				break;  // short-circuit
+			path_remove_hop(npm_path, path_num_hops(npm_path) - 2);
+		}
+		path_free(npm_path);
+	}
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", id);
+	
 	if (!pegasus_try_require(path_cstr(path), true))
 		jsal_throw();
 	return true;
