@@ -449,7 +449,7 @@ build_init_dir(build_t* it)
 	summary_for_js = strescq(summary, '"');
 	template = fs_fslurp(it->fs, "$/Cellscript.tmpl", &template_len);
 	output = strfmt(template, title_for_js, author_for_js, summary_for_js, "320", "240", NULL);
-	fs_fspew(it->fs, "$/Cellscript.mjs", output, strlen(output));
+	fs_fspew(it->fs, "$/Cellscript.js", output, strlen(output));
 	fs_unlink(it->fs, "$/Cellscript.tmpl");
 	free(title_for_js);
 	free(author_for_js);

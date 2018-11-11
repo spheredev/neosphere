@@ -27,11 +27,11 @@ namespace Sphere.Gdk.Components
             CopyDirectory(Path.Combine(m_main.Conf.GdkPath, "system", "template"), project.RootPath);
             con.Print("OK.\n");
 
-            con.Print("Generating Cellscript.mjs... ");
+            con.Print("Generating Cellscript.js... ");
             var cellTemplatePath = Path.Combine(project.RootPath, "Cellscript.tmpl");
             try
             {
-                var scriptPath = Path.Combine(project.RootPath, "Cellscript.mjs");
+                var scriptPath = Path.Combine(project.RootPath, "Cellscript.js");
                 var template = File.ReadAllText(cellTemplatePath);
                 var script = string.Format(template,
                     JSifyString(project.Name, '"'), JSifyString(project.Author, '"'),
