@@ -54,7 +54,6 @@ static void print_usage        (void);
 static
 const char* const CELLSCRIPT_NAMES[] =
 {
-	"Cellscript",
 	"Cellscript.mjs",
 	"Cellscript.js",
 };
