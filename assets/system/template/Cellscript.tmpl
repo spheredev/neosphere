@@ -29,7 +29,7 @@ Object.assign(Sphere.Game,
 	// called automatically.  if the default export is a class, the class will
 	// be instantiated using `new` and `.start()` will be called on the
 	// resulting object.
-	main: '@/scripts/main.mjs',
+	main: '@/scripts/main.js',
 }});
 
 
@@ -43,7 +43,6 @@ Object.assign(Sphere.Game,
 //       `path/to/file`, is relative to the location of the Cellscript, not the
 //       game's JSON manifest like in Sphere.
 
-install('@/scripts', files('src/*.mjs'));
 install('@/scripts', files('src/*.js'));
 
 install('@/images', files('images/*.png', true));
