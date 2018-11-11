@@ -62,11 +62,11 @@ namespace Sphere.Gdk.Components
         public async Task<bool> Package(IProject project, string fileName, IConsole con)
         {
             var stagingPath = Path.Combine(project.RootPath, project.BuildPath);
-            string cellOptions = string.Format(@"--in-dir ""{0}"" --out-dir ""{2}"" --package ""{1}""",
+            string cellOptions = string.Format(@"pack --in-dir ""{0}"" --out-dir ""{1}"" {2} ""{3}""",
                 project.RootPath.Replace(Path.DirectorySeparatorChar, '/'),
-                fileName.Replace(Path.DirectorySeparatorChar, '/'), stagingPath);
-            if (m_main.Conf.MakeDebugPackages)
-                cellOptions += " --debug";
+                stagingPath,
+                m_main.Conf.MakeDebugPackages ? "--debug" : "--release",
+                fileName.Replace(Path.DirectorySeparatorChar, '/'));
             return await RunCell(cellOptions, con);
         }
 
