@@ -4,25 +4,42 @@ miniSphere Changelog
 v5.3.0 - TBD
 ------------
 
+* Adds asynchronous asset loading functions, e.g. `Sound.fromFile()`, to
+  improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
+  notes for further information.
+* Adds a new `Tween` standard module for handling simple animations.
+* Adds `JSON.fromFile`, for loading JSON files without using `require`.
+* Adds `Font#widthOf` for getting the width in pixels of a single line of text.
 * Adds a `cell init` command, for initializing a new Sphere project directory
   directly from the command line.
 * Adds support for `-h` as an alias for `--help` for all command-line tools.
-* Adds support for Cellscript files with no `.js` or `.mjs` extension.
 * Adds a `fileTypes` manifest field which allows a game to tell the engine how
   to load different types of files based on their extension; currently this is
   used only for JavaScript files but may be expanded in the future.
 * Adds `FS.typeOf` API to get the `fileTypes` mapping for a specified file.
 * Adds `FS.directoryOf`, `FS.extensionOf` and `FS.fileNameOf` APIs for taking
   apart path strings.
+* Adds API support for the Back and Forward buttons found on most modern mice.
 * Adds `recursive` option for DirectoryStream, to list files in subdirectories.
 * Adds `apiVersion` and `apiLevel` to the example Cellscript.
+* Improves command-line semantics: `.js` files run from the command line are
+  now executed as ES modules rather than traditional scripts, allowing them to
+  use `import`.
 * Improves performance greatly for code using the `Transform#matrix` property.
 * Improves first-access performance of `Sphere.Game` by avoiding an unnecessary
   JSON round-trip conversion.
 * Improves Cell's command-line syntax.  Many options have been replaced with
   easy-to-remember commands like `cell build` or `cell pack`.
-* Fixes an issue where `import` loaded `.js` files as CommonJS instead of ESM.
-  `require()` should always be used to load CommonJS modules.
+* Removes the `assert` and `test` modules from the standard library.
+* Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,
+  `playSound`, `tween`) which sometimes clashed with game code wanting to use
+  those names.
+* Fixes a crash where calling `MapEngine` or entering a `FlipScreen` loop
+  directly from the main class constructor would cause a segfault upon closing
+  the window.
+* Fixes an issue where `import` treats `.js` files as CommonJS instead of ESM.
+* Fixes an issue where `Sphere.Game` can be modified by JS code at runtime.
+* Fixes an issue where the cursor is hidden while sitting over the game window.
 * Fixes a bug where `FS.fullPath` doesn't automatically add a trailing slash
   when passed the path of a known directory.
 * Fixes a bug where Cell defaults to putting `dist/` in the current working
@@ -32,6 +49,7 @@ v5.3.0 - TBD
 * Fixes a bug where the axis vector passed to `Transform#rotate` is not
   normalized before calculating the rotation matrix, leading to unpredictable
   behavior when using a non-basis vector.
+* Fixes a bug where `BlendOp.Multiply` is rendered the same as `BlendOp.Add`.
 
 
 v5.2.13 - September 6, 2018
