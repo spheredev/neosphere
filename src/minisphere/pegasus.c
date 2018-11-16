@@ -47,6 +47,7 @@
 #include "input.h"
 #include "jsal.h"
 #include "profiler.h"
+#include "query.h"
 #include "sockets.h"
 #include "unicode.h"
 #include "xoroshiro.h"
@@ -220,6 +221,7 @@ COLORS[] =
 	{ 0, NULL, 0, 0, 0, 0 }
 };
 
+static bool js_from                          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_require                       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_APILevel           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, intptr_t magic);
@@ -336,6 +338,10 @@ static bool js_Mouse_get_y                   (int num_args, bool is_ctor, intptr
 static bool js_Mouse_clearQueue              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_getEvent                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_isPressed               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_reduce                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_select                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_take                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_where                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromState                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_RNG                       (int num_args, bool is_ctor, intptr_t magic);
@@ -548,6 +554,7 @@ pegasus_init(int api_level)
 	jsal_pop(1);
 
 	// initialize the Sphere v2 API
+	api_define_function(NULL, "from", js_from, 0);
 	api_define_function(NULL, "print", js_SSj_log, KI_LOG_NORMAL);
 	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
 	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL);
@@ -651,6 +658,11 @@ pegasus_init(int api_level)
 	api_define_method("Mouse", "clearQueue", js_Mouse_clearQueue, 0);
 	api_define_method("Mouse", "getEvent", js_Mouse_getEvent, 0);
 	api_define_method("Mouse", "isPressed", js_Mouse_isPressed, 0);
+	api_define_class("Query", PEGASUS_QUERY, NULL, NULL, 0);
+	api_define_method("Query", "reduce", js_Query_reduce, 0);
+	api_define_method("Query", "select", js_Query_select, 0);
+	api_define_method("Query", "take", js_Query_take, 0);
+	api_define_method("Query", "where", js_Query_where, 0);
 	api_define_class("RNG", PEGASUS_RNG, js_new_RNG, js_RNG_finalize, 0);
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed, 0);
 	api_define_function("RNG", "fromState", js_RNG_fromState, 0);
@@ -1369,6 +1381,20 @@ load_package_json(const char* filename)
 on_error:
 	jsal_set_top(jsal_top);
 	return NULL;
+}
+
+static bool
+js_from(int num_args, bool is_ctor, intptr_t magic)
+{
+	query_t*  query;
+	js_ref_t* source;
+	
+	jsal_require_array(0);
+
+	source = jsal_ref(0);
+	query = query_new(source);
+	jsal_push_class_obj(PEGASUS_QUERY, query, false);
+	return true;
 }
 
 static bool
@@ -3529,6 +3555,65 @@ js_Mouse_isPressed(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid MouseKey constant");
 
 	jsal_push_boolean(mouse_is_key_down(key));
+	return true;
+}
+
+static bool
+js_Query_reduce(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* initial_value;
+	query_t*  query;
+	js_ref_t* reducer;
+
+	reducer = jsal_ref(0);
+	initial_value = jsal_ref(1);
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	query_compile(query);
+	query_run(query, reducer, initial_value);
+	return true;
+}
+
+static bool
+js_Query_select(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* mapper;
+	query_t*  query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	mapper = jsal_ref(0);
+
+	query_add_op(query, QOP_MAP, mapper);
+	return true;
+}
+
+static bool
+js_Query_take(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* count_value;
+	query_t*  query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	count_value = jsal_ref(0);
+
+	query_add_op(query, QOP_TAKE_N, count_value);
+	return true;
+}
+
+static bool
+js_Query_where(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* predicate;
+	query_t*  query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	predicate = jsal_ref(0);
+
+	query_add_op(query, QOP_FILTER, predicate);
 	return true;
 }
 

@@ -30,62 +30,26 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#include "version.h"
+#ifndef SPHERE__QUERY_H__INCLUDED
+#define SPHERE__QUERY_H__INCLUDED
 
-#include "posix.h"
+typedef struct query query_t;
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <limits.h>
-#include <math.h>
-#include <setjmp.h>
-#include <string.h>
-#include <time.h>
-#include <sys/stat.h>
+typedef
+enum query_op
+{
+	QOP_FILTER,
+	QOP_MAP,
+	QOP_REDUCE,
+	QOP_TAKE_N,
+	QOP_MAX,
+} query_op_t;
 
-#if !defined(_WIN32)
-#include <alloca.h>
-#else
-#include <malloc.h>
-#endif
+query_t* query_new     (js_ref_t* source);
+query_t* query_ref     (query_t* it);
+void     query_unref   (query_t* it);
+void     query_add_op  (query_t* it, query_op_t type, js_ref_t* argument);
+void     query_compile (query_t* it);
+void     query_run     (query_t* it, js_ref_t* reducer, js_ref_t* initial_value);
 
-#include <allegro5/allegro.h>
-#include <allegro5/allegro_audio.h>
-#include <allegro5/allegro_acodec.h>
-#include <allegro5/allegro_image.h>
-#include <allegro5/allegro_memfile.h>
-#include <allegro5/allegro_native_dialog.h>
-#include <allegro5/allegro_primitives.h>
-
-#include "lstring.h"
-#include "path.h"
-#include "vector.h"
-
-#include "console.h"
-#include "font.h"
-#include "game.h"
-#include "jsal.h"
-#include "screen.h"
-#include "utility.h"
-
-#define SPHERE_PATH_MAX 1024
-
-// at some point all of these global variables need to get eaten, preferably by some
-// type of eaty pig.  they're a relic from the early stages of engine development; while
-// I've pared this list down over time, ideally all of them should disappear.
-extern game_t*   g_game;
-extern double    g_idle_time;
-extern js_ref_t* g_main_object;
-extern screen_t* g_screen;
-extern uint32_t  g_tick_count;
-
-void sphere_abort       (const char* message);
-void sphere_change_game (const char* pathname);
-void sphere_exit        (bool shutting_down);
-void sphere_heartbeat   (bool in_event_loop, int api_version);
-void sphere_restart     (void);
-void sphere_sleep       (double time);
-void sphere_tick        (int api_version, bool clear_screen, int framerate);
+#endif // SPHERE__QUERY_H__INCLUDED
