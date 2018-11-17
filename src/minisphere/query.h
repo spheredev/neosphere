@@ -41,6 +41,7 @@ enum query_op
 	QOP_FILTER,
 	QOP_MAP,
 	QOP_REDUCE,
+	QOP_SHUFFLE,
 	QOP_SORT_AZ,
 	QOP_SORT_ZA,
 	QOP_TAKE_N,
@@ -48,6 +49,7 @@ enum query_op
 	QOP_MAX,
 } query_op_t;
 
+int      query_max_ops (void);
 query_t* query_new     (js_ref_t* source);
 query_t* query_ref     (query_t* it);
 void     query_unref   (query_t* it);

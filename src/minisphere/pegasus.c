@@ -338,6 +338,7 @@ static bool js_Mouse_get_y                   (int num_args, bool is_ctor, intptr
 static bool js_Mouse_clearQueue              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_getEvent                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_isPressed               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_atomicOp                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_functionOp              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_numberOp                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_reduce                  (int num_args, bool is_ctor, intptr_t magic);
@@ -663,6 +664,7 @@ pegasus_init(int api_level)
 	api_define_method("Query", "descending", js_Query_functionOp, QOP_SORT_ZA);
 	api_define_method("Query", "reduce", js_Query_reduce, 0);
 	api_define_method("Query", "select", js_Query_functionOp, QOP_MAP);
+	api_define_method("Query", "shuffle", js_Query_atomicOp, QOP_SHUFFLE);
 	api_define_method("Query", "take", js_Query_numberOp, QOP_TAKE_N);
 	api_define_method("Query", "where", js_Query_functionOp, QOP_FILTER);
 	api_define_class("RNG", PEGASUS_RNG, js_new_RNG, js_RNG_finalize, 0);
@@ -3557,6 +3559,21 @@ js_Mouse_isPressed(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid MouseKey constant");
 
 	jsal_push_boolean(mouse_is_key_down(key));
+	return true;
+}
+
+static bool
+js_Query_atomicOp(int num_args, bool is_ctor, intptr_t magic)
+{
+	query_op_t opcode;
+	query_t*   query;
+
+	opcode = (query_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+
+	query_add_op(query, opcode, NULL);
 	return true;
 }
 

@@ -39,8 +39,8 @@ static vector_t* jit_cache = NULL;
 
 struct jit_entry
 {
-	unsigned int id;
-	js_ref_t*    wrapper;
+	uint64_t  id;
+	js_ref_t* wrapper;
 };
 
 struct op
@@ -56,6 +56,12 @@ struct query
 	js_ref_t*    program;
 	js_ref_t*    source;
 };
+
+int
+query_max_ops()
+{
+	return (int)floor(log((double)UINT32_MAX) / log((double)QOP_MAX));
+}
 
 query_t*
 query_new(js_ref_t* source)
@@ -78,8 +84,15 @@ query_ref(query_t* it)
 void
 query_unref(query_t* it)
 {
+	struct op* op;
+	
+	iter_t iter;
+	
 	if (--it->refcount > 0)
 		return;
+	iter = vector_enum(it->ops);
+	while (op = iter_next(&iter))
+		jsal_unref(op->a);
 	jsal_unref(it->source);
 	free(it);
 }
@@ -89,9 +102,11 @@ query_add_op(query_t* it, query_op_t opcode, js_ref_t* a)
 {
 	struct op op;
 
+	jsal_push_undefined();
 	op.code = opcode;
-	op.a = a;
+	op.a = a != NULL ? a : jsal_ref(-1);
 	vector_push(it->ops, &op);
+	jsal_pop(1);
 }
 
 void
@@ -105,9 +120,9 @@ query_compile(query_t* it)
 	char*            decl_list_ptr;
 	char             filename[256];
 	struct jit_entry jit_entry;
-	unsigned int     jit_id = 0;
-	struct op*   op;
-	unsigned int     place_value = 1;
+	uint64_t         jit_id = 0;
+	struct op*       op;
+	uint64_t         place_value = 1;
 	const char*      sort_args;
 	lstring_t*       wrapper;
 
@@ -119,7 +134,7 @@ query_compile(query_t* it)
 	// see if this query configuration has already been compiled
 	iter = vector_enum(it->ops);
 	while (op = iter_next(&iter)) {
-		jit_id += op->code * place_value;
+		jit_id += (uint64_t)op->code * place_value;
 		place_value *= QOP_MAX;
 	}
 	iter = vector_enum(jit_cache);
@@ -145,6 +160,16 @@ query_compile(query_t* it)
 		case QOP_MAP:
 			code_ptr += sprintf(code_ptr, "value = op%d(value);", iter.index);
 			break;
+		case QOP_SHUFFLE:
+			// emit a Fisher-Yates shuffle
+			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			code_ptr += sprintf(code_ptr, "for (let i = a%d.length - 1; i >= 1; --i) {", iter.index);
+			code_ptr += sprintf(code_ptr, "const idx = Math.floor(Math.random() * i), v = a%d[idx];", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d[idx] = a%d[i];", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "a%d[i] = v; }", iter.index);
+			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];", iter.index, iter.index);
+			break;
 		case QOP_SORT_AZ:
 		case QOP_SORT_ZA:
 			sort_args = op->code == QOP_SORT_AZ ? "(a, b)" : "(b, a)";
@@ -165,7 +190,7 @@ query_compile(query_t* it)
 		}
 	}
 	code_ptr += sprintf(code_ptr, "result = reducer(result, value);");
-	sprintf(filename, "%%/fromQuery/%.4x.js", jit_id);
+	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
 		"(source,%s reducer,result) => { %s for (let i = 0, len = source.length; i < len; ++i) { let value = source[i]; %s } return result; }",
 		arg_list, decl_list, code);
