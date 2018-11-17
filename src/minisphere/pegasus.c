@@ -343,6 +343,7 @@ static bool js_Query_functionOp              (int num_args, bool is_ctor, intptr
 static bool js_Query_numberOp                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_all                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_any                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_anyIs                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_find                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_first                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_last                    (int num_args, bool is_ctor, intptr_t magic);
@@ -670,6 +671,7 @@ pegasus_init(int api_level)
 	api_define_method("Query", "descending", js_Query_functionOp, QOP_SORT_ZA);
 	api_define_method("Query", "all", js_Query_all, 0);
 	api_define_method("Query", "any", js_Query_any, 0);
+	api_define_method("Query", "anyIs", js_Query_anyIs, 0);
 	api_define_method("Query", "drop", js_Query_numberOp, QOP_DROP_N);
 	api_define_method("Query", "find", js_Query_find, 0);
 	api_define_method("Query", "first", js_Query_first, 0);
@@ -3638,7 +3640,7 @@ js_Query_all(int num_args, bool is_ctor, intptr_t magic)
 	jsal_require_function(0);
 
 	predicate = jsal_ref(0);
-	query_test(query, predicate, true);
+	query_run(query, ROP_EVERY, predicate, NULL);
 	return true;
 }
 
@@ -3653,7 +3655,23 @@ js_Query_any(int num_args, bool is_ctor, intptr_t magic)
 	jsal_require_function(0);
 
 	predicate = jsal_ref(0);
-	query_test(query, predicate, false);
+	query_run(query, ROP_SOME, predicate, NULL);
+	return true;
+}
+
+static bool
+js_Query_anyIs(int num_args, bool is_ctor, intptr_t magic)
+{
+	query_t*  query;
+	js_ref_t* value;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	if (num_args < 1)
+		jsal_error(JS_RANGE_ERROR, "Missing argument for Query#anyIs");
+
+	value = jsal_ref(0);
+	query_run(query, ROP_CONTAINS, value, NULL);
 	return true;
 }
 
@@ -3668,7 +3686,7 @@ js_Query_find(int num_args, bool is_ctor, intptr_t magic)
 	jsal_require_function(0);
 
 	predicate = jsal_ref(0);
-	query_find(query, predicate);
+	query_run(query, ROP_FIND, predicate, NULL);
 	return true;
 }
 
@@ -3680,7 +3698,7 @@ js_Query_first(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
 
-	query_first(query, false);
+	query_run(query, ROP_FIRST, NULL, NULL);
 	return true;
 }
 
@@ -3692,7 +3710,7 @@ js_Query_last(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
 
-	query_first(query, true);
+	query_run(query, ROP_LAST, NULL, NULL);
 	return true;
 }
 
@@ -3711,7 +3729,7 @@ js_Query_reduce(int num_args, bool is_ctor, intptr_t magic)
 
 	reducer = jsal_ref(0);
 	initial_value = jsal_ref(1);
-	query_reduce(query, reducer, initial_value);
+	query_run(query, ROP_REDUCE, reducer, initial_value);
 	return true;
 }
 
@@ -3723,7 +3741,7 @@ js_Query_toArray(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
 
-	query_run(query);
+	query_run(query, ROP_ARRAY, NULL, NULL);
 	return true;
 }
 

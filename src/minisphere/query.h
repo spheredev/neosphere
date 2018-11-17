@@ -52,15 +52,25 @@ enum query_op
 	QOP_MAX,
 } query_op_t;
 
+typedef
+enum reduce_op
+{
+	ROP_NOP,
+	ROP_ARRAY,
+	ROP_CONTAINS,
+	ROP_EVERY,
+	ROP_FIND,
+	ROP_FIRST,
+	ROP_LAST,
+	ROP_REDUCE,
+	ROP_SOME,
+} reduce_op_t;
+
 int      query_max_ops (void);
 query_t* query_new     (js_ref_t* source);
 query_t* query_ref     (query_t* it);
 void     query_unref   (query_t* it);
 void     query_add_op  (query_t* it, query_op_t opcode, js_ref_t* a);
-void     query_find    (query_t* it, js_ref_t* predicate);
-void     query_first   (query_t* it, bool from_end);
-void     query_test    (query_t* it, js_ref_t* predicate, bool match_all);
-void     query_reduce  (query_t* it, js_ref_t* reducer, js_ref_t* initial_value);
-void     query_run     (query_t* it);
+void     query_run     (query_t* it, reduce_op_t opcode, js_ref_t* r1, js_ref_t* r2);
 
 #endif // SPHERE__QUERY_H__INCLUDED
