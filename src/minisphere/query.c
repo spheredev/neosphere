@@ -50,8 +50,12 @@ struct op
 enum reduce_type
 {
 	ROP_ARRAY,
+	ROP_EVERY,
 	ROP_FIND,
+	ROP_FIRST,
+	ROP_LAST,
 	ROP_REDUCE,
+	ROP_SOME,
 };
 
 struct query
@@ -138,6 +142,23 @@ query_find(query_t* it, js_ref_t* predicate)
 }
 
 void
+query_first(query_t* it, bool from_end)
+{
+	struct op* op;
+
+	iter_t iter;
+
+	compile_query(it, from_end ? ROP_LAST : ROP_FIRST);
+
+	jsal_push_ref_weak(it->program);
+	jsal_push_ref_weak(it->source);
+	iter = vector_enum(it->ops);
+	while (op = iter_next(&iter))
+		jsal_push_ref_weak(op->a);
+	jsal_call(1 + vector_len(it->ops));
+}
+
+void
 query_reduce(query_t* it, js_ref_t* reducer, js_ref_t* initial_value)
 {
 	struct op* op;
@@ -171,6 +192,24 @@ query_run(query_t* it)
 	while (op = iter_next(&iter))
 		jsal_push_ref_weak(op->a);
 	jsal_call(1 + vector_len(it->ops));
+}
+
+void
+query_test(query_t* it, js_ref_t* predicate, bool match_all)
+{
+	struct op* op;
+
+	iter_t iter;
+
+	compile_query(it, match_all ? ROP_EVERY : ROP_SOME);
+
+	jsal_push_ref_weak(it->program);
+	jsal_push_ref_weak(it->source);
+	iter = vector_enum(it->ops);
+	while (op = iter_next(&iter))
+		jsal_push_ref_weak(op->a);
+	jsal_push_ref_weak(predicate);
+	jsal_call(2 + vector_len(it->ops));
 }
 
 static void
@@ -215,6 +254,7 @@ compile_query(query_t* query, enum reduce_type type)
 	arg_list_ptr = arg_list;
 	code_ptr = code;
 	decl_list_ptr = decl_list;
+	decl_list_ptr += sprintf(decl_list_ptr, "let value = undefined;");
 	iter = vector_enum(query->ops);
 	while (op = iter_next(&iter)) {
 		arg_list_ptr += sprintf(arg_list_ptr, "op%d,", iter.index);
@@ -224,6 +264,12 @@ compile_query(query_t* query, enum reduce_type type)
 			break;
 		case QOP_MAP:
 			code_ptr += sprintf(code_ptr, "value = op%d(value);", iter.index);
+			break;
+		case QOP_REVERSE:
+			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.reverse();", iter.index);
+			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];", iter.index, iter.index);
 			break;
 		case QOP_SHUFFLE:
 			// emit a Fisher-Yates shuffle
@@ -259,21 +305,39 @@ compile_query(query_t* query, enum reduce_type type)
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
 		code_ptr += sprintf(code_ptr, "result.push(value);");
 		break;
+	case ROP_EVERY:
+		arg_list_ptr += sprintf(arg_list_ptr, "finder");
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = true;");
+		code_ptr += sprintf(code_ptr, "if (!finder(value)) return false;");
+		break;
 	case ROP_FIND:
 		arg_list_ptr += sprintf(arg_list_ptr, "finder");
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
 		code_ptr += sprintf(code_ptr, "if (finder(value)) return value;");
 		break;
+	case ROP_FIRST:
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
+		code_ptr += sprintf(code_ptr, "return value;");
+		break;
+	case ROP_LAST:
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
+		code_ptr += sprintf(code_ptr, "result = value;");
+		break;
 	case ROP_REDUCE:
 		arg_list_ptr += sprintf(arg_list_ptr, "reducer, result");
 		code_ptr += sprintf(code_ptr, "result = reducer(result, value);");
+		break;
+	case ROP_SOME:
+		arg_list_ptr += sprintf(arg_list_ptr, "finder");
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = false;");
+		code_ptr += sprintf(code_ptr, "if (finder(value)) return true;");
 		break;
 	default:
 		code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported ROP %xh (internal error)`);", type);
 	}
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
-		"(source, %s) => { %s for (let i = 0, len = source.length; i < len; ++i) { let value = source[i]; %s } return result; }",
+		"(source, %s) => { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s } return result; }",
 		arg_list, decl_list, code);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);

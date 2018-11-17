@@ -41,6 +41,7 @@ enum query_op
 	QOP_FILTER,
 	QOP_MAP,
 	QOP_REDUCE,
+	QOP_REVERSE,
 	QOP_SHUFFLE,
 	QOP_SORT_AZ,
 	QOP_SORT_ZA,
@@ -55,6 +56,8 @@ query_t* query_ref     (query_t* it);
 void     query_unref   (query_t* it);
 void     query_add_op  (query_t* it, query_op_t opcode, js_ref_t* a);
 void     query_find    (query_t* it, js_ref_t* predicate);
+void     query_first   (query_t* it, bool from_end);
+void     query_test    (query_t* it, js_ref_t* predicate, bool match_all);
 void     query_reduce  (query_t* it, js_ref_t* reducer, js_ref_t* initial_value);
 void     query_run     (query_t* it);
 

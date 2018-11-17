@@ -341,7 +341,11 @@ static bool js_Mouse_isPressed               (int num_args, bool is_ctor, intptr
 static bool js_Query_atomicOp                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_functionOp              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_numberOp                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_all                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_any                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_find                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_first                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_last                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_reduce                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_toArray                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
@@ -664,8 +668,13 @@ pegasus_init(int api_level)
 	api_define_method("Query", "ascending", js_Query_functionOp, QOP_SORT_AZ);
 	api_define_method("Query", "besides", js_Query_functionOp, QOP_TAP);
 	api_define_method("Query", "descending", js_Query_functionOp, QOP_SORT_ZA);
+	api_define_method("Query", "all", js_Query_all, 0);
+	api_define_method("Query", "any", js_Query_any, 0);
 	api_define_method("Query", "find", js_Query_find, 0);
+	api_define_method("Query", "first", js_Query_first, 0);
+	api_define_method("Query", "last", js_Query_last, 0);
 	api_define_method("Query", "reduce", js_Query_reduce, 0);
+	api_define_method("Query", "reverse", js_Query_atomicOp, QOP_REVERSE);
 	api_define_method("Query", "select", js_Query_functionOp, QOP_MAP);
 	api_define_method("Query", "shuffle", js_Query_atomicOp, QOP_SHUFFLE);
 	api_define_method("Query", "take", js_Query_numberOp, QOP_TAKE_N);
@@ -3618,6 +3627,36 @@ js_Query_numberOp(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_Query_all(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* predicate;
+	query_t*  query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	jsal_require_function(0);
+
+	predicate = jsal_ref(0);
+	query_test(query, predicate, true);
+	return true;
+}
+
+static bool
+js_Query_any(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* predicate;
+	query_t*  query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	jsal_require_function(0);
+
+	predicate = jsal_ref(0);
+	query_test(query, predicate, false);
+	return true;
+}
+
+static bool
 js_Query_find(int num_args, bool is_ctor, intptr_t magic)
 {
 	js_ref_t* predicate;
@@ -3629,6 +3668,30 @@ js_Query_find(int num_args, bool is_ctor, intptr_t magic)
 
 	predicate = jsal_ref(0);
 	query_find(query, predicate);
+	return true;
+}
+
+static bool
+js_Query_first(int num_args, bool is_ctor, intptr_t magic)
+{
+	query_t* query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+
+	query_first(query, false);
+	return true;
+}
+
+static bool
+js_Query_last(int num_args, bool is_ctor, intptr_t magic)
+{
+	query_t* query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+
+	query_first(query, true);
 	return true;
 }
 
