@@ -670,6 +670,7 @@ pegasus_init(int api_level)
 	api_define_method("Query", "descending", js_Query_functionOp, QOP_SORT_ZA);
 	api_define_method("Query", "all", js_Query_all, 0);
 	api_define_method("Query", "any", js_Query_any, 0);
+	api_define_method("Query", "drop", js_Query_numberOp, QOP_DROP_N);
 	api_define_method("Query", "find", js_Query_find, 0);
 	api_define_method("Query", "first", js_Query_first, 0);
 	api_define_method("Query", "last", js_Query_last, 0);

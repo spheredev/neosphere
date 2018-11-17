@@ -259,6 +259,9 @@ compile_query(query_t* query, enum reduce_type type)
 	while (op = iter_next(&iter)) {
 		arg_list_ptr += sprintf(arg_list_ptr, "op%d,", iter.index);
 		switch (op->code) {
+		case QOP_DROP_N:
+			code_ptr += sprintf(code_ptr, "if (op%d > 0) { --op%d; continue; }", iter.index, iter.index);
+			break;
 		case QOP_FILTER:
 			code_ptr += sprintf(code_ptr, "if (!op%d(value)) continue;", iter.index);
 			break;

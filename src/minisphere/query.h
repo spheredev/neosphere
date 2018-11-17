@@ -38,6 +38,8 @@ typedef struct query query_t;
 typedef
 enum query_op
 {
+	QOP_NOP,
+	QOP_DROP_N,
 	QOP_FILTER,
 	QOP_MAP,
 	QOP_REDUCE,
