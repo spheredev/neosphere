@@ -338,6 +338,8 @@ static bool js_Mouse_get_y                   (int num_args, bool is_ctor, intptr
 static bool js_Mouse_clearQueue              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_getEvent                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_isPressed               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_ascending               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_descending              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_reduce                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_select                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_take                    (int num_args, bool is_ctor, intptr_t magic);
@@ -659,6 +661,8 @@ pegasus_init(int api_level)
 	api_define_method("Mouse", "getEvent", js_Mouse_getEvent, 0);
 	api_define_method("Mouse", "isPressed", js_Mouse_isPressed, 0);
 	api_define_class("Query", PEGASUS_QUERY, NULL, NULL, 0);
+	api_define_method("Query", "ascending", js_Query_ascending, 0);
+	api_define_method("Query", "descending", js_Query_descending, 0);
 	api_define_method("Query", "reduce", js_Query_reduce, 0);
 	api_define_method("Query", "select", js_Query_select, 0);
 	api_define_method("Query", "take", js_Query_take, 0);
@@ -1388,7 +1392,7 @@ js_from(int num_args, bool is_ctor, intptr_t magic)
 {
 	query_t*  query;
 	js_ref_t* source;
-	
+
 	jsal_require_array(0);
 
 	source = jsal_ref(0);
@@ -1420,7 +1424,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 
 	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
-	
+
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if ((path = find_module_file(id, parent_id, PATHS[i], true)))
 			break;  // short-circuit
@@ -1439,7 +1443,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	}
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", id);
-	
+
 	if (!pegasus_try_require(path_cstr(path), true))
 		jsal_throw();
 	return true;
@@ -3555,6 +3559,34 @@ js_Mouse_isPressed(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid MouseKey constant");
 
 	jsal_push_boolean(mouse_is_key_down(key));
+	return true;
+}
+
+static bool
+js_Query_ascending(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* keymaker;
+	query_t*  query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	keymaker = jsal_ref(0);
+
+	query_add_op(query, QOP_SORT_AZ, keymaker);
+	return true;
+}
+
+static bool
+js_Query_descending(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* keymaker;
+	query_t*  query;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	keymaker = jsal_ref(0);
+
+	query_add_op(query, QOP_SORT_ZA, keymaker);
 	return true;
 }
 

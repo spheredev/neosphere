@@ -98,23 +98,25 @@ query_add_op(query_t* it, query_op_t type, js_ref_t* argument)
 void
 query_compile(query_t* it)
 {
-	char             arg_name[64];
 	char             arg_list[1024] = "";
+	char*            arg_list_ptr;
 	char             code[65536] = "";
-	char             decl[256] = "";
+	char*            code_ptr;
 	char             decl_list[65536] = "";
+	char*            decl_list_ptr;
+	char             filename[128];
 	struct jit_entry jit_entry;
 	unsigned int     jit_id = 0;
-	char             line[256] = "";
 	struct opcode*   op;
 	unsigned int     place_value = 1;
+	const char*      sort_args;
 	char             wrapper[65536];
 
 	iter_t iter;
 
 	if (jit_cache == NULL)
 		jit_cache = vector_new(sizeof(struct jit_entry));
-	
+
 	// see if this query configuration has already been compiled
 	iter = vector_enum(it->opcodes);
 	while (op = iter_next(&iter)) {
@@ -129,31 +131,40 @@ query_compile(query_t* it)
 			return;
 		}
 	}
-	
+
 	// no JIT cache entry found, let's compile one up now
+	arg_list_ptr = arg_list;
+	code_ptr = code;
+	decl_list_ptr = decl_list;
 	iter = vector_enum(it->opcodes);
 	while (op = iter_next(&iter)) {
-		sprintf(arg_name, "op%d,", iter.index);
-		strcat(arg_list, arg_name);
+		arg_list_ptr += sprintf(arg_list_ptr, "op%d,", iter.index);
 		switch (op->type) {
 		case QOP_FILTER:
-			sprintf(line, "if (!op%d(value)) continue;", iter.index);
+			code_ptr += sprintf(code_ptr, "if (!op%d(value)) continue;", iter.index);
 			break;
 		case QOP_MAP:
-			sprintf(line, "value = op%d(value);", iter.index);
+			code_ptr += sprintf(code_ptr, "value = op%d(value);", iter.index);
+			break;
+		case QOP_SORT_AZ:
+		case QOP_SORT_ZA:
+			sort_args = op->type == QOP_SORT_AZ ? "(a, b)" : "(b, a)";
+			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.push([ op%d(value), value ]); }", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.sort(%s => a[0] < b[0] ? -1 : b[0] < a[0] ? 1 : 0);", iter.index, sort_args);
+			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i][1];", iter.index, iter.index);
 			break;
 		case QOP_TAKE_N:
-			sprintf(line, "if (op%d-- === 0) break;", iter.index);
+			code_ptr += sprintf(code_ptr, "if (op%d-- === 0) break;", iter.index);
 		}
-		strcat(code, line);
 	}
-	sprintf(line, "result = reducer(result, value);");
-	strcat(code, line);
+	code_ptr += sprintf(code_ptr, "result = reducer(result, value);");
 	sprintf(wrapper,
-		"(source, %s reducer,result) => { for (let i = 0, len = source.length; i < len; ++i) { let value = source[i]; %s } return result; }",
-		arg_list, code);
+		"(source,%s reducer,result) => { %s for (let i = 0, len = source.length; i < len; ++i) { let value = source[i]; %s } return result; }",
+		arg_list, decl_list, code);
+	sprintf(filename, "%%/fromQuery/%.4x.js", jit_id);
 	jsal_push_string(wrapper);
-	jsal_compile("%/jittedQuery.js");
+	jsal_compile(filename);
 	jsal_call(0);
 	it->program = jsal_ref(-1);
 	jit_entry.id = jit_id;
@@ -167,9 +178,9 @@ void
 query_run(query_t* it, js_ref_t* reducer, js_ref_t* initial_value)
 {
 	struct opcode* op;
-	
+
 	iter_t iter;
-	
+
 	jsal_push_ref_weak(it->program);
 	jsal_push_ref_weak(it->source);
 	iter = vector_enum(it->opcodes);

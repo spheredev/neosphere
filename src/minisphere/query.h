@@ -41,6 +41,8 @@ enum query_op
 	QOP_FILTER,
 	QOP_MAP,
 	QOP_REDUCE,
+	QOP_SORT_AZ,
+	QOP_SORT_ZA,
 	QOP_TAKE_N,
 	QOP_MAX,
 } query_op_t;
