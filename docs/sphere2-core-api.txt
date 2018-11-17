@@ -611,6 +611,24 @@ from(source[, ...]);
     Constructs and returns a `Query` which sources values from one or more
     arrays.
 
+Query#all(predicate);
+
+    Runs the query, calling `predicate` for each result.  The predicate should
+    return a boolean value (true or false); if and only if all items match the
+    predicate, all() returns true.  Otherwise it returns false.
+
+    Note: The first item that doesn't match the predicate will terminate the
+          query.  If there are no values to test, `true` is returned.
+
+Query#any(predicate);
+
+    Runs the query, calling `predicate` for each result.  The predicate should
+    return a boolean value (true or false); if any value matches the predicate,
+    any() returns true.  Otherwise it returns false.
+
+    Note: The first item that matches the predicate will terminate the query.
+          If there are no values to test, `false` is returned.
+
 Query#ascending([keySelector]);
 Query#descending([keySelector]);
 
@@ -622,6 +640,32 @@ Query#descending([keySelector]);
           more memory while running since they have to create a new temporary
           array internally to store the sorted values.  Keep this in mind when
           querying large collections.
+
+Query#drop(count);
+
+    Filters out the first `count` results, passing the remainder on as-is.  The
+    source array is not modified.
+
+Query#find(predicate);
+
+    Runs the query, calling `predicate` for each result, and returns the first
+    value that matches.
+
+    Note: The first value that matches the predicate will terminate the query.
+          If there are no matching values, `undefined` is returned.
+
+Query#first();
+
+    Runs the query and returns the value of the first result, or `undefined` if
+    there are no results.
+
+    Note: The query is terminated immediately once the first result has been
+          produced.
+
+Query#last();
+
+    Runs the query and returns the value of the final result, or `undefined` if
+    there are no results.
 
 Query#reduce(reducer[, initialValue]);
 
@@ -644,6 +688,11 @@ Query#select(selector);
     Calls `selector` for each item and uses whatever it returns as the new
     value for that item in subsequent operations.  The source array is not
     modified.
+
+Query#shuffle();
+
+    Shuffles all incoming values so that the rest of the query sees them in a
+    random order.
 
 Query#take(count);
 
@@ -1252,7 +1301,7 @@ MouseKey [enumeration] [L1]
         MouseKey.WheelUp
         MouseKey.WheelDown
 
-	The following values are currently supported experimentally:
+    The following values are currently supported experimentally:
 
         MouseKey.Back
         MouseKey.Forward
@@ -1292,10 +1341,10 @@ Mouse#getEvent(); [L1]
             The X and Y position of the mouse cursor relative to the rendering
             area at the time the event was received.
 
-		event.delta [experimental]
+        event.delta [experimental]
 
-		    For mouse wheel events, specifies how much the wheel has moved.
-		    For any other event, this will be `undefined`.
+            For mouse wheel events, specifies how much the wheel has moved.
+            For any other event, this will be `undefined`.
 
 Mouse#isPressed(key); [L1]
 
