@@ -44,14 +44,15 @@ enum query_op
 	QOP_SORT_AZ,
 	QOP_SORT_ZA,
 	QOP_TAKE_N,
+	QOP_TAP,
 	QOP_MAX,
 } query_op_t;
 
 query_t* query_new     (js_ref_t* source);
 query_t* query_ref     (query_t* it);
 void     query_unref   (query_t* it);
-void     query_add_op  (query_t* it, query_op_t type, js_ref_t* argument);
+void     query_add_op  (query_t* it, query_op_t opcode, js_ref_t* a);
 void     query_compile (query_t* it);
-void     query_run     (query_t* it, js_ref_t* reducer, js_ref_t* initial_value);
+void     query_reduce  (query_t* it, js_ref_t* reducer, js_ref_t* initial_value);
 
 #endif // SPHERE__QUERY_H__INCLUDED

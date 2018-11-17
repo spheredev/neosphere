@@ -192,12 +192,13 @@ on_error:
 	console_log(2, "failed to load font #%u", s_next_font_id++);
 	file_close(file);
 	if (font != NULL) {
-		for (i = 0; i < rfn.num_chars; ++i) {
-			if (font->glyphs[i].image != NULL) image_unref(font->glyphs[i].image);
+		if (font->glyphs != NULL) {
+			for (i = 0; i < rfn.num_chars; ++i)
+				image_unref(font->glyphs[i].image);
 		}
 		free(font->glyphs);
-		free(font);
 	}
+	free(font);
 	if (lock != NULL) image_unlock(atlas, lock);
 	if (atlas != NULL) image_unref(atlas);
 	return NULL;

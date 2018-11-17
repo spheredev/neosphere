@@ -33,6 +33,8 @@
 #include "minisphere.h"
 #include "query.h"
 
+#include "debugger.h"
+
 static vector_t* jit_cache = NULL;
 
 struct jit_entry
@@ -41,19 +43,16 @@ struct jit_entry
 	js_ref_t*    wrapper;
 };
 
-struct opcode
+struct op
 {
-	query_op_t type;
-	union {
-		js_ref_t* argument;
-		double    count;
-	};
+	query_op_t code;
+	js_ref_t*  a;
 };
 
 struct query
 {
 	unsigned int refcount;
-	vector_t*    opcodes;
+	vector_t*    ops;
 	js_ref_t*    program;
 	js_ref_t*    source;
 };
@@ -65,7 +64,7 @@ query_new(js_ref_t* source)
 
 	query = calloc(1, sizeof(query_t));
 	query->source = source;
-	query->opcodes = vector_new(sizeof(struct opcode));
+	query->ops = vector_new(sizeof(struct op));
 	return query;
 }
 
@@ -86,13 +85,13 @@ query_unref(query_t* it)
 }
 
 void
-query_add_op(query_t* it, query_op_t type, js_ref_t* argument)
+query_add_op(query_t* it, query_op_t opcode, js_ref_t* a)
 {
-	struct opcode op;
+	struct op op;
 
-	op.type = type;
-	op.argument = argument;
-	vector_push(it->opcodes, &op);
+	op.code = opcode;
+	op.a = a;
+	vector_push(it->ops, &op);
 }
 
 void
@@ -102,15 +101,15 @@ query_compile(query_t* it)
 	char*            arg_list_ptr;
 	char             code[65536] = "";
 	char*            code_ptr;
-	char             decl_list[65536] = "";
+	char             decl_list[1024] = "";
 	char*            decl_list_ptr;
-	char             filename[128];
+	char             filename[256];
 	struct jit_entry jit_entry;
 	unsigned int     jit_id = 0;
-	struct opcode*   op;
+	struct op*   op;
 	unsigned int     place_value = 1;
 	const char*      sort_args;
-	char             wrapper[65536];
+	lstring_t*       wrapper;
 
 	iter_t iter;
 
@@ -118,9 +117,9 @@ query_compile(query_t* it)
 		jit_cache = vector_new(sizeof(struct jit_entry));
 
 	// see if this query configuration has already been compiled
-	iter = vector_enum(it->opcodes);
+	iter = vector_enum(it->ops);
 	while (op = iter_next(&iter)) {
-		jit_id += op->type * place_value;
+		jit_id += op->code * place_value;
 		place_value *= QOP_MAX;
 	}
 	iter = vector_enum(jit_cache);
@@ -136,10 +135,10 @@ query_compile(query_t* it)
 	arg_list_ptr = arg_list;
 	code_ptr = code;
 	decl_list_ptr = decl_list;
-	iter = vector_enum(it->opcodes);
+	iter = vector_enum(it->ops);
 	while (op = iter_next(&iter)) {
 		arg_list_ptr += sprintf(arg_list_ptr, "op%d,", iter.index);
-		switch (op->type) {
+		switch (op->code) {
 		case QOP_FILTER:
 			code_ptr += sprintf(code_ptr, "if (!op%d(value)) continue;", iter.index);
 			break;
@@ -148,7 +147,7 @@ query_compile(query_t* it)
 			break;
 		case QOP_SORT_AZ:
 		case QOP_SORT_ZA:
-			sort_args = op->type == QOP_SORT_AZ ? "(a, b)" : "(b, a)";
+			sort_args = op->code == QOP_SORT_AZ ? "(a, b)" : "(b, a)";
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push([ op%d(value), value ]); }", iter.index, iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.sort(%s => a[0] < b[0] ? -1 : b[0] < a[0] ? 1 : 0);", iter.index, sort_args);
@@ -156,14 +155,23 @@ query_compile(query_t* it)
 			break;
 		case QOP_TAKE_N:
 			code_ptr += sprintf(code_ptr, "if (op%d-- === 0) break;", iter.index);
+			break;
+		case QOP_TAP:
+			code_ptr += sprintf(code_ptr, "op%d(value);", iter.index);
+			break;
+		default:
+			// unsupported opcode, inject an error into the compiled code
+			decl_list_ptr += sprintf(decl_list_ptr, "throw new Error(`Unsupported QOP %xh (internal error)`);", op->code);
 		}
 	}
 	code_ptr += sprintf(code_ptr, "result = reducer(result, value);");
-	sprintf(wrapper,
+	sprintf(filename, "%%/fromQuery/%.4x.js", jit_id);
+	wrapper = lstr_newf(
 		"(source,%s reducer,result) => { %s for (let i = 0, len = source.length; i < len; ++i) { let value = source[i]; %s } return result; }",
 		arg_list, decl_list, code);
-	sprintf(filename, "%%/fromQuery/%.4x.js", jit_id);
-	jsal_push_string(wrapper);
+	debugger_add_source(filename, wrapper);
+	jsal_push_lstring_t(wrapper);
+	lstr_free(wrapper);
 	jsal_compile(filename);
 	jsal_call(0);
 	it->program = jsal_ref(-1);
@@ -175,18 +183,18 @@ query_compile(query_t* it)
 }
 
 void
-query_run(query_t* it, js_ref_t* reducer, js_ref_t* initial_value)
+query_reduce(query_t* it, js_ref_t* reducer, js_ref_t* initial_value)
 {
-	struct opcode* op;
+	struct op* op;
 
 	iter_t iter;
 
 	jsal_push_ref_weak(it->program);
 	jsal_push_ref_weak(it->source);
-	iter = vector_enum(it->opcodes);
+	iter = vector_enum(it->ops);
 	while (op = iter_next(&iter))
-		jsal_push_ref_weak(op->argument);
+		jsal_push_ref_weak(op->a);
 	jsal_push_ref_weak(reducer);
 	jsal_push_ref_weak(initial_value);
-	jsal_call(3 + vector_len(it->opcodes));
+	jsal_call(3 + vector_len(it->ops));
 }
