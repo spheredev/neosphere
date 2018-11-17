@@ -581,6 +581,82 @@ Dispatch.onUpdate(fn[, options]); [L1]
         a higher priority than 8.0.
 
 
+`from` Function
+---------------
+
+The `from` function provides games with the ability to perform complex queries
+against the contents of arrays and other iterable collections.  One use case is
+in battle engines: you could, for instance, query for only those battlers on
+the enemy side, or use a query to narrow down the scope of status effects.
+Even enemy AI code can benefit from queries!
+
+If you're familiar with C#, the from() function works a lot like LINQ.  A query
+is built from a number of predicates and mappings, and is then typically
+processed using a `for...of` loop.
+
+For example, suppose you wanted to code an attack that damages all opposing
+battlers whose level is a multiple of 5, but only hits 75% of the time.  That
+could look like this:
+
+    let targets = from(battlers)
+        .where(v => v.isEnemyOf(attacker))
+        .where(v => v.level % 5 == 0)
+        .where(v => random.chance(0.75));
+    for (let target of targets) {
+        target.damage(move.power * attacker.strength);
+    }
+
+from(source[, ...]);
+
+    Constructs and returns a `Query` which sources values from one or more
+    arrays.
+
+Query#ascending([keySelector]);
+Query#descending([keySelector]);
+
+    Calls `keySelector` to get a sort key for each value and sorts the values
+    in ascending or descending order by key.  If no key selector is provided,
+    the value itself will be used as the key.
+
+    Note: Queries with sort operators in them will take longer to run and use
+          more memory while running since they have to create a new temporary
+          array internally to store the sorted values.  Keep this in mind when
+          querying large collections.
+
+Query#reduce(reducer[, initialValue]);
+
+    Runs the query and calls `reducer` for each result, assigning the result to
+    an internal accumulator.  The current value of the accumulator is passed as
+    the first argument to the reducer function, before the value and key.
+
+    This is a pretty advanced operation, so to help illustrate, the following
+    query calculates the sum of all numbers in the array `numbers`:
+
+        sum = from(numbers).reduce((a, v) => a + v);
+
+    Note: If `initialValue` is not given, the accumulator is initialized with
+          the first query result; the reducer function will then not be called
+          for that item.  If that behavior is not desirable, be sure to provide
+          an initial value.
+
+Query#select(selector);
+
+    Calls `selector` for each item and uses whatever it returns as the new
+    value for that item in subsequent operations.  The source array is not
+    modified.
+
+Query#take(count);
+
+    Uses only the first `count` items in subsequent operations and discards
+    the rest.  The source array is not modified.
+
+Query#where(predicate);
+
+    Calls `predicate` for each item and uses only those items for which the
+    function returns `true` in subsequent operations.  The source array is not
+    modified.
+
+
 `FS` Namespace
 --------------
 
