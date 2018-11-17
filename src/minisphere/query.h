@@ -54,7 +54,8 @@ query_t* query_new     (js_ref_t* source);
 query_t* query_ref     (query_t* it);
 void     query_unref   (query_t* it);
 void     query_add_op  (query_t* it, query_op_t opcode, js_ref_t* a);
-void     query_compile (query_t* it);
+void     query_find    (query_t* it, js_ref_t* predicate);
 void     query_reduce  (query_t* it, js_ref_t* reducer, js_ref_t* initial_value);
+void     query_run     (query_t* it);
 
 #endif // SPHERE__QUERY_H__INCLUDED

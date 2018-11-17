@@ -35,8 +35,6 @@
 
 #include "debugger.h"
 
-static vector_t* jit_cache = NULL;
-
 struct jit_entry
 {
 	uint64_t  id;
@@ -49,13 +47,25 @@ struct op
 	js_ref_t*  a;
 };
 
+enum reduce_type
+{
+	ROP_ARRAY,
+	ROP_FIND,
+	ROP_REDUCE,
+};
+
 struct query
 {
 	unsigned int refcount;
+	uint64_t     jit_id;
 	vector_t*    ops;
 	js_ref_t*    program;
 	js_ref_t*    source;
 };
+
+void compile_query (query_t* it, enum reduce_type type);
+
+static vector_t* jit_cache = NULL;
 
 int
 query_max_ops()
@@ -110,7 +120,61 @@ query_add_op(query_t* it, query_op_t opcode, js_ref_t* a)
 }
 
 void
-query_compile(query_t* it)
+query_find(query_t* it, js_ref_t* predicate)
+{
+	struct op* op;
+
+	iter_t iter;
+
+	compile_query(it, ROP_FIND);
+
+	jsal_push_ref_weak(it->program);
+	jsal_push_ref_weak(it->source);
+	iter = vector_enum(it->ops);
+	while (op = iter_next(&iter))
+		jsal_push_ref_weak(op->a);
+	jsal_push_ref_weak(predicate);
+	jsal_call(2 + vector_len(it->ops));
+}
+
+void
+query_reduce(query_t* it, js_ref_t* reducer, js_ref_t* initial_value)
+{
+	struct op* op;
+
+	iter_t iter;
+
+	compile_query(it, ROP_REDUCE);
+	
+	jsal_push_ref_weak(it->program);
+	jsal_push_ref_weak(it->source);
+	iter = vector_enum(it->ops);
+	while (op = iter_next(&iter))
+		jsal_push_ref_weak(op->a);
+	jsal_push_ref_weak(reducer);
+	jsal_push_ref_weak(initial_value);
+	jsal_call(3 + vector_len(it->ops));
+}
+
+void
+query_run(query_t* it)
+{
+	struct op* op;
+
+	iter_t iter;
+
+	compile_query(it, ROP_ARRAY);
+
+	jsal_push_ref_weak(it->program);
+	jsal_push_ref_weak(it->source);
+	iter = vector_enum(it->ops);
+	while (op = iter_next(&iter))
+		jsal_push_ref_weak(op->a);
+	jsal_call(1 + vector_len(it->ops));
+}
+
+static void
+compile_query(query_t* query, enum reduce_type type)
 {
 	char             arg_list[1024] = "";
 	char*            arg_list_ptr;
@@ -120,7 +184,7 @@ query_compile(query_t* it)
 	char*            decl_list_ptr;
 	char             filename[256];
 	struct jit_entry jit_entry;
-	uint64_t         jit_id = 0;
+	uint64_t         jit_id = 1;
 	struct op*       op;
 	uint64_t         place_value = 1;
 	const char*      sort_args;
@@ -132,16 +196,17 @@ query_compile(query_t* it)
 		jit_cache = vector_new(sizeof(struct jit_entry));
 
 	// see if this query configuration has already been compiled
-	iter = vector_enum(it->ops);
+	iter = vector_enum(query->ops);
 	while (op = iter_next(&iter)) {
 		jit_id += (uint64_t)op->code * place_value;
 		place_value *= QOP_MAX;
 	}
+	jit_id += (uint64_t)type * place_value;
 	iter = vector_enum(jit_cache);
 	while (iter_next(&iter)) {
 		jit_entry = *(struct jit_entry*)iter.ptr;
 		if (jit_id == jit_entry.id) {
-			it->program = jit_entry.wrapper;
+			query->program = jit_entry.wrapper;
 			return;
 		}
 	}
@@ -150,7 +215,7 @@ query_compile(query_t* it)
 	arg_list_ptr = arg_list;
 	code_ptr = code;
 	decl_list_ptr = decl_list;
-	iter = vector_enum(it->ops);
+	iter = vector_enum(query->ops);
 	while (op = iter_next(&iter)) {
 		arg_list_ptr += sprintf(arg_list_ptr, "op%d,", iter.index);
 		switch (op->code) {
@@ -186,40 +251,39 @@ query_compile(query_t* it)
 			break;
 		default:
 			// unsupported opcode, inject an error into the compiled code
-			decl_list_ptr += sprintf(decl_list_ptr, "throw new Error(`Unsupported QOP %xh (internal error)`);", op->code);
+			code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported QOP %xh (internal error)`);", op->code);
 		}
 	}
-	code_ptr += sprintf(code_ptr, "result = reducer(result, value);");
+	switch (type) {
+	case ROP_ARRAY:
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
+		code_ptr += sprintf(code_ptr, "result.push(value);");
+		break;
+	case ROP_FIND:
+		arg_list_ptr += sprintf(arg_list_ptr, "finder");
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
+		code_ptr += sprintf(code_ptr, "if (finder(value)) return value;");
+		break;
+	case ROP_REDUCE:
+		arg_list_ptr += sprintf(arg_list_ptr, "reducer, result");
+		code_ptr += sprintf(code_ptr, "result = reducer(result, value);");
+		break;
+	default:
+		code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported ROP %xh (internal error)`);", type);
+	}
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
-		"(source,%s reducer,result) => { %s for (let i = 0, len = source.length; i < len; ++i) { let value = source[i]; %s } return result; }",
+		"(source, %s) => { %s for (let i = 0, len = source.length; i < len; ++i) { let value = source[i]; %s } return result; }",
 		arg_list, decl_list, code);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);
 	lstr_free(wrapper);
 	jsal_compile(filename);
 	jsal_call(0);
-	it->program = jsal_ref(-1);
+	query->program = jsal_ref(-1);
 	jit_entry.id = jit_id;
-	jit_entry.wrapper = it->program;
+	jit_entry.wrapper = query->program;
 	vector_push(jit_cache, &jit_entry);
 	jsal_pop(1);
 
-}
-
-void
-query_reduce(query_t* it, js_ref_t* reducer, js_ref_t* initial_value)
-{
-	struct op* op;
-
-	iter_t iter;
-
-	jsal_push_ref_weak(it->program);
-	jsal_push_ref_weak(it->source);
-	iter = vector_enum(it->ops);
-	while (op = iter_next(&iter))
-		jsal_push_ref_weak(op->a);
-	jsal_push_ref_weak(reducer);
-	jsal_push_ref_weak(initial_value);
-	jsal_call(3 + vector_len(it->ops));
 }
