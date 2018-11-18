@@ -680,6 +680,7 @@ pegasus_init(int api_level)
 	api_define_method("Query", "last", js_Query_reduce, ROP_LAST);
 	api_define_method("Query", "over", js_Query_functionOp, QOP_OVER);
 	api_define_method("Query", "reduce", js_Query_reduce, ROP_REDUCE);
+	api_define_method("Query", "remove", js_Query_reduce, ROP_REMOVE);
 	api_define_method("Query", "reverse", js_Query_atomicOp, QOP_REVERSE);
 	api_define_method("Query", "select", js_Query_functionOp, QOP_MAP);
 	api_define_method("Query", "shuffle", js_Query_atomicOp, QOP_SHUFFLE);

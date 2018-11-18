@@ -155,6 +155,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	struct op*       op;
 	uint64_t         place_value = 1;
 	const char*      sort_args;
+	bool             transformed = false;
 	lstring_t*       wrapper;
 
 	iter_t iter;
@@ -244,6 +245,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 			code_ptr += sprintf(code_ptr, "a%d.push([ op%d_a(value), value ]); }", iter.index, iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.sort(%s => a[0] < b[0] ? -1 : b[0] < a[0] ? 1 : 0);", iter.index, sort_args);
 			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i][1];", iter.index, iter.index);
+			transformed = true;
 			break;
 		case QOP_TAKE_N:
 			code_ptr += sprintf(code_ptr, "if (op%d_a-- === 0) break;", iter.index);
@@ -259,8 +261,10 @@ compile_query(query_t* query, reduce_op_t opcode)
 			break;
 		default:
 			// unsupported opcode, inject an error into the compiled code
-			code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported QOP %xh (internal error)`);", op->code);
+			code_ptr += sprintf(code_ptr, "throw Error(`Unsupported QOP %xh (internal error)`);", op->code);
 		}
+		if (loop_closed)
+			transformed = true;
 	}
 	if (loop_closed && opcode != ROP_ITERATOR && (opcode != ROP_TO_ARRAY || num_overs > 0)) {
 		// closed-loop fast path is only for ROP_ITERATOR and ROP_TO_ARRAY, all others must reopen
@@ -310,6 +314,14 @@ compile_query(query_t* query, reduce_op_t opcode)
 		decl_list_ptr += sprintf(decl_list_ptr, "let result = r2;");
 		code_ptr += sprintf(code_ptr, "result = r1(result, value);");
 		break;
+	case ROP_REMOVE:
+		decl_list_ptr += sprintf(decl_list_ptr, "let result = undefined;");
+		decl_list_ptr += sprintf(decl_list_ptr, "const removals = [];");
+		if (transformed)
+			code_ptr += sprintf(code_ptr, "throw TypeError(`.remove() cannot be used after a transformation`);");
+		else
+			code_ptr += sprintf(code_ptr, "if (r1 === undefined || r1(value)) removals.push(i);");
+		break;
 	case ROP_SOME:
 	case ROP_SOME_IN:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = false;");
@@ -324,7 +336,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 			: sprintf(code_ptr, "result.push(value);");
 		break;
 	default:
-		code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported ROP %xh (internal error)`);", opcode);
+		code_ptr += sprintf(code_ptr, "throw Error(`Unsupported ROP %xh (internal error)`);", opcode);
 	}
 	for (i = 0; i < num_overs; ++i)
 		code_ptr += sprintf(code_ptr, "}");
@@ -332,6 +344,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "}");
 	if (opcode == ROP_LAST)
 		code_ptr += sprintf(code_ptr, "if (r1 !== undefined) result = r1(result);");
+	if (opcode == ROP_REMOVE)
+		code_ptr += sprintf(code_ptr, "let j = 0, k = 0; for (let i = 0, len = source.length; i < len; ++i) { if (i === removals[k]) { ++k; continue; } source[j++] = source[i]; } source.length = j;");
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
 		"(%s fromQuery(source, %s r1, r2) { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s return result; })",
