@@ -150,6 +150,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	struct jit_entry jit_entry;
 	uint64_t         jit_id = 1;
 	bool             loop_closed = false;
+	bool             make_generator = false;
 	int              num_overs = 0;
 	struct op*       op;
 	uint64_t         place_value = 1;
@@ -202,6 +203,13 @@ compile_query(query_t* query, reduce_op_t opcode)
 			break;
 		case QOP_FILTER:
 			code_ptr += sprintf(code_ptr, "if (!op%d_a(value)) continue;", iter.index);
+			break;
+		case QOP_INJECT:
+			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			code_ptr += sprintf(code_ptr, "if ('length' in op%d_a) a%d.push(...op%d_a); else a%d.push(op%d_a);",
+				iter.index, iter.index, iter.index, iter.index, iter.index);
+			loop_closed = true;
 			break;
 		case QOP_MAP:
 			code_ptr += sprintf(code_ptr, "value = op%d_a(value);", iter.index);
@@ -263,15 +271,19 @@ compile_query(query_t* query, reduce_op_t opcode)
 	switch (opcode) {
 	case ROP_CONTAINS:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = false;");
-		code_ptr += sprintf(code_ptr, "if (value === r1) return true;");
+		decl_list_ptr += sprintf(decl_list_ptr, "const is = r1 !== r1 ? (x, y) => x !== x && y !== y : (x, y) => x === y;");
+		code_ptr += sprintf(code_ptr, "if (is(value, r1)) return true;");
 		break;
 	case ROP_EACH:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
 		code_ptr += sprintf(code_ptr, "r1(value);");
 		break;
 	case ROP_EVERY:
+	case ROP_EVERY_IN:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = true;");
-		code_ptr += sprintf(code_ptr, "if (!r1(value)) return false;");
+		code_ptr += opcode == ROP_EVERY_IN
+			? sprintf(code_ptr, "if (!r1.includes(value)) return false;")
+			: sprintf(code_ptr, "if (!r1(value)) return false;");
 		break;
 	case ROP_FIND:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
@@ -284,6 +296,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	case ROP_ITERATOR:
 		// note: performance of generator functions in ChakraCore is atrocious so ROP_ITERATOR should ideally
 		//       be implemented using something other than `yield` at some point.
+		make_generator = true;
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
 		code_ptr += loop_closed
 			? sprintf(code_ptr, "yield* a%d;", iter.index - 1)
@@ -298,8 +311,11 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "result = r1(result, value);");
 		break;
 	case ROP_SOME:
+	case ROP_SOME_IN:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = false;");
-		code_ptr += sprintf(code_ptr, "if (r1(value)) return true;");
+		code_ptr += opcode == ROP_SOME_IN
+			? sprintf(code_ptr, "if (r1.includes(value)) return true;")
+			: sprintf(code_ptr, "if (r1(value)) return true;");
 		break;
 	case ROP_TO_ARRAY:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
@@ -319,7 +335,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
 		"(%s fromQuery(source, %s r1, r2) { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s return result; })",
-		opcode == ROP_ITERATOR ? "function*" : "function", arg_list, decl_list, code);
+		make_generator ? "function*" : "function", arg_list, decl_list, code);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);
 	lstr_free(wrapper);

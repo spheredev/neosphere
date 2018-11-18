@@ -42,6 +42,7 @@ enum query_op
 	QOP_DROP_N,
 	QOP_EACH,
 	QOP_FILTER,
+	QOP_INJECT,
 	QOP_MAP,
 	QOP_OVER,
 	QOP_REDUCE,
@@ -61,6 +62,7 @@ enum reduce_op
 	ROP_NOP,
 	ROP_CONTAINS,
 	ROP_EVERY,
+	ROP_EVERY_IN,
 	ROP_FIND,
 	ROP_FIRST,
 	ROP_EACH,
@@ -68,6 +70,7 @@ enum reduce_op
 	ROP_LAST,
 	ROP_REDUCE,
 	ROP_SOME,
+	ROP_SOME_IN,
 	ROP_TO_ARRAY,
 } reduce_op_t;
 

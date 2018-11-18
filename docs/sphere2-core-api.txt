@@ -606,31 +606,32 @@ could look like this:
         target.damage(move.power * attacker.strength);
     }
 
-from(source[, ...]);
+from(source[, ...]); [experimental]
 
     Constructs and returns a `Query` which sources values from one or more
     arrays.
 
-Query#all(predicate);
+Query#all(predicate); [experimental]
+Query#allIn(valueList); [experimental]
 
-    Runs the query, calling `predicate` for each result.  The predicate should
-    return a boolean value (true or false); if and only if all items match the
-    predicate, all() returns true.  Otherwise it returns false.
+    Runs the query and returns true if and only if all items match `predicate`
+    or any value in `valueList`.  Otherwise it returns false.
 
-    Note: The first item that doesn't match the predicate will terminate the
-          query.  If there are no values to test, `true` is returned.
+    Note: The first item that doesn't match will terminate the query.  If there
+          are no values to test, `true` is returned.
 
-Query#any(predicate);
+Query#any(predicate); [experimental]
+Query#anyIn(valueList);  [experimental]
+Query#anyIs(value); [experimental]
 
-    Runs the query, calling `predicate` for each result.  The predicate should
-    return a boolean value (true or false); if any value matches the predicate,
-    any() returns true.  Otherwise it returns false.
+    Runs the query and returns true if any item matches the specified predicate
+    (see `Query#where`) or value(s).
 
-    Note: The first item that matches the predicate will terminate the query.
-          If there are no values to test, `false` is returned.
+    Note: The first item that matches will terminate the query.  If there are
+          no values to test, `false` is returned.
 
-Query#ascending([keySelector]);
-Query#descending([keySelector]);
+Query#ascending([keySelector]); [experimental]
+Query#descending([keySelector]); [experimental]
 
     Calls `keySelector` to get a sort key for each value and sorts the values
     in ascending or descending order by key.  If no key selector is provided,
@@ -641,12 +642,12 @@ Query#descending([keySelector]);
           array internally to store the sorted values.  Keep this in mind when
           querying large collections.
 
-Query#drop(count);
+Query#drop(count); [experimental]
 
     Filters out the first `count` results, passing the remainder on as-is.  The
     source array is not modified.
 
-Query#find(predicate);
+Query#find(predicate); [experimental]
 
     Runs the query, calling `predicate` for each result, and returns the first
     value that matches.
@@ -654,20 +655,41 @@ Query#find(predicate);
     Note: The first value that matches the predicate will terminate the query.
           If there are no matching values, `undefined` is returned.
 
-Query#first();
+Query#first([mapper]); [experimental]
 
     Runs the query and returns the value of the first result, or `undefined` if
-    there are no results.
+    there are no results.  `mapper` is an optional function specifying how to
+    transform the returned value (see `Query#select`).
 
     Note: The query is terminated immediately once the first result has been
           produced.
 
-Query#last();
+Query#including(values); [experimental]
+
+    Injects additional values from `valueList`.  This is not the different from
+    `Query#over`; the latter replaces each value with values from a different
+    list; this operator simply appends new values at the end.
+
+    Note: `values` can be either a single value or an array of values.
+
+Query#last([mapper]); [experimental]
 
     Runs the query and returns the value of the final result, or `undefined` if
-    there are no results.
+    there are no results.  `mapper` is an optional function specifying how to
+    transform the returned value (see `Query#select`).
 
-Query#reduce(reducer[, initialValue]);
+Query#over(mapper); [experimental]
+
+    Similar to `Query#select`, but rather than being a 1:1 mapping, `over` maps
+    each value to a list of values.  This is used to expand a query into
+    subcollections, for example:
+
+        havePotions = from(partyMembers)
+            .over(member => member.items)
+            .select(item => item.name)
+            .anyIs('Potion');
+
+Query#reduce(reducer[, initialValue]); [experimental]
 
     Runs the query and calls `reducer` for each result, assigning the result to
     an internal accumulator.  The current value of the accumulator is passed as
@@ -683,23 +705,27 @@ Query#reduce(reducer[, initialValue]);
           for that item.  If that behavior is not desirable, be sure to provide
           an initial value.
 
-Query#select(selector);
+Query#select(mapper); [experimental]
 
-    Calls `selector` for each item and uses whatever it returns as the new
-    value for that item in subsequent operations.  The source array is not
-    modified.
+    Calls `mapper` for each item and uses whatever it returns as the new value
+    for that item in subsequent operations.  The source array is not modified.
 
-Query#shuffle();
+Query#shuffle(); [experimental]
 
     Shuffles all incoming values so that the rest of the query sees them in a
     random order.
 
-Query#take(count);
+Query#take(count); [experimental]
 
     Uses only the first `count` items in subsequent operations and discards
     the rest.  The source array is not modified.
 
-Query#where(predicate);
+Query#toArray(); [experimental]
+
+    Runs the query and returns the results in a JavaScript array object for
+    later use.
+
+Query#where(predicate); [experimental]
 
     Calls `predicate` for each item and uses only those items for which the
     function returns `true` in subsequent operations.  The source array is not
