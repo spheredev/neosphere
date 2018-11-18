@@ -671,9 +671,9 @@ pegasus_init(int api_level)
 	api_define_method("Query", "anyIs", js_Query_anyIs, 0);
 	api_define_method("Query", "drop", js_Query_numberOp, QOP_DROP_N);
 	api_define_method("Query", "find", js_Query_find, 0);
-	api_define_method("Query", "first", js_Query_run, ROP_FIRST);
+	api_define_method("Query", "first", js_Query_reduce, ROP_FIRST);
 	api_define_method("Query", "forEach", js_Query_reduce, ROP_EACH);
-	api_define_method("Query", "last", js_Query_run, ROP_LAST);
+	api_define_method("Query", "last", js_Query_reduce, ROP_LAST);
 	api_define_method("Query", "over", js_Query_functionOp, QOP_OVER);
 	api_define_method("Query", "reduce", js_Query_reduce, ROP_REDUCE);
 	api_define_method("Query", "reverse", js_Query_atomicOp, QOP_REVERSE);

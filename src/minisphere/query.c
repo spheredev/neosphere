@@ -279,7 +279,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		break;
 	case ROP_FIRST:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
-		code_ptr += sprintf(code_ptr, "return value;");
+		code_ptr += sprintf(code_ptr, "return r1 !== undefined ? r1(value) : value;");
 		break;
 	case ROP_ITERATOR:
 		// note: performance of generator functions in ChakraCore is atrocious so ROP_ITERATOR should ideally
@@ -314,6 +314,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "}");
 	if (!loop_closed)
 		code_ptr += sprintf(code_ptr, "}");
+	if (opcode == ROP_LAST)
+		code_ptr += sprintf(code_ptr, "if (r1 !== undefined) result = r1(result);");
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
 		"(%s fromQuery(source, %s r1, r2) { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s return result; })",
