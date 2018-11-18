@@ -142,7 +142,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 {
 	char             arg_list[1024] = "";
 	char*            arg_list_ptr;
-	char             code[65536] = "";
+	char             code[4096] = "";
 	char*            code_ptr;
 	char             decl_list[1024] = "";
 	char*            decl_list_ptr;
@@ -160,7 +160,9 @@ compile_query(query_t* query, reduce_op_t opcode)
 	if (jit_cache == NULL)
 		jit_cache = vector_new(sizeof(struct jit_entry));
 
-	// see if this query configuration has already been compiled
+	// see if this kind of query has already been compiled.  note that ROP affects code generation.  in general,
+	// it is of paramount importance that queries requiring a different JS implementation get different JIT IDs.
+	// if this is violated, I take no responsibility for whatever you get eaten by next.
 	iter = vector_enum(query->ops);
 	while (op = iter_next(&iter)) {
 		jit_id += (uint64_t)op->code * place_value;
@@ -243,7 +245,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 			code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported QOP %xh (internal error)`);", op->code);
 		}
 	}
-	if (loop_closed && opcode != ROP_TO_ARRAY) {
+	if (loop_closed && opcode != ROP_TO_ARRAY && opcode != ROP_ITERATOR) {
+		// closed-loop fast path is only for ROP_ITERATOR and ROP_TO_ARRAY, all others must reopen
 		code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];",
 			iter.index - 1, iter.index - 1);
 		loop_closed = false;
@@ -269,6 +272,14 @@ compile_query(query_t* query, reduce_op_t opcode)
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
 		code_ptr += sprintf(code_ptr, "return value;");
 		break;
+	case ROP_ITERATOR:
+		// note: performance of generator functions in ChakraCore's is atrocious so ROP_ITERATOR should ideally
+		//       be implemented using something other than `yield` at some point.
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
+		code_ptr += loop_closed
+			? sprintf(code_ptr, "yield* a%d;", iter.index - 1)
+			: sprintf(code_ptr, "yield value;");
+		break;
 	case ROP_LAST:
 		decl_list_ptr += sprintf(decl_list_ptr, "let result = undefined;");
 		code_ptr += sprintf(code_ptr, "result = value;");
@@ -282,13 +293,10 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "if (r1(value)) return true;");
 		break;
 	case ROP_TO_ARRAY:
-		if (!loop_closed) {
-			decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
-			code_ptr += sprintf(code_ptr, "result.push(value);");
-		}
-		else {
-			code_ptr += sprintf(code_ptr, "return a%d;", iter.index - 1);
-		}
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
+		code_ptr += loop_closed
+			? sprintf(code_ptr, "return a%d;", iter.index - 1)
+			: sprintf(code_ptr, "result.push(value);");
 		break;
 	default:
 		code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported ROP %xh (internal error)`);", opcode);
@@ -297,8 +305,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "}");
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
-		"(source, %s r1, r2) => { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s return result; }",
-		arg_list, decl_list, code);
+		"(%s fromQuery(source, %s r1, r2) { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s return result; })",
+		opcode == ROP_ITERATOR ? "function*" : "function", arg_list, decl_list, code);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);
 	lstr_free(wrapper);

@@ -63,6 +63,7 @@ enum reduce_op
 	ROP_FIND,
 	ROP_FIRST,
 	ROP_EACH,
+	ROP_ITERATOR,
 	ROP_LAST,
 	ROP_REDUCE,
 	ROP_SOME,

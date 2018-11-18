@@ -341,14 +341,10 @@ static bool js_Mouse_isPressed               (int num_args, bool is_ctor, intptr
 static bool js_Query_atomicOp                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_functionOp              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_numberOp                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Query_all                     (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Query_any                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_anyIs                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_find                    (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Query_first                   (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Query_last                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_reduce                  (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Query_toArray                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_run                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromState                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_RNG                       (int num_args, bool is_ctor, intptr_t magic);
@@ -666,17 +662,18 @@ pegasus_init(int api_level)
 	api_define_method("Mouse", "getEvent", js_Mouse_getEvent, 0);
 	api_define_method("Mouse", "isPressed", js_Mouse_isPressed, 0);
 	api_define_class("Query", PEGASUS_QUERY, NULL, NULL, 0);
+	api_define_method("Query", "@@iterator", js_Query_run, ROP_ITERATOR);
 	api_define_method("Query", "ascending", js_Query_functionOp, QOP_SORT_AZ);
 	api_define_method("Query", "besides", js_Query_functionOp, QOP_EACH);
 	api_define_method("Query", "descending", js_Query_functionOp, QOP_SORT_ZA);
-	api_define_method("Query", "all", js_Query_all, 0);
-	api_define_method("Query", "any", js_Query_any, 0);
+	api_define_method("Query", "all", js_Query_reduce, ROP_EVERY);
+	api_define_method("Query", "any", js_Query_reduce, ROP_SOME);
 	api_define_method("Query", "anyIs", js_Query_anyIs, 0);
 	api_define_method("Query", "drop", js_Query_numberOp, QOP_DROP_N);
 	api_define_method("Query", "find", js_Query_find, 0);
-	api_define_method("Query", "first", js_Query_first, 0);
+	api_define_method("Query", "first", js_Query_run, ROP_FIRST);
 	api_define_method("Query", "forEach", js_Query_reduce, ROP_EACH);
-	api_define_method("Query", "last", js_Query_last, 0);
+	api_define_method("Query", "last", js_Query_run, ROP_LAST);
 	api_define_method("Query", "reduce", js_Query_reduce, ROP_REDUCE);
 	api_define_method("Query", "reverse", js_Query_atomicOp, QOP_REVERSE);
 	api_define_method("Query", "select", js_Query_functionOp, QOP_MAP);
@@ -684,7 +681,7 @@ pegasus_init(int api_level)
 	api_define_method("Query", "take", js_Query_numberOp, QOP_TAKE_N);
 	api_define_method("Query", "tap", js_Query_functionOp, QOP_TAP);
 	api_define_method("Query", "thru", js_Query_functionOp, QOP_THRU);
-	api_define_method("Query", "toArray", js_Query_toArray, 0);
+	api_define_method("Query", "toArray", js_Query_run, ROP_TO_ARRAY);
 	api_define_method("Query", "where", js_Query_functionOp, QOP_FILTER);
 	api_define_class("RNG", PEGASUS_RNG, js_new_RNG, js_RNG_finalize, 0);
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed, 0);
@@ -3633,36 +3630,6 @@ js_Query_numberOp(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Query_all(int num_args, bool is_ctor, intptr_t magic)
-{
-	js_ref_t* predicate;
-	query_t*  query;
-
-	jsal_push_this();
-	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
-	jsal_require_function(0);
-
-	predicate = jsal_ref(0);
-	query_run(query, ROP_EVERY, predicate, NULL);
-	return true;
-}
-
-static bool
-js_Query_any(int num_args, bool is_ctor, intptr_t magic)
-{
-	js_ref_t* predicate;
-	query_t*  query;
-
-	jsal_push_this();
-	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
-	jsal_require_function(0);
-
-	predicate = jsal_ref(0);
-	query_run(query, ROP_SOME, predicate, NULL);
-	return true;
-}
-
-static bool
 js_Query_anyIs(int num_args, bool is_ctor, intptr_t magic)
 {
 	query_t*  query;
@@ -3694,30 +3661,6 @@ js_Query_find(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Query_first(int num_args, bool is_ctor, intptr_t magic)
-{
-	query_t* query;
-
-	jsal_push_this();
-	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
-
-	query_run(query, ROP_FIRST, NULL, NULL);
-	return true;
-}
-
-static bool
-js_Query_last(int num_args, bool is_ctor, intptr_t magic)
-{
-	query_t* query;
-
-	jsal_push_this();
-	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
-
-	query_run(query, ROP_LAST, NULL, NULL);
-	return true;
-}
-
-static bool
 js_Query_reduce(int num_args, bool is_ctor, intptr_t magic)
 {
 	reduce_op_t opcode;
@@ -3739,14 +3682,17 @@ js_Query_reduce(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Query_toArray(int num_args, bool is_ctor, intptr_t magic)
+js_Query_run(int num_args, bool is_ctor, intptr_t magic)
 {
-	query_t* query;
+	reduce_op_t opcode;
+	query_t*    query;
 
+	opcode = (reduce_op_t)magic;
+	
 	jsal_push_this();
 	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
 
-	query_run(query, ROP_TO_ARRAY, NULL, NULL);
+	query_run(query, opcode, NULL, NULL);
 	return true;
 }
 
