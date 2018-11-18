@@ -149,6 +149,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	char             filename[256];
 	struct jit_entry jit_entry;
 	uint64_t         jit_id = 1;
+	bool             loop_closed = false;
 	struct op*       op;
 	uint64_t         place_value = 1;
 	const char*      sort_args;
@@ -183,9 +184,17 @@ compile_query(query_t* query, reduce_op_t opcode)
 	iter = vector_enum(query->ops);
 	while (op = iter_next(&iter)) {
 		arg_list_ptr += sprintf(arg_list_ptr, "op%d_a,", iter.index);
+		if (loop_closed) {
+			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];",
+				iter.index - 1, iter.index - 1);
+			loop_closed = false;
+		}
 		switch (op->code) {
 		case QOP_DROP_N:
 			code_ptr += sprintf(code_ptr, "if (op%d_a > 0) { --op%d_a; continue; }", iter.index, iter.index);
+			break;
+		case QOP_EACH:
+			code_ptr += sprintf(code_ptr, "op%d_a(value);", iter.index);
 			break;
 		case QOP_FILTER:
 			code_ptr += sprintf(code_ptr, "if (!op%d_a(value)) continue;", iter.index);
@@ -197,7 +206,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.reverse();", iter.index);
-			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];", iter.index, iter.index);
+			loop_closed = true;
 			break;
 		case QOP_SHUFFLE:
 			// emit a Fisher-Yates shuffle
@@ -207,7 +216,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 			code_ptr += sprintf(code_ptr, "const idx = Math.floor(Math.random() * i), v = a%d[idx];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d[idx] = a%d[i];", iter.index, iter.index);
 			code_ptr += sprintf(code_ptr, "a%d[i] = v; }", iter.index);
-			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];", iter.index, iter.index);
+			loop_closed = true;
 			break;
 		case QOP_SORT_AZ:
 		case QOP_SORT_ZA:
@@ -221,21 +230,32 @@ compile_query(query_t* query, reduce_op_t opcode)
 			code_ptr += sprintf(code_ptr, "if (op%d_a-- === 0) break;", iter.index);
 			break;
 		case QOP_TAP:
-			code_ptr += sprintf(code_ptr, "op%d_a(value);", iter.index);
+		case QOP_THRU:
+			decl_list_ptr += sprintf(decl_list_ptr, "let a%d = [];", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			code_ptr += op->code == QOP_THRU
+				? sprintf(code_ptr, "a%d = op%d_a(a%d);", iter.index, iter.index, iter.index)
+				: sprintf(code_ptr, "op%d_a(a%d);", iter.index, iter.index);
+			loop_closed = true;
 			break;
 		default:
 			// unsupported opcode, inject an error into the compiled code
 			code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported QOP %xh (internal error)`);", op->code);
 		}
 	}
+	if (loop_closed && opcode != ROP_TO_ARRAY) {
+		code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];",
+			iter.index - 1, iter.index - 1);
+		loop_closed = false;
+	}
 	switch (opcode) {
-	case ROP_ARRAY:
-		decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
-		code_ptr += sprintf(code_ptr, "result.push(value);");
-		break;
 	case ROP_CONTAINS:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = false;");
 		code_ptr += sprintf(code_ptr, "if (value === r1) return true;");
+		break;
+	case ROP_EACH:
+		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
+		code_ptr += sprintf(code_ptr, "r1(value);");
 		break;
 	case ROP_EVERY:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = true;");
@@ -261,12 +281,23 @@ compile_query(query_t* query, reduce_op_t opcode)
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = false;");
 		code_ptr += sprintf(code_ptr, "if (r1(value)) return true;");
 		break;
+	case ROP_TO_ARRAY:
+		if (!loop_closed) {
+			decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
+			code_ptr += sprintf(code_ptr, "result.push(value);");
+		}
+		else {
+			code_ptr += sprintf(code_ptr, "return a%d;", iter.index - 1);
+		}
+		break;
 	default:
 		code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported ROP %xh (internal error)`);", opcode);
 	}
+	if (!loop_closed)
+		code_ptr += sprintf(code_ptr, "}");
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
-		"(source, %s r1, r2) => { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s } return result; }",
+		"(source, %s r1, r2) => { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s return result; }",
 		arg_list, decl_list, code);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);

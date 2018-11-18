@@ -40,6 +40,7 @@ enum query_op
 {
 	QOP_NOP,
 	QOP_DROP_N,
+	QOP_EACH,
 	QOP_FILTER,
 	QOP_MAP,
 	QOP_REDUCE,
@@ -49,6 +50,7 @@ enum query_op
 	QOP_SORT_ZA,
 	QOP_TAKE_N,
 	QOP_TAP,
+	QOP_THRU,
 	QOP_MAX,
 } query_op_t;
 
@@ -56,14 +58,15 @@ typedef
 enum reduce_op
 {
 	ROP_NOP,
-	ROP_ARRAY,
 	ROP_CONTAINS,
 	ROP_EVERY,
 	ROP_FIND,
 	ROP_FIRST,
+	ROP_EACH,
 	ROP_LAST,
 	ROP_REDUCE,
 	ROP_SOME,
+	ROP_TO_ARRAY,
 } reduce_op_t;
 
 int      query_max_ops (void);
