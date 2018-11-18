@@ -150,12 +150,14 @@ compile_query(query_t* query, reduce_op_t opcode)
 	struct jit_entry jit_entry;
 	uint64_t         jit_id = 1;
 	bool             loop_closed = false;
+	int              num_overs = 0;
 	struct op*       op;
 	uint64_t         place_value = 1;
 	const char*      sort_args;
 	lstring_t*       wrapper;
 
 	iter_t iter;
+	int    i;
 
 	if (jit_cache == NULL)
 		jit_cache = vector_new(sizeof(struct jit_entry));
@@ -204,6 +206,13 @@ compile_query(query_t* query, reduce_op_t opcode)
 		case QOP_MAP:
 			code_ptr += sprintf(code_ptr, "value = op%d_a(value);", iter.index);
 			break;
+		case QOP_OVER:
+			++num_overs;
+			decl_list_ptr += sprintf(decl_list_ptr, "let src%d;", iter.index);
+			code_ptr += sprintf(code_ptr, "src%d = op%d_a(value);", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "for (let k%d = 0, len = src%d.length; k%d < len; ++k%d) { value = src%d[k%d];",
+				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
+			break;
 		case QOP_REVERSE:
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
@@ -245,7 +254,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 			code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported QOP %xh (internal error)`);", op->code);
 		}
 	}
-	if (loop_closed && opcode != ROP_TO_ARRAY && opcode != ROP_ITERATOR) {
+	if (loop_closed && opcode != ROP_ITERATOR && (opcode != ROP_TO_ARRAY || num_overs > 0)) {
 		// closed-loop fast path is only for ROP_ITERATOR and ROP_TO_ARRAY, all others must reopen
 		code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];",
 			iter.index - 1, iter.index - 1);
@@ -273,7 +282,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "return value;");
 		break;
 	case ROP_ITERATOR:
-		// note: performance of generator functions in ChakraCore's is atrocious so ROP_ITERATOR should ideally
+		// note: performance of generator functions in ChakraCore is atrocious so ROP_ITERATOR should ideally
 		//       be implemented using something other than `yield` at some point.
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
 		code_ptr += loop_closed
@@ -301,6 +310,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 	default:
 		code_ptr += sprintf(code_ptr, "throw new Error(`Unsupported ROP %xh (internal error)`);", opcode);
 	}
+	for (i = 0; i < num_overs; ++i)
+		code_ptr += sprintf(code_ptr, "}");
 	if (!loop_closed)
 		code_ptr += sprintf(code_ptr, "}");
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
