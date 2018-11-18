@@ -207,8 +207,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 		case QOP_INJECT:
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
-			code_ptr += sprintf(code_ptr, "if ('length' in op%d_a) a%d.push(...op%d_a); else a%d.push(op%d_a);",
-				iter.index, iter.index, iter.index, iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "if (typeof op%d_a === 'object' && 'length' in op%d_a) a%d.push(...op%d_a); else a%d.push(op%d_a);",
+				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
 			loop_closed = true;
 			break;
 		case QOP_MAP:
