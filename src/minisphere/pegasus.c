@@ -665,14 +665,15 @@ pegasus_init(int api_level)
 	api_define_method("Mouse", "isPressed", js_Mouse_isPressed, 0);
 	api_define_class("Query", PEGASUS_QUERY, NULL, NULL, 0);
 	api_define_method("Query", "@@iterator", js_Query_run, ROP_ITERATOR);
-	api_define_method("Query", "ascending", js_Query_functionOp, QOP_SORT_AZ);
-	api_define_method("Query", "besides", js_Query_functionOp, QOP_EACH);
-	api_define_method("Query", "descending", js_Query_functionOp, QOP_SORT_ZA);
 	api_define_method("Query", "all", js_Query_reduce, ROP_EVERY);
 	api_define_method("Query", "allIn", js_Query_matchIn, ROP_EVERY_IN);
 	api_define_method("Query", "any", js_Query_reduce, ROP_SOME);
 	api_define_method("Query", "anyIn", js_Query_matchIn, ROP_SOME_IN);
 	api_define_method("Query", "anyIs", js_Query_match, ROP_CONTAINS);
+	api_define_method("Query", "ascending", js_Query_functionOp, QOP_SORT_AZ);
+	api_define_method("Query", "besides", js_Query_functionOp, QOP_EACH);
+	api_define_method("Query", "count", js_Query_run, ROP_COUNT);
+	api_define_method("Query", "descending", js_Query_functionOp, QOP_SORT_ZA);
 	api_define_method("Query", "drop", js_Query_numberOp, QOP_DROP_N);
 	api_define_method("Query", "find", js_Query_reduce, ROP_FIND);
 	api_define_method("Query", "findIndex", js_Query_reduce, ROP_FIND_KEY);

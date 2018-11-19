@@ -61,6 +61,7 @@ enum reduce_op
 {
 	ROP_NOP,
 	ROP_CONTAINS,
+	ROP_COUNT,
 	ROP_EVERY,
 	ROP_EVERY_IN,
 	ROP_FIND,

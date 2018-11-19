@@ -293,6 +293,10 @@ compile_query(query_t* query, reduce_op_t opcode)
 		decl_list_ptr += sprintf(decl_list_ptr, "const is = r1 !== r1 ? (x, y) => x !== x && y !== y : (x, y) => x === y;");
 		code_ptr += sprintf(code_ptr, "if (is(value, r1)) return true;");
 		break;
+	case ROP_COUNT:
+		decl_list_ptr += sprintf(decl_list_ptr, "let result = r1 === undefined ? 0 : {};");
+		code_ptr += sprintf(code_ptr, "if (r1 === undefined) { ++result; } else { const key = ''+r1(value); if (result[key]!==undefined) ++result[key]; else result[key] = 1; }");
+		break;
 	case ROP_EVERY:
 	case ROP_EVERY_IN:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = true;");
