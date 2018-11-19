@@ -209,8 +209,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 		case QOP_CONCAT:
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
-			code_ptr += sprintf(code_ptr, "if (op%d_a && typeof op%d_a.length === 'number') a%d.push(...op%d_a); else a%d.push(op%d_a);",
-				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "if (op%d_a && typeof op%d_a !== 'string' && typeof op%d_a.length === 'number') a%d.push(...op%d_a); else a%d.push(op%d_a);",
+				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
 			loop_open = false;
 			break;
 		case QOP_DROP_N:
