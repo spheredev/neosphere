@@ -1419,11 +1419,13 @@ static bool
 js_from(int num_args, bool is_ctor, intptr_t magic)
 {
 	query_t*  query;
-	js_ref_t* source;
+	js_ref_t* source = NULL;
 
-	jsal_require_array(0);
+	if (num_args >= 1)
+		jsal_require_array(0);
 
-	source = jsal_ref(0);
+	if (num_args >= 1)
+		source = jsal_ref(0);
 	query = query_new(source);
 	jsal_push_class_obj(PEGASUS_QUERY, query, false);
 	return true;

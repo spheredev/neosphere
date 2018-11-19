@@ -123,7 +123,6 @@ query_run(query_t* it, reduce_op_t opcode, js_ref_t* r1, js_ref_t* r2)
 	compile_query(it, opcode);
 
 	jsal_push_ref_weak(it->program);
-	jsal_push_ref_weak(it->source);
 	iter = vector_enum(it->ops);
 	while (op = iter_next(&iter))
 		jsal_push_ref_weak(op->a);
@@ -135,7 +134,11 @@ query_run(query_t* it, reduce_op_t opcode, js_ref_t* r1, js_ref_t* r2)
 		jsal_push_ref_weak(r2);
 	else
 		jsal_push_undefined();
-	jsal_call(3 + vector_len(it->ops));
+	jsal_call(2 + vector_len(it->ops));
+	if (it->source != NULL) {
+		jsal_push_ref_weak(it->source);
+		jsal_call(1);
+	}
 }
 
 static void
@@ -214,7 +217,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 			loop_open = false;
 			break;
 		case QOP_DROP_N:
-			code_ptr += sprintf(code_ptr, "if (op%d_a > 0) { --op%d_a; continue; }", iter.index, iter.index);
+			decl_list_ptr += sprintf(decl_list_ptr, "let c%d = op%d_a;", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "if (c%d > 0) { --c%d; continue; }", iter.index, iter.index);
 			break;
 		case QOP_EACH:
 			code_ptr += sprintf(code_ptr, "op%d_a(value);", iter.index);
@@ -258,7 +262,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 			transformed = true;
 			break;
 		case QOP_TAKE_N:
-			code_ptr += sprintf(code_ptr, "if (op%d_a-- === 0) break;", iter.index);
+			decl_list_ptr += sprintf(decl_list_ptr, "let c%d = op%d_a;", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "if (c%d-- === 0) break;", iter.index);
 			break;
 		case QOP_TAP:
 		case QOP_THRU:
@@ -404,8 +409,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "}");
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
-		"(%s fromQuery(source, %s r1, r2) { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s %s return result; })",
-		is_generator ? "function*" : "function", arg_list, decl_list, code, epilogue);
+		"(function fromQuery(%s r1, r2) { return %s runQuery(source) { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s %s return result; } })",
+		arg_list, is_generator ? "function*" : "function", decl_list, code, epilogue);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);
 	lstr_free(wrapper);
