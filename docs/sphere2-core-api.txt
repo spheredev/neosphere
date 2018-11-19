@@ -664,14 +664,6 @@ Query#first([mapper]); [experimental]
     Note: The query is terminated immediately once the first result has been
           produced.
 
-Query#including(values); [experimental]
-
-    Injects additional values from `valueList`.  This differs from `over()`;
-    while that operator replaces each value with values from a different list,
-    `including()` simply appends new values at the end.
-
-    Note: `values` can be either a single value or an array of values.
-
 Query#last([mapper]); [experimental]
 
     Runs the query and returns the value of the final result, or `undefined` if
@@ -689,11 +681,20 @@ Query#over(mapper); [experimental]
             .select(item => item.name)
             .anyIs('Potion');
 
+Query#plus(values); [experimental]
+
+    Appends additional values from `valueList`.  This differs from `over()`;
+    while that operator replaces each value with values from a different list,
+    `plus()` simply appends new values at the end.
+
+    Note: `values` can be either a single value or an array of values.
+
 Query#reduce(reducer[, initialValue]); [experimental]
 
-    Runs the query and calls `reducer` for each result, assigning the result to
-    an internal accumulator.  The current value of the accumulator is passed as
-    the first argument to the reducer function, before the value and key.
+    Runs the query and calls `reducer` for each result, assigning the return
+    value to an internal accumulator at each step.  The current value of the
+    accumulator is passed as the first argument to the reducer function, before
+    the value.
 
     This is a fairly advanced operation, so to help illustrate, the following
     query calculates the sum of all numbers in the array `numbers`:

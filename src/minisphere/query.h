@@ -39,10 +39,10 @@ typedef
 enum query_op
 {
 	QOP_NOP,
+	QOP_CONCAT,
 	QOP_DROP_N,
 	QOP_EACH,
 	QOP_FILTER,
-	QOP_INJECT,
 	QOP_MAP,
 	QOP_OVER,
 	QOP_REDUCE,
