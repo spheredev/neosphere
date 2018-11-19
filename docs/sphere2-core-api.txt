@@ -666,9 +666,9 @@ Query#first([mapper]); [experimental]
 
 Query#including(values); [experimental]
 
-    Injects additional values from `valueList`.  This is not the different from
-    `Query#over`; the latter replaces each value with values from a different
-    list; this operator simply appends new values at the end.
+    Injects additional values from `valueList`.  This differs from `over()`;
+    while that operator replaces each value with values from a different list,
+    `including()` simply appends new values at the end.
 
     Note: `values` can be either a single value or an array of values.
 
@@ -695,7 +695,7 @@ Query#reduce(reducer[, initialValue]); [experimental]
     an internal accumulator.  The current value of the accumulator is passed as
     the first argument to the reducer function, before the value and key.
 
-    This is a pretty advanced operation, so to help illustrate, the following
+    This is a fairly advanced operation, so to help illustrate, the following
     query calculates the sum of all numbers in the array `numbers`:
 
         sum = from(numbers).reduce((a, v) => a + v);
@@ -704,6 +704,18 @@ Query#reduce(reducer[, initialValue]); [experimental]
           the first query result; the reducer function will then not be called
           for that item.  If that behavior is not desirable, be sure to provide
           an initial value.
+
+Query#remove([predicate]); [experimental]
+
+    Removes results from the source object or array.  `predicate` is optional;
+    if provided, it should return true to remove the result, or false to keep
+    it.  If no `predicate` is provided, all items satisfying the query will be
+    removed.
+
+Query#reverse(); [experimental]
+
+    Takes all incoming values and reverses them so the rest of the query sees
+    them in reverse order.
 
 Query#select(mapper); [experimental]
 
@@ -725,11 +737,18 @@ Query#toArray(); [experimental]
     Runs the query and returns the results in a JavaScript array object for
     later use.
 
+Query#update(mapper); [experimental]
+
+    Writes new values back into the source object or array.  `mapper` is the
+    mapping function to compute the value that gets written back.
+
+    Note: As with `remove()`, `update()` cannot be used in a query containing
+          whole-list transformations such as `shuffle()` or `reverse()`.
+
 Query#where(predicate); [experimental]
 
-    Calls `predicate` for each item and uses only those items for which the
-    function returns `true` in subsequent operations.  The source array is not
-    modified.
+    Calls `predicate` for each value and keeps only those values for which the
+    function returns `true`.  The source array is not modified.
 
 
 `FS` Namespace

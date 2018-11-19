@@ -73,6 +73,8 @@ enum reduce_op
 	ROP_SOME,
 	ROP_SOME_IN,
 	ROP_TO_ARRAY,
+	ROP_UPDATE,
+	ROP_MAX,
 } reduce_op_t;
 
 int      query_max_ops (void);

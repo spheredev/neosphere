@@ -182,7 +182,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		}
 	}
 
-	// no JIT cache entry found, let's compile one up now
+	// no JIT cache entry found, time to compile the query!
 	arg_list_ptr = arg_list;
 	code_ptr = code;
 	decl_list_ptr = decl_list;
@@ -318,7 +318,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		decl_list_ptr += sprintf(decl_list_ptr, "let result = undefined;");
 		decl_list_ptr += sprintf(decl_list_ptr, "const removals = [];");
 		if (transformed)
-			code_ptr += sprintf(code_ptr, "throw TypeError(`.remove() cannot be used after a transformation`);");
+			code_ptr += sprintf(code_ptr, "throw TypeError(`'remove()' cannot be used with transformations`);");
 		else
 			code_ptr += sprintf(code_ptr, "if (r1 === undefined || r1(value)) removals.push(i);");
 		break;
@@ -334,6 +334,13 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += loop_closed
 			? sprintf(code_ptr, "return a%d;", iter.index - 1)
 			: sprintf(code_ptr, "result.push(value);");
+		break;
+	case ROP_UPDATE:
+		decl_list_ptr += sprintf(decl_list_ptr, "let result = undefined;");
+		if (transformed)
+			code_ptr += sprintf(code_ptr, "throw TypeError(`'update()' cannot be used with transformations`);");
+		else
+			code_ptr += sprintf(code_ptr, "source[i] = r1 !== undefined ? r1(value) : value;");
 		break;
 	default:
 		code_ptr += sprintf(code_ptr, "throw Error(`Unsupported ROP %xh (internal error)`);", opcode);
@@ -360,5 +367,4 @@ compile_query(query_t* query, reduce_op_t opcode)
 	jit_entry.wrapper = query->program;
 	vector_push(jit_cache, &jit_entry);
 	jsal_pop(1);
-
 }

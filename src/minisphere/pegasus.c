@@ -680,7 +680,7 @@ pegasus_init(int api_level)
 	api_define_method("Query", "last", js_Query_reduce, ROP_LAST);
 	api_define_method("Query", "over", js_Query_functionOp, QOP_OVER);
 	api_define_method("Query", "reduce", js_Query_reduce, ROP_REDUCE);
-	api_define_method("Query", "remove", js_Query_reduce, ROP_REMOVE);
+	api_define_method("Query", "remove", js_Query_run, ROP_REMOVE);
 	api_define_method("Query", "reverse", js_Query_atomicOp, QOP_REVERSE);
 	api_define_method("Query", "select", js_Query_functionOp, QOP_MAP);
 	api_define_method("Query", "shuffle", js_Query_atomicOp, QOP_SHUFFLE);
@@ -688,6 +688,7 @@ pegasus_init(int api_level)
 	api_define_method("Query", "tap", js_Query_functionOp, QOP_TAP);
 	api_define_method("Query", "thru", js_Query_functionOp, QOP_THRU);
 	api_define_method("Query", "toArray", js_Query_run, ROP_TO_ARRAY);
+	api_define_method("Query", "update", js_Query_reduce, ROP_UPDATE);
 	api_define_method("Query", "where", js_Query_functionOp, QOP_FILTER);
 	api_define_class("RNG", PEGASUS_RNG, js_new_RNG, js_RNG_finalize, 0);
 	api_define_function("RNG", "fromSeed", js_RNG_fromSeed, 0);
@@ -3717,13 +3718,21 @@ js_Query_run(int num_args, bool is_ctor, intptr_t magic)
 {
 	reduce_op_t opcode;
 	query_t*    query;
+	js_ref_t*   r1 = NULL;
+	js_ref_t*   r2 = NULL;
 
 	opcode = (reduce_op_t)magic;
 	
 	jsal_push_this();
 	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	if (num_args >= 1)
+		jsal_require_function(0);
 
-	query_run(query, opcode, NULL, NULL);
+	if (num_args >= 1)
+		r1 = jsal_ref(0);
+	if (num_args >= 2)
+		r2 = jsal_ref(1);
+	query_run(query, opcode, r1, r2);
 	return true;
 }
 
