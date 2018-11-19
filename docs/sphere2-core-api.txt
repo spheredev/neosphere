@@ -642,6 +642,15 @@ Query#descending([keySelector]); [experimental]
           array internally to store the sorted values.  Keep this in mind when
           querying large collections.
 
+Query#besides([callback]); [experimental]
+
+    Calls `callback` for each value that passes through.  This is useful if you
+    need to perform ancillary actions in the middle of a query; for example,
+    tallying intermediate results.
+
+    Note: Avoid causing side effects that modify the query source.  Bad things
+          can happen otherwise! (such as: the pig eating you)
+
 Query#drop(count); [experimental]
 
     Filters out the first `count` results, passing the remainder on as-is.  The
@@ -663,6 +672,13 @@ Query#first([mapper]); [experimental]
 
     Note: The query is terminated immediately once the first result has been
           produced.
+
+Query#forEach(callback);
+
+    Runs the query, calling `callback` for each result.  The return value of
+    the callback is ignored.  This is used to loop over the results of a query,
+    the way you would loop over an array using arrayObj.forEach() in standard
+    JavaScript.
 
 Query#last([mapper]); [experimental]
 
@@ -688,6 +704,15 @@ Query#plus(values); [experimental]
     `plus()` simply appends new values at the end.
 
     Note: `values` can be either a single value or an array of values.
+
+Query#random([count]); [experimental]
+
+    Runs the query and returns an array containing `count` random values
+    produced by the query.  This may sample a result more than once; if you
+    don't want duplicates, use `sample()` instead.
+    
+    Note: If `count` is not provided, `random()` takes a single sample and
+          returns it directly, rather than returning an array.
 
 Query#reduce(reducer[, initialValue]); [experimental]
 
@@ -717,6 +742,15 @@ Query#reverse(); [experimental]
 
     Takes all incoming values and reverses them so the rest of the query sees
     them in reverse order.
+
+Query#sample([count]); [experimental]
+
+    Runs the query and returns an array containing `count` unique random
+    results produced by the query.  This will not sample a given result more
+    than once.
+
+    Note: If `count` is not provided, `sample()` takes a single sample and
+          returns it directly, rather than returning an array.
 
 Query#select(mapper); [experimental]
 

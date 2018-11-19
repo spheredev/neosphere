@@ -346,6 +346,7 @@ static bool js_Query_match                   (int num_args, bool is_ctor, intptr
 static bool js_Query_matchIn                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_reduce                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_run                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_sample                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromState                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_RNG                       (int num_args, bool is_ctor, intptr_t magic);
@@ -674,14 +675,17 @@ pegasus_init(int api_level)
 	api_define_method("Query", "anyIs", js_Query_match, ROP_CONTAINS);
 	api_define_method("Query", "drop", js_Query_numberOp, QOP_DROP_N);
 	api_define_method("Query", "find", js_Query_reduce, ROP_FIND);
+	api_define_method("Query", "findIndex", js_Query_reduce, ROP_FIND_KEY);
 	api_define_method("Query", "first", js_Query_reduce, ROP_FIRST);
-	api_define_method("Query", "forEach", js_Query_reduce, ROP_EACH);
+	api_define_method("Query", "forEach", js_Query_reduce, ROP_FOR_EACH);
 	api_define_method("Query", "last", js_Query_reduce, ROP_LAST);
 	api_define_method("Query", "over", js_Query_functionOp, QOP_OVER);
 	api_define_method("Query", "plus", js_Query_valueOp, QOP_CONCAT);
+	api_define_method("Query", "random", js_Query_sample, ROP_RANDOM);
 	api_define_method("Query", "reduce", js_Query_reduce, ROP_REDUCE);
 	api_define_method("Query", "remove", js_Query_run, ROP_REMOVE);
 	api_define_method("Query", "reverse", js_Query_atomicOp, QOP_REVERSE);
+	api_define_method("Query", "sample", js_Query_sample, ROP_SAMPLE);
 	api_define_method("Query", "select", js_Query_functionOp, QOP_MAP);
 	api_define_method("Query", "shuffle", js_Query_atomicOp, QOP_SHUFFLE);
 	api_define_method("Query", "take", js_Query_numberOp, QOP_TAKE_N);
@@ -3733,6 +3737,26 @@ js_Query_run(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 2)
 		r2 = jsal_ref(1);
 	query_run(query, opcode, r1, r2);
+	return true;
+}
+
+static bool
+js_Query_sample(int num_args, bool is_ctor, intptr_t magic)
+{
+	reduce_op_t opcode;
+	query_t*    query;
+	js_ref_t*   num_samples = NULL;
+
+	opcode = (reduce_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	if (num_args >= 1)
+		jsal_require_number(0);
+
+	if (num_args >= 1)
+		num_samples = jsal_ref(0);
+	query_run(query, opcode, num_samples, NULL);
 	return true;
 }
 
