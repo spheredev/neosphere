@@ -198,16 +198,9 @@ from#descending([keySelector]);
           remain in the same relative order.  This allows chained ordering
           operators to work as expected.
 
-from#each(callback);
+from#drop(count);
 
-    Runs the query, calling `callback` for each result.  The return value of
-    the callback is ignored.  This is used to loop over the results of a query,
-    the way you would loop over an array using arrayObj.forEach() in standard
-    JavaScript.
-
-    Note: Using a `for...of` loop is generally preferred over from#each().
-          This is mainly provided to ease things for legacy code, as pre-ES2015
-          JavaScript doesn't support `for...of`.
+    Filters out the first `count` results.  The rest are passed through as is.
 
 from#first([predicate]);
 
@@ -219,12 +212,16 @@ from#first([predicate]);
           operation is short-circuiting: the first item that passes the check
           terminates the query.
 
-from#from([selector]);
+from#forEach(callback);
 
-    Calls `selector` for each result and uses the contents of the returned
-    object or array as the results of the operator.  This is used to expand a
-    query into subcollections.  If no selector is provided, the results
-    themselves are assumed to be query sources.
+    Runs the query, calling `callback` for each result.  The return value of
+    the callback is ignored.  This is used to loop over the results of a query,
+    the way you would loop over an array using arrayObj.forEach() in standard
+    JavaScript.
+
+    Note: Using a `for...of` loop is generally preferred over from#each().
+          This is mainly provided to ease things for legacy code, as pre-ES2015
+          JavaScript doesn't support `for...of`.
 
 from#including(source[, ...]);
 
@@ -239,6 +236,13 @@ from#last([predicate]);
     returned.
 
     Note: If there are no matching results, last() returns undefined.
+
+from#over([selector]);
+
+    Calls `selector` for each result and uses the contents of the returned
+    object or array as the results of the operator.  This is used to expand a
+    query into subcollections.  If no selector is provided, the results
+    themselves are assumed to be query sources.
 
 from#random(count);
 
@@ -284,10 +288,6 @@ from#shuffle();
 
     Shuffles the results.  Subsequent operators will see them in a random
     order.
-
-from#skip(count);
-
-    Filters out the first `count` results.  The rest are passed through as is.
 
 from#take(count);
 
