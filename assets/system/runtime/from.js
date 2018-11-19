@@ -36,7 +36,7 @@ function from(...targets)
 	// for multiple targets, query against the list of targets and unroll with
 	// .from().
 	if (targets.length > 1)
-		return from(targets).from();
+		return from(targets).over();
 
 	let target = Object(targets[0]);
 	if (typeof target.length === 'number')
@@ -129,7 +129,7 @@ Object.defineProperties(FromQuery.prototype, {
 	anyIs:      PROPDESC('wc', MAKEPOINT(IsSource, anyOp)),
 	ascending:  PROPDESC('wc', MAKEPOINT(OrderedSource(false))),
 	besides:    PROPDESC('wc', MAKEPOINT(CallbackSource)),
-	count:      PROPDESC('wc', MAKEPOINT(FilterSource, countOp)),
+	count:      PROPDESC('wc', MAKEPOINT(MapSource, countOp)),
 	descending: PROPDESC('wc', MAKEPOINT(OrderedSource(true))),
 	drop:       PROPDESC('wc', MAKEPOINT(SkipSource)),
 	first:      PROPDESC('wc', MAKEPOINT(FilterSource, firstOp)),
@@ -338,7 +338,7 @@ function IncludeSource(source, ...targets)
 	function init()
 	{
 		source.init();
-		m_iterator = from(targets).from()[Symbol.iterator](true);
+		m_iterator = from(targets).over()[Symbol.iterator](true);
 	};
 
 	this.next =
@@ -648,12 +648,17 @@ function collectOp(source)
 
 function countOp(source)
 {
-	let numItems = 0;
+	let counts = {};
+	let item;
 
 	source.init();
-	while (source.next())
-		++numItems;
-	return numItems;
+	while ((item = source.next())) {
+		if (counts[item.v] !== undefined)
+			++counts[item.v];
+		else
+			counts[item.v] = 1;
+	}
+	return counts;
 }
 
 function firstOp(source)
