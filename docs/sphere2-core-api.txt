@@ -425,7 +425,7 @@ The `DirectoryStream` object allows you to read the contents of a directory.
 This works a lot like reading data from a `FileStream` (see below) in that you
 read file and directory entries one at a time.  `DirectoryStream` also
 implements the JavaScript ES6 iterator protocol, so you can use it in a
-`from()` query or `for...of` loop.
+query or `for...of` loop.
 
 new DirectoryStream(dir_name[, options]); [L1]
 
@@ -490,9 +490,9 @@ DirectoryStream#next(); [L1]
             rules.
 
     Note: This method is compatible with the JavaScript ES6 iterator protocol,
-          allowing you to use the DirectoryStream as input to a `from()` query.
-          Refer to the Sphere Runtime API documentation for more information
-          about `from()`.
+          allowing you to use the DirectoryStream as input to a query.  See
+          documentation for the `Query` object below for more information about
+          queries.
 
 DirectoryStream#rewind(); [L1]
 
@@ -606,10 +606,28 @@ could look like this:
         target.damage(move.power * attacker.strength);
     }
 
-from(source[, ...]); [experimental]
+from(source); [experimental]
 
-    Constructs and returns a `Query` which sources values from one or more
-    arrays.
+    Constructs and returns a `Query` which sources values from the JS array
+    or iterable referenced by `source`.  Calling a reducer such as `.toArray()`
+    on this query will run it immediately and return the result.
+
+new Query(); [experimental]
+
+    Constructs a Query object representing a deferrable query.  Unlike queries
+    built using `from()` which always source values from the same array, when
+    a reducer such as `toArray()` is called on a deferrable query, it returns a
+    function you can call later to run the query on any array you want.
+
+    As an example:
+
+        let hasEnergyDrinks = new Query()
+			.over(member => member.items)
+			.select(it => it.name)
+			.anyIn(["Red Bull", "Monster"]);
+		// later on...
+		if (hasEnergyDrinks(enemyParty))
+			stealFrom(enemyParty, "Monster");
 
 Query#all(predicate); [experimental]
 Query#allIn(valueList); [experimental]
@@ -710,7 +728,7 @@ Query#random([count]); [experimental]
     Runs the query and returns an array containing `count` random values
     produced by the query.  This may sample a result more than once; if you
     don't want duplicates, use `sample()` instead.
-    
+
     Note: If `count` is not provided, `random()` takes a single sample and
           returns it directly, rather than returning an array.
 

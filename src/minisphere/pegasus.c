@@ -221,7 +221,6 @@ COLORS[] =
 	{ 0, NULL, 0, 0, 0, 0 }
 };
 
-static bool js_from                          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_require                       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_APILevel           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, intptr_t magic);
@@ -338,6 +337,7 @@ static bool js_Mouse_get_y                   (int num_args, bool is_ctor, intptr
 static bool js_Mouse_clearQueue              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_getEvent                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_isPressed               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Query                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_atomicOp                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_functionOp              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_numberOp                (int num_args, bool is_ctor, intptr_t magic);
@@ -466,6 +466,7 @@ static void js_JobToken_finalize        (void* host_ptr);
 static void js_Joystick_finalize        (void* host_ptr);
 static void js_Mixer_finalize           (void* host_ptr);
 static void js_Model_finalize           (void* host_ptr);
+static void js_Query_finalize           (void* host_ptr);
 static void js_RNG_finalize             (void* host_ptr);
 static void js_Sample_finalize          (void* host_ptr);
 static void js_Server_finalize          (void* host_ptr);
@@ -559,7 +560,7 @@ pegasus_init(int api_level)
 	jsal_pop(1);
 
 	// initialize the Sphere v2 API
-	api_define_function(NULL, "from", js_from, 0);
+	api_define_function(NULL, "from", js_new_Query, 0);
 	api_define_function(NULL, "print", js_SSj_log, KI_LOG_NORMAL);
 	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
 	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL);
@@ -663,7 +664,7 @@ pegasus_init(int api_level)
 	api_define_method("Mouse", "clearQueue", js_Mouse_clearQueue, 0);
 	api_define_method("Mouse", "getEvent", js_Mouse_getEvent, 0);
 	api_define_method("Mouse", "isPressed", js_Mouse_isPressed, 0);
-	api_define_class("Query", PEGASUS_QUERY, NULL, NULL, 0);
+	api_define_class("Query", PEGASUS_QUERY, js_new_Query, js_Query_finalize, 0);
 	api_define_method("Query", "@@iterator", js_Query_run, ROP_ITERATOR);
 	api_define_method("Query", "all", js_Query_reduce, ROP_EVERY);
 	api_define_method("Query", "allIn", js_Query_matchIn, ROP_EVERY_IN);
@@ -1413,22 +1414,6 @@ load_package_json(const char* filename)
 on_error:
 	jsal_set_top(jsal_top);
 	return NULL;
-}
-
-static bool
-js_from(int num_args, bool is_ctor, intptr_t magic)
-{
-	query_t*  query;
-	js_ref_t* source = NULL;
-
-	if (num_args >= 1)
-		jsal_require_array(0);
-
-	if (num_args >= 1)
-		source = jsal_ref(0);
-	query = query_new(source);
-	jsal_push_class_obj(PEGASUS_QUERY, query, false);
-	return true;
 }
 
 static bool
@@ -3590,6 +3575,29 @@ js_Mouse_isPressed(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_boolean(mouse_is_key_down(key));
 	return true;
+}
+
+static bool
+js_new_Query(int num_args, bool is_ctor, intptr_t magic)
+{
+	query_t*  query;
+	js_ref_t* source = NULL;
+
+	// ignore argument when called as `new Query`; required for `from`
+	if (num_args >= 1 || !is_ctor) {
+		jsal_require_array(0);
+		source = jsal_ref(0);
+	}
+
+	query = query_new(source);
+	jsal_push_class_obj(PEGASUS_QUERY, query, is_ctor);
+	return true;
+}
+
+static void
+js_Query_finalize(void* host_ptr)
+{
+	query_unref(host_ptr);
 }
 
 static bool
