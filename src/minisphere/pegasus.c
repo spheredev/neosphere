@@ -346,7 +346,6 @@ static bool js_Query_match                   (int num_args, bool is_ctor, intptr
 static bool js_Query_matchIn                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_reduce                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Query_run                     (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Query_sample                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromState                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_RNG                       (int num_args, bool is_ctor, intptr_t magic);
@@ -683,11 +682,11 @@ pegasus_init(int api_level)
 	api_define_method("Query", "last", js_Query_reduce, ROP_LAST);
 	api_define_method("Query", "over", js_Query_functionOp, QOP_OVER);
 	api_define_method("Query", "plus", js_Query_valueOp, QOP_CONCAT);
-	api_define_method("Query", "random", js_Query_sample, ROP_RANDOM);
+	api_define_method("Query", "random", js_Query_numberOp, QOP_RANDOM);
 	api_define_method("Query", "reduce", js_Query_reduce, ROP_REDUCE);
 	api_define_method("Query", "remove", js_Query_run, ROP_REMOVE);
 	api_define_method("Query", "reverse", js_Query_atomicOp, QOP_REVERSE);
-	api_define_method("Query", "sample", js_Query_sample, ROP_SAMPLE);
+	api_define_method("Query", "sample", js_Query_numberOp, QOP_SAMPLE);
 	api_define_method("Query", "select", js_Query_functionOp, QOP_MAP);
 	api_define_method("Query", "shuffle", js_Query_atomicOp, QOP_SHUFFLE);
 	api_define_method("Query", "take", js_Query_numberOp, QOP_TAKE_N);

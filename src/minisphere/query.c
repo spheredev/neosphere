@@ -236,10 +236,28 @@ compile_query(query_t* query, reduce_op_t opcode)
 			code_ptr += sprintf(code_ptr, "for (let k%d = 0, len = src%d.length; k%d < len; ++k%d) { value = src%d[k%d];",
 				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
 			break;
+		case QOP_RANDOM:
+			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [], a%d_2 = [];", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "a%d_2.push(value); }", iter.index);
+			code_ptr += sprintf(code_ptr, "for (let s = 0, len = a%d_2.length; s < op%d_a; ++s) a%d.push(a%d_2[Math.floor(Math.random() * len)]);",
+				iter.index, iter.index, iter.index, iter.index);
+			loop_open = false;
+			break;
 		case QOP_REVERSE:
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.reverse();", iter.index);
+			loop_open = false;
+			break;
+		case QOP_SAMPLE:
+			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = []; let c%d;", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			code_ptr += sprintf(code_ptr, "c%d = Math.max(Math.min(op%d_a, a%d.length - 1), 0);", iter.index, iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < c%d; ++i) {", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "const idx = i + Math.floor(Math.random() * (len - i)), v = a%d[idx];", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d[idx] = a%d[i];", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "a%d[i] = v; }", iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.length = op%d_a;", iter.index, iter.index);
 			loop_open = false;
 			break;
 		case QOP_SHUFFLE:
@@ -284,10 +302,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 			transformed = true;
 		}
 	}
-	if (!loop_open && opcode != ROP_ITERATOR && opcode != ROP_RANDOM && opcode != ROP_SAMPLE
-		&& (opcode != ROP_TO_ARRAY || num_overs_open > 0))
-	{
-		// closed-loop fast path is only for a few opcodes, all others must reopen
+	if (!loop_open && opcode != ROP_ITERATOR && (opcode != ROP_TO_ARRAY || num_overs_open > 0)) {
+		// fast path for closed main loop is only for iterator and toArray(), all others must reopen
 		code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];",
 			iter.index - 1, iter.index - 1);
 		loop_open = true;
@@ -341,19 +357,6 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "result = value;");
 		epilogue_ptr += sprintf(epilogue_ptr, "if (r1 !== undefined) result = r1(result);");
 		break;
-	case ROP_RANDOM:
-		decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
-		if (loop_open) {
-			decl_list_ptr += sprintf(decl_list_ptr, "const c = [];");
-			code_ptr += sprintf(code_ptr, "c.push(value);");
-		}
-		else {
-			// closed-loop situation, just sample from the fresh array
-			decl_list_ptr += sprintf(decl_list_ptr, "const c = %s;", array_name);
-		}
-		epilogue_ptr += sprintf(epilogue_ptr, "if (r1 === undefined) return c[Math.floor(Math.random() * c.length)];");
-		epilogue_ptr += sprintf(epilogue_ptr, "for (let s = 0; s < r1; ++s) result.push(c[Math.floor(Math.random() * c.length)]);");
-		break;
 	case ROP_REDUCE:
 		decl_list_ptr += sprintf(decl_list_ptr, "let result = r2;");
 		code_ptr += sprintf(code_ptr, "result = r1(result, value);");
@@ -365,21 +368,6 @@ compile_query(query_t* query, reduce_op_t opcode)
 			? sprintf(code_ptr, "throw TypeError(`'remove()' cannot be used with transformations`);")
 			: sprintf(code_ptr, "if (r1 === undefined || r1(value)) removals.push(i);");
 		epilogue_ptr += sprintf(epilogue_ptr, "let j = 0, k = 0; for (let i = 0, len = source.length; i < len; ++i) { if (i === removals[k]) { ++k; continue; } source[j++] = source[i]; } source.length = j;");
-		break;
-	case ROP_SAMPLE:
-		decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
-		if (loop_open) {
-			decl_list_ptr += sprintf(decl_list_ptr, "const c = [];");
-			code_ptr += sprintf(code_ptr, "c.push(value);");
-		}
-		else {
-			// closed-loop situation, just sample from the fresh array
-			decl_list_ptr += sprintf(decl_list_ptr, "const c = %s;", array_name);
-		}
-		epilogue_ptr += sprintf(epilogue_ptr, "if (r1 === undefined) return c.length > 0 ? c[Math.floor(Math.random() * c.length)] : undefined;");
-		emit_shuffle(&epilogue_ptr, "c");
-		epilogue_ptr += sprintf(epilogue_ptr, "r1 = Math.min(r1, c.length);");
-		epilogue_ptr += sprintf(epilogue_ptr, "for (let s = 0; s < r1; ++s) result.push(c[s]);");
 		break;
 	case ROP_SOME:
 	case ROP_SOME_IN:
