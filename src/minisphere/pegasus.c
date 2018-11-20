@@ -3653,9 +3653,12 @@ js_Query_numberOp(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Query_valueOp(int num_args, bool is_ctor, intptr_t magic)
 {
-	js_ref_t*  value;
+	int        length;
 	query_op_t opcode;
 	query_t*   query;
+	js_ref_t*  value;
+
+	int i, ii, j;
 
 	opcode = (query_op_t)magic;
 
@@ -3664,6 +3667,24 @@ js_Query_valueOp(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args < 1)
 		jsal_error(JS_RANGE_ERROR, "No value provided for Query method");
 
+	if (num_args > 1) {
+		jsal_push_new_array();
+		for (i = 0, j = 0; i < num_args; ++i) {
+			jsal_dup(i);
+			if (jsal_is_array(-1)) {
+				length = jsal_get_length(-1);
+				for (ii = 0; ii < length; ++i) {
+					jsal_get_prop_index(-1, ii);
+					jsal_put_prop_index(-3, j++);
+				}
+				jsal_pop(1);
+			}
+			else {
+				jsal_put_prop_index(-2, j++);
+			}
+		}
+		jsal_replace(0);
+	}
 	value = jsal_ref(0);
 	query_add_op(query, opcode, value);
 	return true;

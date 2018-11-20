@@ -715,22 +715,22 @@ Query#over(mapper); [experimental]
             .select(item => item.name)
             .anyIs('Potion');
 
-Query#plus(values); [experimental]
+Query#plus(value[, ...]); [experimental]
 
-    Appends additional values from `valueList`.  This differs from `over()`;
+    Injects additional values into the pipeline.  This differs from `over()`;
     while that operator replaces each value with values from a different list,
-    `plus()` simply appends new values at the end.
+    `plus()` simply adds new values to the end of the stream.
 
-    Note: `values` can be either a single value or an array of values.
+    Note: More than one `value` can be provided and each one can be either a
+          single value or an array of values.
 
-Query#random([count]); [experimental]
+Query#random(count); [experimental]
 
-    Runs the query and returns an array containing `count` random values
-    produced by the query.  This may sample a result more than once; if you
-    don't want duplicates, use `sample()` instead.
+    Takes `count` independent random samples from amongst the incoming values.
+    The rest of the query will only see what was sampled.
 
-    Note: If `count` is not provided, `random()` takes a single sample and
-          returns it directly, rather than returning an array.
+    Note: Because the samples taken are independent, this can sample a result
+          more than once; if you don't want duplicates, use `sample()` instead.
 
 Query#reduce(reducer[, initialValue]); [experimental]
 
@@ -761,14 +761,11 @@ Query#reverse(); [experimental]
     Takes all incoming values and reverses them so the rest of the query sees
     them in reverse order.
 
-Query#sample([count]); [experimental]
+Query#sample(count); [experimental]
 
-    Runs the query and returns an array containing `count` unique random
-    results produced by the query.  This will not sample a given result more
-    than once.
-
-    Note: If `count` is not provided, `sample()` takes a single sample and
-          returns it directly, rather than returning an array.
+    Takes `count` unique random samples from the pipeline and filters out the
+    rest; the rest of the query will only see the sampled values.  This will
+    not sample a given result more than once.
 
 Query#select(mapper); [experimental]
 
