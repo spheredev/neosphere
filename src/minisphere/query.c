@@ -212,6 +212,9 @@ compile_query(query_t* query, reduce_op_t opcode)
 		case QOP_CONCAT:
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
+				code_ptr += sprintf(code_ptr, "}");
+			num_overs_open = 0;
 			code_ptr += sprintf(code_ptr, "if (op%d_a && typeof op%d_a !== 'string' && typeof op%d_a.length === 'number') a%d.push(...op%d_a); else a%d.push(op%d_a);",
 				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
 			loop_open = false;
@@ -239,6 +242,9 @@ compile_query(query_t* query, reduce_op_t opcode)
 		case QOP_RANDOM:
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [], a%d_2 = [];", iter.index, iter.index);
 			code_ptr += sprintf(code_ptr, "a%d_2.push(value); }", iter.index);
+			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
+				code_ptr += sprintf(code_ptr, "}");
+			num_overs_open = 0;
 			code_ptr += sprintf(code_ptr, "for (let s = 0, len = a%d_2.length; s < op%d_a; ++s) a%d.push(a%d_2[Math.floor(Math.random() * len)]);",
 				iter.index, iter.index, iter.index, iter.index);
 			loop_open = false;
@@ -246,12 +252,18 @@ compile_query(query_t* query, reduce_op_t opcode)
 		case QOP_REVERSE:
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
+				code_ptr += sprintf(code_ptr, "}");
+			num_overs_open = 0;
 			code_ptr += sprintf(code_ptr, "a%d.reverse();", iter.index);
 			loop_open = false;
 			break;
 		case QOP_SAMPLE:
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = []; let c%d;", iter.index, iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
+				code_ptr += sprintf(code_ptr, "}");
+			num_overs_open = 0;
 			code_ptr += sprintf(code_ptr, "c%d = Math.max(Math.min(op%d_a, a%d.length - 1), 0);", iter.index, iter.index, iter.index);
 			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < c%d; ++i) {", iter.index, iter.index);
 			code_ptr += sprintf(code_ptr, "const idx = i + Math.floor(Math.random() * (len - i)), v = a%d[idx];", iter.index);
@@ -264,6 +276,9 @@ compile_query(query_t* query, reduce_op_t opcode)
 			// emit a Fisher-Yates shuffle
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
+				code_ptr += sprintf(code_ptr, "}");
+			num_overs_open = 0;
 			code_ptr += sprintf(code_ptr, "for (let i = a%d.length - 1; i >= 1; --i) {", iter.index);
 			code_ptr += sprintf(code_ptr, "const idx = Math.floor(Math.random() * i), v = a%d[idx];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d[idx] = a%d[i];", iter.index, iter.index);
@@ -275,6 +290,9 @@ compile_query(query_t* query, reduce_op_t opcode)
 			sort_args = op->code == QOP_SORT_AZ ? "(a, b)" : "(b, a)";
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push([ op%d_a(value), value ]); }", iter.index, iter.index);
+			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
+				code_ptr += sprintf(code_ptr, "}");
+			num_overs_open = 0;
 			code_ptr += sprintf(code_ptr, "a%d.sort(%s => a[0] < b[0] ? -1 : b[0] < a[0] ? 1 : 0);", iter.index, sort_args);
 			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i][1];", iter.index, iter.index);
 			transformed = true;
@@ -287,6 +305,9 @@ compile_query(query_t* query, reduce_op_t opcode)
 		case QOP_THRU:
 			decl_list_ptr += sprintf(decl_list_ptr, "let a%d = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
+			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
+				code_ptr += sprintf(code_ptr, "}");
+			num_overs_open = 0;
 			code_ptr += op->code == QOP_THRU
 				? sprintf(code_ptr, "a%d = op%d_a(a%d);", iter.index, iter.index, iter.index)
 				: sprintf(code_ptr, "op%d_a(a%d);", iter.index, iter.index);
