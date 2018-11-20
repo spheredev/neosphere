@@ -409,7 +409,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "}");
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
-		"(function fromQuery(%s r1, r2) { return %s runQuery(source) { %s for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s %s return result; } })",
+		"(function fromQuery(%s r1, r2) { return %s runQuery(source) { %s if (typeof source === 'object' && typeof source.length !== 'number') source = Object.entries(source); for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s %s return result; } })",
 		arg_list, is_generator ? "function*" : "function", decl_list, code, epilogue);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);

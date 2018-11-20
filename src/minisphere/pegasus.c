@@ -3585,7 +3585,7 @@ js_new_Query(int num_args, bool is_ctor, intptr_t magic)
 
 	// ignore argument when called as `new Query`; required for `from`
 	if (num_args >= 1 || !is_ctor) {
-		jsal_require_array(0);
+		jsal_require_object(0);
 		source = jsal_ref(0);
 	}
 
