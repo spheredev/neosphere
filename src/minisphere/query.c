@@ -151,7 +151,6 @@ compile_query(query_t* query, reduce_op_t opcode)
 
 	char             arg_list[1024] = "";
 	char*            arg_list_ptr;
-	char             array_name[32] = "source";
 	char             code[4096] = "";
 	char*            code_ptr;
 	char             decl_list[1024] = "";
@@ -159,15 +158,17 @@ compile_query(query_t* query, reduce_op_t opcode)
 	char             epilogue[1024] = "";
 	char*            epilogue_ptr;
 	char             filename[256];
+	bool             has_transforms = false;
 	struct jit_entry jit_entry;
 	uint64_t         jit_id = 1;
 	bool             loop_open = true;
 	bool             is_generator = false;
+	bool             is_transform_op;
 	int              num_overs_open = 0;
 	struct op*       op;
 	uint64_t         place_value = 1;
 	const char*      sort_args;
-	bool             transformed = false;
+	char             source_name[32] = "source";
 	lstring_t*       wrapper;
 
 	iter_t iter;
@@ -202,22 +203,35 @@ compile_query(query_t* query, reduce_op_t opcode)
 	decl_list_ptr += sprintf(decl_list_ptr, "let value = undefined;");
 	iter = vector_enum(query->ops);
 	while (op = iter_next(&iter)) {
+		// note: QOP_SORT_* is treated as a special case because its temp array contains key/value
+		//       pairs and therefore can't be used by other opcodes as-is.
+		is_transform_op = op->code == QOP_CONCAT
+			|| op->code == QOP_RANDOM
+			|| op->code == QOP_REVERSE
+			|| op->code == QOP_SAMPLE
+			|| op->code == QOP_SHUFFLE
+			|| op->code == QOP_TAP
+			|| op->code == QOP_THRU;
 		arg_list_ptr += sprintf(arg_list_ptr, "op%d_a,", iter.index);
-		if (!loop_open) {
-			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];",
-				iter.index - 1, iter.index - 1);
+		if (loop_open && is_transform_op) {
+			sprintf(source_name, "a%d", iter.index);
+			decl_list_ptr += sprintf(decl_list_ptr, "let %s = [];", source_name);
+			code_ptr += sprintf(code_ptr, "%s.push(value); }", source_name);
+			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
+				code_ptr += sprintf(code_ptr, "}");
+			num_overs_open = 0;
+			loop_open = false;
+			has_transforms = true;
+		}
+		else if (!loop_open && !is_transform_op) {
+			code_ptr += sprintf(code_ptr, "for (let i = 0, len = %s.length; i < len; ++i) { value = %s[i];",
+				source_name, source_name);
 			loop_open = true;
 		}
 		switch (op->code) {
 		case QOP_CONCAT:
-			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
-			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
-			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
-				code_ptr += sprintf(code_ptr, "}");
-			num_overs_open = 0;
-			code_ptr += sprintf(code_ptr, "if (op%d_a && typeof op%d_a !== 'string' && typeof op%d_a.length === 'number') a%d.push(...op%d_a); else a%d.push(op%d_a);",
-				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
-			loop_open = false;
+			code_ptr += sprintf(code_ptr, "if (op%d_a && typeof op%d_a !== 'string' && typeof op%d_a.length === 'number') %s.push(...op%d_a); else %s.push(op%d_a);",
+				iter.index, iter.index, iter.index, source_name, iter.index, source_name, iter.index);
 			break;
 		case QOP_DROP_N:
 			decl_list_ptr += sprintf(decl_list_ptr, "let c%d = op%d_a;", iter.index, iter.index);
@@ -240,50 +254,29 @@ compile_query(query_t* query, reduce_op_t opcode)
 				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
 			break;
 		case QOP_RANDOM:
-			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [], a%d_2 = [];", iter.index, iter.index);
-			code_ptr += sprintf(code_ptr, "a%d_2.push(value); }", iter.index);
-			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
-				code_ptr += sprintf(code_ptr, "}");
-			num_overs_open = 0;
-			code_ptr += sprintf(code_ptr, "for (let s = 0, len = a%d_2.length; s < op%d_a; ++s) a%d.push(a%d_2[Math.floor(Math.random() * len)]);",
-				iter.index, iter.index, iter.index, iter.index);
-			loop_open = false;
+			decl_list_ptr += sprintf(decl_list_ptr, "const a%d_s = [];", iter.index);
+			code_ptr += sprintf(code_ptr, "for (let s = 0, len = %s.length; s < op%d_a; ++s) a%d_s.push(%s[Math.floor(Math.random() * len)]);",
+				source_name, iter.index, iter.index, source_name);
+			sprintf(source_name, "a%d_2", iter.index);
 			break;
 		case QOP_REVERSE:
-			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
-			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
-			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
-				code_ptr += sprintf(code_ptr, "}");
-			num_overs_open = 0;
-			code_ptr += sprintf(code_ptr, "a%d.reverse();", iter.index);
-			loop_open = false;
+			code_ptr += sprintf(code_ptr, "%s.reverse();", source_name);
 			break;
 		case QOP_SAMPLE:
-			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = []; let c%d;", iter.index, iter.index);
-			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
-			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
-				code_ptr += sprintf(code_ptr, "}");
-			num_overs_open = 0;
-			code_ptr += sprintf(code_ptr, "c%d = Math.max(Math.min(op%d_a, a%d.length - 1), 0);", iter.index, iter.index, iter.index);
-			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < c%d; ++i) {", iter.index, iter.index);
-			code_ptr += sprintf(code_ptr, "const idx = i + Math.floor(Math.random() * (len - i)), v = a%d[idx];", iter.index);
-			code_ptr += sprintf(code_ptr, "a%d[idx] = a%d[i];", iter.index, iter.index);
-			code_ptr += sprintf(code_ptr, "a%d[i] = v; }", iter.index);
-			code_ptr += sprintf(code_ptr, "a%d.length = op%d_a;", iter.index, iter.index);
-			loop_open = false;
+			decl_list_ptr += sprintf(decl_list_ptr, "let c%d;", iter.index);
+			code_ptr += sprintf(code_ptr, "c%d = Math.max(Math.min(op%d_a, %s.length), 0);", iter.index, iter.index, source_name);
+			code_ptr += sprintf(code_ptr, "for (let i = 0, len = %s.length; i < c%d; ++i) {", source_name, iter.index);
+			code_ptr += sprintf(code_ptr, "const idx = i + Math.floor(Math.random() * (len - i)), v = %s[idx];", source_name);
+			code_ptr += sprintf(code_ptr, "%s[idx] = %s[i];", source_name, source_name);
+			code_ptr += sprintf(code_ptr, "%s[i] = v; }", source_name);
+			code_ptr += sprintf(code_ptr, "%s.length = op%d_a;", source_name, iter.index);
 			break;
 		case QOP_SHUFFLE:
 			// emit a Fisher-Yates shuffle
-			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
-			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
-			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
-				code_ptr += sprintf(code_ptr, "}");
-			num_overs_open = 0;
-			code_ptr += sprintf(code_ptr, "for (let i = a%d.length - 1; i >= 1; --i) {", iter.index);
-			code_ptr += sprintf(code_ptr, "const idx = Math.floor(Math.random() * i), v = a%d[idx];", iter.index);
-			code_ptr += sprintf(code_ptr, "a%d[idx] = a%d[i];", iter.index, iter.index);
-			code_ptr += sprintf(code_ptr, "a%d[i] = v; }", iter.index);
-			loop_open = false;
+			code_ptr += sprintf(code_ptr, "for (let i = %s.length - 1; i >= 1; --i) {", source_name);
+			code_ptr += sprintf(code_ptr, "const idx = Math.floor(Math.random() * i), v = %s[idx];", source_name);
+			code_ptr += sprintf(code_ptr, "%s[idx] = %s[i];", source_name, source_name);
+			code_ptr += sprintf(code_ptr, "%s[i] = v; }", source_name);
 			break;
 		case QOP_SORT_AZ:
 		case QOP_SORT_ZA:
@@ -295,7 +288,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 			num_overs_open = 0;
 			code_ptr += sprintf(code_ptr, "a%d.sort(%s => a[0] < b[0] ? -1 : b[0] < a[0] ? 1 : 0);", iter.index, sort_args);
 			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i][1];", iter.index, iter.index);
-			transformed = true;
+			has_transforms = true;
 			break;
 		case QOP_TAKE_N:
 			decl_list_ptr += sprintf(decl_list_ptr, "let c%d = op%d_a;", iter.index, iter.index);
@@ -303,30 +296,19 @@ compile_query(query_t* query, reduce_op_t opcode)
 			break;
 		case QOP_TAP:
 		case QOP_THRU:
-			decl_list_ptr += sprintf(decl_list_ptr, "let a%d = [];", iter.index);
-			code_ptr += sprintf(code_ptr, "a%d.push(value); }", iter.index);
-			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
-				code_ptr += sprintf(code_ptr, "}");
-			num_overs_open = 0;
 			code_ptr += op->code == QOP_THRU
-				? sprintf(code_ptr, "a%d = op%d_a(a%d);", iter.index, iter.index, iter.index)
-				: sprintf(code_ptr, "op%d_a(a%d);", iter.index, iter.index);
-			loop_open = false;
+				? sprintf(code_ptr, "%s = op%d_a(%s);", source_name, iter.index, source_name)
+				: sprintf(code_ptr, "op%d_a(%s);", iter.index, source_name);
 			break;
 		default:
 			// unsupported opcode, inject an error into the compiled code
 			code_ptr += sprintf(code_ptr, "throw Error(`Unsupported QOP %xh (internal error)`);", op->code);
 		}
-		if (!loop_open) {
-			// a closed loop means the list has been transformed
-			sprintf(array_name, "a%d", iter.index);
-			transformed = true;
-		}
 	}
 	if (!loop_open && opcode != ROP_ITERATOR && (opcode != ROP_TO_ARRAY || num_overs_open > 0)) {
-		// fast path for closed main loop is only for iterator and toArray(), all others must reopen
-		code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i];",
-			iter.index - 1, iter.index - 1);
+		// fast path for closed loop is only valid for iterator and toArray(), all others must reopen
+		code_ptr += sprintf(code_ptr, "for (let i = 0, len = %s.length; i < len; ++i) { value = %s[i];",
+			source_name, source_name);
 		loop_open = true;
 	}
 	switch (opcode) {
@@ -337,7 +319,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		break;
 	case ROP_COUNT:
 		decl_list_ptr += sprintf(decl_list_ptr, "let result = r1 === undefined ? 0 : {};");
-		code_ptr += sprintf(code_ptr, "if (r1 === undefined) { ++result; } else { const key = ''+r1(value); if (result[key]!==undefined) ++result[key]; else result[key] = 1; }");
+		code_ptr += sprintf(code_ptr, "if (r1 === undefined) { ++result; } else { const key = r1(value); if (result[key]!==undefined) ++result[key]; else result[key] = 1; }");
 		break;
 	case ROP_EVERY:
 	case ROP_EVERY_IN:
@@ -352,7 +334,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		break;
 	case ROP_FIND_KEY:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = -1;");
-		code_ptr += transformed
+		code_ptr += has_transforms
 			? sprintf(code_ptr, "throw TypeError(`'findIndex()' cannot be used with transformations`);")
 			: sprintf(code_ptr, "if (r1(value)) return i;");
 		break;
@@ -371,7 +353,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
 		code_ptr += loop_open
 			? sprintf(code_ptr, "yield value;")
-			: sprintf(code_ptr, "yield* a%d;", iter.index - 1);
+			: sprintf(code_ptr, "yield* %s;", source_name);
 		break;
 	case ROP_LAST:
 		decl_list_ptr += sprintf(decl_list_ptr, "let result = undefined;");
@@ -385,7 +367,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	case ROP_REMOVE:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
 		decl_list_ptr += sprintf(decl_list_ptr, "const removals = [];");
-		code_ptr += transformed
+		code_ptr += has_transforms
 			? sprintf(code_ptr, "throw TypeError(`'remove()' cannot be used with transformations`);")
 			: sprintf(code_ptr, "if (r1 === undefined || r1(value)) removals.push(i);");
 		epilogue_ptr += sprintf(epilogue_ptr, "let j = 0, k = 0; for (let i = 0, len = source.length; i < len; ++i) { if (i === removals[k]) { ++k; continue; } source[j++] = source[i]; } source.length = j;");
@@ -401,11 +383,11 @@ compile_query(query_t* query, reduce_op_t opcode)
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = [];");
 		code_ptr += loop_open
 			? sprintf(code_ptr, "result.push(value);")
-			: sprintf(code_ptr, "return a%d;", iter.index - 1);
+			: sprintf(code_ptr, "return %s;", source_name);
 		break;
 	case ROP_UPDATE:
 		decl_list_ptr += sprintf(decl_list_ptr, "let result = undefined;");
-		code_ptr += transformed
+		code_ptr += has_transforms
 			? sprintf(code_ptr, "throw TypeError(`'update()' cannot be used with transformations`);")
 			: sprintf(code_ptr, "source[i] = r1 !== undefined ? r1(value) : value;");
 		break;
