@@ -178,8 +178,10 @@ compile_query(query_t* query, reduce_op_t opcode)
 	bool             loop_open = true;
 	bool             is_generator = false;
 	bool             is_transform_op;
+	bool             main_loop_open = true;
 	int              num_overs_open = 0;
 	struct op*       op;
+	char             outer_code[1024] = "";
 	uint64_t         place_value = 1;
 	const char*      sort_args;
 	char             source_name[32] = "source";
@@ -234,6 +236,10 @@ compile_query(query_t* query, reduce_op_t opcode)
 			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
 				code_ptr += sprintf(code_ptr, "}");
 			num_overs_open = 0;
+			if (main_loop_open) {
+				code_ptr = outer_code;
+				main_loop_open = false;
+			}
 			loop_open = false;
 			has_transforms = true;
 		}
@@ -300,6 +306,10 @@ compile_query(query_t* query, reduce_op_t opcode)
 			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
 				code_ptr += sprintf(code_ptr, "}");
 			num_overs_open = 0;
+			if (main_loop_open) {
+				code_ptr = outer_code;
+				main_loop_open = false;
+			}
 			code_ptr += sprintf(code_ptr, "a%d.sort(%s => a[0] < b[0] ? -1 : b[0] < a[0] ? 1 : 0);", iter.index, sort_args);
 			code_ptr += sprintf(code_ptr, "for (let ii = 0, len = a%d.length; ii < len; ++ii) { value = a%d[ii][1];", iter.index, iter.index);
 			has_transforms = true;
@@ -423,8 +433,8 @@ compile_query(query_t* query, reduce_op_t opcode)
 		"if (typeof source.length === 'number') { for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s }"
 		"else if (typeof source[Symbol.iterator] === 'function') { for (let value of source) { %s }"
 		"else { for (const i of Object.keys(source)) { value = source[i]; %s }"
-		"} %s return result; } })",
-		arg_list, is_generator ? "function*" : "function", decl_list, code, code, code, epilogue);
+		"} %s %s return result; } })",
+		arg_list, is_generator ? "function*" : "function", decl_list, code, code, code, outer_code, epilogue);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);
 	lstr_free(wrapper);

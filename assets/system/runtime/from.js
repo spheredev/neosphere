@@ -470,7 +470,7 @@ class OverOp extends QueryOp
 
 	initialize()
 	{
-		// don't pass the source through.  OverOp is not implemented as a ThruOp to avoid the
+		// don't pass the sources through.  OverOp is not implemented as a ThruOp to avoid the
 		// creation of a temp array but it's still a transformative operation so we don't want
 		// to allow use of remove() or update() after this.
 		super.initialize();
@@ -480,7 +480,7 @@ class OverOp extends QueryOp
 	{
 		const sublist = this.mapper(value);
 		for (let i = 0, len = sublist.length; i < len; ++i) {
-			if (!this.nextOp.push(sublist[i]))
+			if (!this.nextOp.push(sublist[i], sublist, i))
 				return false;
 		}
 		return true;
