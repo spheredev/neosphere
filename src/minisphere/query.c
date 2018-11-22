@@ -271,7 +271,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d_s = [];", iter.index);
 			code_ptr += sprintf(code_ptr, "for (let s = 0, len = %s.length; s < op%d_a; ++s) a%d_s.push(%s[Math.floor(Math.random() * len)]);",
 				source_name, iter.index, iter.index, source_name);
-			sprintf(source_name, "a%d_2", iter.index);
+			sprintf(source_name, "a%d_s", iter.index);
 			break;
 		case QOP_REVERSE:
 			code_ptr += sprintf(code_ptr, "%s.reverse();", source_name);
@@ -321,7 +321,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	}
 	if (!loop_open && opcode != ROP_ITERATOR && (opcode != ROP_TO_ARRAY || num_overs_open > 0)) {
 		// fast path for closed loop is only valid for iterator and toArray(), all others must reopen
-		code_ptr += sprintf(code_ptr, "for (let ii = 0, len = %s.length; ii < len; ++ii) { value = %s[i];",
+		code_ptr += sprintf(code_ptr, "for (let ii = 0, len = %s.length; ii < len; ++ii) { value = %s[ii];",
 			source_name, source_name);
 		loop_open = true;
 	}
