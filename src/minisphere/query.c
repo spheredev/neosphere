@@ -383,8 +383,12 @@ compile_query(query_t* query, reduce_op_t opcode)
 		decl_list_ptr += sprintf(decl_list_ptr, "const removals = [];");
 		code_ptr += has_transforms
 			? sprintf(code_ptr, "throw TypeError(`'remove()' cannot be used with transformations`);")
-			: sprintf(code_ptr, "if (r1 === undefined || r1(value)) removals.push(i);");
-		epilogue_ptr += sprintf(epilogue_ptr, "let j = 0, k = 0; for (let i = 0, len = source.length; i < len; ++i) { if (i === removals[k]) { ++k; continue; } source[j++] = source[i]; } source.length = j;");
+			: sprintf(code_ptr, "if (r1 === undefined || r1(value, i)) removals.push([ source, i ]);");
+		epilogue_ptr += sprintf(epilogue_ptr,
+			"let r = 0; for (let m = 0, len = sources.length; m < len; ++m) { const source = sources[m];"
+			"if (typeof source.length === 'number') { let j = 0; for (let i = 0, len = source.length; i < len; ++i) { if (i === removals[r][1]) { ++r; continue; } source[j++] = source[i]; } source.length = j; }"
+			"else { for (let i = 0, len = removals.length; i < len; ++i) if (removals[i][0] === source) delete source[removals[i][1]]; }"
+			"}");
 		break;
 	case ROP_SOME:
 	case ROP_SOME_IN:
