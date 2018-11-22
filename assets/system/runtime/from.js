@@ -89,11 +89,17 @@ class Query
 			else
 				firstOp = reduceOp;
 			firstOp.initialize(sources);
-		outer_loop:
-			for (let i = 0, len = sources.length; i < len; ++i) {
+			outer_loop: for (let i = 0, len = sources.length; i < len; ++i) {
 				const source = sources[i];
 				if (typeof source.length === 'number') {
-					for (let i = 0, len = source.length; i < len; ++i) {
+					let start = 0;
+					if (firstOp instanceof DropTakeOp) {
+						start = Math.max(firstOp.dropsLeft, 0);
+						firstOp.dropsLeft -= source.length;
+						if (firstOp.dropsLeft < 0)
+							firstOp.dropsLeft = 0;
+					}
+					for (let i = start, len = source.length; i < len; ++i) {
 						const value = source[i];
 						if (!firstOp.push(value, source, i))
 							break outer_loop;
@@ -107,8 +113,16 @@ class Query
 				}
 				else {
 					const keys = Object.keys(source);
-					for (const key of keys) {
-						if (!firstOp.push(source[key], source, key))
+					let start = 0;
+					if (firstOp instanceof DropTakeOp) {
+						start = Math.max(firstOp.dropsLeft, 0);
+						firstOp.dropsLeft -= source.length;
+						if (firstOp.dropsLeft < 0)
+							firstOp.dropsLeft = 0;
+					}
+					for (let i = start, len = keys.length; i < len; ++i) {
+						const value = source[keys[i]];
+						if (!firstOp.push(value, source, keys[i]))
 							break outer_loop;
 					}
 				}
@@ -581,8 +595,13 @@ class ThruOp extends QueryOp
 			this.nextOp.values = newList;
 		}
 		else {
-			for (let i = 0, len = newList.length; i < len; ++i) {
-				if (!this.nextOp.push(newList[i]))
+			let start = 0;
+			if (this.nextOp instanceof DropTakeOp) {
+				start = this.nextOp.dropsLeft;
+				this.nextOp.dropsLeft = 0;
+			}
+			for (let i = start, len = newList.length; i < len; ++i) {
+				if (!this.nextOp.push(newList[i], newList, i))
 					break;
 			}
 		}
@@ -629,7 +648,7 @@ class UpdateOp extends QueryOp
 		this.mapper = mapper;
 	}
 
-	initialize(source)
+	initialize(sources)
 	{
 		if (sources === undefined)
 			throw new TypeError("update() cannot be used with transformations");
