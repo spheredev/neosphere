@@ -51,9 +51,10 @@ struct query
 {
 	unsigned int refcount;
 	uint64_t     jit_id;
+	int          num_sources;
 	vector_t*    ops;
 	js_ref_t*    program;
-	js_ref_t*    source;
+	js_ref_t**   sources;
 };
 
 void        compile_query (query_t* it, reduce_op_t opcode);
@@ -68,13 +69,22 @@ query_max_ops()
 }
 
 query_t*
-query_new(js_ref_t* source)
+query_new(int num_sources)
 {
+	int      stack_base;
 	query_t* query;
 
+	int i;
+
 	query = calloc(1, sizeof(query_t));
-	query->source = source;
+	query->num_sources = num_sources;
 	query->ops = vector_new(sizeof(struct op));
+	if (num_sources > 0) {
+		query->sources = malloc(num_sources * sizeof(js_ref_t*));
+		stack_base = -num_sources;
+		for (i = 0; i < num_sources; ++i)
+			query->sources[i] = jsal_ref(i + stack_base);
+	}
 	return query;
 }
 
@@ -91,13 +101,15 @@ query_unref(query_t* it)
 	struct op* op;
 	
 	iter_t iter;
+	int i;
 	
 	if (--it->refcount > 0)
 		return;
 	iter = vector_enum(it->ops);
 	while (op = iter_next(&iter))
 		jsal_unref(op->a);
-	jsal_unref(it->source);
+	for (i = 0; i < it->num_sources; ++i)
+		jsal_unref(it->sources[i]);
 	free(it);
 }
 
@@ -119,6 +131,7 @@ query_run(query_t* it, reduce_op_t opcode, js_ref_t* r1, js_ref_t* r2)
 	struct op* op;
 
 	iter_t iter;
+	int i;
 
 	compile_query(it, opcode);
 
@@ -135,9 +148,10 @@ query_run(query_t* it, reduce_op_t opcode, js_ref_t* r1, js_ref_t* r2)
 	else
 		jsal_push_undefined();
 	jsal_call(2 + vector_len(it->ops));
-	if (it->source != NULL) {
-		jsal_push_ref_weak(it->source);
-		jsal_call(1);
+	if (it->sources != NULL) {
+		for (i = 0; i < it->num_sources; ++i)
+			jsal_push_ref_weak(it->sources[i]);
+		jsal_call(it->num_sources);
 	}
 }
 
@@ -200,7 +214,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	code_ptr = code;
 	decl_list_ptr = decl_list;
 	epilogue_ptr = epilogue;
-	decl_list_ptr += sprintf(decl_list_ptr, "let value = undefined;");
+	decl_list_ptr += sprintf(decl_list_ptr, "let value = undefined, i = undefined;");
 	iter = vector_enum(query->ops);
 	while (op = iter_next(&iter)) {
 		// note: QOP_SORT_* is treated as a special case because its temp array contains key/value
@@ -224,7 +238,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 			has_transforms = true;
 		}
 		else if (!loop_open && !is_transform_op) {
-			code_ptr += sprintf(code_ptr, "for (let i = 0, len = %s.length; i < len; ++i) { value = %s[i];",
+			code_ptr += sprintf(code_ptr, "for (let ii = 0, len = %s.length; ii < len; ++ii) { value = %s[ii];",
 				source_name, source_name);
 			loop_open = true;
 		}
@@ -238,18 +252,18 @@ compile_query(query_t* query, reduce_op_t opcode)
 			code_ptr += sprintf(code_ptr, "if (c%d > 0) { --c%d; continue; }", iter.index, iter.index);
 			break;
 		case QOP_EACH:
-			code_ptr += sprintf(code_ptr, "op%d_a(value);", iter.index);
+			code_ptr += sprintf(code_ptr, "op%d_a(value, i);", iter.index);
 			break;
 		case QOP_FILTER:
-			code_ptr += sprintf(code_ptr, "if (!op%d_a(value)) continue;", iter.index);
+			code_ptr += sprintf(code_ptr, "if (!op%d_a(value, i)) continue;", iter.index);
 			break;
 		case QOP_MAP:
-			code_ptr += sprintf(code_ptr, "value = op%d_a(value);", iter.index);
+			code_ptr += sprintf(code_ptr, "value = op%d_a(value, i);", iter.index);
 			break;
 		case QOP_OVER:
 			++num_overs_open;
 			decl_list_ptr += sprintf(decl_list_ptr, "let src%d;", iter.index);
-			code_ptr += sprintf(code_ptr, "src%d = op%d_a(value);", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "src%d = op%d_a(value, i);", iter.index, iter.index);
 			code_ptr += sprintf(code_ptr, "for (let k%d = 0, len = src%d.length; k%d < len; ++k%d) { value = src%d[k%d];",
 				iter.index, iter.index, iter.index, iter.index, iter.index, iter.index);
 			break;
@@ -282,17 +296,17 @@ compile_query(query_t* query, reduce_op_t opcode)
 		case QOP_SORT_ZA:
 			sort_args = op->code == QOP_SORT_AZ ? "(a, b)" : "(b, a)";
 			decl_list_ptr += sprintf(decl_list_ptr, "const a%d = [];", iter.index);
-			code_ptr += sprintf(code_ptr, "a%d.push([ op%d_a(value), value ]); }", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "a%d.push([ op%d_a(value, i), value ]); }", iter.index, iter.index);
 			for (i = 0; i < num_overs_open; ++i)  // close loops for `over()`
 				code_ptr += sprintf(code_ptr, "}");
 			num_overs_open = 0;
 			code_ptr += sprintf(code_ptr, "a%d.sort(%s => a[0] < b[0] ? -1 : b[0] < a[0] ? 1 : 0);", iter.index, sort_args);
-			code_ptr += sprintf(code_ptr, "for (let i = 0, len = a%d.length; i < len; ++i) { value = a%d[i][1];", iter.index, iter.index);
+			code_ptr += sprintf(code_ptr, "for (let ii = 0, len = a%d.length; ii < len; ++ii) { value = a%d[ii][1];", iter.index, iter.index);
 			has_transforms = true;
 			break;
 		case QOP_TAKE_N:
 			decl_list_ptr += sprintf(decl_list_ptr, "let c%d = op%d_a;", iter.index, iter.index);
-			code_ptr += sprintf(code_ptr, "if (c%d-- === 0) break;", iter.index);
+			code_ptr += sprintf(code_ptr, "if (c%d-- === 0) break main_loop;", iter.index);
 			break;
 		case QOP_TAP:
 		case QOP_THRU:
@@ -307,7 +321,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 	}
 	if (!loop_open && opcode != ROP_ITERATOR && (opcode != ROP_TO_ARRAY || num_overs_open > 0)) {
 		// fast path for closed loop is only valid for iterator and toArray(), all others must reopen
-		code_ptr += sprintf(code_ptr, "for (let i = 0, len = %s.length; i < len; ++i) { value = %s[i];",
+		code_ptr += sprintf(code_ptr, "for (let ii = 0, len = %s.length; ii < len; ++ii) { value = %s[i];",
 			source_name, source_name);
 		loop_open = true;
 	}
@@ -344,7 +358,7 @@ compile_query(query_t* query, reduce_op_t opcode)
 		break;
 	case ROP_FOR_EACH:
 		decl_list_ptr += sprintf(decl_list_ptr, "const result = undefined;");
-		code_ptr += sprintf(code_ptr, "r1(value);");
+		code_ptr += sprintf(code_ptr, "r1(value, i);");
 		break;
 	case ROP_ITERATOR:
 		// note: performance of generator functions in ChakraCore is atrocious so ROP_ITERATOR should ideally
@@ -400,8 +414,13 @@ compile_query(query_t* query, reduce_op_t opcode)
 		code_ptr += sprintf(code_ptr, "}");
 	sprintf(filename, "%%/fromQuery/%"PRIx64".js", jit_id);
 	wrapper = lstr_newf(
-		"(function fromQuery(%s r1, r2) { return %s runQuery(source) { %s if (typeof source === 'object' && typeof source.length !== 'number') source = Object.entries(source); for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s %s return result; } })",
-		arg_list, is_generator ? "function*" : "function", decl_list, code, epilogue);
+		"(function fromQuery(%s r1, r2) { return %s runQuery(...sources) { %s"
+		"main_loop: for (let m = 0, len = sources.length; m < len; ++m) { let source = sources[m];"
+		"if (typeof source.length === 'number') { for (let i = 0, len = source.length; i < len; ++i) { value = source[i]; %s }"
+		"else if (typeof source[Symbol.iterator] === 'function') { for (let value of source) { %s }"
+		"else { for (const i of Object.keys(source)) { value = source[i]; %s }"
+		"} %s return result; } })",
+		arg_list, is_generator ? "function*" : "function", decl_list, code, code, code, epilogue);
 	debugger_add_source(filename, wrapper);
 	jsal_push_lstring_t(wrapper);
 	lstr_free(wrapper);

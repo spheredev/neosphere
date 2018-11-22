@@ -3579,16 +3579,13 @@ js_Mouse_isPressed(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Query(int num_args, bool is_ctor, intptr_t magic)
 {
-	query_t*  query;
-	js_ref_t* source = NULL;
+	query_t* query;
 
 	// ignore argument when called as `new Query`; required for `from`
-	if (num_args >= 1 || !is_ctor) {
+	if (num_args >= 1 || !is_ctor)
 		jsal_require_object(0);
-		source = jsal_ref(0);
-	}
 
-	query = query_new(source);
+	query = query_new(num_args);
 	jsal_push_class_obj(PEGASUS_QUERY, query, is_ctor);
 	return true;
 }

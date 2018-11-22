@@ -82,7 +82,7 @@ enum reduce_op
 } reduce_op_t;
 
 int      query_max_ops (void);
-query_t* query_new     (js_ref_t* source);
+query_t* query_new     (int num_sources);
 query_t* query_ref     (query_t* it);
 void     query_unref   (query_t* it);
 void     query_add_op  (query_t* it, query_op_t opcode, js_ref_t* a);
