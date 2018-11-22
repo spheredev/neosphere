@@ -81,40 +81,39 @@ class Query
 	run$(reduceOp)
 	{
 		this.compile$();
+		let firstOp = this.firstOp;
+		let lastOp = this.lastOp;
 		const runQuery = (...sources) => {
-			let firstOp;
-			if (this.firstOp !== null) {
-				firstOp = this.firstOp;
-				this.lastOp.nextOp = reduceOp;
-			}
-			else {
+			if (firstOp !== null)
+				lastOp.nextOp = reduceOp;
+			else
 				firstOp = reduceOp;
-			}
-			firstOp.initialize(sources.length === 1 ? sources[0] : undefined);
+			firstOp.initialize(sources);
+		outer_loop:
 			for (let i = 0, len = sources.length; i < len; ++i) {
 				const source = sources[i];
 				if (typeof source.length === 'number') {
 					for (let i = 0, len = source.length; i < len; ++i) {
 						const value = source[i];
-						if (!firstOp.push(value, i))
-							break;
+						if (!firstOp.push(value, source, i))
+							break outer_loop;
 					}
 				}
 				else if (typeof source[Symbol.iterator] === 'function') {
 					for (const value of source) {
-						if (!firstOp.push(value))
-							break;
+						if (!firstOp.push(value, source))
+							break outer_loop;
 					}
 				}
 				else {
 					const keys = Object.keys(source);
 					for (const key of keys) {
-						if (!firstOp.push(source[key], key))
-							break;
+						if (!firstOp.push(source[key], source, key))
+							break outer_loop;
 					}
 				}
 			}
-			firstOp.flush();
+			firstOp.flush(sources);
 			return reduceOp.result;
 		};
 		return this.sources !== undefined
@@ -265,12 +264,12 @@ class Query
 	sample(count)
 	{
 		return this.thru(all => {
-			let nSamples = Math.min(Math.max(count, 0), all.length);
+			const nSamples = Math.min(Math.max(count, 0), all.length);
 			for (let i = 0, len = all.length; i < nSamples; ++i) {
-				let pick = i + Math.floor(Math.random() * (len - i));
-				let item = all[pick];
+				const pick = i + Math.floor(Math.random() * (len - i));
+				const value = all[pick];
 				all[pick] = all[i];
-				all[i] = item;
+				all[i] = value;
 			}
 			all.length = nSamples;
 			return all;
@@ -287,10 +286,10 @@ class Query
 	{
 		return this.thru(all => {
 			for (let i = 0, len = all.length - 1; i < len; ++i) {
-				let pick = i + Math.floor(Math.random() * (len - i));
-				let item = all[pick];
+				const pick = i + Math.floor(Math.random() * (len - i));
+				const value = all[pick];
 				all[pick] = all[i];
-				all[i] = item;
+				all[i] = value;
 			}
 			return all;
 		});
@@ -332,10 +331,10 @@ class Query
 
 class QueryOp
 {
-	flush()
+	flush(sources)
 	{
 		if (this.nextOp !== undefined)
-			this.nextOp.flush();
+			this.nextOp.flush(sources);
 	}
 
 	initialize(source)
@@ -344,10 +343,10 @@ class QueryOp
 			this.nextOp.initialize(source);
 	}
 
-	push(item, key)
+	push(value, source, key)
 	{
 		if (this.nextOp !== undefined)
-			this.nextOp.push(item, key);
+			this.nextOp.push(value, source, key);
 	}
 }
 
@@ -367,11 +366,11 @@ class DropTakeOp extends QueryOp
 		super.initialize(source);
 	}
 
-	push(item, key)
+	push(value, source, key)
 	{
 		if (this.dropsLeft-- <= 0) {
 			return this.takesLeft-- > 0
-				? this.nextOp.push(item, key)
+				? this.nextOp.push(value, source, key)
 				: false;
 		}
 		return true;
@@ -386,10 +385,10 @@ class FilterOp extends QueryOp
 		this.predicate = predicate;
 	}
 
-	push(item, key)
+	push(value, source, key)
 	{
-		if (this.predicate(item, key))
-			return this.nextOp.push(item, key);
+		if (this.predicate(value, key))
+			return this.nextOp.push(value, source, key);
 		return true;
 	}
 }
@@ -409,9 +408,9 @@ class FindOp extends QueryOp
 		super.initialize(source);
 	}
 
-	push(item, key)
+	push(value, source, key)
 	{
-		if (this.finder(item, key, this.memo)) {
+		if (this.finder(value, key, this.memo)) {
 			this.result = this.memo.value;
 			return false;
 		}
@@ -439,10 +438,10 @@ class LastOp extends QueryOp
 			this.result = this.mapper(this.result);
 	}
 
-	push(item)
+	push(value)
 	{
 		this.haveItem = true;
-		this.result = item;
+		this.result = value;
 	}
 }
 
@@ -454,10 +453,10 @@ class MapOp extends QueryOp
 		this.mapper = mapper;
 	}
 
-	push(item, key)
+	push(value, source, key)
 	{
-		item = this.mapper(item, key);
-		return this.nextOp.push(item, key);
+		value = this.mapper(value, key);
+		return this.nextOp.push(value, source, key);
 	}
 }
 
@@ -477,9 +476,9 @@ class OverOp extends QueryOp
 		super.initialize();
 	}
 
-	push(item)
+	push(value)
 	{
-		const sublist = this.mapper(item);
+		const sublist = this.mapper(value);
 		for (let i = 0, len = sublist.length; i < len; ++i) {
 			if (!this.nextOp.push(sublist[i]))
 				return false;
@@ -503,9 +502,9 @@ class ReduceOp extends QueryOp
 		super.initialize();
 	}
 
-	push(item)
+	push(value)
 	{
-		this.result = this.reducer(this.result, item);
+		this.result = this.reducer(this.result, value);
 		return true;
 	}
 }
@@ -518,39 +517,41 @@ class RemoveOp extends QueryOp
 		this.predicate = predicate;
 	}
 
-	initialize(source)
+	initialize(sources)
 	{
-		if (source === undefined)
+		if (sources === undefined)
 			throw new TypeError("remove() cannot be used with transformations");
 		this.removals = [];
-		this.source = source;
-		this.isObject = typeof source.length !== 'number'
-			&& typeof source[Symbol.iterator] !== 'function';
 	}
 
-	flush()
+	flush(sources)
 	{
-		if (this.isObject) {
-			for (let i = 0, len = this.removals.length; i < len; ++i)
-				delete this.source[this.removals[i]];
-		}
-		else {
-			let j = 0;
-			let k = 0;
-			for (let i = 0, len = this.source.length; i < len; ++i) {
-				if (i !== this.removals[k])
-					this.source[j++] = this.source[i];
-				else
-					k++;
+		let r = 0;
+		for (let m = 0, len = sources.length; m < len; ++m) {
+			const source = sources[m];
+			if (typeof source.length === 'number') {
+				let j = 0;
+				for (let i = 0, len = source.length; i < len; ++i) {
+					if (i !== this.removals[r][1])
+						source[j++] = source[i];
+					else
+						r++;
+				}
+				source.length = j;
 			}
-			this.source.length = j;
+			else {
+				for (let i = 0, len = this.removals.length; i < len; ++i) {
+					if (this.removals[i][0] === source)
+						delete source[this.removals[i][1]];
+				}
+			}
 		}
 	}
 
-	push(item, key)
+	push(value, source, key)
 	{
-		if (this.predicate === undefined || this.predicate(item))
-			this.removals.push(key);
+		if (this.predicate === undefined || this.predicate(value, key))
+			this.removals.push([ source, key ]);
 		return true;
 	}
 }
@@ -588,9 +589,9 @@ class ThruOp extends QueryOp
 		super.flush();
 	}
 
-	push(item)
+	push(value)
 	{
-		this.values.push(item);
+		this.values.push(value);
 		return true;
 	}
 }
@@ -613,9 +614,9 @@ class ToArrayOp extends ThruOp
 		this.result = this.values;
 	}
 
-	push(item)
+	push(value)
 	{
-		this.values.push(item);
+		this.values.push(value);
 		return true;
 	}
 }
@@ -630,14 +631,13 @@ class UpdateOp extends QueryOp
 
 	initialize(source)
 	{
-		if (source === undefined)
+		if (sources === undefined)
 			throw new TypeError("update() cannot be used with transformations");
-		this.source = source;
 	}
 
-	push(item, key)
+	push(value, source, key)
 	{
-		this.source[key] = this.mapper(item);
+		source[key] = this.mapper(value, key);
 		return true;
 	}
 }
