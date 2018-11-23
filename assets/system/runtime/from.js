@@ -78,12 +78,13 @@ class Query
 				++i;
 				continue;
 			}
-			const op = opcode.type === 'dropTake' ? new DropTakeOp(opcode.a, opcode.b)
+			const op = opcode.type === 'drop' ? new DropOp(opcode.a)
 				: opcode.type === 'filter' ? new FilterOp(opcode.a)
 				: opcode.type === 'map' ? new MapOp(opcode.a)
 				: opcode.type === 'plus' ? new PlusOp(opcode.a)
 				: opcode.type === 'over' ? new OverOp(opcode.a)
 				: opcode.type === 'reverse' ? new ReverseOp()
+				: opcode.type === 'take' ? new TakeOp(opcode.a)
 				: opcode.type === 'thru' ? new ThruOp(opcode.a)
 				: undefined;
 			if (this.lastOp !== null)
@@ -110,11 +111,11 @@ class Query
 				const source = sources[i];
 				if (typeof source.length === 'number') {
 					let start = 0;
-					if (firstOp instanceof DropTakeOp) {
-						start = Math.max(firstOp.dropsLeft, 0);
-						firstOp.dropsLeft -= source.length;
-						if (firstOp.dropsLeft < 0)
-							firstOp.dropsLeft = 0;
+					if (firstOp instanceof DropOp) {
+						start = firstOp.left;
+						firstOp.left -= source.length;
+						if (firstOp.left < 0)
+							firstOp.left = 0;
 					}
 					for (let i = start, len = source.length; i < len; ++i) {
 						const value = source[i];
@@ -131,11 +132,11 @@ class Query
 				else {
 					const keys = Object.keys(source);
 					let start = 0;
-					if (firstOp instanceof DropTakeOp) {
-						start = Math.max(firstOp.dropsLeft, 0);
-						firstOp.dropsLeft -= source.length;
-						if (firstOp.dropsLeft < 0)
-							firstOp.dropsLeft = 0;
+					if (firstOp instanceof DropOp) {
+						start = firstOp.left;
+						firstOp.left -= source.length;
+						if (firstOp.left < 0)
+							firstOp.left = 0;
 					}
 					for (let i = start, len = keys.length; i < len; ++i) {
 						const value = source[keys[i]];
@@ -224,7 +225,7 @@ class Query
 
 	drop(count)
 	{
-		return this.addOp$('dropTake', count, 0);
+		return this.addOp$('drop', count);
 	}
 
 	find(predicate)
@@ -324,7 +325,7 @@ class Query
 
 	take(count)
 	{
-		return this.addOp$('dropTake', 0, count);
+		return this.addOp$('take', count);
 	}
 
 	tap(callback)
@@ -361,10 +362,10 @@ class QueryOp
 			this.nextOp.flush(sources);
 	}
 
-	initialize(source)
+	initialize(sources)
 	{
 		if (this.nextOp !== undefined)
-			this.nextOp.initialize(source);
+			this.nextOp.initialize(sources);
 	}
 
 	push(value, source, key)
@@ -374,29 +375,24 @@ class QueryOp
 	}
 }
 
-class DropTakeOp extends QueryOp
+class DropOp extends QueryOp
 {
-	constructor(dropCount, takeCount)
+	constructor(count)
 	{
 		super();
-		this.dropCount = dropCount;
-		this.takeCount = takeCount;
+		this.count = count;
 	}
 
-	initialize(source)
+	initialize(sources)
 	{
-		this.dropsLeft = this.dropCount;
-		this.takesLeft = this.takeCount;
-		super.initialize(source);
+		this.left = this.count;
+		super.initialize(sources);
 	}
 
 	push(value, source, key)
 	{
-		if (this.dropsLeft-- <= 0) {
-			return this.takesLeft-- > 0
-				? this.nextOp.push(value, source, key)
-				: false;
-		}
+		if (this.left-- <= 0)
+			this.nextOp.push(value, source, key);
 		return true;
 	}
 }
@@ -524,13 +520,14 @@ class PlusOp extends QueryOp
 		source_loop:
 		for (let i = 0, len = this.sources.length; i < len; ++i) {
 			const source = this.sources[i];
-			if (typeof source.length === 'number') {
+			const isObject = typeof source === 'object';
+			if (isObject && typeof source.length === 'number') {
 				for (let i = 0, len = source.length; i < len; ++i) {
 					if (!this.nextOp.push(source[i], source, i))
 						break source_loop;
 				}
 			}
-			else if (Symbol.iterator in source) {
+			else if (isObject && Symbol.iterator in source) {
 				for (const value of source) {
 					if (!this.nextOp.push(value, source))
 						break source_loop;
@@ -619,6 +616,28 @@ class RemoveOp extends QueryOp
 	}
 }
 
+class TakeOp extends QueryOp
+{
+	constructor(count)
+	{
+		super();
+		this.count = count;
+	}
+
+	initialize(sources)
+	{
+		this.left = this.count;
+		super.initialize(sources);
+	}
+
+	push(value, source, key)
+	{
+		return this.left-- > 0
+			? this.nextOp.push(value, source, key)
+			: false;
+	}
+}
+
 class ThruOp extends QueryOp
 {
 	constructor(mapper)
@@ -645,9 +664,9 @@ class ThruOp extends QueryOp
 		}
 		else {
 			let start = 0;
-			if (this.nextOp instanceof DropTakeOp) {
-				start = this.nextOp.dropsLeft;
-				this.nextOp.dropsLeft = 0;
+			if (this.nextOp instanceof DropOp) {
+				start = this.nextOp.left;
+				this.nextOp.left = 0;
 			}
 			for (let i = start, len = newList.length; i < len; ++i) {
 				if (!this.nextOp.push(newList[i], newList, i))
@@ -686,9 +705,9 @@ class ReverseOp extends ThruOp
 		else {
 			const length = this.values.length;
 			let start = length - 1;
-			if (this.nextOp instanceof DropTakeOp) {
-				start -= this.nextOp.dropsLeft;
-				this.nextOp.dropsLeft = 0;
+			if (this.nextOp instanceof DropOp) {
+				start -= this.nextOp.left;
+				this.nextOp.left = 0;
 			}
 			for (let i = start; i >= 0; --i) {
 				if (!this.nextOp.push(this.values[i], this.values, i))
