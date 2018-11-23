@@ -6,76 +6,19 @@ standard objects used for higher-level tasks, collectively known as the
 Sphere Runtime.  This file documents the API.
 
 
-`assert` Function
------------------
+`Query` Object
+--------------
 
-An implementation of the standard CommonJS assertions module.  Assertions are
-useful both for making unit tests as well as verifying that runtime conditions
-match development assumptions.  By writing an assertion, you are asserting that
-the condition is true (hence the name); if that turns out not to be the case,
-an AssertionError will be thrown instead of continuing normal operation.  With
-strategic placement of assertions, bugs can be uncovered faster.
+The `Query` object provides games with the ability to perform complex queries
+against the contents of arrays and other iterable collections.  One use case is
+in battle engines: you could, for instance, query for only those battlers on
+the enemy side, or use a query to narrow down the scope of status effects.
+Even enemy AI code can benefit from queries!
 
-Each assertion function accepts an optional `error_text` parameter.  This
-specifies the error message to use if an AssertionError gets thrown.  If no
-message is specified, a default message will be used approximating the
-offending expression, e.g. "AssertionError: 2 < 1"
+    import { from, Query } from 'sphere-runtime';
 
-    import { assert } from 'sphere-runtime';
-
-assert(condition[, error_text]);
-assert.ok(condition[, error_text]);
-
-    Asserts that a boolean expression evaluates to true.
-
-assert.deepEqual(value, expected[, error_text]);
-assert.deepStrictEqual(value, expected[, error_text]);
-
-    Asserts that two objects are equivalent.  Objects are equivalent if and
-    only if they have the same own properties, their subobjects have the same
-    own properties, etc. and all properties with primitive values are equal in
-    value according to either the equality operator (==) or strict equality
-    operator (===), respectively.
-
-    Note: `assert.deepStrictEqual()` has an additional requirement that the
-          objects must have the same prototype.  `assert.deepEqual()`, by
-          contrast, doesn't look at the objects' prototypes at all.
-
-assert.equal(value, expected[, error_text]);
-assert.strictEqual(value, expected[, error_text]);
-assert.notEqual(value, unexpected[, error_text]);
-assert.notStrictEqual(value, unexpected[, error_text]);
-
-    Asserts that two values either match or do not match, respectively.
-    The standard variants test for loose equality (`==`), while the "strict"
-    variants test for strict equality (`===`).
-
-assert.throws(func, expected[, error_text]);
-assert.doesNotThrow(func, unexpected[, error_text]);
-
-    Asserts that the specified function either throws or does not throw a
-    specified class of exception.  `[un]expected` can either be an error
-    constructor such as `TypeError` or `ReferenceError`, or a predicate
-    function.  If it's a predicate function, the function should return true if
-    the thrown exception matches, or false otherwise.
-
-    Note: To avoid suppressing unrelated exceptions, any exception that doesn't
-          match the specified criteria will be rethrown as-is.
-
-
-`from` Function
----------------
-
-The `from` function provides games with the ability to perform complex queries
-against the contents of arrays and objects.  One use case is in battle engines:
-you could, for instance, query for only those battlers on the enemy side, or
-use a query to narrow down the scope of status effects.  Even enemy AI code can
-benefit from queries!
-
-    import { from } from 'sphere-runtime';
-
-If you're familiar with C#, the from() function works a lot like LINQ.  A query
-is built from a number of predicates and mappings, and is then typically
+If you're familiar with C#, the `from()` function works a lot like LINQ.  A
+query is built from a number of predicates and mappings, and is then typically
 processed using a `for...of` loop.
 
 For example, suppose you wanted to code an attack that damages all opposing
@@ -90,173 +33,142 @@ could look like this:
         target.damage(move.power * attacker.strength);
     }
 
+from(source[, source[, ...]]);
 
-from(source[, ...]);
+    Constructs and returns a `Query` which sources values from the JS array(s)
+    or iterable(s) referenced by each `source` in turn.  Calling a reducer such
+    as `.toArray()` on this query will run it immediately and return the
+    result.
 
-    Constructs a FromQuery against one or more arrays or objects.  The
-    enumeration mode for each source depends on whether it's a plain object,
-    iterable object, or array-like; if you need a specific enumeration mode,
-    you should use one of the specialized calls below and work through one at a
-    time.
+new Query();
 
-from.array(array);
+    Constructs a Query object representing a deferrable query.  Unlike queries
+    built using `from()` which always source values from the same place, when
+    a reducer such as `toArray()` is called on a deferrable query, it returns a
+    function you can call later to run the query on any set of sources you
+    want.
 
-    Constructs a FromQuery against an array or array-like object.  `array` must
-    have a number-valued `length` property, and only sequential integer keys in
-    the range [0,length) will be enumerated.
+    As an example:
 
-    Throws a TypeError if the object either doesn't have a `length` property or
-    its value is non-numeric.
+        let hasEnergyDrinks = new Query()
+			.over(member => member.items)
+			.select(it => it.name)
+			.anyIn(["Red Bull", "Monster"]);
+		// later on...
+		if (hasEnergyDrinks(enemyParty))
+			stealFrom(enemyParty, "Monster");
 
-from.iterable(source);
+Query#all(predicate);
+Query#allIn(valueList);
 
-    Constructs a FromQuery against an iterable object.  Iterable objects are
-    those implementing the JavaScript "iterable protocol"; in other words,
-    objects implementing `[Symbol.iterator]`.  `from()` queries are themselves
-    iterable.
+    Runs the query and returns true if and only if all items match `predicate`
+    or any value in `valueList`.  Otherwise it returns false.
 
-from.object(object);
+    Note: The first item that doesn't match will terminate the query.  If there
+          are no values to test, `true` is returned.
 
-    Constructs a FromQuery against an ordinary JavaScript object.  Only
-    enumerable own properties of the object will be queried.  Non-enumerable
-    and inherited properties will be ignored.
+Query#any(predicate);
+Query#anyIn(valueList); 
+Query#anyIs(value);
 
-from#all(predicate);
+    Runs the query and returns true if any item matches the specified predicate
+    (see `Query#where`) or value(s).
 
-    Runs the query, calling `predicate` for each result.  The predicate should
-    return a boolean value (true or false); if and only if all items match the
-    predicate, all() returns true.  Otherwise it returns false.
+    Note: The first item that matches will terminate the query.  If there are
+          no values to test, `false` is returned.
 
-    Note: If there are no results, all() returns true.  This operation is
-          short-circuiting: the first non-matching item terminates the query.
+Query#ascending([keySelector]);
+Query#descending([keySelector]);
 
-from#allIn(values);
+    Calls `keySelector` to get a sort key for each value and sorts the values
+    in ascending or descending order by key.  If no key selector is provided,
+    the value itself will be used as the key.
 
-    Runs the query and returns true if and only if all results match a value
-    in the array `values`, otherwise returns false.
+    Note: Queries with sort operators in them will take longer to run and use
+          more memory while running since they have to create a new temporary
+          array internally to store the sorted values.  Keep this in mind when
+          querying large collections.
 
-    Note: If there are no results, allIn() returns true.  This operation is
-          short-circuiting: the first non-matching item terminates the query.
+Query#besides([callback]);
 
-from#any(predicate);
-
-    Runs the query, calling `predicate` for each result.  The predicate should
-    return a boolean value (true or false); if any item matches the predicate,
-    any() returns true.  Otherwise it returns false.
-
-    Note: If there are no results, any() returns false.  This operation is
-          short-circuiting: the first matching item terminates the query.
-
-from#anyIn(values);
-
-    Runs the query and returns true if any results matches a value in the
-    array `values`, otherwise returns false.
-
-    Note: If there are no results, anyIn() returns false.  This operation is
-          short-circuiting: the first matching item terminates the query.
-
-from#anyIs(value);
-
-    Runs the query and returns true if any result matches the given value,
-    otherwise returns false.
-
-    Note: If there are no results, anyIs() returns false.  This operation is
-          short-circuiting: the first matching item terminates the query.
-
-from#ascending([keySelector]);
-
-    Calls `keySelector` to get a sort key for each result and orders the
-    results in ascending order (least to greatest) by key.  If no key selector
-    is provided, the result itself is used as the key.
-
-    Note: from#ascending() performs a stable sort: items with the same key
-          remain in the same relative order.  This allows chained ordering
-          operators to work as expected.
-
-from#besides(callback);
-
-    Calls `callback` for each result, ignoring the return value and passing on
-    the result as is.  This is useful if you need to perform ancillary actions
-    in the middle of a query; for example, tallying intermediate results.
+    Calls `callback` for each value that passes through.  This is useful if you
+    need to perform ancillary actions in the middle of a query; for example,
+    tallying intermediate results.
 
     Note: Avoid causing side effects that modify the query source.  Bad things
           can happen otherwise! (such as: the pig eating you)
 
-from#count([predicate]);
+Query#drop(count);
 
-    Runs the query, returning the number of results.  `predicate` is optional;
-    if provided, it should return true to count the result, or false to exclude
-    it.  If no predicate function is provided, all results are counted.
+    Filters out the first `count` results, passing the remainder on as-is.  The
+    source array is not modified.
 
-from#descending([keySelector]);
-
-    Calls `keySelector` to get a sort key for each result and orders the
-    results in descending order (greatest to least) by key.  If no key selector
-    is provided, the result itself is used as the key.
-
-    Note: from#descending() performs a stable sort: items with the same key
-          remain in the same relative order.  This allows chained ordering
-          operators to work as expected.
-
-from#drop(count);
-
-    Filters out the first `count` results.  The rest are passed through as is.
-
-from#first([predicate]);
+Query#find(predicate);
 
     Runs the query, calling `predicate` for each result, and returns the first
-    value that matches.  If `predicate` is omitted, the very first result is
-    returned.
+    value that matches.
 
-    Note: If there are no matching results, first() returns undefined.  This
-          operation is short-circuiting: the first item that passes the check
-          terminates the query.
+    Note: The first value that matches the predicate will terminate the query.
+          If there are no matching values, `undefined` is returned.
 
-from#forEach(callback);
+Query#first([mapper]);
+
+    Runs the query and returns the value of the first result, or `undefined` if
+    there are no results.  `mapper` is an optional function specifying how to
+    transform the returned value (see `Query#select`).
+
+    Note: The query is terminated immediately once the first result has been
+          produced.
+
+Query#forEach(callback);
 
     Runs the query, calling `callback` for each result.  The return value of
     the callback is ignored.  This is used to loop over the results of a query,
     the way you would loop over an array using arrayObj.forEach() in standard
     JavaScript.
 
-    Note: Using a `for...of` loop is generally preferred over from#each().
-          This is mainly provided to ease things for legacy code, as pre-ES2015
-          JavaScript doesn't support `for...of`.
+Query#last([mapper]);
 
-from#including(source[, ...]);
+    Runs the query and returns the value of the final result, or `undefined` if
+    there are no results.  `mapper` is an optional function specifying how to
+    transform the returned value (see `Query#select`).
 
-    Adds results from the specified source(s).  This is not the same as
-    from#from(); while the latter expands a source per result, from#including()
-    only does so once, after all other results have been processed.
+Query#over(mapper);
 
-from#last([predicate]);
+    Similar to `Query#select`, but rather than being a 1:1 mapping, `over` maps
+    each value to a list of values.  This is used to expand a query into
+    subcollections, for example:
 
-    Runs the query, calling `predicate` for each result, and returns the last
-    value that matches.  If `predicate` is omitted, the absolute last result is
-    returned.
+        havePotions = from(partyMembers)
+            .over(member => member.items)
+            .select(item => item.name)
+            .anyIs('Potion');
 
-    Note: If there are no matching results, last() returns undefined.
+Query#plus(value[, ...]);
 
-from#over([selector]);
+    Injects additional values into the pipeline.  This differs from `over()`;
+    while that operator replaces each value with values from a different list,
+    `plus()` simply adds new values to the end of the stream.
 
-    Calls `selector` for each result and uses the contents of the returned
-    object or array as the results of the operator.  This is used to expand a
-    query into subcollections.  If no selector is provided, the results
-    themselves are assumed to be query sources.
+    Note: More than one `value` can be provided and each one can be either a
+          single value or an array of values.
 
-from#random(count);
+Query#random(count);
 
-    Takes `count` random results and filters out the rest.  Note that this may
-    sample a result more than once.  If you don't want duplicates, use
-    from#sample() instead.
+    Takes `count` independent random samples from amongst the incoming values.
+    The rest of the query will only see what was sampled.
 
-from#reduce(reducer[, initialValue]);
+    Note: Because the samples taken are independent, this can sample a result
+          more than once; if you don't want duplicates, use `sample()` instead.
 
-    Runs the query and calls `reducer` for each result, assigning the result to
-    an internal accumulator.  The current value of the accumulator is passed as
-    the first argument to the reducer function, before the value and key.
+Query#reduce(reducer[, initialValue]);
 
-    This is a pretty advanced operation, so to help illustrate, the following
+    Runs the query and calls `reducer` for each result, assigning the return
+    value to an internal accumulator at each step.  The current value of the
+    accumulator is passed as the first argument to the reducer function, before
+    the value.
+
+    This is a fairly advanced operation, so to help illustrate, the following
     query calculates the sum of all numbers in the array `numbers`:
 
         sum = from(numbers).reduce((a, v) => a + v);
@@ -266,49 +178,56 @@ from#reduce(reducer[, initialValue]);
           for that item.  If that behavior is not desirable, be sure to provide
           an initial value.
 
-from#remove([predicate]);
+Query#remove([predicate]);
 
     Removes results from the source object or array.  `predicate` is optional;
     if provided, it should return true to remove the result, or false to keep
-    it.  If no predicate function is provided, all results are removed.
+    it.  If no `predicate` is provided, all items satisfying the query will be
+    removed.
 
-from#sample(count);
+Query#reverse();
 
-    Takes `count` random results and filters out the rest.  Unlike
-    from#random(), this will not sample the same result more than once.
+    Takes all incoming values and reverses them so the rest of the query sees
+    them in reverse order.
 
-from#select(selector);
+Query#sample(count);
 
-    Calls `selector` for each result, passing the return value on to subsequent
-    operations.  This is used to transform results in the middle of a query,
-    which can help code readability as well as avoid multiple requests for the
-    same data.
+    Takes `count` unique random samples from the pipeline and filters out the
+    rest; the rest of the query will only see the sampled values.  This will
+    not sample a given result more than once.
 
-from#shuffle();
+Query#select(mapper);
 
-    Shuffles the results.  Subsequent operators will see them in a random
-    order.
+    Calls `mapper` for each item and uses whatever it returns as the new value
+    for that item in subsequent operations.  The source array is not modified.
 
-from#take(count);
+Query#shuffle();
 
-    Filters out all results after the first `count`.
+    Shuffles all incoming values so that the rest of the query sees them in a
+    random order.
 
-from#toArray();
+Query#take(count);
 
-    Runs the query, assembling the final results into an array; returns the
-    assembled array.
+    Uses only the first `count` items in subsequent operations and discards
+    the rest.  The source array is not modified.
 
-from#update(selector);
+Query#toArray();
 
-    Writes all results back into the source object or array.  `selector` is an
-    optional mapping function to decide what value gets written back.  If no
-    selector is provided, results are written as-is.
+    Runs the query and returns the results in a JavaScript array object for
+    later use.
 
-from#where(predicate);
+Query#update(mapper);
 
-    Calls `predicate` for each result.  The predicate function should return
-    true to keep the result, or false to filter it out.  Only those results
-    that match the predicate will be passed on.
+    Writes new values back into the source object or array.  `mapper` is the
+    mapping function to compute the value that gets written back.
+
+    Note: As with `remove()`, `update()` cannot be used in a query containing
+          whole-list transformations such as `shuffle()` or `reverse()`.
+
+Query#where(predicate);
+
+    Calls `predicate` for each value and keeps only those values for which the
+    function returns `true`.  The source array is not modified.
 
 
 `Console` Object
@@ -1062,27 +981,6 @@ Scene#stop();
     Note: Stopping a scene this way will cause the promise returned by `run()`
           to resolve normally.  It will not be rejected as this is not an error
           condition.
-
-
-`Test` Namespace
-----------------
-
-An implementation of the standard CommonJS testing module.  The primary use for
-this namespace is to automate unit testing.  The `Test` namespace consists of a
-single function.  Unit test code itself can likely benefit from the `assert`
-function though; see above for more information about that one.
-
-    import { Test } from 'sphere-runtime';
-
-Test.run(tests);
-
-    Runs all unit tests in `tests`.  `tests` is an object with a number of
-    methods beginning with the word "test", e.g. testPig(), testCow(), etc.
-    Each one will be called in turn, in Object.keys() order.
-
-    Note: If you need a bit more organization, `tests` can also have subobjects
-          beginning with the word "test".  Any test methods found in subobjects
-          will be called as well.
 
 
 `Thread` Object
