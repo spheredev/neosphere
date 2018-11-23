@@ -208,8 +208,19 @@ Query#shuffle();
 
 Query#take(count);
 
-    Uses only the first `count` items in subsequent operations and discards
-    the rest.  The source array is not modified.
+    Uses only the first `count` items in subsequent operations and discards the
+    rest.  The source array is not modified.
+
+Query#tap(interceptor);
+
+	Collects all results so far into an array and calls `interceptor` passing
+	the array as the first parameter.  Any changes made to the array will be
+	reflected in subsequent operations.
+
+Query#thru(mapper);
+
+    Similar to `tap`, but completely replaces the set of results with the array
+    returned by `mapper`.
 
 Query#toArray();
 
