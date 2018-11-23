@@ -70,7 +70,6 @@ class Query
 			return;
 		this.firstOp = null;
 		this.lastOp = null;
-		let prev = null;
 		for (let i = 0, len = this.opcodes.length; i < len; ++i) {
 			const opcode = this.opcodes[i];
 			const next = i + 1 < len ? this.opcodes[i + 1] : null;
@@ -82,6 +81,7 @@ class Query
 			const op = opcode.type === 'dropTake' ? new DropTakeOp(opcode.a, opcode.b)
 				: opcode.type === 'filter' ? new FilterOp(opcode.a)
 				: opcode.type === 'map' ? new MapOp(opcode.a)
+				: opcode.type === 'plus' ? new PlusOp(opcode.a)
 				: opcode.type === 'over' ? new OverOp(opcode.a)
 				: opcode.type === 'reverse' ? new ReverseOp()
 				: opcode.type === 'thru' ? new ThruOp(opcode.a)
@@ -91,7 +91,6 @@ class Query
 			this.lastOp = op;
 			if (this.firstOp === null)
 				this.firstOp = this.lastOp;
-			prev = opcode;
 		}
 		return this.firstOp;
 	}
@@ -260,7 +259,7 @@ class Query
 
 	plus(...items)
 	{
-		return this.thru(all => (all.push(...items), all));
+		return this.addOp$('plus', items);
 	}
 
 	random(count)
@@ -512,6 +511,45 @@ class OverOp extends QueryOp
 	}
 }
 
+class PlusOp extends QueryOp
+{
+	constructor(sources)
+	{
+		super();
+		this.sources = sources;
+	}
+
+	flush()
+	{
+		source_loop:
+		for (let i = 0, len = this.sources.length; i < len; ++i) {
+			const source = this.sources[i];
+			if (typeof source.length === 'number') {
+				for (let i = 0, len = source.length; i < len; ++i) {
+					if (!this.nextOp.push(source[i], source, i))
+						break source_loop;
+				}
+			}
+			else if (Symbol.iterator in source) {
+				for (const value of source) {
+					if (!this.nextOp.push(value, source))
+						break source_loop;
+				}
+			}
+			else {
+				if (!this.nextOp.push(source))
+					break;
+			}
+		}
+		super.flush();
+	}
+
+	push(value, source, key)
+	{
+		return this.nextOp.push(value, source, key);
+	}
+}
+
 class ReduceOp extends QueryOp
 {
 	constructor(reducer, initialValue)
@@ -649,7 +687,7 @@ class ReverseOp extends ThruOp
 			const length = this.values.length;
 			let start = length - 1;
 			if (this.nextOp instanceof DropTakeOp) {
-				start -= nextOp.dropsLeft;
+				start -= this.nextOp.dropsLeft;
 				this.nextOp.dropsLeft = 0;
 			}
 			for (let i = start; i >= 0; --i) {
