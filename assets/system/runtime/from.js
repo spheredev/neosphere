@@ -55,18 +55,35 @@ class Query
 		return this.toArray()[Symbol.iterator]();
 	}
 
+	addOp$(type, a, b)
+	{
+		const opcode = { type, a, b };
+		const newQuery = new Query();
+		newQuery.sources = this.sources;
+		newQuery.opcodes = [ ...this.opcodes, opcode ];
+		return newQuery;
+	}
+
 	compile$()
 	{
 		if (this.firstOp !== null)
 			return;
 		this.firstOp = null;
 		this.lastOp = null;
+		let prev = null;
 		for (let i = 0, len = this.opcodes.length; i < len; ++i) {
 			const opcode = this.opcodes[i];
+			const next = i + 1 < len ? this.opcodes[i + 1] : null;
+			if (opcode.type === 'reverse' && next !== null && next.type === 'reverse') {
+				// optimize away consecutive 'reverse' opcodes
+				++i;
+				continue;
+			}
 			const op = opcode.type === 'dropTake' ? new DropTakeOp(opcode.a, opcode.b)
 				: opcode.type === 'filter' ? new FilterOp(opcode.a)
 				: opcode.type === 'map' ? new MapOp(opcode.a)
 				: opcode.type === 'over' ? new OverOp(opcode.a)
+				: opcode.type === 'reverse' ? new ReverseOp()
 				: opcode.type === 'thru' ? new ThruOp(opcode.a)
 				: undefined;
 			if (this.lastOp !== null)
@@ -74,6 +91,7 @@ class Query
 			this.lastOp = op;
 			if (this.firstOp === null)
 				this.firstOp = this.lastOp;
+			prev = opcode;
 		}
 		return this.firstOp;
 	}
@@ -172,8 +190,7 @@ class Query
 
 	besides(iteratee)
 	{
-		this.opcodes.push({ type: 'map', a: (it, k) => (iteratee(it, k), it) });
-		return this;
+		return this.addOp$('map', (it, k) => (iteratee(it, k), it));
 	}
 
 	count(keymaker)
@@ -208,8 +225,7 @@ class Query
 
 	drop(count)
 	{
-		this.opcodes.push({ type: 'dropTake', a: count, b: 0 });
-		return this;
+		return this.addOp$('dropTake', count, 0);
 	}
 
 	find(predicate)
@@ -239,8 +255,7 @@ class Query
 
 	over(mapper)
 	{
-		this.opcodes.push({ type: 'over', a: mapper });
-		return this;
+		return this.addOp$('over', mapper);
 	}
 
 	plus(...items)
@@ -272,7 +287,7 @@ class Query
 
 	reverse()
 	{
-		return this.thru(all => all.reverse());
+		return this.addOp$('reverse');
 	}
 
 	sample(count)
@@ -292,8 +307,7 @@ class Query
 
 	select(mapper)
 	{
-		this.opcodes.push({ type: 'map', a: mapper });
-		return this;
+		return this.addOp$('map', mapper);
 	}
 
 	shuffle()
@@ -311,8 +325,7 @@ class Query
 
 	take(count)
 	{
-		this.opcodes.push({ type: 'dropTake', a: 0, b: count });
-		return this;
+		return this.addOp$('dropTake', 0, count);
 	}
 
 	tap(callback)
@@ -322,8 +335,7 @@ class Query
 
 	thru(mapper)
 	{
-		this.opcodes.push({ type: 'thru', a: mapper });
-		return this;
+		return this.addOp$('thru', mapper);
 	}
 
 	toArray()
@@ -338,8 +350,7 @@ class Query
 
 	where(predicate)
 	{
-		this.opcodes.push({ type: 'filter', a: predicate });
-		return this;
+		return this.addOp$('filter', predicate);
 	}
 }
 
@@ -606,6 +617,47 @@ class ThruOp extends QueryOp
 			}
 		}
 		super.flush();
+	}
+
+	push(value)
+	{
+		this.values.push(value);
+		return true;
+	}
+}
+
+class ReverseOp extends ThruOp
+{
+	constructor()
+	{
+		super();
+	}
+
+	initialize()
+	{
+		this.values = [];
+		super.initialize();
+	}
+
+	flush()
+	{
+		if (this.nextOp instanceof ThruOp) {
+			this.values.reverse();
+			this.nextOp.values = this.values;
+		}
+		else {
+			const length = this.values.length;
+			let start = length - 1;
+			if (this.nextOp instanceof DropTakeOp) {
+				start -= nextOp.dropsLeft;
+				this.nextOp.dropsLeft = 0;
+			}
+			for (let i = start; i >= 0; --i) {
+				if (!this.nextOp.push(this.values[i], this.values, i))
+					break;
+			}
+		}
+		this.nextOp.flush();
 	}
 
 	push(value)
