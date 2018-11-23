@@ -7,7 +7,6 @@ v5.3.0 - TBD
 * Adds asynchronous asset loading functions, e.g. `Sound.fromFile()`, to
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
   notes for further information.
-* Adds built-in support for `from()` queries in the Core API.
 * Adds preliminary, experimental support for npm's `node_modules` directory.
 * Adds a new `Tween` standard module for handling simple animations.
 * Adds `JSON.fromFile`, for loading JSON files without using `require`.
@@ -24,6 +23,8 @@ v5.3.0 - TBD
 * Adds API support for the Back and Forward buttons found on most modern mice.
 * Adds `recursive` option for DirectoryStream, to list files in subdirectories.
 * Adds `apiVersion` and `apiLevel` to the example Cellscript.
+* Improves the performance of `from()` queries with a brand-new version of
+  `from.js` rewritten from the ground up with performance in mind.
 * Improves command-line semantics: `.js` files run from the command line are
   now executed as ES modules rather than traditional scripts, allowing them to
   use `import`.
