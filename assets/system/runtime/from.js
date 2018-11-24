@@ -30,6 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+const IdentityFunction = x => x;
+
 export default
 function from(...sources)
 {
@@ -84,8 +86,10 @@ class Query
 				: opcode.type === 'plus' ? new PlusOp(opcode.a)
 				: opcode.type === 'over' ? new OverOp(opcode.a)
 				: opcode.type === 'reverse' ? new ReverseOp()
+				: opcode.type === 'minus' ? new MinusOp(opcode.a)
 				: opcode.type === 'take' ? new TakeOp(opcode.a)
 				: opcode.type === 'thru' ? new ThruOp(opcode.a)
+				: opcode.type === 'uniq' ? new UniqOp(opcode.a)
 				: undefined;
 			if (this.lastOp !== null)
 				this.lastOp.nextOp = op;
@@ -179,7 +183,7 @@ class Query
 		return this.any(it => is(it, value));
 	}
 
-	ascending(keymaker)
+	ascending(keymaker = IdentityFunction)
 	{
 		return this.thru(all => {
 			const pairs = all.map(it => [ keymaker(it), it ]);
@@ -214,7 +218,7 @@ class Query
 		}, null);
 	}
 
-	descending(keymaker)
+	descending(keymaker = IdentityFunction)
 	{
 		return this.thru(all => {
 			const pairs = all.map(it => [ keymaker(it), it ]);
@@ -258,9 +262,9 @@ class Query
 		return this.addOp$('over', mapper);
 	}
 
-	plus(...items)
+	plus(...sources)
 	{
-		return this.addOp$('plus', items);
+		return this.addOp$('plus', sources);
 	}
 
 	random(count)
@@ -343,6 +347,11 @@ class Query
 		return this.run$(new ToArrayOp());
 	}
 
+	uniq(keymaker = IdentityFunction)
+	{
+		return this.addOp$('uniq', keymaker);
+	}
+
 	update(mapper)
 	{
 		return this.run$(new UpdateOp(mapper));
@@ -351,6 +360,11 @@ class Query
 	where(predicate)
 	{
 		return this.addOp$('filter', predicate);
+	}
+
+	without(...values)
+	{
+		return this.addOp$('minus', values);
 	}
 }
 
@@ -477,6 +491,22 @@ class MapOp extends QueryOp
 	{
 		value = this.mapper(value, key);
 		return this.nextOp.push(value, source, key);
+	}
+}
+
+class MinusOp extends QueryOp
+{
+	constructor(sources)
+	{
+		super();
+		this.values = [].concat(...sources);
+	}
+
+	push(value, source, key)
+	{
+		if (!this.values.includes(value))
+			return this.nextOp.push(value, source, key);
+		return true;
 	}
 }
 
@@ -766,6 +796,31 @@ class UpdateOp extends QueryOp
 	push(value, source, key)
 	{
 		source[key] = this.mapper(value, key);
+		return true;
+	}
+}
+
+class UniqOp extends QueryOp
+{
+	constructor(keymaker)
+	{
+		super();
+		this.keymaker = keymaker;
+	}
+
+	initialize()
+	{
+		this.keys = [];
+		super.initialize();
+	}
+
+	push(value, source, key)
+	{
+		const uniqKey = this.keymaker(value);
+		if (!this.keys.includes(uniqKey)) {
+			this.keys.push(uniqKey);
+			return this.nextOp.push(value, source, key);
+		}
 		return true;
 	}
 }
