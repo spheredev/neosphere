@@ -166,6 +166,7 @@ print_results(double running_time)
 	table_add_column(table, "%% run");
 	table_add_column(table, "avg (%s)", UNIT_NAME);
 	table_add_column(table, "%% avg");
+	table_add_column(table, "ops/f");
 	iter = vector_enum(s_records);
 	while ((record = iter_next(&iter))) {
 		if (record->num_hits <= 0)
@@ -176,6 +177,7 @@ print_results(double running_time)
 		table_add_percentage(table, 3, record->total_cost / running_time);
 		table_add_number(table, 4, record->average_cost * TIME_PRECISION);
 		table_add_percentage(table, 5, record->average_cost / total_average);
+		table_add_number(table, 6, floor(1.0 / record->average_cost / 60));
 	}
 	table_add_text(table, 0, "TOTAL");
 	table_add_number(table, 1, total_hits);
@@ -183,6 +185,7 @@ print_results(double running_time)
 	table_add_percentage(table, 3, total_time / running_time);
 	table_add_number(table, 4, total_average * TIME_PRECISION);
 	table_add_percentage(table, 5, 1.0);
+	table_add_text(table, 6, "n/a");
 	table_print(table);
 	table_free(table);
 	free(heading);
