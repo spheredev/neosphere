@@ -252,6 +252,19 @@ class Query
 		this.reduce((a, it) => iteratee(it));
 	}
 
+	group(keymaker)
+	{
+		return this.reduce((a, it) => {
+			if (a === null)
+				a = {};
+			const key = keymaker(it);
+			if (a[key] === undefined)
+				a[key] = [];
+			a[key].push(it);
+			return a;
+		}, null);
+	}
+
 	last(mapper)
 	{
 		return this.run$(new LastOp(mapper));
