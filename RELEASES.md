@@ -9,11 +9,41 @@ miniSphere 5.3
   `cell clean`.  If you need a quick primer on the new syntax, you can type
   `cell help` on the command-line.
 
+* The `from` module has been rewritten for improved performance and along with
+  several new query operators comes a few breaking changes.  `.skip` is now
+  called `.drop`, `.from` is now called `.over` and the iteratee for `.first`
+  and `.last` is now treated as a mapping function rather than a predicate
+  function.  As always, refer to the Sphere Runtime API documentation to get
+  up to date on current API usage.
+
+* The obsolete `assert` and `test` modules have been removed from the Sphere
+  Runtime in preparation for an upcoming API freeze in miniSphere 6.0.  These
+  modules were written based on old CommonJS specifications and the problems
+  they were meant to solve deserve some thought before committing to a
+  solution.
+
+* The undocumented scenelets (`fadeTo`, `tween`, `pause`, `call`) that were
+  previously registered by default by the `scene` module have been removed.
+  These were undocumented and meant for internal use only.  This change will be
+  backported, so if your game happened to be using one of the scenelets listed
+  above, you will need to implement the equivalent functionality yourself.
+
+* `import` statements are now always treated as ES Module imports regardless of
+  filename extension.  If your game or Cellscript needs to load CommonJS
+  modules and is now doing so using `import`, you will need to switch to using
+  `require()`.
+
 * `DirectoryStream` objects can now be initialized in recursive mode.  In this
   mode, instead of listing subdirectories along with files, it will recursively
   descend into subdirectories to list the files in them.  This provides a
   convenient way to find files at any level of a directory structure using a
   single DirectoryStream.
+
+* When calling `Transform#rotate` and specifying a vector to rotate about, the
+  provided vector is now normalized.  This is a bug fix, but may be a breaking
+  change if your game happened to rely on the previous behavior.  If your
+  rotations seem broken, this may be the cause.
+
 
 miniSphere 5.2
 --------------
