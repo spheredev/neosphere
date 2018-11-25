@@ -106,7 +106,7 @@ class Query
 		let firstOp = this.firstOp;
 		let lastOp = this.lastOp;
 		const runQuery = (...sources) => {
-			if (firstOp !== null)
+			if (lastOp !== null)
 				lastOp.nextOp = reduceOp;
 			else
 				firstOp = reduceOp;
@@ -254,15 +254,7 @@ class Query
 
 	group(keymaker)
 	{
-		return this.reduce((a, it) => {
-			if (a === null)
-				a = {};
-			const key = keymaker(it);
-			if (a[key] === undefined)
-				a[key] = [];
-			a[key].push(it);
-			return a;
-		}, null);
+		return this.run$(new GroupOp(keymaker));
 	}
 
 	last(mapper)
@@ -461,6 +453,38 @@ class FindOp extends QueryOp
 			this.result = this.memo.value;
 			return false;
 		}
+		return true;
+	}
+}
+
+class GroupOp extends QueryOp
+{
+	constructor(keymaker)
+	{
+		super();
+		this.keymaker = keymaker;
+	}
+
+	initialize()
+	{
+		this.result = new Map();
+	}
+
+	flush()
+	{
+		const mapEntries = this.result.entries();
+		this.result = {};
+		for (const entry of mapEntries)
+			this.result[entry[0]] = entry[1];
+	}
+
+	push(value)
+	{
+		const key = this.keymaker(value);
+		let list = this.result.get(key);
+		if (list === undefined)
+			this.result.set(key, list = []);
+		list.push(value);
 		return true;
 	}
 }
@@ -823,15 +847,15 @@ class UniqOp extends QueryOp
 
 	initialize()
 	{
-		this.keys = [];
+		this.keys = new Set();
 		super.initialize();
 	}
 
 	push(value, source, key)
 	{
 		const uniqKey = this.keymaker(value);
-		if (!this.keys.includes(uniqKey)) {
-			this.keys.push(uniqKey);
+		if (!this.keys.has(uniqKey)) {
+			this.keys.add(uniqKey);
 			return this.nextOp.push(value, source, key);
 		}
 		return true;
