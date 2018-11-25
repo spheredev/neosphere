@@ -54,7 +54,10 @@ struct screen
 	bool             fullscreen;
 	double           last_flip_time;
 	int              max_skips;
+	char             message[256];
 	double           next_frame_time;
+	double           notify_alpha;
+	double           notify_timer;
 	int              num_flips;
 	int              num_frames;
 	int              num_skips;
@@ -295,6 +298,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	int               serial = 1;
 	ALLEGRO_BITMAP*   snapshot;
 	char              timestamp[100];
+	int               width;
 	int               x, y;
 #if defined(MINISPHERE_SPHERUN)
 	double            start_time;
@@ -316,6 +320,13 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	is_backbuffer_valid = !it->skipping_frame;
 	screen_cx = al_get_display_width(it->display);
 	screen_cy = al_get_display_height(it->display);
+	if (it->notify_timer > 0.0) {
+		it->notify_timer = fmax(it->notify_timer - 1.0 / framerate, 0.0);
+		it->notify_alpha = fmin(it->notify_alpha + 2.0 / framerate, 1.0);
+	}
+	else {
+		it->notify_alpha = fmax(it->notify_alpha - 0.5 / framerate, 0.0);
+	}
 	if (is_backbuffer_valid) {
 		if (it->take_screenshot) {
 			al_store_state(&old_state, ALLEGRO_STATE_NEW_BITMAP_PARAMETERS);
@@ -333,6 +344,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			do {
 				filename = strnewf("%s-%s-%d.png", game_filename, timestamp, serial++);
 				path_strip(path);
+				sprintf(it->message, "screenshot saved in '%s'", path_cstr(path));
 				path_append(path, filename);
 				pathname = path_cstr(path);
 				free(filename);
@@ -340,6 +352,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			al_save_bitmap(pathname, snapshot);
 			al_destroy_bitmap(snapshot);
 			path_free(path);
+			it->notify_timer = 10.0;
 			it->take_screenshot = false;
 		}
 		old_target = al_get_target_bitmap();
@@ -350,6 +363,16 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			0x0);
 		if (debugger_attached())
 			screen_draw_status(it, debugger_name(), debugger_color());
+		if (it->notify_alpha > 0.0 && it->font != NULL) {
+			width = font_get_width(it->font, it->message) + 20;
+			x = (screen_cx - width) / 2;
+			y = screen_cy - it->y_offset - 32;
+			al_draw_filled_rounded_rectangle(x, y, x + width, y + 24, 4, 4, al_map_rgba(16, 16, 16, 192 * it->notify_alpha));
+			font_set_mask(it->font, mk_color(0, 0, 0, 255 * it->notify_alpha));
+			font_draw_text(it->font, x + 11, y + 7, TEXT_ALIGN_LEFT, it->message);
+			font_set_mask(it->font, mk_color(192, 255, 0, 255 * it->notify_alpha));
+			font_draw_text(it->font, x + 10, y + 6, TEXT_ALIGN_LEFT, it->message);
+		}
 		if (it->show_fps && it->font != NULL) {
 			if (framerate > 0)
 				sprintf(fps_text, "%d/%d fps", it->fps_flips, it->fps_frames);
