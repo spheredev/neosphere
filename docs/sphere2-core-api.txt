@@ -1292,12 +1292,19 @@ to communicate with an attached debugger such as SSj or SSj Blue.  Note that
 `SSj` methods only have an effect when called under SpheRun; in production they
 do nothing.
 
-SSj.flipScreen(); [L1]
+SSj.assert(condition[, description]);
+
+    Checks that some condition is true and throws an error if it's not.  This
+    allows you to test assumptions made during development without compromising
+    performance in production.  `condition` can be either a boolean expression
+    or a function that returns `true` or `false`.
+
+SSj.flipScreen();
 
     Immediately flips the contents of the backbuffer to the screen.  The
     backbuffer is not cleared afterwards.  Useful for debugging graphics code.
 
-SSj.log(text_or_object); [L1]
+SSj.log(text_or_object);
 
     Logs `text_or_object` to an attached SSj or SSj Blue session.  If an object
     is passed in, logs the result of calling `JSON.stringify()` on the object.
@@ -1305,7 +1312,7 @@ SSj.log(text_or_object); [L1]
     Note: If the game was started from the command line using SpheRun, the
           item is logged to the terminal as well.
 
-SSj.now(); [L1]
+SSj.now();
 
     Returns the time in nanoseconds since some arbitrary point in time, useful
     for benchmarking.  In production, this will always be 0; use `Date.now()`
@@ -1315,7 +1322,7 @@ SSj.now(); [L1]
           the timer will almost certainly be less, typically in the microsecond
           range.  Don't assume this will be nanosecond precision.
 
-SSj.profile(object, method_name[, description]); [L1]
+SSj.profile(object, method_name[, description]);
 
     Adds a method to be automatically profiled (timed) by SpheRun.
     `description` is an optional string to name the function in the performance
@@ -1333,7 +1340,7 @@ SSj.profile(object, method_name[, description]); [L1]
           profiler.  All `SSj.profile()` calls will be completely ignored if
           the profiler is not enabled.
 
-SSj.trace(text); [L1]
+SSj.trace(text);
 
     Logs `text` to an attached SSj or SSj Blue session.  This is intended for
     low-level, detailed logging; by default, traces will not be displayed, even

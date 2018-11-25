@@ -10,6 +10,8 @@ v5.3.0 - TBD
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
 * Adds preliminary, experimental support for npm's `node_modules` directory.
 * Adds a new `Tween` standard module for handling simple animations.
+* Adds `SSj.assert` for testing assumptions while debugging.  The assertions
+  are ignored in production.
 * Adds `JSON.fromFile`, for loading JSON files without using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.
 * Adds a `cell init` command, for initializing a new Sphere project directory

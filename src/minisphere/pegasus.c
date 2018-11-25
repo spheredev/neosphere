@@ -352,6 +352,7 @@ static bool js_RNG_get_state                 (int num_args, bool is_ctor, intptr
 static bool js_RNG_set_state                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_iterator                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_next                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_assert                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SSj_flipScreen                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SSj_instrument                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SSj_log                       (int num_args, bool is_ctor, intptr_t magic);
@@ -667,6 +668,7 @@ pegasus_init(int api_level)
 	api_define_property("RNG", "state", false, js_RNG_get_state, js_RNG_set_state);
 	api_define_method("RNG", "@@iterator", js_RNG_iterator, 0);
 	api_define_method("RNG", "next", js_RNG_next, 0);
+	api_define_function("SSj", "assert", js_SSj_assert, 0);
 	api_define_function("SSj", "flipScreen", js_SSj_flipScreen, 0);
 	api_define_function("SSj", "instrument", js_SSj_instrument, 0);
 	api_define_function("SSj", "log", js_SSj_log, KI_LOG_NORMAL);
@@ -3645,6 +3647,38 @@ js_RNG_next(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_number(value);
 	jsal_put_prop_key(-2, s_key_value);
 	return true;
+}
+
+static bool
+js_SSj_assert(int num_args, bool is_ctor, intptr_t magic)
+{
+#if defined(MINISPHERE_SPHERUN)
+	bool        assertion = true;
+	const char* message = NULL;
+	bool        use_function;
+
+	use_function = jsal_is_function(0);
+	if (num_args >= 2)
+		message = jsal_to_string(1);
+
+	if (use_function) {
+		jsal_dup(0);
+		jsal_call(0);
+		assertion = jsal_to_boolean(-1);
+	}
+	else {
+		assertion = jsal_to_boolean(0);
+	}
+
+
+	if (!assertion) {
+		if (message != NULL)
+			jsal_error(JS_ERROR, "Assertion was false: %s", message);
+		else
+			jsal_error(JS_ERROR, "Asserted expression was false");
+	}
+#endif
+	return false;
 }
 
 static bool
