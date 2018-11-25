@@ -68,7 +68,7 @@ Query#allIn(valueList);
           are no values to test, `true` is returned.
 
 Query#any(predicate);
-Query#anyIn(valueList); 
+Query#anyIn(valueList);
 Query#anyIs(value);
 
     Runs the query and returns true if any item matches the specified predicate
@@ -126,6 +126,16 @@ Query#forEach(callback);
     the callback is ignored.  This is used to loop over the results of a query,
     the way you would loop over an array using arrayObj.forEach() in standard
     JavaScript.
+
+Query#group(keySelector);
+
+    Runs the query and returns an object containing all query results grouped
+    by key.  `keySelector` should return a string to use as the key for each
+    group of values.  To illustrate how this works:
+
+        from([ 1, 2, 3, "a", "b" ])
+            .group(it => typeof it);
+		// returns: { number: [ 1, 2, 3 ], string: [ "a", "b" ] }
 
 Query#last([mapper]);
 
@@ -227,6 +237,12 @@ Query#toArray();
     Runs the query and returns the results in a JavaScript array object for
     later use.
 
+Query#uniq([keySelector]);
+
+    Filters out duplicate values.  If the mapping function `keySelector` is
+    provided, it will be called for each result; only the first value for which
+    a given key is selected will be kept.
+
 Query#update(mapper);
 
     Writes new values back into the source object or array.  `mapper` is the
@@ -239,6 +255,11 @@ Query#where(predicate);
 
     Calls `predicate` for each value and keeps only those values for which the
     function returns `true`.  The source array is not modified.
+
+Query#without(value[, ...]);
+
+    Filters out the specified value(s).  Each `value` argument can be either a
+    single value or an array of values.
 
 
 `Console` Object
