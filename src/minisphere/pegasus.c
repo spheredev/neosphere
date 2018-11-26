@@ -1213,10 +1213,10 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 		{ false, "%s/index.json" },
 	};
 
-	path_t*      origin_path;
-	char*        filename;
-	path_t*      main_path;
-	path_t*      path;
+	char*   filename;
+	path_t* main_path;
+	path_t* origin_path;
+	path_t* path;
 
 	int i;
 
@@ -1309,11 +1309,11 @@ handle_module_import(void)
 		"#/runtime",
 	};
 
-	char*       caller_id = NULL;
-	path_t*     path;
-	char*       source;
-	size_t      source_len;
-	char*       specifier;
+	char*   caller_id = NULL;
+	path_t* path;
+	char*   source;
+	size_t  source_len;
+	char*   specifier;
 
 	int i;
 
@@ -1332,16 +1332,17 @@ handle_module_import(void)
 		if ((path = find_module_file(specifier, caller_id, PATHS[i], false)))
 			break;  // short-circuit
 	}
-	free(caller_id);
 	if (path == NULL) {
 		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
 		if (caller_id != NULL) {
 			jsal_push_string(debugger_source_name(caller_id));
 			jsal_put_prop_string(-2, "url");
 		}
+		free(caller_id);
 		free(specifier);
 		jsal_throw();
 	}
+	free(caller_id);
 	free(specifier);
 
 	source = game_read_file(g_game, path_cstr(path), &source_len);
@@ -1349,6 +1350,8 @@ handle_module_import(void)
 	jsal_push_string(debugger_source_name(path_cstr(path)));
 	jsal_push_lstring(source, source_len);
 	free(source);
+
+	path_free(path);
 }
 
 static path_t*
@@ -1391,43 +1394,33 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		"@/lib",
 	};
 
-	const char* id;
-	path_t*     npm_path;
-	const char* parent_id = NULL;
+	const char* caller_id = NULL;
 	path_t*     path;
+	const char* specifier;
 
 	int i;
 
-	id = jsal_require_string(0);
+	specifier = jsal_require_string(0);
 
 	jsal_push_callee();
 	if (jsal_get_prop_string(-1, "id"))
-		parent_id = jsal_get_string(-1);
+		caller_id = jsal_get_string(-1);
 
-	if (parent_id == NULL && (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0))
+	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(id, parent_id, PATHS[i], true)))
+		if ((path = find_module_file(specifier, caller_id, PATHS[i], true)))
 			break;  // short-circuit
 	}
-	if (path == NULL) {
-		// look for npm-installed modules (`node_modules`)
-		npm_path = parent_id != NULL ? path_strip(path_new(parent_id))
-			: path_new("@/");
-		path_append(npm_path, "node_modules/");
-		while (path_num_hops(npm_path) >= 2) {
-			if ((path = find_module_file(id, parent_id, path_cstr(npm_path), true)))
-				break;  // short-circuit
-			path_remove_hop(npm_path, path_num_hops(npm_path) - 2);
-		}
-		path_free(npm_path);
-	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", id);
+		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
 
-	if (!pegasus_try_require(path_cstr(path), true))
+	if (!pegasus_try_require(path_cstr(path), true)) {
+		path_free(path);
 		jsal_throw();
+	}
+	path_free(path);
 	return true;
 }
 

@@ -8,7 +8,6 @@ v5.3.0 - TBD
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
   notes for further information.
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
-* Adds preliminary, experimental support for npm's `node_modules` directory.
 * Adds a new `Tween` standard module for handling simple animations.
 * Adds `SSj.assert` for testing assumptions while debugging.  The assertions
   are ignored in production.

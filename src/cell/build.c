@@ -1336,44 +1336,34 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		"$/lib",
 	};
 
-	const char* module_id;
-	path_t*     npm_path;
-	const char* parent_id = NULL;
+	const char* caller_id = NULL;
 	path_t*     path;
+	const char* specifier;
 
 	int i;
 
-	module_id = jsal_require_string(0);
+	specifier = jsal_require_string(0);
 
 	// get the calling module ID
 	jsal_push_callee();
 	if (jsal_get_prop_string(-1, "id"))
-		parent_id = jsal_get_string(-1);
+		caller_id = jsal_get_string(-1);
 
-	if (parent_id == NULL && (strncmp(module_id, "./", 2) == 0 || strncmp(module_id, "../", 3) == 0))
+	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(s_build->fs, module_id, parent_id, PATHS[i], true)))
+		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i], true)))
 			break;  // short-circuit
 	}
-	if (path == NULL) {
-		// look for npm-installed modules (`node_modules`)
-		npm_path = parent_id != NULL ? path_strip(path_new(parent_id))
-			: path_new("$/");
-		path_append(npm_path, "node_modules/");
-		while (path_num_hops(npm_path) >= 2) {
-			if ((path = find_module_file(s_build->fs, module_id, parent_id, path_cstr(npm_path), true)))
-				break;  // short-circuit
-			path_remove_hop(npm_path, path_num_hops(npm_path) - 2);
-		}
-		path_free(npm_path);
-	}
 	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", module_id);
+		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
 	
-	if (!try_eval_module(s_build->fs, path_cstr(path), true))
+	if (!try_eval_module(s_build->fs, path_cstr(path), true)) {
+		path_free(path);
 		jsal_throw();
+	}
+	path_free(path);
 	return true;
 }
 
