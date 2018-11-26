@@ -136,7 +136,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>
@@ -146,12 +146,12 @@
       </IgnoreSpecificDefaultLibraries>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib;..\dep\lib</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
 xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"
-xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
+xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -165,7 +165,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -177,7 +177,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <AdditionalDependencies>ChakraCore.lib;libmng.lib;zlib.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib;..\dep\lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent />
@@ -185,7 +185,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
 xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"
-xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
+xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
@@ -199,7 +199,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -211,14 +211,14 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <AdditionalDependencies>ChakraCore.lib;libmng.lib;zlib.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib;..\dep\lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
 xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"
-xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
+xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
@@ -233,7 +233,7 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\minisphere;include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\minisphere;include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
@@ -244,14 +244,14 @@ xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
       <AdditionalDependencies>ChakraCore.lib;libmng.lib;zlib.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib;..\dep\lib</AdditionalLibraryDirectories>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
     <PostBuildEvent />
     <PostBuildEvent>
       <Command>xcopy /y /d /e /f "..\assets\*" "$(OutDir)"
 xcopy /y /d /e /f "..\docs\*-api.txt" "$(OutDir)documentation\"
-xcopy /y /d /e /f "lib\*.dll" "$(OutDir)"</Command>
+xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -6,21 +6,37 @@ This file contains instructions for how to compile and install the engine for
 Windows and Linux; macOS is more complicated and you will probably have to set
 up your own build harness.
 
+Before you get started, you will need to download the ChakraCore binaries for
+your platform here, as they are too large to include in the miniSphere
+repository:
+
+https://github.com/Microsoft/ChakraCore/releases
+
+Copy `ChakraCore.lib` (and for Windows builds, `ChakraCore.dll`) into `dep/lib`
+and the following header files into `dep/include`:
+
+* `ChakraCommon.h`
+* `ChakraCommonWindows.h`
+* `ChakraCore.h`
+* `ChakraCoreVersion.h`
+* `ChakraCoreWindows.h`
+* `ChakraDebug.h`
+
 
 Windows
 -------
 
-You can build a complete 32- or 64-bit distribution of miniSphere using the
-included Visual Studio solution `minisphere.sln` located in `msvs/`.
-Visual Studio 2015 or later is required; as of this writing,
-Visual Studio Community 2015 can be downloaded free of charge from here:
+You can build a complete 64-bit distribution of miniSphere using the included
+Visual Studio solution `minisphere.sln` located in `msvs/`.  Visual Studio 2017
+or later is required; as of this writing, Visual Studio Community 2017 can be
+downloaded free of charge from here:
 
-[Download Visual Studio Community 2015]
+[Download Visual Studio Community 2017]
 (https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
 
-Allegro is provided through NuGet, and static libraries and/or source are included
-for all other dependencies, so no additional software is required to build for
-Windows.
+Allegro is provided through NuGet, and static libraries and/or source are
+included for all other dependencies besides ChakraCore, so no additional 
+software is required to build for Windows.
 
 
 Linux
