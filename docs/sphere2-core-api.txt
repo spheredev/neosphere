@@ -1299,6 +1299,14 @@ SSj.assert(condition[, description]);
     performance in production.  `condition` can be either a boolean expression
     or a function that returns `true` or `false`.
 
+    `description` is an optional text description of the condition under test.
+    This should describe what's being checked for, as the error thrown in case
+    of failure is "Assertion was false: <description>".
+
+    Note: Use a function for `condition` if you need to do a complicated sanity
+          check; this way the engine can avoid running the check at all in
+          production.
+
 SSj.flipScreen();
 
     Immediately flips the contents of the backbuffer to the screen.  The
