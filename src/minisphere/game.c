@@ -72,7 +72,7 @@ struct game
 	path_t*        script_path;
 	package_t*     package;
 	lstring_t*     summary;
-	int            type;
+	enum fs_type   type;
 	int            version;
 };
 
@@ -141,6 +141,7 @@ game_open(const char* game_path)
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
 	}
+#if defined(MINISPHERE_SPHERUN)
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
@@ -178,6 +179,7 @@ game_open(const char* game_path)
 		game->manifest = jsal_ref(-1);
 		jsal_pop(1);
 	}
+#endif
 	else {  // default case, unpacked game folder
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
@@ -237,6 +239,10 @@ game_open(const char* game_path)
 		}
 	}
 
+	// always use full sandbox enforcement for SPK packages
+	if (game->type == FS_PACKAGE)
+		game->safety = FS_SAFETY_FULL;
+	
 	load_default_assets(game);
 
 	resolution = game_resolution(game);
@@ -1090,9 +1096,11 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	char*       key;
 	int         res_x;
 	int         res_y;
-	const char* sandbox_mode;
 	int         stack_top;
 	char*       value;
+#if defined(MINISPHERE_SPHERUN)
+	const char* sandbox_mode;
+#endif
 
 	stack_top = jsal_get_top();
 
@@ -1156,17 +1164,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	else
 		game->fullscreen = game->version < 2;
 
-	if (jsal_get_prop_string(-10, "sandbox") && jsal_is_string(-1)) {
-		sandbox_mode = jsal_get_string(-1);
-		game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
-			: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED
-			: FS_SAFETY_FULL;
-	}
-	else {
-		game->safety = FS_SAFETY_FULL;
-	}
-
-	if (jsal_get_prop_string(-11, "fileTypes") && jsal_is_object(-1) && !jsal_is_array(-1)) {
+	if (jsal_get_prop_string(-10, "fileTypes") && jsal_is_object(-1) && !jsal_is_array(-1)) {
 		game->file_type_map = vector_new(sizeof(char*));
 		jsal_push_new_iterator(-1);
 		while (jsal_next(-1)) {
@@ -1182,8 +1180,22 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	}
 
 	// load build metadata
-	if (jsal_get_prop_string(-12, "$COMPILER") && jsal_is_string(-1))
+	if (jsal_get_prop_string(-11, "$COMPILER") && jsal_is_string(-1))
 		game->compiler = strdup(jsal_get_string(-1));
+
+	// for SpheRun only: load dev configuration from manifest.  otherwise use defaults to avoid
+	// security issues in production.
+	game->safety = FS_SAFETY_FULL;
+#if defined(MINISPHERE_SPHERUN)
+	if (jsal_get_prop_string(-12, "development") && jsal_is_object(-1)) {
+		if (jsal_get_prop_string(-1, "sandbox") && jsal_is_string(-1)) {
+			sandbox_mode = jsal_get_string(-1);
+			game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
+				: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED
+				: FS_SAFETY_FULL;
+		}
+	}
+#endif
 
 	jsal_set_top(stack_top);
 	return true;

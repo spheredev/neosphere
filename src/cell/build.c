@@ -148,7 +148,7 @@ static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_
 static void    package_dir          (build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname);
 static void    push_require         (const char* module_id);
 static int     sort_targets_by_path (const void* p_a, const void* p_b);
-static bool    write_manifests      (build_t* build);
+static bool    write_manifests      (build_t* build, bool debugging);
 
 static build_t*     s_build;
 static unsigned int s_next_module_id = 1;
@@ -581,7 +581,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	// warnings are fine.
 	if (visor_num_errors(build->visor) == 0) {
 		clean_old_artifacts(build, true);
-		if (!write_manifests(build)) {
+		if (!write_manifests(build, want_debug)) {
 			fs_unlink(build->fs, "@/game.json");
 			fs_unlink(build->fs, "@/game.sgm");
 			goto finished;
@@ -1073,7 +1073,7 @@ on_error:
 }
 
 static bool
-write_manifests(build_t* build)
+write_manifests(build_t* build, bool debugging)
 {
 	int         api_level;
 	int         api_version = 2;
@@ -1187,17 +1187,27 @@ write_manifests(build_t* build)
 		return false;
 	}
 
-	if (jsal_get_prop_string(-8, "sandbox")) {
-		sandbox_mode = jsal_to_string(-1);
-		if (strcmp(sandbox_mode, "full") != 0
-			&& strcmp(sandbox_mode, "relaxed") != 0
-			&& strcmp(sandbox_mode, "none") != 0)
-		{
-			visor_error(build->visor, "'sandbox': must be one of 'full', 'relaxed', 'none'");
-			jsal_pop(8);
-			visor_end_op(build->visor);
-			return false;
+	jsal_get_prop_string(-8, "development");
+	if (jsal_is_object(-1)) {
+		if (jsal_get_prop_string(-1, "sandboxing")) {
+			sandbox_mode = jsal_to_string(-1);
+			if (strcmp(sandbox_mode, "full") != 0 && strcmp(sandbox_mode, "relaxed") != 0 && strcmp(sandbox_mode, "none") != 0) {
+				visor_error(build->visor, "'sandboxing': must be one of 'full', 'relaxed', 'none'");
+				jsal_pop(9);
+				visor_end_op(build->visor);
+				return false;
+			}
+			if (!debugging && strcmp(sandbox_mode, "full") != 0) {
+				visor_warn(build->visor, "'full' sandboxing will be enforced in production");
+			}
 		}
+		jsal_pop(1);
+	}
+	else {
+		visor_error(build->visor, "'development': must be a JSON object");
+		jsal_pop(8);
+		visor_end_op(build->visor);
+		return false;
 	}
 
 	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
