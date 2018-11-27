@@ -1188,7 +1188,7 @@ write_manifests(build_t* build, bool debugging)
 	}
 
 	jsal_get_prop_string(-8, "development");
-	if (jsal_is_object(-1)) {
+	if (jsal_is_object(-1) && !jsal_is_array(-1)) {
 		if (jsal_get_prop_string(-1, "sandboxing")) {
 			sandbox_mode = jsal_to_string(-1);
 			if (strcmp(sandbox_mode, "full") != 0 && strcmp(sandbox_mode, "relaxed") != 0 && strcmp(sandbox_mode, "none") != 0) {
@@ -1203,8 +1203,8 @@ write_manifests(build_t* build, bool debugging)
 		}
 		jsal_pop(1);
 	}
-	else {
-		visor_error(build->visor, "'development': must be a JSON object");
+	else if (!jsal_is_undefined(-1)) {
+		visor_error(build->visor, "'development': must be an object {}");
 		jsal_pop(8);
 		visor_end_op(build->visor);
 		return false;

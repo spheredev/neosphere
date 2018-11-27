@@ -87,26 +87,6 @@ needed, and their values can be accessed from JavaScript through `Sphere.Game`.
 
     Note: The resolution can be changed at runtime by calling screen.resize().
 
-"sandbox" [default: "full"]
-
-    Specifies the SphereFS sandbox enforcement mode.  This should have one of
-    the following values:
-
-        "full": Full enforcement.  This is the default.  Using an absolute
-                path is illegal and will throw an error, and all files and
-                directories except for those in `~/` (the game's save data
-                directory) are treated as read-only.
-
-        "relaxed": Allow read-only access to files named by an absolute path
-                   and enable full write access to `@/`.  This is useful during
-                   development but not recommended for production, particulary
-                   as your game may end up installed in a read-only location.
-
-        "none": NOT RECOMMENDED!  This disables the sandbox entirely and allows
-                write access to all files, including those named by an absolute
-                path and everything under `#/`.  Unless you know what you're
-                doing (and maybe even then), avoid this mode at all costs!
-
 "saveID" [default: none]
 
     A string usually of the form "authorID.titleID" uniquely identifying the
