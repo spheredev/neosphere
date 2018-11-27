@@ -74,23 +74,7 @@ class Query
 		this.lastOp = null;
 		for (let i = 0, len = this.opcodes.length; i < len; ++i) {
 			const opcode = this.opcodes[i];
-			const next = i + 1 < len ? this.opcodes[i + 1] : null;
-			if (opcode.type === 'reverse' && next !== null && next.type === 'reverse') {
-				// optimize away consecutive 'reverse' opcodes
-				++i;
-				continue;
-			}
-			const op = opcode.type === 'drop' ? new DropOp(opcode.a)
-				: opcode.type === 'over' ? new OverOp(opcode.a)
-				: opcode.type === 'plus' ? new PlusOp(opcode.a)
-				: opcode.type === 'reverse' ? new ReverseOp()
-				: opcode.type === 'select' ? new SelectOp(opcode.a)
-				: opcode.type === 'take' ? new TakeOp(opcode.a)
-				: opcode.type === 'thru' ? new ThruOp(opcode.a)
-				: opcode.type === 'uniq' ? new UniqOp(opcode.a)
-				: opcode.type === 'where' ? new WhereOp(opcode.a)
-				: opcode.type === 'without' ? new WithoutOp(opcode.a)
-				: undefined;
+			const op = new opcode.type(opcode.a);
 			if (this.lastOp !== null)
 				this.lastOp.nextOp = op;
 			this.lastOp = op;
@@ -229,7 +213,7 @@ class Query
 
 	drop(count)
 	{
-		return this.addOp$('drop', count);
+		return this.addOp$(DropOp, count);
 	}
 
 	find(predicate)
@@ -252,7 +236,7 @@ class Query
 		this.reduce((a, it) => iteratee(it));
 	}
 
-	group(keySelector)
+	groupBy(keySelector)
 	{
 		return this.run$(new GroupOp(keySelector));
 	}
@@ -264,12 +248,12 @@ class Query
 
 	over(selector)
 	{
-		return this.addOp$('over', selector);
+		return this.addOp$(OverOp, selector);
 	}
 
 	plus(...sources)
 	{
-		return this.addOp$('plus', sources);
+		return this.addOp$(PlusOp, sources);
 	}
 
 	random(count)
@@ -296,7 +280,7 @@ class Query
 
 	reverse()
 	{
-		return this.addOp$('reverse');
+		return this.addOp$(ReverseOp);
 	}
 
 	sample(count)
@@ -316,7 +300,7 @@ class Query
 
 	select(selector)
 	{
-		return this.addOp$('select', selector);
+		return this.addOp$(SelectOp, selector);
 	}
 
 	shuffle()
@@ -334,7 +318,7 @@ class Query
 
 	take(count)
 	{
-		return this.addOp$('take', count);
+		return this.addOp$(TakeOp, count);
 	}
 
 	tap(callback)
@@ -344,7 +328,7 @@ class Query
 
 	thru(mapper)
 	{
-		return this.addOp$('thru', mapper);
+		return this.addOp$(TakeOp, mapper);
 	}
 
 	toArray()
@@ -354,7 +338,7 @@ class Query
 
 	uniq(keySelector = IdentityFunction)
 	{
-		return this.addOp$('uniq', keySelector);
+		return this.addOp$(UniqOp, keySelector);
 	}
 
 	update(selector)
@@ -364,12 +348,12 @@ class Query
 
 	where(predicate)
 	{
-		return this.addOp$('where', predicate);
+		return this.addOp$(WhereOp, predicate);
 	}
 
 	without(...values)
 	{
-		return this.addOp$('without', values.flat());
+		return this.addOp$(WithoutOp, values.flat());
 	}
 }
 
@@ -681,21 +665,6 @@ class RemoveOp extends QueryOp
 	}
 }
 
-class SelectOp extends QueryOp
-{
-	constructor(selector)
-	{
-		super();
-		this.selector = selector;
-	}
-
-	push(value, source, key)
-	{
-		value = this.selector(value, key);
-		return this.nextOp.push(value, source, key);
-	}
-}
-
 class ReverseOp extends ThruOp
 {
 	constructor()
@@ -734,6 +703,21 @@ class ReverseOp extends ThruOp
 	{
 		this.values.push(value);
 		return true;
+	}
+}
+
+class SelectOp extends QueryOp
+{
+	constructor(selector)
+	{
+		super();
+		this.selector = selector;
+	}
+
+	push(value, source, key)
+	{
+		value = this.selector(value, key);
+		return this.nextOp.push(value, source, key);
 	}
 }
 
@@ -784,27 +768,6 @@ class ToArrayOp extends ThruOp
 	}
 }
 
-class UpdateOp extends QueryOp
-{
-	constructor(selector)
-	{
-		super();
-		this.selector = selector;
-	}
-
-	initialize(sources)
-	{
-		if (sources === undefined)
-			throw new TypeError("update() cannot be used with transformations");
-	}
-
-	push(value, source, key)
-	{
-		source[key] = this.selector(value, key);
-		return true;
-	}
-}
-
 class UniqOp extends QueryOp
 {
 	constructor(keySelector)
@@ -826,6 +789,27 @@ class UniqOp extends QueryOp
 			this.keys.add(uniqKey);
 			return this.nextOp.push(value, source, key);
 		}
+		return true;
+	}
+}
+
+class UpdateOp extends QueryOp
+{
+	constructor(selector)
+	{
+		super();
+		this.selector = selector;
+	}
+
+	initialize(sources)
+	{
+		if (sources === undefined)
+			throw new TypeError("update() cannot be used with transformations");
+	}
+
+	push(value, source, key)
+	{
+		source[key] = this.selector(value, key);
 		return true;
 	}
 }

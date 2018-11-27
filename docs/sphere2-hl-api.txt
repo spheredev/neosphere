@@ -127,14 +127,14 @@ Query#forEach(callback);
     the way you would loop over an array using arrayObj.forEach() in standard
     JavaScript.
 
-Query#group(keySelector);
+Query#groupBy(keySelector);
 
     Runs the query and returns an object containing all query results grouped
     by key.  `keySelector` should return a string to use as the key for each
     group of values.  To illustrate how this works:
 
         from([ 1, 2, 3, "a", "b" ])
-            .group(it => typeof it);
+            .groupBy(it => typeof it);
 		// returns: { number: [ 1, 2, 3 ], string: [ "a", "b" ] }
 
 Query#last([mapper]);
