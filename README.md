@@ -4,11 +4,11 @@ miniSphere
 [![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)](https://travis-ci.org/fatcerberus/minisphere)
 [![Release](https://img.shields.io/github/release/fatcerberus/minisphere.svg)](https://github.com/fatcerberus/minisphere/releases/latest)
 
-**miniSphere** is a lightweight JavaScript-powered game engine and the official
-successor to Chad Austin's original *Sphere* game engine, written from the
-ground up in C.  [Allegro 5](http://liballeg.org) is used on the backend, and
-JavaScript support is provided by [ChakraCore](https://github.com/Microsoft/ChakraCore),
-the same JavaScript engine that powers Microsoft Edge.
+**miniSphere** is a lightweight, fully sandboxed, JavaScript-powered game
+engine and the de facto successor to Chad Austin's original *Sphere* engine,
+written from the ground up in C.  [Allegro 5](http://liballeg.org) holds up the
+backend, and JavaScript support is provided by [ChakraCore](https://github.com/Microsoft/ChakraCore),
+the same high-performance JavaScript engine that powers Microsoft Edge.
 
 Sphere games are written in JavaScript, which gives game developers a great
 deal of power.  The API is also designed to be user-friendly and reasonably

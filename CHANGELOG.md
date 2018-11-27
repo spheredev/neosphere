@@ -45,7 +45,7 @@ v5.3.0 - TBD
   `playSound`, `tween`) which sometimes clashed with game code wanting to use
   those names.
 * Fixes a crash where calling `MapEngine` or entering a `FlipScreen` loop
-  directly from the main class constructor would cause a segfault upon closing
+  directly from the main class constructor can cause a segfault upon closing
   the window.
 * Fixes an issue where `import` treats `.js` files as CommonJS instead of ESM.
 * Fixes an issue where `Sphere.Game` can be modified by JS code at runtime.
