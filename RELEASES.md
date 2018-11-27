@@ -35,8 +35,8 @@ miniSphere 5.3
   sandboxing will be enforced in production.
 
 * It is no longer possible to run plain `.js` or `.mjs` scripts from the
-  command line using the `minisphere` command.  These are run with a relaxed
-  sandbox by design, and so are a potential end-user security issue.
+  command line using the `minisphere` command.  These are run with the SphereFS
+  sandbox disabled--by design--and so are a potential end-user security issue.
 
 * `SSj.assert` has been added which lets you perform sanity checks during
   development without impacting performance in production.  Expensive checks

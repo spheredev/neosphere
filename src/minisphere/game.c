@@ -145,7 +145,7 @@ game_open(const char* game_path)
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
-		game->safety = FS_SAFETY_RELAXED;
+		game->safety = FS_SAFETY_NONE;
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
 		// a bare script transparent to the rest of the engine, keeping things simple.
