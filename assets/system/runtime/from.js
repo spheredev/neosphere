@@ -328,7 +328,7 @@ class Query
 
 	thru(mapper)
 	{
-		return this.addOp$(TakeOp, mapper);
+		return this.addOp$(ThruOp, mapper);
 	}
 
 	toArray()
