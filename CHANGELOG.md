@@ -11,7 +11,8 @@ v5.3.0 - TBD
 * Adds a new `Tween` standard module for handling simple animations.
 * Adds `SSj.assert` for testing assumptions while debugging.  The assertions
   are ignored in production.
-* Adds `JSON.fromFile`, for loading JSON files without using `require`.
+* Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
+  using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.
 * Adds a `cell init` command, for initializing a new Sphere project directory
   directly from the command line.
@@ -31,13 +32,14 @@ v5.3.0 - TBD
 * Improves the performance of `from()` queries with a brand-new version of
   `from.js` rewritten from the ground up with performance in mind.
 * Improves command-line semantics: `.js` files run from the command line are
-  now executed as ES modules rather than traditional scripts, allowing them to
+  now executed as ES Modules rather than traditional scripts, allowing them to
   use `import`.
 * Improves performance greatly for code using the `Transform#matrix` property.
 * Improves first-access performance of `Sphere.Game` by avoiding an unnecessary
   JSON round-trip conversion.
 * Improves Cell's command-line syntax.  Many options have been replaced with
   easy-to-remember commands like `cell build` or `cell pack`.
+* Removes support for loading ES Module scripts using `require`.
 * Removes the `assert` and `test` modules from the standard library.
 * Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,
   `playSound`, `tween`) which sometimes clashed with game code wanting to use

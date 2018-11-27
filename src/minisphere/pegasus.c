@@ -984,9 +984,8 @@ pegasus_try_require(const char* filename, bool node_compatible)
 	dir_path = path_strip(path_dup(file_path));
 	file_type = game_file_type(g_game, filename);
 
-	// always evaluate `javascript-module` file type as ESM code
-	is_esm_module = (!node_compatible && strcmp(file_type, "data/json") != 0)
-		|| strcmp(file_type, "script/es-module") == 0;
+	// never evaluate JSON as ESM, let the CommonJS loader deal with it
+	is_esm_module = !node_compatible && strcmp(file_type, "data/json") != 0;
 	if (is_esm_module) {
 		source = game_read_file(g_game, filename, &source_size);
 		code_string = lstr_from_utf8(source, source_size, true);

@@ -107,7 +107,7 @@ const char* const DEFAULT_TYPE_MAP[] =
 {
 	".js",   "script/javascript",
 	".json", "data/json",
-	".mjs",  "script/es-module",
+	".mjs",  "script/javascript",
 	NULL, NULL
 };
 

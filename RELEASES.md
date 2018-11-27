@@ -16,22 +16,43 @@ miniSphere 5.3
   function.  As always, refer to the Sphere Runtime API documentation to get
   up to date on current API usage.
 
+* `import` statements are now always treated as ES Module imports regardless of
+  filename extension.  If your game or Cellscript needs to load CommonJS
+  modules and is now doing so using `import`, you will need to switch to using
+  `require()`.
+
+* `require` will no longer load ES Module scripts.  `require` is now provided
+  only for compatibility with a limited subset of modules written for Node.js;
+  new code should always use `import` (note that `require` is not covered by
+  Sphere v2 API versioning guarantees).
+
+* To improve end-user security and ensure the SPK package format is not a
+  malware vector, it is no longer possible to relax the SphereFS sandbox in
+  production.  The `sandboxing` manifest field has been moved into a special
+  `development` namespace which is only honored by SpheRun when running a game
+  from a local directory.  When using a relaxed or disabled sandbox during
+  development, Cell will notify you when building for release that full
+  sandboxing will be enforced in production.
+
+* It is no longer possible to run plain `.js` or `.mjs` scripts from the
+  command line using the `minisphere` command.  These are run with a relaxed
+  sandbox by design, and so are a potential end-user security issue.
+
+* `SSj.assert` has been added which lets you perform sanity checks during
+  development without impacting performance in production.  Expensive checks
+  can be wrapped in an arrow function which will only be called when running
+  the game using SpheRun.
+
 * The obsolete `assert` and `test` modules have been removed from the Sphere
   Runtime in preparation for an upcoming API freeze in miniSphere 6.0.  These
-  modules were written based on old CommonJS specifications and the problems
-  they were meant to solve deserve some thought before committing to a
-  solution.
+  modules were written based on old CommonJS specifications and don't really
+  have a place in a modern JavaScript codebase.
 
 * The undocumented scenelets (`fadeTo`, `tween`, `pause`, `call`) that were
   previously registered by default by the `scene` module have been removed.
   These were undocumented and meant for internal use only.  This change will be
   backported, so if your game happened to be using one of the scenelets listed
   above, you will need to implement the equivalent functionality yourself.
-
-* `import` statements are now always treated as ES Module imports regardless of
-  filename extension.  If your game or Cellscript needs to load CommonJS
-  modules and is now doing so using `import`, you will need to switch to using
-  `require()`.
 
 * `DirectoryStream` objects can now be initialized in recursive mode.  In this
   mode, instead of listing subdirectories along with files, it will recursively
