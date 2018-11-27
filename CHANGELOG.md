@@ -25,6 +25,9 @@ v5.3.0 - TBD
 * Adds API support for the Back and Forward buttons found on most modern mice.
 * Adds `recursive` option for DirectoryStream, to list files in subdirectories.
 * Adds `apiVersion` and `apiLevel` to the example Cellscript.
+* Improves end-user security by not allowing the SphereFS sandbox to be relaxed
+  in production.
+* Improves end-user security by not executing bare scripts except with SpheRun.
 * Improves the performance of `from()` queries with a brand-new version of
   `from.js` rewritten from the ground up with performance in mind.
 * Improves command-line semantics: `.js` files run from the command line are
