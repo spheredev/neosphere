@@ -1198,7 +1198,7 @@ write_manifests(build_t* build, bool debugging)
 				return false;
 			}
 			if (!debugging && strcmp(sandbox_mode, "full") != 0) {
-				visor_warn(build->visor, "'full' sandboxing will be enforced in production");
+				visor_print(build->visor, "note: 'full' sandboxing is enforced in production");
 			}
 		}
 		jsal_pop(1);

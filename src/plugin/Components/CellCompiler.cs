@@ -51,15 +51,16 @@ namespace Sphere.Gdk.Components
             return true;
         }
 
-        public async Task<bool> Build(IProject project, string outPath, IConsole con)
+        public async Task<bool> Build(IProject project, string outPath, bool debuggable, IConsole con)
         {
-            string cellOptions = string.Format(@"--in-dir ""{0}"" --out-dir ""{1}"" --debug",
+            string cellOptions = string.Format(@"--in-dir ""{0}"" --out-dir ""{1}"" {2}",
                 project.RootPath.Replace(Path.DirectorySeparatorChar, '/'),
-                outPath.Replace(Path.DirectorySeparatorChar, '/'));
+                outPath.Replace(Path.DirectorySeparatorChar, '/'),
+                debuggable ? "--debug" : "--release");
             return await RunCell(cellOptions, con);
         }
 
-        public async Task<bool> Package(IProject project, string fileName, IConsole con)
+        public async Task<bool> Package(IProject project, string fileName, bool debuggable, IConsole con)
         {
             var stagingPath = Path.Combine(project.RootPath, project.BuildPath);
             string cellOptions = string.Format(@"pack --in-dir ""{0}"" --out-dir ""{1}"" {2} ""{3}""",

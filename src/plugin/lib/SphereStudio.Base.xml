@@ -248,12 +248,13 @@
             <param name="con">An IConsole where project prep progress can be printed.</param>
             <returns>true if the project was successfully prepared.</returns>
         </member>
-        <member name="M:SphereStudio.Base.ICompiler.Build(SphereStudio.Base.IProject,System.String,SphereStudio.Base.IConsole)">
+        <member name="M:SphereStudio.Base.ICompiler.Build(SphereStudio.Base.IProject,System.String,System.Boolean,SphereStudio.Base.IConsole)">
             <summary>
             Builds a game distribution from a Sphere Studio project.
             </summary>
             <param name="project">The project to build.</param>
             <param name="outPath">The pathname of the directory where the distribution will be created.</param>
+            <param name="debuggable">'true' the project should be built with debugging information.</param>
             <param name="con">An IConsole where compiler output will be sent.</param>
             <returns>'true' if compilation succeeded, false if not.</returns>
         </member>
@@ -268,12 +269,13 @@
             SaveFileDialog.
             </summary>
         </member>
-        <member name="M:SphereStudio.Base.IPackager.Package(SphereStudio.Base.IProject,System.String,SphereStudio.Base.IConsole)">
+        <member name="M:SphereStudio.Base.IPackager.Package(SphereStudio.Base.IProject,System.String,System.Boolean,SphereStudio.Base.IConsole)">
             <summary>
             Builds a game package from a Sphere Studio project.
             </summary>
             <param name="project">The project to build.</param>
             <param name="fileName">The pathname of the package. If this file exists, it will be overwritten.</param>
+            <param name="debuggable">'true' if debugging info should be included in the package.</param>
             <param name="con">An IConsole where compiler output will be sent.</param>
             <returns>'true' if packaging succeeded, false if not.</returns>
         </member>
@@ -1798,27 +1800,27 @@
         </member>
         <member name="F:SphereStudio.Versioning.Name">
             <summary>
-            The name of the IDE, "Sphere Studio".
+            The name of the IDE used for branding.
             </summary>
         </member>
         <member name="F:SphereStudio.Versioning.Author">
             <summary>
-            The name of the IDE author or supporting company.
+            The name of the author used for branding.
             </summary>
         </member>
         <member name="F:SphereStudio.Versioning.Version">
             <summary>
-            The version number of the IDE.
+            The version number of the software.
             </summary>
         </member>
         <member name="F:SphereStudio.Versioning.Copyright">
             <summary>
-            A string indicating the copyright holder and date of copyright.
+            A string indicating the copyright holder and year(s) of copyright.
             </summary>
         </member>
         <member name="F:SphereStudio.Versioning.Credits">
             <summary>
-            A short description of the IDE along with a list of contributors.
+            A short description of the software along with a list of contributors.
             </summary>
         </member>
     </members>
