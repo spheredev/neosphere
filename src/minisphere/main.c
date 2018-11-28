@@ -140,8 +140,20 @@ main(int argc, char* argv[])
 	ssj_mode_t           ssj_mode;
 	int                  use_frameskip;
 	int                  use_verbosity;
+#if defined(_WIN32)
+	HANDLE               h_stdout;
+	DWORD                handle_mode;
+#endif
 
 	int i;
+
+#if defined(_WIN32)
+	// enable ANSI colors (note: requires Windows 10+)
+	h_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	GetConsoleMode(h_stdout, &handle_mode);
+	handle_mode |= 0x0004;  // ENABLE_VIRTUAL_TERMINAL_PROCESSING
+	SetConsoleMode(h_stdout, handle_mode);
+#endif
 
 	// parse the command line
 	if (parse_command_line(argc, argv, &s_game_path,

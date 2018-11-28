@@ -35,6 +35,7 @@ v5.3.0 - TBD
   JSON round-trip conversion.
 * Improves Cell's command-line syntax.  Many options have been replaced with
   easy-to-remember commands like `cell build` or `cell pack`.
+* Improves logging by adding fancy ANSI coloration to SpheRun's console output.
 * Removes support for loading ES Module scripts using `require`.
 * Removes the `assert` and `test` modules from the standard library.
 * Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,

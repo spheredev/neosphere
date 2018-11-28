@@ -297,9 +297,9 @@ debugger_log(const char* text, ki_log_op_t op, bool use_console)
 	ki_message_t* notify;
 
 	if (use_console) {
-		heading = op == KI_LOG_TRACE ? "trace"
-			: "log";
-		console_log(0, "%s: %s", heading, text);
+		heading = op == KI_LOG_TRACE ? "\33[32mtrace"
+			: "\33[34;1m  log";
+		console_log(0, "%s:\33[m %s", heading, text);
 	}
 	if (s_socket != NULL) {
 		notify = ki_message_new(KI_NFY);

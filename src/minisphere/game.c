@@ -1180,7 +1180,7 @@ on_error:
 static bool
 resolve_pathname(const game_t* game, const char* pathname, path_t* *out_path, enum fs_type *out_fs_type)
 {
-	// the path resolver is the core of SphereFS. it handles all canonization of paths
+	// the path resolver is the core of SphereFS.  it handles all canonization of paths
 	// so that the game doesn't have to care whether it's running from a local directory,
 	// Sphere SPK package, etc.
 
@@ -1196,8 +1196,8 @@ resolve_pathname(const game_t* game, const char* pathname, path_t* *out_path, en
 
 	// process SphereFS path
 	if (strlen(pathname) >= 2 && memcmp(pathname, "@/", 2) == 0) {
-		// the @/ prefix is an alias for the game directory.  it is used in contexts
-		// where a bare SphereFS filename may be ambiguous, e.g. in a require() call.
+		// the @/ prefix is an alias for the game directory.  it is used in contexts where
+		// a bare SphereFS filename may be ambiguous, e.g. in an `import` statement.
 		if (game == NULL)
 			goto on_error;
 		*out_path = path_new(&pathname[2]);
