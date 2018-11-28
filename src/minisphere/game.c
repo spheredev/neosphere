@@ -104,6 +104,15 @@ static bool      try_load_s2gm       (game_t* game, const lstring_t* json_text);
 
 static unsigned int s_next_game_id = 1;
 
+static
+const char* const DEFAULT_TYPE_MAP[] =
+{
+	".js",   "script/javascript",
+	".json", "data/json",
+	".mjs",  "script/javascript",
+	NULL, NULL
+};
+
 game_t*
 game_open(const char* game_path)
 {
@@ -400,6 +409,57 @@ game_file_exists(const game_t* it, const char* filename)
 on_error:
 	path_free(path);
 	return false;
+}
+
+const char*
+game_file_type(const game_t* it, const char* filename)
+{
+	const char* extension;
+	bool        in_system;
+	const char* map_from;
+	const char* map_to;
+	path_t*     path;
+	const char* type_name = NULL;
+
+	iter_t iter;
+	int    i;
+
+	path = path_new(filename);
+	in_system = path_num_hops(path) > 0 && path_hop_is(path, 0, "#");
+	extension = path_extension(path);
+	if (!path_is_file(path)) {
+		type_name = "directory";
+		goto finished;
+	}
+	else if (it->file_type_map != NULL && !in_system) {
+		iter = vector_enum(it->file_type_map);
+		while (iter_next(&iter)) {
+			map_from = *(const char**)iter.ptr;
+			iter_next(&iter);
+			map_to = *(const char**)iter.ptr;
+			if (strcasecmp(extension, map_from) == 0) {
+				type_name = map_to;
+				goto finished;  // found a mapping, short circuit
+			}
+		}
+	}
+
+	// no fileTypes table or file is in `#/`, check default mappings
+	i = 0;
+	while ((map_from = DEFAULT_TYPE_MAP[i++]) != NULL) {
+		map_to = DEFAULT_TYPE_MAP[i++];
+		if (strcasecmp(extension, map_from) == 0) {
+			type_name = map_to;
+			goto finished;  // found a mapping, short circuit
+		}
+	}
+
+	// no default mapping either, so give up
+	type_name = "unknown";
+
+finished:
+	path_free(path);
+	return type_name;
 }
 
 path_t*
@@ -1045,10 +1105,12 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	//       complicated than the game.sgm loader.
 
 	js_ref_t*   error_ref;
+	char*       key;
 	const char* res_string;
 	int         res_x;
 	int         res_y;
 	int         stack_top;
+	char*       value;
 #if defined(MINISPHERE_SPHERUN)
 	const char* sandbox_mode;
 #endif
@@ -1118,15 +1180,30 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	else
 		game->fullscreen = game->version < 2;
 
+	if (jsal_get_prop_string(-10, "fileTypes") && jsal_is_object(-1) && !jsal_is_array(-1)) {
+		game->file_type_map = vector_new(sizeof(char*));
+		jsal_push_new_iterator(-1);
+		while (jsal_next(-1)) {
+			jsal_dup(-1);
+			jsal_get_prop(-4);
+			key = strdup(jsal_require_string(-2));
+			value = strdup(jsal_require_string(-1));
+			vector_push(game->file_type_map, &key);
+			vector_push(game->file_type_map, &value);
+			jsal_pop(2);
+		}
+		jsal_pop(1);
+	}
+
 	// load build metadata
-	if (jsal_get_prop_string(-10, "$COMPILER") && jsal_is_string(-1))
+	if (jsal_get_prop_string(-11, "$COMPILER") && jsal_is_string(-1))
 		game->compiler = strdup(jsal_get_string(-1));
 
 	// for SpheRun only: load dev configuration from manifest.  otherwise use defaults to avoid
 	// security issues in production.
 	game->safety = FS_SAFETY_FULL;
 #if defined(MINISPHERE_SPHERUN)
-	if (jsal_get_prop_string(-11, "development") && jsal_is_object(-1)) {
+	if (jsal_get_prop_string(-12, "development") && jsal_is_object(-1)) {
 		if (jsal_get_prop_string(-1, "emptyPromises") && jsal_is_boolean(-1))
 			game->empty_promises = jsal_get_boolean(-1);
 		if (jsal_get_prop_string(-2, "sandbox") && jsal_is_string(-1)) {
