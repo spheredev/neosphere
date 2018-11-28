@@ -353,8 +353,25 @@ class Query
 
 	without(...values)
 	{
-		return this.addOp$(WithoutOp, values.flat());
+		return this.addOp$(WithoutOp, flatten(values));
 	}
+}
+
+function flatten(array)
+{
+	const flattened = [];
+	let j = 0;
+	for (let i = 0, len = array.length; i < len; ++i) {
+		const item = array[i];
+		if (typeof item === 'object' && typeof item.length === 'number') {
+			for (let i = 0, len = item.length; i < len; ++i)
+				flattened[j++] = item[i];
+		}
+		else {
+			flattened[j++] = item;
+		}
+	}
+	return flattened;
 }
 
 class QueryOp
