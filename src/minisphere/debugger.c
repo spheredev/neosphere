@@ -298,6 +298,7 @@ debugger_log(const char* text, ki_log_op_t op, bool use_console)
 
 	if (use_console) {
 		heading = op == KI_LOG_TRACE ? "\33[32mtrace"
+			: op == KI_LOG_WARN ? "\33[31;1m WARN"
 			: "\33[34;1m  log";
 		console_log(0, "%s:\33[m %s", heading, text);
 	}

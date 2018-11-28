@@ -57,6 +57,7 @@ typedef
 enum ki_log_op
 {
 	KI_LOG_NORMAL,
+	KI_LOG_WARN,
 	KI_LOG_TRACE,
 } ki_log_op_t;
 

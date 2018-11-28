@@ -472,6 +472,7 @@ static void js_VertexList_finalize      (void* host_ptr);
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
 static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool node_compatible);
+static void      handle_deprecation          (const char* name, int api_level, int line_number);
 static bool      handle_main_event_loop      (int num_args, bool is_ctor, intptr_t magic);
 static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
@@ -502,6 +503,8 @@ static js_ref_t* s_key_value;
 static js_ref_t* s_key_x;
 static js_ref_t* s_key_y;
 static js_ref_t* s_key_z;
+
+#define DEPRECATE(name, level) handle_deprecation(name, level, __LINE__)
 
 void
 pegasus_init(int api_level)
@@ -1247,6 +1250,23 @@ find_module_file(const char* id, const char* origin, const char* sys_origin, boo
 	}
 
 	return NULL;
+}
+
+static void
+handle_deprecation(const char* name, int api_level, int line_number)
+{
+	int   game_level;
+	char* text;
+
+	game_level = game_api_level(g_game);
+	if (game_level == api_level) {
+		text = strnewf("\33[33;1m%s\33[m is deprecated and will be removed in \33[33;1mAPI %d\33[m", name, api_level + 1);
+		debugger_log(text, KI_LOG_WARN, true);
+		free(text);
+	}
+	else if (game_level > api_level) {
+		jsal_error(JS_REF_ERROR, "'%s' was removed in API level %d", name, api_level);
+	}
 }
 
 static bool
@@ -4792,6 +4812,8 @@ js_Surface_toTexture(int num_args, bool is_ctor, intptr_t magic)
 	image_t* image;
 	image_t* new_image;
 
+	DEPRECATE("Surface#toTexture", 2);
+	
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
