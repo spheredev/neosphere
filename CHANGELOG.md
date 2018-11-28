@@ -17,10 +17,6 @@ v5.3.0 - TBD
 * Adds a `cell init` command, for initializing a new Sphere project directory
   directly from the command line.
 * Adds support for `-h` as an alias for `--help` for all command-line tools.
-* Adds a `fileTypes` manifest field which allows a game to tell the engine how
-  to load different types of files based on their extension; currently this is
-  used only for JavaScript files but may be expanded in the future.
-* Adds `FS.typeOf` API to get the `fileTypes` mapping for a specified file.
 * Adds `FS.directoryOf`, `FS.extensionOf` and `FS.fileNameOf` APIs for taking
   apart path strings.
 * Adds API support for the Back and Forward buttons found on most modern mice.

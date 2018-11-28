@@ -284,7 +284,6 @@ static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr
 static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JSON_fromFile                 (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_typeOf                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_dispose            (int num_args, bool is_ctor, intptr_t magic);
@@ -874,7 +873,6 @@ pegasus_init(int api_level)
 		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
 		api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
 		api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
-		api_define_function("FS", "typeOf", js_FS_typeOf, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
@@ -971,21 +969,19 @@ pegasus_try_require(const char* filename, bool node_compatible)
 	//       return false and the error will be left on top of the stack for the caller to deal
 	//       with.
 
-	lstring_t*  code_string;
-	path_t*     dir_path;
-	path_t*     file_path;
-	const char* file_type;
-	bool        is_esm_module;
-	bool        is_module_loaded;
-	size_t      source_size;
-	char*       source;
+	lstring_t* code_string;
+	path_t*    dir_path;
+	path_t*    file_path;
+	bool       is_esm_module;
+	bool       is_module_loaded;
+	size_t     source_size;
+	char*      source;
 
 	file_path = path_new(filename);
 	dir_path = path_strip(path_dup(file_path));
-	file_type = game_file_type(g_game, filename);
 
 	// never evaluate JSON as ESM, let the CommonJS loader deal with it
-	is_esm_module = !node_compatible && strcmp(file_type, "data/json") != 0;
+	is_esm_module = !node_compatible && !path_extension_is(file_path, ".json");
 	if (is_esm_module) {
 		source = game_read_file(g_game, filename, &source_size);
 		code_string = lstr_from_utf8(source, source_size, true);
@@ -1037,7 +1033,7 @@ pegasus_try_require(const char* filename, bool node_compatible)
 	jsal_put_prop_string(-2, filename);
 	jsal_pop(2);
 
-	if (strcmp(file_type, "data/json") == 0) {
+	if (path_extension_is(file_path, ".json")) {
 		// JSON file, decode to JavaScript object
 		jsal_push_lstring_t(code_string);
 		lstr_free(code_string);
@@ -2332,28 +2328,6 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	if (!game_rename(g_game, old_pathname, new_pathname))
 		jsal_error(JS_ERROR, "Couldn't rename '%s' to '%s'", old_pathname, new_pathname);
 	return false;
-}
-
-static bool
-js_FS_typeOf(int num_args, bool is_ctor, intptr_t magic)
-{
-	path_t*     path;
-	const char* pathname;
-	const char* type_name;
-
-	pathname = jsal_require_pathname(0, NULL, false, false);
-
-	path = path_new(pathname);
-	if (path_is_file(path)) {
-		type_name = game_file_type(g_game, pathname);
-		jsal_push_string(type_name);
-		path_free(path);
-		return true;
-	}
-	else {
-		path_free(path);
-		jsal_error(JS_TYPE_ERROR, "'FS.typeOf' cannot be called on a directory");
-	}
 }
 
 static bool
