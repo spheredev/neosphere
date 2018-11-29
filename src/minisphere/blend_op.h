@@ -39,24 +39,25 @@ typedef
 enum blend_type
 {
 	BLEND_OP_ADD,
-	BLEND_OP_S_MINUS_T,
-	BLEND_OP_T_MINUS_S,
+	BLEND_OP_SUB,
+	BLEND_OP_SUB_INV,
 	BLEND_OP_MAX,
 } blend_type_t;
 
 typedef
 enum blend_factor
 {
+	BLEND_ALPHA,
+	BLEND_CONST,
+	BLEND_DEST,
+	BLEND_INV_ALPHA,
+	BLEND_INV_CONST,
+	BLEND_INV_DEST,
+	BLEND_INV_SRC,
 	BLEND_ONE,
-	BLEND_ONE_M_A,
-	BLEND_ONE_M_C,
-	BLEND_ONE_M_S,
-	BLEND_ONE_M_T,
-	BLEND_A,
-	BLEND_C,
-	BLEND_S,
-	BLEND_T,
+	BLEND_SRC,
 	BLEND_ZERO,
+	BLEND_FACTOR_MAX,
 } blend_factor_t;
 
 blend_op_t* blend_op_new_asym (blend_type_t color_op, blend_factor_t sfc, blend_factor_t tfc, blend_type_t alpha_op, blend_factor_t sfa, blend_factor_t tfa);

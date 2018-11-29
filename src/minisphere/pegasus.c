@@ -63,6 +63,27 @@ enum file_op
 };
 
 static const
+struct blender
+{
+	const char*    name;
+	blend_type_t   color_op;
+	blend_factor_t color_sf;
+	blend_factor_t color_tf;
+	blend_type_t   alpha_op;
+	blend_factor_t alpha_sf;
+	blend_factor_t alpha_tf;
+}
+BLENDERS[] =
+{
+	{ "Default",  BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA, BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA },
+	{ "Add",      BLEND_OP_ADD, BLEND_ONE,   BLEND_ONE,       BLEND_OP_ADD, BLEND_ONE,   BLEND_ONE },
+	{ "Multiply", BLEND_OP_ADD, BLEND_DEST,  BLEND_ZERO,      BLEND_OP_ADD, BLEND_DEST,  BLEND_ZERO },
+	{ "Replace",  BLEND_OP_ADD, BLEND_ONE,   BLEND_ZERO,      BLEND_OP_ADD, BLEND_ONE,   BLEND_ZERO },
+	{ "Subtract", BLEND_OP_SUB, BLEND_ONE,   BLEND_ONE,       BLEND_OP_SUB, BLEND_ONE,   BLEND_ONE },
+	{ NULL },
+};
+
+static const
 struct x11_color
 {
 	int         api_level;
@@ -240,9 +261,9 @@ static bool js_Sphere_restart                (int num_args, bool is_ctor, intptr
 static bool js_Sphere_setResolution          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_shutDown               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_sleep                  (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Blender_get_Default           (int num_args, bool is_ctor, intptr_t magic);
-static bool js_new_Blender                   (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Color_get_Color               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_BlendOp_get_Default           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_BlendOp                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_get_Default             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Color_is                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Color_mix                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Color_of                      (int num_args, bool is_ctor, intptr_t magic);
@@ -412,11 +433,11 @@ static bool js_SoundStream_pause             (int num_args, bool is_ctor, intptr
 static bool js_SoundStream_stop              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SoundStream_write             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_Screen            (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Surface_get_blender           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_get_blendOp           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_height            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_transform         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_width             (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Surface_set_blender           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_set_blendOp           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_set_transform         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_clipTo                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_toTexture             (int num_args, bool is_ctor, intptr_t magic);
@@ -449,14 +470,11 @@ static bool js_new_VertexList                (int num_args, bool is_ctor, intptr
 static bool js_Z_deflate                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Z_inflate                     (int num_args, bool is_ctor, intptr_t magic);
 
-static void js_Blender_finalize         (void* host_ptr);
-static void js_Color_finalize           (void* host_ptr);
+static void js_BlendOp_finalize         (void* host_ptr);
 static void js_DirectoryStream_finalize (void* host_ptr);
 static void js_FileStream_finalize      (void* host_ptr);
 static void js_Font_finalize            (void* host_ptr);
 static void js_IndexList_finalize       (void* host_ptr);
-static void js_JobToken_finalize        (void* host_ptr);
-static void js_Joystick_finalize        (void* host_ptr);
 static void js_Mixer_finalize           (void* host_ptr);
 static void js_Model_finalize           (void* host_ptr);
 static void js_RNG_finalize             (void* host_ptr);
@@ -486,14 +504,13 @@ static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
 static path_t*   load_package_json           (const char* filename);
 
-static int         s_api_level;
-static int         s_api_level_nominal;
-static blend_op_t* s_def_blend_op;
-static mixer_t*    s_def_mixer;
-static int         s_frame_rate = 60;
-static int         s_next_module_id = 1;
-static js_ref_t*   s_screen_obj;
-static bool        s_shutting_down = false;
+static int            s_api_level;
+static int            s_api_level_nominal;
+static mixer_t*       s_def_mixer;
+static int            s_frame_rate = 60;
+static int            s_next_module_id = 1;
+static js_ref_t*      s_screen_obj;
+static bool           s_shutting_down = false;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
@@ -514,13 +531,13 @@ static js_ref_t* s_key_z;
 void
 pegasus_init(int api_level)
 {
-	const struct x11_color* p;
+	const struct blender*   p_blender;
+	const struct x11_color* p_color;
 
 	console_log(1, "initializing Sphere v%d L%d API", API_VERSION, api_level);
 
 	s_api_level = api_level;
 
-	s_def_blend_op = blend_op_new_sym(BLEND_OP_ADD, BLEND_A, BLEND_ONE_M_A);
 	s_def_mixer = mixer_new(44100, 16, 2);
 
 	// only advertise highest stable API level; games must test for experimental
@@ -574,7 +591,7 @@ pegasus_init(int api_level)
 	api_define_function("Sphere", "setResolution", js_Sphere_setResolution, 0);
 	api_define_function("Sphere", "shutDown", js_Sphere_shutDown, 0);
 	api_define_function("Sphere", "sleep", js_Sphere_sleep, 0);
-	api_define_class("Color", PEGASUS_COLOR, js_new_Color, js_Color_finalize, 0);
+	api_define_class("Color", PEGASUS_COLOR, js_new_Color, NULL, 0);
 	api_define_function("Color", "is", js_Color_is, 0);
 	api_define_function("Color", "mix", js_Color_mix, 0);
 	api_define_function("Color", "of", js_Color_of, 0);
@@ -628,9 +645,9 @@ pegasus_init(int api_level)
 	api_define_function("FS", "writeFile", js_FS_writeFile, 0);
 	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize, 0);
 	api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
-	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, js_JobToken_finalize, 0);
+	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, NULL, 0);
 	api_define_method("JobToken", "cancel", js_JobToken_cancel, 0);
-	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, js_Joystick_finalize, 0);
+	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, NULL, 0);
 	api_define_static_prop("Joystick", "Null", js_Joystick_get_Null, NULL);
 	api_define_function("Joystick", "getDevices", js_Joystick_getDevices, 0);
 	api_define_property("Joystick", "name", false, js_Joystick_get_name, NULL);
@@ -879,8 +896,7 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
-		api_define_class("Blender", PEGASUS_BLENDER, js_new_Blender, js_Blender_finalize, 0);
-		api_define_static_prop("Blender", "Default", js_Blender_get_Default, NULL);
+		api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
 		api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
@@ -888,23 +904,34 @@ pegasus_init(int api_level)
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
-		api_define_property("Surface", "blender", false, js_Surface_get_blender, js_Surface_set_blender);
+		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_function("Z", "deflate", js_Z_deflate, 0);
 		api_define_function("Z", "inflate", js_Z_inflate, 0);
 
-		api_define_const("BlendOp", "Add", BLEND_OP_ADD);
-		api_define_const("BlendOp", "SubtractInverse", BLEND_OP_S_MINUS_T);
-		api_define_const("BlendOp", "Subtract", BLEND_OP_T_MINUS_S);
-		api_define_const("BlendFactor", "Alpha", BLEND_A);
-		api_define_const("BlendFactor", "AlphaInverse", BLEND_ONE_M_A);
-		api_define_const("BlendFactor", "One", BLEND_ONE);
-		api_define_const("BlendFactor", "Source", BLEND_S);
-		api_define_const("BlendFactor", "SourceInverse", BLEND_ONE_M_S);
-		api_define_const("BlendFactor", "Target", BLEND_T);
-		api_define_const("BlendFactor", "TargetInverse", BLEND_ONE_M_T);
-		api_define_const("BlendFactor", "Zero", BLEND_ZERO);
+		api_define_const("BlendType", "Add", BLEND_OP_ADD);
+		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
+		api_define_const("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);
+		api_define_const("Blend", "Alpha", BLEND_ALPHA);
+		api_define_const("Blend", "AlphaInverse", BLEND_INV_ALPHA);
+		api_define_const("Blend", "One", BLEND_ONE);
+		api_define_const("Blend", "Source", BLEND_SRC);
+		api_define_const("Blend", "SourceInverse", BLEND_INV_SRC);
+		api_define_const("Blend", "Target", BLEND_DEST);
+		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
+		api_define_const("Blend", "Zero", BLEND_ZERO);
+
+		// register predefined BlendOp accessors
+		jsal_get_global_string("BlendOp");
+		p_blender = BLENDERS;
+		while (p_blender->name != NULL) {
+			jsal_push_new_function(js_BlendOp_get_Default, p_blender->name, 0, (intptr_t)(p_blender - BLENDERS));
+			jsal_to_propdesc_get(false, true);
+			jsal_def_prop_string(-2, p_blender->name);
+			++p_blender;
+		}
+		jsal_pop(1);
 	}
 
 	// keep a local reference to Surface.Screen
@@ -919,14 +946,14 @@ pegasus_init(int api_level)
 
 	// register predefined X11 colors
 	jsal_get_global_string("Color");
-	p = COLORS;
-	while (p->name != NULL) {
-		if (s_api_level >= p->api_level) {
-			jsal_push_new_function(js_Color_get_Color, "get", 0, (intptr_t)(p - COLORS));
+	p_color = COLORS;
+	while (p_color->name != NULL) {
+		if (s_api_level >= p_color->api_level) {
+			jsal_push_new_function(js_Color_get_Default, p_color->name, 0, (intptr_t)(p_color - COLORS));
 			jsal_to_propdesc_get(false, true);
-			jsal_def_prop_string(-2, p->name);
+			jsal_def_prop_string(-2, p_color->name);
 		}
-		++p;
+		++p_color;
 	}
 	jsal_pop(1);
 }
@@ -935,7 +962,6 @@ void
 pegasus_uninit(void)
 {
 	jsal_unref(s_screen_obj);
-	blend_op_unref(s_def_blend_op);
 	mixer_unref(s_def_mixer);
 
 	jsal_unref(s_key_color);
@@ -1635,40 +1661,71 @@ js_Sphere_sleep(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Blender_get_Default(int num_args, bool is_ctor, intptr_t magic)
+js_BlendOp_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
-	jsal_push_class_obj(PEGASUS_BLENDER, s_def_blend_op, false);
-	cache_value_to_this("Default");
+	const struct blender* desc;
+	blend_op_t*           op;
+
+	desc = &BLENDERS[magic];
+	op = blend_op_new_asym(desc->color_op, desc->color_sf, desc->color_tf, desc->alpha_op, desc->alpha_sf, desc->alpha_tf);
+	jsal_push_class_obj(PEGASUS_BLENDER, op, false);
+	cache_value_to_this(desc->name);
 	return true;
 }
 
 static bool
-js_new_Blender(int num_args, bool is_ctor, intptr_t magic)
+js_new_BlendOp(int num_args, bool is_ctor, intptr_t magic)
 {
-	int         dst_factor;
-	int         src_factor;
+	int         alpha_op_type;
+	int         alpha_sf;
+	int         alpha_tf;
+	int         color_op_type;
+	int         color_sf;
+	int         color_tf;
 	blend_op_t* op;
-	int         type;
 
-	type = jsal_require_int(0);
-	src_factor = jsal_require_int(1);
-	dst_factor = jsal_require_int(2);
+	if (num_args != 3 && num_args < 6)
+		jsal_error(JS_RANGE_ERROR, "Not enough arguments, expected 3 or 6 args");
+	color_op_type = jsal_require_int(0);
+	color_sf = jsal_require_int(1);
+	color_tf = jsal_require_int(2);
+	if (num_args >= 6) {
+		alpha_op_type = jsal_require_int(3);
+		alpha_sf = jsal_require_int(4);
+		alpha_tf = jsal_require_int(5);
+	}
 	
-	if (type < 0 || type > BLEND_OP_MAX)
-		jsal_error(JS_RANGE_ERROR, "Invalid BlendOp constant value '%d'", type);
-	op = blend_op_new_sym(type, src_factor, dst_factor);
+	if (color_op_type < 0 || color_op_type > BLEND_OP_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid BlendOp constant value '%d'", color_op_type);
+	if (color_sf < 0 || color_sf > BLEND_FACTOR_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid Blend constant value '%d'", color_sf);
+	if (color_tf < 0 || color_tf > BLEND_FACTOR_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid Blend constant value '%d'", color_tf);
+	if (num_args >= 6) {
+		if (alpha_op_type < 0 || alpha_op_type > BLEND_OP_MAX)
+			jsal_error(JS_RANGE_ERROR, "Invalid BlendOp constant value '%d'", alpha_op_type);
+		if (alpha_sf < 0 || alpha_sf > BLEND_FACTOR_MAX)
+			jsal_error(JS_RANGE_ERROR, "Invalid Blend constant value '%d'", alpha_sf);
+		if (alpha_tf < 0 || alpha_tf > BLEND_FACTOR_MAX)
+			jsal_error(JS_RANGE_ERROR, "Invalid Blend constant value '%d'", alpha_tf);
+	}
+	
+	if (num_args < 6)
+		op = blend_op_new_sym(color_op_type, color_sf, color_tf);
+	else
+		op = blend_op_new_asym(color_op_type, color_sf, color_tf, alpha_op_type, alpha_sf, alpha_tf);
 	jsal_push_class_obj(PEGASUS_BLENDER, op, true);
 	return true;
 }
 
 static void
-js_Blender_finalize(void* host_ptr)
+js_BlendOp_finalize(void* host_ptr)
 {
 	blend_op_unref(host_ptr);
 }
 
 static bool
-js_Color_get_Color(int num_args, bool is_ctor, intptr_t magic)
+js_Color_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	const struct x11_color* data;
 
@@ -1775,11 +1832,6 @@ js_new_Color(int num_args, bool is_ctor, intptr_t magic)
 	color = mk_color(red, green, blue, alpha);
 	jsal_pegasus_push_color(color, true);
 	return true;
-}
-
-static void
-js_Color_finalize(void* host_ptr)
-{
 }
 
 static bool
@@ -2803,11 +2855,6 @@ js_JSON_fromFile(int num_args, bool is_ctor, intptr_t magic)
 	return true;
 }
 
-static void
-js_JobToken_finalize(void* host_ptr)
-{
-}
-
 static bool
 js_JobToken_cancel(int num_args, bool is_ctor, intptr_t magic)
 {
@@ -2860,11 +2907,6 @@ js_Joystick_getDevices(int num_args, bool is_ctor, intptr_t magic)
 		jsal_put_prop_index(-2, i);
 	}
 	return true;
-}
-
-static void
-js_Joystick_finalize(void* host_ptr)
-{
 }
 
 static bool
@@ -4748,7 +4790,7 @@ js_Surface_get_Screen(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Surface_get_blender(int num_args, bool is_ctor, intptr_t magic)
+js_Surface_get_blendOp(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t*    image;
 	blend_op_t* op;
@@ -4802,7 +4844,7 @@ js_Surface_get_width(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Surface_set_blender(int num_args, bool is_ctor, intptr_t magic)
+js_Surface_set_blendOp(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t*    image;
 	blend_op_t* op;
@@ -5098,8 +5140,6 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 			jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);
 	}
 	jsal_push_class_obj(class_id, image, true);
-	if (class_id == PEGASUS_SURFACE)
-		image_set_blend_op(image, s_def_blend_op);
 	return true;
 }
 

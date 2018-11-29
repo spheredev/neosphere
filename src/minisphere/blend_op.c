@@ -115,21 +115,21 @@ static int
 get_allegro_blend_factor(blend_factor_t factor)
 {
 	return factor == BLEND_ONE ? ALLEGRO_ONE
-		: factor == BLEND_ONE_M_A ? ALLEGRO_INVERSE_ALPHA
-		: factor == BLEND_ONE_M_C ? ALLEGRO_INVERSE_CONST_COLOR
-		: factor == BLEND_ONE_M_S ? ALLEGRO_INVERSE_SRC_COLOR
-		: factor == BLEND_ONE_M_T ? ALLEGRO_INVERSE_DEST_COLOR
-		: factor == BLEND_A ? ALLEGRO_ALPHA
-		: factor == BLEND_C ? ALLEGRO_CONST_COLOR
-		: factor == BLEND_S ? ALLEGRO_SRC_COLOR
-		: factor == BLEND_T ? ALLEGRO_DEST_COLOR
+		: factor == BLEND_INV_ALPHA ? ALLEGRO_INVERSE_ALPHA
+		: factor == BLEND_INV_CONST ? ALLEGRO_INVERSE_CONST_COLOR
+		: factor == BLEND_INV_SRC ? ALLEGRO_INVERSE_SRC_COLOR
+		: factor == BLEND_INV_DEST ? ALLEGRO_INVERSE_DEST_COLOR
+		: factor == BLEND_ALPHA ? ALLEGRO_ALPHA
+		: factor == BLEND_CONST ? ALLEGRO_CONST_COLOR
+		: factor == BLEND_SRC ? ALLEGRO_SRC_COLOR
+		: factor == BLEND_DEST ? ALLEGRO_DEST_COLOR
 		: ALLEGRO_ZERO;
 }
 
 static int
 get_allegro_blend_op(blend_type_t type)
 {
-	return type == BLEND_OP_S_MINUS_T ? ALLEGRO_SRC_MINUS_DEST
-		: type == BLEND_OP_T_MINUS_S ? ALLEGRO_DEST_MINUS_SRC
+	return type == BLEND_OP_SUB_INV ? ALLEGRO_SRC_MINUS_DEST
+		: type == BLEND_OP_SUB ? ALLEGRO_DEST_MINUS_SRC
 		: ALLEGRO_ADD;
 }

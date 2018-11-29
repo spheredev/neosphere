@@ -558,14 +558,14 @@ vanilla_init(void)
 	//       clobbered by internal text rendering (e.g. the FPS counter).
 	s_default_font = font_clone(game_default_font(g_game));
 
-	s_blender_normal = blend_op_new_sym(BLEND_OP_ADD, BLEND_A, BLEND_ONE_M_A);
+	s_blender_normal = blend_op_new_sym(BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA);
 	s_blender_null = blend_op_new_sym(BLEND_OP_ADD, BLEND_ZERO, BLEND_ZERO);
 	s_blender_add = blend_op_new_sym(BLEND_OP_ADD, BLEND_ONE, BLEND_ONE);
 	s_blender_copy = blend_op_new_sym(BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO);
 	s_blender_copy_alpha = blend_op_new_asym(BLEND_OP_ADD, BLEND_ZERO, BLEND_ONE, BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO);
 	s_blender_copy_rgb = blend_op_new_asym(BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO, BLEND_OP_ADD, BLEND_ZERO, BLEND_ONE);
-	s_blender_multiply = blend_op_new_sym(BLEND_OP_ADD, BLEND_T, BLEND_ZERO);
-	s_blender_subtract = blend_op_new_sym(BLEND_OP_T_MINUS_S, BLEND_ONE, BLEND_ONE);
+	s_blender_multiply = blend_op_new_sym(BLEND_OP_ADD, BLEND_DEST, BLEND_ZERO);
+	s_blender_subtract = blend_op_new_sym(BLEND_OP_SUB, BLEND_ONE, BLEND_ONE);
 	s_sound_mixer = mixer_new(44100, 16, 2);
 
 	// set up a dictionary to track RequireScript() calls

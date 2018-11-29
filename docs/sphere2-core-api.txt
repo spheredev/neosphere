@@ -312,6 +312,60 @@ Sphere.sleep(frames); [L1]
     function without blocking the event loop.
 
 
+`BlendOp` Object
+----------------
+
+The `BlendOp` object represents a pixel blending operation.  The parameters
+specified when the object is created determine how the colors of an object are
+to be combined with the existing contents of a surface.  For convenience,
+predefined BlendOp objects are provided in the API for the most common blending
+operations, but you can easily make new ones if these don't meet your needs.
+
+BlendOp.Default [read-only] [experimental]
+
+    The default blending mode.  If no blending operation is specified for a
+    surface, it will use this mode.  This represents traditional alpha
+    blending; the final rendered pixel is a weighted average of the source and
+    destination pixels, based on the alpha value of the source pixel.
+
+BlendOp.Add [read-only] [experimental]
+BlendOp.Multiply [read-only] [experimental]
+BlendOp.Replace [read-only] [experimental]
+BlendOp.Subtract [read-only] [experimental]
+
+    Adds to, multiplies with, replaces, and subtracts from the destination
+    pixel values, respectively.  These modes cover most common use cases, so
+    the engine provides them for convenience.
+
+new BlendOp(color_op, sfc, dfc[, alpha_op, sfa, dfa]) [experimental]
+
+    Constructs a new BlendOp which blends colors according to the given
+    parameters.
+
+    `color_op` and `alpha_op` determine the mathematical operators used for
+    blending and can each be one of the following:
+
+        BlendType.Add
+        BlendType.Subtract
+        BlendType.SubtractInverse
+
+	Before applying the blend type as above, the factors are first multiplied
+	with the respective source and destination components (RGB for color
+	factors and A for alpha factors) and can be each be one of:
+
+	    Blend.Alpha
+	    Blend.AlphaInverse
+	    Blend.One
+	    Blend.Source
+	    Blend.SourceInverse
+	    Blend.Target
+	    Blend.TargetInverse
+	    Blend.Zero
+
+	If `alpha_op` and its associated factors are not provided, the alpha
+	channel will be blended the same as the color channels.
+
+
 `Color` Object
 --------------
 
@@ -1797,23 +1851,8 @@ new Surface(filename); [L1]
 
 Surface#blendOp [read/write] [experimental]
 
-    Gets or sets the blending operation for objects drawn to this surface.  The
-    value specifies how the colors of the object being drawn will be combined
-    with the existing contents of the surface, and can be one of the following:
-
-        BlendOp.AlphaBlend
-        BlendOp.Add
-        BlendOp.Average
-        BlendOp.CopyAlpha
-        BlendOp.CopyRGB
-        BlendOp.Invert
-        BlendOp.Multiply
-        BlendOp.Replace
-        BlendOp.Subtract
-
-    The default is `BlendOp.AlphaBlend` which combines the source and
-    destination pixels using the source's alpha value as a weighting factor
-    (commonly referred to as "alpha blending").
+    Gets or sets the blending operation (see `BlendOp` above) for objects drawn
+    to this surface.
 
 Surface#transform [read/write] [L1]
 

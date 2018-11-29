@@ -8,8 +8,6 @@ v5.3.0 - TBD
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
   notes for further information.
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
-* Adds a new `Blender` class to allow games to set custom blending modes for
-  surfaces.
 * Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
   using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.
@@ -27,6 +25,8 @@ v5.3.0 - TBD
 * Improves end-user security by not allowing the SphereFS sandbox to be relaxed
   in production.
 * Improves end-user security by not executing bare scripts except with SpheRun.
+* Improves `BlendOp` by making it into a class, allowing games to define their
+  own custom blending modes.
 * Improves the performance of `from()` queries with a brand-new version of
   `from.js` rewritten from the ground up with performance in mind.
 * Improves command-line semantics: `.js` files run from the command line are
