@@ -145,7 +145,7 @@ static void    handle_module_import (void);
 static bool    install_target       (int num_args, bool is_ctor, intptr_t magic);
 static path_t* load_package_json    (const char* filename);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
-static void    package_dir          (build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname);
+static void    package_dir          (build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname, bool recursive);
 static void    push_require         (const char* module_id);
 static int     sort_targets_by_path (const void* p_a, const void* p_b);
 static bool    write_manifests      (build_t* build, bool debugging);
@@ -475,7 +475,12 @@ build_package(build_t* build, const char* filename)
 	spk = spk_create(filename);
 	spk_add_file(spk, build->fs, "@/game.json", "game.json");
 	spk_add_file(spk, build->fs, "@/game.sgm", "game.sgm");
-	package_dir(build, spk, "#/", "#/");
+	package_dir(build, spk, "#/game_modules", "#/game_modules", true);
+	package_dir(build, spk, "#/lib", "#/lib", true);
+	package_dir(build, spk, "#/runtime", "#/runtime", true);
+	package_dir(build, spk, "#/scripts", "#/scripts", true);
+	package_dir(build, spk, "#/shaders", "#/shaders", true);
+	package_dir(build, spk, "#/", "#/", false);
 	iter = vector_enum(build->targets);
 	while ((target_ptr = iter_next(&iter))) {
 		in_path = target_path(*target_ptr);
@@ -875,7 +880,7 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 }
 
 static void
-package_dir(build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname)
+package_dir(build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname, bool recursive)
 {
 	vector_t* file_list;
 	path_t*   from_path;
@@ -896,8 +901,8 @@ package_dir(build_t* build, spk_writer_t* spk, const char* from_dirname, const c
 		path_rebase(to_path, to_dir_path);
 		if (path_is_file(from_path))
 			spk_add_file(spk, build->fs, path_cstr(from_path), path_cstr(to_path));
-		else
-			package_dir(build, spk, path_cstr(from_path), path_cstr(to_path));
+		else if (recursive)
+			package_dir(build, spk, path_cstr(from_path), path_cstr(to_path), true);
 		path_free(to_path);
 		path_free(from_path);
 	}
