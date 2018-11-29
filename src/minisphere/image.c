@@ -33,6 +33,7 @@
 #include "minisphere.h"
 #include "image.h"
 
+#include "blend_op.h"
 #include "color.h"
 #include "galileo.h"
 #include "transform.h"
@@ -42,7 +43,7 @@ struct image
 	unsigned int    refcount;
 	unsigned int    id;
 	ALLEGRO_BITMAP* bitmap;
-	blend_mode_t    blend_mode;
+	blend_op_t*     blend_op;
 	unsigned int    cache_hits;
 	bool            clipping_set;
 	image_lock_t    lock;
@@ -57,9 +58,8 @@ struct image
 	image_t*        parent;
 };
 
-static void apply_blend_mode (blend_mode_t mode);
-static void cache_pixels     (image_t* image);
-static void uncache_pixels   (image_t* image);
+static void cache_pixels   (image_t* image);
+static void uncache_pixels (image_t* image);
 
 static image_t*     s_last_image = NULL;
 static unsigned int s_next_image_id = 0;
@@ -245,10 +245,10 @@ image_width(const image_t* it)
 	return it->width;
 }
 
-blend_mode_t
-image_get_blend_mode(const image_t* it)
+blend_op_t*
+image_get_blend_op(const image_t* it)
 {
-	return it->blend_mode;
+	return it->blend_op;
 }
 
 rect_t
@@ -264,11 +264,15 @@ image_get_transform(const image_t* it)
 }
 
 void
-image_set_blend_mode(image_t* it, blend_mode_t mode)
+image_set_blend_op(image_t* it, blend_op_t* op)
 {
-	it->blend_mode = mode;
+	blend_op_t* prev_op;
+
+	prev_op = it->blend_op;
+	it->blend_op = blend_op_ref(op);
+	blend_op_unref(prev_op);
 	if (it == s_last_image)
-		apply_blend_mode(mode);
+		blend_op_apply(op);
 }
 
 void
@@ -602,7 +606,7 @@ image_render_to(image_t* it, transform_t* transform)
 		it->modelview = transform_ref(transform);
 		transform_make_clean(transform);
 	}
-	apply_blend_mode(it->blend_mode);
+	blend_op_apply(it->blend_op);
 	s_last_image = it;
 }
 
@@ -737,49 +741,6 @@ image_upload(image_t* it, const color_t* pixels)
 	}
 	image_unlock(it, lock);
 	return true;
-}
-
-static void
-apply_blend_mode(blend_mode_t mode)
-{
-	switch (mode) {
-		case BLEND_NORMAL:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ALPHA, ALLEGRO_INVERSE_ALPHA);
-			break;
-		case BLEND_ADD:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ONE);
-			break;
-		case BLEND_AVERAGE:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_CONST_COLOR, ALLEGRO_CONST_COLOR);
-			al_set_blend_color(al_map_rgba_f(0.5, 0.5, 0.5, 0.5));
-			break;
-		case BLEND_COPY_ALPHA:
-			al_set_separate_blender(
-				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE,
-				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-			break;
-		case BLEND_COPY_RGB:
-			al_set_separate_blender(
-				ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO,
-				ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ONE);
-			break;
-		case BLEND_INVERT:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_INVERSE_SRC_COLOR);
-			break;
-		case BLEND_MULTIPLY:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_DEST_COLOR, ALLEGRO_ZERO);
-			break;
-		case BLEND_REPLACE:
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
-			break;
-		case BLEND_SUBTRACT:
-			al_set_blender(ALLEGRO_DEST_MINUS_SRC, ALLEGRO_ONE, ALLEGRO_ONE);
-			break;
-		default:
-			// this shouldn't happen, but in case it does, just output nothing to make it
-			// obvious something went wrong.
-			al_set_blender(ALLEGRO_ADD, ALLEGRO_ZERO, ALLEGRO_ZERO);
-	}
 }
 
 static void

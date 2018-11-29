@@ -33,6 +33,7 @@
 #ifndef SPHERE__IMAGE_H__INCLUDED
 #define SPHERE__IMAGE_H__INCLUDED
 
+#include "blend_op.h"
 #include "geometry.h"
 #include "transform.h"
 
@@ -46,23 +47,6 @@ struct image_lock
 	ptrdiff_t pitch;
 } image_lock_t;
 
-typedef
-enum blend_mode
-{
-	// note: these are in the same order as their Sphere 1.x equivalents
-	//       for maximum compatibility.
-	BLEND_NORMAL,
-	BLEND_REPLACE,
-	BLEND_COPY_RGB,
-	BLEND_COPY_ALPHA,
-	BLEND_ADD,
-	BLEND_SUBTRACT,
-	BLEND_MULTIPLY,
-	BLEND_AVERAGE,
-	BLEND_INVERT,
-	BLEND_MAX,
-} blend_mode_t;
-
 image_t*        image_new                (int width, int height, const color_t* pixels);
 image_t*        image_new_slice          (image_t* parent, int x, int y, int width, int height);
 image_t*        image_dup                (const image_t* it);
@@ -73,10 +57,10 @@ ALLEGRO_BITMAP* image_bitmap             (image_t* it);
 int             image_height             (const image_t* it);
 const char*     image_path               (const image_t* it);
 int             image_width              (const image_t* it);
-blend_mode_t    image_get_blend_mode     (const image_t* it);
+blend_op_t*     image_get_blend_op       (const image_t* it);
 rect_t          image_get_scissor        (const image_t* it);
 transform_t*    image_get_transform      (const image_t* it);
-void            image_set_blend_mode     (image_t* it, blend_mode_t mode);
+void            image_set_blend_op       (image_t* it, blend_op_t* op);
 void            image_set_scissor        (image_t* it, rect_t value);
 void            image_set_transform      (image_t* it, transform_t* transform);
 bool            image_apply_color_fx     (image_t* it, color_fx_t matrix, int x, int y, int width, int height);

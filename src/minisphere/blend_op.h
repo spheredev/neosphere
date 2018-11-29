@@ -30,43 +30,39 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__PEGASUS_H__INCLUDED
-#define SPHERE__PEGASUS_H__INCLUDED
+#ifndef SPHERE__BLEND_OP_H__INCLUDED
+#define SPHERE__BLEND_OP_H__INCLUDED
 
-enum pegasus_type
+typedef struct blend_op blend_op_t;
+
+typedef
+enum blend_type
 {
-	PEGASUS_BLENDER = 200,
-	PEGASUS_COLOR,
-	PEGASUS_DIR_STREAM,
-	PEGASUS_FILE_STREAM,
-	PEGASUS_FONT,
-	PEGASUS_INDEX_LIST,
-	PEGASUS_JOB_TOKEN,
-	PEGASUS_JOYSTICK,
-	PEGASUS_KEYBOARD,
-	PEGASUS_MIXER,
-	PEGASUS_MODEL,
-	PEGASUS_MOUSE,
-	PEGASUS_QUERY,
-	PEGASUS_RNG,
-	PEGASUS_SAMPLE,
-	PEGASUS_SERVER,
-	PEGASUS_SHADER,
-	PEGASUS_SHAPE,
-	PEGASUS_SOCKET,
-	PEGASUS_SOUND,
-	PEGASUS_SOUND_STREAM,
-	PEGASUS_SURFACE,
-	PEGASUS_TEXT_DEC,
-	PEGASUS_TEXT_ENC,
-	PEGASUS_TEXTURE,
-	PEGASUS_TRANSFORM,
-	PEGASUS_VERTEX_LIST,
-};
+	BLEND_OP_ADD,
+	BLEND_OP_S_MINUS_T,
+	BLEND_OP_T_MINUS_S,
+	BLEND_OP_MAX,
+} blend_type_t;
 
-void pegasus_init             (int api_level);
-void pegasus_uninit           (void);
-bool pegasus_start_event_loop (void);
-bool pegasus_try_require      (const char* filename, bool node_compatible);
+typedef
+enum blend_factor
+{
+	BLEND_ONE,
+	BLEND_ONE_M_A,
+	BLEND_ONE_M_C,
+	BLEND_ONE_M_S,
+	BLEND_ONE_M_T,
+	BLEND_A,
+	BLEND_C,
+	BLEND_S,
+	BLEND_T,
+	BLEND_ZERO,
+} blend_factor_t;
 
-#endif // SPHERE__PEGASUS_H__INCLUDED
+blend_op_t* blend_op_new_asym (blend_type_t color_op, blend_factor_t sfc, blend_factor_t tfc, blend_type_t alpha_op, blend_factor_t sfa, blend_factor_t tfa);
+blend_op_t* blend_op_new_sym  (blend_type_t op_type, blend_factor_t sf, blend_factor_t tf);
+blend_op_t* blend_op_ref      (blend_op_t* it);
+void        blend_op_unref    (blend_op_t* it);
+void        blend_op_apply    (const blend_op_t* it);
+
+#endif // SPHERE__BLEND_OP_H__INCLUDED

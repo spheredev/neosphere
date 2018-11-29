@@ -40,6 +40,7 @@
 #include "animation.h"
 #include "api.h"
 #include "audio.h"
+#include "blend_op.h"
 #include "byte_array.h"
 #include "debugger.h"
 #include "dispatch.h"
@@ -507,6 +508,22 @@ static void js_Spriteset_finalize   (void* host_ptr);
 static void js_Surface_finalize     (void* host_ptr);
 static void js_WindowStyle_finalize (void* host_ptr);
 
+enum blend_mode
+{
+	// note: these are in the same order as their Sphere 1.x equivalents
+	//       for maximum compatibility.
+	BLEND_NORMAL,
+	BLEND_REPLACE,
+	BLEND_COPY_RGB,
+	BLEND_COPY_ALPHA,
+	BLEND_ADD,
+	BLEND_SUBTRACT,
+	BLEND_MULTIPLY,
+	BLEND_AVERAGE,
+	BLEND_INVERT,
+	BLEND_MAX,
+};
+
 enum line_series_type
 {
 	LINE_MULTIPLE,
@@ -520,9 +537,17 @@ enum sound_effect_mode
 	SE_MULTIPLE,
 };
 
-static font_t*  s_default_font;
-static int      s_frame_rate = 0;
-static mixer_t* s_sound_mixer;
+static blend_op_t* s_blender_normal;
+static blend_op_t* s_blender_null;
+static blend_op_t* s_blender_add;
+static blend_op_t* s_blender_copy;
+static blend_op_t* s_blender_copy_alpha;
+static blend_op_t* s_blender_copy_rgb;
+static blend_op_t* s_blender_multiply;
+static blend_op_t* s_blender_subtract;
+static font_t*     s_default_font;
+static int         s_frame_rate = 0;
+static mixer_t*    s_sound_mixer;
 
 void
 vanilla_init(void)
@@ -533,6 +558,14 @@ vanilla_init(void)
 	//       clobbered by internal text rendering (e.g. the FPS counter).
 	s_default_font = font_clone(game_default_font(g_game));
 
+	s_blender_normal = blend_op_new_sym(BLEND_OP_ADD, BLEND_A, BLEND_ONE_M_A);
+	s_blender_null = blend_op_new_sym(BLEND_OP_ADD, BLEND_ZERO, BLEND_ZERO);
+	s_blender_add = blend_op_new_sym(BLEND_OP_ADD, BLEND_ONE, BLEND_ONE);
+	s_blender_copy = blend_op_new_sym(BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO);
+	s_blender_copy_alpha = blend_op_new_asym(BLEND_OP_ADD, BLEND_ZERO, BLEND_ONE, BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO);
+	s_blender_copy_rgb = blend_op_new_asym(BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO, BLEND_OP_ADD, BLEND_ZERO, BLEND_ONE);
+	s_blender_multiply = blend_op_new_sym(BLEND_OP_ADD, BLEND_T, BLEND_ZERO);
+	s_blender_subtract = blend_op_new_sym(BLEND_OP_T_MINUS_S, BLEND_ONE, BLEND_ONE);
 	s_sound_mixer = mixer_new(44100, 16, 2);
 
 	// set up a dictionary to track RequireScript() calls
@@ -1457,6 +1490,22 @@ jsal_require_rgba_lut(int index)
 		jsal_pop(1);
 	}
 	return lut;
+}
+
+static void
+apply_blend_mode(image_t* image, enum blend_mode mode)
+{
+	blend_op_t* op;
+
+	op = mode == BLEND_NORMAL ? s_blender_normal
+		: mode == BLEND_ADD ? s_blender_add
+		: mode == BLEND_COPY_ALPHA ? s_blender_copy_alpha
+		: mode == BLEND_COPY_RGB ? s_blender_copy_rgb
+		: mode == BLEND_MULTIPLY ? s_blender_multiply
+		: mode == BLEND_REPLACE ? s_blender_copy
+		: mode == BLEND_SUBTRACT ? s_blender_subtract
+		: s_blender_null;
+	image_set_blend_op(image, op);
 }
 
 static bool
@@ -7050,10 +7099,13 @@ js_Image_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode = BLEND_NORMAL;
-	image_t* image;
-	int      x;
-	int      y;
+	image_t*    backbuffer;
+	int         blend_mode = BLEND_NORMAL;
+	blend_op_t* blend_op;
+	image_t*    image;
+	blend_op_t* prev_blend_op;
+	int         x;
+	int         y;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_IMAGE);
@@ -7067,9 +7119,16 @@ js_Image_blit(int num_args, bool is_ctor, intptr_t magic)
 
 	if (screen_skipping_frame(g_screen))
 		return false;
+	backbuffer = screen_backbuffer(g_screen);
+	blend_op = blend_mode == BLEND_NORMAL ? s_blender_normal
+		: blend_mode == BLEND_REPLACE ? s_blender_copy
+		: s_blender_null;
 	galileo_reset();
-	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
+	prev_blend_op = blend_op_ref(image_get_blend_op(backbuffer));
+	image_set_blend_op(backbuffer, blend_op);
 	al_draw_bitmap(image_bitmap(image), x, y, 0x0);
+	image_set_blend_op(backbuffer, prev_blend_op);
+	blend_op_unref(prev_blend_op);
 	return false;
 }
 
@@ -7096,7 +7155,7 @@ js_Image_blitMask(int num_args, bool is_ctor, intptr_t magic)
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
+	apply_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_tinted_bitmap(image_bitmap(image), nativecolor(mask), x, y, 0x0);
 	return false;
 }
@@ -7143,7 +7202,7 @@ js_Image_rotateBlit(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
+	apply_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_rotated_bitmap(image_bitmap(image), width / 2, height / 2,
 		x + width / 2, y + height / 2, angle, 0x0);
 	return false;
@@ -7178,7 +7237,7 @@ js_Image_rotateBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
+	apply_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_tinted_rotated_bitmap(image_bitmap(image), nativecolor(mask),
 		width / 2, height / 2, x + width / 2, y + height / 2, angle, 0x0);
 	return false;
@@ -7232,7 +7291,7 @@ js_Image_transformBlit(int num_args, bool is_ctor, intptr_t magic)
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
+	apply_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return false;
 }
@@ -7280,7 +7339,7 @@ js_Image_transformBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	if (screen_skipping_frame(g_screen))
 		return false;
 	galileo_reset();
-	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
+	apply_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_prim(v, NULL, image_bitmap(image), 0, 4, ALLEGRO_PRIM_TRIANGLE_STRIP);
 	return false;
 }
@@ -7312,7 +7371,7 @@ js_Image_zoomBlit(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
+	apply_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_scaled_bitmap(image_bitmap(image), 0, 0, width, height,
 		x, y, width * scale, height * scale, 0x0);
 	return false;
@@ -7347,7 +7406,7 @@ js_Image_zoomBlitMask(int num_args, bool is_ctor, intptr_t magic)
 	width = image_width(image);
 	height = image_height(image);
 	galileo_reset();
-	image_set_blend_mode(screen_backbuffer(g_screen), blend_mode);
+	apply_blend_mode(screen_backbuffer(g_screen), blend_mode);
 	al_draw_tinted_scaled_bitmap(image_bitmap(image), nativecolor(mask),
 		0, 0, width, height, x, y, width * scale, height * scale, 0x0);
 	return false;
@@ -9015,8 +9074,9 @@ js_Surface_setAlpha(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_setBlendMode(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      blend_mode;
-	image_t* image;
+	int         blend_mode;
+	image_t*    image;
+	blend_op_t* op;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, SV1_SURFACE);
@@ -9025,7 +9085,15 @@ js_Surface_setBlendMode(int num_args, bool is_ctor, intptr_t magic)
 	if (blend_mode < 0 || blend_mode >= BLEND_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid blend mode constant '%d'", blend_mode);
 
-	image_set_blend_mode(image, blend_mode);
+	op = blend_mode == BLEND_NORMAL ? s_blender_normal
+		: blend_mode == BLEND_ADD ? s_blender_add
+		: blend_mode == BLEND_COPY_ALPHA ? s_blender_copy_alpha
+		: blend_mode == BLEND_COPY_RGB ? s_blender_copy_rgb
+		: blend_mode == BLEND_MULTIPLY ? s_blender_multiply
+		: blend_mode == BLEND_REPLACE ? s_blender_copy
+		: blend_mode == BLEND_SUBTRACT ? s_blender_subtract
+		: s_blender_null;
+	image_set_blend_op(image, op);
 	return false;
 }
 

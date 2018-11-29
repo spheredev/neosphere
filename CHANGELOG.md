@@ -8,12 +8,14 @@ v5.3.0 - TBD
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
   notes for further information.
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
-* Adds a new `Tween` standard module for handling simple animations.
-* Adds `SSj.assert` for testing assumptions while debugging.  The assertions
-  are ignored in production.
+* Adds a new `Blender` class to allow games to set custom blending modes for
+  surfaces.
 * Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
   using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.
+* Adds `SSj.assert` for testing assumptions while debugging.  The assertions
+  are ignored in production.
+* Adds a new `Tween` standard module for handling simple animations.
 * Adds a `cell init` command, for initializing a new Sphere project directory
   directly from the command line.
 * Adds support for `-h` as an alias for `--help` for all command-line tools.
