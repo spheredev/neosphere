@@ -1696,14 +1696,14 @@ js_new_BlendOp(int num_args, bool is_ctor, intptr_t magic)
 	}
 	
 	if (color_op_type < 0 || color_op_type > BLEND_OP_MAX)
-		jsal_error(JS_RANGE_ERROR, "Invalid BlendOp constant value '%d'", color_op_type);
+		jsal_error(JS_RANGE_ERROR, "Invalid BlendType constant value '%d'", color_op_type);
 	if (color_sf < 0 || color_sf > BLEND_FACTOR_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid Blend constant value '%d'", color_sf);
 	if (color_tf < 0 || color_tf > BLEND_FACTOR_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid Blend constant value '%d'", color_tf);
 	if (num_args >= 6) {
 		if (alpha_op_type < 0 || alpha_op_type > BLEND_OP_MAX)
-			jsal_error(JS_RANGE_ERROR, "Invalid BlendOp constant value '%d'", alpha_op_type);
+			jsal_error(JS_RANGE_ERROR, "Invalid BlendType constant value '%d'", alpha_op_type);
 		if (alpha_sf < 0 || alpha_sf > BLEND_FACTOR_MAX)
 			jsal_error(JS_RANGE_ERROR, "Invalid Blend constant value '%d'", alpha_sf);
 		if (alpha_tf < 0 || alpha_tf > BLEND_FACTOR_MAX)

@@ -316,10 +316,15 @@ Sphere.sleep(frames); [L1]
 ----------------
 
 The `BlendOp` object represents a pixel blending operation.  The parameters
-specified when the object is created determine how the colors of an object are
-to be combined with the existing contents of a surface.  For convenience,
-predefined BlendOp objects are provided in the API for the most common blending
-operations, but you can easily make new ones if these don't meet your needs.
+specified when the BlendOp is created determine how the colors of an object are
+to be combined with the existing contents of a surface.  To use a BlendOp, you
+simply assign it to the `blendOp` property of a surface before drawing to that
+surface and it will be used for all subsequent drawing operations on that
+surface until a different one is set.
+
+For convenience, predefined BlendOp objects are provided in the API for the
+most common blending operations, but you can easily make new ones if these
+don't meet your needs.
 
 BlendOp.Default [read-only] [experimental]
 
@@ -337,21 +342,32 @@ BlendOp.Subtract [read-only] [experimental]
     pixel values, respectively.  These modes cover most common use cases, so
     the engine provides them for convenience.
 
-new BlendOp(color_op, sfc, dfc[, alpha_op, sfa, dfa]) [experimental]
+new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [experimental]
 
     Constructs a new BlendOp which blends colors according to the given
     parameters.
 
-    `color_op` and `alpha_op` determine the mathematical operators used for
-    blending and can each be one of the following:
+    `operator` (and `alpha_op`) specify the mathematical operator used for
+    blending and must be one of the following (all operators are applied to
+    each color component individually):
 
         BlendType.Add
-        BlendType.Subtract
-        BlendType.SubtractInverse
+        
+            Adds the source and destination colors together.
 
-	Before applying the blend type as above, the factors are first multiplied
-	with the respective source and destination components (RGB for color
-	factors and A for alpha factors) and can be each be one of:
+        BlendType.Subtract
+        
+            Subtracts the source color from the destination color.
+        
+        BlendType.SubtractInverse
+        
+            Subtracts the destination color from the source color.
+
+	Before applying the blend type as above, the factors `sf` and `df` are
+	first multiplied with the respective source and destination components
+	(RGB for color factors and A for alpha factors) and the final color value
+	is calculated using the modified values.  `sf` and `df` can each be one of
+	the following:
 
 	    Blend.Alpha
 	    Blend.AlphaInverse
@@ -363,7 +379,8 @@ new BlendOp(color_op, sfc, dfc[, alpha_op, sfa, dfa]) [experimental]
 	    Blend.Zero
 
 	If `alpha_op` and its associated factors are not provided, the alpha
-	channel will be blended the same as the color channels.
+	channel will use the same blending type and factors as specified for the
+	color channels.
 
 
 `Color` Object
