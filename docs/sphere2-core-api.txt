@@ -305,9 +305,9 @@ Sphere.shutDown(); [L1]
           after control has returned to the event loop.  Note that dispatching
           new update or render jobs before then will cancel the request!
 
-Sphere.sleep(frames); [L1]
+Sphere.sleep(frames); [async] [L1]
 
-    Returns a promise which resolves after the specified number of frames have
+    Returns a promise that resolves after the specified number of frames have
     elapsed.  Can be used with `await`.  This is useful to delay execution of a
     function without blocking the event loop.
 
@@ -775,11 +775,18 @@ FS.writeFile(pathname, string); [L1]
 `FileStream` Object
 -------------------
 
-new FileStream(filename, file_op); [L1]
+A `FileStream` object represents a file opened for reading or writing.  It is
+called a "stream" because the default mode of operation is to read bytes from
+the file sequentially (although you can seek anywhere within the file at will);
+there is no requirement that the data is streamed directly from disk and on
+certain implementations (notably Oozaru), the engine may even load it fully
+into memory before the first access is even made.
 
-    Constructs a FileStream that provides access to the contents of a specified
-    file.  `file_op` specifies the file operation requested and must be one of
-    the following:
+FileStream.open(filename, file_op); [async] [experimental]
+
+    Opens a file asynchronously and returns a promise for a `FileStream` that
+    provides access to the contents of the file.  `file_op` specifies the file
+    operation requested and must be one of the following:
 
         FileOp.Read
 
@@ -800,12 +807,19 @@ new FileStream(filename, file_op); [L1]
             placed at the end of the file.
 
     Requesting write access to a file residing in a read-only directory (e.g.,
-    the system directory `#/`) will throw a TypeError.
+    the system directory `#/`) will reject the promise with a TypeError.
+
+new FileStream(filename, file_op); [L1]
+
+    Like `FileStream.open`, but doesn't return until the file is ready for
+    access and throws a synchronous exception in case of error.  This will not
+    work on all implementations and will be deprecated starting in API level 2;
+    use `FileStream.open` instead.
 
 FileStream#dispose(); [L1]
 
     Disposes of the FileStream object, closing the underlying file.  Attempting
-    to the object afterwards will throw an error.
+    to use the FileStream afterwards will throw an exception.
 
     Note: While it's not strictly necessary to call `dispose()` on stream
           objects,  it may take some time for the garbage collector to get to
