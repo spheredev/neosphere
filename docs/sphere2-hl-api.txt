@@ -349,11 +349,6 @@ story reasons.
 
     import { Music } from 'sphere-runtime';
 
-Music.adjustingVolume [read-only]
-
-    `true` if the music volume is currently being adjusted by a call to
-    Music.adjustVolume() (see below), otherwise `false`.
-
 Music.adjustVolume(newVolume, time);
 
     Smoothly adjusts the BGM volume level and returns a promise that resolves
