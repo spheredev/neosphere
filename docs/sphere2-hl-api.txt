@@ -1163,6 +1163,63 @@ Thread#yieldFocus();
     have focus.
 
 
+`Tween` Object
+--------------
+
+The `Tween` object provides a way to manage simple animations.  You specify an
+object to animate when constructing the Tween and then whenever you need to
+animate it, you call one of the easing methods with the property values you
+want to change and the Tween engine will take care of the rest, using
+interpolation to gradually change the value over the course of several frames.
+
+    import { Tween, Easing } from 'sphere-runtime';
+
+Tweens are asynchronous in nature; the `ease` methods simply set an animation
+to start and then return immediately.  If you need to wait until an animation
+is finished to do something, each method returns a promise that resolves only
+once the animation is complete.
+
+new Tween(object[, easing_type]);
+
+    Constructs a Tween which can be used to animate properties of the specified
+    `object`.  `easing_type` specifies the curve that values should follow on
+    their way to the new value and can be one of:
+    
+        Easing.Back
+        Easing.Bounce
+        Easing.Circular
+        Easing.Cubic
+        Easing.Elastic
+        Easing.Exponential
+        Easing.Quadratic
+        Easing.Quartic
+        Easing.Quintic
+        Easing.Sine
+	
+	The default is `Easing.Sine`, which animates according to the trigonometric
+	sine (`Math.sin`) function.
+
+Tween#easeIn(newValues, numFrames); [async]
+
+    Starts an animation such that the "tail" of the easing function (that is,
+    the slower part of the animation) is applied at the beginning of the
+    movement.  `newValues` is an object naming the properties to animate and
+    the new values they should take by the end of the animation.
+
+Tween#easeOut(newValues, numFrames); [async]
+
+    Starts an animation such that the "tail" of the easing function is applied
+    at the end of the movement.  `newValues` is an object naming the properties
+    to animate and the new values they should be tweened to.
+
+Tween#easeInOut(newValues, numFrames); [async]
+
+    Starts an animation which is a combination of `easeIn` and `easeOut`;
+    movement will slow down in the middle of the animation before speeding up
+    again.  `newValues` is an object naming the properties to animate and the
+    new values they should be tweened to.
+
+
 `XML` Namespace
 ---------------
 
