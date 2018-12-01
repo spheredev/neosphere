@@ -1191,6 +1191,7 @@ new Tween(object[, easing_type]);
         Easing.Cubic
         Easing.Elastic
         Easing.Exponential
+        Easing.Linear
         Easing.Quadratic
         Easing.Quartic
         Easing.Quintic
