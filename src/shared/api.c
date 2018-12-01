@@ -135,6 +135,31 @@ api_define_async_func(const char* namespace_name, const char* name, js_function_
 }
 
 void
+api_define_async_method(const char* class_name, const char* name, js_function_t callback, intptr_t magic)
+{
+	jsal_push_global_object();
+	if (class_name != NULL) {
+		// load the prototype from the prototype stash
+		jsal_push_class_prototype(class_id_from_name(class_name));
+	}
+
+	jsal_push_new_function_async(callback, name, 0, magic);
+	jsal_to_propdesc_value(true, false, true);
+	if (strncmp(name, "@@", 2) == 0) {
+		jsal_push_known_symbol(&name[2]);
+		jsal_pull(-2);
+		jsal_def_prop(-3);
+	}
+	else {
+		jsal_def_prop_string(-2, name);
+	}
+
+	if (class_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
 api_define_const(const char* enum_name, const char* name, double value)
 {
 	jsal_push_global_object();

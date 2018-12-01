@@ -39,6 +39,7 @@ v5.3.0 - TBD
   easy-to-remember commands like `cell build` or `cell pack`.
 * Improves logging by adding fancy ANSI coloration to SpheRun's console output.
 * Changes all `FS` functions that access the file system to return promises.
+* Changes all `Socket` methods to return promises.
 * Removes support for loading ES Module scripts using `require`.
 * Removes the `assert` and `test` modules from the standard library.
 * Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,

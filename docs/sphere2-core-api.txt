@@ -647,7 +647,7 @@ The `FS` namespace allows your game to access asset and save files, create or
 remove directories, etc.  All file system operations are sandboxed to prevent
 damage to the system.
 
-FS.createDirectory(pathname); [L1]
+FS.createDirectory(pathname); [async] [L1]
 
     Creates a directory and any of its parent directories that don't already
     exist.  If the directory already exists, this function does nothing.
@@ -659,11 +659,11 @@ FS.createDirectory(pathname); [L1]
           exists before you access it, without needing an explicit check
           beforehand.
 
-FS.deleteFile(pathname); [L1]
+FS.deleteFile(pathname); [async] [L1]
 
     Deletes the file named by `pathname` from the file system.
 
-FS.directoryExists(pathname); [L1]
+FS.directoryExists(pathname); [async] [L1]
 
     Checks whether a directory by the name of `pathname` exists.  Returns a
     promise which resolves to `true` if the directory exists, or `false`
@@ -681,7 +681,7 @@ FS.directoryOf(pathname); [experimental]
           existing directory, the function will act as if the trailing slash
           was present.
 
-FS.evaluate(pathname); [L1]
+FS.evaluate(pathname); [async] [L1]
 
     Executes the JavaScript file named by `pathname` in the global scope and
     returns a promise for the result.  This is useful for executing scripts
@@ -700,7 +700,7 @@ FS.extensionOf(pathname); [experimental]
     Note: If `pathname` ends in a forward slash `/` or names a known existing
           directory, a TypeError will be thrown.
 
-FS.fileExists(pathname); [L1]
+FS.fileExists(pathname); [async] [L1]
 
     Checks whether a file by the name of `pathname` exists.  Returns a promise
     which resolves to `true` if the file exists, or `false` otherwise.
@@ -731,7 +731,7 @@ FS.fullPath(pathname[, base_dir]); [L1]
           returned by this function will end in a forward slash (`/`) even if
           the input pathname did not.
 
-FS.readFile(pathname); [L1]
+FS.readFile(pathname); [async] [L1]
 
     Reads an entire UTF-8 text file as a JS string and returns a promise for
     the string.  This is a convenience to avoid the need to explicitly
@@ -748,21 +748,21 @@ FS.relativePath(pathname, base_dir); [L1]
     path relative to `base_dir`.  This can be useful when logging filenames or
     displaying track names, for example.
 
-FS.removeDirectory(pathname); [L1]
+FS.removeDirectory(pathname); [async] [L1]
 
     Deletes the directory named by `pathname` and returns a promise that
     resolves once the deletion is finished.  If the directory doesn't exist--or
     *does* exist but is not empty (this function will not delete a non-empty
     directory)--the promise will be rejected.
 
-FS.rename(orig_name, new_name); [L1]
+FS.rename(orig_name, new_name); [async] [L1]
 
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full paths.  This can also be used to move a file between
     directories; if so, the destination directory must already exist.  Returns
     a promise that resolves once the rename is done.
 
-FS.writeFile(pathname, string); [L1]
+FS.writeFile(pathname, string); [async] [L1]
 
     Writes a string out to a UTF-8 text file.  If a file already exists under
     the specified pathname, it will be overwritten.  Returns a promise that
@@ -1695,30 +1695,28 @@ Socket#remotePort [read-only] [L1]
     Generally not a useful statistic, but it's there if you need it.  Throws an
     error if accessed before a connection is established.
 
-Socket#close(); [L1]
+Socket#close(); [async] [L1]
 
     Disconnects the socket.  Note that any given Socket object is tied to a
     specific session and so cannot be reused after it has been closed.
 
-Socket#connectTo(hostname, port); [L1]
+Socket#connectTo(hostname, port); [async] [L1]
 
     Connects the socket to `hostname` on `port` and throws an error if the
     initial connection attempt fails.  `hostname` can either be a domain name
-    (e.g. google.com) or IP address (e.g. 127.0.0.1).  If this method succeeds,
-    you must poll `Socket#connected` to find out when the connection has been
-    established before attempting to read or write from the socket.
+    (e.g. google.com) or IP address (e.g. 127.0.0.1).  Returns a promise that
+    resolves when the connection is successfully made or rejects if it fails.
 
     Note: A single socket can only be connected to one client at a time.  If
           the socket is already connected when `Socket#connectTo()` is called,
           that connection will be closed.
 
-Socket#read(num_bytes); [L1]
+Socket#read(num_bytes); [async] [L1]
 
-    Reads up to `num_bytes` bytes from the socket and returns an ArrayBuffer
-    containing the data received.  This method is non-blocking: If more bytes
-    are requested than are available, only the available data will be returned.
+    Reads up to `num_bytes` bytes from the socket and returns a promise for an
+    ArrayBuffer containing the data received.
 
-Socket#write(data); [L1]
+Socket#write(data); [async] [L1]
 
     Writes data to the socket, which can be read at the other end.  `data` can
     be either an ArrayBuffer, TypedArray view, or DataView.

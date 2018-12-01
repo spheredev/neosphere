@@ -717,10 +717,10 @@ pegasus_init(int api_level)
 	api_define_property("Socket", "connected", false, js_Socket_get_connected, NULL);
 	api_define_property("Socket", "remoteAddress", false, js_Socket_get_remoteAddress, NULL);
 	api_define_property("Socket", "remotePort", false, js_Socket_get_remotePort, NULL);
-	api_define_method("Socket", "close", js_Socket_close, 0);
-	api_define_method("Socket", "connectTo", js_Socket_connectTo, 0);
-	api_define_method("Socket", "read", js_Socket_read, 0);
-	api_define_method("Socket", "write", js_Socket_write, 0);
+	api_define_async_method("Socket", "close", js_Socket_close, 0);
+	api_define_async_method("Socket", "connectTo", js_Socket_connectTo, 0);
+	api_define_async_method("Socket", "read", js_Socket_read, 0);
+	api_define_async_method("Socket", "write", js_Socket_write, 0);
 	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize, 0);
 	api_define_property("Sound", "fileName", false, js_Sound_get_fileName, NULL);
 	api_define_property("Sound", "length", false, js_Sound_get_length, NULL);
