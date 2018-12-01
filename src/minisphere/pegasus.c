@@ -624,13 +624,11 @@ pegasus_init(int api_level)
 	api_define_method("FileStream", "read", js_FileStream_read, 0);
 	api_define_method("FileStream", "write", js_FileStream_write, 0);
 	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize, 0);
-	api_define_async_func("Font", "fromFile", js_new_Font, 0);
 	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL);
 	api_define_property("Font", "fileName", false, js_Font_get_fileName, NULL);
 	api_define_property("Font", "height", false, js_Font_get_height, NULL);
 	api_define_method("Font", "drawText", js_Font_drawText, 0);
 	api_define_method("Font", "getTextSize", js_Font_getTextSize, 0);
-	api_define_method("Font", "widthOf", js_Font_widthOf, 0);
 	api_define_method("Font", "wordWrap", js_Font_wordWrap, 0);
 	api_define_async_func("FS", "createDirectory", js_FS_createDirectory, 0);
 	api_define_async_func("FS", "deleteFile", js_FS_deleteFile, 0);
@@ -644,7 +642,6 @@ pegasus_init(int api_level)
 	api_define_async_func("FS", "rename", js_FS_rename, 0);
 	api_define_async_func("FS", "writeFile", js_FS_writeFile, 0);
 	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize, 0);
-	api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
 	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, NULL, 0);
 	api_define_method("JobToken", "cancel", js_JobToken_cancel, 0);
 	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, NULL, 0);
@@ -692,7 +689,6 @@ pegasus_init(int api_level)
 	api_define_function("SSj", "profile", js_SSj_profile, 0);
 	api_define_function("SSj", "trace", js_SSj_log, KI_LOG_TRACE);
 	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize, 0);
-	api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
 	api_define_property("Sample", "fileName", false, js_Sample_get_fileName, NULL);
 	api_define_method("Sample", "play", js_Sample_play, 0);
 	api_define_method("Sample", "stopAll", js_Sample_stopAll, 0);
@@ -700,7 +696,6 @@ pegasus_init(int api_level)
 	api_define_method("Server", "close", js_Server_close, 0);
 	api_define_method("Server", "accept", js_Server_accept, 0);
 	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize, 0);
-	api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
 	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL);
 	api_define_method("Shader", "clone", js_Shader_clone, 0);
 	api_define_method("Shader", "setBoolean", js_Shader_setBoolean, 0);
@@ -727,7 +722,6 @@ pegasus_init(int api_level)
 	api_define_method("Socket", "read", js_Socket_read, 0);
 	api_define_method("Socket", "write", js_Socket_write, 0);
 	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize, 0);
-	api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
 	api_define_property("Sound", "fileName", false, js_Sound_get_fileName, NULL);
 	api_define_property("Sound", "length", false, js_Sound_get_length, NULL);
 	api_define_property("Sound", "pan", false, js_Sound_get_pan, js_Sound_set_pan);
@@ -754,7 +748,6 @@ pegasus_init(int api_level)
 	api_define_property("TextEncoder", "encoding", false, js_TextEncoder_get_encoding, NULL);
 	api_define_method("TextEncoder", "encode", js_TextEncoder_encode, 0);
 	api_define_class("Texture", PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_TEXTURE);
-	api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
 	api_define_property("Texture", "fileName", false, js_Texture_get_fileName, NULL);
 	api_define_property("Texture", "height", false, js_Texture_get_height, NULL);
 	api_define_property("Texture", "width", false, js_Texture_get_width, NULL);
@@ -770,7 +763,6 @@ pegasus_init(int api_level)
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
 
 	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
-	api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
 	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
 	api_define_property("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_property("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
@@ -897,18 +889,28 @@ pegasus_init(int api_level)
 
 	if (api_level >= 2) {
 		api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
+
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
 		api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
 		api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
+		api_define_async_func("Font", "fromFile", js_new_Font, 0);
+		api_define_method("Font", "widthOf", js_Font_widthOf, 0);
+		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
+		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
+		api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
+		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
+		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
+		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
+		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
+		api_define_function("Z", "deflate", js_Z_deflate, 0);
+		api_define_function("Z", "inflate", js_Z_inflate, 0);
+
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
-		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
-		api_define_function("Z", "deflate", js_Z_deflate, 0);
-		api_define_function("Z", "inflate", js_Z_inflate, 0);
 
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
 		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
