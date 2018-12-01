@@ -777,12 +777,17 @@ FS.writeFile(pathname, string); [async] [L1]
 `FileStream` Object
 -------------------
 
-A `FileStream` object represents a file opened for reading or writing.  It is
-called a "stream" because the default mode of operation is to read bytes from
-the file sequentially (although you can seek anywhere within the file at will);
-there is no requirement that the data is streamed directly from disk and on
-certain implementations (notably Oozaru), the engine may even load it fully
-into memory before the first access is even made.
+The `FileStream` object provides a low-level interface for reading and writing
+any kind of file.  This can be used, for example, to support additional file
+formats that aren't directly supported by the engine.  Sphere makes no attempt
+to interpret the data in the file and simply provides access to the raw bytes
+it contains.
+
+It is called a "stream" only because the default mode of operation is to read
+byte data sequentially (although random access is allowed); all reads and
+writes are synchronous and there is no guarantee that data is streamed directly
+from disk.  In some implementations, the file will be completely loaded into
+memory upfront.  Keep this in mind when working with large files.
 
 FileStream.open(filename, file_op); [async] [experimental]
 
@@ -815,7 +820,7 @@ new FileStream(filename, file_op); [L1]
 
     Like `FileStream.open`, but doesn't return until the file is ready for
     access and throws a synchronous exception in case of error.  This will not
-    work on all implementations and will be deprecated starting in API level 2;
+    work in all implementations and will be deprecated starting in API level 2;
     use `FileStream.open` instead.
 
 FileStream#dispose(); [L1]
@@ -1702,10 +1707,10 @@ Socket#close(); [async] [L1]
 
 Socket#connectTo(hostname, port); [async] [L1]
 
-    Connects the socket to `hostname` on `port` and throws an error if the
-    initial connection attempt fails.  `hostname` can either be a domain name
-    (e.g. google.com) or IP address (e.g. 127.0.0.1).  Returns a promise that
-    resolves when the connection is successfully made or rejects if it fails.
+    Connects the socket to `hostname` on `port`.  `hostname` can either be a
+    domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  Returns a
+    promise that resolves when the connection is successfully made or rejects
+    if it fails.
 
     Note: A single socket can only be connected to one client at a time.  If
           the socket is already connected when `Socket#connectTo()` is called,
@@ -1713,13 +1718,15 @@ Socket#connectTo(hostname, port); [async] [L1]
 
 Socket#read(num_bytes); [async] [L1]
 
-    Reads up to `num_bytes` bytes from the socket and returns a promise for an
-    ArrayBuffer containing the data received.
+    Reads `num_bytes` bytes from the socket and returns a promise for an
+    ArrayBuffer containing the data received.  If the connection is lost before
+    all bytes are received, the promise will be rejected.
 
 Socket#write(data); [async] [L1]
 
-    Writes data to the socket, which can be read at the other end.  `data` can
-    be either an ArrayBuffer, TypedArray view, or DataView.
+    Writes data to the socket, which can be read on the other end.  `data` can
+    be either an ArrayBuffer, TypedArray view, or DataView.  Returns a promise
+    that resolves after all data has been sent.
 
 
 `Sound` Object
