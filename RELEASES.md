@@ -9,6 +9,14 @@ miniSphere 5.3
   `cell clean`.  If you need a quick primer on the new syntax, you can type
   `cell help` on the command-line.
 
+* All `FS` namespace functions that access the physical file system have been
+  changed to return a promise for their result.  In some cases (`FS.readFile`,
+  notably) this is a breaking API change, but was a necessary evil to ensure
+  cross-compatibility with Oozaru, the Sphere implementation for the Web
+  currently under development.  The alternative was to introduce duplicate
+  `async` variants of about 10 functions, bloating the API.  These functions
+  haven't seen much use so far, so the real-world impact should be minimal.
+
 * The `from` module has been rewritten for improved performance and along with
   several new query operators comes a few breaking changes.  `.skip` is now
   called `.drop`, `.from` is now called `.over` and the iteratee for `.first`

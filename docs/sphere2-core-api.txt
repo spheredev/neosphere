@@ -651,11 +651,13 @@ FS.createDirectory(pathname); [L1]
 
     Creates a directory and any of its parent directories that don't already
     exist.  If the directory already exists, this function does nothing.
+    Returns a promise that resolves once the directory has been created.
 
     Note: As noted above, `FS.createDirectory()` is safe to call even if the
-          specified directory already exists; no error will be thrown in that
-          case.  This allows you to call it to ensure a directory exists before
-          you access it, without needing an explicit check beforehand.
+          specified directory already exists; the promise will not be rejected
+          in that case.  This allows you to call it to ensure a directory
+          exists before you access it, without needing an explicit check
+          beforehand.
 
 FS.deleteFile(pathname); [L1]
 
@@ -663,8 +665,9 @@ FS.deleteFile(pathname); [L1]
 
 FS.directoryExists(pathname); [L1]
 
-    Checks whether a directory by the name of `pathname` exists and returns
-    `true` if it does.  Otherwise, returns `false`.
+    Checks whether a directory by the name of `pathname` exists.  Returns a
+    promise which resolves to `true` if the directory exists, or `false`
+    otherwise.
 
 FS.directoryOf(pathname); [experimental]
 
@@ -678,11 +681,11 @@ FS.directoryOf(pathname); [experimental]
           existing directory, the function will act as if the trailing slash
           was present.
 
-FS.evaluateScript(pathname); [L1]
+FS.evaluate(pathname); [L1]
 
     Executes the JavaScript file named by `pathname` in the global scope and
-    returns the result.  This is useful for executing scripts originally
-    written for the Web, where modules are not supported.
+    returns a promise for the result.  This is useful for executing scripts
+    originally written for the Web, where modules are not supported.
 
     Note: Depending on the particular script being evaluated, this function
           can--and likely will--create new global functions and variables.  Be
@@ -699,8 +702,8 @@ FS.extensionOf(pathname); [experimental]
 
 FS.fileExists(pathname); [L1]
 
-    Checks whether a file by the name of `pathname` exists and returns `true`
-    if it does.  Otherwise, returns `false`.
+    Checks whether a file by the name of `pathname` exists.  Returns a promise
+    which resolves to `true` if the file exists, or `false` otherwise.
 
 FS.fileNameOf(pathname); [experimental]
 
@@ -730,50 +733,41 @@ FS.fullPath(pathname[, base_dir]); [L1]
 
 FS.readFile(pathname); [L1]
 
-    Reads an entire UTF-8 text file into a JavaScript string.  This is a
-    convenience to avoid the need to explicitly construct a FileStream and
-    decode the file contents when all you want is to load a text file.
+    Reads an entire UTF-8 text file as a JS string and returns a promise for
+    the string.  This is a convenience to avoid the need to explicitly
+    construct a FileStream and decode the file contents when loading plain text
+    files.
 
-    Note: This performs UTF-8 decoding, making it unsuitable for use with
-          binary data.  To work with binary files, use a FileStream object
+    Note: This performs strict UTF-8 decoding, making it unsuitable for use
+          with binary data.  To work with binary files, use a FileStream object
           instead.
 
 FS.relativePath(pathname, base_dir); [L1]
 
-    Abbreviates a full SphereFS pathname by returning its path relative to
-    `base_dir`.  This can be useful when logging filenames or displaying track
-    names, for example.
+    Abbreviates a full SphereFS pathname, returning a string representing its
+    path relative to `base_dir`.  This can be useful when logging filenames or
+    displaying track names, for example.
 
 FS.removeDirectory(pathname); [L1]
 
-    Deletes the directory named by `pathname`.  If the directory doesn't
-    exist--or *does* exist but is not empty (this function will not delete a
-    non-empty directory)--an error will be thrown.
+    Deletes the directory named by `pathname` and returns a promise that
+    resolves once the deletion is finished.  If the directory doesn't exist--or
+    *does* exist but is not empty (this function will not delete a non-empty
+    directory)--the promise will be rejected.
 
 FS.rename(orig_name, new_name); [L1]
 
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full paths.  This can also be used to move a file between
-    directories; if so, the destination directory must already exist.
-
-FS.typeOf(pathname); [experimental]
-
-    If `pathname` refers to a file, returns a string describing the type of the
-    file, e.g. "javascript-module" or "json".  The type string returned is
-    based on both the filename extension and the contents of the `fileTypes`
-    table in the manifest, which directly maps extensions to types.
-
-    If the pathname refers to a file which is part of the engine (e.g., any
-    name beginning with `#/`), the `fileTypes` table will be ignored and only
-    the built-in type mappings will be used.
-
-    Note: If `pathname` ends in a forward slash `/` or names a known existing
-          directory, a TypeError will be thrown.
+    directories; if so, the destination directory must already exist.  Returns
+    a promise that resolves once the rename is done.
 
 FS.writeFile(pathname, string); [L1]
 
     Writes a string out to a UTF-8 text file.  If a file already exists under
-    the specified pathname, it will be overwritten.
+    the specified pathname, it will be overwritten.  Returns a promise that
+    resolves once the file has been successfully written, or rejects with an
+    error if writing fails.
 
     Note: This performs UTF-8 encoding, making it unsuitable for use with
           binary data.  To work with binary files, use a FileStream object
