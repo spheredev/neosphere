@@ -199,14 +199,14 @@ communicate with the underlying Sphere platform.  The properties provide access
 to the engine's name, version number, and API level, and there are several
 methods for managing execution.
 
-Sphere.Engine [read-only] [L1]
+Sphere.Engine [READ-ONLY] [L1]
 
     A string specifying the name and version number of the game engine.  The
     version number takes the form X.Y.Z, where X is the major version, Y is the
     minor version, and Z is the patch level.
 
-Sphere.Version [read-only] [L1]
-Sphere.APILevel [read-only] [L1]
+Sphere.Version [READ-ONLY] [L1]
+Sphere.APILevel [READ-ONLY] [L1]
 
     The Sphere API version and level supported by the engine, respectively.
     `Version` indicates which version of the Sphere API is supported (e.g., 2),
@@ -214,13 +214,13 @@ Sphere.APILevel [read-only] [L1]
     methods, or properties are added to the Core API, the API level is
     increased.
 
-Sphere.Compiler [read-only] [L1]
+Sphere.Compiler [READ-ONLY] [L1]
 
     A string specifying the name and version number of the compiler or build
     tool used to make the game distribution.  If no compiler information is
     available for the current game, this evaluates to `undefined`.
 
-Sphere.Game [read-only] [L1]
+Sphere.Game [READ-ONLY] [L1]
 
     An object whose properties describe the currently running game.  The object
     consists of everything in the JSON manifest plus any fields synthesized by
@@ -230,7 +230,7 @@ Sphere.Game [read-only] [L1]
           any attempt to add, remove, or change any properties of `Sphere.Game`
           will cause a TypeError to be thrown.
 
-Sphere.frameRate [read/write] [L1]
+Sphere.frameRate [READ/WRITE] [L1]
 
     Gets or sets the frame rate.  Set this to Infinity to disable the frame
     limiter.  The default is 60 FPS.
@@ -239,12 +239,12 @@ Sphere.frameRate [read/write] [L1]
     set to 60 (the default), the event loop will perform 60 iterations per
     second, skipping renders as necessary to meet that goal.
 
-Sphere.frameSkip [read/write] [L1]
+Sphere.frameSkip [READ/WRITE] [L1]
 
     Gets or sets the maximum number of frames the engine is allowed to skip in
     order to maintain the desired frame rate.
 
-Sphere.fullScreen [read/write] [L1]
+Sphere.fullScreen [READ/WRITE] [L1]
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
@@ -253,7 +253,7 @@ Sphere.fullScreen [read/write] [L1]
           windowed mode and any change to the value of `screen.fullScreen` will
           be silently ignored.
 
-Sphere.main [read-only] [L1]
+Sphere.main [READ-ONLY] [L1]
 
     Gets a reference to the game's main object, when the main module exports a
     constructor or class.  This object is created by the engine on startup by
@@ -305,7 +305,7 @@ Sphere.shutDown(); [L1]
           after control has returned to the event loop.  Note that dispatching
           new update or render jobs before then will cancel the request!
 
-Sphere.sleep(frames); [async] [L1]
+Sphere.sleep(frames); [ASYNC] [L1]
 
     Returns a promise that resolves after the specified number of frames have
     elapsed.  Can be used with `await`.  This is useful to delay execution of a
@@ -326,23 +326,23 @@ For convenience, predefined BlendOp objects are provided in the API for the
 most common blending operations, but you can easily make new ones if these
 don't meet your needs.
 
-BlendOp.Default [read-only] [experimental]
+BlendOp.Default [READ-ONLY] [EXPERIMENTAL]
 
     The default blending mode.  If no blending operation is specified for a
     surface, it will use this mode.  This represents traditional alpha
     blending; the final rendered pixel is a weighted average of the source and
     destination pixels, based on the alpha value of the source pixel.
 
-BlendOp.Add [read-only] [experimental]
-BlendOp.Multiply [read-only] [experimental]
-BlendOp.Replace [read-only] [experimental]
-BlendOp.Subtract [read-only] [experimental]
+BlendOp.Add [READ-ONLY] [EXPERIMENTAL]
+BlendOp.Multiply [READ-ONLY] [EXPERIMENTAL]
+BlendOp.Replace [READ-ONLY] [EXPERIMENTAL]
+BlendOp.Subtract [READ-ONLY] [EXPERIMENTAL]
 
     Adds to, multiplies with, replaces, and subtracts from the destination
     pixel values, respectively.  These modes cover most common use cases, so
     the engine provides them for convenience.
 
-new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [experimental]
+new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [EXPERIMENTAL]
 
     Constructs a new BlendOp which blends colors according to the given
     parameters.
@@ -397,10 +397,10 @@ new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [experimental]
 The `Color` object represents an RGB color value.  It also has an alpha
 component and can therefore represent translucent colors.
 
-Color.Red [read-only] [L1]
-Color.Green [read-only] [L1]
-Color.Blue [read-only] [L1]
-Color.Transparent [read-only] [L1]
+Color.Red [READ-ONLY] [L1]
+Color.Green [READ-ONLY] [L1]
+Color.Blue [READ-ONLY] [L1]
+Color.Transparent [READ-ONLY] [L1]
 etc...
 
     Gets a copy of a predefined color.  The entire X11 color set is provided,
@@ -446,17 +446,17 @@ new Color(red, green, blue[, alpha]); [L1]
     the range [0.0, 1.0]; out-of-range values are silently clamped.  `alpha`
     specifies the color's opacity and defaults to 1.0 if not provided.
 
-Color#r [read/write] [L1]
-Color#g [read/write] [L1]
-Color#b [read/write] [L1]
-Color#a [read/write] [L1]
+Color#r [READ/WRITE] [L1]
+Color#g [READ/WRITE] [L1]
+Color#b [READ/WRITE] [L1]
+Color#a [READ/WRITE] [L1]
 
     Gets or sets the individual components of the color (red, green, blue, or
     alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
     HDR is not supported and the engine will automatically clamp such colors
     when rendered.
 
-Color#name [read-only] [L1]
+Color#name [READ-ONLY] [L1]
 
     Gets the name of the Color according to its component values such that
     Color.of(color.name) will give back a Color with the same values.  Useful
@@ -491,18 +491,18 @@ new DirectoryStream(dir_name[, options]); [L1]
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
 
-    options.recursive [default: false] [experimental]
+    options.recursive [default: false] [EXPERIMENTAL]
 
         If `recursive` is true, the DirectoryStream will descend into
         subdirectories to list files they contain.  The output will not contain
         any directory entries in this case, only file entries.
 
-DirectoryStream#fileCount [read-only] [L1]
+DirectoryStream#fileCount [READ-ONLY] [L1]
 
     Gets the number of entries (both files and directories) in the directory
     listing.
 
-DirectoryStream#fileName [read-only] [L1]
+DirectoryStream#fileName [READ-ONLY] [L1]
 
     Gets the full SphereFS pathname of the directory whose entries are being
     enumerated.
@@ -510,7 +510,7 @@ DirectoryStream#fileName [read-only] [L1]
     Note: Under SphereFS canonicalization rules, the pathname of a directory
           always ends in a slash (`/`).
 
-DirectoryStream#position [read/write] [L1]
+DirectoryStream#position [READ/WRITE] [L1]
 
     Gets or sets the position within the stream.  This is an index into the
     directory specifying which entry will be read next.
@@ -597,7 +597,7 @@ Dispatch.now(callback); [L1]
           latter runs at the beginning of the next frame; Dispatch.now() jobs
           always run during the same frame they were issued.
 
-Dispatch.onExit(callback); [experimental]
+Dispatch.onExit(callback); [EXPERIMENTAL]
 
     Sets up a one-time job to call `callback` after the event loop exits.  This
     is useful when you need to ensure something always runs before the engine
@@ -647,7 +647,7 @@ The `FS` namespace allows your game to access asset and save files, create or
 remove directories, etc.  All file system operations are sandboxed to prevent
 damage to the system.
 
-FS.createDirectory(pathname); [async] [L1]
+FS.createDirectory(pathname); [ASYNC] [L1]
 
     Creates a directory and any of its parent directories that don't already
     exist.  If the directory already exists, this function does nothing.
@@ -659,17 +659,17 @@ FS.createDirectory(pathname); [async] [L1]
           exists before you access it, without needing an explicit check
           beforehand.
 
-FS.deleteFile(pathname); [async] [L1]
+FS.deleteFile(pathname); [ASYNC] [L1]
 
     Deletes the file named by `pathname` from the file system.
 
-FS.directoryExists(pathname); [async] [L1]
+FS.directoryExists(pathname); [ASYNC] [L1]
 
     Checks whether a directory by the name of `pathname` exists.  Returns a
     promise which resolves to `true` if the directory exists, or `false`
     otherwise.
 
-FS.directoryOf(pathname); [experimental]
+FS.directoryOf(pathname); [EXPERIMENTAL]
 
     Returns the full SphereFS path of the directory containing `pathname`.  The
     pathname is resolved via the usual SphereFS rules, so if no directory info
@@ -681,7 +681,7 @@ FS.directoryOf(pathname); [experimental]
           existing directory, the function will act as if the trailing slash
           was present.
 
-FS.evaluate(pathname); [async] [L1]
+FS.evaluate(pathname); [ASYNC] [L1]
 
     Executes the JavaScript file named by `pathname` in the global scope and
     returns a promise for the result.  This is useful for executing scripts
@@ -691,7 +691,7 @@ FS.evaluate(pathname); [async] [L1]
           can--and likely will--create new global functions and variables.  Be
           sure you know what you're doing!
 
-FS.extensionOf(pathname); [experimental]
+FS.extensionOf(pathname); [EXPERIMENTAL]
 
     If `pathname` refers to a file, returns the filename extension of the named
     file (i.e. everything starting from the last dot `.` in the filename).  If
@@ -700,12 +700,12 @@ FS.extensionOf(pathname); [experimental]
     Note: If `pathname` ends in a forward slash `/` or names a known existing
           directory, a TypeError will be thrown.
 
-FS.fileExists(pathname); [async] [L1]
+FS.fileExists(pathname); [ASYNC] [L1]
 
     Checks whether a file by the name of `pathname` exists.  Returns a promise
     which resolves to `true` if the file exists, or `false` otherwise.
 
-FS.fileNameOf(pathname); [experimental]
+FS.fileNameOf(pathname); [EXPERIMENTAL]
 
     If `pathname` is a full or partial path to a file, returns only the
     filename portion, or `undefined` if there is no filename in the path (for
@@ -731,7 +731,7 @@ FS.fullPath(pathname[, base_dir]); [L1]
           returned by this function will end in a forward slash (`/`) even if
           the input pathname did not.
 
-FS.readFile(pathname[, data_type]); [async] [L1]
+FS.readFile(pathname[, data_type]); [ASYNC] [L1]
 
     Reads an entire file at once and returns a promise for the content.  The
     optional parameter `data_type` specifies how interpret the file contents
@@ -765,21 +765,21 @@ FS.relativePath(pathname, base_dir); [L1]
     path relative to `base_dir`.  This can be useful when logging filenames or
     displaying track names, for example.
 
-FS.removeDirectory(pathname); [async] [L1]
+FS.removeDirectory(pathname); [ASYNC] [L1]
 
     Deletes the directory named by `pathname` and returns a promise that
     resolves once the deletion is finished.  If the directory doesn't exist--or
     *does* exist but is not empty (this function will not delete a non-empty
     directory)--the promise will be rejected.
 
-FS.rename(orig_name, new_name); [async] [L1]
+FS.rename(orig_name, new_name); [ASYNC] [L1]
 
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full paths.  This can also be used to move a file between
     directories; if so, the destination directory must already exist.  Returns
     a promise that resolves once the rename is done.
 
-FS.writeFile(pathname, data); [async] [L1]
+FS.writeFile(pathname, data); [ASYNC] [L1]
 
     Writes `data`, which can be either a string, array of strings, ArrayBuffer,
     or TypedArray, to a file.  If a file already exists by the specified name,
@@ -796,7 +796,7 @@ formats that aren't directly supported by the engine.  Sphere makes no attempt
 to interpret the data in the file and simply provides access to the raw bytes
 it contains.
 
-FileStream.open(filename, file_op); [async] [experimental]
+FileStream.open(filename, file_op); [ASYNC] [EXPERIMENTAL]
 
     Opens a file asynchronously and returns a promise for a `FileStream` that
     provides access to the contents of the file.  `file_op` specifies the file
@@ -830,7 +830,24 @@ new FileStream(filename, file_op); [L1]
     work in all implementations and will be deprecated starting in API level 2;
     use `FileStream.open` instead.
 
-FileStream#close(); [async] [L1]
+FileStream#fileName [READ-ONLY] [L1]
+
+    Gets the full SphereFS pathname of the underlying file.
+
+FileStream#fileSize [READ-ONLY] [L1]
+
+    Gets the size of the underlying file, in bytes.
+
+FileStream#position [READ/WRITE] [L1]
+
+    Gets or sets the file position, which determines where in the file the next
+    read or write will start from.  Expressed in bytes.
+
+    Note: For files opened for writing, it is valid to seek past the end of the
+          stream.  In this case the next write will be at the new position and
+          the intervening space filled with NUL bytes.
+
+FileStream#close(); [ASYNC] [L1]
 
     Disposes of the FileStream object, closing the underlying file.  Attempting
     to use the FileStream afterwards will cause an exception.  Returns a
@@ -842,30 +859,13 @@ FileStream#close(); [async] [L1]
           if the file is opened in write mode, an error may be thrown if you
           try to construct another one.
 
-FileStream#fileName [read-only] [L1]
-
-    Gets the full SphereFS pathname of the underlying file.
-
-FileStream#fileSize [read-only] [L1]
-
-    Gets the size of the underlying file, in bytes.
-
-FileStream#position [read/write] [L1]
-
-    Gets or sets the file position, which determines where in the file the next
-    read or write will start from.  Expressed in bytes.
-
-    Note: For files opened for writing, it is valid to seek past the end of the
-          stream.  In this case the next write will be at the new position and
-          the intervening space filled with NUL bytes.
-
-FileStream#read(num_bytes); [async] [L1]
+FileStream#read(num_bytes); [ASYNC] [L1]
 
     Reads data from the file, up to the specified number of bytes, and returns
     a promise for an ArrayBuffer containing the data read.  The file must be
     opened for reading.
 
-FileStream#write(data); [async] [L1]
+FileStream#write(data); [ASYNC] [L1]
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
@@ -879,7 +879,7 @@ The `Font` object specifies a typeface that can be used when drawing text.
 Sphere provides a default font which is the same for all games, or you can load
 one from an RFN font file.
 
-Font.Default [read-only] [L1]
+Font.Default [READ-ONLY] [L1]
 
     Gets the default engine font.  This is the font used for the FPS counter
     and system messages.
@@ -889,12 +889,12 @@ new Font(filename); [L1]
     Constructs a Font object from a font file.  Currently only the Sphere RFN
     font format is supported.
 
-Font#fileName [read-only] [L1]
+Font#fileName [READ-ONLY] [L1]
 
     Gets the full SphereFS pathname of the file used to construct this Font
     object.
 
-Font#height [read-only] [L1]
+Font#height [READ-ONLY] [L1]
 
     Gets the line height, in pixels, for text rendered using this font.
 
@@ -914,7 +914,7 @@ Font#getTextSize(text[, wrap_width]); [L1]
     Note: If `wrap_width` is not provided, no word wrap processing will be
           performed.
 
-Font#widthOf(text); [experimental]
+Font#widthOf(text); [EXPERIMENTAL]
 
     Returns the width, in pixels, of `text` when rendered by `Font#drawText`
     without wrapping.
@@ -963,12 +963,12 @@ JobToken#cancel(); [L1]
     using either `Dispatch.now()` or `Dispatch.later()` and has already started
     running, calling this has no effect.
 
-JobToken#pause(); [experimental]
+JobToken#pause(); [EXPERIMENTAL]
 
     Pauses the job.  Paused jobs will not run, but do keep the event loop alive
     and can be resumed at any time without the need to dispatch a new job.
 
-JobToken#resume(); [experimental]
+JobToken#resume(); [EXPERIMENTAL]
 
     Resumes the job associated with this token after it's been paused with
     JobToken#pause().  If the job is not currently paused, this does nothing.
@@ -977,7 +977,7 @@ JobToken#resume(); [experimental]
 `Joystick` Object
 -----------------
 
-Joystick.Null [read-only] [L1]
+Joystick.Null [READ-ONLY] [L1]
 
     Gets the null joystick.  When polled, a null joystick returns neutral
     values for all inputs.  Joystick.Null can be used in place of a real
@@ -988,16 +988,16 @@ Joystick.getDevices(); [L1]
     Gets an array of Joystick objects, one for each connected gamepad or
     joystick.
 
-Joystick#name [read-only] [L1]
+Joystick#name [READ-ONLY] [L1]
 
     Gets the name of the device, as reported by the Allegro backend.  Xbox
     controllers are reported as "XInput Joystick <n>"
 
-Joystick#numAxes [read-only] [L1]
+Joystick#numAxes [READ-ONLY] [L1]
 
     Gets the number of analog axes supported by the device.
 
-Joystick#numButtons [read-only] [L1]
+Joystick#numButtons [READ-ONLY] [L1]
 
     Gets the number of buttons supported by the device.
 
@@ -1138,15 +1138,15 @@ Key [enumeration] [L1]
           below the function keys, while NumPad0-NumPad9 refer to the numbers
           on the numeric keypad.
 
-Keyboard.Default [read-only] [L1]
+Keyboard.Default [READ-ONLY] [L1]
 
     Gets a `Keyboard` object for the default keyboard device.
 
     Note: miniSphere currently only supports a single keyboard.
 
-Keyboard#capsLock [read-only] [L1]
-Keyboard#numLock [read-only] [L1]
-Keyboard#scrollLock [read-only] [L1]
+Keyboard#capsLock [READ-ONLY] [L1]
+Keyboard#numLock [READ-ONLY] [L1]
+Keyboard#scrollLock [READ-ONLY] [L1]
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
@@ -1183,7 +1183,7 @@ Mixers are used to group related audio together and adjust their parameters as
 a class; this is useful, for example, for implementing global volume controls
 in your game.
 
-Mixer.Default [read-only] [L1]
+Mixer.Default [READ-ONLY] [L1]
 
     Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
     16-bit stereo sound, i.e. CD quality.
@@ -1200,7 +1200,7 @@ new Mixer(frequency, bits[, channels]); [L1]
     not supported by the system, an error will be thrown ("unable to create
     hardware voice").
 
-Mixer#volume [read/write] [L1]
+Mixer#volume [READ/WRITE] [L1]
 
     Gets or sets the output volume of the mixer.  This will affect the volume
     of any sounds played through the mixer.
@@ -1224,11 +1224,11 @@ new Model(shapes[, shader]); [L1]
     identity matrix.  If `shader` is not provided, the default shader program
     will be used (see `Shader.Default`).
 
-Model#shader [read/write] [L1]
+Model#shader [READ/WRITE] [L1]
 
     Gets or sets the Shader to use when drawing this model.
 
-Model#transform [read/write] [L1]
+Model#transform [READ/WRITE] [L1]
 
     Gets or sets the transformation matrix to use when drawing this model.
 
@@ -1263,14 +1263,14 @@ MouseKey [enumeration] [L1]
         MouseKey.Back
         MouseKey.Forward
 
-Mouse.Default [read-only] [L1]
+Mouse.Default [READ-ONLY] [L1]
 
     Gets a `Mouse` object for the default mouse device.
 
     Note: miniSphere currently only supports a single mouse.
 
-Mouse#x [read-only] [L1]
-Mouse#y [read-only] [L1]
+Mouse#x [READ-ONLY] [L1]
+Mouse#y [READ-ONLY] [L1]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
     game's rendering area.
@@ -1298,7 +1298,7 @@ Mouse#getEvent(); [L1]
             The X and Y position of the mouse cursor relative to the rendering
             area at the time the event was received.
 
-        event.delta [experimental]
+        event.delta [EXPERIMENTAL]
 
             For mouse wheel events, specifies how much the wheel has moved.
             For any other event, this will be `undefined`.
@@ -1345,7 +1345,7 @@ new RNG(); [L1]
     Constructs a new random number generator seeded from the current system
     time.
 
-RNG#state [read/write] [L1]
+RNG#state [READ/WRITE] [L1]
 
     Gets or sets the current state of this generator.  State is encoded as
     a 32-digit hexadecimal string which makes it easy to save and restore.
@@ -1456,7 +1456,7 @@ new Sample(filename); [L1]
           recommend to use `Sample` objects for, e.g., background music.  Use a
           `Sound` instead.
 
-Sample#fileName [read-only] [L1]
+Sample#fileName [READ-ONLY] [L1]
 
     Gets the full SphereFS pathname of the audio file used to construct this
     Sample object.
@@ -1527,7 +1527,7 @@ manipulates vertices and pixels as they are rendered to a surface.  Shaders are
 written in the GLSL shader programming language, which is beyond the scope of
 this document.
 
-Shader.Default [read-only] [L1]
+Shader.Default [READ-ONLY] [L1]
 
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
@@ -1620,7 +1620,7 @@ ShapeType [enumeration] [L1]
         ShapeType.Triangles
         ShapeType.TriStrip
 
-Shape.drawImmediate([surface, ]type[, texture], vertices); [experimental]
+Shape.drawImmediate([surface, ]type[, texture], vertices); [EXPERIMENTAL]
 
     Draws a shape to a surface in immediate mode (on-the-fly).  Useful when
     you need to create shapes on demand (procedural generation, for instance)
@@ -1646,17 +1646,17 @@ new Shape(type[, texture], vertexList[, indexList]); [L1]
     the vertex list will comprise the shape.  If `indexList` is not specified,
     all vertices from `vertexList` will be used.
 
-Shape#indexList [read/write] [L1]
+Shape#indexList [READ/WRITE] [L1]
 
     Gets or sets the index list used to select vertices for this shape.  Set
     this to `null` to use the entire vertex list.
 
-Shape#texture [read/write] [L1]
+Shape#texture [READ/WRITE] [L1]
 
     The Image to use when texturing the shape. This can be null, in which case
     the vertex colors alone will determine the shape's appearance.
 
-Shape#vertexList [read/write] [L1]
+Shape#vertexList [READ/WRITE] [L1]
 
     Gets or sets the vertex list containing vertices for this shape.
 
@@ -1683,7 +1683,7 @@ new Socket([hostname, port]); [L1]
     on `port` and throws an error if the attempt fails. See the documentation
     for `Socket#connectTo()` for more information on socket connections.
 
-Socket#bytesPending [read-only] [L1]
+Socket#bytesPending [READ-ONLY] [L1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     Call `Socket#read()` to retrieve this data.
@@ -1693,29 +1693,29 @@ Socket#bytesPending [read-only] [L1]
           to time and perform reads in order to keep the size of the receive
           buffer down.
 
-Socket#connected [read-only] [L1]
+Socket#connected [READ-ONLY] [L1]
 
     Gets whether the connection has been established.  As long as this is
     false, you cannot call any other methods on the socket object.  Doing so
     will cause an error to be thrown.
 
-Socket#remoteAddress [read-only] [L1]
+Socket#remoteAddress [READ-ONLY] [L1]
 
     Gets the IP address of the upstream end of the socket.  Throws an error if
     accessed before a connection has been established.
 
-Socket#remotePort [read-only] [L1]
+Socket#remotePort [READ-ONLY] [L1]
 
     Gets the port that the remote machine is using for the connection.
     Generally not a useful statistic, but it's there if you need it.  Throws an
     error if accessed before a connection is established.
 
-Socket#close(); [async] [L1]
+Socket#close(); [ASYNC] [L1]
 
     Disconnects the socket.  Note that any given Socket object is tied to a
     specific session and so cannot be reused after it has been closed.
 
-Socket#connectTo(hostname, port); [async] [L1]
+Socket#connectTo(hostname, port); [ASYNC] [L1]
 
     Connects the socket to `hostname` on `port`.  `hostname` can either be a
     domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  Returns a
@@ -1726,13 +1726,13 @@ Socket#connectTo(hostname, port); [async] [L1]
           the socket is already connected when `Socket#connectTo()` is called,
           that connection will be closed.
 
-Socket#read(num_bytes); [async] [L1]
+Socket#read(num_bytes); [ASYNC] [L1]
 
     Reads `num_bytes` bytes from the socket and returns a promise for an
     ArrayBuffer containing the data received.  If the connection is lost before
     all bytes are received, the promise will be rejected.
 
-Socket#write(data); [async] [L1]
+Socket#write(data); [ASYNC] [L1]
 
     Writes data to the socket, which can be read on the other end.  `data` can
     be either an ArrayBuffer, TypedArray view, or DataView.  Returns a promise
@@ -1752,40 +1752,40 @@ new Sound(filename); [L1]
     formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that
     unlike in Sphere 1.x, mp3 and MIDI formats are not supported.
 
-Sound#fileName [read-only] [L1]
+Sound#fileName [READ-ONLY] [L1]
 
     Gets the full SphereFS pathname of the file used to construct this Sound
     object.
 
-Sound#length [read-only] [L1]
+Sound#length [READ-ONLY] [L1]
 
     Gets the length of the sound in microseconds.
 
-Sound#pan [read/write] [L1]
+Sound#pan [READ/WRITE] [L1]
 
     Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
     left, and 1.0 is full right.
 
-Sound#playing [read-only] [L1]
+Sound#playing [READ-ONLY] [L1]
 
     true if the sound is currently playing, false otherwise.
 
-Sound#position [read/write] [L1]
+Sound#position [READ/WRITE] [L1]
 
     Gets or sets the playback position within the sound, in seconds.
 
-Sound#repeat [read/write] [L1]
+Sound#repeat [READ/WRITE] [L1]
 
     Gets or sets whether the sound will automatically repeat when it reaches
     the end.
 
-Sound#speed [read/write] [L1]
+Sound#speed [READ/WRITE] [L1]
 
     Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
     speed, etc.  Note that changing the playback speed affects the pitch as
     well.
 
-Sound#volume [read/write] [L1]
+Sound#volume [READ/WRITE] [L1]
 
     Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
     volume.  Higher values are allowed, but may introduce distortion due to
@@ -1825,7 +1825,7 @@ new SoundStream([frequency[, bits[, channels]]]); [L1]
 
     The default stream format is 8-bit 22050Hz with 1 channel.
 
-SoundStream#length [read-only] [L1]
+SoundStream#length [READ-ONLY] [L1]
 
     Gets the amount of audio currently buffered into the stream, in seconds.
     Playback will pause if the buffer is exhausted; To ensure skip-free
@@ -1871,7 +1871,7 @@ enables render-to-texture effects to be implemented.
 Note: Surfaces can only be used as textures under API level 2 or higher.  When
       targeting API level 1 you must call `.toTexture()` (see below) first.
 
-Surface.Screen [read-only] [L1]
+Surface.Screen [READ-ONLY] [L1]
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
@@ -1897,12 +1897,12 @@ new Surface(filename); [L1]
     Constructs a new Surface whose initial contents are taken from the
     specified image file.
 
-Surface#blendOp [read/write] [experimental]
+Surface#blendOp [READ/WRITE] [EXPERIMENTAL]
 
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
 
-Surface#transform [read/write] [L1]
+Surface#transform [READ/WRITE] [L1]
 
     Gets or sets a `Transform` representing the surface's projection matrix.
     When rendering is done on the surface, the projection matrix is the last
@@ -1912,8 +1912,8 @@ Surface#transform [read/write] [L1]
           When a surface is created, Sphere sets its transform to an
           orthographic matrix suitable for pixel-perfect 2D rendering.
 
-Surface#width [read-only] [L1]
-Surface#height [read-only] [L1]
+Surface#width [READ-ONLY] [L1]
+Surface#height [READ-ONLY] [L1]
 
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
@@ -1973,18 +1973,18 @@ new Texture(surface); [L1]
     Subsequent modifications to the surface will not affect the contents of the
     new texture.
 
-Texture#fileName [read-only] [L1]
+Texture#fileName [READ-ONLY] [L1]
 
     Gets the full SphereFS pathname of the file used to construct this Texture
     object.  For synthesized textures, e.g. those created from a surface, this
     is `null`.
 
-Texture#width [read-only] [L1]
-Texture#height [read-only] [L1]
+Texture#width [READ-ONLY] [L1]
+Texture#height [READ-ONLY] [L1]
 
     Gets the width or height of the texture, in pixels.
 
-Texture#download(); [experimental]
+Texture#download(); [EXPERIMENTAL]
 
     Downloads the 32-bit RGBA pixel data from the texture and returns it as a
     new Uint8ClampedArray.
@@ -1993,7 +1993,7 @@ Texture#download(); [experimental]
           shouldn't be done at render time if you can avoid it.  Use a Surface
           for render-to-texture effects if at all possible.
 
-Texture#upload(content); [experimental]
+Texture#upload(content); [EXPERIMENTAL]
 
     Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
     array) to the texture.  Enough data must be provided to completely rewrite
@@ -2011,7 +2011,7 @@ new Transform(); [L1]
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
 
-Transform#matrix [read-only]
+Transform#matrix [READ-ONLY]
 
     Gets an object you can use to access the cells of the underlying matrix.
     The object is used like a two-dimensional array:
@@ -2107,14 +2107,14 @@ new VertexList(vertices); [L1]
 The somewhat cryptically-named `Z` namespace hosts functions used for data
 compression.
 
-Z.deflate(data[, level]); [experimental]
+Z.deflate(data[, level]); [EXPERIMENTAL]
 
     Compresses the data in an ArrayBuffer or TypedArray using the DEFLATE
     compression method.  `level` specifies the compression level from
     0 (no compression) to 9 (maximum), with 7 being the default.  Returns an
     ArrayBuffer containing the compressed data.
 
-Z.inflate(data[, max_size]); [experimental]
+Z.inflate(data[, max_size]); [EXPERIMENTAL]
 
     Decompresses data in an ArrayBuffer or TypedArray which was previously
     compressed using DEFLATE.  `max_size` is optional and specifies an upper
