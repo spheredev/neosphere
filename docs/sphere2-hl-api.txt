@@ -90,26 +90,30 @@ Console#undefineObject(objectName);
 `DataStream` Object
 -------------------
 
-A `DataStream` object allows you to read from structured binary files like
-those used for Sphere game assets (maps, tilesets, etc.) based on a simple JSON
-schema.  You can also read individual binary values from the file.
-
-`DataStream` is a subclass of `FileStream` and supports all the same methods.
-See the Core API reference for information on `FileStream`.
+A `DataStream` object allows you to read structured binary data from any buffer
+or file.  It is similar to the built-in JavaScript `DataView`, but behaves more
+like a stream, making it more suitable for reading binary data from files.
 
     import { DataStream } from 'sphere-runtime';
 
-new DataStream(fileName, fileOp);
+DataStream supports reading and writing numeric values in both big- and
+little-endian modes.  If you're not familiar with this, "endianness" refers to
+the order of the bytes in a number encoded with more than one byte; big-endian
+means the bytes are ordered from most- to least-significant, and little-endian
+means the reverse.  Big-endian mode is the default, as this is the standard
+byte order for data interchange.
+
+new DataStream(buffer);
 
     Constructs a `DataStream` object which can be used to read binary data from
-    `fileName`.  `fileOp` specifies the access requested; refer to the API
-    documentation for FileStream for more information on this parameter.
+    `buffer`, which can be either an ArrayBuffer, TypedArray or DataView.
 
 DataStream#readFloat32([littleEndian]);
 DataStream#readFloat64([littleEndian]);
 
-    Reads an IEEE floating point value from the data file.  If `littleEndian`
-    is true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
+    Reads an IEEE floating point value at the current position and advances the
+    pointer.  If `littleEndian` is true, reads in little-endian mode.
+    Otherwise, reads in big-endian mode.
 
 DataStream#readInt8();
 DataStream#readInt16([littleEndian]);
@@ -118,53 +122,95 @@ DataStream#readUint8();
 DataStream#readUint16([littleEndian]);
 DataStream#readUint32([littleEndian]);
 
-    Reads an integer value from the data file.  If `littleEndian` is true,
-    reads in little-endian mode.  Otherwise, reads in big-endian mode.
+    Reads an integer value from the buffer at the current position and advances
+    the pointer.  If `littleEndian` is true, reads in little-endian mode.
+    Otherwise, reads in big-endian mode.  The number at the end of the function
+    name specifies how many bits are used to encode the integer.
 
-    Note: "readUint" variants read unsigned values.  "readInt" variants read
+    Note: `readUint` variants read unsigned values.  `readInt` variants read
           signed ("two's complement") values.
 
-DataStream#readStringRaw(length);
+DataStream#readString(numBytes);
 
-    Reads a UTF-8 string from the data file.  `length` specifies how many bytes
-    to read.
+    Reads a fixed-length UTF-8 string from the buffer at the current position
+    and advances the pointer.  Use this only when you know the length of the
+    string in advance; otherwise, the length is probably encoded in the data
+    and you should use one of the variable-sized versions below.
 
 DataStream#readString8();
 DataStream#readString16([littleEndian]);
 DataStream#readString32([littleEndian]);
 
-    Reads a UTF-8 length-prefixed string from the data file, where the length
-    in bytes is stored as an unsigned integer.  If `littleEndian` is true,
-    reads in little-endian mode.  Otherwise, reads in big-endian mode.
+    Reads a UTF-8 length-prefixed string from the buffer at the current
+    position and advances the pointer, where the length of the string in bytes
+    is stored as an unsigned integer immediately before the character data.  If
+    `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
+    big-endian mode.
 
 DataStream#readStruct(desc);
 
-    Reads an object from the data file, based on `desc`.  The descriptor is an
-    object describing the layout and typing of the data; for example, the
-    following will read the 256-byte header from a Sphere v1 format map file:
+    Reads several values in sequence starting at the current position, based on
+    `desc`, advancing the pointer accordingly.  The descriptor is an object
+    describing the data type of each item; for example, the following will read
+    the 256-byte header from a Sphere v1 format map file:
 
         rmp_header = myReader.readStruct({
-            signature: { type: 'fstring', length: 4 },
-            version: { type: 'uint16le' },
-            type: { type: 'uint8' },
-            numLayers: { type: 'uint8' },
-            reserved1: { type: 'raw', size: 1 },
-            numEntities: { type: 'uint16le' },
-            startX: { type: 'uint16le' },
-            startY: { type: 'uint16le' },
-            startLayer: { type: 'uint8' },
-            startDir: { type: 'uint8' },
-            numStrings: { type: 'uint16le' },
-            numZones: { type: 'uint16le' },
-            repeating: { type: 'bool' },
-            reserved2: { type: 'raw', size: 234 },
+            signature: 'string/4',
+            version: 'uint16-le',
+            type: 'uint8',
+            numLayers: 'uint8',
+            reserved1: 'pad/1',
+            numEntities: 'uint16-le',
+            startX: 'uint16-le',
+            startY: 'uint16-le',
+            startLayer: 'uint8',
+            startDir: 'uint8',
+            numStrings: 'uint16-le',
+            numZones: 'uint16-le',
+            repeating: 'bool',
+            reserved2: 'pad/234',
         });
+
+	`readStruct` returns an object where each property named in `desc` is set
+	to the value read for that entry.  It is recommended to pass an object
+	literal for `desc` (as illustrated above) to ensure values will be read in
+	the correct order.
+
+	Each property in `desc` must be set to one of the following strings,
+	otherwise an exception will be thrown:
+
+	    "bool"        - Boolean value, stored as 1 byte (`true`/`false`)
+	    "float32-be"  - Floating point, 32-bit, big endian
+	    "float32-le"  - Floating point, 32-bit, little endian
+	    "float64-be"  - Floating point, 64-bit, big endian
+	    "float64-le"  - Floating point, 64-bit, little endian
+	    "int8"        - 8-bit signed int [-128, +127]
+	    "int16-be"    - 16-bit signed int, big endian [-32768, +32767]
+	    "int16-le"    - 16-bit signed int, little endian [-32768, +32767]
+	    "int32-be"    - 32-bit signed int, big endian [-2147483648, +2147483647]
+	    "int32-le"    - 32-bit signed int, little endian [-2147483648, +2147483647]
+	    "pad/<n>"     - Padding (skip ahead), <n> is number of bytes of padding
+	    "string/<n>"  - UTF-8 string, <n> is number of bytes stored
+	    "string8"     - 8-bit unsigned byte count + UTF-8 string
+	    "string16-be" - 16-bit unsigned byte count + UTF-8 string, big endian
+	    "string16-le" - 16-bit unsigned byte count + UTF-8 string, little endian
+	    "string32-be" - 32-bit unsigned byte count + UTF-8 string, big endian
+	    "string32-le" - 32-bit unsigned byte count + UTF-8 string, little endian
+	    "uint8"       - 8-bit unsigned int [0, 255]
+	    "uint16-be"   - 16-bit unsigned int, big endian [0, 65535]
+	    "uint16-le"   - 16-bit unsigned int, little endian [0, 65535]
+	    "uint32-be"   - 32-bit unsigned int, big endian [0, 4294967295]
+	    "uint32-le"   - 32-bit unsigned int, little endian [0, 4294967295]
+
+	If there is not enough data left in the buffer to read all the specified
+	values, an exception will be thrown and the pointer will not be advanced.
 
 DataStream#writeFloat32(value[, littleEndian]);
 DataStream#writeFloat64(value[, littleEndian]);
 
-    Writes a floating point value to the data file.  If `littleEndian` is true,
-    writes in little-endian mode.  Otherwise writes in big-endian mode.
+    Writes a floating point value to the buffer at the current position and
+    advances the pointer.  If `littleEndian` is true, writes in little-endian
+    mode.  Otherwise writes in big-endian mode.
 
 DataStream#writeInt8(value);
 DataStream#writeInt16(value[, littleEndian]);
@@ -173,23 +219,31 @@ DataStream#writeUint8(value);
 DataStream#writeUint16(value[, littleEndian]);
 DataStream#writeUint32(value[, littleEndian]);
 
-    Writes an integer value to the data file.  If `littleEndian` is true,
-    writes in little-endian mode.  Otherwise writes in big-endian mode.
+    Writes an integer value to the buffer at the current position and advances
+    the pointer.  If `littleEndian` is true, writes in little-endian mode.
+    Otherwise writes in big-endian mode.
 
-    Note: "writeUint" variants write unsigned values.  "writeInt" variants
+    Note: `writeUint` variants write unsigned values.  `writeInt` variants
           write signed ("two's complement") values.
 
-DataStream#writeStringRaw(value);
+DataStream#writeString(value);
 
-    Writes a UTF-8 string to the data file.
+    Writes a UTF-8 string to the buffer at the current position and advances
+    the pointer.
+
+    Note: The length of the string is not stored.  If you need to know the
+          length of a string when reading back the data later, use one of the
+          variable-sized versions below.
 
 DataStream#writeString8(value);
 DataStream#writeString16(value[, littleEndian]);
 DataStream#writeString32(value[, littleEndian]);
 
-    Writes a UTF-8 length-prefixed string to the data file, where the length is
-    stored as an unsigned integer.  If `littleEndian` is true, writes in
-    little-endian mode.  Otherwise, writes in big-endian mode.
+    Writes a UTF-8 length-prefixed string to the data file at the current
+    position and advances the pointer.  The length in bytes is stored as an
+    unsigned integer immediately before the character data.  If `littleEndian`
+    is true, writes in little-endian mode.  Otherwise, writes in big-endian
+    mode.
 
 
 `Delegate` Object
@@ -1184,7 +1238,7 @@ new Tween(object[, easing_type]);
     Constructs a Tween which can be used to animate properties of the specified
     `object`.  `easing_type` specifies the curve that values should follow on
     their way to the new value and can be one of:
-    
+
         Easing.Back
         Easing.Bounce
         Easing.Circular
@@ -1196,7 +1250,7 @@ new Tween(object[, easing_type]);
         Easing.Quartic
         Easing.Quintic
         Easing.Sine
-	
+
 	The default is `Easing.Sine`, which animates according to the trigonometric
 	sine (`Math.sin`) function.
 
