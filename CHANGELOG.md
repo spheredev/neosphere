@@ -15,7 +15,7 @@ v5.3.0 - TBD
   file contents are returned.
 * Adds `SSj.assert` for testing assumptions while debugging.  The assertions
   are ignored in production.
-* Adds support for working with in-memory buffers with the `DataStream` class.
+* Adds support to `DataStream` for working directly with buffer objects.
 * Adds a new `Tween` standard module for handling simple animations.
 * Adds a `cell init` command, for initializing a new Sphere project directory
   directly from the command line.

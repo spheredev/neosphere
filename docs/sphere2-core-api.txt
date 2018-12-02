@@ -199,14 +199,14 @@ communicate with the underlying Sphere platform.  The properties provide access
 to the engine's name, version number, and API level, and there are several
 methods for managing execution.
 
-Sphere.Engine [READ-ONLY] [L1]
+Sphere.Engine [R/O] [L1]
 
     A string specifying the name and version number of the game engine.  The
     version number takes the form X.Y.Z, where X is the major version, Y is the
     minor version, and Z is the patch level.
 
-Sphere.Version [READ-ONLY] [L1]
-Sphere.APILevel [READ-ONLY] [L1]
+Sphere.Version [R/O] [L1]
+Sphere.APILevel [R/O] [L1]
 
     The Sphere API version and level supported by the engine, respectively.
     `Version` indicates which version of the Sphere API is supported (e.g., 2),
@@ -214,13 +214,13 @@ Sphere.APILevel [READ-ONLY] [L1]
     methods, or properties are added to the Core API, the API level is
     increased.
 
-Sphere.Compiler [READ-ONLY] [L1]
+Sphere.Compiler [R/O] [L1]
 
     A string specifying the name and version number of the compiler or build
     tool used to make the game distribution.  If no compiler information is
     available for the current game, this evaluates to `undefined`.
 
-Sphere.Game [READ-ONLY] [L1]
+Sphere.Game [R/O] [L1]
 
     An object whose properties describe the currently running game.  The object
     consists of everything in the JSON manifest plus any fields synthesized by
@@ -230,7 +230,7 @@ Sphere.Game [READ-ONLY] [L1]
           any attempt to add, remove, or change any properties of `Sphere.Game`
           will cause a TypeError to be thrown.
 
-Sphere.frameRate [READ/WRITE] [L1]
+Sphere.frameRate [R/W] [L1]
 
     Gets or sets the frame rate.  Set this to Infinity to disable the frame
     limiter.  The default is 60 FPS.
@@ -239,12 +239,12 @@ Sphere.frameRate [READ/WRITE] [L1]
     set to 60 (the default), the event loop will perform 60 iterations per
     second, skipping renders as necessary to meet that goal.
 
-Sphere.frameSkip [READ/WRITE] [L1]
+Sphere.frameSkip [R/W] [L1]
 
     Gets or sets the maximum number of frames the engine is allowed to skip in
     order to maintain the desired frame rate.
 
-Sphere.fullScreen [READ/WRITE] [L1]
+Sphere.fullScreen [R/W] [L1]
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
@@ -253,7 +253,7 @@ Sphere.fullScreen [READ/WRITE] [L1]
           windowed mode and any change to the value of `screen.fullScreen` will
           be silently ignored.
 
-Sphere.main [READ-ONLY] [L1]
+Sphere.main [R/O] [L1]
 
     Gets a reference to the game's main object, when the main module exports a
     constructor or class.  This object is created by the engine on startup by
@@ -326,17 +326,17 @@ For convenience, predefined BlendOp objects are provided in the API for the
 most common blending operations, but you can easily make new ones if these
 don't meet your needs.
 
-BlendOp.Default [READ-ONLY] [EXPERIMENTAL]
+BlendOp.Default [R/O] [EXPERIMENTAL]
 
     The default blending mode.  If no blending operation is specified for a
     surface, it will use this mode.  This represents traditional alpha
     blending; the final rendered pixel is a weighted average of the source and
     destination pixels, based on the alpha value of the source pixel.
 
-BlendOp.Add [READ-ONLY] [EXPERIMENTAL]
-BlendOp.Multiply [READ-ONLY] [EXPERIMENTAL]
-BlendOp.Replace [READ-ONLY] [EXPERIMENTAL]
-BlendOp.Subtract [READ-ONLY] [EXPERIMENTAL]
+BlendOp.Add [R/O] [EXPERIMENTAL]
+BlendOp.Multiply [R/O] [EXPERIMENTAL]
+BlendOp.Replace [R/O] [EXPERIMENTAL]
+BlendOp.Subtract [R/O] [EXPERIMENTAL]
 
     Adds to, multiplies with, replaces, and subtracts from the destination
     pixel values, respectively.  These modes cover most common use cases, so
@@ -397,10 +397,10 @@ new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [EXPERIMENTAL]
 The `Color` object represents an RGB color value.  It also has an alpha
 component and can therefore represent translucent colors.
 
-Color.Red [READ-ONLY] [L1]
-Color.Green [READ-ONLY] [L1]
-Color.Blue [READ-ONLY] [L1]
-Color.Transparent [READ-ONLY] [L1]
+Color.Red [R/O] [L1]
+Color.Green [R/O] [L1]
+Color.Blue [R/O] [L1]
+Color.Transparent [R/O] [L1]
 etc...
 
     Gets a copy of a predefined color.  The entire X11 color set is provided,
@@ -446,17 +446,17 @@ new Color(red, green, blue[, alpha]); [L1]
     the range [0.0, 1.0]; out-of-range values are silently clamped.  `alpha`
     specifies the color's opacity and defaults to 1.0 if not provided.
 
-Color#r [READ/WRITE] [L1]
-Color#g [READ/WRITE] [L1]
-Color#b [READ/WRITE] [L1]
-Color#a [READ/WRITE] [L1]
+Color#r [R/W] [L1]
+Color#g [R/W] [L1]
+Color#b [R/W] [L1]
+Color#a [R/W] [L1]
 
     Gets or sets the individual components of the color (red, green, blue, or
     alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
     HDR is not supported and the engine will automatically clamp such colors
     when rendered.
 
-Color#name [READ-ONLY] [L1]
+Color#name [R/O] [L1]
 
     Gets the name of the Color according to its component values such that
     Color.of(color.name) will give back a Color with the same values.  Useful
@@ -497,12 +497,12 @@ new DirectoryStream(dir_name[, options]); [L1]
         subdirectories to list files they contain.  The output will not contain
         any directory entries in this case, only file entries.
 
-DirectoryStream#fileCount [READ-ONLY] [L1]
+DirectoryStream#fileCount [R/O] [L1]
 
     Gets the number of entries (both files and directories) in the directory
     listing.
 
-DirectoryStream#fileName [READ-ONLY] [L1]
+DirectoryStream#fileName [R/O] [L1]
 
     Gets the full SphereFS pathname of the directory whose entries are being
     enumerated.
@@ -510,7 +510,7 @@ DirectoryStream#fileName [READ-ONLY] [L1]
     Note: Under SphereFS canonicalization rules, the pathname of a directory
           always ends in a slash (`/`).
 
-DirectoryStream#position [READ/WRITE] [L1]
+DirectoryStream#position [R/W] [L1]
 
     Gets or sets the position within the stream.  This is an index into the
     directory specifying which entry will be read next.
@@ -830,15 +830,15 @@ new FileStream(filename, file_op); [L1]
     work in all implementations and will be deprecated starting in API level 2;
     use `FileStream.open` instead.
 
-FileStream#fileName [READ-ONLY] [L1]
+FileStream#fileName [R/O] [L1]
 
     Gets the full SphereFS pathname of the underlying file.
 
-FileStream#fileSize [READ-ONLY] [L1]
+FileStream#fileSize [R/O] [L1]
 
     Gets the size of the underlying file, in bytes.
 
-FileStream#position [READ/WRITE] [L1]
+FileStream#position [R/W] [L1]
 
     Gets or sets the file position, which determines where in the file the next
     read or write will start from.  Expressed in bytes.
@@ -879,7 +879,7 @@ The `Font` object specifies a typeface that can be used when drawing text.
 Sphere provides a default font which is the same for all games, or you can load
 one from an RFN font file.
 
-Font.Default [READ-ONLY] [L1]
+Font.Default [R/O] [L1]
 
     Gets the default engine font.  This is the font used for the FPS counter
     and system messages.
@@ -889,12 +889,12 @@ new Font(filename); [L1]
     Constructs a Font object from a font file.  Currently only the Sphere RFN
     font format is supported.
 
-Font#fileName [READ-ONLY] [L1]
+Font#fileName [R/O] [L1]
 
     Gets the full SphereFS pathname of the file used to construct this Font
     object.
 
-Font#height [READ-ONLY] [L1]
+Font#height [R/O] [L1]
 
     Gets the line height, in pixels, for text rendered using this font.
 
@@ -977,7 +977,7 @@ JobToken#resume(); [EXPERIMENTAL]
 `Joystick` Object
 -----------------
 
-Joystick.Null [READ-ONLY] [L1]
+Joystick.Null [R/O] [L1]
 
     Gets the null joystick.  When polled, a null joystick returns neutral
     values for all inputs.  Joystick.Null can be used in place of a real
@@ -988,16 +988,16 @@ Joystick.getDevices(); [L1]
     Gets an array of Joystick objects, one for each connected gamepad or
     joystick.
 
-Joystick#name [READ-ONLY] [L1]
+Joystick#name [R/O] [L1]
 
     Gets the name of the device, as reported by the Allegro backend.  Xbox
     controllers are reported as "XInput Joystick <n>"
 
-Joystick#numAxes [READ-ONLY] [L1]
+Joystick#numAxes [R/O] [L1]
 
     Gets the number of analog axes supported by the device.
 
-Joystick#numButtons [READ-ONLY] [L1]
+Joystick#numButtons [R/O] [L1]
 
     Gets the number of buttons supported by the device.
 
@@ -1138,15 +1138,15 @@ Key [enumeration] [L1]
           below the function keys, while NumPad0-NumPad9 refer to the numbers
           on the numeric keypad.
 
-Keyboard.Default [READ-ONLY] [L1]
+Keyboard.Default [R/O] [L1]
 
     Gets a `Keyboard` object for the default keyboard device.
 
     Note: miniSphere currently only supports a single keyboard.
 
-Keyboard#capsLock [READ-ONLY] [L1]
-Keyboard#numLock [READ-ONLY] [L1]
-Keyboard#scrollLock [READ-ONLY] [L1]
+Keyboard#capsLock [R/O] [L1]
+Keyboard#numLock [R/O] [L1]
+Keyboard#scrollLock [R/O] [L1]
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
@@ -1183,7 +1183,7 @@ Mixers are used to group related audio together and adjust their parameters as
 a class; this is useful, for example, for implementing global volume controls
 in your game.
 
-Mixer.Default [READ-ONLY] [L1]
+Mixer.Default [R/O] [L1]
 
     Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
     16-bit stereo sound, i.e. CD quality.
@@ -1200,7 +1200,7 @@ new Mixer(frequency, bits[, channels]); [L1]
     not supported by the system, an error will be thrown ("unable to create
     hardware voice").
 
-Mixer#volume [READ/WRITE] [L1]
+Mixer#volume [R/W] [L1]
 
     Gets or sets the output volume of the mixer.  This will affect the volume
     of any sounds played through the mixer.
@@ -1224,11 +1224,11 @@ new Model(shapes[, shader]); [L1]
     identity matrix.  If `shader` is not provided, the default shader program
     will be used (see `Shader.Default`).
 
-Model#shader [READ/WRITE] [L1]
+Model#shader [R/W] [L1]
 
     Gets or sets the Shader to use when drawing this model.
 
-Model#transform [READ/WRITE] [L1]
+Model#transform [R/W] [L1]
 
     Gets or sets the transformation matrix to use when drawing this model.
 
@@ -1263,14 +1263,14 @@ MouseKey [enumeration] [L1]
         MouseKey.Back
         MouseKey.Forward
 
-Mouse.Default [READ-ONLY] [L1]
+Mouse.Default [R/O] [L1]
 
     Gets a `Mouse` object for the default mouse device.
 
     Note: miniSphere currently only supports a single mouse.
 
-Mouse#x [READ-ONLY] [L1]
-Mouse#y [READ-ONLY] [L1]
+Mouse#x [R/O] [L1]
+Mouse#y [R/O] [L1]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
     game's rendering area.
@@ -1345,7 +1345,7 @@ new RNG(); [L1]
     Constructs a new random number generator seeded from the current system
     time.
 
-RNG#state [READ/WRITE] [L1]
+RNG#state [R/W] [L1]
 
     Gets or sets the current state of this generator.  State is encoded as
     a 32-digit hexadecimal string which makes it easy to save and restore.
@@ -1456,7 +1456,7 @@ new Sample(filename); [L1]
           recommend to use `Sample` objects for, e.g., background music.  Use a
           `Sound` instead.
 
-Sample#fileName [READ-ONLY] [L1]
+Sample#fileName [R/O] [L1]
 
     Gets the full SphereFS pathname of the audio file used to construct this
     Sample object.
@@ -1527,7 +1527,7 @@ manipulates vertices and pixels as they are rendered to a surface.  Shaders are
 written in the GLSL shader programming language, which is beyond the scope of
 this document.
 
-Shader.Default [READ-ONLY] [L1]
+Shader.Default [R/O] [L1]
 
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
@@ -1646,17 +1646,17 @@ new Shape(type[, texture], vertexList[, indexList]); [L1]
     the vertex list will comprise the shape.  If `indexList` is not specified,
     all vertices from `vertexList` will be used.
 
-Shape#indexList [READ/WRITE] [L1]
+Shape#indexList [R/W] [L1]
 
     Gets or sets the index list used to select vertices for this shape.  Set
     this to `null` to use the entire vertex list.
 
-Shape#texture [READ/WRITE] [L1]
+Shape#texture [R/W] [L1]
 
     The Image to use when texturing the shape. This can be null, in which case
     the vertex colors alone will determine the shape's appearance.
 
-Shape#vertexList [READ/WRITE] [L1]
+Shape#vertexList [R/W] [L1]
 
     Gets or sets the vertex list containing vertices for this shape.
 
@@ -1683,7 +1683,7 @@ new Socket([hostname, port]); [L1]
     on `port` and throws an error if the attempt fails. See the documentation
     for `Socket#connectTo()` for more information on socket connections.
 
-Socket#bytesPending [READ-ONLY] [L1]
+Socket#bytesPending [R/O] [L1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     Call `Socket#read()` to retrieve this data.
@@ -1693,18 +1693,18 @@ Socket#bytesPending [READ-ONLY] [L1]
           to time and perform reads in order to keep the size of the receive
           buffer down.
 
-Socket#connected [READ-ONLY] [L1]
+Socket#connected [R/O] [L1]
 
     Gets whether the connection has been established.  As long as this is
     false, you cannot call any other methods on the socket object.  Doing so
     will cause an error to be thrown.
 
-Socket#remoteAddress [READ-ONLY] [L1]
+Socket#remoteAddress [R/O] [L1]
 
     Gets the IP address of the upstream end of the socket.  Throws an error if
     accessed before a connection has been established.
 
-Socket#remotePort [READ-ONLY] [L1]
+Socket#remotePort [R/O] [L1]
 
     Gets the port that the remote machine is using for the connection.
     Generally not a useful statistic, but it's there if you need it.  Throws an
@@ -1752,40 +1752,40 @@ new Sound(filename); [L1]
     formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that
     unlike in Sphere 1.x, mp3 and MIDI formats are not supported.
 
-Sound#fileName [READ-ONLY] [L1]
+Sound#fileName [R/O] [L1]
 
     Gets the full SphereFS pathname of the file used to construct this Sound
     object.
 
-Sound#length [READ-ONLY] [L1]
+Sound#length [R/O] [L1]
 
     Gets the length of the sound in microseconds.
 
-Sound#pan [READ/WRITE] [L1]
+Sound#pan [R/W] [L1]
 
     Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
     left, and 1.0 is full right.
 
-Sound#playing [READ-ONLY] [L1]
+Sound#playing [R/O] [L1]
 
     true if the sound is currently playing, false otherwise.
 
-Sound#position [READ/WRITE] [L1]
+Sound#position [R/W] [L1]
 
     Gets or sets the playback position within the sound, in seconds.
 
-Sound#repeat [READ/WRITE] [L1]
+Sound#repeat [R/W] [L1]
 
     Gets or sets whether the sound will automatically repeat when it reaches
     the end.
 
-Sound#speed [READ/WRITE] [L1]
+Sound#speed [R/W] [L1]
 
     Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
     speed, etc.  Note that changing the playback speed affects the pitch as
     well.
 
-Sound#volume [READ/WRITE] [L1]
+Sound#volume [R/W] [L1]
 
     Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
     volume.  Higher values are allowed, but may introduce distortion due to
@@ -1825,7 +1825,7 @@ new SoundStream([frequency[, bits[, channels]]]); [L1]
 
     The default stream format is 8-bit 22050Hz with 1 channel.
 
-SoundStream#length [READ-ONLY] [L1]
+SoundStream#length [R/O] [L1]
 
     Gets the amount of audio currently buffered into the stream, in seconds.
     Playback will pause if the buffer is exhausted; To ensure skip-free
@@ -1871,7 +1871,7 @@ enables render-to-texture effects to be implemented.
 Note: Surfaces can only be used as textures under API level 2 or higher.  When
       targeting API level 1 you must call `.toTexture()` (see below) first.
 
-Surface.Screen [READ-ONLY] [L1]
+Surface.Screen [R/O] [L1]
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
@@ -1897,12 +1897,12 @@ new Surface(filename); [L1]
     Constructs a new Surface whose initial contents are taken from the
     specified image file.
 
-Surface#blendOp [READ/WRITE] [EXPERIMENTAL]
+Surface#blendOp [R/W] [EXPERIMENTAL]
 
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
 
-Surface#transform [READ/WRITE] [L1]
+Surface#transform [R/W] [L1]
 
     Gets or sets a `Transform` representing the surface's projection matrix.
     When rendering is done on the surface, the projection matrix is the last
@@ -1912,8 +1912,8 @@ Surface#transform [READ/WRITE] [L1]
           When a surface is created, Sphere sets its transform to an
           orthographic matrix suitable for pixel-perfect 2D rendering.
 
-Surface#width [READ-ONLY] [L1]
-Surface#height [READ-ONLY] [L1]
+Surface#width [R/O] [L1]
+Surface#height [R/O] [L1]
 
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
@@ -1973,14 +1973,14 @@ new Texture(surface); [L1]
     Subsequent modifications to the surface will not affect the contents of the
     new texture.
 
-Texture#fileName [READ-ONLY] [L1]
+Texture#fileName [R/O] [L1]
 
     Gets the full SphereFS pathname of the file used to construct this Texture
     object.  For synthesized textures, e.g. those created from a surface, this
     is `null`.
 
-Texture#width [READ-ONLY] [L1]
-Texture#height [READ-ONLY] [L1]
+Texture#width [R/O] [L1]
+Texture#height [R/O] [L1]
 
     Gets the width or height of the texture, in pixels.
 
@@ -2011,7 +2011,7 @@ new Transform(); [L1]
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
 
-Transform#matrix [READ-ONLY]
+Transform#matrix [R/O]
 
     Gets an object you can use to access the cells of the underlying matrix.
     The object is used like a two-dimensional array:

@@ -35,20 +35,13 @@ class DataStream extends DataView
 {
 	get [Symbol.toStringTag]() { return 'DataStream'; }
 
-	static async fromFile(fileName)
-	{
-		const file = await FileStream.open(fileName, FileOp.Read);
-		const buffer = await file.read(file.fileSize);
-		await file.close();
-		return new this(buffer);
-	}
-
 	constructor(...args)
 	{
 		super(...args);
 		this.bytes = new Uint8Array(this.buffer);
 		this.ptr = 0;
 		this.textDec = new TextDecoder();
+		this.textEnc = new TextEncoder();
 	}
 
 	get position()
@@ -112,19 +105,19 @@ class DataStream extends DataView
 		return this.textDec.decode(slice);
 	}
 
-	readStringU8()
+	readString8()
 	{
 		const length = this.readUint8();
 		return this.readString(length);
 	}
 
-	readStringU16(littleEndian = false)
+	readString16(littleEndian = false)
 	{
 		const length = this.readUint16(littleEndian);
 		return this.readString(length);
 	}
 
-	readStringU32(littleEndian = false)
+	readString32(littleEndian = false)
 	{
 		const length = this.readUint32(littleEndian);
 		return this.readString(length);
@@ -139,7 +132,7 @@ class DataStream extends DataView
 			const numBytes = matches !== null ? parseInt(matches[2], 10) : 0;
 			switch (valueType) {
 				case 'bool':
-					retval[key] = this.readUint8() != 0;
+					retval[key] = this.readUint8() !== 0;
 					break;
 				case 'float32-be':
 					retval[key] = this.readFloat32();
@@ -176,19 +169,19 @@ class DataStream extends DataView
 					retval[key] = this.readString(numBytes);
 					break;
 				case 'string8':
-					retval[key] = this.readStringU8();
+					retval[key] = this.readString8();
 					break;
 				case 'string16-be':
-					retval[key] = this.readStringU16();
+					retval[key] = this.readString16();
 					break;
 				case 'string16-le':
-					retval[key] = this.readStringU16(true);
+					retval[key] = this.readString16(true);
 					break;
 				case 'string32-be':
-					retval[key] = this.readStringU32();
+					retval[key] = this.readString32();
 					break;
 				case 'string32-le':
-					retval[key] = this.readStringU32(true);
+					retval[key] = this.readString32(true);
 					break;
 				case 'uint8':
 					retval[key] = this.readUint8();
@@ -231,5 +224,97 @@ class DataStream extends DataView
 		const ptr = this.position;
 		this.position += 4;
 		return this.getUint32(ptr, littleEndian);
+	}
+
+	writeBytes(data)
+	{
+		const buffer = ArrayBuffer.isView(data) ? data.buffer : data;
+		const payload = new Uint8Array(buffer);
+		const ptr = this.position;
+		this.position += buffer.byteLength;
+		this.bytes.set(payload, ptr);
+	}
+
+	writeFloat32(value, littleEndian = false)
+	{
+		const ptr = this.position;
+		this.position += 4;
+		this.setFloat32(ptr, value, littleEndian);
+	}
+
+	writeFloat64(value, littleEndian = false)
+	{
+		const ptr = this.position;
+		this.position += 8;
+		this.setFloat64(ptr, value, littleEndian);
+	}
+
+	writeInt8(value)
+	{
+		const ptr = this.position;
+		this.position += 1;
+		this.setInt8(ptr, value);
+	}
+
+	writeInt16(value, littleEndian = false)
+	{
+		const ptr = this.position;
+		this.position += 2;
+		this.setInt16(ptr, value, littleEndian);
+	}
+
+	writeInt32(value, littleEndian = false)
+	{
+		const ptr = this.position;
+		this.position += 4;
+		this.setInt32(ptr, value, littleEndian);
+	}
+
+	writeString(value)
+	{
+		const bytes = this.textEnc.encode(value);
+		this.writeBytes(bytes);
+	}
+
+	writeString8(value)
+	{
+		const bytes = this.textEnc.encode(value);
+		this.writeUint8(bytes.length);
+		this.writeBytes(bytes);
+	}
+
+	writeString16(value, littleEndian = false)
+	{
+		const bytes = this.textEnc.encode(value);
+		this.writeUint16(bytes.length, littleEndian);
+		this.writeBytes(bytes);
+	}
+
+	writeString32(value, littleEndian = false)
+	{
+		const bytes = this.textEnc.encode(value);
+		this.writeUint32(bytes.length, littleEndian);
+		this.writeBytes(bytes);
+	}
+
+	writeUint8(value)
+	{
+		const ptr = this.position;
+		this.position += 1;
+		this.setUint8(ptr, value);
+	}
+
+	writeUint16(value, littleEndian = false)
+	{
+		const ptr = this.position;
+		this.position += 2;
+		this.setUint16(ptr, value, littleEndian);
+	}
+
+	writeUint32(value, littleEndian = false)
+	{
+		const ptr = this.position;
+		this.position += 4;
+		this.setUint32(ptr, value, littleEndian);
 	}
 }

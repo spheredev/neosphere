@@ -91,9 +91,9 @@ Console#undefineObject(objectName);
 -------------------
 
 A `DataStream` object allows you to read structured binary data from any buffer
-or file.  It is similar to the built-in JavaScript `DataView` (in fact it's a
+object.  It is similar to the built-in JavaScript `DataView` (in fact it's a
 subclass of it), but acts more like a stream, making it very useful for reading
-binary data from files.
+data stored in binary files.
 
     import { DataStream } from 'sphere-runtime';
 
@@ -104,11 +104,6 @@ means the bytes are ordered from most- to least-significant, and little-endian
 means the reverse.  Big-endian mode is the default, as this is the standard
 byte order for data interchange.
 
-await DataStream.fromFile(filename); [ASYNC]
-
-    Loads the entire content of `filename` into memory and returns a promise
-    for a DataStream providing access to that data.
-
 new DataStream(buffer);
 
     Constructs a `DataStream` object which can be used to read binary data from
@@ -116,11 +111,13 @@ new DataStream(buffer);
 
 DataStream#buffer [R/O]
 
-    Gets the ArrayBuffer representing the underlying data store.
+    Gets the ArrayBuffer representing the underlying data store.  Inherited
+    from DataView.
 
-DataStream#bufferSize [R/O]
+DataStream#byteLength [R/O]
 
     Gets the size in bytes of the DataStream's underlying data store.
+    Inherited from DataView.
 
 DataStream#position [R/W]
 
@@ -164,9 +161,9 @@ DataStream#readString(numBytes);
     string in advance; otherwise, the length is probably encoded in the data
     and you should use one of the variable-sized versions below.
 
-DataStream#readStringU8();
-DataStream#readStringU16([littleEndian]);
-DataStream#readStringU32([littleEndian]);
+DataStream#readString8();
+DataStream#readString16([littleEndian]);
+DataStream#readString32([littleEndian]);
 
     Reads a UTF-8 variable-length string from the buffer at the current
     position and advances the pointer, where the length of the string in bytes
