@@ -1111,7 +1111,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	game->safety = FS_SAFETY_FULL;
 #if defined(MINISPHERE_SPHERUN)
 	if (jsal_get_prop_string(-11, "development") && jsal_is_object(-1)) {
-		if (jsal_get_prop_string(-1, "sandbox") && jsal_is_string(-1)) {
+		if (jsal_get_prop_string(-1, "sandboxing") && jsal_is_string(-1)) {
 			sandbox_mode = jsal_get_string(-1);
 			game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
 				: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED

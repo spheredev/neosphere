@@ -54,6 +54,15 @@
 
 #define API_VERSION 2
 
+enum data_type
+{
+	DATA_BYTES,
+	DATA_LINES,
+	DATA_RAW,
+	DATA_TEXT,
+	DATA_TYPE_MAX,
+};
+
 enum file_op
 {
 	FILE_OP_READ,
@@ -923,6 +932,10 @@ pegasus_init(int api_level)
 		api_define_const("Blend", "Target", BLEND_DEST);
 		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
 		api_define_const("Blend", "Zero", BLEND_ZERO);
+		api_define_const("DataType", "Bytes", DATA_BYTES);
+		api_define_const("DataType", "Lines", DATA_LINES);
+		api_define_const("DataType", "Raw", DATA_RAW);
+		api_define_const("DataType", "Text", DATA_TEXT);
 
 		// register predefined BlendOp accessors
 		jsal_get_global_string("BlendOp");
@@ -2392,17 +2405,60 @@ js_FS_fullPath(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 {
-	lstring_t*  content;
+	void*       buffer;
 	void*       file_data;
 	size_t      file_size;
+	int         line_index = 0;
 	const char* pathname;
+	lstring_t*  string;
+	int         type = DATA_TEXT;
+	char*       p_line;
+	char*       p_newline;
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
+	if (s_api_level >= 2 && num_args >= 2 && !jsal_is_undefined(1))
+		type = jsal_require_int(1);
+
+	if (type < 0 || type > DATA_TYPE_MAX)
+		jsal_error(JS_RANGE_ERROR, "Invalid DataType constant value '%d'", type);
 
 	if (!(file_data = game_read_file(g_game, pathname, &file_size)))
 		jsal_error(JS_ERROR, "Couldn't read file '%s'", pathname);
-	content = lstr_from_utf8(file_data, file_size, true);
-	jsal_push_lstring_t(content);
+	switch (type) {
+	case DATA_BYTES:
+		jsal_push_new_buffer(JS_UINT8ARRAY, file_size, &buffer);
+		memcpy(buffer, file_data, file_size);
+		break;
+	case DATA_LINES:
+		jsal_push_new_array();
+		p_line = file_data;
+		while ((p_newline = strpbrk(p_line, "\r\n"))) {
+			string = lstr_from_utf8(p_line, p_newline - p_line, line_index == 0);
+			jsal_push_lstring_t(string);
+			jsal_put_prop_index(-2, line_index++);
+			lstr_free(string);
+			if (*p_newline == '\r' && *(p_newline + 1) == '\n')
+				p_line = p_newline + 2;
+			else
+				p_line = p_newline + 1;
+		}
+		if (*p_line != '\0') {
+			string = lstr_from_utf8(p_line, strlen(p_line), line_index == 0);
+			jsal_push_lstring_t(string);
+			jsal_put_prop_index(-2, line_index++);
+			lstr_free(string);
+		}
+		break;
+	case DATA_RAW:
+		jsal_push_new_buffer(JS_ARRAYBUFFER, file_size, &buffer);
+		memcpy(buffer, file_data, file_size);
+		break;
+	case DATA_TEXT:
+		string = lstr_from_utf8(file_data, file_size, true);
+		jsal_push_lstring_t(string);
+		lstr_free(string);
+	}
+	free(file_data);
 	return true;
 }
 
@@ -2451,19 +2507,61 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 {
+#if defined(_WIN32)
+	const char* const NEWLINE = "\r\n";
+#else if
+	const char* const NEWLINE = "\n";
+#endif
+
+	file_t*     file;
 	const void* file_data;
 	size_t      file_size;
+	int         num_lines;
 	const char* pathname;
 	lstring_t*  text = NULL;
 
-	pathname = jsal_require_pathname(0, NULL, false, true);
-	text = jsal_require_lstring_t(1);
+	int i;
 
-	file_data = lstr_cstr(text);
-	file_size = lstr_len(text);
-	if (!game_write_file(g_game, pathname, file_data, file_size))
-		jsal_error(JS_ERROR, "Couldn't write file '%s'", pathname);
-	lstr_free(text);
+	if (num_args < 2)
+		jsal_error(JS_RANGE_ERROR, "'FS.writeFile' requires 2 arguments");
+	pathname = jsal_require_pathname(0, NULL, false, true);
+	
+	if (jsal_is_buffer(1)) {
+		file_data = jsal_get_buffer_ptr(1, &file_size);
+		if (!game_write_file(g_game, pathname, file_data, file_size))
+			jsal_error(JS_ERROR, "Couldn't write file '%s'", pathname);
+	}
+	else if (jsal_is_string(1)) {
+		text = jsal_require_lstring_t(1);
+		file_data = lstr_cstr(text);
+		file_size = lstr_len(text);
+		if (!game_write_file(g_game, pathname, file_data, file_size))
+			jsal_error(JS_ERROR, "Couldn't write file '%s'", pathname);
+		lstr_free(text);
+	}
+	else if (jsal_is_object(1) && jsal_has_own_prop_string(1, "length")) {
+		jsal_get_prop_string(1, "length");
+		num_lines = jsal_require_int(-1);
+		if (!(file = file_open(g_game, pathname, "wb")))
+			jsal_error(JS_ERROR, "Couldn't open file '%s' for writing", pathname);
+		for (i = 0; i < num_lines; ++i) {
+			jsal_get_prop_index(1, i);
+			if (!jsal_is_string(-1)) {
+				file_close(file);
+				game_unlink(g_game, pathname);
+				jsal_error(JS_TYPE_ERROR, "'%s' at index '%d' is not a string", jsal_to_string(-1), i);
+			}
+			text = jsal_require_lstring_t(-1);
+			file_write(file, lstr_cstr(text), lstr_len(text), 1);
+			file_puts(file, NEWLINE);
+			lstr_free(text);
+			jsal_pop(1);
+		}
+		file_close(file);
+	}
+	else {
+		jsal_error(JS_TYPE_ERROR, "'FS.writeFile' requires a string, string array, or buffer object");
+	}
 	return false;
 }
 

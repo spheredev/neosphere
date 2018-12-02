@@ -11,6 +11,8 @@ v5.3.0 - TBD
 * Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
   using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.
+* Adds a new `DataType` parameter for `FS.readFile` for controlling the way the
+  file contents are returned.
 * Adds `SSj.assert` for testing assumptions while debugging.  The assertions
   are ignored in production.
 * Adds a new `Tween` standard module for handling simple animations.

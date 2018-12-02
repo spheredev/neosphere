@@ -731,16 +731,33 @@ FS.fullPath(pathname[, base_dir]); [L1]
           returned by this function will end in a forward slash (`/`) even if
           the input pathname did not.
 
-FS.readFile(pathname); [async] [L1]
+FS.readFile(pathname[, data_type]); [async] [L1]
 
-    Reads an entire UTF-8 text file as a JS string and returns a promise for
-    the string.  This is a convenience to avoid the need to explicitly
-    construct a FileStream and decode the file contents when loading plain text
-    files.
+    Reads an entire file at once and returns a promise for the content.  The
+    optional parameter `data_type` specifies how interpret the file contents
+    and can be one of the following (defaults to `DataType.Text`):
 
-    Note: This performs strict UTF-8 decoding, making it unsuitable for use
-          with binary data.  To work with binary files, use a FileStream object
-          instead.
+        DataType.Bytes
+
+            Interpret the file as a sequence of bytes.  Sphere assigns no
+            specific meaning to the individual bytes; that's up to your game's
+            code.  Returns a Uint8Array.
+
+        DataType.Lines
+
+            Interpret the file as plain text (UTF-8).  Returns an array of
+            strings, one for each line of text in the file.
+
+        DataType.Raw
+
+            Read the file back-to-front without attempting to interpret the
+            data.  Returns an ArrayBuffer.
+
+        DataType.Text
+
+            Interpret the file as plain text (UTF-8).  This is the default.
+            Returns a string representing the entire text content of the file,
+            including newline characters.
 
 FS.relativePath(pathname, base_dir); [L1]
 
@@ -762,16 +779,12 @@ FS.rename(orig_name, new_name); [async] [L1]
     directories; if so, the destination directory must already exist.  Returns
     a promise that resolves once the rename is done.
 
-FS.writeFile(pathname, string); [async] [L1]
+FS.writeFile(pathname, data); [async] [L1]
 
-    Writes a string out to a UTF-8 text file.  If a file already exists under
-    the specified pathname, it will be overwritten.  Returns a promise that
-    resolves once the file has been successfully written, or rejects with an
-    error if writing fails.
-
-    Note: This performs UTF-8 encoding, making it unsuitable for use with
-          binary data.  To work with binary files, use a FileStream object
-          instead.
+    Writes `data`, which can be either a string, array of strings, ArrayBuffer,
+    or TypedArray, to a file.  If a file already exists by the specified name,
+    it will be overwritten.  Returns a promise that resolves once the file has
+    been successfully written, or rejects with an error if writing fails.
 
 
 `FileStream` Object
