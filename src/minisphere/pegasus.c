@@ -630,8 +630,8 @@ pegasus_init(int api_level)
 	api_define_property("FileStream", "fileName", false, js_FileStream_get_fileName, NULL);
 	api_define_property("FileStream", "fileSize", false, js_FileStream_get_fileSize, NULL);
 	api_define_property("FileStream", "position", false, js_FileStream_get_position, js_FileStream_set_position);
-	api_define_method("FileStream", "read", js_FileStream_read, 0);
-	api_define_method("FileStream", "write", js_FileStream_write, 0);
+	api_define_async_method("FileStream", "read", js_FileStream_read, 0);
+	api_define_async_method("FileStream", "write", js_FileStream_write, 0);
 	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize, 0);
 	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL);
 	api_define_property("Font", "fileName", false, js_Font_get_fileName, NULL);

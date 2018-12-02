@@ -1,5 +1,5 @@
-/**
- *  Sphere Runtime for Sphere games
+/*
+ *  miniSphere JavaScript game engine
  *  Copyright (c) 2015-2018, Fat Cerberus
  *  All rights reserved.
  *
@@ -31,301 +31,241 @@
 **/
 
 export default
-class DataStream extends FileStream
+class DataStream
 {
 	get [Symbol.toStringTag]() { return 'DataStream'; }
 
-	static async open(fileName, fileOp)
+	static async fromFile(fileName)
 	{
-		let fs = await FileStream.open(fileName, fileOp);
-		Object.setPrototypeOf(fs, this.prototype);
-		fs._textDecoder = new TextDecoder('utf-8');
-		fs._textEncoder = new TextEncoder();
-		return fs;
+		const file = await FileStream.open(fileName, FileOp.Read);
+		const buffer = await file.read(file.fileSize);
+		file.dispose();
+		return new this(buffer);
 	}
 
-	constructor(fileName, fileOp)
+	constructor(buffer)
 	{
-		super(fileName, fileOp);
-
-		this._textDecoder = new TextDecoder('utf-8');
-		this._textEncoder = new TextEncoder();
+		if (ArrayBuffer.isView(buffer))
+			this.bytes = new Uint8Array(buffer.buffer);
+		else
+			this.bytes = new Uint8Array(buffer);
+		this.ptr = 0;
+		this.textDec = new TextDecoder();
+		this.view = new DataView(this.bytes.buffer);
 	}
 
-	readFloat32(littleEndian)
+	get buffer()
 	{
-		let view = new DataView(this.read(4));
-		return view.getFloat32(0, littleEndian);
+		return this.bytes.buffer;
 	}
 
-	readFloat64(littleEndian)
+	get bufferSize()
 	{
-		let view = new DataView(this.read(8));
-		return view.getFloat64(0, littleEndian);
+		return this.bytes.length;
+	}
+
+	get position()
+	{
+		return this.ptr;
+	}
+
+	set position(value)
+	{
+		if (value > this.bytes.length)
+			throw new RangeError(`Stream position '${value}' is out of range`);
+		this.ptr = value;
+	}
+
+	readBytes(numBytes)
+	{
+		if (this.ptr + numBytes > this.bytes.length)
+			throw new Error(`Unable to read ${numBytes} bytes from stream`);
+		const bytes = this.bytes.slice(this.ptr, this.ptr + numBytes);
+		this.ptr += numBytes;
+		return bytes;
+	}
+
+	readFloat32(littleEndian = false)
+	{
+		if (this.ptr + 4 > this.bytes.length)
+			throw new Error(`Unable to read 32-bit float from stream`);
+		const value = this.view.getFloat32(this.ptr, littleEndian);
+		this.ptr += 4;
+		return value;
+	}
+
+	readFloat64(littleEndian = false)
+	{
+		if (this.ptr + 8 > this.bytes.length)
+			throw new Error(`Unable to read 64-bit float from stream`);
+		const value = this.view.getFloat64(this.ptr, littleEndian);
+		this.ptr += 8;
+		return value;
 	}
 
 	readInt8()
 	{
-		return readInteger(this, 1, true);
+		if (this.ptr + 1 > this.bytes.length)
+			throw new Error(`Unable to read 8-bit signed integer from stream`);
+		return this.view.getInt8(this.ptr++);
 	}
 
-	readInt16(littleEndian)
+	readInt16(littleEndian = false)
 	{
-		return readInteger(this, 2, true, littleEndian);
+		if (this.ptr + 2 > this.bytes.length)
+			throw new Error(`Unable to read 16-bit signed integer from stream`);
+		const value = this.view.getInt16(this.ptr, littleEndian);
+		this.ptr += 2;
+		return value;
 	}
 
-	readInt32(littleEndian)
+	readInt32(littleEndian = false)
 	{
-		return readInteger(this, 4, true, littleEndian);
+		if (this.ptr + 4 > this.bytes.length)
+			throw new Error(`Unable to read 32-bit signed integer from stream`);
+		const value = this.view.getInt32(this.ptr, littleEndian);
+		this.ptr += 4;
+		return value;
 	}
 
-	readStringRaw(length)
+	readString(numBytes)
 	{
-		let bytes = this.read(length);
-		let string = this._textDecoder.decode(bytes);
-		let nulIndex = string.indexOf('\0');
-		if (nulIndex !== -1)
-			return string.substring(0, nulIndex);
-		else
-			return string;
+		if (this.ptr + numBytes > this.bytes.length)
+			throw new Error(`Unable to read ${numBytes}-byte string from stream`);
+		const slice = this.bytes.subarray(this.ptr, this.ptr + numBytes);
+		this.ptr += numBytes;
+		return this.textDec.decode(slice);
 	}
 
-	readString8()
+	readStringU8()
 	{
-		let length = readInteger(this, 1, false);
-		return this.readStringRaw(length);
+		const length = this.readUint8();
+		return this.readString(length);
 	}
 
-	readString16(littleEndian)
+	readStringU16(littleEndian = false)
 	{
-		let length = readInteger(this, 2, false, littleEndian);
-		return this.readStringRaw(length);
+		const length = this.readUint16(littleEndian);
+		return this.readString(length);
 	}
 
-	readString32(littleEndian)
+	readStringU32(littleEndian = false)
 	{
-		let length = readInteger(this, 4, false, littleEndian);
-		return this.readStringRaw(length);
+		const length = this.readUint32(littleEndian);
+		return this.readString(length);
 	}
 
-	readStruct(desc)
+	readStruct(manifest)
 	{
-		verifyStructDescriptor(desc);
-
-		let object = {};
-		for (const key of Object.keys(desc)) {
-			let fieldDesc = desc[key];
-			let value;
-			switch (fieldDesc.type) {
-				case 'bool': value = this.readUint8() !== 0; break;
-				case 'float32be': value = this.readFloat32(); break;
-				case 'float32le': value = this.readFloat32(true); break;
-				case 'float64be': value = this.readFloat64(); break;
-				case 'float64le': value = this.readFloat64(true); break;
-				case 'int8': value = this.readInt8(); break;
-				case 'int16be': value = this.readInt16(); break;
-				case 'int16le': value = this.readInt16(true); break;
-				case 'int32be': value = this.readInt32(); break;
-				case 'int32le': value = this.readInt32(true); break;
-				case 'uint8': value = this.readUint8(); break;
-				case 'uint16be': value = this.readUint16(); break;
-				case 'uint16le': value = this.readUint16(true); break;
-				case 'uint32be': value = this.readUint32(); break;
-				case 'uint32le': value = this.readUint32(true); break;
-				case 'fstring': value = this.readStringRaw(fieldDesc.length); break;
-				case 'lstr8': value = this.readString8(); break;
-				case 'lstr16be': value = this.readString16(); break;
-				case 'lstr16le': value = this.readString16(true); break;
-				case 'lstr32be': value = this.readString32(); break;
-				case 'lstr32le': value = this.readString32(true); break;
-				case 'raw': value = this.read(fieldDesc.size); break;
+		const retval = {};
+		for (const key of Object.keys(manifest)) {
+			const matches = manifest[key].match(/(string|pad)\/([0-9]*)/);
+			const valueType = matches !== null ? matches[1] : manifest[key];
+			const numBytes = matches !== null ? parseInt(matches[2], 10) : 0;
+			switch (valueType) {
+				case 'bool':
+					retval[key] = this.readUint8() != 0;
+					break;
+				case 'float32-be':
+					retval[key] = this.readFloat32();
+					break;
+				case 'float32-le':
+					retval[key] = this.readFloat32(true);
+					break;
+				case 'float64-be':
+					retval[key] = this.readFloat64();
+					break;
+				case 'float64-le':
+					retval[key] = this.readFloat64(true);
+					break;
+				case 'int8':
+					retval[key] = this.readInt8();
+					break;
+				case 'int16-be':
+					retval[key] = this.readInt16();
+					break;
+				case 'int16-le':
+					retval[key] = this.readInt16(true);
+					break;
+				case 'int32-be':
+					retval[key] = this.readInt32();
+					break;
+				case 'int32-le':
+					retval[key] = this.readInt32(true);
+					break;
+				case 'pad':
+					retval[key] = null;
+					this.skipAhead(numBytes);
+					break;
+				case 'string':
+					retval[key] = this.readString(numBytes);
+					break;
+				case 'string8':
+					retval[key] = this.readStringU8();
+					break;
+				case 'string16-be':
+					retval[key] = this.readStringU16();
+					break;
+				case 'string16-le':
+					retval[key] = this.readStringU16(true);
+					break;
+				case 'string32-be':
+					retval[key] = this.readStringU32();
+					break;
+				case 'string32-le':
+					retval[key] = this.readStringU32(true);
+					break;
+				case 'uint8':
+					retval[key] = this.readUint8();
+					break;
+				case 'uint16-be':
+					retval[key] = this.readUint16();
+					break;
+				case 'uint16-le':
+					retval[key] = this.readUint16(true);
+					break;
+				case 'uint32-be':
+					retval[key] = this.readUint32();
+					break;
+				case 'uint32-le':
+					retval[key] = this.readUint32(true);
+					break;
+				default:
+					throw new RangeError(`Unknown element type '${valueType}'`);
 			}
-			object[key] = value;
 		}
-		return object;
+		return retval;
 	}
 
 	readUint8()
 	{
-		return readInteger(this, 1, false);
+		if (this.ptr + 1 > this.bytes.length)
+			throw new Error(`Unable to read 8-bit unsigned integer from stream`);
+		return this.view.getUint8(this.ptr++);
 	}
 
-	readUint16(littleEndian)
+	readUint16(littleEndian = false)
 	{
-		return readInteger(this, 2, false, littleEndian);
+		if (this.ptr + 2 > this.bytes.length)
+			throw new Error(`Unable to read 16-bit unsigned integer from stream`);
+		const value = this.view.getUint16(this.ptr, littleEndian);
+		this.ptr += 2;
+		return value;
 	}
 
-	readUint32(littleEndian)
+	readUint32(littleEndian = false)
 	{
-		return readInteger(this, 4, false, littleEndian);
+		if (this.ptr + 4 > this.bytes.length)
+			throw new Error(`Unable to read 32-bit unsigned integer from stream`);
+		const value = this.view.getUint32(this.ptr, littleEndian);
+		this.ptr += 4;
+		return value;
 	}
 
-	writeFloat32(value, littleEndian)
+	skipAhead(numBytes)
 	{
-		let dv = new DataView(new ArrayBuffer(4));
-		dv.setFloat32(0, value, littleEndian);
-		this.write(dv.buffer);
-	}
-
-	writeFloat64(value, littleEndian)
-	{
-		let dv = new DataView(new ArrayBuffer(8));
-		dv.setFloat64(0, value, littleEndian);
-		this.write(dv.buffer);
-	}
-
-	writeInt8(value)
-	{
-		let dv = new DataView(new ArrayBuffer(1));
-		dv.setInt8(0, value);
-		this.write(dv.buffer);
-	}
-
-	writeInt16(value, littleEndian)
-	{
-		let dv = new DataView(new ArrayBuffer(2));
-		dv.setInt16(0, value, littleEndian);
-		this.write(dv.buffer);
-	}
-
-	writeInt32(value, littleEndian)
-	{
-		let dv = new DataView(new ArrayBuffer(4));
-		dv.setInt32(0, value, littleEndian);
-		this.write(dv.buffer);
-	}
-
-	writeStringRaw(value, length)
-	{
-		let encoded = this._textEncoder.encode(value);
-		let bytes = new Uint8Array(length);
-		bytes.set(encoded.subarray(0, length));
-		this.write(bytes);
-	}
-
-	writeString8(value)
-	{
-		let bytes = this._textEncoder.encode(value);
-		this.writeUint8(bytes.length);
-		this.write(bytes);
-	}
-
-	writeString16(value, littleEndian)
-	{
-		let bytes = this._textEncoder.encode(value);
-		this.writeUint16(bytes.length, littleEndian);
-		this.write(bytes);
-	}
-
-	writeString32(value, littleEndian)
-	{
-		let bytes = this._textEncoder.encode(value);
-		this.writeUint32(bytes.length, littleEndian);
-		this.write(bytes);
-	}
-
-	writeStruct(object, desc)
-	{
-		verifyStructDescriptor(desc);
-
-		for (const key of Object.keys(desc)) {
-			let value = key in object ? object[key] : desc[key].default;
-			switch (desc[key].type) {
-				case 'bool': this.writeUint8(value ? 1 : 0); break;
-				case 'float32be': this.writeFloat32(value); break;
-				case 'float32le': this.writeFloat32(value, true); break;
-				case 'float64be': this.writeFloat64(value); break;
-				case 'float64le': this.writeFloat64(value, true); break;
-				case 'int8': this.writeInt8(value); break;
-				case 'int16be': this.writeInt16(value); break;
-				case 'int16le': this.writeInt16(value, true); break;
-				case 'int32be': this.writeInt32(value); break;
-				case 'int32le': this.writeInt32(value, true); break;
-				case 'uint8': this.writeUint8(value); break;
-				case 'uint16be': this.writeUint16(value); break;
-				case 'uint16le': this.writeUint16(value, true); break;
-				case 'uint32be': this.writeUint32(value); break;
-				case 'uint32le': this.writeUint32(value, true); break;
-				case 'fstring': this.writeStringRaw(value, desc[key].length); break;
-				case 'lstr8': this.writeString8(value); break;
-				case 'lstr16be': this.writeString16(value); break;
-				case 'lstr16le': this.writeString16(value, true); break;
-				case 'lstr32be': this.writeString32(value); break;
-				case 'lstr32le': this.writeString32(value, true); break;
-				case 'raw': this.write(value); break;
-			}
-		}
-	}
-
-	writeUint8(value)
-	{
-		let dv = new DataView(new ArrayBuffer(1));
-		dv.setUint8(0, value);
-		this.write(dv.buffer);
-	}
-
-	writeUint16(value, littleEndian)
-	{
-		let dv = new DataView(new ArrayBuffer(2));
-		dv.setUint16(0, value, littleEndian);
-		this.write(dv.buffer);
-	}
-
-	writeUint32(value, littleEndian)
-	{
-		let dv = new DataView(new ArrayBuffer(4));
-		dv.setUint32(0, value, littleEndian);
-		this.write(dv.buffer);
-	}
-}
-
-function readInteger(stream, size, signed, littleEndian)
-{
-	// variable-size two's complement integer decoding algorithm jacked from
-	// Node.js.  this allows us to read integer values up to 48 bits in size.
-
-	let bytes = new Uint8Array(stream.read(size));
-	let mul = 1;
-	let value;
-	if (littleEndian) {
-		let ptr = 0;
-		value = bytes[ptr];
-		while (++ptr < size && (mul *= 0x100))
-			value += bytes[ptr] * mul;
-	}
-	else {
-		let ptr = size - 1;
-		value = bytes[ptr];
-		while (ptr > 0 && (mul *= 0x100))
-			value += bytes[--ptr] * mul;
-	}
-	if (signed && value > mul * 0x80)
-		value -= Math.pow(2, 8 * size);
-	return value;
-}
-
-function verifyStructDescriptor(desc)
-{
-	const FieldTypes = [
-		'float32be', 'float32le', 'float64be', 'float64le',
-		'int8', 'int16be', 'int16le', 'int32be', 'int32le',
-		'uint8', 'uint16be', 'uint16le', 'uint32be', 'uint32le',
-		'fstring', 'lstr8', 'lstr16be', 'lstr16le', 'lstr32be', 'lstr32le',
-		'bool', 'raw',
-	];
-	const Attributes = {
-		'fstring': [ 'length' ],
-		'raw':     [ 'size' ],
-	};
-
-	for (const key of Object.keys(desc)) {
-		let fieldDesc = desc[key];
-		let fieldType = fieldDesc.type;
-		if (!FieldTypes.some(it => fieldType === it))
-			throw new TypeError(`Invalid field type '${fieldType}'`);
-		if (fieldType in Attributes) {
-			if (!Attributes[fieldType].every(it => it in fieldDesc))
-				throw new TypeError(`Missing attributes for '${fieldType}'`);
-		}
+		if (this.ptr + numBytes > this.bytes.length)
+			throw new Error(`Cannot read ${numBytes} bytes from stream`);
+		this.ptr += numBytes;
 	}
 }

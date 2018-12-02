@@ -42,7 +42,7 @@ export { default as Thread } from 'thread';
 export { default as Tween, Easing } from 'tween';
 
 // Sphere Runtime shared modules
-export { default as from } from 'from';
+export { default as from, Query } from 'from';
 export { default as DataStream } from 'data-stream';
 export { default as Delegate } from 'delegate';
 export { default as Logger } from 'logger';
