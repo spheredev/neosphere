@@ -849,9 +849,9 @@ FileStream#position [R/W] [L1]
 
 FileStream#close(); [ASYNC] [L1]
 
-    Disposes of the FileStream object, closing the underlying file.  Attempting
-    to use the FileStream afterwards will cause an exception.  Returns a
-    promise that resolves once the file has been successfully closed.
+    Closes the file, performing any final processing as necessary.  Attempting
+    to use the FileStream after calling this will cause an exception.  Returns
+    a promise that resolves once the file has been successfully closed.
 
     Note: While it's not strictly necessary to call `close()` on FileStream
           objects,  it may take some time for the garbage collector to get to
@@ -1676,22 +1676,29 @@ A `Socket` represents a TCP connection to another computer.  Sockets can either
 be created manually (if the game is initiating the connection), or returned by
 `Server#accept()` to represent an incoming connection.
 
+Socket.connectTo(hostname, port); [ASYNC] [EXPERIMENTAL]
+
+    Connects to the specified host and port and returns a promise for a newly
+    constructed Socket object allowing communication with that host.  If the
+    connection attempt fails, the promise is rejected with an error. See the
+    documentation for `Socket#connectTo()` for more information on socket
+    connections.
+
 new Socket([hostname, port]); [L1]
 
-    Constructs a TCP socket object.  If no arguments are provided, the socket
-    starts in a disconnected state, otherwise attempts to connect to `hostname`
-    on `port` and throws an error if the attempt fails. See the documentation
-    for `Socket#connectTo()` for more information on socket connections.
+    Constructs a socket object that for synchronous reading and writing,
+    optionally connecting to the specified host and port.  This is available
+    only in miniSphere for backwards compatibility; new code should use the
+    asynchronous `Socket.connectTo` for maximum portability.
 
 Socket#bytesPending [R/O] [L1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     Call `Socket#read()` to retrieve this data.
-
-    Note: More data may be received between the time this is checked the time
-          a read is performed.  It's recommended to poll this value from time
-          to time and perform reads in order to keep the size of the receive
-          buffer down.
+    
+    Note: This property is supported only for synchronous sockets created using
+          `new Socket`.  For socket objects created with `Socket.connectTo`,
+          reading and writing is asynchronous so this property is not needed.
 
 Socket#connected [R/O] [L1]
 

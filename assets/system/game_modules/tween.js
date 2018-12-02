@@ -188,7 +188,7 @@ function runTween(targetObject, newValues, easer, numFrames)
 		initialValues[p] = targetObject[p];
 		targetValues[p] = newValues[p];
 	}
-	const promise = new Promise((resolve, reject) => {
+	const promise = new Promise(resolve => {
 		activeTweens.push({
 			initialValues,
 			targetValues,
