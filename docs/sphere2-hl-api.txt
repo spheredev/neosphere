@@ -42,7 +42,7 @@ new Console(options);
         A string specifying the text to display in front of the command
         line.
 
-Console#visible [read/write]
+Console#visible [R/W]
 
     Gets or sets whether this Console is visible to the player.  Setting this
     to `true` will show the console, while setting to `false` will hide it.
@@ -103,10 +103,36 @@ means the bytes are ordered from most- to least-significant, and little-endian
 means the reverse.  Big-endian mode is the default, as this is the standard
 byte order for data interchange.
 
+await DataStream.fromFile(filename); [ASYNC]
+
+    Loads the entire content of `filename` into memory and returns a promise
+    for a DataStream providing access to that data.
+
 new DataStream(buffer);
 
     Constructs a `DataStream` object which can be used to read binary data from
     `buffer`, which can be either an ArrayBuffer, TypedArray or DataView.
+
+DataStream#buffer [R/O]
+
+    Gets the ArrayBuffer representing the underlying data store.
+
+DataStream#bufferSize [R/O]
+
+    Gets the size in bytes of the DataStream's underlying data store.
+
+DataStream#position [R/W]
+
+    Gets or sets the byte position at which the next read or write will occur.
+    This is also referred to in documentation as the "pointer".  When setting
+    `position', the new value must be in the range [0, bufferSize] or a
+    RangeError exception will be thrown.
+
+DataStream#readBytes(num_bytes);
+
+    Reads a number of bytes starting at the current position and advances the
+    pointer accordingly.  Returns a `Uint8Array` containing the data that was
+    read.
 
 DataStream#readFloat32([littleEndian]);
 DataStream#readFloat64([littleEndian]);
@@ -204,6 +230,12 @@ DataStream#readStruct(desc);
 
 	If there is not enough data left in the buffer to read all the specified
 	values, an exception will be thrown and the pointer will not be advanced.
+
+DataStream#writeBytes(data);
+
+    Writes `data`, which can be either an ArrayBuffer, TypedArray, or DataView,
+    to the DataStream starting at the current position and advances the pointer
+    accordingly.
 
 DataStream#writeFloat32(value[, littleEndian]);
 DataStream#writeFloat64(value[, littleEndian]);
@@ -307,7 +339,7 @@ new FocusTarget(options);
         when another target tries to take the focus via `Focus#take()` (see
         below).
 
-FocusTarget#hasFocus [read-only]
+FocusTarget#hasFocus [R/O]
 
     `true` if the target is currently in focus, `false` otherwise.
 
@@ -338,10 +370,10 @@ simultaneously.
 
     import { Joypad } from 'sphere-runtime';
 
-Joypad.P1 [read-only]
-Joypad.P2 [read-only]
-Joypad.P3 [read-only]
-Joypad.P4 [read-only]
+Joypad.P1 [R/O]
+Joypad.P2 [R/O]
+Joypad.P3 [R/O]
+Joypad.P4 [R/O]
 
     Gets a Joystick object representing a connected device.  `Joypad.P1` always
     refers to the same device within a session; likewise for the other players.
@@ -939,7 +971,7 @@ scene engine uses the threads module and by default, scenes are nonblocking.
 See the documentation for `Scene#run()` below to find out how to play a scene
 in blocking mode.
 
-Scene.defaultPriority [read/write]
+Scene.defaultPriority [R/W]
 
     The Dispatch priority to use for new scenes.  Changing this value allows
     you control where in the render order your cutscene elements (such as
@@ -1016,7 +1048,7 @@ new Scene([options]);
         Note: The default priority for new scenes is determined by the value of
               `Scene.defaultPriority` (see above).
 
-Scene#running [read-only]
+Scene#running [R/O]
 
     `true` if scene execution is in progress, `false` if not.
 
@@ -1119,16 +1151,16 @@ new Thread(options);
         sooner and rendered later in a frame.  Especially useful to enforce
         rendering order.
 
-Thread#hasFocus [read-only]
+Thread#hasFocus [R/O]
 
     `true` if the thread has input focus, `false` otherwise.
 
-Thread#priority [read-only]
+Thread#priority [R/O]
 
     Gets the priority of the thread.  This is set when the thread is created
     and can't be changed afterwards.
 
-Thread#running [read-only]
+Thread#running [R/O]
 
     `true` if this thread is running (even if it's awaiting a promise),
     otherwise `false`.

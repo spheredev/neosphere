@@ -68,72 +68,60 @@ class DataStream
 	{
 		return this.ptr;
 	}
-
 	set position(value)
 	{
-		if (value > this.bytes.length)
-			throw new RangeError(`Stream position '${value}' is out of range`);
+		if (value < 0 || value > this.bytes.length)
+			throw new RangeError(`Attempt to advance beyond end of buffer`);
 		this.ptr = value;
 	}
 
 	readBytes(numBytes)
 	{
-		if (this.ptr + numBytes > this.bytes.length)
-			throw new Error(`Unable to read ${numBytes} bytes from stream`);
-		const bytes = this.bytes.slice(this.ptr, this.ptr + numBytes);
-		this.ptr += numBytes;
-		return bytes;
+		const ptr = this.position;
+		this.position += numBytes;
+		return this.bytes.slice(ptr, ptr + numBytes);
 	}
 
 	readFloat32(littleEndian = false)
 	{
-		if (this.ptr + 4 > this.bytes.length)
-			throw new Error(`Unable to read 32-bit float from stream`);
-		const value = this.view.getFloat32(this.ptr, littleEndian);
-		this.ptr += 4;
-		return value;
+		const ptr = this.position;
+		this.position += 4;
+		return this.view.getFloat32(ptr, littleEndian);
 	}
 
 	readFloat64(littleEndian = false)
 	{
-		if (this.ptr + 8 > this.bytes.length)
-			throw new Error(`Unable to read 64-bit float from stream`);
-		const value = this.view.getFloat64(this.ptr, littleEndian);
-		this.ptr += 8;
-		return value;
+		const ptr = this.position;
+		this.position += 8;
+		return this.view.getFloat64(ptr, littleEndian);
 	}
 
 	readInt8()
 	{
-		if (this.ptr + 1 > this.bytes.length)
-			throw new Error(`Unable to read 8-bit signed integer from stream`);
-		return this.view.getInt8(this.ptr++);
+		const ptr = this.position;
+		this.position += 1;
+		return this.view.getInt8(ptr);
 	}
 
 	readInt16(littleEndian = false)
 	{
-		if (this.ptr + 2 > this.bytes.length)
-			throw new Error(`Unable to read 16-bit signed integer from stream`);
-		const value = this.view.getInt16(this.ptr, littleEndian);
-		this.ptr += 2;
-		return value;
+		const ptr = this.position;
+		this.position += 2;
+		return this.view.getInt16(ptr, littleEndian);
 	}
 
 	readInt32(littleEndian = false)
 	{
-		if (this.ptr + 4 > this.bytes.length)
-			throw new Error(`Unable to read 32-bit signed integer from stream`);
-		const value = this.view.getInt32(this.ptr, littleEndian);
-		this.ptr += 4;
-		return value;
+		const ptr = this.position;
+		this.position += 4;
+		return this.view.getInt32(ptr, littleEndian);
 	}
 
 	readString(numBytes)
 	{
-		if (this.ptr + numBytes > this.bytes.length)
-			throw new Error(`Unable to read ${numBytes}-byte string from stream`);
-		const slice = this.bytes.subarray(this.ptr, this.ptr + numBytes);
-		this.ptr += numBytes;
+		const ptr = this.position;
+		this.position += numBytes;
+		const slice = this.bytes.subarray(ptr, ptr + numBytes);
 		return this.textDec.decode(slice);
 	}
 
@@ -195,7 +183,7 @@ class DataStream
 					break;
 				case 'pad':
 					retval[key] = null;
-					this.skipAhead(numBytes);
+					this.position += numBytes;
 					break;
 				case 'string':
 					retval[key] = this.readString(numBytes);
@@ -239,33 +227,22 @@ class DataStream
 
 	readUint8()
 	{
-		if (this.ptr + 1 > this.bytes.length)
-			throw new Error(`Unable to read 8-bit unsigned integer from stream`);
-		return this.view.getUint8(this.ptr++);
+		const ptr = this.position;
+		this.position += 1;
+		return this.view.getUint8(ptr);
 	}
 
 	readUint16(littleEndian = false)
 	{
-		if (this.ptr + 2 > this.bytes.length)
-			throw new Error(`Unable to read 16-bit unsigned integer from stream`);
-		const value = this.view.getUint16(this.ptr, littleEndian);
-		this.ptr += 2;
-		return value;
+		const ptr = this.position;
+		this.position += 2;
+		return this.view.getUint16(ptr, littleEndian);
 	}
 
 	readUint32(littleEndian = false)
 	{
-		if (this.ptr + 4 > this.bytes.length)
-			throw new Error(`Unable to read 32-bit unsigned integer from stream`);
-		const value = this.view.getUint32(this.ptr, littleEndian);
-		this.ptr += 4;
-		return value;
-	}
-
-	skipAhead(numBytes)
-	{
-		if (this.ptr + numBytes > this.bytes.length)
-			throw new Error(`Cannot read ${numBytes} bytes from stream`);
-		this.ptr += numBytes;
+		const ptr = this.position;
+		this.position += 4;
+		return this.view.getUint32(ptr, littleEndian);
 	}
 }
