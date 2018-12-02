@@ -796,12 +796,6 @@ formats that aren't directly supported by the engine.  Sphere makes no attempt
 to interpret the data in the file and simply provides access to the raw bytes
 it contains.
 
-It is called a "stream" only because the default mode of operation is to read
-byte data sequentially (although random access is allowed); all reads and
-writes are synchronous and there is no guarantee that data is streamed directly
-from disk.  In some implementations, the file will be completely loaded into
-memory upfront.  Keep this in mind when working with large files.
-
 FileStream.open(filename, file_op); [async] [experimental]
 
     Opens a file asynchronously and returns a promise for a `FileStream` that
@@ -836,12 +830,13 @@ new FileStream(filename, file_op); [L1]
     work in all implementations and will be deprecated starting in API level 2;
     use `FileStream.open` instead.
 
-FileStream#dispose(); [L1]
+FileStream#close(); [async] [L1]
 
     Disposes of the FileStream object, closing the underlying file.  Attempting
-    to use the FileStream afterwards will throw an exception.
+    to use the FileStream afterwards will cause an exception.  Returns a
+    promise that resolves once the file has been successfully closed.
 
-    Note: While it's not strictly necessary to call `dispose()` on stream
+    Note: While it's not strictly necessary to call `close()` on FileStream
           objects,  it may take some time for the garbage collector to get to
           them.  If there's an active FileStream for a given file, particularly
           if the file is opened in write mode, an error may be thrown if you
@@ -864,15 +859,17 @@ FileStream#position [read/write] [L1]
           stream.  In this case the next write will be at the new position and
           the intervening space filled with NUL bytes.
 
-FileStream#read(num_bytes); [L1]
+FileStream#read(num_bytes); [async] [L1]
 
     Reads data from the file, up to the specified number of bytes, and returns
-    it as an ArrayBuffer.  The file must be opened for reading.
+    a promise for an ArrayBuffer containing the data read.  The file must be
+    opened for reading.
 
-FileStream#write(data); [L1]
+FileStream#write(data); [async] [L1]
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
+    Returns a promise that resolves once the data has been written.
 
 
 `Font` Object

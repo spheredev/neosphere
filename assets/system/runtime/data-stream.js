@@ -39,7 +39,7 @@ class DataStream
 	{
 		const file = await FileStream.open(fileName, FileOp.Read);
 		const buffer = await file.read(file.fileSize);
-		file.dispose();
+		await file.close();
 		return new this(buffer);
 	}
 
