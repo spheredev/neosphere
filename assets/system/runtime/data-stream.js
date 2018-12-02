@@ -31,7 +31,7 @@
 **/
 
 export default
-class DataStream
+class DataStream extends DataView
 {
 	get [Symbol.toStringTag]() { return 'DataStream'; }
 
@@ -43,25 +43,12 @@ class DataStream
 		return new this(buffer);
 	}
 
-	constructor(buffer)
+	constructor(...args)
 	{
-		if (ArrayBuffer.isView(buffer))
-			this.bytes = new Uint8Array(buffer.buffer);
-		else
-			this.bytes = new Uint8Array(buffer);
+		super(...args);
+		this.bytes = new Uint8Array(this.buffer);
 		this.ptr = 0;
 		this.textDec = new TextDecoder();
-		this.view = new DataView(this.bytes.buffer);
-	}
-
-	get buffer()
-	{
-		return this.bytes.buffer;
-	}
-
-	get bufferSize()
-	{
-		return this.bytes.length;
 	}
 
 	get position()
@@ -86,35 +73,35 @@ class DataStream
 	{
 		const ptr = this.position;
 		this.position += 4;
-		return this.view.getFloat32(ptr, littleEndian);
+		return this.getFloat32(ptr, littleEndian);
 	}
 
 	readFloat64(littleEndian = false)
 	{
 		const ptr = this.position;
 		this.position += 8;
-		return this.view.getFloat64(ptr, littleEndian);
+		return this.getFloat64(ptr, littleEndian);
 	}
 
 	readInt8()
 	{
 		const ptr = this.position;
 		this.position += 1;
-		return this.view.getInt8(ptr);
+		return this.getInt8(ptr);
 	}
 
 	readInt16(littleEndian = false)
 	{
 		const ptr = this.position;
 		this.position += 2;
-		return this.view.getInt16(ptr, littleEndian);
+		return this.getInt16(ptr, littleEndian);
 	}
 
 	readInt32(littleEndian = false)
 	{
 		const ptr = this.position;
 		this.position += 4;
-		return this.view.getInt32(ptr, littleEndian);
+		return this.getInt32(ptr, littleEndian);
 	}
 
 	readString(numBytes)
@@ -229,20 +216,20 @@ class DataStream
 	{
 		const ptr = this.position;
 		this.position += 1;
-		return this.view.getUint8(ptr);
+		return this.getUint8(ptr);
 	}
 
 	readUint16(littleEndian = false)
 	{
 		const ptr = this.position;
 		this.position += 2;
-		return this.view.getUint16(ptr, littleEndian);
+		return this.getUint16(ptr, littleEndian);
 	}
 
 	readUint32(littleEndian = false)
 	{
 		const ptr = this.position;
 		this.position += 4;
-		return this.view.getUint32(ptr, littleEndian);
+		return this.getUint32(ptr, littleEndian);
 	}
 }

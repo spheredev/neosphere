@@ -91,8 +91,9 @@ Console#undefineObject(objectName);
 -------------------
 
 A `DataStream` object allows you to read structured binary data from any buffer
-or file.  It is similar to the built-in JavaScript `DataView`, but behaves more
-like a stream, making it more suitable for reading binary data from files.
+or file.  It is similar to the built-in JavaScript `DataView` (in fact it's a
+subclass of it), but acts more like a stream, making it very useful for reading
+binary data from files.
 
     import { DataStream } from 'sphere-runtime';
 
@@ -163,11 +164,11 @@ DataStream#readString(numBytes);
     string in advance; otherwise, the length is probably encoded in the data
     and you should use one of the variable-sized versions below.
 
-DataStream#readString8();
-DataStream#readString16([littleEndian]);
-DataStream#readString32([littleEndian]);
+DataStream#readStringU8();
+DataStream#readStringU16([littleEndian]);
+DataStream#readStringU32([littleEndian]);
 
-    Reads a UTF-8 length-prefixed string from the buffer at the current
+    Reads a UTF-8 variable-length string from the buffer at the current
     position and advances the pointer, where the length of the string in bytes
     is stored as an unsigned integer immediately before the character data.  If
     `littleEndian` is true, reads in little-endian mode.  Otherwise, reads in
@@ -197,39 +198,39 @@ DataStream#readStruct(desc);
             reserved2: 'pad/234',
         });
 
-	`readStruct` returns an object where each property named in `desc` is set
-	to the value read for that entry.  It is recommended to pass an object
-	literal for `desc` (as illustrated above) to ensure values will be read in
-	the correct order.
+    `readStruct` returns an object where each property named in `desc` is set
+    to the value read for that entry.  It is recommended to pass an object
+    literal for `desc` (as illustrated above) to ensure values will be read in
+    the correct order.
 
-	Each property in `desc` must be set to one of the following strings,
-	otherwise an exception will be thrown:
+    Each property in `desc` must be set to one of the following strings,
+    otherwise an exception will be thrown:
 
-	    "bool"        - Boolean value, stored as 1 byte (`true`/`false`)
-	    "float32-be"  - Floating point, 32-bit, big endian
-	    "float32-le"  - Floating point, 32-bit, little endian
-	    "float64-be"  - Floating point, 64-bit, big endian
-	    "float64-le"  - Floating point, 64-bit, little endian
-	    "int8"        - 8-bit signed int [-128, +127]
-	    "int16-be"    - 16-bit signed int, big endian [-32768, +32767]
-	    "int16-le"    - 16-bit signed int, little endian [-32768, +32767]
-	    "int32-be"    - 32-bit signed int, big endian [-2147483648, +2147483647]
-	    "int32-le"    - 32-bit signed int, little endian [-2147483648, +2147483647]
-	    "pad/<n>"     - Padding (skip ahead), <n> is number of bytes of padding
-	    "string/<n>"  - UTF-8 string, <n> is number of bytes stored
-	    "string8"     - 8-bit unsigned byte count + UTF-8 string
-	    "string16-be" - 16-bit unsigned byte count + UTF-8 string, big endian
-	    "string16-le" - 16-bit unsigned byte count + UTF-8 string, little endian
-	    "string32-be" - 32-bit unsigned byte count + UTF-8 string, big endian
-	    "string32-le" - 32-bit unsigned byte count + UTF-8 string, little endian
-	    "uint8"       - 8-bit unsigned int [0, 255]
-	    "uint16-be"   - 16-bit unsigned int, big endian [0, 65535]
-	    "uint16-le"   - 16-bit unsigned int, little endian [0, 65535]
-	    "uint32-be"   - 32-bit unsigned int, big endian [0, 4294967295]
-	    "uint32-le"   - 32-bit unsigned int, little endian [0, 4294967295]
+        "bool"        - Boolean value, stored as 1 byte (`true`/`false`)
+        "float32-be"  - Floating point, 32-bit, big endian
+        "float32-le"  - Floating point, 32-bit, little endian
+        "float64-be"  - Floating point, 64-bit, big endian
+        "float64-le"  - Floating point, 64-bit, little endian
+        "int8"        - 8-bit signed int [-128, +127]
+        "int16-be"    - 16-bit signed int, big endian [-32768, +32767]
+        "int16-le"    - 16-bit signed int, little endian [-32768, +32767]
+        "int32-be"    - 32-bit signed int, big endian [-2147483648, +2147483647]
+        "int32-le"    - 32-bit signed int, little endian [-2147483648, +2147483647]
+        "pad/<n>"     - Padding (skip ahead), <n> is number of bytes of padding
+        "string/<n>"  - UTF-8 string, <n> is number of bytes stored
+        "string8"     - 8-bit unsigned byte count + UTF-8 string
+        "string16-be" - 16-bit unsigned byte count + UTF-8 string, big endian
+        "string16-le" - 16-bit unsigned byte count + UTF-8 string, little endian
+        "string32-be" - 32-bit unsigned byte count + UTF-8 string, big endian
+        "string32-le" - 32-bit unsigned byte count + UTF-8 string, little endian
+        "uint8"       - 8-bit unsigned int [0, 255]
+        "uint16-be"   - 16-bit unsigned int, big endian [0, 65535]
+        "uint16-le"   - 16-bit unsigned int, little endian [0, 65535]
+        "uint32-be"   - 32-bit unsigned int, big endian [0, 4294967295]
+        "uint32-le"   - 32-bit unsigned int, little endian [0, 4294967295]
 
-	If there is not enough data left in the buffer to read all the specified
-	values, an exception will be thrown and the pointer will not be advanced.
+    If there is not enough data left in the buffer to read all the specified
+    values, an exception will be thrown and the pointer will not be advanced.
 
 DataStream#writeBytes(data);
 
@@ -545,8 +546,8 @@ Pact#toPromise();
 
     Returns a standard Promise which resolves to the same value as this pact.
     Use this when you want to provide outside code with access to the pact's
-	resolution or rejection value without also giving access to the settlement
-	methods described above.
+    resolution or rejection value without also giving access to the settlement
+    methods described above.
 
 
 `Prim` Namespace
@@ -668,12 +669,12 @@ new Query();
     As an example:
 
         let hasEnergyDrinks = new Query()
-			.over(member => member.items)
-			.select(it => it.name)
-			.anyIn(["Red Bull", "Monster"]);
-		// later on...
-		if (hasEnergyDrinks(enemyParty))
-			stealFrom(enemyParty, "Monster");
+            .over(member => member.items)
+            .select(it => it.name)
+            .anyIn(["Red Bull", "Monster"]);
+        // later on...
+        if (hasEnergyDrinks(enemyParty))
+            stealFrom(enemyParty, "Monster");
 
 Query#all(predicate);
 Query#allIn(valueList);
@@ -725,7 +726,7 @@ Query#count([keySelector]);
 
         let counts = from([ "pig", "cow", 812, "ape", 1208 ])
             .count(it => typeof it);
-		// returns: { string: 3, number: 2 }
+        // returns: { string: 3, number: 2 }
 
 Query#drop(count);
 
@@ -764,7 +765,7 @@ Query#groupBy(keySelector);
 
         let groups = from([ 1, "a", 2, "b", 3 ])
             .groupBy(it => typeof it);
-		// returns: { number: [ 1, 2, 3 ], string: [ "a", "b" ] }
+        // returns: { number: [ 1, 2, 3 ], string: [ "a", "b" ] }
 
 Query#last([mapper]);
 
@@ -852,9 +853,9 @@ Query#take(count);
 
 Query#tap(interceptor);
 
-	Collects all results so far into an array and calls `interceptor` passing
-	the array as the first parameter.  Any changes made to the array will be
-	reflected in subsequent operations.
+    Collects all results so far into an array and calls `interceptor` passing
+    the array as the first parameter.  Any changes made to the array will be
+    reflected in subsequent operations.
 
 Query#thru(mapper);
 
@@ -1283,8 +1284,8 @@ new Tween(object[, easing_type]);
         Easing.Quintic
         Easing.Sine
 
-	The default is `Easing.Sine`, which animates according to the trigonometric
-	sine (`Math.sin`) function.
+    The default is `Easing.Sine`, which animates according to the trigonometric
+    sine (`Math.sin`) function.
 
 Tween#easeIn(newValues, numFrames); [async]
 
