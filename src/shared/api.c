@@ -125,7 +125,7 @@ api_define_async_func(const char* namespace_name, const char* name, js_function_
 		}
 	}
 
-	jsal_push_new_function_async(callback, name, 0, magic);
+	jsal_push_new_function(callback, name, 0, true, magic);
 	jsal_to_propdesc_value(true, false, true);
 	jsal_def_prop_string(-2, name);
 
@@ -143,7 +143,7 @@ api_define_async_method(const char* class_name, const char* name, js_function_t 
 		jsal_push_class_prototype(class_id_from_name(class_name));
 	}
 
-	jsal_push_new_function_async(callback, name, 0, magic);
+	jsal_push_new_function(callback, name, 0, true, magic);
 	jsal_to_propdesc_value(true, false, true);
 	if (strncmp(name, "@@", 2) == 0) {
 		jsal_push_known_symbol(&name[2]);
@@ -235,7 +235,7 @@ api_define_function(const char* namespace_name, const char* name, js_function_t 
 		}
 	}
 
-	jsal_push_new_function(callback, name, 0, magic);
+	jsal_push_new_function(callback, name, 0, false, magic);
 	jsal_to_propdesc_value(true, false, true);
 	jsal_def_prop_string(-2, name);
 
@@ -253,7 +253,7 @@ api_define_method(const char* class_name, const char* name, js_function_t callba
 		jsal_push_class_prototype(class_id_from_name(class_name));
 	}
 
-	jsal_push_new_function(callback, name, 0, magic);
+	jsal_push_new_function(callback, name, 0, false, magic);
 	jsal_to_propdesc_value(true, false, true);
 	if (strncmp(name, "@@", 2) == 0) {
 		jsal_push_known_symbol(&name[2]);
@@ -317,11 +317,11 @@ api_define_property(const char* class_name, const char* name, bool enumerable, j
 	jsal_push_boolean(enumerable);
 	jsal_put_prop_string(-2, "enumerable");
 	if (getter != NULL) {
-		jsal_push_new_function(getter, "get", 0, 0);
+		jsal_push_new_function(getter, "get", 0, false, 0);
 		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
-		jsal_push_new_function(setter, "set", 0, 0);
+		jsal_push_new_function(setter, "set", 0, false, 0);
 		jsal_put_prop_string(-2, "set");
 	}
 
@@ -360,11 +360,11 @@ api_define_static_prop(const char* namespace_name, const char* name, js_function
 	jsal_push_boolean_true();
 	jsal_put_prop_string(-2, "configurable");
 	if (getter != NULL) {
-		jsal_push_new_function(getter, "get", 0, 0);
+		jsal_push_new_function(getter, "get", 0, false, 0);
 		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
-		jsal_push_new_function(setter, "set", 0, 0);
+		jsal_push_new_function(setter, "set", 0, false, 0);
 		jsal_put_prop_string(-2, "set");
 	}
 	jsal_def_prop_string(-2, name);

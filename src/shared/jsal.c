@@ -80,6 +80,7 @@ struct breakpoint
 
 struct function
 {
+	bool          async_flag;
 	js_function_t callback;
 	bool          ctor_only;
 	intptr_t      magic;
@@ -119,7 +120,6 @@ static JsErrorCode CHAKRA_CALLBACK on_fetch_dynamic_import     (JsSourceContext 
 static JsErrorCode CHAKRA_CALLBACK on_fetch_imported_module    (JsModuleRecord importer, JsValueRef specifier, JsModuleRecord *out_module);
 static void CHAKRA_CALLBACK        on_finalize_host_object     (void* userdata);
 static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call        (JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata);
-static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call_async  (JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata);
 static JsErrorCode CHAKRA_CALLBACK on_notify_module_ready      (JsModuleRecord module, JsValueRef exception);
 static void CHAKRA_CALLBACK        on_reject_promise_unhandled (JsValueRef promise, JsValueRef reason, bool handled, void* userdata);
 static void CHAKRA_CALLBACK        on_resolve_reject_promise   (JsValueRef function, void* userdata);
@@ -1433,34 +1433,19 @@ jsal_push_new_error_va(js_error_type_t type, const char* format, va_list ap)
 }
 
 int
-jsal_push_new_function(js_function_t callback, const char* name, int min_args, intptr_t magic)
+jsal_push_new_function(js_function_t callback, const char* name, int min_args, bool async, intptr_t magic)
 {
 	JsValueRef       function;
 	struct function* function_data;
 	JsValueRef       name_string;
 
 	function_data = calloc(1, sizeof(struct function));
+	function_data->async_flag = async;
 	function_data->callback = callback;
 	function_data->magic = magic;
 	function_data->min_args = min_args;
 	JsCreateString(name, strlen(name), &name_string);
 	JsCreateEnhancedFunction(on_js_to_native_call, name_string, function_data, &function);
-	return push_value(function, false);
-}
-
-int
-jsal_push_new_function_async(js_function_t callback, const char* name, int min_args, intptr_t magic)
-{
-	JsValueRef       function;
-	struct function* function_data;
-	JsValueRef       name_string;
-
-	function_data = calloc(1, sizeof(struct function));
-	function_data->callback = callback;
-	function_data->magic = magic;
-	function_data->min_args = min_args;
-	JsCreateString(name, strlen(name), &name_string);
-	JsCreateEnhancedFunction(on_js_to_native_call_async, name_string, function_data, &function);
 	return push_value(function, false);
 }
 
@@ -2991,7 +2976,9 @@ on_finalize_host_object(void* userdata)
 static JsValueRef CHAKRA_CALLBACK
 on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata)
 {
+	JsValueRef       call_args[2];
 	struct function* function_data;
+	bool             has_exception = false;
 	bool             has_return;
 	bool             is_ctor_call;
 	JsValueRef       last_callee_value;
@@ -3000,6 +2987,9 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	int              last_stack_base;
 	JsValueRef       last_this_value;
 	jsal_jmpbuf      label;
+	JsValueRef       promise;
+	JsValueRef       reject_func;
+	JsValueRef       resolve_func;
 	JsValueRef       retval = JS_INVALID_REFERENCE;
 
 	int i;
@@ -3037,8 +3027,10 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	else {
 		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
 		// of the value stack.
+		has_exception = true;
 		retval = pop_value();
-		JsSetException(retval);
+		if (!function_data->async_flag)
+			JsSetException(retval);
 	}
 	resize_stack(s_stack_base);
 	s_callee_value = last_callee_value;
@@ -3046,32 +3038,19 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	s_newtarget_value = last_newtarget_value;
 	s_this_value = last_this_value;
 	s_stack_base = last_stack_base;
-	return retval;
-}
-
-static JsValueRef CHAKRA_CALLBACK
-on_js_to_native_call_async(JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata)
-{
-	JsValueRef call_args[2];
-	JsValueRef exception;
-	JsValueRef promise;
-	JsValueRef reject_func;
-	JsValueRef resolve_func;
-	JsValueRef retval;
-
-	retval = on_js_to_native_call(callee, argv, argc, env, userdata);
-
-	JsCreatePromise(&promise, &resolve_func, &reject_func);
-	call_args[0] = s_js_undefined;
-	if (JsGetAndClearException(&exception) == JsNoError) {
-		call_args[1] = exception;
-		JsCallFunction(reject_func, call_args, 2, NULL);
-	}
-	else {
+	
+	if (function_data->async_flag) {
+		JsCreatePromise(&promise, &resolve_func, &reject_func);
+		call_args[0] = s_js_undefined;
 		call_args[1] = retval;
-		JsCallFunction(resolve_func, call_args, 2, NULL);
+		if (!has_exception)
+			JsCallFunction(resolve_func, call_args, 2, NULL);
+		else
+			JsCallFunction(reject_func, call_args, 2, NULL);
+		retval = promise;
 	}
-	return promise;
+
+	return retval;
 }
 
 static JsErrorCode CHAKRA_CALLBACK

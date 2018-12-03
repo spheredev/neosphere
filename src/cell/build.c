@@ -263,7 +263,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	// create a Tool for the install() function to use
 	jsal_push_hidden_stash();
-	jsal_push_new_function(install_target, "doInstall", 0, 0);
+	jsal_push_new_function(install_target, "doInstall", 0, false, 0);
 	jsal_push_class_obj(CELL_TOOL, tool_new("installing"), false);
 	jsal_put_prop_string(-2, "installTool");
 	jsal_pop(1);
@@ -915,7 +915,7 @@ push_require(const char* module_id)
 	jsal_get_prop_string(-1, "moduleCache");
 	jsal_remove(-2);
 
-	jsal_push_new_function(js_require, "require", 1, 0);
+	jsal_push_new_function(js_require, "require", 1, false, 0);
 	jsal_push_new_object();
 	jsal_pull(-3);
 	jsal_put_prop_string(-2, "value");

@@ -203,7 +203,7 @@ script_run(script_t* script, bool allow_reentry)
 	if (jsal_is_object(-1) && jsal_has_prop_key(-1, s_key_then)) {
 		jsal_get_prop_string(-1, "then");
 		jsal_pull(-2);
-		jsal_push_new_function(js_onScriptFinished, "", 0, (intptr_t)script);
+		jsal_push_new_function(js_onScriptFinished, "", 0, false, (intptr_t)script);
 		jsal_call_method(1);
 		jsal_pop(1);
 	}

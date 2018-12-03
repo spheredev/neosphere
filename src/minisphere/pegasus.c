@@ -625,7 +625,6 @@ pegasus_init(int api_level)
 	api_define_function("Dispatch", "onRender", js_Dispatch_onRender, 0);
 	api_define_function("Dispatch", "onUpdate", js_Dispatch_onUpdate, 0);
 	api_define_class("FileStream", PEGASUS_FILE_STREAM, js_new_FileStream, js_FileStream_finalize, 0);
-	api_define_async_func("FileStream", "open", js_new_FileStream, 0);
 	api_define_property("FileStream", "fileName", false, js_FileStream_get_fileName, NULL);
 	api_define_property("FileStream", "fileSize", false, js_FileStream_get_fileSize, NULL);
 	api_define_property("FileStream", "position", false, js_FileStream_get_position, js_FileStream_set_position);
@@ -898,6 +897,7 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
+		api_define_async_func("FileStream", "open", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
 		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
@@ -914,13 +914,13 @@ pegasus_init(int api_level)
 
 	if (api_level >= 3) {
 		api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
+		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
+		api_define_function("Z", "deflate", js_Z_deflate, 0);
+		api_define_function("Z", "inflate", js_Z_inflate, 0);
 		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
 		api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
 		api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
-		api_define_function("Z", "deflate", js_Z_deflate, 0);
-		api_define_function("Z", "inflate", js_Z_inflate, 0);
-		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_method("Font", "widthOf", js_Font_widthOf, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
@@ -942,7 +942,7 @@ pegasus_init(int api_level)
 		jsal_get_global_string("BlendOp");
 		p_blender = BLENDERS;
 		while (p_blender->name != NULL) {
-			jsal_push_new_function(js_BlendOp_get_Default, p_blender->name, 0, (intptr_t)(p_blender - BLENDERS));
+			jsal_push_new_function(js_BlendOp_get_Default, p_blender->name, 0, false, (intptr_t)(p_blender - BLENDERS));
 			jsal_to_propdesc_get(false, true);
 			jsal_def_prop_string(-2, p_blender->name);
 			++p_blender;
@@ -965,7 +965,7 @@ pegasus_init(int api_level)
 	p_color = COLORS;
 	while (p_color->name != NULL) {
 		if (s_api_level >= p_color->api_level) {
-			jsal_push_new_function(js_Color_get_Default, p_color->name, 0, (intptr_t)(p_color - COLORS));
+			jsal_push_new_function(js_Color_get_Default, p_color->name, 0, false, (intptr_t)(p_color - COLORS));
 			jsal_to_propdesc_get(false, true);
 			jsal_def_prop_string(-2, p_color->name);
 		}
@@ -1170,7 +1170,7 @@ jsal_pegasus_push_job_token(int64_t token)
 static void
 jsal_pegasus_push_require(const char* module_id)
 {
-	jsal_push_new_function(js_require, "require", 1, 0);
+	jsal_push_new_function(js_require, "require", 1, false, 0);
 
 	// assign 'require.cache'
 	jsal_push_new_object();
@@ -2594,9 +2594,9 @@ js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 	if (is_ctor) {
 		// streams created using 'new FileStream' must support synchronous I/O.  this is
 		// kind of a hack but for now just shadow the prototype methods.
-		jsal_push_new_function(js_FileStream_close, "close", 0, 0);
-		jsal_push_new_function(js_FileStream_read, "read", 0, 0);
-		jsal_push_new_function(js_FileStream_write, "write", 0, 0);
+		jsal_push_new_function(js_FileStream_close, "close", 0, false, 0);
+		jsal_push_new_function(js_FileStream_read, "read", 0, false, 0);
+		jsal_push_new_function(js_FileStream_write, "write", 0, false, 0);
 		jsal_put_prop_string(-4, "write");
 		jsal_put_prop_string(-3, "read");
 		jsal_put_prop_string(-2, "close");
@@ -4422,10 +4422,10 @@ js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 	if (is_ctor) {
 		// sockets created using 'new Socket' must support synchronous I/O.  this is
 		// kind of a hack but for now just shadow the prototype methods.
-		jsal_push_new_function(js_Socket_connectTo, "connectTo", 0, 0);
-		jsal_push_new_function(js_Socket_close, "close", 0, 0);
-		jsal_push_new_function(js_Socket_read, "read", 0, 0);
-		jsal_push_new_function(js_Socket_write, "write", 0, 0);
+		jsal_push_new_function(js_Socket_connectTo, "connectTo", 0, false, 0);
+		jsal_push_new_function(js_Socket_close, "close", 0, false, 0);
+		jsal_push_new_function(js_Socket_read, "read", 0, false, 0);
+		jsal_push_new_function(js_Socket_write, "write", 0, false, 0);
 		jsal_put_prop_string(-5, "write");
 		jsal_put_prop_string(-4, "read");
 		jsal_put_prop_string(-3, "close");
@@ -5405,8 +5405,8 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 			jsal_push_new_object();
 			for (j = 0; j < 4; ++j) {
 				jsal_dup(cell_desc_idx);
-				jsal_push_new_function(js_Transform_get_matrix, "get", 0, (intptr_t)&values[j * 4 + i]);
-				jsal_push_new_function(js_Transform_set_matrix, "set", 0, (intptr_t)&values[j * 4 + i]);
+				jsal_push_new_function(js_Transform_get_matrix, "get", 0, false, (intptr_t)&values[j * 4 + i]);
+				jsal_push_new_function(js_Transform_set_matrix, "set", 0, false, (intptr_t)&values[j * 4 + i]);
 				jsal_put_prop_key(-3, s_key_set);
 				jsal_put_prop_key(-2, s_key_get);
 				jsal_def_prop_index(-2, j);
