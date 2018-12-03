@@ -513,13 +513,13 @@ static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
 static path_t*   load_package_json           (const char* filename);
 
-static int            s_api_level;
-static int            s_api_level_nominal;
-static mixer_t*       s_def_mixer;
-static int            s_frame_rate = 60;
-static int            s_next_module_id = 1;
-static js_ref_t*      s_screen_obj;
-static bool           s_shutting_down = false;
+static int       s_api_level;
+static int       s_api_level_nominal;
+static mixer_t*  s_def_mixer;
+static int       s_frame_rate = 60;
+static int       s_next_module_id = 1;
+static js_ref_t* s_screen_obj;
+static bool      s_shutting_down = false;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;

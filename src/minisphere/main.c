@@ -275,7 +275,7 @@ main(int argc, char* argv[])
 	if (game_version(g_game) > SPHERE_API_VERSION || game_api_level(g_game) > SPHERE_API_LEVEL_STABLE) {
 #if !defined(MINISPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Start Game", game_name(g_game),
-			"This game was developed for a newer version of the Sphere platform than your version of miniSphere ("SPHERE_VERSION") supports.\n\n"
+			"This game was developed for a newer edition of the Sphere API than your version of miniSphere ("SPHERE_VERSION") supports.  "
 			"You'll need to upgrade your copy of miniSphere before you can play this game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
@@ -312,7 +312,11 @@ main(int argc, char* argv[])
 	}
 	else {
 		api_version = SPHERE_API_VERSION;
+#if defined(MINISPHERE_SPHERUN)
 		api_level = SPHERE_API_LEVEL;
+#else
+		api_level = SPHERE_API_LEVEL_STABLE;
+#endif
 	}
 	
 	api_init();
