@@ -905,6 +905,9 @@ pegasus_init(int api_level)
 		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
 		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
 		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
+		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
+		api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
+		api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
 		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 		api_define_const("DataType", "Bytes", DATA_BYTES);
 		api_define_const("DataType", "Lines", DATA_LINES);
@@ -918,9 +921,6 @@ pegasus_init(int api_level)
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_function("Z", "deflate", js_Z_deflate, 0);
 		api_define_function("Z", "inflate", js_Z_inflate, 0);
-		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
-		api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
-		api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
 		api_define_method("Font", "widthOf", js_Font_widthOf, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
