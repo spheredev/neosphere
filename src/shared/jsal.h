@@ -215,6 +215,7 @@ const char*  jsal_require_string           (int at_index);
 void         jsal_require_symbol           (int at_index);
 unsigned int jsal_require_uint             (int at_index);
 void         jsal_require_undefined        (int at_index);
+void         jsal_set_async_call_flag      (bool is_async);
 void         jsal_set_finalizer            (int at_index, js_finalizer_t callback);
 void         jsal_set_host_data            (int at_index, void* ptr);
 void         jsal_set_prototype            (int object_index);

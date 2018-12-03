@@ -144,6 +144,7 @@ static int asprintf  (char* *out, const char* format, ...);
 static int vasprintf (char* *out, const char* format, va_list ap);
 #endif
 
+static bool                 s_async_flag = false;
 static js_break_callback_t  s_break_callback = NULL;
 static vector_t*            s_breakpoints;
 static JsValueRef           s_callee_value = JS_INVALID_REFERENCE;
@@ -1920,6 +1921,12 @@ jsal_require_undefined(int at_index)
 }
 
 void
+jsal_set_async_call_flag(bool is_async)
+{
+	s_async_flag = is_async;
+}
+
+void
 jsal_set_finalizer(int at_index, js_finalizer_t callback)
 {
 	JsValueRef     object;
@@ -2981,6 +2988,7 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	bool             has_exception = false;
 	bool             has_return;
 	bool             is_ctor_call;
+	bool             last_async_flag;
 	JsValueRef       last_callee_value;
 	jsal_jmpbuf*     last_catch_label;
 	JsValueRef       last_newtarget_value;
@@ -2997,11 +3005,15 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	function_data = userdata;
 
 	last_stack_base = s_stack_base;
+	last_async_flag = s_async_flag;
 	last_callee_value = s_callee_value;
 	last_catch_label = s_catch_label;
 	last_newtarget_value = s_newtarget_value;
 	last_this_value = s_this_value;
+
+	// set up a stack frame and call the native function
 	s_stack_base = vector_len(s_value_stack);
+	s_async_flag = function_data->async_flag;
 	s_callee_value = callee;
 	s_newtarget_value = env->newTargetArg;
 	s_this_value = env->thisArg;
@@ -3029,17 +3041,11 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 		// of the value stack.
 		has_exception = true;
 		retval = pop_value();
-		if (!function_data->async_flag)
+		if (!s_async_flag)
 			JsSetException(retval);
 	}
-	resize_stack(s_stack_base);
-	s_callee_value = last_callee_value;
-	s_catch_label = last_catch_label;
-	s_newtarget_value = last_newtarget_value;
-	s_this_value = last_this_value;
-	s_stack_base = last_stack_base;
 	
-	if (function_data->async_flag) {
+	if (s_async_flag) {
 		JsCreatePromise(&promise, &resolve_func, &reject_func);
 		call_args[0] = s_js_undefined;
 		call_args[1] = retval;
@@ -3049,7 +3055,16 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 			JsCallFunction(reject_func, call_args, 2, NULL);
 		retval = promise;
 	}
-
+	
+	// tear down the stack frame for the call
+	resize_stack(s_stack_base);
+	s_async_flag = last_async_flag;
+	s_callee_value = last_callee_value;
+	s_catch_label = last_catch_label;
+	s_newtarget_value = last_newtarget_value;
+	s_this_value = last_this_value;
+	s_stack_base = last_stack_base;
+	
 	return retval;
 }
 

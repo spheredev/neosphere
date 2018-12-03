@@ -212,7 +212,7 @@ api_define_class(const char* name, int class_id, js_function_t constructor, js_f
 }
 
 void
-api_define_function(const char* namespace_name, const char* name, js_function_t callback, intptr_t magic)
+api_define_func(const char* namespace_name, const char* name, js_function_t callback, intptr_t magic)
 {
 	jsal_push_global_object();
 
@@ -302,7 +302,7 @@ api_define_object(const char* namespace_name, const char* name, int class_id, vo
 }
 
 void
-api_define_property(const char* class_name, const char* name, bool enumerable, js_function_t getter, js_function_t setter)
+api_define_prop(const char* class_name, const char* name, bool enumerable, js_function_t getter, js_function_t setter)
 {
 	jsal_push_global_object();
 	if (class_name != NULL) {
