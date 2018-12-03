@@ -3052,23 +3052,25 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 static JsValueRef CHAKRA_CALLBACK
 on_js_to_native_call_async(JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata)
 {
-	JsValueRef       call_args[2];
-	bool             have_exception;
-	JsValueRef       promise;
-	JsValueRef       reject_func;
-	JsValueRef       resolve_func;
-	JsValueRef       retval;
+	JsValueRef call_args[2];
+	JsValueRef exception;
+	JsValueRef promise;
+	JsValueRef reject_func;
+	JsValueRef resolve_func;
+	JsValueRef retval;
 
 	retval = on_js_to_native_call(callee, argv, argc, env, userdata);
 
 	JsCreatePromise(&promise, &resolve_func, &reject_func);
 	call_args[0] = s_js_undefined;
-	call_args[1] = retval;
-	JsHasException(&have_exception);
-	if (!have_exception)
-		JsCallFunction(resolve_func, call_args, 2, NULL);
-	else
+	if (JsGetAndClearException(&exception) == JsNoError) {
+		call_args[1] = exception;
 		JsCallFunction(reject_func, call_args, 2, NULL);
+	}
+	else {
+		call_args[1] = retval;
+		JsCallFunction(resolve_func, call_args, 2, NULL);
+	}
 	return promise;
 }
 

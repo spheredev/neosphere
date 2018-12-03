@@ -9,18 +9,23 @@ miniSphere 5.3
   `cell clean`.  If you need a quick primer on the new syntax, you can type
   `cell help` on the command-line.
 
-* All functions and methods that access the physical file system have been
-  changed to return a promise for their result.  In some cases (`FileStream`
-  methods, notably) this is a breaking API change, but was a necessary evil to
-  ensure cross-compatibility with Oozaru, the Sphere implementation for the Web
-  currently under development.  The alternative was to introduce duplicate
-  `async` variants of several functions, bloating the API.
+* New static `fromFile` methods have been added to all built-in classes whose
+  constructor accepts a filename.  These methods return a promise for the
+  new object instead of constructing it on-the-fly, which allows assets to be
+  loaded asynchronously in implementations where that is necessary.
+  The synchronous constructors will remain available, but are not guaranteed
+  to work in all implementations going forward.
 
-* `DataStream` has been completely rewritten.  It is no longer a subclass of
-  `FileStream` and can now work with any buffer object.  `DataStream.fromFile`
-  has been provided both to make migration easier as well as a general
-  convenience for working with binary data in files.  Refer to the Sphere
-  Runtime API documentation to get back up to speed.
+* All functions in the `FS` namespace have been changed to return a promise for
+  their result.  In a few cases (`FS.readFile`, in particular) this is a
+  breaking API change, but was a necessary evil to ensure cross-compatibility
+  with Oozaru, the Sphere v2 implementation for the Web under development.  The
+  alternative was to introduce duplicate `async` variants of several functions,
+  bloating the API.
+
+* `DataStream` has been completely reworked.  It is no longer a subclass of
+  `FileStream` and can now work with any buffer object.  There may be breaking
+  changes; refer to the Sphere Runtime API Reference to get back up to speed.
 
 * The `from` module has been rewritten for improved performance and along with
   several new query operators comes a few breaking changes.  `.skip` is now

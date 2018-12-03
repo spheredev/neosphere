@@ -825,10 +825,13 @@ FileStream.open(filename, file_op); [ASYNC] [EXPERIMENTAL]
 
 new FileStream(filename, file_op); [L1]
 
-    Like `FileStream.open`, but doesn't return until the file is ready for
-    access and throws a synchronous exception in case of error.  This will not
-    work in all implementations and will be deprecated starting in API level 2;
-    use `FileStream.open` instead.
+    Similar to `FileStream.open`, but opens the file in synchronous mode.  In
+    this mode, reads and writes will be performed on-the-fly without yielding
+    to the event loop and `read` will return an ArrayBuffer directly instead of
+    returning it through a promise.
+
+    Note: Synchronous file system access is not supportable on some platforms;
+          for maximum portability, use `FileStream.open` instead.
 
 FileStream#fileName [R/O] [L1]
 
@@ -1679,23 +1682,26 @@ be created manually (if the game is initiating the connection), or returned by
 Socket.connectTo(hostname, port); [ASYNC] [EXPERIMENTAL]
 
     Connects to the specified host and port and returns a promise for a newly
-    constructed Socket object allowing communication with that host.  If the
-    connection attempt fails, the promise is rejected with an error. See the
-    documentation for `Socket#connectTo()` for more information on socket
-    connections.
+    constructed Socket object allowing asynchronous communication with that
+    host.  If the connection attempt fails, the promise is rejected with an
+    error.
 
 new Socket([hostname, port]); [L1]
 
-    Constructs a socket object that for synchronous reading and writing,
-    optionally connecting to the specified host and port.  This is available
-    only in miniSphere for backwards compatibility; new code should use the
-    asynchronous `Socket.connectTo` for maximum portability.
+    Constructs a socket object for synchronous reading and writing, optionally
+    connecting to the specified host and port.  In this mode, reads and writes
+    are performed on-the-fly without yielding to the event loop, and
+    `Socket#read` returns an ArrayBuffer directly instead of returning it
+    through a promise.
+
+    Note: Synchronous sockets are not supportable on all platforms.  For
+          maximum portability, use `Socket.connectTo` instead.
 
 Socket#bytesPending [R/O] [L1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     Call `Socket#read()` to retrieve this data.
-    
+
     Note: This property is supported only for synchronous sockets created using
           `new Socket`.  For socket objects created with `Socket.connectTo`,
           reading and writing is asynchronous so this property is not needed.
@@ -1705,6 +1711,11 @@ Socket#connected [R/O] [L1]
     Gets whether the connection has been established.  As long as this is
     false, you cannot call any other methods on the socket object.  Doing so
     will cause an error to be thrown.
+
+    Note: This property is supported only for synchronous sockets created using
+          `new Socket`.  For socket objects created with `Socket.connectTo`,
+          the connection promise doesn't resolve until a connection is made so
+          this property is not needed.
 
 Socket#remoteAddress [R/O] [L1]
 
