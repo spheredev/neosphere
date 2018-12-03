@@ -898,30 +898,34 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
-		api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
+		api_define_async_func("Font", "fromFile", js_new_Font, 0);
+		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
+		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
+		api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
+		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
+		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
+		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
+		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
+		api_define_const("DataType", "Bytes", DATA_BYTES);
+		api_define_const("DataType", "Lines", DATA_LINES);
+		api_define_const("DataType", "Raw", DATA_RAW);
+		api_define_const("DataType", "Text", DATA_TEXT);
+	}
 
+	if (api_level >= 3) {
+		api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
 		api_define_function("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_function("FS", "directoryOf", js_FS_directoryOf, 0);
 		api_define_function("FS", "extensionOf", js_FS_extensionOf, 0);
 		api_define_function("FS", "fileNameOf", js_FS_fileNameOf, 0);
-		api_define_async_func("Font", "fromFile", js_new_Font, 0);
-		api_define_method("Font", "widthOf", js_Font_widthOf, 0);
-		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
-		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
-		api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
-		api_define_function("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
-		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
-		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
-		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
 		api_define_function("Z", "deflate", js_Z_deflate, 0);
 		api_define_function("Z", "inflate", js_Z_inflate, 0);
-
+		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
+		api_define_method("Font", "widthOf", js_Font_widthOf, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
-		api_define_property("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
-
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
 		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
 		api_define_const("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);
@@ -933,10 +937,6 @@ pegasus_init(int api_level)
 		api_define_const("Blend", "Target", BLEND_DEST);
 		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
 		api_define_const("Blend", "Zero", BLEND_ZERO);
-		api_define_const("DataType", "Bytes", DATA_BYTES);
-		api_define_const("DataType", "Lines", DATA_LINES);
-		api_define_const("DataType", "Raw", DATA_RAW);
-		api_define_const("DataType", "Text", DATA_TEXT);
 
 		// register predefined BlendOp accessors
 		jsal_get_global_string("BlendOp");

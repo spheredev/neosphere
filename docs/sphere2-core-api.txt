@@ -54,7 +54,7 @@ are added often.  When a new API feature is added, it will be designated as
 engine's supported API level will be incremented and some or all experimental
 features will be assigned to the new level.
 
-The maximum supported API level in this version of miniSphere is level 1.
+The maximum supported API level in this version of miniSphere is level 2.
 
 The minimum API level required by a game is specified in its game manifest (see
 above); if this value is not present it defaults to level 1.  By default, all
@@ -65,7 +65,7 @@ level as well as experimental features.
 
 All class constructors, methods and properties listed below include the API
 level they were introduced in (e.g. "[L1]") or else, for experimental features,
-"[experimental]".
+"[EXPERIMENTAL]".
 
 
 SphereFS File System
@@ -758,6 +758,9 @@ FS.readFile(pathname[, data_type]); [ASYNC] [L1]
             Interpret the file as plain text (UTF-8).  This is the default.
             Returns a string representing the entire text content of the file,
             including newline characters.
+
+    Note: `DataType` is supported only when running under API level 2 or
+          higher.
 
 FS.relativePath(pathname, base_dir); [L1]
 
@@ -1646,7 +1649,7 @@ ShapeType [enumeration] [L1]
         ShapeType.Triangles
         ShapeType.TriStrip
 
-Shape.drawImmediate([surface, ]type[, texture], vertices); [EXPERIMENTAL]
+Shape.drawImmediate([surface, ]type[, texture], vertices); [L2]
 
     Draws a shape to a surface in immediate mode (on-the-fly).  Useful when
     you need to create shapes on demand (procedural generation, for instance)
@@ -2008,7 +2011,7 @@ Texture.fromFile(filename); [ASYNC] [L2]
 
     Loads the image file named by `filename` asynchronously and returns a
     promise for the newly constructed Texture object.
-    
+
     Note: The promise is not guaranteed to resolve on the same frame, although
           in miniSphere it usually does.
 

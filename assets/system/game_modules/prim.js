@@ -30,8 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const haveFastImmediate = 'drawImmediate' in Shape;
-
 export default
 class Prim extends null
 {
@@ -195,7 +193,7 @@ class Prim extends null
 
 function drawShape(surface, type, vertices)
 {
-	if (haveFastImmediate) {
+	if (Sphere.APILevel >= 2) {
 		Shape.drawImmediate(surface, type, vertices);
 	}
 	else {
@@ -207,7 +205,7 @@ function drawShape(surface, type, vertices)
 
 function drawTexturedShape(surface, type, texture, vertices)
 {
-	if (haveFastImmediate) {
+	if (Sphere.APILevel >= 2) {
 		Shape.drawImmediate(surface, type, texture, vertices);
 	}
 	else {
