@@ -43,6 +43,7 @@ v5.3.0 - TBD
 * Improves Cell's command-line syntax.  Many options have been replaced with
   easy-to-remember commands like `cell build` or `cell pack`.
 * Improves logging by adding fancy ANSI coloration to SpheRun's console output.
+* Changes the supported API level from 1 to 2, standardizing several functions.
 * Changes all `FS` functions that access the file system to work asynchronously
   and return promises.
 * Removes support for loading ES Module scripts using `require`.

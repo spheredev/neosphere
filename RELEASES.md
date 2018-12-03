@@ -4,6 +4,12 @@ Release Notes
 miniSphere 5.3
 --------------
 
+* miniSphere now supports API level 2.  As part of this, `Shape.drawImmediate`
+  has been canonized, as well as a handful of brand new APIs.  Because API 1
+  has several deficiencies that make it unsuitable as a Web-based platform,
+  Cell will now produce a warning when building a game targeting API 1.
+  Consider migrating to API 2 as soon as possible for maximum portability.
+
 * Cell's command-line syntax has changed to accommodate new commands.  Notably,
   a few options have been promoted to full commands, e.g. `cell -c` is now
   `cell clean`.  If you need a quick primer on the new syntax, you can type
@@ -17,11 +23,10 @@ miniSphere 5.3
   to work in all implementations going forward.
 
 * All functions in the `FS` namespace that access the file system have been
-  changed to return a promise for their result.  In a few cases (`FS.readFile`,
-  in particular) this represents a breaking API change; the breakage was deemed
-  a necessary evil to ensure cross-compatibility with Oozaru, the Sphere v2
-  implementation for the Web currently under development.  The alternative was
-  to introduce duplicate `async` variants of several functions, adding bloat.
+  changed to return a promise for their result when targeting API 2.  In a few
+  cases (`FS.readFile`, in particular) this represents a breaking API change,
+  which may be a hazard during migration.  To maintain backwards compatibility,
+  these functions will continue to work synchronously when targeting API 1.
 
 * `DataStream` has been completely reworked.  It is no longer a subclass of
   `FileStream` and can now work with any buffer object.  There may be breaking
