@@ -8,6 +8,8 @@ v5.3.0 - TBD
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
   notes for further information.
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
+* Adds `Socket.connectTo` which connects asynchronously and constructs a socket
+  object whose `read` and `write` methods are likewise async.
 * Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
   using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.
@@ -41,8 +43,8 @@ v5.3.0 - TBD
 * Improves Cell's command-line syntax.  Many options have been replaced with
   easy-to-remember commands like `cell build` or `cell pack`.
 * Improves logging by adding fancy ANSI coloration to SpheRun's console output.
-* Changes all `FS` functions that access the file system to return promises.
-* Changes all `Socket` methods to return promises.
+* Changes all `FS` functions that access the file system to work asynchronously
+  and return promises.
 * Removes support for loading ES Module scripts using `require`.
 * Removes the `assert` and `test` modules from the standard library.
 * Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,

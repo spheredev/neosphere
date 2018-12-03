@@ -16,12 +16,12 @@ miniSphere 5.3
   The synchronous constructors will remain available, but are not guaranteed
   to work in all implementations going forward.
 
-* All functions in the `FS` namespace have been changed to return a promise for
-  their result.  In a few cases (`FS.readFile`, in particular) this is a
-  breaking API change, but was a necessary evil to ensure cross-compatibility
-  with Oozaru, the Sphere v2 implementation for the Web under development.  The
-  alternative was to introduce duplicate `async` variants of several functions,
-  bloating the API.
+* All functions in the `FS` namespace that access the file system have been
+  changed to return a promise for their result.  In a few cases (`FS.readFile`,
+  in particular) this represents a breaking API change; the breakage was deemed
+  a necessary evil to ensure cross-compatibility with Oozaru, the Sphere v2
+  implementation for the Web currently under development.  The alternative was
+  to introduce duplicate `async` variants of several functions, adding bloat.
 
 * `DataStream` has been completely reworked.  It is no longer a subclass of
   `FileStream` and can now work with any buffer object.  There may be breaking
