@@ -32,8 +32,6 @@
 
 import Tween, { Easing } from 'tween';
 
-const useAsyncLoading = 'fromFile' in Sound;
-
 let adjuster = null;
 let currentSound = null;
 let haveOverride = false;
@@ -116,7 +114,8 @@ async function crossfade(fileName, frames = 0, forceChange)
 	if (currentSound !== null && allowChange)
 		currentSound.tween.easeIn({ volume: 0.0 }, frames);
 	if (fileName !== null) {
-		let stream = useAsyncLoading ? await Sound.fromFile(fileName)
+		let stream = Sphere.APILevel >= 2
+			? await Sound.fromFile(fileName)
 			: new Sound(fileName);
 		stream.repeat = true;
 		stream.volume = 0.0;
