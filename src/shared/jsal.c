@@ -3053,72 +3053,19 @@ static JsValueRef CHAKRA_CALLBACK
 on_js_to_native_call_async(JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata)
 {
 	JsValueRef       call_args[2];
-	struct function* function_data;
-	bool             has_exception = false;
-	bool             has_return;
-	bool             is_ctor_call;
-	JsValueRef       last_callee_value;
-	jsal_jmpbuf*     last_catch_label;
-	JsValueRef       last_newtarget_value;
-	int              last_stack_base;
-	JsValueRef       last_this_value;
-	jsal_jmpbuf      label;
+	bool             have_exception;
 	JsValueRef       promise;
 	JsValueRef       reject_func;
 	JsValueRef       resolve_func;
 	JsValueRef       retval;
 
-	int i;
-
-	function_data = userdata;
-
-	last_stack_base = s_stack_base;
-	last_callee_value = s_callee_value;
-	last_catch_label = s_catch_label;
-	last_newtarget_value = s_newtarget_value;
-	last_this_value = s_this_value;
-	s_stack_base = vector_len(s_value_stack);
-	s_callee_value = callee;
-	s_newtarget_value = env->newTargetArg;
-	s_this_value = env->thisArg;
-	for (i = 1; i < argc; ++i)
-		push_value(argv[i], true);
-	if (jsal_setjmp(label) == 0) {
-		s_catch_label = &label;
-		is_ctor_call = env->isConstructCall;
-		if (!is_ctor_call && function_data->ctor_only) {
-			push_value(callee, true);  // note: gets popped during unwind
-			jsal_get_prop_string(-1, "name");
-			jsal_error(JS_TYPE_ERROR, "Constructor '%s()' requires 'new'", jsal_to_string(-1));
-		}
-		if (argc - 1 < function_data->min_args) {
-			push_value(callee, true);  // note: gets popped during unwind
-			jsal_get_prop_string(-1, "name");
-			jsal_error(JS_TYPE_ERROR, "Not enough arguments for '%s()'", jsal_to_string(-1));
-		}
-		has_return = function_data->callback(argc - 1, is_ctor_call, function_data->magic);
-		if (has_return)
-			retval = get_value(-1);
-		else
-			retval = s_js_undefined;
-	}
-	else {
-		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
-		// of the value stack.
-		has_exception = true;
-		retval = pop_value();
-	}
-	resize_stack(s_stack_base);
-	s_callee_value = last_callee_value;
-	s_catch_label = last_catch_label;
-	s_newtarget_value = last_newtarget_value;
-	s_this_value = last_this_value;
-	s_stack_base = last_stack_base;
+	retval = on_js_to_native_call(callee, argv, argc, env, userdata);
 
 	JsCreatePromise(&promise, &resolve_func, &reject_func);
 	call_args[0] = s_js_undefined;
 	call_args[1] = retval;
-	if (!has_exception)
+	JsHasException(&have_exception);
+	if (!have_exception)
 		JsCallFunction(resolve_func, call_args, 2, NULL);
 	else
 		JsCallFunction(reject_func, call_args, 2, NULL);
