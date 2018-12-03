@@ -12,6 +12,93 @@ and modern API calls may be freely intermingled within the same codebase, and
 that holds true even when the engine is running in compatibility mode.
 
 
+The Sphere Event Loop
+---------------------
+
+Sphere, like most JavaScript-based platforms, is built around the concept of a
+central event loop that keeps the engine running and schedules JavaScript
+execution.  JavaScript operations cannot run indefinitely; the engine runs in
+a single thread, so the game must yield to the event loop periodically to allow
+other tasks to run.  There are two ways this can be done: either by allowing
+the current operation to run to completion, or by suspending execution using
+the `await` operator.
+
+The event loop begins running after all JavaScript modules have been loaded and
+remains active as long as there is something for it to do.  Each iteration of
+the event loop represents one frame and consists of three phases:
+
+    Render: The Render phase calls jobs set up with `Dispatch.onRender()`.
+            This phase is unique in that it may be skipped entirely in order
+            to maintain the game's desired frame rate.  Only drawing operations
+            should be performed during this phase.  Immediately after the
+            Render phase, the contents of the backbuffer are flipped to the
+            screen and the backbuffer is cleared.
+
+    Update: The Update phase calls jobs set up with `Dispatch.onUpdate()`.
+            Updates are regulated by `Sphere.frameRate` (see below), which you
+            can take advantage of to simplify, e.g., animation code.
+
+    Dispatch: The Dispatch phase is a multi-purpose phase which calls one-off
+              jobs such as `Dispatch.now()` and settles promises.  The Dispatch
+              phase runs until there are no more jobs to execute, ensuring
+              results which are available immediately aren't delayed until the
+              next frame.
+
+
+API Levels
+----------
+
+The Sphere API is constantly evolving, and as such new functions and classes
+are added often.  When a new API feature is added, it will be designated as
+"experimental" until the next API freeze.  When an API freeze occurs, the
+engine's supported API level will be incremented and some or all experimental
+features will be assigned to the new level.
+
+The maximum supported API level in this version of miniSphere is level 1.
+
+The minimum API level required by a game is specified in its game manifest (see
+above); if this value is not present it defaults to level 1.  By default, all
+API functions are available for use regardless of this value; however you can
+start the engine using the `--retro` command line switch to have the engine
+emulate the older API level, which disables all APIs introduced in a later
+level as well as experimental features.
+
+All class constructors, methods and properties listed below include the API
+level they were introduced in (e.g. "[L1]") or else, for experimental features,
+"[experimental]".
+
+
+SphereFS File System
+--------------------
+
+Sphere uses the SphereFS standard to interpret file paths.  Under SphereFS,
+when a relative path is used in an API call, it will be resolved relative to
+the root of the game package (where `game.json` is located).  To load files
+from a different location, you can use one of the SphereFS prefixes:
+
+    @/: The root of the game's sandboxed file system.  Usually redundant, but
+        can be useful to qualify filenames in situations where a bare SphereFS
+        filename will be ambiguous, for example in an `import` declaration.
+        This directory is read-only; trying to save or modify anything here
+        will cause a TypeError to be thrown.
+    $/: The directory containing the startup script.  This is mostly provided
+        as a convenience for specifying module names in `import` declarations.
+    #/: The engine's system directory.  This contains assets included with the
+        engine.  As with `@/`, this is read-only to Sphere games.
+    ~/: The current user's save data directory (note: requires a save ID; refer
+        to the section on `game.json` above).  This is generally used to store
+        save data and such where the user can easily access it.
+
+As an example, the following will create a FileStream which allows reading from
+the file `EatyPig.bin` residing in the user's save data directory.
+
+    let file = new FileStream('~/EatyPig.bin', FileOp.Read);
+
+Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
+      to break into the underlying file system, e.g. "@/../maggie.fat", will
+      be met with a sandbox violation error.
+
+
 JSON Game Manifest (`game.json`)
 --------------------------------
 
@@ -102,93 +189,6 @@ needed, and their values can be accessed from JavaScript through `Sphere.Game`.
     A short summary of the game.  While there is no imposed length limit, it
     is recommended to keep this short (150 characters or less) with no line
     breaks.
-
-
-SphereFS File System
---------------------
-
-Sphere uses the SphereFS standard to interpret file paths.  Under SphereFS,
-when a relative path is used in an API call, it will be resolved relative to
-the root of the game package (where `game.json` is located).  To load files
-from a different location, you can use one of the SphereFS prefixes:
-
-    @/: The root of the game's sandboxed file system.  Usually redundant, but
-        can be useful to qualify filenames in situations where a bare SphereFS
-        filename will be ambiguous, for example in an `import` declaration.
-        This directory is read-only; trying to save or modify anything here
-        will cause a TypeError to be thrown.
-    $/: The directory containing the startup script.  This is mostly provided
-        as a convenience for specifying module names in `import` declarations.
-    #/: The engine's system directory.  This contains assets included with the
-        engine.  As with `@/`, this is read-only to Sphere games.
-    ~/: The current user's save data directory (note: requires a save ID; refer
-        to the section on `game.json` above).  This is generally used to store
-        save data and such where the user can easily access it.
-
-As an example, the following will create a FileStream which allows reading from
-the file `EatyPig.bin` residing in the user's save data directory.
-
-    let file = new FileStream('~/EatyPig.bin', FileOp.Read);
-
-Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
-      to break into the underlying file system, e.g. "@/../maggie.fat", will
-      be met with a sandbox violation error.
-
-
-The Sphere Event Loop
----------------------
-
-Sphere, like most JavaScript-based platforms, is built around the concept of a
-central event loop that keeps the engine running and schedules JavaScript
-execution.  JavaScript operations cannot run indefinitely; the engine runs in
-a single thread, so the game must yield to the event loop periodically to allow
-other tasks to run.  There are two ways this can be done: either by allowing
-the current operation to run to completion, or by suspending execution using
-the `await` operator.
-
-The event loop begins running after all JavaScript modules have been loaded and
-remains active as long as there is something for it to do.  Each iteration of
-the event loop represents one frame and consists of three phases:
-
-    Render: The Render phase calls jobs set up with `Dispatch.onRender()`.
-            This phase is unique in that it may be skipped entirely in order
-            to maintain the game's desired frame rate.  Only drawing operations
-            should be performed during this phase.  Immediately after the
-            Render phase, the contents of the backbuffer are flipped to the
-            screen and the backbuffer is cleared.
-
-    Update: The Update phase calls jobs set up with `Dispatch.onUpdate()`.
-            Updates are regulated by `Sphere.frameRate` (see below), which you
-            can take advantage of to simplify, e.g., animation code.
-
-    Dispatch: The Dispatch phase is a multi-purpose phase which calls one-off
-              jobs such as `Dispatch.now()` and settles promises.  The Dispatch
-              phase runs until there are no more jobs to execute, ensuring
-              results which are available immediately aren't delayed until the
-              next frame.
-
-
-API Levels
-----------
-
-The Sphere API is constantly evolving, and as such new functions and classes
-are added often.  When a new API feature is added, it will be designated as
-"experimental" until the next API freeze.  When an API freeze occurs, the
-engine's supported API level will be incremented and some or all experimental
-features will be assigned to the new level.
-
-The maximum supported API level in this version of miniSphere is level 1.
-
-The minimum API level required by a game is specified in its game manifest (see
-above); if this value is not present it defaults to level 1.  By default, all
-API functions are available for use regardless of this value; however you can
-start the engine using the `--retro` command line switch to have the engine
-emulate the older API level, which disables all APIs introduced in a later
-level as well as experimental features.
-
-All class constructors, methods and properties listed below include the API
-level they were introduced in (e.g. "[L1]") or else, for experimental features,
-"[experimental]".
 
 
 `Sphere` Namespace
@@ -884,13 +884,22 @@ one from an RFN font file.
 
 Font.Default [R/O] [L1]
 
-    Gets the default engine font.  This is the font used for the FPS counter
+    Gets the engine's default font.  This is the font used for the FPS counter
     and system messages.
+
+Font.fromFile(filename); [ASYNC] [L2]
+
+    Loads the RFN font file named by `filename` asynchronously and returns a
+    promise for the newly constructed Font object.
+
+    Note: The promise is not guaranteed to resolve in the same frame, although
+          in miniSphere it usually does.
 
 new Font(filename); [L1]
 
-    Constructs a Font object from a font file.  Currently only the Sphere RFN
-    font format is supported.
+    Loads the RFN font file named by `filename` synchronously, without yielding
+    to the event loop, and returns the newly constructed Font object.  May not
+    be supported on all platforms.
 
 Font#fileName [R/O] [L1]
 
@@ -1444,20 +1453,27 @@ SSj.trace(text);
 ---------------
 
 A `Sample` represents a sound effect.  Multiple instances of a sample can be
-played simultaneously, on any mixer.  This is often more desirable than using a
-`Sound` object, which only allows one instance to play at a time.
+played simultaneously, on any mixer.  Unlike a `Sound` object, the audio data
+for a `Sample` is loaded into memory in its entirety and multiple instances can
+be played simultaneously with no latency, making this very useful for sound
+effects.
 
-new Sample(filename); [L1]
+Sample.fromFile(filename); [ASYNC] [L2]
 
-    Constructs a Sample from the specified audio file.  The audio data is
-    loaded into memory in its entirety and multiple instances can be played
-    simultaneously with no latency, making this very useful for sound effects.
-    Supported formats are Ogg Vorbis (.ogg), WAV, and FLAC.
+    Loads the audio file named by `filename` asynchronously and returns a
+    promise for the newly constructed Sample object.  Supported formats are
+    Ogg Vorbis (.ogg), WAV, and FLAC.
 
     Note: Compressed formats like Vorbis will be decompressed during loading,
           potentially using a large amount of RAM.  It is therefore not
-          recommend to use `Sample` objects for, e.g., background music.  Use a
-          `Sound` instead.
+          recommended to use `Sample` objects for, e.g., background music.  Use
+          a `Sound` instead.
+
+new Sample(filename); [L1]
+
+    Loads the audio file named by `filename` synchronously, without yielding to
+    the event loop, and returns the newly constructed Sample object.  May not
+    be supported on all platforms.
 
 Sample#fileName [R/O] [L1]
 
@@ -1535,10 +1551,10 @@ Shader.Default [R/O] [L1]
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
 
-new Shader(options); [L1]
+Shader.fromFiles(options); [ASYNC] [L2]
 
-    Constructs a shader program from a set of GLSL shader sources.  `options`
-    specifies the shader sources.
+    Loads the shader source files specified in `options` asynchronously and
+    returns a promise for the newly constructed Shader object.
 
     options.vertexFile [required]
 
@@ -1549,6 +1565,13 @@ new Shader(options); [L1]
 
         The name of a file containing GLSL source code for the program's
         fragment shader.
+
+new Shader(options); [L1]
+
+    Loads the shader source files specified in `options` (refer to the
+    documentation of `Shader.fromFiles` above) synchronously, without yielding
+    to the event loop, and returns the newly constructed Shader object.  May
+    not be supported on all platforms.
 
 Shader#clone(); [L1]
 
@@ -1694,8 +1717,8 @@ new Socket([hostname, port]); [L1]
     `Socket#read` returns an ArrayBuffer directly instead of returning it
     through a promise.
 
-    Note: Synchronous sockets are not supportable on all platforms.  For
-          maximum portability, use `Socket.connectTo` instead.
+    Note: Synchronous sockets cannot feasibly be supported on some platforms.
+          For maximum portability, use `Socket.connectTo` instead.
 
 Socket#bytesPending [R/O] [L1]
 
@@ -1764,11 +1787,21 @@ A `Sound` represents a streaming audio file.  Because the sound is streamed, it
 remains compressed, saving RAM; however, only one instance of the sound can be
 played at a time.
 
+Sound.fromFile(filename); [ASYNC] [L2]
+
+    Loads the audio file named by `filename` asynchronously and returns a
+    promise for the newly constructed `Sound` object.  Supported sound formats
+    are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that mp3 and MIDI
+    formats are **NOT** supported.
+
+    Note: The promise is not guaranteed to resolve on the same frame, although
+          in miniSphere it usually does.
+
 new Sound(filename); [L1]
 
-    Constructs a Sound object from the specified audio file.  Supported sound
-    formats are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that
-    unlike in Sphere 1.x, mp3 and MIDI formats are not supported.
+    Loads the audio file named by `filename` synchronously, without yielding to
+    the event loop, and returns the newly constructed Sound object.  May not be
+    supported on all platforms.
 
 Sound#fileName [R/O] [L1]
 
@@ -1895,6 +1928,12 @@ Surface.Screen [R/O] [L1]
     this surface will automatically become visible on the screen the next time
     the event loop regains control.
 
+Surface.fromFile(filename); [ASYNC] [L2]
+
+    Loads the image file named by `filename` asynchronously and returns a
+    promise for a Surface whose dimensions and initial content match that of
+    the loaded image.
+
 new Surface(width, height[, content]); [L1]
 
     Constructs a new Surface with the specified content.  `width` and `height`
@@ -1912,8 +1951,9 @@ new Surface(width, height[, content]); [L1]
 
 new Surface(filename); [L1]
 
-    Constructs a new Surface whose initial contents are taken from the
-    specified image file.
+    Loads the image file named by `filename` synchronously, without yielding to
+    the event loop, and returns a Surface whose dimensions and initial content
+    match that of the loaded image.  May not be supported on all platforms.
 
 Surface#blendOp [R/W] [EXPERIMENTAL]
 
@@ -1961,14 +2001,22 @@ A `Texture` is an image which can used to as a texture for shapes drawn using
 the Sphere v2 graphics API.  Unlike in Sphere v1, you cannot draw an image
 directly using the Core API; it must be used to texture a `Shape`.
 
+Note that Textures are read-only.  If you need a writable texture, you can use
+a Surface object instead.
+
+Texture.fromFile(filename); [ASYNC] [L2]
+
+    Loads the image file named by `filename` asynchronously and returns a
+    promise for the newly constructed Texture object.
+    
+    Note: The promise is not guaranteed to resolve on the same frame, although
+          in miniSphere it usually does.
+
 new Texture(filename); [L1]
 
-    Constructs a new Texture object from an image file.  Unlike images in
-    Sphere v1, these cannot be rendered directly but instead must be used to
-    texture a Shape object.
-
-    Note that Textures are read-only.  If you need a writable image, you should
-    use a Surface object instead.
+    Loads the image file named by `filename` synchronously, without yielding to
+    the event loop, and returns the newly constructed Texture object.  May not
+    be supported on all platforms.
 
 new Texture(width, height[, content]); [L1]
 
