@@ -641,7 +641,7 @@ pegasus_init(int api_level)
 	api_define_async_func("FS", "createDirectory", js_FS_createDirectory, 0);
 	api_define_async_func("FS", "deleteFile", js_FS_deleteFile, 0);
 	api_define_async_func("FS", "directoryExists", js_FS_directoryExists, 0);
-	api_define_async_func("FS", "evaluate", js_FS_evaluateScript, 0);
+	api_define_async_func("FS", "evaluateScript", js_FS_evaluateScript, 0);
 	api_define_async_func("FS", "fileExists", js_FS_fileExists, 0);
 	api_define_func("FS", "fullPath", js_FS_fullPath, 0);
 	api_define_async_func("FS", "readFile", js_FS_readFile, 0);
@@ -2273,6 +2273,8 @@ js_FS_createDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_mkdir(g_game, pathname))
@@ -2285,6 +2287,8 @@ js_FS_deleteFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_unlink(g_game, pathname))
@@ -2297,6 +2301,8 @@ js_FS_directoryExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	jsal_push_boolean(game_dir_exists(g_game, pathname));
@@ -2322,6 +2328,8 @@ js_FS_evaluateScript(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!game_file_exists(g_game, filename))
@@ -2363,6 +2371,8 @@ js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	jsal_push_boolean(game_file_exists(g_game, pathname));
@@ -2416,6 +2426,8 @@ js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 	char*       p_line;
 	char*       p_newline;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, false);
 	if (s_api_level >= 2 && num_args >= 2 && !jsal_is_undefined(1))
 		type = jsal_require_int(1);
@@ -2484,6 +2496,8 @@ js_FS_removeDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_rmdir(g_game, pathname))
@@ -2497,6 +2511,8 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	const char* new_pathname;
 	const char* old_pathname;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	old_pathname = jsal_require_pathname(0, NULL, false, true);
 	new_pathname = jsal_require_pathname(1, NULL, false, true);
 
@@ -2523,6 +2539,8 @@ js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 
 	int i;
 
+	if (game_api_level(g_game) < 2)  // async only in API 2+
+		jsal_set_async_call_flag(false);
 	if (num_args < 2)
 		jsal_error(JS_RANGE_ERROR, "'FS.writeFile' requires 2 arguments");
 	pathname = jsal_require_pathname(0, NULL, false, true);
@@ -4547,7 +4565,7 @@ js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
 		jsal_error(JS_ERROR, "Socket is not connected");
-	if (num_bytes > socket_peek(socket))
+	if (num_bytes > (int)socket_peek(socket))
 		jsal_error(JS_RANGE_ERROR, "Receive buffer has less than '%d' bytes", num_bytes);
 	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
 	bytes_read = socket_read(socket, buffer, num_bytes);

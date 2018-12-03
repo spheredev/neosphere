@@ -647,6 +647,12 @@ The `FS` namespace allows your game to access asset and save files, create or
 remove directories, etc.  All file system operations are sandboxed to prevent
 damage to the system.
 
+IMPORTANT: When targeting API level 1, for backwards compatibility, all `FS`
+           functions operate synchronously, without yielding to the event loop,
+           and return their result directly.  If you later retarget your game
+           to API 2, many calls will become async.  You will need to keep this
+           in mind if you intend to migrate from API 1 to API 2.
+
 FS.createDirectory(pathname); [ASYNC] [L1]
 
     Creates a directory and any of its parent directories that don't already
@@ -669,7 +675,7 @@ FS.directoryExists(pathname); [ASYNC] [L1]
     promise which resolves to `true` if the directory exists, or `false`
     otherwise.
 
-FS.directoryOf(pathname); [EXPERIMENTAL]
+FS.directoryOf(pathname); [L2]
 
     Returns the full SphereFS path of the directory containing `pathname`.  The
     pathname is resolved via the usual SphereFS rules, so if no directory info
@@ -691,7 +697,7 @@ FS.evaluate(pathname); [ASYNC] [L1]
           can--and likely will--create new global functions and variables.  Be
           sure you know what you're doing!
 
-FS.extensionOf(pathname); [EXPERIMENTAL]
+FS.extensionOf(pathname); [L2]
 
     If `pathname` refers to a file, returns the filename extension of the named
     file (i.e. everything starting from the last dot `.` in the filename).  If
@@ -705,7 +711,7 @@ FS.fileExists(pathname); [ASYNC] [L1]
     Checks whether a file by the name of `pathname` exists.  Returns a promise
     which resolves to `true` if the file exists, or `false` otherwise.
 
-FS.fileNameOf(pathname); [EXPERIMENTAL]
+FS.fileNameOf(pathname); [L2]
 
     If `pathname` is a full or partial path to a file, returns only the
     filename portion, or `undefined` if there is no filename in the path (for
@@ -799,7 +805,7 @@ formats that aren't directly supported by the engine.  Sphere makes no attempt
 to interpret the data in the file and simply provides access to the raw bytes
 it contains.
 
-FileStream.open(filename, file_op); [ASYNC] [EXPERIMENTAL]
+FileStream.open(filename, file_op); [ASYNC] [L2]
 
     Opens a file asynchronously and returns a promise for a `FileStream` that
     provides access to the contents of the file.  `file_op` specifies the file
