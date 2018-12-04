@@ -256,6 +256,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\minisphere\blend_op.c" />
+    <ClCompile Include="..\src\minisphere\event_loop.c" />
     <ClCompile Include="..\src\shared\compress.c" />
     <ClCompile Include="..\src\minisphere\legacy.c" />
     <ClCompile Include="..\src\minisphere\profiler.c" />
@@ -304,6 +305,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\minisphere\blend_op.h" />
+    <ClInclude Include="..\src\minisphere\event_loop.h" />
     <ClInclude Include="..\src\shared\compress.h" />
     <ClInclude Include="..\src\minisphere\legacy.h" />
     <ClInclude Include="..\src\minisphere\profiler.h" />

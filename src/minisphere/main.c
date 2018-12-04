@@ -39,6 +39,7 @@
 #include "audio.h"
 #include "debugger.h"
 #include "dispatch.h"
+#include "event_loop.h"
 #include "galileo.h"
 #include "input.h"
 #include "jsal.h"
@@ -398,7 +399,7 @@ main(int argc, char* argv[])
 	// start up the event loop.  we can do this even in compatibility mode:
 	// the event loop terminates when there are no pending jobs or promises to settle,
 	// and neither one was available in Sphere 1.x.
-	if (!pegasus_start_event_loop())
+	if (!events_run_main_loop())
 		goto on_js_error;
 
 #if defined(MINISPHERE_SPHERUN)

@@ -42,6 +42,7 @@
 #include "debugger.h"
 #include "dispatch.h"
 #include "encoding.h"
+#include "event_loop.h"
 #include "font.h"
 #include "galileo.h"
 #include "image.h"
@@ -504,7 +505,6 @@ static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
 static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool node_compatible);
 static void      handle_deprecation          (const char* name, int api_level, int line_number);
-static bool      handle_main_event_loop      (int num_args, bool is_ctor, intptr_t magic);
 static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
@@ -516,10 +516,8 @@ static path_t*   load_package_json           (const char* filename);
 static int       s_api_level;
 static int       s_api_level_nominal;
 static mixer_t*  s_def_mixer;
-static int       s_frame_rate = 60;
 static int       s_next_module_id = 1;
 static js_ref_t* s_screen_obj;
-static bool      s_shutting_down = false;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
@@ -996,19 +994,6 @@ pegasus_uninit(void)
 }
 
 bool
-pegasus_start_event_loop(void)
-{
-	if (jsal_try(handle_main_event_loop, 0)) {
-		jsal_pop(1);  // don't need return value
-		return true;
-	}
-	else {
-		// leave the error for the caller, don't pop it off
-		return false;
-	}
-}
-
-bool
 pegasus_try_require(const char* filename, bool node_compatible)
 {
 	// HERE BE DRAGONS!
@@ -1322,39 +1307,6 @@ handle_deprecation(const char* name, int api_level, int line_number)
 	}
 }
 
-static bool
-handle_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
-{
-	// SPHERE v2 UNIFIED EVENT LOOP
-	// once started, the event loop should continue to cycle until none of the
-	// following remain:
-	//    - Dispatch API jobs (either one-time or recurring)
-	//    - promise continuations (e.g. await completion or .then())
-	//    - JS module loader jobs
-	//    - unhandled promise rejections
-
-	// Sphere v1 exit paths disable the JavaScript VM to force the engine to
-	// bail, so we need to re-enable it here.
-	jsal_enable_vm(true);
-
-	while (dispatch_busy() || jsal_busy())
-		sphere_tick(2, true, s_frame_rate);
-
-	// deal with Dispatch.onExit() jobs
-	// note: the JavaScript VM might have been disabled due to a Sphere v1
-	//       bailout; we'll need to re-enable it if so.
-	jsal_enable_vm(true);
-	s_shutting_down = true;
-	while (!dispatch_can_exit() || jsal_busy()) {
-		sphere_heartbeat(true, 2);
-		dispatch_run(JOB_ON_TICK);
-		dispatch_run(JOB_ON_EXIT);
-	}
-	s_shutting_down = false;
-
-	return false;
-}
-
 static void
 handle_module_import(void)
 {
@@ -1528,9 +1480,12 @@ js_Sphere_get_Version(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_get_frameRate(int num_args, bool is_ctor, intptr_t magic)
 {
+	int frame_rate;
+	
 	// as far as Sphere v2 code is concerned, infinity, not 0, means "unthrottled".
 	// that's stored as a zero internally though, so we need to translate.
-	jsal_push_number(s_frame_rate > 0 ? s_frame_rate : INFINITY);
+	frame_rate = events_get_frame_rate();
+	jsal_push_number(frame_rate > 0 ? frame_rate : INFINITY);
 	return true;
 }
 
@@ -1562,16 +1517,16 @@ js_Sphere_get_main(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_set_frameRate(int num_args, bool is_ctor, intptr_t magic)
 {
-	double framerate;
+	double frame_rate;
 
-	framerate = jsal_require_number(0);
+	frame_rate = jsal_require_number(0);
 
-	if (framerate < 1.0)
-		jsal_error(JS_RANGE_ERROR, "Invalid frame rate '%g'", framerate);
-	if (framerate != INFINITY)
-		s_frame_rate = framerate;
+	if (frame_rate < 1.0)
+		jsal_error(JS_RANGE_ERROR, "Invalid frame rate '%g'", frame_rate);
+	if (frame_rate != INFINITY)
+		events_set_frame_rate((int)frame_rate);
 	else
-		s_frame_rate = 0;  // unthrottled
+		events_set_frame_rate(0);
 	return false;
 }
 
@@ -2178,7 +2133,7 @@ js_Dispatch_later(int num_args, bool is_ctor, intptr_t magic)
 	timeout = jsal_require_int(0);
 	script = jsal_pegasus_require_script(1);
 
-	if (s_shutting_down)
+	if (events_exiting())
 		jsal_error(JS_RANGE_ERROR, "Job creation not allowed during shutdown");
 	if (!(token = dispatch_defer(script, timeout, JOB_ON_UPDATE, false)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
@@ -2194,7 +2149,7 @@ js_Dispatch_now(int num_args, bool is_ctor, intptr_t magic)
 
 	script = jsal_pegasus_require_script(0);
 
-	if (s_shutting_down)
+	if (events_exiting())
 		jsal_error(JS_RANGE_ERROR, "Job creation not allowed during shutdown");
 	if (!(token = dispatch_defer(script, 0, JOB_ON_TICK, false)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
@@ -2234,7 +2189,7 @@ js_Dispatch_onRender(int num_args, bool is_ctor, intptr_t magic)
 		jsal_pop(2);
 	}
 
-	if (s_shutting_down)
+	if (events_exiting())
 		jsal_error(JS_RANGE_ERROR, "Job creation not allowed during shutdown");
 	if (!(token = dispatch_recur(script, priority, background, JOB_ON_RENDER)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
@@ -2260,7 +2215,7 @@ js_Dispatch_onUpdate(int num_args, bool is_ctor, intptr_t magic)
 		jsal_pop(2);
 	}
 
-	if (s_shutting_down)
+	if (events_exiting())
 		jsal_error(JS_RANGE_ERROR, "Job creation not allowed during shutdown");
 	if (!(token = dispatch_recur(script, priority, background, JOB_ON_UPDATE)))
 		jsal_error(JS_ERROR, "Couldn't set up Dispatch job");
