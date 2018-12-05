@@ -332,7 +332,7 @@ api_define_prop(const char* class_name, const char* name, bool enumerable, js_fu
 }
 
 void
-api_define_static_prop(const char* namespace_name, const char* name, js_function_t getter, js_function_t setter)
+api_define_static_prop(const char* namespace_name, const char* name, js_function_t getter, js_function_t setter, intptr_t magic)
 {
 	jsal_push_global_object();
 
@@ -360,11 +360,11 @@ api_define_static_prop(const char* namespace_name, const char* name, js_function
 	jsal_push_boolean_true();
 	jsal_put_prop_string(-2, "configurable");
 	if (getter != NULL) {
-		jsal_push_new_function(getter, "get", 0, false, 0);
+		jsal_push_new_function(getter, "get", 0, false, magic);
 		jsal_put_prop_string(-2, "get");
 	}
 	if (setter != NULL) {
-		jsal_push_new_function(setter, "set", 0, false, 0);
+		jsal_push_new_function(setter, "set", 0, false, magic);
 		jsal_put_prop_string(-2, "set");
 	}
 	jsal_def_prop_string(-2, name);

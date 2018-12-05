@@ -8,6 +8,8 @@ v5.3.0 - TBD
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
   notes for further information.
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
+* Adds `Joystick.P1` through `Joystick.P4` to the Core API, providing built-in
+  default gamepad inputs for up to four players.
 * Adds `Socket.connectTo` which connects asynchronously and constructs a socket
   object whose `read` and `write` methods are likewise async.
 * Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
@@ -46,8 +48,9 @@ v5.3.0 - TBD
 * Changes the supported API level from 1 to 2, standardizing several functions.
 * Changes all `FS` functions that access the file system to work asynchronously
   and return promises.
+* Removes `assert`, `delegate`, `joypad`, and `test` modules from the standard
+  library.
 * Removes support for loading ES Module scripts using `require`.
-* Removes the `assert` and `test` modules from the standard library.
 * Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,
   `playSound`, `tween`) which sometimes clashed with game code wanting to use
   those names.

@@ -193,9 +193,9 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_func(NULL, "files", js_files, 0);
 	api_define_func(NULL, "install", js_install, 0);
 	api_define_func(NULL, "warn", js_warn, 0);
-	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL);
-	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL);
-	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
+	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL, 0);
+	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL, 0);
+	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL, 0);
 	api_define_class("DirectoryStream", CELL_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize, 0);
 	api_define_prop("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
 	api_define_prop("DirectoryStream", "fileName", false, js_DirectoryStream_get_fileName, NULL);

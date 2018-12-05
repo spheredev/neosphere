@@ -338,7 +338,7 @@ static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr
 static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JobToken_cancel               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JobToken_pause_resume         (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Joystick_get_Null             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Joystick_get_Default          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Joystick_getDevices           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Joystick_get_name             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Joystick_get_numAxes          (int num_args, bool is_ctor, intptr_t magic);
@@ -583,15 +583,15 @@ pegasus_init(int api_level)
 
 	// initialize the Sphere v2 API
 	api_define_func(NULL, "print", js_SSj_log, KI_LOG_NORMAL);
-	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL);
-	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL);
-	api_define_static_prop("Sphere", "Engine", js_Sphere_get_Engine, NULL);
-	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL);
-	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL);
-	api_define_static_prop("Sphere", "frameRate", js_Sphere_get_frameRate, js_Sphere_set_frameRate);
-	api_define_static_prop("Sphere", "frameSkip", js_Sphere_get_frameSkip, js_Sphere_set_frameSkip);
-	api_define_static_prop("Sphere", "fullScreen", js_Sphere_get_fullScreen, js_Sphere_set_fullScreen);
-	api_define_static_prop("Sphere", "main", js_Sphere_get_main, NULL);
+	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL, 0);
+	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL, 0);
+	api_define_static_prop("Sphere", "Engine", js_Sphere_get_Engine, NULL, 0);
+	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL, 0);
+	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL, 0);
+	api_define_static_prop("Sphere", "frameRate", js_Sphere_get_frameRate, js_Sphere_set_frameRate, 0);
+	api_define_static_prop("Sphere", "frameSkip", js_Sphere_get_frameSkip, js_Sphere_set_frameSkip, 0);
+	api_define_static_prop("Sphere", "fullScreen", js_Sphere_get_fullScreen, js_Sphere_set_fullScreen, 0);
+	api_define_static_prop("Sphere", "main", js_Sphere_get_main, NULL, 0);
 	api_define_func("Sphere", "abort", js_Sphere_abort, 0);
 	api_define_func("Sphere", "now", js_Sphere_now, 0);
 	api_define_func("Sphere", "restart", js_Sphere_restart, 0);
@@ -630,7 +630,7 @@ pegasus_init(int api_level)
 	api_define_async_method("FileStream", "read", js_FileStream_read, 0);
 	api_define_async_method("FileStream", "write", js_FileStream_write, 0);
 	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize, 0);
-	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL);
+	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL, 0);
 	api_define_prop("Font", "fileName", false, js_Font_get_fileName, NULL);
 	api_define_prop("Font", "height", false, js_Font_get_height, NULL);
 	api_define_method("Font", "drawText", js_Font_drawText, 0);
@@ -651,7 +651,7 @@ pegasus_init(int api_level)
 	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, NULL, 0);
 	api_define_method("JobToken", "cancel", js_JobToken_cancel, 0);
 	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, NULL, 0);
-	api_define_static_prop("Joystick", "Null", js_Joystick_get_Null, NULL);
+	api_define_static_prop("Joystick", "Null", js_Joystick_get_Default, NULL, 0);
 	api_define_func("Joystick", "getDevices", js_Joystick_getDevices, 0);
 	api_define_prop("Joystick", "name", false, js_Joystick_get_name, NULL);
 	api_define_prop("Joystick", "numAxes", false, js_Joystick_get_numAxes, NULL);
@@ -659,7 +659,7 @@ pegasus_init(int api_level)
 	api_define_method("Joystick", "getPosition", js_Joystick_getPosition, 0);
 	api_define_method("Joystick", "isPressed", js_Joystick_isPressed, 0);
 	api_define_class("Keyboard", PEGASUS_KEYBOARD, NULL, NULL, 0);
-	api_define_static_prop("Keyboard", "Default", js_Keyboard_get_Default, NULL);
+	api_define_static_prop("Keyboard", "Default", js_Keyboard_get_Default, NULL, 0);
 	api_define_prop("Keyboard", "capsLock", false, js_Keyboard_get_capsLock, NULL);
 	api_define_prop("Keyboard", "numLock", false, js_Keyboard_get_numLock, NULL);
 	api_define_prop("Keyboard", "scrollLock", false, js_Keyboard_get_scrollLock, NULL);
@@ -668,14 +668,14 @@ pegasus_init(int api_level)
 	api_define_method("Keyboard", "getKey", js_Keyboard_getKey, 0);
 	api_define_method("Keyboard", "isPressed", js_Keyboard_isPressed, 0);
 	api_define_class("Mixer", PEGASUS_MIXER, js_new_Mixer, js_Mixer_finalize, 0);
-	api_define_static_prop("Mixer", "Default", js_Mixer_get_Default, NULL);
+	api_define_static_prop("Mixer", "Default", js_Mixer_get_Default, NULL, 0);
 	api_define_prop("Mixer", "volume", false, js_Mixer_get_volume, js_Mixer_set_volume);
 	api_define_class("Model", PEGASUS_MODEL, js_new_Model, js_Model_finalize, 0);
 	api_define_prop("Model", "shader", false, js_Model_get_shader, js_Model_set_shader);
 	api_define_prop("Model", "transform", false, js_Model_get_transform, js_Model_set_transform);
 	api_define_method("Model", "draw", js_Model_draw, 0);
 	api_define_class("Mouse", PEGASUS_MOUSE, NULL, NULL, 0);
-	api_define_static_prop("Mouse", "Default", js_Mouse_get_Default, NULL);
+	api_define_static_prop("Mouse", "Default", js_Mouse_get_Default, NULL, 0);
 	api_define_prop("Mouse", "x", false, js_Mouse_get_x, NULL);
 	api_define_prop("Mouse", "y", false, js_Mouse_get_y, NULL);
 	api_define_method("Mouse", "clearQueue", js_Mouse_clearQueue, 0);
@@ -702,7 +702,7 @@ pegasus_init(int api_level)
 	api_define_method("Server", "close", js_Server_close, 0);
 	api_define_method("Server", "accept", js_Server_accept, 0);
 	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize, 0);
-	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL);
+	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL, 0);
 	api_define_method("Shader", "clone", js_Shader_clone, 0);
 	api_define_method("Shader", "setBoolean", js_Shader_setBoolean, 0);
 	api_define_method("Shader", "setColorVector", js_Shader_setColorVector, 0);
@@ -770,7 +770,7 @@ pegasus_init(int api_level)
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
 
 	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
-	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL);
+	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL, 0);
 	api_define_prop("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_prop("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
 	api_define_prop("Surface", "width", false, js_Surface_get_width, 0);
@@ -895,6 +895,10 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
+		api_define_static_prop("Joystick", "P1", js_Joystick_get_Default, NULL, 1);
+		api_define_static_prop("Joystick", "P2", js_Joystick_get_Default, NULL, 2);
+		api_define_static_prop("Joystick", "P3", js_Joystick_get_Default, NULL, 3);
+		api_define_static_prop("Joystick", "P4", js_Joystick_get_Default, NULL, 4);
 		api_define_async_func("FileStream", "open", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
@@ -2964,14 +2968,19 @@ js_JobToken_pause_resume(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Joystick_get_Null(int num_args, bool is_ctor, intptr_t magic)
+js_Joystick_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	int* device;
+	char prop_name[8];
 
 	jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), (void**)&device);
-	*device = -1;
+	*device = (int)(magic - 1);
 
-	cache_value_to_this("Null");
+	if (magic > 0)
+		sprintf(prop_name, "P%"PRIdPTR, magic);
+	else
+		strcpy(prop_name, "Null");
+	cache_value_to_this(prop_name);
 	return true;
 }
 
@@ -3063,7 +3072,7 @@ js_Joystick_isPressed(int num_args, bool is_ctor, intptr_t magic)
 	index = jsal_require_int(0);
 
 	if (*device != -1 && (index < 0 || index >= joy_num_buttons(*device)))
-		jsal_error(JS_RANGE_ERROR, "Joystick button ID out of range");
+		jsal_error(JS_RANGE_ERROR, "Joystick button ID out of range '%d'", index);
 
 	jsal_push_boolean(joy_is_button_down(*device, index));
 	return true;

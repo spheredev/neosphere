@@ -47,7 +47,7 @@ void   api_define_func         (const char* namespace_name, const char* name, js
 void   api_define_method       (const char* class_name, const char* name, js_function_t callback, intptr_t magic);
 void   api_define_object       (const char* namespace_name, const char* name, int class_id, void* udata);
 void   api_define_prop         (const char* class_name, const char* name, bool enumerable, js_function_t getter, js_function_t setter);
-void   api_define_static_prop  (const char* namespace_name, const char* name, js_function_t getter, js_function_t setter);
+void   api_define_static_prop  (const char* namespace_name, const char* name, js_function_t getter, js_function_t setter, intptr_t magic);
 void   api_define_subclass     (const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer, intptr_t magic);
 
 void* jsal_get_class_obj        (int index, int class_id);

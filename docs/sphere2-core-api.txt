@@ -1004,15 +1004,29 @@ Joystick.Null [R/O] [L1]
     values for all inputs.  Joystick.Null can be used in place of a real
     Joystick object to simplify input code.
 
+Joystick.P1 [R/O] [L2]
+Joystick.P2 [R/O] [L2]
+Joystick.P3 [R/O] [L2]
+Joystick.P4 [R/O] [L2]
+
+   Gets the default joystick for the respective player.  If there are many
+   joystick or gamepad devices attached, there is no guarantee which ones these
+   will use, and the mapping could even change between sessions.  If you need
+   full control, use `Joystick.getDevices` (see below).
+   
+   Note: If there are less than 4 devices attached, the unmapped objects will
+         act like `Joystick.Null` and return neutral values for all inputs.
+
 Joystick.getDevices(); [L1]
 
     Gets an array of Joystick objects, one for each connected gamepad or
-    joystick.
+    joystick.  miniSphere currently supports a maximum of 16 attached devices;
+    this will never return more than that.
 
 Joystick#name [R/O] [L1]
 
-    Gets the name of the device, as reported by the Allegro backend.  Xbox
-    controllers are reported as "XInput Joystick <n>"
+    Gets the name of the device, as reported by the operating system.  Xbox
+    controllers, for example, are typically reported as "XInput Joystick <n>".
 
 Joystick#numAxes [R/O] [L1]
 

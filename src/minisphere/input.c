@@ -231,7 +231,7 @@ joy_num_axes(int joy_index)
 	int i;
 
 	if (!s_have_joystick || joy_index < 0 || !(joystick = s_joy_handles[joy_index]))
-		return 0;
+		return MAX_JOY_BUTTONS;
 	n_sticks = al_get_joystick_num_sticks(joystick);
 	n_axes = 0;
 	for (i = 0; i < n_sticks; ++i)
@@ -245,7 +245,7 @@ joy_num_buttons(int joy_index)
 	ALLEGRO_JOYSTICK* joystick;
 
 	if (!s_have_joystick || joy_index < 0 || !(joystick = s_joy_handles[joy_index]))
-		return 0;
+		return MAX_JOY_BUTTONS;
 	return al_get_joystick_num_buttons(joystick);
 }
 
