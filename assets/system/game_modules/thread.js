@@ -41,10 +41,10 @@ class Thread
 {
 	get [Symbol.toStringTag]() { return 'Thread'; }
 
-	static join(...threads)
+	static async join(...threads)
 	{
-		let threadPacts = threads.map(it => it._onThreadStop);
-		return Promise.all(threadPacts);
+		const promises = threads.map(it => it._onThreadStop);
+		return Promise.all(promises);
 	}
 
 	constructor(options = {})
@@ -152,7 +152,7 @@ class Thread
 			this._focusTarget.dispose();
 		});
 
-		await this._onThreadStart;
+		return this._onThreadStart;
 	}
 
 	async stop()

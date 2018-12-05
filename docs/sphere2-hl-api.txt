@@ -276,45 +276,6 @@ DataStream#writeString32(value[, littleEndian]);
     mode.
 
 
-`Delegate` Object
------------------
-
-A simple multicast delegate implementation which works similarly to events in
-.NET.  An object exposes one or more delegates, which can have handler
-functions registered to them by outside code.  When something interesting
-happens, the object owning the delegate invokes it, which calls all the
-registered handlers in turn.  In this way outside code can react to changing
-situations without breaking encapsulation.
-
-    import { Delegate } from 'sphere-runtime';
-
-new Delegate();
-
-    Constructs a new delegate.  The delegate starts out empty, with no handlers
-    attached.
-
-Delegate#addHandler(handler[, thisObj]);
-
-    Registers the function `handler` with the delegate.  Whenever the delegate
-    is invoked, all handlers registered at that time will be called in order.
-    `thisObj` is optional and specifies an object to use for the `this` binding
-    when calling `handler`.
-
-    add() will throw an error if a matching handler has already been
-    registered.
-
-Delegate#call([...]);
-
-    Calls all handlers registered with the delegate.  Calls are made in order
-    of registration, and any arguments passed to `call()` are forwarded to the
-    handlers as-is.
-
-Delegate#removeHandler(handler[, thisObj]);
-
-    Removes a previously-registered handler from the delegate.  Throws an error
-    if no matching handler is registered.
-
-
 `FocusTarget` Object
 --------------------
 
@@ -356,30 +317,6 @@ FocusTarget#takeFocus();
 FocusTarget#yield();
 
     Yields the focus.  If the target is not in focus, this does nothing.
-
-
-`Joypad` Namespace
-------------------
-
-The `Joypad` namespace provides a simplified interface for games that want to
-support joystick input without the complexity of the Sphere v2 Joystick API.
-Using this module, games can support joystick input for up to 4 players
-simultaneously.
-
-    import { Joypad } from 'sphere-runtime';
-
-Joypad.P1 [R/O]
-Joypad.P2 [R/O]
-Joypad.P3 [R/O]
-Joypad.P4 [R/O]
-
-    Gets a Joystick object representing a connected device.  `Joypad.P1` always
-    refers to the same device within a session; likewise for the other players.
-    If no suitable device is available for the specified player,
-    `Joystick.Null` is returned instead.
-
-    Note: Only connected devices with at least 5 buttons and 2 axes are
-          considered.
 
 
 `Logger` Object
@@ -495,12 +432,12 @@ powerful construct but can be difficult to work with.  A promise represents the
 future result of some ongoing task which will eventually settle it; outside
 code can only observe the promise and await its resolution.
 
-Normally, a Promise can only be settled from within a closure passed to the
-`Promise` constructor.  This makes managing custom promises awkward if not
-overly difficult--and that's where `Pact` comes in.  Pact provides a means to
-set up a promise which can later be settled by any code that holds a reference
-to the pact.  In this way the opacity of the Promise object is maintained while
-keeping things simple for the code handing them out.
+Normally, a Promise can only be settled from within the function passed to the
+`Promise` constructor.  This makes managing custom promises awkward--and that's
+where `Pact` comes in.  Pact provides a means to set up a promise which can
+later be settled by any code that holds a reference to the pact.  In this way
+the opacity of the Promise object is maintained while keeping things simple for
+the code handing them out.
 
     import { Pact } from 'sphere-runtime';
 
@@ -638,11 +575,11 @@ For example, suppose you wanted to code an attack that damages all opposing
 battlers whose level is a multiple of 5, but only hits 75% of the time.  That
 could look like this:
 
-    let targets = from(battlers)
+    const targets = from(battlers)
         .where(v => v.isEnemyOf(attacker))
         .where(v => v.level % 5 == 0)
         .where(v => random.chance(0.75));
-    for (let target of targets) {
+    for (const target of targets) {
         target.damage(move.power * attacker.strength);
     }
 
@@ -1331,9 +1268,11 @@ XML.parse(text);
            property; instead they have a `text` string property with their
            content.
 
-XML.readFile(fileName);
+XML.readFile(fileName); [ASYNC]
 
-    Loads XML text from a file and returns a DOM built from it.
+    Loads XML text from a file asynchronously and returns a promise for a DOM
+    built from it.
 
     Note: The return value and throw semantics of this function are identical
-          to those of `XML.parse()` above.
+          to those of `XML.parse()` above.  In cases where `XML.parse` would
+          throw, `XML.readFile`, being async, will reject its promise instead.

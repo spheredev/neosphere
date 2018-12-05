@@ -71,9 +71,9 @@ class XML
 		return dom;
 	}
 
-	static readFile(fileName)
+	static async readFile(fileName)
 	{
-		let xmlText = FS.readFile(fileName);
-		return this.parse(xmlText);
+		const source = await FS.readFile(fileName);
+		return this.parse(source);
 	}
 }
