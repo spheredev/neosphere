@@ -33,7 +33,6 @@
 // miniSphere-specific modules
 export { default as Console } from 'console';
 export { default as FocusTarget } from 'focus-target';
-export { default as Joypad } from 'joypad';
 export { default as Music } from 'music';
 export { default as Pact } from 'pact';
 export { default as Prim } from 'prim';
@@ -44,7 +43,6 @@ export { default as Tween, Easing } from 'tween';
 // Sphere Runtime shared modules
 export { default as from, Query } from 'from';
 export { default as DataStream } from 'data-stream';
-export { default as Delegate } from 'delegate';
 export { default as Logger } from 'logger';
 export { default as Random } from 'random';
 export { default as XML } from 'xml';
