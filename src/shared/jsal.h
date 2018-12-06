@@ -162,6 +162,7 @@ bool         jsal_next                     (int iter_index);
 int          jsal_normalize_index          (int index);
 void         jsal_parse                    (int at_index);
 void         jsal_pop                      (int num_values);
+js_ref_t*    jsal_pop_ref                  (void);
 int          jsal_push_boolean             (bool value);
 int          jsal_push_boolean_false       (void);
 int          jsal_push_boolean_true        (void);

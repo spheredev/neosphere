@@ -1273,6 +1273,16 @@ jsal_pop(int num_values)
 	jsal_set_top(top - num_values);
 }
 
+js_ref_t*
+jsal_pop_ref(void)
+{
+	js_ref_t* ref;
+
+	ref = jsal_ref(-1);
+	jsal_pop(1);
+	return ref;
+}
+
 int
 jsal_push_boolean(bool value)
 {

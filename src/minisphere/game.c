@@ -167,8 +167,7 @@ game_open(const char* game_path)
 		jsal_put_prop_string(-2, "main");
 		jsal_freeze(-1);
 
-		game->manifest = jsal_ref(-1);
-		jsal_pop(1);
+		game->manifest = jsal_pop_ref();
 	}
 #endif
 	else {  // default case, unpacked game folder
@@ -222,8 +221,7 @@ game_open(const char* game_path)
 			jsal_put_prop_string(-2, "main");
 			jsal_freeze(-1);
 
-			game->manifest = jsal_ref(-1);
-			jsal_pop(1);
+			game->manifest = jsal_pop_ref();
 		}
 		else {
 			goto on_error;

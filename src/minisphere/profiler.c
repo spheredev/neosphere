@@ -114,8 +114,7 @@ profiler_attach_to(js_ref_t* function, const char* description)
 
 	index = vector_len(s_records) - 1;
 	jsal_push_new_function(js_instrumentedWrapper, "", 0, false, index);
-	shim_ref = jsal_ref(-1);
-	jsal_pop(1);
+	shim_ref = jsal_pop_ref();
 	return shim_ref;
 }
 

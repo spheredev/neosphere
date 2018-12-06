@@ -126,8 +126,7 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	// we can call the script later.
 	jsal_push_lstring_t(source);
 	jsal_compile(lstr_cstr(name));
-	function = jsal_ref(-1);
-	jsal_pop(1);
+	function = jsal_pop_ref();
 
 	debugger_add_source(lstr_cstr(name), source);
 	lstr_free(name);
