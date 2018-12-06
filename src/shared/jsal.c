@@ -3035,6 +3035,8 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 		has_return = function_data->callback(argc - 1, is_ctor_call, function_data->magic);
 		if (has_return)
 			retval = get_value(-1);
+		else
+			retval = s_js_undefined;
 	}
 	else {
 		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
