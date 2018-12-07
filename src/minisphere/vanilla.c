@@ -44,6 +44,7 @@
 #include "byte_array.h"
 #include "debugger.h"
 #include "dispatch.h"
+#include "event_loop.h"
 #include "font.h"
 #include "galileo.h"
 #include "image.h"

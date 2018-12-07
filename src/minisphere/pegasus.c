@@ -387,8 +387,9 @@ static bool js_Sample_get_fileName           (int num_args, bool is_ctor, intptr
 static bool js_Sample_play                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_stopAll                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Server                    (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Server_close                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Server_get_numPending         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Server_accept                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Server_close                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_get_Default            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Shader                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_clone                  (int num_args, bool is_ctor, intptr_t magic);
@@ -699,8 +700,8 @@ pegasus_init(int api_level)
 	api_define_method("Sample", "play", js_Sample_play, 0);
 	api_define_method("Sample", "stopAll", js_Sample_stopAll, 0);
 	api_define_class("Server", PEGASUS_SERVER, js_new_Server, js_Server_finalize, 0);
-	api_define_method("Server", "close", js_Server_close, 0);
 	api_define_method("Server", "accept", js_Server_accept, 0);
+	api_define_method("Server", "close", js_Server_close, 0);
 	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize, 0);
 	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL, 0);
 	api_define_method("Shader", "clone", js_Shader_clone, 0);
@@ -910,6 +911,7 @@ pegasus_init(int api_level)
 		api_define_func("FS", "extensionOf", js_FS_extensionOf, 0);
 		api_define_func("FS", "fileNameOf", js_FS_fileNameOf, 0);
 		api_define_func("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
+		api_define_prop("Server", "numPending", false, js_Server_get_numPending, NULL);
 		api_define_const("DataType", "Bytes", DATA_BYTES);
 		api_define_const("DataType", "Lines", DATA_LINES);
 		api_define_const("DataType", "Raw", DATA_RAW);
@@ -1484,7 +1486,7 @@ static bool
 js_Sphere_get_frameRate(int num_args, bool is_ctor, intptr_t magic)
 {
 	int frame_rate;
-	
+
 	// as far as Sphere v2 code is concerned, infinity, not 0, means "unthrottled".
 	// that's stored as a zero internally though, so we need to translate.
 	frame_rate = events_get_frame_rate();
@@ -1668,7 +1670,7 @@ js_new_BlendOp(int num_args, bool is_ctor, intptr_t magic)
 		alpha_sf = jsal_require_int(4);
 		alpha_tf = jsal_require_int(5);
 	}
-	
+
 	if (color_op_type < 0 || color_op_type > BLEND_OP_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid BlendType constant value '%d'", color_op_type);
 	if (color_sf < 0 || color_sf > BLEND_FACTOR_MAX)
@@ -1683,7 +1685,7 @@ js_new_BlendOp(int num_args, bool is_ctor, intptr_t magic)
 		if (alpha_tf < 0 || alpha_tf > BLEND_FACTOR_MAX)
 			jsal_error(JS_RANGE_ERROR, "Invalid Blend constant value '%d'", alpha_tf);
 	}
-	
+
 	if (num_args < 6)
 		op = blend_op_new_sym(color_op_type, color_sf, color_tf);
 	else
@@ -2502,7 +2504,7 @@ js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args < 2)
 		jsal_error(JS_RANGE_ERROR, "'FS.writeFile' requires 2 arguments");
 	pathname = jsal_require_pathname(0, NULL, false, true);
-	
+
 	if (jsal_is_buffer(1)) {
 		file_data = jsal_get_buffer_ptr(1, &file_size);
 		if (!game_write_file(g_game, pathname, file_data, file_size))
@@ -4065,12 +4067,13 @@ js_Sample_stopAll(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Server(int num_args, bool is_ctor, intptr_t magic)
 {
-	int       max_backlog;
+	int       max_backlog = 128;
 	int       port;
 	server_t* server;
 
 	port = jsal_require_int(0);
-	max_backlog = num_args >= 2 ? jsal_require_int(1) : 16;
+	if (num_args >= 2)
+		max_backlog = jsal_require_int(1);
 
 	if (max_backlog <= 0)
 		jsal_error(JS_RANGE_ERROR, "Invalid backlog size '%d'", max_backlog);
@@ -4088,6 +4091,20 @@ js_Server_finalize(void* host_ptr)
 }
 
 static bool
+js_Server_get_numPending(int num_args, bool is_ctor, intptr_t magic)
+{
+	server_t* server;
+
+	jsal_push_this();
+	server = jsal_require_class_obj(-1, PEGASUS_SERVER);
+
+	if (server == NULL)
+		jsal_error(JS_ERROR, "Server has already shut down");
+	jsal_push_int(server_num_pending(server));
+	return true;
+}
+
+static bool
 js_Server_accept(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* new_socket;
@@ -4098,11 +4115,10 @@ js_Server_accept(int num_args, bool is_ctor, intptr_t magic)
 
 	if (server == NULL)
 		jsal_error(JS_ERROR, "Server has already shut down");
+	if (server_num_pending(server) <= 0)
+		jsal_error(JS_RANGE_ERROR, "No client connections in backlog");
 	new_socket = server_accept(server);
-	if (new_socket != NULL)
-		jsal_push_class_obj(PEGASUS_SOCKET, new_socket, false);
-	else
-		jsal_push_null();
+	jsal_push_class_obj(PEGASUS_SOCKET, new_socket, false);
 	return true;
 }
 
@@ -4982,7 +4998,7 @@ js_Surface_toTexture(int num_args, bool is_ctor, intptr_t magic)
 	image_t* new_image;
 
 	DEPRECATE("Surface#toTexture", 2);
-	
+
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 

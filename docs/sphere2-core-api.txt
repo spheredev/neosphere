@@ -1013,7 +1013,7 @@ Joystick.P4 [R/O] [L2]
    joystick or gamepad devices attached, there is no guarantee which ones these
    will use, and the mapping could even change between sessions.  If you need
    full control, use `Joystick.getDevices` (see below).
-   
+
    Note: If there are less than 4 devices attached, the unmapped objects will
          act like `Joystick.Null` and return neutral values for all inputs.
 
@@ -1544,21 +1544,25 @@ must be explicitly accepted by game code.
 new Server(port[, backlog_size]); [L1]
 
     Constructs a new server to listen for connections on the specified port.
-    `backlog_size` specifies the size of the backlog.  If the backlog fills,
-    new connections will be dropped.
+    `backlog_size` specifies the size of the backlog and defaults to 128.  If
+    the backlog fills, new connections will be refused.
+
+Server#numPending [R/O] [L2]
+
+    Gets the number of pending connections currently in the backlog.  If the
+    number of pending connections is allowed to reach the backlog size
+    specified at `Server` construction, new connections will be refused.
 
 Server#accept(); [L1]
 
-    If one or more connections are waiting in the backlog, removes it from the
-    queue and returns a `Socket` object representing the connection; otherwise,
-    this returns `null`.  This method should be called regularly to prevent the
-    backlog from filling up.
+    Returns a Socket for the next connection in the backlog.  If the backlog is
+    empty, a RangeError will be thrown, so you should check the value of
+    `numPending` first to see if there are any connections in the backlog.
 
 Server#close(); [L1]
 
-    Shuts down the server.  Any connections in the backlog will be dropped and
-    no new connections can be made until a new server is started on the same
-    port.
+    Shuts down the server.  The server port will be closed and any connections
+    already in the backlog will be dropped.
 
 
 `Shader` Object
@@ -1725,82 +1729,65 @@ A `Socket` represents a TCP connection to another computer.  Sockets can either
 be created manually (if the game is initiating the connection), or returned by
 `Server#accept()` to represent an incoming connection.
 
-Socket.connectTo(hostname, port); [ASYNC] [EXPERIMENTAL]
-
-    Connects to the specified host and port and returns a promise for a newly
-    constructed Socket object allowing asynchronous communication with that
-    host.  If the connection attempt fails, the promise is rejected with an
-    error.
-
 new Socket([hostname, port]); [L1]
 
-    Constructs a socket object for synchronous reading and writing, optionally
-    connecting to the specified host and port.  In this mode, reads and writes
-    are performed on-the-fly without yielding to the event loop, and
-    `Socket#read` returns an ArrayBuffer directly instead of returning it
-    through a promise.
-
-    Note: Synchronous sockets cannot feasibly be supported on some platforms.
-          For maximum portability, use `Socket.connectTo` instead.
+    Constructs a new socket object.  If `hostname` and `port` are specified,
+    Sphere will immediately attempt to connect the socket; otherwise, it will
+    be created in a disconnected state and you must call `connectTo()` manually
+    to connect it.
 
 Socket#bytesPending [R/O] [L1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     Call `Socket#read()` to retrieve this data.
 
-    Note: This property is supported only for synchronous sockets created using
-          `new Socket`.  For socket objects created with `Socket.connectTo`,
-          reading and writing is asynchronous so this property is not needed.
-
 Socket#connected [R/O] [L1]
 
     Gets whether the connection has been established.  As long as this is
-    false, you cannot call any other methods on the socket object.  Doing so
-    will cause an error to be thrown.
-
-    Note: This property is supported only for synchronous sockets created using
-          `new Socket`.  For socket objects created with `Socket.connectTo`,
-          the connection promise doesn't resolve until a connection is made so
-          this property is not needed.
+    false, you won't be able to call most methods (except `connectTo`) on the
+    socket object.
 
 Socket#remoteAddress [R/O] [L1]
 
-    Gets the IP address of the upstream end of the socket.  Throws an error if
-    accessed before a connection has been established.
+    Gets the IP address of the upstream end of the socket.  If the socket is
+    disconnected, accessing this will throw an error.
 
 Socket#remotePort [R/O] [L1]
 
-    Gets the port that the remote machine is using for the connection.
-    Generally not a useful statistic, but it's there if you need it.  Throws an
-    error if accessed before a connection is established.
+    Gets the port that the remote machine is using for its side of the
+    connection.  Generally not very useful, but it's there if you need it.  If
+    the socket is disconnected, accessing this will throw an error.
 
-Socket#close(); [ASYNC] [L1]
+Socket#close(); [L1]
 
-    Disconnects the socket.  Note that any given Socket object is tied to a
-    specific session and so cannot be reused after it has been closed.
+    Disconnects the socket.  You can reconnect it by calling its `connectTo`
+    method again.
 
-Socket#connectTo(hostname, port); [ASYNC] [L1]
+Socket#connectTo(hostname, port); [L1]
 
     Connects the socket to `hostname` on `port`.  `hostname` can either be a
-    domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  Returns a
-    promise that resolves when the connection is successfully made or rejects
-    if it fails.
+    domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  The socket's
+    `connected` property will become `true` once the connection is established.
 
     Note: A single socket can only be connected to one client at a time.  If
           the socket is already connected when `Socket#connectTo()` is called,
           that connection will be closed.
 
-Socket#read(num_bytes); [ASYNC] [L1]
+Socket#read(num_bytes); [L1]
 
-    Reads `num_bytes` bytes from the socket and returns a promise for an
-    ArrayBuffer containing the data received.  If the connection is lost before
-    all bytes are received, the promise will be rejected.
+    Reads `num_bytes` bytes from the socket and returns an ArrayBuffer
+    containing the data received.  This is performed synchronously, without
+    yielding to the event loop.
 
-Socket#write(data); [ASYNC] [L1]
+    This call is non-blocking; if there is not enough data in the socket's
+    receive buffer to satisfy the read, a RangeError will be thrown.  To avoid
+    the RangeError, check the value of `bytesPending` first.
+
+Socket#write(data); [L1]
 
     Writes data to the socket, which can be read on the other end.  `data` can
-    be either an ArrayBuffer, TypedArray view, or DataView.  Returns a promise
-    that resolves after all data has been sent.
+    be either an ArrayBuffer, TypedArray view, or DataView.  Note that the data
+    may not be sent out immediately.
 
 
 `Sound` Object

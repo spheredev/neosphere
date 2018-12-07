@@ -318,6 +318,12 @@ server_unref(server_t* it)
 	free(it);
 }
 
+int
+server_num_pending(const server_t* it)
+{
+	return it->num_backlog;
+}
+
 socket_t*
 server_accept(server_t* it)
 {
