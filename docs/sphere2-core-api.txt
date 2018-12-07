@@ -1789,9 +1789,8 @@ Socket#connectTo(hostname, port); [L1]
 
 Socket#read(num_bytes); [L1]
 
-    Reads `num_bytes` bytes from the socket and returns an ArrayBuffer
-    containing the data received.  This is performed synchronously, without
-    yielding to the event loop.
+    Reads `num_bytes` bytes from the socket's receive buffer and returns an
+    ArrayBuffer containing the data received.
 
     This call is non-blocking; if there is not enough data in the socket's
     receive buffer to satisfy the read, a RangeError will be thrown.  To avoid
@@ -1800,8 +1799,9 @@ Socket#read(num_bytes); [L1]
 Socket#write(data); [L1]
 
     Writes data to the socket, which can be read on the other end.  `data` can
-    be either an ArrayBuffer, TypedArray view, or DataView.  Note that the data
-    may not be sent out immediately.
+    be either an ArrayBuffer, TypedArray view, or DataView.  The data may be
+    buffered until some later time; to eliminate the delay and send data
+    immediately, set `noDelay` to `true`.
 
 
 `Sound` Object

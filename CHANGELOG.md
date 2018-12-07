@@ -10,8 +10,7 @@ v5.3.0 - TBD
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
 * Adds `Joystick.P1` through `Joystick.P4` to the Core API, providing built-in
   default gamepad inputs for up to four players.
-* Adds `Socket.connectTo` which connects asynchronously and constructs a socket
-  object whose `read` and `write` methods are likewise async.
+* Adds `Socket#noDelay` and `Server#noDelay` for disabling TCP write buffering.
 * Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
   using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.
