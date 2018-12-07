@@ -48,6 +48,7 @@ struct server
 	size_t       buffer_size;
 	int          max_backlog;
 	int          num_backlog;
+	bool         no_delay;
 	dyad_Stream* stream4;
 	dyad_Stream* stream6;
 	bool         sync_mode;
@@ -59,6 +60,7 @@ struct socket
 	unsigned int refcount;
 	unsigned int id;
 	size_t       buffer_size;
+	bool         no_delay;
 	uint8_t*     recv_buffer;
 	size_t       recv_size;
 	dyad_Stream* stream;
@@ -138,6 +140,20 @@ socket_unref(socket_t* it)
 }
 
 bool
+socket_get_no_delay(const socket_t* it)
+{
+	return it->no_delay;
+}
+
+void
+socket_set_no_delay(socket_t* it, bool enabled)
+{
+	it->no_delay = enabled;
+	if (it->stream != NULL)
+		dyad_setNoDelay(it->stream, it->no_delay);
+}
+
+bool
 socket_closed(const socket_t* it)
 {
 	int state;
@@ -166,7 +182,7 @@ socket_connect(socket_t* it, const char* hostname, int port)
 	socket_close(it);
 
 	it->stream = dyad_newStream();
-	dyad_setNoDelay(it->stream, true);
+	dyad_setNoDelay(it->stream, it->no_delay);
 	dyad_addListener(it->stream, DYAD_EVENT_DATA, on_dyad_receive, it);
 	dyad_addListener(it->stream, DYAD_EVENT_CLOSE, on_dyad_close, it);
 	if (dyad_connect(it->stream, hostname, port) == -1)
@@ -257,12 +273,10 @@ server_new(const char* hostname, int port, size_t buffer_size, int max_backlog, 
 	server->max_backlog = max_backlog;
 	if (!(server->stream4 = dyad_newStream()))
 		goto on_error;
-	dyad_setNoDelay(server->stream4, true);
 	dyad_addListener(server->stream4, DYAD_EVENT_ACCEPT, on_dyad_accept, server);
 	if (hostname == NULL) {
 		if (!(server->stream6 = dyad_newStream()))
 			goto on_error;
-		dyad_setNoDelay(server->stream6, true);
 		dyad_addListener(server->stream6, DYAD_EVENT_ACCEPT, on_dyad_accept, server);
 		if (dyad_listenEx(server->stream4, "0.0.0.0", port, max_backlog) == -1)
 			goto on_error;
@@ -317,6 +331,18 @@ server_num_pending(const server_t* it)
 	return it->num_backlog;
 }
 
+bool
+server_get_no_delay(const server_t* it)
+{
+	return it->no_delay;
+}
+
+void
+server_set_no_delay(server_t* it, bool enabled)
+{
+	it->no_delay = enabled;
+}
+
 socket_t*
 server_accept(server_t* it)
 {
@@ -337,8 +363,10 @@ server_accept(server_t* it)
 	client = calloc(1, sizeof(socket_t));
 	client->sync_mode = it->sync_mode;
 	client->buffer_size = it->buffer_size;
+	client->no_delay = it->no_delay;
 	client->recv_buffer = malloc(it->buffer_size);
 	client->stream = it->backlog[0];
+	dyad_setNoDelay(client->stream, client->no_delay);
 	dyad_addListener(client->stream, DYAD_EVENT_DATA, on_dyad_receive, client);
 	dyad_addListener(client->stream, DYAD_EVENT_CLOSE, on_dyad_close, client);
 

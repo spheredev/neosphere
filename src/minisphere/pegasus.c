@@ -387,7 +387,9 @@ static bool js_Sample_get_fileName           (int num_args, bool is_ctor, intptr
 static bool js_Sample_play                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_stopAll                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Server                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Server_get_noDelay            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Server_get_numPending         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Server_set_noDelay            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Server_accept                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Server_close                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_get_Default            (int num_args, bool is_ctor, intptr_t magic);
@@ -414,8 +416,10 @@ static bool js_Shape_draw                    (int num_args, bool is_ctor, intptr
 static bool js_new_Socket                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_get_bytesPending       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_get_connected          (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_get_noDelay            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_get_remoteAddress      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_get_remotePort         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_set_noDelay            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_close                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_connectTo              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_read                   (int num_args, bool is_ctor, intptr_t magic);
@@ -912,6 +916,8 @@ pegasus_init(int api_level)
 		api_define_func("FS", "fileNameOf", js_FS_fileNameOf, 0);
 		api_define_func("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 		api_define_prop("Server", "numPending", false, js_Server_get_numPending, NULL);
+		api_define_prop("Server", "noDelay", false, js_Server_get_noDelay, js_Server_set_noDelay);
+		api_define_prop("Socket", "noDelay", false, js_Socket_get_noDelay, js_Socket_set_noDelay);
 		api_define_const("DataType", "Bytes", DATA_BYTES);
 		api_define_const("DataType", "Lines", DATA_LINES);
 		api_define_const("DataType", "Raw", DATA_RAW);
@@ -4090,6 +4096,20 @@ js_Server_finalize(void* host_ptr)
 }
 
 static bool
+js_Server_get_noDelay(int num_args, bool is_ctor, intptr_t magic)
+{
+	server_t* server;
+
+	jsal_push_this();
+	server = jsal_require_class_obj(-1, PEGASUS_SERVER);
+
+	if (server == NULL)
+		jsal_error(JS_RANGE_ERROR, "Server has been shut down");
+	jsal_push_int(server_get_no_delay(server));
+	return true;
+}
+
+static bool
 js_Server_get_numPending(int num_args, bool is_ctor, intptr_t magic)
 {
 	server_t* server;
@@ -4101,6 +4121,22 @@ js_Server_get_numPending(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Server has been shut down");
 	jsal_push_int(server_num_pending(server));
 	return true;
+}
+
+static bool
+js_Server_set_noDelay(int num_args, bool is_ctor, intptr_t magic)
+{
+	bool      enabled;
+	server_t* server;
+
+	jsal_push_this();
+	server = jsal_require_class_obj(-1, PEGASUS_SERVER);
+	enabled = jsal_require_boolean(0);
+
+	if (server == NULL)
+		jsal_error(JS_RANGE_ERROR, "Server has been shut down");
+	server_set_no_delay(server, enabled);
+	return false;
 }
 
 static bool
@@ -4439,6 +4475,18 @@ js_Socket_get_connected(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_Socket_get_noDelay(int num_args, bool is_ctor, intptr_t magic)
+{
+	socket_t* socket;
+
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
+
+	jsal_push_boolean(socket_get_no_delay(socket));
+	return true;
+}
+
+static bool
 js_Socket_get_remoteAddress(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* socket;
@@ -4464,6 +4512,20 @@ js_Socket_get_remotePort(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Cannot get port of disconnected socket");
 	jsal_push_int(socket_port(socket));
 	return true;
+}
+
+static bool
+js_Socket_set_noDelay(int num_args, bool is_ctor, intptr_t magic)
+{
+	bool      enabled;
+	socket_t* socket;
+
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
+	enabled = jsal_require_boolean(0);
+
+	socket_set_no_delay(socket, enabled);
+	return false;
 }
 
 static bool

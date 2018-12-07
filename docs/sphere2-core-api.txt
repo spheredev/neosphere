@@ -1547,6 +1547,13 @@ new Server(port[, backlog_size]); [L1]
     `backlog_size` specifies the size of the backlog and defaults to 128.  If
     the backlog fills, new connections will be refused.
 
+Server#noDelay [R/W] [L2]
+
+    Gets or sets a boolean value indicating whether Nagle's algorithm (write
+    buffering) is turned off for this server.  This doesn't directly affect the
+    server but will be used as the initial value of `noDelay` for all sockets
+    returned by `accept()`.
+
 Server#numPending [R/O] [L2]
 
     Gets the number of pending connections currently in the backlog.  If the
@@ -1746,6 +1753,13 @@ Socket#connected [R/O] [L1]
     Gets whether the connection has been established.  As long as this is
     false, you won't be able to call most methods (except `connectTo`) on the
     socket object.
+
+Socket#noDelay [R/W] [L2]
+
+    Gets or sets a boolean value indicating whether Nagle's algorithm (write
+    buffering) is turned off for this socket.  If `false` (the default), writes
+    are buffered and may not be sent over the network until some later time.
+    Otherwise, data is sent as soon as it's written to the socket.
 
 Socket#remoteAddress [R/O] [L1]
 
