@@ -3038,6 +3038,11 @@ on_js_to_native_call(JsValueRef callee, JsValueRef argv[], unsigned short argc, 
 	if (jsal_setjmp(label) == 0) {
 		s_catch_label = &label;
 		is_ctor_call = env->isConstructCall;
+		if (is_ctor_call && function_data->async_flag) {
+			push_value(callee, true);  // note: gets popped during unwind
+			jsal_get_prop_string(-1, "name");
+			jsal_error(JS_TYPE_ERROR, "Async '%s()' cannot be called with 'new'", jsal_to_string(-1));
+		}
 		if (!is_ctor_call && function_data->ctor_only) {
 			push_value(callee, true);  // note: gets popped during unwind
 			jsal_get_prop_string(-1, "name");
