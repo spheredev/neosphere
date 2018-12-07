@@ -4078,8 +4078,7 @@ js_new_Server(int num_args, bool is_ctor, intptr_t magic)
 	if (max_backlog <= 0)
 		jsal_error(JS_RANGE_ERROR, "Invalid backlog size '%d'", max_backlog);
 
-	if (!(server = server_new(NULL, port, 1024, max_backlog, false)))
-		jsal_error(JS_ERROR, "Couldn't create server socket");
+	server = server_new(NULL, port, 1024, max_backlog, false);
 	jsal_push_class_obj(PEGASUS_SERVER, server, true);
 	return true;
 }
@@ -4099,7 +4098,7 @@ js_Server_get_numPending(int num_args, bool is_ctor, intptr_t magic)
 	server = jsal_require_class_obj(-1, PEGASUS_SERVER);
 
 	if (server == NULL)
-		jsal_error(JS_ERROR, "Server has already shut down");
+		jsal_error(JS_RANGE_ERROR, "Server has been shut down");
 	jsal_push_int(server_num_pending(server));
 	return true;
 }
@@ -4114,10 +4113,9 @@ js_Server_accept(int num_args, bool is_ctor, intptr_t magic)
 	server = jsal_require_class_obj(-1, PEGASUS_SERVER);
 
 	if (server == NULL)
-		jsal_error(JS_ERROR, "Server has already shut down");
-	if (server_num_pending(server) <= 0)
+		jsal_error(JS_RANGE_ERROR, "Server has been shut down");
+	if (!(new_socket = server_accept(server)))
 		jsal_error(JS_RANGE_ERROR, "No client connections in backlog");
-	new_socket = server_accept(server);
 	jsal_push_class_obj(PEGASUS_SOCKET, new_socket, false);
 	return true;
 }
@@ -4401,8 +4399,7 @@ js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 		port = jsal_require_int(1);
 	}
 
-	if (!(socket = socket_new(1024, false)))
-		jsal_error(JS_ERROR, "Couldn't create TCP socket");
+	socket = socket_new(1024, false);
 	if (hostname != NULL && !socket_connect(socket, hostname, port))
 		jsal_error(JS_ERROR, "Couldn't connect to '%s'", hostname);
 	jsal_push_class_obj(PEGASUS_SOCKET, socket, true);
@@ -4423,8 +4420,8 @@ js_Socket_get_bytesPending(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	if (socket == NULL)
-		jsal_error(JS_ERROR, "Socket is not connected");
+	if (!socket_connected(socket))
+		jsal_error(JS_RANGE_ERROR, "Socket is not connected");
 	jsal_push_int((int)socket_peek(socket));
 	return true;
 }
@@ -4437,10 +4434,7 @@ js_Socket_get_connected(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	if (socket != NULL)
-		jsal_push_boolean(socket_connected(socket));
-	else
-		jsal_push_boolean_false();
+	jsal_push_boolean(socket_connected(socket));
 	return true;
 }
 
@@ -4452,10 +4446,8 @@ js_Socket_get_remoteAddress(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	if (socket == NULL)
-		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "Socket is not connected");
+		jsal_error(JS_RANGE_ERROR, "Cannot get address of disconnected socket");
 	jsal_push_string(socket_hostname(socket));
 	return true;
 }
@@ -4468,10 +4460,8 @@ js_Socket_get_remotePort(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	if (socket == NULL)
-		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "Socket is not connected");
+		jsal_error(JS_RANGE_ERROR, "Cannot get port of disconnected socket");
 	jsal_push_int(socket_port(socket));
 	return true;
 }
@@ -4484,8 +4474,7 @@ js_Socket_close(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	jsal_set_class_ptr(-1, NULL);
-	socket_unref(socket);
+	socket_close(socket);
 	return false;
 }
 
@@ -4501,8 +4490,7 @@ js_Socket_connectTo(int num_args, bool is_ctor, intptr_t magic)
 	hostname = jsal_require_string(0);
 	port = jsal_require_int(1);
 
-	if (!socket_connect(socket, hostname, port))
-		jsal_error(JS_ERROR, "Couldn't connect to '%s'", hostname);
+	socket_connect(socket, hostname, port);
 	return false;
 }
 
@@ -4518,12 +4506,10 @@ js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
 	num_bytes = jsal_require_int(0);
-	if (socket == NULL)
-		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "Socket is not connected");
+		jsal_error(JS_ERROR, "Cannot read from disconnected socket");
 	if (num_bytes > (int)socket_peek(socket))
-		jsal_error(JS_RANGE_ERROR, "Receive buffer has less than '%d' bytes", num_bytes);
+		jsal_error(JS_RANGE_ERROR, "Not enough data buffered to satisfy read");
 	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
 	bytes_read = socket_read(socket, buffer, num_bytes);
 	return true;
@@ -4540,10 +4526,8 @@ js_Socket_write(int num_args, bool is_ctor, intptr_t magic)
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 	payload = jsal_require_buffer_ptr(0, &write_size);
 
-	if (socket == NULL)
-		jsal_error(JS_ERROR, "Socket is already closed");
 	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "Socket is not connected");
+		jsal_error(JS_ERROR, "Cannot write to disconnected socket");
 	socket_write(socket, payload, write_size);
 	return false;
 }

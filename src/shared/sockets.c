@@ -114,15 +114,9 @@ socket_new(size_t buffer_size, bool sync_mode)
 	socket = calloc(1, sizeof(socket_t));
 	socket->buffer_size = buffer_size;
 	socket->sync_mode = sync_mode;
-	if (!(socket->recv_buffer = malloc(buffer_size)))
-		goto on_error;
+	socket->recv_buffer = malloc(buffer_size);
 	socket->id = s_next_socket_id++;
 	return socket_ref(socket);
-
-on_error:
-	console_log(2, "couldn't create TCP socket #%u", s_next_socket_id++);
-	free(socket);
-	return NULL;
 }
 
 socket_t*
@@ -171,8 +165,7 @@ socket_connect(socket_t* it, const char* hostname, int port)
 {
 	socket_close(it);
 
-	if (!(it->stream = dyad_newStream()))
-		goto on_error;
+	it->stream = dyad_newStream();
 	dyad_setNoDelay(it->stream, true);
 	dyad_addListener(it->stream, DYAD_EVENT_DATA, on_dyad_receive, it);
 	dyad_addListener(it->stream, DYAD_EVENT_CLOSE, on_dyad_close, it);
