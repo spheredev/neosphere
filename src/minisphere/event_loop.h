@@ -37,5 +37,6 @@ bool events_exiting        (void);
 int  events_get_frame_rate (void);
 void events_set_frame_rate (int frame_rate);
 bool events_run_main_loop  (void);
+void events_tick           (int api_version, bool clear_screen, int framerate);
 
 #endif

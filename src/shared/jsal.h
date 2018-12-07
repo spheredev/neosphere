@@ -143,6 +143,7 @@ bool         jsal_has_prop_key             (int object_index, js_ref_t* key);
 bool         jsal_has_prop_string          (int object_index, const char* name);
 void         jsal_insert                   (int at_index);
 bool         jsal_is_array                 (int stack_index);
+bool         jsal_is_async_call            (void);
 bool         jsal_is_async_function        (int stack_index);
 bool         jsal_is_boolean               (int stack_index);
 bool         jsal_is_buffer                (int stack_index);

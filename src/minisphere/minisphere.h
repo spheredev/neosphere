@@ -88,4 +88,3 @@ void sphere_exit        (bool shutting_down);
 void sphere_heartbeat   (bool in_event_loop, int api_version);
 void sphere_restart     (void);
 void sphere_sleep       (double time);
-void sphere_tick        (int api_version, bool clear_screen, int framerate);

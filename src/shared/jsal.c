@@ -1035,6 +1035,12 @@ jsal_is_array(int stack_index)
 }
 
 bool
+jsal_is_async_call(void)
+{
+	return s_async_flag;
+}
+
+bool
 jsal_is_async_function(int stack_index)
 {
 	bool        is_async = false;

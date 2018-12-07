@@ -2451,7 +2451,7 @@ js_FilledEllipse(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FlipScreen(int num_args, bool is_ctor, intptr_t magic)
 {
-	sphere_tick(1, true, s_frame_rate);
+	events_tick(1, true, s_frame_rate);
 	return false;
 }
 

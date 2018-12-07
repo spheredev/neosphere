@@ -71,6 +71,30 @@ events_run_main_loop(void)
 	}
 }
 
+void
+events_tick(int api_version, bool clear_screen, int framerate)
+{
+	sphere_heartbeat(true, api_version);
+
+	if (!screen_skipping_frame(g_screen)) {
+		if (!dispatch_run(JOB_ON_RENDER))
+			return;
+	}
+
+	// flip the backbuffer.  if this is a Sphere v2 frame, also reset clipping.
+	screen_flip(g_screen, framerate, clear_screen);
+	if (api_version >= 2)
+		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
+
+	if (!dispatch_run(JOB_ON_UPDATE))
+		return;
+
+	if (!dispatch_run(JOB_ON_TICK))
+		return;
+
+	++g_tick_count;
+}
+
 static bool
 run_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 {
@@ -87,7 +111,7 @@ run_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 	jsal_enable_vm(true);
 
 	while (dispatch_busy() || jsal_busy())
-		sphere_tick(2, true, s_frame_rate);
+		events_tick(2, true, s_frame_rate);
 
 	// deal with Dispatch.onExit() jobs
 	// note: the JavaScript VM might have been disabled due to a Sphere v1

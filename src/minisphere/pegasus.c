@@ -626,9 +626,9 @@ pegasus_init(int api_level)
 	api_define_prop("FileStream", "fileName", false, js_FileStream_get_fileName, NULL);
 	api_define_prop("FileStream", "fileSize", false, js_FileStream_get_fileSize, NULL);
 	api_define_prop("FileStream", "position", false, js_FileStream_get_position, js_FileStream_set_position);
-	api_define_async_method("FileStream", "close", js_FileStream_close, 0);
-	api_define_async_method("FileStream", "read", js_FileStream_read, 0);
-	api_define_async_method("FileStream", "write", js_FileStream_write, 0);
+	api_define_method("FileStream", "close", js_FileStream_close, 0);
+	api_define_method("FileStream", "read", js_FileStream_read, 0);
+	api_define_method("FileStream", "write", js_FileStream_write, 0);
 	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize, 0);
 	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL, 0);
 	api_define_prop("Font", "fileName", false, js_Font_get_fileName, NULL);
@@ -719,15 +719,14 @@ pegasus_init(int api_level)
 	api_define_prop("Shape", "vertexList", false, js_Shape_get_vertexList, js_Shape_set_vertexList);
 	api_define_method("Shape", "draw", js_Shape_draw, 0);
 	api_define_class("Socket", PEGASUS_SOCKET, js_new_Socket, js_Socket_finalize, 0);
-	api_define_async_func("Socket", "connectTo", js_new_Socket, 0);
 	api_define_prop("Socket", "bytesPending", false, js_Socket_get_bytesPending, NULL);
 	api_define_prop("Socket", "connected", false, js_Socket_get_connected, NULL);
 	api_define_prop("Socket", "remoteAddress", false, js_Socket_get_remoteAddress, NULL);
 	api_define_prop("Socket", "remotePort", false, js_Socket_get_remotePort, NULL);
-	api_define_async_method("Socket", "close", js_Socket_close, 0);
-	api_define_async_method("Socket", "connectTo", js_Socket_connectTo, 0);
-	api_define_async_method("Socket", "read", js_Socket_read, 0);
-	api_define_async_method("Socket", "write", js_Socket_write, 0);
+	api_define_method("Socket", "close", js_Socket_close, 0);
+	api_define_method("Socket", "connectTo", js_Socket_connectTo, 0);
+	api_define_method("Socket", "read", js_Socket_read, 0);
+	api_define_method("Socket", "write", js_Socket_write, 0);
 	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize, 0);
 	api_define_prop("Sound", "fileName", false, js_Sound_get_fileName, NULL);
 	api_define_prop("Sound", "length", false, js_Sound_get_length, NULL);
@@ -2568,16 +2567,6 @@ js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 	if (file_op == FILE_OP_UPDATE)
 		file_seek(file, 0, WHENCE_END);
 	jsal_push_class_obj(PEGASUS_FILE_STREAM, file, is_ctor);
-	if (is_ctor) {
-		// files opened using 'new FileStream' must support synchronous I/O.  this is
-		// kind of a hack but for now just shadow the prototype methods.
-		jsal_push_new_function(js_FileStream_close, "close", 0, false, 0);
-		jsal_push_new_function(js_FileStream_read, "read", 0, false, 0);
-		jsal_push_new_function(js_FileStream_write, "write", 0, false, 0);
-		jsal_put_prop_string(-4, "write");
-		jsal_put_prop_string(-3, "read");
-		jsal_put_prop_string(-2, "close");
-	}
 	return true;
 }
 
@@ -4400,19 +4389,7 @@ js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_ERROR, "Couldn't create TCP socket");
 	if (hostname != NULL && !socket_connect(socket, hostname, port))
 		jsal_error(JS_ERROR, "Couldn't connect to '%s'", hostname);
-	jsal_push_class_obj(PEGASUS_SOCKET, socket, is_ctor);
-	if (is_ctor) {
-		// sockets created using 'new Socket' must support synchronous I/O.  this is
-		// kind of a hack but for now just shadow the prototype methods.
-		jsal_push_new_function(js_Socket_connectTo, "connectTo", 0, false, 0);
-		jsal_push_new_function(js_Socket_close, "close", 0, false, 0);
-		jsal_push_new_function(js_Socket_read, "read", 0, false, 0);
-		jsal_push_new_function(js_Socket_write, "write", 0, false, 0);
-		jsal_put_prop_string(-5, "write");
-		jsal_put_prop_string(-4, "read");
-		jsal_put_prop_string(-3, "close");
-		jsal_put_prop_string(-2, "connectTo");
-	}
+	jsal_push_class_obj(PEGASUS_SOCKET, socket, true);
 	return true;
 }
 
