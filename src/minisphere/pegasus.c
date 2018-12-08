@@ -729,7 +729,7 @@ pegasus_init(int api_level)
 	api_define_prop("Socket", "connected", false, js_Socket_get_connected, NULL);
 	api_define_prop("Socket", "remoteAddress", false, js_Socket_get_remoteAddress, NULL);
 	api_define_prop("Socket", "remotePort", false, js_Socket_get_remotePort, NULL);
-	api_define_method("Socket", "close", js_Socket_close, 0);
+	api_define_async_method("Socket", "close", js_Socket_close, 0);
 	api_define_async_method("Socket", "connectTo", js_Socket_connectTo, 0);
 	api_define_method("Socket", "read", js_Socket_read, 0);
 	api_define_method("Socket", "write", js_Socket_write, 0);
@@ -921,8 +921,8 @@ pegasus_init(int api_level)
 		api_define_prop("Server", "noDelay", false, js_Server_get_noDelay, js_Server_set_noDelay);
 		api_define_prop("Socket", "noDelay", false, js_Socket_get_noDelay, js_Socket_set_noDelay);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
-		api_define_async_method("Socket", "disconnect", js_Socket_disconnect, 0);
-		api_define_async_method("Socket", "readAsync", js_Socket_read, 0);
+		api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
+		api_define_method("Socket", "disconnect", js_Socket_disconnect, 0);
 		api_define_const("DataType", "Bytes", DATA_BYTES);
 		api_define_const("DataType", "Lines", DATA_LINES);
 		api_define_const("DataType", "Raw", DATA_RAW);
@@ -4551,8 +4551,8 @@ js_Socket_close(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	socket_close(socket);
-	return false;
+	events_close_socket(socket);
+	return true;
 }
 
 static bool
@@ -4581,8 +4581,8 @@ js_Socket_disconnect(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	events_disconnect(socket);
-	return true;
+	socket_disconnect(socket);
+	return false;
 }
 
 static bool

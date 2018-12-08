@@ -1791,11 +1791,22 @@ Socket#remotePort [R/O] [L1]
     connection.  Generally not very useful, but it's there if you need it.  If
     the socket is disconnected, accessing this will throw an error.
 
-Socket#close(); [L1]
+Socket#asyncRead(num_bytes); [ASYNC] [L2]
 
-    Immediately closes the connection.  If there is still data in the socket's
-    write-behind buffer not yet sent over the wire, it will be discarded.  To
-    avoid this, use `disconnect()` instead.
+    Instructs Sphere to read `num_bytes` from the socket via the event loop.
+    The promise resolves with an ArrayBuffer containing the data read.  This is
+    an asynchronous version of `read()` that can be used with `await`.
+
+    Note: This call will not fail if there is not enough data in the receive
+          buffer to immediately satisfy it.  However, if the connection is lost
+          before the read completes, Sphere will reject the promise.
+
+Socket#close(); [ASYNC] [L1]
+
+    Disconnects the socket.  If there is still data in the socket's outgoing
+    write buffer yet to be written, it will be written out before the
+    connection is closed.  The promise resolves when the socket is no longer
+    connected.
 
 Socket#connectTo(hostname, port); [ASYNC] [L1]
 
@@ -1807,12 +1818,10 @@ Socket#connectTo(hostname, port); [ASYNC] [L1]
           the socket is already connected when `connectTo()` is called, the
           promise will be rejected with a TypeError.
 
-Socket#disconnect(); [ASYNC] [L2]
+Socket#disconnect(); [L2]
 
-    Disconnects the socket.  If there is still data in the socket's outgoing
-    write buffer yet to be written, it will be written out before the
-    connection is closed.  The promise resolves when the socket is no longer
-    connected.
+    Immediately disconnects the socket.  If there is still data in the socket's
+    write-behind buffer not yet sent over the wire, it will be discarded.
 
 Socket#read(num_bytes); [L1]
 
@@ -1822,17 +1831,6 @@ Socket#read(num_bytes); [L1]
     This call is non-blocking; if there is not enough data in the socket's
     receive buffer to satisfy the read, a RangeError will be thrown.  To avoid
     the RangeError, check the value of `bytesPending` first.
-
-Socket#readAsync(num_bytes); [ASYNC] [L2]
-
-    Instructs Sphere to read `num_bytes` from the socket via the event loop.
-    The promise resolves with an ArrayBuffer containing the data read.  This is
-    an asynchronous version of `read()` that can be used with `await`.
-
-    Note: This call will not fail if there is not enough data in the receive
-          buffer to immediately satisfy it.  However, if the connection is lost
-          before the amount of data asked for can be read, Sphere will reject
-          the promise.
 
 Socket#write(data); [L1]
 

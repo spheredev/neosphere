@@ -135,7 +135,7 @@ socket_unref(socket_t* it)
 		return;
 	console_log(3, "disposing TCP socket #%u no longer in use", it->id);
 	if (it->stream != NULL)
-		dyad_end(it->stream);
+		dyad_close(it->stream);
 	free(it);
 }
 
@@ -194,6 +194,12 @@ on_error:
 	return false;
 }
 
+void
+socket_disconnect(socket_t* it)
+{
+	dyad_close(it->stream);
+}
+
 const char*
 socket_hostname(const socket_t* it)
 {
@@ -213,7 +219,6 @@ socket_close(socket_t* it)
 		return;
 	console_log(2, "closing connection on TCP socket #%u", it->id);
 	dyad_end(it->stream);
-	it->stream = NULL;
 	it->recv_size = 0;
 }
 

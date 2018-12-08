@@ -62,6 +62,7 @@ const char* socket_hostname     (const socket_t* it);
 int         socket_port         (const socket_t* it);
 void        socket_close        (socket_t* it);
 bool        socket_connect      (socket_t* it, const char* hostname, int port);
+void        socket_disconnect   (socket_t* it);
 size_t      socket_peek         (const socket_t* it);
 size_t      socket_read         (socket_t* it, void* buffer, size_t num_bytes);
 size_t      socket_write        (socket_t* it, const void* data, size_t num_bytes);

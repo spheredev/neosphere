@@ -41,8 +41,8 @@
 enum task_type
 {
 	TASK_ACCEPT_CLIENT,
+	TASK_CLOSE_SOCKET,
 	TASK_CONNECT,
-	TASK_DISCONNECT,
 	TASK_READ_SOCKET,
 };
 
@@ -94,6 +94,17 @@ events_accept_client(server_t* server)
 }
 
 void
+events_close_socket(socket_t* socket)
+{
+	struct task* task;
+
+	socket_close(socket);
+
+	task = push_new_task_promise(TASK_CLOSE_SOCKET);
+	task->socket = socket_ref(socket);
+}
+
+void
 events_connect_to(socket_t* socket, const char* hostname, int port)
 {
 	struct task* task;
@@ -105,17 +116,6 @@ events_connect_to(socket_t* socket, const char* hostname, int port)
 	socket_connect(socket, hostname, port);
 
 	task = push_new_task_promise(TASK_CONNECT);
-	task->socket = socket_ref(socket);
-}
-
-void
-events_disconnect(socket_t* socket)
-{
-	struct task* task;
-
-	socket_close(socket);
-
-	task = push_new_task_promise(TASK_DISCONNECT);
 	task->socket = socket_ref(socket);
 }
 
@@ -211,7 +211,7 @@ events_tick(int api_version, bool clear_screen, int framerate)
 				task_errored = true;
 			}
 			break;
-		case TASK_DISCONNECT:
+		case TASK_CLOSE_SOCKET:
 			if (socket_closed(task->socket)) {
 				jsal_push_undefined();
 				task_finished = true;
