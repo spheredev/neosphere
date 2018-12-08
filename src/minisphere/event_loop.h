@@ -33,9 +33,15 @@
 #ifndef SPHERE__EVENT_LOOP_H__INCLUDED
 #define SPHERE__EVENT_LOOP_H__INCLUDED
 
+#include "sockets.h"
+
 bool events_exiting        (void);
 int  events_get_frame_rate (void);
 void events_set_frame_rate (int frame_rate);
+void events_accept_client  (server_t* server);
+void events_connect_to     (socket_t* socket, const char* hostname, int port);
+void events_disconnect     (socket_t* socket);
+void events_read_socket    (socket_t* socket, size_t num_bytes);
 bool events_run_main_loop  (void);
 void events_tick           (int api_version, bool clear_screen, int framerate);
 

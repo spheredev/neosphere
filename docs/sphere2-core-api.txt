@@ -1566,6 +1566,13 @@ Server#accept(); [L1]
     empty, a RangeError will be thrown, so you should check the value of
     `numPending` first to see if there are any connections in the backlog.
 
+Server#acceptNext(); [ASYNC] [L2]
+
+    Instructs Sphere to accept the next available client connection from the
+    event loop.  The promise resolves with a Socket representing that
+    connection.  This is an asychronous version of `accept()` that can be used
+    with `await`.
+
 Server#close(); [L1]
 
     Shuts down the server.  The server port will be closed and any connections
@@ -1736,6 +1743,12 @@ A `Socket` represents a TCP connection to another computer.  Sockets can either
 be created manually (if the game is initiating the connection), or returned by
 `Server#accept()` to represent an incoming connection.
 
+Socket.connectTo(hostname, port); [ASYNC] [L2]
+
+    Connects to the specified host and port and returns a promise for a newly
+    constructed Socket object for the connection.  If the connection attempt
+    fails, the promise is rejected.
+
 new Socket([hostname, port]); [L1]
 
     Constructs a new socket object.  If `hostname` and `port` are specified,
@@ -1774,18 +1787,26 @@ Socket#remotePort [R/O] [L1]
 
 Socket#close(); [L1]
 
-    Disconnects the socket.  You can reconnect it by calling its `connectTo`
-    method again.
+    Immediately closes the connection.  If there is still data in the socket's
+    write-behind buffer not yet sent over the wire, it will be discarded.  To
+    avoid this, use `disconnect()` instead.
 
-Socket#connectTo(hostname, port); [L1]
+Socket#connectTo(hostname, port); [ASYNC] [L1]
 
     Connects the socket to `hostname` on `port`.  `hostname` can either be a
-    domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  The socket's
-    `connected` property will become `true` once the connection is established.
+    domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  The promise
+    resolves when the socket is ready for communication.
 
     Note: A single socket can only be connected to one client at a time.  If
-          the socket is already connected when `Socket#connectTo()` is called,
-          that connection will be closed.
+          the socket is already connected when `connectTo()` is called, the
+          promise will be rejected with a TypeError.
+
+Socket#disconnect(); [ASYNC] [L2]
+
+    Disconnects the socket.  If there is still data in the socket's outgoing
+    write buffer yet to be written, it will be written out before the
+    connection is closed.  The promise resolves when the socket is no longer
+    connected.
 
 Socket#read(num_bytes); [L1]
 
@@ -1795,6 +1816,17 @@ Socket#read(num_bytes); [L1]
     This call is non-blocking; if there is not enough data in the socket's
     receive buffer to satisfy the read, a RangeError will be thrown.  To avoid
     the RangeError, check the value of `bytesPending` first.
+
+Socket#readAsync(num_bytes); [ASYNC] [L2]
+
+    Instructs Sphere to read `num_bytes` from the socket from the event loop.
+    The promise resolves with an ArrayBuffer containing the data read.  This is
+    an asynchronous version of `read()` that can be used with `await`.
+
+    Note: This call will not fail if there is not enough data in the receive
+          buffer to immediately satisfy it.  However, if the connection is lost
+          before the amount of data asked for can be read, Sphere will reject
+          the promise.
 
 Socket#write(data); [L1]
 

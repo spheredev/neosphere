@@ -422,6 +422,7 @@ static bool js_Socket_get_remotePort         (int num_args, bool is_ctor, intptr
 static bool js_Socket_set_noDelay            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_close                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_connectTo              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_disconnect             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_read                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_write                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Sound                     (int num_args, bool is_ctor, intptr_t magic);
@@ -729,7 +730,7 @@ pegasus_init(int api_level)
 	api_define_prop("Socket", "remoteAddress", false, js_Socket_get_remoteAddress, NULL);
 	api_define_prop("Socket", "remotePort", false, js_Socket_get_remotePort, NULL);
 	api_define_method("Socket", "close", js_Socket_close, 0);
-	api_define_method("Socket", "connectTo", js_Socket_connectTo, 0);
+	api_define_async_method("Socket", "connectTo", js_Socket_connectTo, 0);
 	api_define_method("Socket", "read", js_Socket_read, 0);
 	api_define_method("Socket", "write", js_Socket_write, 0);
 	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize, 0);
@@ -907,6 +908,7 @@ pegasus_init(int api_level)
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
 		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
+		api_define_async_func("Socket", "connectTo", js_new_Socket, 0);
 		api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
 		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
 		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
@@ -918,6 +920,9 @@ pegasus_init(int api_level)
 		api_define_prop("Server", "numPending", false, js_Server_get_numPending, NULL);
 		api_define_prop("Server", "noDelay", false, js_Server_get_noDelay, js_Server_set_noDelay);
 		api_define_prop("Socket", "noDelay", false, js_Socket_get_noDelay, js_Socket_set_noDelay);
+		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
+		api_define_async_method("Socket", "disconnect", js_Socket_disconnect, 0);
+		api_define_async_method("Socket", "readAsync", js_Socket_read, 0);
 		api_define_const("DataType", "Bytes", DATA_BYTES);
 		api_define_const("DataType", "Lines", DATA_LINES);
 		api_define_const("DataType", "Raw", DATA_RAW);
@@ -4150,9 +4155,14 @@ js_Server_accept(int num_args, bool is_ctor, intptr_t magic)
 
 	if (server == NULL)
 		jsal_error(JS_RANGE_ERROR, "Server has been shut down");
-	if (!(new_socket = server_accept(server)))
-		jsal_error(JS_RANGE_ERROR, "No client connections in backlog");
-	jsal_push_class_obj(PEGASUS_SOCKET, new_socket, false);
+	if (jsal_is_async_call()) {
+		events_accept_client(server);
+	}
+	else {
+		if (!(new_socket = server_accept(server)))
+			jsal_error(JS_RANGE_ERROR, "No client connections in backlog");
+		jsal_push_class_obj(PEGASUS_SOCKET, new_socket, false);
+	}
 	return true;
 }
 
@@ -4430,15 +4440,20 @@ js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 	int         port;
 	socket_t*   socket;
 
-	if (num_args >= 2) {
+	if (num_args >= 2 || !is_ctor) {
 		hostname = jsal_require_string(0);
 		port = jsal_require_int(1);
 	}
 
-	socket = socket_new(1024, false);
-	if (hostname != NULL && !socket_connect(socket, hostname, port))
-		jsal_error(JS_ERROR, "Couldn't connect to '%s'", hostname);
-	jsal_push_class_obj(PEGASUS_SOCKET, socket, true);
+	if (is_ctor) {
+		socket = socket_new(1024, false);
+		if (hostname != NULL && !socket_connect(socket, hostname, port))
+			jsal_error(JS_ERROR, "Couldn't connect to '%s'", hostname);
+		jsal_push_class_obj(PEGASUS_SOCKET, socket, true);
+	}
+	else {
+		events_connect_to(NULL, hostname, port);
+	}
 	return true;
 }
 
@@ -4552,15 +4567,28 @@ js_Socket_connectTo(int num_args, bool is_ctor, intptr_t magic)
 	hostname = jsal_require_string(0);
 	port = jsal_require_int(1);
 
-	socket_connect(socket, hostname, port);
-	return false;
+	if (socket_connected(socket))
+		jsal_error(JS_TYPE_ERROR, "Socket is already connected");
+	events_connect_to(socket, hostname, port);
+	return true;
+}
+
+static bool
+js_Socket_disconnect(int num_args, bool is_ctor, intptr_t magic)
+{
+	socket_t* socket;
+
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
+
+	events_disconnect(socket);
+	return true;
 }
 
 static bool
 js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 {
 	void*     buffer;
-	size_t    bytes_read;
 	int       num_bytes;
 	socket_t* socket;
 
@@ -4570,10 +4598,15 @@ js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 	num_bytes = jsal_require_int(0);
 	if (!socket_connected(socket))
 		jsal_error(JS_ERROR, "Cannot read from disconnected socket");
-	if (num_bytes > (int)socket_peek(socket))
-		jsal_error(JS_RANGE_ERROR, "Not enough data buffered to satisfy read");
-	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
-	bytes_read = socket_read(socket, buffer, num_bytes);
+	if (jsal_is_async_call()) {
+		events_read_socket(socket, num_bytes);
+	}
+	else {
+		if (num_bytes > (int)socket_peek(socket))
+			jsal_error(JS_RANGE_ERROR, "Not enough data buffered to satisfy read");
+		jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
+		socket_read(socket, buffer, num_bytes);
+	}
 	return true;
 }
 
