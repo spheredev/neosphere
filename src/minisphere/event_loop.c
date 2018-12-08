@@ -33,12 +33,38 @@
 #include "minisphere.h"
 #include "event_loop.h"
 
+#include "api.h"
 #include "dispatch.h"
+#include "pegasus.h"
+#include "sockets.h"
 
-static bool run_main_event_loop (int num_args, bool is_ctor, intptr_t magic);
+enum task_type
+{
+	TASK_ACCEPT_CLIENT,
+	TASK_CONNECT,
+	TASK_DISCONNECT,
+	TASK_READ_SOCKET,
+};
 
-static bool s_exiting = false;
-static int  s_frame_rate = 60;
+struct task
+{
+	enum task_type type;
+	js_ref_t*      resolver;
+	js_ref_t*      rejector;
+	server_t*      server;
+	socket_t*      socket;
+	js_ref_t*      buffer_ref;
+	size_t         bytes_left;
+	uint8_t*       ptr;
+};
+
+static void         free_task             (struct task* task);
+static struct task* push_new_task_promise (enum task_type type);
+static bool         run_main_event_loop   (int num_args, bool is_ctor, intptr_t magic);
+
+static bool      s_exiting = false;
+static int       s_frame_rate = 60;
+static vector_t* s_tasks;
 
 bool
 events_exiting(void)
@@ -58,22 +84,93 @@ events_set_frame_rate(int frame_rate)
 	s_frame_rate = frame_rate;
 }
 
+void
+events_accept_client(server_t* server)
+{
+	struct task* task;
+
+	task = push_new_task_promise(TASK_ACCEPT_CLIENT);
+	task->server = server_ref(server);
+}
+
+void
+events_connect_to(socket_t* socket, const char* hostname, int port)
+{
+	struct task* task;
+
+	if (socket == NULL)
+		socket = socket_new(1024, false);
+	else
+		socket_ref(socket);
+	socket_connect(socket, hostname, port);
+
+	task = push_new_task_promise(TASK_CONNECT);
+	task->socket = socket_ref(socket);
+}
+
+void
+events_disconnect(socket_t* socket)
+{
+	struct task* task;
+
+	socket_close(socket);
+
+	task = push_new_task_promise(TASK_DISCONNECT);
+	task->socket = socket_ref(socket);
+}
+
+void
+events_read_socket(socket_t* socket, size_t num_bytes)
+{
+	js_ref_t*    buffer_ref;
+	void*        data_ptr;
+	struct task* task;
+
+	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &data_ptr);
+	buffer_ref = jsal_pop_ref();
+
+	task = push_new_task_promise(TASK_READ_SOCKET);
+	task->socket = socket_ref(socket);
+	task->buffer_ref = buffer_ref;
+	task->bytes_left = num_bytes;
+	task->ptr = data_ptr;
+}
+
 bool
 events_run_main_loop(void)
 {
+	bool         have_error = false;
+	struct task* task;
+
+	int i, len;
+
+	s_tasks = vector_new(sizeof(struct task));
 	if (jsal_try(run_main_event_loop, 0)) {
 		jsal_pop(1);  // don't need return value
-		return true;
 	}
 	else {
 		// leave the error for the caller, don't pop it off
-		return false;
+		have_error = true;
 	}
+	for (i = 0, len = vector_len(s_tasks); i < len; ++i) {
+		task = vector_get(s_tasks, i);
+		free_task(task);
+	}
+	vector_free(s_tasks);
+	return !have_error;
 }
 
 void
 events_tick(int api_version, bool clear_screen, int framerate)
 {
+	size_t       bytes_read;
+	socket_t*    client;
+	bool         task_errored;
+	bool         task_finished;
+	struct task* task;
+
+	int i;
+
 	sphere_heartbeat(true, api_version);
 
 	if (!screen_skipping_frame(g_screen)) {
@@ -92,7 +189,91 @@ events_tick(int api_version, bool clear_screen, int framerate)
 	if (!dispatch_run(JOB_ON_TICK))
 		return;
 
+	// handle ongoing asynchronous tasks
+	for (i = 0; i < vector_len(s_tasks); ++i) {
+		task = vector_get(s_tasks, i);
+		task_finished = false;
+		task_errored = false;
+		switch (task->type) {
+		case TASK_ACCEPT_CLIENT:
+			if (client = server_accept(task->server)) {
+				jsal_push_class_obj(PEGASUS_SOCKET, client, false);
+				task_finished = true;
+			}
+			break;
+		case TASK_CONNECT:
+			if (socket_connected(task->socket)) {
+				jsal_push_class_obj(PEGASUS_SOCKET, task->socket, false);
+				task_finished = true;
+			}
+			else if (socket_closed(task->socket)) {
+				jsal_push_new_error(JS_ERROR, "Unable to establish TCP connection");
+				task_errored = true;
+			}
+			break;
+		case TASK_DISCONNECT:
+			if (socket_closed(task->socket)) {
+				jsal_push_undefined();
+				task_finished = true;
+			}
+			break;
+		case TASK_READ_SOCKET:
+			bytes_read = socket_read(task->socket, task->ptr, task->bytes_left);
+			task->bytes_left -= bytes_read;
+			task->ptr += bytes_read;
+			if (task->bytes_left == 0) {
+				jsal_push_ref_weak(task->buffer_ref);
+				task_finished = true;
+			}
+			else if (!socket_connected(task->socket)) {
+				jsal_push_new_error(JS_ERROR, "Connection was lost before completion of read");
+				task_errored = true;
+			}
+		}
+		if (task_finished || task_errored) {
+			jsal_push_ref_weak(task_errored ? task->rejector : task->resolver);
+			jsal_pull(-2);
+			jsal_call(1);
+			jsal_pop(1);
+			free_task(task);
+			vector_remove(s_tasks, i--);
+		}
+	}
+
+	// run the microtask queue one more time to finalize any promises that
+	// were settled above.
+	if (!dispatch_run(JOB_ON_TICK))
+		return;
+
 	++g_tick_count;
+}
+
+static struct task*
+push_new_task_promise(enum task_type type)
+{
+	js_ref_t*   rejector;
+	js_ref_t*   resolver;
+	struct task task;
+
+	// note: leave promise on top of the JSAL stack for convenience
+	jsal_push_new_promise(&resolver, &rejector);
+
+	memset(&task, 0, sizeof(struct task));
+	task.type = type;
+	task.resolver = resolver;
+	task.rejector = rejector;
+	vector_push(s_tasks, &task);
+	return vector_get(s_tasks, vector_len(s_tasks) - 1);
+}
+
+static void
+free_task(struct task* task)
+{
+	jsal_unref(task->buffer_ref);
+	jsal_unref(task->rejector);
+	jsal_unref(task->resolver);
+	socket_unref(task->socket);
+	server_unref(task->server);
 }
 
 static bool
@@ -110,7 +291,7 @@ run_main_event_loop(int num_args, bool is_ctor, intptr_t magic)
 	// bail, so we need to re-enable it here.
 	jsal_enable_vm(true);
 
-	while (dispatch_busy() || jsal_busy())
+	while (dispatch_busy() || jsal_busy() || vector_len(s_tasks) > 0)
 		events_tick(2, true, s_frame_rate);
 
 	// deal with Dispatch.onExit() jobs
