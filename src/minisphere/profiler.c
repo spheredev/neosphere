@@ -77,7 +77,7 @@ profiler_uninit(void)
 
 	runtime = al_get_time() - s_startup_time;
 
-	record_obj.name = strdup("[event loop - idle]");
+	record_obj.name = strdup("[miniSphere event loop]");
 	record_obj.num_hits = g_tick_count;
 	record_obj.total_cost = g_idle_time;
 	record_obj.function = NULL;

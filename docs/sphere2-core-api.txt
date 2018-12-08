@@ -1568,7 +1568,7 @@ Server#accept(); [L1]
 
 Server#acceptNext(); [ASYNC] [L2]
 
-    Instructs Sphere to accept the next available client connection from the
+    Instructs Sphere to accept the next available client connection via the
     event loop.  The promise resolves with a Socket representing that
     connection.  This is an asychronous version of `accept()` that can be used
     with `await`.
@@ -1739,9 +1739,15 @@ Shape#draw([surface[, transform]]); [L1]
 `Socket` Object
 --------------
 
-A `Socket` represents a TCP connection to another computer.  Sockets can either
-be created manually (if the game is initiating the connection), or returned by
-`Server#accept()` to represent an incoming connection.
+A `Socket` represents a raw TCP connection to another computer.  Sockets can
+either be created manually (if the game is initiating the connection), or
+returned by `Server#accept()` (or `acceptNext()`) to represent an incoming
+connection.
+
+Sockets in Sphere are non-blocking: sending and receiving data is handled in
+the event loop so `read()` and `write()` calls return immediately.  Socket
+objects are also reusable: if the connection is lost, the socket can be
+reconnected by simply calling its `connectTo()` method again.
 
 Socket.connectTo(hostname, port); [ASYNC] [L2]
 
@@ -1819,7 +1825,7 @@ Socket#read(num_bytes); [L1]
 
 Socket#readAsync(num_bytes); [ASYNC] [L2]
 
-    Instructs Sphere to read `num_bytes` from the socket from the event loop.
+    Instructs Sphere to read `num_bytes` from the socket via the event loop.
     The promise resolves with an ArrayBuffer containing the data read.  This is
     an asynchronous version of `read()` that can be used with `await`.
 
