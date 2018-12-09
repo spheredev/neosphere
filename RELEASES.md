@@ -4,12 +4,6 @@ Release Notes
 miniSphere 5.3
 --------------
 
-* miniSphere now supports API level 2.  As part of this, `Shape.drawImmediate`
-  has been canonized, as well as a handful of brand new APIs.  Because API 1
-  has several deficiencies that make it unsuitable as a Web-based platform,
-  Cell will now produce a warning when building a game targeting API 1.
-  Consider migrating to API 2 as soon as possible for maximum portability.
-
 * Cell's command-line syntax has changed to accommodate new commands.  Notably,
   a few options have been promoted to full commands, e.g. `cell -c` is now
   `cell clean`.  If you need a quick primer on the new syntax, you can type

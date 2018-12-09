@@ -313,11 +313,7 @@ main(int argc, char* argv[])
 	}
 	else {
 		api_version = SPHERE_API_VERSION;
-#if defined(MINISPHERE_SPHERUN)
 		api_level = SPHERE_API_LEVEL;
-#else
-		api_level = SPHERE_API_LEVEL_STABLE;
-#endif
 	}
 	
 	api_init();

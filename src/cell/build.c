@@ -1141,8 +1141,6 @@ write_manifests(build_t* build, bool debugging)
 			api_level = jsal_get_int(-1);
 			if (api_level < 1)
 				visor_error(build->visor, "'apiLevel': must be greater than zero, found '%d'", api_level);
-			else if (api_level == 1)  // Oozaru doesn't support API 1, warn developer
-				visor_warn(build->visor, "'apiLevel': game targeting API 1 will not run in Oozaru");
 			else if (api_level > SPHERE_API_LEVEL_STABLE && api_version <= SPHERE_API_VERSION)
 				visor_warn(build->visor, "'apiLevel': value '%d' targets future Sphere version", api_level);
 		}

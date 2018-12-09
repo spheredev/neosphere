@@ -11,7 +11,6 @@ In order to ease migration of existing Sphere v1 codebases to Sphere v2, legacy
 and modern API calls may be freely intermingled within the same codebase, and
 that holds true even when the engine is running in compatibility mode.
 
-
 The Sphere Event Loop
 ---------------------
 
@@ -50,11 +49,11 @@ API Levels
 
 The Sphere API is constantly evolving, and as such new functions and classes
 are added often.  When a new API feature is added, it will be designated as
-"experimental" until the next API freeze.  When an API freeze occurs, the
+experimental until the next API freeze.  When an API freeze occurs, the
 engine's supported API level will be incremented and some or all experimental
-features will be assigned to the new level.
+features will be "canonized" under the new API level.
 
-The maximum supported API level in this version of miniSphere is level 2.
+The maximum supported API level in this version of miniSphere is level 1.
 
 The minimum API level required by a game is specified in its game manifest (see
 above); if this value is not present it defaults to level 1.  By default, all
@@ -64,8 +63,8 @@ emulate the older API level, which disables all APIs introduced in a later
 level as well as experimental features.
 
 All class constructors, methods and properties listed below include the API
-level they were introduced in (e.g. "[L1]") or else, for experimental features,
-"[EXPERIMENTAL]".
+level they were introduced in, e.g. `L1` or else, for new experimental features
+not yet subject to an API freeze, `NEW`.
 
 
 SphereFS File System
@@ -326,23 +325,23 @@ For convenience, predefined BlendOp objects are provided in the API for the
 most common blending operations, but you can easily make new ones if these
 don't meet your needs.
 
-BlendOp.Default [R/O] [EXPERIMENTAL]
+BlendOp.Default [R/O] [NEW]
 
     The default blending mode.  If no blending operation is specified for a
     surface, it will use this mode.  This represents traditional alpha
     blending; the final rendered pixel is a weighted average of the source and
     destination pixels, based on the alpha value of the source pixel.
 
-BlendOp.Add [R/O] [EXPERIMENTAL]
-BlendOp.Multiply [R/O] [EXPERIMENTAL]
-BlendOp.Replace [R/O] [EXPERIMENTAL]
-BlendOp.Subtract [R/O] [EXPERIMENTAL]
+BlendOp.Add [R/O] [NEW]
+BlendOp.Multiply [R/O] [NEW]
+BlendOp.Replace [R/O] [NEW]
+BlendOp.Subtract [R/O] [NEW]
 
     Adds to, multiplies with, replaces, and subtracts from the destination
     pixel values, respectively.  These modes cover most common use cases, so
     the engine provides them for convenience.
 
-new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [EXPERIMENTAL]
+new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [NEW]
 
     Constructs a new BlendOp which blends colors according to the given
     parameters.
@@ -491,7 +490,7 @@ new DirectoryStream(dir_name[, options]); [L1]
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
 
-    options.recursive [default: false] [EXPERIMENTAL]
+    options.recursive [default: false] [NEW]
 
         If `recursive` is true, the DirectoryStream will descend into
         subdirectories to list files they contain.  The output will not contain
@@ -597,7 +596,7 @@ Dispatch.now(callback); [L1]
           latter runs at the beginning of the next frame; Dispatch.now() jobs
           always run during the same frame they were issued.
 
-Dispatch.onExit(callback); [EXPERIMENTAL]
+Dispatch.onExit(callback); [NEW]
 
     Sets up a one-time job to call `callback` after the event loop exits.  This
     is useful when you need to ensure something always runs before the engine
@@ -675,7 +674,7 @@ FS.directoryExists(pathname); [ASYNC] [L1]
     promise which resolves to `true` if the directory exists, or `false`
     otherwise.
 
-FS.directoryOf(pathname); [L2]
+FS.directoryOf(pathname); [NEW]
 
     Returns the full SphereFS path of the directory containing `pathname`.  The
     pathname is resolved via the usual SphereFS rules, so if no directory info
@@ -697,7 +696,7 @@ FS.evaluate(pathname); [ASYNC] [L1]
           can--and likely will--create new global functions and variables.  Be
           sure you know what you're doing!
 
-FS.extensionOf(pathname); [L2]
+FS.extensionOf(pathname); [NEW]
 
     If `pathname` refers to a file, returns the filename extension of the named
     file (i.e. everything starting from the last dot `.` in the filename).  If
@@ -711,7 +710,7 @@ FS.fileExists(pathname); [ASYNC] [L1]
     Checks whether a file by the name of `pathname` exists.  Returns a promise
     which resolves to `true` if the file exists, or `false` otherwise.
 
-FS.fileNameOf(pathname); [L2]
+FS.fileNameOf(pathname); [NEW]
 
     If `pathname` is a full or partial path to a file, returns only the
     filename portion, or `undefined` if there is no filename in the path (for
@@ -805,7 +804,7 @@ formats that aren't directly supported by the engine.  Sphere makes no attempt
 to interpret the data in the file and simply provides access to the raw bytes
 it contains.
 
-FileStream.open(filename, file_op); [ASYNC] [L2]
+FileStream.open(filename, file_op); [ASYNC] [NEW]
 
     Opens a file asynchronously and returns a promise for a `FileStream` that
     provides access to the contents of the file.  `file_op` specifies the file
@@ -834,13 +833,9 @@ FileStream.open(filename, file_op); [ASYNC] [L2]
 
 new FileStream(filename, file_op); [L1]
 
-    Similar to `FileStream.open`, but opens the file in synchronous mode.  In
-    this mode, reads and writes will be performed on-the-fly without yielding
-    to the event loop and `read` will return an ArrayBuffer directly instead of
-    returning it through a promise.
-
-    Note: Synchronous file system access is not supportable on some platforms;
-          for maximum portability, use `FileStream.open` instead.
+    Similar to `FileStream.open`, but opens the file synchronously, without
+    yielding to the event loop.  This is not supported on all platforms; for
+    maximum portability, use `FileStream.open` instead.
 
 FileStream#fileName [R/O] [L1]
 
@@ -859,11 +854,10 @@ FileStream#position [R/W] [L1]
           stream.  In this case the next write will be at the new position and
           the intervening space filled with NUL bytes.
 
-FileStream#close(); [ASYNC] [L1]
+FileStream#close(); [L1]
 
     Closes the file, performing any final processing as necessary.  Attempting
-    to use the FileStream after calling this will cause an exception.  Returns
-    a promise that resolves once the file has been successfully closed.
+    to use the FileStream after calling this will cause an exception.
 
     Note: While it's not strictly necessary to call `close()` on FileStream
           objects,  it may take some time for the garbage collector to get to
@@ -871,17 +865,16 @@ FileStream#close(); [ASYNC] [L1]
           if the file is opened in write mode, an error may be thrown if you
           try to construct another one.
 
-FileStream#read(num_bytes); [ASYNC] [L1]
+FileStream#read(num_bytes); [L1]
 
     Reads data from the file, up to the specified number of bytes, and returns
-    a promise for an ArrayBuffer containing the data read.  The file must be
-    opened for reading.
+    an ArrayBuffer containing the data read.  The file must be opened for
+    reading.
 
-FileStream#write(data); [ASYNC] [L1]
+FileStream#write(data); [L1]
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
-    Returns a promise that resolves once the data has been written.
 
 
 `Font` Object
@@ -896,7 +889,7 @@ Font.Default [R/O] [L1]
     Gets the engine's default font.  This is the font used for the FPS counter
     and system messages.
 
-Font.fromFile(filename); [ASYNC] [L2]
+Font.fromFile(filename); [ASYNC] [NEW]
 
     Loads the RFN font file named by `filename` asynchronously and returns a
     promise for the newly constructed Font object.
@@ -935,7 +928,7 @@ Font#getTextSize(text[, wrap_width]); [L1]
     Note: If `wrap_width` is not provided, no word wrap processing will be
           performed.
 
-Font#widthOf(text); [EXPERIMENTAL]
+Font#widthOf(text); [NEW]
 
     Returns the width, in pixels, of `text` when rendered by `Font#drawText`
     without wrapping.
@@ -984,12 +977,12 @@ JobToken#cancel(); [L1]
     using either `Dispatch.now()` or `Dispatch.later()` and has already started
     running, calling this has no effect.
 
-JobToken#pause(); [EXPERIMENTAL]
+JobToken#pause(); [NEW]
 
     Pauses the job.  Paused jobs will not run, but do keep the event loop alive
     and can be resumed at any time without the need to dispatch a new job.
 
-JobToken#resume(); [EXPERIMENTAL]
+JobToken#resume(); [NEW]
 
     Resumes the job associated with this token after it's been paused with
     JobToken#pause().  If the job is not currently paused, this does nothing.
@@ -1004,10 +997,10 @@ Joystick.Null [R/O] [L1]
     values for all inputs.  Joystick.Null can be used in place of a real
     Joystick object to simplify input code.
 
-Joystick.P1 [R/O] [L2]
-Joystick.P2 [R/O] [L2]
-Joystick.P3 [R/O] [L2]
-Joystick.P4 [R/O] [L2]
+Joystick.P1 [R/O] [NEW]
+Joystick.P2 [R/O] [NEW]
+Joystick.P3 [R/O] [NEW]
+Joystick.P4 [R/O] [NEW]
 
    Gets the default joystick for the respective player.  If there are many
    joystick or gamepad devices attached, there is no guarantee which ones these
@@ -1333,7 +1326,7 @@ Mouse#getEvent(); [L1]
             The X and Y position of the mouse cursor relative to the rendering
             area at the time the event was received.
 
-        event.delta [EXPERIMENTAL]
+        event.delta [NEW]
 
             For mouse wheel events, specifies how much the wheel has moved.
             For any other event, this will be `undefined`.
@@ -1481,7 +1474,7 @@ for a `Sample` is loaded into memory in its entirety and multiple instances can
 be played simultaneously with no latency, making this very useful for sound
 effects.
 
-Sample.fromFile(filename); [ASYNC] [L2]
+Sample.fromFile(filename); [ASYNC] [NEW]
 
     Loads the audio file named by `filename` asynchronously and returns a
     promise for the newly constructed Sample object.  Supported formats are
@@ -1547,14 +1540,14 @@ new Server(port[, backlog_size]); [L1]
     `backlog_size` specifies the size of the backlog and defaults to 128.  If
     the backlog fills, new connections will be refused.
 
-Server#noDelay [R/W] [L2]
+Server#noDelay [R/W] [NEW]
 
-    Gets or sets a boolean value indicating whether Nagle's algorithm (write
-    buffering) is turned off for this server.  This doesn't directly affect the
-    server but will be used as the initial value of `noDelay` for all sockets
-    returned by `accept()`.
+    Gets or sets a boolean value indicating whether Nagle's algorithm is turned
+    off for this server.  This doesn't directly affect the server but will be
+    used as the initial setting of `noDelay` for all sockets returned by
+    `accept()` or `acceptNext()`.
 
-Server#numPending [R/O] [L2]
+Server#numPending [R/O] [NEW]
 
     Gets the number of pending connections currently in the backlog.  If the
     number of pending connections is allowed to reach the backlog size
@@ -1566,7 +1559,7 @@ Server#accept(); [L1]
     empty, a RangeError will be thrown, so you should check the value of
     `numPending` first to see if there are any connections in the backlog.
 
-Server#acceptNext(); [ASYNC] [L2]
+Server#acceptNext(); [ASYNC] [NEW]
 
     Instructs Sphere to accept the next available client connection via the
     event loop.  The promise resolves with a Socket representing that
@@ -1592,7 +1585,7 @@ Shader.Default [R/O] [L1]
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
 
-Shader.fromFiles(options); [ASYNC] [L2]
+Shader.fromFiles(options); [ASYNC] [NEW]
 
     Loads the shader source files specified in `options` asynchronously and
     returns a promise for the newly constructed Shader object.
@@ -1687,7 +1680,7 @@ ShapeType [enumeration] [L1]
         ShapeType.Triangles
         ShapeType.TriStrip
 
-Shape.drawImmediate([surface, ]type[, texture], vertices); [L2]
+Shape.drawImmediate([surface, ]type[, texture], vertices); [NEW]
 
     Draws a shape to a surface in immediate mode (on-the-fly).  Useful when
     you need to create shapes on demand (procedural generation, for instance)
@@ -1749,7 +1742,7 @@ return immediately; data is buffered which allows the game to read or write at
 at any time with no rate limit; and if a connection is lost, the socket can be
 reconnected by simply calling its `connectTo()` method again.
 
-Socket.connectTo(hostname, port); [ASYNC] [L2]
+Socket.connectTo(hostname, port); [ASYNC] [NEW]
 
     Connects to the specified host and port and returns a promise for a newly
     constructed Socket object for the connection.  If the connection attempt
@@ -1776,13 +1769,13 @@ Socket#bytesPending [R/O] [L1]
 
     Accessing this property on a disconnected socket will throw a TypeError.
 
-Socket#bytesReceived [R/O] [L2]
+Socket#bytesReceived [R/O] [NEW]
 
     Gets the total number of bytes of data received through this socket since
     it was last connected, including data still in the socket's receive buffer
     and not yet read by the game.
 
-Socket#bytesSent [R/O] [L2]
+Socket#bytesSent [R/O] [NEW]
 
     Gets the total number of bytes of data transmitted through this socket
     since it was last connected.
@@ -1796,7 +1789,7 @@ Socket#connected [R/O] [L1]
     false, you won't be able to call most methods (except `connectTo`) on the
     socket object.
 
-Socket#noDelay [R/W] [L2]
+Socket#noDelay [R/W] [NEW]
 
     Gets or sets a boolean value indicating whether Nagle's algorithm is turned
     off for this socket.  If `false` (the default), the operating system may
@@ -1814,7 +1807,7 @@ Socket#remotePort [R/O] [L1]
     connection.  Generally not very useful, but it's there if you need it.  If
     the socket is disconnected, accessing this will throw an error.
 
-Socket#asyncRead(num_bytes); [ASYNC] [L2]
+Socket#asyncRead(num_bytes); [ASYNC] [NEW]
 
     Instructs Sphere to read `num_bytes` from the socket via the event loop.
     The promise resolves with an ArrayBuffer containing the data read.  This is
@@ -1824,7 +1817,7 @@ Socket#asyncRead(num_bytes); [ASYNC] [L2]
           buffer to immediately satisfy it.  However, if the connection is lost
           before the read completes, Sphere will reject the promise.
 
-Socket#asyncWrite(data); [ASYNC] [L2]
+Socket#asyncWrite(data); [ASYNC] [NEW]
 
     Instructs Sphere to write `data`--either an ArrayBuffer, TypedArray view,
     or DataView--to the socket via the event loop.  The promise resolves once
@@ -1851,7 +1844,7 @@ Socket#connectTo(hostname, port); [ASYNC] [L1]
           the socket is already connected when `connectTo()` is called, a
           TypeError will be thrown.
 
-Socket#disconnect(); [L2]
+Socket#disconnect(); [NEW]
 
     Immediately disconnects the socket.  If there is still data in the socket's
     write-behind buffer that hasn't been transmitted, it will be discarded.
@@ -1885,7 +1878,7 @@ A `Sound` represents a streaming audio file.  Because the sound is streamed, it
 remains compressed, saving RAM; however, only one instance of the sound can be
 played at a time.
 
-Sound.fromFile(filename); [ASYNC] [L2]
+Sound.fromFile(filename); [ASYNC] [NEW]
 
     Loads the audio file named by `filename` asynchronously and returns a
     promise for the newly constructed `Sound` object.  Supported sound formats
@@ -2026,7 +2019,7 @@ Surface.Screen [R/O] [L1]
     this surface will automatically become visible on the screen the next time
     the event loop regains control.
 
-Surface.fromFile(filename); [ASYNC] [L2]
+Surface.fromFile(filename); [ASYNC] [NEW]
 
     Loads the image file named by `filename` asynchronously and returns a
     promise for a Surface whose dimensions and initial content match that of
@@ -2053,7 +2046,7 @@ new Surface(filename); [L1]
     the event loop, and returns a Surface whose dimensions and initial content
     match that of the loaded image.  May not be supported on all platforms.
 
-Surface#blendOp [R/W] [EXPERIMENTAL]
+Surface#blendOp [R/W] [NEW]
 
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
@@ -2102,7 +2095,7 @@ directly using the Core API; it must be used to texture a `Shape`.
 Note that Textures are read-only.  If you need a writable texture, you can use
 a Surface object instead.
 
-Texture.fromFile(filename); [ASYNC] [L2]
+Texture.fromFile(filename); [ASYNC] [NEW]
 
     Loads the image file named by `filename` asynchronously and returns a
     promise for the newly constructed Texture object.
@@ -2148,7 +2141,7 @@ Texture#height [R/O] [L1]
 
     Gets the width or height of the texture, in pixels.
 
-Texture#download(); [EXPERIMENTAL]
+Texture#download(); [NEW]
 
     Downloads the 32-bit RGBA pixel data from the texture and returns it as a
     new Uint8ClampedArray.
@@ -2157,7 +2150,7 @@ Texture#download(); [EXPERIMENTAL]
           shouldn't be done at render time if you can avoid it.  Use a Surface
           for render-to-texture effects if at all possible.
 
-Texture#upload(content); [EXPERIMENTAL]
+Texture#upload(content); [NEW]
 
     Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
     array) to the texture.  Enough data must be provided to completely rewrite
@@ -2271,14 +2264,14 @@ new VertexList(vertices); [L1]
 The somewhat cryptically-named `Z` namespace hosts functions used for data
 compression.
 
-Z.deflate(data[, level]); [EXPERIMENTAL]
+Z.deflate(data[, level]); [NEW]
 
     Compresses the data in an ArrayBuffer or TypedArray using the DEFLATE
     compression method.  `level` specifies the compression level from
     0 (no compression) to 9 (maximum), with 7 being the default.  Returns an
     ArrayBuffer containing the compressed data.
 
-Z.inflate(data[, max_size]); [EXPERIMENTAL]
+Z.inflate(data[, max_size]); [NEW]
 
     Decompresses data in an ArrayBuffer or TypedArray which was previously
     compressed using DEFLATE.  `max_size` is optional and specifies an upper
