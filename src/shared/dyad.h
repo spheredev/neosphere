@@ -95,6 +95,7 @@ void dyad_setNoDelay(dyad_Stream *stream, int opt);
 int  dyad_getState(dyad_Stream *stream);
 const char *dyad_getAddress(dyad_Stream *stream);
 int  dyad_getPort(dyad_Stream *stream);
+int  dyad_getBytesPending(dyad_Stream *stream);
 int  dyad_getBytesSent(dyad_Stream *stream);
 int  dyad_getBytesReceived(dyad_Stream *stream);
 dyad_Socket dyad_getSocket(dyad_Stream *stream);

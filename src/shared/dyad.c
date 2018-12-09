@@ -1144,6 +1144,10 @@ int dyad_getPort(dyad_Stream *stream) {
 }
 
 
+int dyad_getBytesPending(dyad_Stream *stream) {
+	return stream->writeBuffer.length;
+}
+
 int dyad_getBytesSent(dyad_Stream *stream) {
   return stream->bytesSent;
 }

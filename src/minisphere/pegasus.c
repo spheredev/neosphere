@@ -414,7 +414,10 @@ static bool js_Shape_set_texture             (int num_args, bool is_ctor, intptr
 static bool js_Shape_set_vertexList          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shape_draw                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Socket                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_get_bytesAvailable     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_get_bytesPending       (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_get_bytesReceived      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_get_bytesSent          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_get_connected          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_get_noDelay            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_get_remoteAddress      (int num_args, bool is_ctor, intptr_t magic);
@@ -725,6 +728,7 @@ pegasus_init(int api_level)
 	api_define_prop("Shape", "vertexList", false, js_Shape_get_vertexList, js_Shape_set_vertexList);
 	api_define_method("Shape", "draw", js_Shape_draw, 0);
 	api_define_class("Socket", PEGASUS_SOCKET, js_new_Socket, js_Socket_finalize, 0);
+	api_define_prop("Socket", "bytesAvailable", false, js_Socket_get_bytesAvailable, NULL);
 	api_define_prop("Socket", "bytesPending", false, js_Socket_get_bytesPending, NULL);
 	api_define_prop("Socket", "connected", false, js_Socket_get_connected, NULL);
 	api_define_prop("Socket", "remoteAddress", false, js_Socket_get_remoteAddress, NULL);
@@ -919,6 +923,8 @@ pegasus_init(int api_level)
 		api_define_func("Shape", "drawImmediate", js_Shape_drawImmediate, 0);
 		api_define_prop("Server", "numPending", false, js_Server_get_numPending, NULL);
 		api_define_prop("Server", "noDelay", false, js_Server_get_noDelay, js_Server_set_noDelay);
+		api_define_prop("Socket", "bytesReceived", false, js_Socket_get_bytesReceived, NULL);
+		api_define_prop("Socket", "bytesSent", false, js_Socket_get_bytesSent, NULL);
 		api_define_prop("Socket", "noDelay", false, js_Socket_get_noDelay, js_Socket_set_noDelay);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
 		api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
@@ -4464,7 +4470,7 @@ js_Socket_finalize(void* host_ptr)
 }
 
 static bool
-js_Socket_get_bytesPending(int num_args, bool is_ctor, intptr_t magic)
+js_Socket_get_bytesAvailable(int num_args, bool is_ctor, intptr_t magic)
 {
 	socket_t* socket;
 
@@ -4474,6 +4480,44 @@ js_Socket_get_bytesPending(int num_args, bool is_ctor, intptr_t magic)
 	if (!socket_connected(socket))
 		jsal_error(JS_RANGE_ERROR, "Socket is not connected");
 	jsal_push_int((int)socket_peek(socket));
+	return true;
+}
+
+static bool
+js_Socket_get_bytesPending(int num_args, bool is_ctor, intptr_t magic)
+{
+	socket_t* socket;
+
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
+
+	if (!socket_connected(socket))
+		jsal_error(JS_RANGE_ERROR, "Socket is not connected");
+	jsal_push_int(socket_bytes_pending(socket));
+	return true;
+}
+
+static bool
+js_Socket_get_bytesReceived(int num_args, bool is_ctor, intptr_t magic)
+{
+	socket_t* socket;
+
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
+
+	jsal_push_int(socket_bytes_in(socket));
+	return true;
+}
+
+static bool
+js_Socket_get_bytesSent(int num_args, bool is_ctor, intptr_t magic)
+{
+	socket_t* socket;
+
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
+
+	jsal_push_int(socket_bytes_out(socket));
 	return true;
 }
 

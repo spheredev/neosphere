@@ -60,6 +60,8 @@ struct socket
 	unsigned int refcount;
 	unsigned int id;
 	size_t       buffer_size;
+	int          bytes_in;
+	int          bytes_out;
 	bool         no_delay;
 	uint8_t*     recv_buffer;
 	size_t       recv_size;
@@ -151,6 +153,30 @@ socket_set_no_delay(socket_t* it, bool enabled)
 	it->no_delay = enabled;
 	if (it->stream != NULL)
 		dyad_setNoDelay(it->stream, it->no_delay);
+}
+
+int
+socket_bytes_in(const socket_t* it)
+{
+	if (it->stream == NULL)
+		return it->bytes_in;
+	return dyad_getBytesReceived(it->stream);
+}
+
+int
+socket_bytes_out(const socket_t* it)
+{
+	if (it->stream == NULL)
+		return it->bytes_out;
+	return dyad_getBytesSent(it->stream);
+}
+
+int
+socket_bytes_pending(const socket_t* it)
+{
+	if (it->stream == NULL)
+		return 0;
+	return dyad_getBytesPending(it->stream);
 }
 
 bool
@@ -410,6 +436,8 @@ on_dyad_close(dyad_Event* e)
 
 	socket = e->udata;
 
+	socket->bytes_in = dyad_getBytesReceived(socket->stream);
+	socket->bytes_out = dyad_getBytesSent(socket->stream);
 	socket->stream = NULL;
 }
 

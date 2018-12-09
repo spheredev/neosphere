@@ -1740,13 +1740,13 @@ Shape#draw([surface[, transform]]); [L1]
 --------------
 
 A `Socket` represents a raw TCP connection to another computer.  Sockets can
-either be created manually (if the game is initiating the connection), or
-returned by `Server#accept()` (or `acceptNext()`) to represent an incoming
-connection.
+either be created manually for outgoing connections, or returned by
+`Server#accept()` (or `acceptNext()`) to represent an incoming connection.
 
-Sockets in Sphere are non-blocking: sending and receiving data is handled in
-the event loop so `read()` and `write()` calls return immediately.  Socket
-objects are also reusable: if the connection is lost, the socket can be
+Sphere Sockets are non-blocking, fully buffered, and reusable.  Network
+communication is handled in the event loop so that `read()` and `write()` calls
+return immediately; data is buffered which allows the game to read or write at
+at any time with no rate limit; and if a connection is lost, the socket can be
 reconnected by simply calling its `connectTo()` method again.
 
 Socket.connectTo(hostname, port); [ASYNC] [L2]
@@ -1762,10 +1762,33 @@ new Socket([hostname, port]); [L1]
     be created in a disconnected state and you must call `connectTo()` manually
     to connect it.
 
-Socket#bytesPending [R/O] [L1]
+Socket#bytesAvailable [R/O] [L1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
-    Call `Socket#read()` to retrieve this data.
+    This is the maximum amount of data you can retrieve using `read()` on that
+    frame without causing a RangeError.
+
+Socket#bytesPending [R/O] [L1]
+
+    Gets the number of bytes of data currently in this socket's write-behind
+    buffer.  This is the amount of data which has been written to the socket
+    but not yet sent over the network.
+
+    Accessing this property on a disconnected socket will throw a TypeError.
+
+Socket#bytesReceived [R/O] [L2]
+
+    Gets the total number of bytes of data received through this socket since
+    it was last connected, including data still in the socket's receive buffer
+    and not yet read by the game.
+
+Socket#bytesSent [R/O] [L2]
+
+    Gets the total number of bytes of data sent through this socket since it
+    was last connected.
+
+    Note: This only counts data actually sent over the network.  Data still
+          waiting in the socket's write-behind buffer is not counted.
 
 Socket#connected [R/O] [L1]
 
