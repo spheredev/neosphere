@@ -1765,8 +1765,8 @@ new Socket([hostname, port]); [L1]
 Socket#bytesAvailable [R/O] [L1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
-    This is the maximum amount of data you can retrieve using `read()` on that
-    frame without causing a RangeError.
+    This is the maximum amount of data you can retrieve using `read()` on the
+    current frame without it throwing a RangeError.
 
 Socket#bytesPending [R/O] [L1]
 
@@ -1784,10 +1784,10 @@ Socket#bytesReceived [R/O] [L2]
 
 Socket#bytesSent [R/O] [L2]
 
-    Gets the total number of bytes of data sent through this socket since it
-    was last connected.
+    Gets the total number of bytes of data transmitted through this socket
+    since it was last connected.
 
-    Note: This only counts data actually sent over the network.  Data still
+    Note: This only counts bytes actually sent over the network.  Data still
           waiting in the socket's write-behind buffer is not counted.
 
 Socket#connected [R/O] [L1]
@@ -1798,10 +1798,10 @@ Socket#connected [R/O] [L1]
 
 Socket#noDelay [R/W] [L2]
 
-    Gets or sets a boolean value indicating whether Nagle's algorithm (write
-    buffering) is turned off for this socket.  If `false` (the default), writes
-    are buffered and may not be sent over the network until some later time.
-    Otherwise, data is sent as soon as it's written to the socket.
+    Gets or sets a boolean value indicating whether Nagle's algorithm is turned
+    off for this socket.  If `false` (the default), the operating system may
+    delay transmission of small writes while waiting on acknowledgement of a
+    previous transmission.
 
 Socket#remoteAddress [R/O] [L1]
 
@@ -1824,12 +1824,21 @@ Socket#asyncRead(num_bytes); [ASYNC] [L2]
           buffer to immediately satisfy it.  However, if the connection is lost
           before the read completes, Sphere will reject the promise.
 
+Socket#asyncWrite(data); [ASYNC] [L2]
+
+    Instructs Sphere to write `data`--either an ArrayBuffer, TypedArray view,
+    or DataView--to the socket via the event loop.  The promise resolves once
+    all bytes have been transmitted.  This is an asynchronous version of
+    `write()` that can be used with `await`.
+
+    Note: If the connection is lost before the write completes, Sphere will
+          reject the promise.
+
 Socket#close(); [ASYNC] [L1]
 
-    Disconnects the socket.  If there is still data in the socket's outgoing
-    write buffer yet to be written, it will be written out before the
-    connection is closed.  The promise resolves when the socket is no longer
-    connected.
+    Disconnects the socket.  Data remaining the socket's write-behind buffer
+    will be written out before the connection is closed.  The promise resolves
+    once the socket is no longer connected.
 
 Socket#connectTo(hostname, port); [ASYNC] [L1]
 
@@ -1844,7 +1853,7 @@ Socket#connectTo(hostname, port); [ASYNC] [L1]
 Socket#disconnect(); [L2]
 
     Immediately disconnects the socket.  If there is still data in the socket's
-    write-behind buffer not yet sent over the wire, it will be discarded.
+    write-behind buffer that hasn't been transmitted, it will be discarded.
 
 Socket#read(num_bytes); [L1]
 
@@ -1853,14 +1862,19 @@ Socket#read(num_bytes); [L1]
 
     This call is non-blocking; if there is not enough data in the socket's
     receive buffer to satisfy the read, a RangeError will be thrown.  To avoid
-    the RangeError, check the value of `bytesPending` first.
+    the RangeError, check the value of `bytesAvailable` first.
 
 Socket#write(data); [L1]
 
-    Writes data to the socket, which can be read on the other end.  `data` can
-    be either an ArrayBuffer, TypedArray view, or DataView.  The data may be
-    buffered until some later time; to eliminate the delay and send data
-    immediately, set `noDelay` to `true`.
+    Writes data to the socket, to be read on the other end.  `data` can be an
+    ArrayBuffer, TypedArray view, or DataView.  This function always returns
+    immediately; Sphere will transmit the data from the event loop as soon as
+    it's possible to do so.
+
+    Note: No error is produced if the connection is lost mid-transmission.  If
+          you need to detect this, you can either monitor the value of
+          `bytesSent`, or else just call `asyncWrite()` which will reject its
+          promise if an early disconnection happens.
 
 
 `Sound` Object

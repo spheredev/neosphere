@@ -10,7 +10,13 @@ v5.3.0 - TBD
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
 * Adds `Joystick.P1` through `Joystick.P4` to the Core API, providing built-in
   default gamepad inputs for up to four players.
-* Adds `Socket#noDelay` and `Server#noDelay` for disabling TCP write buffering.
+* Adds support to `Socket` for performing connnections and I/O via the event
+  loop, allowing a game to `await` the arrival of data and avoiding the need to
+  explicitly check the state of the socket every frame.
+* Adds several new methods and properties to the built-in `Socket` class, most
+  notably including the `noDelay` option for disabling Nagle's algorithm.
+* Adds `Server#numPending`, which reflects the number of connections in the
+  server's backlog.
 * Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
   using `require`.
 * Adds `Font#widthOf` for getting the width in pixels of a single line of text.
@@ -59,6 +65,8 @@ v5.3.0 - TBD
 * Fixes an issue where `import` treats `.js` files as CommonJS instead of ESM.
 * Fixes an issue where `Sphere.Game` can be modified by JS code at runtime.
 * Fixes an issue where the cursor is hidden while sitting over the game window.
+* Fixes an issue where `Socket#close` disposes of the underlying socket object,
+  preventing it from being reused.
 * Fixes a bug where `FS.fullPath` doesn't automatically add a trailing slash
   when passed the path of a known directory.
 * Fixes a bug where Cell defaults to putting `dist/` in the current working

@@ -41,8 +41,9 @@ void events_set_frame_rate (int frame_rate);
 void events_accept_client  (server_t* server);
 void events_close_socket   (socket_t* socket);
 void events_connect_to     (socket_t* socket, const char* hostname, int port);
-void events_read_socket    (socket_t* socket, size_t num_bytes);
+void events_read_socket    (socket_t* socket, int num_bytes);
 bool events_run_main_loop  (void);
+void events_write_socket   (socket_t* socket, const void* data, int num_bytes);
 void events_tick           (int api_version, bool clear_screen, int framerate);
 
 #endif

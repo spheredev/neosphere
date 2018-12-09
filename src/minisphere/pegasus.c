@@ -733,8 +733,8 @@ pegasus_init(int api_level)
 	api_define_prop("Socket", "connected", false, js_Socket_get_connected, NULL);
 	api_define_prop("Socket", "remoteAddress", false, js_Socket_get_remoteAddress, NULL);
 	api_define_prop("Socket", "remotePort", false, js_Socket_get_remotePort, NULL);
-	api_define_async_method("Socket", "close", js_Socket_close, 0);
-	api_define_async_method("Socket", "connectTo", js_Socket_connectTo, 0);
+	api_define_method("Socket", "close", js_Socket_close, 0);
+	api_define_method("Socket", "connectTo", js_Socket_connectTo, 0);
 	api_define_method("Socket", "read", js_Socket_read, 0);
 	api_define_method("Socket", "write", js_Socket_write, 0);
 	api_define_class("Sound", PEGASUS_SOUND, js_new_Sound, js_Sound_finalize, 0);
@@ -928,6 +928,7 @@ pegasus_init(int api_level)
 		api_define_prop("Socket", "noDelay", false, js_Socket_get_noDelay, js_Socket_set_noDelay);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
 		api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
+		api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
 		api_define_method("Socket", "disconnect", js_Socket_disconnect, 0);
 		api_define_const("DataType", "Bytes", DATA_BYTES);
 		api_define_const("DataType", "Lines", DATA_LINES);
@@ -4477,9 +4478,7 @@ js_Socket_get_bytesAvailable(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	if (!socket_connected(socket))
-		jsal_error(JS_RANGE_ERROR, "Socket is not connected");
-	jsal_push_int((int)socket_peek(socket));
+	jsal_push_int(socket_peek(socket));
 	return true;
 }
 
@@ -4638,16 +4637,19 @@ js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
-
 	num_bytes = jsal_require_int(0);
+
+	if (num_bytes < 0)
+		jsal_error(JS_RANGE_ERROR, "Invalid size for Socket read '%d'", num_bytes);
+
 	if (!socket_connected(socket))
 		jsal_error(JS_ERROR, "Cannot read from disconnected socket");
 	if (jsal_is_async_call()) {
 		events_read_socket(socket, num_bytes);
 	}
 	else {
-		if (num_bytes > (int)socket_peek(socket))
-			jsal_error(JS_RANGE_ERROR, "Not enough data buffered to satisfy read");
+		if (num_bytes > socket_peek(socket))
+			jsal_error(JS_RANGE_ERROR, "Not enough data received to satisfy read");
 		jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
 		socket_read(socket, buffer, num_bytes);
 	}
@@ -4667,8 +4669,14 @@ js_Socket_write(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!socket_connected(socket))
 		jsal_error(JS_ERROR, "Cannot write to disconnected socket");
-	socket_write(socket, payload, write_size);
-	return false;
+	if (jsal_is_async_call()) {
+		events_write_socket(socket, payload, (int)write_size);
+		return true;
+	}
+	else {
+		socket_write(socket, payload, (int)write_size);
+		return false;
+	}
 }
 
 static bool

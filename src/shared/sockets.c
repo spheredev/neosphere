@@ -64,7 +64,7 @@ struct socket
 	int          bytes_out;
 	bool         no_delay;
 	uint8_t*     recv_buffer;
-	size_t       recv_size;
+	int          recv_size;
 	dyad_Stream* stream;
 	bool         sync_mode;
 };
@@ -245,17 +245,16 @@ socket_close(socket_t* it)
 		return;
 	console_log(2, "closing connection on TCP socket #%u", it->id);
 	dyad_end(it->stream);
-	it->recv_size = 0;
 }
 
-size_t
+int
 socket_peek(const socket_t* it)
 {
 	return it->recv_size;
 }
 
-size_t
-socket_read(socket_t* it, void* buffer, size_t num_bytes)
+int
+socket_read(socket_t* it, void* buffer, int num_bytes)
 {
 	if (it->sync_mode) {
 		// in sync mode, block until all bytes are available.
@@ -275,15 +274,15 @@ socket_read(socket_t* it, void* buffer, size_t num_bytes)
 	return num_bytes;
 }
 
-size_t
-socket_write(socket_t* it, const void* data, size_t num_bytes)
+int
+socket_write(socket_t* it, const void* data, int num_bytes)
 {
 	if (it->stream == NULL)
 		return 0;
 
-	console_log(4, "writing %zd bytes to TCP socket #%u", num_bytes, it->id);
-	dyad_write(it->stream, data, (int)num_bytes);
-	if (num_bytes > 0)
+	console_log(4, "writing %d bytes to TCP socket #%u", num_bytes, it->id);
+	dyad_write(it->stream, data, num_bytes);
+	if (it->sync_mode && num_bytes > 0)
 		sockets_update();
 	return num_bytes;
 }

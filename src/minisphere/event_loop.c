@@ -44,6 +44,7 @@ enum task_type
 	TASK_CLOSE_SOCKET,
 	TASK_CONNECT,
 	TASK_READ_SOCKET,
+	TASK_WRITE_SOCKET,
 };
 
 struct task
@@ -54,7 +55,7 @@ struct task
 	server_t*      server;
 	socket_t*      socket;
 	js_ref_t*      buffer_ref;
-	size_t         bytes_left;
+	int            bytes_left;
 	uint8_t*       ptr;
 };
 
@@ -120,7 +121,7 @@ events_connect_to(socket_t* socket, const char* hostname, int port)
 }
 
 void
-events_read_socket(socket_t* socket, size_t num_bytes)
+events_read_socket(socket_t* socket, int num_bytes)
 {
 	js_ref_t*    buffer_ref;
 	void*        data_ptr;
@@ -136,6 +137,18 @@ events_read_socket(socket_t* socket, size_t num_bytes)
 	task->ptr = data_ptr;
 }
 
+void
+events_write_socket(socket_t* socket, const void* data, int num_bytes)
+{
+	struct task* task;
+
+	socket_write(socket, data, num_bytes);
+
+	task = push_new_task_promise(TASK_WRITE_SOCKET);
+	task->socket = socket_ref(socket);
+	task->bytes_left = socket_bytes_out(socket) + num_bytes;
+}
+
 bool
 events_run_main_loop(void)
 {
@@ -146,7 +159,7 @@ events_run_main_loop(void)
 
 	s_tasks = vector_new(sizeof(struct task));
 	if (jsal_try(run_main_event_loop, 0)) {
-		jsal_pop(1);  // don't need return value
+		jsal_pop(1);  // don't need the return value
 	}
 	else {
 		// leave the error for the caller, don't pop it off
@@ -229,6 +242,17 @@ events_tick(int api_version, bool clear_screen, int framerate)
 				jsal_push_new_error(JS_ERROR, "Connection was lost before completion of read");
 				task_errored = true;
 			}
+			break;
+		case TASK_WRITE_SOCKET:
+			if (socket_bytes_out(task->socket) >= task->bytes_left) {
+				jsal_push_undefined();
+				task_finished = true;
+			}
+			else if (!socket_connected(task->socket)) {
+				jsal_push_new_error(JS_ERROR, "Connection was lost before completion of write");
+				task_errored = true;
+			}
+			break;
 		}
 		if (task_finished || task_errored) {
 			jsal_push_ref_weak(task_errored ? task->rejector : task->resolver);
