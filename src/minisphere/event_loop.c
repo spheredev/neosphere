@@ -176,7 +176,7 @@ events_run_main_loop(void)
 void
 events_tick(int api_version, bool clear_screen, int framerate)
 {
-	size_t       bytes_read;
+	int          bytes_read;
 	socket_t*    client;
 	bool         task_errored;
 	bool         task_finished;

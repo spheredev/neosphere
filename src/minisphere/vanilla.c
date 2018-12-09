@@ -7700,8 +7700,9 @@ js_Socket_write(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, SV1_SOCKET);
 
-	if (jsal_is_string(0))
+	if (jsal_is_string(0)) {
 		payload = (uint8_t*)jsal_get_lstring(0, &write_size);
+	}
 	else {
 		array = jsal_require_class_obj(0, SV1_BYTE_ARRAY);
 		payload = bytearray_buffer(array);
@@ -7711,7 +7712,7 @@ js_Socket_write(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_ERROR, "socket has been closed");
 	if (!socket_v1_connected(socket))
 		jsal_error(JS_ERROR, "socket is not connected");
-	socket_v1_write(socket, payload, write_size);
+	socket_v1_write(socket, payload, (int)write_size);
 	return false;
 }
 

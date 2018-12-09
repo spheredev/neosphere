@@ -119,20 +119,20 @@ socket_v1_close(socket_v1_t* it)
 	socket_close(it->client);
 }
 
-size_t
+int
 socket_v1_peek(const socket_v1_t* it)
 {
 	return socket_peek(it->client);
 }
 
-size_t
-socket_v1_read(socket_v1_t* it, void* buffer, size_t num_bytes)
+int
+socket_v1_read(socket_v1_t* it, void* buffer, int num_bytes)
 {
 	return socket_read(it->client, buffer, num_bytes);
 }
 
 void
-socket_v1_write(socket_v1_t* it, const void* data, size_t num_bytes)
+socket_v1_write(socket_v1_t* it, const void* data, int num_bytes)
 {
 	socket_write(it->client, data, num_bytes);
 }

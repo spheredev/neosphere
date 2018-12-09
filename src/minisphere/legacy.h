@@ -41,8 +41,8 @@ socket_v1_t*   socket_v1_ref        (socket_v1_t* it);
 void           socket_v1_unref      (socket_v1_t* it);
 bool           socket_v1_connected  (socket_v1_t* it);
 void           socket_v1_close      (socket_v1_t* it);
-size_t         socket_v1_peek       (const socket_v1_t* it);
-size_t         socket_v1_read       (socket_v1_t* it, void* buffer, size_t num_bytes);
-void           socket_v1_write      (socket_v1_t* it, const void* data, size_t num_bytes);
+int            socket_v1_peek       (const socket_v1_t* it);
+int            socket_v1_read       (socket_v1_t* it, void* buffer, int num_bytes);
+void           socket_v1_write      (socket_v1_t* it, const void* data, int num_bytes);
 
 #endif // SPHERE__LEGACY_H__INCLUDED

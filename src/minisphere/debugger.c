@@ -177,7 +177,7 @@ debugger_update(void)
 			jsal_debug_breakpoint_inject();
 			console_log(0, "connected to debugger at %s", socket_hostname(client));
 			handshake = strnewf("SSj/Ki v%d %s %s\n", KI_VERSION, SPHERE_ENGINE_NAME, SPHERE_VERSION);
-			socket_write(client, handshake, strlen(handshake));
+			socket_write(client, handshake, (int)strlen(handshake));
 			free(handshake);
 			s_socket = client;
 			s_is_attached = true;
