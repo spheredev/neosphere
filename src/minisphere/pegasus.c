@@ -4478,7 +4478,7 @@ js_Socket_get_bytesAvailable(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
 
-	jsal_push_int(socket_peek(socket));
+	jsal_push_int(socket_bytes_avail(socket));
 	return true;
 }
 
@@ -4648,7 +4648,7 @@ js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 		events_read_socket(socket, num_bytes);
 	}
 	else {
-		if (num_bytes > socket_peek(socket))
+		if (num_bytes > socket_bytes_avail(socket))
 			jsal_error(JS_RANGE_ERROR, "Not enough data received to satisfy read");
 		jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
 		socket_read(socket, buffer, num_bytes);

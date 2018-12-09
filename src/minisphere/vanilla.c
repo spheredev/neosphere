@@ -7636,7 +7636,7 @@ js_Socket_getPendingReadSize(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_ERROR, "socket has been closed");
 	if (!socket_v1_connected(socket))
 		jsal_error(JS_ERROR, "socket is not connected");
-	jsal_push_int((int)socket_v1_peek(socket));
+	jsal_push_int(socket_v1_bytes_avail(socket));
 	return true;
 }
 

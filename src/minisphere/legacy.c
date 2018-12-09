@@ -92,6 +92,12 @@ socket_v1_unref(socket_v1_t* it)
 	free(it);
 }
 
+int
+socket_v1_bytes_avail(const socket_v1_t* it)
+{
+	return socket_bytes_avail(it->client);
+}
+
 bool
 socket_v1_connected(socket_v1_t* it)
 {
@@ -117,12 +123,6 @@ void
 socket_v1_close(socket_v1_t* it)
 {
 	socket_close(it->client);
-}
-
-int
-socket_v1_peek(const socket_v1_t* it)
-{
-	return socket_peek(it->client);
 }
 
 int

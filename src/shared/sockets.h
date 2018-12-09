@@ -56,6 +56,7 @@ socket_t*   socket_ref           (socket_t* it);
 void        socket_unref         (socket_t* it);
 bool        socket_get_no_delay  (const socket_t* it);
 void        socket_set_no_delay  (socket_t* it, bool enabled);
+int         socket_bytes_avail   (const socket_t* it);
 int         socket_bytes_in      (const socket_t* it);
 int         socket_bytes_out     (const socket_t* it);
 int         socket_bytes_pending (const socket_t* it);
@@ -66,7 +67,6 @@ int         socket_port          (const socket_t* it);
 void        socket_close         (socket_t* it);
 bool        socket_connect       (socket_t* it, const char* hostname, int port);
 void        socket_disconnect    (socket_t* it);
-int         socket_peek          (const socket_t* it);
 int         socket_read          (socket_t* it, void* buffer, int num_bytes);
 int         socket_write         (socket_t* it, const void* data, int num_bytes);
 

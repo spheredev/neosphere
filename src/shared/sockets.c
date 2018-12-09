@@ -71,6 +71,7 @@ struct socket
 
 static void on_dyad_accept  (dyad_Event* e);
 static void on_dyad_close   (dyad_Event* e);
+static void on_dyad_connect (dyad_Event* e);
 static void on_dyad_receive (dyad_Event* e);
 
 static sockets_on_idle_t s_idle_callback = NULL;
@@ -156,6 +157,12 @@ socket_set_no_delay(socket_t* it, bool enabled)
 }
 
 int
+socket_bytes_avail(const socket_t* it)
+{
+	return it->recv_size;
+}
+
+int
 socket_bytes_in(const socket_t* it)
 {
 	if (it->stream == NULL)
@@ -205,12 +212,15 @@ socket_connected(const socket_t* it)
 bool
 socket_connect(socket_t* it, const char* hostname, int port)
 {
-	socket_close(it);
+	socket_disconnect(it);
+
+	// clear receive buffer before connection attempt
+	it->recv_size = 0;
 
 	it->stream = dyad_newStream();
-	dyad_setNoDelay(it->stream, it->no_delay);
-	dyad_addListener(it->stream, DYAD_EVENT_DATA, on_dyad_receive, it);
 	dyad_addListener(it->stream, DYAD_EVENT_CLOSE, on_dyad_close, it);
+	dyad_addListener(it->stream, DYAD_EVENT_CONNECT, on_dyad_connect, it);
+	dyad_addListener(it->stream, DYAD_EVENT_DATA, on_dyad_receive, it);
 	if (dyad_connect(it->stream, hostname, port) == -1)
 		goto on_error;
 	return true;
@@ -218,12 +228,6 @@ socket_connect(socket_t* it, const char* hostname, int port)
 on_error:
 	console_log(2, "couldn't connect TCP socket #%u to %s:%d", it->id, hostname, port);
 	return false;
-}
-
-void
-socket_disconnect(socket_t* it)
-{
-	dyad_close(it->stream);
 }
 
 const char*
@@ -247,10 +251,11 @@ socket_close(socket_t* it)
 	dyad_end(it->stream);
 }
 
-int
-socket_peek(const socket_t* it)
+void
+socket_disconnect(socket_t* it)
 {
-	return it->recv_size;
+	if (it->stream != NULL)
+		dyad_close(it->stream);
 }
 
 int
@@ -397,8 +402,8 @@ server_accept(server_t* it)
 	client->recv_buffer = malloc(it->buffer_size);
 	client->stream = it->backlog[0];
 	dyad_setNoDelay(client->stream, client->no_delay);
-	dyad_addListener(client->stream, DYAD_EVENT_DATA, on_dyad_receive, client);
 	dyad_addListener(client->stream, DYAD_EVENT_CLOSE, on_dyad_close, client);
+	dyad_addListener(client->stream, DYAD_EVENT_DATA, on_dyad_receive, client);
 
 	// we accepted the connection, remove it from the backlog
 	--it->num_backlog;
@@ -438,6 +443,16 @@ on_dyad_close(dyad_Event* e)
 	socket->bytes_in = dyad_getBytesReceived(socket->stream);
 	socket->bytes_out = dyad_getBytesSent(socket->stream);
 	socket->stream = NULL;
+}
+
+static void
+on_dyad_connect(dyad_Event* e)
+{
+	socket_t* socket;
+
+	socket = e->udata;
+
+	dyad_setNoDelay(socket->stream, socket->no_delay);
 }
 
 static void

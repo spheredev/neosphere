@@ -1844,11 +1844,12 @@ Socket#connectTo(hostname, port); [ASYNC] [L1]
 
     Connects the socket to `hostname` on `port`.  `hostname` can either be a
     domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  The promise
-    resolves when the socket is ready for communication.
+    resolves when the socket is ready for communication.  If there is still
+    data in the socket's receive buffer at this time, it will be discarded.
 
     Note: A single socket can only be connected to one client at a time.  If
-          the socket is already connected when `connectTo()` is called, the
-          promise will be rejected with a TypeError.
+          the socket is already connected when `connectTo()` is called, a
+          TypeError will be thrown.
 
 Socket#disconnect(); [L2]
 

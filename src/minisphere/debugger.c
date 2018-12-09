@@ -185,7 +185,7 @@ debugger_update(void)
 	}
 
 	// process any incoming SSj requests
-	if (s_socket == NULL || socket_peek(s_socket) == 0)
+	if (s_socket == NULL || socket_bytes_avail(s_socket) == 0)
 		return;
 	process_message(&step_op);
 }
