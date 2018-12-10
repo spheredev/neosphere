@@ -557,9 +557,10 @@ resolve(const fs_t* fs, const char* filename)
 		path_rebase(path, fs->system_path);
 	}
 	else if (path_hop_is(path, 0, "~"))
-		if (fs->user_path == NULL)
+		if (fs->user_path == NULL) {
 			// no user directory set, ~/ is a sandbox violation.
 			goto on_error;
+		}
 		else {
 			path_remove_hop(path, 0);
 			path_rebase(path, fs->user_path);

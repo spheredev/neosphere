@@ -303,13 +303,13 @@ jsal_require_pathname(int index, const char* origin_name, bool v1_mode, bool nee
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || (path_rooted(path) && game_safety(g_game) >= FS_SAFETY_FULL))
-		jsal_error(JS_TYPE_ERROR, "Illegal file or directory path '%s'", pathname);
+		jsal_error(JS_TYPE_ERROR, "SphereFS sandbox violation '%s'", pathname);
 	if (strcmp(prefix, "%") == 0)
 		jsal_error(JS_REF_ERROR, "SphereFS prefix '%%/' is reserved for future use");
 	if (strcmp(prefix, "~") == 0 && game_save_id(g_game) == NULL)
-		jsal_error(JS_REF_ERROR, "No save ID present in game manifest");
+		jsal_error(JS_REF_ERROR, "SphereFS prefix '~/' requires a save ID");
 	if (need_write && !game_is_writable(g_game, path_cstr(path), v1_mode))
-		jsal_error(JS_TYPE_ERROR, "Path is not writable '%s'", pathname);
+		jsal_error(JS_TYPE_ERROR, "File or directory is not writable '%s'", pathname);
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;

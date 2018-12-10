@@ -1088,7 +1088,9 @@ write_manifests(build_t* build, bool debugging)
 	const char* json_text;
 	path_t*     main_path;
 	const char* sandbox_mode;
+	const char* save_id;
 	path_t*     script_path;
+	size_t      span;
 	int         width;
 
 	visor_begin_op(build->visor, "writing Sphere manifest files");
@@ -1192,13 +1194,23 @@ write_manifests(build_t* build, bool debugging)
 		return false;
 	}
 
-	jsal_get_prop_string(-8, "development");
+	jsal_get_prop_string(-8, "saveID");
+	if (save_id = jsal_get_string(-1)) {
+		span = strspn(save_id, "abcdefghijklmnopqrstuvwxyzABCDEFGHIKLMNOPQRSTUVWXYZ0123456789-_.");
+		if (span != strlen(save_id))
+			visor_error(build->visor, "'saveID': invalid character '%c' in save ID", save_id[span]);
+	}
+	else {
+		visor_warn(build->visor, "'saveID': no save ID, game won't be able to use '~/'");
+	}
+
+	jsal_get_prop_string(-9, "development");
 	if (jsal_is_object(-1) && !jsal_is_array(-1)) {
 		if (jsal_get_prop_string(-1, "sandboxing")) {
 			sandbox_mode = jsal_to_string(-1);
 			if (strcmp(sandbox_mode, "full") != 0 && strcmp(sandbox_mode, "relaxed") != 0 && strcmp(sandbox_mode, "none") != 0) {
 				visor_error(build->visor, "'sandboxing': must be one of 'full', 'relaxed', 'none'");
-				jsal_pop(9);
+				jsal_pop(10);
 				visor_end_op(build->visor);
 				return false;
 			}
@@ -1210,7 +1222,7 @@ write_manifests(build_t* build, bool debugging)
 	}
 	else if (!jsal_is_undefined(-1)) {
 		visor_error(build->visor, "'development': must be an object {}");
-		jsal_pop(8);
+		jsal_pop(9);
 		visor_end_op(build->visor);
 		return false;
 	}
@@ -1228,7 +1240,7 @@ write_manifests(build_t* build, bool debugging)
 	fprintf(file, "script=%s\n", path_cstr(script_path));
 	fclose(file);
 	path_free(script_path);
-	jsal_pop(8);
+	jsal_pop(9);
 
 	// write game.json (Sphere v2 JSON manifest)
 	jsal_stringify(-1);
