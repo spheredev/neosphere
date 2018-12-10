@@ -94,7 +94,7 @@ static bool js_FS_rename                     (int num_args, bool is_ctor, intptr
 static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FileStream_close            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_dispose            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_get_fileSize       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_get_position       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_set_position       (int num_args, bool is_ctor, intptr_t magic);
@@ -220,7 +220,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_class("FileStream", CELL_FILE_STREAM, js_new_FileStream, js_FileStream_finalize, 0);
 	api_define_prop("FileStream", "fileSize", false, js_FileStream_get_fileSize, NULL);
 	api_define_prop("FileStream", "position", false, js_FileStream_get_position, js_FileStream_set_position);
-	api_define_method("FileStream", "dispose", js_FileStream_close, 0);
+	api_define_method("FileStream", "dispose", js_FileStream_dispose, 0);
 	api_define_method("FileStream", "read", js_FileStream_read, 0);
 	api_define_method("FileStream", "write", js_FileStream_write, 0);
 	api_define_class("Image", CELL_IMAGE, js_new_Image, js_Image_finalize, 0);
@@ -1865,7 +1865,7 @@ js_FileStream_set_position(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_FileStream_close(int num_args, bool is_ctor, intptr_t magic)
+js_FileStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 {
 	FILE* file;
 

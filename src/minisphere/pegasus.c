@@ -324,7 +324,7 @@ static bool js_FileStream_get_fileName       (int num_args, bool is_ctor, intptr
 static bool js_FileStream_get_fileSize       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_get_position       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_set_position       (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FileStream_close              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FileStream_dispose            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_read               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_write              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_get_Default              (int num_args, bool is_ctor, intptr_t magic);
@@ -635,7 +635,7 @@ pegasus_init(int api_level)
 	api_define_prop("FileStream", "fileName", false, js_FileStream_get_fileName, NULL);
 	api_define_prop("FileStream", "fileSize", false, js_FileStream_get_fileSize, NULL);
 	api_define_prop("FileStream", "position", false, js_FileStream_get_position, js_FileStream_set_position);
-	api_define_method("FileStream", "close", js_FileStream_close, 0);
+	api_define_method("FileStream", "dispose", js_FileStream_dispose, 0);
 	api_define_method("FileStream", "read", js_FileStream_read, 0);
 	api_define_method("FileStream", "write", js_FileStream_write, 0);
 	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize, 0);
@@ -2655,7 +2655,7 @@ js_FileStream_set_position(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_FileStream_close(int num_args, bool is_ctor, intptr_t magic)
+js_FileStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 {
 	file_t* file;
 
