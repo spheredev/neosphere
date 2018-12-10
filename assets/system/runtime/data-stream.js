@@ -69,9 +69,7 @@ class DataStream extends DataView
 	{
 		const ptr = this.position;
 		this.position += numBytes;
-		return this.bytes
-			.subarray(ptr, ptr + numBytes).buffer
-			.slice(0);
+		return this.bytes.buffer.slice(ptr, ptr + numBytes);
 	}
 
 	readBytes(numBytes)
