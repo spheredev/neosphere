@@ -2489,7 +2489,7 @@ js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 {
 #if defined(_WIN32)
 	const char* const NEWLINE = "\r\n";
-#else if
+#else
 	const char* const NEWLINE = "\n";
 #endif
 
