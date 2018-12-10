@@ -646,33 +646,24 @@ The `FS` namespace allows your game to access asset and save files, create or
 remove directories, etc.  All file system operations are sandboxed to prevent
 damage to the system.
 
-IMPORTANT: When targeting API level 1, for backwards compatibility, all `FS`
-           functions operate synchronously, without yielding to the event loop,
-           and return their result directly.  If you later retarget your game
-           to API 2, many calls will become async.  You will need to keep this
-           in mind if you intend to migrate from API 1 to API 2.
-
-FS.createDirectory(pathname); [ASYNC] [API 1]
+FS.createDirectory(pathname); [API 1]
 
     Creates a directory and any of its parent directories that don't already
     exist.  If the directory already exists, this function does nothing.
-    Returns a promise that resolves once the directory has been created.
 
-    Note: As noted above, `FS.createDirectory()` is safe to call even if the
-          specified directory already exists; the promise will not be rejected
-          in that case.  This allows you to call it to ensure a directory
-          exists before you access it, without needing an explicit check
-          beforehand.
+    Note: `FS.createDirectory()` is safe to call even if the directory to be
+		  created already exists.  This allows you to use it to ensure a
+		  directory exists before you access it, without needing an explicit
+		  check beforehand.
 
-FS.deleteFile(pathname); [ASYNC] [API 1]
+FS.deleteFile(pathname); [API 1]
 
     Deletes the file named by `pathname` from the file system.
 
-FS.directoryExists(pathname); [ASYNC] [API 1]
+FS.directoryExists(pathname); [API 1]
 
-    Checks whether a directory by the name of `pathname` exists.  Returns a
-    promise which resolves to `true` if the directory exists, or `false`
-    otherwise.
+    Checks whether a directory by the name of `pathname` exists and returns
+    `true` if it exists, or `false` otherwise.
 
 FS.directoryOf(pathname); [NEW]
 
@@ -686,11 +677,11 @@ FS.directoryOf(pathname); [NEW]
           existing directory, the function will act as if the trailing slash
           was present.
 
-FS.evaluate(pathname); [ASYNC] [API 1]
+FS.evaluateScript(pathname); [API 1]
 
     Executes the JavaScript file named by `pathname` in the global scope and
-    returns a promise for the result.  This is useful for executing scripts
-    originally written for the Web, where modules are not supported.
+    returns the result.  This is useful for executing scripts originally
+    written for the Web, where modules are not supported.
 
     Note: Depending on the particular script being evaluated, this function
           can--and likely will--create new global functions and variables.  Be
@@ -705,10 +696,10 @@ FS.extensionOf(pathname); [NEW]
     Note: If `pathname` ends in a forward slash `/` or names a known existing
           directory, a TypeError will be thrown.
 
-FS.fileExists(pathname); [ASYNC] [API 1]
+FS.fileExists(pathname); [API 1]
 
-    Checks whether a file by the name of `pathname` exists.  Returns a promise
-    which resolves to `true` if the file exists, or `false` otherwise.
+    Checks whether a file by the name of `pathname` exists and returns `true`
+    if it exists, or `false` otherwise.
 
 FS.fileNameOf(pathname); [NEW]
 
@@ -736,11 +727,11 @@ FS.fullPath(pathname[, base_dir]); [API 1]
           returned by this function will end in a forward slash (`/`) even if
           the input pathname did not.
 
-FS.readFile(pathname[, data_type]); [ASYNC] [API 1]
+FS.readFile(pathname[, data_type]); [API 1]
 
-    Reads an entire file at once and returns a promise for the content.  The
-    optional parameter `data_type` specifies how interpret the file contents
-    and can be one of the following (defaults to `DataType.Text`):
+    Reads an entire file at once and returns the content.  The optional
+    parameter `data_type` specifies how interpret the file contents and can be
+    one of the following (defaults to `DataType.Text`):
 
         DataType.Bytes
 
@@ -773,26 +764,23 @@ FS.relativePath(pathname, base_dir); [API 1]
     path relative to `base_dir`.  This can be useful when logging filenames or
     displaying track names, for example.
 
-FS.removeDirectory(pathname); [ASYNC] [API 1]
+FS.removeDirectory(pathname); [API 1]
 
-    Deletes the directory named by `pathname` and returns a promise that
-    resolves once the deletion is finished.  If the directory doesn't exist--or
-    *does* exist but is not empty (this function will not delete a non-empty
-    directory)--the promise will be rejected.
+    Removes the directory named by `pathname` from the file system.  If the
+    directory doesn't exist--or *does* exist but is not empty (this function
+    will not delete a non-empty directory)--an error will be thrown.
 
-FS.rename(orig_name, new_name); [ASYNC] [API 1]
+FS.rename(orig_name, new_name); [API 1]
 
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full paths.  This can also be used to move a file between
-    directories; if so, the destination directory must already exist.  Returns
-    a promise that resolves once the rename is done.
+    directories; if so, the destination directory must already exist.
 
-FS.writeFile(pathname, data); [ASYNC] [API 1]
+FS.writeFile(pathname, data); [API 1]
 
     Writes `data`, which can be either a string, array of strings, ArrayBuffer,
     or TypedArray, to a file.  If a file already exists by the specified name,
-    it will be overwritten.  Returns a promise that resolves once the file has
-    been successfully written, or rejects with an error if writing fails.
+    it will be overwritten.
 
 
 `FileStream` Object
