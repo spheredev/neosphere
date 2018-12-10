@@ -53,7 +53,7 @@ experimental until the next API freeze.  When an API freeze occurs, the
 engine's supported API level will be incremented and some or all experimental
 features will be "canonized" under the new API level.
 
-The maximum supported API level in this version of miniSphere is level 1.
+The maximum supported API level in this version of miniSphere is level 2.
 
 The minimum API level required by a game is specified in its game manifest (see
 above); if this value is not present it defaults to level 1.  By default, all
@@ -665,7 +665,7 @@ FS.directoryExists(pathname); [API 1]
     Checks whether a directory by the name of `pathname` exists and returns
     `true` if it exists, or `false` otherwise.
 
-FS.directoryOf(pathname); [NEW]
+FS.directoryOf(pathname); [API 2]
 
     Returns the full SphereFS path of the directory containing `pathname`.  The
     pathname is resolved via the usual SphereFS rules, so if no directory info
@@ -687,7 +687,7 @@ FS.evaluateScript(pathname); [API 1]
           can--and likely will--create new global functions and variables.  Be
           sure you know what you're doing!
 
-FS.extensionOf(pathname); [NEW]
+FS.extensionOf(pathname); [API 2]
 
     If `pathname` refers to a file, returns the filename extension of the named
     file (i.e. everything starting from the last dot `.` in the filename).  If
@@ -701,7 +701,7 @@ FS.fileExists(pathname); [API 1]
     Checks whether a file by the name of `pathname` exists and returns `true`
     if it exists, or `false` otherwise.
 
-FS.fileNameOf(pathname); [NEW]
+FS.fileNameOf(pathname); [API 2]
 
     If `pathname` is a full or partial path to a file, returns only the
     filename portion, or `undefined` if there is no filename in the path (for
@@ -934,13 +934,13 @@ Font#getTextSize(text[, wrap_width]); [API 1]
     Note: If `wrap_width` is not provided, no word wrap processing will be
           performed.
 
-Font#heightOf(text[, wrap_width]); [NEW]
+Font#heightOf(text[, wrap_width]); [API 2]
 
     Returns the height, in pixels, of `text` when rendered by `Font#drawText`
     using the specifed wrap width.  If `wrap_width` is not specified, returns
     the same value as `Font#height`.
 
-Font#widthOf(text); [NEW]
+Font#widthOf(text); [API 2]
 
     Returns the width, in pixels, of `text` when rendered by `Font#drawText`
     without wrapping.
@@ -1009,10 +1009,10 @@ Joystick.Null [R/O] [API 1]
     values for all inputs.  Joystick.Null can be used in place of a real
     Joystick object to simplify input code.
 
-Joystick.P1 [R/O] [NEW]
-Joystick.P2 [R/O] [NEW]
-Joystick.P3 [R/O] [NEW]
-Joystick.P4 [R/O] [NEW]
+Joystick.P1 [R/O] [API 2]
+Joystick.P2 [R/O] [API 2]
+Joystick.P3 [R/O] [API 2]
+Joystick.P4 [R/O] [API 2]
 
    Gets the default joystick for the respective player.  If there are many
    joystick or gamepad devices attached, there is no guarantee which ones these
@@ -1552,14 +1552,14 @@ new Server(port[, backlog_size]); [API 1]
     `backlog_size` specifies the size of the backlog and defaults to 128.  If
     the backlog fills, new connections will be refused.
 
-Server#noDelay [R/W] [NEW]
+Server#noDelay [R/W] [API 2]
 
     Gets or sets a boolean value indicating whether Nagle's algorithm is turned
     off for this server.  This doesn't directly affect the server but will be
     used as the initial setting of `noDelay` for all sockets returned by
     `accept()` or `acceptNext()`.
 
-Server#numPending [R/O] [NEW]
+Server#numPending [R/O] [API 2]
 
     Gets the number of pending connections currently in the backlog.  If the
     number of pending connections is allowed to reach the backlog size
@@ -1692,7 +1692,7 @@ ShapeType [enumeration] [API 1]
         ShapeType.Triangles
         ShapeType.TriStrip
 
-Shape.drawImmediate([surface, ]type[, texture], vertices); [NEW]
+Shape.drawImmediate([surface, ]type[, texture], vertices); [API 2]
 
     Draws a shape to a surface in immediate mode (on-the-fly).  Useful when
     you need to create shapes on demand (procedural generation, for instance)
@@ -1781,13 +1781,13 @@ Socket#bytesPending [R/O] [API 1]
 
     Accessing this property on a disconnected socket will throw a TypeError.
 
-Socket#bytesReceived [R/O] [NEW]
+Socket#bytesReceived [R/O] [API 2]
 
     Gets the total number of bytes of data received through this socket since
     it was last connected, including data still in the socket's receive buffer
     and not yet read by the game.
 
-Socket#bytesSent [R/O] [NEW]
+Socket#bytesSent [R/O] [API 2]
 
     Gets the total number of bytes of data transmitted through this socket
     since it was last connected.
@@ -1801,7 +1801,7 @@ Socket#connected [R/O] [API 1]
     false, you won't be able to call most methods (except `connectTo`) on the
     socket object.
 
-Socket#noDelay [R/W] [NEW]
+Socket#noDelay [R/W] [API 2]
 
     Gets or sets a boolean value indicating whether Nagle's algorithm is turned
     off for this socket.  If `false` (the default), the operating system may
@@ -1856,7 +1856,7 @@ Socket#connectTo(hostname, port); [ASYNC] [API 1]
           the socket is already connected when `connectTo()` is called, a
           TypeError will be thrown.
 
-Socket#disconnect(); [NEW]
+Socket#disconnect(); [API 2]
 
     Immediately disconnects the socket.  If there is still data in the socket's
     write-behind buffer that hasn't been transmitted, it will be discarded.
