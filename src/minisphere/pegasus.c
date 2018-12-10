@@ -333,6 +333,7 @@ static bool js_Font_get_fileName             (int num_args, bool is_ctor, intptr
 static bool js_Font_get_height               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_drawText                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_getTextSize              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_heightOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_widthOf                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
@@ -909,6 +910,7 @@ pegasus_init(int api_level)
 		api_define_static_prop("Joystick", "P2", js_Joystick_get_Default, NULL, 2);
 		api_define_static_prop("Joystick", "P3", js_Joystick_get_Default, NULL, 3);
 		api_define_static_prop("Joystick", "P4", js_Joystick_get_Default, NULL, 4);
+		api_define_method("Font", "heightOf", js_Font_heightOf, 0);
 		api_define_async_func("FileStream", "open", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
@@ -2851,6 +2853,33 @@ js_Font_getTextSize(int num_args, bool is_ctor, intptr_t magic)
 		jsal_put_prop_string(-2, "width");
 		jsal_push_int(font_height(font));
 		jsal_put_prop_string(-2, "height");
+	}
+	return true;
+}
+
+static bool
+js_Font_heightOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	font_t*     font;
+	int         num_lines;
+	const char* text;
+	int         width;
+	wraptext_t* wraptext;
+
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
+	text = jsal_to_string(0);
+	if (num_args >= 2)
+		width = jsal_require_int(1);
+
+	if (num_args >= 2) {
+		wraptext = wraptext_new(text, font, width);
+		num_lines = wraptext_len(wraptext);
+		wraptext_free(wraptext);
+		jsal_push_int(font_height(font) * num_lines);
+	}
+	else {
+		jsal_push_int(font_height(font));
 	}
 	return true;
 }

@@ -934,6 +934,12 @@ Font#getTextSize(text[, wrap_width]); [API 1]
     Note: If `wrap_width` is not provided, no word wrap processing will be
           performed.
 
+Font#heightOf(text[, wrap_width]); [NEW]
+
+    Returns the height, in pixels, of `text` when rendered by `Font#drawText`
+    using the specifed wrap width.  If `wrap_width` is not specified, returns
+    the same value as `Font#height`.
+
 Font#widthOf(text); [NEW]
 
     Returns the width, in pixels, of `text` when rendered by `Font#drawText`
