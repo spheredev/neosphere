@@ -63,8 +63,8 @@ emulate the older API level, which disables all APIs introduced in a later
 level as well as experimental features.
 
 All class constructors, methods and properties listed below include the API
-level they were introduced in, e.g. `L1` or else, for new experimental features
-not yet subject to an API freeze, `NEW`.
+level they were introduced in, e.g. `API 1` or else, for new features which
+haven't yet been canonized, `NEW`.
 
 
 SphereFS File System
@@ -198,14 +198,14 @@ communicate with the underlying Sphere platform.  The properties provide access
 to the engine's name, version number, and API level, and there are several
 methods for managing execution.
 
-Sphere.Engine [R/O] [L1]
+Sphere.Engine [R/O] [API 1]
 
     A string specifying the name and version number of the game engine.  The
     version number takes the form X.Y.Z, where X is the major version, Y is the
     minor version, and Z is the patch level.
 
-Sphere.Version [R/O] [L1]
-Sphere.APILevel [R/O] [L1]
+Sphere.Version [R/O] [API 1]
+Sphere.APILevel [R/O] [API 1]
 
     The Sphere API version and level supported by the engine, respectively.
     `Version` indicates which version of the Sphere API is supported (e.g., 2),
@@ -213,13 +213,13 @@ Sphere.APILevel [R/O] [L1]
     methods, or properties are added to the Core API, the API level is
     increased.
 
-Sphere.Compiler [R/O] [L1]
+Sphere.Compiler [R/O] [API 1]
 
     A string specifying the name and version number of the compiler or build
     tool used to make the game distribution.  If no compiler information is
     available for the current game, this evaluates to `undefined`.
 
-Sphere.Game [R/O] [L1]
+Sphere.Game [R/O] [API 1]
 
     An object whose properties describe the currently running game.  The object
     consists of everything in the JSON manifest plus any fields synthesized by
@@ -229,7 +229,7 @@ Sphere.Game [R/O] [L1]
           any attempt to add, remove, or change any properties of `Sphere.Game`
           will cause a TypeError to be thrown.
 
-Sphere.frameRate [R/W] [L1]
+Sphere.frameRate [R/W] [API 1]
 
     Gets or sets the frame rate.  Set this to Infinity to disable the frame
     limiter.  The default is 60 FPS.
@@ -238,12 +238,12 @@ Sphere.frameRate [R/W] [L1]
     set to 60 (the default), the event loop will perform 60 iterations per
     second, skipping renders as necessary to meet that goal.
 
-Sphere.frameSkip [R/W] [L1]
+Sphere.frameSkip [R/W] [API 1]
 
     Gets or sets the maximum number of frames the engine is allowed to skip in
     order to maintain the desired frame rate.
 
-Sphere.fullScreen [R/W] [L1]
+Sphere.fullScreen [R/W] [API 1]
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
@@ -252,13 +252,13 @@ Sphere.fullScreen [R/W] [L1]
           windowed mode and any change to the value of `screen.fullScreen` will
           be silently ignored.
 
-Sphere.main [R/O] [L1]
+Sphere.main [R/O] [API 1]
 
     Gets a reference to the game's main object, when the main module exports a
     constructor or class.  This object is created by the engine on startup by
     instantiating the exported class using `new`.
 
-Sphere.abort(message); [L1]
+Sphere.abort(message); [API 1]
 
     Aborts execution.  This is effectively a forced crash: JavaScript execution
     will cease immediately, and the exception screen will be shown displaying
@@ -267,7 +267,7 @@ Sphere.abort(message); [L1]
     Note: Sphere.abort() bypasses all exception handling mechanisms, including
           the debugger if it's attached.  Be sure you know what you're doing!
 
-Sphere.now(); [L1]
+Sphere.now(); [API 1]
 
     Returns the number of frames (including skipped frames) processed by the
     engine since it started running.  To measure wall clock time instead, use
@@ -277,7 +277,7 @@ Sphere.now(); [L1]
           That typically isn't an issue: at 60 FPS, a game would need to run
           continuously for *over 2 years* before the timer would roll over.
 
-Sphere.restart(); [L1]
+Sphere.restart(); [API 1]
 
     Restarts the engine.  All in-flight Dispatch jobs are canceled so that once
     control returns to the event loop, the engine will initiate a restart.
@@ -286,7 +286,7 @@ Sphere.restart(); [L1]
           after control has returned to the event loop.  Note that dispatching
           new update or render jobs before then will cancel the request!
 
-Sphere.setResolution(width, height); [L1]
+Sphere.setResolution(width, height); [API 1]
 
     Changes the game's resolution.  This determines the width and height of
     the backbuffer (see `Surface.Screen` below); higher resolutions allow you
@@ -295,7 +295,7 @@ Sphere.setResolution(width, height); [L1]
     Note: This change is not persistent and lasts only until the engine is
           closed.
 
-Sphere.shutDown(); [L1]
+Sphere.shutDown(); [API 1]
 
     Shuts down the engine.  All in-flight Dispatch jobs are canceled so that
     once control returns to the event loop, the engine will close.
@@ -304,7 +304,7 @@ Sphere.shutDown(); [L1]
           after control has returned to the event loop.  Note that dispatching
           new update or render jobs before then will cancel the request!
 
-Sphere.sleep(frames); [ASYNC] [L1]
+Sphere.sleep(frames); [ASYNC] [API 1]
 
     Returns a promise that resolves after the specified number of frames have
     elapsed.  Can be used with `await`.  This is useful to delay execution of a
@@ -396,10 +396,10 @@ new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [NEW]
 The `Color` object represents an RGB color value.  It also has an alpha
 component and can therefore represent translucent colors.
 
-Color.Red [R/O] [L1]
-Color.Green [R/O] [L1]
-Color.Blue [R/O] [L1]
-Color.Transparent [R/O] [L1]
+Color.Red [R/O] [API 1]
+Color.Green [R/O] [API 1]
+Color.Blue [R/O] [API 1]
+Color.Transparent [R/O] [API 1]
 etc...
 
     Gets a copy of a predefined color.  The entire X11 color set is provided,
@@ -416,7 +416,7 @@ etc...
     The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
     false, but this is rarely an issue in practice.
 
-Color.is(color1, color2); [L1]
+Color.is(color1, color2); [API 1]
 
     Returns true if `color1` refers to the same physical color as `color2`
     without regard to their alpha components.  Otherwise returns false.
@@ -425,48 +425,48 @@ Color.is(color1, color2); [L1]
           because Color#name encodes the alpha channel in addition to the
           physical color.
 
-Color.mix(color1, color2[, w1, w2]); [L1]
+Color.mix(color1, color2[, w1, w2]); [API 1]
 
     Calculates a weighted average of two colors.  `w1` and `w2` are optional
     and specify the relative weights of `color1` and `color2` respectively.  If
     the weights are omitted, the mix is 50/50.
 
-Color.of(name); [L1]
+Color.of(name); [API 1]
 
     Returns a Color object from `name`, which can either be the name of a
     predefined X11 color without spaces (e.g. "chartreuse"), or an ARGB
     signature such as "#800000FF".  If `name` cannot be resolved to a color,
     throws a TypeError.
 
-new Color(red, green, blue[, alpha]); [L1]
+new Color(red, green, blue[, alpha]); [API 1]
 
     Constructs a new Color object.  Color objects are used to specify the color
     of elements such as vertices and primitives.  Color components should be in
     the range [0.0, 1.0]; out-of-range values are silently clamped.  `alpha`
     specifies the color's opacity and defaults to 1.0 if not provided.
 
-Color#r [R/W] [L1]
-Color#g [R/W] [L1]
-Color#b [R/W] [L1]
-Color#a [R/W] [L1]
+Color#r [R/W] [API 1]
+Color#g [R/W] [API 1]
+Color#b [R/W] [API 1]
+Color#a [R/W] [API 1]
 
     Gets or sets the individual components of the color (red, green, blue, or
     alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
     HDR is not supported and the engine will automatically clamp such colors
     when rendered.
 
-Color#name [R/O] [L1]
+Color#name [R/O] [API 1]
 
     Gets the name of the Color according to its component values such that
     Color.of(color.name) will give back a Color with the same values.  Useful
     for saving and reading back colors from save files.
 
-Color#clone(); [L1]
+Color#clone(); [API 1]
 
     Returns a copy of this Color object.  Changes to the clone will not affect
     the original object.
 
-Color#fadeTo(alpha_factor); [L1]
+Color#fadeTo(alpha_factor); [API 1]
 
     Scales this color's alpha channel by `alpha_factor`, between 0.0 and 1.0,
     and returns the result.  The red, green, and blue components are not
@@ -485,7 +485,7 @@ read file and directory entries one at a time.  `DirectoryStream` also
 implements the JavaScript ES6 iterator protocol, so you can use it in a
 query or `for...of` loop.
 
-new DirectoryStream(dir_name[, options]); [L1]
+new DirectoryStream(dir_name[, options]); [API 1]
 
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
@@ -496,12 +496,12 @@ new DirectoryStream(dir_name[, options]); [L1]
         subdirectories to list files they contain.  The output will not contain
         any directory entries in this case, only file entries.
 
-DirectoryStream#fileCount [R/O] [L1]
+DirectoryStream#fileCount [R/O] [API 1]
 
     Gets the number of entries (both files and directories) in the directory
     listing.
 
-DirectoryStream#fileName [R/O] [L1]
+DirectoryStream#fileName [R/O] [API 1]
 
     Gets the full SphereFS pathname of the directory whose entries are being
     enumerated.
@@ -509,12 +509,12 @@ DirectoryStream#fileName [R/O] [L1]
     Note: Under SphereFS canonicalization rules, the pathname of a directory
           always ends in a slash (`/`).
 
-DirectoryStream#position [R/W] [L1]
+DirectoryStream#position [R/W] [API 1]
 
     Gets or sets the position within the stream.  This is an index into the
     directory specifying which entry will be read next.
 
-DirectoryStream#dispose(); [L1]
+DirectoryStream#dispose(); [API 1]
 
     Disposes of the DirectoryStream object, closing the underlying directory.
     Attempting to use the object afterwards will throw an error.
@@ -524,7 +524,7 @@ DirectoryStream#dispose(); [L1]
           them.  If there's an active DirectoryStream for a given directory, an
           error may be thrown if you try to construct another one.
 
-DirectoryStream#next(); [L1]
+DirectoryStream#next(); [API 1]
 
     Reads the next entry from the directory and advances the stream position.
     This returns an object.  If there are no entries remaining, the object's
@@ -552,7 +552,7 @@ DirectoryStream#next(); [L1]
           to the Sphere Runtime API Reference for more information about
           queries.
 
-DirectoryStream#rewind(); [L1]
+DirectoryStream#rewind(); [API 1]
 
     Rewinds the stream and resets the position to 0.  If the directory contents
     have changed, rewinding the DirectoryStream will allow you to enumerate the
@@ -571,20 +571,20 @@ When queueing a job, a token is returned which allows you to manage the
 in-flight job.  See the documentation for `JobToken` below to find out what you
 can do with the token.
 
-Dispatch.cancelAll(); [L1]
+Dispatch.cancelAll(); [API 1]
 
     Cancels all one-time jobs (except `onExit`) in the job queue.  In order to
     prevent mishaps, this does not cancel update, render and exit jobs.  Those
     must be cancelled individually.
 
-Dispatch.later(num_frames, callback); [L1]
+Dispatch.later(num_frames, callback); [API 1]
 
     Sets up a one-time job to call `callback` from the event loop after
     `num_frames` frames have passed.
 
     Returns a `JobToken` you can use the manage the job.
 
-Dispatch.now(callback); [L1]
+Dispatch.now(callback); [API 1]
 
     Sets up a one-time job to call `callback` from the event loop during the
     current frame.  This is useful for performing operations that need to be
@@ -609,8 +609,8 @@ Dispatch.onExit(callback); [NEW]
           avoid it; the engine won't close until all exit jobs have finished
           running, so excessive delays here are likely to frustrate the user.
 
-Dispatch.onRender(fn[, options]); [L1]
-Dispatch.onUpdate(fn[, options]); [L1]
+Dispatch.onRender(fn[, options]); [API 1]
+Dispatch.onUpdate(fn[, options]); [API 1]
 
     Sets up a recurring job to call `fn` during a specified event loop phase.
     For example, `onRender()` jobs are called before the backbuffer is flipped,
@@ -652,7 +652,7 @@ IMPORTANT: When targeting API level 1, for backwards compatibility, all `FS`
            to API 2, many calls will become async.  You will need to keep this
            in mind if you intend to migrate from API 1 to API 2.
 
-FS.createDirectory(pathname); [ASYNC] [L1]
+FS.createDirectory(pathname); [ASYNC] [API 1]
 
     Creates a directory and any of its parent directories that don't already
     exist.  If the directory already exists, this function does nothing.
@@ -664,11 +664,11 @@ FS.createDirectory(pathname); [ASYNC] [L1]
           exists before you access it, without needing an explicit check
           beforehand.
 
-FS.deleteFile(pathname); [ASYNC] [L1]
+FS.deleteFile(pathname); [ASYNC] [API 1]
 
     Deletes the file named by `pathname` from the file system.
 
-FS.directoryExists(pathname); [ASYNC] [L1]
+FS.directoryExists(pathname); [ASYNC] [API 1]
 
     Checks whether a directory by the name of `pathname` exists.  Returns a
     promise which resolves to `true` if the directory exists, or `false`
@@ -686,7 +686,7 @@ FS.directoryOf(pathname); [NEW]
           existing directory, the function will act as if the trailing slash
           was present.
 
-FS.evaluate(pathname); [ASYNC] [L1]
+FS.evaluate(pathname); [ASYNC] [API 1]
 
     Executes the JavaScript file named by `pathname` in the global scope and
     returns a promise for the result.  This is useful for executing scripts
@@ -705,7 +705,7 @@ FS.extensionOf(pathname); [NEW]
     Note: If `pathname` ends in a forward slash `/` or names a known existing
           directory, a TypeError will be thrown.
 
-FS.fileExists(pathname); [ASYNC] [L1]
+FS.fileExists(pathname); [ASYNC] [API 1]
 
     Checks whether a file by the name of `pathname` exists.  Returns a promise
     which resolves to `true` if the file exists, or `false` otherwise.
@@ -721,7 +721,7 @@ FS.fileNameOf(pathname); [NEW]
           existing directory, the function will act as if the trailing slash
           was present and return `undefined`.
 
-FS.fullPath(pathname[, base_dir]); [L1]
+FS.fullPath(pathname[, base_dir]); [API 1]
 
     Resolves `pathname` (which may contain relative path components, or even be
     relative itself) to a fully canonicalized SphereFS pathname.  `base_dir`
@@ -736,7 +736,7 @@ FS.fullPath(pathname[, base_dir]); [L1]
           returned by this function will end in a forward slash (`/`) even if
           the input pathname did not.
 
-FS.readFile(pathname[, data_type]); [ASYNC] [L1]
+FS.readFile(pathname[, data_type]); [ASYNC] [API 1]
 
     Reads an entire file at once and returns a promise for the content.  The
     optional parameter `data_type` specifies how interpret the file contents
@@ -767,27 +767,27 @@ FS.readFile(pathname[, data_type]); [ASYNC] [L1]
     Note: `DataType` is supported only when running under API level 2 or
           higher.
 
-FS.relativePath(pathname, base_dir); [L1]
+FS.relativePath(pathname, base_dir); [API 1]
 
     Abbreviates a full SphereFS pathname, returning a string representing its
     path relative to `base_dir`.  This can be useful when logging filenames or
     displaying track names, for example.
 
-FS.removeDirectory(pathname); [ASYNC] [L1]
+FS.removeDirectory(pathname); [ASYNC] [API 1]
 
     Deletes the directory named by `pathname` and returns a promise that
     resolves once the deletion is finished.  If the directory doesn't exist--or
     *does* exist but is not empty (this function will not delete a non-empty
     directory)--the promise will be rejected.
 
-FS.rename(orig_name, new_name); [ASYNC] [L1]
+FS.rename(orig_name, new_name); [ASYNC] [API 1]
 
     Renames the file named by `orig_name` to `new_name`, both of which are
     assumed to be full paths.  This can also be used to move a file between
     directories; if so, the destination directory must already exist.  Returns
     a promise that resolves once the rename is done.
 
-FS.writeFile(pathname, data); [ASYNC] [L1]
+FS.writeFile(pathname, data); [ASYNC] [API 1]
 
     Writes `data`, which can be either a string, array of strings, ArrayBuffer,
     or TypedArray, to a file.  If a file already exists by the specified name,
@@ -831,21 +831,26 @@ FileStream.open(filename, file_op); [ASYNC] [NEW]
     Requesting write access to a file residing in a read-only directory (e.g.,
     the system directory `#/`) will reject the promise with a TypeError.
 
-new FileStream(filename, file_op); [L1]
+new FileStream(filename, file_op); [API 1]
 
     Similar to `FileStream.open`, but opens the file synchronously, without
     yielding to the event loop.  This is not supported on all platforms; for
-    maximum portability, use `FileStream.open` instead.
+    maximum portability, target API 2 and use `FileStream.open()` instead.
 
-FileStream#fileName [R/O] [L1]
+    Note: If `new FileStream()` is not supported on a given platform,
+          synchronous reads and writes will not be either.  You must use
+          `FileStream.open()` in combination with `asyncRead()`/`asyncWrite()`
+          in that case.
+
+FileStream#fileName [R/O] [API 1]
 
     Gets the full SphereFS pathname of the underlying file.
 
-FileStream#fileSize [R/O] [L1]
+FileStream#fileSize [R/O] [API 1]
 
     Gets the size of the underlying file, in bytes.
 
-FileStream#position [R/W] [L1]
+FileStream#position [R/W] [API 1]
 
     Gets or sets the file position, which determines where in the file the next
     read or write will start from.  Expressed in bytes.
@@ -854,24 +859,37 @@ FileStream#position [R/W] [L1]
           stream.  In this case the next write will be at the new position and
           the intervening space filled with NUL bytes.
 
-FileStream#close(); [L1]
+FileStream#asyncRead(num_bytes); [ASYNC] [NEW]
+
+    Instructs Sphere to read `num_bytes` from the file via the event loop.  The
+    promise resolves with an ArrayBuffer containing the data read.  This is an
+    asynchronous version of `read()` that can be used with `await`.
+
+FileStream#asyncWrite(data); [ASYNC] [NEW]
+
+    Instructs Sphere to write `data`--either an ArrayBuffer, TypedArray view,
+    or DataView--to the file via the event loop.  The promise resolves once all
+    bytes have been written out.  This is an asynchronous version of `write()`
+    that can be used with `await`.
+
+FileStream#dispose(); [API 1]
 
     Closes the file, performing any final processing as necessary.  Attempting
     to use the FileStream after calling this will cause an exception.
 
-    Note: While it's not strictly necessary to call `close()` on FileStream
+    Note: While it's not absolutely necessary to call `dispose()` on FileStream
           objects,  it may take some time for the garbage collector to get to
           them.  If there's an active FileStream for a given file, particularly
           if the file is opened in write mode, an error may be thrown if you
-          try to construct another one.
+          try to construct another FileStream for the same file.
 
-FileStream#read(num_bytes); [L1]
+FileStream#read(num_bytes); [API 1]
 
     Reads data from the file, up to the specified number of bytes, and returns
     an ArrayBuffer containing the data read.  The file must be opened for
     reading.
 
-FileStream#write(data); [L1]
+FileStream#write(data); [API 1]
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
@@ -884,7 +902,7 @@ The `Font` object specifies a typeface that can be used when drawing text.
 Sphere provides a default font which is the same for all games, or you can load
 one from an RFN font file.
 
-Font.Default [R/O] [L1]
+Font.Default [R/O] [API 1]
 
     Gets the engine's default font.  This is the font used for the FPS counter
     and system messages.
@@ -897,29 +915,29 @@ Font.fromFile(filename); [ASYNC] [NEW]
     Note: The promise is not guaranteed to resolve in the same frame, although
           in miniSphere it usually does.
 
-new Font(filename); [L1]
+new Font(filename); [API 1]
 
     Loads the RFN font file named by `filename` synchronously, without yielding
     to the event loop, and returns the newly constructed Font object.  May not
     be supported on all platforms.
 
-Font#fileName [R/O] [L1]
+Font#fileName [R/O] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Font
     object.
 
-Font#height [R/O] [L1]
+Font#height [R/O] [API 1]
 
     Gets the line height, in pixels, for text rendered using this font.
 
-Font#drawText(surface, x, y, text[, color[, wrap_width]]); [L1]
+Font#drawText(surface, x, y, text[, color[, wrap_width]]); [API 1]
 
     Renders `text` to the specified surface at (x,y).  `color` defaults to
     Color.White if not provided, and `wrap_width` specifies the width in which
     to constrain the text.  If `wrap_width` is not provided, no wrapping is
     performed.
 
-Font#getTextSize(text[, wrap_width]); [L1]
+Font#getTextSize(text[, wrap_width]); [API 1]
 
     Gets the size, in pixels, of `text` if it were rendered by Font:drawText()
     with the specified wrap width.  Return value is an object with `width` and
@@ -933,7 +951,7 @@ Font#widthOf(text); [NEW]
     Returns the width, in pixels, of `text` when rendered by `Font#drawText`
     without wrapping.
 
-Font#wordWrap(text, wrap_width); [L1]
+Font#wordWrap(text, wrap_width); [API 1]
 
     Wraps `text` as if it were drawn with Font#drawText() using the specified
     wrap width.  Returns an array of strings, representing the lines in the
@@ -953,7 +971,7 @@ all the vertices for a scene in a single `VertexList` and construct different
 shapes from it.  The index list specifies which vertices from the list to use
 to create a shape.
 
-new IndexList(indices); [L1]
+new IndexList(indices); [API 1]
 
     Constructs a new index list from `indices`, an array of integers in the
     range [0, 65535].  If `indices` is not an array or any element is not a
@@ -971,7 +989,7 @@ A JobToken represents a job queued using one of the `Dispatch` functions above.
 When queuing a job, you must keep a reference to the token if you want to be
 able to manage the job later.
 
-JobToken#cancel(); [L1]
+JobToken#cancel(); [API 1]
 
     Cancels the dispatch job associated with this token.  If the job was queued
     using either `Dispatch.now()` or `Dispatch.later()` and has already started
@@ -991,7 +1009,7 @@ JobToken#resume(); [NEW]
 `Joystick` Object
 -----------------
 
-Joystick.Null [R/O] [L1]
+Joystick.Null [R/O] [API 1]
 
     Gets the null joystick.  When polled, a null joystick returns neutral
     values for all inputs.  Joystick.Null can be used in place of a real
@@ -1010,26 +1028,26 @@ Joystick.P4 [R/O] [NEW]
    Note: If there are less than 4 devices attached, the unmapped objects will
          act like `Joystick.Null` and return neutral values for all inputs.
 
-Joystick.getDevices(); [L1]
+Joystick.getDevices(); [API 1]
 
     Gets an array of Joystick objects, one for each connected gamepad or
     joystick.  miniSphere currently supports a maximum of 16 attached devices;
     this will never return more than that.
 
-Joystick#name [R/O] [L1]
+Joystick#name [R/O] [API 1]
 
     Gets the name of the device, as reported by the operating system.  Xbox
     controllers, for example, are typically reported as "XInput Joystick <n>".
 
-Joystick#numAxes [R/O] [L1]
+Joystick#numAxes [R/O] [API 1]
 
     Gets the number of analog axes supported by the device.
 
-Joystick#numButtons [R/O] [L1]
+Joystick#numButtons [R/O] [API 1]
 
     Gets the number of buttons supported by the device.
 
-Joystick#getPosition(axisID); [L1]
+Joystick#getPosition(axisID); [API 1]
 
     Polls the device and gets the current position along the specified analog
     axis.  To get the number of axes supported by a device, use the `numAxes`
@@ -1040,7 +1058,7 @@ Joystick#getPosition(axisID); [L1]
           For gamepads with analog sticks, though, it's generally a safe bet
           that the primary analog stick will be mapped to the first two axes.
 
-Joystick#isPressed(buttonID); [L1]
+Joystick#isPressed(buttonID); [API 1]
 
     Polls the device and returns true if the specified button is currently
     depressed.  To get the number of buttons supported by a device, use the
@@ -1058,7 +1076,7 @@ What would a game be without the ability for the player to control it?  The
 `Keyboard` object allows your game to accept input via the keyboard, the most
 common input method for a PC game.
 
-Key [enumeration] [L1]
+Key [enumeration] [API 1]
 
     Specifies a keyboard key.  Can be one of the following:
 
@@ -1166,20 +1184,20 @@ Key [enumeration] [L1]
           below the function keys, while NumPad0-NumPad9 refer to the numbers
           on the numeric keypad.
 
-Keyboard.Default [R/O] [L1]
+Keyboard.Default [R/O] [API 1]
 
     Gets a `Keyboard` object for the default keyboard device.
 
     Note: miniSphere currently only supports a single keyboard.
 
-Keyboard#capsLock [R/O] [L1]
-Keyboard#numLock [R/O] [L1]
-Keyboard#scrollLock [R/O] [L1]
+Keyboard#capsLock [R/O] [API 1]
+Keyboard#numLock [R/O] [API 1]
+Keyboard#scrollLock [R/O] [API 1]
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
 
-Keyboard#charOf(key[, shifted]); [L1]
+Keyboard#charOf(key[, shifted]); [API 1]
 
     Gets the character(s) that would be generated if a specified key is pressed
     on this keyboard.  For example, Key.A becomes "a" (or "A" if shifted).
@@ -1189,16 +1207,16 @@ Keyboard#charOf(key[, shifted]); [L1]
     An empty string is returned if the specified key is not associated with a
     character (a modifier key, for example).
 
-Keyboard#clearQueue(); [L1]
+Keyboard#clearQueue(); [API 1]
 
     Removes all keys from the keyboard queue.  If another key is not pressed
     in the interim, the next getKey() will return null.
 
-Keyboard#getKey(); [L1]
+Keyboard#getKey(); [API 1]
 
     Gets the next key in the keyboard queue, or null if the queue is empty.
 
-Keyboard#isPressed(key); [L1]
+Keyboard#isPressed(key); [API 1]
 
     Returns true if the user is currently pressing the specified key.  `key`
     should be a member of the Key enumeration.
@@ -1211,12 +1229,12 @@ Mixers are used to group related audio together and adjust their parameters as
 a class; this is useful, for example, for implementing global volume controls
 in your game.
 
-Mixer.Default [R/O] [L1]
+Mixer.Default [R/O] [API 1]
 
     Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
     16-bit stereo sound, i.e. CD quality.
 
-new Mixer(frequency, bits[, channels]); [L1]
+new Mixer(frequency, bits[, channels]); [API 1]
 
     Constructs a new Mixer object.  Any sounds played through the mixer will use
     the format specified by the parameters above.  `frequency` is the sample
@@ -1228,7 +1246,7 @@ new Mixer(frequency, bits[, channels]); [L1]
     not supported by the system, an error will be thrown ("unable to create
     hardware voice").
 
-Mixer#volume [R/W] [L1]
+Mixer#volume [R/W] [API 1]
 
     Gets or sets the output volume of the mixer.  This will affect the volume
     of any sounds played through the mixer.
@@ -1242,7 +1260,7 @@ which are drawn to a surface as a single unit.  Used well, this can improve
 your game's rendering performance by grouping together operations using similar
 parameters.
 
-new Model(shapes[, shader]); [L1]
+new Model(shapes[, shader]); [API 1]
 
     Constructs a Model out of the provided array of Shape objects.  `shader` is
     the Shader to use when rendering the model.  See below for more information
@@ -1252,15 +1270,15 @@ new Model(shapes[, shader]); [L1]
     identity matrix.  If `shader` is not provided, the default shader program
     will be used (see `Shader.Default`).
 
-Model#shader [R/W] [L1]
+Model#shader [R/W] [API 1]
 
     Gets or sets the Shader to use when drawing this model.
 
-Model#transform [R/W] [L1]
+Model#transform [R/W] [API 1]
 
     Gets or sets the transformation matrix to use when drawing this model.
 
-Model#draw([surface]); [L1]
+Model#draw([surface]); [API 1]
 
     Draws the model on `surface`, or the backbuffer if no surface is specified.
     Any transformations defined for the model (see below) are applied as if all
@@ -1275,7 +1293,7 @@ common input method for games.  As with the `Keyboard` object, `Mouse` provides
 an event queue which accumulates clicks and other events until the game is
 ready to process them.
 
-MouseKey [enumeration] [L1]
+MouseKey [enumeration] [API 1]
 
     Specifies a mouse click or other event (such as a wheel movement).  Can
     be one of the following:
@@ -1291,24 +1309,24 @@ MouseKey [enumeration] [L1]
         MouseKey.Back
         MouseKey.Forward
 
-Mouse.Default [R/O] [L1]
+Mouse.Default [R/O] [API 1]
 
     Gets a `Mouse` object for the default mouse device.
 
     Note: miniSphere currently only supports a single mouse.
 
-Mouse#x [R/O] [L1]
-Mouse#y [R/O] [L1]
+Mouse#x [R/O] [API 1]
+Mouse#y [R/O] [API 1]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
     game's rendering area.
 
-Mouse#clearQueue(); [L1]
+Mouse#clearQueue(); [API 1]
 
     Removes all events from this mouse's event queue.  If another event is not
     received in the interim, the next getEvent() will return null.
 
-Mouse#getEvent(); [L1]
+Mouse#getEvent(); [API 1]
 
     Gets the next event in this mouse's event queue.  `null` is returned if the
     queue is empty.
@@ -1331,7 +1349,7 @@ Mouse#getEvent(); [L1]
             For mouse wheel events, specifies how much the wheel has moved.
             For any other event, this will be `undefined`.
 
-Mouse#isPressed(key); [L1]
+Mouse#isPressed(key); [API 1]
 
     Gets whether the specified mouse button is currently pressed.  `key` is one
     of the MouseKey constants listed above.
@@ -1353,7 +1371,7 @@ and allows manually seeding the generator, as well as saving and restoring the
 exact state of the generator at any time.  RNG state is often saved along with
 other save data as a way to deter save scumming.
 
-RNG.fromSeed(seed); [L1]
+RNG.fromSeed(seed); [API 1]
 
     Constructs a new random number generator seeded using the specified value.
     The specific sequence of numbers generated is entirely defined by the seed:
@@ -1363,17 +1381,17 @@ RNG.fromSeed(seed); [L1]
     `seed` is a number greater than zero.  If the seed is fractional, only the
     integer part is used; everything after the decimal point is ignored.
 
-RNG.fromState(state); [L1]
+RNG.fromState(state); [API 1]
 
     Constructs a new random number generator which starts in the specified
     state.  See RNG#state for more information.
 
-new RNG(); [L1]
+new RNG(); [API 1]
 
     Constructs a new random number generator seeded from the current system
     time.
 
-RNG#state [R/W] [L1]
+RNG#state [R/W] [API 1]
 
     Gets or sets the current state of this generator.  State is encoded as
     a 32-digit hexadecimal string which makes it easy to save and restore.
@@ -1382,7 +1400,7 @@ RNG#state [R/W] [L1]
     and consist only of hexadecimal digits (0-9, A-F), otherwise a TypeError
     will be thrown.
 
-RNG#next(); [L1]
+RNG#next(); [API 1]
 
     Generates the next random number in the sequence.  This returns an object
     whose `done` property is always false, and whose `value` property is a
@@ -1485,18 +1503,18 @@ Sample.fromFile(filename); [ASYNC] [NEW]
           recommended to use `Sample` objects for, e.g., background music.  Use
           a `Sound` instead.
 
-new Sample(filename); [L1]
+new Sample(filename); [API 1]
 
     Loads the audio file named by `filename` synchronously, without yielding to
     the event loop, and returns the newly constructed Sample object.  May not
     be supported on all platforms.
 
-Sample#fileName [R/O] [L1]
+Sample#fileName [R/O] [API 1]
 
     Gets the full SphereFS pathname of the audio file used to construct this
     Sample object.
 
-Sample#play(mixer[, options]); [L1]
+Sample#play(mixer[, options]); [API 1]
 
     Plays the sample on the specified mixer.  Each time this is called, a new
     stream is started, allowing many instances of the sound to be playing
@@ -1522,7 +1540,7 @@ Sample#play(mixer[, options]); [L1]
             Playback speed, where 1.0 is normal speed.  Also affects pitch.
             Speed is 1.0x if not specified.
 
-Sample#stopAll(); [L1]
+Sample#stopAll(); [API 1]
 
     Stops playback of all active instances of this sample.
 
@@ -1534,7 +1552,7 @@ A `Server` represents a basic TCP server which listens for connections on a
 specified port.  Clients connecting to the server are placed in a backlog and
 must be explicitly accepted by game code.
 
-new Server(port[, backlog_size]); [L1]
+new Server(port[, backlog_size]); [API 1]
 
     Constructs a new server to listen for connections on the specified port.
     `backlog_size` specifies the size of the backlog and defaults to 128.  If
@@ -1553,7 +1571,7 @@ Server#numPending [R/O] [NEW]
     number of pending connections is allowed to reach the backlog size
     specified at `Server` construction, new connections will be refused.
 
-Server#accept(); [L1]
+Server#accept(); [API 1]
 
     Returns a Socket for the next connection in the backlog.  If the backlog is
     empty, a RangeError will be thrown, so you should check the value of
@@ -1566,7 +1584,7 @@ Server#acceptNext(); [ASYNC] [NEW]
     connection.  This is an asychronous version of `accept()` that can be used
     with `await`.
 
-Server#close(); [L1]
+Server#close(); [API 1]
 
     Shuts down the server.  The server port will be closed and any connections
     already in the backlog will be dropped.
@@ -1580,7 +1598,7 @@ manipulates vertices and pixels as they are rendered to a surface.  Shaders are
 written in the GLSL shader programming language, which is beyond the scope of
 this document.
 
-Shader.Default [R/O] [L1]
+Shader.Default [R/O] [API 1]
 
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
@@ -1600,14 +1618,14 @@ Shader.fromFiles(options); [ASYNC] [NEW]
         The name of a file containing GLSL source code for the program's
         fragment shader.
 
-new Shader(options); [L1]
+new Shader(options); [API 1]
 
     Loads the shader source files specified in `options` (refer to the
     documentation of `Shader.fromFiles` above) synchronously, without yielding
     to the event loop, and returns the newly constructed Shader object.  May
     not be supported on all platforms.
 
-Shader#clone(); [L1]
+Shader#clone(); [API 1]
 
     Creates a copy of this shader.  The new shader is distinct from the first
     and can have its own independent uniform values.  As uniform values are
@@ -1616,25 +1634,25 @@ Shader#clone(); [L1]
     Note: Uniform values are not copied; the cloned shader will be constructed
           with all of its uniforms set to their default values.
 
-Shader#setBoolean(name, value); [L1]
+Shader#setBoolean(name, value); [API 1]
 
     Sets the value of a GLSL boolean-valued (`bool`) uniform.  `value` is
     either `true` or `false`.
 
-Shader#setColorVector(name, color); [L1]
+Shader#setColorVector(name, color); [API 1]
 
     Sets the value of a GLSL floating point 4-vector uniform (`vec4`) from the
     components of a `Color` object.  Order is assumed to be RGBA.
 
-Shader#setFloat(name, value); [L1]
-Shader#setInt(name, value); [L1]
+Shader#setFloat(name, value); [API 1]
+Shader#setInt(name, value); [API 1]
 
     Sets the value of a GLSL scalar uniform.
 
     Note: Only `float` and `int` types are currently supported.
 
-Shader#setFloatArray(name, values); [L1]
-Shader#setIntArray(name, values); [L1]
+Shader#setFloatArray(name, values); [API 1]
+Shader#setIntArray(name, values); [API 1]
 
     Sets the values of a GLSL array uniform.  `values` should be an array
     containing a number of values equal to the size of the array, otherwise
@@ -1642,8 +1660,8 @@ Shader#setIntArray(name, values); [L1]
 
     Note: Only `float` and `int` types are currently supported.
 
-Shader#setFloatVector(name, values); [L1]
-Shader#setIntVector(name, values); [L1]
+Shader#setFloatVector(name, values); [API 1]
+Shader#setIntVector(name, values); [API 1]
 
     Sets the value of a GLSL vector uniform.  `values` must be an array and
     contain between 2 and 4 values, inclusive.  If not, an error will be
@@ -1652,7 +1670,7 @@ Shader#setIntVector(name, values); [L1]
     Note: Only `vecN` (float) and `ivecN` (integer) types are currently
           supported.
 
-Shader#setMatrix(name, transform); [L1]
+Shader#setMatrix(name, transform); [API 1]
 
     Sets the value of 4x4 matrix uniform (`mat4`) using the underlying matrix
     cells of a `Transform` object.
@@ -1667,7 +1685,7 @@ A `Shape` represents a group of textured triangles, line segments, or points to
 be drawn to a surface.  Shapes can be drawn directly, or added to a `Model` to
 group related rendering operations together.
 
-ShapeType [enumeration] [L1]
+ShapeType [enumeration] [API 1]
 
     Specifies the type of graphics primitive represented by a Shape object.
     Can be one of the following:
@@ -1695,7 +1713,7 @@ Shape.drawImmediate([surface, ]type[, texture], vertices); [NEW]
           Shapes.  Keep this in mind when writing your rendering code as
           immediate-mode rendering can very easily become a performance issue.
 
-new Shape(type[, texture], vertexList[, indexList]); [L1]
+new Shape(type[, texture], vertexList[, indexList]); [API 1]
 
     Constructs a primitive shape from a vertex list and optional index list,
     textured with a specified `Texture` image.  `type` specifies the type of
@@ -1706,21 +1724,21 @@ new Shape(type[, texture], vertexList[, indexList]); [L1]
     the vertex list will comprise the shape.  If `indexList` is not specified,
     all vertices from `vertexList` will be used.
 
-Shape#indexList [R/W] [L1]
+Shape#indexList [R/W] [API 1]
 
     Gets or sets the index list used to select vertices for this shape.  Set
     this to `null` to use the entire vertex list.
 
-Shape#texture [R/W] [L1]
+Shape#texture [R/W] [API 1]
 
     The Image to use when texturing the shape. This can be null, in which case
     the vertex colors alone will determine the shape's appearance.
 
-Shape#vertexList [R/W] [L1]
+Shape#vertexList [R/W] [API 1]
 
     Gets or sets the vertex list containing vertices for this shape.
 
-Shape#draw([surface[, transform]]); [L1]
+Shape#draw([surface[, transform]]); [API 1]
 
     Draws the shape onto `surface`, or the backbuffer if no surface is
     specified.  `transform` is the Transform to use.
@@ -1748,20 +1766,20 @@ Socket.connectTo(hostname, port); [ASYNC] [NEW]
     constructed Socket object for the connection.  If the connection attempt
     fails, the promise is rejected.
 
-new Socket([hostname, port]); [L1]
+new Socket([hostname, port]); [API 1]
 
     Constructs a new socket object.  If `hostname` and `port` are specified,
     Sphere will immediately attempt to connect the socket; otherwise, it will
     be created in a disconnected state and you must call `connectTo()` manually
     to connect it.
 
-Socket#bytesAvailable [R/O] [L1]
+Socket#bytesAvailable [R/O] [API 1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     This is the maximum amount of data you can retrieve using `read()` on the
     current frame without it throwing a RangeError.
 
-Socket#bytesPending [R/O] [L1]
+Socket#bytesPending [R/O] [API 1]
 
     Gets the number of bytes of data currently in this socket's write-behind
     buffer.  This is the amount of data which has been written to the socket
@@ -1783,7 +1801,7 @@ Socket#bytesSent [R/O] [NEW]
     Note: This only counts bytes actually sent over the network.  Data still
           waiting in the socket's write-behind buffer is not counted.
 
-Socket#connected [R/O] [L1]
+Socket#connected [R/O] [API 1]
 
     Gets whether the connection has been established.  As long as this is
     false, you won't be able to call most methods (except `connectTo`) on the
@@ -1796,12 +1814,12 @@ Socket#noDelay [R/W] [NEW]
     delay transmission of small writes while waiting on acknowledgement of a
     previous transmission.
 
-Socket#remoteAddress [R/O] [L1]
+Socket#remoteAddress [R/O] [API 1]
 
     Gets the IP address of the upstream end of the socket.  If the socket is
     disconnected, accessing this will throw an error.
 
-Socket#remotePort [R/O] [L1]
+Socket#remotePort [R/O] [API 1]
 
     Gets the port that the remote machine is using for its side of the
     connection.  Generally not very useful, but it's there if you need it.  If
@@ -1827,13 +1845,13 @@ Socket#asyncWrite(data); [ASYNC] [NEW]
     Note: If the connection is lost before the write completes, Sphere will
           reject the promise.
 
-Socket#close(); [ASYNC] [L1]
+Socket#close(); [ASYNC] [API 1]
 
     Disconnects the socket.  Data remaining the socket's write-behind buffer
     will be written out before the connection is closed.  The promise resolves
     once the socket is no longer connected.
 
-Socket#connectTo(hostname, port); [ASYNC] [L1]
+Socket#connectTo(hostname, port); [ASYNC] [API 1]
 
     Connects the socket to `hostname` on `port`.  `hostname` can either be a
     domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  The promise
@@ -1849,7 +1867,7 @@ Socket#disconnect(); [NEW]
     Immediately disconnects the socket.  If there is still data in the socket's
     write-behind buffer that hasn't been transmitted, it will be discarded.
 
-Socket#read(num_bytes); [L1]
+Socket#read(num_bytes); [API 1]
 
     Reads `num_bytes` bytes from the socket's receive buffer and returns an
     ArrayBuffer containing the data received.
@@ -1858,7 +1876,7 @@ Socket#read(num_bytes); [L1]
     receive buffer to satisfy the read, a RangeError will be thrown.  To avoid
     the RangeError, check the value of `bytesAvailable` first.
 
-Socket#write(data); [L1]
+Socket#write(data); [API 1]
 
     Writes data to the socket, to be read on the other end.  `data` can be an
     ArrayBuffer, TypedArray view, or DataView.  This function always returns
@@ -1888,62 +1906,62 @@ Sound.fromFile(filename); [ASYNC] [NEW]
     Note: The promise is not guaranteed to resolve on the same frame, although
           in miniSphere it usually does.
 
-new Sound(filename); [L1]
+new Sound(filename); [API 1]
 
     Loads the audio file named by `filename` synchronously, without yielding to
     the event loop, and returns the newly constructed Sound object.  May not be
     supported on all platforms.
 
-Sound#fileName [R/O] [L1]
+Sound#fileName [R/O] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Sound
     object.
 
-Sound#length [R/O] [L1]
+Sound#length [R/O] [API 1]
 
     Gets the length of the sound in microseconds.
 
-Sound#pan [R/W] [L1]
+Sound#pan [R/W] [API 1]
 
     Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
     left, and 1.0 is full right.
 
-Sound#playing [R/O] [L1]
+Sound#playing [R/O] [API 1]
 
     true if the sound is currently playing, false otherwise.
 
-Sound#position [R/W] [L1]
+Sound#position [R/W] [API 1]
 
     Gets or sets the playback position within the sound, in seconds.
 
-Sound#repeat [R/W] [L1]
+Sound#repeat [R/W] [API 1]
 
     Gets or sets whether the sound will automatically repeat when it reaches
     the end.
 
-Sound#speed [R/W] [L1]
+Sound#speed [R/W] [API 1]
 
     Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
     speed, etc.  Note that changing the playback speed affects the pitch as
     well.
 
-Sound#volume [R/W] [L1]
+Sound#volume [R/W] [API 1]
 
     Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
     volume.  Higher values are allowed, but may introduce distortion due to
     clipping.
 
-Sound#pause(); [L1]
+Sound#pause(); [API 1]
 
     Pauses the sound.  If it is already paused, this has no effect.
 
-Sound#play([mixer]); [L1]
+Sound#play([mixer]); [API 1]
 
     Begins or resumes sound playback.  When called with no `mixer` argument,
     Sound#play() will resume playback for a paused sound.  Otherwise, the sound
     is started from the beginning on the specified mixer.
 
-Sound#stop(); [L1]
+Sound#stop(); [API 1]
 
     Stops the sound.  Playback position will be reset to the beginning (0.0s),
     even if the sound was not playing.
@@ -1956,7 +1974,7 @@ A `SoundStream` represents a dynamic audio stream which can be used to play
 arbitrary audio data, fed to the stream by your game in realtime.  This can be
 used to implement procedural audio, for example.
 
-new SoundStream([frequency[, bits[, channels]]]); [L1]
+new SoundStream([frequency[, bits[, channels]]]); [API 1]
 
     Constructs an audio stream, which plays arbitrary sound data provided by
     the game at runtime.  This may be used, for example, to generate sound
@@ -1967,19 +1985,19 @@ new SoundStream([frequency[, bits[, channels]]]); [L1]
 
     The default stream format is 8-bit 22050Hz with 1 channel.
 
-SoundStream#length [R/O] [L1]
+SoundStream#length [R/O] [API 1]
 
     Gets the amount of audio currently buffered into the stream, in seconds.
     Playback will pause if the buffer is exhausted; To ensure skip-free
     playback, you should monitor the stream and write more data before `length`
     reaches zero.
 
-SoundStream#pause(); [L1]
+SoundStream#pause(); [API 1]
 
     Pauses playback of the stream.  Has no effect if the stream is already
     paused.
 
-SoundStream#play([mixer]); [L1]
+SoundStream#play([mixer]); [API 1]
 
     Starts the stream playing, or if no mixer is specified, resumes a paused
     stream.  Before beginning playback, it is recommended to pre-buffer a few
@@ -1987,13 +2005,13 @@ SoundStream#play([mixer]); [L1]
     will minimize the risk of a buffer underrun and subsequent skipping during
     playback.
 
-SoundStream#stop(); [L1]
+SoundStream#stop(); [API 1]
 
     Stops playback of the stream and frees its buffer.  This should be called
     when you are done using a stream.  The stream may be reused after a stop()
     call, but you will have to feed new audio data.
 
-SoundStream#write(data); [L1]
+SoundStream#write(data); [API 1]
 
     Writes audio data to the stream buffer.  `data` is an ArrayBuffer,
     TypedArray or DataView containing the data to write.  While a stream is
@@ -2013,7 +2031,7 @@ enables render-to-texture effects to be implemented.
 Note: Surfaces can only be used as textures under API level 2 or higher.  When
       targeting API level 1 you must call `.toTexture()` (see below) first.
 
-Surface.Screen [R/O] [L1]
+Surface.Screen [R/O] [API 1]
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
@@ -2025,7 +2043,7 @@ Surface.fromFile(filename); [ASYNC] [NEW]
     promise for a Surface whose dimensions and initial content match that of
     the loaded image.
 
-new Surface(width, height[, content]); [L1]
+new Surface(width, height[, content]); [API 1]
 
     Constructs a new Surface with the specified content.  `width` and `height`
     specify the size in pixels of the surface, and `content` is either a
@@ -2040,7 +2058,7 @@ new Surface(width, height[, content]); [L1]
           enough pixel data to cover the entire surface, a RangeError will be
           thrown.
 
-new Surface(filename); [L1]
+new Surface(filename); [API 1]
 
     Loads the image file named by `filename` synchronously, without yielding to
     the event loop, and returns a Surface whose dimensions and initial content
@@ -2051,7 +2069,7 @@ Surface#blendOp [R/W] [NEW]
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
 
-Surface#transform [R/W] [L1]
+Surface#transform [R/W] [API 1]
 
     Gets or sets a `Transform` representing the surface's projection matrix.
     When rendering is done on the surface, the projection matrix is the last
@@ -2061,13 +2079,13 @@ Surface#transform [R/W] [L1]
           When a surface is created, Sphere sets its transform to an
           orthographic matrix suitable for pixel-perfect 2D rendering.
 
-Surface#width [R/O] [L1]
-Surface#height [R/O] [L1]
+Surface#width [R/O] [API 1]
+Surface#height [R/O] [API 1]
 
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
 
-Surface#clipTo(x, y, width, height); [L1]
+Surface#clipTo(x, y, width, height); [API 1]
 
     Sets the surface's clipping rectangle.  Values are expressed in pixels.
     Anything drawn outside of the clipping rectangle won't be rendered.
@@ -2075,7 +2093,7 @@ Surface#clipTo(x, y, width, height); [L1]
     Note: When setting the clipping rectangle for the screen, the effect only
           lasts until the next frame.
 
-Surface#toTexture(); [L1]
+Surface#toTexture(); [API 1]
 
     Returns a Texture created from the current contents of this Surface.  Note
     that drawing to the surface afterwards will not affect the texture, which
@@ -2103,13 +2121,13 @@ Texture.fromFile(filename); [ASYNC] [NEW]
     Note: The promise is not guaranteed to resolve on the same frame, although
           in miniSphere it usually does.
 
-new Texture(filename); [L1]
+new Texture(filename); [API 1]
 
     Loads the image file named by `filename` synchronously, without yielding to
     the event loop, and returns the newly constructed Texture object.  May not
     be supported on all platforms.
 
-new Texture(width, height[, content]); [L1]
+new Texture(width, height[, content]); [API 1]
 
     Constructs a new Texture with the specified content.  `width` and `height`
     specify the size in pixels of the texture, and `content` is either a
@@ -2124,20 +2142,20 @@ new Texture(width, height[, content]); [L1]
           enough pixel data to cover the entire texture, a RangeError will be
           thrown.
 
-new Texture(surface); [L1]
+new Texture(surface); [API 1]
 
     Constructs a new Texture from the contents of `surface`, a Surface object.
     Subsequent modifications to the surface will not affect the contents of the
     new texture.
 
-Texture#fileName [R/O] [L1]
+Texture#fileName [R/O] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Texture
     object.  For synthesized textures, e.g. those created from a surface, this
     is `null`.
 
-Texture#width [R/O] [L1]
-Texture#height [R/O] [L1]
+Texture#width [R/O] [API 1]
+Texture#height [R/O] [API 1]
 
     Gets the width or height of the texture, in pixels.
 
@@ -2163,7 +2181,7 @@ Texture#upload(content); [NEW]
 A `Transform` represents a transformation matrix used to convert vertex
 coordinates for shapes drawn to a surface.
 
-new Transform(); [L1]
+new Transform(); [API 1]
 
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
@@ -2176,21 +2194,21 @@ Transform#matrix [R/O]
         cellValue = transform_obj.matrix[i][j];
         transform_obj.matrix[i][j] = newValue;
 
-Transform#identity(); [L1]
+Transform#identity(); [API 1]
 
     Re-initializes this matrix as an identity matrix.
 
-Transform#compose(otherMatrix); [L1]
+Transform#compose(otherMatrix); [API 1]
 
     Composes this transform with another.  `otherMatrix` is multiplied from the
     left such that transformations are performed in the order you specify.
 
-Transform#project2D(left, top, right, bottom[, near, far]); [L1]
+Transform#project2D(left, top, right, bottom[, near, far]); [API 1]
 
     Multiplies this transform's matrix with an orthographic (parallel)
     projection.
 
-Transform#project3D(fov, aspect, near, far); [L1]
+Transform#project3D(fov, aspect, near, far); [API 1]
 
     Multiplies this transform's matrix with a 3D perspective projection.  `fov`
     is the size of the vertical field of view, in degrees.  `aspect` should
@@ -2201,19 +2219,19 @@ Transform#project3D(fov, aspect, near, far); [L1]
     objects will be clipped.  They must be nonzero and positive, or an error
     will be thrown.
 
-Transform#rotate(angle[, vx, vy, vz]); [L1]
+Transform#rotate(angle[, vx, vy, vz]); [API 1]
 
     Applies a rotation transformation to this matrix.  `angle` is the amount of
     rotation to apply, in degrees.  (vx, vy, vz) is the vector to rotate about.
     For example, the default is (0, 0, 1) which rotates about the Z axis.
 
-Transform#scale(sx, sy[, sz]); [L1]
+Transform#scale(sx, sy[, sz]); [API 1]
 
     Applies a scaling transformation to this matrix.  `sx`, `sy`, and `sz` are
     the scaling factors for each axis.  If `sz` is omitted, it defaults to 1.0
     and the Z axis is not scaled.
 
-Transform#translate(tx, ty[, tz]); [L1]
+Transform#translate(tx, ty[, tz]); [API 1]
 
     Applies a translation transformation to this matrix.  `tx`, `ty`, and `tz`
     are the amount of translation to apply along each axis.  If `tz` is
@@ -2227,7 +2245,7 @@ A `VertexList` contains a collection of vertices for use when constructing a
 `Shape`.  The vertices in the vertex list are stored on the GPU for fast access
 at render time.
 
-new VertexList(vertices); [L1]
+new VertexList(vertices); [API 1]
 
     Constructs a new vertex list from `vertices`, an array of objects with the
     following properties:
