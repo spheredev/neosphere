@@ -126,11 +126,22 @@ DataStream#position [R/W]
     `position', the new value must be in the range [0, bufferSize] or a
     RangeError exception will be thrown.
 
-DataStream#readBytes(num_bytes);
+DataStream#size [R/O]
+
+    Gets the size of the stream in bytes.  This is the size of the underlying
+    data store, which is fixed at creation; trying to write data past this
+    point will throw a RangeError.
+
+DataStream#read(num_bytes);
 
     Reads a number of bytes starting at the current position and advances the
-    pointer accordingly.  Returns a `Uint8Array` containing the data that was
+    pointer accordingly.  Returns an `ArrayBuffer` containing the data that was
     read.
+
+DataStream#readBytes(num_bytes);
+
+    Like `read()`, but returns a Uint8Array instead of an ArrayBuffer for
+    convenience.
 
 DataStream#readFloat32([littleEndian]);
 DataStream#readFloat64([littleEndian]);
@@ -229,7 +240,7 @@ DataStream#readStruct(desc);
     If there is not enough data left in the buffer to read all the specified
     values, an exception will be thrown and the pointer will not be advanced.
 
-DataStream#writeBytes(data);
+DataStream#write(data);
 
     Writes `data`, which can be either an ArrayBuffer, TypedArray, or DataView,
     to the DataStream starting at the current position and advances the pointer

@@ -1,4 +1,4 @@
-/*
+/**
  *  miniSphere JavaScript game engine
  *  Copyright (c) 2015-2018, Fat Cerberus
  *  All rights reserved.
@@ -44,6 +44,11 @@ class DataStream extends DataView
 		this.textEnc = new TextEncoder();
 	}
 
+	get canExtend()
+	{
+		return false;
+	}
+
 	get position()
 	{
 		return this.ptr;
@@ -55,11 +60,23 @@ class DataStream extends DataView
 		this.ptr = value;
 	}
 
-	readBytes(numBytes)
+	get size()
+	{
+		return this.byteLength;
+	}
+
+	read(numBytes)
 	{
 		const ptr = this.position;
 		this.position += numBytes;
-		return this.bytes.slice(ptr, ptr + numBytes);
+		return this.bytes
+			.subarray(ptr, ptr + numBytes).buffer
+			.slice(0);
+	}
+
+	readBytes(numBytes)
+	{
+		return new Uint8Array(this.read(numBytes));
 	}
 
 	readFloat32(littleEndian = false)
@@ -226,7 +243,7 @@ class DataStream extends DataView
 		return this.getUint32(ptr, littleEndian);
 	}
 
-	writeBytes(data)
+	write(data)
 	{
 		const buffer = ArrayBuffer.isView(data) ? data.buffer : data;
 		const payload = new Uint8Array(buffer);
