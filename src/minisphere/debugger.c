@@ -110,6 +110,13 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 		console_log(1, "listening for SSj on TCP port %d", TCP_DEBUG_PORT);
 		hostname = allow_remote ? NULL : "127.0.0.1";
 		s_server = server_new(hostname, TCP_DEBUG_PORT, 1024, 1, true);
+		if (s_server != NULL) {
+			server_set_no_delay(s_server, true);
+		}
+		else {
+			debugger_log("unable to bind SSj port, debugger disabled", KI_LOG_WARN, true);
+			s_attach_mode = SSJ_OFF;
+		}
 	}
 	else {
 		s_server = NULL;
@@ -117,7 +124,7 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 
 	// if the engine was started in debug mode, wait for a debugger to connect before
 	// beginning execution.
-	s_needs_attachment = attach_mode == SSJ_ACTIVE;
+	s_needs_attachment = s_attach_mode == SSJ_ACTIVE;
 	if (s_needs_attachment && !do_attach_debugger())
 		sphere_abort(NULL);  // no attachment, exit
 }
@@ -298,8 +305,8 @@ debugger_log(const char* text, ki_log_op_t op, bool use_console)
 
 	if (use_console) {
 		heading = op == KI_LOG_TRACE ? "\33[32mtrace"
-			: op == KI_LOG_WARN ? "\33[31;1m WARN"
-			: "\33[34;1m  log";
+			: op == KI_LOG_WARN ? "\33[31;1mWARN"
+			: "\33[34;1mlog";
 		console_log(0, "%s:\33[m %s", heading, text);
 	}
 	if (s_socket != NULL) {

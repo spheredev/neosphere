@@ -98,6 +98,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	printf("connecting to %s:%d... ", hostname, port);
 	fflush(stdout);
 	obj->socket = socket_new(1024, true);
+	socket_set_no_delay(obj->socket, true);
 	if (!socket_connect(obj->socket, hostname, port))
 		goto on_error;
 	timeout = clock() + 60 * CLOCKS_PER_SEC;
