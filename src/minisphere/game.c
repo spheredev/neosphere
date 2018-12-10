@@ -1217,6 +1217,8 @@ resolve_pathname(const game_t* game, const char* pathname, path_t* *out_path, en
 		// the ~/ prefix refers to the game's save data directory.  to improve sandboxing and
 		// make things easier for developers using stock code, each game gets its own save data
 		// directory.
+		if (game_save_id(game) == NULL)
+			goto on_error;  // no save ID, can't resolve path
 		*out_path = path_new(&pathname[2]);
 		origin = path_rebase(path_new("miniSphere/Save Data/"), home_path());
 		path_append_dir(origin, game_save_id(game));
