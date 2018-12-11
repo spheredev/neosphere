@@ -61,6 +61,7 @@ struct game
 	image_t*       default_arrow_up;
 	font_t*        default_font;
 	windowstyle_t* default_windowstyle;
+	bool           empty_promises;
 	vector_t*      file_type_map;
 	bool           fullscreen;
 	js_ref_t*      manifest;
@@ -367,6 +368,12 @@ windowstyle_t*
 game_default_windowstyle(const game_t* it)
 {
 	return it->default_windowstyle;
+}
+
+bool
+game_empty_promises(const game_t* it)
+{
+	return it->empty_promises;
 }
 
 bool
@@ -1109,7 +1116,9 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	game->safety = FS_SAFETY_FULL;
 #if defined(MINISPHERE_SPHERUN)
 	if (jsal_get_prop_string(-11, "development") && jsal_is_object(-1)) {
-		if (jsal_get_prop_string(-1, "sandboxing") && jsal_is_string(-1)) {
+		if (jsal_get_prop_string(-1, "emptyPromises") && jsal_is_boolean(-1))
+			game->empty_promises = jsal_get_boolean(-1);
+		if (jsal_get_prop_string(-2, "sandboxing") && jsal_is_string(-1)) {
 			sandbox_mode = jsal_get_string(-1);
 			game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
 				: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED

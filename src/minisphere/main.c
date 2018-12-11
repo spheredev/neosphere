@@ -573,7 +573,7 @@ on_reject_promise(void)
 	const char* error_text;
 	const char* error_url = NULL;
 
-	if (false) {
+	if (game_empty_promises(g_game)) {
 		jsal_dup(0);
 		error_text = jsal_to_string(-1);
 		if (jsal_is_error(1)) {

@@ -71,6 +71,7 @@ image_t*        game_default_arrow_up    (const game_t* it);
 font_t*         game_default_font        (const game_t* it);
 windowstyle_t*  game_default_windowstyle (const game_t* it);
 bool            game_dir_exists          (const game_t* it, const char* dirname);
+bool            game_empty_promises      (const game_t* it);
 bool            game_file_exists         (const game_t* it, const char* filename);
 path_t*         game_full_path           (const game_t* it, const char* filename, const char* base_dir_name, bool v1_mode);
 bool            game_fullscreen          (const game_t* it);

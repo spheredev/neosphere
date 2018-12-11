@@ -31,6 +31,8 @@ v5.3.0 - TBD
 * Adds support for `-h` as an alias for `--help` for all command-line tools.
 * Adds `FS.directoryOf`, `FS.extensionOf` and `FS.fileNameOf` APIs for taking
   apart path strings.
+* Adds a new `development` manifest field to allow controlling behavior when
+  running a game under SpheRun.
 * Adds API support for the Back and Forward buttons found on most modern mice.
 * Adds `recursive` option for DirectoryStream, to list files in subdirectories.
 * Adds `apiVersion` and `apiLevel` to the example Cellscript.
