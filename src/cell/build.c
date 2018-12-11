@@ -1658,7 +1658,6 @@ js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
 		// throw a TypeError in that case.
 		path_free(path);
 		jsal_error(JS_TYPE_ERROR, "'FS.extensionOf' cannot be called on a directory");
-		return false;  // not actually reached
 	}
 }
 

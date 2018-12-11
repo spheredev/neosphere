@@ -79,7 +79,7 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 {
 	image_t*             backbuffer = NULL;
 	int                  bitmap_flags;
-	ALLEGRO_DISPLAY*     display;
+	ALLEGRO_DISPLAY*     display = NULL;
 	ALLEGRO_BITMAP*      icon_bitmap;
 	ALLEGRO_MONITOR_INFO desktop_info;
 	ALLEGRO_STATE        old_state;
@@ -87,13 +87,18 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 	int                  x_scale = 1;
 	int                  y_scale = 1;
 
+	if (!(screen = calloc(1, sizeof(screen_t)))) {
+		fprintf(stderr, "FATAL: couldn't allocate memory for screen_t");
+		goto on_error;
+	}
+
 	console_log(1, "initializing render context at %dx%d", resolution.width, resolution.height);
 
 	al_set_new_window_title(title);
 	al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_PROGRAMMABLE_PIPELINE);
 	if (al_get_monitor_info(0, &desktop_info)) {
-		x_scale = ((desktop_info.x2 - desktop_info.x1) / 1.5) / resolution.width;
-		y_scale = ((desktop_info.y2 - desktop_info.y1) / 1.5) / resolution.height;
+		x_scale = ((desktop_info.x2 - desktop_info.x1) * 2 / 3) / resolution.width;
+		y_scale = ((desktop_info.y2 - desktop_info.y1) * 2 / 3) / resolution.height;
 		x_scale = y_scale = fmax(fmin(x_scale, y_scale), 1.0);
 	}
 	display = al_create_display(resolution.width * x_scale, resolution.height * y_scale);
@@ -110,7 +115,7 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 	}
 	if (backbuffer == NULL) {
 		fprintf(stderr, "FATAL: couldn't initialize render context");
-		return NULL;
+		goto on_error;
 	}
 
 	if (icon != NULL) {
@@ -125,7 +130,6 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 		al_set_display_icon(display, icon_bitmap);
 	}
 
-	screen = calloc(1, sizeof(screen_t));
 	screen->display = display;
 	screen->backbuffer = backbuffer;
 	screen->font = font;
@@ -143,6 +147,13 @@ screen_new(const char* title, image_t* icon, size2_t resolution, int frameskip, 
 
 	refresh_display(screen);
 	return screen;
+
+on_error:
+	image_unref(backbuffer);
+	if (display != NULL)
+		al_destroy_display(display);
+	free(screen);
+	return NULL;
 }
 
 void
@@ -516,8 +527,8 @@ refresh_display(screen_t* screen)
 		screen->x_offset = 0;
 		screen->y_offset = 0;
 		if (al_get_monitor_info(0, &desktop_info)) {
-			screen->x_scale = trunc(((desktop_info.x2 - desktop_info.x1) / 1.5) / screen->x_size);
-			screen->y_scale = trunc(((desktop_info.y2 - desktop_info.y1) / 1.5) / screen->y_size);
+			screen->x_scale = trunc(((desktop_info.x2 - desktop_info.x1) * 2 / 3) / screen->x_size);
+			screen->y_scale = trunc(((desktop_info.y2 - desktop_info.y1) * 2 / 3) / screen->y_size);
 			screen->x_scale = screen->y_scale = fmax(fmin(screen->x_scale, screen->y_scale), 1.0);
 		}
 

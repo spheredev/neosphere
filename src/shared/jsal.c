@@ -612,7 +612,7 @@ jsal_enable_vm(bool enabled)
 		JsDisableRuntimeExecution(s_js_runtime);
 }
 
-void
+noreturn_t
 jsal_error(js_error_type_t type, const char* format, ...)
 {
 	va_list ap;
@@ -622,7 +622,7 @@ jsal_error(js_error_type_t type, const char* format, ...)
 	va_end(ap);
 }
 
-void
+noreturn_t
 jsal_error_va(js_error_type_t type, const char* format, va_list ap)
 {
 	jsal_push_new_error_va(type, format, ap);
@@ -2005,7 +2005,7 @@ jsal_stringify(int at_index)
 	jsal_replace(at_index);
 }
 
-void
+noreturn_t
 jsal_throw(void)
 {
 	/* [ ... exception ] -> [ ... ] */

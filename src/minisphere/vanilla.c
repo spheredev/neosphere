@@ -1380,18 +1380,21 @@ jsal_require_sphere_script(int index, const char* name)
 	if (jsal_is_function(index)) {
 		// caller passed function directly
 		script = script_new_function(index);
+		return script;
 	}
 	else if (jsal_is_string(index)) {
 		// caller passed code string, compile it
 		codestring = jsal_require_lstring_t(index);
 		script = script_new(codestring, "%s", name);
 		lstr_free(codestring);
+		return script;
 	}
-	else if (jsal_is_null(index) || jsal_is_undefined(index))
+	else if (jsal_is_null(index) || jsal_is_undefined(index)) {
 		return NULL;
-	else
+	}
+	else {
 		jsal_error(JS_TYPE_ERROR, "Expected a string, function, or null/undefined");
-	return script;
+	}
 }
 
 spriteset_t*

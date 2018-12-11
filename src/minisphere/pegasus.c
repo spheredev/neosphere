@@ -2325,7 +2325,6 @@ js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
 		// throw a TypeError in that case.
 		path_free(path);
 		jsal_error(JS_TYPE_ERROR, "'FS.extensionOf' cannot be called on a directory");
-		return false;  // not actually reached
 	}
 }
 
@@ -2657,7 +2656,7 @@ js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 {
 	void*   buffer;
 	file_t* file;
-	int     num_bytes;
+	int     num_bytes = 0;
 	long    pos;
 
 	jsal_push_this();
@@ -5163,7 +5162,7 @@ js_new_TextDecoder(int num_args, bool is_ctor, intptr_t magic)
 		jsal_require_object(1);
 		jsal_get_prop_string(1, "fatal");
 		jsal_get_prop_string(1, "ignoreBOM");
-		if (!jsal_is_undefined(-2));
+		if (!jsal_is_undefined(-2))
 			fatal = jsal_require_boolean(-2);
 		if (!jsal_is_undefined(-1))
 			ignore_bom = jsal_require_boolean(-1);

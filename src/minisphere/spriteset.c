@@ -141,12 +141,14 @@ spriteset_new(void)
 	vector_t*    poses;
 	spriteset_t* spriteset;
 
+	if (!(spriteset = calloc(1, sizeof(spriteset_t))))
+		return NULL;
+
 	console_log(2, "constructing new spriteset #%u", s_next_spriteset_id);
 
 	images = vector_new(sizeof(image_t*));
 	poses = vector_new(sizeof(struct pose));
 
-	spriteset = calloc(1, sizeof(spriteset_t));
 	spriteset->id = s_next_spriteset_id++;
 	spriteset->images = images;
 	spriteset->poses = poses;

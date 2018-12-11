@@ -38,6 +38,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#if defined(__GNUC__) || defined(__clang__)
+#define noreturn_t __attribute__((noreturn)) void
+#elif defined(_MSC_VER)
+#define noreturn_t __declspec(noreturn) void
+#else
+#define noreturn_t void
+#endif
+
 typedef struct js_ref js_ref_t;
 
 typedef
@@ -112,8 +120,8 @@ bool         jsal_del_prop_index           (int object_index, int name);
 bool         jsal_del_prop_string          (int object_index, const char* name);
 int          jsal_dup                      (int from_index);
 void         jsal_enable_vm                (bool enabled);
-void         jsal_error                    (js_error_type_t type, const char* message, ...);
-void         jsal_error_va                 (js_error_type_t type, const char* message, va_list ap);
+noreturn_t   jsal_error                    (js_error_type_t type, const char* message, ...);
+noreturn_t   jsal_error_va                 (js_error_type_t type, const char* message, va_list ap);
 void         jsal_eval_module              (const char* specifier, const char* url);
 void         jsal_freeze                   (int at_index);
 void         jsal_gc                       (void);
@@ -223,7 +231,7 @@ void         jsal_set_host_data            (int at_index, void* ptr);
 void         jsal_set_prototype            (int object_index);
 void         jsal_set_top                  (int new_top);
 void         jsal_stringify                (int at_index);
-void         jsal_throw                    (void);
+noreturn_t   jsal_throw                    (void);
 bool         jsal_to_boolean               (int at_index);
 int          jsal_to_int                   (int at_index);
 double       jsal_to_number                (int at_index);
