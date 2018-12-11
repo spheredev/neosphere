@@ -35,6 +35,8 @@
 
 #include "sockets.h"
 
+void events_init           (void);
+void events_uninit         (void);
 bool events_exiting        (void);
 int  events_get_frame_rate (void);
 void events_set_frame_rate (int frame_rate);

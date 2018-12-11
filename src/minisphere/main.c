@@ -649,6 +649,7 @@ initialize_engine(void)
 
 	// initialize engine components
 	dispatch_init();
+	events_init();
 	galileo_init();
 	audio_init();
 	initialize_input();
@@ -694,6 +695,7 @@ shutdown_engine(void)
 	spritesets_uninit();
 	audio_uninit();
 	galileo_uninit();
+	events_uninit();
 	dispatch_uninit();
 
 	console_log(1, "shutting down Allegro");

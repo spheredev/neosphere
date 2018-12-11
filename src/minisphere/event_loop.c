@@ -67,6 +67,26 @@ static bool      s_exiting = false;
 static int       s_frame_rate = 60;
 static vector_t* s_tasks;
 
+void
+events_init(void)
+{
+	s_tasks = vector_new(sizeof(struct task));
+}
+
+void
+events_uninit(void)
+{
+	struct task* task;
+
+	int i, len;
+
+	for (i = 0, len = vector_len(s_tasks); i < len; ++i) {
+		task = vector_get(s_tasks, i);
+		free_task(task);
+	}
+	vector_free(s_tasks);
+}
+
 bool
 events_exiting(void)
 {
@@ -152,25 +172,14 @@ events_write_socket(socket_t* socket, const void* data, int num_bytes)
 bool
 events_run_main_loop(void)
 {
-	bool         have_error = false;
-	struct task* task;
-
-	int i, len;
-
-	s_tasks = vector_new(sizeof(struct task));
 	if (jsal_try(run_main_event_loop, 0)) {
 		jsal_pop(1);  // don't need the return value
+		return true;
 	}
 	else {
 		// leave the error for the caller, don't pop it off
-		have_error = true;
+		return false;
 	}
-	for (i = 0, len = vector_len(s_tasks); i < len; ++i) {
-		task = vector_get(s_tasks, i);
-		free_task(task);
-	}
-	vector_free(s_tasks);
-	return !have_error;
 }
 
 void
