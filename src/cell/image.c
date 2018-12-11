@@ -59,9 +59,11 @@ image_load(const fs_t* fs, const char* pathname)
 
 	int i;
 
+	if (!(image = calloc(1, sizeof(image_t))))
+		goto on_error;
+	
 	if (!(file = fs_fopen(fs, pathname, "rb")))
-		return NULL;
-
+		goto on_error;
 	png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	png_info = png_create_info_struct(png);
 	if (setjmp(png_jmpbuf(png)) == 0) {
@@ -87,7 +89,7 @@ image_load(const fs_t* fs, const char* pathname)
 		png_read_update_info(png, png_info);
 
 		pixels = malloc(width * height * sizeof(uint32_t));
-		row_ptrs = alloca(sizeof(png_bytep) * height);
+		row_ptrs = alloca(height * sizeof(png_bytep));
 		for (i = 0; i < height; ++i)
 			row_ptrs[i] = (png_bytep)(pixels + i * width);
 		png_read_image(png, row_ptrs);
@@ -101,11 +103,14 @@ image_load(const fs_t* fs, const char* pathname)
 	png_destroy_read_struct(&png, &png_info, NULL);
 	fclose(file);
 
-	image = calloc(1, sizeof(image_t));
 	image->width = width;
 	image->height = height;
 	image->pixels = pixels;
 	return image;
+
+on_error:
+	free(image);
+	return NULL;
 }
 
 void
@@ -154,7 +159,7 @@ image_save(const image_t* it, const fs_t* fs, const char* pathname)
 	png_info = png_create_info_struct(png);
 
 	if (setjmp(png_jmpbuf(png)) == 0) {
-		row_ptrs = alloca(sizeof(png_bytep) * it->height);
+		row_ptrs = alloca(it->height * sizeof(png_bytep));
 		for (i = 0; i < it->height; ++i)
 			row_ptrs[i] = (png_bytep)(it->pixels + i * it->width);
 		png_init_io(png, file);
@@ -188,10 +193,12 @@ image_slice(const image_t* image, int x, int y, int width, int height)
 
 	int i;
 
-	slice = calloc(1, sizeof(image_t));
+	if (!(slice = calloc(1, sizeof(image_t))))
+		goto on_error;
+	if (!(slice->pixels = malloc(width * height * sizeof(uint32_t))))
+		goto on_error;
 	slice->width = width;
 	slice->height = height;
-	slice->pixels = malloc(width * height * sizeof(uint32_t));
 	stride = width * sizeof(uint32_t);
 	for (i = 0; i < height; ++i) {
 		in = image->pixels + (y + i) * image->width + x;
@@ -199,4 +206,8 @@ image_slice(const image_t* image, int x, int y, int width, int height)
 		memcpy(out, in, stride);
 	}
 	return slice;
+
+on_error:
+	free(slice);
+	return NULL;
 }

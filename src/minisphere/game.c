@@ -690,7 +690,8 @@ directory_open(game_t* game, const char* dirname, bool recursive)
 	if (!game_dir_exists(game, dirname))
 		return NULL;
 
-	directory = calloc(1, sizeof(directory_t));
+	if (!(directory = calloc(1, sizeof(directory_t))))
+		return NULL;
 	directory->game = game_ref(game);
 	directory->path = path_new_dir(dirname);
 	directory->recursive = recursive;
@@ -812,7 +813,8 @@ file_open(game_t* game, const char* filename, const char* mode)
 	file_t* file;
 	path_t* file_path = NULL;
 
-	file = calloc(1, sizeof(file_t));
+	if (!(file = calloc(1, sizeof(file_t))))
+		goto on_error;
 
 	if (!resolve_pathname(game, filename, &file_path, &file->fs_type))
 		goto on_error;
@@ -1038,6 +1040,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	//       complicated than the game.sgm loader.
 
 	js_ref_t*   error_ref;
+	const char* res_string;
 	int         res_x;
 	int         res_y;
 	int         stack_top;
@@ -1061,7 +1064,11 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 
 	if (!jsal_get_prop_string(-2, "resolution") || !jsal_is_string(-1))
 		goto on_error;
-	sscanf(jsal_get_string(-1), "%dx%d", &res_x, &res_y);
+	res_string = jsal_get_string(-1);
+	if (sscanf(res_string, "%dx%d", &res_x, &res_y) != 2) {
+		printf("invalid `resolution` in JSON manifest '%s'\n", res_string);
+		goto on_error;
+	}
 	game->resolution = mk_size2(res_x, res_y);
 
 	if (!jsal_get_prop_string(-3, "main") || !jsal_is_string(-1))
@@ -1150,7 +1157,7 @@ read_directory(const game_t* game, const char* dirname, bool want_dirs, bool rec
 	path_t*      dir_path;
 	enum fs_type fs_type;
 	vector_t*    list = NULL;
-	path_t*      origin_path;
+	path_t*      origin_path = NULL;
 	path_t*      path;
 
 	int i;
