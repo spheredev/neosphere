@@ -6,6 +6,166 @@ standard objects used for higher-level tasks, collectively known as the
 Sphere Runtime.  This file documents the API.
 
 
+`BinaryCoder` Object
+--------------------
+
+A `BinaryCoder` object allows reading and writing structured binary data from
+a file or socket.  The idea is similar to the built-in TextEncoder/TextDecoder
+classes, but for general binary data instead of text.
+
+    import { BinaryCoder } from 'sphere-runtime';
+
+BinaryCoder supports numeric values encoded in both big-endian (most
+significant byte first) and little-endian (least significant byte first) modes.
+Big-endian mode is the default, as this is the de facto standard byte order for
+data interchange.
+
+new BinaryCoder(stream[, options]);
+
+    Constructs a `BinaryCoder` object which can be used to read binary data
+    from the specified stream.  `options` specifies the default behavior for
+    this BinaryCoder.
+
+    options.little_endian [default: false]
+
+        Whether to use little-endian mode by default when reading and writing
+        numeric values.  As big-endian is the de facto standard byte order for
+        data interchange, the default for this option is `false`.
+
+    options.nulTermination [default: false]
+
+        Whether strings encoded and decoded by this BinaryCoder should end with
+        a NUL terminator ('0' byte) by default.  If this is true, strings read
+        by the BinaryCoder will be truncated at the first NUL byte and any
+        strings written will have a NUL byte appended when written out.
+
+BinaryCoder#readBytes(stream, num_bytes);
+
+    Reads `num_bytes` from a stream and returns a Uint8Array containing all the
+    bytes read.
+
+BinaryCoder#readFloat32(stream[, little_endian]);
+BinaryCoder#readFloat64(stream[, little_endian]);
+
+    Reads a 32-bit (single precision) or 64-bit (double precision) IEEE
+    floating value from a stream.
+
+BinaryCoder#readInt8(stream);
+BinaryCoder#readInt16(stream[, little_endian]);
+BinaryCoder#readInt32(stream[, little_endian]);
+BinaryCoder#readUint8(stream);
+BinaryCoder#readUint16(stream[, little_endian]);
+BinaryCoder#readUint32(stream[, little_endian]);
+
+    Reads an 8-, 16-, or 32-bit twos'-complement integer value from a stream.
+
+    Note: `readUint` variants write unsigned values (always positive).
+          `readInt` variants write signed values (positive or negative).
+
+BinaryCoder#readString(stream, numBytes[, nul_terminate]);
+
+    Reads a fixed-length UTF-8 string from a stream.  Use this only when you
+    know the length of the string in advance; otherwise, the length is probably
+    encoded in the data and you should use one of the variable-sized versions
+    below.
+
+BinaryCoder#readString8(stream[, nul_terminate]);
+BinaryCoder#readString16(stream[, nul_terminate[, little_endian]]);
+BinaryCoder#readString32(stream[, nul_terminate[, little_endian]]);
+
+    Reads a UTF-8 variable-length string from a stream, where the length of the
+    string in bytes is stored as an unsigned integer immediately before the
+    character data.
+
+BinaryCoder#readStruct(stream, desc);
+
+    Reads several values from a stream sequentially based on a data descriptor.
+    `desc` is an object describing the data type of each item; for example,
+    the following will read the 256-byte header from a Sphere v1 format map
+    file (assuming a BinaryCoder in little-endian mode):
+
+        rmp_header = myReader.readStruct({
+            signature: 'string/4',
+            version: 'uint16',
+            type: 'uint8',
+            numLayers: 'uint8',
+            reserved1: 'raw/1',
+            numEntities: 'uint16',
+            startX: 'uint16',
+            startY: 'uint16',
+            startLayer: 'uint8',
+            startDir: 'uint8',
+            numStrings: 'uint16',
+            numZones: 'uint16',
+            repeating: 'bool',
+            reserved2: 'raw/234',
+        });
+
+    `readStruct` returns an object where each property named in `desc` is set
+    to the value read for that entry.  It is recommended to pass an object
+    literal for `desc` (as illustrated above) to ensure values will be read in
+    the correct order.
+
+    Each property in `desc` must be set to one of the following strings,
+    otherwise an exception will be thrown:
+
+        "bool"        - Boolean value, stored as 1 byte (`true`/`false`)
+        "float32-be"  - Floating point, 32-bit, big endian
+        "float32-le"  - Floating point, 32-bit, little endian
+        "float64-be"  - Floating point, 64-bit, big endian
+        "float64-le"  - Floating point, 64-bit, little endian
+        "int8"        - 8-bit signed int [-128, +127]
+        "int16-be"    - 16-bit signed int, big endian [-32768, +32767]
+        "int16-le"    - 16-bit signed int, little endian [-32768, +32767]
+        "int32-be"    - 32-bit signed int, big endian [-2147483648, +2147483647]
+        "int32-le"    - 32-bit signed int, little endian [-2147483648, +2147483647]
+        "raw/<n>"     - Raw data (ArrayBuffer), <n> is number of bytes
+        "string/<n>"  - UTF-8 string, <n> is number of bytes stored
+        "string8"     - 8-bit unsigned byte count + UTF-8 string
+        "string16-be" - 16-bit unsigned byte count + UTF-8 string, big endian
+        "string16-le" - 16-bit unsigned byte count + UTF-8 string, little endian
+        "string32-be" - 32-bit unsigned byte count + UTF-8 string, big endian
+        "string32-le" - 32-bit unsigned byte count + UTF-8 string, little endian
+        "uint8"       - 8-bit unsigned int [0, 255]
+        "uint16-be"   - 16-bit unsigned int, big endian [0, 65535]
+        "uint16-le"   - 16-bit unsigned int, little endian [0, 65535]
+        "uint32-be"   - 32-bit unsigned int, big endian [0, 4294967295]
+        "uint32-le"   - 32-bit unsigned int, little endian [0, 4294967295]
+
+BinaryCoder#writeFloat32(stream, value[, little_endian]);
+BinaryCoder#writeFloat64(stream, value[, little_endian]);
+
+    Writes a 32-bit (single precision) or 64-bit (double precision) floating
+    point value to a stream.
+
+BinaryCoder#writeInt8(stream, value);
+BinaryCoder#writeInt16(stream, value[, little_endian]);
+BinaryCoder#writeInt32(stream, value[, little_endian]);
+BinaryCoder#writeUint8(stream, value);
+BinaryCoder#writeUint16(stream, value[, little_endian]);
+BinaryCoder#writeUint32(stream, value[, little_endian]);
+
+    Writes an 8-, 16-, or 32-bit twos'-complement integer value to a stream.
+
+    Note: `writeUint` variants write unsigned values (always positive).
+          `writeInt` variants write signed values (positive or negative).
+
+BinaryCoder#writeString(stream, value[, nul_terminate]);
+
+    Writes a UTF-8 string a stream.
+
+    Note: The length of the string is not stored.  If you need to know the
+          length of a string when reading back the data later, use one of the
+          variable-sized versions below.
+
+BinaryCoder#writeString8(stream, value);
+BinaryCoder#writeString16(stream, value[, nul_terminate[, little_endian]]);
+BinaryCoder#writeString32(stream, value[, nul_terminate[, little_endian]]);
+
+    Writes a UTF-8 length-prefixed string to a stream.  The length in bytes is
+    stored as an unsigned integer immediately before the character data.
+
+
 `Console` Object
 ----------------
 
@@ -85,111 +245,6 @@ Console#undefineObject(objectName);
     Console.  See `Console#defineObject()` for more information.
 
     Note: It is not currently possible to unregister individual commands.
-
-
-`DataStream` Object
--------------------
-
-A `DataStream` object allows you to read from structured binary files like
-those used for Sphere game assets (maps, tilesets, etc.) based on a simple JSON
-schema.  You can also read individual binary values from the file.
-
-`DataStream` is a subclass of `FileStream` and supports all the same methods.
-See the Core API reference for information on `FileStream`.
-
-    import { DataStream } from 'sphere-runtime';
-
-new DataStream(fileName, fileOp);
-
-    Constructs a `DataStream` object which can be used to read binary data from
-    `fileName`.  `fileOp` specifies the access requested; refer to the API
-    documentation for FileStream for more information on this parameter.
-
-DataStream#readFloat32([littleEndian]);
-DataStream#readFloat64([littleEndian]);
-
-    Reads an IEEE floating point value from the data file.  If `littleEndian`
-    is true, reads in little-endian mode.  Otherwise, reads in big-endian mode.
-
-DataStream#readInt8();
-DataStream#readInt16([littleEndian]);
-DataStream#readInt32([littleEndian]);
-DataStream#readUint8();
-DataStream#readUint16([littleEndian]);
-DataStream#readUint32([littleEndian]);
-
-    Reads an integer value from the data file.  If `littleEndian` is true,
-    reads in little-endian mode.  Otherwise, reads in big-endian mode.
-
-    Note: "readUint" variants read unsigned values.  "readInt" variants read
-          signed ("two's complement") values.
-
-DataStream#readStringRaw(length);
-
-    Reads a UTF-8 string from the data file.  `length` specifies how many bytes
-    to read.
-
-DataStream#readString8();
-DataStream#readString16([littleEndian]);
-DataStream#readString32([littleEndian]);
-
-    Reads a UTF-8 length-prefixed string from the data file, where the length
-    in bytes is stored as an unsigned integer.  If `littleEndian` is true,
-    reads in little-endian mode.  Otherwise, reads in big-endian mode.
-
-DataStream#readStruct(desc);
-
-    Reads an object from the data file, based on `desc`.  The descriptor is an
-    object describing the layout and typing of the data; for example, the
-    following will read the 256-byte header from a Sphere v1 format map file:
-
-        rmp_header = myReader.readStruct({
-            signature: { type: 'fstring', length: 4 },
-            version: { type: 'uint16le' },
-            type: { type: 'uint8' },
-            numLayers: { type: 'uint8' },
-            reserved1: { type: 'raw', size: 1 },
-            numEntities: { type: 'uint16le' },
-            startX: { type: 'uint16le' },
-            startY: { type: 'uint16le' },
-            startLayer: { type: 'uint8' },
-            startDir: { type: 'uint8' },
-            numStrings: { type: 'uint16le' },
-            numZones: { type: 'uint16le' },
-            repeating: { type: 'bool' },
-            reserved2: { type: 'raw', size: 234 },
-        });
-
-DataStream#writeFloat32(value[, littleEndian]);
-DataStream#writeFloat64(value[, littleEndian]);
-
-    Writes a floating point value to the data file.  If `littleEndian` is true,
-    writes in little-endian mode.  Otherwise writes in big-endian mode.
-
-DataStream#writeInt8(value);
-DataStream#writeInt16(value[, littleEndian]);
-DataStream#writeInt32(value[, littleEndian]);
-DataStream#writeUint8(value);
-DataStream#writeUint16(value[, littleEndian]);
-DataStream#writeUint32(value[, littleEndian]);
-
-    Writes an integer value to the data file.  If `littleEndian` is true,
-    writes in little-endian mode.  Otherwise writes in big-endian mode.
-
-    Note: "writeUint" variants write unsigned values.  "writeInt" variants
-          write signed ("two's complement") values.
-
-DataStream#writeStringRaw(value);
-
-    Writes a UTF-8 string to the data file.
-
-DataStream#writeString8(value);
-DataStream#writeString16(value[, littleEndian]);
-DataStream#writeString32(value[, littleEndian]);
-
-    Writes a UTF-8 length-prefixed string to the data file, where the length is
-    stored as an unsigned integer.  If `littleEndian` is true, writes in
-    little-endian mode.  Otherwise, writes in big-endian mode.
 
 
 `FocusTarget` Object
