@@ -709,6 +709,8 @@ jsal_get_buffer_ptr(int at_index, size_t *out_size)
 		JsGetTypedArrayStorage(value_ref, &value, &size, NULL, NULL);
 	else if (type == JsArrayBuffer)
 		JsGetArrayBufferStorage(value_ref, &value, &size);
+	else if (type == JsDataView)
+		JsGetDataViewStorage(value_ref, &value, &size);
 	else
 		return NULL;
 	if (out_size != NULL)
@@ -1080,7 +1082,8 @@ jsal_is_buffer(int stack_index)
 	ref = get_value(stack_index);
 	JsGetValueType(ref, &type);
 	return type == JsArrayBuffer
-		|| type == JsTypedArray;
+		|| type == JsTypedArray
+		|| type == JsDataView;
 }
 
 bool
