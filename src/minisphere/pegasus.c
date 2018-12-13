@@ -427,6 +427,7 @@ static bool js_Socket_set_noDelay            (int num_args, bool is_ctor, intptr
 static bool js_Socket_close                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_connectTo              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_disconnect             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Socket_peek                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_read                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Socket_write                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Sound                     (int num_args, bool is_ctor, intptr_t magic);
@@ -918,6 +919,7 @@ pegasus_init(int api_level)
 		api_define_method("Font", "heightOf", js_Font_heightOf, 0);
 		api_define_method("Font", "widthOf", js_Font_widthOf, 0);
 		api_define_method("Socket", "disconnect", js_Socket_disconnect, 0);
+		api_define_method("Socket", "peek", js_Socket_peek, 0);
 		api_define_const("DataType", "Bytes", DATA_BYTES);
 		api_define_const("DataType", "Lines", DATA_LINES);
 		api_define_const("DataType", "Raw", DATA_RAW);
@@ -4640,8 +4642,9 @@ js_Socket_disconnect(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
+js_Socket_peek(int num_args, bool is_ctor, intptr_t magic)
 {
+	int       avail_size;
 	void*     buffer;
 	int       num_bytes;
 	socket_t* socket;
@@ -4651,15 +4654,41 @@ js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
 	num_bytes = jsal_require_int(0);
 
 	if (num_bytes < 0)
-		jsal_error(JS_RANGE_ERROR, "Invalid size for Socket read '%d'", num_bytes);
+		jsal_error(JS_RANGE_ERROR, "Invalid Socket peek size '%d'", num_bytes);
 
-	if (!socket_connected(socket))
-		jsal_error(JS_ERROR, "Cannot read from disconnected socket");
+	avail_size = socket_bytes_avail(socket);
+	if (!socket_connected(socket) && num_bytes > avail_size)
+		jsal_error(JS_ERROR, "Cannot peek at disconnected Socket");
+	if (num_bytes > avail_size)
+		jsal_error(JS_RANGE_ERROR, "Not enough data received to satisfy peek");
+	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
+	socket_peek(socket, buffer, num_bytes);
+	return true;
+}
+
+static bool
+js_Socket_read(int num_args, bool is_ctor, intptr_t magic)
+{
+	int       avail_size;
+	void*     buffer;
+	int       num_bytes;
+	socket_t* socket;
+
+	jsal_push_this();
+	socket = jsal_require_class_obj(-1, PEGASUS_SOCKET);
+	num_bytes = jsal_require_int(0);
+
+	if (num_bytes < 0)
+		jsal_error(JS_RANGE_ERROR, "Invalid Socket read size '%d'", num_bytes);
+
+	avail_size = socket_bytes_avail(socket);
+	if (!socket_connected(socket) && num_bytes > avail_size)
+		jsal_error(JS_ERROR, "Cannot read from disconnected Socket");
 	if (jsal_is_async_call()) {
 		events_read_socket(socket, num_bytes);
 	}
 	else {
-		if (num_bytes > socket_bytes_avail(socket))
+		if (num_bytes > avail_size)
 			jsal_error(JS_RANGE_ERROR, "Not enough data received to satisfy read");
 		jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
 		socket_read(socket, buffer, num_bytes);

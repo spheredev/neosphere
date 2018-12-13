@@ -1861,6 +1861,12 @@ Socket#disconnect(); [API 2]
     Immediately disconnects the socket.  If there is still data in the socket's
     write-behind buffer that hasn't been transmitted, it will be discarded.
 
+Socket#peek(num_bytes); [API 2]
+
+    Peeks at the next `num_bytes` from the socket's receive buffer and returns
+    an ArrayBuffer containing the data found there.  The data is not removed
+    from the receive buffer and will be returned in subsequent read(s).
+
 Socket#read(num_bytes); [API 1]
 
     Reads `num_bytes` bytes from the socket's receive buffer and returns an

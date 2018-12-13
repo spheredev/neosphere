@@ -259,6 +259,15 @@ socket_disconnect(socket_t* it)
 }
 
 int
+socket_peek(socket_t* it, void* buffer, int num_bytes)
+{
+	num_bytes = num_bytes <= it->recv_size ? num_bytes : it->recv_size;
+	console_log(4, "peeking at %d bytes from TCP socket #%u", num_bytes, it->id);
+	memcpy(buffer, it->recv_buffer, num_bytes);
+	return num_bytes;
+}
+
+int
 socket_read(socket_t* it, void* buffer, int num_bytes)
 {
 	if (it->sync_mode) {
@@ -272,7 +281,7 @@ socket_read(socket_t* it, void* buffer, int num_bytes)
 			return 0;
 	}
 	num_bytes = num_bytes <= it->recv_size ? num_bytes : it->recv_size;
-	console_log(4, "reading %zd bytes from TCP socket #%u", num_bytes, it->id);
+	console_log(4, "reading %d bytes from TCP socket #%u", num_bytes, it->id);
 	memcpy(buffer, it->recv_buffer, num_bytes);
 	memmove(it->recv_buffer, it->recv_buffer + num_bytes, it->recv_size - num_bytes);
 	it->recv_size -= num_bytes;
