@@ -10,9 +10,9 @@ v5.3.0 - TBD
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
 * Adds `Joystick.P1` through `Joystick.P4` to the Core API, providing built-in
   default gamepad inputs for up to four players.
-* Adds support to `Socket` for performing connnections and I/O via the event
-  loop, allowing a game to `await` the arrival of data and avoiding the need to
-  explicitly check the state of the socket every frame.
+* Adds new async methods to `Socket` for performing connnections and I/O via
+  the event loop, allowing a game to `await` the arrival of data and avoiding
+  the need to explicitly check the state of the socket every frame.
 * Adds several new methods and properties to the built-in `Socket` class, most
   notably including the `noDelay` option for disabling Nagle's algorithm.
 * Adds `Server#numPending`, which reflects the number of connections in the
@@ -24,7 +24,6 @@ v5.3.0 - TBD
   file contents are returned.
 * Adds `SSj.assert` for testing assumptions while debugging.  The assertions
   are ignored in production.
-* Adds support to `DataStream` for working directly with buffer objects.
 * Adds a new `Tween` standard module for handling simple animations.
 * Adds a `cell init` command, for initializing a new Sphere project directory
   directly from the command line.

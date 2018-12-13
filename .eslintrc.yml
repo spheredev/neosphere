@@ -48,8 +48,6 @@ rules:
     - error
     - always-multiline
   comma-spacing: error
-  complexity:
-    - warn
   curly:
     - error
     - multi-or-nest
