@@ -13,18 +13,8 @@ miniSphere 5.3
   constructor accepts a filename.  These methods return a promise for the
   new object instead of constructing it on-the-fly, which allows assets to be
   loaded asynchronously in implementations where that is necessary.
-  The synchronous constructors will remain available, but are not guaranteed
-  to work in all implementations going forward.
-
-* All functions in the `FS` namespace that access the file system have been
-  changed to return a promise for their result when targeting API 2.  In a few
-  cases (`FS.readFile`, in particular) this represents a breaking API change,
-  which may be a hazard during migration.  To maintain backwards compatibility,
-  these functions will continue to work synchronously when targeting API 1.
-
-* `DataStream` has been completely reworked.  It is no longer a subclass of
-  `FileStream` and can now work with any buffer object.  There may be breaking
-  changes; refer to the Sphere Runtime API Reference to get back up to speed.
+  Synchronous construction will remain available for use on platforms where
+  that can be supported.
 
 * The `from` module has been rewritten for improved performance and along with
   several new query operators comes a few breaking changes.  `.skip` is now
