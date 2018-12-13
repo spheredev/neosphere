@@ -652,9 +652,9 @@ FS.createDirectory(pathname); [API 1]
     exist.  If the directory already exists, this function does nothing.
 
     Note: `FS.createDirectory()` is safe to call even if the directory to be
-		  created already exists.  This allows you to use it to ensure a
-		  directory exists before you access it, without needing an explicit
-		  check beforehand.
+          created already exists.  This allows you to use it to ensure a
+          directory exists before you access it, without needing an explicit
+          check beforehand.
 
 FS.deleteFile(pathname); [API 1]
 
@@ -822,13 +822,12 @@ FileStream.open(filename, file_op); [ASYNC] [NEW]
 new FileStream(filename, file_op); [API 1]
 
     Similar to `FileStream.open`, but opens the file synchronously, without
-    yielding to the event loop.  This is not supported on all platforms; for
-    maximum portability, target API 2 and use `FileStream.open()` instead.
+    yielding to the event loop.  This may not be supported on all platforms; if
+    not, you may want to consider using `FileStream.open()` instead.
 
-    Note: If `new FileStream()` is not supported on a given platform,
-          synchronous reads and writes will not be either.  You must use
-          `FileStream.open()` in combination with `asyncRead()`/`asyncWrite()`
-          in that case.
+    Note: If `new FileStream()` isn't supported on a platform, synchronous
+          read and write won't be either.  In that case you will also need to
+          use `asyncRead()`/`asyncWrite()` to access the file contents.
 
 FileStream#fileName [R/O] [API 1]
 
