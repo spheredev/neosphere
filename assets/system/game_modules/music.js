@@ -52,15 +52,15 @@ class Music extends null
 			mixer.volume = newVolume;
 	}
 
-	static async override(fileName, fadeTime = 0)
+	static override(fileName, fadeTime = 0)
 	{
-		await crossfade(fileName, fadeTime, true);
+		crossfade(fileName, fadeTime, true);
 		haveOverride = true;
 	}
 
-	static async play(fileName, fadeTime = 0)
+	static play(fileName, fadeTime = 0)
 	{
-		topmostSound = await crossfade(fileName, fadeTime, false);
+		topmostSound = crossfade(fileName, fadeTime, false);
 	}
 
 	static pop(fadeTime = 0)
@@ -76,10 +76,10 @@ class Music extends null
 		}
 	}
 
-	static async push(fileName, fadeTime = 0)
+	static push(fileName, fadeTime = 0)
 	{
 		let oldSound = topmostSound;
-		await this.play(fileName, fadeTime);
+		this.play(fileName, fadeTime);
 		oldSounds.push(oldSound);
 	}
 
@@ -103,24 +103,22 @@ function appearifyMixer()
 	// lazy mixer creation, works around autoplay policy in Oozaru
 	if (mixer === null) {
 		mixer = new Mixer(44100, 16, 2);
-		adjuster = new Tween(mixer, Easing.Exponential);
+		adjuster = new Tween(mixer, Easing.Linear);
 	}
 }
 
-async function crossfade(fileName, frames = 0, forceChange)
+function crossfade(fileName, frames = 0, forceChange)
 {
 	appearifyMixer();
 	let allowChange = !haveOverride || forceChange;
 	if (currentSound !== null && allowChange)
 		currentSound.tween.easeIn({ volume: 0.0 }, frames);
 	if (fileName !== null) {
-		let stream = Sphere.APILevel >= 2
-			? await Sound.fromFile(fileName)
-			: new Sound(fileName);
+		let stream = new Sound(fileName);
 		stream.repeat = true;
 		stream.volume = 0.0;
 		stream.play(mixer);
-		let newSound = { stream, tween: new Tween(stream, Easing.Exponential) };
+		let newSound = { stream, tween: new Tween(stream, Easing.Linear) };
 		if (allowChange) {
 			newSound.tween.easeIn({ volume: 1.0 }, frames);
 			currentSound = newSound;
