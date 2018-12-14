@@ -52,7 +52,7 @@ AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
 AppCopyright=© 2015-2017 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
-ArchitecturesAllowed=x64
+ArchitecturesAllowed=x86 x64
 ArchitecturesInstallIn64BitMode=x64
 ChangesAssociations=yes
 ChangesEnvironment=yes
@@ -95,17 +95,24 @@ Name: "assoc_ss/ssproj"; Description: ".ssproj - Sphere Studio project file"; Gr
 Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescription: "Develop on the command line:"; Components: spherun/cli; Flags: checkedonce unchecked
 
 [Files]
-Source: "..\msw\miniSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
-Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
-Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
-Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
-Source: "..\msw\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: engine
+; 64-bit (x64) binaries
+Source: "..\msw64\miniSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: Is64BitInstallMode
+Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: Is64BitInstallMode
+Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: Is64BitInstallMode
+Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: Is64BitInstallMode
+Source: "..\msw64\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: Is64BitInstallMode
+; 32-bit (x86) binaries
+Source: "..\msw\miniSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: not Is64BitInstallMode
+Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: not Is64BitInstallMode
+Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: not Is64BitInstallMode
+Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli; Check: not Is64BitInstallMode
+Source: "..\msw\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Components: engine; Check: not Is64BitInstallMode
+; everything else
 Source: "..\msw\gdk-cp.bat"; DestDir: "{app}"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw\documentation\sphere2-core-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\sphere2-hl-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun
 Source: "..\msw\documentation\cellscript-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion; Components: spherun/cli
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "..\msw\template\*"; DestDir: "{app}\template"; Components: engine; Flags: ignoreversion recursesubdirs createallsubdirs
 #ifdef INCLUDE_SPHERE_STUDIO
 Source: "..\msw\ide\*"; DestDir: "{app}\ide"; Flags: ignoreversion recursesubdirs; Components: spherun/ide
 #endif
