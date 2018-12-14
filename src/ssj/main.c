@@ -216,7 +216,7 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 				print_cell_quote();
 				goto on_output_only;
 			}
-			else if (strcmp(argv[i], "--attach") == 0)
+			else if (strcmp(argv[i], "--connect") == 0)
 				have_target = true;
 			else if (strcmp(argv[i], "--no-pause") == 0)
 				cmdline->run_now = true;
@@ -231,13 +231,13 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 			short_args = argv[i];
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
-				case 'a':
+				case 'c':
 					have_target = true;
 					break;
 				case 'h':
 					print_usage();
 					goto on_output_only;
-				case 'r':
+				case 'n':
 					cmdline->run_now = true;
 					break;
 				case 't':
@@ -344,12 +344,12 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   ssj [--no-pause] <game-path>\n");
-	printf("   ssj --attach [--no-pause]\n");
+	printf("   ssj [--trace] [--no-pause] <game-path>\n");
+	printf("   ssj --connect [--trace] [--no-pause]\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("   -a  --attach     Attach to a SpheRun instance which is already running      \n");
-	printf("   -r  --no-pause   Prevent the debugger from triggering a breakpoint on attach\n");
+	printf("   -c  --connect    Connect to a SpheRun instance which is already running     \n");
+	printf("   -n  --no-pause   Prevent the debugger from triggering a breakpoint on attach\n");
 	printf("   -t  --trace      Show trace-level output, for example, from SSj.trace()     \n");
 	printf("   -v  --version    Show the version number of SSj and its dependencies        \n");
 	printf("   -h  --help       Show this help text                                        \n");

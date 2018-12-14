@@ -6,11 +6,11 @@ spherun \- run a Sphere game in a dev-friendly environment
 .na
 .TP 8
 .B spherun
-[\fB\-\-debug\fR | \fB\-\-profile]
-[\fB\-\-retro]
-[\fB\-\-fullscreen\fR | \fB\-\-window\fR]
-[\fB\-\-frameskip \fImaxframes\fR]
-[\fB\-\-verbose \fIlevel\fR]
+.RB [ \-\-debug | \-\-profile ]
+.RB [ \-\-retro ]
+.RB [ \-\-fullscreen | \-\-windowed ]
+.RB [ \-\-frameskip\~\fImaxframes\fP ]
+.RB [ \-\-verbose\~\fIlevel\fP ]
 .I path
 .RI [ arguments ]
 .ad
@@ -31,7 +31,7 @@ is the preferred way to invoke the engine while developing a game.
 Start the engine in fullscreen mode. This option is ignored if
 .B \-\-debug
 is used (see below).
-.IP \fB\-\-window
+.IP \fB\-\-windowed
 Start the engine in windowed mode. This is the default when the engine is started using the
 .BR spherun (1)
 command.
@@ -45,7 +45,7 @@ If no debugger attaches within 30 seconds, miniSphere will exit.
 .BR \-p ", " \-\-profile
 Enables full-performance JavaScript execution by disabling the single-step debugger.
 Note that this comes at the cost of SSj support.
-You will not be able to attach an SSj instance later if you use this option.
+You will not be able to connect an SSj instance if you use this option.
 .TP
 .BR \-r ", " \-\-retro
 Tells the engine to run in "retrograde mode", in which it will emulate the minimum API level required by the game as specified in its manifest.

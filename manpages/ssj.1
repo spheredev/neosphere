@@ -1,18 +1,19 @@
 .TH SSJ 1 "xxxx-xx-xx" "miniSphere 5.3a3" "Sphere Game Development Kit"
 .SH NAME
-ssj \- the JavaScript debugger for miniSphere
+ssj - the JavaScript debugger for miniSphere
 .SH SYNOPSIS
 .nh
 .na
 .TP 4
 .B ssj
+.RB [ \-\-connect ]
+.RB [ \-\-trace ]
 .RB [ \-\-no\-pause ]
-.RB [ \-\-attach " | "
-.IR gamefile ]
+.RI [ gamefile ]
 .ad
 .hy
 .SH DESCRIPTION
-When used in combination with miniSphere, SSj allows you step through a game's code and track its state as it executes.
+When used in combination with the miniSphere game engine, SSj allows you step through a game's code and track its state as it executes.
 In this regard it is similar in purpose to other CLI debuggers such as GDB.
 The debugger enables you to diagnose bugs and crashes as they happen by tracking program variables, function calls, and objects, all while your game is still running.
 .P
@@ -41,7 +42,7 @@ object.
 SSj will let you see that output.
 .P
 Unless you use the
-.B \-\-attach
+.B \-\-connect
 option (see below), SSj will start miniSphere for you.
 This avoids to need to open a separate terminal for debugging.
 Simply provide the name of a Sphere game directory or package as the last argument to the
@@ -49,18 +50,21 @@ Simply provide the name of a Sphere game directory or package as the last argume
 command, and SSj will do the rest.
 .SH OPTIONS
 .TP
-.BR \-c ", " \-\-attach
+.BR \-c ", " \-\-connect
 Connects to a running game which was starting using the
 .BR spherun (1)
 command.
 This can be invaluable by allowing you to debug hard-to-reproduce bugs when they happen.
+If this option is used,
+.I gamefile
+will be ignored.
 .TP
-.BR \-\-no\-pause
-Sends a resume command upon attachment.
+.BR \-n ", " \-\-no\-pause
+Avoids triggering a breakpoint upon attachment.
 Normally SSj automatically pauses execution so you can see the program exactly as it was when the debugger attached.
-Use the
+The
 .B \-\-no\-pause
-option to override this behavior.
+option disables this behavior.
 .TP
 .B \-\-version
 Show the version number of SSj along with the version numbers of any libraries it depends on.
