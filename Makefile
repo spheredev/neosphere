@@ -118,25 +118,28 @@ ssj_sources=src/ssj/main.c \
 .PHONY: all
 all: minisphere spherun cell ssj
 
+.PHONY: deps
+deps: dep/lib/libChakraCore.so
+
 .PHONY: minisphere
-minisphere: bin/minisphere
+minisphere: deps bin/minisphere
 
 .PHONY: spherun
-spherun: bin/minisphere bin/spherun
+spherun: deps bin/minisphere bin/spherun
 
 .PHONY: cell
-cell: bin/cell
+cell: deps bin/cell
 
 .PHONY: ssj
-ssj: bin/ssj
+ssj: deps bin/ssj
 
 .PHONY: dist
-dist:
+dist: all
 	mkdir -p dist/$(pkgname)
 	cp -r assets dep desktop docs manpages src dist/$(pkgname)
 	cp Makefile VERSION dist/$(pkgname)
 	cp CHANGELOG.md LICENSE.txt README.md dist/$(pkgname)
-	cd dist && tar cfz $(pkgname).tar.gz $(pkgname) && rm -rf dist/$(pkgname)
+	cd dist && tar czf $(pkgname).tar.gz $(pkgname) && rm -rf dist/$(pkgname)
 
 .PHONY: install
 install: all
@@ -168,6 +171,12 @@ install: all
 clean:
 	rm -rf bin
 	rm -rf dist
+
+dep/lib/libChakraCore.so:
+	mkdir -p dep
+	wget -O dep/libChakraCore.tar.gz https://aka.ms/chakracore/cc_linux_x64_1_11_4
+	cd dep && tar xzf libChakraCore.tar.gz --strip-components=1 \
+	    ChakraCoreFiles/include ChakraCoreFiles/lib
 
 bin/minisphere:
 	mkdir -p bin
