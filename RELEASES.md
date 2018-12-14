@@ -28,11 +28,6 @@ miniSphere 5.3
   modules and is now doing so using `import`, you will need to switch to using
   `require()`.
 
-* `require` will no longer load ES Module scripts.  `require` is now provided
-  only for compatibility with a limited subset of modules written for Node.js;
-  new code should always use `import` (note that `require` is not covered by
-  Sphere v2 API versioning guarantees).
-
 * To improve end-user security and ensure the SPK package format is not a
   malware vector, it is no longer possible to relax the SphereFS sandbox in
   production.  The `sandboxing` manifest field has been moved into a special

@@ -968,7 +968,8 @@ try_eval_module(fs_t* fs, const char* filename, bool node_compatible)
 	dir_path = path_strip(path_dup(file_path));
 
 	// never evaluate JSON as ESM, let the CommonJS loader deal with it
-	is_esm_module = !node_compatible && !path_extension_is(file_path, ".json");
+	is_esm_module = (!node_compatible || path_extension_is(file_path, ".mjs"))
+		&& !path_extension_is(file_path, ".json");
 	if (is_esm_module) {
 		source = fs_fslurp(fs, filename, &source_size);
 		code_string = lstr_from_utf8(source, source_size, true);

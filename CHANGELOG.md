@@ -55,7 +55,6 @@ v5.3.0 - TBD
   and return promises.
 * Removes `assert`, `delegate`, `joypad`, and `test` modules from the standard
   library.
-* Removes support for loading ES Module scripts using `require`.
 * Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,
   `playSound`, `tween`) which sometimes clashed with game code wanting to use
   those names.
