@@ -137,7 +137,7 @@ static unsigned int                script_id_from_filename     (const char* file
 static int                         push_value                  (JsValueRef value, bool weak_ref);
 static void                        resize_stack                (int new_size);
 static void                        throw_on_error              (void);
-static void                        throw_value                 (JsValueRef value);
+static noreturn_t                  throw_value                 (JsValueRef value);
 
 #if !defined(__APPLE__)
 static int asprintf  (char* *out, const char* format, ...);
@@ -2793,7 +2793,7 @@ throw_on_error(void)
 	}
 }
 
-static void
+static noreturn_t
 throw_value(JsValueRef value)
 {
 	push_value(value, false);
