@@ -4,57 +4,47 @@ miniSphere Changelog
 v5.3.0 - TBD
 ------------
 
+* Adds `cell init` to initialize a new Sphere source tree on the command line.
 * Adds asynchronous asset loading functions, e.g. `Sound.fromFile()`, to
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
   notes for further information.
 * Adds a pop-up message when pressing F12 to confirm a screenshot was taken.
-* Adds `Joystick.P1` through `Joystick.P4` to the Core API, providing built-in
-  default gamepad inputs for up to four players.
+* Adds `Joystick.P1` through `Joystick.P4`, providing built-in default gamepad
+  inputs for up to four players.
 * Adds new async methods to `Socket` for performing connnections and I/O via
   the event loop, allowing a game to `await` the arrival of data and avoiding
   the need to explicitly check the state of the socket every frame.
-* Adds several new methods and properties to the built-in `Socket` class, most
-  notably including the `noDelay` option for disabling Nagle's algorithm.
-* Adds `Server#numPending`, which reflects the number of connections in the
-  server's backlog.
-* Adds `JSON.fromFile`, an asynchronous method for loading JSON files without
-  using `require`.
-* Adds `Font#widthOf` for getting the width in pixels of a single line of text.
-* Adds a new `DataType` parameter for `FS.readFile` for controlling the way the
-  file contents are returned.
-* Adds `SSj.assert` for testing assumptions while debugging.  The assertions
-  are ignored in production.
-* Adds a new `Tween` standard module for handling simple animations.
-* Adds a `cell init` command, for initializing a new Sphere project directory
-  directly from the command line.
+* Adds `SSj.assert` to automatically verify assumptions made while coding.
+* Adds `Socket#noDelay` which disables Nagle's algorithm for a connection.
+* Adds `Server#numPending`, the length of a Server's connection backlog.
+* Adds `JSON.fromFile()` for loading and parsing a JSON file in a single call.
+* Adds `Font#widthOf()` and `Font#heightOf()` convenience calls.
+* Adds a new parameter to `FS.readFile` to control how file contents are
+  returned.
+* Adds a new class to the `from` module, `Query`, which lets you prefabricate
+  queries and run them as many times as you want on any source.
+* Adds a new Sphere Runtime module, `tween`, for handling simple animations.
 * Adds support for `-h` as an alias for `--help` for all command-line tools.
-* Adds `FS.directoryOf`, `FS.extensionOf` and `FS.fileNameOf` APIs for taking
+* Adds `FS.directoryOf()`, `FS.extensionOf()` and `FS.fileNameOf()` for taking
   apart path strings.
-* Adds a new `development` manifest field to allow controlling behavior when
-  running a game under SpheRun.
-* Adds API support for the Back and Forward buttons found on most modern mice.
-* Adds `recursive` option for DirectoryStream, to list files in subdirectories.
+* Adds a new `development` manifest field to control behavior under SpheRun.
+* Adds API support for the Back and Forward buttons found on modern mice.
+* Adds a new option, `recursive`, for DirectoryStream, to include files in
+  subdirectories.
 * Adds `apiVersion` and `apiLevel` to the example Cellscript.
-* Improves end-user security by not allowing the SphereFS sandbox to be relaxed
-  in production.
-* Improves end-user security by not executing bare scripts except with SpheRun.
+* Improves security by forcing full SphereFS sandbox enforcement in production.
+* Improves security by disabling execution of bare scripts using `minisphere`.
 * Improves `BlendOp` by making it into a class, allowing games to define their
   own custom blending modes.
-* Improves the performance of `from()` queries with a brand-new version of
-  `from.js` rewritten from the ground up with performance in mind.
-* Improves command-line semantics: `.js` files run from the command line are
-  now executed as ES Modules rather than traditional scripts, allowing them to
-  use `import`.
-* Improves performance greatly for code using the `Transform#matrix` property.
+* Improves performance of `from()` queries across the board.
+* Improves bare-script execution by loading `.js` files passed on the command
+  line as module code, allowing them to use `import`.
+* Improves the performance of `Transform#matrix`, particularly on first-access.
 * Improves first-access performance of `Sphere.Game` by avoiding an unnecessary
   JSON round-trip conversion.
 * Improves Cell's command-line syntax.  Many options have been replaced with
   easy-to-remember commands like `cell build` or `cell pack`.
-* Improves logging by adding fancy ANSI coloration to SpheRun's console output.
-* Changes all `FS` functions that access the file system to work asynchronously
-  and return promises.
-* Removes `assert`, `delegate`, `joypad`, and `test` modules from the standard
-  library.
+* Removes the `assert`, `delegate`, `joypad`, and `test` modules.
 * Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,
   `playSound`, `tween`) which sometimes clashed with game code wanting to use
   those names.
