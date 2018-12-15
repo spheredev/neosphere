@@ -221,13 +221,13 @@ Sphere.Compiler [R/O] [API 1]
 
 Sphere.Game [R/O] [API 1]
 
-    An object whose properties describe the currently running game.  The object
-    consists of everything in the JSON manifest plus any fields synthesized by
-    the engine.
+    An object whose properties describe the currently running game.  Initially,
+    this consists of everything in the JSON manifest, plus whatever fields are
+    synthesized by the game engine.
 
-    Note: This object is completely frozen from the time the game is loaded;
-          any attempt to add, remove, or change any properties of `Sphere.Game`
-          will cause a TypeError to be thrown.
+    Note: Properties of `Sphere.Game` can be freely added, removed, or
+          modified, and this will be visible to game code.  The engine itself
+          won't see the changes, however.
 
 Sphere.frameRate [R/W] [API 1]
 

@@ -166,7 +166,6 @@ game_open(const char* game_path)
 		jsal_put_prop_string(-2, "resolution");
 		jsal_push_string(path_cstr(game->script_path));
 		jsal_put_prop_string(-2, "main");
-		jsal_freeze(-1);
 
 		game->manifest = jsal_pop_ref();
 	}
@@ -220,7 +219,6 @@ game_open(const char* game_path)
 			jsal_put_prop_string(-2, "resolution");
 			jsal_push_string(path_cstr(game->script_path));
 			jsal_put_prop_string(-2, "main");
-			jsal_freeze(-1);
 
 			game->manifest = jsal_pop_ref();
 		}
@@ -1054,7 +1052,6 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	jsal_push_lstring_t(json_text);
 	if (!jsal_try_parse(-1))
 		goto on_json_error;
-	jsal_freeze(-1);
 
 	game->manifest = jsal_ref(-1);
 
