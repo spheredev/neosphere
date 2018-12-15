@@ -119,24 +119,28 @@ ssj_sources=src/ssj/main.c \
 all: minisphere spherun cell ssj
 
 .PHONY: deps
-deps: dep/lib/libChakraCore.so
+deps:
+	mkdir -p dep
+	wget -O dep/libChakraCore.tar.gz https://aka.ms/chakracore/cc_linux_x64_1_11_4
+	cd dep && tar xzf libChakraCore.tar.gz --strip-components=1 ChakraCoreFiles/include ChakraCoreFiles/lib
+	cp dep/lib/libChakraCore.so $(installdir)/lib
 
 .PHONY: minisphere
-minisphere: deps bin/minisphere
+minisphere: bin/minisphere
 
 .PHONY: spherun
-spherun: deps bin/minisphere bin/spherun
+spherun: bin/minisphere bin/spherun
 
 .PHONY: cell
-cell: deps bin/cell
+cell: bin/cell
 
 .PHONY: ssj
-ssj: deps bin/ssj
+ssj: bin/ssj
 
 .PHONY: dist
 dist: all
 	mkdir -p dist/$(pkgname)
-	cp -r assets dep desktop docs manpages src dist/$(pkgname)
+	cp -r assets desktop docs license manpages src dist/$(pkgname)
 	cp Makefile VERSION dist/$(pkgname)
 	cp CHANGELOG.md LICENSE.txt README.md dist/$(pkgname)
 	cd dist && tar czf $(pkgname).tar.gz $(pkgname) && rm -rf dist/$(pkgname)
@@ -153,7 +157,6 @@ install: all
 	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/pixmaps
 	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
-	cp bin/libChakraCore.so $(installdir)/lib
 	cp -r bin/system $(installdir)/share/minisphere
 	gzip docs/sphere2-core-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-core-api.gz
 	gzip docs/sphere2-hl-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-hl-api.gz
@@ -172,12 +175,6 @@ clean:
 	rm -rf bin
 	rm -rf dist
 
-dep/lib/libChakraCore.so:
-	mkdir -p dep
-	wget -O dep/libChakraCore.tar.gz https://aka.ms/chakracore/cc_linux_x64_1_11_4
-	cd dep && tar xzf libChakraCore.tar.gz --strip-components=1 \
-	    ChakraCoreFiles/include ChakraCoreFiles/lib
-
 bin/minisphere:
 	mkdir -p bin
 	$(CC) -o bin/minisphere $(CFLAGS) \
@@ -186,7 +183,6 @@ bin/minisphere:
 	      -Ldep/lib \
 	      -Wl,-rpath=\$$ORIGIN \
 	      $(engine_sources) $(engine_libs)
-	cp dep/lib/libChakraCore.so bin
 	cp -r assets/system bin
 
 bin/spherun:
@@ -198,7 +194,6 @@ bin/spherun:
 	      -Wl,-rpath=\$$ORIGIN \
 	      -DMINISPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
-	cp dep/lib/libChakraCore.so bin
 
 bin/cell:
 	mkdir -p bin
@@ -208,8 +203,8 @@ bin/cell:
 	      -Ldep/lib \
 	      -Wl,-rpath=\$$ORIGIN \
 	      $(cell_sources) $(cell_libs)
-	cp dep/lib/libChakraCore.so bin
 
 bin/ssj:
 	mkdir -p bin
 	$(CC) -o bin/ssj $(CFLAGS) -Isrc/shared $(ssj_sources)
+
