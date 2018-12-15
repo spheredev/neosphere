@@ -1202,21 +1202,21 @@ write_manifests(build_t* build, bool debugging)
 			visor_error(build->visor, "'saveID': invalid character '%c' in save ID", save_id[span]);
 	}
 	else {
-		visor_warn(build->visor, "'saveID': no save ID, game won't be able to use '~/'");
+		visor_warn(build->visor, "'saveID': no save ID - '~/' prefix will be disabled");
 	}
 
 	jsal_get_prop_string(-9, "development");
 	if (jsal_is_object(-1) && !jsal_is_array(-1)) {
-		if (jsal_get_prop_string(-1, "sandboxing")) {
+		if (jsal_get_prop_string(-1, "sandbox")) {
 			sandbox_mode = jsal_to_string(-1);
 			if (strcmp(sandbox_mode, "full") != 0 && strcmp(sandbox_mode, "relaxed") != 0 && strcmp(sandbox_mode, "none") != 0) {
-				visor_error(build->visor, "'sandboxing': must be one of 'full', 'relaxed', 'none'");
+				visor_error(build->visor, "'sandbox': must be one of 'full', 'relaxed', 'none'");
 				jsal_pop(10);
 				visor_end_op(build->visor);
 				return false;
 			}
 			if (!debugging && strcmp(sandbox_mode, "full") != 0) {
-				visor_print(build->visor, "note: 'full' sandboxing is enforced in production");
+				visor_print(build->visor, "full sandboxing is enforced in production");
 			}
 		}
 		jsal_pop(1);
