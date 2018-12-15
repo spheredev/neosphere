@@ -4,23 +4,21 @@ Release Notes
 miniSphere 5.3
 --------------
 
-* Cell's command-line syntax has changed to accommodate new commands.  Notably,
-  a few options have been promoted to full commands, e.g. `cell -c` is now
-  `cell clean`.  If you need a quick primer on the new syntax, you can type
+* Cell's command-line syntax has been enhanced to support new commands.
+  Notably, a few options have been promoted to full commands, e.g. `cell -c` is
+  now `cell clean`.  If you need a quick primer on the new syntax, you can type
   `cell help` on the command-line.
 
-* New static `fromFile` methods have been added to all built-in classes whose
+* New `fromFile` factory methods have been added to all built-in classes whose
   constructor accepts a filename.  These methods return a promise for the
-  new object instead of constructing it on-the-fly, which allows assets to be
-  loaded asynchronously in implementations where that is necessary.
-  Synchronous construction will remain available for use on platforms where
-  that can be supported.
+  new object, which allows assets to be loaded asynchronously in
+  implementations where that is necessary.
 
 * The `from` module has been rewritten for improved performance and along with
-  several new query operators comes a few breaking changes.  `.skip` is now
-  called `.drop`, `.from` is now called `.over` and the iteratee for `.first`
-  and `.last` is now treated as a mapping function rather than a predicate
-  function.  As always, refer to the Sphere Runtime API documentation to get
+  several new query operators come some minor breaking changes.  `Query#skip`
+  is now called `drop`, `Query#from` is now called `over` and the iteratee for
+  `.first` and `.last` is now treated as a mapping function rather than a
+  predicate.  As always, refer to the Sphere Runtime API documentation to get
   up to date on current API usage.
 
 * `import` statements are now always treated as ES Module imports regardless of
@@ -29,16 +27,17 @@ miniSphere 5.3
   `require()`.
 
 * To improve end-user security and ensure the SPK package format is not a
-  malware vector, it is no longer possible to relax the SphereFS sandbox in
-  production.  The `sandboxing` manifest field has been moved into a special
-  `development` namespace which is only honored by SpheRun when running a game
-  from a local directory.  When using a relaxed or disabled sandbox during
-  development, Cell will notify you when building for release that full
-  sandboxing will be enforced in production.
+  malware vector, it is no longer possible to relax or disable the SphereFS
+  sandbox in production.  The `sandbox` manifest field has been moved into a
+  special `development` namespace which will only honored by SpheRun when
+  running a game from a local directory.  When using a relaxed or disabled
+  sandbox during development, Cell will notify you when building for release
+  that full sandboxing will be enforced in production.
 
-* It is no longer possible to run plain `.js` or `.mjs` scripts from the
-  command line using the `minisphere` command.  These are run with the SphereFS
-  sandbox disabled--by design--and so are a potential end-user security issue.
+* When executing a standalone `.js` or `.mjs` script from the command line,
+  starting in miniSphere 5.3, you must use the `spherun` command.  Standalone
+  scripts are executed with the SphereFS sandbox disabled, so allowing the
+  end-user engine to run them was identified as a potential security issue.
 
 * `SSj.assert` has been added which lets you perform sanity checks during
   development without impacting performance in production.  Expensive checks
@@ -52,9 +51,9 @@ miniSphere 5.3
 
 * The undocumented scenelets (`fadeTo`, `tween`, `pause`, `call`) that were
   previously registered by default by the `scene` module have been removed.
-  These were undocumented and meant for internal use only.  This change will be
-  backported, so if your game happened to be using one of the scenelets listed
-  above, you will need to implement the equivalent functionality yourself.
+  They had been retained for internal use, but the Scene API accidentally
+  exposed them to user code.  If you're currently using one of the scenelets
+  listed above, you will need to implement their functionality yourself.
 
 * `DirectoryStream` objects can now be initialized in recursive mode.  In this
   mode, instead of listing subdirectories along with files, it will recursively
@@ -65,7 +64,7 @@ miniSphere 5.3
 * When calling `Transform#rotate` and specifying a vector to rotate about, the
   provided vector is now normalized.  This is a bug fix, but may be a breaking
   change if your game happened to rely on the previous behavior.  If your
-  rotations seem broken, this may be the cause.
+  rotations seem broken after upgrading to mS 5.3, this is probably why.
 
 
 miniSphere 5.2

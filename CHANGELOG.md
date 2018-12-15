@@ -62,20 +62,17 @@ v5.3.0 - TBD
   directly from the main class constructor can cause a segfault upon closing
   the window.
 * Fixes an issue where `import` treats `.js` files as CommonJS instead of ESM.
-* Fixes an issue where `Sphere.Game` can be modified by JS code at runtime.
 * Fixes an issue where the cursor is hidden while sitting over the game window.
 * Fixes an issue where `Socket#close` disposes of the underlying socket object,
   preventing it from being reused.
-* Fixes a bug where `FS.fullPath` doesn't automatically add a trailing slash
-  when passed the path of a known directory.
-* Fixes a bug where Cell defaults to putting `dist/` in the current working
-  directory instead of the directory of the project being built.
-* Fixes a bug where calling `.play` on a newly constructed `Sound` object
-  without specifying a mixer doesn't work.
-* Fixes a bug where the axis vector passed to `Transform#rotate` is not
-  normalized before calculating the rotation matrix, leading to unpredictable
-  behavior when using a non-basis vector.
-* Fixes a bug where `BlendOp.Multiply` is rendered the same as `BlendOp.Add`.
+* Fixes a bug where the `MULTIPLY` blend mode is rendered the same as `ADD`.
+* Fixes a bug where `FS.fullPath` doesn't add a trailing slash when passed the
+  path of a known directory.
+* Fixes a bug where Cell puts `dist/` in the PWD by default instead of the
+  directory of the project being built.
+* Fixes a bug where calling `Sound#play` without passing a Mixer doesn't work.
+* Fixes a bug where the vector passed to `Transform#rotate` is not normalized
+  before calculating the rotation matrix, leading to unpredictable behavior.
 
 
 v5.2.13 - September 6, 2018
