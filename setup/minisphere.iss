@@ -33,7 +33,7 @@
 ; solution configurations.
 #define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.3a3"
+#define AppVersion3 "5.3.0"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -50,7 +50,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion3}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=© 2015-2017 Fat Cerberus
+AppCopyright=© 2015-2018 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x86 x64
 ArchitecturesInstallIn64BitMode=x64
