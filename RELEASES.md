@@ -4,6 +4,13 @@ Release Notes
 miniSphere 5.3
 --------------
 
+* Several APIs were canonized in this release (refer to the API documentation
+  to see which ones) and the maximum supported API level increased to 2.  If
+  you put `apiLevel: 2` in your manifest, your game will require miniSphere 5.3
+  or later.  If you still want to support earlier versions, specify
+  `apiLevel: 1` in the manifest and test for newer APIs at runtime by checking
+  the value of `Sphere.APILevel`.
+
 * Cell's command-line syntax has been enhanced to support new commands.
   Notably, a few options have been promoted to full commands, e.g. `cell -c` is
   now `cell clean`.  If you need a quick primer on the new syntax, you can type

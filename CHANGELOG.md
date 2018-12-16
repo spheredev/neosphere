@@ -4,6 +4,7 @@ miniSphere Changelog
 v5.3.0 - TBD
 ------------
 
+* Adds support for games targeting API level 2, canonizing several Core APIs.
 * Adds `cell init` to initialize a new Sphere source tree on the command line.
 * Adds asynchronous asset loading functions, e.g. `Sound.fromFile()`, to
   improve cross-compatibility with Oozaru.  Refer to the miniSphere 5.3 release
@@ -32,6 +33,8 @@ v5.3.0 - TBD
 * Adds a new option, `recursive`, for DirectoryStream, to include files in
   subdirectories.
 * Adds `apiVersion` and `apiLevel` to the example Cellscript.
+* Improves module handling; all `import` statements regardless of extension are
+  now loaded as ESM code.
 * Improves security by forcing full SphereFS sandbox enforcement in production.
 * Improves security by disabling execution of bare scripts using `minisphere`.
 * Improves `BlendOp` by making it into a class, allowing games to define their
@@ -48,17 +51,14 @@ v5.3.0 - TBD
 * Removes several internal-use-only Scenario scenelets (`fadeTo`, `call`,
   `playSound`, `tween`) which sometimes clashed with game code wanting to use
   those names.
-* Fixes a crash where calling `MapEngine` or entering a `FlipScreen` loop
-  directly from the main class constructor can cause a segfault upon closing
-  the window.
-* Fixes an issue where `import` treats `.js` files as CommonJS instead of ESM.
+* Fixes a crash when calling `MapEngine`/`FlipScreen` from the main function.
 * Fixes an issue where the cursor is hidden while sitting over the game window.
+* Fixes an issue where `FS.fullPath` doesn't add a trailing slash when passed
+  the path of a known directory.
 * Fixes an issue where `Socket#close` disposes of the underlying socket object,
   preventing it from being reused.
 * Fixes a bug where the `MULTIPLY` blend mode is rendered the same as `ADD`.
-* Fixes a bug where `FS.fullPath` doesn't add a trailing slash when passed the
-  path of a known directory.
-* Fixes a bug where Cell puts `dist/` in the PWD by default instead of the
+* Fixes a bug where Cell puts `dist/` in the PWD by default instead of in the
   directory of the project being built.
 * Fixes a bug where calling `Sound#play` without passing a Mixer doesn't work.
 * Fixes a bug where the vector passed to `Transform#rotate` is not normalized
