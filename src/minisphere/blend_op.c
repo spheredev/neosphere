@@ -97,6 +97,12 @@ blend_op_unref(blend_op_t* it)
 }
 
 void
+blend_op_set_const(blend_op_t* it, float r, float g, float b, float a)
+{
+	it->color = al_map_rgba_f(r, g, b, a);
+}
+
+void
 blend_op_apply(const blend_op_t* it)
 {
 	if (it != NULL) {

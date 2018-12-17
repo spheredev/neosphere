@@ -60,10 +60,11 @@ enum blend_factor
 	BLEND_FACTOR_MAX,
 } blend_factor_t;
 
-blend_op_t* blend_op_new_asym (blend_type_t color_op, blend_factor_t sfc, blend_factor_t tfc, blend_type_t alpha_op, blend_factor_t sfa, blend_factor_t tfa);
-blend_op_t* blend_op_new_sym  (blend_type_t op_type, blend_factor_t sf, blend_factor_t tf);
-blend_op_t* blend_op_ref      (blend_op_t* it);
-void        blend_op_unref    (blend_op_t* it);
-void        blend_op_apply    (const blend_op_t* it);
+blend_op_t* blend_op_new_asym  (blend_type_t color_op, blend_factor_t sfc, blend_factor_t tfc, blend_type_t alpha_op, blend_factor_t sfa, blend_factor_t tfa);
+blend_op_t* blend_op_new_sym   (blend_type_t op_type, blend_factor_t sf, blend_factor_t tf);
+blend_op_t* blend_op_ref       (blend_op_t* it);
+void        blend_op_unref     (blend_op_t* it);
+void        blend_op_set_const (blend_op_t* it, float r, float g, float b, float a);
+void        blend_op_apply     (const blend_op_t* it);
 
 #endif // SPHERE__BLEND_OP_H__INCLUDED

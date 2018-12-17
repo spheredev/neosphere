@@ -82,14 +82,19 @@ struct blender
 	blend_type_t   alpha_op;
 	blend_factor_t alpha_sf;
 	blend_factor_t alpha_tf;
+	float          cr;
+	float          cg;
+	float          cb;
+	float          ca;
 }
 BLENDERS[] =
 {
-	{ "Default",  BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA, BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA },
-	{ "Add",      BLEND_OP_ADD, BLEND_ONE,   BLEND_ONE,       BLEND_OP_ADD, BLEND_ONE,   BLEND_ONE },
-	{ "Multiply", BLEND_OP_ADD, BLEND_DEST,  BLEND_ZERO,      BLEND_OP_ADD, BLEND_DEST,  BLEND_ZERO },
-	{ "Replace",  BLEND_OP_ADD, BLEND_ONE,   BLEND_ZERO,      BLEND_OP_ADD, BLEND_ONE,   BLEND_ZERO },
-	{ "Subtract", BLEND_OP_SUB, BLEND_ONE,   BLEND_ONE,       BLEND_OP_SUB, BLEND_ONE,   BLEND_ONE },
+	{ "Default",  BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA, BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA, 1.0f, 1.0f, 1.0f, 1.0f },
+	{ "Add",      BLEND_OP_ADD, BLEND_ONE,   BLEND_ONE,       BLEND_OP_ADD, BLEND_ONE,   BLEND_ONE,       1.0f, 1.0f, 1.0f, 1.0f },
+	{ "Average",  BLEND_OP_ADD, BLEND_CONST, BLEND_CONST,     BLEND_OP_ADD, BLEND_CONST, BLEND_CONST,     0.5f, 0.5f, 0.5f, 0.5f },
+	{ "Multiply", BLEND_OP_ADD, BLEND_DEST,  BLEND_ZERO,      BLEND_OP_ADD, BLEND_DEST,  BLEND_ZERO,      1.0f, 1.0f, 1.0f, 1.0f },
+	{ "Replace",  BLEND_OP_ADD, BLEND_ONE,   BLEND_ZERO,      BLEND_OP_ADD, BLEND_ONE,   BLEND_ZERO,      1.0f, 1.0f, 1.0f, 1.0f },
+	{ "Subtract", BLEND_OP_SUB, BLEND_ONE,   BLEND_ONE,       BLEND_OP_SUB, BLEND_ONE,   BLEND_ONE,       1.0f, 1.0f, 1.0f, 1.0f },
 	{ NULL },
 };
 
@@ -903,6 +908,7 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
+		api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
 		api_define_static_prop("Joystick", "P1", js_Joystick_get_Default, NULL, 1);
 		api_define_static_prop("Joystick", "P2", js_Joystick_get_Default, NULL, 2);
 		api_define_static_prop("Joystick", "P3", js_Joystick_get_Default, NULL, 3);
@@ -916,6 +922,7 @@ pegasus_init(int api_level)
 		api_define_prop("Socket", "bytesReceived", false, js_Socket_get_bytesReceived, NULL);
 		api_define_prop("Socket", "bytesSent", false, js_Socket_get_bytesSent, NULL);
 		api_define_prop("Socket", "noDelay", false, js_Socket_get_noDelay, js_Socket_set_noDelay);
+		api_define_prop("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_method("Font", "heightOf", js_Font_heightOf, 0);
 		api_define_method("Font", "widthOf", js_Font_widthOf, 0);
 		api_define_method("Socket", "disconnect", js_Socket_disconnect, 0);
@@ -924,10 +931,20 @@ pegasus_init(int api_level)
 		api_define_const("DataType", "Lines", DATA_LINES);
 		api_define_const("DataType", "Raw", DATA_RAW);
 		api_define_const("DataType", "Text", DATA_TEXT);
+
+		// register predefined BlendOp accessors
+		jsal_get_global_string("BlendOp");
+		p_blender = BLENDERS;
+		while (p_blender->name != NULL) {
+			jsal_push_new_function(js_BlendOp_get_Default, p_blender->name, 0, false, (intptr_t)(p_blender - BLENDERS));
+			jsal_to_propdesc_get(false, true);
+			jsal_def_prop_string(-2, p_blender->name);
+			++p_blender;
+		}
+		jsal_pop(1);
 	}
 	
 	if (api_level >= 3) {
-		api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
 		api_define_async_func("FileStream", "open", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
@@ -940,7 +957,6 @@ pegasus_init(int api_level)
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
-		api_define_prop("Surface", "blendOp", false, js_Surface_get_blendOp, js_Surface_set_blendOp);
 		api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
 		api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
@@ -961,17 +977,6 @@ pegasus_init(int api_level)
 		api_define_const("Blend", "Target", BLEND_DEST);
 		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
 		api_define_const("Blend", "Zero", BLEND_ZERO);
-
-		// register predefined BlendOp accessors
-		jsal_get_global_string("BlendOp");
-		p_blender = BLENDERS;
-		while (p_blender->name != NULL) {
-			jsal_push_new_function(js_BlendOp_get_Default, p_blender->name, 0, false, (intptr_t)(p_blender - BLENDERS));
-			jsal_to_propdesc_get(false, true);
-			jsal_def_prop_string(-2, p_blender->name);
-			++p_blender;
-		}
-		jsal_pop(1);
 	}
 
 	// keep a local reference to Surface.Screen
@@ -1649,6 +1654,7 @@ js_BlendOp_get_Default(int num_args, bool is_ctor, intptr_t magic)
 
 	desc = &BLENDERS[magic];
 	op = blend_op_new_asym(desc->color_op, desc->color_sf, desc->color_tf, desc->alpha_op, desc->alpha_sf, desc->alpha_tf);
+	blend_op_set_const(op, desc->cr, desc->cg, desc->cb, desc->ca);
 	jsal_push_class_obj(PEGASUS_BLENDER, op, false);
 	cache_value_to_this(desc->name);
 	return true;
