@@ -44,16 +44,48 @@ the event loop represents one frame and consists of three phases:
               next frame.
 
 
-API Levels
-----------
+API Versioning
+--------------
 
 The Sphere API is constantly evolving, and as such new functions and classes
 are added often.  When a new API feature is added, it will be designated as
-experimental until the next API freeze.  When an API freeze occurs, the
-engine's supported API level will be incremented and some or all experimental
-features will be "canonized" under the new API level.
+experimental until the next API freeze.  At that time, the engine's supported
+API level will be incremented and some of the experimental APIs will be
+"canonized" under the new API level.  Once that happens, those APIs are said to
+be frozen: no further breaking changes will be made to them.
 
 The maximum supported API level in this version of miniSphere is level 2.
+
+If a game uses only frozen APIs, it shouldn't be broken by upgrading to a newer
+engine version; this is the true goal of an API freeze.  If the behavior of a
+canonized function changes in a way that breaks existing game packages, this is
+almost certainly a bug and should be reported.
+
+Note that the backwards compatibility guarantees in Sphere are somewhat more
+lenient in comparison to, say, the ECMAScript standard.  The goal is not to
+break "typical" use cases; more exotic code that relies on, e.g., specific
+property attributes may in fact be broken by an engine upgrade.  This provides
+some breathing room when adding new features to existing APIs.  In particular,
+upon upgrading the engine:
+
+    1. A static namespace may become a class.  For example, under API 2,
+       `BlendOp` is a namespace for predefined blending operators, but there is
+       an experimental BlendOp constructor slated for canonization in API 3.
+       Without this allowance, the constructor would need to be renamed.
+
+    2. Accessor properties may become plain data properties, or vice versa.
+       This is allowed because it can already happen at runtime; for example,
+       `Font.Default` is cached after first access to ensure the font is only
+       loaded once.
+
+    3. A read-only property may become read/write.  This is very unlikely to
+       break even the most exotic use cases, and the alternative is to
+       introduce an entirely new property, bloating the API unnecessarily.
+
+    4. Operations that throw a TypeError, RangeError, or ReferenceError
+       exception (or reject a promise with same) may be updated with meaningful
+       behavior.  Such errors only indicate an unsupported request; without
+       this allowance, new APIs could never be added at all!
 
 The minimum API level required by a game is specified in its game manifest (see
 above); if this value is not present it defaults to level 1.  By default, all
@@ -63,8 +95,8 @@ emulate the older API level, which disables all APIs introduced in a later
 level as well as experimental features.
 
 All class constructors, methods and properties listed below include the API
-level they were introduced in, e.g. `API 1` or else, for new features which
-haven't yet been canonized, `NEW`.
+level they were introduced in, e.g. `API 1` or else, for new experimental APIs
+which haven't yet been canonized, `NEW`.
 
 
 SphereFS File System
