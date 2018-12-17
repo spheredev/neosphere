@@ -908,7 +908,11 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
-		api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
+		// if we need to register the BlendOp constructor, that has to be done here, before we register
+		// the default BlendOps.  if we do it afterwards, those will get clobbered.
+		if (api_level >= 3)
+			api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
+		
 		api_define_static_prop("Joystick", "P1", js_Joystick_get_Default, NULL, 1);
 		api_define_static_prop("Joystick", "P2", js_Joystick_get_Default, NULL, 2);
 		api_define_static_prop("Joystick", "P3", js_Joystick_get_Default, NULL, 3);
@@ -933,15 +937,11 @@ pegasus_init(int api_level)
 		api_define_const("DataType", "Text", DATA_TEXT);
 
 		// register predefined BlendOp accessors
-		jsal_get_global_string("BlendOp");
 		p_blender = BLENDERS;
 		while (p_blender->name != NULL) {
-			jsal_push_new_function(js_BlendOp_get_Default, p_blender->name, 0, false, (intptr_t)(p_blender - BLENDERS));
-			jsal_to_propdesc_get(false, true);
-			jsal_def_prop_string(-2, p_blender->name);
+			api_define_static_prop("BlendOp", p_blender->name, js_BlendOp_get_Default, NULL, (intptr_t)(p_blender - BLENDERS));
 			++p_blender;
 		}
-		jsal_pop(1);
 	}
 	
 	if (api_level >= 3) {
