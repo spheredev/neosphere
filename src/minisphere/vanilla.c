@@ -541,6 +541,7 @@ enum sound_effect_mode
 static blend_op_t* s_blender_normal;
 static blend_op_t* s_blender_null;
 static blend_op_t* s_blender_add;
+static blend_op_t* s_blender_average;
 static blend_op_t* s_blender_copy;
 static blend_op_t* s_blender_copy_alpha;
 static blend_op_t* s_blender_copy_rgb;
@@ -559,15 +560,21 @@ vanilla_init(void)
 	//       clobbered by internal text rendering (e.g. the FPS counter).
 	s_default_font = font_clone(game_default_font(g_game));
 
+	s_sound_mixer = mixer_new(44100, 16, 2);
+
 	s_blender_normal = blend_op_new_sym(BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA);
 	s_blender_null = blend_op_new_sym(BLEND_OP_ADD, BLEND_ZERO, BLEND_ZERO);
 	s_blender_add = blend_op_new_sym(BLEND_OP_ADD, BLEND_ONE, BLEND_ONE);
+	s_blender_average = blend_op_new_sym(BLEND_OP_ADD, BLEND_CONST, BLEND_CONST);
 	s_blender_copy = blend_op_new_sym(BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO);
 	s_blender_copy_alpha = blend_op_new_asym(BLEND_OP_ADD, BLEND_ZERO, BLEND_ONE, BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO);
 	s_blender_copy_rgb = blend_op_new_asym(BLEND_OP_ADD, BLEND_ONE, BLEND_ZERO, BLEND_OP_ADD, BLEND_ZERO, BLEND_ONE);
 	s_blender_multiply = blend_op_new_sym(BLEND_OP_ADD, BLEND_DEST, BLEND_ZERO);
 	s_blender_subtract = blend_op_new_sym(BLEND_OP_SUB, BLEND_ONE, BLEND_ONE);
-	s_sound_mixer = mixer_new(44100, 16, 2);
+	
+	// there's no native "half" factor but we can fake it with a color constant.
+	// as far as I can tell, this is the only way to implement AVERAGE blending properly.
+	blend_op_set_const(s_blender_average, 0.5f, 0.5f, 0.5f, 0.5f);
 
 	// set up a dictionary to track RequireScript() calls
 	jsal_push_hidden_stash();
@@ -1221,6 +1228,22 @@ vanilla_init(void)
 }
 
 void
+vanilla_uninit()
+{
+	font_unref(s_default_font);
+	mixer_unref(s_sound_mixer);
+	blend_op_unref(s_blender_normal);
+	blend_op_unref(s_blender_null);
+	blend_op_unref(s_blender_add);
+	blend_op_unref(s_blender_average);
+	blend_op_unref(s_blender_copy);
+	blend_op_unref(s_blender_copy_alpha);
+	blend_op_unref(s_blender_copy_rgb);
+	blend_op_unref(s_blender_multiply);
+	blend_op_unref(s_blender_subtract);
+}
+
+void
 jsal_push_sphere_bytearray(bytearray_t* array)
 {
 	jsal_push_class_obj(SV1_BYTE_ARRAY, bytearray_ref(array), false);
@@ -1503,6 +1526,7 @@ apply_blend_mode(image_t* image, enum blend_mode mode)
 
 	op = mode == BLEND_NORMAL ? s_blender_normal
 		: mode == BLEND_ADD ? s_blender_add
+		: mode == BLEND_AVERAGE ? s_blender_average
 		: mode == BLEND_COPY_ALPHA ? s_blender_copy_alpha
 		: mode == BLEND_COPY_RGB ? s_blender_copy_rgb
 		: mode == BLEND_MULTIPLY ? s_blender_multiply
