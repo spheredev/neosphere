@@ -895,8 +895,6 @@ pegasus_init(int api_level)
 	api_define_const("MouseKey", "Left", MOUSE_KEY_LEFT);
 	api_define_const("MouseKey", "Right", MOUSE_KEY_RIGHT);
 	api_define_const("MouseKey", "Middle", MOUSE_KEY_MIDDLE);
-	api_define_const("MouseKey", "Back", MOUSE_KEY_BACK);
-	api_define_const("MouseKey", "Forward", MOUSE_KEY_FORWARD);
 	api_define_const("MouseKey", "WheelUp", MOUSE_KEY_WHEEL_UP);
 	api_define_const("MouseKey", "WheelDown", MOUSE_KEY_WHEEL_DOWN);
 	api_define_const("ShapeType", "Fan", SHAPE_TRI_FAN);
@@ -931,6 +929,8 @@ pegasus_init(int api_level)
 		api_define_const("DataType", "Lines", DATA_LINES);
 		api_define_const("DataType", "Raw", DATA_RAW);
 		api_define_const("DataType", "Text", DATA_TEXT);
+		api_define_const("MouseKey", "Back", MOUSE_KEY_BACK);
+		api_define_const("MouseKey", "Forward", MOUSE_KEY_FORWARD);
 
 		// register predefined BlendOp accessors
 		p_blender = BLENDERS;
@@ -3677,33 +3677,32 @@ static bool
 js_Mouse_getEvent(int num_args, bool is_ctor, intptr_t magic)
 {
 	mouse_event_t event;
-	bool          ok;
+	bool          have_key = false;
 
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_MOUSE);
 
-	if (mouse_queue_len() == 0) {
-		jsal_push_null();
-	}
-	else {
-		do {
-			event = mouse_get_event();
-			ok = true;
-			if ((event.key == MOUSE_KEY_BACK || event.key == MOUSE_KEY_FORWARD) && s_api_level < 2)
-				ok = false;
-		} while (!ok);
-		screen_fix_mouse_xy(g_screen, &event.x, &event.y);
-		jsal_push_new_object();
-		jsal_push_int(event.key);
-		jsal_put_prop_string(-2, "key");
-		jsal_push_int(event.x);
-		jsal_put_prop_string(-2, "x");
-		jsal_push_int(event.y);
-		jsal_put_prop_string(-2, "y");
-		if (s_api_level >= 2 && (event.key == MOUSE_KEY_WHEEL_DOWN || event.key == MOUSE_KEY_WHEEL_UP)) {
-			jsal_push_int(event.delta);
-			jsal_put_prop_string(-2, "delta");
+	while (!have_key) {
+		if (mouse_queue_len() == 0) {
+			jsal_push_null();
+			return true;
 		}
+		event = mouse_get_event();
+		have_key = true;
+		if ((event.key == MOUSE_KEY_BACK || event.key == MOUSE_KEY_FORWARD) && s_api_level < 2)
+			have_key = false;
+	}
+	screen_fix_mouse_xy(g_screen, &event.x, &event.y);
+	jsal_push_new_object();
+	jsal_push_int(event.key);
+	jsal_put_prop_string(-2, "key");
+	jsal_push_int(event.x);
+	jsal_put_prop_string(-2, "x");
+	jsal_push_int(event.y);
+	jsal_put_prop_string(-2, "y");
+	if (s_api_level >= 2 && (event.key == MOUSE_KEY_WHEEL_DOWN || event.key == MOUSE_KEY_WHEEL_UP)) {
+		jsal_push_int(event.delta);
+		jsal_put_prop_string(-2, "delta");
 	}
 	return true;
 }

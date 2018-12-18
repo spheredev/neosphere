@@ -1339,7 +1339,7 @@ MouseKey [enumeration] [API 1]
         MouseKey.WheelUp
         MouseKey.WheelDown
 
-    The following values are currently supported experimentally:
+    The following values were added in API 2:
 
         MouseKey.Back
         MouseKey.Forward
@@ -1379,7 +1379,7 @@ Mouse#getEvent(); [API 1]
             The X and Y position of the mouse cursor relative to the rendering
             area at the time the event was received.
 
-        event.delta [NEW]
+        event.delta [API 2]
 
             For mouse wheel events, specifies how much the wheel has moved.
             For any other event, this will be `undefined`.
