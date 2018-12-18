@@ -100,9 +100,9 @@ start the engine using the `--retro` command line switch to have the engine
 emulate the older API level, which disables all APIs introduced in a later
 level as well as experimental features.
 
-All class constructors, methods and properties listed below include the API
-level they were introduced in, e.g. `API 1` or else, for new experimental APIs
-which haven't yet been canonized, `NEW`.
+All class constructors, methods, properties, and manifest fields listed below
+include the API level they were introduced in, e.g. `API 1` or else, for new
+experimental features which haven't yet been canonized, `NEW`.
 
 
 SphereFS File System
@@ -143,74 +143,63 @@ file named `game.json` in its root directory.  This file holds metadata such as
 the title and author, as well as some control information which affects how the
 engine runs the game.
 
+Note that if your project has a Cellscript, Cell will generate this file for
+you at build time based on the values you assign to `Sphere.Game`.
+
 Here's a sample manifest:
 
     {
         "name": "Spectacles: Bruce's Story",
-        "version": 2,
-        "apiLevel": 1,
         "saveID": "fatCerberus.spectacles",
         "author": "Fat Cerberus",
         "summary": "Follow Scott Starcross in his quest to stop the Primus.",
-        "resolution": "320x240",
         "main": "@/bin/main.mjs"
+        "version": 2,
+        "apiLevel": 1,
+        "resolution": "320x240",
     }
 
 JSON fields defined by the Sphere v2 specification are documented below.
 Because the manifest format is JSON, as many additional fields may be added as
-needed, and their values can be accessed from JavaScript through `Sphere.Game`.
+needed, and their values can be accessed at runtime through `Sphere.Game`.
 
-"version" [default: 2]
+"name" [REQUIRED] [API 1]
 
-    The Sphere standards version the game was developed against.  If this is
-    set to 2 (or is just not present) the game runs in Sphere v2 mode.  In
-    Sphere v2 mode, the main script is run as a module, either CommonJS or
-    mJS depending on the file extension.
+    The title of the game.  This field must be present; if it isn't, the
+    manifest will be considered invalid and the game will not start.
 
-    If this is set to 1, the game runs in Sphere 1.x compatibility mode.  In
-    compatibility mode, the main module is executed as top-level program code,
-    and miniSphere calls the global `game()` function--if one is provided--to
-    begin game execution.
+"main" [REQUIRED] [API 1]
 
-    Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
-          be available for use by game code.  The standards version merely
-          tells the engine how to load the main module.
+    The SphereFS path of the main JavaScript module (see below for more on
+    SphereFS).  This is the script miniSphere will run when the game is
+    started.  If no "main" field is present, the game will not start.
 
-"apiLevel" [default: 1]
+"apiLevel" {default: 1} [API 1]
 
-    The minimum API level required to run the game.
+    The minimum API level required to run the game.  Only valid if `version` is
+    set to 2.
 
-"author" [default: none]
+"author" {default: none} [API 1]
 
     The name of the person or company who developed the game.
 
-"fullScreen" [default: false]
+"fullScreen" {default: false} [API 1]
 
     The game's preferred fullscreen mode.  If the engine is started without
     passing either `--windowed` or `--fullscreen` on the command line, the
     value of this property will decide whether to start in fullscreen mode or
     not.
 
-"main" [required]
-
-    The SphereFS path of the main JavaScript module (see below for more on
-    SphereFS).  This is the script miniSphere will run when the game is
-    started.  If no "main" field is present, the game will not start.
-
-"name" [default: "Untitled"]
-
-    The title of the game.  This field must be present; if it is not, the game
-    will not start.
-
-"resolution" [required]
+"resolution" {default: 320x240} [API 1]
 
     The default screen resolution of the game, expressed as a string of the
     form "WxH", specifying the number of pixels across and down.  For example,
     720p resolution would be expressed as "1280x720".
 
-    Note: The resolution can be changed at runtime by calling screen.resize().
+    Note: The resolution can be changed at will at runtime by calling
+          `Sphere.setResolution`.
 
-"saveID" [default: none]
+"saveID" {default: none} [API 1]
 
     A string usually of the form "authorID.titleID" uniquely identifying the
     game for the purposes of save data management.
@@ -220,11 +209,26 @@ needed, and their values can be accessed from JavaScript through `Sphere.Game`.
           only an SGM manifest therefore can't take advantage of the save
           store.
 
-"summary" [default: none]
+"summary" {default: none} [API 1]
 
     A short summary of the game.  While there is no imposed length limit, it
     is recommended to keep this short (150 characters or less) with no line
     breaks.
+
+"version" {default: 2} [API 1]
+
+    The Sphere standards version the game was developed against.  If this is
+    set to 2 (or is just not present) the game runs in Sphere v2 mode.  In
+    Sphere v2 mode, the main script is run as ESM code and can use `import`.
+
+    If this is set to 1, the game runs in Sphere 1.x compatibility mode.  In
+    compatibility mode, the main module is executed as traditional JS code,
+    and miniSphere calls the global `game()` function--if one is provided--to
+    begin game execution.
+
+    Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
+          be available for use by game code.  The standards version merely
+          tells the engine how to load the main module.
 
 
 `Sphere` Namespace
