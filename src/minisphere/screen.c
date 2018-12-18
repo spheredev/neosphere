@@ -381,7 +381,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			al_draw_filled_rounded_rectangle(x, y, x + width, y + 24, 4, 4, al_map_rgba(16, 16, 16, 192 * it->notify_alpha));
 			font_set_mask(it->font, mk_color(0, 0, 0, 255 * it->notify_alpha));
 			font_draw_text(it->font, x + 11, y + 7, TEXT_ALIGN_LEFT, it->message);
-			font_set_mask(it->font, mk_color(255, 192, 128, 255 * it->notify_alpha));
+			font_set_mask(it->font, mk_color(192, 192, 192, 255 * it->notify_alpha));
 			font_draw_text(it->font, x + 10, y + 6, TEXT_ALIGN_LEFT, it->message);
 		}
 		if (it->show_fps && it->font != NULL) {
