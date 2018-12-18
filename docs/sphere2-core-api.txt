@@ -24,7 +24,7 @@ the `await` operator.
 
 The event loop begins running after all JavaScript modules have been loaded and
 remains active as long as there is something for it to do.  Each iteration of
-the event loop represents one frame and consists of three phases:
+the event loop constitutes one frame and consists of three phases:
 
     Render: The Render phase calls jobs set up with `Dispatch.onRender()`.
             This phase is unique in that it may be skipped entirely in order
@@ -94,7 +94,7 @@ upon upgrading the engine:
        shouldn't assume it will be unsupported forever!
 
 The minimum API level required by a game is specified in its game manifest (see
-above); if this value is not present it defaults to level 1.  By default, all
+above); if this value is not present, it defaults to level 1.  By default, all
 API functions are available for use regardless of this value; however you can
 start the engine using the `--retro` command line switch to have the engine
 emulate the older API level, which disables all APIs introduced in a later
@@ -126,14 +126,13 @@ from a different location, you can use one of the SphereFS prefixes:
         to the section on `game.json` above).  This is generally used to store
         save data and such where the user can easily access it.
 
-As an example, the following will create a FileStream which allows reading from
-the file `EatyPig.bin` residing in the user's save data directory.
+As an example, the following call will read all text lines from the file named
+`eaty-list.txt` in the user's save data directory:
 
-    let file = new FileStream('~/EatyPig.bin', FileOp.Read);
+    let thingsThatAreEaty = FS.readFile('~/eaty-list.txt', DataType.Lines);
 
-Note: Absolute paths are forbidden, and any attempt to circumvent the sandbox
-      to break into the underlying file system, e.g. "@/../maggie.fat", will
-      be met with a sandbox violation error.
+Any attempts to circumvent the SphereFS sandbox using a relative path, e.g.
+"@/../filename", will be met with a URIError exception.
 
 
 JSON Game Manifest (`game.json`)
@@ -2102,7 +2101,7 @@ new Surface(filename); [API 1]
     the event loop, and returns a Surface whose dimensions and initial content
     match that of the loaded image.  May not be supported on all platforms.
 
-Surface#blendOp [R/W] [NEW]
+Surface#blendOp [R/W] [API 2]
 
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.

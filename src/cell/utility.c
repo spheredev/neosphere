@@ -74,11 +74,11 @@ jsal_require_pathname(int index, const char* origin_name)
 	if (path_num_hops(path) > 1)
 		first_hop = path_hop(path, 1);
 	if (strcmp(first_hop, "..") == 0 || path_rooted(path))
-		jsal_error(JS_TYPE_ERROR, "illegal file or directory path '%s'", pathname);
+		jsal_error(JS_URI_ERROR, "SphereFS sandbox violation '%s'", pathname);
 	if (strcmp(prefix, "%") == 0)
 		jsal_error(JS_REF_ERROR, "SphereFS prefix '%%/' is reserved for future use");
 	if (strcmp(prefix, "~") == 0)
-		jsal_error(JS_TYPE_ERROR, "no save directory in Cell");
+		jsal_error(JS_TYPE_ERROR, "No save directory in Cell");
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;
