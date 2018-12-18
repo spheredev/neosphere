@@ -908,11 +908,7 @@ pegasus_init(int api_level)
 	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
-		// if we need to register the BlendOp constructor, that has to be done here, before we register
-		// the default BlendOps.  if we do it afterwards, those will get clobbered.
-		if (api_level >= 3)
-			api_define_class("BlendOp", PEGASUS_BLENDER, js_new_BlendOp, js_BlendOp_finalize, 0);
-		
+		api_define_class("BlendOp", PEGASUS_BLENDER, api_level >= 3 ? js_new_BlendOp : NULL, js_BlendOp_finalize, 0);
 		api_define_static_prop("Joystick", "P1", js_Joystick_get_Default, NULL, 1);
 		api_define_static_prop("Joystick", "P2", js_Joystick_get_Default, NULL, 2);
 		api_define_static_prop("Joystick", "P3", js_Joystick_get_Default, NULL, 3);
