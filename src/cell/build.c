@@ -1217,7 +1217,7 @@ write_manifests(build_t* build, bool debugging)
 				return false;
 			}
 			if (strcmp(sandbox_mode, "full") != 0 && !debugging)
-				visor_print(build->visor, "full sandboxing is used in release");
+				visor_print(build->visor, "full SphereFS sandboxing will be enforced");
 		}
 		if (jsal_get_prop_string(-2, "retrograde")) {
 			if (!jsal_is_boolean(-1)) {
@@ -1228,7 +1228,7 @@ write_manifests(build_t* build, bool debugging)
 			}
 			flag_enabled = jsal_get_boolean(-1);
 			if (flag_enabled && !debugging)
-				visor_print(build->visor, "latest API is exposed in release");
+				visor_print(build->visor, "all supported APIs will be exposed");
 		}
 		if (jsal_get_prop_string(-3, "emptyPromises")) {
 			if (!jsal_is_boolean(-1)) {
@@ -1239,7 +1239,7 @@ write_manifests(build_t* build, bool debugging)
 			}
 			flag_enabled = jsal_get_boolean(-1);
 			if (flag_enabled && !debugging)
-				visor_print(build->visor, "uncaught promise rejections are fatal in release");
+				visor_print(build->visor, "uncaught promise rejections will be fatal");
 		}
 		jsal_pop(3);
 	}
