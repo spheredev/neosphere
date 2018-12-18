@@ -33,7 +33,6 @@ namespace Sphere.Gdk.SettingsPages
             m_main.Conf.AlwaysUseConsole = TestWithConsoleCheckBox.Checked;
             m_main.Conf.ShowTraceInfo = ShowTraceCheckBox.Checked;
             m_main.Conf.TestInWindow = TestInWindowCheckBox.Checked;
-            m_main.Conf.UseRetroMode = UseRetroModeCheckBox.Checked;
             m_main.Conf.Verbosity = VerbosityComboBox.SelectedIndex;
             return true;
         }
@@ -45,7 +44,6 @@ namespace Sphere.Gdk.SettingsPages
             ShowTraceCheckBox.Checked = m_main.Conf.ShowTraceInfo;
             TestWithConsoleCheckBox.Checked = m_main.Conf.AlwaysUseConsole;
             TestInWindowCheckBox.Checked = m_main.Conf.TestInWindow;
-            UseRetroModeCheckBox.Checked = m_main.Conf.UseRetroMode;
             VerbosityComboBox.SelectedIndex = m_main.Conf.Verbosity;
             base.OnLoad(e);
         }

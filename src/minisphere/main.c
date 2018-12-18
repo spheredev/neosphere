@@ -307,7 +307,7 @@ main(int argc, char* argv[])
 	
 	// in retrograde mode, only provide access to functions up to the targeted
 	// API level, nothing newer.
-	if (retro_mode) {
+	if (retro_mode || game_retro_api(g_game)) {
 		api_version = game_version(g_game);
 		api_level = game_api_level(g_game);
 	}

@@ -1083,6 +1083,7 @@ write_manifests(build_t* build, bool debugging)
 {
 	int         api_level;
 	int         api_version = 2;
+	bool        flag_enabled;
 	FILE*       file;
 	int         height;
 	size_t      json_size;
@@ -1215,11 +1216,32 @@ write_manifests(build_t* build, bool debugging)
 				visor_end_op(build->visor);
 				return false;
 			}
-			if (!debugging && strcmp(sandbox_mode, "full") != 0) {
-				visor_print(build->visor, "full sandboxing is enforced in production");
-			}
+			if (strcmp(sandbox_mode, "full") != 0 && !debugging)
+				visor_print(build->visor, "full sandboxing is used in release");
 		}
-		jsal_pop(1);
+		if (jsal_get_prop_string(-2, "retrograde")) {
+			if (!jsal_is_boolean(-1)) {
+				visor_error(build->visor, "'retrograde': must be boolean (true or false)");
+				jsal_pop(11);
+				visor_end_op(build->visor);
+				return false;
+			}
+			flag_enabled = jsal_get_boolean(-1);
+			if (flag_enabled && !debugging)
+				visor_print(build->visor, "latest API is exposed in release");
+		}
+		if (jsal_get_prop_string(-3, "emptyPromises")) {
+			if (!jsal_is_boolean(-1)) {
+				visor_error(build->visor, "'emptyPromises': must be boolean (true or false)");
+				jsal_pop(11);
+				visor_end_op(build->visor);
+				return false;
+			}
+			flag_enabled = jsal_get_boolean(-1);
+			if (flag_enabled && !debugging)
+				visor_print(build->visor, "uncaught promise rejections are fatal in release");
+		}
+		jsal_pop(3);
 	}
 	else if (!jsal_is_undefined(-1)) {
 		visor_error(build->visor, "'development': must be an object {}");
@@ -1244,6 +1266,8 @@ write_manifests(build_t* build, bool debugging)
 	jsal_pop(9);
 
 	// write game.json (Sphere v2 JSON manifest)
+	if (!debugging)  // strip debug flags from release
+		jsal_del_prop_string(-1, "development");
 	jsal_stringify(-1);
 	json_text = jsal_get_lstring(-1, &json_size);
 	fs_fspew(build->fs, "@/game.json", json_text, json_size);

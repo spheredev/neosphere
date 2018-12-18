@@ -24,10 +24,9 @@ namespace Sphere.Gdk.Components
             bool wantWindow = m_main.Conf.TestInWindow || wantConsole;
 
             string enginePath = Path.Combine(gdkPath, wantConsole ? "spherun.exe" : "miniSphere.exe");
-            string options = string.Format(@"{0} --verbose {1} {2} {3} ""{4}""",
+            string options = string.Format(@"{0} --verbose {1} {2} ""{3}""",
                 wantWindow ? "--windowed" : "",
                 m_main.Conf.Verbosity,
-                wantConsole && m_main.Conf.UseRetroMode ? "--retro" : "",
                 wantConsole ? "--profile" : "",
                 gamePath);
             Process.Start(enginePath, options);
@@ -46,9 +45,8 @@ namespace Sphere.Gdk.Components
             Panes.Console.ClearConsole();
             PluginManager.Core.Docking.Show(Panes.Inspector);
             string enginePath = Path.Combine(gdkPath, "spherun.exe");
-            string options = string.Format(@"--verbose {0} {1} --debug ""{2}""",
+            string options = string.Format(@"--verbose {0} --debug ""{1}""",
                 m_main.Conf.Verbosity,
-                m_main.Conf.UseRetroMode ? "--retro" : "",
                 gamePath);
             Process engine = Process.Start(enginePath, options);
             return new SsjDebugger(m_main, gamePath, enginePath, engine, project);

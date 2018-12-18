@@ -140,12 +140,6 @@ namespace Sphere.Gdk
             set { Conf.SetValue("testInWindow", value); }
         }
 
-        public bool UseRetroMode
-        {
-            get { return Conf.GetBoolean("useRetroMode", false); }
-            set { Conf.SetValue("useRetroMode", value); }
-        }
-
         public int Verbosity
         {
             get { return Math.Min(Math.Max(Conf.GetInteger("verbosity", 0), 0), 4); }

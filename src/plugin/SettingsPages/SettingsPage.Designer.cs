@@ -36,7 +36,6 @@
             this.MakeDebugPackageCheckBox = new System.Windows.Forms.CheckBox();
             this.editorLabel3 = new SphereStudio.UI.DialogHeader();
             this.panel3 = new System.Windows.Forms.Panel();
-            this.UseRetroModeCheckBox = new System.Windows.Forms.CheckBox();
             this.VerbosityComboBox = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.TestWithConsoleCheckBox = new System.Windows.Forms.CheckBox();
@@ -85,9 +84,9 @@
             this.panel2.Controls.Add(this.TestInWindowCheckBox);
             this.panel2.Controls.Add(this.MakeDebugPackageCheckBox);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel2.Location = new System.Drawing.Point(3, 210);
+            this.panel2.Location = new System.Drawing.Point(3, 190);
             this.panel2.Name = "panel2";
-            this.panel2.Size = new System.Drawing.Size(562, 116);
+            this.panel2.Size = new System.Drawing.Size(562, 136);
             this.panel2.TabIndex = 3;
             // 
             // ShowTraceCheckBox
@@ -95,9 +94,9 @@
             this.ShowTraceCheckBox.AutoSize = true;
             this.ShowTraceCheckBox.Location = new System.Drawing.Point(12, 58);
             this.ShowTraceCheckBox.Name = "ShowTraceCheckBox";
-            this.ShowTraceCheckBox.Size = new System.Drawing.Size(280, 17);
+            this.ShowTraceCheckBox.Size = new System.Drawing.Size(278, 17);
             this.ShowTraceCheckBox.TabIndex = 4;
-            this.ShowTraceCheckBox.Text = "Show output produced by SSj.trace() while debugging";
+            this.ShowTraceCheckBox.Text = "Show output produced by \'SSj.trace\' while debugging";
             this.ShowTraceCheckBox.UseVisualStyleBackColor = true;
             // 
             // TestInWindowCheckBox
@@ -126,7 +125,7 @@
             this.editorLabel3.Dock = System.Windows.Forms.DockStyle.Top;
             this.editorLabel3.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.editorLabel3.ForeColor = System.Drawing.Color.White;
-            this.editorLabel3.Location = new System.Drawing.Point(3, 187);
+            this.editorLabel3.Location = new System.Drawing.Point(3, 167);
             this.editorLabel3.Name = "editorLabel3";
             this.editorLabel3.Size = new System.Drawing.Size(562, 23);
             this.editorLabel3.TabIndex = 4;
@@ -135,25 +134,14 @@
             // 
             // panel3
             // 
-            this.panel3.Controls.Add(this.UseRetroModeCheckBox);
             this.panel3.Controls.Add(this.VerbosityComboBox);
             this.panel3.Controls.Add(this.label2);
             this.panel3.Controls.Add(this.TestWithConsoleCheckBox);
             this.panel3.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel3.Location = new System.Drawing.Point(3, 126);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(562, 61);
+            this.panel3.Size = new System.Drawing.Size(562, 41);
             this.panel3.TabIndex = 5;
-            // 
-            // UseRetroModeCheckBox
-            // 
-            this.UseRetroModeCheckBox.AutoSize = true;
-            this.UseRetroModeCheckBox.Location = new System.Drawing.Point(12, 35);
-            this.UseRetroModeCheckBox.Name = "UseRetroModeCheckBox";
-            this.UseRetroModeCheckBox.Size = new System.Drawing.Size(238, 17);
-            this.UseRetroModeCheckBox.TabIndex = 1;
-            this.UseRetroModeCheckBox.Text = "Emulate game\'s minimum supported API level";
-            this.UseRetroModeCheckBox.UseVisualStyleBackColor = true;
             // 
             // VerbosityComboBox
             // 
@@ -301,6 +289,5 @@
         private System.Windows.Forms.ComboBox VerbosityComboBox;
         private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.CheckBox ShowTraceCheckBox;
-        private System.Windows.Forms.CheckBox UseRetroModeCheckBox;
     }
 }

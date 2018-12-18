@@ -67,6 +67,7 @@ struct game
 	js_ref_t*      manifest;
 	lstring_t*     name;
 	size2_t        resolution;
+	bool           retrograde;
 	path_t*        root_path;
 	fs_safety_t    safety;
 	lstring_t*     save_id;
@@ -507,6 +508,12 @@ size2_t
 game_resolution(const game_t* it)
 {
 	return it->resolution;
+}
+
+bool
+game_retro_api(const game_t* it)
+{
+	return it->retrograde;
 }
 
 fs_safety_t
@@ -1128,6 +1135,8 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 				: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED
 				: FS_SAFETY_FULL;
 		}
+		if (jsal_get_prop_string(-3, "retrograde") && jsal_is_boolean(-1))
+			game->retrograde = jsal_get_boolean(-1);
 	}
 #endif
 
