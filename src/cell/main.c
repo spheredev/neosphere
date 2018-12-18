@@ -40,7 +40,7 @@
 
 enum mode
 {
-	MODE_BUILD_ONLY,
+	MODE_BUILD,
 	MODE_CLEAN,
 	MODE_INIT,
 	MODE_PACK,
@@ -87,7 +87,7 @@ main(int argc, char* argv[])
 	if (s_script_path != NULL && !build_eval(build, path_cstr(s_script_path)))
 		goto shutdown;
 	switch (s_mode) {
-	case MODE_BUILD_ONLY:
+	case MODE_BUILD:
 	case MODE_PACK:
 		if (!build_run(build, s_debug_build, s_want_rebuild))
 			goto shutdown;
@@ -127,8 +127,8 @@ parse_command_line(int argc, char* argv[])
 	size_t i_arg;
 
 	// establish default options
-	s_mode = MODE_BUILD_ONLY;
-	s_in_path = path_new("./");
+	s_mode = MODE_BUILD;
+	s_in_path = NULL;
 	s_out_path = NULL;
 	s_package_path = NULL;
 	s_script_path = NULL;
@@ -140,7 +140,7 @@ parse_command_line(int argc, char* argv[])
 		command = argv[1];
 		if (strcmp(command, "build") == 0 || strcmp(command, "b") == 0) {
 			command = "build";
-			s_mode = MODE_BUILD_ONLY;
+			s_mode = MODE_BUILD;
 			have_in_dir = true;
 		}
 		else if (strcmp(command, "clean") == 0 || strcmp(command, "c") == 0) {
@@ -275,17 +275,24 @@ parse_command_line(int argc, char* argv[])
 				return false;
 			}
 			have_in_dir = true;
-		} else {
+		}
+		else if (s_mode == MODE_INIT && s_in_path == NULL) {
+			s_in_path = path_new_dir(argv[i]);
+			have_in_dir = true;
+		}
+		else {
 			printf("cell: unexpected argument '%s'\n", argv[i]);
 			return false;
 		}
 	}
 
 	// validate command line
+	if (s_in_path == NULL)
+		s_in_path = path_new("./");
 	if (s_out_path == NULL)
 		s_out_path = path_rebase(path_new("dist/"), s_in_path);
 	if (!have_debug_flag)
-		s_debug_build = s_mode == MODE_BUILD_ONLY;
+		s_debug_build = s_mode == MODE_BUILD;
 	if (s_mode == MODE_PACK && s_package_path == NULL) {
 		printf("cell: no SPK filename was provided for 'cell %s'\n", command);
 		return false;
