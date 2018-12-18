@@ -75,17 +75,23 @@ upon upgrading the engine:
 
     2. Accessor properties may become plain data properties, or vice versa.
        This is allowed because it can already happen at runtime; for example,
-       `Font.Default` is cached after first access to ensure the font is only
-       loaded once.
+       `Font.Default` is cached as a plain value after the first access as an
+       optimization to minimize the number of slow native calls.
 
     3. A read-only property may become read/write.  This is very unlikely to
        break even the most exotic use cases, and the alternative is to
        introduce an entirely new property, bloating the API unnecessarily.
 
-    4. Operations that throw a TypeError, RangeError, or ReferenceError
-       exception (or reject a promise with same) may be updated with meaningful
-       behavior.  Such errors only indicate an unsupported request; without
-       this allowance, new APIs could never be added at all!
+    4. Existing functions may acquire new parameters.  If for some reason your
+       code passes extra arguments to API functions assuming the excess will
+       be discarded (through the spread operator `...`, for example, or when
+       writing higher-order functions), such code may be broken by an engine
+       upgrade.
+
+    5. Functions that throw a TypeError or RangeError exception (or equivalent
+       promise rejection) for a given input may acquire meaningful behavior for
+       that input.  The error only indicates an unsupported request; your code
+       shouldn't assume it will be unsupported forever!
 
 The minimum API level required by a game is specified in its game manifest (see
 above); if this value is not present it defaults to level 1.  By default, all
