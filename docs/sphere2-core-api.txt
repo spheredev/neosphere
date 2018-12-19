@@ -1384,6 +1384,11 @@ Mouse#getEvent(); [API 1]
             For mouse wheel events, specifies how much the wheel has moved.
             For any other event, this will be `undefined`.
 
+    Note: Newer API revisions may include additional MouseKey values, so your
+          game will eventually have to deal with key codes it can't recognize.
+          To ensure forward compatibility, you must not treat this as an error;
+          the event should simply be ignored.
+
 Mouse#isPressed(key); [API 1]
 
     Gets whether the specified mouse button is currently pressed.  `key` is one

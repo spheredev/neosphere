@@ -46,6 +46,12 @@ miniSphere 5.3
   scripts are executed with the SphereFS sandbox disabled, so allowing the
   end-user engine to run them was identified as a potential security issue.
 
+* New `MouseKey` event codes were added (`MouseKey.Back`, `MouseKey.Forward`),
+  and therefore games written for API 1 will now end up seeing key codes they
+  can't match to a known constant.  This is a potentially breaking change if
+  your game treats unrecognized event codes as an error.  Instead of producing
+  an error, unknown event code should simply be ignored.
+
 * `SSj.assert` has been added which lets you perform sanity checks during
   development without impacting performance in production.  Expensive checks
   can be wrapped in an arrow function which will only be called when running
