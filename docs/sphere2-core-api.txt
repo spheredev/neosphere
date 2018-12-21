@@ -453,7 +453,7 @@ etc...
     undesirable side effects:
 
         let customColor = Color.Red;
-        customColor.blue = 255;  // we needed magenta instead
+        customColor.b = 255;  // we needed magenta instead
 
     The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
     false, but this is rarely an issue in practice.

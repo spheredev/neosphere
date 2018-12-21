@@ -804,23 +804,24 @@ integrate more seamlessly with other Sphere v2 technologies.
     import { Scene } from 'sphere-runtime';
 
 A scene consists of a chain of scenelet invocations, with optional forks and
-resync points.  For example, supposing the scenelets used have been properly
-defined, the scene below would cause the screen to fade out simultaneously and
-the person `scott` to walk offscreen, and finally change the background music
-only when both are complete:
+resync points.  For example, supposing the `fadeOut`, `walkOffscreen` and
+`changeBGM` scenelets have been properly defined using `defineOp()`, the scene
+below would cause the screen to fade out while the person `scott` walks
+offscreen, and finally change the background music only when both are complete:
 
     let myScene = new Scene()
         .fork()  // fork the timeline
-            .fadeTo(new Color(0, 0, 0, 255), 2.0)  // 2 sec. fade
+            .fadeOut(120)  // 2s @ 60fps
         .end()
         .walkOffscreen("scott")
         .resync()  // resync point - await completion of forks
-        .changeBGM('maggieIsHungry');
+        .changeBGM('music/superEatyPig.ogg');
 
-This scene can be played back at any time by calling `myScene.run()`.  miniRT's
-scene engine uses the threads module and by default, scenes are nonblocking.
-See the documentation for `Scene#run()` below to find out how to play a scene
-in blocking mode.
+The scene can be played back at any time by calling `myScene.run()`.  Scene
+playback is regulated by a set of Dispatch jobs, so `run()` will return
+immediately.  However, if you start playback in an async function, you can use
+the JavaScript `await` keyword to suspend the function and have the event loop
+automatically resume it once the scene has run to completion.
 
 Scene.defaultPriority [R/W]
 
