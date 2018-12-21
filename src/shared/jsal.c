@@ -666,6 +666,15 @@ jsal_eval_module(const char* specifier, const char* url)
 }
 
 void
+jsal_exec(void)
+{
+	/* [ ... source ] -> [ ... result ] */
+
+	jsal_compile("%/jsal_exec.js");
+	jsal_call(0);
+}
+
+void
 jsal_freeze(int at_index)
 {
 	at_index = jsal_normalize_index(at_index);

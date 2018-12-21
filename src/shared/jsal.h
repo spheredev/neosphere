@@ -123,6 +123,7 @@ void         jsal_enable_vm                (bool enabled);
 noreturn_t   jsal_error                    (js_error_type_t type, const char* message, ...);
 noreturn_t   jsal_error_va                 (js_error_type_t type, const char* message, va_list ap);
 void         jsal_eval_module              (const char* specifier, const char* url);
+void         jsal_exec                     (void);
 void         jsal_freeze                   (int at_index);
 void         jsal_gc                       (void);
 bool         jsal_get_boolean              (int at_index);

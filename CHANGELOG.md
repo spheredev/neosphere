@@ -39,6 +39,8 @@ v5.3.0 - TBD
 * Improves security by disabling execution of bare scripts using `minisphere`.
 * Improves `BlendOp` by making it into a class, allowing games to define their
   own custom blending modes.
+* Improves performance of code using `SSj` namespace methods in production by
+  avoiding unnecessary native calls.
 * Improves performance of `from()` queries across the board.
 * Improves bare-script execution by loading `.js` files passed on the command
   line as module code, allowing them to use `import`.

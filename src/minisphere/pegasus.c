@@ -382,12 +382,6 @@ static bool js_RNG_get_state                 (int num_args, bool is_ctor, intptr
 static bool js_RNG_set_state                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_iterator                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_next                      (int num_args, bool is_ctor, intptr_t magic);
-static bool js_SSj_assert                    (int num_args, bool is_ctor, intptr_t magic);
-static bool js_SSj_flipScreen                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_SSj_instrument                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_SSj_log                       (int num_args, bool is_ctor, intptr_t magic);
-static bool js_SSj_now                       (int num_args, bool is_ctor, intptr_t magic);
-static bool js_SSj_profile                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Sample                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_get_fileName           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_play                   (int num_args, bool is_ctor, intptr_t magic);
@@ -496,6 +490,15 @@ static bool js_new_VertexList                (int num_args, bool is_ctor, intptr
 static bool js_Z_deflate                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Z_inflate                     (int num_args, bool is_ctor, intptr_t magic);
 
+#if defined(MINISPHERE_SPHERUN)
+static bool js_SSj_assert     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_flipScreen (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_instrument (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_log        (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_now        (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_profile    (int num_args, bool is_ctor, intptr_t magic);
+#endif
+
 static void js_BlendOp_finalize         (void* host_ptr);
 static void js_DirectoryStream_finalize (void* host_ptr);
 static void js_FileStream_finalize      (void* host_ptr);
@@ -595,7 +598,6 @@ pegasus_init(int api_level)
 	jsal_pop(1);
 
 	// initialize the Sphere v2 API
-	api_define_func(NULL, "print", js_SSj_log, KI_LOG_NORMAL);
 	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL, 0);
 	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL, 0);
 	api_define_static_prop("Sphere", "Engine", js_Sphere_get_Engine, NULL, 0);
@@ -700,13 +702,6 @@ pegasus_init(int api_level)
 	api_define_prop("RNG", "state", false, js_RNG_get_state, js_RNG_set_state);
 	api_define_method("RNG", "@@iterator", js_RNG_iterator, 0);
 	api_define_method("RNG", "next", js_RNG_next, 0);
-	api_define_func("SSj", "assert", js_SSj_assert, 0);
-	api_define_func("SSj", "flipScreen", js_SSj_flipScreen, 0);
-	api_define_func("SSj", "instrument", js_SSj_instrument, 0);
-	api_define_func("SSj", "log", js_SSj_log, KI_LOG_NORMAL);
-	api_define_func("SSj", "now", js_SSj_now, 0);
-	api_define_func("SSj", "profile", js_SSj_profile, 0);
-	api_define_func("SSj", "trace", js_SSj_log, KI_LOG_TRACE);
 	api_define_class("Sample", PEGASUS_SAMPLE, js_new_Sample, js_Sample_finalize, 0);
 	api_define_prop("Sample", "fileName", false, js_Sample_get_fileName, NULL);
 	api_define_method("Sample", "play", js_Sample_play, 0);
@@ -789,6 +784,45 @@ pegasus_init(int api_level)
 	api_define_prop("Surface", "width", false, js_Surface_get_width, 0);
 	api_define_method("Surface", "clipTo", js_Surface_clipTo, 0);
 	api_define_method("Surface", "toTexture", js_Surface_toTexture, 0);
+
+	// the 'SSj' functions only do anything under SpheRun; in production they are no-ops
+#if defined(MINISPHERE_SPHERUN)
+	api_define_func(NULL, "print", js_SSj_log, KI_LOG_NORMAL);
+	api_define_func("SSj", "assert", js_SSj_assert, 0);
+	api_define_func("SSj", "flipScreen", js_SSj_flipScreen, 0);
+	api_define_func("SSj", "instrument", js_SSj_instrument, 0);
+	api_define_func("SSj", "log", js_SSj_log, KI_LOG_NORMAL);
+	api_define_func("SSj", "now", js_SSj_now, 0);
+	api_define_func("SSj", "profile", js_SSj_profile, 0);
+	api_define_func("SSj", "trace", js_SSj_log, KI_LOG_TRACE);
+#else
+	// the do-nothing versions are implemented in JavaScript.  doing so allows the JIT to compile them
+	// away completely; there's no need to call into the engine if nothing needs to be done anyway.
+	jsal_push_string(
+		"Object.defineProperty(global, 'SSj', {"
+		"    writable: true,"
+		"    enumerable: false,"
+		"    configurable: true,"
+		"    value: {"
+		"        assert() {},"
+		"        flipScreen() {},"
+		"        instrument(f) { return f; },"
+		"        log() {},"
+		"        now() { return 0.0; },"
+		"        profile() {},"
+		"        trace() {},"
+		"    },"
+		"});"
+		"Object.defineProperty(global, 'print', {"
+		"    writable: true,"
+		"    enumerable: false,"
+		"    configurable: true,"
+		"    value: SSj.log"
+		"});"
+	);
+	jsal_exec();
+	jsal_pop(1);
+#endif
 
 	api_define_const("FileOp", "Read", FILE_OP_READ);
 	api_define_const("FileOp", "Write", FILE_OP_WRITE);
@@ -3828,10 +3862,10 @@ js_RNG_next(int num_args, bool is_ctor, intptr_t magic)
 	return true;
 }
 
+#if defined(MINISPHERE_SPHERUN)
 static bool
 js_SSj_assert(int num_args, bool is_ctor, intptr_t magic)
 {
-#if defined(MINISPHERE_SPHERUN)
 	bool        assertion = true;
 	const char* message = NULL;
 	bool        use_function;
@@ -3856,23 +3890,19 @@ js_SSj_assert(int num_args, bool is_ctor, intptr_t magic)
 		else
 			jsal_error(JS_ERROR, "Asserted expression was false");
 	}
-#endif
 	return false;
 }
 
 static bool
 js_SSj_flipScreen(int num_args, bool is_ctor, intptr_t magic)
 {
-#if defined(MINISPHERE_SPHERUN)
 	screen_flip(g_screen, 0, false);
-#endif
 	return false;
 }
 
 static bool
 js_SSj_instrument(int num_args, bool is_ctor, intptr_t magic)
 {
-#if defined(MINISPHERE_SPHERUN)
 	static unsigned int next_function_id = 1;
 
 	js_ref_t*   function_ref;
@@ -3895,19 +3925,12 @@ js_SSj_instrument(int num_args, bool is_ctor, intptr_t magic)
 	shim_ref = profiler_attach_to(function_ref, name);
 	jsal_push_ref(shim_ref);
 	jsal_unref(shim_ref);
-#else
-	if (num_args >= 1)
-		jsal_pull(0);
-	else
-		jsal_push_undefined();
-#endif
 	return true;
 }
 
 static bool
 js_SSj_log(int num_args, bool is_ctor, intptr_t magic)
 {
-#if defined(MINISPHERE_SPHERUN)
 	const char* text;
 
 	if (jsal_is_error(0)) {
@@ -3932,25 +3955,19 @@ js_SSj_log(int num_args, bool is_ctor, intptr_t magic)
 
 	text = jsal_to_string(0);
 	debugger_log(text, (ki_log_op_t)magic, true);
-#endif
 	return false;
 }
 
 static bool
 js_SSj_now(int num_args, bool is_ctor, intptr_t magic)
 {
-#if defined(MINISPHERE_SPHERUN)
 	jsal_push_number(al_get_time());
-#else
-	jsal_push_number(0.0);
-#endif
 	return true;
 }
 
 static bool
 js_SSj_profile(int num_args, bool is_ctor, intptr_t magic)
 {
-#if defined(MINISPHERE_SPHERUN)
 	const char* class_name;
 	js_ref_t*   function_ref;
 	const char* key;
@@ -4017,9 +4034,9 @@ js_SSj_profile(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_unref(shim_ref);
 	free(record_name);
-#endif
 	return false;
 }
+#endif
 
 static bool
 js_new_Sample(int num_args, bool is_ctor, intptr_t magic)
