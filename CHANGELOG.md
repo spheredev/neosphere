@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.3.0 - TBD
-------------
+v5.3.0 - December 25, 2018
+--------------------------
 
 * Adds support for games targeting API level 2, canonizing several Core APIs.
 * Adds `cell init` to initialize a new Sphere source tree on the command line.

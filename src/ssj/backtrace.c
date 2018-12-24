@@ -1,6 +1,6 @@
 /**
  *  SSj, the Sphere JavaScript debugger
- *  Copyright (c) 2015-2018, Fat Cerberus
+ *  Copyright (c) 2015-2019, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without

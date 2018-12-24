@@ -1,5 +1,5 @@
 ;  miniSphere JavaScript game engine
-;  Copyright (c) 2015-2018, Fat Cerberus
+;  Copyright (c) 2015-2019, Fat Cerberus
 ;  All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,8 @@
 ; solution configurations.
 #define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.3a3"
-#define AppVersion4 "0.0.0.0"
+#define AppVersion3 "5.3.0"
+#define AppVersion4 "5.3.0.3183"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -51,7 +51,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion4}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=© 2015-2018 Fat Cerberus
+AppCopyright=© 2015-2019 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x86 x64
 ArchitecturesInstallIn64BitMode=x64
