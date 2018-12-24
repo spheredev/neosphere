@@ -1490,13 +1490,9 @@ SSj.log(text_or_object);
 
 SSj.now();
 
-    Returns the time in nanoseconds since some arbitrary point in time, useful
-    for benchmarking.  In production, this will always be 0; use `Date.now()`
-    for in-game timing purposes.
-
-    Note: While the value returned is in nanoseconds, the actual precision of
-          the timer will almost certainly be less, typically in the microsecond
-          range.  Don't assume this will be nanosecond precision.
+    Returns the time in seconds since some arbitrary point in time, accurate to
+    the microsecond.  Useful for measuring performance.  In production, this
+    always returns 0.0; use `Date.now()` for in-game timing purposes.
 
 SSj.profile(object, method_name[, description]);
 
