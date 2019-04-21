@@ -477,13 +477,15 @@ class FindOp extends QueryOp
 		super.initialize(source);
 	}
 
+	flush(sources)
+	{
+		this.result = this.memo.value;
+		super.flush(sources);
+	}
+
 	push(value, source, key)
 	{
-		if (this.finder(value, key, this.memo)) {
-			this.result = this.memo.value;
-			return false;
-		}
-		return true;
+		return !this.finder(value, key, this.memo);
 	}
 }
 
