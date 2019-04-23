@@ -111,6 +111,10 @@ class Query
 							break outer_loop;
 					}
 				}
+				else if (source instanceof Query) {
+					if (!source.all((it, k, s) => firstOp.push(it, s, k)))
+						break outer_loop;
+				}
 				else if (typeof source[Symbol.iterator] === 'function') {
 					for (const value of source) {
 						if (!firstOp.push(value, source))
@@ -194,8 +198,6 @@ class Query
 					a[key] = 1;
 			}
 			else {
-				if (a === null)
-					a = 0;
 				++a;
 			}
 			return a;
@@ -567,9 +569,20 @@ class OverOp extends QueryOp
 	push(value)
 	{
 		const sublist = this.selector(value);
-		for (let i = 0, len = sublist.length; i < len; ++i) {
-			if (!this.nextOp.push(sublist[i], sublist, i))
-				return false;
+		if (typeof sublist === 'object' && typeof sublist.length === 'number') {
+			for (let i = 0, len = sublist.length; i < len; ++i) {
+				if (!this.nextOp.push(sublist[i], sublist, i))
+					return false;
+			}
+		}
+		else if (typeof sublist[Symbol.iterator] === 'function') {
+			for (const value of sublist) {
+				if (!this.nextOp.push(value, sublist))
+					return false;
+			}
+		}
+		else if (sublist instanceof Query) {
+			return sublist.all((it, k, s) => this.nextOp.push(it, s, k));
 		}
 		return true;
 	}
