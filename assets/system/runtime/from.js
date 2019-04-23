@@ -199,7 +199,7 @@ class Query
 				++a;
 			}
 			return a;
-		}, null);
+		}, keySelector !== undefined ? null : 0);
 	}
 
 	descending(keySelector = IdentityFunction)
