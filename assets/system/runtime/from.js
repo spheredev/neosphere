@@ -30,8 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const IdentityFunction = x => x;
-
 export default
 function from(...sources)
 {
@@ -97,7 +95,7 @@ class Query
 			firstOp.initialize(sources);
 			outer_loop: for (let i = 0, len = sources.length; i < len; ++i) {
 				const source = sources[i];
-				if (typeof source.length === 'number') {
+				if (isArrayLike(source)) {
 					let start = 0;
 					if (firstOp instanceof DropOp) {
 						start = firstOp.left;
@@ -107,19 +105,19 @@ class Query
 					}
 					for (let i = start, len = source.length; i < len; ++i) {
 						const value = source[i];
-						if (!firstOp.push(value, source, i))
+						if (!firstOp.step(value, source, i))
+							break outer_loop;
+					}
+				}
+				else if (isIterable(source)) {
+					for (const value of source) {
+						if (!firstOp.step(value, source))
 							break outer_loop;
 					}
 				}
 				else if (source instanceof Query) {
-					if (!source.all((it, k, s) => firstOp.push(it, s, k)))
+					if (!source.all((it, k, s) => firstOp.step(it, s, k)))
 						break outer_loop;
-				}
-				else if (typeof source[Symbol.iterator] === 'function') {
-					for (const value of source) {
-						if (!firstOp.push(value, source))
-							break outer_loop;
-					}
 				}
 				else {
 					const keys = Object.keys(source);
@@ -132,7 +130,7 @@ class Query
 					}
 					for (let i = start, len = keys.length; i < len; ++i) {
 						const value = source[keys[i]];
-						if (!firstOp.push(value, source, keys[i]))
+						if (!firstOp.step(value, source, keys[i]))
 							break outer_loop;
 					}
 				}
@@ -171,7 +169,7 @@ class Query
 		return this.any(it => match(it));
 	}
 
-	ascending(keySelector = IdentityFunction)
+	ascending(keySelector = identity)
 	{
 		return this.thru(all => {
 			const pairs = all.map(it => [ keySelector(it), it ]);
@@ -185,26 +183,19 @@ class Query
 		return this.select((it, k) => (iteratee(it, k), it));
 	}
 
-	count(keySelector)
+	countBy(keySelector)
 	{
-		return this.reduce((a, it) => {
-			if (keySelector !== undefined) {
-				if (a === null)
-					a = Object.create(null);
-				const key = keySelector(it);
-				if (a[key] !== undefined)
-					++a[key];
-				else
-					a[key] = 1;
-			}
-			else {
-				++a;
-			}
+		return this.fold((a, it) => {
+			const key = keySelector(it);
+			if (a[key] !== undefined)
+				++a[key];
+			else
+				a[key] = 1;
 			return a;
-		}, keySelector !== undefined ? null : 0);
+		}, Object.create(null));
 	}
 
-	descending(keySelector = IdentityFunction)
+	descending(keySelector = identity)
 	{
 		return this.thru(all => {
 			const pairs = all.map(it => [ keySelector(it), it ]);
@@ -233,9 +224,14 @@ class Query
 		return this.run$(new FindOp((it, key, memo) => (memo.value = selector ? selector(it) : it, true)));
 	}
 
+	fold(reducer, initialValue)
+	{
+		return this.run$(new FoldOp(reducer, initialValue));
+	}
+
 	forEach(iteratee)
 	{
-		this.reduce((a, it) => iteratee(it));
+		this.fold((a, it) => iteratee(it));
 	}
 
 	groupBy(keySelector)
@@ -268,11 +264,6 @@ class Query
 			}
 			return samples;
 		});
-	}
-
-	reduce(reducer, initialValue)
-	{
-		return this.run$(new ReduceOp(reducer, initialValue));
 	}
 
 	remove(predicate)
@@ -318,6 +309,11 @@ class Query
 		});
 	}
 
+	size()
+	{
+		return this.fold(n => n + 1, 0);
+	}
+
 	take(count)
 	{
 		return this.addOp$(TakeOp, count);
@@ -338,7 +334,7 @@ class Query
 		return this.run$(new ToArrayOp());
 	}
 
-	uniq(keySelector = IdentityFunction)
+	uniq(keySelector = identity)
 	{
 		return this.addOp$(UniqOp, keySelector);
 	}
@@ -359,23 +355,6 @@ class Query
 	}
 }
 
-function flatten(array)
-{
-	const flattened = [];
-	let j = 0;
-	for (let i = 0, len = array.length; i < len; ++i) {
-		const item = array[i];
-		if (typeof item === 'object' && typeof item.length === 'number') {
-			for (let i = 0, len = item.length; i < len; ++i)
-				flattened[j++] = item[i];
-		}
-		else {
-			flattened[j++] = item;
-		}
-	}
-	return flattened;
-}
-
 class QueryOp
 {
 	flush(sources)
@@ -390,10 +369,10 @@ class QueryOp
 			this.nextOp.initialize(sources);
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		if (this.nextOp !== undefined)
-			this.nextOp.push(value, source, key);
+			this.nextOp.step(value, source, key);
 	}
 }
 
@@ -414,7 +393,7 @@ class ThruOp extends QueryOp
 	flush()
 	{
 		let newList = this.mapper(this.values);
-		if (typeof newList.length !== 'number')
+		if (!Array.isArray(newList) && isIterable(newList))
 			newList = [ ...newList ];
 		if (this.nextOp instanceof ThruOp) {
 			// if the next query op is a ThruOp, just give it our buffer since we don't need it anymore.
@@ -428,14 +407,14 @@ class ThruOp extends QueryOp
 				this.nextOp.left = 0;
 			}
 			for (let i = start, len = newList.length; i < len; ++i) {
-				if (!this.nextOp.push(newList[i], newList, i))
+				if (!this.nextOp.step(newList[i], newList, i))
 					break;
 			}
 		}
 		super.flush();
 	}
 
-	push(value)
+	step(value)
 	{
 		this.values.push(value);
 		return true;
@@ -456,10 +435,10 @@ class DropOp extends QueryOp
 		super.initialize(sources);
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		if (this.left-- <= 0)
-			this.nextOp.push(value, source, key);
+			this.nextOp.step(value, source, key);
 		return true;
 	}
 }
@@ -485,9 +464,31 @@ class FindOp extends QueryOp
 		super.flush(sources);
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		return !this.finder(value, key, this.memo);
+	}
+}
+
+class FoldOp extends QueryOp
+{
+	constructor(reducer, initialValue)
+	{
+		super();
+		this.initialValue = initialValue;
+		this.reducer = reducer;
+	}
+
+	initialize()
+	{
+		this.result = this.initialValue;
+		super.initialize();
+	}
+
+	step(value)
+	{
+		this.result = this.reducer(this.result, value);
+		return true;
 	}
 }
 
@@ -512,7 +513,7 @@ class GroupOp extends QueryOp
 			this.result[entry[0]] = entry[1];
 	}
 
-	push(value)
+	step(value)
 	{
 		const key = this.keySelector(value);
 		let list = this.result.get(key);
@@ -543,7 +544,7 @@ class LastOp extends QueryOp
 			this.result = this.selector(this.result);
 	}
 
-	push(value)
+	step(value)
 	{
 		this.haveItem = true;
 		this.result = value;
@@ -566,23 +567,23 @@ class OverOp extends QueryOp
 		super.initialize();
 	}
 
-	push(value)
+	step(value)
 	{
 		const sublist = this.selector(value);
-		if (typeof sublist === 'object' && typeof sublist.length === 'number') {
+		if (isArrayLike(sublist)) {
 			for (let i = 0, len = sublist.length; i < len; ++i) {
-				if (!this.nextOp.push(sublist[i], sublist, i))
+				if (!this.nextOp.step(sublist[i], sublist, i))
 					return false;
 			}
 		}
-		else if (typeof sublist[Symbol.iterator] === 'function') {
+		else if (isIterable(sublist)) {
 			for (const value of sublist) {
-				if (!this.nextOp.push(value, sublist))
+				if (!this.nextOp.step(value, sublist))
 					return false;
 			}
 		}
 		else if (sublist instanceof Query) {
-			return sublist.all((it, k, s) => this.nextOp.push(it, s, k));
+			return sublist.all((it, k, s) => this.nextOp.step(it, s, k));
 		}
 		return true;
 	}
@@ -602,51 +603,29 @@ class PlusOp extends QueryOp
 		for (let i = 0, len = this.sources.length; i < len; ++i) {
 			const source = this.sources[i];
 			const isObject = typeof source === 'object';
-			if (isObject && typeof source.length === 'number') {
+			if (isArrayLike(source)) {
 				for (let i = 0, len = source.length; i < len; ++i) {
-					if (!this.nextOp.push(source[i], source, i))
+					if (!this.nextOp.step(source[i], source, i))
 						break source_loop;
 				}
 			}
-			else if (isObject && Symbol.iterator in source) {
+			else if (isIterable(source)) {
 				for (const value of source) {
-					if (!this.nextOp.push(value, source))
+					if (!this.nextOp.step(value, source))
 						break source_loop;
 				}
 			}
 			else {
-				if (!this.nextOp.push(source))
+				if (!this.nextOp.step(source))
 					break;
 			}
 		}
 		super.flush();
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
-		return this.nextOp.push(value, source, key);
-	}
-}
-
-class ReduceOp extends QueryOp
-{
-	constructor(reducer, initialValue)
-	{
-		super();
-		this.initialValue = initialValue;
-		this.reducer = reducer;
-	}
-
-	initialize()
-	{
-		this.result = this.initialValue;
-		super.initialize();
-	}
-
-	push(value)
-	{
-		this.result = this.reducer(this.result, value);
-		return true;
+		return this.nextOp.step(value, source, key);
 	}
 }
 
@@ -670,7 +649,7 @@ class RemoveOp extends QueryOp
 		let r = 0;
 		for (let m = 0, len = sources.length; m < len; ++m) {
 			const source = sources[m];
-			if (typeof source.length === 'number') {
+			if (isArrayLike(source)) {
 				let j = 0;
 				for (let i = 0, len = source.length; i < len; ++i) {
 					if (i !== this.removals[r][1])
@@ -689,7 +668,7 @@ class RemoveOp extends QueryOp
 		}
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		if (this.predicate === undefined || this.predicate(value, key))
 			this.removals.push([ source, key ]);
@@ -724,14 +703,14 @@ class ReverseOp extends ThruOp
 				this.nextOp.left = 0;
 			}
 			for (let i = start; i >= 0; --i) {
-				if (!this.nextOp.push(this.values[i], this.values, i))
+				if (!this.nextOp.step(this.values[i], this.values, i))
 					break;
 			}
 		}
 		this.nextOp.flush();
 	}
 
-	push(value)
+	step(value)
 	{
 		this.values.push(value);
 		return true;
@@ -746,10 +725,10 @@ class SelectOp extends QueryOp
 		this.selector = selector;
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		value = this.selector(value, key);
-		return this.nextOp.push(value, source, key);
+		return this.nextOp.step(value, source, key);
 	}
 }
 
@@ -767,10 +746,10 @@ class TakeOp extends QueryOp
 		super.initialize(sources);
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		return this.left-- > 0
-			? this.nextOp.push(value, source, key)
+			? this.nextOp.step(value, source, key)
 			: false;
 	}
 }
@@ -793,7 +772,7 @@ class ToArrayOp extends ThruOp
 		this.result = this.values;
 	}
 
-	push(value)
+	step(value)
 	{
 		this.values.push(value);
 		return true;
@@ -814,12 +793,12 @@ class UniqOp extends QueryOp
 		super.initialize();
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		const uniqKey = this.keySelector(value);
 		if (!this.keys.has(uniqKey)) {
 			this.keys.add(uniqKey);
-			return this.nextOp.push(value, source, key);
+			return this.nextOp.step(value, source, key);
 		}
 		return true;
 	}
@@ -839,7 +818,7 @@ class UpdateOp extends QueryOp
 			throw new TypeError("update() cannot be used with transformations");
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		source[key] = this.selector(value, key);
 		return true;
@@ -854,10 +833,10 @@ class WhereOp extends QueryOp
 		this.predicate = predicate;
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		if (this.predicate(value, key))
-			return this.nextOp.push(value, source, key);
+			return this.nextOp.step(value, source, key);
 		return true;
 	}
 }
@@ -870,10 +849,46 @@ class WithoutOp extends QueryOp
 		this.values = new Set(values);
 	}
 
-	push(value, source, key)
+	step(value, source, key)
 	{
 		if (!this.values.has(value))
-			return this.nextOp.push(value, source, key);
+			return this.nextOp.step(value, source, key);
 		return true;
 	}
+}
+
+function isArrayLike(value)
+{
+	// note: strings have a numeric `.length`, but aren't usually treated as
+	//       collections, so this check is purposely designed to exclude them.
+	return value !== null && typeof value === 'object'
+		&& typeof value.length === 'number';
+}
+
+function isIterable(value)
+{
+	return value !== null && value !== undefined
+		&& typeof value[Symbol.iterator] === 'function';
+}
+
+function flatten(array)
+{
+	const flattened = [];
+	let j = 0;
+	for (let i = 0, len = array.length; i < len; ++i) {
+		const item = array[i];
+		if (isArrayLike(item)) {
+			for (let i = 0, len = item.length; i < len; ++i)
+				flattened[j++] = item[i];
+		}
+		else {
+			flattened[j++] = item;
+		}
+	}
+	return flattened;
+}
+
+function identity(value)
+{
+	return value;
 }
