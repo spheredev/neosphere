@@ -169,12 +169,17 @@ class Query
 		return this.any(it => match(it));
 	}
 
+	apply(values)
+	{
+		return this.over(f => from(values).select(f));
+	}
+
 	ascending(keySelector = identity)
 	{
 		return this.thru(all => {
-			const pairs = all.map(it => [ keySelector(it), it ]);
-			pairs.sort((a, b) => a[0] < b[0] ? -1 : b[0] < a[0] ? +1 : 0);
-			return pairs.map(it => it[1]);
+			const pairs = all.map(it => ({ key: keySelector(it), value: it }));
+			pairs.sort((a, b) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0);
+			return pairs.map(it => it.value);
 		});
 	}
 
@@ -198,9 +203,9 @@ class Query
 	descending(keySelector = identity)
 	{
 		return this.thru(all => {
-			const pairs = all.map(it => [ keySelector(it), it ]);
-			pairs.sort((b, a) => a[0] < b[0] ? -1 : b[0] < a[0] ? +1 : 0);
-			return pairs.map(it => it[1]);
+			const pairs = all.map(it => ({ key: keySelector(it), value: it }));
+			pairs.sort((b, a) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0);
+			return pairs.map(it => it.value);
 		});
 	}
 
@@ -602,7 +607,6 @@ class PlusOp extends QueryOp
 		source_loop:
 		for (let i = 0, len = this.sources.length; i < len; ++i) {
 			const source = this.sources[i];
-			const isObject = typeof source === 'object';
 			if (isArrayLike(source)) {
 				for (let i = 0, len = source.length; i < len; ++i) {
 					if (!this.nextOp.step(source[i], source, i))
