@@ -545,17 +545,17 @@ Query#anyIs(value);
     Note: The first item that matches will terminate the query.  If there are
           no values to test, `false` is returned.
 
-Query#apply(values);
+Query#applyTo(values);
 
-    Takes the cross-product of calling each function produced by the query with
+    Takes the cross-product of applying each function produced by the query to
     each value from `values` in turn.  This only works if all query results
-    seen by the `apply` step are functions; otherwise an error will likely be
+    seen by the `applyTo` step are functions; otherwise an error will likely be
     thrown.  To illustrate how this works:
 
         let square = x => x * x;
         let cube = x => x * x * x;
         let results = from([ square, cube ])
-            .apply([ 1, 2, 3 ])
+            .applyTo([ 1, 2, 3 ])
             .toArray();
         // results = [ 1, 4, 9, 1, 8, 27 ]
 

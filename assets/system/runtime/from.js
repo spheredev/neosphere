@@ -169,7 +169,7 @@ class Query
 		return this.any(it => match(it));
 	}
 
-	apply(values)
+	applyTo(values)
 	{
 		return this.over(f => from(values).select(f));
 	}
@@ -329,9 +329,9 @@ class Query
 		return this.thru(all => (callback(all), all));
 	}
 
-	thru(mapper)
+	thru(replacer)
 	{
-		return this.addOp$(ThruOp, mapper);
+		return this.addOp$(ThruOp, replacer);
 	}
 
 	toArray()
