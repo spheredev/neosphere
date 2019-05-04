@@ -580,6 +580,11 @@ Query#besides([callback]);
     Note: Avoid causing side effects that modify the query source.  Bad things
           can happen otherwise! (such as: the pig eating you)
 
+Query#count();
+
+    Runs the query and returns the total number of results.  If you want to
+    count different types of things separately, use `countBy` instead.
+
 Query#countBy(keySelector);
 
     Runs the query and counts the results.  `keySelector` is called for each
@@ -611,22 +616,6 @@ Query#first([mapper]);
 
     Note: The query is terminated immediately once the first result has been
           produced.
-
-Query#fold(reducer, initialValue);
-
-    Runs the query and calls `reducer` for each result, assigning the return
-    value to an internal accumulator at each step.  The current value of the
-    accumulator is passed as the first argument to the reducer function, before
-    the value.
-
-    This is a fairly advanced operation, so to help illustrate, the following
-    query calculates the sum of all numbers in the array `numbers`:
-
-        sum = from(numbers).fold((acc, v) => acc + v, 0);
-
-    Note: This works very much like the built-in `reduce` method for arrays;
-          unlike that method however, `fold` always processes all items so the
-          initial seed value is required.
 
 Query#forEach(callback);
 
@@ -679,6 +668,22 @@ Query#random(count);
     Note: Because the samples taken are independent, this can sample a result
           more than once; if you don't want duplicates, use `sample()` instead.
 
+Query#reduce(reducer[, initialValue]);
+
+    Runs the query and calls `reducer` for each result, assigning the return
+    value to an internal accumulator at each step.  The current value of the
+    accumulator is passed as the first argument to the reducer function, before
+    the value.
+
+    This is a fairly advanced operation, so to help illustrate, the following
+    query calculates the sum of all numbers in the array `numbers`:
+
+        sum = from(numbers).reduce((acc, v) => acc + v, 0);
+	
+	Note: If `initialValue` is omitted, the first query result will be used as
+	      the initial value; in that case, `reducer` won't be called for that
+	      result.
+
 Query#remove([predicate]);
 
     Removes results from the source object or array.  `predicate` is optional;
@@ -706,10 +711,6 @@ Query#shuffle();
 
     Shuffles all incoming values so that the rest of the query sees them in a
     random order.
-
-Query#size();
-
-    Runs the query and returns the total number of results.
 
 Query#take(count);
 

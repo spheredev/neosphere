@@ -188,9 +188,14 @@ class Query
 		return this.select((it, k) => (iteratee(it, k), it));
 	}
 
+	count()
+	{
+		return this.reduce(n => n + 1, 0);
+	}
+
 	countBy(keySelector)
 	{
-		return this.fold((a, it) => {
+		return this.reduce((a, it) => {
 			const key = keySelector(it);
 			if (a[key] !== undefined)
 				++a[key];
@@ -229,14 +234,9 @@ class Query
 		return this.run$(new FindOp((it, key, memo) => (memo.value = selector ? selector(it) : it, true)));
 	}
 
-	fold(reducer, initialValue)
-	{
-		return this.run$(new FoldOp(reducer, initialValue));
-	}
-
 	forEach(iteratee)
 	{
-		this.fold((a, it) => iteratee(it));
+		this.reduce((a, it) => iteratee(it));
 	}
 
 	groupBy(keySelector)
@@ -269,6 +269,11 @@ class Query
 			}
 			return samples;
 		});
+	}
+
+	reduce(reducer, initialValue)
+	{
+		return this.run$(new ReduceOp(reducer, initialValue));
 	}
 
 	remove(predicate)
@@ -312,11 +317,6 @@ class Query
 			}
 			return all;
 		});
-	}
-
-	size()
-	{
-		return this.fold(n => n + 1, 0);
 	}
 
 	take(count)
@@ -475,28 +475,6 @@ class FindOp extends QueryOp
 	}
 }
 
-class FoldOp extends QueryOp
-{
-	constructor(reducer, initialValue)
-	{
-		super();
-		this.initialValue = initialValue;
-		this.reducer = reducer;
-	}
-
-	initialize()
-	{
-		this.result = this.initialValue;
-		super.initialize();
-	}
-
-	step(value)
-	{
-		this.result = this.reducer(this.result, value);
-		return true;
-	}
-}
-
 class GroupOp extends QueryOp
 {
 	constructor(keySelector)
@@ -630,6 +608,28 @@ class PlusOp extends QueryOp
 	step(value, source, key)
 	{
 		return this.nextOp.step(value, source, key);
+	}
+}
+
+class ReduceOp extends QueryOp
+{
+	constructor(reducer, initialValue)
+	{
+		super();
+		this.initialValue = initialValue;
+		this.reducer = reducer;
+	}
+
+	initialize()
+	{
+		this.result = this.initialValue;
+		super.initialize();
+	}
+
+	step(value)
+	{
+		this.result = this.reducer(this.result, value);
+		return true;
 	}
 }
 
