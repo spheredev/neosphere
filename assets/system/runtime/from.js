@@ -93,47 +93,10 @@ class Query
 			else
 				firstOp = reduceOp;
 			firstOp.initialize(sources);
-			outer_loop: for (let i = 0, len = sources.length; i < len; ++i) {
+			for (let i = 0, len = sources.length; i < len; ++i) {
 				const source = sources[i];
-				if (isArrayLike(source)) {
-					let start = 0;
-					if (firstOp instanceof DropOp) {
-						start = firstOp.left;
-						firstOp.left -= source.length;
-						if (firstOp.left < 0)
-							firstOp.left = 0;
-					}
-					for (let i = start, len = source.length; i < len; ++i) {
-						const value = source[i];
-						if (!firstOp.step(value, source, i))
-							break outer_loop;
-					}
-				}
-				else if (isIterable(source)) {
-					for (const value of source) {
-						if (!firstOp.step(value, source))
-							break outer_loop;
-					}
-				}
-				else if (source instanceof Query) {
-					if (!source.all((it, k, s) => firstOp.step(it, s, k)))
-						break outer_loop;
-				}
-				else {
-					const keys = Object.keys(source);
-					let start = 0;
-					if (firstOp instanceof DropOp) {
-						start = firstOp.left;
-						firstOp.left -= source.length;
-						if (firstOp.left < 0)
-							firstOp.left = 0;
-					}
-					for (let i = start, len = keys.length; i < len; ++i) {
-						const value = source[keys[i]];
-						if (!firstOp.step(value, source, keys[i]))
-							break outer_loop;
-					}
-				}
+				if (!feedMeSeymour(firstOp, source))
+					break;
 			}
 			firstOp.flush(sources);
 			return reduceOp.result;
@@ -398,23 +361,15 @@ class ThruOp extends QueryOp
 	flush()
 	{
 		let newList = this.mapper(this.values);
-		if (!Array.isArray(newList) && isIterable(newList))
-			newList = [ ...newList ];
 		if (this.nextOp instanceof ThruOp) {
 			// if the next query op is a ThruOp, just give it our buffer since we don't need it anymore.
 			// this greatly speeds up queries with multiple consecutive ThruOps.
+			if (!Array.isArray(newList) && isIterable(newList))
+				newList = [ ...newList ];
 			this.nextOp.values = newList;
 		}
 		else {
-			let start = 0;
-			if (this.nextOp instanceof DropOp) {
-				start = this.nextOp.left;
-				this.nextOp.left = 0;
-			}
-			for (let i = start, len = newList.length; i < len; ++i) {
-				if (!this.nextOp.step(newList[i], newList, i))
-					break;
-			}
+			feedMeSeymour(this.nextOp, newList);
 		}
 		super.flush();
 	}
@@ -553,22 +508,7 @@ class OverOp extends QueryOp
 	step(value)
 	{
 		const sublist = this.selector(value);
-		if (isArrayLike(sublist)) {
-			for (let i = 0, len = sublist.length; i < len; ++i) {
-				if (!this.nextOp.step(sublist[i], sublist, i))
-					return false;
-			}
-		}
-		else if (isIterable(sublist)) {
-			for (const value of sublist) {
-				if (!this.nextOp.step(value, sublist))
-					return false;
-			}
-		}
-		else if (sublist instanceof Query) {
-			return sublist.all((it, k, s) => this.nextOp.step(it, s, k));
-		}
-		return true;
+		return feedMeSeymour(this.nextOp, sublist);
 	}
 }
 
@@ -857,6 +797,50 @@ function isIterable(value)
 {
 	return value !== null && value !== undefined
 		&& typeof value[Symbol.iterator] === 'function';
+}
+
+function feedMeSeymour(queryOp, source)
+{
+	if (isArrayLike(source)) {
+		let start = 0;
+		if (queryOp instanceof DropOp) {
+			start = queryOp.left;
+			queryOp.left -= source.length;
+			if (queryOp.left < 0)
+				queryOp.left = 0;
+		}
+		for (let i = start, len = source.length; i < len; ++i) {
+			const value = source[i];
+			if (!queryOp.step(value, source, i))
+				return false;
+		}
+	}
+	else if (isIterable(source)) {
+		for (const value of source) {
+			if (!queryOp.step(value, source))
+				return false;
+		}
+	}
+	else if (source instanceof Query) {
+		if (!source.all((it, k, s) => queryOp.step(it, s, k)))
+			return false;
+	}
+	else {
+		const keys = Object.keys(source);
+		let start = 0;
+		if (queryOp instanceof DropOp) {
+			start = queryOp.left;
+			queryOp.left -= source.length;
+			if (queryOp.left < 0)
+				queryOp.left = 0;
+		}
+		for (let i = start, len = keys.length; i < len; ++i) {
+			const value = source[keys[i]];
+			if (!queryOp.step(value, source, keys[i]))
+				return false;
+		}
+	}
+	return true;
 }
 
 function identity(value)
