@@ -653,12 +653,9 @@ Query#over(mapper);
 
 Query#plus(value[, ...]);
 
-    Injects additional values into the pipeline.  This differs from `over()`;
-    while that operator replaces each value with values from a different list,
-    `plus()` simply adds new values to the end of the stream.
-
-    Note: More than one `value` can be provided and each one can be either a
-          single value or an array of values.
+    Injects one or more additional values into the pipeline.  This differs from
+    `over()`; while that operator replaces each value with values from a
+    different list, `plus()` simply adds new values to the end of the stream.
 
 Query#random(count);
 
@@ -754,8 +751,7 @@ Query#where(predicate);
 
 Query#without(value[, ...]);
 
-    Filters out the specified value(s).  Each `value` argument can be either a
-    single value or an array of values.
+    Filters out one or more specific values from the query results.
 
 
 `Random` Namespace

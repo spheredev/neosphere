@@ -254,9 +254,9 @@ class Query
 		return this.addOp$(OverOp, selector);
 	}
 
-	plus(...sources)
+	plus(...values)
 	{
-		return this.addOp$(PlusOp, sources);
+		return this.addOp$(PlusOp, values);
 	}
 
 	random(count)
@@ -356,7 +356,7 @@ class Query
 
 	without(...values)
 	{
-		return this.addOp$(WithoutOp, flatten(values));
+		return this.addOp$(WithoutOp, values);
 	}
 }
 
@@ -574,33 +574,17 @@ class OverOp extends QueryOp
 
 class PlusOp extends QueryOp
 {
-	constructor(sources)
+	constructor(values)
 	{
 		super();
-		this.sources = sources;
+		this.values = values;
 	}
 
 	flush()
 	{
-		source_loop:
-		for (let i = 0, len = this.sources.length; i < len; ++i) {
-			const source = this.sources[i];
-			if (isArrayLike(source)) {
-				for (let i = 0, len = source.length; i < len; ++i) {
-					if (!this.nextOp.step(source[i], source, i))
-						break source_loop;
-				}
-			}
-			else if (isIterable(source)) {
-				for (const value of source) {
-					if (!this.nextOp.step(value, source))
-						break source_loop;
-				}
-			}
-			else {
-				if (!this.nextOp.step(source))
-					break;
-			}
+		for (let i = 0, len = this.values.length; i < len; ++i) {
+			if (!this.nextOp.step(this.values[i]))
+				break;
 		}
 		super.flush();
 	}
@@ -873,23 +857,6 @@ function isIterable(value)
 {
 	return value !== null && value !== undefined
 		&& typeof value[Symbol.iterator] === 'function';
-}
-
-function flatten(array)
-{
-	const flattened = [];
-	let j = 0;
-	for (let i = 0, len = array.length; i < len; ++i) {
-		const item = array[i];
-		if (isArrayLike(item)) {
-			for (let i = 0, len = item.length; i < len; ++i)
-				flattened[j++] = item[i];
-		}
-		else {
-			flattened[j++] = item;
-		}
-	}
-	return flattened;
 }
 
 function identity(value)
