@@ -325,22 +325,31 @@ class Query
 
 class QueryOp
 {
-	flush(sources)
-	{
-		if (this.nextOp !== undefined)
-			this.nextOp.flush(sources);
-	}
-
 	initialize(sources)
 	{
+		// `initialize()` is called at the start of query execution, before the
+		// first item is sent to `step()`.
 		if (this.nextOp !== undefined)
 			this.nextOp.initialize(sources);
 	}
 
+	flush(sources)
+	{
+		// `flush()` is called after all items from the source have been sent
+		// into the pipeline.  this provides for operations that need to see
+		// all results before they can do their work, e.g. sorting.
+		if (this.nextOp !== undefined)
+			this.nextOp.flush(sources);
+	}
+
 	step(value, source, key)
 	{
-		if (this.nextOp !== undefined)
-			this.nextOp.step(value, source, key);
+		// `step()` should return `true` to continue execution, or `false` to
+		// short-circuit.  note that `flush()` will still be called even if the
+		// query short-circuits.
+		return this.nextOp !== undefined
+			? this.nextOp.step(value, source, key)
+			: false;
 	}
 }
 
@@ -360,16 +369,17 @@ class ThruOp extends QueryOp
 
 	flush()
 	{
-		let newList = this.mapper(this.values);
+		const newSource = this.mapper(this.values);
 		if (this.nextOp instanceof ThruOp) {
-			// if the next query op is a ThruOp, just give it our buffer since we don't need it anymore.
-			// this greatly speeds up queries with multiple consecutive ThruOps.
-			if (!Array.isArray(newList) && isIterable(newList))
-				newList = [ ...newList ];
-			this.nextOp.values = newList;
+			// if the next operator is a ThruOp, just give it our buffer since
+			// we don't need it anymore.  this greatly speeds up queries with
+			// multiple consecutive ThruOps.
+			this.nextOp.values = Array.isArray(newSource)
+				? newSource
+				: Array.from(newSource);
 		}
 		else {
-			feedMeSeymour(this.nextOp, newList);
+			feedMeSeymour(this.nextOp, newSource);
 		}
 		super.flush();
 	}
@@ -397,9 +407,9 @@ class DropOp extends QueryOp
 
 	step(value, source, key)
 	{
-		if (this.left-- <= 0)
-			this.nextOp.step(value, source, key);
-		return true;
+		return this.left-- <= 0
+			? this.nextOp.step(value, source, key)
+			: true;
 	}
 }
 
@@ -507,8 +517,8 @@ class OverOp extends QueryOp
 
 	step(value)
 	{
-		const sublist = this.selector(value);
-		return feedMeSeymour(this.nextOp, sublist);
+		const itemSource = this.selector(value);
+		return feedMeSeymour(this.nextOp, itemSource);
 	}
 }
 
@@ -655,8 +665,8 @@ class SelectOp extends QueryOp
 
 	step(value, source, key)
 	{
-		value = this.selector(value, key);
-		return this.nextOp.step(value, source, key);
+		const newValue = this.selector(value, key);
+		return this.nextOp.step(newValue, source, key);
 	}
 }
 
@@ -763,9 +773,9 @@ class WhereOp extends QueryOp
 
 	step(value, source, key)
 	{
-		if (this.predicate(value, key))
-			return this.nextOp.step(value, source, key);
-		return true;
+		return this.predicate(value, key)
+			? this.nextOp.step(value, source, key)
+			: true;
 	}
 }
 
@@ -779,9 +789,9 @@ class WithoutOp extends QueryOp
 
 	step(value, source, key)
 	{
-		if (!this.values.has(value))
-			return this.nextOp.step(value, source, key);
-		return true;
+		return (!this.values.has(value))
+			? this.nextOp.step(value, source, key)
+			: true;
 	}
 }
 
