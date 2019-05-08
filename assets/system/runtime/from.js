@@ -1,6 +1,6 @@
 /**
  *  Sphere Runtime for Sphere games
- *  Copyright (c) 2015-2018, Fat Cerberus
+ *  Copyright (c) 2015-2019, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -98,8 +98,7 @@ class Query
 				if (!feedMeSeymour(firstOp, source))
 					break;
 			}
-			firstOp.flush(sources);
-			return reduceOp.result;
+			return firstOp.flush(sources);
 		};
 		return this.sources !== undefined
 			? runQuery(...this.sources)
@@ -337,9 +336,12 @@ class QueryOp
 	{
 		// `flush()` is called after all items from the source have been sent
 		// into the pipeline.  this provides for operations that need to see
-		// all results before they can do their work, e.g. sorting.
-		if (this.nextOp !== undefined)
-			this.nextOp.flush(sources);
+		// all results before they can do their work, e.g. sorting.  the
+		// reducer at the end of the chain should return its final result from
+		// `flush()`.
+		return this.nextOp !== undefined
+			? this.nextOp.flush(sources)
+			: undefined;
 	}
 
 	step(value, source, key)
@@ -381,7 +383,7 @@ class ThruOp extends QueryOp
 		else {
 			feedMeSeymour(this.nextOp, newSource);
 		}
-		super.flush();
+		return this.nextOp.flush();
 	}
 
 	step(value)
@@ -422,20 +424,19 @@ class FindOp extends QueryOp
 		this.finder = finder;
 	}
 
-	initialize(source)
+	initialize(sources)
 	{
 		this.memo = { value: this.defaultValue };
-		super.initialize(source);
 	}
 
 	flush(sources)
 	{
-		this.result = this.memo.value;
-		super.flush(sources);
+		return this.memo.value;
 	}
 
 	step(value, source, key)
 	{
+		// if the `finder` returns true, short-circuit the query.
 		return !this.finder(value, key, this.memo);
 	}
 }
@@ -450,23 +451,23 @@ class GroupOp extends QueryOp
 
 	initialize()
 	{
-		this.result = new Map();
+		this.groupMap = new Map();
 	}
 
 	flush()
 	{
-		const mapEntries = this.result.entries();
-		this.result = {};
-		for (const entry of mapEntries)
-			this.result[entry[0]] = entry[1];
+		const groups = {};
+		for (const [ key, list ] of this.groupMap.entries())
+			groups[key] = list;
+		return groups;
 	}
 
 	step(value)
 	{
 		const key = this.keySelector(value);
-		let list = this.result.get(key);
+		let list = this.groupMap.get(key);
 		if (list === undefined)
-			this.result.set(key, list = []);
+			this.groupMap.set(key, list = []);
 		list.push(value);
 		return true;
 	}
@@ -483,19 +484,20 @@ class LastOp extends QueryOp
 	initialize()
 	{
 		this.haveItem = false;
-		this.result = undefined;
+		this.lastValue = undefined;
 	}
 
 	flush()
 	{
 		if (this.selector !== undefined && this.haveItem)
-			this.result = this.selector(this.result);
+			this.lastValue = this.selector(this.lastValue);
+		return this.lastValue;
 	}
 
 	step(value)
 	{
 		this.haveItem = true;
-		this.result = value;
+		this.lastValue = value;
 	}
 }
 
@@ -536,7 +538,7 @@ class PlusOp extends QueryOp
 			if (!this.nextOp.step(this.values[i]))
 				break;
 		}
-		super.flush();
+		return this.nextOp.flush();
 	}
 
 	step(value, source, key)
@@ -556,13 +558,18 @@ class ReduceOp extends QueryOp
 
 	initialize()
 	{
-		this.result = this.initialValue;
+		this.accumulator = this.initialValue;
 		super.initialize();
+	}
+
+	flush()
+	{
+		return this.accumulator;
 	}
 
 	step(value)
 	{
-		this.result = this.reducer(this.result, value);
+		this.accumulator = this.reducer(this.accumulator, value);
 		return true;
 	}
 }
@@ -645,7 +652,7 @@ class ReverseOp extends ThruOp
 					break;
 			}
 		}
-		this.nextOp.flush();
+		return this.nextOp.flush();
 	}
 
 	step(value)
@@ -707,7 +714,7 @@ class ToArrayOp extends ThruOp
 
 	flush()
 	{
-		this.result = this.values;
+		return this.values;
 	}
 
 	step(value)
