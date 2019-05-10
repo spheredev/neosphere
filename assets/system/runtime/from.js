@@ -105,9 +105,9 @@ class Query
 			: runQuery;
 	}
 
-	aggregate(reducer, seedValue)
+	aggregate(aggregator, seedValue)
 	{
-		return this.run$(new ReduceOp(reducer, seedValue));
+		return this.run$(new AggregateOp(aggregator, seedValue));
 	}
 
 	all(predicate)
@@ -166,6 +166,11 @@ class Query
 				a[key] = 1;
 			return a;
 		}, Object.create(null));
+	}
+
+	elementAt(index)
+	{
+		return this.skip(index).first();
 	}
 
 	find(predicate)
@@ -392,6 +397,33 @@ class ThruOp extends QueryOp
 	}
 }
 
+class AggregateOp extends QueryOp
+{
+	constructor(aggregator, seedValue)
+	{
+		super();
+		this.aggregator = aggregator;
+		this.seedValue = seedValue;
+	}
+
+	initialize()
+	{
+		this.accumulator = this.seedValue;
+		super.initialize();
+	}
+
+	flush()
+	{
+		return this.accumulator;
+	}
+
+	step(value)
+	{
+		this.accumulator = this.aggregator(this.accumulator, value);
+		return true;
+	}
+}
+
 class ConcatOp extends QueryOp
 {
 	constructor(sources)
@@ -521,33 +553,6 @@ class OverOp extends QueryOp
 	{
 		const itemSource = this.selector(value);
 		return feedMeSeymour(this.nextOp, itemSource);
-	}
-}
-
-class ReduceOp extends QueryOp
-{
-	constructor(reducer, seedValue)
-	{
-		super();
-		this.seedValue = seedValue;
-		this.reducer = reducer;
-	}
-
-	initialize()
-	{
-		this.accumulator = this.seedValue;
-		super.initialize();
-	}
-
-	flush()
-	{
-		return this.accumulator;
-	}
-
-	step(value)
-	{
-		this.accumulator = this.reducer(this.accumulator, value);
-		return true;
 	}
 }
 

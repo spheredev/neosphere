@@ -604,6 +604,15 @@ Query#countBy(keySelector);
             .countBy(it => typeof it);
         // returns: { string: 3, number: 2 }
 
+Query#elementAt(index);
+
+    Gets the query result at the zero-based position specified by `index`, or
+    `undefined` if the index is out of range.
+
+    Note: In most cases, query results can only be accessed sequentially, so
+          this method should be used sparingly to avoid creating performance
+          issues.
+
 Query#find(predicate);
 
     Runs the query, calling `predicate` for each result, and returns the first
