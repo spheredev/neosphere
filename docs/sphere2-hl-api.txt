@@ -526,6 +526,21 @@ new Query();
         if (hasEnergyDrinks(enemyParty))
             stealFrom(enemyParty, "Monster");
 
+Query#aggregate(aggregator[, seedValue]);
+
+    Runs the query and calls `aggregator` for each result, assigning the return
+    value to an internal accumulator at each step.  The current value of the
+    accumulator is passed as the first argument to the aggregator function,
+    before the value.  `seedValue` is the initial value of the accumulator.
+
+    This is a fairly advanced operation, so to help illustrate, the following
+    query calculates the sum of all numbers in the array `numbers`:
+
+        sum = from(numbers).aggregate((acc, v) => acc + v, 0);
+
+	Note: If `seedValue` is omitted, the first query result will be used as the
+	      seed; in that case, `aggregator` won't be called for that result.
+
 Query#all(predicate);
 Query#allIn(valueList);
 
@@ -559,18 +574,6 @@ Query#applyTo(values);
             .toArray();
         // results = [ 1, 4, 9, 1, 8, 27 ]
 
-Query#ascending([keySelector]);
-Query#descending([keySelector]);
-
-    Calls `keySelector` to get a sort key for each value and sorts the values
-    in ascending or descending order by key.  If no key selector is provided,
-    the value itself will be used as the key.
-
-    Note: Queries with sort operators in them will take longer to run and use
-          more memory while running since they have to create a new temporary
-          array internally to store the sorted values.  Keep this in mind when
-          querying large collections.
-
 Query#besides([callback]);
 
     Calls `callback` for each value that passes through.  This is useful if you
@@ -579,6 +582,12 @@ Query#besides([callback]);
 
     Note: Avoid causing side effects that modify the query source.  Bad things
           can happen otherwise! (such as: the pig eating you)
+
+Query#concat(source[, ...]);
+
+    Concatenates (appends) values from one or more other sources to the results
+    of the query.  Similar to `from()`, sources used for `concat` can be
+    arrays, iterables, or even other `Query` objects.
 
 Query#count();
 
@@ -592,13 +601,8 @@ Query#countBy(keySelector);
     object is returned with one entry for each unique key:
 
         let counts = from([ "pig", "cow", 812, "ape", 1208 ])
-            .count(it => typeof it);
+            .countBy(it => typeof it);
         // returns: { string: 3, number: 2 }
-
-Query#drop(count);
-
-    Filters out the first `count` results, passing the remainder on as-is.  The
-    source array is not modified.
 
 Query#find(predicate);
 
@@ -640,6 +644,20 @@ Query#last([mapper]);
     there are no results.  `mapper` is an optional function specifying how to
     transform the returned value (see `Query#select`).
 
+Query#orderBy([keySelector[, direction]]);
+
+    Calls `keySelector` to get a sort key for each value and sorts the values
+    in ascending or descending order by key.  If no key selector is provided,
+    the value itself will be used as the key.
+
+    `direction` is a string indicating the sort direction: "asc" for ascending,
+    or "desc" for descending.
+
+    Note: Queries with sort operators in them will take longer to run and use
+          more memory while running since they have to create a new temporary
+          array internally to store the sorted values.  Keep this in mind when
+          querying large collections.
+
 Query#over(mapper);
 
     Similar to `Query#select`, but rather than being a 1:1 mapping, `over` maps
@@ -665,22 +683,6 @@ Query#random(count);
     Note: Because the samples taken are independent, this can sample a result
           more than once; if you don't want duplicates, use `sample()` instead.
 
-Query#reduce(reducer[, initialValue]);
-
-    Runs the query and calls `reducer` for each result, assigning the return
-    value to an internal accumulator at each step.  The current value of the
-    accumulator is passed as the first argument to the reducer function, before
-    the value.
-
-    This is a fairly advanced operation, so to help illustrate, the following
-    query calculates the sum of all numbers in the array `numbers`:
-
-        sum = from(numbers).reduce((acc, v) => acc + v, 0);
-	
-	Note: If `initialValue` is omitted, the first query result will be used as
-	      the initial value; in that case, `reducer` won't be called for that
-	      result.
-
 Query#remove([predicate]);
 
     Removes results from the source object or array.  `predicate` is optional;
@@ -699,6 +701,12 @@ Query#sample(count);
     rest; the rest of the query will only see the sampled values.  This will
     not sample a given result more than once.
 
+Query#sans(predicate);
+
+    Calls `predicate` for each value and filters out all values for which the
+    predicate returns `true`.  This is the exact opposite of `Query#where` (see
+    below).
+
 Query#select(mapper);
 
     Calls `mapper` for each item and uses whatever it returns as the new value
@@ -709,21 +717,21 @@ Query#shuffle();
     Shuffles all incoming values so that the rest of the query sees them in a
     random order.
 
+Query#skip(count);
+
+    Filters out the first `count` results, passing the remainder on as-is.  The
+    source array is not modified.
+
 Query#take(count);
 
     Uses only the first `count` items in subsequent operations and discards the
     rest.  The source array is not modified.
 
-Query#tap(interceptor);
+Query#thru(replacer);
 
-    Collects all results so far into an array and calls `interceptor` passing
-    the array as the first parameter.  Any changes made to the array will be
-    reflected in subsequent operations.
-
-Query#thru(mapper);
-
-    Similar to `tap`, but completely replaces the set of results with the array
-    returned by `mapper`.
+    Collects all results so far into an array and calls `replacer` passing
+    the array as the first parameter.  `replacer` must return an array; the
+    contents of this array will be used as the results of `thru`.
 
 Query#toArray();
 

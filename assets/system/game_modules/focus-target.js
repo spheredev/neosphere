@@ -63,7 +63,7 @@ class FocusTarget
 		focusQueue = from(focusQueue)
 			.without(this)
 			.plus(this)
-			.ascending(it => it._priority)
+			.orderBy(it => it._priority)
 			.toArray();
 	}
 

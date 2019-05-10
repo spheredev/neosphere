@@ -105,6 +105,11 @@ class Query
 			: runQuery;
 	}
 
+	aggregate(reducer, seedValue)
+	{
+		return this.run$(new ReduceOp(reducer, seedValue));
+	}
+
 	all(predicate)
 	{
 		return this.run$(new FindOp((it, key, memo) => !predicate(it) ? (memo.value = false, true) : false, true));
@@ -136,28 +141,24 @@ class Query
 		return this.over(f => from(values).select(f));
 	}
 
-	ascending(keySelector = identity)
-	{
-		return this.thru(all => {
-			const pairs = all.map(it => ({ key: keySelector(it), value: it }));
-			pairs.sort((a, b) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0);
-			return pairs.map(it => it.value);
-		});
-	}
-
 	besides(iteratee)
 	{
 		return this.select((it, k) => (iteratee(it, k), it));
 	}
 
+	concat(...sources)
+	{
+		return this.addOp$(ConcatOp, sources);
+	}
+
 	count()
 	{
-		return this.reduce(n => n + 1, 0);
+		return this.aggregate(n => n + 1, 0);
 	}
 
 	countBy(keySelector)
 	{
-		return this.reduce((a, it) => {
+		return this.aggregate((a, it) => {
 			const key = keySelector(it);
 			if (a[key] !== undefined)
 				++a[key];
@@ -165,20 +166,6 @@ class Query
 				a[key] = 1;
 			return a;
 		}, Object.create(null));
-	}
-
-	descending(keySelector = identity)
-	{
-		return this.thru(all => {
-			const pairs = all.map(it => ({ key: keySelector(it), value: it }));
-			pairs.sort((b, a) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0);
-			return pairs.map(it => it.value);
-		});
-	}
-
-	drop(count)
-	{
-		return this.addOp$(DropOp, count);
 	}
 
 	find(predicate)
@@ -198,7 +185,7 @@ class Query
 
 	forEach(iteratee)
 	{
-		this.reduce((a, it) => iteratee(it));
+		this.aggregate((a, it) => iteratee(it));
 	}
 
 	groupBy(keySelector)
@@ -211,6 +198,18 @@ class Query
 		return this.run$(new LastOp(selector));
 	}
 
+	orderBy(keySelector = identity, direction = 'asc')
+	{
+		const comparator = direction === 'desc'
+			? (b, a) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0
+			: (a, b) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0;
+		return this.thru(all => {
+			const pairs = all.map(it => ({ key: keySelector(it), value: it }));
+			pairs.sort(comparator);
+			return pairs.map(it => it.value);
+		});
+	}
+
 	over(selector)
 	{
 		return this.addOp$(OverOp, selector);
@@ -218,7 +217,7 @@ class Query
 
 	plus(...values)
 	{
-		return this.addOp$(PlusOp, values);
+		return this.addOp$(ConcatOp, [ values ]);
 	}
 
 	random(count)
@@ -231,11 +230,6 @@ class Query
 			}
 			return samples;
 		});
-	}
-
-	reduce(reducer, initialValue)
-	{
-		return this.run$(new ReduceOp(reducer, initialValue));
 	}
 
 	remove(predicate)
@@ -263,6 +257,11 @@ class Query
 		});
 	}
 
+	sans(predicate)
+	{
+		return this.addOp$(WhereOp, it => !predicate(it));
+	}
+
 	select(selector)
 	{
 		return this.addOp$(SelectOp, selector);
@@ -281,14 +280,14 @@ class Query
 		});
 	}
 
+	skip(count)
+	{
+		return this.addOp$(SkipOp, count);
+	}
+
 	take(count)
 	{
 		return this.addOp$(TakeOp, count);
-	}
-
-	tap(callback)
-	{
-		return this.thru(all => (callback(all), all));
 	}
 
 	thru(replacer)
@@ -393,25 +392,26 @@ class ThruOp extends QueryOp
 	}
 }
 
-class DropOp extends QueryOp
+class ConcatOp extends QueryOp
 {
-	constructor(count)
+	constructor(sources)
 	{
 		super();
-		this.count = count;
+		this.sources = sources;
 	}
 
-	initialize(sources)
+	flush()
 	{
-		this.left = this.count;
-		super.initialize(sources);
+		for (let i = 0, len = this.sources.length; i < len; ++i) {
+			if (!feedMeSeymour(this.nextOp, this.sources[i]))
+				break;
+		}
+		return this.nextOp.flush();
 	}
 
 	step(value, source, key)
 	{
-		return this.left-- <= 0
-			? this.nextOp.step(value, source, key)
-			: true;
+		return this.nextOp.step(value, source, key);
 	}
 }
 
@@ -524,41 +524,18 @@ class OverOp extends QueryOp
 	}
 }
 
-class PlusOp extends QueryOp
-{
-	constructor(values)
-	{
-		super();
-		this.values = values;
-	}
-
-	flush()
-	{
-		for (let i = 0, len = this.values.length; i < len; ++i) {
-			if (!this.nextOp.step(this.values[i]))
-				break;
-		}
-		return this.nextOp.flush();
-	}
-
-	step(value, source, key)
-	{
-		return this.nextOp.step(value, source, key);
-	}
-}
-
 class ReduceOp extends QueryOp
 {
-	constructor(reducer, initialValue)
+	constructor(reducer, seedValue)
 	{
 		super();
-		this.initialValue = initialValue;
+		this.seedValue = seedValue;
 		this.reducer = reducer;
 	}
 
 	initialize()
 	{
-		this.accumulator = this.initialValue;
+		this.accumulator = this.seedValue;
 		super.initialize();
 	}
 
@@ -643,7 +620,7 @@ class ReverseOp extends ThruOp
 		else {
 			const length = this.values.length;
 			let start = length - 1;
-			if (this.nextOp instanceof DropOp) {
+			if (this.nextOp instanceof SkipOp) {
 				start -= this.nextOp.left;
 				this.nextOp.left = 0;
 			}
@@ -674,6 +651,28 @@ class SelectOp extends QueryOp
 	{
 		const newValue = this.selector(value, key);
 		return this.nextOp.step(newValue, source, key);
+	}
+}
+
+class SkipOp extends QueryOp
+{
+	constructor(count)
+	{
+		super();
+		this.count = count;
+	}
+
+	initialize(sources)
+	{
+		this.left = this.count;
+		super.initialize(sources);
+	}
+
+	step(value, source, key)
+	{
+		return this.left-- <= 0
+			? this.nextOp.step(value, source, key)
+			: true;
 	}
 }
 
@@ -820,7 +819,7 @@ function feedMeSeymour(queryOp, source)
 {
 	if (isArrayLike(source)) {
 		let start = 0;
-		if (queryOp instanceof DropOp) {
+		if (queryOp instanceof SkipOp) {
 			start = queryOp.left;
 			queryOp.left -= source.length;
 			if (queryOp.left < 0)
@@ -845,7 +844,7 @@ function feedMeSeymour(queryOp, source)
 	else {
 		const keys = Object.keys(source);
 		let start = 0;
-		if (queryOp instanceof DropOp) {
+		if (queryOp instanceof SkipOp) {
 			start = queryOp.left;
 			queryOp.left -= source.length;
 			if (queryOp.left < 0)
