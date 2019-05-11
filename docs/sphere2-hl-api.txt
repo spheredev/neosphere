@@ -533,8 +533,8 @@ Query#aggregate(aggregator[, seedValue]);
     accumulator is passed as the first argument to the aggregator function,
     before the value.  `seedValue` is the initial value of the accumulator.
 
-    This is a fairly advanced operation, so to help illustrate, the following
-    query calculates the sum of all numbers in the array `numbers`:
+    This is a bit advanced, so to help illustrate, the query shown below will
+    compute the sum of all numbers in the array `numbers`:
 
         sum = from(numbers).aggregate((acc, v) => acc + v, 0);
 
@@ -603,6 +603,12 @@ Query#countBy(keySelector);
         let counts = from([ "pig", "cow", 812, "ape", 1208 ])
             .countBy(it => typeof it);
         // returns: { string: 3, number: 2 }
+
+Query#distinct([keySelector]);
+
+    Filters out duplicate values.  If the mapping function `keySelector` is
+    provided, it will be called for each result; only the first value for which
+    a given key is selected will be kept.
 
 Query#elementAt(index);
 
@@ -710,12 +716,6 @@ Query#sample(count);
     rest; the rest of the query will only see the sampled values.  This will
     not sample a given result more than once.
 
-Query#sans(predicate);
-
-    Calls `predicate` for each value and filters out all values for which the
-    predicate returns `true`.  This is the exact opposite of `Query#where` (see
-    below).
-
 Query#select(mapper);
 
     Calls `mapper` for each item and uses whatever it returns as the new value
@@ -731,10 +731,20 @@ Query#skip(count);
     Filters out the first `count` results, passing the remainder on as-is.  The
     source array is not modified.
 
+Query#skipWhile(predicate);
+
+    Calls `predicate` for each result and filters out values until the first
+    time the predicate returns false, then passes the remainder on as-is.
+
 Query#take(count);
 
     Uses only the first `count` items in subsequent operations and discards the
     rest.  The source array is not modified.
+
+Query#takeWhile(predicate);
+
+    Calls `predicate` for each result, keeping all results received until the
+    first time it returns false.  The remainder is dropped.
 
 Query#thru(replacer);
 
@@ -746,12 +756,6 @@ Query#toArray();
 
     Runs the query and returns the results in a JavaScript array object for
     later use.
-
-Query#uniq([keySelector]);
-
-    Filters out duplicate values.  If the mapping function `keySelector` is
-    provided, it will be called for each result; only the first value for which
-    a given key is selected will be kept.
 
 Query#update(mapper);
 
