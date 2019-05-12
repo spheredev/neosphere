@@ -179,6 +179,9 @@ class Query
 	plus(...values) {
 		return this.addOp$(ConcatOp, [ values ]);
 	}
+	pull(...values) {
+		return this.remove(it => values.includes(it));
+	}
 	random(count) {
 		return this.thru(all => {
 			let samples = [];

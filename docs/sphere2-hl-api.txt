@@ -690,6 +690,10 @@ Query#plus(value[, ...]);
     `over()`; while that operator replaces each value with values from a
     different list, `plus()` simply adds new values to the end of the stream.
 
+Query#pull(value[, ...]);
+
+    Physically removes one or more specific values from the source array.
+
 Query#random(count);
 
     Takes `count` independent random samples from amongst the incoming values.
@@ -700,10 +704,10 @@ Query#random(count);
 
 Query#remove([predicate]);
 
-    Removes results from the source object or array.  `predicate` is optional;
-    if provided, it should return true to remove the result, or false to keep
-    it.  If no `predicate` is provided, all items satisfying the query will be
-    removed.
+    Physically removes results from the source object or array.  `predicate` is
+    optional; if provided, it should return true to remove the result, or false
+    to keep it.  If no `predicate` is provided, all items satisfying the query
+    will be removed.
 
 Query#reverse();
 
