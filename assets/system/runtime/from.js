@@ -160,6 +160,15 @@ class Query
 	groupBy(keySelector) {
 		return this.run$(new GroupOp(keySelector));
 	}
+	groupJoin(innerSource, predicate, selector) {
+		return this.select(it => selector(it, from(innerSource).where(inner => predicate(it, inner))));
+	}
+	join(innerSource, predicate, selector) {
+		return this.over(outerValue =>
+			from(innerSource)
+				.where(it => predicate(outerValue, it))
+				.select(it => selector(outerValue, it)));
+	}
 	last(selector) {
 		return this.run$(new LastOp(selector));
 	}
@@ -252,6 +261,13 @@ class Query
 	without(...values) {
 		return this.addOp$(WithoutOp, values);
 	}
+	zip(zipSource, selector = tupleify) {
+		return this.thru(lefts => {
+			let index = 0;
+			return from(zipSource)
+				.select(it => selector(lefts[index++], it));
+		});
+	}
 }
 
 class QueryOp
@@ -266,8 +282,8 @@ class QueryOp
 		// `flush()` is called after all items from the source have been sent
 		// into the pipeline.  this provides for operations that need to see
 		// all results before they can do their work, e.g. sorting.  the
-		// reducer at the end of the chain should return its final result from
-		// `flush()`.
+		// aggregator at the end of the chain should return its final result
+		// from `flush()`.
 		return this.nextOp !== undefined
 			? this.nextOp.flush(sources)
 			: undefined;
@@ -733,4 +749,9 @@ function feedMeSeymour(queryOp, source)
 function identity(value)
 {
 	return value;
+}
+
+function tupleify(...values)
+{
+	return values;
 }
