@@ -43,31 +43,36 @@ class Query
 {
 	get [Symbol.toStringTag]() { return 'Query'; }
 
-	constructor() {
+	constructor()
+	{
 		this.opcodes = [];
 		this.firstOp = null;
 		this.lastOp = null;
 	}
 
-	[Symbol.iterator]() {
+	[Symbol.iterator]()
+	{
 		return this.toArray()[Symbol.iterator]();
 	}
 
-	addOp$(type, a, b) {
+	addOp$(type, a, b)
+	{
 		const opcode = { type, a, b };
 		const newQuery = new Query();
 		newQuery.sources = this.sources;
 		newQuery.opcodes = [ ...this.opcodes, opcode ];
 		return newQuery;
 	}
-	compile$() {
+
+	compile$()
+	{
 		if (this.firstOp !== null)
 			return;
 		this.firstOp = null;
 		this.lastOp = null;
 		for (let i = 0, len = this.opcodes.length; i < len; ++i) {
 			const opcode = this.opcodes[i];
-			const op = new opcode.type(opcode.a);
+			const op = new opcode.type(opcode.a, opcode.b);
 			if (this.lastOp !== null)
 				this.lastOp.nextOp = op;
 			this.lastOp = op;
@@ -76,7 +81,9 @@ class Query
 		}
 		return this.firstOp;
 	}
-	run$(reduceOp) {
+
+	run$(reduceOp)
+	{
 		this.compile$();
 		let firstOp = this.firstOp;
 		let lastOp = this.lastOp;
@@ -98,38 +105,59 @@ class Query
 			: runQuery;
 	}
 
-	aggregate(aggregator, seedValue) {
+	aggregate(aggregator, seedValue)
+	{
 		return this.run$(new AggregateOp(aggregator, seedValue));
 	}
-	all(predicate) {
+
+	all(predicate)
+	{
 		return this.run$(new FindOp((it, key, memo) => !predicate(it) ? (memo.value = false, true) : false, true));
 	}
-	allIn(values) {
+
+	allIn(values)
+	{
 		return this.all(it => values.includes(it));
 	}
-	any(predicate) {
+
+	any(predicate)
+	{
 		return this.run$(new FindOp((it, key, memo) => predicate(it) ? (memo.value = true, true) : false, false));
 	}
-	anyIn(values) {
+
+	anyIn(values)
+	{
 		return this.any(it => values.includes(it));
 	}
-	anyIs(value) {
+
+	anyIs(value)
+	{
 		const match = value !== value ? x => x !== x : x => x === value;
 		return this.any(it => match(it));
 	}
-	applyTo(values) {
-		return this.over(f => from(values).select(f));
+
+	apply(values)
+	{
+		return this.selectMany(fn => from(values).select(fn));
 	}
-	besides(iteratee) {
+
+	besides(iteratee)
+	{
 		return this.select((it, k) => (iteratee(it, k), it));
 	}
-	concat(...sources) {
+
+	concat(...sources)
+	{
 		return this.addOp$(ConcatOp, sources);
 	}
-	count() {
+
+	count()
+	{
 		return this.aggregate(n => n + 1, 0);
 	}
-	countBy(keySelector) {
+
+	countBy(keySelector)
+	{
 		return this.aggregate((a, it) => {
 			const key = keySelector(it);
 			if (a[key] !== undefined)
@@ -139,40 +167,62 @@ class Query
 			return a;
 		}, Object.create(null));
 	}
-	distinct(keySelector = identity) {
+
+	distinct(keySelector = identity)
+	{
 		return this.addOp$(DistinctOp, keySelector);
 	}
-	elementAt(index) {
+
+	elementAt(index)
+	{
 		return this.skip(index).first();
 	}
-	find(predicate) {
+
+	find(predicate)
+	{
 		return this.run$(new FindOp((it, key, memo) => predicate(it) ? (memo.value = it, true) : false));
 	}
-	findIndex(predicate) {
+
+	findIndex(predicate)
+	{
 		return this.run$(new FindOp((it, key, memo) => predicate(it) ? (memo.value = key, true) : false));
 	}
-	first(selector) {
+
+	first(selector)
+	{
 		return this.run$(new FindOp((it, key, memo) => (memo.value = selector ? selector(it) : it, true)));
 	}
-	forEach(iteratee) {
+
+	forEach(iteratee)
+	{
 		this.aggregate((a, it) => iteratee(it));
 	}
-	groupBy(keySelector) {
+
+	groupBy(keySelector)
+	{
 		return this.run$(new GroupOp(keySelector));
 	}
-	groupJoin(innerSource, predicate, selector) {
+
+	groupJoin(innerSource, predicate, selector)
+	{
 		return this.select(it => selector(it, from(innerSource).where(inner => predicate(it, inner))));
 	}
-	join(innerSource, predicate, selector) {
-		return this.over(outerValue =>
+
+	join(innerSource, predicate, selector)
+	{
+		return this.selectMany(outerValue =>
 			from(innerSource)
 				.where(it => predicate(outerValue, it))
 				.select(it => selector(outerValue, it)));
 	}
-	last(selector) {
+
+	last(selector)
+	{
 		return this.run$(new LastOp(selector));
 	}
-	orderBy(keySelector = identity, direction = 'asc') {
+
+	orderBy(keySelector = identity, direction = 'asc')
+	{
 		const comparator = direction === 'desc'
 			? (b, a) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0
 			: (a, b) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0;
@@ -182,16 +232,19 @@ class Query
 			return pairs.map(it => it.value);
 		});
 	}
-	over(selector) {
-		return this.addOp$(OverOp, selector);
-	}
-	plus(...values) {
+
+	plus(...values)
+	{
 		return this.addOp$(ConcatOp, [ values ]);
 	}
-	pull(...values) {
+
+	pull(...values)
+	{
 		return this.remove(it => values.includes(it));
 	}
-	random(count) {
+
+	random(count)
+	{
 		return this.thru(all => {
 			let samples = [];
 			for (let i = 0, len = all.length; i < count; ++i) {
@@ -201,13 +254,19 @@ class Query
 			return samples;
 		});
 	}
-	remove(predicate) {
+
+	remove(predicate)
+	{
 		return this.run$(new RemoveOp(predicate));
 	}
-	reverse() {
+
+	reverse()
+	{
 		return this.addOp$(ReverseOp);
 	}
-	sample(count) {
+
+	sample(count)
+	{
 		return this.thru(all => {
 			const nSamples = Math.min(Math.max(count, 0), all.length);
 			for (let i = 0, len = all.length; i < nSamples; ++i) {
@@ -220,10 +279,19 @@ class Query
 			return all;
 		});
 	}
-	select(selector) {
+
+	select(selector)
+	{
 		return this.addOp$(SelectOp, selector);
 	}
-	shuffle() {
+
+	selectMany(selector)
+	{
+		return this.addOp$(SelectManyOp, selector);
+	}
+
+	shuffle()
+	{
 		return this.thru(all => {
 			for (let i = 0, len = all.length - 1; i < len; ++i) {
 				const pick = i + Math.floor(Math.random() * (len - i));
@@ -234,51 +302,69 @@ class Query
 			return all;
 		});
 	}
-	skip(count) {
+
+	skip(count)
+	{
 		return this.addOp$(SkipOp, count);
 	}
-	skipWhile(predicate) {
+
+	skipWhile(predicate)
+	{
 		return this.addOp$(SkipWhileOp, predicate);
 	}
-	take(count) {
+	take(count)
+	{
 		return this.addOp$(TakeOp, count);
 	}
-	takeWhile(predicate) {
+
+	takeWhile(predicate)
+	{
 		return this.addOp$(TakeWhileOp, predicate);
 	}
-	thru(replacer) {
+
+	thru(replacer)
+	{
 		return this.addOp$(ThruOp, replacer);
 	}
-	toArray() {
+
+	toArray()
+	{
 		return this.run$(new ToArrayOp());
 	}
-	update(selector) {
+
+	update(selector)
+	{
 		return this.run$(new UpdateOp(selector));
 	}
-	where(predicate) {
+
+	where(predicate)
+	{
 		return this.addOp$(WhereOp, predicate);
 	}
-	without(...values) {
+
+	without(...values)
+	{
 		return this.addOp$(WithoutOp, values);
 	}
-	zip(zipSource, selector = tupleify) {
-		return this.thru(lefts => {
-			let index = 0;
-			return from(zipSource)
-				.select(it => selector(lefts[index++], it));
-		});
+
+	zip(zipSource, selector = tupleify)
+	{
+		return this.addOp$(ZipOp, zipSource, selector);
 	}
 }
 
 class QueryOp
 {
-	initialize(sources) {
+	initialize(sources)
+	{
 		// `initialize()` is called at the start of query execution, before the
 		// first item is sent to `step()`.
 		if (this.nextOp !== undefined)
 			this.nextOp.initialize(sources);
 	}
-	flush(sources) {
+
+	flush(sources)
+	{
 		// `flush()` is called after all items from the source have been sent
 		// into the pipeline.  this provides for operations that need to see
 		// all results before they can do their work, e.g. sorting.  the
@@ -288,7 +374,9 @@ class QueryOp
 			? this.nextOp.flush(sources)
 			: undefined;
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		// `step()` should return `true` to continue execution, or `false` to
 		// short-circuit.  note that `flush()` will still be called even if the
 		// query short-circuits.
@@ -300,15 +388,20 @@ class QueryOp
 
 class ThruOp extends QueryOp
 {
-	constructor(mapper) {
+	constructor(mapper)
+	{
 		super();
 		this.mapper = mapper;
 	}
-	initialize() {
+
+	initialize()
+	{
 		this.values = [];
 		super.initialize();
 	}
-	flush() {
+
+	flush()
+	{
 		const newSource = this.mapper(this.values);
 		if (this.nextOp instanceof ThruOp) {
 			// if the next operator is a ThruOp, just give it our buffer since
@@ -323,7 +416,9 @@ class ThruOp extends QueryOp
 		}
 		return this.nextOp.flush();
 	}
-	step(value) {
+
+	step(value)
+	{
 		this.values.push(value);
 		return true;
 	}
@@ -331,19 +426,26 @@ class ThruOp extends QueryOp
 
 class AggregateOp extends QueryOp
 {
-	constructor(aggregator, seedValue) {
+	constructor(aggregator, seedValue)
+	{
 		super();
 		this.aggregator = aggregator;
 		this.seedValue = seedValue;
 	}
-	initialize() {
+
+	initialize()
+	{
 		this.accumulator = this.seedValue;
 		super.initialize();
 	}
-	flush() {
+
+	flush()
+	{
 		return this.accumulator;
 	}
-	step(value) {
+
+	step(value)
+	{
 		this.accumulator = this.aggregator(this.accumulator, value);
 		return true;
 	}
@@ -351,33 +453,43 @@ class AggregateOp extends QueryOp
 
 class ConcatOp extends QueryOp
 {
-	constructor(sources) {
+	constructor(sources)
+	{
 		super();
 		this.sources = sources;
 	}
-	flush() {
+
+	flush()
+	{
 		for (let i = 0, len = this.sources.length; i < len; ++i) {
 			if (!feedMeSeymour(this.nextOp, this.sources[i]))
 				break;
 		}
 		return this.nextOp.flush();
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		return this.nextOp.step(value, source, key);
 	}
 }
 
 class DistinctOp extends QueryOp
 {
-	constructor(keySelector) {
+	constructor(keySelector)
+	{
 		super();
 		this.keySelector = keySelector;
 	}
-	initialize() {
+
+	initialize()
+	{
 		this.keys = new Set();
 		super.initialize();
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		const uniqKey = this.keySelector(value);
 		if (!this.keys.has(uniqKey)) {
 			this.keys.add(uniqKey);
@@ -389,18 +501,25 @@ class DistinctOp extends QueryOp
 
 class FindOp extends QueryOp
 {
-	constructor(finder, defaultValue) {
+	constructor(finder, defaultValue)
+	{
 		super();
 		this.defaultValue = defaultValue;
 		this.finder = finder;
 	}
-	initialize(sources) {
+
+	initialize(sources)
+	{
 		this.memo = { value: this.defaultValue };
 	}
-	flush(sources) {
+
+	flush(sources)
+	{
 		return this.memo.value;
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		// if the `finder` returns true, short-circuit the query.
 		return !this.finder(value, key, this.memo);
 	}
@@ -408,20 +527,27 @@ class FindOp extends QueryOp
 
 class GroupOp extends QueryOp
 {
-	constructor(keySelector) {
+	constructor(keySelector)
+	{
 		super();
 		this.keySelector = keySelector;
 	}
-	initialize() {
+
+	initialize()
+	{
 		this.groupMap = new Map();
 	}
-	flush() {
+
+	flush()
+	{
 		const groups = {};
 		for (const [ key, list ] of this.groupMap.entries())
 			groups[key] = list;
 		return groups;
 	}
-	step(value) {
+
+	step(value)
+	{
 		const key = this.keySelector(value);
 		let list = this.groupMap.get(key);
 		if (list === undefined)
@@ -433,55 +559,49 @@ class GroupOp extends QueryOp
 
 class LastOp extends QueryOp
 {
-	constructor(selector) {
+	constructor(selector)
+	{
 		super();
 		this.selector = selector;
 	}
-	initialize() {
+
+	initialize()
+	{
 		this.haveItem = false;
 		this.lastValue = undefined;
 	}
-	flush() {
+
+	flush()
+	{
 		if (this.selector !== undefined && this.haveItem)
 			this.lastValue = this.selector(this.lastValue);
 		return this.lastValue;
 	}
-	step(value) {
+
+	step(value)
+	{
 		this.haveItem = true;
 		this.lastValue = value;
 	}
 }
 
-class OverOp extends QueryOp
-{
-	constructor(selector) {
-		super();
-		this.selector = selector;
-	}
-	initialize() {
-		// don't pass the sources through.  OverOp is not implemented as a ThruOp to avoid the
-		// creation of a temp array but it's still a transformative operation so we don't want
-		// to allow use of remove() or update() after this.
-		super.initialize();
-	}
-	step(value) {
-		const itemSource = this.selector(value);
-		return feedMeSeymour(this.nextOp, itemSource);
-	}
-}
-
 class RemoveOp extends QueryOp
 {
-	constructor(predicate) {
+	constructor(predicate)
+	{
 		super();
 		this.predicate = predicate;
 	}
-	initialize(sources) {
+
+	initialize(sources)
+	{
 		if (sources === undefined)
 			throw new TypeError("remove() cannot be used with transformations");
 		this.removals = [];
 	}
-	flush(sources) {
+
+	flush(sources)
+	{
 		let r = 0;
 		for (let m = 0, len = sources.length; m < len; ++m) {
 			const source = sources[m];
@@ -503,7 +623,9 @@ class RemoveOp extends QueryOp
 			}
 		}
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		if (this.predicate === undefined || this.predicate(value, key))
 			this.removals.push([ source, key ]);
 		return true;
@@ -512,14 +634,19 @@ class RemoveOp extends QueryOp
 
 class ReverseOp extends ThruOp
 {
-	constructor() {
+	constructor()
+	{
 		super();
 	}
-	initialize() {
+
+	initialize()
+	{
 		this.values = [];
 		super.initialize();
 	}
-	flush() {
+
+	flush()
+	{
 		if (this.nextOp instanceof ThruOp) {
 			this.values.reverse();
 			this.nextOp.values = this.values;
@@ -538,7 +665,9 @@ class ReverseOp extends ThruOp
 		}
 		return this.nextOp.flush();
 	}
-	step(value) {
+
+	step(value)
+	{
 		this.values.push(value);
 		return true;
 	}
@@ -546,27 +675,59 @@ class ReverseOp extends ThruOp
 
 class SelectOp extends QueryOp
 {
-	constructor(selector) {
+	constructor(selector)
+	{
 		super();
 		this.selector = selector;
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		const newValue = this.selector(value, key);
 		return this.nextOp.step(newValue, source, key);
 	}
 }
 
+class SelectManyOp extends QueryOp
+{
+	constructor(selector)
+	{
+		super();
+		this.selector = selector;
+	}
+
+	initialize()
+	{
+		// don't pass the sources through.  SelectManyOp is not implemented as
+		// a ThruOp to avoid the creation of a temp array but it's still a
+		// transformative operation so we don't want to allow use of remove()
+		// or update() after this.
+		super.initialize();
+	}
+
+	step(value)
+	{
+		const itemSource = this.selector(value);
+		return feedMeSeymour(this.nextOp, itemSource);
+	}
+}
+
 class SkipOp extends QueryOp
 {
-	constructor(count) {
+	constructor(count)
+	{
 		super();
 		this.count = count;
 	}
-	initialize(sources) {
+
+	initialize(sources)
+	{
 		this.left = this.count;
 		super.initialize(sources);
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		return this.left-- <= 0
 			? this.nextOp.step(value, source, key)
 			: true;
@@ -575,18 +736,23 @@ class SkipOp extends QueryOp
 
 class SkipWhileOp extends QueryOp
 {
-	constructor(predicate) {
+	constructor(predicate)
+	{
 		super();
 		this.predicate = predicate;
 	}
-	initialize(sources) {
-		this.skipping = true;
+
+	initialize(sources)
+	{
+		this.onTheTake = false;
 		super.initialize(sources);
 	}
-	step(value, source, key) {
-		if (this.skipping)
-			this.skipping = this.predicate(value, key);
-		return !this.skipping
+
+	step(value, source, key)
+	{
+		if (!this.onTheTake)
+			this.onTheTake = !this.predicate(value, key);
+		return this.onTheTake
 			? this.nextOp.step(value, source, key)
 			: true;
 	}
@@ -594,15 +760,20 @@ class SkipWhileOp extends QueryOp
 
 class TakeOp extends QueryOp
 {
-	constructor(count) {
+	constructor(count)
+	{
 		super();
 		this.count = count;
 	}
-	initialize(sources) {
+
+	initialize(sources)
+	{
 		this.left = this.count;
 		super.initialize(sources);
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		return this.left-- > 0
 			? this.nextOp.step(value, source, key)
 			: false;
@@ -611,15 +782,20 @@ class TakeOp extends QueryOp
 
 class TakeWhileOp extends QueryOp
 {
-	constructor(predicate) {
+	constructor(predicate)
+	{
 		super();
 		this.predicate = predicate;
 	}
-	initialize(sources) {
+
+	initialize(sources)
+	{
 		this.onTheTake = true;
 		super.initialize(sources);
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		if (this.onTheTake)
 			this.onTheTake = this.predicate(value, key);
 		return this.onTheTake
@@ -630,17 +806,24 @@ class TakeWhileOp extends QueryOp
 
 class ToArrayOp extends ThruOp
 {
-	constructor() {
+	constructor()
+	{
 		super();
 	}
-	initialize() {
+
+	initialize()
+	{
 		this.values = [];
 		super.initialize();
 	}
-	flush() {
+
+	flush()
+	{
 		return this.values;
 	}
-	step(value) {
+
+	step(value)
+	{
 		this.values.push(value);
 		return true;
 	}
@@ -648,15 +831,20 @@ class ToArrayOp extends ThruOp
 
 class UpdateOp extends QueryOp
 {
-	constructor(selector) {
+	constructor(selector)
+	{
 		super();
 		this.selector = selector;
 	}
-	initialize(sources) {
+
+	initialize(sources)
+	{
 		if (sources === undefined)
 			throw new TypeError("update() cannot be used with transformations");
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		source[key] = this.selector(value, key);
 		return true;
 	}
@@ -664,11 +852,14 @@ class UpdateOp extends QueryOp
 
 class WhereOp extends QueryOp
 {
-	constructor(predicate) {
+	constructor(predicate)
+	{
 		super();
 		this.predicate = predicate;
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		return this.predicate(value, key)
 			? this.nextOp.step(value, source, key)
 			: true;
@@ -677,14 +868,42 @@ class WhereOp extends QueryOp
 
 class WithoutOp extends QueryOp
 {
-	constructor(values) {
+	constructor(values)
+	{
 		super();
 		this.values = new Set(values);
 	}
-	step(value, source, key) {
+
+	step(value, source, key)
+	{
 		return (!this.values.has(value))
 			? this.nextOp.step(value, source, key)
 			: true;
+	}
+}
+
+class ZipOp extends QueryOp
+{
+	constructor(source, selector)
+	{
+		super();
+		this.source = source;
+		this.selector = selector;
+	}
+
+	initialize(sources)
+	{
+		this.iterator = this.source[Symbol.iterator]();
+		super.initialize(sources);
+	}
+
+	step(value, source, key)
+	{
+		const iterResult = this.iterator.next();
+		if (iterResult.done)
+			return false;
+		const newValue = this.selector(value, iterResult.value, key);
+		return this.nextOp.step(newValue, source, key);
 	}
 }
 
@@ -751,7 +970,7 @@ function identity(value)
 	return value;
 }
 
-function tupleify(...values)
+function tupleify(lValue, rValue)
 {
-	return values;
+	return [ lValue, rValue ];
 }
