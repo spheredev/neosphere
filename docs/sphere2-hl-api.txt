@@ -560,7 +560,7 @@ Query#anyIs(value);
     Note: The first item that matches will terminate the query.  If there are
           no values to test, `false` is returned.
 
-Query#applyTo(values);
+Query#apply(values);
 
     Takes the cross-product of applying each function produced by the query to
     each value from `values` in turn.  This only works if all query results
@@ -673,17 +673,6 @@ Query#orderBy([keySelector[, direction]]);
           array internally to store the sorted values.  Keep this in mind when
           querying large collections.
 
-Query#over(mapper);
-
-    Similar to `Query#select`, but rather than being a 1:1 mapping, `over` maps
-    each value to a list of values.  This is used to expand a query into
-    subcollections, for example:
-
-        havePotions = from(partyMembers)
-            .over(member => member.items)
-            .select(item => item.name)
-            .anyIs('Potion');
-
 Query#plus(value[, ...]);
 
     Injects one or more additional values into the pipeline.  This differs from
@@ -725,6 +714,16 @@ Query#select(mapper);
     Calls `mapper` for each item and uses whatever it returns as the new value
     for that item in subsequent operations.  The source array is not modified.
 
+Query#selectMany(mapper);
+
+    Similar to `Query#select`, but maps each value in the source sequence to a
+    list of values.  This is useful to expand a query into subcollections, for
+    example:
+
+        havePotions = from(partyMembers)
+            .selectMany(member => member.items)
+            .any(item => item.name === 'Potion');
+
 Query#shuffle();
 
     Shuffles all incoming values so that the rest of the query sees them in a
@@ -733,6 +732,11 @@ Query#shuffle();
 Query#skip(count);
 
     Filters out the first `count` results, passing the remainder on as-is.  The
+    source array is not modified.
+
+Query#skipLast(count);
+
+    Filters out the last `count` results, passing the remainder on as-is.  The
     source array is not modified.
 
 Query#skipWhile(predicate);
@@ -744,6 +748,11 @@ Query#take(count);
 
     Uses only the first `count` items in subsequent operations and discards the
     rest.  The source array is not modified.
+
+Query#takeLast(count);
+
+    Uses only the final `count` items in subsequent operations; the rest is
+    discarded.
 
 Query#takeWhile(predicate);
 

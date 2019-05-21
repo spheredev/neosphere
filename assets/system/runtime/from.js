@@ -308,13 +308,26 @@ class Query
 		return this.addOp$(SkipOp, count);
 	}
 
+	skipLast(count)
+	{
+		return this.addOp$(SkipLastOp, count);
+	}
+
 	skipWhile(predicate)
 	{
 		return this.addOp$(SkipWhileOp, predicate);
 	}
+
 	take(count)
 	{
 		return this.addOp$(TakeOp, count);
+	}
+
+	takeLast(count)
+	{
+		// takeLast can't be lazily evaluated because we don't know where to
+		// start until we've seen the final result.
+		return this.thru(values => (count > 0 ? values.slice(-count) : []));
 	}
 
 	takeWhile(predicate)
@@ -730,6 +743,33 @@ class SkipOp extends QueryOp
 	{
 		return this.left-- <= 0
 			? this.nextOp.step(value, source, key)
+			: true;
+	}
+}
+
+class SkipLastOp extends QueryOp
+{
+	constructor(count)
+	{
+		super();
+		this.count = count;
+	}
+
+	initialize(sources)
+	{
+		this.buffer = new Array(this.count);
+		this.ptr = 0;
+		this.left = this.count;
+		super.initialize(sources);
+	}
+
+	step(value, source, key)
+	{
+		const nextUp = this.buffer[this.ptr];
+		this.buffer[this.ptr] = { value, key, source };
+		this.ptr = (this.ptr + 1) % this.count;
+		return this.left-- <= 0
+			? this.nextOp.step(nextUp.value, nextUp.source, nextUp.key)
 			: true;
 	}
 }
