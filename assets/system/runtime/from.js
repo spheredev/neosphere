@@ -117,7 +117,8 @@ class Query
 
 	allIn(values)
 	{
-		return this.all(it => values.includes(it));
+		const valueSet = new Set(values);
+		return this.all(it => valueSet.has(it));
 	}
 
 	any(predicate)
@@ -127,7 +128,8 @@ class Query
 
 	anyIn(values)
 	{
-		return this.any(it => values.includes(it));
+		const valueSet = new Set(values);
+		return this.any(it => valueSet.has(it));
 	}
 
 	anyIs(value)
@@ -221,7 +223,12 @@ class Query
 		return this.run$(new LastOp(selector));
 	}
 
-	orderBy(keySelector = identity, direction = 'asc')
+	memoize()
+	{
+		return from(this.toArray());
+	}
+
+	orderBy(keySelector, direction = 'asc')
 	{
 		const comparator = direction === 'desc'
 			? (b, a) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0
@@ -240,7 +247,8 @@ class Query
 
 	pull(...values)
 	{
-		return this.remove(it => values.includes(it));
+		const valueSet = new Set(values);
+		return this.remove(it => valueSet.has(it));
 	}
 
 	random(count)
@@ -283,11 +291,6 @@ class Query
 	select(selector)
 	{
 		return this.addOp$(SelectOp, selector);
-	}
-
-	selectAll()
-	{
-		return from(this.toArray());
 	}
 
 	selectMany(selector)

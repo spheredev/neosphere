@@ -659,6 +659,16 @@ Query#last([mapper]);
     there are no results.  `mapper` is an optional function specifying how to
     transform the returned value (see `Query#select`).
 
+Query#memoize();
+
+    Runs the query immediately, collecting all results into a new array.
+    Returns a `Query` over the new array.  This can be useful as an
+    optimization, for example to avoid doing multiple queries over a huge
+    amount of data, or to break a query down into smaller reusable
+    pieces.
+
+    Note: `query.memoize()` is equivalent to `from(query.toArray())`.
+
 Query#orderBy([keySelector[, direction]]);
 
     Calls `keySelector` to get a sort key for each value and sorts the values
@@ -713,15 +723,6 @@ Query#select(mapper);
 
     Calls `mapper` for each item and uses whatever it returns as the new value
     for that item in subsequent operations.  The source array is not modified.
-
-Query#selectAll();
-
-    Runs the query immediately, collecting all results into a new array.
-    Returns a `Query` over the new array.  This can be useful as an
-    optimization, for example to avoid doing multiple queries over a huge
-    amount of data, or to break a query down into smaller steps.
-
-    Note: `query.selectAll()` is equivalent to `from(query.toArray())`.
 
 Query#selectMany(mapper);
 
