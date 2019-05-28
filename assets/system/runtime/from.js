@@ -285,6 +285,11 @@ class Query
 		return this.addOp$(SelectOp, selector);
 	}
 
+	selectAll()
+	{
+		return from(this.toArray());
+	}
+
 	selectMany(selector)
 	{
 		return this.addOp$(SelectManyOp, selector);

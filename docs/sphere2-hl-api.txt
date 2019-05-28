@@ -714,6 +714,15 @@ Query#select(mapper);
     Calls `mapper` for each item and uses whatever it returns as the new value
     for that item in subsequent operations.  The source array is not modified.
 
+Query#selectAll();
+
+    Runs the query immediately, collecting all results into a new array.
+    Returns a `Query` over the new array.  This can be useful as an
+    optimization, for example to avoid doing multiple queries over a huge
+    amount of data, or to break a query down into smaller steps.
+
+    Note: `query.selectAll()` is equivalent to `from(query.toArray())`.
+
 Query#selectMany(mapper);
 
     Similar to `Query#select`, but maps each value in the source sequence to a
@@ -767,8 +776,7 @@ Query#thru(replacer);
 
 Query#toArray();
 
-    Runs the query and returns the results in a JavaScript array object for
-    later use.
+    Runs the query and returns the results in an array for later use.
 
 Query#update(mapper);
 
