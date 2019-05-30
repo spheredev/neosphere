@@ -526,21 +526,6 @@ new Query();
         if (hasEnergyDrinks(enemyParty))
             stealFrom(enemyParty, "Monster");
 
-Query#aggregate(aggregator[, seedValue]);
-
-    Runs the query and calls `aggregator` for each result, assigning the return
-    value to an internal accumulator at each step.  The current value of the
-    accumulator is passed as the first argument to the aggregator function,
-    before the value.  `seedValue` is the initial value of the accumulator.
-
-    This is a bit advanced, so to help illustrate, the query shown below will
-    compute the sum of all numbers in the array `numbers`:
-
-        sum = from(numbers).aggregate((acc, v) => acc + v, 0);
-
-	Note: If `seedValue` is omitted, the first query result will be used as the
-	      seed; in that case, `aggregator` won't be called for that result.
-
 Query#all(predicate);
 Query#allIn(valueList);
 
@@ -574,6 +559,18 @@ Query#apply(values);
             .toArray();
         // results = [ 1, 4, 9, 1, 8, 27 ]
 
+Query#ascending([keySelector]);
+Query#descending([keySelector]);
+
+    Calls `keySelector` to get a sort key for each value and sorts the values
+    in ascending or descending order by key.  If no key selector is provided,
+    the value itself will be used as the key.
+
+    Note: Queries with sort operators in them will take longer to run and use
+          more memory while running since they have to create a new temporary
+          array internally to store the sorted values.  Keep this in mind when
+          querying large collections.
+
 Query#besides([callback]);
 
     Calls `callback` for each value that passes through.  This is useful if you
@@ -604,37 +601,28 @@ Query#countBy(keySelector);
             .countBy(it => typeof it);
         // returns: { string: 3, number: 2 }
 
-Query#distinct([keySelector]);
+Query#drop(count);
 
-    Filters out duplicate values.  If the mapping function `keySelector` is
-    provided, it will be called for each result; only the first value for which
-    a given key is selected will be kept.
+    Filters out the first `count` results, passing the remainder on as-is.  The
+    source array is not modified.
 
-Query#elementAt(index);
+Query#dropLast(count);
 
-    Gets the query result at the zero-based position specified by `index`, or
-    `undefined` if the index is out of range.
+    Filters out the last `count` results, passing the remainder on as-is.  The
+    source array is not modified.
 
-    Note: In most cases, query results can only be accessed sequentially, so
-          this method should be used sparingly to avoid creating performance
-          issues.
+Query#dropWhile(predicate);
 
-Query#find(predicate);
+    Calls `predicate` for each result and filters out values until the first
+    time the predicate returns false, then passes the remainder on as-is.
+
+Query#first(predicate);
 
     Runs the query, calling `predicate` for each result, and returns the first
     value that matches.
 
     Note: The first value that matches the predicate will terminate the query.
           If there are no matching values, `undefined` is returned.
-
-Query#first([mapper]);
-
-    Runs the query and returns the value of the first result, or `undefined` if
-    there are no results.  `mapper` is an optional function specifying how to
-    transform the returned value (see `Query#select`).
-
-    Note: The query is terminated immediately once the first result has been
-          produced.
 
 Query#forEach(callback);
 
@@ -653,11 +641,11 @@ Query#groupBy(keySelector);
             .groupBy(it => typeof it);
         // returns: { number: [ 1, 2, 3 ], string: [ "a", "b" ] }
 
-Query#last([mapper]);
+Query#last([predicate]);
 
-    Runs the query and returns the value of the final result, or `undefined` if
-    there are no results.  `mapper` is an optional function specifying how to
-    transform the returned value (see `Query#select`).
+    Runs the query and returns the value of the last result that matches the
+    predicate, or `undefined` if there are no matches.  If no predicate is
+    supplied, all results will match.
 
 Query#memoize();
 
@@ -669,19 +657,15 @@ Query#memoize();
 
     Note: `query.memoize()` is equivalent to `from(query.toArray())`.
 
-Query#orderBy([keySelector[, direction]]);
+Query#over(mapper);
 
-    Calls `keySelector` to get a sort key for each value and sorts the values
-    in ascending or descending order by key.  If no key selector is provided,
-    the value itself will be used as the key.
+    Similar to `Query#select`, but maps each value in the source sequence to a
+    list of values.  This is useful to expand a query into subcollections, for
+    example:
 
-    `direction` is a string indicating the sort direction: "asc" for ascending,
-    or "desc" for descending.
-
-    Note: Queries with sort operators in them will take longer to run and use
-          more memory while running since they have to create a new temporary
-          array internally to store the sorted values.  Keep this in mind when
-          querying large collections.
+        havePotions = from(partyMembers)
+            .selectMany(member => member.items)
+            .any(item => item.name === 'Potion');
 
 Query#plus(value[, ...]);
 
@@ -700,6 +684,21 @@ Query#random(count);
 
     Note: Because the samples taken are independent, this can sample a result
           more than once; if you don't want duplicates, use `sample()` instead.
+
+Query#reduce(reducer[, seedValue]);
+
+    Runs the query and calls `reducer` for each result, assigning the return
+    value to an internal accumulator at each step.  The current value of the
+    accumulator is passed as the first argument to the reducer function, before
+    the value.  `seedValue` is the initial value of the accumulator.
+
+    This is a bit advanced, so to help illustrate, the query shown below will
+    compute the sum of all numbers in the array `numbers`:
+
+        sum = from(numbers).reduce((acc, v) => acc + v, 0);
+
+	Note: If `seedValue` is omitted, the first query result will be used as the
+	      seed; in that case, `reduce` won't be called for that result.
 
 Query#remove([predicate]);
 
@@ -724,35 +723,10 @@ Query#select(mapper);
     Calls `mapper` for each item and uses whatever it returns as the new value
     for that item in subsequent operations.  The source array is not modified.
 
-Query#selectMany(mapper);
-
-    Similar to `Query#select`, but maps each value in the source sequence to a
-    list of values.  This is useful to expand a query into subcollections, for
-    example:
-
-        havePotions = from(partyMembers)
-            .selectMany(member => member.items)
-            .any(item => item.name === 'Potion');
-
 Query#shuffle();
 
     Shuffles all incoming values so that the rest of the query sees them in a
     random order.
-
-Query#skip(count);
-
-    Filters out the first `count` results, passing the remainder on as-is.  The
-    source array is not modified.
-
-Query#skipLast(count);
-
-    Filters out the last `count` results, passing the remainder on as-is.  The
-    source array is not modified.
-
-Query#skipWhile(predicate);
-
-    Calls `predicate` for each result and filters out values until the first
-    time the predicate returns false, then passes the remainder on as-is.
 
 Query#take(count);
 
@@ -779,6 +753,12 @@ Query#toArray();
 
     Runs the query and returns the results in an array for later use.
 
+Query#uniq([keySelector]);
+
+    Filters out duplicate values.  If the mapping function `keySelector` is
+    provided, it will be called for each result; only the first value for which
+    a given key is selected will be kept.
+
 Query#update(mapper);
 
     Writes new values back into the source object or array.  `mapper` is the
@@ -786,6 +766,15 @@ Query#update(mapper);
 
     Note: As with `remove()`, `update()` cannot be used in a query containing
           whole-list transformations such as `shuffle()` or `reverse()`.
+
+Query#valueAt(index);
+
+    Gets the query result at the zero-based position specified by `index`, or
+    `undefined` if the index is out of range.
+
+    Note: In most cases, query results can only be accessed sequentially, so
+          this method should be used sparingly to avoid creating performance
+          issues.
 
 Query#where(predicate);
 

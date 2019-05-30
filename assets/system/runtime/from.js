@@ -105,11 +105,6 @@ class Query
 			: runQuery;
 	}
 
-	aggregate(aggregator, seedValue)
-	{
-		return this.run$(new AggregateOp(aggregator, seedValue));
-	}
-
 	all(predicate)
 	{
 		return this.run$(new FindOp((it, key, memo) => !predicate(it) ? (memo.value = false, true) : false, true));
@@ -140,12 +135,26 @@ class Query
 
 	apply(values)
 	{
-		return this.selectMany(fn => from(values).select(fn));
+		return this.over(fn => from(values).select(fn));
+	}
+
+	ascending(keySelector = identity)
+	{
+		return this.thru(all => {
+			const pairs = all.map(it => ({ key: keySelector(it), value: it }));
+			pairs.sort((a, b) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0);
+			return pairs.map(it => it.value);
+		});
 	}
 
 	besides(iteratee)
 	{
 		return this.select((it, k) => (iteratee(it, k), it));
+	}
+
+	call(...args)
+	{
+		return this.select(it => it(...args)).toArray();
 	}
 
 	concat(...sources)
@@ -155,12 +164,12 @@ class Query
 
 	count()
 	{
-		return this.aggregate(n => n + 1, 0);
+		return this.reduce(n => n + 1, 0);
 	}
 
 	countBy(keySelector)
 	{
-		return this.aggregate((a, it) => {
+		return this.reduce((a, it) => {
 			const key = keySelector(it);
 			if (a[key] !== undefined)
 				++a[key];
@@ -170,34 +179,38 @@ class Query
 		}, Object.create(null));
 	}
 
-	distinct(keySelector = identity)
+	descending(keySelector = identity)
 	{
-		return this.addOp$(DistinctOp, keySelector);
+		return this.thru(all => {
+			const pairs = all.map(it => ({ key: keySelector(it), value: it }));
+			pairs.sort((b, a) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0);
+			return pairs.map(it => it.value);
+		});
 	}
 
-	elementAt(index)
+	drop(count)
 	{
-		return this.skip(index).first();
+		return this.addOp$(DropOp, count);
 	}
 
-	find(predicate)
+	dropLast(count)
+	{
+		return this.addOp$(DropLastOp, count);
+	}
+
+	dropWhile(predicate)
+	{
+		return this.addOp$(DropWhileOp, predicate);
+	}
+
+	first(predicate = always)
 	{
 		return this.run$(new FindOp((it, key, memo) => predicate(it) ? (memo.value = it, true) : false));
 	}
 
-	findIndex(predicate)
-	{
-		return this.run$(new FindOp((it, key, memo) => predicate(it) ? (memo.value = key, true) : false));
-	}
-
-	first(selector)
-	{
-		return this.run$(new FindOp((it, key, memo) => (memo.value = selector ? selector(it) : it, true)));
-	}
-
 	forEach(iteratee)
 	{
-		this.aggregate((a, it) => iteratee(it));
+		this.reduce((a, it) => iteratee(it));
 	}
 
 	groupBy(keySelector)
@@ -212,15 +225,15 @@ class Query
 
 	join(innerSource, predicate, selector)
 	{
-		return this.selectMany(outerValue =>
+		return this.over(outerValue =>
 			from(innerSource)
 				.where(it => predicate(outerValue, it))
 				.select(it => selector(outerValue, it)));
 	}
 
-	last(selector)
+	last(predicate = always)
 	{
-		return this.run$(new LastOp(selector));
+		return this.run$(new LastOp(predicate));
 	}
 
 	memoize()
@@ -228,16 +241,9 @@ class Query
 		return from(this.toArray());
 	}
 
-	orderBy(keySelector, direction = 'asc')
+	over(selector)
 	{
-		const comparator = direction === 'desc'
-			? (b, a) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0
-			: (a, b) => a.key < b.key ? -1 : b.key < a.key ? +1 : 0;
-		return this.thru(all => {
-			const pairs = all.map(it => ({ key: keySelector(it), value: it }));
-			pairs.sort(comparator);
-			return pairs.map(it => it.value);
-		});
+		return this.addOp$(OverOp, selector);
 	}
 
 	plus(...values)
@@ -261,6 +267,11 @@ class Query
 			}
 			return samples;
 		});
+	}
+
+	reduce(reducer, seedValue)
+	{
+		return this.run$(new ReduceOp(reducer, seedValue));
 	}
 
 	remove(predicate)
@@ -293,11 +304,6 @@ class Query
 		return this.addOp$(SelectOp, selector);
 	}
 
-	selectMany(selector)
-	{
-		return this.addOp$(SelectManyOp, selector);
-	}
-
 	shuffle()
 	{
 		return this.thru(all => {
@@ -309,21 +315,6 @@ class Query
 			}
 			return all;
 		});
-	}
-
-	skip(count)
-	{
-		return this.addOp$(SkipOp, count);
-	}
-
-	skipLast(count)
-	{
-		return this.addOp$(SkipLastOp, count);
-	}
-
-	skipWhile(predicate)
-	{
-		return this.addOp$(SkipWhileOp, predicate);
 	}
 
 	take(count)
@@ -343,9 +334,9 @@ class Query
 		return this.addOp$(TakeWhileOp, predicate);
 	}
 
-	thru(replacer)
+	thru(transformer)
 	{
-		return this.addOp$(ThruOp, replacer);
+		return this.addOp$(ThruOp, transformer);
 	}
 
 	toArray()
@@ -353,9 +344,19 @@ class Query
 		return this.run$(new ToArrayOp());
 	}
 
+	uniq(keySelector = identity)
+	{
+		return this.addOp$(UniqOp, keySelector);
+	}
+
 	update(selector)
 	{
 		return this.run$(new UpdateOp(selector));
+	}
+
+	valueAt(index)
+	{
+		return this.drop(index).first();
 	}
 
 	where(predicate)
@@ -409,10 +410,10 @@ class QueryOp
 
 class ThruOp extends QueryOp
 {
-	constructor(mapper)
+	constructor(transformer)
 	{
 		super();
-		this.mapper = mapper;
+		this.transformer = transformer;
 	}
 
 	initialize()
@@ -423,7 +424,7 @@ class ThruOp extends QueryOp
 
 	flush()
 	{
-		const newSource = this.mapper(this.values);
+		const newSource = this.transformer(this.values);
 		if (this.nextOp instanceof ThruOp) {
 			// if the next operator is a ThruOp, just give it our buffer since
 			// we don't need it anymore.  this greatly speeds up queries with
@@ -441,33 +442,6 @@ class ThruOp extends QueryOp
 	step(value)
 	{
 		this.values.push(value);
-		return true;
-	}
-}
-
-class AggregateOp extends QueryOp
-{
-	constructor(aggregator, seedValue)
-	{
-		super();
-		this.aggregator = aggregator;
-		this.seedValue = seedValue;
-	}
-
-	initialize()
-	{
-		this.accumulator = this.seedValue;
-		super.initialize();
-	}
-
-	flush()
-	{
-		return this.accumulator;
-	}
-
-	step(value)
-	{
-		this.accumulator = this.aggregator(this.accumulator, value);
 		return true;
 	}
 }
@@ -495,28 +469,76 @@ class ConcatOp extends QueryOp
 	}
 }
 
-class DistinctOp extends QueryOp
+class DropOp extends QueryOp
 {
-	constructor(keySelector)
+	constructor(count)
 	{
 		super();
-		this.keySelector = keySelector;
+		this.count = count;
 	}
 
-	initialize()
+	initialize(sources)
 	{
-		this.keys = new Set();
-		super.initialize();
+		this.left = this.count;
+		super.initialize(sources);
 	}
 
 	step(value, source, key)
 	{
-		const uniqKey = this.keySelector(value);
-		if (!this.keys.has(uniqKey)) {
-			this.keys.add(uniqKey);
-			return this.nextOp.step(value, source, key);
-		}
-		return true;
+		return this.left-- <= 0
+			? this.nextOp.step(value, source, key)
+			: true;
+	}
+}
+
+class DropLastOp extends QueryOp
+{
+	constructor(count)
+	{
+		super();
+		this.count = count;
+	}
+
+	initialize(sources)
+	{
+		this.buffer = new Array(this.count);
+		this.ptr = 0;
+		this.left = this.count;
+		super.initialize(sources);
+	}
+
+	step(value, source, key)
+	{
+		const nextUp = this.buffer[this.ptr];
+		this.buffer[this.ptr] = { value, key, source };
+		this.ptr = (this.ptr + 1) % this.count;
+		return this.left-- <= 0
+			? this.nextOp.step(nextUp.value, nextUp.source, nextUp.key)
+			: true;
+	}
+}
+
+class DropWhileOp extends QueryOp
+{
+	constructor(predicate)
+	{
+		super();
+		this.predicate = predicate;
+	}
+
+	initialize(sources)
+	{
+		this.onTheTake = false;
+		super.initialize(sources);
+	}
+
+	step(value, source, key)
+	{
+		if (!this.onTheTake)
+			this.onTheTake = !this.predicate(value, key);
+		return this.onTheTake
+			? this.nextOp.step(value, source, key)
+			: true;
 	}
 }
 
@@ -580,6 +602,31 @@ class GroupOp extends QueryOp
 
 class LastOp extends QueryOp
 {
+	constructor(predicate)
+	{
+		super();
+		this.predicate = predicate;
+	}
+
+	initialize()
+	{
+		this.lastValue = undefined;
+	}
+
+	flush()
+	{
+		return this.lastValue;
+	}
+
+	step(value)
+	{
+		if (this.predicate(value))
+			this.lastValue = value;
+	}
+}
+
+class OverOp extends QueryOp
+{
 	constructor(selector)
 	{
 		super();
@@ -588,21 +635,44 @@ class LastOp extends QueryOp
 
 	initialize()
 	{
-		this.haveItem = false;
-		this.lastValue = undefined;
-	}
-
-	flush()
-	{
-		if (this.selector !== undefined && this.haveItem)
-			this.lastValue = this.selector(this.lastValue);
-		return this.lastValue;
+		// don't pass the sources through.  OverOp is not implemented as a
+		// ThruOp to avoid the creation of a temp array but it's still a
+		// transformative operation so we don't want to allow use of remove()
+		// or update() after this.
+		super.initialize();
 	}
 
 	step(value)
 	{
-		this.haveItem = true;
-		this.lastValue = value;
+		const itemSource = this.selector(value);
+		return feedMeSeymour(this.nextOp, itemSource);
+	}
+}
+
+class ReduceOp extends QueryOp
+{
+	constructor(aggregator, seedValue)
+	{
+		super();
+		this.aggregator = aggregator;
+		this.seedValue = seedValue;
+	}
+
+	initialize()
+	{
+		this.accumulator = this.seedValue;
+		super.initialize();
+	}
+
+	flush()
+	{
+		return this.accumulator;
+	}
+
+	step(value)
+	{
+		this.accumulator = this.aggregator(this.accumulator, value);
+		return true;
 	}
 }
 
@@ -675,7 +745,7 @@ class ReverseOp extends ThruOp
 		else {
 			const length = this.values.length;
 			let start = length - 1;
-			if (this.nextOp instanceof SkipOp) {
+			if (this.nextOp instanceof DropOp) {
 				start -= this.nextOp.left;
 				this.nextOp.left = 0;
 			}
@@ -706,103 +776,6 @@ class SelectOp extends QueryOp
 	{
 		const newValue = this.selector(value, key);
 		return this.nextOp.step(newValue, source, key);
-	}
-}
-
-class SelectManyOp extends QueryOp
-{
-	constructor(selector)
-	{
-		super();
-		this.selector = selector;
-	}
-
-	initialize()
-	{
-		// don't pass the sources through.  SelectManyOp is not implemented as
-		// a ThruOp to avoid the creation of a temp array but it's still a
-		// transformative operation so we don't want to allow use of remove()
-		// or update() after this.
-		super.initialize();
-	}
-
-	step(value)
-	{
-		const itemSource = this.selector(value);
-		return feedMeSeymour(this.nextOp, itemSource);
-	}
-}
-
-class SkipOp extends QueryOp
-{
-	constructor(count)
-	{
-		super();
-		this.count = count;
-	}
-
-	initialize(sources)
-	{
-		this.left = this.count;
-		super.initialize(sources);
-	}
-
-	step(value, source, key)
-	{
-		return this.left-- <= 0
-			? this.nextOp.step(value, source, key)
-			: true;
-	}
-}
-
-class SkipLastOp extends QueryOp
-{
-	constructor(count)
-	{
-		super();
-		this.count = count;
-	}
-
-	initialize(sources)
-	{
-		this.buffer = new Array(this.count);
-		this.ptr = 0;
-		this.left = this.count;
-		super.initialize(sources);
-	}
-
-	step(value, source, key)
-	{
-		const nextUp = this.buffer[this.ptr];
-		this.buffer[this.ptr] = { value, key, source };
-		this.ptr = (this.ptr + 1) % this.count;
-		return this.left-- <= 0
-			? this.nextOp.step(nextUp.value, nextUp.source, nextUp.key)
-			: true;
-	}
-}
-
-class SkipWhileOp extends QueryOp
-{
-	constructor(predicate)
-	{
-		super();
-		this.predicate = predicate;
-	}
-
-	initialize(sources)
-	{
-		this.onTheTake = false;
-		super.initialize(sources);
-	}
-
-	step(value, source, key)
-	{
-		if (!this.onTheTake)
-			this.onTheTake = !this.predicate(value, key);
-		return this.onTheTake
-			? this.nextOp.step(value, source, key)
-			: true;
 	}
 }
 
@@ -873,6 +846,31 @@ class ToArrayOp extends ThruOp
 	step(value)
 	{
 		this.values.push(value);
+		return true;
+	}
+}
+
+class UniqOp extends QueryOp
+{
+	constructor(keySelector)
+	{
+		super();
+		this.keySelector = keySelector;
+	}
+
+	initialize()
+	{
+		this.keys = new Set();
+		super.initialize();
+	}
+
+	step(value, source, key)
+	{
+		const uniqKey = this.keySelector(value);
+		if (!this.keys.has(uniqKey)) {
+			this.keys.add(uniqKey);
+			return this.nextOp.step(value, source, key);
+		}
 		return true;
 	}
 }
@@ -973,7 +971,7 @@ function feedMeSeymour(queryOp, source)
 {
 	if (isArrayLike(source)) {
 		let start = 0;
-		if (queryOp instanceof SkipOp) {
+		if (queryOp instanceof DropOp) {
 			start = queryOp.left;
 			queryOp.left -= source.length;
 			if (queryOp.left < 0)
@@ -998,7 +996,7 @@ function feedMeSeymour(queryOp, source)
 	else {
 		const keys = Object.keys(source);
 		let start = 0;
-		if (queryOp instanceof SkipOp) {
+		if (queryOp instanceof DropOp) {
 			start = queryOp.left;
 			queryOp.left -= source.length;
 			if (queryOp.left < 0)
@@ -1010,6 +1008,11 @@ function feedMeSeymour(queryOp, source)
 				return false;
 		}
 	}
+	return true;
+}
+
+function always()
+{
 	return true;
 }
 
