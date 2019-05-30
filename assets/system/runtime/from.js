@@ -699,17 +699,19 @@ class RemoveOp extends QueryOp
 			if (isArrayLike(source)) {
 				let j = 0;
 				for (let i = 0, len = source.length; i < len; ++i) {
-					if (i !== this.removals[r][1])
-						source[j++] = source[i];
-					else
-						r++;
+					if (r < this.removals.length && i === this.removals[r].key) {
+						// note: array length is adjusted after the loop.
+						++r;
+						continue;
+					}
+					source[j++] = source[i];
 				}
 				source.length = j;
 			}
 			else {
 				for (let i = 0, len = this.removals.length; i < len; ++i) {
-					if (this.removals[i][0] === source)
-						delete source[this.removals[i][1]];
+					if (this.removals[i].source === source)
+						delete source[this.removals[i].key];
 				}
 			}
 		}
@@ -718,7 +720,7 @@ class RemoveOp extends QueryOp
 	step(value, source, key)
 	{
 		if (this.predicate === undefined || this.predicate(value, key))
-			this.removals.push([ source, key ]);
+			this.removals.push({ source, key });
 		return true;
 	}
 }
