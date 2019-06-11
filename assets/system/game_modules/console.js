@@ -44,6 +44,7 @@ class Console extends Thread
 			hotKey:       Key.Tilde,
 			inBackground: true,
 			logFileName:  null,
+			mouseKey:     MouseKey.Middle,
 			prompt:       ">",
 			priority:     Infinity,
 		}, options);
@@ -62,6 +63,7 @@ class Console extends Thread
 			: null;
 		this.keyboard = Keyboard.Default;
 		this.mouse = Mouse.Default;
+		this.mouseKey = options.mouseKey;
 		this.nextLine = 0;
 		this.numLines = Math.floor((Surface.Screen.height - 32) / this.font.height);
 		this.prompt = options.prompt;
@@ -223,13 +225,15 @@ class Console extends Thread
 
 	on_update()
 	{
-		if (!this.wasKeyDown && this.keyboard.isPressed(this.activationKey)) {
+		const hotKeyPressed = this.keyboard.isPressed(this.activationKey)
+			|| this.mouse.isPressed(this.mouseKey);
+		if (hotKeyPressed && !this.wasKeyDown) {
 			if (!this.view.visible)
 				showConsole(this);
 			else
 				hideConsole(this);
 		}
-		this.wasKeyDown = this.keyboard.isPressed(this.activationKey);
+		this.wasKeyDown = hotKeyPressed;
 
 		if (this.view.fade <= 0.0)
 			this.view.line = 0.0;
