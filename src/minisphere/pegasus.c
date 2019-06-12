@@ -3732,7 +3732,9 @@ js_Mouse_getEvent(int num_args, bool is_ctor, intptr_t magic)
 
 	while (!have_key) {
 		if (mouse_queue_len() == 0) {
+			jsal_push_new_object();
 			jsal_push_null();
+			jsal_put_prop_string(-2, "key");
 			return true;
 		}
 		event = mouse_get_event();
