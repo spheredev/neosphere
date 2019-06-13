@@ -122,7 +122,7 @@ main(int argc, char* argv[])
 	int                  api_version;
 	bool                 eval_succeeded;
 	lstring_t*           dialog_name;
-	int                  error_column;
+	int                  error_column = 0;
 	int                  error_line = 0;
 	const char*          error_source;
 	const char*          error_stack = NULL;
