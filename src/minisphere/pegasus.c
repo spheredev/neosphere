@@ -371,6 +371,7 @@ static bool js_Model_set_shader              (int num_args, bool is_ctor, intptr
 static bool js_Model_set_transform           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Model_draw                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_get_Default             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Mouse_get_position            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_get_x                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_get_y                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_clearQueue              (int num_args, bool is_ctor, intptr_t magic);
@@ -989,6 +990,7 @@ pegasus_init(int api_level)
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
+		api_define_prop("Mouse", "position", false, js_Mouse_get_position, NULL);
 		api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
 		api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
@@ -3680,6 +3682,24 @@ js_Mouse_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_class_obj(PEGASUS_MOUSE, NULL, false);
 	cache_value_to_this("Default");
+	return true;
+}
+
+static bool
+js_Mouse_get_position(int num_args, bool is_ctor, intptr_t magic)
+{
+	int x;
+	int y;
+
+	jsal_push_this();
+	jsal_require_class_obj(-1, PEGASUS_MOUSE);
+
+	screen_get_mouse_xy(g_screen, &x, &y);
+	jsal_push_new_array();
+	jsal_push_int(x);
+	jsal_push_int(y);
+	jsal_put_prop_index(-3, 0);
+	jsal_put_prop_index(-2, 1);
 	return true;
 }
 
