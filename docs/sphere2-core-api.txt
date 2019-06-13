@@ -1350,6 +1350,14 @@ Mouse.Default [R/O] [API 1]
 
     Note: miniSphere currently only supports a single mouse.
 
+Mouse#position [R/O] [NEW]
+
+    Gets the immediate X and Y position of the mouse cursor relative to the
+	game's rendering area.  This returns an array `[ x, y ]` which can be
+	conveniently taken apart with destructuring assignment:
+	
+	    let [ mouseX, mouseY ] = mouse.position;
+
 Mouse#x [R/O] [API 1]
 Mouse#y [R/O] [API 1]
 
@@ -1363,15 +1371,16 @@ Mouse#clearQueue(); [API 1]
 
 Mouse#getEvent(); [API 1]
 
-    Gets the next event in this mouse's event queue.  `null` is returned if the
-    queue is empty.
-
-    The object returned has the following properties:
+    Gets the next event in this mouse's event queue.  This returns an object
+    with the following properties:
 
         event.key
 
             A MouseKey value representing the type of the click or other event.
             For example, a left mouse click is represented as MouseKey.Left.
+            
+            Note: If the queue was empty, this will be `null` and the remaining
+                  properties will be undefined.
 
         event.x
         event.y
