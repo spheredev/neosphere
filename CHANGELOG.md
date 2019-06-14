@@ -5,8 +5,8 @@ v5.4.0 - TBD
 ------------
 
 * Adds several `Query` methods: `apply`, `call`, `concat`, `dropLast`,
-  `dropWhile`, `groupJoin`, `join`, `memoize`, `pull`, `takeLast`, `takeWhile`,
-  `valueAt`, `zip`.
+  `dropWhile`, `join`, `memoize`, `pull`, `takeLast`, `takeWhile`, `valueAt`,
+  `zip`.
 * Adds `FS.require()` API for better cross-compatibility with Oozaru.
 * Adds `Mouse#position` which returns a tuple `[x,y]` that can be destructured.
 * Adds mouse-button activation support to the `console` module.

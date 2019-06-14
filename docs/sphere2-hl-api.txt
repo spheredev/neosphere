@@ -548,9 +548,8 @@ Query#anyIs(value);
 Query#apply(values);
 
     Takes the cross-product of applying each function produced by the query to
-    each value from `values` in turn.  This only works if all query results
-    seen by the `applyTo` step are functions; otherwise an error will likely be
-    thrown.  To illustrate how this works:
+    each value from `values` in turn.  The query results must be functions.  To
+    illustrate how this works:
 
         let square = x => x * x;
         let cube = x => x * x * x;
@@ -579,6 +578,12 @@ Query#besides([callback]);
 
     Note: Avoid causing side effects that modify the query source.  Bad things
           can happen otherwise! (such as: the pig eating you)
+
+Query#call([...arguments]);
+
+    Calls each function returned by the query with the specified arguments,
+    producing a query over the return values.  Useful if you have an array of
+    similar functions and want to call all of them in one shot.
 
 Query#concat(source[, ...]);
 
@@ -641,6 +646,24 @@ Query#groupBy(keySelector);
             .groupBy(it => typeof it);
         // returns: { number: [ 1, 2, 3 ], string: [ "a", "b" ] }
 
+Query#join(collection, predicate, join_mapper);
+
+    For each query result, selects those values of `collection` for which
+    `predicate` returns true and produces the result of calling `join_mapper`
+    for each one selected.
+
+        movesAvailable = from(moveTable)
+            .where(move => move.level <= currentLevel)
+            .join(characters,
+                (move, char) => move.charID === char.id,
+                (move, char) => move)
+
+    This is equivalent to an "inner join" in database terms.
+
+    Note: `predicate` and `join_mapper` are both called with two arguments: a
+          query result as the first argument, and a value from `collection` as
+          the second.
+
 Query#last([predicate]);
 
     Runs the query and returns the value of the last result that matches the
@@ -697,8 +720,8 @@ Query#reduce(reducer[, seedValue]);
 
         sum = from(numbers).reduce((acc, v) => acc + v, 0);
 
-	Note: If `seedValue` is omitted, the first query result will be used as the
-	      seed; in that case, `reduce` won't be called for that result.
+    Note: If `seedValue` is omitted, the first query result will be used as the
+          seed; in that case, `reduce` won't be called for that result.
 
 Query#remove([predicate]);
 
@@ -784,6 +807,20 @@ Query#where(predicate);
 Query#without(value[, ...]);
 
     Filters out one or more specific values from the query results.
+
+Query#zip(collection[, zip_mapper]);
+
+    Iterates over `collection` in tandem with the query results.  `zip_mapper`,
+    if provided, must be a function and will be called with a query result as
+    the first argument and the corresponding element from `collection` as the
+    second.  It should return a single value to map these to.
+
+    The overall number of values produced is equal to either the number of
+    query results, or the length of `collection`, whichever is less.
+
+    Note: If `zip_mapper` is not provided, an array `[ a, b ]` will be produced
+          for each result where `a` is the incoming query result and `b` is the
+          corresponding value from `collection`.
 
 
 `Random` Namespace

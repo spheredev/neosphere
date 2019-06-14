@@ -218,17 +218,12 @@ class Query
 		return this.run$(new GroupOp(keySelector));
 	}
 
-	groupJoin(innerSource, predicate, selector)
+	join(collection, predicate, selector)
 	{
-		return this.select(it => selector(it, from(innerSource).where(inner => predicate(it, inner))));
-	}
-
-	join(innerSource, predicate, selector)
-	{
-		return this.over(outerValue =>
-			from(innerSource)
-				.where(it => predicate(outerValue, it))
-				.select(it => selector(outerValue, it)));
+		return this.over(outer =>
+			from(collection)
+				.where(it => predicate(outer, it))
+				.select(it => selector(outer, it)));
 	}
 
 	last(predicate = always)
@@ -369,9 +364,9 @@ class Query
 		return this.addOp$(WithoutOp, values);
 	}
 
-	zip(zipSource, selector = tupleify)
+	zip(collection, selector = tupleify)
 	{
-		return this.addOp$(ZipOp, zipSource, selector);
+		return this.addOp$(ZipOp, collection, selector);
 	}
 }
 
