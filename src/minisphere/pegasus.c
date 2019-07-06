@@ -4164,7 +4164,8 @@ js_new_Server(int num_args, bool is_ctor, intptr_t magic)
 	if (max_backlog <= 0)
 		jsal_error(JS_RANGE_ERROR, "Invalid backlog size '%d'", max_backlog);
 
-	server = server_new(NULL, port, 1024, max_backlog, false);
+	if (!(server = server_new(NULL, port, 1024, max_backlog, false)))
+		jsal_error(JS_ERROR, "Couldn't start TCP server on port %d", port);
 	jsal_push_class_obj(PEGASUS_SERVER, server, true);
 	return true;
 }
