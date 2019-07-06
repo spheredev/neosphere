@@ -315,19 +315,28 @@ server_new(const char* hostname, int port, size_t buffer_size, int max_backlog, 
 	server->buffer_size = buffer_size;
 	server->backlog = malloc(max_backlog * sizeof(dyad_Stream*));
 	server->max_backlog = max_backlog;
-	if (!(server->stream4 = dyad_newStream()))
-		goto on_error;
-	dyad_addListener(server->stream4, DYAD_EVENT_ACCEPT, on_dyad_accept, server);
 	if (hostname == NULL) {
+		if (!(server->stream4 = dyad_newStream()))
+			goto on_error;
+		dyad_addListener(server->stream4, DYAD_EVENT_ACCEPT, on_dyad_accept, server);
+		if (dyad_listenEx(server->stream4, "0.0.0.0", port, max_backlog) != 0) {
+			dyad_close(server->stream4);
+			server->stream4 = NULL;
+		}
 		if (!(server->stream6 = dyad_newStream()))
 			goto on_error;
 		dyad_addListener(server->stream6, DYAD_EVENT_ACCEPT, on_dyad_accept, server);
-		if (dyad_listenEx(server->stream4, "0.0.0.0", port, max_backlog) == -1)
-			goto on_error;
-		if (dyad_listenEx(server->stream6, "::", port, max_backlog) == -1)
+		if (dyad_listenEx(server->stream6, "::", port, max_backlog) != 0) {
+			dyad_close(server->stream6);
+			server->stream6 = NULL;
+		}
+		if (server->stream4 == NULL && server->stream6 == NULL)
 			goto on_error;
 	}
 	else {
+		if (!(server->stream4 = dyad_newStream()))
+			goto on_error;
+		dyad_addListener(server->stream4, DYAD_EVENT_ACCEPT, on_dyad_accept, server);
 		if (dyad_listenEx(server->stream4, hostname, port, max_backlog) == -1)
 			goto on_error;
 	}
@@ -341,6 +350,8 @@ on_error:
 		free(server->backlog);
 		if (server->stream4 != NULL)
 			dyad_close(server->stream4);
+		if (server->stream6 != NULL)
+			dyad_close(server->stream6);
 		free(server);
 	}
 	return NULL;
@@ -363,7 +374,8 @@ server_unref(server_t* it)
 	console_log(3, "disposing server #%u no longer in use", it->id);
 	for (i = 0; i < it->num_backlog; ++i)
 		dyad_end(it->backlog[i]);
-	dyad_end(it->stream4);
+	if (it->stream4 != NULL)
+		dyad_end(it->stream4);
 	if (it->stream6 != NULL)
 		dyad_end(it->stream6);
 	free(it);
