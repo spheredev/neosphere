@@ -265,7 +265,10 @@ declare interface Vertex
 /** Specifies the mode to use when opening a file. */
 declare enum FileOp
 {
-	/** File will be opened for reading only. */
+	/**
+	 * File will be opened for reading only, with the cursor placed at the beginning of the
+	 * file.
+	 */
 	Read,
 
 	/**
@@ -709,7 +712,7 @@ declare class Color
 }
 
 /**
- * Allows the contents of a directory (files and subdirectories) to be enumerated.
+ * Provides a means for enumerating the contents of a directory (files and subdirectories).
  */
 declare class DirectoryStream implements Iterable<DirectoryEntry>
 {
@@ -980,8 +983,16 @@ declare class Font
 	wordWrap(text: string, wrapWidth: number): string[];
 }
 
+/**
+ * Stores a list of numeric indices directly on the GPU that specify which entries in a vertex list
+ * are used for a `Shape`.
+ */
 declare class IndexList
 {
+	/**
+	 * Construct a new index list from an array of numeric indices.
+	 * @param indices The indices to be stored in the index list.
+	 */
 	constructor(indices: number[]);
 }
 
@@ -1021,17 +1032,46 @@ declare class Joystick
 	isPressed(buttonID: number): boolean;
 }
 
+/**
+ * Represents a keyboard-like input device.
+ */
 declare class Keyboard
 {
+	/** The default keyboard device provided by the engine. */
 	static readonly Default: Keyboard;
 
+	/** `true` if Caps Lock is active, otherwise `false`. */
 	readonly capsLock: boolean;
+
+	/** `true` if Num Lock is active, otherwise false. */
 	readonly numLock: boolean;
+
+	/** `true` if Scroll Lock is active, otherwise false. Not all keyboards support Scroll Lock. */
 	readonly scrollLock: boolean;
 
+	/**
+	 * Get the printable string representation of a keyboard key, if one exists.
+	 * @param key A member of `Key` specifying the keyboard key.
+	 * @param shifted `true` for a shifted version of the key (i.e. pretend `Shift` is pressed).
+	 * @returns The printable string representation of the key, or an empty string for non-printable
+	 *          keys.
+	 */
 	charOf(key: Key, shifted?: boolean): string;
+
+	/** Clear any keys from the keyboard queue that haven't yet been retrieved with `getKey`. */
 	clearQueue(): void;
+
+	/**
+	 * Get the next key in the keyboard queue. The key is removed from the queue.
+	 * @returns The next key in the keyboard queue, or `null` if the queue was empty.
+	 */
 	getKey(): Key | null;
+
+	/**
+	 * Get a Boolean value indicating whether a given key is currently pressed down.
+	 * @param key A member of `Key` naming the keyboard key to check.
+	 * @returns `true` if the key is currently pressed, otherwise `false`.
+	 */
 	isPressed(key: Key): boolean;
 }
 
@@ -1065,16 +1105,40 @@ declare class Model
 	draw(surface?: Surface): void
 }
 
+/**
+ * Represents a mouse-like pointing device.
+ */
 declare class Mouse
 {
+	/** The default mouse device provided by the engine. */
 	static readonly Default: Mouse;
 
+	/**
+	 * 2D position of the mouse cursor in pixels, relative to the top-left corner of the game,
+	 * represented as a two-element array (2-tuple).
+	*/
 	readonly position: [ number, number ];
+
+	/** X coordinate of the mouse cursor in pixels, relative to the top-left corner of the game. */
 	readonly x: number;
+
+	/** Y coordinate of the mouse cursor in pixels, relative to the top-left corner of the game. */
 	readonly y: number;
 
+	/** Clear any events from the mouse queue that haven't yet been retrieved with `getEvent`. */
 	clearQueue(): void;
+
+	/**
+	 * Get the next event in the mouse queue. The event is removed from the queue.
+	 * @returns A `MouseEvent` object describing the event retrieved, if any.
+	 */
 	getEvent(): MouseEvent;
+
+	/**
+	 * Get a Boolean value indicating whether a given mouse button is currently pressed down.
+	 * @param key A member of `MouseKey` naming the mouse button to check.
+	 * @returns `true` if the button is currently pressed down, otherwise `false`.
+	 */
 	isPressed(key: MouseKey): boolean;
 }
 
@@ -1417,6 +1481,10 @@ declare class SoundStream
 	write(data: ArrayBuffer | ArrayBufferView): void;
 }
 
+/**
+ * Represents a surface that can be used as a target for rendering operations. Surfaces can also be
+ * used as textures.
+ */
 declare class Surface extends Texture
 {
 	/**
@@ -1460,7 +1528,22 @@ declare class Surface extends Texture
 	 */
 	constructor(width: number, height: number, content?: Color | ArrayBuffer);
 
+	/**
+	 * Set this surface's clipping rectangle. When drawing to a surface, anything falling outside of
+	 * the clipping rectangle will not be rendered.
+	 * @param x       X coordinate relative to the upper-left corner of the surface, in pixels.
+	 * @param y       Y coordinate relative to the upper-left corner of the surface, in pixels.
+	 * @param width   Width of the new clipping rectangle, in pixels.
+	 * @param height  Height of the new clipping rectangle, in pixels.
+	 */
 	clipTo(x: number, y: number, width: number, height: number): void;
+
+	/**
+	 * Convert the contents of this surface to a texture. All surfaces are also textures, so this is
+	 * provided only for backward compatibility with API level 1.
+	 * @deprecated
+	 * @returns A new `Texture` created from the contents of this surface.
+	 */
 	toTexture(): Texture;
 }
 
@@ -1579,8 +1662,15 @@ declare class Transform
 	translate(tx: number, ty: number, tz?: number): Transform;
 }
 
+/**
+ * Stores vertex data for a `Shape` directly on the GPU.
+ */
 declare class VertexList
 {
+	/**
+	 * Construct a new vertex list from an array of vertex descriptors.
+	 * @param vertices An array of `Vertex` objects describing the vertices.
+	 */
 	constructor(vertices: Vertex[]);
 }
 
@@ -1831,6 +1921,11 @@ declare module 'from'
 		 */
 		dropWhile(predicate: (value: T) => boolean): Query<T>;
 
+		/**
+		 * Run the query and get the first result that satisfies the given predicate function.
+		 * @param predicate A Boolean predicate function. It takes a query result and returns `true`
+		 *                  if the value matches, or `false` if it doesn't.
+		 */
 		first(predicate?: (value: T) => boolean): T | undefined;
 
 		/**
@@ -1842,6 +1937,12 @@ declare module 'from'
 
 		groupBy<K extends string>(keySelector: (value: T) => K): Record<K, T[]>;
 		join<U, R>(joinSource: Iterable<U>, predicate: (left: T, right: U) => boolean, selector: (left: T, right: U) => R): Query<R>;
+
+		/**
+		 * Run the query and get the last result that satisfies the given predicate function.
+		 * @param predicate A Boolean predicate function. It takes a query result and returns `true`
+		 *                  if the value matches, or `false` if it doesn't.
+		 */
 		last(predicate?: (value: T) => boolean): T | undefined;
 
 		/**
@@ -1851,7 +1952,15 @@ declare module 'from'
 		 */
 		memoize(): Query<T>;
 
+		/**
+		 * Extend the query with a mapping operation that maps each incoming result to a list of
+		 * new values.
+		 * @param selector A selector function. It takes a query result and returns an array of new
+		 *                 values.
+		 * @returns A new query for the transformed results.
+		 */
 		over<R>(selector: (value: T) => Iterable<R>): Query<R>;
+
 		plus(...values: T[]): Query<T>;
 		pull(...values: T[]): Query<T>;
 
@@ -1903,9 +2012,34 @@ declare module 'from'
 		 */
 		shuffle(): Query<T>;
 
+		/**
+		 * Extend the query with a filtering operation that keeps only a finite number of results
+		 * from the beginning of the sequence.
+		 * @param count The number of results to keep.
+		 */
 		take(count: number): Query<T>;
+
+		/**
+		 * Extend the query with a filtering operation that keeps only a finite number of results
+		 * from the end of the sequence.
+		 * @param count The number of results to keep.
+		 */
 		takeLast(count: number): Query<T>;
+
+		/**
+		 * Extend the query with a filtering operation that discards all results after the first
+		 * time a given predicate function is not satisfied.
+		 * @param predicate A Boolean predicate function. It takes a query result and returns `true`
+		 *                  if the value matches, or `false` if it doesn't.
+		 */
 		takeWhile(predicate: (value: T) => boolean): Query<T>;
+
+		/**
+		 * Extend the query with an operation that collects all incoming results into an array and
+		 * produces a new list of values.
+		 * @param transform A transformer function that takes an array of all results and returns an
+		 *                  iterable for the new set of results.
+		 */
 		thru<R>(transform: (values: T[]) => Iterable<R>): Query<R>;
 
 		/** Run the query and get an array containing the results. */
@@ -1932,7 +2066,13 @@ declare module 'from'
 		 */
 		where(predicate: (value: T) => boolean): Query<T>;
 
+		/**
+		 * Extend the query with a filtering operation that removes all results found in a fixed set
+		 * of values.
+		 * @param values Array of values to exclude.
+		 */
 		without(...values: T[]): Query<T>;
+
 		zip<U>(zipSource: Iterable<U>): Query<[ T, U ]>;
 		zip<U, R>(zipSource: Iterable<U>, selector: (left: T, right: U) => R): Query<R>;
 	}
@@ -1977,7 +2117,7 @@ declare module 'music'
 		function override(fileName: string, fadeFrames?: number): void;
 
 		/**
-		 * Change the track currently at the top of the music stack, with optional crossfade.
+		 * Play a different track, replacing the track currently on top of the music stack.
 		 * @param fileName   SphereFS path of the music track to play.
 		 * @param fadeFrames Duration of the optional crossfade transition, in frames.
 		 */
