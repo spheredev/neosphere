@@ -266,13 +266,13 @@ declare interface Vertex
 declare enum FileOp
 {
 	/**
-	 * File will be opened for reading only, with the cursor placed at the beginning of the
-	 * file.
+	 * File will be opened for reading only, with the cursor initially placed at the beginning of
+	 * the file.
 	 */
 	Read,
 
 	/**
-	 * Enables reading and writing. If the file already exists, the existing contents will be erased
+	 * Enable reading and writing. If the file already exists, the existing contents will be erased
 	 * first. Otherwise a new file will be created.
 	 */
 	Write,
@@ -1095,14 +1095,32 @@ declare class Mixer
 	constructor(sampleRate: number, bitsPerSample: 8 | 16 | 24 | 32, numChannels?: number);
 }
 
+/**
+ * Represents a collection of related shapes with an associated shader program and transformation
+ * matrix.
+ */
 declare class Model
 {
+	/**
+	 * Construct a new model from a list of shapes.
+	 * @param shapes An array of shapes that make up the model.
+	 * @param shader Shader to use when rendering this model.
+	 */
 	constructor(shapes: Shape[], shader?: Shader);
 
 	shader: Shader;
 	transform: Transform;
 
-	draw(surface?: Surface): void
+	/**
+	 * Render the model to the backbuffer.
+	 */
+	draw(): void;
+
+	/**
+	 * Render the model to a surface.
+	 * @param surface Surface on which to render the model.
+	 */
+	draw(surface: Surface): void;
 }
 
 /**
@@ -1142,16 +1160,44 @@ declare class Mouse
 	isPressed(key: MouseKey): boolean;
 }
 
+/**
+ * Represents an instance of the built-in pseudorandom number generator.
+ */
 declare class RNG implements Iterable<number>
 {
+	/**
+	 * Construct a new RNG using a given seed. Each seed value produces a different sequence of
+	 * random numbers.
+	 * @param seed A number whose integer part will be used to determine the initial RNG state.
+	 */
 	static fromSeed(seed: number): RNG;
+
+	/**
+	 * Construct a new RNG which starts in a specified state.
+	 * @param state A 32-byte hexadecimal string specifying the initial state of the new RNG, in the
+	 *              same format as the `state` property.
+	 * @throws `TypeError` if `state` is not exactly 32 characters or contains anything other than
+	 *         hexadecimal digits (0-9, A-F, case-insensitive).
+	 */
 	static fromState(state: string): RNG;
 
 	[Symbol.iterator](): Iterator<number>;
+
+	/**
+	 * Construct a new RNG using a seed based on the current date and time.
+	 */
 	constructor();
 
+	/**
+	 * A 32-byte string of hexadecimal digits representing the current state of this RNG. This
+	 * string can be saved, e.g., to a file, and later passed to `RNG.fromState` to resume the
+	 * RNG from that exact point.
+	 */
 	state: string;
 
+	/**
+	 * Get the next random number in the sequence. Follows the ES6 iterator protocol.
+	 */
 	next(): IteratorResult<number>;
 }
 
@@ -1189,15 +1235,47 @@ declare class Sample
 	stopAll(): void;
 }
 
+/**
+ * Represents a TCP server that listens for incoming TCP connections on a specific port.
+ */
 declare class Server
 {
+	/**
+	 * Initialize a TCP server that listens for incoming connections on a given port.
+	 * @param port        TCP port number on which to run the server.
+	 * @param backlogSize Maximum number of incoming connections that can remain unaccepted before
+	 *                    new connections are refused.
+	 */
 	constructor(port: number, backlogSize?: number);
 
+	/**
+	 * Boolean value specifying whether Nagle's algorithm (write coalescing) should be **disabled**
+	 * for sockets spawned by this server.
+	 * @default false
+	 */
 	noDelay: boolean;
+
+	/**
+	 * Number of incoming connections still waiting to be accepted.
+	 */
 	numPending: number;
 
-	accept(): void;
+	/**
+	 * Accept a pending incoming connection and create a new `Socket` for it.
+	 * @returns A `Socket` for the newly completed connection.
+	 * @throws A `RangeError` is thrown if there are no pending connections.
+	 */
+	accept(): Socket;
+
+	/**
+	 * Get a promise for the `Socket` of the next incoming connection, whenever one is available.
+	 * @returns A promise for the next connection's `Socket`.
+	 */
 	acceptNext(): Promise<Socket>;
+
+	/**
+	 * Shut down the server. Incoming connections that haven't yet been accepted will be dropped.
+	 */
 	close(): void;
 }
 
@@ -1251,6 +1329,11 @@ declare class Shader
 	 */
 	setFloat(name: string, value: number) : void;
 
+	/**
+	 * Set the values of a `vec2`, `vec3`, or `vec4` (floating point vector) uniform.
+	 * @param name   Name of a `uniform` variable in the GLSL source text.
+	 * @param values Values to set: an array of 2, 3, or 4 numbers.
+	 */
 	setFloatVector(name: string, values: [number, number] | [number, number, number] | [number, number, number, number]): void;
 
 	/**
@@ -1260,6 +1343,12 @@ declare class Shader
 	 */
 	setInt(name: string, value: number): void;
 
+	/**
+	 * Set the values of an `ivec2`, `ivec3`, or `ivec4` (integer vector) uniform.
+	 * @param name   Name of a `uniform` variable in the GLSL source text.
+	 * @param values Values to set: an array of 2, 3, or 4 numbers. Anything after the decimal point
+	 *               will be ignored.
+	 */
 	setIntVector(name: string, values: [number, number] | [number, number, number] | [number, number, number, number]): void;
 
 	/**
@@ -1347,29 +1436,122 @@ declare class Shape
 	draw(surface: Surface, transform?: Transform): void;
 }
 
+/**
+ * Represents an active connection to a remote machine over the TCP protocol.
+ */
 declare class Socket
 {
+	/**
+	 * Connect to a host in the background. The promise resolves once the connection has been made.
+	 * @param hostName The name or IP address of the remote machine to connect to.
+	 * @param port     TCP port to connect on. The host must be listening on this port.
+	 */
 	static connectTo(hostName: string, port: number): Promise<Socket>;
 
+	/**
+	 * Construct a new socket object. It will start out disconnected and a connection must be
+	 * initiated manually later.
+	 */
 	constructor();
+
+	/**
+	 * Construct a new socket and attempt to make a connection. If the connection fails, there is no
+	 * way to tell; it is recommended to use `Socket.connectTo` instead.
+	 * @deprecated
+	 * @param hostName The name or IP address of the remote machine to connect to.
+	 * @param port     TCP port to connect on. The host must be listening on this port.
+	 */
 	constructor(hostName: string, port: number);
 
+	/** Number of bytes available for immediate reading from this socket. */
 	readonly bytesAvailable: number;
+
+	/** Number of bytes written to this socket but not yet sent over the network. */
 	readonly bytesPending: number;
+
+	/** Total number of bytes received since this socket was connected. */
 	readonly bytesReceived: number;
+
+	/** Total number of bytes sent over the network through this socket since it was connected. */
 	readonly bytesSent: number;
+
+	/** `true` if the socket is fully connected, otherwise `false`. */
 	readonly connected: boolean;
+
+	/**
+	 * Whether Nagle's algorithm is **disabled** for this socket. Setting this to `true` can reduce
+	 * latency for small writes but might increase overhead and lead to network congestion. Unless
+	 * you understand exactly what this does, it is recommended to leave it alone.
+	 * @default false
+	 */
 	noDelay: boolean;
+
+	/** Name or IP address of the remote machine this socket is connected to. */
 	readonly remoteAddress: string;
+
+	/**
+	 * The port number the remote machine is using to send data. This will be different from the
+	 * port used to make the connection and is generally only useful for diagnostic purposes.
+	 */
 	readonly remotePort: number;
 
+	/**
+	 * Read data from the socket in the background. The promise resolves once the requested number
+	 * of bytes has been read.
+	 * @param numBytes Number of bytes to read from the socket.
+	 * @returns A promise for an `ArrayBuffer` containing the data received.
+	 * @throws Rejects with `Error` if the connection is lost before all bytes can be read.
+	 */
 	asyncRead(numBytes: number): Promise<ArrayBuffer>;
+
+	/**
+	 * Write data to the socket in the background. The promise resolves once all the data has been
+	 * transmitted.
+	 * @param data A buffer object containing the data to write.
+	 * @throws Rejects with `Error` if the connection is lost before all bytes can be transmitted.
+	 */
 	asyncWrite(data: ArrayBuffer | ArrayBufferView): Promise<void>;
+
+	/**
+	 * Shut down the connection. If data remains in this socket's write buffer, it will be sent over
+	 * the network before disconnecting. The promise resolves once the socket is fully disconnected.
+	 */
 	close(): Promise<void>;
+
+	/**
+	 * Start trying to connect this socket in the background. The promise resolves once the
+	 * connection is established.
+	 * @param hostName The name or IP address of the remote machine to connect to.
+	 * @param port     TCP port to connect on. The host must be listening on this port.
+	 * @throws Rejects with `Error` if the connection fails.
+	 */
 	connectTo(hostName: string, port: number): Promise<void>;
+
+	/**
+	 * Immediately disconnect this socket. Any data remaining in the write-behind buffer will be
+	 * discarded without being sent over the network.
+	 */
 	disconnect(): void;
+
+	/**
+	 * Peek at the next `numBytes` in the socket's receive buffer without removing that data from
+	 * the buffer.
+	 * @param numBytes Number of bytes to read ahead.
+	 * @throws `RangeError` if there is less data in the receive buffer than requested.
+	 */
 	peek(numBytes: number): ArrayBuffer;
+
+	/**
+	 * Read the next `numBytes` from this socket's receive buffer. There must be at least that much
+	 * data available for immediate reading (see `bytesAvailable`).
+	 * @param numBytes Number of bytes of data to read.
+	 */
 	read(numBytes: number): ArrayBuffer;
+
+	/**
+	 * Write data to this socket. The data can be read on the other side of the connection.
+	 * @param data A buffer object containing the data to write.
+	 */
 	write(data: ArrayBuffer | ArrayBufferView): void;
 }
 
