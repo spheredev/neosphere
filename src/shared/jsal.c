@@ -2350,7 +2350,11 @@ jsal_debug_uninit(void)
 {
 	void* userdata;
 
-	JsDiagStopDebugging(s_js_runtime, &userdata);
+	// this causes a crash on shutdown on recent ChakraCore builds, so it's commented out for now.
+	// as miniSphere currently runs the debugger nonstop, skipping this shouldn't have any ill effects.
+	// the OS will clean up any leaks when the process terminates.
+	// https://github.com/microsoft/ChakraCore/issues/6160
+	//JsDiagStopDebugging(s_js_runtime, &userdata);
 }
 
 void
