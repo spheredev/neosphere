@@ -322,8 +322,6 @@ static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_require                    (int num_args, bool is_ctor, intptr_t magic);
-static bool js_JSON_fromFile                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_get_fileName       (int num_args, bool is_ctor, intptr_t magic);
@@ -343,6 +341,7 @@ static bool js_Font_heightOf                 (int num_args, bool is_ctor, intptr
 static bool js_Font_widthOf                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_JSON_fromFile                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JobToken_cancel               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JobToken_pause_resume         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Joystick_get_Default          (int num_args, bool is_ctor, intptr_t magic);
@@ -979,7 +978,6 @@ pegasus_init(int api_level)
 	if (api_level >= 3) {
 		api_define_async_func("FileStream", "open", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
-		api_define_async_func("FS", "require", js_FS_require, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
 		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
 		api_define_async_func("Socket", "connectTo", js_new_Socket, 0);
@@ -2524,18 +2522,6 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	if (!game_rename(g_game, old_pathname, new_pathname))
 		jsal_error(JS_ERROR, "Couldn't rename '%s' to '%s'", old_pathname, new_pathname);
 	return false;
-}
-
-static bool
-js_FS_require(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* pathname;
-
-	pathname = jsal_require_pathname(0, NULL, false, false);
-
-	if (!pegasus_try_require(pathname, false))
-		jsal_throw();
-	return true;
 }
 
 static bool
