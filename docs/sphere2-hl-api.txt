@@ -756,6 +756,15 @@ Query#shuffle();
     Shuffles all incoming values so that the rest of the query sees them in a
     random order.
 
+Query#single(predicate);
+
+    Runs the query, calling `predicate` for each result, and returns the first
+    value that matches.  If more than one match is found, throws an error.
+
+    Note: The second value that matches the predicate will terminate the query
+          by throwing an error.  If there are no matching values, `undefined`
+          is returned.
+
 Query#take(count);
 
     Uses only the first `count` items in subsequent operations and discards the

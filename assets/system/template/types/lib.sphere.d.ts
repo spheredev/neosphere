@@ -2184,6 +2184,15 @@ declare module 'from'
 		shuffle(): Query<T>;
 
 		/**
+		 * Run the query and get the single result that satisfies the given predicate function.
+		 * @param predicate A Boolean predicate function. It takes a query result and returns `true`
+		 *                  if the value matches, or `false` if it doesn't.
+		 * @returns The matching value, if there is one; otherwise, `undefined`.
+		 * @throws An `Error` is thrown if more than one match is found.
+		 */
+		single(predicate?: (value: T) => boolean): T | undefined;
+
+		/**
 		 * Extend the query with a filtering operation that discards a given number of results at
 		 * the beginning of the sequence.
 		 * @param count The number of results to discard.

@@ -5,8 +5,8 @@ v5.4.0 - TBD
 ------------
 
 * Adds several `Query` methods: `apply`, `call`, `concat`, `elementAt`, `join`,
-  `memoize`, `pull`, `skipLast`, `skipWhile`, `takeLast`, `takeWhile`, and
-  `zip`.
+  `memoize`, `pull`, `single`, `skipLast`, `skipWhile`, `takeLast`,
+  `takeWhile`, and `zip`.
 * Adds `Mouse#position` which returns a tuple `[x, y]` that can be destructured.
 * Adds mouse-button activation support to the `console` module.
 * Adds TypeScript bindings (type declarations and `jsconfig.json`) to the

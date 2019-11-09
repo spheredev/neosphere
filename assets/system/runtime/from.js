@@ -307,6 +307,11 @@ class Query
 		});
 	}
 
+	single(predicate = always)
+	{
+		return this.run$(new SingleOp(predicate));
+	}
+
 	skip(count)
 	{
 		return this.addOp$(SkipOp, count);
@@ -725,6 +730,35 @@ class SelectManyOp extends QueryOp
 	{
 		const itemSource = this.selector(value);
 		return feedMeSeymour(this.nextOp, itemSource);
+	}
+}
+
+class SingleOp extends QueryOp
+{
+	constructor(predicate)
+	{
+		super();
+		this.predicate = predicate;
+	}
+
+	initialize()
+	{
+		this.lastValue = undefined;
+		this.count = 0;
+	}
+
+	flush()
+	{
+		return this.lastValue;
+	}
+
+	step(value)
+	{
+		if (this.predicate(value)) {
+			if (++this.count > 1)
+				throw new Error("Query would return too many results");
+			this.lastValue = value;
+		}
 	}
 }
 
