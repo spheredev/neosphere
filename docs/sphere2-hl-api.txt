@@ -30,6 +30,11 @@ new Console(options);
         A `Key` value specifying which keyboard key will show and hide the
         console.
 
+    options.mouseKey [default: MouseKey.Middle]
+
+        A `MouseKey` value specifying which mouse button will show and hide the
+        console.
+
     options.logFileName [default: none]
 
         The SphereFS path of the file used for logging console output.  If
