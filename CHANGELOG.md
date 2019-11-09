@@ -7,11 +7,13 @@ v5.4.0 - TBD
 * Adds several `Query` methods: `apply`, `call`, `concat`, `dropLast`,
   `dropWhile`, `join`, `memoize`, `pull`, `takeLast`, `takeWhile`, `valueAt`,
   `zip`.
-* Adds `FS.require()` API for better cross-compatibility with Oozaru.
-* Adds `Mouse#position` which returns a tuple `[x,y]` that can be destructured.
+* Adds `Mouse#position` which returns a tuple `[x, y]` that can be destructured.
 * Adds mouse-button activation support to the `console` module.
-* Adds support for destructuring the return value of `Mouse#getEvent()` by
-  having it always return an object.
+* Adds TypeScript bindings (type declarations and `jsconfig.json`) to the
+  `cell init` template.  This greatly improves the experience when developing
+  Sphere projects in Visual Studio Code.
+* Fixes a bug where destructuring the return value of `Mouse#getEvent()` can
+  throw an error due to being `null`.
 * Fixes a bug where `Query#any()` and `Query#all()` can return `undefined` in
   certain cases instead of a boolean value.
 * Fixes a bug where `Query#count()` can return `null` instead of `0`.
