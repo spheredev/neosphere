@@ -1965,6 +1965,8 @@ declare module 'from'
 	{
 		[Symbol.iterator](): Iterator<T>;
 
+		aggregate<R>(reducer: (accumulator: R, value: T) => R, seed: R): R;
+
 		/**
 		 * Run the query and check if every result satisfies the given predicate function.
 		 * @param predicate A Boolean predicate function. It takes a query result and returns `true`
@@ -2081,27 +2083,16 @@ declare module 'from'
 		 */
 		descending(keySelector?: (value: T) => boolean): Query<T>;
 
-		/**
-		 * Extend the query with a filtering operation that discards a given number of results at
-		 * the beginning of the sequence.
-		 * @param count The number of results to discard.
-		 */
-		drop(count: number): Query<T>;
+		distinct(): Query<T>;
+		distinct<K>(predicate: (value: T) => K): Query<T>;
 
 		/**
-		 * Extend the query with a filtering operation that discards a given number of results at
-		 * the end of the sequence.
-		 * @param count The number of results to discard.
+		 * Run the query and get the query result at a given position in the sequence.
+		 * @param index Position within the sequence, starting at 0.
+		 * @returns The value at the given position if present; `undefined` if the index exceeds the
+		 *          number of results.
 		 */
-		dropLast(count: number): Query<T>;
-
-		/**
-		 * Extend the query with a filtering operation that discards results until the first time a
-		 * given predicate function is not satisifed.
-		 * @param predicate A Boolean predicate function. It takes a query result and returns `true`
-		 *                  if the value matches, or `false` if it doesn't.
-		 */
-		dropWhile(predicate: (value: T) => boolean): Query<T>;
+		elementAt(index: number): T | undefined;
 
 		/**
 		 * Run the query and get the first result that satisfies the given predicate function.
@@ -2134,15 +2125,6 @@ declare module 'from'
 		 */
 		memoize(): Query<T>;
 
-		/**
-		 * Extend the query with a mapping operation that maps each incoming result to a list of
-		 * new values.
-		 * @param selector A selector function. It takes a query result and returns an array of new
-		 *                 values.
-		 * @returns A new query for the transformed results.
-		 */
-		over<R>(selector: (value: T) => Iterable<R>): Query<R>;
-
 		plus(...values: T[]): Query<T>;
 		pull(...values: T[]): Query<T>;
 
@@ -2153,8 +2135,6 @@ declare module 'from'
 		 * @returns A new query for the sampled sequence.
 		 */
 		random(count: number): Query<T>;
-
-		reduce<R>(reducer: (accumulator: R, value: T) => R, seed: R): R;
 
 		/**
 		 * Remove all values from the original array source that satisfy a given predicate function.
@@ -2188,11 +2168,42 @@ declare module 'from'
 		select<R>(selector: (value: T) => R): Query<R>;
 
 		/**
+		 * Extend the query with a mapping operation that maps each incoming result to a list of
+		 * new values.
+		 * @param selector A selector function. It takes a query result and returns an array of new
+		 *                 values.
+		 * @returns A new query for the transformed results.
+		 */
+		selectMany<R>(selector: (value: T) => Iterable<R>): Query<R>;
+
+		/**
 		 * Extend the query with a randomizing operation that passes through results in a random
 		 * order using a Fisher-Yates shuffle.
 		 * @returns A new query for the randomized sequence.
 		 */
 		shuffle(): Query<T>;
+
+		/**
+		 * Extend the query with a filtering operation that discards a given number of results at
+		 * the beginning of the sequence.
+		 * @param count The number of results to discard.
+		 */
+		skip(count: number): Query<T>;
+
+		/**
+		 * Extend the query with a filtering operation that discards a given number of results at
+		 * the end of the sequence.
+		 * @param count The number of results to discard.
+		 */
+		skipLast(count: number): Query<T>;
+
+		/**
+		 * Extend the query with a filtering operation that discards results until the first time a
+		 * given predicate function is not satisifed.
+		 * @param predicate A Boolean predicate function. It takes a query result and returns `true`
+		 *                  if the value matches, or `false` if it doesn't.
+		 */
+		skipWhile(predicate: (value: T) => boolean): Query<T>;
 
 		/**
 		 * Extend the query with a filtering operation that keeps only a finite number of results
@@ -2227,17 +2238,7 @@ declare module 'from'
 		/** Run the query and get an array containing the results. */
 		toArray(): T[];
 
-		uniq(): Query<T>;
-		uniq<K>(predicate: (value: T) => K): Query<T>;
 		update<R>(selector: (value: T) => R): void;
-
-		/**
-		 * Run the query and get the query result at a given position in the sequence.
-		 * @param index Position within the sequence, starting at 0.
-		 * @returns The value at the given position if present; `undefined` if the index exceeds the
-		 *          number of results.
-		 */
-		valueAt(index: number): T | undefined;
 
 		/**
 		 * Extend the query with a filter operation that keeps only those values satisfying a given

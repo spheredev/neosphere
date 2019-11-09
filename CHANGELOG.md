@@ -4,14 +4,18 @@ miniSphere Changelog
 v5.4.0 - TBD
 ------------
 
-* Adds several `Query` methods: `apply`, `call`, `concat`, `dropLast`,
-  `dropWhile`, `join`, `memoize`, `pull`, `takeLast`, `takeWhile`, `valueAt`,
+* Adds several `Query` methods: `apply`, `call`, `concat`, `elementAt`, `join`,
+  `memoize`, `pull`, `skipLast`, `skipWhile`, `takeLast`, `takeWhile`, and
   `zip`.
 * Adds `Mouse#position` which returns a tuple `[x, y]` that can be destructured.
 * Adds mouse-button activation support to the `console` module.
 * Adds TypeScript bindings (type declarations and `jsconfig.json`) to the
   `cell init` template.  This greatly improves the experience when developing
   Sphere projects in Visual Studio Code.
+* Renames `Query#drop()` to `Query#skip()` for consistency with LINQ.
+* Renames `Query#reduce()` to `Query#aggregate()`.
+* Renames `Query#over()` to `Query#selectMany()`.
+* Renames `Query#uniq()` to `Query#distinct()`.
 * Fixes a bug where destructuring the return value of `Mouse#getEvent()` can
   throw an error due to being `null`.
 * Fixes a bug where `Query#any()` and `Query#all()` can return `undefined` in
