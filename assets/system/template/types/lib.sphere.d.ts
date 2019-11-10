@@ -2125,8 +2125,19 @@ declare module 'from'
 		 */
 		memoize(): Query<T>;
 
+		/**
+		 * Extend the query with an operation that appends additional values to the query results.
+		 * @param values Value(s) to inject into the query.
+		 */
 		plus(...values: T[]): Query<T>;
-		pull(...values: T[]): Query<T>;
+
+		/**
+		 * Remove all values from the original array source found in the given list of values.
+		 * @param values The value(s) to be removed.
+		 * @throws If the query is memoized, has a non-array source, or any transformation happened
+		 *         before `pull`, throws a `TypeError`.
+		 */
+		pull(...values: T[]): void;
 
 		/**
 		 * Extend the query with a sampling operation that takes a given number of random results.
@@ -2244,7 +2255,9 @@ declare module 'from'
 		 */
 		thru<R>(transform: (values: T[]) => Iterable<R>): Query<R>;
 
-		/** Run the query and get an array containing the results. */
+		/**
+		 * Run the query and get an array of the results produced.
+		 */
 		toArray(): T[];
 
 		update<R>(selector: (value: T) => R): void;

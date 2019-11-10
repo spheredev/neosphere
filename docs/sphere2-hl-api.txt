@@ -531,6 +531,21 @@ new Query();
         if (hasEnergyDrinks(enemyParty))
             stealFrom(enemyParty, "Monster");
 
+Query#aggregate(reducer[, seedValue]);
+
+    Runs the query and calls `reducer` for each result, assigning the return
+    value to an internal accumulator at each step.  The current value of the
+    accumulator is passed as the first argument to the reducer function, before
+    the value.  `seedValue` is the initial value of the accumulator.
+
+    This is a bit advanced, so to help illustrate, the query shown below will
+    compute the sum of all numbers in the array `numbers`:
+
+        sum = from(numbers).aggregate((acc, v) => acc + v, 0);
+
+    Note: If `seedValue` is omitted, the first query result will be used as the
+          seed; in that case, the reducer won't be called for that result.
+
 Query#all(predicate);
 Query#allIn(valueList);
 
@@ -559,7 +574,7 @@ Query#apply(values);
         let square = x => x * x;
         let cube = x => x * x * x;
         let results = from([ square, cube ])
-            .applyTo([ 1, 2, 3 ])
+            .apply([ 1, 2, 3 ])
             .toArray();
         // results = [ 1, 4, 9, 1, 8, 27 ]
 
@@ -611,20 +626,20 @@ Query#countBy(keySelector);
             .countBy(it => typeof it);
         // returns: { string: 3, number: 2 }
 
-Query#drop(count);
+Query#distinct([keySelector]);
 
-    Filters out the first `count` results, passing the remainder on as-is.  The
-    source array is not modified.
+    Filters out duplicate values.  If the mapping function `keySelector` is
+    provided, it will be called for each result; only the first value for which
+    a given key is selected will be kept.
 
-Query#dropLast(count);
+Query#elementAt(index);
 
-    Filters out the last `count` results, passing the remainder on as-is.  The
-    source array is not modified.
+    Gets the query result at the zero-based position specified by `index`, or
+    `undefined` if the index is out of range.
 
-Query#dropWhile(predicate);
-
-    Calls `predicate` for each result and filters out values until the first
-    time the predicate returns false, then passes the remainder on as-is.
+    Note: In most cases, query results can only be accessed sequentially, so
+          this method should be used sparingly to avoid creating performance
+          issues.
 
 Query#first(predicate);
 
@@ -685,16 +700,6 @@ Query#memoize();
 
     Note: `query.memoize()` is equivalent to `from(query.toArray())`.
 
-Query#over(mapper);
-
-    Similar to `Query#select`, but maps each value in the source sequence to a
-    list of values.  This is useful to expand a query into subcollections, for
-    example:
-
-        havePotions = from(partyMembers)
-            .selectMany(member => member.items)
-            .any(item => item.name === 'Potion');
-
 Query#plus(value[, ...]);
 
     Injects one or more additional values into the pipeline.  This differs from
@@ -712,21 +717,6 @@ Query#random(count);
 
     Note: Because the samples taken are independent, this can sample a result
           more than once; if you don't want duplicates, use `sample()` instead.
-
-Query#reduce(reducer[, seedValue]);
-
-    Runs the query and calls `reducer` for each result, assigning the return
-    value to an internal accumulator at each step.  The current value of the
-    accumulator is passed as the first argument to the reducer function, before
-    the value.  `seedValue` is the initial value of the accumulator.
-
-    This is a bit advanced, so to help illustrate, the query shown below will
-    compute the sum of all numbers in the array `numbers`:
-
-        sum = from(numbers).reduce((acc, v) => acc + v, 0);
-
-    Note: If `seedValue` is omitted, the first query result will be used as the
-          seed; in that case, `reduce` won't be called for that result.
 
 Query#remove([predicate]);
 
@@ -751,6 +741,16 @@ Query#select(mapper);
     Calls `mapper` for each item and uses whatever it returns as the new value
     for that item in subsequent operations.  The source array is not modified.
 
+Query#selectMany(mapper);
+
+    Similar to `Query#select`, but maps each value in the source sequence to a
+    list of values.  This is useful to expand a query into subcollections, for
+    example:
+
+        havePotions = from(partyMembers)
+            .selectMany(member => member.items)
+            .any(item => item.name === 'Potion');
+
 Query#shuffle();
 
     Shuffles all incoming values so that the rest of the query sees them in a
@@ -764,6 +764,21 @@ Query#single(predicate);
     Note: The second value that matches the predicate will terminate the query
           by throwing an error.  If there are no matching values, `undefined`
           is returned.
+
+Query#skip(count);
+
+    Filters out the first `count` results, passing the remainder on as-is.  The
+    source array is not modified.
+
+Query#skipLast(count);
+
+    Filters out the last `count` results, passing the remainder on as-is.  The
+    source array is not modified.
+
+Query#skipWhile(predicate);
+
+    Calls `predicate` for each result and filters out values until the first
+    time the predicate returns false, then passes the remainder on as-is.
 
 Query#take(count);
 
@@ -790,12 +805,6 @@ Query#toArray();
 
     Runs the query and returns the results in an array for later use.
 
-Query#uniq([keySelector]);
-
-    Filters out duplicate values.  If the mapping function `keySelector` is
-    provided, it will be called for each result; only the first value for which
-    a given key is selected will be kept.
-
 Query#update(mapper);
 
     Writes new values back into the source object or array.  `mapper` is the
@@ -803,15 +812,6 @@ Query#update(mapper);
 
     Note: As with `remove()`, `update()` cannot be used in a query containing
           whole-list transformations such as `shuffle()` or `reverse()`.
-
-Query#valueAt(index);
-
-    Gets the query result at the zero-based position specified by `index`, or
-    `undefined` if the index is out of range.
-
-    Note: In most cases, query results can only be accessed sequentially, so
-          this method should be used sparingly to avoid creating performance
-          issues.
 
 Query#where(predicate);
 
@@ -829,7 +829,7 @@ Query#zip(collection[, zip_mapper]);
     the first argument and the corresponding element from `collection` as the
     second.  It should return a single value to map these to.
 
-    The overall number of values produced is equal to either the number of
+    The number of results produced by `zip` is equal to either the number of
     query results, or the length of `collection`, whichever is less.
 
     Note: If `zip_mapper` is not provided, an array `[ a, b ]` will be produced
