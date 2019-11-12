@@ -21,6 +21,8 @@ v5.4.0 - TBD
 * Fixes a bug where `Query#any()` and `Query#all()` can return `undefined` in
   certain cases instead of a boolean value.
 * Fixes a bug where `Query#count()` can return `null` instead of `0`.
+* Fixes a bug where `require()` can't be used to load system modules like
+  `sphere-runtime`.
 
 
 v5.3.0 - December 25, 2018

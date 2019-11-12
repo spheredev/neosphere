@@ -1383,12 +1383,21 @@ js_install(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_require(int num_args, bool is_ctor, intptr_t magic)
 {
-	const char* const PATHS[] =
+	static const
+	struct search_path
 	{
-		"$/lib",
+		bool        node_compatible;
+		const char* path;
+	}
+	PATHS[] =
+	{
+		{ true,  "$/lib" },
+		{ false, "#/cell_modules" },
+		{ false, "#/runtime" },
 	};
 
 	const char* caller_id = NULL;
+	bool        node_compatible = true;
 	path_t*     path;
 	const char* specifier;
 
@@ -1405,13 +1414,14 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i], true)))
+		node_compatible = PATHS[i].node_compatible;
+		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i].path, node_compatible)))
 			break;  // short-circuit
 	}
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
 	
-	if (!try_eval_module(s_build->fs, path_cstr(path), true)) {
+	if (!try_eval_module(s_build->fs, path_cstr(path), node_compatible)) {
 		path_free(path);
 		jsal_throw();
 	}
