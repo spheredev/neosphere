@@ -540,6 +540,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\minisphere\tileset.c" />
     <ClCompile Include="..\src\minisphere\utility.c" />
     <ClCompile Include="..\src\minisphere\windowstyle.c" />
+    <ClCompile Include="..\src\shared\wildmatch.c" />
     <ClCompile Include="..\src\shared\xoroshiro.c" />
   </ItemGroup>
   <ItemGroup>
@@ -592,6 +593,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\minisphere\tileset.h" />
     <ClInclude Include="..\src\minisphere\utility.h" />
     <ClInclude Include="..\src\minisphere\windowstyle.h" />
+    <ClInclude Include="..\src\shared\wildmatch.h" />
     <ClInclude Include="..\src\shared\xoroshiro.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

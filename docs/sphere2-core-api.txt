@@ -769,6 +769,16 @@ FS.fullPath(pathname[, base_dir]); [API 1]
           returned by this function will end in a forward slash (`/`) even if
           the input pathname did not.
 
+FS.match(pattern, pathname); [NEW]
+
+    Determines whether `pathname` matches the glob pattern given by `pattern`
+    and returns `true` if it does.  Otherwise returns `false`.
+    
+    Note: Both `pattern` and `pathname` are SphereFS canonicalized befor
+          performing the check.  This means that a pattern such as `*.fat` will
+          be treated as though it were `$/*.fat` and matched against the
+          canonicalized pathname.
+
 FS.readFile(pathname[, data_type]); [API 1]
 
     Reads an entire file at once and returns the content.  The optional

@@ -1750,8 +1750,8 @@ js_FS_match(int num_args, bool is_ctor, intptr_t magic)
 	const char* filename;
 	const char* pattern;
 
-	filename = jsal_require_pathname(0, NULL);
-	pattern = jsal_require_string(1);
+	pattern = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(1, NULL);
 
 	jsal_push_boolean(wildmatch(pattern, filename, WM_WILDSTAR) == WM_MATCH);
 	return true;

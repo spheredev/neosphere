@@ -12,6 +12,8 @@ v5.4.0 - TBD
 * Adds TypeScript bindings (type declarations and `jsconfig.json`) to the
   `cell init` template.  This greatly improves the experience when developing
   Sphere projects in Visual Studio Code.
+* Adds a new `FS.match()` API for matching filenames and paths against "glob"
+  patterns such as `**/*.js`, useful for filtering `DirectoryStream` output.
 * Renames `Query#drop()` to `Query#skip()` for consistency with LINQ.
 * Renames `Query#reduce()` to `Query#aggregate()`.
 * Renames `Query#over()` to `Query#selectMany()`.

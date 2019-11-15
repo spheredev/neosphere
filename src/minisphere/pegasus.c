@@ -51,6 +51,7 @@
 #include "profiler.h"
 #include "sockets.h"
 #include "unicode.h"
+#include "wildmatch.h"
 #include "xoroshiro.h"
 
 #define API_VERSION 2
@@ -318,6 +319,7 @@ static bool js_FS_extensionOf                (int num_args, bool is_ctor, intptr
 static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileNameOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_match                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
@@ -658,6 +660,7 @@ pegasus_init(int api_level)
 	api_define_func("FS", "evaluateScript", js_FS_evaluateScript, 0);
 	api_define_func("FS", "fileExists", js_FS_fileExists, 0);
 	api_define_func("FS", "fullPath", js_FS_fullPath, 0);
+	api_define_func("FS", "match", js_FS_match, 0);
 	api_define_func("FS", "readFile", js_FS_readFile, 0);
 	api_define_func("FS", "relativePath", js_FS_relativePath, 0);
 	api_define_func("FS", "removeDirectory", js_FS_removeDirectory, 0);
@@ -2423,6 +2426,19 @@ js_FS_fullPath(int num_args, bool is_ctor, intptr_t magic)
 	pathname = jsal_require_pathname(0, base_pathname, false, false);
 
 	jsal_push_string(pathname);
+	return true;
+}
+
+static bool
+js_FS_match(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* filename;
+	const char* pattern;
+
+	pattern = jsal_require_pathname(0, NULL, false, false);
+	filename = jsal_require_pathname(1, NULL, false, false);
+
+	jsal_push_boolean(wildmatch(pattern, filename, WM_WILDSTAR) == WM_MATCH);
 	return true;
 }
 
