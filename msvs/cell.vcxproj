@@ -310,6 +310,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\cell\main.c" />
     <ClCompile Include="..\src\cell\spk_writer.c" />
     <ClCompile Include="..\src\cell\utility.c" />
+    <ClCompile Include="..\src\shared\wildmatch.c" />
     <ClCompile Include="..\src\shared\xoroshiro.c" />
   </ItemGroup>
   <ItemGroup>
@@ -333,6 +334,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\cell\cell.h" />
     <ClInclude Include="..\src\cell\spk_writer.h" />
     <ClInclude Include="..\src\cell\utility.h" />
+    <ClInclude Include="..\src\shared\wildmatch.h" />
     <ClInclude Include="..\src\shared\xoroshiro.h" />
     <ClInclude Include="resource1.h" />
   </ItemGroup>

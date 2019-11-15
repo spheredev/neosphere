@@ -44,6 +44,7 @@
 #include "utility.h"
 #include "visor.h"
 #include "xoroshiro.h"
+#include "wildmatch.h"
 
 struct build
 {
@@ -88,6 +89,7 @@ static bool js_FS_extensionOf                (int num_args, bool is_ctor, intptr
 static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileNameOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FS_match                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
@@ -212,6 +214,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_func("FS", "fileExists", js_FS_fileExists, 0);
 	api_define_func("FS", "fileNameOf", js_FS_fileNameOf, 0);
 	api_define_func("FS", "fullPath", js_FS_fullPath, 0);
+	api_define_func("FS", "match", js_FS_match, 0);
 	api_define_func("FS", "readFile", js_FS_readFile, 0);
 	api_define_func("FS", "relativePath", js_FS_relativePath, 0);
 	api_define_func("FS", "removeDirectory", js_FS_removeDirectory, 0);
@@ -1386,7 +1389,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	static const
 	struct search_path
 	{
-		bool        node_compatible;
+		bool        node_aware;
 		const char* path;
 	}
 	PATHS[] =
@@ -1414,7 +1417,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		node_compatible = PATHS[i].node_compatible;
+		node_compatible = PATHS[i].node_aware;
 		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i].path, node_compatible)))
 			break;  // short-circuit
 	}
@@ -1738,6 +1741,19 @@ js_FS_fullPath(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, origin_pathname);
 
 	jsal_push_string(filename);
+	return true;
+}
+
+static bool
+js_FS_match(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* filename;
+	const char* pattern;
+
+	filename = jsal_require_pathname(0, NULL);
+	pattern = jsal_require_string(1);
+
+	jsal_push_boolean(wildmatch(pattern, filename, WM_WILDSTAR) == WM_MATCH);
 	return true;
 }
 

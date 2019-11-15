@@ -1449,7 +1449,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	static const
 	struct search_path
 	{
-		bool        node_compatible;
+		bool        node_aware;
 		const char* path;
 	}
 	PATHS[] =
@@ -1476,7 +1476,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		node_compatible = PATHS[i].node_compatible;
+		node_compatible = PATHS[i].node_aware;
 		if ((path = find_module_file(specifier, caller_id, PATHS[i].path, node_compatible)))
 			break;  // short-circuit
 	}
