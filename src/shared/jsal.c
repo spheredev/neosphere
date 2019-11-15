@@ -1505,6 +1505,8 @@ jsal_push_new_host_object(js_finalizer_t finalizer, size_t data_size, void* *out
 int
 jsal_push_new_iterator(int for_index)
 {
+	/* [ ... list_obj ... ] -> [ ... list_obj ... iter ] */
+	
 	JsValueRef key_list;
 	JsValueRef object;
 
