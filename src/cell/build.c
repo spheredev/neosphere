@@ -1308,20 +1308,22 @@ js_files(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 2)
 		recursive = jsal_require_boolean(1);
 
-	// extract the wildcard, if any, from the given path
+	// extract the wildcard, if any, from the given path.  if only a directory name is given,
+	// assume '*' for the wildcard pattern.
 	path = path_new(pattern);
-	if (!path_is_file(path)) {
-		wildcard = strdup("*");
-	}
-	else {
+	if (path_is_file(path)) {
 		wildcard = strdup(path_filename(path));
 		path_strip(path);
 	}
+	else {
+		wildcard = strdup("*");
+	}
 
 	// this is potentially recursive, so we defer to make_file_targets() to construct
-	// the targets.  note: 'path' should always be a directory at this point.
+	// the targets.  note: 'path' is assumed to refer to a directory here.
 	targets = vector_new(sizeof(target_t*));
 	make_file_targets(s_build->fs, wildcard, path, NULL, targets, recursive, s_build->timestamp);
+	path_free(path);
 	free(wildcard);
 
 	if (vector_len(targets) == 0)
@@ -1334,6 +1336,7 @@ js_files(int num_args, bool is_ctor, intptr_t magic)
 		jsal_push_class_obj(CELL_TARGET, *p, false);
 		jsal_put_prop_index(-2, iter.index);
 	}
+	vector_free(targets);
 	return true;
 }
 
