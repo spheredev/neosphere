@@ -660,7 +660,6 @@ pegasus_init(int api_level)
 	api_define_func("FS", "evaluateScript", js_FS_evaluateScript, 0);
 	api_define_func("FS", "fileExists", js_FS_fileExists, 0);
 	api_define_func("FS", "fullPath", js_FS_fullPath, 0);
-	api_define_func("FS", "match", js_FS_match, 0);
 	api_define_func("FS", "readFile", js_FS_readFile, 0);
 	api_define_func("FS", "relativePath", js_FS_relativePath, 0);
 	api_define_func("FS", "removeDirectory", js_FS_removeDirectory, 0);
@@ -989,6 +988,7 @@ pegasus_init(int api_level)
 		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
 		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
+		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
 		api_define_prop("Mouse", "position", false, js_Mouse_get_position, NULL);
