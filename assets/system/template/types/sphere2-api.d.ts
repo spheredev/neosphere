@@ -855,6 +855,16 @@ declare namespace FS
 	 */
 	function fullPath(path: string, baseDirectory?: string): string;
 
+	/**
+	 * Check whether a given path matches the specified wildcard pattern.
+	 * @param patterns One or more wildcard patterns using globbing syntax where `?` matches a
+	 *                 single character, `*` matches any number of characters except for slash
+	 *                 (`/`), and `**` is the same but also matches slashes.
+	 * @param path     The path to check.
+	 * @returns `true` if the path matches the pattern, otherwise `false`.
+	 */
+	function match(path: string, patterns: string | string[]): boolean;
+
 	function readFile(path: string): string;
 
 	/**
@@ -1881,17 +1891,15 @@ declare namespace Z
 
 declare module 'sphere-runtime'
 {
-	const from: typeof import('from').default;
-	const Console: typeof import('console').default;
-	const Easing: typeof import('tween').Easing;
-	const FocusTarget: typeof import('focus-target').default;
-	const Logger: typeof import('logger').default;
-	const Music: typeof import('music').default;
-	const Prim: typeof import('prim').default;
-	const Query: typeof import('from').Query;
-	const Random: typeof import('random').default;
-	const Thread: typeof import('thread').default;
-	const Tween: typeof import('tween').default;
+	export { default as Console } from 'console';
+	export { default as FocusTarget } from 'focus-target';
+	export { default as from, Query } from 'from';
+	export { default as Logger } from 'logger';
+	export { default as Music } from 'music';
+	export { default as Prim } from 'prim';
+	export { default as Random } from 'random';
+	export { default as Tween, Easing } from 'tween';
+	export { default as Thread } from 'thread';
 }
 
 declare module 'console'
