@@ -38,7 +38,7 @@
 
 void        jsal_push_lstring_t    (const lstring_t* string);
 lstring_t*  jsal_require_lstring_t (int at_index);
-const char* jsal_require_pathname  (int index, const char* origin_name);
+const char* jsal_require_pathname  (int index, const char* origin_name, bool need_write);
 int         fcopy                  (const char* src_filename, const char* dst_filename, int skip_if_exists);
 bool        fexist                 (const char* filename);
 void*       fslurp                 (const char* filename, size_t *out_size);

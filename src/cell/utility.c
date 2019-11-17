@@ -58,7 +58,7 @@ jsal_require_lstring_t(int index)
 }
 
 const char*
-jsal_require_pathname(int index, const char* origin_name)
+jsal_require_pathname(int index, const char* origin_name, bool need_write)
 {
 	static int     s_index = 0;
 	static path_t* s_paths[10];
@@ -78,7 +78,9 @@ jsal_require_pathname(int index, const char* origin_name)
 	if (strcmp(prefix, "%") == 0)
 		jsal_error(JS_REF_ERROR, "SphereFS prefix '%%/' is reserved for future use");
 	if (strcmp(prefix, "~") == 0)
-		jsal_error(JS_TYPE_ERROR, "No save directory in Cell");
+		jsal_error(JS_TYPE_ERROR, "Cell doesn't support the '~/' SphereFS prefix");
+	if (need_write && (strcmp(prefix, "$") == 0 || strcmp(prefix, "#") == 0))
+		jsal_error(JS_TYPE_ERROR, "File or directory is not writable '%s'", pathname);
 	if (s_paths[s_index] != NULL)
 		path_free(s_paths[s_index]);
 	s_paths[s_index] = path;

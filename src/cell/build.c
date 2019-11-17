@@ -1476,7 +1476,7 @@ js_new_DirectoryStream(int num_args, bool is_ctor, intptr_t magic)
 	bool         recursive = false;
 	directory_t* stream;
 
-	pathname = jsal_require_pathname(0, NULL);
+	pathname = jsal_require_pathname(0, NULL, false);
 	if (num_args >= 2 && jsal_is_object_coercible(1)) {
 		jsal_require_object(1);
 		jsal_get_prop_string(1, "recursive");
@@ -1631,7 +1631,7 @@ js_FS_createDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
-	filename = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(0, NULL, true);
 
 	if (fs_mkdir(s_build->fs, filename) != 0)
 		jsal_error(JS_ERROR, "Couldn't create directory '%s'", filename);
@@ -1643,7 +1643,7 @@ js_FS_deleteFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
-	filename = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(0, NULL, true);
 
 	if (!fs_unlink(s_build->fs, filename))
 		jsal_error(JS_ERROR, "Couldn't delete file '%s'", filename);
@@ -1655,7 +1655,7 @@ js_FS_directoryExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* dirname;
 
-	dirname = jsal_require_pathname(0, NULL);
+	dirname = jsal_require_pathname(0, NULL, false);
 
 	jsal_push_boolean(fs_dir_exists(s_build->fs, dirname));
 	return true;
@@ -1667,7 +1667,7 @@ js_FS_directoryOf(int num_args, bool is_ctor, intptr_t magic)
 	path_t*     path;
 	const char* pathname;
 
-	pathname = jsal_require_pathname(0, NULL);
+	pathname = jsal_require_pathname(0, NULL, false);
 
 	path = path_strip(path_new(pathname));
 	jsal_push_string(path_cstr(path));
@@ -1682,7 +1682,7 @@ js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
 	path_t*     path;
 	const char* pathname;
 
-	pathname = jsal_require_pathname(0, NULL);
+	pathname = jsal_require_pathname(0, NULL, false);
 
 	path = path_new(pathname);
 	if (path_is_file(path)) {
@@ -1707,7 +1707,7 @@ js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
-	filename = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(0, NULL, false);
 
 	jsal_push_boolean(fs_fexist(s_build->fs, filename));
 	return true;
@@ -1720,7 +1720,7 @@ js_FS_fileNameOf(int num_args, bool is_ctor, intptr_t magic)
 	path_t*     path;
 	const char* pathname;
 
-	pathname = jsal_require_pathname(0, NULL);
+	pathname = jsal_require_pathname(0, NULL, false);
 
 	path = path_new(pathname);
 	filename = path_filename(path);
@@ -1740,8 +1740,8 @@ js_FS_fullPath(int num_args, bool is_ctor, intptr_t magic)
 	const char* origin_pathname = NULL;
 
 	if (num_args >= 2)
-		origin_pathname = jsal_require_pathname(1, NULL);
-	filename = jsal_require_pathname(0, origin_pathname);
+		origin_pathname = jsal_require_pathname(1, NULL, false);
+	filename = jsal_require_pathname(0, origin_pathname, false);
 
 	jsal_push_string(filename);
 	return true;
@@ -1754,11 +1754,11 @@ js_FS_match(int num_args, bool is_ctor, intptr_t magic)
 	bool        matched = false;
 	const char* pattern;
 
-	filename = jsal_require_pathname(1, NULL);
+	filename = jsal_require_pathname(1, NULL, false);
 	if (jsal_is_array(0)) {
 		jsal_push_new_iterator(0);
 		while (!matched && jsal_next(-1)) {
-			pattern = jsal_require_pathname(-1, NULL);
+			pattern = jsal_require_pathname(-1, NULL, false);
 			if (wildmatch(pattern, filename, WM_WILDSTAR) == WM_MATCH)
 				matched = true;
 			jsal_pop(1);
@@ -1768,7 +1768,7 @@ js_FS_match(int num_args, bool is_ctor, intptr_t magic)
 		return true;
 	}
 	else if (jsal_is_string(0)) {
-		pattern = jsal_require_pathname(0, NULL);
+		pattern = jsal_require_pathname(0, NULL, false);
 		jsal_push_boolean(wildmatch(pattern, filename, WM_WILDSTAR) == WM_MATCH);
 		return true;
 	}
@@ -1785,7 +1785,7 @@ js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 	size_t      file_size;
 	const char* filename;
 
-	filename = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(0, NULL, false);
 
 	if (!(file_data = fs_fslurp(s_build->fs, filename, &file_size)))
 		jsal_error(JS_ERROR, "Couldn't read file '%s'", filename);
@@ -1801,8 +1801,8 @@ js_FS_relativePath(int num_args, bool is_ctor, intptr_t magic)
 	path_t*     path;
 	const char* pathname;
 
-	pathname = jsal_require_pathname(0, NULL);
-	base_pathname = jsal_require_pathname(1, NULL);
+	pathname = jsal_require_pathname(0, NULL, false);
+	base_pathname = jsal_require_pathname(1, NULL, false);
 
 	path = fs_relative_path(pathname, base_pathname);
 	jsal_push_string(path_cstr(path));
@@ -1815,7 +1815,7 @@ js_FS_removeDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
-	filename = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(0, NULL, true);
 
 	if (!fs_rmdir(s_build->fs, filename))
 		jsal_error(JS_ERROR, "Couldn't remove directory '%s'", filename);
@@ -1828,8 +1828,8 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	const char* old_name;
 	const char* new_name;
 
-	old_name = jsal_require_pathname(0, NULL);
-	new_name = jsal_require_pathname(1, NULL);
+	old_name = jsal_require_pathname(0, NULL, true);
+	new_name = jsal_require_pathname(1, NULL, true);
 
 	if (!fs_rename(s_build->fs, old_name, new_name))
 		jsal_error(JS_ERROR, "Couldn't rename '%s' to '%s'", old_name, new_name);
@@ -1842,7 +1842,7 @@ js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 	const char* filename;
 	lstring_t*  text = NULL;
 
-	filename = jsal_require_pathname(0, NULL);
+	filename = jsal_require_pathname(0, NULL, true);
 	text = jsal_require_lstring_t(1);
 
 	if (!fs_fspew(s_build->fs, filename, lstr_cstr(text), lstr_len(text)))
@@ -1859,12 +1859,12 @@ js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 	const char*  filename;
 	const char*  mode;
 
-	filename = jsal_require_pathname(0, NULL);
+	jsal_require_string(0);
 	file_op = jsal_require_int(1);
-
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
 		jsal_error(JS_RANGE_ERROR, "Invalid file-op constant");
 
+	filename = jsal_require_pathname(0, NULL, file_op != FILE_OP_READ);
 	if (file_op == FILE_OP_UPDATE && !fs_fexist(s_build->fs, filename))
 		file_op = FILE_OP_WRITE;  // ...because 'r+b' requires the file to exist.
 	mode = file_op == FILE_OP_READ ? "rb"
@@ -2000,7 +2000,7 @@ js_new_Image(int num_args, bool is_ctor, intptr_t magic)
 	const char* pathname;
 	image_t*    image;
 
-	pathname = jsal_require_pathname(0, NULL);
+	pathname = jsal_require_pathname(0, NULL, false);
 
 	if (!(image = image_load(s_build->fs, pathname)))
 		jsal_error(JS_ERROR, "Couldn't open image file '%s'", pathname);
@@ -2075,7 +2075,7 @@ js_Image_saveAs(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, CELL_IMAGE);
-	pathname = jsal_require_pathname(0, NULL);
+	pathname = jsal_require_pathname(0, NULL, true);
 
 	// if the image's pixel buffer has ever been accessed in JavaScript, make sure
 	// the modified data gets written back before saving.
