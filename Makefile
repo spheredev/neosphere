@@ -28,6 +28,7 @@ engine_sources=src/minisphere/main.c \
    src/shared/sockets.c \
    src/shared/unicode.c \
    src/shared/vector.c \
+   src/shared/wildmatch.c \
    src/shared/xoroshiro.c \
    src/minisphere/animation.c \
    src/minisphere/atlas.c \
@@ -84,6 +85,7 @@ cell_sources=src/cell/main.c \
    src/shared/path.c \
    src/shared/unicode.c \
    src/shared/vector.c \
+   src/shared/wildmatch.c \
    src/shared/xoroshiro.c \
    src/cell/build.c \
    src/cell/fs.c \
