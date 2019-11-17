@@ -1,6 +1,27 @@
 Release Notes
 =============
 
+miniSphere 5.4
+--------------
+
+* To improve sandboxing and ensure out-of-source builds always work correctly,
+  starting with this version, Cell code can no longer write files and
+  directories under `$/`.  This change might break builds that depend on `$/`
+  being writable.
+
+* `Mouse#getEvent()` no longer returns `null` in case of an empty queue.
+  Instead it now returns an object whose `.event` is set to `null` in this case
+  to facilitate safe destructuring of the return value.  This might break code
+  that specifically checked for a return value of `null`.  The old behavior is
+  being treated as a bug and the change may be backported if necessary, so any
+  code that does this should be updated as soon as possible.
+
+* Several `Query` methods were renamed to align with the corresponding LINQ
+  names.  This will inevitably break code that uses these methods; check the
+  changelog for the full list.  Note that the Sphere Runtime API is not yet
+  frozen.
+
+
 miniSphere 5.3
 --------------
 
