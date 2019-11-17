@@ -1754,9 +1754,9 @@ js_FS_match(int num_args, bool is_ctor, intptr_t magic)
 	bool        matched = false;
 	const char* pattern;
 
-	filename = jsal_require_pathname(1, NULL, false);
-	if (jsal_is_array(0)) {
-		jsal_push_new_iterator(0);
+	filename = jsal_require_pathname(0, NULL, false);
+	if (jsal_is_array(1)) {
+		jsal_push_new_iterator(1);
 		while (!matched && jsal_next(-1)) {
 			pattern = jsal_require_pathname(-1, NULL, false);
 			if (wildmatch(pattern, filename, WM_WILDSTAR) == WM_MATCH)
@@ -1767,13 +1767,13 @@ js_FS_match(int num_args, bool is_ctor, intptr_t magic)
 		jsal_push_boolean(matched);
 		return true;
 	}
-	else if (jsal_is_string(0)) {
-		pattern = jsal_require_pathname(0, NULL, false);
+	else if (jsal_is_string(1)) {
+		pattern = jsal_require_pathname(1, NULL, false);
 		jsal_push_boolean(wildmatch(pattern, filename, WM_WILDSTAR) == WM_MATCH);
 		return true;
 	}
 	else {
-		jsal_error(JS_TYPE_ERROR, "'FS.match' first argument must be array or string");
+		jsal_error(JS_TYPE_ERROR, "'FS.match' second argument must be a string or array of strings");
 	}
 }
 
