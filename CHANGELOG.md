@@ -29,6 +29,8 @@ v5.4.0 - TBD
 * Fixes a bug where `Query#count()` can return `null` instead of `0`.
 * Fixes a bug where `require()` can't be used to load system modules like
   `sphere-runtime`.
+* Fixes a bug where Cell fails to properly normalize the pathname passed to
+  `Tool#stage()`, potentially leading to undesirable behavior later.
 
 
 v5.3.0 - December 25, 2018
