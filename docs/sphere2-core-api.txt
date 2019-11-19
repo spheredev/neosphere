@@ -589,6 +589,19 @@ DirectoryStream#next(); [API 1]
             directory paths end in a slash (`/`) per SphereFS canonicalization
             rules.
 
+		value.depth [NEW]
+
+		    The subdirectory nesting level of the entry, relative to the
+		    directory being streamed.  This is equal to the number of nested
+		    subdirectories which must be entered to find this entry.
+
+		value.extension [NEW]
+
+		    The filename extension (everything starting from the last dot `.`),
+		    for file entries.  If the file has no extension, this is `null`.
+
+		    This property is not present for directory entries.
+
     Note: This method is compatible with the JavaScript ES6 iterator protocol,
           allowing you to use the DirectoryStream as input to a query.  Refer
           to the Sphere Runtime API Reference for more information about
@@ -774,7 +787,7 @@ FS.match(pathname, pattern); [NEW]
     Determines whether `pathname` matches the pattern string(s) given by
     `pattern`.  `pattern` can be either a single pattern, or an array of them.
     Returns `true` if any of the patterns match, otherwise `false`.
-    
+
     Note: Both `pathname` and `pattern` are SphereFS canonicalized before
           performing the check.  This means that a pattern such as `*.fat` will
           be treated as though it were `@/*.fat` and matched against the
@@ -1366,7 +1379,7 @@ Mouse#position [R/O] [NEW]
     Gets the immediate X and Y position of the mouse cursor relative to the
 	game's rendering area.  This returns an array `[ x, y ]` which can be
 	conveniently taken apart with destructuring assignment:
-	
+
 	    let [ mouseX, mouseY ] = mouse.position;
 
 Mouse#x [R/O] [API 1]
@@ -1389,7 +1402,7 @@ Mouse#getEvent(); [API 1]
 
             A MouseKey value representing the type of the click or other event.
             For example, a left mouse click is represented as MouseKey.Left.
-            
+
             Note: If the queue was empty, this will be `null` and the remaining
                   properties will be undefined.
 

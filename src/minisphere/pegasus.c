@@ -2130,7 +2130,9 @@ js_DirectoryStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_DirectoryStream_next(int num_args, bool is_ctor, intptr_t magic)
 {
+	int           depth;
 	directory_t*  directory;
+	const char*   extension;
 	const path_t* entry_path;
 	path_t*       rel_path;
 
@@ -2143,16 +2145,29 @@ js_DirectoryStream_next(int num_args, bool is_ctor, intptr_t magic)
 	if (entry_path != NULL) {
 		rel_path = path_dup(entry_path);
 		path_relativize(rel_path, directory_path(directory));
+		extension = path_extension(entry_path);
+		depth = path_num_hops(rel_path);
+		if (!path_is_file(rel_path))
+			--depth;  // directory path, don't count the last hop
 
 		jsal_push_boolean_false();
 		jsal_put_prop_key(-2, s_key_done);
 		jsal_push_new_object();
+		jsal_push_boolean(!path_is_file(entry_path));
+		jsal_put_prop_string(-2, "isDirectory");
 		jsal_push_string(path_cstr(rel_path));
 		jsal_put_prop_string(-2, "fileName");
 		jsal_push_string(path_cstr(entry_path));
 		jsal_put_prop_string(-2, "fullPath");
-		jsal_push_boolean(!path_is_file(entry_path));
-		jsal_put_prop_string(-2, "isDirectory");
+		jsal_push_int(depth);
+		jsal_put_prop_string(-2, "depth");
+		if (path_is_file(entry_path)) {
+			if (extension != NULL)
+				jsal_push_string(extension);
+			else
+				jsal_push_null();
+			jsal_put_prop_string(-2, "extension");
+		}
 		jsal_put_prop_key(-2, s_key_value);
 
 		path_free(rel_path);
