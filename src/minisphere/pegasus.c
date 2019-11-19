@@ -2159,14 +2159,16 @@ js_DirectoryStream_next(int num_args, bool is_ctor, intptr_t magic)
 		jsal_put_prop_string(-2, "fileName");
 		jsal_push_string(path_cstr(entry_path));
 		jsal_put_prop_string(-2, "fullPath");
-		jsal_push_int(depth);
-		jsal_put_prop_string(-2, "depth");
-		if (path_is_file(entry_path)) {
-			if (extension != NULL)
-				jsal_push_string(extension);
-			else
-				jsal_push_null();
-			jsal_put_prop_string(-2, "extension");
+		if (s_api_level >= 3) {
+			jsal_push_int(depth);
+			jsal_put_prop_string(-2, "depth");
+			if (path_is_file(entry_path)) {
+				if (extension != NULL)
+					jsal_push_string(extension);
+				else
+					jsal_push_null();
+				jsal_put_prop_string(-2, "extension");
+			}
 		}
 		jsal_put_prop_key(-2, s_key_value);
 
