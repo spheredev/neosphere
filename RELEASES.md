@@ -4,6 +4,18 @@ Release Notes
 miniSphere 5.4
 --------------
 
+* `DirectoryStream` now includes additional `depth` and `extension` properties
+  on result objects, making it easier to filter directory entries based on
+  those criteria.  Keep in mind that since the new properties are part of the
+  experimental API level 3, they will be disabled in retrograde mode.
+
+* Cell now supports using a directory name for `Tool#stage()`.  Directories are
+  considered to be permanantly out-of-date, so Cell will always run a tool
+  which claims to build one.  This eases things for tools that dynamically
+  determine their sources or create multiple output files, which would often be
+  considered erroneously up-to-date because Cell didn't consider all the files
+  involved.
+
 * To improve sandboxing and ensure out-of-source builds always work correctly,
   starting with this version, Cell code can no longer write files and
   directories under `$/`.  This change might break builds that depend on `$/`
