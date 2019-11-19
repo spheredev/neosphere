@@ -170,7 +170,13 @@ new Tool(buildFunc[, status_text]);
     `status_text` is how Cell will describe the build step, e.g. "compiling" or
     "compressing".  If the status text is omitted, "building" is the default.
 
-Tool#stage(filename, sources);
+Tool#stage(pathname, sources);
 
-    Instructs Cell to build `filename` using this Tool.  Returns a Target
-    object representing the target file.
+    Instructs Cell to build `pathname`, which can name either a file or
+    directory, using this Tool.  Returns a Target object representing the
+    output.
+
+    Note: If `pathname` is a directory path, Cell will consider the target to
+          be perpetually out-of-date and run the tool during every build.  If
+          you don't want this, you need to specify a file so Cell can use it
+          for timestamp comparisons.

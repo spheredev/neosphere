@@ -16,6 +16,7 @@ v5.4.0 - TBD
   patterns such as `**/*.js`, useful for filtering `DirectoryStream` output.
 * Adds new `depth` and `extension` properties to `DirectoryStream` output to
   make filtering even easier.
+* Adds support for using a directory as the output of `Tool#stage()` in Cell.
 * Improves sandboxing by disabling write access to `$/` in Cell code.
 * Renames `Query#drop()` to `Query#skip()` for consistency with LINQ.
 * Renames `Query#reduce()` to `Query#aggregate()`.

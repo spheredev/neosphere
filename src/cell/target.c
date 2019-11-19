@@ -55,7 +55,8 @@ target_new(const path_t* name, fs_t* fs, const path_t* path, tool_t* tool, time_
 	target_t* target;
 
 	target = calloc(1, sizeof(target_t));
-	target->name = path_dup(name);
+	if (name != NULL)
+		target->name = path_dup(name);
 	target->fs = fs;
 	target->path = path_dup(path);
 	target->sources = vector_new(sizeof(target_t*));
@@ -158,8 +159,9 @@ target_build(target_t* target, visor_t* visor, bool force_build)
 	// switch to a hash-based solution like in SCons.
 	if (fs_stat(target->fs, path_cstr(target->path), &sb) == 0)
 		last_time = sb.st_mtime;
-	if (force_build || target->timestamp > last_time)
+	if (force_build || (sb.st_mode & S_IFDIR) == S_IFDIR || target->timestamp > last_time) {
 		is_outdated = true;
+	}
 	else {
 		iter = vector_enum(in_paths);
 		while ((path_ptr = iter_next(&iter))) {

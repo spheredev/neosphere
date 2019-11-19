@@ -137,10 +137,11 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	// only issue a warning because it might have been intentional (unlikely, but possible).
 	if (result_ok) {
 		if (fs_stat(fs, path_cstr(out_path), &stats) != 0) {
-			visor_error(visor, "target file not found after build");
+			visor_error(visor, "target %s not found after build",
+				path_is_file(out_path) ? "file" : "directory");
 			result_ok = false;
 		}
-		else if (stats.st_mtime == last_mtime) {
+		else if (path_is_file(out_path) && stats.st_mtime == last_mtime) {
 			visor_warn(visor, "target file unchanged after build");
 		}
 	}

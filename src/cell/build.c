@@ -2463,12 +2463,13 @@ js_Tool_finalize(void* host_ptr)
 static bool
 js_Tool_stage(int num_args, bool is_ctor, intptr_t magic)
 {
-	int       length;
-	path_t*   name;
-	path_t*   out_path;
-	target_t* source;
-	target_t* target;
-	tool_t*   tool;
+	const char* filename;
+	int         length;
+	path_t*     name = NULL;
+	path_t*     out_path;
+	target_t*   source;
+	target_t*   target;
+	tool_t*     tool;
 
 	int i;
 
@@ -2479,7 +2480,9 @@ js_Tool_stage(int num_args, bool is_ctor, intptr_t magic)
 	if (num_args >= 3)
 		jsal_require_object_coercible(2);
 
-	name = path_new(path_filename(out_path));
+	filename = path_filename(out_path);
+	if (filename != NULL)
+		name = path_new(filename);
 	if (num_args >= 3) {
 		if (jsal_get_prop_string(2, "name")) {
 			path_free(name);
