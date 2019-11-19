@@ -1860,9 +1860,12 @@ js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 	filename = jsal_require_pathname(0, NULL, true);
 	text = jsal_require_lstring_t(1);
 
+	visor_begin_op(s_build->visor, "writing '%s'", filename);
 	if (!fs_fspew(s_build->fs, filename, lstr_cstr(text), lstr_len(text)))
 		jsal_error(JS_ERROR, "Couldn't write file '%s'", filename);
 	lstr_free(text);
+	visor_add_file(s_build->visor, filename);
+	visor_end_op(s_build->visor);
 	return false;
 }
 

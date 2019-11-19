@@ -18,6 +18,8 @@ v5.4.0 - TBD
   make filtering even easier.
 * Adds support for using a directory as the output of `Tool#stage()` in Cell.
 * Improves sandboxing by disabling write access to `$/` in Cell code.
+* Improves Cell build hygiene by tracking files created with `FS.writeFile()`
+  as build artifacts and cleaning them as necessary.
 * Renames `Query#drop()` to `Query#skip()` for consistency with LINQ.
 * Renames `Query#reduce()` to `Query#aggregate()`.
 * Renames `Query#over()` to `Query#selectMany()`.

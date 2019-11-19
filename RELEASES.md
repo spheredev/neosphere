@@ -9,18 +9,6 @@ miniSphere 5.4
   those criteria.  Keep in mind that since the new properties are part of the
   experimental API level 3, they will be disabled in retrograde mode.
 
-* Cell now supports using a directory name for `Tool#stage()`.  Directories are
-  considered to be permanantly out-of-date, so Cell will always run a tool
-  which claims to build one.  This eases things for tools that dynamically
-  determine their sources or create multiple output files, which would often be
-  considered erroneously up-to-date because Cell didn't consider all the files
-  involved.
-
-* To improve sandboxing and ensure out-of-source builds always work correctly,
-  starting with this version, Cell code can no longer write files and
-  directories under `$/`.  This change might break builds that depend on `$/`
-  being writable.
-
 * `Mouse#getEvent()` no longer returns `null` in case of an empty queue.
   Instead it now returns an object whose `.event` is set to `null` in this case
   to facilitate safe destructuring of the return value.  This might break code
@@ -33,6 +21,21 @@ miniSphere 5.4
   changelog for the full list.  Note that the Sphere Runtime API is not yet
   frozen.
 
+* Cell now supports using a directory name for `Tool#stage()`.  Directories are
+  considered to be permanantly out-of-date, so Cell will always run a tool
+  which claims to build one.  This eases things for tools that dynamically
+  determine their sources or create multiple output files, which would often be
+  considered erroneously up-to-date because Cell didn't consider all the files
+  involved.
+
+* To improve sandboxing and ensure out-of-source builds always work correctly,
+  starting with this version, Cell code can no longer write files and
+  directories under `$/`.  This change might break builds that depend on `$/`
+  being writable.
+
+* Cell now tracks all files created using `FS.writeFile()` as build artifacts.
+  These files will be therefore now be deleted when running `cell clean`, even
+  if they have no corresponding `Target`.
 
 miniSphere 5.3
 --------------
