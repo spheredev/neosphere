@@ -48,9 +48,9 @@
 
 struct build
 {
-	vector_t*     artifacts;
 	bool          crashed;
 	fs_t*         fs;
+	vector_t*     old_artifacts;
 	vector_t*     targets;
 	time_t        timestamp;
 	visor_t*      visor;
@@ -294,7 +294,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	build->visor = visor;
 	build->fs = fs;
-	build->artifacts = artifacts;
+	build->old_artifacts = artifacts;
 	build->targets = vector_new(sizeof(target_t*));
 	return build;
 }
@@ -313,7 +313,7 @@ build_free(build_t* build)
 			visor_num_warns(build->visor));
 	}
 
-	iter = vector_enum(build->artifacts);
+	iter = vector_enum(build->old_artifacts);
 	while (iter_next(&iter))
 		free(*(char**)iter.ptr);
 	iter = vector_enum(build->targets);
@@ -467,10 +467,9 @@ build_init_dir(build_t* it)
 bool
 build_package(build_t* build, const char* filename)
 {
-	const path_t* in_path;
+	path_t*       in_path;
 	path_t*       out_path;
 	spk_writer_t* spk;
-	target_t**    target_ptr;
 
 	iter_t iter;
 
@@ -484,17 +483,17 @@ build_package(build_t* build, const char* filename)
 	package_dir(build, spk, "#/scripts", "#/scripts", true);
 	package_dir(build, spk, "#/shaders", "#/shaders", true);
 	package_dir(build, spk, "#/", "#/", false);
-	iter = vector_enum(build->targets);
-	while ((target_ptr = iter_next(&iter))) {
-		in_path = target_path(*target_ptr);
-		if (path_num_hops(in_path) == 0 || !path_hop_is(in_path, 0, "@"))
+	iter = vector_enum(visor_filenames(build->visor));
+	while (iter_next(&iter)) {
+		in_path = path_new(*(const char**)iter.ptr);
+		if (path_num_hops(in_path) == 0 || !path_hop_is(in_path, 0, "@") || !path_is_file(in_path)) {
+			path_free(in_path);
 			continue;
-		out_path = path_dup(target_path(*target_ptr));
+		}
+		out_path = path_dup(in_path);
 		path_remove_hop(out_path, 0);
 		visor_begin_op(build->visor, "packaging '%s'", path_cstr(out_path));
-		spk_add_file(spk, build->fs,
-			path_cstr(target_path(*target_ptr)),
-			path_cstr(out_path));
+		spk_add_file(spk, build->fs, path_cstr(in_path), path_cstr(out_path));
 		path_free(out_path);
 		visor_end_op(build->visor);
 	}
@@ -546,7 +545,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		goto finished;
 	}
 
-	// build all relevant targets
+	// build all primary targets
 	iter = vector_enum(build->targets);
 	while ((target_ptr = iter_next(&iter))) {
 		path = target_path(*target_ptr);
@@ -572,7 +571,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		iter = vector_enum(build->targets);
 		while ((target_ptr = iter_next(&iter))) {
 			path = target_path(*target_ptr);
-			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
+			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@") || !path_is_file(path))
 				continue;
 			if (!(source_path = target_source_path(*target_ptr)))
 				continue;
@@ -638,7 +637,7 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 
 	visor_begin_op(build->visor, "cleaning up outdated artifacts");
 	filenames = visor_filenames(build->visor);
-	iter_i = vector_enum(build->artifacts);
+	iter_i = vector_enum(build->old_artifacts);
 	while (iter_next(&iter_i)) {
 		keep_file = false;
 		if (keep_targets) {
