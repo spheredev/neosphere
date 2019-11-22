@@ -2310,7 +2310,7 @@ declare module 'music'
 	export default Music;
 
 	/**
-	 * Provides convenient functions for managing background music.
+	 * Provides utility functions for managing background music.
 	 */
 	namespace Music
 	{
@@ -2363,6 +2363,9 @@ declare module 'prim'
 {
 	export default Prim;
 
+	/**
+	 * Provides utility functions for rendering primitive shapes such as circles and rectangles.
+	 */
 	namespace Prim
 	{
 		function blit(surface: Surface, x: number, y: number, texture: Texture, mask?: Color): void;
@@ -2378,6 +2381,12 @@ declare module 'prim'
 		function drawSolidRectangle(surface: Surface, x: number, y: number, width: number, height: number, colorUL: Color, colorUR: Color, colorLR: Color, colorLL: Color): void;
 		function drawSolidTriangle(surface: Surface, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, color: Color): void;
 		function drawSolidTriangle(surface: Surface, x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, color1: Color, color2: Color, color3: Color): void;
+
+		/**
+		 * Fill an entire surface with a specified color.
+		 * @param surface The surface to fill.
+		 * @param color   Color to fill the surface with. Can be translucent, in which case the fill will be too.
+		 */
 		function fill(surface: Surface, color: Color): void;
 	}
 }
@@ -2386,6 +2395,9 @@ declare module 'random'
 {
 	export default Random;
 
+	/**
+	 * Provides utility functions for generating different kinds of random values.
+	 */
 	namespace Random
 	{
 		function chance(odds: number): boolean;
@@ -2431,27 +2443,62 @@ declare module 'tween'
 	export default Tween;
 	export { Easing };
 
+	/**
+	 * Specifies the interpolation method for a tween.
+	 */
 	enum Easing
 	{
+		/** Overshoots the target values, then reverses into place. */
 		Back,
+
 		Bounce,
 		Circular,
 		Cubic,
 		Elastic,
 		Exponential,
+
+		/** Linear interpolation: Animate smoothly from one value to the next, with no acceleration. */
 		Linear,
+
 		Quadratic,
 		Quartic,
 		Quintic,
 		Sine,
 	}
 
-	class Tween<K extends PropertyKey>
+	/**
+	 * Animates the numeric values of an object by interpolating with a specified
+	 * easing function.
+	 */
+	class Tween<T extends object>
 	{
-		constructor(object: Record<K, number>, easingType?: Easing);
+		/**
+		 * Construct a new tween that animates a given object.
+		 * @param object     Object to animate with this tween.
+		 * @param easingType Easing function to use; `Easing.Sine` if not specified.
+		 */
+		constructor(object: T, easingType?: Easing);
 
-		easeIn(newValues: Record<K, number>, numFrames: number): Promise<void>;
-		easeInOut(newValues: Record<K, number>, numFrames: number): Promise<void>;
-		easeOut(newValues: Record<K, number>, numFrames: number): Promise<void>;
+		/**
+		 * Animate by easing in. This inverts the easing function and may look bad with certain ones.
+		 * @param newValues Object containing the values to animate towards.
+		 * @param numFrames Number of frames over which to animate.
+		 */
+		easeIn(newValues: Partial<T>, numFrames: number): Promise<void>;
+
+		/**
+		 * Animate by easing in *and* out. Approximately equivalent to easing in up to the halfway
+		 * point, then easing out the rest of the way.
+		 * @param newValues Object containing the values to animate towards.
+		 * @param numFrames Number of frames over which to animate.
+		 */
+		easeInOut(newValues: Partial<T>, numFrames: number): Promise<void>;
+
+		/**
+		 * Animate by easing out.
+		 * @param newValues Object containing the values to animate towards.
+		 * @param numFrames Number of frames over which to animate.
+		 */
+		easeOut(newValues: Partial<T>, numFrames: number): Promise<void>;
 	}
 }
