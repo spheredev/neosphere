@@ -708,16 +708,16 @@ find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_o
 		}
 		free(filename);
 		if (fs_fexist(fs, path_cstr(path))) {
-			if (strcmp(path_filename(path), "package.json") != 0) {
-				return path;
-			}
-			else {
+			if (strcmp(path_filename(path), "package.json") == 0) {
 				if (!(main_path = load_package_json(path_cstr(path))))
 					goto next_filename;
 				if (fs_fexist(fs, path_cstr(main_path))) {
 					path_free(path);
 					return main_path;
 				}
+			}
+			else {
+				return path;
 			}
 		}
 
