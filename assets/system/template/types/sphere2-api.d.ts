@@ -1908,25 +1908,61 @@ declare module 'console'
 
 	import Thread from 'thread';
 
-	interface ConsoleOptions
+	/**
+	 * Specifies options for creating a console.
+	 */
+	interface ConsoleOptions extends JobOptions
 	{
+		/**
+		 * The hotkey the player can use to display the console, or `null` to disable keyboard
+		 * activation.
+		 * @default null
+		 */
 		hotKey?: Key | null;
-		inBackground?: boolean;
+
+		/**
+		 * SphereFS path of a file to which all console output will be written, or `null` to disable
+		 * logging.
+		 * @default null
+		 */
 		logFileName?: string | null;
+
+		/**
+		 * The mouse button the player can use to display the console, or `null` to disable mouse
+		 * activation.
+		 * @default null
+		 */
 		mouseKey?: MouseKey | null;
+
+		/**
+		 * Text to show to the left of the command prompt.
+		 * @default "$"
+		 */
 		prompt?: string;
-		priority?: number;
 	}
 
 	class Console extends Thread
 	{
 		constructor(options?: ConsoleOptions);
 
+		/** Whether the console is currently being displayed to the player. */
 		visible: boolean;
 
 		defineObject<T>(name: string, thisArg: T, methods: {} & ThisType<T>): void;
+
+		/**
+		 * Write a line of text to the console.
+		 * @param texts One or more strings to write. If more than one string is provided, they will
+		 *              be separated will chevrons (`>>`).
+		 */
 		log(...texts: string[]): void;
+
+		/**
+		 * Start up the console. The console will be initially invisible, but the player can
+		 * activate it using its configured hotkey.
+		 */
 		start(): Promise<void>;
+
 		undefineObject(name: string): void;
 	}
 }
@@ -1935,20 +1971,49 @@ declare module 'focus-target'
 {
 	export default FocusTarget;
 
+	/**
+	 * Specifies options for creating a focus target.
+	 */
 	interface FocusTargetOptions
 	{
+		/**
+		 * Priority of the focus target. Higher-priority targets can take focus away from
+		 * lower-priority ones, but not vice versa.
+		 */
 		priority?: number;
 	}
 
+	/**
+	 * Represents an entity which can have focus within a prioritized Z-order. Only one
+	 * `FocusTarget` can have the focus at a time, so this is useful for routing user input.
+	 */
 	class FocusTarget
 	{
+		/**
+		 * Construct a new `FocusTarget`.
+		 * @param options Options for creating the new focus target.
+		 */
 		constructor(options?: FocusTargetOptions);
 
-		/** `true` if the focus target currently has focus, otherwise `false`. */
+		/** `true` if the focus target currently has the focus, otherwise `false`. */
 		readonly hasFocus: boolean;
 
+		/**
+		 * Get rid of this focus target by feeding it to the nearest eaty pig. If you don't feed it
+		 * enough focus targets, *you* get eaten. OH NO AAAAAAHHHHHHHHHH\*munch\*
+		 */
 		dispose(): void;
+
+		/**
+		 * Attempts to give this focus target the focus. If a higher-priority target currently has
+		 * the focus, this will not steal it.
+		 */
 		takeFocus(): void;
+
+		/**
+		 * Yield the focus to whichever focus target previously had it. If this target does not
+		 * currently have the focus, `yield` has no effect.
+		 */
 		yield(): void;
 	}
 }
@@ -2310,7 +2375,7 @@ declare module 'music'
 	export default Music;
 
 	/**
-	 * Provides utility functions for managing background music.
+	 * Provides utility functions for controlling background music.
 	 */
 	namespace Music
 	{
@@ -2400,11 +2465,47 @@ declare module 'random'
 	 */
 	namespace Random
 	{
+		/**
+		 * Take a random sample which is either `true` or `false` depending on given odds.
+		 * @param odds A number between `0.0` and `1.0` specifying the percentage chance of
+		 *             returning `true`.
+		 */
 		function chance(odds: number): boolean;
+
+		/**
+		 * Compute a random integer within a specified range.
+		 * @param min Highest value to return.
+		 * @param max Highest value to return.
+		 */
 		function discrete(min: number, max: number): number;
+
+		/**
+		 * Compute a random value according to the specified average. Over many samples, this
+		 * function will tend to a normal (Gaussian) distribution, or "bell curve".
+		 * @param mean Mean value. The sample distribution is centered around this value.
+		 * @param sigma Standard deviation. 68% of results are within 1x standard deviation, 95% are
+		 *              within 2x, etc.
+		 */
 		function normal(mean: number, sigma: number): number;
+
+		/**
+		 * Sample a single random value from an array.
+		 * @param array Array whose values are being sampled.
+		 */
 		function sample<T>(array: T[]): T;
+
+		/**
+		 * Compute a randomized alphanumeric string.
+		 * @param length Number of characters to generate. If not specified, defaults to `10`.
+		 */
 		function string(length?: number): string;
+
+		/**
+		 * Compute a random value according to the specified average value and variance.
+		 * @param mean     Mean value. The sample distribution is centered around this value.
+		 * @param variance Maximum amount by which the value is allowed to deviate from the mean, in
+		 *                 either direction ("give or take").
+		 */
 		function uniform(mean: number, variance: number): number;
 	}
 }
@@ -2413,27 +2514,97 @@ declare module 'thread'
 {
 	export default Thread;
 
-	class Thread
+	/**
+	 * Represents a set of Dispatch jobs with associated state which can be controlled as a unit.
+	 * @abstract
+	 */
+	abstract class Thread
 	{
+		/**
+		 * Resolves a promise when one or more threads terminate. Use with `await`.
+		 * @param threads One or more threads to wait for. The promise resolves only once all
+		 *                specified threads have finished.
+		 */
 		static join(...threads: Thread[]): Promise<void>;
 
+		/**
+		 * Construct a new `Thread`, optionally specifying options for its Dispatch jobs.
+		 * @param options Options for the thread's recurring Dispatch jobs.
+		 */
 		constructor(options?: JobOptions);
 
+		/** Whether the thread currently has input focus. */
 		readonly hasFocus: boolean;
+
+		/**
+		 * Priority of this thread's Dispatch jobs. Higher priority threads are updated earlier and
+		 * rendered later in a frame.
+		 */
 		readonly priority: number;
+
+		/** Whether the thread is currently running (paused threads count as running). */
 		readonly running: boolean;
 
+		/**
+		 * Override this method to execute code when the thread starts up.
+		 */
 		on_startUp(): void;
+
+		/**
+		 * Override this method to execute code when the thread terminates or when the engine exits,
+		 * whichever comes first.
+		 */
 		on_shutDown(): void;
+
+		/**
+		 * Override this to check for input during the Update phase of each frame. Unlike
+		 * `on_update`, this is called only on frames in which the thread has the focus.
+		 */
 		on_inputCheck(): void;
+
+		/**
+		 * Override this to execute code during the Render phase of each frame.
+		 */
 		on_render(): void;
+
+		/**
+		 * Override this to execute code during the Update phase of each frame.
+		 */
 		on_update(): void;
 
+		/**
+		 * Pause updates for this thread. While paused, the thread will continue to render, but will
+		 * not update or check for input.
+		 */
 		pause(): void;
+
+		/**
+		 * Resume updates for this thread. If the thread isn't paused, this has no effect.
+		 */
 		resume(): void;
+
+		/**
+		 * Start execution of the thread and resolve a promise when the thread has fully started--which
+		 * may take several frames if its `on_startUp` handler is `async`.
+		 */
 		start(): Promise<void>;
+
+		/**
+		 * Shut down the thread, completely cancelling its Dispatch jobs. `on_shutDown` will be
+		 * called.
+		 */
 		stop(): void;
+
+		/**
+		 * Attempt to give this thread input focus. If a higher-priority `FocusTarget` or `Thread`
+		 * currently has the focus, it won't be stolen.
+		 */
 		takeFocus(): void;
+
+		/**
+		 * Give the focus back to whichever `FocusTarget` or `Thread` had it previously. Has no
+		 * effect if this thread doesn't currently have the focus.
+		 */
 		yieldFocus(): void;
 	}
 }
@@ -2467,37 +2638,39 @@ declare module 'tween'
 	}
 
 	/**
-	 * Animates the numeric values of an object by interpolating with a specified
-	 * easing function.
+	 * Provides a means to adjust the numeric values of an object over time via interpolation.
 	 */
 	class Tween<T extends object>
 	{
 		/**
-		 * Construct a new tween that animates a given object.
+		 * Construct a new `Tween` that can be used to adjust a specified object.
 		 * @param object     Object to animate with this tween.
 		 * @param easingType Easing function to use; `Easing.Sine` if not specified.
 		 */
 		constructor(object: T, easingType?: Easing);
 
 		/**
-		 * Animate by easing in. This inverts the easing function and may look bad with certain ones.
-		 * @param newValues Object containing the values to animate towards.
-		 * @param numFrames Number of frames over which to animate.
+		 * Adjust by easing in. This inverts the easing function and may look bad with certain ones.
+		 * @param newValues Object specifying the target values for each property.
+		 * @param numFrames Number of frames over which to do the adjustment.
+		 * @returns A promise that resolves once the adjustment is complete.
 		 */
 		easeIn(newValues: Partial<T>, numFrames: number): Promise<void>;
 
 		/**
-		 * Animate by easing in *and* out. Approximately equivalent to easing in up to the halfway
+		 * Adjust by easing in *and* out. Approximately equivalent to easing in up to the halfway
 		 * point, then easing out the rest of the way.
-		 * @param newValues Object containing the values to animate towards.
-		 * @param numFrames Number of frames over which to animate.
+		 * @param newValues Object specifying the target values for each property.
+		 * @param numFrames Number of frames over which to do the adjustment.
+		 * @returns A promise that resolves once the adjustment is complete.
 		 */
 		easeInOut(newValues: Partial<T>, numFrames: number): Promise<void>;
 
 		/**
-		 * Animate by easing out.
-		 * @param newValues Object containing the values to animate towards.
-		 * @param numFrames Number of frames over which to animate.
+		 * Adjust by easing out.
+		 * @param newValues Object specifying the target values for each property.
+		 * @param numFrames Number of frames over which to do the adjustment.
+		 * @returns A promise that resolves once the adjustment is complete.
 		 */
 		easeOut(newValues: Partial<T>, numFrames: number): Promise<void>;
 	}
