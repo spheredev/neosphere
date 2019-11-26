@@ -4,6 +4,12 @@ Release Notes
 miniSphere 5.4
 --------------
 
+* miniSphere and Cell now support the `.cjs` file extension introduced in
+  Node.js v13.2.0.  Scripts with this extension are always loaded as CommonJS
+  modules, regardless of whether `require()` or `import` is used.  This can be
+  helpful if you need to load a CommonJS module using a relative path, since
+  relative `require()` is not supported in ESM files.
+
 * `DirectoryStream` now includes additional `depth` and `extension` properties
   on result objects, making it easier to filter directory entries based on
   those criteria.  Keep in mind that since the new properties are part of the
@@ -36,6 +42,7 @@ miniSphere 5.4
 * Cell now tracks all files created using `FS.writeFile()` as build artifacts.
   These files will be therefore now be deleted when running `cell clean`, even
   if they have no corresponding `Target`.
+
 
 miniSphere 5.3
 --------------

@@ -17,6 +17,8 @@ v5.4.0 - TBD
 * Adds new `depth` and `extension` properties to `DirectoryStream` output to
   make filtering even easier.
 * Adds support for using a directory as the output of `Tool#stage()` in Cell.
+* Adds support for the `.cjs` file extension to facilitate smoother interop
+  between ESM and CommonJS code.
 * Improves sandboxing by disabling write access to `$/` in Cell code.
 * Improves Cell build hygiene by tracking files created with `FS.writeFile()`
   as build artifacts and cleaning them as necessary.

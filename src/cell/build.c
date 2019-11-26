@@ -670,10 +670,12 @@ find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_o
 		{ true,  "%s" },
 		{ true,  "%s.mjs" },
 		{ true,  "%s.js" },
+		{ true,  "%s.cjs" },
 		{ false, "%s.json" },
 		{ false, "%s/package.json" },
 		{ true,  "%s/index.mjs" },
 		{ true,  "%s/index.js" },
+		{ true,  "%s/index.cjs" },
 		{ false, "%s/index.json" },
 	};
 
@@ -694,7 +696,7 @@ find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_o
 	}
 
 	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
-		if (!node_compatible && !PATTERNS[i].esm_aware)
+		if (!PATTERNS[i].esm_aware && !node_compatible)
 			continue;
 		filename = strnewf(PATTERNS[i].name, id);
 		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
@@ -742,6 +744,8 @@ handle_module_import(void)
 
 	const char* caller_id = NULL;
 	path_t*     path;
+	char*       shim_name;
+	lstring_t*  shim_source;
 	char*       source;
 	size_t      source_len;
 	const char* specifier;
@@ -770,11 +774,25 @@ handle_module_import(void)
 		jsal_throw();
 	}
 
-	source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
-	jsal_push_string(path_cstr(path));
-	jsal_dup(-1);
-	jsal_push_lstring(source, source_len);
-	free(source);
+	if (path_extension_is(path, ".cjs")) {
+		// ES module shim, allows 'import' to work with CommonJS modules
+		shim_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		shim_source = lstr_newf(
+			"/* ES module shim for CommonJS module */\n"
+			"export default require(\"%s\");", path_cstr(path));
+		jsal_push_string(shim_name);
+		jsal_dup(-1);
+		jsal_push_lstring_t(shim_source);
+		free(shim_name);
+		lstr_free(shim_source);
+	}
+	else {
+		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
+		jsal_push_string(path_cstr(path));
+		jsal_dup(-1);
+		jsal_push_lstring(source, source_len);
+		free(source);
+	}
 }
 
 static bool
@@ -970,7 +988,8 @@ try_eval_module(fs_t* fs, const char* filename, bool node_compatible)
 	dir_path = path_strip(path_dup(file_path));
 
 	// never evaluate JSON as ESM, let the CommonJS loader deal with it
-	is_esm_module = (!node_compatible || path_extension_is(file_path, ".mjs"))
+	is_esm_module = (path_extension_is(file_path, ".mjs") || !node_compatible)
+		&& !path_extension_is(file_path, ".cjs")
 		&& !path_extension_is(file_path, ".json");
 	if (is_esm_module) {
 		source = fs_fslurp(fs, filename, &source_size);
