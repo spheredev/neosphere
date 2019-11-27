@@ -1,8 +1,16 @@
 {
 	"compilerOptions": {
-		"target": "esnext",
-		"module": "esnext",
-		"lib": [ "esnext" ],
-		"strict": true
-	}
+		"target": "es2017",
+		"lib": [ "es2017" ],
+		"module": "es2015",
+		"baseUrl": "lib",
+		"paths": {
+			"@/*": [ "../*" ],
+			"$/*": [ "../scripts/*" ]
+		}
+	},
+	"exclude": [
+		"Cellscript.js",
+		"dist/**"
+	]
 }

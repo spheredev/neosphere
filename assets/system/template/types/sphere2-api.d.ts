@@ -717,7 +717,7 @@ declare class Color
 declare class DirectoryStream implements Iterable<DirectoryEntry>
 {
 	/**
-	 * Constructs a new `DirectoryStream` to enumerate the given directory.
+	 * Construct a new `DirectoryStream` for a specified directory.
 	 * @param directoryName SphereFS path to the directory whose contents will be enumerated.
 	 * @param options       Options for creating the new directory stream.
 	 */
@@ -1889,6 +1889,10 @@ declare namespace Z
 	function inflate(data: ArrayBuffer | ArrayBufferView, maxSize?: number): ArrayBuffer;
 }
 
+/**
+ * Collects all the built-in classes and objects provided as part of the Sphere Runtime into one
+ * convenient package.
+ */
 declare module 'sphere-runtime'
 {
 	export { default as Console } from 'console';
@@ -1941,14 +1945,30 @@ declare module 'console'
 		prompt?: string;
 	}
 
+	/**
+	 * Represents a text console. The player can use the console to view internal log messages as
+	 * well as enter commands to control the game's low-level workings.
+	 */
 	class Console extends Thread
 	{
+		/**
+		 * Construct a new console. There is rarely a need to make more than one.
+		 * @param options Options for the new console.
+		 */
 		constructor(options?: ConsoleOptions);
 
-		/** Whether the console is currently being displayed to the player. */
+		/** Whether this console is currently being displayed to the player. */
 		visible: boolean;
 
-		defineObject<T>(name: string, thisArg: T, methods: {} & ThisType<T>): void;
+		/**
+		 * Registers an object and associated set of commands with the console.
+		 * @param name    The name of the object, as used in commands. Note that if this contains
+		 *                any spaces, the player will have to quote it.
+		 * @param object  The JavaScript object to be registered.
+		 * @param methods An object whose methods correspond to commands. When the user types the
+		 *                associated command, its method is called with `this` set to `thisArg`.
+		 */
+		defineObject<T>(name: string, object: T, methods: Record<string, (this: T, ...args: (string | number)[]) => void>): void;
 
 		/**
 		 * Write a line of text to the console.
@@ -1958,11 +1978,15 @@ declare module 'console'
 		log(...texts: string[]): void;
 
 		/**
-		 * Start up the console. The console will be initially invisible, but the player can
-		 * activate it using its configured hotkey.
+		 * Start up the console. The console is initially invisible, but the player can activate it
+		 * using its configured hotkey.
 		 */
 		start(): Promise<void>;
 
+		/**
+		 * Unregisters a set of commands that was previously registered with `defineObject`.
+		 * @param name
+		 */
 		undefineObject(name: string): void;
 	}
 }
@@ -1984,8 +2008,8 @@ declare module 'focus-target'
 	}
 
 	/**
-	 * Represents an entity which can have focus within a prioritized Z-order. Only one
-	 * `FocusTarget` can have the focus at a time, so this is useful for routing user input.
+	 * Represents an entity which can receive input focus. It is strictly enforced that only one
+	 * `FocusTarget` can have the focus at a time and Z-order is automatically managed.
 	 */
 	class FocusTarget
 	{
@@ -2360,12 +2384,35 @@ declare module 'logger'
 {
 	export default Logger;
 
+	/**
+	 * Provides a means to log individual lines of text to a file, with associated timestamps for
+	 * each entry.
+	 */
 	class Logger
 	{
+		/**
+		 * Construct a `Logger` which writes to a specified file. If the file doesn't exist, it will
+		 * be created; otherwise, new entries will be appended to the existing file.
+		 * @param fileName SphereFS path of the log file.
+		 */
 		constructor(fileName: string);
 
+		/**
+		 * Begin a grouping of related log entries. Everything written between this and the
+		 * corresponding `endGroup` will be indented under the grouping's header.
+		 * @param title Name of the grouping to start.
+		 */
 		beginGroup(title: string): void;
+
+		/**
+		 * Close the most recently opened group of log entries.
+		 */
 		endGroup(): void;
+
+		/**
+		 * Write a timestamped log entry to this log file.
+		 * @param text The text of the log entry.
+		 */
 		write(text: string): void;
 	}
 }
@@ -2424,6 +2471,40 @@ declare module 'music'
 	}
 }
 
+declare module 'pact'
+{
+	export default Pact;
+
+	/**
+	 * Represents a promise which can be resolved or rejected externally.
+	 */
+	class Pact<T> extends Promise<T>
+	{
+		/**
+		 * Construct a new, unsettled pact.
+		 */
+		constructor();
+
+		/**
+		 * Reject this pact's promise.
+		 * @param reason Value to reject the promise with.
+		 */
+		reject(reason?: any): void;
+
+		/**
+		 * Resolve this pact's promise.
+		 * @param value Value to resolve the promise with.
+		 */
+		resolve(value?: T): void;
+
+		/**
+		 * Get a standard promise which resolves or rejects with the same result as this pact.
+		 * Unlike the pact, the promise cannot be settled externally.
+		 */
+		toPromise(): Promise<T>;
+	}
+}
+
 declare module 'prim'
 {
 	export default Prim;
@@ -2433,8 +2514,32 @@ declare module 'prim'
 	 */
 	namespace Prim
 	{
+		/**
+		 * Render an entire texture as an 2D image to a surface.
+		 * @param surface Surface on which to render the image.
+		 * @param x       X coordinate of the upper-left corner on the surface.
+		 * @param y       Y coordinate of the upper-left corner on the surface.
+		 * @param texture Texture to be rendered.
+		 * @param mask    Optional color whose RGBA values will be multiplied with those of the
+		 *                texture. Use to tint the rendered image.
+		 */
 		function blit(surface: Surface, x: number, y: number, texture: Texture, mask?: Color): void;
+
+		/**
+		 * Render a portion of a texture as an 2D image to a surface.
+		 * @param surface Surface on which to render the image.
+		 * @param x       X coordinate of the upper-left corner on the surface.
+		 * @param y       Y coordinate of the upper-left corner on the surface.
+		 * @param texture Texture to be rendered.
+		 * @param sx      X coordinate, in pixels, of the top-left corner of the texture portion to draw.
+		 * @param sy      Y coordinate, in pixels, of the top-left corner of the texture portion to draw.
+		 * @param width   Width, in pixels, of the texture portion to draw.
+		 * @param height  Height, in pixels, of the texture portion to draw.
+		 * @param mask    Optional color whose RGBA values will be multiplied with those of the
+		 *                texture. Use to tint the rendered image.
+		 */
 		function blitSection(surface: Surface, x: number, y: number, texture: Texture, sx: number, sy: number, width: number, height: number, mask?: Color): void;
+
 		function drawCircle(surface: Surface, x: number, y: number, radius: number, color: Color): void;
 		function drawEllipse(surface: Surface, x: number, y: number, rx: number, ry: number, color: Color): void;
 		function drawLine(surface: Surface, x1: number, y1: number, x2: number, y2: number, thickness: number, color: Color, color2?: Color): void;
@@ -2521,7 +2626,7 @@ declare module 'thread'
 	abstract class Thread
 	{
 		/**
-		 * Resolves a promise when one or more threads terminate. Use with `await`.
+		 * Resolve a promise when one or more threads terminate. Use with `await`.
 		 * @param threads One or more threads to wait for. The promise resolves only once all
 		 *                specified threads have finished.
 		 */
