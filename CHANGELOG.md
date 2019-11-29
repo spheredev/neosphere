@@ -9,9 +9,6 @@ v5.4.0 - TBD
   `takeWhile`, and `zip`.
 * Adds `Mouse#position` which returns a tuple `[x, y]` that can be destructured.
 * Adds mouse-button activation support to the `console` module.
-* Adds TypeScript bindings (type declarations and `jsconfig.json`) to the
-  `cell init` template.  This greatly improves the experience when developing
-  Sphere projects in Visual Studio Code.
 * Adds a new `FS.match()` API for matching filenames and paths against "glob"
   patterns such as `**/*.js`, useful for filtering `DirectoryStream` output.
 * Adds new `depth` and `extension` properties to `DirectoryStream` output to
