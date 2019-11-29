@@ -1318,7 +1318,7 @@ find_module_file(const char* specifier, const char* origin, const char* lib_dir_
 
 	int i;
 
-	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0) {
+	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0 || game_is_prefix_path(g_game, specifier)) {
 		// resolve module relative to calling module
 		origin_path = path_new(origin != NULL ? origin : "./");
 		strict_mode = game_strict_imports(g_game) && !node_compatible;
@@ -1334,7 +1334,7 @@ find_module_file(const char* specifier, const char* origin, const char* lib_dir_
 		if (strict_mode && !PATTERNS[i].strict_aware)
 			continue;
 		filename = strnewf(PATTERNS[i].name, specifier);
-		if (strncmp(specifier, "@/", 2) == 0 || strncmp(specifier, "$/", 2) == 0 || strncmp(specifier, "~/", 2) == 0 || strncmp(specifier, "#/", 2) == 0) {
+		if (game_is_prefix_path(g_game, specifier)) {
 			path = game_full_path(g_game, filename, NULL, false);
 		}
 		else {
@@ -1397,9 +1397,6 @@ handle_module_import(void)
 	// doesn't know where the request came from in that case
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of ESM code");
-
-	if (game_is_prefix_path(g_game, specifier) && game_strict_imports(g_game))
-		jsal_error(JS_URI_ERROR, "SphereFS prefix in import specifier '%s'", specifier);
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if ((path = find_module_file(specifier, caller_id, PATHS[i], false)))
