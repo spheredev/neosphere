@@ -765,14 +765,8 @@ handle_module_import(void)
 		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i], false)))
 			break;  // short-circuit
 	}
-	if (path == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
-		if (caller_id != NULL) {
-			jsal_push_string(caller_id);
-			jsal_put_prop_string(-2, "url");
-		}
-		jsal_throw();
-	}
+	if (path == NULL)
+		jsal_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
 
 	if (path_extension_is(path, ".cjs")) {
 		// ES module shim, allows 'import' to work with CommonJS modules

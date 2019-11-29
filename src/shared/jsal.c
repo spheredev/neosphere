@@ -2950,6 +2950,7 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModu
 	const char*       source;
 	size_t            source_len;
 	const char*       url;
+	JsValueRef        url_ref;
 
 	if (s_import_callback == NULL)
 		return JsErrorInvalidArgument;
@@ -2989,6 +2990,13 @@ on_fetch_imported_module(JsModuleRecord importer, JsValueRef module_name, JsModu
 	}
 	else {
 		exception = pop_value();
+		if (importer != NULL) {
+			JsGetModuleHostInfo(importer, JsModuleHostInfo_Url, &url_ref);
+			push_value(exception, true);
+			push_value(url_ref, true);
+			jsal_put_prop_string(-2, "url");
+			jsal_pop(1);
+		}
 		push_value(module_name, true);
 		specifier = jsal_get_string(-1);
 		module = get_module_record(specifier, importer, specifier, &is_new_module);
