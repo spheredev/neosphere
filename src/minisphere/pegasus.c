@@ -525,7 +525,7 @@ static void js_VertexList_finalize      (void* host_ptr);
 
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
-static path_t*   find_module_file            (const char* id, const char* origin, const char* sys_origin, bool node_compatible);
+static path_t*   find_module_file            (const char* specifier, const char* origin, const char* lib_dir_name, bool node_compatible);
 static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
@@ -1287,49 +1287,54 @@ create_joystick_objects(void)
 }
 
 static path_t*
-find_module_file(const char* id, const char* origin, const char* sys_origin, bool node_compatible)
+find_module_file(const char* specifier, const char* origin, const char* lib_dir_name, bool node_compatible)
 {
 	static const
 	struct pattern
 	{
 		bool        esm_aware;
+		bool        strict_aware;
 		const char* name;
 	}
 	PATTERNS[] =
 	{
-		{ true,  "%s" },
-		{ true,  "%s.mjs" },
-		{ true,  "%s.js" },
-		{ true,  "%s.cjs" },
-		{ false, "%s.json" },
-		{ false, "%s/package.json" },
-		{ true,  "%s/index.mjs" },
-		{ true,  "%s/index.js" },
-		{ true,  "%s/index.cjs" },
-		{ false, "%s/index.json" },
+		{ true,  true,  "%s" },
+		{ true,  false, "%s.mjs" },
+		{ true,  false, "%s.js" },
+		{ true,  false, "%s.cjs" },
+		{ false, false, "%s.json" },
+		{ false, false, "%s/package.json" },
+		{ true,  false, "%s/index.mjs" },
+		{ true,  false, "%s/index.js" },
+		{ true,  false, "%s/index.cjs" },
+		{ false, false, "%s/index.json" },
 	};
 
 	char*   filename;
 	path_t* main_path;
 	path_t* origin_path;
 	path_t* path;
+	bool    strict_mode = false;
 
 	int i;
 
-	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0) {
+	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0) {
 		// resolve module relative to calling module
 		origin_path = path_new(origin != NULL ? origin : "./");
+		strict_mode = game_strict_imports(g_game) && !node_compatible;
 	}
 	else {
 		// resolve module from designated module repository
-		origin_path = path_new_dir(sys_origin);
+		origin_path = path_new_dir(lib_dir_name);
 	}
 
 	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
 		if (!PATTERNS[i].esm_aware && !node_compatible)
 			continue;
-		filename = strnewf(PATTERNS[i].name, id);
-		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
+		if (strict_mode && !PATTERNS[i].strict_aware)
+			continue;
+		filename = strnewf(PATTERNS[i].name, specifier);
+		if (strncmp(specifier, "@/", 2) == 0 || strncmp(specifier, "$/", 2) == 0 || strncmp(specifier, "~/", 2) == 0 || strncmp(specifier, "#/", 2) == 0) {
 			path = game_full_path(g_game, filename, NULL, false);
 		}
 		else {
@@ -1393,16 +1398,15 @@ handle_module_import(void)
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of ESM code");
 
+	if (game_is_prefix_path(g_game, specifier) && game_strict_imports(g_game))
+		jsal_error(JS_URI_ERROR, "SphereFS prefix in import specifier '%s'", specifier);
+
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if ((path = find_module_file(specifier, caller_id, PATHS[i], false)))
 			break;  // short-circuit
 	}
 	if (path == NULL) {
 		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
-		if (caller_id != NULL) {
-			jsal_push_string(debugger_source_name(caller_id));
-			jsal_put_prop_string(-2, "url");
-		}
 		free(caller_id);
 		free(specifier);
 		jsal_throw();

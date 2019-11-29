@@ -66,13 +66,14 @@ struct game
 	bool           fullscreen;
 	js_ref_t*      manifest;
 	lstring_t*     name;
+	package_t*     package;
 	size2_t        resolution;
 	bool           retrograde;
 	path_t*        root_path;
 	fs_safety_t    safety;
 	lstring_t*     save_id;
 	path_t*        script_path;
-	package_t*     package;
+	bool           strict_imports;
 	lstring_t*     summary;
 	enum fs_type   type;
 	int            version;
@@ -535,6 +536,12 @@ game_script_path(const game_t* it)
 	return it->script_path;
 }
 
+bool
+game_strict_imports(const game_t* it)
+{
+	return it->strict_imports;
+}
+
 const char*
 game_summary(const game_t* it)
 {
@@ -545,6 +552,16 @@ int
 game_version(const game_t* it)
 {
 	return it->version;
+}
+
+bool
+game_is_prefix_path(const game_t* it, const char* pathname)
+{
+	// this may look unsafe but it actually isn't: if the `strpbrk()` check passes,
+	// then we know the string is at least one character long, and accessing `pathname[1]`
+	// is thus safe.
+	return strpbrk(pathname, "@#~$%") == pathname
+		&& (pathname[1] == '/' || pathname[1] == '\\');
 }
 
 bool
@@ -1129,14 +1146,16 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	if (jsal_get_prop_string(-11, "development") && jsal_is_object(-1)) {
 		if (jsal_get_prop_string(-1, "emptyPromises") && jsal_is_boolean(-1))
 			game->empty_promises = jsal_get_boolean(-1);
-		if (jsal_get_prop_string(-2, "sandbox") && jsal_is_string(-1)) {
+		if (jsal_get_prop_string(-2, "retrograde") && jsal_is_boolean(-1))
+			game->retrograde = jsal_get_boolean(-1);
+		if (jsal_get_prop_string(-3, "strictImports") && jsal_is_boolean(-1))
+			game->strict_imports = jsal_get_boolean(-1);
+		if (jsal_get_prop_string(-4, "sandbox") && jsal_is_string(-1)) {
 			sandbox_mode = jsal_get_string(-1);
 			game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
 				: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED
 				: FS_SAFETY_FULL;
 		}
-		if (jsal_get_prop_string(-3, "retrograde") && jsal_is_boolean(-1))
-			game->retrograde = jsal_get_boolean(-1);
 	}
 #endif
 
