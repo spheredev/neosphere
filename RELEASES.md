@@ -10,6 +10,13 @@ miniSphere 5.4
   helpful if you need to load a CommonJS module using a relative path, since
   relative `require()` is not supported in ESM files.
 
+* miniSphere 5.4 adds a new optional `strictImports` flag in the `development`
+  section of `game.json`.  This flag, when enabled, causes SpheRun to enforce
+  that your `import` specifiers are Oozaru-compatible--in particular, any
+  imports referring to files in the project must include the file extension,
+  such as `.js`.  Like other `development` flags, `strictImports` has no effect
+  in production.
+
 * `DirectoryStream` now includes additional `depth` and `extension` properties
   on result objects, making it easier to filter directory entries based on
   those criteria.  Keep in mind that since the new properties are part of the

@@ -1,13 +1,13 @@
 miniSphere Changelog
 ====================
 
-v5.4.0 - TBD
-------------
+v5.4.0 - December 1, 2019
+-------------------------
 
 * Adds several `Query` methods: `apply`, `call`, `concat`, `elementAt`, `join`,
   `memoize`, `pull`, `single`, `skipLast`, `skipWhile`, `takeLast`,
   `takeWhile`, and `zip`.
-* Adds `Mouse#position` which returns a tuple `[x, y]` that can be destructured.
+* Adds `Mouse#position` which returns a tuple `[x, y]` for easy destructuring.
 * Adds mouse-button activation support to the `console` module.
 * Adds a new `FS.match()` API for matching filenames and paths against "glob"
   patterns such as `**/*.js`, useful for filtering `DirectoryStream` output.

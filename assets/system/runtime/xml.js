@@ -30,7 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-const sax = require('#/lib/sax');
+import sax from '#/lib/sax.cjs';
 
 export default
 class XML

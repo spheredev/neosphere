@@ -123,7 +123,7 @@ all: minisphere spherun cell ssj
 .PHONY: deps
 deps:
 	mkdir -p dep
-	wget -O dep/libChakraCore.tar.gz https://aka.ms/chakracore/cc_linux_x64_1_11_10
+	wget -O dep/libChakraCore.tar.gz https://aka.ms/chakracore/cc_linux_x64_1_11_15
 	cd dep && tar xzf libChakraCore.tar.gz --strip-components=1 ChakraCoreFiles/include ChakraCoreFiles/lib
 	cp dep/lib/libChakraCore.so $(installdir)/lib
 

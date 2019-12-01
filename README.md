@@ -26,7 +26,7 @@ Download
 ========
 
 The latest stable miniSphere release at the time of this writing is
-**miniSphere 5.3.0**, released on Tuesday, December 25, 2018.  miniSphere
+**miniSphere 5.4.0**, released on Sunday, December 1, 2019.  miniSphere
 binaries are provided through GitHub, and the latest version is always
 available for download here:
 
