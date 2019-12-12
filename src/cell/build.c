@@ -1248,7 +1248,7 @@ write_manifests(build_t* build, bool debugging)
 		if (jsal_get_prop_string(-3, "emptyPromises")) {
 			if (!jsal_is_boolean(-1)) {
 				visor_error(build->visor, "'emptyPromises': must be boolean (true or false)");
-				jsal_pop(11);
+				jsal_pop(12);
 				visor_end_op(build->visor);
 				return false;
 			}
@@ -1256,7 +1256,22 @@ write_manifests(build_t* build, bool debugging)
 			if (flag_enabled && !debugging)
 				visor_print(build->visor, "uncaught promise rejections will be fatal");
 		}
-		jsal_pop(3);
+		if (jsal_get_prop_string(-4, "strictImports")) {
+			if (!jsal_is_boolean(-1)) {
+				visor_error(build->visor, "'strictImports': must be boolean (true or false)");
+				jsal_pop(13);
+				visor_end_op(build->visor);
+				return false;
+			}
+			flag_enabled = jsal_get_boolean(-1);
+			if (flag_enabled && path_extension_is(main_path, ".cjs")) {
+				visor_error(build->visor, "CommonJS main '%s' unsupported with strictImports", path_cstr(main_path));
+				jsal_pop(13);
+				visor_end_op(build->visor);
+				return false;
+			}
+		}
+		jsal_pop(4);
 	}
 	else if (!jsal_is_undefined(-1)) {
 		visor_error(build->visor, "'development': must be an object {}");

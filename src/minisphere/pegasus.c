@@ -1331,8 +1331,6 @@ find_module_file(const char* specifier, const char* origin, const char* lib_dir_
 	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
 		if (!PATTERNS[i].esm_aware && !node_compatible)
 			continue;
-		if (strict_mode && !PATTERNS[i].strict_aware)
-			continue;
 		filename = strnewf(PATTERNS[i].name, specifier);
 		if (game_is_prefix_path(g_game, specifier)) {
 			path = game_full_path(g_game, filename, NULL, false);
@@ -1345,6 +1343,8 @@ find_module_file(const char* specifier, const char* origin, const char* lib_dir_
 		}
 		free(filename);
 		if (game_file_exists(g_game, path_cstr(path))) {
+			if (strict_mode && !PATTERNS[i].strict_aware)
+				jsal_error(JS_URI_ERROR, "Partial specifier in import '%s' unsupported with strictImports", specifier);
 			if (strcmp(path_filename(path), "package.json") == 0) {
 				if (!(main_path = load_package_json(path_cstr(path))))
 					goto next_filename;
@@ -1412,8 +1412,11 @@ handle_module_import(void)
 	free(specifier);
 
 	if (path_extension_is(path, ".cjs")) {
+		if (game_strict_imports(g_game))
+			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported with strictImports", specifier);
+		
 		// ES module shim, allows 'import' to work with CommonJS modules
-		shim_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
+		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
 		shim_source = lstr_newf(
 			"/* ES module shim for CommonJS module */\n"
 			"export default require(\"%s\");", path_cstr(path));
@@ -1498,6 +1501,8 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 
 	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
 		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
+	if (game_strict_imports(g_game))
+		jsal_error(JS_TYPE_ERROR, "CommonJS require '%s' unsupported with strictImports", specifier);
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		node_compatible = PATHS[i].node_aware;

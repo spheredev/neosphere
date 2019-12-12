@@ -345,6 +345,10 @@ main(int argc, char* argv[])
 	// evaluate the main script (v1) or module (v2)
 	script_path = game_script_path(g_game);
 	api_version = game_version(g_game);
+	if (game_strict_imports(g_game) && api_version >= 2 && path_extension_is(script_path, ".cjs")) {
+		jsal_push_new_error(JS_TYPE_ERROR, "CommonJS main '%s' unsupported with strictImports", path_cstr(script_path));
+		goto on_js_error;
+	}
 	eval_succeeded = api_version >= 2
 		? pegasus_try_require(path_cstr(script_path), false)
 		: script_eval(path_cstr(script_path));
