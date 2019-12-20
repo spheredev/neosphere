@@ -1,6 +1,13 @@
 miniSphere Changelog
 ====================
 
+v6.0.0 - TBD
+------------
+
+* Changes `strictImports` to also disable CommonJS module support.
+* Removes the `xml` module from the Sphere Runtime.
+
+
 v5.4.0 - December 1, 2019
 -------------------------
 
