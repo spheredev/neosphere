@@ -1285,9 +1285,9 @@ write_manifests(build_t* build, bool debugging)
 	//       this differs from Sv2 (game.json), where it's relative to '@/'.
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
 	script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
-	fprintf(file, "name=%s\n", jsal_to_string(-8));
-	fprintf(file, "author=%s\n", jsal_to_string(-7));
-	fprintf(file, "description=%s\n", jsal_to_string(-6));
+	fprintf(file, "name=%s\n", jsal_to_string(-9));
+	fprintf(file, "author=%s\n", jsal_to_string(-8));
+	fprintf(file, "description=%s\n", jsal_to_string(-7));
 	fprintf(file, "screen_width=%d\n", width);
 	fprintf(file, "screen_height=%d\n", height);
 	fprintf(file, "script=%s\n", path_cstr(script_path));
