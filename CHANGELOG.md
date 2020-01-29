@@ -9,7 +9,6 @@ v5.4.1 - January 5, 2020
 * Fixes a bug where Cell writes the wrong values for `name`, `author`, and
   `description` in `game.sgm`.
 
-
 v5.4.0 - December 1, 2019
 -------------------------
 
