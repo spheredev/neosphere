@@ -978,6 +978,11 @@ pegasus_init(int api_level)
 	}
 	
 	if (api_level >= 3) {
+		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
+		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
+	}
+	
+	if (api_level >= 4) {
 		api_define_async_func("FileStream", "open", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
@@ -997,8 +1002,6 @@ pegasus_init(int api_level)
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
 		api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
 		api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
-		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
-		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
