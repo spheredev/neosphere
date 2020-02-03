@@ -6,6 +6,8 @@ v6.0.0 - TBD
 
 * Adds support for games targeting API level 3, canonizing several APIs
   including `JobToken#pause()` and `JobToken#resume()`.
+* Adds `Thread#suspend()` API, which works like `Thread#pause()` but also
+  suspends rendering.
 
 
 v5.4.1 - January 5, 2020

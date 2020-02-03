@@ -1054,12 +1054,12 @@ JobToken#cancel(); [API 1]
     using either `Dispatch.now()` or `Dispatch.later()` and has already started
     running, calling this has no effect.
 
-JobToken#pause(); [NEW]
+JobToken#pause(); [API 3]
 
     Pauses the job.  Paused jobs will not run, but do keep the event loop alive
     and can be resumed at any time without the need to dispatch a new job.
 
-JobToken#resume(); [NEW]
+JobToken#resume(); [API 3]
 
     Resumes the job associated with this token after it's been paused with
     JobToken#pause().  If the job is not currently paused, this does nothing.

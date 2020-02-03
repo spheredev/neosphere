@@ -93,7 +93,7 @@ class Thread
 	pause()
 	{
 		if (!canPauseJobs)
-			throw new RangeError("Thread#pause requires newer Sphere version");
+			throw new RangeError("Thread#pause requires a newer Sphere version");
 		if (!this.running)
 			throw new Error("Thread is not running");
 		this._updateJob.pause();
@@ -102,10 +102,11 @@ class Thread
 	resume()
 	{
 		if (!canPauseJobs)
-			throw new RangeError("Thread#resume requires newer Sphere version");
+			throw new RangeError("Thread#resume requires a newer Sphere version");
 		if (!this.running)
 			throw new Error("Thread is not running");
 		this._updateJob.resume();
+		this._renderJob.resume();
 	}
 
 	async start()
@@ -168,6 +169,16 @@ class Thread
 		this._started = false;
 		await this.on_shutDown();
 		this._onThreadStop.resolve();
+	}
+
+	suspend()
+	{
+		if (!canPauseJobs)
+			throw new RangeError("Thread#suspend requires a newer Sphere version");
+		if (!this.running)
+			throw new Error("Thread is not running");
+		this._updateJob.pause();
+		this._renderJob.pause();
 	}
 
 	takeFocus()

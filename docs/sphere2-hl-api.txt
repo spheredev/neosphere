@@ -1159,8 +1159,9 @@ Thread#pause();
 
 Thread#resume();
 
-    Resumes the thread after it was paused with Thread#pause().  If the thread
-    is not paused, this does nothing.
+    Resumes the thread after it was paused with Thread#pause() or
+    Thread#suspend().  If the thread is not paused or suspended, this does
+    nothing.
 
 Thread#start();
 
@@ -1178,6 +1179,14 @@ Thread#stop();
     Note: If the thread's update handler is paused at an `await` expression
           when this method is called, the asynchronous operation being awaited
           will not be canceled and that update will still run to completion.
+
+Thread#suspend();
+
+    Suspends the thread.  This is like Thread#pause() (see above), but also
+    suspends rendering.
+
+    Note: Suspended threads can still keep the event loop alive unless they
+          were created with the `inBackground` option enabled.
 
 Thread#takeFocus();
 
