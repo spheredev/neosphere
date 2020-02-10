@@ -8,6 +8,7 @@ v6.0.0 - TBD
   including `JobToken#pause()` and `JobToken#resume()`.
 * Adds `Thread#suspend()` API, which works like `Thread#pause()` but also
   suspends rendering.
+* Adds support for mp3 playback through the `Sound` API.
 * Fixes an issue where `from()` didn't check its argument, leading to a
   nonsensical stack trace later if the caller accidentally passes `null`
   or `undefined`.
