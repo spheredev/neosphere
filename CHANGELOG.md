@@ -8,6 +8,9 @@ v6.0.0 - TBD
   including `JobToken#pause()` and `JobToken#resume()`.
 * Adds `Thread#suspend()` API, which works like `Thread#pause()` but also
   suspends rendering.
+* Fixes an issue where `from()` didn't check its argument, leading to a
+  nonsensical stack trace later if the caller accidentally passes `null`
+  or `undefined`.
 
 
 v5.4.1 - January 5, 2020

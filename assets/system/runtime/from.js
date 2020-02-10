@@ -33,6 +33,8 @@
 export default
 function from(...sources)
 {
+	if (sources.some(it => it === null || it === undefined))
+		throw new TypeError("Query source is null or undefined");
 	let query = new Query();
 	query.sources = sources;
 	return query;
@@ -88,6 +90,8 @@ class Query
 		let firstOp = this.firstOp;
 		let lastOp = this.lastOp;
 		const runQuery = (...sources) => {
+			if (sources.some(it => it === null || it === undefined))
+				throw new TypeError("Query source is null or undefined");
 			if (lastOp !== null)
 				lastOp.nextOp = reduceOp;
 			else
