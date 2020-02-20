@@ -13,7 +13,6 @@ v5.4.2 - February 20, 2020
   nonsensical stack trace later if the caller accidentally passes `null`
   or `undefined`.
 
-
 v5.4.1 - January 5, 2020
 ------------------------
 
