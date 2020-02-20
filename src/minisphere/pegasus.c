@@ -976,13 +976,8 @@ pegasus_init(int api_level)
 			++p_blender;
 		}
 	}
-	
+
 	if (api_level >= 3) {
-		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
-		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
-	}
-	
-	if (api_level >= 4) {
 		api_define_async_func("FileStream", "fromFile", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
@@ -992,6 +987,11 @@ pegasus_init(int api_level)
 		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
 		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
 		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
+		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
+		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
+	}
+
+	if (api_level >= 4) {
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);

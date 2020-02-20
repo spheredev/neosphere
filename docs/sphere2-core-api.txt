@@ -858,7 +858,7 @@ formats that aren't directly supported by the engine.  Sphere makes no attempt
 to interpret the data in the file and simply provides access to the raw bytes
 it contains.
 
-FileStream.fromFile(filename, file_op); [ASYNC] [NEW]
+FileStream.fromFile(filename, file_op); [ASYNC] [API 3]
 
     Opens a file asynchronously and returns a promise for a `FileStream` that
     provides access to the contents of the file.  `file_op` specifies the file
@@ -960,7 +960,7 @@ Font.Default [R/O] [API 1]
     Gets the engine's default font.  This is the font used for the FPS counter
     and system messages.
 
-Font.fromFile(filename); [ASYNC] [NEW]
+Font.fromFile(filename); [ASYNC] [API 3]
 
     Loads the RFN font file named by `filename` asynchronously and returns a
     promise for the newly constructed Font object.
@@ -1561,7 +1561,7 @@ for a `Sample` is loaded into memory in its entirety and multiple instances can
 be played simultaneously with no latency, making this very useful for sound
 effects.
 
-Sample.fromFile(filename); [ASYNC] [NEW]
+Sample.fromFile(filename); [ASYNC] [API 3]
 
     Loads the audio file named by `filename` asynchronously and returns a
     promise for the newly constructed Sample object.  Supported formats are
@@ -1672,7 +1672,7 @@ Shader.Default [R/O] [API 1]
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
 
-Shader.fromFiles(options); [ASYNC] [NEW]
+Shader.fromFiles(options); [ASYNC] [API 3]
 
     Loads the shader source files specified in `options` asynchronously and
     returns a promise for the newly constructed Shader object.
@@ -1971,7 +1971,7 @@ A `Sound` represents a streaming audio file.  Because the sound is streamed, it
 remains compressed, saving RAM; however, only one instance of the sound can be
 played at a time.
 
-Sound.fromFile(filename); [ASYNC] [NEW]
+Sound.fromFile(filename); [ASYNC] [API 3]
 
     Loads the audio file named by `filename` asynchronously and returns a
     promise for the newly constructed `Sound` object.  Supported sound formats
@@ -2112,7 +2112,7 @@ Surface.Screen [R/O] [API 1]
     this surface will automatically become visible on the screen the next time
     the event loop regains control.
 
-Surface.fromFile(filename); [ASYNC] [NEW]
+Surface.fromFile(filename); [ASYNC] [API 3]
 
     Loads the image file named by `filename` asynchronously and returns a
     promise for a Surface whose dimensions and initial content match that of
@@ -2188,7 +2188,7 @@ directly using the Core API; it must be used to texture a `Shape`.
 Note that Textures are read-only.  If you need a writable texture, you can use
 a Surface object instead.
 
-Texture.fromFile(filename); [ASYNC] [NEW]
+Texture.fromFile(filename); [ASYNC] [API 3]
 
     Loads the image file named by `filename` asynchronously and returns a
     promise for the newly constructed Texture object.

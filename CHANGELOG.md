@@ -4,11 +4,11 @@ miniSphere Changelog
 v5.5.0 - TBD
 ------------
 
-* Adds support for games targeting API level 3, canonizing several APIs
-  including `JobToken#pause()` and `JobToken#resume()`.
-* Adds `Thread#suspend()` API, which works like `Thread#pause()` but also
-  suspends rendering.
-* Adds support for mp3 playback through the `Sound` API.
+* Adds support for games targeting API level 3, canonizing several previously
+  experimental APIs such as `JobToken#pause()` and `Texture.fromFile()`.
+* Adds `Thread#suspend()`, which works like `Thread#pause()` but also pauses
+  rendering.
+* Adds support for mp3 playback through the `Sound` API on Windows.
 * Renames `FileStream.open()` to `FileStream.fromFile()`.
 * Fixes an issue where `from()` didn't check its argument, leading to a
   nonsensical stack trace later if the caller accidentally passes `null`
