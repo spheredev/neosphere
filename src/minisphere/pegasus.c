@@ -983,7 +983,7 @@ pegasus_init(int api_level)
 	}
 	
 	if (api_level >= 4) {
-		api_define_async_func("FileStream", "open", js_new_FileStream, 0);
+		api_define_async_func("FileStream", "fromFile", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
 		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);

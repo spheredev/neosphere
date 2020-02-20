@@ -1,7 +1,7 @@
 miniSphere Changelog
 ====================
 
-v6.0.0 - TBD
+v5.5.0 - TBD
 ------------
 
 * Adds support for games targeting API level 3, canonizing several APIs
@@ -9,6 +9,7 @@ v6.0.0 - TBD
 * Adds `Thread#suspend()` API, which works like `Thread#pause()` but also
   suspends rendering.
 * Adds support for mp3 playback through the `Sound` API.
+* Renames `FileStream.open()` to `FileStream.fromFile()`.
 * Fixes an issue where `from()` didn't check its argument, leading to a
   nonsensical stack trace later if the caller accidentally passes `null`
   or `undefined`.

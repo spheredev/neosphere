@@ -858,7 +858,7 @@ formats that aren't directly supported by the engine.  Sphere makes no attempt
 to interpret the data in the file and simply provides access to the raw bytes
 it contains.
 
-FileStream.open(filename, file_op); [ASYNC] [NEW]
+FileStream.fromFile(filename, file_op); [ASYNC] [NEW]
 
     Opens a file asynchronously and returns a promise for a `FileStream` that
     provides access to the contents of the file.  `file_op` specifies the file
