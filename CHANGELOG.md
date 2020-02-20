@@ -1,13 +1,11 @@
 miniSphere Changelog
 ====================
 
-v5.5.0 - TBD
-------------
+v5.4.2 - February 20, 2020
+--------------------------
 
-* Adds support for games targeting API level 3, canonizing several previously
-  experimental APIs such as `JobToken#pause()` and `Texture.fromFile()`.
-* Adds `Thread#suspend()`, which works like `Thread#pause()` but also pauses
-  rendering.
+* Adds experimental `Thread#suspend()` API, which works like `Thread#pause()`
+  but also pauses rendering.
 * Adds support for mp3 playback through the `Sound` API on Windows.
 * Renames `FileStream.open()` to `FileStream.fromFile()`.
 * Renames `Socket.connectTo()` to `Socket.for()`.
