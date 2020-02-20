@@ -1829,7 +1829,7 @@ return immediately; data is buffered which allows the game to read or write at
 at any time with no rate limit; and if a connection is lost, the socket can be
 reconnected by simply calling its `connectTo()` method again.
 
-Socket.connectTo(hostname, port); [ASYNC] [NEW]
+Socket.for(hostname, port); [ASYNC] [API 3]
 
     Connects to the specified host and port and returns a promise for a newly
     constructed Socket object for the connection.  If the connection attempt

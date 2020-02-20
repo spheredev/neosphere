@@ -10,6 +10,7 @@ v5.5.0 - TBD
   rendering.
 * Adds support for mp3 playback through the `Sound` API on Windows.
 * Renames `FileStream.open()` to `FileStream.fromFile()`.
+* Renames `Socket.connectTo()` to `Socket.for()`.
 * Fixes an issue where `from()` didn't check its argument, leading to a
   nonsensical stack trace later if the caller accidentally passes `null`
   or `undefined`.

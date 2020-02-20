@@ -982,7 +982,7 @@ pegasus_init(int api_level)
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
 		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
-		api_define_async_func("Socket", "connectTo", js_new_Socket, 0);
+		api_define_async_func("Socket", "for", js_new_Socket, 0);
 		api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
 		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
 		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
