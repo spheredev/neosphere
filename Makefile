@@ -67,9 +67,11 @@ engine_libs= \
    -lallegro_audio \
    -lallegro_color \
    -lallegro_dialog \
+   -lallegro_font \
    -lallegro_image \
    -lallegro_memfile \
    -lallegro_primitives \
+   -lallegro_ttf \
    -lallegro \
    -lChakraCore \
    -lmng \

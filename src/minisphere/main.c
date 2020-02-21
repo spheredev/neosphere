@@ -638,6 +638,10 @@ initialize_engine(void)
 		goto on_error;
 	if (!al_init_image_addon())
 		goto on_error;
+	if (!al_init_font_addon())
+		goto on_error;
+	if (!al_init_ttf_addon())
+		goto on_error;
 
 	// initialize networking
 	console_log(1, "initializing Dyad %s", dyad_getVersion());

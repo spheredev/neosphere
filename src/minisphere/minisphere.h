@@ -59,6 +59,7 @@
 #include <allegro5/allegro_memfile.h>
 #include <allegro5/allegro_native_dialog.h>
 #include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_ttf.h>
 
 #include "lstring.h"
 #include "path.h"

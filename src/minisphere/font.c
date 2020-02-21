@@ -59,6 +59,13 @@ struct glyph
 	image_t* image;
 };
 
+struct ttf
+{
+	unsigned int  refcount;
+	unsigned int  id;
+	ALLEGRO_FONT* font;
+};
+
 struct wraptext
 {
 	int    num_lines;
@@ -442,6 +449,59 @@ font_get_width(const font_t* it, const char* text)
 	} while (cp != '\0');
 	utf8_decode_end(utf8);
 	return width;
+}
+
+ttf_t*
+ttf_open(const char* path, int size, bool auto_kern, bool antialias)
+{
+	size_t        file_size;
+	int           flags = 0x0;
+	ALLEGRO_FILE* memfile = NULL;
+	void*         slurp;
+	struct ttf*   ttf;
+
+	if (!(ttf = calloc(1, sizeof(ttf_t))))
+		goto on_error;
+	if (!(slurp = game_read_file(g_game, path, &file_size)))
+		goto on_error;
+	memfile = al_open_memfile(slurp, file_size, "rb");
+	if (!auto_kern)
+		flags |= ALLEGRO_TTF_NO_KERNING;
+	if (!antialias)
+		flags |= ALLEGRO_TTF_MONOCHROME;
+	if (!(ttf->font = al_load_ttf_font_f(memfile, NULL, size, flags)))
+		goto on_error;
+	return ttf_ref(ttf);
+
+on_error:
+	if (memfile != NULL)
+		al_fclose(memfile);
+	free(ttf);
+	return NULL;
+}
+
+ttf_t*
+ttf_ref(ttf_t* it)
+{
+	++it->refcount;
+	return it;
+}
+
+void
+ttf_unref(ttf_t* it)
+{
+	if (it == NULL || --it->refcount > 0)
+		return;
+
+	console_log(3, "disposing TTF font #%u no longer in use", it->id);
+	al_destroy_font(it->font);
+	free(it);
+}
+
+void
+ttf_draw_text(const ttf_t* it, int x, int y, const char* text, color_t color)
+{
+	al_draw_text(it->font, nativecolor(color), x, y, 0x0, text);
 }
 
 wraptext_t*

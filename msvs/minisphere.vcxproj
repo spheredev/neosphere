@@ -137,6 +137,8 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug\</OutDir>
     <IntDir>obj\debug\minisphere\</IntDir>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Allegro_LibraryType>DynamicDebug</Allegro_LibraryType>
@@ -152,6 +154,8 @@
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <OutDir>debug64\</OutDir>
     <IntDir>obj64\debug\minisphere\</IntDir>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -166,6 +170,8 @@
     <TargetName>miniSphere</TargetName>
     <OutDir>..\msw\</OutDir>
     <IntDir>obj\release\minisphere\</IntDir>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -180,6 +186,8 @@
     <TargetName>miniSphere</TargetName>
     <OutDir>..\msw64\</OutDir>
     <IntDir>obj64\release\minisphere\</IntDir>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|Win32'">
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -194,6 +202,8 @@
     <TargetName>spherun</TargetName>
     <OutDir>..\msw\</OutDir>
     <IntDir>obj\console\minisphere\</IntDir>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Console|x64'">
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -208,6 +218,8 @@
     <TargetName>spherun</TargetName>
     <OutDir>..\msw64\</OutDir>
     <IntDir>obj64\console\minisphere\</IntDir>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -222,6 +234,8 @@
     <TargetName>spherun</TargetName>
     <OutDir>profile\</OutDir>
     <IntDir>obj\profile\minisphere\</IntDir>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">
     <Allegro_LibraryType>StaticMonolithRelease</Allegro_LibraryType>
@@ -236,6 +250,8 @@
     <TargetName>spherun</TargetName>
     <OutDir>profile64\</OutDir>
     <IntDir>obj64\profile\minisphere\</IntDir>
+    <Allegro_AddonTTF>true</Allegro_AddonTTF>
+    <Allegro_AddonFont>true</Allegro_AddonFont>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

@@ -464,6 +464,8 @@ static bool js_Surface_set_blendOp           (int num_args, bool is_ctor, intptr
 static bool js_Surface_set_transform         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_clipTo                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_toTexture             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_TTFont                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_TTFont_drawText               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_TextDecoder               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_TextDecoder_get_encoding      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_TextDecoder_get_fatal         (int num_args, bool is_ctor, intptr_t magic);
@@ -517,6 +519,7 @@ static void js_Shape_finalize           (void* host_ptr);
 static void js_Socket_finalize          (void* host_ptr);
 static void js_Sound_finalize           (void* host_ptr);
 static void js_SoundStream_finalize     (void* host_ptr);
+static void js_TTFont_finalize          (void* host_ptr);
 static void js_TextDecoder_finalize     (void* host_ptr);
 static void js_TextEncoder_finalize     (void* host_ptr);
 static void js_Texture_finalize         (void* host_ptr);
@@ -757,6 +760,8 @@ pegasus_init(int api_level)
 	api_define_method("SoundStream", "play", js_SoundStream_play, 0);
 	api_define_method("SoundStream", "stop", js_SoundStream_stop, 0);
 	api_define_method("SoundStream", "write", js_SoundStream_write, 0);
+	api_define_class("TTFont", PEGASUS_TT_FONT, js_new_TTFont, js_TTFont_finalize, 0);
+	api_define_method("TTFont", "drawText", js_TTFont_drawText, 0);
 	api_define_class("TextDecoder", PEGASUS_TEXT_DEC, js_new_TextDecoder, js_TextDecoder_finalize, 0);
 	api_define_prop("TextDecoder", "encoding", false, js_TextDecoder_get_encoding, NULL);
 	api_define_prop("TextDecoder", "fatal", false, js_TextDecoder_get_fatal, NULL);
@@ -986,6 +991,7 @@ pegasus_init(int api_level)
 		api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
 		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
 		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
+		api_define_async_func("TTFont", "fromFile", js_new_TTFont, 0);
 		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
@@ -5303,6 +5309,52 @@ js_Surface_toTexture(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	jsal_push_class_obj(PEGASUS_TEXTURE, new_image, false);
 	return true;
+}
+
+static bool
+js_new_TTFont(int num_args, bool is_ctor, intptr_t magic)
+{
+	ttf_t*      font;
+	const char* pathname;
+	int         size;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+	if ((size = jsal_require_int(1)) < 1)
+		jsal_error(JS_RANGE_ERROR, "Invalid font size '%i'", size);
+
+	font = ttf_open(pathname, size, true, false);
+	jsal_push_class_obj(PEGASUS_TT_FONT, font, is_ctor);
+	return true;
+}
+
+static void
+js_TTFont_finalize(void* host_ptr)
+{
+	ttf_unref(host_ptr);
+}
+
+static bool
+js_TTFont_drawText(int num_args, bool is_ctor, intptr_t magic)
+{
+	color_t     color;
+	ttf_t*      font;
+	image_t*    surface;
+	const char* text;
+	int         x;
+	int         y;
+
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, PEGASUS_TT_FONT);
+	surface = jsal_require_class_obj(0, PEGASUS_SURFACE);
+	x = jsal_require_int(1);
+	y = jsal_require_int(2);
+	text = jsal_require_string(3);
+	color = num_args >= 5 ? jsal_pegasus_require_color(4)
+		: mk_color(255, 255, 255, 255);
+
+	image_render_to(surface, NULL);
+	ttf_draw_text(font, x, y, text, color);
+	return false;
 }
 
 static bool
