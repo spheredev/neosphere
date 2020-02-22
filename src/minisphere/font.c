@@ -500,6 +500,23 @@ on_error:
 }
 
 ttf_t*
+ttf_from_rfn(font_t* font)
+{
+	ttf_t* ttf;
+
+	if (!(ttf = calloc(1, sizeof(ttf_t))))
+		goto on_error;
+	ttf->id = s_next_ttf_id++;
+	ttf->height = font_height(font);
+	ttf->path = strdup(font_path(font));
+	ttf->rfn_font = font_ref(font);
+	return ttf_ref(ttf);
+
+on_error:
+	return NULL;
+}
+
+ttf_t*
 ttf_ref(ttf_t* it)
 {
 	++it->refcount;

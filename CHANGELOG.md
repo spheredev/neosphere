@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+v6.0.0 - TBD
+------------
+
+* Adds support for loading and rendering TrueType fonts using the `Font` class.
+
+
 v5.4.2 - February 20, 2020
 --------------------------
 

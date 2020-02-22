@@ -63,6 +63,7 @@ void        font_set_glyph   (font_t* it, uint32_t cp, image_t* image);
 void        font_set_mask    (font_t* it, color_t color);
 
 ttf_t*      ttf_open         (const char* path, int size, bool kerning, bool antialiasing);
+ttf_t*      ttf_from_rfn     (font_t* font);
 ttf_t*      ttf_ref          (ttf_t* it);
 void        ttf_unref        (ttf_t* it);
 int         ttf_height       (const ttf_t* it);
