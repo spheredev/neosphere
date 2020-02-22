@@ -344,7 +344,10 @@ static bool js_Font_widthOf                  (int num_args, bool is_ctor, intptr
 static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_FontFace                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FontFace_get_fileName         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FontFace_get_height           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FontFace_drawText             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FontFace_heightOf             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_FontFace_widthOf              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FontFace_wordWrap             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JSON_fromFile                 (int num_args, bool is_ctor, intptr_t magic);
@@ -659,6 +662,13 @@ pegasus_init(int api_level)
 	api_define_method("Font", "drawText", js_Font_drawText, 0);
 	api_define_method("Font", "getTextSize", js_Font_getTextSize, 0);
 	api_define_method("Font", "wordWrap", js_Font_wordWrap, 0);
+	api_define_class("FontFace", PEGASUS_FONT_FACE, js_new_FontFace, js_FontFace_finalize, 0);
+	api_define_prop("FontFace", "fileName", false, js_FontFace_get_fileName, NULL);
+	api_define_prop("FontFace", "height", false, js_FontFace_get_height, NULL);
+	api_define_method("FontFace", "drawText", js_FontFace_drawText, 0);
+	api_define_method("FontFace", "heightOf", js_FontFace_heightOf, 0);
+	api_define_method("FontFace", "widthOf", js_FontFace_widthOf, 0);
+	api_define_method("FontFace", "wordWrap", js_FontFace_wordWrap, 0);
 	api_define_func("FS", "createDirectory", js_FS_createDirectory, 0);
 	api_define_func("FS", "deleteFile", js_FS_deleteFile, 0);
 	api_define_func("FS", "directoryExists", js_FS_directoryExists, 0);
@@ -762,10 +772,6 @@ pegasus_init(int api_level)
 	api_define_method("SoundStream", "play", js_SoundStream_play, 0);
 	api_define_method("SoundStream", "stop", js_SoundStream_stop, 0);
 	api_define_method("SoundStream", "write", js_SoundStream_write, 0);
-	api_define_class("FontFace", PEGASUS_FONT_FACE, js_new_FontFace, js_FontFace_finalize, 0);
-	api_define_prop("FontFace", "fileName", false, js_FontFace_get_fileName, NULL);
-	api_define_method("FontFace", "drawText", js_FontFace_drawText, 0);
-	api_define_method("FontFace", "wordWrap", js_FontFace_wordWrap, 0);
 	api_define_class("TextDecoder", PEGASUS_TEXT_DEC, js_new_TextDecoder, js_TextDecoder_finalize, 0);
 	api_define_prop("TextDecoder", "encoding", false, js_TextDecoder_get_encoding, NULL);
 	api_define_prop("TextDecoder", "fatal", false, js_TextDecoder_get_fatal, NULL);
@@ -3047,15 +3053,25 @@ js_Font_wordWrap(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_FontFace(int num_args, bool is_ctor, intptr_t magic)
 {
-	ttf_t* font;
+	bool        antialiasing = false;
+	ttf_t*      font;
+	bool        kerning = true;
 	const char* pathname;
 	int         size;
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
 	if ((size = jsal_require_int(1)) < 1)
 		jsal_error(JS_RANGE_ERROR, "Invalid font size '%i'", size);
+	if (num_args >= 3) {
+		jsal_require_object_coercible(2);
+		if (jsal_get_prop_string(2, "antialiasing"))
+			antialiasing = jsal_require_boolean(-1);
+		if (jsal_get_prop_string(2, "kerning"))
+			kerning = jsal_require_boolean(-1);
+	}
 
-	font = ttf_open(pathname, size, true, false);
+	if (!(font = ttf_open(pathname, -size, kerning, antialiasing)))
+		jsal_error(JS_ERROR, "Couldn't load font file '%s'", pathname);
 	jsal_push_class_obj(PEGASUS_FONT_FACE, font, is_ctor);
 	return true;
 }
@@ -3075,6 +3091,18 @@ js_FontFace_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 	font = jsal_require_class_obj(-1, PEGASUS_FONT_FACE);
 
 	jsal_push_string(ttf_path(font));
+	return true;
+}
+
+static bool
+js_FontFace_get_height(int num_args, bool is_ctor, intptr_t magic)
+{
+	ttf_t* font;
+
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, PEGASUS_FONT_FACE);
+
+	jsal_push_int(ttf_height(font));
 	return true;
 }
 
@@ -3100,6 +3128,44 @@ js_FontFace_drawText(int num_args, bool is_ctor, intptr_t magic)
 	image_render_to(surface, NULL);
 	ttf_draw_text(font, x, y, text, color);
 	return false;
+}
+
+static bool
+js_FontFace_heightOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	ttf_t*      font;
+	int         num_lines = 1;
+	const char* text;
+	int         width;
+	wraptext_t* wraptext;
+
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, PEGASUS_FONT_FACE);
+	text = jsal_require_string(0);
+	if (num_args >= 2)
+		width = jsal_require_int(1);
+
+	if (num_args >= 2) {
+		wraptext = ttf_wrap(font, text, width);
+		num_lines = wraptext_len(wraptext);
+		wraptext_free(wraptext);
+	}
+	jsal_push_int(ttf_height(font) * num_lines);
+	return true;
+}
+
+static bool
+js_FontFace_widthOf(int num_args, bool is_ctor, intptr_t magic)
+{
+	ttf_t*      font;
+	const char* text;
+
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, PEGASUS_FONT_FACE);
+	text = jsal_require_string(0);
+
+	jsal_push_int(ttf_get_width(font, text));
+	return true;
 }
 
 static bool

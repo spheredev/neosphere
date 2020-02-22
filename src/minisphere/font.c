@@ -64,6 +64,7 @@ struct ttf
 {
 	unsigned int  refcount;
 	unsigned int  id;
+	int           height;
 	char*         path;
 	font_t*       rfn_font;
 	ALLEGRO_FONT* ttf_font;
@@ -94,6 +95,7 @@ struct rfn_glyph_header
 #pragma pack(pop)
 
 static unsigned int s_next_font_id = 1;
+static unsigned int s_next_ttf_id = 1;
 
 font_t*
 font_load(const char* filename)
@@ -455,7 +457,7 @@ font_get_width(const font_t* it, const char* text)
 }
 
 ttf_t*
-ttf_open(const char* path, int size, bool auto_kern, bool antialias)
+ttf_open(const char* path, int size, bool kerning, bool antialiasing)
 {
 	size_t        file_size;
 	int           flags = 0x0;
@@ -473,16 +475,21 @@ ttf_open(const char* path, int size, bool auto_kern, bool antialias)
 		if (!(slurp = game_read_file(g_game, path, &file_size)))
 			goto on_error;
 		memfile = al_open_memfile(slurp, file_size, "rb");
-		if (!auto_kern)
+		if (!kerning)
 			flags |= ALLEGRO_TTF_NO_KERNING;
-		if (!antialias)
+		if (!antialiasing)
 			flags |= ALLEGRO_TTF_MONOCHROME;
 		if (!(font->ttf_font = al_load_ttf_font_f(memfile, NULL, size, flags)))
 			goto on_error;
+		font->height = al_get_font_line_height(font->ttf_font);
 	}
 	else {
 		font->rfn_font = rfn_font;
+		font->height = font_height(rfn_font);
 	}
+
+	font->id = s_next_ttf_id++;
+	font->path = strdup(path);
 	return ttf_ref(font);
 
 on_error:
@@ -513,6 +520,12 @@ ttf_unref(ttf_t* it)
 	free(it);
 }
 
+int
+ttf_height(const ttf_t* it)
+{
+	return it->height;
+}
+
 const char*
 ttf_path(const ttf_t* it)
 {
@@ -530,6 +543,15 @@ ttf_draw_text(const ttf_t* it, int x, int y, const char* text, color_t color)
 		font_set_mask(it->rfn_font, color);
 		font_draw_text(it->rfn_font, x, y, TEXT_ALIGN_LEFT, text);
 	}
+}
+
+int
+ttf_get_width(const ttf_t* it, const char* text)
+{
+	if (it->ttf_font != NULL)
+		return al_get_text_width(it->ttf_font, text);
+	else
+		return font_get_width(it->rfn_font, text);
 }
 
 wraptext_t*

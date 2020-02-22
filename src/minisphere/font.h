@@ -62,11 +62,13 @@ int         font_get_width   (const font_t* it, const char* text);
 void        font_set_glyph   (font_t* it, uint32_t cp, image_t* image);
 void        font_set_mask    (font_t* it, color_t color);
 
-ttf_t*      ttf_open         (const char* path, int size, bool auto_kern, bool antialias);
+ttf_t*      ttf_open         (const char* path, int size, bool kerning, bool antialiasing);
 ttf_t*      ttf_ref          (ttf_t* it);
 void        ttf_unref        (ttf_t* it);
+int         ttf_height       (const ttf_t* it);
 const char* ttf_path         (const ttf_t* it);
 void        ttf_draw_text    (const ttf_t* it, int x, int y, const char* text, color_t color);
+int         ttf_get_width    (const ttf_t* it, const char* text);
 wraptext_t* ttf_wrap         (const ttf_t* it, const char* text, int width);
 
 wraptext_t* wraptext_new     (const char* text, const font_t* font, int width);
