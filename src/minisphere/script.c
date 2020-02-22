@@ -45,6 +45,7 @@ struct script
 	unsigned int  id;
 	js_ref_t*     function;
 	bool          in_use;
+	js_ref_t*     this_arg;
 };
 
 static bool js_onScriptFinished (int num_args, bool is_ctor, intptr_t magic);
@@ -120,7 +121,7 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	va_end(ap);
 	script = calloc(1, sizeof(script_t));
 
-	console_log(3, "compiling script #%u as '%s'", s_next_script_id, lstr_cstr(name));
+	console_log(4, "compiling script #%u as '%s'", s_next_script_id, lstr_cstr(name));
 
 	// compile the source.  JSAL gives us a function back; save its heap pointer so
 	// we can call the script later.
@@ -139,17 +140,30 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 script_t*
 script_new_function(int stack_index)
 {
+	stack_index = jsal_normalize_index(stack_index);
+	jsal_push_undefined();
+	return script_new_method(stack_index);
+}
+
+script_t*
+script_new_method(int stack_index)
+{
+	// this_arg should be on top of the JSAL stack before calling this.
+	
 	js_ref_t* function;
 	script_t* script;
+	js_ref_t* this_arg;
 
 	stack_index = jsal_normalize_index(stack_index);
 	jsal_require_function(stack_index);
 	function = jsal_ref(stack_index);
+	this_arg = jsal_pop_ref();
 
 	if (!(script = calloc(1, sizeof(script_t))))
 		return NULL;
 	script->id = s_next_script_id++;
 	script->function = function;
+	script->this_arg = this_arg;
 	return script_ref(script);
 }
 
@@ -166,9 +180,10 @@ script_unref(script_t* script)
 	if (script == NULL || --script->refcount > 0)
 		return;
 
-	console_log(3, "disposing script #%u no longer in use", script->id);
+	console_log(4, "disposing script #%u no longer in use", script->id);
 
 	jsal_unref(script->function);
+	jsal_unref(script->this_arg);
 	free(script);
 }
 
@@ -185,11 +200,11 @@ script_run(script_t* script, bool allow_reentry)
 	// to prevent multiple invocation.
 	was_in_use = script->in_use;
 	if (was_in_use && !allow_reentry) {
-		console_log(3, "skipping execution of script #%u, already in use", script->id);
+		console_log(4, "skipping execution of script #%u, already in use", script->id);
 		return;
 	}
 
-	console_log(3, "executing script #%u", script->id);
+	console_log(4, "executing script #%u", script->id);
 
 	// ref the script in case it gets freed during execution.  the owner
 	// may be destroyed in the process and we don't want to end up crashing.
@@ -198,7 +213,8 @@ script_run(script_t* script, bool allow_reentry)
 	// execute the script!
 	script->in_use = true;
 	jsal_push_ref_weak(script->function);
-	jsal_call(0);
+	jsal_push_ref_weak(script->this_arg);
+	jsal_call_method(0);
 	if (jsal_is_object(-1) && jsal_has_prop_key(-1, s_key_then)) {
 		jsal_get_prop_string(-1, "then");
 		jsal_pull(-2);
