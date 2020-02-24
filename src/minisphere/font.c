@@ -72,8 +72,9 @@ struct ttf
 
 struct wraptext
 {
-	int    num_lines;
 	char*  buffer;
+	int    max_lines;
+	int    num_lines;
 	size_t pitch;
 };
 
@@ -456,140 +457,8 @@ font_get_width(const font_t* it, const char* text)
 	return width;
 }
 
-ttf_t*
-ttf_open(const char* path, int size, bool kerning, bool antialiasing)
-{
-	size_t        file_size;
-	int           flags = 0x0;
-	struct ttf*   font;
-	ALLEGRO_FILE* memfile = NULL;
-	font_t*       rfn_font;
-	void*         slurp;
-
-	// check if the font can be loaded as RFN first
-	rfn_font = font_load(path);
-	
-	if (!(font = calloc(1, sizeof(ttf_t))))
-		goto on_error;
-	if (rfn_font == NULL) {
-		if (!(slurp = game_read_file(g_game, path, &file_size)))
-			goto on_error;
-		memfile = al_open_memfile(slurp, file_size, "rb");
-		if (!kerning)
-			flags |= ALLEGRO_TTF_NO_KERNING;
-		if (!antialiasing)
-			flags |= ALLEGRO_TTF_MONOCHROME;
-		if (!(font->ttf_font = al_load_ttf_font_f(memfile, NULL, size, flags)))
-			goto on_error;
-		font->height = al_get_font_line_height(font->ttf_font);
-	}
-	else {
-		font->rfn_font = rfn_font;
-		font->height = font_height(rfn_font);
-	}
-
-	font->id = s_next_ttf_id++;
-	font->path = strdup(path);
-	return ttf_ref(font);
-
-on_error:
-	if (memfile != NULL)
-		al_fclose(memfile);
-	free(font);
-	return NULL;
-}
-
-ttf_t*
-ttf_from_rfn(font_t* font)
-{
-	ttf_t* ttf;
-
-	if (!(ttf = calloc(1, sizeof(ttf_t))))
-		goto on_error;
-	ttf->id = s_next_ttf_id++;
-	ttf->height = font_height(font);
-	ttf->path = strdup(font_path(font));
-	ttf->rfn_font = font_ref(font);
-	return ttf_ref(ttf);
-
-on_error:
-	return NULL;
-}
-
-ttf_t*
-ttf_ref(ttf_t* it)
-{
-	++it->refcount;
-	return it;
-}
-
-void
-ttf_unref(ttf_t* it)
-{
-	if (it == NULL || --it->refcount > 0)
-		return;
-
-	console_log(3, "disposing TTF font #%u no longer in use", it->id);
-	if (it->ttf_font != NULL)
-		al_destroy_font(it->ttf_font);
-	else
-		font_unref(it->rfn_font);
-	free(it);
-}
-
-int
-ttf_height(const ttf_t* it)
-{
-	return it->height;
-}
-
-const char*
-ttf_path(const ttf_t* it)
-{
-	return it->path;
-}
-
-void
-ttf_draw_text(const ttf_t* it, int x, int y, const char* text, color_t color)
-{
-	if (it->ttf_font != NULL) {
-		al_draw_text(it->ttf_font, nativecolor(color), x, y, 0x0, text);
-	}
-	else {
-		// legacy RFN font mode
-		font_set_mask(it->rfn_font, color);
-		font_draw_text(it->rfn_font, x, y, TEXT_ALIGN_LEFT, text);
-	}
-}
-
-int
-ttf_get_width(const ttf_t* it, const char* text)
-{
-	if (it->ttf_font != NULL)
-		return al_get_text_width(it->ttf_font, text);
-	else
-		return font_get_width(it->rfn_font, text);
-}
-
 wraptext_t*
-ttf_wrap(const ttf_t* it, const char* text, int width)
-{
-	wraptext_t* wraptext;
-	
-	if (it->ttf_font != NULL) {
-		wraptext = calloc(1, sizeof(wraptext_t));
-		wraptext->pitch = 1024;
-		wraptext->buffer = malloc(1024 * wraptext->pitch);
-		al_do_multiline_text(it->ttf_font, width, text, do_multiline_text_line, wraptext);
-		return wraptext;
-	}
-	else {
-		return wraptext_new(text, it->rfn_font, width);
-	}
-}
-
-wraptext_t*
-wraptext_new(const char* text, const font_t* font, int width)
+font_wrap(const font_t* font, const char* text, int width)
 {
 	char*          buffer = NULL;
 	uint8_t        ch_byte;
@@ -733,6 +602,159 @@ on_error:
 	return NULL;
 }
 
+ttf_t*
+ttf_open(const char* path, int size, bool kerning, bool antialiasing)
+{
+	size_t        file_size;
+	int           flags = 0x0;
+	struct ttf*   font;
+	ALLEGRO_FILE* memfile = NULL;
+	font_t*       rfn_font;
+	void*         slurp;
+
+	// check if the font can be loaded as RFN first
+	rfn_font = font_load(path);
+	
+	if (!(font = calloc(1, sizeof(ttf_t))))
+		goto on_error;
+	if (rfn_font == NULL) {
+		if (!(slurp = game_read_file(g_game, path, &file_size)))
+			goto on_error;
+		memfile = al_open_memfile(slurp, file_size, "rb");
+		if (!kerning)
+			flags |= ALLEGRO_TTF_NO_KERNING;
+		if (!antialiasing)
+			flags |= ALLEGRO_TTF_MONOCHROME;
+		if (!(font->ttf_font = al_load_ttf_font_f(memfile, NULL, size, flags)))
+			goto on_error;
+		font->height = al_get_font_line_height(font->ttf_font);
+	}
+	else {
+		font->rfn_font = rfn_font;
+		font->height = font_height(rfn_font);
+	}
+
+	font->id = s_next_ttf_id++;
+	font->path = strdup(path);
+	return ttf_ref(font);
+
+on_error:
+	if (memfile != NULL)
+		al_fclose(memfile);
+	free(font);
+	return NULL;
+}
+
+ttf_t*
+ttf_from_rfn(font_t* font)
+{
+	ttf_t* ttf;
+
+	if (!(ttf = calloc(1, sizeof(ttf_t))))
+		goto on_error;
+	ttf->id = s_next_ttf_id++;
+	ttf->height = font_height(font);
+	ttf->path = strdup(font_path(font));
+	ttf->rfn_font = font_ref(font);
+	return ttf_ref(ttf);
+
+on_error:
+	return NULL;
+}
+
+ttf_t*
+ttf_ref(ttf_t* it)
+{
+	++it->refcount;
+	return it;
+}
+
+void
+ttf_unref(ttf_t* it)
+{
+	if (it == NULL || --it->refcount > 0)
+		return;
+
+	console_log(3, "disposing TTF font #%u no longer in use", it->id);
+	if (it->ttf_font != NULL)
+		al_destroy_font(it->ttf_font);
+	else
+		font_unref(it->rfn_font);
+	free(it);
+}
+
+int
+ttf_height(const ttf_t* it)
+{
+	return it->height;
+}
+
+const char*
+ttf_path(const ttf_t* it)
+{
+	return it->path;
+}
+
+void
+ttf_draw_text(const ttf_t* it, int x, int y, const char* text, color_t color)
+{
+	if (it->ttf_font != NULL) {
+		al_draw_text(it->ttf_font, nativecolor(color), x, y, 0x0, text);
+	}
+	else {
+		// legacy RFN font mode
+		font_set_mask(it->rfn_font, color);
+		font_draw_text(it->rfn_font, x, y, TEXT_ALIGN_LEFT, text);
+	}
+}
+
+int
+ttf_get_width(const ttf_t* it, const char* text)
+{
+	if (it->ttf_font != NULL)
+		return al_get_text_width(it->ttf_font, text);
+	else
+		return font_get_width(it->rfn_font, text);
+}
+
+wraptext_t*
+ttf_wrap(const ttf_t* it, const char* text, int width)
+{
+	wraptext_t* wraptext;
+	
+	if (it->ttf_font != NULL) {
+		if (!(wraptext = wraptext_new(256)))
+			return NULL;
+		al_do_multiline_text(it->ttf_font, width, text, do_multiline_text_line, wraptext);
+		return wraptext;
+	}
+	else {
+		return font_wrap(it->rfn_font, text, width);
+	}
+}
+
+wraptext_t*
+wraptext_new(size_t pitch)
+{
+	char*       buffer;
+	int         max_lines = 8;
+	wraptext_t* wraptext;
+
+	if (!(buffer = malloc(max_lines * pitch)))
+		goto on_error;
+
+	if (!(wraptext = calloc(1, sizeof(wraptext_t))))
+		goto on_error;
+	wraptext->buffer = buffer;
+	wraptext->max_lines = max_lines;
+	wraptext->pitch = pitch;
+	return wraptext;
+
+on_error:
+	free(buffer);
+	return NULL;
+}
+
 void
 wraptext_free(wraptext_t* it)
 {
@@ -752,17 +774,54 @@ wraptext_line(const wraptext_t* it, int line_index)
 	return it->buffer + line_index * it->pitch;
 }
 
+bool
+wraptext_add_line(wraptext_t* it, const char* text, size_t length)
+{
+	char*  new_buffer;
+	int    new_max_lines;
+	size_t new_pitch;
+	
+	char *p_out;
+	int i;
+
+	new_pitch = it->pitch;
+	if (length + 1 > it->pitch)
+		new_pitch = (length + 1) * 2;
+	new_max_lines = it->max_lines;
+	if (it->num_lines >= it->max_lines)
+		new_max_lines = it->num_lines * 2;
+	if (new_max_lines >= it->max_lines || new_pitch > it->pitch) {
+		if (new_pitch > it->pitch) {
+			if (!(new_buffer = malloc(new_max_lines * new_pitch)))
+				goto on_error;
+			for (i = 0; i < it->num_lines; ++i)
+				memcpy(new_buffer + i * new_pitch, it->buffer + i * it->pitch, it->pitch);
+			free(it->buffer);
+		}
+		else {
+			if (!(new_buffer = realloc(it->buffer, new_max_lines * new_pitch)))
+				goto on_error;
+		}
+		it->buffer = new_buffer;
+		it->max_lines = new_max_lines;
+		it->pitch = new_pitch;
+	}
+	p_out = it->buffer + it->num_lines++ * it->pitch;
+	memcpy(p_out, text, length);
+	p_out[length] = '\0';  // NUL terminator
+	return true;
+
+on_error:
+	return false;
+}
+
 static bool
 do_multiline_text_line(int line_idx, const char* line, int size, void* userdata)
 {
-	char*       line_buffer;
 	wraptext_t* wraptext;
 
 	wraptext = userdata;
-	line_buffer = wraptext->buffer + line_idx * wraptext->pitch;
-	memcpy(line_buffer, line, size);
-	line_buffer[size] = '\0';  // NUL terminator
-	++wraptext->num_lines;
+	wraptext_add_line(wraptext, line, size);
 	return true;
 }
 

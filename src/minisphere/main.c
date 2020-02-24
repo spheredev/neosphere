@@ -996,7 +996,7 @@ show_error_screen(const char* message)
 
 	// word-wrap the error message to fit inside the error box
 	resolution = screen_size(g_screen);
-	if (!(error_info = wraptext_new(message, font, resolution.width - 84)))
+	if (!(error_info = font_wrap(font, message, resolution.width - 84)))
 		goto show_error_box;
 	num_lines = wraptext_len(error_info);
 

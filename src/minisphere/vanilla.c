@@ -6906,7 +6906,7 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 	image_set_scissor(backbuffer,
 		rect_intersect(mk_rect(x, y, x + width, y + height), old_clip_box));
 
-	wraptext = wraptext_new(text, font, width);
+	wraptext = font_wrap(font, text, width);
 	line_height = font_height(font);
 	galileo_reset();
 	y += y_offset;
@@ -7010,7 +7010,7 @@ js_Font_getStringHeight(int num_args, bool is_ctor, intptr_t magic)
 	text = jsal_to_string(0);
 	width = jsal_to_int(1);
 
-	wraptext = wraptext_new(text, font, width);
+	wraptext = font_wrap(font, text, width);
 	jsal_push_int(font_height(font) * wraptext_len(wraptext));
 	wraptext_free(wraptext);
 	return true;
@@ -7083,7 +7083,7 @@ js_Font_wordWrapString(int num_args, bool is_ctor, intptr_t magic)
 	text = jsal_to_string(0);
 	width = jsal_to_int(1);
 
-	wraptext = wraptext_new(text, font, width);
+	wraptext = font_wrap(font, text, width);
 	num_lines = wraptext_len(wraptext);
 	jsal_push_new_array();
 	for (i = 0; i < num_lines; ++i) {
