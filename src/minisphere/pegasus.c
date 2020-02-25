@@ -49,6 +49,7 @@
 #include "input.h"
 #include "jsal.h"
 #include "profiler.h"
+#include "query.h"
 #include "sockets.h"
 #include "unicode.h"
 #include "wildmatch.h"
@@ -378,6 +379,15 @@ static bool js_Mouse_get_y                   (int num_args, bool is_ctor, intptr
 static bool js_Mouse_clearQueue              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_getEvent                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Mouse_isPressed               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_new_Query                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_atomicOp                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_functionOp              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_numberOp                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_valueOp                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_match                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_matchIn                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_reduce                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Query_run                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromSeed                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_fromState                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_RNG                       (int num_args, bool is_ctor, intptr_t magic);
@@ -509,6 +519,7 @@ static void js_Font_finalize            (void* host_ptr);
 static void js_IndexList_finalize       (void* host_ptr);
 static void js_Mixer_finalize           (void* host_ptr);
 static void js_Model_finalize           (void* host_ptr);
+static void js_Query_finalize           (void* host_ptr);
 static void js_RNG_finalize             (void* host_ptr);
 static void js_Sample_finalize          (void* host_ptr);
 static void js_Server_finalize          (void* host_ptr);
@@ -978,6 +989,7 @@ pegasus_init(int api_level)
 	}
 
 	if (api_level >= 3) {
+		api_define_class("Query", PEGASUS_QUERY, js_new_Query, js_Query_finalize, 0);
 		api_define_async_func("FileStream", "fromFile", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
 		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
@@ -987,6 +999,7 @@ pegasus_init(int api_level)
 		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
 		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
 		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
+		api_define_func(NULL, "from", js_new_Query, 0);
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
@@ -999,6 +1012,40 @@ pegasus_init(int api_level)
 		api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
+		api_define_method("Query", "@@iterator", js_Query_run, ROP_ITERATOR);
+		api_define_method("Query", "aggregate", js_Query_reduce, ROP_AGGREGATE);
+		api_define_method("Query", "all", js_Query_reduce, ROP_ALL);
+		api_define_method("Query", "allIn", js_Query_matchIn, ROP_ALL_IN);
+		api_define_method("Query", "any", js_Query_reduce, ROP_ANY);
+		api_define_method("Query", "anyIn", js_Query_matchIn, ROP_ANY_IN);
+		api_define_method("Query", "anyIs", js_Query_match, ROP_ANY_IS);
+		api_define_method("Query", "ascending", js_Query_functionOp, QOP_SORT_AZ);
+		api_define_method("Query", "besides", js_Query_functionOp, QOP_BESIDES);
+		api_define_method("Query", "count", js_Query_run, ROP_COUNT);
+		api_define_method("Query", "descending", js_Query_functionOp, QOP_SORT_ZA);
+		api_define_method("Query", "drop", js_Query_numberOp, QOP_DROP);
+		api_define_method("Query", "find", js_Query_reduce, ROP_FIND);
+		api_define_method("Query", "findIndex", js_Query_reduce, ROP_FIND_KEY);
+		api_define_method("Query", "first", js_Query_run, ROP_FIRST);
+		api_define_method("Query", "forEach", js_Query_reduce, ROP_FOR_EACH);
+		api_define_method("Query", "group", js_Query_reduce, ROP_GROUP);
+		api_define_method("Query", "last", js_Query_run, ROP_LAST);
+		api_define_method("Query", "over", js_Query_functionOp, QOP_OVER);
+		api_define_method("Query", "plus", js_Query_valueOp, QOP_PLUS);
+		api_define_method("Query", "random", js_Query_numberOp, QOP_RANDOM);
+		api_define_method("Query", "remove", js_Query_run, ROP_REMOVE);
+		api_define_method("Query", "reverse", js_Query_atomicOp, QOP_REVERSE);
+		api_define_method("Query", "sample", js_Query_numberOp, QOP_SAMPLE);
+		api_define_method("Query", "select", js_Query_functionOp, QOP_SELECT);
+		api_define_method("Query", "shuffle", js_Query_atomicOp, QOP_SHUFFLE);
+		api_define_method("Query", "take", js_Query_numberOp, QOP_TAKE);
+		api_define_method("Query", "tap", js_Query_functionOp, QOP_TAP);
+		api_define_method("Query", "thru", js_Query_functionOp, QOP_THRU);
+		api_define_method("Query", "toArray", js_Query_run, ROP_TO_ARRAY);
+		api_define_method("Query", "uniq", js_Query_atomicOp, QOP_UNIQ);
+		api_define_method("Query", "update", js_Query_reduce, ROP_UPDATE);
+		api_define_method("Query", "where", js_Query_functionOp, QOP_WHERE);
+		api_define_method("Query", "without", js_Query_valueOp, QOP_WITHOUT);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
@@ -3549,6 +3596,231 @@ js_Model_draw(int num_args, bool is_ctor, intptr_t magic)
 	if (!screen_skipping_frame(g_screen))
 		model_draw(model, surface);
 	return false;
+}
+
+static bool
+js_new_Query(int num_args, bool is_ctor, intptr_t magic)
+{
+	query_t* query;
+
+	// ignore argument when called as `new Query`; required for `from`
+	if (num_args >= 1 || !is_ctor)
+		jsal_require_object(0);
+
+	query = query_new(num_args);
+	jsal_push_class_obj(PEGASUS_QUERY, query, is_ctor);
+	return true;
+}
+
+static void
+js_Query_finalize(void* host_ptr)
+{
+	query_unref(host_ptr);
+}
+
+static bool
+js_Query_atomicOp(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t*  iteratee = NULL;
+	query_op_t opcode;
+	query_t*   query;
+
+	opcode = (query_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	if (num_args >= 1)
+		jsal_require_function(0);
+
+	if (num_args >= 1)
+		iteratee = jsal_ref(0);
+	query = query_clone(query);
+	query_add_op(query, opcode, iteratee);
+	jsal_push_class_obj(PEGASUS_QUERY, query, false);
+	return true;
+}
+
+static bool
+js_Query_functionOp(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t*  iteratee;
+	query_op_t opcode;
+	query_t*   query;
+
+	opcode = (query_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	jsal_require_function(0);
+
+	query = query_clone(query);
+	iteratee = jsal_ref(0);
+	query_add_op(query, opcode, iteratee);
+	jsal_push_class_obj(PEGASUS_QUERY, query, false);
+	return true;
+}
+
+static bool
+js_Query_numberOp(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t*  argument;
+	query_op_t opcode;
+	query_t*   query;
+
+	opcode = (query_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	jsal_require_number(0);
+
+	query = query_clone(query);
+	argument = jsal_ref(0);
+	query_add_op(query, opcode, argument);
+	jsal_push_class_obj(PEGASUS_QUERY, query, false);
+	return true;
+}
+
+static bool
+js_Query_valueOp(int num_args, bool is_ctor, intptr_t magic)
+{
+	int        length;
+	query_op_t opcode;
+	query_t*   query;
+	js_ref_t*  value;
+
+	int i, ii, j;
+
+	opcode = (query_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	if (num_args < 1)
+		jsal_error(JS_RANGE_ERROR, "No value provided for Query method");
+
+	if (num_args >= 1) {
+		jsal_push_new_array();
+		for (i = 0, j = 0; i < num_args; ++i) {
+			jsal_dup(i);
+			if (jsal_is_array(-1)) {
+				length = jsal_get_length(-1);
+				for (ii = 0; ii < length; ++i) {
+					jsal_get_prop_index(-1, ii);
+					jsal_put_prop_index(-3, j++);
+				}
+				jsal_pop(1);
+			}
+			else {
+				jsal_put_prop_index(-2, j++);
+			}
+		}
+		jsal_replace(0);
+	}
+	query = query_clone(query);
+	value = jsal_ref(0);
+	query_add_op(query, opcode, value);
+	jsal_push_class_obj(PEGASUS_QUERY, query, false);
+	return true;
+}
+
+static bool
+js_Query_match(int num_args, bool is_ctor, intptr_t magic)
+{
+	reduce_op_t opcode;
+	query_t*    query;
+	js_ref_t*   value;
+
+	opcode = (reduce_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	if (num_args < 1)
+		jsal_error(JS_RANGE_ERROR, "No search value provided for Query method");
+
+	value = jsal_ref(0);
+	query_run(query, opcode, value, NULL);
+	return true;
+}
+
+static bool
+js_Query_matchIn(int num_args, bool is_ctor, intptr_t magic)
+{
+	reduce_op_t opcode;
+	query_t*    query;
+	js_ref_t*   value_list;
+
+	opcode = (reduce_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	jsal_require_array(0);
+
+	value_list = jsal_ref(0);
+	query_run(query, opcode, value_list, NULL);
+	return true;
+}
+
+static bool
+js_Query_reduce(int num_args, bool is_ctor, intptr_t magic)
+{
+	reduce_op_t opcode;
+	query_t*    query;
+	js_ref_t*   r1;
+	js_ref_t*   r2 = NULL;
+
+	opcode = (reduce_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	jsal_require_function(0);
+
+	r1 = jsal_ref(0);
+	if (num_args >= 2)
+		r2 = jsal_ref(1);
+	query_run(query, opcode, r1, r2);
+	return true;
+}
+
+static bool
+js_Query_run(int num_args, bool is_ctor, intptr_t magic)
+{
+	reduce_op_t opcode;
+	query_t*    query;
+	js_ref_t*   r1 = NULL;
+	js_ref_t*   r2 = NULL;
+
+	opcode = (reduce_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	if (num_args >= 1)
+		jsal_require_function(0);
+
+	if (num_args >= 1)
+		r1 = jsal_ref(0);
+	if (num_args >= 2)
+		r2 = jsal_ref(1);
+	query_run(query, opcode, r1, r2);
+	return true;
+}
+
+static bool
+js_Query_sample(int num_args, bool is_ctor, intptr_t magic)
+{
+	reduce_op_t opcode;
+	query_t*    query;
+	js_ref_t*   num_samples = NULL;
+
+	opcode = (reduce_op_t)magic;
+
+	jsal_push_this();
+	query = jsal_require_class_obj(-1, PEGASUS_QUERY);
+	if (num_args >= 1)
+		jsal_require_number(0);
+
+	if (num_args >= 1)
+		num_samples = jsal_ref(0);
+	query_run(query, opcode, num_samples, NULL);
+	return true;
 }
 
 static bool

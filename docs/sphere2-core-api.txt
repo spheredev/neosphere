@@ -1431,6 +1431,276 @@ Mouse#isPressed(key); [API 1]
           and WheelDown.
 
 
+`Query` Object
+--------------
+
+The `Query` object provides games with the ability to perform complex queries
+against the contents of arrays and other iterable collections.  One use case is
+in battle engines: you could, for instance, query for only those battlers on
+the enemy side, or use a query to narrow down the scope of status effects.
+Even enemy AI code can benefit from queries!
+
+If you're familiar with C#, the `from()` function works a lot like LINQ.  A
+query is built from a number of predicates and mappings, and is then typically
+processed using a `for...of` loop.  Each method returns a new Query object with
+the corresponding operation appended so you can easily chain many different
+operations into a single query.
+
+For example, suppose you wanted to code an attack that damages all opposing
+battlers whose level is a multiple of 5, but only hits 75% of the time.  That
+could look like this:
+
+    const targets = from(battlers)
+        .where(v => v.isEnemyOf(attacker))
+        .where(v => v.level % 5 == 0)
+        .where(v => random.chance(0.75));
+    for (const target of targets) {
+        target.damage(move.power * attacker.strength);
+    }
+
+from(source[, ...]);
+
+    Constructs and returns a `Query` which sources values from the JS array(s)
+    or iterable(s) given by `source`.  Calling a reducer such as `.toArray()`
+    on a query created this way will run it immediately and return the result.
+
+    Note: You can specify more than one `source` to do a query over multiple
+          collections as if they were a single list.
+
+new Query();
+
+    Constructs a Query object representing a deferrable query.  Unlike queries
+    started using `from()` which always take values from the same places, when
+    a reducer such as `toArray()` is called on a deferrable query, it returns a
+    function you can call later to run the query on any set of sources you
+    want.
+
+    As an example:
+
+        let hasEnergyDrinks = new Query()
+            .over(member => member.items)
+            .select(it => it.name)
+            .anyIn(["Red Bull", "Monster"]);
+        // later on...
+        if (hasEnergyDrinks(enemyParty))
+            stealFrom(enemyParty, "Monster");
+
+Query#all(predicate);
+Query#allIn(valueList);
+
+    Runs the query and returns true if and only if all items match `predicate`
+    or any value in `valueList`.  Otherwise it returns false.
+
+    Note: The first item that doesn't match will terminate the query.  If there
+          are no values to test, `true` is returned.
+
+Query#any(predicate);
+Query#anyIn(valueList);
+Query#anyIs(value);
+
+    Runs the query and returns true if any item matches the specified predicate
+    (see `Query#where`) or value(s).
+
+    Note: The first item that matches will terminate the query.  If there are
+          no values to test, `false` is returned.
+
+Query#ascending([keySelector]);
+Query#descending([keySelector]);
+
+    Calls `keySelector` to get a sort key for each value and sorts the values
+    in ascending or descending order by key.  If no key selector is provided,
+    the value itself will be used as the key.
+
+    Note: Queries with sort operators in them will take longer to run and use
+          more memory while running since they have to create a new temporary
+          array internally to store the sorted values.  Keep this in mind when
+          querying large collections.
+
+Query#besides([callback]);
+
+    Calls `callback` for each value that passes through.  This is useful if you
+    need to perform ancillary actions in the middle of a query; for example,
+    tallying intermediate results.
+
+    Note: Avoid causing side effects that modify the query source.  Bad things
+          can happen otherwise! (such as: the pig eating you)
+
+Query#count([keySelector]);
+
+    Runs the query and counts the results.  If no `keySelector` is provided,
+    this method simply returns the total number of results.  Otherwise,
+    `keySelector` is called for each result and values with different keys will
+    be counted separately.  In this case, an object is returned with one entry
+    for each unique key:
+
+        let counts = from([ "pig", "cow", 812, "ape", 1208 ])
+            .count(it => typeof it);
+        // returns: { string: 3, number: 2 }
+
+Query#drop(count);
+
+    Filters out the first `count` results, passing the remainder on as-is.  The
+    source array is not modified.
+
+Query#find(predicate);
+
+    Runs the query, calling `predicate` for each result, and returns the first
+    value that matches.
+
+    Note: The first value that matches the predicate will terminate the query.
+          If there are no matching values, `undefined` is returned.
+
+Query#first([mapper]);
+
+    Runs the query and returns the value of the first result, or `undefined` if
+    there are no results.  `mapper` is an optional function specifying how to
+    transform the returned value (see `Query#select`).
+
+    Note: The query is terminated immediately once the first result has been
+          produced.
+
+Query#forEach(callback);
+
+    Runs the query, calling `callback` for each result.  The return value of
+    the callback is ignored.  This is used to loop over the results of a query,
+    the way you would loop over an array using arrayObj.forEach() in standard
+    JavaScript.
+
+Query#groupBy(keySelector);
+
+    Runs the query and returns an object containing all query results grouped
+    by key.  `keySelector` should return a string to use as the key for each
+    group of values.  To illustrate how this works:
+
+        let groups = from([ 1, "a", 2, "b", 3 ])
+            .groupBy(it => typeof it);
+        // returns: { number: [ 1, 2, 3 ], string: [ "a", "b" ] }
+
+Query#last([mapper]);
+
+    Runs the query and returns the value of the final result, or `undefined` if
+    there are no results.  `mapper` is an optional function specifying how to
+    transform the returned value (see `Query#select`).
+
+Query#over(mapper);
+
+    Similar to `Query#select`, but rather than being a 1:1 mapping, `over` maps
+    each value to a list of values.  This is used to expand a query into
+    subcollections, for example:
+
+        havePotions = from(partyMembers)
+            .over(member => member.items)
+            .select(item => item.name)
+            .anyIs('Potion');
+
+Query#plus(value[, ...]);
+
+    Injects additional values into the pipeline.  This differs from `over()`;
+    while that operator replaces each value with values from a different list,
+    `plus()` simply adds new values to the end of the stream.
+
+    Note: More than one `value` can be provided and each one can be either a
+          single value or an array of values.
+
+Query#random(count);
+
+    Takes `count` independent random samples from amongst the incoming values.
+    The rest of the query will only see what was sampled.
+
+    Note: Because the samples taken are independent, this can sample a result
+          more than once; if you don't want duplicates, use `sample()` instead.
+
+Query#reduce(reducer[, initialValue]);
+
+    Runs the query and calls `reducer` for each result, assigning the return
+    value to an internal accumulator at each step.  The current value of the
+    accumulator is passed as the first argument to the reducer function, before
+    the value.
+
+    This is a fairly advanced operation, so to help illustrate, the following
+    query calculates the sum of all numbers in the array `numbers`:
+
+        sum = from(numbers).reduce((a, v) => a + v);
+
+    Note: If `initialValue` is not given, the accumulator is initialized with
+          the first query result; the reducer function will then not be called
+          for that item.  If that behavior is not desirable, be sure to provide
+          an initial value.
+
+Query#remove([predicate]);
+
+    Removes results from the source object or array.  `predicate` is optional;
+    if provided, it should return true to remove the result, or false to keep
+    it.  If no `predicate` is provided, all items satisfying the query will be
+    removed.
+
+Query#reverse();
+
+    Takes all incoming values and reverses them so the rest of the query sees
+    them in reverse order.
+
+Query#sample(count);
+
+    Takes `count` unique random samples from the pipeline and filters out the
+    rest; the rest of the query will only see the sampled values.  This will
+    not sample a given result more than once.
+
+Query#select(mapper);
+
+    Calls `mapper` for each item and uses whatever it returns as the new value
+    for that item in subsequent operations.  The source array is not modified.
+
+Query#shuffle();
+
+    Shuffles all incoming values so that the rest of the query sees them in a
+    random order.
+
+Query#take(count);
+
+    Uses only the first `count` items in subsequent operations and discards the
+    rest.  The source array is not modified.
+
+Query#tap(interceptor);
+
+    Collects all results so far into an array and calls `interceptor` passing
+    the array as the first parameter.  Any changes made to the array will be
+    reflected in subsequent operations.
+
+Query#thru(mapper);
+
+    Similar to `tap`, but completely replaces the set of results with the array
+    returned by `mapper`.
+
+Query#toArray();
+
+    Runs the query and returns the results in a JavaScript array object for
+    later use.
+
+Query#uniq([keySelector]);
+
+    Filters out duplicate values.  If the mapping function `keySelector` is
+    provided, it will be called for each result; only the first value for which
+    a given key is selected will be kept.
+
+Query#update(mapper);
+
+    Writes new values back into the source object or array.  `mapper` is the
+    mapping function to compute the value that gets written back.
+
+    Note: As with `remove()`, `update()` cannot be used in a query containing
+          whole-list transformations such as `shuffle()` or `reverse()`.
+
+Query#where(predicate);
+
+    Calls `predicate` for each value and keeps only those values for which the
+    function returns `true`.  The source array is not modified.
+
+Query#without(value[, ...]);
+
+    Filters out the specified value(s).  Each `value` argument can be either a
+    single value or an array of values.
+
+
 `RNG` Object
 ------------
 

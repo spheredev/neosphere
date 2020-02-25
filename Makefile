@@ -53,6 +53,7 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/package.c \
    src/minisphere/pegasus.c \
    src/minisphere/profiler.c \
+   src/minisphere/query.c \
    src/minisphere/screen.c \
    src/minisphere/script.c \
    src/minisphere/spriteset.c \

@@ -1755,6 +1755,19 @@ jsal_ref(int at_index)
 	return ref;
 }
 
+js_ref_t*
+jsal_ref_dup(const js_ref_t* ref)
+{
+	js_ref_t* dolly;
+
+	dolly = calloc(1, sizeof(js_ref_t));
+	dolly->value = ref->value;
+	dolly->weak_ref = ref->weak_ref;
+	if (!dolly->weak_ref)
+		JsAddRef(dolly->value, NULL);
+	return dolly;
+}
+
 void
 jsal_remove(int at_index)
 {
