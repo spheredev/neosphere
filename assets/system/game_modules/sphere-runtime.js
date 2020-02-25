@@ -42,6 +42,6 @@ export { default as Tween, Easing } from 'tween';
 
 // Sphere Runtime shared modules
 export { default as from, Query } from 'from';
-export { default as DataStream } from 'data-stream';
+export { default as BinaryCoder } from 'binary-coder';
 export { default as Logger } from 'logger';
 export { default as Random } from 'random';
