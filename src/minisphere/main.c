@@ -351,7 +351,7 @@ main(int argc, char* argv[])
 		goto on_js_error;
 	}
 	eval_succeeded = api_version >= 2
-		? module_load(path_cstr(script_path), NULL, false)
+		? module_load(path_cstr(script_path), false)
 		: script_eval(path_cstr(script_path));
 	if (!eval_succeeded)
 		goto on_js_error;

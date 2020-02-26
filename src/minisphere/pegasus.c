@@ -1124,48 +1124,21 @@ handle_module_import(void)
 {
 	/* [ module_name parent_specifier ] -> [ ... specifier url source ] */
 
-	const char* const PATHS[] =
-	{
-		"@/lib",
-		"#/game_modules",
-		"#/runtime",
-	};
-
-	char*         caller_id = NULL;
+	const char*   caller_id = NULL;
 	const char*   pathname;
-	module_ref_t* ref = NULL;
+	module_ref_t* ref;
 	char*         shim_name;
 	lstring_t*    shim_source;
 	char*         source;
 	size_t        source_len;
-	char*         specifier;
+	const char*   specifier;
 
-	int i;
-
-	// strdup() here because the JSAL-managed strings may get overwritten in the course
-	// of a filename lookup.
-	specifier = strdup(jsal_require_string(0));
+	specifier = jsal_require_string(0);
 	if (!jsal_is_null(1))
-		caller_id = strdup(jsal_require_string(1));
+		caller_id = jsal_require_string(1);
 
-	// relative path is nonsensical in a non-module context because the JS engine
-	// doesn't know where the request came from in that case
-	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of ESM code");
-
-	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((ref = module_resolve(specifier, caller_id, PATHS[i], false)))
-			break;  // short-circuit
-	}
-	if (ref == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
-		free(caller_id);
-		free(specifier);
+	if (!(ref = module_resolve(specifier, caller_id, false)))
 		jsal_throw();
-	}
-	free(caller_id);
-	free(specifier);
-
 	pathname = module_pathname(ref);
 	if (module_type(ref) == MODULE_COMMONJS) {
 		if (game_strict_imports(g_game))
@@ -1190,7 +1163,6 @@ handle_module_import(void)
 		jsal_push_lstring(source, source_len);
 		free(source);
 	}
-
 	module_free(ref);
 }
 

@@ -41,12 +41,23 @@ struct module_ref
 	path_t*       path;
 };
 
+static module_ref_t* find_module       (const char* specifier, const char* importer, const char* lib_dir_name, bool node_compatible);
 static module_ref_t* load_package_json (const char* filename);
 
 static bool js_require (int num_args, bool is_ctor, intptr_t magic);
 
 bool
-module_load(const char* specifier, const char* importer, bool node_compatible)
+module_load(const char* specifier, bool node_compatible)
+{
+	module_ref_t* ref;
+
+	if (!(ref = module_resolve(specifier, NULL, node_compatible)))
+		return false;
+	return module_exec(ref);
+}
+
+module_ref_t*
+module_resolve(const char* specifier, const char* importer, bool node_compatible)
 {
 	static const
 	struct search_path
@@ -65,106 +76,21 @@ module_load(const char* specifier, const char* importer, bool node_compatible)
 
 	int i;
 
+	// can't resolve a relative specifier if we don't know where it came from
 	if (importer == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0)) {
-		jsal_push_new_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
-		return false;
-	}
-	if (node_compatible && game_strict_imports(g_game)) {
-		jsal_push_new_error(JS_TYPE_ERROR, "CommonJS require '%s' unsupported with strictImports", specifier);
+		jsal_push_new_error(JS_URI_ERROR, "Relative module specifier '%s' in non-module code", specifier);
 		return false;
 	}
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((ref = module_resolve(specifier, importer, PATHS[i].path, node_compatible && !PATHS[i].esm_only)))
+		if ((ref = find_module(specifier, importer, PATHS[i].path, node_compatible && !PATHS[i].esm_only)))
 			break;  // short-circuit
 	}
 	if (ref == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
+		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
 		return false;
 	}
-	return module_exec(ref);
-}
-
-module_ref_t*
-module_resolve(const char* specifier, const char* importer, const char* lib_dir_name, bool node_compatible)
-{
-	static const
-	struct pattern
-	{
-		bool        esm_aware;
-		bool        strict_aware;
-		const char* name;
-	}
-	PATTERNS[] =
-	{
-		{ true,  true,  "%s" },
-		{ true,  false, "%s.mjs" },
-		{ true,  false, "%s.js" },
-		{ true,  false, "%s.cjs" },
-		{ false, false, "%s.json" },
-		{ false, false, "%s/package.json" },
-		{ true,  false, "%s/index.mjs" },
-		{ true,  false, "%s/index.js" },
-		{ true,  false, "%s/index.cjs" },
-		{ false, false, "%s/index.json" },
-	};
-
-	path_t*       base_path;
-	char*         filename;
-	path_t*       path;
-	module_ref_t* ref;
-	bool          strict_mode = false;
-
-	int i;
-
-	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0 || game_is_prefix_path(g_game, specifier)) {
-		// relative-path specifier or SphereFS prefix, resolve from file system
-		base_path = path_new(importer != NULL ? importer : "./");
-		strict_mode = game_strict_imports(g_game) && !node_compatible;
-	}
-	else {
-		// bare specifier, resolve module from designated module repository
-		base_path = path_new_dir(lib_dir_name);
-	}
-
-	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
-		if (!node_compatible && !PATTERNS[i].esm_aware)
-			continue;
-		filename = strnewf(PATTERNS[i].name, specifier);
-		if (game_is_prefix_path(g_game, specifier)) {
-			path = game_full_path(g_game, filename, NULL, false);
-		}
-		else {
-			path = path_dup(base_path);
-			path_strip(path);
-			path_append(path, filename);
-			path_collapse(path, true);
-		}
-		free(filename);
-		if (game_file_exists(g_game, path_cstr(path))) {
-			if (strict_mode && !PATTERNS[i].strict_aware)
-				jsal_error(JS_URI_ERROR, "Abbreviated import '%s' unsupported with strictImports", specifier);
-			if (strcmp(path_filename(path), "package.json") == 0) {
-				if (!(ref = load_package_json(path_cstr(path))))
-					goto next_filename;
-				path_free(path);
-				return ref;
-			}
-			else {
-				if (!(ref = calloc(1, sizeof(module_ref_t))))
-					return NULL;
-				ref->path = path;
-				ref->type = node_compatible && !path_extension_is(path, ".mjs")
-					? MODULE_COMMONJS : MODULE_ESM;
-				return ref;
-			}
-		}
-
-	next_filename:
-		path_free(path);
-	}
-
-	return NULL;
+	return ref;
 }
 
 void
@@ -347,6 +273,88 @@ jsal_push_require(const char* module_id)
 }
 
 static module_ref_t*
+find_module(const char* specifier, const char* importer, const char* lib_dir_name, bool node_compatible)
+{
+	static const
+	struct pattern
+	{
+		bool        esm_aware;
+		bool        strict_aware;
+		const char* name;
+	}
+	PATTERNS[] =
+	{
+		{ true,  true,  "%s" },
+		{ true,  false, "%s.mjs" },
+		{ true,  false, "%s.js" },
+		{ true,  false, "%s.cjs" },
+		{ false, false, "%s.json" },
+		{ false, false, "%s/package.json" },
+		{ true,  false, "%s/index.mjs" },
+		{ true,  false, "%s/index.js" },
+		{ true,  false, "%s/index.cjs" },
+		{ false, false, "%s/index.json" },
+	};
+
+	path_t*       base_path;
+	char*         filename;
+	path_t*       path;
+	module_ref_t* ref;
+	bool          strict_mode = false;
+
+	int i;
+
+	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0 || game_is_prefix_path(g_game, specifier)) {
+		// relative-path specifier or SphereFS prefix, resolve from file system
+		base_path = path_new(importer != NULL ? importer : "./");
+		strict_mode = game_strict_imports(g_game) && !node_compatible;
+	}
+	else {
+		// bare specifier, resolve module from designated module repository
+		base_path = path_new_dir(lib_dir_name);
+	}
+
+	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
+		if (!node_compatible && !PATTERNS[i].esm_aware)
+			continue;
+		filename = strnewf(PATTERNS[i].name, specifier);
+		if (game_is_prefix_path(g_game, specifier)) {
+			path = game_full_path(g_game, filename, NULL, false);
+		}
+		else {
+			path = path_dup(base_path);
+			path_strip(path);
+			path_append(path, filename);
+			path_collapse(path, true);
+		}
+		free(filename);
+		if (game_file_exists(g_game, path_cstr(path))) {
+			if (strict_mode && !PATTERNS[i].strict_aware)
+				jsal_error(JS_URI_ERROR, "Abbreviated import '%s' unsupported with strictImports", specifier);
+			if (strcmp(path_filename(path), "package.json") == 0) {
+				if (!(ref = load_package_json(path_cstr(path))))
+					goto next_filename;
+				path_free(path);
+				return ref;
+			}
+			else {
+				if (!(ref = calloc(1, sizeof(module_ref_t))))
+					return NULL;
+				ref->path = path;
+				ref->type = node_compatible && !path_extension_is(path, ".mjs")
+					? MODULE_COMMONJS : MODULE_ESM;
+				return ref;
+			}
+		}
+
+	next_filename:
+		path_free(path);
+	}
+
+	return NULL;
+}
+
+static module_ref_t*
 load_package_json(const char* filename)
 {
 	char*         json;
@@ -404,25 +412,9 @@ on_error:
 static bool
 js_require(int num_args, bool is_ctor, intptr_t magic)
 {
-	static const
-	struct search_path
-	{
-		bool        node_aware;
-		const char* path;
-	}
-	PATHS[] =
-	{
-		{ true,  "@/lib" },
-		{ false, "#/game_modules" },
-		{ false, "#/runtime" },
-	};
-
 	const char*   caller_id = NULL;
-	bool          node_compatible = true;
-	module_ref_t* ref = NULL;
+	module_ref_t* ref;
 	const char*   specifier;
-
-	int i;
 
 	specifier = jsal_require_string(0);
 
@@ -430,19 +422,11 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	if (jsal_get_prop_string(-1, "id"))
 		caller_id = jsal_get_string(-1);
 
-	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
 	if (game_strict_imports(g_game))
 		jsal_error(JS_TYPE_ERROR, "CommonJS require '%s' unsupported with strictImports", specifier);
 
-	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		node_compatible = PATHS[i].node_aware;
-		if ((ref = module_resolve(specifier, caller_id, PATHS[i].path, node_compatible)))
-			break;  // short-circuit
-	}
-	if (ref == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
-
+	if (!(ref = module_resolve(specifier, caller_id, true)))
+		jsal_throw();
 	if (!module_exec(ref))
 		jsal_throw();
 	return true;
