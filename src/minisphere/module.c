@@ -33,6 +33,8 @@
 #include "minisphere.h"
 #include "module.h"
 
+#include "debugger.h"
+
 struct module_ref
 {
 	module_type_t type;
@@ -41,8 +43,50 @@ struct module_ref
 
 static module_ref_t* load_package_json (const char* filename);
 
+static bool js_require (int num_args, bool is_ctor, intptr_t magic);
+
+bool
+module_load(const char* specifier, const char* importer, bool node_compatible)
+{
+	static const
+	struct search_path
+	{
+		bool        esm_only;
+		const char* path;
+	}
+	PATHS[] =
+	{
+		{ false, "@/lib" },
+		{ true,  "#/game_modules" },
+		{ true,  "#/runtime" },
+	};
+
+	module_ref_t* ref = NULL;
+
+	int i;
+
+	if (importer == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0)) {
+		jsal_push_new_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
+		return false;
+	}
+	if (node_compatible && game_strict_imports(g_game)) {
+		jsal_push_new_error(JS_TYPE_ERROR, "CommonJS require '%s' unsupported with strictImports", specifier);
+		return false;
+	}
+
+	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
+		if ((ref = module_resolve(specifier, importer, PATHS[i].path, node_compatible && !PATHS[i].esm_only)))
+			break;  // short-circuit
+	}
+	if (ref == NULL) {
+		jsal_push_new_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
+		return false;
+	}
+	return module_exec(ref);
+}
+
 module_ref_t*
-module_find(const char* specifier, const char* origin, const char* lib_dir_name, bool node_compatible)
+module_resolve(const char* specifier, const char* importer, const char* lib_dir_name, bool node_compatible)
 {
 	static const
 	struct pattern
@@ -65,8 +109,8 @@ module_find(const char* specifier, const char* origin, const char* lib_dir_name,
 		{ false, false, "%s/index.json" },
 	};
 
+	path_t*       base_path;
 	char*         filename;
-	path_t*       origin_path;
 	path_t*       path;
 	module_ref_t* ref;
 	bool          strict_mode = false;
@@ -75,12 +119,12 @@ module_find(const char* specifier, const char* origin, const char* lib_dir_name,
 
 	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0 || game_is_prefix_path(g_game, specifier)) {
 		// relative-path specifier or SphereFS prefix, resolve from file system
-		origin_path = path_new(origin != NULL ? origin : "./");
+		base_path = path_new(importer != NULL ? importer : "./");
 		strict_mode = game_strict_imports(g_game) && !node_compatible;
 	}
 	else {
 		// bare specifier, resolve module from designated module repository
-		origin_path = path_new_dir(lib_dir_name);
+		base_path = path_new_dir(lib_dir_name);
 	}
 
 	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
@@ -91,7 +135,7 @@ module_find(const char* specifier, const char* origin, const char* lib_dir_name,
 			path = game_full_path(g_game, filename, NULL, false);
 		}
 		else {
-			path = path_dup(origin_path);
+			path = path_dup(base_path);
 			path_strip(path);
 			path_append(path, filename);
 			path_collapse(path, true);
@@ -99,7 +143,7 @@ module_find(const char* specifier, const char* origin, const char* lib_dir_name,
 		free(filename);
 		if (game_file_exists(g_game, path_cstr(path))) {
 			if (strict_mode && !PATTERNS[i].strict_aware)
-				jsal_error(JS_URI_ERROR, "Partial specifier in import '%s' unsupported with strictImports", specifier);
+				jsal_error(JS_URI_ERROR, "Abbreviated import '%s' unsupported with strictImports", specifier);
 			if (strcmp(path_filename(path), "package.json") == 0) {
 				if (!(ref = load_package_json(path_cstr(path))))
 					goto next_filename;
@@ -140,6 +184,166 @@ module_type_t
 module_type(const module_ref_t* it)
 {
 	return it->type;
+}
+
+bool
+module_exec(module_ref_t* it)
+{
+	// HERE BE DRAGONS!
+	// this function is horrendous.  JSAL's stack-based API is powerful, but gets very
+	// messy very quickly when dealing with object properties.  I tried to add comments
+	// to illuminate what's going on, but it's still likely to be confusing for someone
+	// not familiar with Lua or similar APIs.  proceed with caution.
+
+	// notes:
+	//     - the final value of 'module.exports' is left on top of the JSAL value stack.
+	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
+	//       behavior, the filename should be canonicalized first.
+	//     - this is a protected call.  if the module being loaded throws, this function will
+	//       return false and the error will be left on top of the stack for the caller to deal
+	//       with.
+
+	lstring_t*  code_string;
+	path_t*     dir_path;
+	bool        is_module_loaded;
+	const char* pathname;
+	size_t      source_size;
+	char*       source;
+
+	pathname = path_cstr(it->path);
+	dir_path = path_strip(path_dup(it->path));
+
+	// if loading as ESM, we can skip the whole CommonJS rigamarole.
+	if (it->type == MODULE_ESM) {
+		source = game_read_file(g_game, pathname, &source_size);
+		code_string = lstr_from_utf8(source, source_size, true);
+		free(source);
+		jsal_push_lstring_t(code_string);
+		debugger_add_source(pathname, code_string);
+		is_module_loaded = jsal_try_eval_module(pathname, debugger_source_name(pathname));
+		lstr_free(code_string);
+		if (!is_module_loaded)
+			goto on_error;
+		goto have_module;
+	}
+
+	// is the requested module already in the cache?
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "moduleCache");
+	if (jsal_get_prop_string(-1, pathname)) {
+		jsal_remove(-2);
+		jsal_remove(-2);
+		goto have_module;
+	}
+	else {
+		jsal_pop(3);
+	}
+
+	console_log(1, "evaluating JS module '%s'", pathname);
+
+	source = game_read_file(g_game, pathname, &source_size);
+	code_string = lstr_from_utf8(source, source_size, true);
+	free(source);
+
+	// construct a CommonJS module object for the new module
+	jsal_push_new_object();  // module object
+	jsal_push_new_object();
+	jsal_put_prop_string(-2, "exports");  // module.exports = {}
+	jsal_push_string(pathname);
+	jsal_put_prop_string(-2, "filename");  // module.filename
+	jsal_push_string(pathname);
+	jsal_put_prop_string(-2, "id");  // module.id
+	jsal_push_boolean_false();
+	jsal_put_prop_string(-2, "loaded");  // module.loaded = false
+	jsal_push_require(pathname);
+	jsal_put_prop_string(-2, "require");  // module.require
+
+	// cache the module object in advance
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "moduleCache");
+	jsal_dup(-3);
+	jsal_put_prop_string(-2, pathname);
+	jsal_pop(2);
+
+	if (it->type == MODULE_JSON) {
+		// JSON file, decode to JavaScript object
+		jsal_push_lstring_t(code_string);
+		lstr_free(code_string);
+		if (!jsal_try_parse(-1))
+			goto on_error;
+		jsal_put_prop_string(-2, "exports");
+	}
+	else {
+		// synthesize a function to wrap the module code.  this is the simplest way to
+		// implement CommonJS semantics and matches the behavior of Node.js.
+		jsal_push_sprintf("(function (exports, require, module, __filename, __dirname) {%s%s\n})",
+			strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
+			lstr_cstr(code_string));
+		lstr_free(code_string);
+		if (!jsal_try_compile(debugger_source_name(pathname)))
+			goto on_error;
+		jsal_call(0);
+		jsal_push_new_object();
+		jsal_push_string("main");
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "name");
+
+		// go, go, go!
+		jsal_get_prop_string(-2, "exports");    // this = exports
+		jsal_get_prop_string(-3, "exports");    // exports
+		jsal_get_prop_string(-4, "require");    // require
+		jsal_dup(-5);                           // module
+		jsal_push_string(pathname);             // __filename
+		jsal_push_string(path_cstr(dir_path));  // __dirname
+		if (!jsal_try_call_method(5))
+			goto on_error;
+		jsal_pop(1);
+	}
+
+	// module executed successfully, set 'module.loaded' to true
+	jsal_push_boolean_true();
+	jsal_put_prop_string(-2, "loaded");
+
+have_module:
+	if (it->type != MODULE_ESM) {
+		// 'module` is on the stack; we need `module.exports'.
+		jsal_get_prop_string(-1, "exports");
+		jsal_replace(-2);
+	}
+	return true;
+
+on_error:
+	// note: it's assumed that at this point, the only thing(s) left in our portion of the
+	//       value stack are the module object (for CommonJS) and the thrown error.
+	if (it->type != MODULE_ESM) {
+		jsal_push_hidden_stash();
+		jsal_get_prop_string(-1, "moduleCache");
+		jsal_del_prop_string(-1, pathname);
+		jsal_pop(2);
+		jsal_replace(-2);  // leave the error on the stack
+	}
+	return false;
+}
+
+void
+jsal_push_require(const char* module_id)
+{
+	jsal_push_new_function(js_require, "require", 1, false, 0);
+
+	// assign 'require.cache'
+	jsal_push_new_object();
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "moduleCache");
+	jsal_remove(-2);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, "cache");
+
+	if (module_id != NULL) {
+		jsal_push_new_object();
+		jsal_push_string(module_id);
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "id");  // require.id
+	}
 }
 
 static module_ref_t*
@@ -195,4 +399,51 @@ load_package_json(const char* filename)
 on_error:
 	jsal_set_top(stack_top);
 	return NULL;
+}
+
+static bool
+js_require(int num_args, bool is_ctor, intptr_t magic)
+{
+	static const
+	struct search_path
+	{
+		bool        node_aware;
+		const char* path;
+	}
+	PATHS[] =
+	{
+		{ true,  "@/lib" },
+		{ false, "#/game_modules" },
+		{ false, "#/runtime" },
+	};
+
+	const char*   caller_id = NULL;
+	bool          node_compatible = true;
+	module_ref_t* ref = NULL;
+	const char*   specifier;
+
+	int i;
+
+	specifier = jsal_require_string(0);
+
+	jsal_push_callee();
+	if (jsal_get_prop_string(-1, "id"))
+		caller_id = jsal_get_string(-1);
+
+	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
+		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
+	if (game_strict_imports(g_game))
+		jsal_error(JS_TYPE_ERROR, "CommonJS require '%s' unsupported with strictImports", specifier);
+
+	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
+		node_compatible = PATHS[i].node_aware;
+		if ((ref = module_resolve(specifier, caller_id, PATHS[i].path, node_compatible)))
+			break;  // short-circuit
+	}
+	if (ref == NULL)
+		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
+
+	if (!module_exec(ref))
+		jsal_throw();
+	return true;
 }

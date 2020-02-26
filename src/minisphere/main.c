@@ -44,6 +44,7 @@
 #include "input.h"
 #include "jsal.h"
 #include "map_engine.h"
+#include "module.h"
 #include "pegasus.h"
 #include "profiler.h"
 #include "sockets.h"
@@ -350,7 +351,7 @@ main(int argc, char* argv[])
 		goto on_js_error;
 	}
 	eval_succeeded = api_version >= 2
-		? pegasus_try_require(path_cstr(script_path), false)
+		? module_load(path_cstr(script_path), NULL, false)
 		: script_eval(path_cstr(script_path));
 	if (!eval_succeeded)
 		goto on_js_error;

@@ -45,9 +45,13 @@ enum module_type
     MODULE_JSON,
 } module_type_t;
 
-module_ref_t* module_find     (const char* specifier, const char* origin, const char* lib_dir_name, bool node_compatible);
+bool          module_load     (const char* specifier, const char* importer, bool node_compatible);
+module_ref_t* module_resolve  (const char* specifier, const char* importer, const char* lib_dir_name, bool node_compatible);
 void          module_free     (module_ref_t* it);
 const char*   module_pathname (const module_ref_t* it);
 module_type_t module_type     (const module_ref_t* it);
+bool          module_exec     (module_ref_t* it);
+
+void jsal_push_require (const char* module_id);
 
 #endif // SPHERE__MODULE_H__INCLUDED

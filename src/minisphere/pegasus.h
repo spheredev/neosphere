@@ -64,9 +64,7 @@ enum pegasus_type
 	PEGASUS_VERTEX_LIST,
 };
 
-void pegasus_init             (int api_level);
-void pegasus_uninit           (void);
-bool pegasus_start_event_loop (void);
-bool pegasus_try_require      (const char* filename, bool node_compatible);
+void pegasus_init   (int api_level);
+void pegasus_uninit (void);
 
 #endif // SPHERE__PEGASUS_H__INCLUDED
