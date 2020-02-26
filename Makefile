@@ -49,6 +49,7 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/legacy.c \
    src/minisphere/logger.c \
    src/minisphere/map_engine.c \
+   src/minisphere/module.c \
    src/minisphere/obstruction.c \
    src/minisphere/package.c \
    src/minisphere/pegasus.c \

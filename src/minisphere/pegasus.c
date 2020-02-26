@@ -48,6 +48,7 @@
 #include "image.h"
 #include "input.h"
 #include "jsal.h"
+#include "module.h"
 #include "profiler.h"
 #include "sockets.h"
 #include "unicode.h"
@@ -525,14 +526,12 @@ static void js_VertexList_finalize      (void* host_ptr);
 
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
-static path_t*   find_module_file            (const char* specifier, const char* origin, const char* lib_dir_name, bool node_compatible);
 static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
 static void      jsal_pegasus_push_require   (const char* module_id);
 static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
-static path_t*   load_package_json           (const char* filename);
 
 static int       s_api_level;
 static int       s_api_level_nominal;
@@ -1286,85 +1285,6 @@ create_joystick_objects(void)
 	jsal_pop(1);
 }
 
-static path_t*
-find_module_file(const char* specifier, const char* origin, const char* lib_dir_name, bool node_compatible)
-{
-	static const
-	struct pattern
-	{
-		bool        esm_aware;
-		bool        strict_aware;
-		const char* name;
-	}
-	PATTERNS[] =
-	{
-		{ true,  true,  "%s" },
-		{ true,  false, "%s.mjs" },
-		{ true,  false, "%s.js" },
-		{ true,  false, "%s.cjs" },
-		{ false, false, "%s.json" },
-		{ false, false, "%s/package.json" },
-		{ true,  false, "%s/index.mjs" },
-		{ true,  false, "%s/index.js" },
-		{ true,  false, "%s/index.cjs" },
-		{ false, false, "%s/index.json" },
-	};
-
-	char*   filename;
-	path_t* main_path;
-	path_t* origin_path;
-	path_t* path;
-	bool    strict_mode = false;
-
-	int i;
-
-	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0 || game_is_prefix_path(g_game, specifier)) {
-		// resolve module relative to calling module
-		origin_path = path_new(origin != NULL ? origin : "./");
-		strict_mode = game_strict_imports(g_game) && !node_compatible;
-	}
-	else {
-		// resolve module from designated module repository
-		origin_path = path_new_dir(lib_dir_name);
-	}
-
-	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
-		if (!PATTERNS[i].esm_aware && !node_compatible)
-			continue;
-		filename = strnewf(PATTERNS[i].name, specifier);
-		if (game_is_prefix_path(g_game, specifier)) {
-			path = game_full_path(g_game, filename, NULL, false);
-		}
-		else {
-			path = path_dup(origin_path);
-			path_strip(path);
-			path_append(path, filename);
-			path_collapse(path, true);
-		}
-		free(filename);
-		if (game_file_exists(g_game, path_cstr(path))) {
-			if (strict_mode && !PATTERNS[i].strict_aware)
-				jsal_error(JS_URI_ERROR, "Partial specifier in import '%s' unsupported with strictImports", specifier);
-			if (strcmp(path_filename(path), "package.json") == 0) {
-				if (!(main_path = load_package_json(path_cstr(path))))
-					goto next_filename;
-				if (game_file_exists(g_game, path_cstr(main_path))) {
-					path_free(path);
-					return main_path;
-				}
-			}
-			else {
-				return path;
-			}
-		}
-
-	next_filename:
-		path_free(path);
-	}
-
-	return NULL;
-}
-
 static void
 handle_module_import(void)
 {
@@ -1377,13 +1297,14 @@ handle_module_import(void)
 		"#/runtime",
 	};
 
-	char*      caller_id = NULL;
-	path_t*    path;
-	char*      shim_name;
-	lstring_t* shim_source;
-	char*      source;
-	size_t     source_len;
-	char*      specifier;
+	char*         caller_id = NULL;
+	const char*   pathname;
+	module_ref_t* ref = NULL;
+	char*         shim_name;
+	lstring_t*    shim_source;
+	char*         source;
+	size_t        source_len;
+	char*         specifier;
 
 	int i;
 
@@ -1399,10 +1320,10 @@ handle_module_import(void)
 		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of ESM code");
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(specifier, caller_id, PATHS[i], false)))
+		if ((ref = module_find(specifier, caller_id, PATHS[i], false)))
 			break;  // short-circuit
 	}
-	if (path == NULL) {
+	if (ref == NULL) {
 		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
 		free(caller_id);
 		free(specifier);
@@ -1411,7 +1332,8 @@ handle_module_import(void)
 	free(caller_id);
 	free(specifier);
 
-	if (path_extension_is(path, ".cjs")) {
+	pathname = module_pathname(ref);
+	if (module_type(ref) == MODULE_COMMONJS) {
 		if (game_strict_imports(g_game))
 			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported with strictImports", specifier);
 		
@@ -1419,7 +1341,7 @@ handle_module_import(void)
 		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
 		shim_source = lstr_newf(
 			"/* ES module shim for CommonJS module */\n"
-			"export default require(\"%s\");", path_cstr(path));
+			"export default require(\"%s\");", pathname);
 		debugger_add_source(shim_name, shim_source);
 		jsal_push_string(shim_name);
 		jsal_dup(-1);
@@ -1428,46 +1350,14 @@ handle_module_import(void)
 		lstr_free(shim_source);
 	}
 	else {
-		source = game_read_file(g_game, path_cstr(path), &source_len);
-		jsal_push_string(path_cstr(path));
-		jsal_push_string(debugger_source_name(path_cstr(path)));
+		source = game_read_file(g_game, pathname, &source_len);
+		jsal_push_string(pathname);
+		jsal_push_string(debugger_source_name(pathname));
 		jsal_push_lstring(source, source_len);
 		free(source);
 	}
 
-	path_free(path);
-}
-
-static path_t*
-load_package_json(const char* filename)
-{
-	int jsal_top;
-	char*     json;
-	size_t    json_size;
-	path_t*   path;
-
-	jsal_top = jsal_get_top();
-	if (!(json = game_read_file(g_game, filename, &json_size)))
-		goto on_error;
-	jsal_push_lstring(json, json_size);
-	free(json);
-	if (!jsal_try_parse(-1))
-		goto on_error;
-	if (!jsal_is_object_coercible(-1))
-		goto on_error;
-	jsal_get_prop_string(-1, "main");
-	if (!jsal_is_string(-1))
-		goto on_error;
-	path = path_strip(path_new(filename));
-	path_append(path, jsal_get_string(-1));
-	path_collapse(path, true);
-	if (!game_file_exists(g_game, path_cstr(path)))
-		goto on_error;
-	return path;
-
-on_error:
-	jsal_set_top(jsal_top);
-	return NULL;
+	module_free(ref);
 }
 
 static bool
@@ -1486,10 +1376,10 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		{ false, "#/runtime" },
 	};
 
-	const char* caller_id = NULL;
-	bool        node_compatible = true;
-	path_t*     path;
-	const char* specifier;
+	const char*   caller_id = NULL;
+	bool          node_compatible = true;
+	module_ref_t* ref = NULL;
+	const char*   specifier;
 
 	int i;
 
@@ -1506,17 +1396,17 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		node_compatible = PATHS[i].node_aware;
-		if ((path = find_module_file(specifier, caller_id, PATHS[i].path, node_compatible)))
+		if ((ref = module_find(specifier, caller_id, PATHS[i].path, node_compatible)))
 			break;  // short-circuit
 	}
-	if (path == NULL)
+	if (ref == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
 
-	if (!pegasus_try_require(path_cstr(path), node_compatible)) {
-		path_free(path);
+	if (!pegasus_try_require(module_pathname(ref), node_compatible)) {
+		module_free(ref);
 		jsal_throw();
 	}
-	path_free(path);
+	module_free(ref);
 	return true;
 }
 
