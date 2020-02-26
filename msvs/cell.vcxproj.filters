@@ -75,6 +75,9 @@
     <ClCompile Include="..\src\cell\tileset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\cell\module.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\lstring.h">
@@ -147,6 +150,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\cell\tileset.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\cell\module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

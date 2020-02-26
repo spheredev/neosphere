@@ -48,6 +48,7 @@
 #include "image.h"
 #include "input.h"
 #include "jsal.h"
+#include "module.h"
 #include "profiler.h"
 #include "sockets.h"
 #include "unicode.h"
@@ -258,7 +259,6 @@ COLORS[] =
 	{ 0, NULL, 0, 0, 0, 0 }
 };
 
-static bool js_require                       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_APILevel           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_Compiler           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sphere_get_Engine             (int num_args, bool is_ctor, intptr_t magic);
@@ -525,14 +525,10 @@ static void js_VertexList_finalize      (void* host_ptr);
 
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
-static path_t*   find_module_file            (const char* specifier, const char* origin, const char* lib_dir_name, bool node_compatible);
-static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
-static void      jsal_pegasus_push_require   (const char* module_id);
 static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
-static path_t*   load_package_json           (const char* filename);
 
 static int       s_api_level;
 static int       s_api_level_nominal;
@@ -572,8 +568,6 @@ pegasus_init(int api_level)
 	if (s_api_level_nominal > SPHERE_API_LEVEL_STABLE)
 		s_api_level_nominal = SPHERE_API_LEVEL_STABLE;
 
-	jsal_on_import_module(handle_module_import);
-
 	s_key_color = jsal_new_key("color");
 	s_key_done = jsal_new_key("done");
 	s_key_get = jsal_new_key("get");
@@ -587,18 +581,6 @@ pegasus_init(int api_level)
 	s_key_x = jsal_new_key("x");
 	s_key_y = jsal_new_key("y");
 	s_key_z = jsal_new_key("z");
-
-	// initialize CommonJS cache and global require()
-	jsal_push_hidden_stash();
-	jsal_push_new_bare_object();
-	jsal_put_prop_string(-2, "moduleCache");
-	jsal_pop(1);
-
-	jsal_push_global_object();
-	jsal_pegasus_push_require(NULL);
-	jsal_to_propdesc_value(true, false, true);
-	jsal_def_prop_string(-2, "require");
-	jsal_pop(1);
 
 	// initialize the Sphere v2 API
 	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL, 0);
@@ -1059,149 +1041,6 @@ pegasus_uninit(void)
 	jsal_unref(s_key_z);
 }
 
-bool
-pegasus_try_require(const char* filename, bool node_compatible)
-{
-	// HERE BE DRAGONS!
-	// this function is horrendous.  JSAL's stack-based API is powerful, but gets very
-	// messy very quickly when dealing with object properties.  I tried to add comments
-	// to illuminate what's going on, but it's still likely to be confusing for someone
-	// not familiar with Lua or similar APIs.  proceed with caution.
-
-	// notes:
-	//     - the final value of 'module.exports' is left on top of the JSAL value stack.
-	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
-	//       behavior, the filename should be canonicalized first.
-	//     - this is a protected call.  if the module being loaded throws, this function will
-	//       return false and the error will be left on top of the stack for the caller to deal
-	//       with.
-
-	lstring_t* code_string;
-	path_t*    dir_path;
-	path_t*    file_path;
-	bool       is_esm_module;
-	bool       is_module_loaded;
-	size_t     source_size;
-	char*      source;
-
-	file_path = path_new(filename);
-	dir_path = path_strip(path_dup(file_path));
-
-	// never evaluate JSON as ESM, let the CommonJS loader deal with it
-	is_esm_module = (path_extension_is(file_path, ".mjs") || !node_compatible)
-		&& !path_extension_is(file_path, ".cjs")
-		&& !path_extension_is(file_path, ".json");
-	if (is_esm_module) {
-		source = game_read_file(g_game, filename, &source_size);
-		code_string = lstr_from_utf8(source, source_size, true);
-		free(source);
-		jsal_push_lstring_t(code_string);
-		debugger_add_source(filename, code_string);
-		is_module_loaded = jsal_try_eval_module(filename, debugger_source_name(filename));
-		lstr_free(code_string);
-		if (!is_module_loaded)
-			goto on_error;
-		goto have_module;
-	}
-
-	// is the requested module already in the cache?
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	if (jsal_get_prop_string(-1, filename)) {
-		jsal_remove(-2);
-		jsal_remove(-2);
-		goto have_module;
-	}
-	else {
-		jsal_pop(3);
-	}
-
-	console_log(1, "evaluating JS module '%s'", filename);
-
-	source = game_read_file(g_game, filename, &source_size);
-	code_string = lstr_from_utf8(source, source_size, true);
-	free(source);
-
-	// construct a CommonJS module object for the new module
-	jsal_push_new_object();  // module object
-	jsal_push_new_object();
-	jsal_put_prop_string(-2, "exports");  // module.exports = {}
-	jsal_push_string(filename);
-	jsal_put_prop_string(-2, "filename");  // module.filename
-	jsal_push_string(filename);
-	jsal_put_prop_string(-2, "id");  // module.id
-	jsal_push_boolean_false();
-	jsal_put_prop_string(-2, "loaded");  // module.loaded = false
-	jsal_pegasus_push_require(filename);
-	jsal_put_prop_string(-2, "require");  // module.require
-
-	// cache the module object in advance
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, filename);
-	jsal_pop(2);
-
-	if (path_extension_is(file_path, ".json")) {
-		// JSON file, decode to JavaScript object
-		jsal_push_lstring_t(code_string);
-		lstr_free(code_string);
-		if (!jsal_try_parse(-1))
-			goto on_error;
-		jsal_put_prop_string(-2, "exports");
-	}
-	else {
-		// synthesize a function to wrap the module code.  this is the simplest way to
-		// implement CommonJS semantics and matches the behavior of Node.js.
-		jsal_push_sprintf("(function (exports, require, module, __filename, __dirname) {%s%s\n})",
-			strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
-			lstr_cstr(code_string));
-		lstr_free(code_string);
-		if (!jsal_try_compile(debugger_source_name(filename)))
-			goto on_error;
-		jsal_call(0);
-		jsal_push_new_object();
-		jsal_push_string("main");
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "name");
-
-		// go, go, go!
-		jsal_get_prop_string(-2, "exports");    // this = exports
-		jsal_get_prop_string(-3, "exports");    // exports
-		jsal_get_prop_string(-4, "require");    // require
-		jsal_dup(-5);                           // module
-		jsal_push_string(filename);             // __filename
-		jsal_push_string(path_cstr(dir_path));  // __dirname
-		if (!jsal_try_call_method(5))
-			goto on_error;
-		jsal_pop(1);
-	}
-
-	// module executed successfully, set 'module.loaded' to true
-	jsal_push_boolean_true();
-	jsal_put_prop_string(-2, "loaded");
-
-have_module:
-	if (!is_esm_module) {
-		// 'module` is on the stack; we need `module.exports'.
-		jsal_get_prop_string(-1, "exports");
-		jsal_replace(-2);
-	}
-	return true;
-
-on_error:
-	// note: it's assumed that at this point, the only thing(s) left in our portion of the
-	//       value stack are the module object (for CommonJS) and the thrown error.
-	if (!is_esm_module) {
-		jsal_push_hidden_stash();
-		jsal_get_prop_string(-1, "moduleCache");
-		jsal_del_prop_string(-1, filename);
-		jsal_pop(2);
-		jsal_replace(-2);  // leave the error on the stack
-	}
-	return false;
-}
-
 static void
 jsal_pegasus_push_color(color_t color, bool in_ctor)
 {
@@ -1218,27 +1057,6 @@ jsal_pegasus_push_job_token(int64_t token)
 
 	jsal_push_class_fatobj(PEGASUS_JOB_TOKEN, false, sizeof(int64_t), (void**)&ptr);
 	*ptr = token;
-}
-
-static void
-jsal_pegasus_push_require(const char* module_id)
-{
-	jsal_push_new_function(js_require, "require", 1, false, 0);
-
-	// assign 'require.cache'
-	jsal_push_new_object();
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	jsal_remove(-2);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "cache");
-
-	if (module_id != NULL) {
-		jsal_push_new_object();
-		jsal_push_string(module_id);
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "id");  // require.id
-	}
 }
 
 static color_t
@@ -1284,240 +1102,6 @@ create_joystick_objects(void)
 	}
 	jsal_put_prop_string(-2, "joystickObjects");
 	jsal_pop(1);
-}
-
-static path_t*
-find_module_file(const char* specifier, const char* origin, const char* lib_dir_name, bool node_compatible)
-{
-	static const
-	struct pattern
-	{
-		bool        esm_aware;
-		bool        strict_aware;
-		const char* name;
-	}
-	PATTERNS[] =
-	{
-		{ true,  true,  "%s" },
-		{ true,  false, "%s.mjs" },
-		{ true,  false, "%s.js" },
-		{ true,  false, "%s.cjs" },
-		{ false, false, "%s.json" },
-		{ false, false, "%s/package.json" },
-		{ true,  false, "%s/index.mjs" },
-		{ true,  false, "%s/index.js" },
-		{ true,  false, "%s/index.cjs" },
-		{ false, false, "%s/index.json" },
-	};
-
-	char*   filename;
-	path_t* main_path;
-	path_t* origin_path;
-	path_t* path;
-	bool    strict_mode = false;
-
-	int i;
-
-	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0 || game_is_prefix_path(g_game, specifier)) {
-		// resolve module relative to calling module
-		origin_path = path_new(origin != NULL ? origin : "./");
-		strict_mode = game_strict_imports(g_game) && !node_compatible;
-	}
-	else {
-		// resolve module from designated module repository
-		origin_path = path_new_dir(lib_dir_name);
-	}
-
-	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
-		if (!PATTERNS[i].esm_aware && !node_compatible)
-			continue;
-		filename = strnewf(PATTERNS[i].name, specifier);
-		if (game_is_prefix_path(g_game, specifier)) {
-			path = game_full_path(g_game, filename, NULL, false);
-		}
-		else {
-			path = path_dup(origin_path);
-			path_strip(path);
-			path_append(path, filename);
-			path_collapse(path, true);
-		}
-		free(filename);
-		if (game_file_exists(g_game, path_cstr(path))) {
-			if (strict_mode && !PATTERNS[i].strict_aware)
-				jsal_error(JS_URI_ERROR, "Partial specifier in import '%s' unsupported with strictImports", specifier);
-			if (strcmp(path_filename(path), "package.json") == 0) {
-				if (!(main_path = load_package_json(path_cstr(path))))
-					goto next_filename;
-				if (game_file_exists(g_game, path_cstr(main_path))) {
-					path_free(path);
-					return main_path;
-				}
-			}
-			else {
-				return path;
-			}
-		}
-
-	next_filename:
-		path_free(path);
-	}
-
-	return NULL;
-}
-
-static void
-handle_module_import(void)
-{
-	/* [ module_name parent_specifier ] -> [ ... specifier url source ] */
-
-	const char* const PATHS[] =
-	{
-		"@/lib",
-		"#/game_modules",
-		"#/runtime",
-	};
-
-	char*      caller_id = NULL;
-	path_t*    path;
-	char*      shim_name;
-	lstring_t* shim_source;
-	char*      source;
-	size_t     source_len;
-	char*      specifier;
-
-	int i;
-
-	// strdup() here because the JSAL-managed strings may get overwritten in the course
-	// of a filename lookup.
-	specifier = strdup(jsal_require_string(0));
-	if (!jsal_is_null(1))
-		caller_id = strdup(jsal_require_string(1));
-
-	// relative path is nonsensical in a non-module context because the JS engine
-	// doesn't know where the request came from in that case
-	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of ESM code");
-
-	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(specifier, caller_id, PATHS[i], false)))
-			break;  // short-circuit
-	}
-	if (path == NULL) {
-		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
-		free(caller_id);
-		free(specifier);
-		jsal_throw();
-	}
-	free(caller_id);
-	free(specifier);
-
-	if (path_extension_is(path, ".cjs")) {
-		if (game_strict_imports(g_game))
-			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported with strictImports", specifier);
-		
-		// ES module shim, allows 'import' to work with CommonJS modules
-		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
-		shim_source = lstr_newf(
-			"/* ES module shim for CommonJS module */\n"
-			"export default require(\"%s\");", path_cstr(path));
-		debugger_add_source(shim_name, shim_source);
-		jsal_push_string(shim_name);
-		jsal_dup(-1);
-		jsal_push_lstring_t(shim_source);
-		free(shim_name);
-		lstr_free(shim_source);
-	}
-	else {
-		source = game_read_file(g_game, path_cstr(path), &source_len);
-		jsal_push_string(path_cstr(path));
-		jsal_push_string(debugger_source_name(path_cstr(path)));
-		jsal_push_lstring(source, source_len);
-		free(source);
-	}
-
-	path_free(path);
-}
-
-static path_t*
-load_package_json(const char* filename)
-{
-	int jsal_top;
-	char*     json;
-	size_t    json_size;
-	path_t*   path;
-
-	jsal_top = jsal_get_top();
-	if (!(json = game_read_file(g_game, filename, &json_size)))
-		goto on_error;
-	jsal_push_lstring(json, json_size);
-	free(json);
-	if (!jsal_try_parse(-1))
-		goto on_error;
-	if (!jsal_is_object_coercible(-1))
-		goto on_error;
-	jsal_get_prop_string(-1, "main");
-	if (!jsal_is_string(-1))
-		goto on_error;
-	path = path_strip(path_new(filename));
-	path_append(path, jsal_get_string(-1));
-	path_collapse(path, true);
-	if (!game_file_exists(g_game, path_cstr(path)))
-		goto on_error;
-	return path;
-
-on_error:
-	jsal_set_top(jsal_top);
-	return NULL;
-}
-
-static bool
-js_require(int num_args, bool is_ctor, intptr_t magic)
-{
-	static const
-	struct search_path
-	{
-		bool        node_aware;
-		const char* path;
-	}
-	PATHS[] =
-	{
-		{ true,  "@/lib" },
-		{ false, "#/game_modules" },
-		{ false, "#/runtime" },
-	};
-
-	const char* caller_id = NULL;
-	bool        node_compatible = true;
-	path_t*     path;
-	const char* specifier;
-
-	int i;
-
-	specifier = jsal_require_string(0);
-
-	jsal_push_callee();
-	if (jsal_get_prop_string(-1, "id"))
-		caller_id = jsal_get_string(-1);
-
-	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
-	if (game_strict_imports(g_game))
-		jsal_error(JS_TYPE_ERROR, "CommonJS require '%s' unsupported with strictImports", specifier);
-
-	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		node_compatible = PATHS[i].node_aware;
-		if ((path = find_module_file(specifier, caller_id, PATHS[i].path, node_compatible)))
-			break;  // short-circuit
-	}
-	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
-
-	if (!pegasus_try_require(path_cstr(path), node_compatible)) {
-		path_free(path);
-		jsal_throw();
-	}
-	path_free(path);
-	return true;
 }
 
 static bool

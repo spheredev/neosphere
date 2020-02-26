@@ -35,6 +35,7 @@
 
 #include "posix.h"
 
+#include "jsal.h"
 #include "lstring.h"
 #include "path.h"
 #include "utility.h"

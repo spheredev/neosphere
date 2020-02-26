@@ -44,6 +44,7 @@
 #include "input.h"
 #include "jsal.h"
 #include "map_engine.h"
+#include "module.h"
 #include "pegasus.h"
 #include "profiler.h"
 #include "sockets.h"
@@ -317,6 +318,7 @@ main(int argc, char* argv[])
 	}
 	
 	api_init();
+	modules_init(game_strict_imports(g_game));
 	vanilla_init();
 	if (api_version >= 2)
 		pegasus_init(api_level);
@@ -350,7 +352,7 @@ main(int argc, char* argv[])
 		goto on_js_error;
 	}
 	eval_succeeded = api_version >= 2
-		? pegasus_try_require(path_cstr(script_path), false)
+		? module_eval(path_cstr(script_path), false)
 		: script_eval(path_cstr(script_path));
 	if (!eval_succeeded)
 		goto on_js_error;

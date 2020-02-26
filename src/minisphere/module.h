@@ -30,29 +30,25 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__DEBUGGER_H__INCLUDED
-#define SPHERE__DEBUGGER_H__INCLUDED
+#ifndef SPHERE__MODULE_H__INCLUDED
+#define SPHERE__MODULE_H__INCLUDED
 
-#include "color.h"
-#include "ki.h"
+typedef struct module_ref module_ref_t;
 
 typedef
-enum ssj_mode
+enum module_type
 {
-	SSJ_OFF,
-	SSJ_PASSIVE,
-	SSJ_ACTIVE,
-} ssj_mode_t;
+    MODULE_COMMONJS,
+    MODULE_ESM,
+    MODULE_JSON,
+} module_type_t;
 
-void        debugger_init          (ssj_mode_t ssj_mode, bool allow_remote);
-void        debugger_uninit        (void);
-void        debugger_update        (void);
-bool        debugger_attached      (void);
-color_t     debugger_color         (void);
-const char* debugger_name          (void);
-const char* debugger_compiled_name (const char* source_name);
-const char* debugger_source_name   (const char* pathname);
-void        debugger_add_source    (const char* name, const lstring_t* text);
-void        debugger_log           (const char* text, ki_log_op_t op, bool use_console);
+void          modules_init    (bool enable_cjs);
+bool          module_eval     (const char* specifier, bool node_compatible);
+module_ref_t* module_resolve  (const char* specifier, const char* importer, bool node_compatible);
+void          module_free     (module_ref_t* it);
+const char*   module_pathname (const module_ref_t* it);
+module_type_t module_type     (const module_ref_t* it);
+bool          module_exec     (module_ref_t* it);
 
-#endif // SPHERE__DEBUGGER_H__INCLUDED
+#endif // SPHERE__MODULE_H__INCLUDED
