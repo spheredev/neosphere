@@ -525,7 +525,6 @@ static void js_VertexList_finalize      (void* host_ptr);
 
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
-static void      handle_module_import        (void);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
 static color_t   jsal_pegasus_require_color  (int index);
@@ -569,8 +568,6 @@ pegasus_init(int api_level)
 	if (s_api_level_nominal > SPHERE_API_LEVEL_STABLE)
 		s_api_level_nominal = SPHERE_API_LEVEL_STABLE;
 
-	jsal_on_import_module(handle_module_import);
-
 	s_key_color = jsal_new_key("color");
 	s_key_done = jsal_new_key("done");
 	s_key_get = jsal_new_key("get");
@@ -584,18 +581,6 @@ pegasus_init(int api_level)
 	s_key_x = jsal_new_key("x");
 	s_key_y = jsal_new_key("y");
 	s_key_z = jsal_new_key("z");
-
-	// initialize CommonJS cache and global require()
-	jsal_push_hidden_stash();
-	jsal_push_new_bare_object();
-	jsal_put_prop_string(-2, "moduleCache");
-	jsal_pop(1);
-
-	jsal_push_global_object();
-	jsal_push_require(NULL);
-	jsal_to_propdesc_value(true, false, true);
-	jsal_def_prop_string(-2, "require");
-	jsal_pop(1);
 
 	// initialize the Sphere v2 API
 	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL, 0);
@@ -1117,53 +1102,6 @@ create_joystick_objects(void)
 	}
 	jsal_put_prop_string(-2, "joystickObjects");
 	jsal_pop(1);
-}
-
-static void
-handle_module_import(void)
-{
-	/* [ module_name parent_specifier ] -> [ ... specifier url source ] */
-
-	const char*   caller_id = NULL;
-	const char*   pathname;
-	module_ref_t* ref;
-	char*         shim_name;
-	lstring_t*    shim_source;
-	char*         source;
-	size_t        source_len;
-	const char*   specifier;
-
-	specifier = jsal_require_string(0);
-	if (!jsal_is_null(1))
-		caller_id = jsal_require_string(1);
-
-	if (!(ref = module_resolve(specifier, caller_id, false)))
-		jsal_throw();
-	pathname = module_pathname(ref);
-	if (module_type(ref) == MODULE_COMMONJS) {
-		if (game_strict_imports(g_game))
-			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported with strictImports", specifier);
-
-		// ES module shim, allows 'import' to work with CommonJS modules
-		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
-		shim_source = lstr_newf(
-			"/* ES module shim for CommonJS module */\n"
-			"export default require(\"%s\");", pathname);
-		debugger_add_source(shim_name, shim_source);
-		jsal_push_string(shim_name);
-		jsal_dup(-1);
-		jsal_push_lstring_t(shim_source);
-		free(shim_name);
-		lstr_free(shim_source);
-	}
-	else {
-		source = game_read_file(g_game, pathname, &source_len);
-		jsal_push_string(pathname);
-		jsal_push_string(debugger_source_name(pathname));
-		jsal_push_lstring(source, source_len);
-		free(source);
-	}
-	module_free(ref);
 }
 
 static bool

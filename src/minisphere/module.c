@@ -41,14 +41,19 @@ struct module_ref
 	path_t*       path;
 };
 
+static void          do_resolve_import (void);
 static module_ref_t* find_module       (const char* specifier, const char* importer, const char* lib_dir_name, bool node_compatible);
 static module_ref_t* load_package_json (const char* filename);
 
 static bool js_require (int num_args, bool is_ctor, intptr_t magic);
 
+static int s_next_module_id = 1;
+
 void
 modules_init(void)
 {
+	jsal_on_import_module(do_resolve_import);
+
 	// initialize CommonJS cache and global require()
 	jsal_push_hidden_stash();
 	jsal_push_new_bare_object();
@@ -286,6 +291,53 @@ jsal_push_require(const char* module_id)
 		jsal_put_prop_string(-2, "value");
 		jsal_def_prop_string(-2, "id");  // require.id
 	}
+}
+
+static void
+do_resolve_import(void)
+{
+	/* [ module_name parent_specifier ] -> [ ... specifier url source ] */
+
+	const char*   caller_id = NULL;
+	const char*   pathname;
+	module_ref_t* ref;
+	char*         shim_name;
+	lstring_t*    shim_source;
+	char*         source;
+	size_t        source_len;
+	const char*   specifier;
+
+	specifier = jsal_require_string(0);
+	if (!jsal_is_null(1))
+		caller_id = jsal_require_string(1);
+
+	if (!(ref = module_resolve(specifier, caller_id, false)))
+		jsal_throw();
+	pathname = module_pathname(ref);
+	if (module_type(ref) == MODULE_COMMONJS) {
+		if (game_strict_imports(g_game))
+			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported with strictImports", specifier);
+
+		// ES module shim, allows 'import' to work with CommonJS modules
+		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
+		shim_source = lstr_newf(
+			"/* ES module shim for CommonJS module */\n"
+			"export default require(\"%s\");", pathname);
+		debugger_add_source(shim_name, shim_source);
+		jsal_push_string(shim_name);
+		jsal_dup(-1);
+		jsal_push_lstring_t(shim_source);
+		free(shim_name);
+		lstr_free(shim_source);
+	}
+	else {
+		source = game_read_file(g_game, pathname, &source_len);
+		jsal_push_string(pathname);
+		jsal_push_string(debugger_source_name(pathname));
+		jsal_push_lstring(source, source_len);
+		free(source);
+	}
+	module_free(ref);
 }
 
 static module_ref_t*

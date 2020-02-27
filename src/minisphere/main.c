@@ -318,6 +318,7 @@ main(int argc, char* argv[])
 	}
 	
 	api_init();
+	modules_init();
 	vanilla_init();
 	if (api_version >= 2)
 		pegasus_init(api_level);
