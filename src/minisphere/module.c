@@ -89,6 +89,7 @@ module_resolve(const char* specifier, const char* importer, bool node_compatible
 	}
 	PATHS[] =
 	{
+		{ false, "@/node_modules" },
 		{ false, "@/lib" },
 		{ true,  "#/game_modules" },
 		{ true,  "#/runtime" },
@@ -337,7 +338,7 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 		{ true,  false, "%s.js" },
 		{ true,  false, "%s.cjs" },
 		{ false, false, "%s.json" },
-		{ false, false, "%s/package.json" },
+		{ true,  false, "%s/package.json" },
 		{ true,  false, "%s/index.mjs" },
 		{ true,  false, "%s/index.js" },
 		{ true,  false, "%s/index.cjs" },
@@ -442,12 +443,12 @@ load_package_json(const char* filename)
 		: "commonjs";
 	if (jsal_is_string(-1)) {
 		specifier = jsal_require_string(-1);
-		type = strcmp(type_str, "module") ? MODULE_ESM
+		type = strcmp(type_str, "module") == 0 ? MODULE_ESM
 			: MODULE_COMMONJS;
 	}
 	if (specifier == NULL)
 		goto on_error;
-	
+
 	// check that the module exists and verify the load type
 	path = path_strip(path_new(filename));
 	path_append(path, specifier);
