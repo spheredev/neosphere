@@ -46,8 +46,24 @@ static module_ref_t* load_package_json (const char* filename);
 
 static bool js_require (int num_args, bool is_ctor, intptr_t magic);
 
+void
+modules_init(void)
+{
+	// initialize CommonJS cache and global require()
+	jsal_push_hidden_stash();
+	jsal_push_new_bare_object();
+	jsal_put_prop_string(-2, "moduleCache");
+	jsal_pop(1);
+
+	jsal_push_global_object();
+	jsal_push_require(NULL);
+	jsal_to_propdesc_value(true, false, true);
+	jsal_def_prop_string(-2, "require");
+	jsal_pop(1);
+}
+
 bool
-module_load(const char* specifier, bool node_compatible)
+module_eval(const char* specifier, bool node_compatible)
 {
 	module_ref_t* ref;
 

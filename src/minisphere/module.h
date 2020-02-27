@@ -45,7 +45,8 @@ enum module_type
     MODULE_JSON,
 } module_type_t;
 
-bool          module_load     (const char* specifier, bool node_compatible);
+void          modules_init    (void);
+bool          module_eval     (const char* specifier, bool node_compatible);
 module_ref_t* module_resolve  (const char* specifier, const char* importer, bool node_compatible);
 void          module_free     (module_ref_t* it);
 const char*   module_pathname (const module_ref_t* it);
