@@ -425,6 +425,7 @@ load_package_json(const char* filename)
 	const char*   specifier = NULL;
 	int           stack_top;
 	module_type_t type = MODULE_COMMONJS;
+	const char*   type_str;
 
 	stack_top = jsal_get_top();
 	if (!(json = game_read_file(g_game, filename, &json_size)))
@@ -435,14 +436,14 @@ load_package_json(const char* filename)
 		goto on_error;
 	if (!jsal_is_object_coercible(-1))
 		goto on_error;
-	jsal_get_prop_string(-1, "module");
+	jsal_get_prop_string(-1, "type");
 	jsal_get_prop_string(-2, "main");
-	if (jsal_is_string(-2)) {
-		specifier = jsal_require_string(-2);
-		type = MODULE_ESM;
-	}
-	else if (jsal_is_string(-1)) {
+	type_str = jsal_is_string(-2) ? jsal_get_string(-2)
+		: "commonjs";
+	if (jsal_is_string(-1)) {
 		specifier = jsal_require_string(-1);
+		type = strcmp(type_str, "module") ? MODULE_ESM
+			: MODULE_COMMONJS;
 	}
 	if (specifier == NULL)
 		goto on_error;
@@ -453,6 +454,8 @@ load_package_json(const char* filename)
 	path_collapse(path, true);
 	if (!game_file_exists(g_game, path_cstr(path)))
 		goto on_error;
+	if (path_extension_is(path, ".cjs"))
+		type = MODULE_COMMONJS;  // treat `.cjs` as CommonJS, always
 	if (path_extension_is(path, ".mjs"))
 		type = MODULE_ESM;  // treat `.mjs` as ESM, always
 	if (path_extension_is(path, ".json"))
