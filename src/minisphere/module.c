@@ -301,6 +301,7 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 	path_t*       path;
 	module_ref_t* ref;
 	bool          strict_mode = false;
+	module_type_t type;
 
 	int i;
 
@@ -338,11 +339,18 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 				return ref;
 			}
 			else {
+				// figure out what kind of module we're loading
+				type = MODULE_ESM;
+				if (node_compatible) {
+					type = path_extension_is(path, ".mjs") ? MODULE_ESM
+						: path_extension_is(path, ".json") ? MODULE_JSON
+						: MODULE_COMMONJS;
+				}
+				
 				if (!(ref = calloc(1, sizeof(module_ref_t))))
 					return NULL;
 				ref->path = path;
-				ref->type = node_compatible && !path_extension_is(path, ".mjs")
-					? MODULE_COMMONJS : MODULE_ESM;
+				ref->type = type;
 				return ref;
 			}
 		}

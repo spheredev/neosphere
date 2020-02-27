@@ -1143,7 +1143,7 @@ handle_module_import(void)
 	if (module_type(ref) == MODULE_COMMONJS) {
 		if (game_strict_imports(g_game))
 			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported with strictImports", specifier);
-		
+
 		// ES module shim, allows 'import' to work with CommonJS modules
 		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
 		shim_source = lstr_newf(
