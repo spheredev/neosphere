@@ -53,6 +53,4 @@ const char*   module_pathname (const module_ref_t* it);
 module_type_t module_type     (const module_ref_t* it);
 bool          module_exec     (module_ref_t* it);
 
-void jsal_push_require (const char* module_id);
-
 #endif // SPHERE__MODULE_H__INCLUDED

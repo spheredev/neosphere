@@ -41,11 +41,12 @@ struct module_ref
 	path_t*       path;
 };
 
+static bool js_require (int num_args, bool is_ctor, intptr_t magic);
+
 static void          do_resolve_import (void);
 static module_ref_t* find_module       (const char* specifier, const char* importer, const char* lib_dir_name, bool node_compatible);
 static module_ref_t* load_package_json (const char* filename);
-
-static bool js_require (int num_args, bool is_ctor, intptr_t magic);
+static void          push_new_require  (const char* module_id);
 
 static int s_next_module_id = 1;
 
@@ -61,7 +62,7 @@ modules_init(void)
 	jsal_pop(1);
 
 	jsal_push_global_object();
-	jsal_push_require(NULL);
+	push_new_require(NULL);
 	jsal_to_propdesc_value(true, false, true);
 	jsal_def_prop_string(-2, "require");
 	jsal_pop(1);
@@ -202,7 +203,7 @@ module_exec(module_ref_t* it)
 	jsal_put_prop_string(-2, "id");  // module.id
 	jsal_push_boolean_false();
 	jsal_put_prop_string(-2, "loaded");  // module.loaded = false
-	jsal_push_require(pathname);
+	push_new_require(pathname);
 	jsal_put_prop_string(-2, "require");  // module.require
 
 	// cache the module object in advance
@@ -270,27 +271,6 @@ on_error:
 		jsal_replace(-2);  // leave the error on the stack
 	}
 	return false;
-}
-
-void
-jsal_push_require(const char* module_id)
-{
-	jsal_push_new_function(js_require, "require", 1, false, 0);
-
-	// assign 'require.cache'
-	jsal_push_new_object();
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	jsal_remove(-2);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "cache");
-
-	if (module_id != NULL) {
-		jsal_push_new_object();
-		jsal_push_string(module_id);
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "id");  // require.id
-	}
 }
 
 static void
@@ -379,7 +359,7 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 		strict_mode = game_strict_imports(g_game) && !node_compatible;
 	}
 	else {
-		// bare specifier, resolve module from designated module repository
+		// bare specifier, resolve from designated module directory
 		base_path = path_new_dir(lib_dir_name);
 	}
 
@@ -408,11 +388,16 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 			}
 			else {
 				// figure out what kind of module we're loading
-				type = MODULE_ESM;
 				if (node_compatible) {
 					type = path_extension_is(path, ".mjs") ? MODULE_ESM
 						: path_extension_is(path, ".json") ? MODULE_JSON
 						: MODULE_COMMONJS;
+				}
+				else {
+					// in ESM resolution mode, everything is ESM except `.cjs`
+					type = MODULE_ESM;
+					if (path_extension_is(path, ".cjs"))
+						type = MODULE_COMMONJS;
 				}
 				
 				if (!(ref = calloc(1, sizeof(module_ref_t))))
@@ -469,7 +454,7 @@ load_package_json(const char* filename)
 	if (!game_file_exists(g_game, path_cstr(path)))
 		goto on_error;
 	if (path_extension_is(path, ".mjs"))
-		type = MODULE_ESM;  // treat .mjs as ESM, always
+		type = MODULE_ESM;  // treat `.mjs` as ESM, always
 	if (path_extension_is(path, ".json"))
 		type = MODULE_JSON;
 	
@@ -483,6 +468,27 @@ load_package_json(const char* filename)
 on_error:
 	jsal_set_top(stack_top);
 	return NULL;
+}
+
+static void
+push_new_require(const char* module_id)
+{
+	jsal_push_new_function(js_require, "require", 1, false, 0);
+
+	// assign 'require.cache'
+	jsal_push_new_object();
+	jsal_push_hidden_stash();
+	jsal_get_prop_string(-1, "moduleCache");
+	jsal_remove(-2);
+	jsal_put_prop_string(-2, "value");
+	jsal_def_prop_string(-2, "cache");
+
+	if (module_id != NULL) {
+		jsal_push_new_object();
+		jsal_push_string(module_id);
+		jsal_put_prop_string(-2, "value");
+		jsal_def_prop_string(-2, "id");  // require.id
+	}
 }
 
 static bool
