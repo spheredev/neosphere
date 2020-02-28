@@ -30,6 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+#include "cell.h"
 #include "tileset.h"
 
 #include "image.h"
@@ -83,7 +84,7 @@ build_tileset(const path_t* path, const image_t* image, int tile_width, int tile
 	memset(&rts, 0, sizeof(struct rts_header));
 	memcpy(&rts.signature, ".rts", 4);
 	rts.version = 1;
-	rts.num_tiles = (image_get_width(image) / tile_width) * (image_get_height(image) / tile_height);
+	rts.num_tiles = (image_width(image) / tile_width) * (image_height(image) / tile_height);
 	rts.has_obstructions = 0;
 	rts.tile_width = (uint16_t)tile_width;
 	rts.tile_height = (uint16_t)tile_height;
@@ -91,14 +92,14 @@ build_tileset(const path_t* path, const image_t* image, int tile_width, int tile
 
 	file = fopen(path_cstr(path), "wb");
 	fwrite(&rts, sizeof(struct rts_header), 1, file);
-	pitch = image_get_pitch(image);
+	pitch = image_width(image);
 	x = 0; y = 0;
 	for (i = 0; i < rts.num_tiles; ++i) {
 		for (i_y = 0; i_y < tile_height; ++i_y) {
-			pixelbuf = image_get_pixelbuf(image) + x + (y + i_y) * pitch;
+			pixelbuf = image_bitmap(image, NULL) + x + (y + i_y) * pitch;
 			fwrite(pixelbuf, tile_width * 4, 1, file);
 		}
-		if ((x += tile_width) + tile_width > image_get_width(image)) {
+		if ((x += tile_width) + tile_width > image_width(image)) {
 			x = 0;
 			y += tile_height;
 		}

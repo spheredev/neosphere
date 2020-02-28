@@ -94,6 +94,7 @@ cell_sources=src/cell/main.c \
    src/cell/image.c \
    src/cell/spk_writer.c \
    src/cell/target.c \
+   src/cell/tileset.c \
    src/cell/tool.c \
    src/cell/utility.c \
    src/cell/visor.c
