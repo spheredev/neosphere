@@ -737,7 +737,7 @@ handle_module_import(void)
 
 	const char* const PATHS[] =
 	{
-		"$/lib",
+		"$/node_modules",
 		"#/cell_modules",
 		"#/runtime",
 	};
@@ -1424,7 +1424,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	}
 	PATHS[] =
 	{
-		{ true,  "$/lib" },
+		{ true,  "$/node_modules" },
 		{ false, "#/cell_modules" },
 		{ false, "#/runtime" },
 	};
