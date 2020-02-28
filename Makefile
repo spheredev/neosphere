@@ -20,6 +20,7 @@ engine_sources=src/minisphere/main.c \
    src/shared/console.c \
    src/shared/dyad.c \
    src/shared/encoding.c \
+   src/shared/fs.c \
    src/shared/jsal.c \
    src/shared/ki.c \
    src/shared/lstring.c \

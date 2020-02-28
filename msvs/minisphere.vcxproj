@@ -524,6 +524,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\shared\api.c" />
     <ClCompile Include="..\src\shared\console.c" />
     <ClCompile Include="..\src\shared\encoding.c" />
+    <ClCompile Include="..\src\shared\fs.c" />
     <ClCompile Include="..\src\shared\ki.c" />
     <ClCompile Include="..\src\shared\dyad.c" />
     <ClCompile Include="..\src\shared\jsal.c" />
@@ -576,6 +577,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\shared\console.h" />
     <ClInclude Include="..\src\shared\dyad.h" />
     <ClInclude Include="..\src\shared\encoding.h" />
+    <ClInclude Include="..\src\shared\fs.h" />
     <ClInclude Include="..\src\shared\jsal.h" />
     <ClInclude Include="..\src\shared\ki.h" />
     <ClInclude Include="..\src\shared\lstring.h" />

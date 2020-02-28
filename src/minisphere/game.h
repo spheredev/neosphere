@@ -34,6 +34,7 @@
 #define SPHERE__GAME_H__INCLUDED
 
 #include "font.h"
+#include "fs.h"
 #include "geometry.h"
 #include "image.h"
 #include "jsal.h"
@@ -73,6 +74,7 @@ windowstyle_t*  game_default_windowstyle (const game_t* it);
 bool            game_dir_exists          (const game_t* it, const char* dirname);
 bool            game_empty_promises      (const game_t* it);
 bool            game_file_exists         (const game_t* it, const char* filename);
+const fs_t*     game_fs                  (const game_t* it);
 path_t*         game_full_path           (const game_t* it, const char* filename, const char* base_dir_name, bool v1_mode);
 bool            game_fullscreen          (const game_t* it);
 const js_ref_t* game_manifest            (const game_t* it);

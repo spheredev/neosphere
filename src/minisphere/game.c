@@ -34,6 +34,7 @@
 #include "game.h"
 
 #include "font.h"
+#include "fs.h"
 #include "geometry.h"
 #include "image.h"
 #include "jsal.h"
@@ -63,6 +64,7 @@ struct game
 	windowstyle_t* default_windowstyle;
 	bool           empty_promises;
 	vector_t*      file_type_map;
+	fs_t*          fs;
 	bool           fullscreen;
 	js_ref_t*      manifest;
 	lstring_t*     name;
@@ -97,6 +99,8 @@ struct file
 	const char*   path;
 };
 
+static bool      do_fs_fexist        (const char* filename, void* userdata);
+static void*     do_fs_fslurp        (const char* filename, size_t *out_size, void* userdata);
 static bool      help_list_dir       (vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive);
 static void      load_default_assets (game_t* game);
 static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs, bool recursive);
@@ -232,8 +236,12 @@ game_open(const char* game_path)
 	// always use full sandbox enforcement for SPK packages
 	if (game->type == FS_PACKAGE)
 		game->safety = FS_SAFETY_FULL;
-	
+
 	load_default_assets(game);
+
+	game->fs = fs_new(game);
+	fs_on_fexist(game->fs, do_fs_fexist);
+	fs_on_fslurp(game->fs, do_fs_fslurp);
 
 	resolution = game_resolution(game);
 	console_log(1, "         title: %s", game_name(game));
@@ -401,6 +409,12 @@ game_file_exists(const game_t* it, const char* filename)
 on_error:
 	path_free(path);
 	return false;
+}
+
+const fs_t*
+game_fs(const game_t* it)
+{
+	return it->fs;
 }
 
 path_t*
@@ -963,6 +977,22 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 	default:
 		return 0;
 	}
+}
+
+static bool
+do_fs_fexist(const char* filename, void* userdata)
+{
+	game_t* game = userdata;
+
+	return game_file_exists(game, filename);
+}
+
+static void*
+do_fs_fslurp(const char* filename, size_t *out_size, void* userdata)
+{
+	game_t* game = userdata;
+
+	return game_read_file(game, filename, out_size);
 }
 
 static bool
