@@ -318,7 +318,7 @@ main(int argc, char* argv[])
 	}
 	
 	api_init();
-	modules_init();
+	modules_init(game_strict_imports(g_game));
 	vanilla_init();
 	if (api_version >= 2)
 		pegasus_init(api_level);

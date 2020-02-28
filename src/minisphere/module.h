@@ -33,8 +33,6 @@
 #ifndef SPHERE__MODULE_H__INCLUDED
 #define SPHERE__MODULE_H__INCLUDED
 
-#include "path.h"
-
 typedef struct module_ref module_ref_t;
 
 typedef
@@ -45,7 +43,7 @@ enum module_type
     MODULE_JSON,
 } module_type_t;
 
-void          modules_init    (void);
+void          modules_init    (bool enable_cjs);
 bool          module_eval     (const char* specifier, bool node_compatible);
 module_ref_t* module_resolve  (const char* specifier, const char* importer, bool node_compatible);
 void          module_free     (module_ref_t* it);

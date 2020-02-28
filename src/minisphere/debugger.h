@@ -33,6 +33,7 @@
 #ifndef SPHERE__DEBUGGER_H__INCLUDED
 #define SPHERE__DEBUGGER_H__INCLUDED
 
+#include "color.h"
 #include "ki.h"
 
 typedef

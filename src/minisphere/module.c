@@ -48,11 +48,14 @@ static module_ref_t* find_module       (const char* specifier, const char* impor
 static module_ref_t* load_package_json (const char* filename);
 static void          push_new_require  (const char* module_id);
 
-static int s_next_module_id = 1;
+static bool s_esm_only;
+static int  s_next_module_id = 1;
 
 void
-modules_init(void)
+modules_init(bool esm_only)
 {
+	s_esm_only = esm_only;
+
 	jsal_on_import_module(do_resolve_import);
 
 	// initialize CommonJS cache and global require()
@@ -296,8 +299,8 @@ do_resolve_import(void)
 		jsal_throw();
 	pathname = module_pathname(ref);
 	if (module_type(ref) == MODULE_COMMONJS) {
-		if (game_strict_imports(g_game))
-			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported with strictImports", specifier);
+		if (!s_esm_only)
+			jsal_error(JS_TYPE_ERROR, "CommonJS imports unsupported '%s'", specifier);
 
 		// ES module shim, allows 'import' to work with CommonJS modules
 		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
@@ -357,7 +360,7 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0 || game_is_prefix_path(g_game, specifier)) {
 		// relative-path specifier or SphereFS prefix, resolve from file system
 		base_path = path_new(importer != NULL ? importer : "./");
-		strict_mode = game_strict_imports(g_game) && !node_compatible;
+		strict_mode = s_esm_only && !node_compatible;
 	}
 	else {
 		// bare specifier, resolve from designated module directory
@@ -380,7 +383,7 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 		free(filename);
 		if (game_file_exists(g_game, path_cstr(path))) {
 			if (strict_mode && !PATTERNS[i].strict_aware)
-				jsal_error(JS_URI_ERROR, "Abbreviated import '%s' unsupported with strictImports", specifier);
+				jsal_error(JS_URI_ERROR, "Abbreviated import specifier unsupported '%s'", specifier);
 			if (strcmp(path_filename(path), "package.json") == 0) {
 				if (!(ref = load_package_json(path_cstr(path))))
 					goto next_filename;
@@ -508,8 +511,8 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	if (jsal_get_prop_string(-1, "id"))
 		caller_id = jsal_get_string(-1);
 
-	if (game_strict_imports(g_game))
-		jsal_error(JS_TYPE_ERROR, "CommonJS require '%s' unsupported with strictImports", specifier);
+	if (s_esm_only)
+		jsal_error(JS_TYPE_ERROR, "require() is unsupported '%s'", specifier);
 
 	if (!(ref = module_resolve(specifier, caller_id, true)))
 		jsal_throw();
