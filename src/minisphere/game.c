@@ -99,6 +99,7 @@ struct file
 	const char*   path;
 };
 
+static bool      do_fs_direxist      (const char* filename, void* userdata);
 static bool      do_fs_fexist        (const char* filename, void* userdata);
 static void*     do_fs_fslurp        (const char* filename, size_t *out_size, void* userdata);
 static bool      help_list_dir       (vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive);
@@ -112,6 +113,7 @@ static unsigned int s_next_game_id = 1;
 game_t*
 game_open(const char* game_path)
 {
+	path_t*     base_path;
 	game_t*     game;
 	lstring_t*  json_text;
 	package_t*  package;
@@ -233,15 +235,20 @@ game_open(const char* game_path)
 		}
 	}
 
+	base_path = path_dup(game->script_path);
+	path_strip(base_path);
+	if (!(game->fs = fs_new("@#~$%", game)))
+		goto on_error;
+	fs_define_alias(game->fs, '$', path_cstr(base_path));
+	fs_on_direxist(game->fs, do_fs_direxist);
+	fs_on_fexist(game->fs, do_fs_fexist);
+	fs_on_fslurp(game->fs, do_fs_fslurp);
+
 	// always use full sandbox enforcement for SPK packages
 	if (game->type == FS_PACKAGE)
 		game->safety = FS_SAFETY_FULL;
 
 	load_default_assets(game);
-
-	game->fs = fs_new(game);
-	fs_on_fexist(game->fs, do_fs_fexist);
-	fs_on_fslurp(game->fs, do_fs_fslurp);
 
 	resolution = game_resolution(game);
 	console_log(1, "         title: %s", game_name(game));
@@ -420,6 +427,10 @@ game_fs(const game_t* it)
 path_t*
 game_full_path(const game_t* it, const char* filename, const char* base_dir_name, bool v1_mode)
 {
+	// TODO: get rid of this function entirely and always use the `fs.c` canonicalizer
+	if (!v1_mode && it->fs != NULL)
+		return fs_path_of(it->fs, filename, base_dir_name);
+	
 	// note: '../' path hops are collapsed unconditionally, per SphereFS specification.
 	//       this ensures the game can't subvert its sandbox by navigating outside through
 	//       a symbolic link.
@@ -977,6 +988,14 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 	default:
 		return 0;
 	}
+}
+
+static bool
+do_fs_direxist(const char* filename, void* userdata)
+{
+	game_t* game = userdata;
+
+	return game_dir_exists(game, filename);
 }
 
 static bool
