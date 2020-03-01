@@ -99,9 +99,8 @@ struct file
 	const char*   path;
 };
 
-static bool      do_fs_direxist      (const char* filename, void* userdata);
-static bool      do_fs_fexist        (const char* filename, void* userdata);
-static void*     do_fs_fslurp        (const char* filename, size_t *out_size, void* userdata);
+static void*     do_fs_fslurp        (fs_t* fs, const char* filename, size_t *out_size);
+static int       do_fs_stat          (fs_t* fs, const char* filename, struct stat *out_stat);
 static bool      help_list_dir       (vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive);
 static void      load_default_assets (game_t* game);
 static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs, bool recursive);
@@ -240,9 +239,8 @@ game_open(const char* game_path)
 	if (!(game->fs = fs_new("@#~$%", game)))
 		goto on_error;
 	fs_define_alias(game->fs, '$', path_cstr(base_path));
-	fs_on_direxist(game->fs, do_fs_direxist);
-	fs_on_fexist(game->fs, do_fs_fexist);
 	fs_on_fslurp(game->fs, do_fs_fslurp);
+	fs_on_stat(game->fs, do_fs_stat);
 
 	// always use full sandbox enforcement for SPK packages
 	if (game->type == FS_PACKAGE)
@@ -429,7 +427,7 @@ game_full_path(const game_t* it, const char* filename, const char* base_dir_name
 {
 	// TODO: get rid of this function entirely and always use the `fs.c` canonicalizer
 	if (!v1_mode && it->fs != NULL)
-		return fs_path_of(it->fs, filename, base_dir_name);
+		return fs_pathname(it->fs, filename, base_dir_name);
 	
 	// note: '../' path hops are collapsed unconditionally, per SphereFS specification.
 	//       this ensures the game can't subvert its sandbox by navigating outside through
@@ -990,28 +988,41 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 	}
 }
 
-static bool
-do_fs_direxist(const char* filename, void* userdata)
-{
-	game_t* game = userdata;
-
-	return game_dir_exists(game, filename);
-}
-
-static bool
-do_fs_fexist(const char* filename, void* userdata)
-{
-	game_t* game = userdata;
-
-	return game_file_exists(game, filename);
-}
-
 static void*
-do_fs_fslurp(const char* filename, size_t *out_size, void* userdata)
+do_fs_fslurp(fs_t* fs, const char* filename, size_t *out_size)
 {
-	game_t* game = userdata;
+	game_t* game;
 
+	game = fs_user_ptr(fs);
 	return game_read_file(game, filename, out_size);
+}
+
+static int
+do_fs_stat(fs_t* fs, const char* filename, struct stat *out_stat)
+{
+	path_t*      file_path;
+	enum fs_type fs_type;
+	game_t*      game;
+
+	game = fs_user_ptr(fs);
+	if (!resolve_pathname(game, filename, &file_path, &fs_type))
+		return 1;
+	switch (game->type) {
+	case FS_LOCAL:
+		return stat(path_cstr(file_path), out_stat);
+		break;
+	case FS_PACKAGE:
+		stat(path_cstr(game->root_path), out_stat);
+		out_stat->st_mode &= ~(S_IFREG | S_IFDIR);
+		if (package_file_exists(game->package, path_cstr(file_path)))
+			out_stat->st_mode |= S_IFREG;
+		else if (package_dir_exists(game->package, path_cstr(file_path)))
+			out_stat->st_mode |= S_IFDIR;
+		else
+			return 1;
+		break;
+	}
+	return 0;
 }
 
 static bool
