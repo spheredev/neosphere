@@ -93,6 +93,7 @@ cell_sources=src/cell/main.c \
    src/cell/build.c \
    src/cell/fs.c \
    src/cell/image.c \
+   src/cell/module.c \
    src/cell/spk_writer.c \
    src/cell/target.c \
    src/cell/tileset.c \

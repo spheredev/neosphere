@@ -237,6 +237,16 @@ fs_fspew(const fs_t* fs, const char* filename, const void* data, size_t size)
 }
 
 bool
+fs_is_prefix_path(const fs_t* it, const char* pathname)
+{
+	// this may look unsafe but it actually isn't: if the `strpbrk()` check passes,
+	// then we know the string is at least one character long, and accessing `pathname[1]`
+	// is thus safe.
+	return strpbrk(pathname, "@#~$%") == pathname
+		&& (pathname[1] == '/' || pathname[1] == '\\');
+}
+
+bool
 fs_is_game_dir(const fs_t* fs, const char* dirname)
 {
 	path_t* full_path;

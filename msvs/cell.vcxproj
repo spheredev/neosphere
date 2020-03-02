@@ -296,6 +296,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\cell\fs.c" />
     <ClCompile Include="..\src\cell\build.c" />
     <ClCompile Include="..\src\cell\image.c" />
+    <ClCompile Include="..\src\cell\module.c" />
     <ClCompile Include="..\src\cell\target.c" />
     <ClCompile Include="..\src\cell\tileset.c" />
     <ClCompile Include="..\src\cell\tool.c" />
@@ -318,6 +319,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\cell\fs.h" />
     <ClInclude Include="..\src\cell\build.h" />
     <ClInclude Include="..\src\cell\image.h" />
+    <ClInclude Include="..\src\cell\module.h" />
     <ClInclude Include="..\src\cell\target.h" />
     <ClInclude Include="..\src\cell\tileset.h" />
     <ClInclude Include="..\src\cell\tool.h" />

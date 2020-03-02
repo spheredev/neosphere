@@ -38,6 +38,7 @@
 #include "encoding.h"
 #include "fs.h"
 #include "image.h"
+#include "module.h"
 #include "spk_writer.h"
 #include "target.h"
 #include "tool.h"
@@ -64,7 +65,6 @@ enum file_op
 	FILE_OP_MAX,
 };
 
-static bool js_require                       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_error                         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_files                         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_install                       (int num_args, bool is_ctor, intptr_t magic);
@@ -141,14 +141,11 @@ static void js_Tool_finalize            (void* host_ptr);
 
 static void    cache_value_to_this  (const char* key);
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
-static bool    try_eval_module      (fs_t* fs, const char* filename, bool node_compatible);
 static path_t* find_module_file     (fs_t* fs, const char* id, const char* origin, const char* sys_origin, bool node_compatible);
-static void    handle_module_import (void);
 static bool    install_target       (int num_args, bool is_ctor, intptr_t magic);
 static path_t* load_package_json    (const char* filename);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void    package_dir          (build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname, bool recursive);
-static void    push_require         (const char* module_id);
 static int     sort_targets_by_path (const void* p_a, const void* p_b);
 static bool    write_manifests      (build_t* build, bool debugging);
 
@@ -176,22 +173,9 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	visor_begin_op(visor, "setting up the Cell build environment");
 
-	jsal_on_import_module(handle_module_import);
-
-	// initialize the CommonJS cache and global require()
-	jsal_push_hidden_stash();
-	jsal_push_new_object();
-	jsal_put_prop_string(-2, "moduleCache");
-	jsal_pop(1);
-
-	jsal_push_global_object();
-	push_require(NULL);
-	jsal_to_propdesc_value(true, false, true);
-	jsal_def_prop_string(-2, "require");
-	jsal_pop(1);
-
 	// initialize the Cellscript API
 	api_init();
+	modules_init(fs, false);
 	api_define_func(NULL, "error", js_error, 0);
 	api_define_func(NULL, "files", js_files, 0);
 	api_define_func(NULL, "install", js_install, 0);
@@ -341,7 +325,7 @@ build_eval(build_t* build, const char* filename)
 
 	visor_begin_op(build->visor, "evaluating '%s'", filename);
 	build->timestamp = stats.st_mtime;
-	if (!try_eval_module(build->fs, filename, false)) {
+	if (!module_eval(filename, false)) {
 		build->crashed = true;
 		is_ok = false;
 		if (jsal_is_error(-1)) {
@@ -731,65 +715,6 @@ find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_o
 	return NULL;
 }
 
-static void
-handle_module_import(void)
-{
-	/* [ module_name parent_specifier ] -> [ ... specifier url source ] */
-
-	const char* const PATHS[] =
-	{
-		"$/node_modules",
-		"#/cell_modules",
-		"#/runtime",
-	};
-
-	const char* caller_id = NULL;
-	path_t*     path;
-	char*       shim_name;
-	lstring_t*  shim_source;
-	char*       source;
-	size_t      source_len;
-	const char* specifier;
-
-	int i;
-
-	specifier = jsal_require_string(0);
-	if (!jsal_is_null(1))
-		caller_id = jsal_require_string(1);
-
-	// relative path is nonsensical in a non-module context because the JS engine
-	// doesn't know where the request came from in that case
-	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "Relative import() not allowed outside of an ESM module");
-
-	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i], false)))
-			break;  // short-circuit
-	}
-	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
-
-	if (path_extension_is(path, ".cjs")) {
-		// ES module shim, allows 'import' to work with CommonJS modules
-		shim_name = strnewf("%%/moduleShim-%d.mjs", s_next_module_id++);
-		shim_source = lstr_newf(
-			"/* ES module shim for CommonJS module */\n"
-			"export default require(\"%s\");", path_cstr(path));
-		jsal_push_string(shim_name);
-		jsal_dup(-1);
-		jsal_push_lstring_t(shim_source);
-		free(shim_name);
-		lstr_free(shim_source);
-	}
-	else {
-		source = fs_fslurp(s_build->fs, path_cstr(path), &source_len);
-		jsal_push_string(path_cstr(path));
-		jsal_dup(-1);
-		jsal_push_lstring(source, source_len);
-		free(source);
-	}
-}
-
 static bool
 install_target(int num_args, bool is_ctor, intptr_t magic)
 {
@@ -923,27 +848,6 @@ package_dir(build_t* build, spk_writer_t* spk, const char* from_dirname, const c
 	}
 }
 
-static void
-push_require(const char* module_id)
-{
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	jsal_remove(-2);
-
-	jsal_push_new_function(js_require, "require", 1, false, 0);
-	jsal_push_new_object();
-	jsal_pull(-3);
-	jsal_put_prop_string(-2, "value");
-	jsal_def_prop_string(-2, "cache");  // require.cache
-
-	if (module_id != NULL) {
-		jsal_push_new_object();
-		jsal_push_string(module_id);
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "id");  // require.id
-	}
-}
-
 static int
 sort_targets_by_path(const void* p_a, const void* p_b)
 {
@@ -953,145 +857,6 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 	a = *(const target_t**)p_a;
 	b = *(const target_t**)p_b;
 	return strcmp(path_cstr(target_path(a)), path_cstr(target_path(b)));
-}
-
-static bool
-try_eval_module(fs_t* fs, const char* filename, bool node_compatible)
-{
-	// HERE BE DRAGONS!
-	// this function is horrendous.  Duktape's stack-based API is powerful, but gets
-	// very messy very quickly when dealing with object properties.  I tried to add
-	// comments to illuminate what's going on, but it's still likely to be confusing for
-	// someone not familiar with Duktape code.  proceed with caution.
-
-	// notes:
-	//     - the final value of 'module.exports' is left on top of the Duktape value stack.
-	//     - 'module.id' is set to the given filename.  in order to guarantee proper cache
-	//       behavior, the filename should be in canonical form.
-	//     - this is a protected call.  if the module being loaded throws, the error will be
-	//       caught and left on top of the stack for the caller to deal with.
-
-	lstring_t*  code_string;
-	path_t*     dir_path;
-	path_t*     file_path;
-	bool        is_esm_module;
-	bool        is_module_loaded;
-	size_t      source_size;
-	char*       source;
-
-	file_path = path_new(filename);
-	dir_path = path_strip(path_dup(file_path));
-
-	// never evaluate JSON as ESM, let the CommonJS loader deal with it
-	is_esm_module = (path_extension_is(file_path, ".mjs") || !node_compatible)
-		&& !path_extension_is(file_path, ".cjs")
-		&& !path_extension_is(file_path, ".json");
-	if (is_esm_module) {
-		source = fs_fslurp(fs, filename, &source_size);
-		code_string = lstr_from_utf8(source, source_size, true);
-		free(source);
-		jsal_push_lstring_t(code_string);
-		is_module_loaded = jsal_try_eval_module(filename, NULL);
-		lstr_free(code_string);
-		if (!is_module_loaded)
-			goto on_error;
-		goto have_module;
-	}
-
-	// is the requested module already in the cache?
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	if (jsal_get_prop_string(-1, filename)) {
-		jsal_remove(-2);
-		jsal_remove(-2);
-		goto have_module;
-	}
-	else {
-		jsal_pop(3);
-	}
-
-	source = fs_fslurp(fs, filename, &source_size);
-	code_string = lstr_from_utf8(source, source_size, true);
-	free(source);
-
-	// construct a CommonJS module object for the new module
-	jsal_push_new_object();  // module object
-	jsal_push_new_object();
-	jsal_put_prop_string(-2, "exports");  // module.exports = {}
-	jsal_push_string(filename);
-	jsal_put_prop_string(-2, "filename");  // module.filename
-	jsal_push_string(filename);
-	jsal_put_prop_string(-2, "id");  // module.id
-	jsal_push_boolean(false);
-	jsal_put_prop_string(-2, "loaded");  // module.loaded = false
-	push_require(filename);
-	jsal_put_prop_string(-2, "require");  // module.require
-
-	// cache the module object in advance
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "moduleCache");
-	jsal_dup(-3);
-	jsal_put_prop_string(-2, filename);
-	jsal_pop(2);
-
-	if (path_extension_is(file_path, ".json")) {
-		// JSON file, decode to JavaScript object
-		jsal_push_lstring_t(code_string);
-		lstr_free(code_string);
-		if (!jsal_try_parse(-1))
-			goto on_error;
-		jsal_put_prop_string(-2, "exports");
-	}
-	else {
-		// synthesize a function to wrap the module code.  this is the simplest way to
-		// implement CommonJS semantics and matches the behavior of Node.js.
-		jsal_push_sprintf("(function (exports, require, module, __filename, __dirname) {%s%s\n})",
-			strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
-			lstr_cstr(code_string));
-		if (!jsal_try_compile(filename))
-			goto on_error;
-		jsal_call(0);
-		jsal_push_new_object();
-		jsal_push_string("main");
-		jsal_put_prop_string(-2, "value");
-		jsal_def_prop_string(-2, "name");
-		lstr_free(code_string);
-
-		// go, go, go!
-		jsal_dup(-2);                           // this = module
-		jsal_get_prop_string(-3, "exports");     // exports
-		jsal_get_prop_string(-4, "require");     // require
-		jsal_dup(-5);                           // module
-		jsal_push_string(filename);             // __filename
-		jsal_push_string(path_cstr(dir_path));  // __dirname
-		if (!jsal_try_call_method(5))
-			goto on_error;
-		jsal_pop(1);
-	}
-
-	// module executed successfully, set 'module.loaded' to true
-	jsal_push_boolean(true);
-	jsal_put_prop_string(-2, "loaded");
-
-have_module:
-	if (!is_esm_module) {
-		// 'module` is on the stack; we need `module.exports'.
-		jsal_get_prop_string(-1, "exports");
-		jsal_replace(-2);
-	}
-	return true;
-
-on_error:
-	// note: it's assumed that at this point, the only thing(s) left in our portion of the
-	//       value stack are the module object (for CommonJS) and the thrown error.
-	if (!is_esm_module) {
-		jsal_push_hidden_stash();
-		jsal_get_prop_string(-1, "moduleCache");
-		jsal_del_prop_string(-1, filename);
-		jsal_pop(2);
-		jsal_replace(-2);  // leave the error on the stack
-	}
-	return false;
 }
 
 static bool
@@ -1455,7 +1220,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	if (path == NULL)
 		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
 	
-	if (!try_eval_module(s_build->fs, path_cstr(path), node_compatible)) {
+	if (!module_eval(path_cstr(path), node_compatible)) {
 		path_free(path);
 		jsal_throw();
 	}

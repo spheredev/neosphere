@@ -30,34 +30,27 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__CELL_H__INCLUDED
-#define SPHERE__CELL_H__INCLUDED
+#ifndef SPHERE__MODULE_H__INCLUDED
+#define SPHERE__MODULE_H__INCLUDED
 
-#include "posix.h"
+#include "fs.h"
 
-#include "jsal.h"
-#include "lstring.h"
-#include "path.h"
-#include "utility.h"
-#include "vector.h"
+typedef struct module_ref module_ref_t;
 
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include <time.h>
-#include <sys/stat.h>
+typedef
+enum module_type
+{
+    MODULE_COMMONJS,
+    MODULE_ESM,
+    MODULE_JSON,
+} module_type_t;
 
-#if !defined(_WIN32)
-#include <alloca.h>
-#include <utime.h>
-#else
-#include <malloc.h>
-#include <sys/utime.h>
-#endif
+void          modules_init    (fs_t* fs, bool strict_imports);
+bool          module_eval     (const char* specifier, bool node_compatible);
+module_ref_t* module_resolve  (const char* specifier, const char* importer, bool node_compatible);
+void          module_free     (module_ref_t* it);
+const char*   module_pathname (const module_ref_t* it);
+module_type_t module_type     (const module_ref_t* it);
+bool          module_exec     (module_ref_t* it);
 
-#include "version.h"
-
-#endif // SPHERE__CELL_H__INCLUDED
+#endif // SPHERE__MODULE_H__INCLUDED
