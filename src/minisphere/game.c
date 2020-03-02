@@ -326,33 +326,6 @@ game_compiler(const game_t* it)
 	return it->compiler;
 }
 
-bool
-game_dir_exists(const game_t* it, const char* dirname)
-{
-	path_t*      dir_path = NULL;
-	enum fs_type fs_type;
-	struct stat  stats;
-
-	if (!resolve_pathname(it, dirname, &dir_path, &fs_type))
-		goto on_error;
-	switch (fs_type) {
-	case FS_LOCAL:
-		if (stat(path_cstr(dir_path), &stats) != 0)
-			goto on_error;
-		path_free(dir_path);
-		return (stats.st_mode & S_IFDIR) == S_IFDIR;
-	case FS_PACKAGE:
-		if (!package_dir_exists(it->package, path_cstr(dir_path)))
-			goto on_error;
-		path_free(dir_path);
-		return true;
-	}
-
-on_error:
-	path_free(dir_path);
-	return false;
-}
-
 image_t*
 game_default_arrow(const game_t* it)
 {
@@ -384,6 +357,12 @@ game_default_windowstyle(const game_t* it)
 }
 
 bool
+game_dir_exists(const game_t* it, const char* dirname)
+{
+	return fs_dir_exists(it->fs, dirname);
+}
+
+bool
 game_empty_promises(const game_t* it)
 {
 	return it->empty_promises;
@@ -392,28 +371,7 @@ game_empty_promises(const game_t* it)
 bool
 game_file_exists(const game_t* it, const char* filename)
 {
-	enum fs_type fs_type;
-	path_t*      path = NULL;
-	struct stat  stats;
-
-	if (!resolve_pathname(it, filename, &path, &fs_type))
-		goto on_error;
-	switch (fs_type) {
-	case FS_LOCAL:
-		if (stat(path_cstr(path), &stats) != 0)
-			goto on_error;
-		path_free(path);
-		return (stats.st_mode & S_IFREG) == S_IFREG;
-	case FS_PACKAGE:
-		if (!package_file_exists(it->package, path_cstr(path)))
-			goto on_error;
-		path_free(path);
-		return true;
-	}
-
-on_error:
-	path_free(path);
-	return false;
+	return fs_file_exists(it->fs, filename);
 }
 
 const fs_t*
@@ -1012,6 +970,9 @@ do_fs_stat(fs_t* fs, const char* filename, struct stat *out_stat)
 		return stat(path_cstr(file_path), out_stat);
 		break;
 	case FS_PACKAGE:
+		// for SPK packages: stat the package, then set file/directory flag appropriately.
+		// none of the data `stat()` returns is supported by the SPK format, so this is the only
+		// way we can return meaningful values.
 		stat(path_cstr(game->root_path), out_stat);
 		out_stat->st_mode &= ~(S_IFREG | S_IFDIR);
 		if (package_file_exists(game->package, path_cstr(file_path)))
