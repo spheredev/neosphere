@@ -555,7 +555,10 @@ image_get_pixel(image_t* it, int x, int y)
 	else {
 		++it->cache_hits;
 	}
-	return it->pixel_cache[x + y * it->width];
+
+	return it->pixel_cache != NULL
+		? it->pixel_cache[x + y * it->width]
+		: mk_color(0, 0, 0, 0);
 }
 
 image_lock_t*

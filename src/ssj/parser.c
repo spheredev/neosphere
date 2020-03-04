@@ -66,7 +66,8 @@ command_parse(const char* string)
 	char         *p_tail;
 	struct token *tokens;
 
-	tokens = malloc(array_len * sizeof(struct token));
+	if (!(tokens = malloc(array_len * sizeof(struct token))))
+		goto on_error;
 	p_ch = string;
 	while (*p_ch != '\0') {
 		while (*p_ch == ' ' || *p_ch == '\t')
@@ -95,7 +96,8 @@ command_parse(const char* string)
 			next_char = *(p_ch + 1 + length);
 			if (next_char != quote[0])
 				goto syntax_error;
-			string_value = malloc(length + 1);
+			if (!(string_value = malloc(length + 1)))
+				goto on_error;
 			strncpy(string_value, p_ch + 1, length); string_value[length] = '\0';
 			tokens[index].tag = TOK_STRING;
 			tokens[index].string = string_value;
@@ -114,7 +116,8 @@ command_parse(const char* string)
 		else {
 			length = strcspn(p_ch, " \t'\":");
 			next_char = *(p_ch + length);
-			string_value = malloc(length + 1);
+			if (!(string_value = malloc(length + 1)))
+				goto on_error;
 			strncpy(string_value, p_ch, length); string_value[length] = '\0';
 			tokens[index].tag = TOK_STRING;
 			tokens[index].string = string_value;
@@ -150,10 +153,14 @@ command_parse(const char* string)
 syntax_error:
 	tokens[index++].tag = TOK_ERROR;
 	if (!(command = calloc(1, sizeof(command_t))))
-		return NULL;
+		goto on_error;
 	command->num_tokens = index;
 	command->tokens = tokens;
 	return command;
+
+on_error:
+	free(tokens);
+	return NULL;
 }
 
 void

@@ -263,7 +263,8 @@ strfmt(const char* format, ...)
 		p_in = p_next_in;
 	}
 	out_len += strlen(p_in);
-	buffer = malloc(out_len + 1);
+	if (!(buffer = malloc(out_len + 1)))
+		return NULL;
 
 	// ready, set, GO!
 	p_in = format;

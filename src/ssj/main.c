@@ -200,7 +200,8 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 	size_t i_arg;
 
 	// parse the command line
-	cmdline = calloc(1, sizeof(struct cmdline));
+	if (!(cmdline = calloc(1, sizeof(struct cmdline))))
+		return NULL;
 	*out_retval = EXIT_SUCCESS;
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {

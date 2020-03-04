@@ -109,7 +109,7 @@ font_load(const char* filename)
 	struct glyph*           glyph;
 	struct rfn_glyph_header glyph_hdr;
 	long                    glyph_start;
-	uint8_t*                grayscale;
+	uint8_t*                grayscale = NULL;
 	image_lock_t*           lock = NULL;
 	int                     max_x = 0, max_y = 0;
 	int                     min_width = INT_MAX;
@@ -174,7 +174,8 @@ font_load(const char* filename)
 		case 1: // RFN v1: 8-bit grayscale glyphs
 			if (!(glyph->image = image_new_slice(atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
 				goto on_error;
-			grayscale = malloc(glyph_hdr.width * glyph_hdr.height);
+			if (!(grayscale = malloc(glyph_hdr.width * glyph_hdr.height)))
+				goto on_error;
 			if (file_read(file, grayscale, 1, glyph_hdr.width * glyph_hdr.height) != 1)
 				goto on_error;
 			psrc = grayscale;
@@ -185,6 +186,7 @@ font_load(const char* filename)
 				pdest += lock->pitch;
 				psrc += glyph_hdr.width;
 			}
+			free(grayscale);
 			break;
 		case 2: // RFN v2: 32-bit truecolor glyphs
 			if (!(glyph->image = fread_image_slice(file, atlas, atlas_x, atlas_y, glyph_hdr.width, glyph_hdr.height)))
@@ -204,6 +206,7 @@ font_load(const char* filename)
 on_error:
 	console_log(2, "failed to load font #%u", s_next_font_id++);
 	file_close(file);
+	free(grayscale);
 	if (font != NULL) {
 		if (font->glyphs != NULL) {
 			for (i = 0; i < rfn.num_chars; ++i)
@@ -212,8 +215,10 @@ on_error:
 		free(font->glyphs);
 	}
 	free(font);
-	if (lock != NULL) image_unlock(atlas, lock);
-	if (atlas != NULL) image_unref(atlas);
+	if (lock != NULL)
+		image_unlock(atlas, lock);
+	if (atlas != NULL)
+		image_unref(atlas);
 	return NULL;
 }
 

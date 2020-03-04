@@ -86,7 +86,7 @@ z_inflate(const void* data, size_t size, size_t max_inflate, size_t *out_output_
 	int      flush_flag = Z_NO_FLUSH;
 	size_t   inflated_size;
 	Bytef*   new_buffer;
-	size_t   num_chunks = 0;
+	size_t   num_chunks;
 	int      result;
 	z_stream stream;
 
@@ -96,9 +96,14 @@ z_inflate(const void* data, size_t size, size_t max_inflate, size_t *out_output_
 	if (inflateInit(&stream) != Z_OK)
 		goto on_error;
 	chunk_size = max_inflate != 0 ? (uInt)max_inflate : 65536;
+	num_chunks = 1;
+	if (!(buffer = malloc(chunk_size + 1)))
+		goto on_error;
+	stream.next_out = buffer;
+	stream.avail_out = chunk_size;
 	do {
 		if (stream.avail_out == 0) {
-			if (buffer != NULL && max_inflate > 0)
+			if (max_inflate > 0)
 				goto on_error;  // inflated data exceeds maximum size
 			if (!(new_buffer = realloc(buffer, ++num_chunks * chunk_size + 1)))
 				goto on_error;
