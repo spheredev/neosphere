@@ -70,7 +70,8 @@ image_new(int width, int height, const color_t* pixels)
 	image_t* image;
 
 	console_log(3, "creating image #%u at %dx%d", s_next_image_id, width, height);
-	image = calloc(1, sizeof(image_t));
+	if (!(image = calloc(1, sizeof(image_t))))
+		goto on_error;
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
 	image->id = s_next_image_id++;
@@ -100,7 +101,8 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image_t* image;
 
 	console_log(3, "creating image #%u as %dx%d subimage of image #%u", s_next_image_id, width, height, parent->id);
-	image = calloc(1, sizeof(image_t));
+	if (!(image = calloc(1, sizeof(image_t))))
+		goto on_error;
 	if (!(image->bitmap = al_create_sub_bitmap(parent->bitmap, x, y, width, height)))
 		goto on_error;
 	image->id = s_next_image_id++;
@@ -125,7 +127,8 @@ image_dup(const image_t* it)
 	console_log(3, "cloning image #%u from source image #%u",
 		s_next_image_id, it->id);
 
-	image = calloc(1, sizeof(image_t));
+	if (!(image = calloc(1, sizeof(image_t))))
+		goto on_error;
 	if (!(image->bitmap = al_clone_bitmap(it->bitmap)))
 		goto on_error;
 	image->id = s_next_image_id++;
@@ -154,7 +157,8 @@ image_load(const char* filename)
 
 	console_log(2, "loading image #%u from '%s'", s_next_image_id, filename);
 
-	image = calloc(1, sizeof(image_t));
+	if (!(image = calloc(1, sizeof(image_t))))
+		goto on_error;
 	if (!(slurp = game_read_file(g_game, filename, &file_size)))
 		goto on_error;
 	al_file = al_open_memfile(slurp, file_size, "rb");
@@ -548,8 +552,9 @@ image_get_pixel(image_t* it, int x, int y)
 		console_log(4, "image_get_pixel() cache miss for image #%u", it->id);
 		cache_pixels(it);
 	}
-	else
+	else {
 		++it->cache_hits;
+	}
 	return it->pixel_cache[x + y * it->width];
 }
 

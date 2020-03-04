@@ -69,13 +69,18 @@ spk_create(const char* filename)
 
 	spk_writer_t* writer;
 
-	writer = calloc(1, sizeof(spk_writer_t));
+	if (!(writer = calloc(1, sizeof(spk_writer_t))))
+		goto on_error;
 	if (!(writer->file = fopen(filename, "wb")))
-		return NULL;
+		goto on_error;
 	fseek(writer->file, sizeof(struct spk_header), SEEK_SET);
 
 	writer->index = vector_new(sizeof(struct spk_entry));
 	return writer;
+
+on_error:
+	free(writer);
+	return NULL;
 }
 
 void

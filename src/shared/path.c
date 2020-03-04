@@ -410,7 +410,8 @@ path_rebase(path_t* path, const path_t* root)
 
 	if (path_rooted(path))
 		return path;
-	new_hops = malloc(PATH_MAX_HOPS * sizeof(char*));
+	if (!(new_hops = malloc(PATH_MAX_HOPS * sizeof(char*))))
+		return NULL;
 	num_root_hops = path_num_hops(root);
 	for (i = 0; i < path_num_hops(root); ++i)
 		new_hops[i] = strdup(root->hops[i]);

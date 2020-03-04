@@ -53,7 +53,8 @@ utf8_decode_start(bool strict)
 {
 	utf8_decode_t* cx;
 
-	cx = calloc(1, sizeof(utf8_decode_t));
+	if (!(cx = calloc(1, sizeof(utf8_decode_t))))
+		return NULL;
 	cx->strict = strict;
 	cx->utf8_low = 0x80;
 	cx->utf8_high = 0xbf;

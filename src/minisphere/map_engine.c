@@ -293,7 +293,7 @@ static void                sort_persons         (void);
 static void                update_map_engine    (bool is_main_loop);
 static void                update_person        (person_t* person, bool* out_has_moved);
 
-void
+bool
 map_engine_init(void)
 {
 	int i;
@@ -305,9 +305,11 @@ map_engine_init(void)
 
 	memset(s_def_map_scripts, 0, MAP_SCRIPT_MAX * sizeof(int));
 	memset(s_def_person_scripts, 0, PERSON_SCRIPT_MAX * sizeof(int));
-	s_map = NULL; s_map_filename = NULL;
+	s_map = NULL;
+	s_map_filename = NULL;
 	s_camera_person = NULL;
-	s_players = calloc(PLAYER_MAX, sizeof(struct player));
+	if (!(s_players = calloc(PLAYER_MAX, sizeof(struct player))))
+		return false;
 	for (i = 0; i < PLAYER_MAX; ++i)
 		s_players[i].is_talk_allowed = true;
 	s_current_trigger = -1;
@@ -326,6 +328,8 @@ map_engine_init(void)
 	s_talk_distance = 8;
 	s_acting_person = NULL;
 	s_current_person = NULL;
+
+	return true;
 }
 
 void
@@ -1115,7 +1119,9 @@ person_new(const char* name, spriteset_t* spriteset, bool is_persistent, script_
 		s_max_persons = s_num_persons * 2;
 		s_persons = realloc(s_persons, s_max_persons * sizeof(person_t*));
 	}
-	person = s_persons[s_num_persons - 1] = calloc(1, sizeof(person_t));
+	if (!(person = calloc(1, sizeof(person_t))))
+		return NULL;
+	s_persons[s_num_persons - 1] = person;
 	person->id = s_next_person_id++;
 	person->sprite = spriteset_ref(spriteset);
 	set_person_name(person, name);
@@ -2311,11 +2317,13 @@ load_map(const char* filename)
 	switch (rmp.version) {
 	case 1:
 		// load strings (resource filenames, scripts, etc.)
-		strings = calloc(rmp.num_strings, sizeof(lstring_t*));
+		if (!(strings = calloc(rmp.num_strings, sizeof(lstring_t*))))
+			goto on_error;
 		has_failed = false;
 		for (i = 0; i < rmp.num_strings; ++i)
 			has_failed = has_failed || ((strings[i] = read_lstring(file, true)) == NULL);
-		if (has_failed) goto on_error;
+		if (has_failed)
+			goto on_error;
 
 		// pre-allocate map structures
 		map->layers = calloc(rmp.num_layers, sizeof(struct map_layer));
@@ -2479,10 +2487,12 @@ load_map(const char* filename)
 	return map;
 
 on_error:
-	if (file != NULL) file_close(file);
+	if (file != NULL)
+		file_close(file);
 	free(tile_data);
 	if (strings != NULL) {
-		for (i = 0; i < rmp.num_strings; ++i) lstr_free(strings[i]);
+		for (i = 0; i < rmp.num_strings; ++i)
+			lstr_free(strings[i]);
 		free(strings);
 	}
 	if (map != NULL) {

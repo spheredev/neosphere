@@ -181,8 +181,7 @@ static js_throw_callback_t  s_throw_callback = NULL;
 bool
 jsal_init(void)
 {
-	JsModuleRecord module_record;
-	JsErrorCode    result;
+	JsErrorCode result;
 
 	result = JsCreateRuntime(
 		JsRuntimeAttributeAllowScriptInterrupt
@@ -203,10 +202,9 @@ jsal_init(void)
 	// set up the callbacks
 	JsSetPromiseContinuationCallback(on_resolve_reject_promise, NULL);
 	JsSetHostPromiseRejectionTracker(on_reject_promise_unhandled, NULL);
-	JsInitializeModuleRecord(NULL, NULL, &module_record);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
-	JsSetModuleHostInfo(module_record, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
+	JsSetModuleHostInfo(NULL, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
+	JsSetModuleHostInfo(NULL, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
+	JsSetModuleHostInfo(NULL, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
 
 	// set up the stash, used to store JS values behind the scenes.
 	JsCreateObject(&s_stash);
@@ -812,7 +810,8 @@ jsal_get_lstring(int index, size_t *out_length)
 		counter = (counter + 1) % 25;
 	}
 	else {
-		buffer = malloc(length + 1);
+		if (!(buffer = malloc(length + 1)))
+			return NULL;
 		JsCopyString(value, buffer, length + 1, NULL);
 		free(retval[counter]);
 		retval[counter] = buffer;
@@ -1743,6 +1742,9 @@ jsal_ref(int at_index)
 	js_ref_t*  ref;
 	js_ref_t*  stack_ref;
 
+	if (!(ref = calloc(1, sizeof(js_ref_t))))
+		return NULL;
+
 	// IMPORTANT: stack entry becomes a weak reference after this; to avoid a segfault, make
 	//            sure the value is off the stack before calling jsal_unref().
 	stack_ref = get_ref(at_index);
@@ -1750,7 +1752,6 @@ jsal_ref(int at_index)
 		JsAddRef(stack_ref->value, NULL);  // stack ref is weak, pin it
 	stack_ref->weak_ref = true;
 
-	ref = calloc(1, sizeof(js_ref_t));
 	ref->value = stack_ref->value;
 	return ref;
 }
@@ -2634,7 +2635,8 @@ make_ref(JsRef value, bool weak_ref)
 	if (!weak_ref)
 		JsAddRef(value, NULL);
 
-	ref = calloc(1, sizeof(js_ref_t));
+	if (!(ref = calloc(1, sizeof(js_ref_t))))
+		return NULL;
 	ref->value = value;
 	ref->weak_ref = weak_ref;
 	return ref;

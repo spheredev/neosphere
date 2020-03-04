@@ -62,7 +62,8 @@ objview_new(void)
 
 	array = malloc(array_size * sizeof(struct property));
 
-	obj = calloc(1, sizeof(objview_t));
+	if (!(obj = calloc(1, sizeof(objview_t))))
+		return NULL;
 	obj->props = array;
 	obj->array_size = array_size;
 	return obj;

@@ -70,7 +70,8 @@ table_new(const char* title, bool has_totals)
 {
 	table_t* table;
 
-	table = calloc(1, sizeof(table_t));
+	if (!(table = calloc(1, sizeof(table_t))))
+		return NULL;
 	table->has_totals = has_totals;
 	table->num_columns = 0;
 	table->title = strdup(title);

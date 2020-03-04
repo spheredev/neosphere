@@ -1508,7 +1508,8 @@ jsal_require_rgba_lut(int index)
 
 	index = jsal_normalize_index(index);
 	jsal_require_object_coercible(index);
-	lut = malloc(sizeof(uint8_t) * 256);
+	if (!(lut = malloc(sizeof(uint8_t) * 256)))
+		return NULL;
 	length = fmin(jsal_get_length(index), 256);
 	for (i = length; i < 256; ++i) lut[i] = i;
 	for (i = 0; i < length; ++i) {

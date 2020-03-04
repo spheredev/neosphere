@@ -55,7 +55,8 @@ atlas_new(int num_images, int max_width, int max_height)
 	console_log(4, "creating atlas #%u at %dx%d per image", s_next_atlas_id,
 		max_width, max_height);
 
-	atlas = calloc(1, sizeof(atlas_t));
+	if (!(atlas = calloc(1, sizeof(atlas_t))))
+		goto on_error;
 	atlas->pitch = ceil(sqrt(num_images));
 	atlas->max_width = max_width;
 	atlas->max_height = max_height;

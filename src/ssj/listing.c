@@ -53,7 +53,8 @@ listing_new(const char* text)
 	while ((line_text = read_line(&p_source)))
 		vector_push(lines, &line_text);
 
-	source = calloc(1, sizeof(listing_t));
+	if (!(source = calloc(1, sizeof(listing_t))))
+		return NULL;
 	source->lines = lines;
 	return source;
 }
@@ -123,7 +124,8 @@ read_line(const char** p_string)
 	bool   have_line = false;
 	size_t length;
 
-	buffer = malloc(buf_size = 256);
+	if (!(buffer = malloc(buf_size = 256)))
+		return NULL;
 	length = 0;
 	while (!have_line) {
 		if (length + 1 >= buf_size)

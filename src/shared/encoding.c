@@ -57,7 +57,8 @@ decoder_new(bool fatal, bool ignore_bom)
 {
 	decoder_t* decoder;
 
-	decoder = calloc(1, sizeof(decoder_t));
+	if (!(decoder = calloc(1, sizeof(decoder_t))))
+		return NULL;
 	decoder->fatal = fatal;
 	decoder->ignore_bom = ignore_bom;
 	return decoder_ref(decoder);

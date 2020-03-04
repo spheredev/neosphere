@@ -115,7 +115,8 @@ session_new(inferior_t* inferior)
 {
 	session_t* session;
 
-	session = calloc(1, sizeof(session_t));
+	if (!(session = calloc(1, sizeof(session_t))))
+		return NULL;
 	session->inferior = inferior;
 	return session;
 }

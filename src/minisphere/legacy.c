@@ -53,7 +53,8 @@ socket_v1_new_client(const char* hostname, int port)
 	if (!socket_connect(client, hostname, port))
 		goto on_error;
 
-	socket = calloc(1, sizeof(socket_v1_t));
+	if (!(socket = calloc(1, sizeof(socket_v1_t))))
+		goto on_error;
 	socket->client = client;
 	return socket_v1_ref(socket);
 
@@ -70,7 +71,8 @@ socket_v1_new_server(int port)
 
 	server = server_new(NULL, port, 4096, 16, false);
 
-	socket = calloc(1, sizeof(socket_v1_t));
+	if (!(socket = calloc(1, sizeof(socket_v1_t))))
+		return NULL;
 	socket->server = server;
 	return socket_v1_ref(socket);
 }

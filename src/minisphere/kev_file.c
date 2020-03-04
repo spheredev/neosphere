@@ -53,7 +53,8 @@ kev_open(game_t* game, const char* filename, bool can_create)
 	size_t        slurp_size;
 
 	console_log(2, "opening kevfile #%u '%s'", s_next_file_id, filename);
-	kev_file = calloc(1, sizeof(kev_file_t));
+	if (!(kev_file = calloc(1, sizeof(kev_file_t))))
+		return NULL;
 	if ((slurp = game_read_file(game, filename, &slurp_size))) {
 		memfile = al_open_memfile(slurp, slurp_size, "rb");
 		if (!(kev_file->conf = al_load_config_file_f(memfile)))
@@ -179,14 +180,18 @@ kev_save(kev_file_t* it)
 	file_t*       file = NULL;
 	size_t        file_size;
 	bool          is_aok = false;
-	ALLEGRO_FILE* memfile;
+	ALLEGRO_FILE* memfile = NULL;
+	void*         new_buffer;
 	size_t        next_buf_size;
 
 	console_log(3, "saving kevfile #%u as '%s'", it->id, it->filename);
 	next_buf_size = 4096;
 	while (!is_aok) {
-		buffer = realloc(buffer, next_buf_size);
-		memfile = al_open_memfile(buffer, next_buf_size, "wb");
+		if (!(new_buffer = realloc(buffer, next_buf_size)))
+			goto on_error;
+		buffer = new_buffer;
+		if (!(memfile = al_open_memfile(buffer, next_buf_size, "wb")))
+			goto on_error;
 		next_buf_size *= 2;
 		al_save_config_file_f(memfile, it->conf);
 		is_aok = !al_feof(memfile);

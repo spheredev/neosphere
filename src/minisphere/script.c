@@ -117,9 +117,12 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	script_t*  script;
 
 	va_start(ap, fmt_name);
-	name = lstr_vnewf(fmt_name, ap);
+	if (!(name = lstr_vnewf(fmt_name, ap)))
+		goto on_error;
 	va_end(ap);
-	script = calloc(1, sizeof(script_t));
+
+	if (!(script = calloc(1, sizeof(script_t))))
+		goto on_error;
 
 	console_log(4, "compiling script #%u as '%s'", s_next_script_id, lstr_cstr(name));
 
@@ -135,6 +138,10 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	script->id = s_next_script_id++;
 	script->function = function;
 	return script_ref(script);
+
+on_error:
+	lstr_free(name);
+	return NULL;
 }
 
 script_t*

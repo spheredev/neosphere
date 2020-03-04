@@ -95,7 +95,8 @@ package_open(const char* path)
 
 	console_log(2, "opening package #%u '%s'", s_next_package_id, path);
 
-	package = calloc(1, sizeof(package_t));
+	if (!(package = calloc(1, sizeof(package_t))))
+		goto on_error;
 
 	if (!(package->file = al_fopen(path, "rb"))) goto on_error;
 	if (al_fread(package->file, &spk_hdr, sizeof(struct spk_header)) != sizeof(struct spk_header))

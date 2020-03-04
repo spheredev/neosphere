@@ -48,7 +48,8 @@ visor_new(void)
 {
 	visor_t* visor;
 
-	visor = calloc(1, sizeof(visor_t));
+	if (!(visor = calloc(1, sizeof(visor_t))))
+		return NULL;
 	visor->filenames = vector_new(sizeof(char*));
 	return visor;
 }

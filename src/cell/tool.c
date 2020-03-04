@@ -52,7 +52,8 @@ tool_new(const char* verb)
 
 	callback_ptr = jsal_pop_ref();
 
-	tool = calloc(1, sizeof(tool_t));
+	if (!(tool = calloc(1, sizeof(tool_t))))
+		return NULL;
 	tool->verb = strdup(verb);
 	tool->callback_ptr = callback_ptr;
 	return tool_ref(tool);

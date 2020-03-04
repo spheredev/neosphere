@@ -159,7 +159,8 @@ ibo_new(void)
 {
 	ibo_t* ibo;
 
-	ibo = calloc(1, sizeof(ibo_t));
+	if (!(ibo = calloc(1, sizeof(ibo_t))))
+		return NULL;
 	ibo->indices = vector_new(sizeof(uint16_t));
 	return ibo_ref(ibo);
 }
@@ -243,7 +244,8 @@ model_new(shader_t* shader)
 
 	console_log(4, "creating new model #%u", s_next_model_id);
 
-	model = calloc(1, sizeof(model_t));
+	if (!(model = calloc(1, sizeof(model_t))))
+		return NULL;
 	model->shapes = vector_new(sizeof(shape_t*));
 	model->transform = transform_new();
 	model->shader = shader_ref(shader);
@@ -343,7 +345,8 @@ shader_new(const char* vert_filename, const char* frag_filename)
 	char*      vert_source = NULL;
 	shader_t*  shader;
 
-	shader = calloc(1, sizeof(shader_t));
+	if (!(shader = calloc(1, sizeof(shader_t))))
+		goto on_error;
 
 	console_log(2, "compiling new shader program #%u", s_next_shader_id);
 
@@ -377,9 +380,11 @@ shader_new(const char* vert_filename, const char* frag_filename)
 on_error:
 	free(vert_source);
 	free(frag_source);
-	if (shader->program != NULL)
-		al_destroy_shader(shader->program);
-	free(shader);
+	if (shader != NULL) {
+		if (shader->program != NULL)
+			al_destroy_shader(shader->program);
+		free(shader);
+	}
 	return NULL;
 }
 
@@ -644,7 +649,8 @@ shape_new(vbo_t* vertices, ibo_t* indices, shape_type_t type, image_t* texture)
 		: "automatic";
 	console_log(4, "creating shape #%u as %s", s_next_shape_id, type_name);
 
-	shape = calloc(1, sizeof(shape_t));
+	if (!(shape = calloc(1, sizeof(shape_t))))
+		return NULL;
 	shape->texture = image_ref(texture);
 	shape->type = type;
 	shape->vbo = vbo_ref(vertices);
@@ -735,7 +741,8 @@ vbo_new(void)
 {
 	vbo_t* vbo;
 
-	vbo = calloc(1, sizeof(vbo_t));
+	if (!(vbo = calloc(1, sizeof(vbo_t))))
+		return NULL;
 	vbo->vertices = vector_new(sizeof(vertex_t));
 	return vbo_ref(vbo);
 }

@@ -141,14 +141,16 @@ command_parse(const char* string)
 		return NULL;
 	}
 
-	command = calloc(1, sizeof(command_t));
+	if (!(command = calloc(1, sizeof(command_t))))
+		return NULL;
 	command->num_tokens = index;
 	command->tokens = tokens;
 	return command;
 
 syntax_error:
 	tokens[index++].tag = TOK_ERROR;
-	command = calloc(1, sizeof(command_t));
+	if (!(command = calloc(1, sizeof(command_t))))
+		return NULL;
 	command->num_tokens = index;
 	command->tokens = tokens;
 	return command;

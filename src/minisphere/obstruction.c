@@ -50,7 +50,8 @@ obsmap_new(void)
 
 	console_log(4, "creating new obstruction map #%u", s_next_obsmap_id);
 
-	obsmap = calloc(1, sizeof(obsmap_t));
+	if (!(obsmap = calloc(1, sizeof(obsmap_t))))
+		return NULL;
 	obsmap->max_lines = 0;
 	obsmap->num_lines = 0;
 

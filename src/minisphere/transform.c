@@ -45,7 +45,8 @@ transform_new(void)
 {
 	transform_t* transform;
 
-	transform = calloc(1, sizeof(transform_t));
+	if (!(transform = calloc(1, sizeof(transform_t))))
+		return NULL;
 	transform->dirty = true;
 	al_identity_transform(&transform->matrix);
 	return transform_ref(transform);
@@ -56,7 +57,8 @@ transform_clone(const transform_t* it)
 {
 	transform_t* dolly;
 
-	dolly = calloc(1, sizeof(transform_t));
+	if (!(dolly = calloc(1, sizeof(transform_t))))
+		return NULL;
 	al_copy_transform(&dolly->matrix, &it->matrix);
 	return transform_ref(dolly);
 }

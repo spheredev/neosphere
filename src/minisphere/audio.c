@@ -237,7 +237,8 @@ mixer_new(int frequency, int bits, int channels)
 		: bits == 32 ? ALLEGRO_AUDIO_DEPTH_FLOAT32
 		: ALLEGRO_AUDIO_DEPTH_UINT8;
 
-	mixer = calloc(1, sizeof(mixer_t));
+	if (!(mixer = calloc(1, sizeof(mixer_t))))
+		goto on_error;
 	if (!(mixer->voice = al_create_voice(frequency, depth, conf)))
 		goto on_error;
 	if (!(mixer->ptr = al_create_mixer(frequency, ALLEGRO_AUDIO_DEPTH_FLOAT32, conf)))
@@ -253,11 +254,13 @@ mixer_new(int frequency, int bits, int channels)
 
 on_error:
 	console_log(2, "failed to create mixer #%u", s_next_mixer_id++);
-	if (mixer->ptr != NULL)
-		al_destroy_mixer(mixer->ptr);
-	if (mixer->voice != NULL)
-		al_destroy_voice(mixer->voice);
-	free(mixer);
+	if (mixer != NULL) {
+		if (mixer->ptr != NULL)
+			al_destroy_mixer(mixer->ptr);
+		if (mixer->voice != NULL)
+			al_destroy_voice(mixer->voice);
+		free(mixer);
+	}
 	return NULL;
 }
 
@@ -309,7 +312,8 @@ sample_new(const char* path, bool polyphonic)
 	al_sample = al_load_sample_f(file, strrchr(path, '.'));
 	al_fclose(file);
 
-	sample = calloc(1, sizeof(sample_t));
+	if (!(sample = calloc(1, sizeof(sample_t))))
+		goto on_error;
 	sample->id = s_next_sample_id++;
 	sample->path = strdup(path);
 	sample->ptr = al_sample;
@@ -434,7 +438,8 @@ sound_new(const char* path)
 
 	console_log(2, "loading sound #%u from '%s'", s_next_sound_id, path);
 
-	sound = calloc(1, sizeof(sound_t));
+	if (!(sound = calloc(1, sizeof(sound_t))))
+		goto on_error;
 	sound->path = strdup(path);
 
 	if (!(sound->file_data = game_read_file(g_game, sound->path, &sound->file_size)))
@@ -631,7 +636,8 @@ stream_new(int frequency, int bits, int channels)
 	console_log(2, "creating new stream #%u at %d kHz", s_next_stream_id, frequency / 1000);
 	console_log(3, "    format: %dch %d Hz, %d-bit", channels, frequency, bits);
 
-	stream = calloc(1, sizeof(stream_t));
+	if (!(stream = calloc(1, sizeof(stream_t))))
+		goto on_error;
 
 	// create the underlying Allegro stream
 	depth_flag = bits == 8 ? ALLEGRO_AUDIO_DEPTH_UINT8
@@ -687,18 +693,20 @@ stream_unref(stream_t* stream)
 		return;
 
 	console_log(3, "disposing stream #%u no longer in use", stream->id);
+
+	iter = vector_enum(s_active_streams);
+	while ((stream_ptr = iter_next(&iter))) {
+		if (*stream_ptr == stream) {
+			iter_remove(&iter);
+			break;
+		}
+	}
+
 	al_drain_audio_stream(stream->ptr);
 	al_destroy_audio_stream(stream->ptr);
 	mixer_unref(stream->mixer);
 	free(stream->buffer);
 	free(stream);
-	iter = vector_enum(s_active_streams);
-	while ((stream_ptr = iter_next(&iter))) {
-		if (*stream_ptr == stream) {
-			vector_remove(s_active_streams, iter.index);
-			break;
-		}
-	}
 }
 
 double

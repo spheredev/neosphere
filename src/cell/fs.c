@@ -65,7 +65,8 @@ fs_new(const char* root_dir, const char* game_dir, const char* home_dir)
 	path_t* app_path;
 	fs_t*   fs;
 
-	fs = calloc(1, sizeof(fs_t));
+	if (!(fs = calloc(1, sizeof(fs_t))))
+		return NULL;
 	fs->root_path = path_new_dir(root_dir);
 	fs->game_path = path_new_dir(game_dir);
 	app_path = path_new_self();
@@ -393,7 +394,8 @@ directory_open(fs_t* fs, const char* dirname, bool recursive)
 	if (!fs_dir_exists(fs, dirname))
 		return NULL;
 
-	directory = calloc(1, sizeof(directory_t));
+	if (!(directory = calloc(1, sizeof(directory_t))))
+		return NULL;
 	directory->fs = fs;
 	directory->path = path_new_dir(dirname);
 	directory->recursive = recursive;

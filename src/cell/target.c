@@ -54,7 +54,8 @@ target_new(const path_t* name, fs_t* fs, const path_t* path, tool_t* tool, time_
 {
 	target_t* target;
 
-	target = calloc(1, sizeof(target_t));
+	if (!(target = calloc(1, sizeof(target_t))))
+		return NULL;
 	if (name != NULL)
 		target->name = path_dup(name);
 	target->fs = fs;

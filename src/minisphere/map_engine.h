@@ -99,7 +99,7 @@ enum person_op
 	PERSON_SCRIPT_MAX
 } person_op_t;
 
-void             map_engine_init              (void);
+bool             map_engine_init              (void);
 void             map_engine_uninit            (void);
 void             map_engine_on_render         (script_t* script);
 void             map_engine_on_update         (script_t* script);

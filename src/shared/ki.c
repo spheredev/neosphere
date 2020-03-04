@@ -67,7 +67,8 @@ ki_atom_new(ki_type_t type)
 {
 	ki_atom_t* atom;
 
-	atom = calloc(1, sizeof(ki_atom_t));
+	if (!(atom = calloc(1, sizeof(ki_atom_t))))
+		return NULL;
 	atom->type = type;
 	return atom;
 }
@@ -77,7 +78,8 @@ ki_atom_new_bool(bool value)
 {
 	ki_atom_t* atom;
 
-	atom = calloc(1, sizeof(ki_atom_t));
+	if (!(atom = calloc(1, sizeof(ki_atom_t))))
+		return NULL;
 	atom->type = value ? KI_TRUE : KI_FALSE;
 	return atom;
 }
@@ -87,7 +89,8 @@ ki_atom_new_int(int value)
 {
 	ki_atom_t* atom;
 
-	atom = calloc(1, sizeof(ki_atom_t));
+	if (!(atom = calloc(1, sizeof(ki_atom_t))))
+		return NULL;
 	atom->type = KI_INT;
 	atom->int_value = value;
 	return atom;
@@ -98,7 +101,8 @@ ki_atom_new_number(double value)
 {
 	ki_atom_t* atom;
 
-	atom = calloc(1, sizeof(ki_atom_t));
+	if (!(atom = calloc(1, sizeof(ki_atom_t))))
+		return NULL;
 	atom->type = KI_NUMBER;
 	atom->float_value = value;
 	return atom;
@@ -109,7 +113,8 @@ ki_atom_new_ref(unsigned int value)
 {
 	ki_atom_t* atom;
 
-	atom = calloc(1, sizeof(ki_atom_t));
+	if (!(atom = calloc(1, sizeof(ki_atom_t))))
+		return NULL;
 	atom->type = KI_REF;
 	atom->handle = value;
 	return atom;
@@ -120,7 +125,8 @@ ki_atom_new_string(const char* value)
 {
 	ki_atom_t* atom;
 
-	atom = calloc(1, sizeof(ki_atom_t));
+	if (!(atom = calloc(1, sizeof(ki_atom_t))))
+		return NULL;
 	atom->type = KI_STRING;
 	atom->buffer.data = strdup(value);
 	atom->buffer.size = strlen(value);
@@ -130,15 +136,21 @@ ki_atom_new_string(const char* value)
 ki_atom_t*
 ki_atom_dup(const ki_atom_t* it)
 {
-	ki_atom_t* atom;
+	ki_atom_t* atom = NULL;
 
-	atom = calloc(1, sizeof(ki_atom_t));
+	if (!(atom = calloc(1, sizeof(ki_atom_t))))
+		goto on_error;
 	memcpy(atom, it, sizeof(ki_atom_t));
 	if (atom->type == KI_STRING || atom->type == KI_BUFFER) {
-		atom->buffer.data = malloc(it->buffer.size + 1);
+		if (!(atom->buffer.data = malloc(it->buffer.size + 1)))
+			goto on_error;
 		memcpy(atom->buffer.data, it->buffer.data, it->buffer.size + 1);
 	}
 	return atom;
+
+on_error:
+	free(atom);
+	return NULL;
 }
 
 void
@@ -245,7 +257,8 @@ ki_atom_recv(socket_t* socket)
 	uint8_t    ib;
 	int        read_size;
 
-	atom = calloc(1, sizeof(ki_atom_t));
+	if (!(atom = calloc(1, sizeof(ki_atom_t))))
+		return NULL;
 	if (socket_read(socket, &ib, 1) == 0)
 		goto lost_connection;
 	atom->type = (ki_type_t)ib;
@@ -355,7 +368,8 @@ ki_message_new(ki_type_t command_tag)
 {
 	ki_message_t* message;
 
-	message = calloc(1, sizeof(ki_message_t));
+	if (!(message = calloc(1, sizeof(ki_message_t))))
+		return NULL;
 	message->atoms = vector_new(sizeof(ki_atom_t*));
 	message->command = command_tag;
 	return message;
@@ -514,7 +528,8 @@ ki_message_recv(socket_t* socket)
 
 	iter_t iter;
 
-	message = calloc(1, sizeof(ki_message_t));
+	if (!(message = calloc(1, sizeof(ki_message_t))))
+		return NULL;
 	message->atoms = vector_new(sizeof(ki_atom_t*));
 	if (!(atom = ki_atom_recv(socket)))
 		goto lost_dvalue;

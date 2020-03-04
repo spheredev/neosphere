@@ -169,7 +169,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 
 	int i;
 
-	build = calloc(1, sizeof(build_t));
+	if (!(build = calloc(1, sizeof(build_t))))
+		return NULL;
 	visor = visor_new();
 	fs = fs_new(path_cstr(source_path), path_cstr(out_path), NULL);
 
@@ -328,7 +329,7 @@ build_free(build_t* build)
 bool
 build_eval(build_t* build, const char* filename)
 {
-	int         error_column;
+	int         error_column = 0;
 	int         error_line = 0;
 	char*       error_stack = NULL;
 	char*       error_url = NULL;

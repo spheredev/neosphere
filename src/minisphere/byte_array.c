@@ -53,7 +53,8 @@ bytearray_new(int size)
 	console_log(3, "creating new byte array #%u size %d bytes",
 		size, s_next_array_id);
 
-	array = calloc(1, sizeof(bytearray_t));
+	if (!(array = calloc(1, sizeof(bytearray_t))))
+		goto on_error;
 	if (!(array->buffer = calloc(size, 1)))
 		goto on_error;
 	array->size = size;
@@ -172,7 +173,8 @@ bytearray_deflate(bytearray_t* array, int level)
 	if (deflation == NULL || output_size > INT_MAX)
 		goto on_error;
 
-	new_array = calloc(1, sizeof(bytearray_t));
+	if (!(new_array = calloc(1, sizeof(bytearray_t))))
+		goto on_error;
 	new_array->id = s_next_array_id++;
 	new_array->buffer = deflation;
 	new_array->size = (int)output_size;
@@ -196,7 +198,8 @@ bytearray_inflate(bytearray_t* array, int max_size)
 	if (inflation == NULL || output_size > INT_MAX)
 		goto on_error;
 
-	new_array = calloc(1, sizeof(bytearray_t));
+	if (!(new_array = calloc(1, sizeof(bytearray_t))))
+		goto on_error;
 	new_array->id = s_next_array_id++;
 	new_array->buffer = inflation;
 	new_array->size = (int)output_size;

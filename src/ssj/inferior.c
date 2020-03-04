@@ -94,7 +94,8 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	ki_message_t* request;
 	clock_t       timeout;
 
-	obj = calloc(1, sizeof(inferior_t));
+	if (!(obj = calloc(1, sizeof(inferior_t))))
+		goto on_error;
 	printf("connecting to %s:%d... ", hostname, port);
 	fflush(stdout);
 	obj->socket = socket_new(1024, true);

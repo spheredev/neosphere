@@ -116,7 +116,8 @@ socket_new(size_t buffer_size, bool sync_mode)
 
 	console_log(2, "creating TCP socket #%u", s_next_socket_id);
 
-	socket = calloc(1, sizeof(socket_t));
+	if (!(socket = calloc(1, sizeof(socket_t))))
+		return NULL;
 	socket->buffer_size = buffer_size;
 	socket->sync_mode = sync_mode;
 	socket->recv_buffer = malloc(buffer_size);
@@ -310,7 +311,8 @@ server_new(const char* hostname, int port, size_t buffer_size, int max_backlog, 
 	if (max_backlog > 0)
 		console_log(3, "    backlog size: %d", max_backlog);
 
-	server = calloc(1, sizeof(server_t));
+	if (!(server = calloc(1, sizeof(server_t))))
+		goto on_error;
 	server->sync_mode = sync_mode;
 	server->buffer_size = buffer_size;
 	server->backlog = malloc(max_backlog * sizeof(dyad_Stream*));
@@ -416,7 +418,8 @@ server_accept(server_t* it)
 		dyad_getPort(it->backlog[0]));
 
 	// construct a socket object for the new connection
-	client = calloc(1, sizeof(socket_t));
+	if (!(client = calloc(1, sizeof(socket_t))))
+		return NULL;
 	client->sync_mode = it->sync_mode;
 	client->buffer_size = it->buffer_size;
 	client->no_delay = it->no_delay;

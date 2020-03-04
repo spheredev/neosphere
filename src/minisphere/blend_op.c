@@ -53,7 +53,8 @@ blend_op_new_asym(blend_type_t color_op, blend_factor_t sfc, blend_factor_t tfc,
 {
 	blend_op_t* op;
 
-	op = calloc(1, sizeof(blend_op_t));
+	if (!(op = calloc(1, sizeof(blend_op_t))))
+		return NULL;
 	op->color_op = get_allegro_blend_op(color_op);
 	op->color_s_factor = get_allegro_blend_factor(sfc);
 	op->color_t_factor = get_allegro_blend_factor(tfc);
@@ -69,7 +70,8 @@ blend_op_new_sym(blend_type_t op_type, blend_factor_t sf, blend_factor_t tf)
 {
 	blend_op_t* op;
 
-	op = calloc(1, sizeof(blend_op_t));
+	if (!(op = calloc(1, sizeof(blend_op_t))))
+		return NULL;
 	op->color_op = get_allegro_blend_op(op_type);
 	op->color_s_factor = get_allegro_blend_factor(sf);
 	op->color_t_factor = get_allegro_blend_factor(tf);
