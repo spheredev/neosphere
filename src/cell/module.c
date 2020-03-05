@@ -298,7 +298,7 @@ do_resolve_import(void)
 		jsal_throw();
 	pathname = module_pathname(ref);
 	if (module_type(ref) == MODULE_COMMONJS) {
-		if (!s_strict_imports)
+		if (s_strict_imports)
 			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported in strict imports mode", specifier);
 
 		// ES module shim, allows 'import' to work with CommonJS modules
@@ -506,30 +506,33 @@ type_of_module(const path_t* path, bool node_compatible)
 	if (path_extension_is(path, ".json"))
 		return MODULE_JSON;
 
-	// for everything else, find the nearest uplevel `package.json` to determine
-	// module type.
-	json_path = path_dup(path);
-	path_strip(json_path);
-	path_append(json_path, "package.json");
-	hop_index = path_num_hops(json_path) - 1;
-	while (hop_index >= 0) {
-		if ((json_text = fs_fslurp(s_fs, path_cstr(json_path), &json_size))) {
-			jsal_push_lstring(json_text, json_size);
-			free(json_text);
-			if (!jsal_try_parse(-1) || !jsal_is_object_coercible(-1)) {
-				jsal_pop(1);
-				continue;  // invalid `package.json`, move on
+	// in Node.js compatibility mode, for `.js`, find the nearest uplevel `package.json`
+	// to determine module type.
+	if (node_compatible && path_extension_is(path, ".js")) {
+		json_path = path_dup(path);
+		path_strip(json_path);
+		path_append(json_path, "package.json");
+		hop_index = path_num_hops(json_path) - 1;
+		while (hop_index >= 0) {
+			if ((json_text = fs_fslurp(s_fs, path_cstr(json_path), &json_size))) {
+				jsal_push_lstring(json_text, json_size);
+				free(json_text);
+				if (!jsal_try_parse(-1) || !jsal_is_object_coercible(-1)) {
+					jsal_pop(1);
+					continue;  // invalid `package.json`, move on
+				}
+				jsal_get_prop_string(-1, "type");
+				type_string = jsal_is_string(-2) ? jsal_get_string(-2) : "commonjs";
+				type = strcmp(type_string, "module") == 0 ? MODULE_ESM
+					: MODULE_COMMONJS;
+				jsal_pop(2);
+				break;  // we're done here
 			}
-			jsal_get_prop_string(-1, "type");
-			type_string = jsal_is_string(-2) ? jsal_get_string(-2) : "commonjs";
-			type = strcmp(type_string, "module") == 0 ? MODULE_ESM
-				: MODULE_COMMONJS;
-			jsal_pop(2);
-			break;  // we're done here
+			path_remove_hop(json_path, hop_index--);
 		}
-		path_remove_hop(json_path, hop_index--);
+		path_free(json_path);
 	}
-	path_free(json_path);
+
 	return type;
 }
 
