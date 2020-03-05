@@ -257,10 +257,11 @@ inferior_get_calls(inferior_t* it)
 const listing_t*
 inferior_get_listing(inferior_t* it, const char* filename)
 {
-	int           cache_id;
-	listing_t*    listing;
-	ki_message_t* request;
-	const char*   text;
+	int            cache_id;
+	listing_t*     listing;
+	ki_message_t*  request;
+	struct source* sources;
+	const char*    text;
 
 	int i;
 
@@ -279,10 +280,12 @@ inferior_get_listing(inferior_t* it, const char* filename)
 	text = ki_message_string(request, 0);
 	listing = listing_new(text);
 
+	if (!(sources = realloc(it->sources, (it->num_sources + 1) * sizeof(struct source))))
+		goto on_error;
 	cache_id = it->num_sources++;
-	it->sources = realloc(it->sources, it->num_sources * sizeof(struct source));
-	it->sources[cache_id].filename = strdup(filename);
-	it->sources[cache_id].listing = listing;
+	sources[cache_id].filename = strdup(filename);
+	sources[cache_id].listing = listing;
+	it->sources = sources;
 
 	return listing;
 
@@ -519,7 +522,7 @@ do_handshake(socket_t* socket)
 	static char handshake[128];
 
 	ptrdiff_t idx;
-	char*     next_token;
+	char*     next_token = NULL;
 	char*     token;
 	int       version;
 

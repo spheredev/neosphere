@@ -95,16 +95,20 @@ backtrace_get_linenum(const backtrace_t* obj, int index)
 	return obj->frames[index].lineno;
 }
 
-void
+bool
 backtrace_add(backtrace_t* obj, const char* call_name, const char* filename, int line_no)
 {
-	int index;
+	struct frame* frames;
+	int           index;
 
+	if (!(frames = realloc(obj->frames, (obj->num_frames + 1) * sizeof(struct frame))))
+		return false;
 	index = obj->num_frames++;
-	obj->frames = realloc(obj->frames, obj->num_frames * sizeof(struct frame));
-	obj->frames[index].name = strdup(call_name);
-	obj->frames[index].filename = strdup(filename);
-	obj->frames[index].lineno = line_no;
+	frames[index].name = strdup(call_name);
+	frames[index].filename = strdup(filename);
+	frames[index].lineno = line_no;
+	obj->frames = frames;
+	return true;
 }
 
 void

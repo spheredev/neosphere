@@ -191,7 +191,8 @@ strescq(const char* input, char quote_char)
 	}
 	out_len += strlen(p_in);
 
-	buffer = malloc(out_len + 1);
+	if (!(buffer = malloc(out_len + 1)))
+		return NULL;
 	p_in = input;
 	p_out = buffer;
 	while (p_next_in = strpbrk(p_in, escapables)) {
@@ -226,11 +227,15 @@ strfmt(const char* format, ...)
 
 	// get replacement strings from argument list (up to 9)
 	va_start(ap, format);
-	for (;;) {
-		if (num_items >= 9 || !(items[num_items] = va_arg(ap, const char*)))
+	while (num_items < 9) {
+		if ((items[num_items] = va_arg(ap, const char*))) {
+			item_len[num_items] = strlen(items[num_items]);
+			++num_items;
+		}
+		else {
+			item_len[num_items] = 0;
 			break;
-		item_len[num_items] = strlen(items[num_items]);
-		++num_items;
+		}
 	}
 	va_end(ap);
 	

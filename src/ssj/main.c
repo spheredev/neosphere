@@ -109,8 +109,9 @@ launch_game(path_t* game_path)
 	GetModuleFileName(NULL, pathname, MAX_PATH);
 	PathRemoveFileSpec(pathname);
 	SetCurrentDirectory(pathname);
-	if (!PathFileExists(TEXT(".\\spherun.exe")))
+	if (!PathFileExists(TEXT(".\\spherun.exe"))) {
 		goto on_error;
+	}
 	else {
 		ZeroMemory(&si, sizeof(STARTUPINFOA));
 		si.cb = sizeof(STARTUPINFOA);
