@@ -47,6 +47,7 @@ static void          do_resolve_import (void);
 static module_ref_t* find_module       (const char* specifier, const char* importer, const char* lib_dir_name, bool node_compatible);
 static module_ref_t* load_package_json (const char* filename);
 static void          push_new_require  (const char* module_id);
+static module_type_t type_of_module    (const path_t* path, bool node_compatible);
 
 static int  s_next_module_id = 1;
 static bool s_strict_imports;
@@ -352,7 +353,6 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 	path_t*       path;
 	module_ref_t* ref;
 	bool          strict_mode = false;
-	module_type_t type;
 
 	int i;
 
@@ -390,23 +390,10 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 				return ref;
 			}
 			else {
-				// figure out what kind of module we're loading
-				if (node_compatible) {
-					type = path_extension_is(path, ".mjs") ? MODULE_ESM
-						: path_extension_is(path, ".json") ? MODULE_JSON
-						: MODULE_COMMONJS;
-				}
-				else {
-					// in ESM resolution mode, everything is ESM except `.cjs`
-					type = MODULE_ESM;
-					if (path_extension_is(path, ".cjs"))
-						type = MODULE_COMMONJS;
-				}
-				
 				if (!(ref = calloc(1, sizeof(module_ref_t))))
 					return NULL;
 				ref->path = path;
-				ref->type = type;
+				ref->type = type_of_module(path, node_compatible);
 				return ref;
 			}
 		}
@@ -421,31 +408,30 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 static module_ref_t*
 load_package_json(const char* filename)
 {
-	char*         json;
 	size_t        json_size;
+	char*         json_text;
 	path_t*       path;
 	module_ref_t* ref;
 	const char*   specifier = NULL;
 	int           stack_top;
 	module_type_t type = MODULE_COMMONJS;
-	const char*   type_str;
+	const char*   type_string;
 
 	stack_top = jsal_get_top();
-	if (!(json = game_read_file(g_game, filename, &json_size)))
+	if (!(json_text = game_read_file(g_game, filename, &json_size)))
 		goto on_error;
-	jsal_push_lstring(json, json_size);
-	free(json);
+	jsal_push_lstring(json_text, json_size);
+	free(json_text);
 	if (!jsal_try_parse(-1))
 		goto on_error;
 	if (!jsal_is_object_coercible(-1))
 		goto on_error;
 	jsal_get_prop_string(-1, "type");
 	jsal_get_prop_string(-2, "main");
-	type_str = jsal_is_string(-2) ? jsal_get_string(-2)
-		: "commonjs";
+	type_string = jsal_is_string(-2) ? jsal_get_string(-2) : "commonjs";
 	if (jsal_is_string(-1)) {
 		specifier = jsal_require_string(-1);
-		type = strcmp(type_str, "module") == 0 ? MODULE_ESM
+		type = strcmp(type_string, "module") == 0 ? MODULE_ESM
 			: MODULE_COMMONJS;
 	}
 	if (specifier == NULL)
@@ -495,6 +481,58 @@ push_new_require(const char* module_id)
 		jsal_put_prop_string(-2, "value");
 		jsal_def_prop_string(-2, "id");  // require.id
 	}
+}
+
+static module_type_t
+type_of_module(const path_t* path, bool node_compatible)
+{
+	// IMPORTANT: `path` is assumed to be canonical, including SphereFS prefix.
+
+	int           hop_index;
+	path_t*       json_path;
+	size_t        json_size;
+	char*         json_text;
+	module_type_t type;
+	const char*   type_string;
+
+	if (node_compatible)
+		type = MODULE_COMMONJS;
+	else
+		type = MODULE_ESM;
+	
+	// if extension is `.cjs` or `.mjs`, we don't need to look at `package.json`
+	if (path_extension_is(path, ".mjs"))
+		return MODULE_ESM;
+	if (path_extension_is(path, ".cjs"))
+		return MODULE_COMMONJS;
+	if (path_extension_is(path, ".json"))
+		return MODULE_JSON;
+	
+	// for everything else, find the nearest uplevel `package.json` to determine
+	// module type.
+	json_path = path_dup(path);
+	path_strip(json_path);
+	path_append(json_path, "package.json");
+	hop_index = path_num_hops(json_path) - 1;
+	while (hop_index >= 0) {
+		if ((json_text = game_read_file(g_game, path_cstr(json_path), &json_size))) {
+			jsal_push_lstring(json_text, json_size);
+			free(json_text);
+			if (!jsal_try_parse(-1) || !jsal_is_object_coercible(-1)) {
+				jsal_pop(1);
+				continue;  // invalid `package.json`, move on
+			}
+			jsal_get_prop_string(-1, "type");
+			type_string = jsal_is_string(-2) ? jsal_get_string(-2) : "commonjs";
+			type = strcmp(type_string, "module") == 0 ? MODULE_ESM
+				: MODULE_COMMONJS;
+			jsal_pop(2);
+			break;  // we're done here
+		}
+		path_remove_hop(json_path, hop_index--);
+	}
+	path_free(json_path);
+	return type;
 }
 
 static bool
