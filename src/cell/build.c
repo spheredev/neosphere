@@ -1180,55 +1180,6 @@ js_install(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_require(int num_args, bool is_ctor, intptr_t magic)
-{
-	static const
-	struct search_path
-	{
-		bool        node_aware;
-		const char* path;
-	}
-	PATHS[] =
-	{
-		{ true,  "$/node_modules" },
-		{ false, "#/cell_modules" },
-		{ false, "#/runtime" },
-	};
-
-	const char* caller_id = NULL;
-	bool        node_compatible = true;
-	path_t*     path;
-	const char* specifier;
-
-	int i;
-
-	specifier = jsal_require_string(0);
-
-	// get the calling module ID
-	jsal_push_callee();
-	if (jsal_get_prop_string(-1, "id"))
-		caller_id = jsal_get_string(-1);
-
-	if (caller_id == NULL && (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0))
-		jsal_error(JS_URI_ERROR, "Relative require() outside of a CommonJS module");
-
-	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
-		node_compatible = PATHS[i].node_aware;
-		if ((path = find_module_file(s_build->fs, specifier, caller_id, PATHS[i].path, node_compatible)))
-			break;  // short-circuit
-	}
-	if (path == NULL)
-		jsal_error(JS_URI_ERROR, "Couldn't find CommonJS module '%s'", specifier);
-	
-	if (!module_eval(path_cstr(path), node_compatible)) {
-		path_free(path);
-		jsal_throw();
-	}
-	path_free(path);
-	return true;
-}
-
-static bool
 js_warn(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* message;
