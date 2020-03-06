@@ -137,7 +137,7 @@ static unsigned int                script_id_from_filename     (const char* file
 static int                         push_value                  (JsValueRef value, bool weak_ref);
 static void                        resize_stack                (int new_size);
 static void                        throw_on_error              (void);
-static noreturn_t                  throw_value                 (JsValueRef value);
+static except_t                    throw_value                 (JsValueRef value);
 
 #if !defined(__APPLE__)
 static int asprintf  (char* *out, const char* format, ...);
@@ -610,7 +610,7 @@ jsal_enable_vm(bool enabled)
 		JsDisableRuntimeExecution(s_js_runtime);
 }
 
-noreturn_t
+except_t
 jsal_error(js_error_type_t type, const char* format, ...)
 {
 	va_list ap;
@@ -620,7 +620,7 @@ jsal_error(js_error_type_t type, const char* format, ...)
 	va_end(ap);
 }
 
-noreturn_t
+except_t
 jsal_error_va(js_error_type_t type, const char* format, va_list ap)
 {
 	jsal_push_new_error_va(type, format, ap);
@@ -2020,7 +2020,7 @@ jsal_stringify(int at_index)
 	jsal_replace(at_index);
 }
 
-noreturn_t
+except_t
 jsal_throw(void)
 {
 	/* [ ... exception ] -> [ ... ] */
@@ -2808,7 +2808,7 @@ throw_on_error(void)
 	}
 }
 
-static noreturn_t
+static except_t
 throw_value(JsValueRef value)
 {
 	push_value(value, false);

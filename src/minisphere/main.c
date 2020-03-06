@@ -32,13 +32,14 @@
 
 #include "minisphere.h"
 
-#include <dyad.h>
 #include <libmng.h>
 #include <zlib.h>
+
 #include "api.h"
 #include "audio.h"
 #include "debugger.h"
 #include "dispatch.h"
+#include "dyad.h"
 #include "event_loop.h"
 #include "galileo.h"
 #include "input.h"

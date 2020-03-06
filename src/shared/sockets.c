@@ -38,8 +38,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <dyad.h>
 #include "console.h"
+#include "dyad.h"
 
 struct server
 {

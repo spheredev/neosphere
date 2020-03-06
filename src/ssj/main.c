@@ -32,7 +32,7 @@
 
 #include "ssj.h"
 
-#include <dyad.h>
+#include "dyad.h"
 #include "inferior.h"
 #include "session.h"
 #include "xoroshiro.h"
