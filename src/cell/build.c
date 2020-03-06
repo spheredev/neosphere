@@ -141,9 +141,7 @@ static void js_Tool_finalize            (void* host_ptr);
 
 static void    cache_value_to_this  (const char* key);
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
-static path_t* find_module_file     (fs_t* fs, const char* id, const char* origin, const char* sys_origin, bool node_compatible);
 static bool    install_target       (int num_args, bool is_ctor, intptr_t magic);
-static path_t* load_package_json    (const char* filename);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static void    package_dir          (build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname, bool recursive);
 static int     sort_targets_by_path (const void* p_a, const void* p_b);
@@ -641,80 +639,6 @@ clean_old_artifacts(build_t* build, bool keep_targets)
 	visor_end_op(build->visor);
 }
 
-static path_t*
-find_module_file(fs_t* fs, const char* id, const char* origin, const char* sys_origin, bool node_compatible)
-{
-	static const
-	struct pattern
-	{
-		bool        esm_aware;
-		const char* name;
-	}
-	PATTERNS[] =
-	{
-		{ true,  "%s" },
-		{ true,  "%s.mjs" },
-		{ true,  "%s.js" },
-		{ true,  "%s.cjs" },
-		{ false, "%s.json" },
-		{ false, "%s/package.json" },
-		{ true,  "%s/index.mjs" },
-		{ true,  "%s/index.js" },
-		{ true,  "%s/index.cjs" },
-		{ false, "%s/index.json" },
-	};
-
-	path_t*     origin_path;
-	char*       filename;
-	path_t*     main_path;
-	path_t*     path;
-
-	int i;
-
-	if (strncmp(id, "./", 2) == 0 || strncmp(id, "../", 3) == 0) {
-		// resolve module relative to calling module
-		origin_path = path_new(origin != NULL ? origin : "./");
-	}
-	else {
-		// resolve module from designated module repository
-		origin_path = path_new_dir(sys_origin);
-	}
-
-	for (i = 0; i < sizeof PATTERNS / sizeof PATTERNS[0]; ++i) {
-		if (!PATTERNS[i].esm_aware && !node_compatible)
-			continue;
-		filename = strnewf(PATTERNS[i].name, id);
-		if (strncmp(id, "@/", 2) == 0 || strncmp(id, "$/", 2) == 0 || strncmp(id, "~/", 2) == 0 || strncmp(id, "#/", 2) == 0) {
-			path = fs_full_path(filename, NULL);
-		}
-		else {
-			path = path_dup(origin_path);
-			path_strip(path);
-			path_append(path, filename);
-			path_collapse(path, true);
-		}
-		free(filename);
-		if (fs_fexist(fs, path_cstr(path))) {
-			if (strcmp(path_filename(path), "package.json") == 0) {
-				if (!(main_path = load_package_json(path_cstr(path))))
-					goto next_filename;
-				if (fs_fexist(fs, path_cstr(main_path))) {
-					path_free(path);
-					return main_path;
-				}
-			}
-			else {
-				return path;
-			}
-		}
-
-	next_filename:
-		path_free(path);
-	}
-
-	return NULL;
-}
-
 static bool
 install_target(int num_args, bool is_ctor, intptr_t magic)
 {
@@ -736,38 +660,6 @@ install_target(int num_args, bool is_ctor, intptr_t magic)
 	}
 	jsal_push_boolean(result == 0);
 	return true;
-}
-
-static path_t*
-load_package_json(const char* filename)
-{
-	char*       json;
-	size_t      json_size;
-	path_t*     path;
-	int         stack_top;
-
-	stack_top = jsal_get_top();
-	if (!(json = fs_fslurp(s_build->fs, filename, &json_size)))
-		goto on_error;
-	jsal_push_lstring(json, json_size);
-	free(json);
-	if (!jsal_try_parse(-1))
-		goto on_error;
-	if (!jsal_is_object_coercible(-1))
-		goto on_error;
-	jsal_get_prop_string(-1, "main");
-	if (!jsal_is_string(-1))
-		goto on_error;
-	path = path_strip(path_new(filename));
-	path_append(path, jsal_get_string(-1));
-	path_collapse(path, true);
-	if (!fs_fexist(s_build->fs, path_cstr(path)))
-		goto on_error;
-	return path;
-
-on_error:
-	jsal_set_top(stack_top);
-	return NULL;
 }
 
 static void

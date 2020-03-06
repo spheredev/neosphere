@@ -11,7 +11,7 @@
 #include <stdarg.h>
 
 #ifdef _WIN32
-  #include <windows.h> /* For SOCKET */
+  #include <winsock.h> /* For SOCKET */
 #endif
 
 
