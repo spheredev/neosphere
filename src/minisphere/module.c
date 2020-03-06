@@ -508,9 +508,10 @@ type_of_module(const path_t* path, bool node_compatible)
 	if (path_extension_is(path, ".json"))
 		return MODULE_JSON;
 
-	// in Node.js compatibility mode, for `.js`, find the nearest uplevel `package.json`
-	// to determine module type.
-	if (node_compatible && path_extension_is(path, ".js")) {
+	// for `.js`, find the nearest uplevel `package.json` to determine module type.
+	// if no package manifest is found, the default module type depends on whether we're
+	// in Node.js compatibility mode or not (see above).
+	if (path_extension_is(path, ".js")) {
 		json_path = path_dup(path);
 		path_strip(json_path);
 		path_append(json_path, "package.json");
