@@ -574,6 +574,8 @@ update_input(void)
 			break;
 		case ALLEGRO_EVENT_KEY_DOWN:
 			keycode = event.keyboard.keycode;
+			if (keycode == ALLEGRO_KEY_BACKQUOTE)
+				keycode = ALLEGRO_KEY_TILDE;
 			s_key_state[keycode] = true;
 
 			// queue Ctrl/Alt/Shift keys (Sphere compatibility hack)
@@ -591,11 +593,17 @@ update_input(void)
 
 			break;
 		case ALLEGRO_EVENT_KEY_UP:
-			s_key_state[event.keyboard.keycode] = false;
+			keycode = event.keyboard.keycode;
+			if (keycode == ALLEGRO_KEY_BACKQUOTE)
+				keycode = ALLEGRO_KEY_TILDE;
+			s_key_state[keycode] = false;
 			break;
 		case ALLEGRO_EVENT_KEY_CHAR:
+			keycode = event.keyboard.keycode;
+			if (keycode == ALLEGRO_KEY_BACKQUOTE)
+				keycode = ALLEGRO_KEY_TILDE;
 			s_keymod_state = event.keyboard.modifiers;
-			switch (event.keyboard.keycode) {
+			switch (keycode) {
 			case ALLEGRO_KEY_ENTER:
 				if (event.keyboard.modifiers & ALLEGRO_KEYMOD_ALT
 				 || event.keyboard.modifiers & ALLEGRO_KEYMOD_ALTGR)
@@ -603,7 +611,7 @@ update_input(void)
 					screen_toggle_fullscreen(g_screen);
 				}
 				else {
-					queue_key(event.keyboard.keycode);
+					queue_key(keycode);
 				}
 				break;
 			case ALLEGRO_KEY_F10:
@@ -619,10 +627,7 @@ update_input(void)
 					jsal_debug_breakpoint_inject();
 				break;
 			default:
-				keycode = event.keyboard.keycode;
-				if (keycode == ALLEGRO_KEY_BACKQUOTE)
-					keycode = ALLEGRO_KEY_TILDE;
-				queue_key(event.keyboard.keycode);
+				queue_key(keycode);
 				break;
 			}
 		}
