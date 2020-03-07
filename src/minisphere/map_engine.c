@@ -78,7 +78,6 @@ static unsigned int        s_next_person_id = 0;
 static int                 s_num_deferreds = 0;
 static int                 s_num_persons = 0;
 static struct map_trigger* s_on_trigger = NULL;
-static unsigned int        s_queued_id = 0;
 static vector_t*           s_person_list = NULL;
 static struct player*      s_players;
 static script_t*           s_render_script = NULL;

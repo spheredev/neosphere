@@ -161,8 +161,6 @@ bytearray_concat(bytearray_t* array1, bytearray_t* array2)
 bytearray_t*
 bytearray_deflate(bytearray_t* array, int level)
 {
-	static const int CHUNK_SIZE = 65536;
-
 	uint8_t*     deflation;
 	bytearray_t* new_array;
 	size_t       output_size;

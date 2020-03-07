@@ -115,7 +115,6 @@ command_parse(const char* string)
 		}
 		else {
 			length = strcspn(p_ch, " \t'\":");
-			next_char = *(p_ch + length);
 			if (!(string_value = malloc(length + 1)))
 				goto on_error;
 			strncpy(string_value, p_ch, length); string_value[length] = '\0';
@@ -139,13 +138,12 @@ command_parse(const char* string)
 	}
 
 	if (index > 0 && tokens[0].tag != TOK_STRING) {
-		free(tokens);
 		printf("missing instruction in command line");
-		return NULL;
+		goto on_error;
 	}
 
 	if (!(command = calloc(1, sizeof(command_t))))
-		return NULL;
+		goto on_error;
 	command->num_tokens = index;
 	command->tokens = tokens;
 	return command;

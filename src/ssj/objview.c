@@ -60,13 +60,18 @@ objview_new(void)
 	int              array_size = 16;
 	objview_t*       obj;
 
-	array = malloc(array_size * sizeof(struct property));
+	if (!(array = malloc(array_size * sizeof(struct property))))
+		goto on_error;
 
 	if (!(obj = calloc(1, sizeof(objview_t))))
-		return NULL;
+		goto on_error;
 	obj->props = array;
 	obj->array_size = array_size;
 	return obj;
+
+on_error:
+	free(array);
+	return NULL;
 }
 
 void

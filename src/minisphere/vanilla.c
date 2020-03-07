@@ -496,7 +496,6 @@ static bool js_WindowStyle_toString             (int num_args, bool is_ctor, int
 
 static void js_Animation_finalize   (void* host_ptr);
 static void js_ByteArray_finalize   (void* host_ptr);
-static void js_Color_finalize       (void* host_ptr);
 static void js_File_finalize        (void* host_ptr);
 static void js_Font_finalize        (void* host_ptr);
 static void js_Image_finalize       (void* host_ptr);
@@ -6685,29 +6684,10 @@ js_Color_toString(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_ColorMatrix_apply(int num_args, bool is_ctor, intptr_t magic)
-{
-	color_t color = jsal_require_sphere_color(0);
-
-	color_fx_t matrix;
-
-	jsal_push_this();
-	matrix = jsal_require_sphere_color_fx(-1);
-
-	jsal_push_sphere_color(color_transform(color, matrix));
-	return true;
-}
-
-static bool
 js_ColorMatrix_toString(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_string("[object colormatrix]");
 	return true;
-}
-
-static void
-js_Color_finalize(void* host_ptr)
-{
 }
 
 static void

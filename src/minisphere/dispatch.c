@@ -300,7 +300,7 @@ recheck_busy_flag(void)
 	// check for recurring jobs that should keep the event loop alive
 	s_is_busy = false;
 	iter = vector_enum(s_recurring_jobs);
-	while (job = iter_next(&iter))
+	while ((job = iter_next(&iter)))
 		s_is_busy |= !job->finished && !job->background;
 }
 

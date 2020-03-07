@@ -125,7 +125,6 @@ static void CHAKRA_CALLBACK        on_reject_promise_unhandled (JsValueRef promi
 static void CHAKRA_CALLBACK        on_resolve_reject_promise   (JsValueRef function, void* userdata);
 static void                        decode_debugger_value       (void);
 static const char*                 filename_from_script_id     (unsigned int script_id);
-static void                        free_ref                    (js_ref_t* ref);
 static JsModuleRecord              get_module_record           (const char* specifier, JsModuleRecord parent, const char* url, bool *out_is_new);
 static js_ref_t*                   get_ref                     (int stack_index);
 static JsValueRef                  get_value                   (int stack_index);
@@ -291,7 +290,6 @@ jsal_update(bool in_event_loop)
 	jsal_jmpbuf*       last_catch_label;
 	int                last_stack_base;
 	JsModuleRecord     module_record;
-	JsValueRef         reason_value = JS_INVALID_REFERENCE;
 	struct rejection*  rejection;
 	JsValueRef         result;
 	char*              source;
@@ -2578,14 +2576,6 @@ decode_debugger_value(void)
 	jsal_remove(-5);
 }
 
-static void
-free_ref(js_ref_t* ref)
-{
-	if (!ref->weak_ref)
-		JsRelease(ref->value, NULL);
-	free(ref);
-}
-
 static js_ref_t*
 get_ref(int stack_index)
 {
@@ -2837,7 +2827,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 	unsigned int       script_id;
 	js_step_t          step = JS_STEP_CONTINUE;
 	JsDiagStepType     step_type;
-	char*              traceback;
+	char*              traceback = NULL;
 
 	iter_t iter;
 
@@ -2887,7 +2877,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 				jsal_pop(2);
 			}
 			jsal_pop(3);
-			jsal_push_string(traceback);
+			jsal_push_string(traceback != NULL ? traceback : "");
 			push_debug_callback_args(data);
 			if (jsal_setjmp(label) == 0) {
 				s_catch_label = &label;

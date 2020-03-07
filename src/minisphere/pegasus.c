@@ -533,7 +533,6 @@ static script_t* jsal_pegasus_require_script (int index);
 static int       s_api_level;
 static int       s_api_level_nominal;
 static mixer_t*  s_def_mixer;
-static int       s_next_module_id = 1;
 static js_ref_t* s_screen_obj;
 
 static js_ref_t* s_key_color;

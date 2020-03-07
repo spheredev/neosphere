@@ -142,12 +142,15 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	printf("    title:  \33[37;1m%s\33[m\n", obj->title);
 	printf("    author: \33[37;1m%s\33[m\n", obj->author);
 
+	free(platform_name);
+
 	obj->id = s_next_inferior_id++;
 	obj->show_trace = show_trace;
 	return obj;
 
 timed_out:
 	printf("\33[31merror!\33[m\n");
+	free(obj);
 	return NULL;
 
 on_error:
@@ -174,7 +177,6 @@ inferior_free(inferior_t* it)
 bool
 inferior_update(inferior_t* it)
 {
-	bool          is_active = true;
 	ki_message_t* notify = NULL;
 
 	if (it->is_detached)
@@ -247,6 +249,7 @@ inferior_get_calls(inferior_t* it)
 			filename = ki_message_string(request, i * 4);
 			line_no = ki_message_int(request, i * 4 + 2);
 			backtrace_add(it->calls, call_name, filename, line_no);
+			free(call_name);
 		}
 		ki_message_free(request);
 	}
@@ -320,15 +323,15 @@ inferior_get_object(inferior_t* it, unsigned int handle, bool get_all)
 	while (index < ki_message_len(request)) {
 		key_atom = ki_message_atom(request, index++);
 		attributes = ki_message_int(request, index++);
-		if (ki_atom_type(key_atom) == KI_STRING)
-			key_string = strdup(ki_atom_string(key_atom));
-		else
-			key_string = strnewf("%d", ki_atom_int(key_atom));
 		is_accessor = (attributes & 0x008) != 0;
 		if (attributes & 0x100) {
 			index += is_accessor ? 2 : 1;
 			continue;
 		}
+		if (ki_atom_type(key_atom) == KI_STRING)
+			key_string = strdup(ki_atom_string(key_atom));
+		else
+			key_string = strnewf("%d", ki_atom_int(key_atom));
 		flags = 0x0;
 		if (attributes & 0x01)
 			flags |= PROP_WRITABLE;

@@ -134,9 +134,9 @@ fread_image(file_t* file, int width, int height)
 	int i_y;
 
 	console_log(3, "reading %dx%d image from open file", width, height);
+	file_pos = file_position(file);
 	if (!(image = image_new(width, height, NULL)))
 		goto on_error;
-	file_pos = file_position(file);
 	if (!(lock = image_lock(image, true, false)))
 		goto on_error;
 	line_size = width * sizeof(color_t);

@@ -72,7 +72,6 @@ scripts_uninit(void)
 bool
 script_eval(const char* filename)
 {
-	file_t*     file = NULL;
 	path_t*     path = NULL;
 	const char* source_name;
 	lstring_t*  source_text = NULL;

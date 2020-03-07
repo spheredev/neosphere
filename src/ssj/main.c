@@ -77,12 +77,12 @@ main(int argc, char* argv[])
 	printf("\n");
 
 	if (cmdline->path != NULL && !launch_game(cmdline->path))
-		return EXIT_FAILURE;
+		goto on_error;
 
 	inferiors_init();
 
 	if (!(inferior = inferior_new("127.0.0.1", 1208, cmdline->show_trace)))
-		return EXIT_FAILURE;
+		goto on_error;
 	printf("\n");
 	session = session_new(inferior);
 	session_run(session, cmdline->run_now);
@@ -93,6 +93,10 @@ main(int argc, char* argv[])
 
 	free_cmdline(cmdline);
 	return EXIT_SUCCESS;
+
+on_error:
+	free_cmdline(cmdline);
+	return EXIT_FAILURE;
 }
 
 bool
@@ -201,8 +205,10 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 	size_t i_arg;
 
 	// parse the command line
-	if (!(cmdline = calloc(1, sizeof(struct cmdline))))
+	if (!(cmdline = calloc(1, sizeof(struct cmdline)))) {
+		*out_retval = EXIT_FAILURE;
 		return NULL;
+	}
 	*out_retval = EXIT_SUCCESS;
 	for (i = 1; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
