@@ -4,7 +4,11 @@ miniSphere Changelog
 v6.0.0 - TBD
 ------------
 
-* Adds support for loading and rendering TrueType fonts using the `Font` class.
+* Adds support for loading TrueType fonts using the `Font` class.
+* Adds support for Node.js-like automatic module type detection for `.js`
+  files.
+* Adds support for importing npm modules in Cell code.
+* Fixes a bug where `Key.Tilde` isn't recognized on macOS.
 
 
 v5.4.2 - February 20, 2020
