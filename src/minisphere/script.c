@@ -220,7 +220,10 @@ script_run(script_t* script, bool allow_reentry)
 	// execute the script!
 	script->in_use = true;
 	jsal_push_ref_weak(script->function);
-	jsal_push_ref_weak(script->this_arg);
+	if (script->this_arg != NULL)
+		jsal_push_ref_weak(script->this_arg);
+	else
+		jsal_push_undefined();
 	jsal_call_method(0);
 	if (jsal_is_object(-1) && jsal_has_prop_key(-1, s_key_then)) {
 		jsal_get_prop_string(-1, "then");
