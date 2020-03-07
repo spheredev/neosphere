@@ -619,6 +619,9 @@ update_input(void)
 					jsal_debug_breakpoint_inject();
 				break;
 			default:
+				keycode = event.keyboard.keycode;
+				if (keycode == ALLEGRO_KEY_BACKQUOTE)
+					keycode = ALLEGRO_KEY_TILDE;
 				queue_key(event.keyboard.keycode);
 				break;
 			}
