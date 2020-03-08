@@ -141,7 +141,8 @@ fslurp(const char* filename, size_t *out_size)
 
 	if (!(file = fopen(filename, "rb")))
 		return false;
-	*out_size = (fseek(file, 0, SEEK_END), ftell(file));
+	fseek(file, 0, SEEK_END);
+	*out_size = (size_t)ftell(file);
 	if (!(buffer = malloc(*out_size)))
 		goto on_error;
 	fseek(file, 0, SEEK_SET);
@@ -151,6 +152,7 @@ fslurp(const char* filename, size_t *out_size)
 	return buffer;
 
 on_error:
+	fclose(file);
 	return NULL;
 }
 

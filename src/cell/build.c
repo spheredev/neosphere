@@ -1604,9 +1604,10 @@ js_FileStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 {
+	size_t bytes_read;
 	void*  data_ptr;
 	FILE*  file;
-	int    num_bytes = 0;
+	long   num_bytes = 0;
 	long   position;
 
 	jsal_push_this();
@@ -1616,15 +1617,18 @@ js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 		num_bytes = jsal_require_int(0);
 
 	if (num_bytes < 0)
-		jsal_error(JS_RANGE_ERROR, "Invalid read size '%d'", num_bytes);
+		jsal_error(JS_RANGE_ERROR, "Invalid read size '%ld'", num_bytes);
 
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		position = ftell(file);
-		num_bytes = (fseek(file, 0, SEEK_END), ftell(file));
+		fseek(file, 0, SEEK_END);
+		num_bytes = ftell(file);
 		fseek(file, 0, SEEK_SET);
 	}
 	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &data_ptr);
-	num_bytes = (int)fread(data_ptr, 1, num_bytes, file);
+	bytes_read = fread(data_ptr, 1, num_bytes, file);
+	if (bytes_read < num_bytes)
+		jsal_error(JS_RANGE_ERROR, "Script tried to read past end of file");
 	if (num_args < 1)  // reset file position after whole-file read
 		fseek(file, position, SEEK_SET);
 	return true;
