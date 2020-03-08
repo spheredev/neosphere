@@ -635,8 +635,11 @@ handle_vars(session_t* session, command_t* cmd)
 {
 	const backtrace_t* calls;
 	const char*        call_name;
+	int                class_len;
 	const char*        class_name;
-	int                max_len = 0;
+	int                max_class_len = 0;
+	int                max_name_len = 0;
+	int                name_len;
 	const ki_atom_t*   value;
 	const objview_t*   vars;
 	const char*        var_name;
@@ -649,8 +652,13 @@ handle_vars(session_t* session, command_t* cmd)
 		return;
 	for (i = 0; i < objview_len(vars); ++i) {
 		var_name = objview_get_key(vars, i);
-		if ((int)strlen(var_name) > max_len)
-			max_len = (int)strlen(var_name);
+		class_name = objview_get_class(vars, i);
+		name_len = (int)strlen(var_name);
+		class_len = (int)strlen(class_name);
+		if (name_len > max_name_len)
+			max_name_len = name_len;
+		if (class_len > max_class_len)
+			max_class_len = class_len;
 	}
 	if (objview_len(vars) == 0) {
 		call_name = backtrace_get_call_name(calls, session->frame);
@@ -660,7 +668,9 @@ handle_vars(session_t* session, command_t* cmd)
 		var_name = objview_get_key(vars, i);
 		class_name = objview_get_class(vars, i);
 		value = objview_get_value(vars, i);
-		printf("\33[30;1mvar\33[m  %-*s  \33[37;1m", max_len, var_name);
+		printf("\33[30;1m%-*s\33[m  %-*s  \33[37;1m",
+			max_class_len, class_name,
+			max_name_len, var_name);
 		ki_atom_print(value, true);
 		printf("\33[m\n");
 	}

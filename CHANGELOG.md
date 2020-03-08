@@ -8,6 +8,7 @@ v6.0.0 - TBD
 * Adds support for Node.js-like automatic module type detection for `.js`
   files.
 * Adds support for importing npm modules in Cell code.
+* Adds support for seeing the types of variables while debugging with SSj.
 * Fixes a bug where `Key.Tilde` isn't recognized on macOS.
 
 
