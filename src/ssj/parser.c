@@ -64,6 +64,7 @@ command_parse(const char* string)
 	char*        string_value;
 	const char   *p_ch;
 	char         *p_tail;
+	struct token *new_tokens;
 	struct token *tokens;
 
 	if (!(tokens = malloc(array_len * sizeof(struct token))))
@@ -76,7 +77,9 @@ command_parse(const char* string)
 			break;  // avoid parsing the NUL terminator as a token
 		if (index >= array_len) {
 			array_len *= 2;
-			tokens = realloc(tokens, array_len * sizeof(struct token));
+			if (!(new_tokens = realloc(tokens, array_len * sizeof(struct token))))
+				goto on_error;
+			tokens = new_tokens;
 		}
 		memset(&tokens[index], 0, sizeof(struct token));
 		tokens[index].rest_string = strdup(p_ch);

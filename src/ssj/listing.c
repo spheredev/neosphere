@@ -123,13 +123,17 @@ read_line(const char** p_string)
 	char   ch;
 	bool   have_line = false;
 	size_t length;
+	char*  new_buffer;
 
 	if (!(buffer = malloc(buf_size = 256)))
-		return NULL;
+		goto on_error;
 	length = 0;
 	while (!have_line) {
-		if (length + 1 >= buf_size)
-			buffer = realloc(buffer, buf_size *= 2);
+		if (length + 1 >= buf_size) {
+			if (!(new_buffer = realloc(buffer, buf_size *= 2)))
+				goto on_error;
+			buffer = new_buffer;
+		}
 		if ((ch = *(*p_string)) == '\0')
 			goto hit_eof;
 		++(*p_string);
@@ -151,6 +155,11 @@ hit_eof:
 		free(buffer);
 		return NULL;
 	}
-	else
+	else {
 		return buffer;
+	}
+
+on_error:
+	free(buffer);
+	return NULL;
 }

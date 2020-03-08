@@ -361,16 +361,18 @@ handle_backtrace(session_t* session, command_t* cmd)
 static void
 handle_breakpoint(session_t* session, command_t* cmd)
 {
-	const char*      filename;
-	int              handle;
-	int              linenum;
-	const listing_t* listing;
+	const char*        filename;
+	int                handle;
+	int                linenum;
+	const listing_t*   listing;
+	struct breakpoint* new_breaks;
 
 	int i;
 
 	if (command_len(cmd) < 2) {
-		if (session->num_breaks <= 0)
+		if (session->num_breaks <= 0) {
 			printf("no breakpoints are currently set.\n");
+		}
 		else {
 			for (i = 0; i < session->num_breaks; ++i) {
 				printf("#%2d: breakpoint at %s:%d\n", i,
@@ -382,21 +384,27 @@ handle_breakpoint(session_t* session, command_t* cmd)
 	else {
 		filename = command_get_string(cmd, 1);
 		linenum = command_get_int(cmd, 1);
-		if ((handle = inferior_add_breakpoint(session->inferior, filename, linenum)) < 0)
-			printf("SSj was unable to set the breakpoint.\n");
+		if ((handle = inferior_add_breakpoint(session->inferior, filename, linenum)) < 0) {
+			goto on_error;
+		}
 		else {
+			if (!(new_breaks = realloc(session->breaks, session->num_breaks * sizeof(struct breakpoint))))
+				goto on_error;
 			i = session->num_breaks++;
-			session->breaks = realloc(session->breaks, session->num_breaks * sizeof(struct breakpoint));
-			session->breaks[i].handle = handle;
-			session->breaks[i].filename = strdup(command_get_string(cmd, 1));
-			session->breaks[i].linenum = command_get_int(cmd, 1);
+			new_breaks[i].handle = handle;
+			new_breaks[i].filename = strdup(command_get_string(cmd, 1));
+			new_breaks[i].linenum = command_get_int(cmd, 1);
 			printf("breakpoint #%2d set at %s:%d.\n", i,
-				session->breaks[i].filename,
-				session->breaks[i].linenum);
+				new_breaks[i].filename,
+				new_breaks[i].linenum);
+			session->breaks = new_breaks;
 			if ((listing = inferior_get_listing(session->inferior, filename)))
 				listing_print(listing, linenum, 1, 0);
 		}
 	}
+
+on_error:
+	printf("SSj was unable to set the breakpoint.");
 }
 
 static void
