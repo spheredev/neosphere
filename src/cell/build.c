@@ -147,8 +147,7 @@ static void    package_dir          (build_t* build, spk_writer_t* spk, const ch
 static int     sort_targets_by_path (const void* p_a, const void* p_b);
 static bool    write_manifests      (build_t* build, bool debugging);
 
-static build_t*     s_build;
-static unsigned int s_next_module_id = 1;
+static build_t* s_build;
 
 build_t*
 build_new(const path_t* source_path, const path_t* out_path)
@@ -387,7 +386,7 @@ build_init_dir(build_t* it)
 	visor_begin_op(it->visor, "gathering information");
 	origin_path = path_new("#/template/");
 	dir = directory_open(it->fs, path_cstr(origin_path), true);
-	while (in_path = directory_next(dir)) {
+	while ((in_path = directory_next(dir))) {
 		out_path = path_dup(in_path);
 		path_relativize(out_path, origin_path);
 		path_insert_hop(out_path, 0, "$");
@@ -416,7 +415,7 @@ build_init_dir(build_t* it)
 	visor_begin_op(it->visor, "copying in project files");
 	fs_mkdir(it->fs, "$/");
 	directory_seek(dir, 0);
-	while (in_path = directory_next(dir)) {
+	while ((in_path = directory_next(dir))) {
 		out_path = path_dup(in_path);
 		path_relativize(out_path, origin_path);
 		path_insert_hop(out_path, 0, "$");
@@ -870,7 +869,7 @@ write_manifests(build_t* build, bool debugging)
 	}
 
 	jsal_get_prop_string(-8, "saveID");
-	if (save_id = jsal_get_string(-1)) {
+	if ((save_id = jsal_get_string(-1))) {
 		span = strspn(save_id, "abcdefghijklmnopqrstuvwxyzABCDEFGHIKLMNOPQRSTUVWXYZ0123456789-_.");
 		if (span != strlen(save_id))
 			visor_error(build->visor, "'saveID': invalid character '%c' in save ID", save_id[span]);
@@ -1988,13 +1987,13 @@ js_TextDecoder_get_ignoreBOM(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_TextDecoder_decode(int num_args, bool is_ctor, intptr_t magic)
 {
-	decoder_t*  decoder;
-	lstring_t*  head;
-	const char* input = "";
-	size_t      length = 0;
-	lstring_t*  string;
-	bool        streaming = false;
-	lstring_t*  tail = NULL;
+	decoder_t*     decoder;
+	lstring_t*     head;
+	const uint8_t* input = NULL;
+	size_t         length = 0;
+	lstring_t*     string;
+	bool           streaming = false;
+	lstring_t*     tail = NULL;
 
 	jsal_push_this();
 	decoder = jsal_require_class_obj(-1, CELL_TEXT_DEC);

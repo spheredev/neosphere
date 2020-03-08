@@ -85,7 +85,6 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 	int           array_index;
 	path_t*       dir_path;
 	const char*   filename;
-	bool          is_outdated = false;
 	time_t        last_mtime = 0;
 	int           line_number;
 	int           num_errors;

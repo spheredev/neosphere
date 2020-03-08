@@ -164,18 +164,27 @@ fs_fcopy(const fs_t* fs, const char* destination, const char* source, int overwr
 	path_t* dest_path;
 	char*   resolved_dest;
 	char*   resolved_src;
+	int     result;
 
 	resolved_dest = resolve(fs, destination);
 	resolved_src = resolve(fs, source);
 	if (resolved_dest == NULL || resolved_src == NULL) {
 		errno = EACCES;  // sandboxing violation
-		return -1;
+		goto on_error;
 	}
 
 	dest_path = path_new(resolved_dest);
 	path_mkdir(dest_path);
 	path_free(dest_path);
-	return fcopy(resolved_src, resolved_dest, !overwrite);
+	result = fcopy(resolved_src, resolved_dest, !overwrite);
+	free(resolved_src);
+	free(resolved_dest);
+	return result;
+
+on_error:
+	free(resolved_src);
+	free(resolved_dest);
+	return -1;
 }
 
 bool
@@ -258,6 +267,7 @@ fs_is_game_dir(const fs_t* fs, const char* dirname)
 	full_path = path_new_dir(resolved_name);
 	retval = path_is(full_path, fs->game_path);
 	path_free(full_path);
+	free(resolved_name);
 	return retval;
 }
 

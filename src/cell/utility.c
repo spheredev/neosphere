@@ -185,7 +185,7 @@ strescq(const char* input, char quote_char)
 		escapables = "`$\\";
 
 	p_in = input;
-	while (p_next_in = strpbrk(p_in, escapables)) {
+	while ((p_next_in = strpbrk(p_in, escapables))) {
 		out_len += p_next_in - p_in + 2;
 		p_in = p_next_in + 1;
 	}
@@ -195,7 +195,7 @@ strescq(const char* input, char quote_char)
 		return NULL;
 	p_in = input;
 	p_out = buffer;
-	while (p_next_in = strpbrk(p_in, escapables)) {
+	while ((p_next_in = strpbrk(p_in, escapables))) {
 		len = p_next_in - p_in;
 		memcpy(p_out, p_in, len);
 		p_out += len;
@@ -243,7 +243,7 @@ strfmt(const char* format, ...)
 	// while we're at it we can validate the input string to avoid some extra checks during the
 	// replacement phase.
 	p_in = format;
-	while (p_next_in = strpbrk(p_in, "{}")) {
+	while ((p_next_in = strpbrk(p_in, "{}"))) {
 		out_len += p_next_in - p_in;
 		if (p_next_in[1] == p_next_in[0]) {  // "{{" or "}}"
 			out_len += 1;
@@ -274,7 +274,7 @@ strfmt(const char* format, ...)
 	// ready, set, GO!
 	p_in = format;
 	p_out = buffer;
-	while (p_next_in = strpbrk(p_in, "{}")) {
+	while ((p_next_in = strpbrk(p_in, "{}"))) {
 		in_len = p_next_in - p_in;
 		memcpy(p_out, p_in, in_len);
 		p_out += in_len;
@@ -324,7 +324,6 @@ wildcmp(const char* filename, const char* pattern)
 {
 	const char* cp = NULL;
 	const char* mp = NULL;
-	bool        is_match = 0;
 
 	// check filename against the specified filter string
 	while (*filename != '\0' && *pattern != '*') {

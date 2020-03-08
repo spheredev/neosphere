@@ -144,6 +144,7 @@ decoder_run(decoder_t* decoder, const uint8_t* buffer, size_t size)
 		decoder->bom_seen = true;
 	}
 	string = lstr_from_utf8((char*)output, p_out - output, false);
+	free(output);
 	return string;
 
 on_error:

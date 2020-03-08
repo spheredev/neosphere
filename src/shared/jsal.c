@@ -2879,6 +2879,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 			jsal_pop(3);
 			jsal_push_string(traceback != NULL ? traceback : "");
 			push_debug_callback_args(data);
+			free(traceback);
 			if (jsal_setjmp(label) == 0) {
 				s_catch_label = &label;
 				if (s_throw_callback != NULL)

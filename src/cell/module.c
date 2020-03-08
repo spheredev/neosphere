@@ -261,6 +261,7 @@ have_module:
 		jsal_get_prop_string(-1, "exports");
 		jsal_replace(-2);
 	}
+	module_free(it);
 	return true;
 
 on_error:
@@ -273,6 +274,7 @@ on_error:
 		jsal_pop(2);
 		jsal_replace(-2);  // leave the error on the stack
 	}
+	module_free(it);
 	return false;
 }
 

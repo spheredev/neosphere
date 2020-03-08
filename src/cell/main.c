@@ -70,9 +70,8 @@ static bool      s_want_rebuild;
 int
 main(int argc, char* argv[])
 {
-	build_t*  build = NULL;
-	bool      evaled = false;
-	int       retval = EXIT_FAILURE;
+	build_t* build = NULL;
+	int      retval = EXIT_FAILURE;
 
 	srand((unsigned int)time(NULL));
 	jsal_init();
@@ -117,10 +116,8 @@ parse_command_line(int argc, char* argv[])
 {
 	int         args_index = 1;
 	const char* command = "build";
-	bool        found_script = false;
 	bool        have_debug_flag = false;
 	bool        have_in_dir = false;
-	int         num_targets = 0;
 	path_t*     script_path;
 	const char* short_args;
 

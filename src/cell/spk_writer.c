@@ -65,8 +65,6 @@ struct spk_writer
 spk_writer_t*
 spk_create(const char* filename)
 {
-	const uint16_t VERSION = 1;
-
 	spk_writer_t* writer;
 
 	if (!(writer = calloc(1, sizeof(spk_writer_t))))

@@ -48,7 +48,7 @@ image_load(const fs_t* fs, const char* pathname)
 {
 	png_byte    bit_depth;
 	png_byte    color_type;
-	FILE*       file;
+	FILE*       file = NULL;
 	int         height;
 	image_t*    image;
 	uint32_t*   pixels;
@@ -95,9 +95,8 @@ image_load(const fs_t* fs, const char* pathname)
 		png_read_image(png, row_ptrs);
 	}
 	else {
-		fclose(file);
 		png_destroy_read_struct(&png, &png_info, NULL);
-		return NULL;
+		goto on_error;
 	}
 
 	png_destroy_read_struct(&png, &png_info, NULL);
@@ -109,6 +108,8 @@ image_load(const fs_t* fs, const char* pathname)
 	return image;
 
 on_error:
+	if (file != NULL)
+		fclose(file);
 	free(image);
 	return NULL;
 }
