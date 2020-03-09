@@ -2364,7 +2364,7 @@ js_FileStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 {
-	size_t    bytes_read;
+	long long bytes_read;
 	void*     buffer;
 	file_t*   file;
 	long long num_bytes = 0;
@@ -2387,7 +2387,7 @@ js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 	}
 
 	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &buffer);
-	bytes_read = file_read(file, buffer, num_bytes, 1);
+	bytes_read = (long long)file_read(file, buffer, num_bytes, 1);
 	if (bytes_read < num_bytes)
 		jsal_error(JS_RANGE_ERROR, "Game tried to read past end of file");
 	if (num_args < 1)  // reset file position after whole-file read

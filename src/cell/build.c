@@ -1604,11 +1604,11 @@ js_FileStream_dispose(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 {
-	size_t bytes_read;
-	void*  data_ptr;
-	FILE*  file;
-	long   num_bytes = 0;
-	long   position;
+	long  bytes_read;
+	void* data_ptr;
+	FILE* file;
+	long  num_bytes = 0;
+	long  position;
 
 	jsal_push_this();
 	if (!(file = jsal_require_class_obj(-1, CELL_FILE_STREAM)))
@@ -1626,7 +1626,7 @@ js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 		fseek(file, 0, SEEK_SET);
 	}
 	jsal_push_new_buffer(JS_ARRAYBUFFER, num_bytes, &data_ptr);
-	bytes_read = fread(data_ptr, 1, num_bytes, file);
+	bytes_read = (long)fread(data_ptr, 1, num_bytes, file);
 	if (bytes_read < num_bytes)
 		jsal_error(JS_RANGE_ERROR, "Script tried to read past end of file");
 	if (num_args < 1)  // reset file position after whole-file read
