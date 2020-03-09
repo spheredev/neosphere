@@ -131,6 +131,8 @@ font_load(const char* filename)
 		goto on_error;
 	if (file_read(file, &rfn, 1, sizeof(struct rfn_header)) != 1)
 		goto on_error;
+	if (memcmp(rfn.signature, ".rfn", 4) != 0 || rfn.version < 1 || rfn.version > 2)
+		goto on_error;
 	pixel_size = (rfn.version == 1) ? 1 : 4;
 	if (!(font->glyphs = calloc(rfn.num_chars, sizeof(struct glyph))))
 		goto on_error;

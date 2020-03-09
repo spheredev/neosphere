@@ -10,6 +10,8 @@ v6.0.0 - TBD
 * Adds support for importing npm modules in Cell code.
 * Adds support for seeing the types of variables while debugging with SSj.
 * Fixes a bug where `Key.Tilde` isn't recognized on macOS.
+* Fixes a bug where trying to load something other than an RFN file using the
+  font API can cause the engine to segfault.
 
 
 v5.4.2 - February 20, 2020
