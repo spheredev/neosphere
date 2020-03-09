@@ -2441,9 +2441,9 @@ js_new_Font(int num_args, bool is_ctor, intptr_t magic)
 	}
 	if (num_args >= 3) {
 		jsal_require_object_coercible(2);
-		if (jsal_get_prop_string(2, "antialiasing"))
+		if (jsal_get_prop_string(2, "antialias"))
 			antialiasing = jsal_require_boolean(-1);
-		if (jsal_get_prop_string(2, "kerning"))
+		if (jsal_get_prop_string(2, "kern"))
 			kerning = jsal_require_boolean(-1);
 	}
 
