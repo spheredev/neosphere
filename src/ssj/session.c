@@ -465,6 +465,7 @@ static void
 handle_eval(session_t* session, command_t* cmd, bool verbose)
 {
 	const char*      expr = NULL;
+	char             flag_string[4] = "---";
 	const ki_atom_t* getter;
 	unsigned int     handle;
 	bool             is_accessor;
@@ -517,12 +518,21 @@ handle_eval(session_t* session, command_t* cmd, bool verbose)
 		is_accessor = objview_get_tag(object, i) == KI_ATTR_ACCESSOR;
 		prop_key = objview_get_key(object, i);
 		prop_flags = objview_get_flags(object, i);
-		if (verbose)
-			printf("\33[30;1mprop\33[m  %-*s  ", max_len, prop_key);
-		else
+		if (verbose) {
+			if (prop_flags & PROP_WRITABLE)
+				flag_string[0] = 'w';
+			if (prop_flags & PROP_ENUMERABLE)
+				flag_string[1] = 'e';
+			if (prop_flags & PROP_CONFIGURABLE)
+				flag_string[2] = 'c';
+			printf("\33[30;1mprop\33[m  %s  %-*s  ", flag_string, max_len, prop_key);
+		}
+		else {
 			printf("    \"%s\": ", prop_key);
-		if (!is_accessor)
+		}
+		if (!is_accessor) {
 			ki_atom_print(objview_get_value(object, i), verbose);
+		}
 		else {
 			getter = objview_get_getter(object, i);
 			setter = objview_get_setter(object, i);
