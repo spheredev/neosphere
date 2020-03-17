@@ -143,7 +143,7 @@ static void    cache_value_to_this  (const char* key);
 static void    clean_old_artifacts  (build_t* build, bool keep_targets);
 static bool    install_target       (int num_args, bool is_ctor, intptr_t magic);
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
-static void    package_dir          (build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname, bool recursive);
+static bool    package_dir          (build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname, bool recursive);
 static int     sort_targets_by_path (const void* p_a, const void* p_b);
 static bool    write_manifests      (build_t* build, bool debugging);
 
@@ -710,10 +710,10 @@ make_file_targets(fs_t* fs, const char* wildcard, const path_t* path, const path
 	vector_free(list);
 }
 
-static void
+static bool
 package_dir(build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname, bool recursive)
 {
-	vector_t* file_list;
+	vector_t* file_list = NULL;
 	path_t*   from_path;
 	path_t*   from_dir_path;
 	path_t*   to_dir_path;
@@ -723,7 +723,8 @@ package_dir(build_t* build, spk_writer_t* spk, const char* from_dirname, const c
 
 	from_dir_path = path_new_dir(from_dirname);
 	to_dir_path = path_new_dir(to_dirname);
-	file_list = fs_list_dir(build->fs, path_cstr(from_dir_path), false);
+	if (!(file_list = fs_list_dir(build->fs, path_cstr(from_dir_path), false)))
+		goto on_error;
 	iter = vector_enum(file_list);
 	while (iter_next(&iter)) {
 		from_path = *(path_t**)iter.ptr;
@@ -737,6 +738,14 @@ package_dir(build_t* build, spk_writer_t* spk, const char* from_dirname, const c
 		path_free(to_path);
 		path_free(from_path);
 	}
+	vector_free(file_list);
+	return true;
+
+on_error:
+	vector_free(file_list);
+	path_free(from_dir_path);
+	path_free(to_dir_path);
+	return false;
 }
 
 static int
