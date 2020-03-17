@@ -115,11 +115,22 @@ void
 backtrace_print(const backtrace_t* obj, int active_frame, bool show_all)
 {
 	const char* arrow;
+	int         name_len;
 	const char* filename;
 	int         line_no;
+	int         max_name_len = 0;
 	const char* name;
 
 	int i;
+
+	for (i = 0; i < backtrace_len(obj); ++i) {
+		name = backtrace_get_call_name(obj, i);
+		filename = backtrace_get_filename(obj, i);
+		line_no = backtrace_get_linenum(obj, i);
+		name_len = (int)strlen(name);
+		if (name_len > max_name_len)
+			max_name_len = name_len;
+	}
 
 	for (i = 0; i < backtrace_len(obj); ++i) {
 		name = backtrace_get_call_name(obj, i);
@@ -130,7 +141,7 @@ backtrace_print(const backtrace_t* obj, int active_frame, bool show_all)
 			if (i == active_frame)
 				printf("\33[37;1m");
 			if (line_no > 0)
-				printf("%s #%2d: %s, at %s:%d\n", arrow, i, name, filename, line_no);
+				printf("%s #%2d  %-*s  %s:%d\n", arrow, i, max_name_len, name, filename, line_no);
 			else
 				printf("%s #%2d: %s <system call>\n", arrow, i, name);
 			printf("\33[m");

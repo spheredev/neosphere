@@ -486,7 +486,7 @@ handle_eval(session_t* session, command_t* cmd, bool verbose)
 		handle = ki_atom_handle(result);
 		if (ki_atom_type(result) != KI_REF) {  // primitive value?
 			if (!is_error) {
-				printf("= \33[37;1m");
+				printf("%s = \33[37;1m", expr);
 				ki_atom_print(result, verbose);
 				printf("\33[m\n");
 			} else {

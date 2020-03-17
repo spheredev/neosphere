@@ -44,6 +44,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <math.h>
 #include <string.h>
 #include <time.h>
 #include <sys/stat.h>
