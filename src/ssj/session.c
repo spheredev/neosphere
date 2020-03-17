@@ -384,24 +384,22 @@ handle_breakpoint(session_t* session, command_t* cmd)
 	else {
 		filename = command_get_string(cmd, 1);
 		linenum = command_get_int(cmd, 1);
-		if ((handle = inferior_add_breakpoint(session->inferior, filename, linenum)) < 0) {
+		if ((handle = inferior_add_breakpoint(session->inferior, filename, linenum)) < 0)
 			goto on_error;
-		}
-		else {
-			if (!(new_breaks = realloc(session->breaks, session->num_breaks * sizeof(struct breakpoint))))
-				goto on_error;
-			i = session->num_breaks++;
-			new_breaks[i].handle = handle;
-			new_breaks[i].filename = strdup(command_get_string(cmd, 1));
-			new_breaks[i].linenum = command_get_int(cmd, 1);
-			printf("breakpoint #%2d set at %s:%d.\n", i,
-				new_breaks[i].filename,
-				new_breaks[i].linenum);
-			session->breaks = new_breaks;
-			if ((listing = inferior_get_listing(session->inferior, filename)))
-				listing_print(listing, linenum, 1, 0);
-		}
+		if (!(new_breaks = realloc(session->breaks, (session->num_breaks + 1) * sizeof(struct breakpoint))))
+			goto on_error;
+		i = session->num_breaks++;
+		new_breaks[i].handle = handle;
+		new_breaks[i].filename = strdup(command_get_string(cmd, 1));
+		new_breaks[i].linenum = command_get_int(cmd, 1);
+		printf("breakpoint #%2d set at %s:%d.\n", i,
+			new_breaks[i].filename,
+			new_breaks[i].linenum);
+		session->breaks = new_breaks;
+		if ((listing = inferior_get_listing(session->inferior, filename)))
+			listing_print(listing, linenum, 1, 0);
 	}
+	return;
 
 on_error:
 	printf("SSj was unable to set the breakpoint.");
