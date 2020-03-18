@@ -540,35 +540,6 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	}
 	visor_end_op(build->visor);
 
-	// add metadata
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "manifest");
-	jsal_push_sprintf("%s %s", SPHERE_COMPILER_NAME, SPHERE_VERSION);
-	jsal_put_prop_string(-2, "$COMPILER");
-	jsal_pop(2);
-
-	// generate the source map
-	if (want_debug) {
-		visor_begin_op(build->visor, "collecting debugging information");
-		jsal_push_hidden_stash();
-		jsal_get_prop_string(-1, "manifest");
-		jsal_push_new_object();
-		iter = vector_enum(build->targets);
-		while ((target_ptr = iter_next(&iter))) {
-			path = target_path(*target_ptr);
-			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@") || !path_is_file(path))
-				continue;
-			if (!(source_path = target_source_path(*target_ptr)))
-				continue;
-			jsal_push_string(path_cstr(path));
-			jsal_push_string(path_cstr(source_path));
-			jsal_put_prop(-3);
-		}
-		jsal_put_prop_string(-2, "$SOURCES");
-		jsal_pop(2);
-		visor_end_op(build->visor);
-	}
-
 	// only generate a game manifest if the build finished with no errors.
 	// warnings are fine.
 	if (visor_num_errors(build->visor) == 0) {

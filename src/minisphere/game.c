@@ -55,7 +55,6 @@ struct game
 	unsigned int   id;
 	int            api_level;
 	lstring_t*     author;
-	char*          compiler;
 	image_t*       default_arrow;
 	image_t*       default_arrow_down;
 	image_t*       default_arrow_up;
@@ -288,7 +287,6 @@ game_unref(game_t* it)
 
 	if (it->type == FS_PACKAGE)
 		package_unref(it->package);
-	free(it->compiler);
 	path_free(it->script_path);
 	path_free(it->root_path);
 	jsal_unref(it->manifest);
@@ -305,12 +303,6 @@ const char*
 game_author(const game_t* it)
 {
 	return lstr_cstr(it->author);
-}
-
-const char*
-game_compiler(const game_t* it)
-{
-	return it->compiler;
 }
 
 bool
@@ -1135,15 +1127,11 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	else
 		game->fullscreen = game->version < 2;
 
-	// load build metadata
-	if (jsal_get_prop_string(-10, "$COMPILER") && jsal_is_string(-1))
-		game->compiler = strdup(jsal_get_string(-1));
-
 	// for SpheRun only: load dev configuration from manifest.  otherwise use defaults to avoid
 	// security issues in production.
 	game->safety = FS_SAFETY_FULL;
 #if defined(MINISPHERE_SPHERUN)
-	if (jsal_get_prop_string(-11, "development") && jsal_is_object(-1)) {
+	if (jsal_get_prop_string(-10, "development") && jsal_is_object(-1)) {
 		if (jsal_get_prop_string(-1, "emptyPromises") && jsal_is_boolean(-1))
 			game->empty_promises = jsal_get_boolean(-1);
 		if (jsal_get_prop_string(-2, "retrograde") && jsal_is_boolean(-1))

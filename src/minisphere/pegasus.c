@@ -1116,7 +1116,7 @@ js_Sphere_get_Compiler(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* compiler;
 
-	compiler = game_compiler(g_game);
+	compiler = debugger_compiler();
 	jsal_push_undefined();
 	if (compiler != NULL)
 		jsal_push_string(compiler);

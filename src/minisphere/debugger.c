@@ -56,6 +56,8 @@ static bool       process_message     (js_step_t* out_step);
 static ssj_mode_t   s_attach_mode;
 static color_t      s_banner_color;
 static lstring_t*   s_banner_text;
+static js_ref_t*    s_cell_data = NULL;
+static char*        s_compiler = NULL;
 static bool         s_have_source_map = false;
 static bool         s_is_attached = false;
 static bool         s_needs_attachment;
@@ -66,9 +68,9 @@ static vector_t*    s_sources;
 void
 debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 {
-	const path_t* game_root;
-	const char*   hostname;
-	int           json_index;
+	const char* hostname;
+	size_t      json_size;
+	char*       json_text;
 
 	s_attach_mode = attach_mode;
 
@@ -81,28 +83,30 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 	s_banner_color = mk_color(192, 192, 192, 255);
 	s_sources = vector_new(sizeof(struct source));
 
+	if ((json_text = game_read_file(g_game, "@/artifacts.json", &json_size))) {
+		jsal_push_lstring(json_text, json_size);
+		if (jsal_try_parse(-1) && jsal_is_object(-1))
+			s_cell_data = jsal_ref(-1);
+		jsal_pop(1);
+	}
+
 	// load the source map, if one is available
 	s_have_source_map = false;
-	json_index = jsal_push_ref_weak(game_manifest(g_game));
-
-	jsal_push_hidden_stash();
-	jsal_del_prop_string(-1, "debugMap");
-	game_root = game_path(g_game);
-	if (jsal_has_prop_string(json_index, "$SOURCES")) {
-		jsal_push_new_object();
-		jsal_get_prop_string(json_index, "$SOURCES");
-		jsal_put_prop_string(-2, "fileMap");
-		jsal_put_prop_string(-2, "debugMap");
-		s_have_source_map = true;
+	if (s_cell_data != NULL) {
+		jsal_push_ref_weak(s_cell_data);
+		if (jsal_get_prop_string(-1, "compiler"))
+			s_compiler = strdup(jsal_get_string(-1));
+		if (jsal_get_prop_string(-2, "fileMap") && jsal_is_object(-1)) {
+			jsal_push_hidden_stash();
+			jsal_del_prop_string(-1, "debugMap");
+			jsal_push_new_object();
+			jsal_dup(-3);
+			jsal_put_prop_string(-2, "fileMap");
+			jsal_put_prop_string(-2, "debugMap");
+			s_have_source_map = true;
+		}
+		jsal_pop(4);
 	}
-	else if (!path_is_file(game_root)) {
-		jsal_push_new_object();
-		jsal_push_string(path_cstr(game_root));
-		jsal_put_prop_string(-2, "origin");
-		jsal_put_prop_string(-2, "debugMap");
-	}
-
-	jsal_pop(2);
 
 	// listen for SSj connection on TCP port 1208. the listening socket will remain active
 	// for the duration of the session, allowing a debugger to be attached at any time.
@@ -141,6 +145,9 @@ debugger_uninit()
 		jsal_debug_uninit();
 		server_unref(s_server);
 	}
+
+	jsal_unref(s_cell_data);
+	free(s_compiler);
 
 	if (s_sources != NULL) {
 		iter = vector_enum(s_sources);
@@ -207,6 +214,12 @@ color_t
 debugger_color(void)
 {
 	return s_banner_color;
+}
+
+const char*
+debugger_compiler(void)
+{
+	return s_compiler;
 }
 
 const char*

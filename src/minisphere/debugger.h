@@ -49,6 +49,7 @@ void        debugger_uninit        (void);
 void        debugger_update        (void);
 bool        debugger_attached      (void);
 color_t     debugger_color         (void);
+const char* debugger_compiler      (void);
 const char* debugger_name          (void);
 const char* debugger_compiled_name (const char* source_name);
 const char* debugger_source_name   (const char* pathname);
