@@ -258,14 +258,17 @@ build_new(const path_t* source_path, const path_t* out_path)
 	if ((json = fs_fslurp(fs, "@/artifacts.json", &json_size))) {
 		jsal_push_lstring(json, json_size);
 		free(json);
-		if (jsal_try_parse(-1) && jsal_is_array(-1)) {
-			num_artifacts = jsal_get_length(-1);
-			for (i = 0; i < num_artifacts; ++i) {
-				jsal_get_prop_index(-1, i);
-				filename = strdup(jsal_to_string(-1));
-				vector_push(artifacts, &filename);
-				jsal_pop(1);
+		if (jsal_try_parse(-1)) {
+			if (jsal_get_prop_string(-1, "builtTargets") && jsal_is_object(-1)) {
+				num_artifacts = jsal_get_length(-1);
+				for (i = 0; i < num_artifacts; ++i) {
+					jsal_get_prop_index(-1, i);
+					filename = strdup(jsal_to_string(-1));
+					vector_push(artifacts, &filename);
+					jsal_pop(1);
+				}
 			}
+			jsal_pop(1);
 		}
 		jsal_pop(1);
 	}
@@ -585,11 +588,30 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	}
 
 	filenames = visor_filenames(build->visor);
+	jsal_push_new_object();
+	jsal_push_sprintf("%s %s", SPHERE_COMPILER_NAME, SPHERE_VERSION);
+	jsal_put_prop_string(-2, "compiler");
 	jsal_push_new_array();
 	iter = vector_enum(filenames);
 	while (iter_next(&iter)) {
 		jsal_push_string(*(char**)iter.ptr);
 		jsal_put_prop_index(-2, iter.index);
+	}
+	jsal_put_prop_string(-2, "builtTargets");
+	if (want_debug) {
+		jsal_push_new_object();
+		iter = vector_enum(build->targets);
+		while ((target_ptr = iter_next(&iter))) {
+			path = target_path(*target_ptr);
+			if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@") || !path_is_file(path))
+				continue;
+			if (!(source_path = target_source_path(*target_ptr)))
+				continue;
+			jsal_push_string(path_cstr(path));
+			jsal_push_string(path_cstr(source_path));
+			jsal_put_prop(-3);
+		}
+		jsal_put_prop_string(-2, "fileMap");
 	}
 	jsal_stringify(-1);
 	json = jsal_get_lstring(-1, &json_size);
