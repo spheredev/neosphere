@@ -37,6 +37,10 @@
 #include "session.h"
 #include "xoroshiro.h"
 
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
+
 struct cmdline
 {
 	path_t* path;
@@ -133,20 +137,28 @@ launch_game(path_t* game_path)
 #else
 	path_t*     path;
 	char        pathname[PATH_MAX];
-	ssize_t     pathname_len;
+	uint32_t    pathname_len;
 	struct stat stat_buf;
 
 	printf("starting '%s'... ", path_cstr(game_path));
 	fflush(stdout);
 	memset(pathname, 0, sizeof pathname);
-	pathname_len = readlink("/proc/self/exe", pathname, PATH_MAX);
+#if defined(__APPLE__)
+	pathname_len = sizeof pathname;
+	if (_NSGetExecutablePath(pathname, &pathname_len) != 0)
+		goto on_error;
+#else
+	pathname_len = (uint32_t)readlink("/proc/self/exe", pathname, PATH_MAX);
 	if (pathname_len == -1 || pathname_len == PATH_MAX)
 		goto on_error;
+#endif
 	path = path_strip(path_new(pathname));
-	if (chdir(path_cstr(path)) != 0) goto on_error;
-	path_append(path, "spherun");
-	if (stat(path_cstr(path), &stat_buf) != 0)
+	if (chdir(path_cstr(path)) != 0)
 		goto on_error;
+	path_append(path, "spherun");
+	if (stat(path_cstr(path), &stat_buf) != 0) {
+		goto on_error;
+	}
 	else {
 		if (fork() != 0)
 			path_free(path);
