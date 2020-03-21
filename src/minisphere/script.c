@@ -34,9 +34,9 @@
 #include "script.h"
 
 #include "api.h"
-#include "debugger.h"
 #include "jsal.h"
 #include "pegasus.h"
+#include "source_map.h"
 #include "utility.h"
 
 struct script
@@ -82,7 +82,7 @@ script_eval(const char* filename)
 	stack_top = jsal_get_top();
 
 	path = game_full_path(g_game, filename, NULL, false);
-	source_name = debugger_source_name(path_cstr(path));
+	source_name = source_map_alias_of(path_cstr(path));
 	if (!(slurp = game_read_file(g_game, filename, &size))) {
 		jsal_push_new_error(JS_REF_ERROR, "script not found '%s'\n", filename);
 		goto on_error;
@@ -131,7 +131,7 @@ script_new(const lstring_t* source, const char* fmt_name, ...)
 	jsal_compile(lstr_cstr(name));
 	function = jsal_pop_ref();
 
-	debugger_add_source(lstr_cstr(name), source);
+	source_map_add_source(lstr_cstr(name), lstr_cstr(source));
 	lstr_free(name);
 
 	script->id = s_next_script_id++;

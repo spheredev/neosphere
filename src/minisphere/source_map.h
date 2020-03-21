@@ -30,27 +30,26 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__DEBUGGER_H__INCLUDED
-#define SPHERE__DEBUGGER_H__INCLUDED
-
-#include "color.h"
-#include "ki.h"
+#ifndef SPHERE__SOURCE_MAP_H__INCLUDED
+#define SPHERE__SOURCE_MAP_H__INCLUDED
 
 typedef
-enum ssj_mode
+struct mapping
 {
-	SSJ_OFF,
-	SSJ_PASSIVE,
-	SSJ_ACTIVE,
-} ssj_mode_t;
+	const char* filename;
+	int         line;
+	int         column;
+} mapping_t;
 
-void        debugger_init     (ssj_mode_t ssj_mode, bool allow_remote);
-void        debugger_uninit   (void);
-void        debugger_update   (void);
-bool        debugger_attached (void);
-color_t     debugger_color    (void);
-const char* debugger_compiler (void);
-const char* debugger_name     (void);
-void        debugger_log      (const char* text, ki_log_op_t op, bool use_console);
+void        source_map_init        (void);
+void        source_map_uninit      (void);
+const char* source_map_alias_of    (const char* url);
+const char* source_map_url_of      (const char* alias);
+const char* source_map_source_text (const char* filename);
+bool        source_map_add_alias   (const char* url, const char* alias);
+bool        source_map_add_map     (const char* url, js_ref_t* content);
+bool        source_map_add_source  (const char* filename, const char* text);
+mapping_t   source_map_lookup      (const char* url, int line, int column);
+mapping_t   source_map_reverse     (const char* filename, int line, int column);
 
-#endif // SPHERE__DEBUGGER_H__INCLUDED
+#endif // SPHERE__SOURCE_MAP_H__INCLUDED

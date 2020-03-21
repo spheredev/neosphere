@@ -765,6 +765,8 @@ on_error:
 void
 wraptext_free(wraptext_t* it)
 {
+	if (it == NULL)
+		return;
 	free(it->buffer);
 	free(it);
 }

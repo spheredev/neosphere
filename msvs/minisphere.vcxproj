@@ -513,6 +513,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\minisphere\blend_op.c" />
     <ClCompile Include="..\src\minisphere\event_loop.c" />
     <ClCompile Include="..\src\minisphere\module.c" />
+    <ClCompile Include="..\src\minisphere\source_map.c" />
     <ClCompile Include="..\src\shared\compress.c" />
     <ClCompile Include="..\src\minisphere\legacy.c" />
     <ClCompile Include="..\src\minisphere\profiler.c" />
@@ -564,6 +565,7 @@ xcopy /y /d /e /f "..\dep\lib64\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\minisphere\blend_op.h" />
     <ClInclude Include="..\src\minisphere\event_loop.h" />
     <ClInclude Include="..\src\minisphere\module.h" />
+    <ClInclude Include="..\src\minisphere\source_map.h" />
     <ClInclude Include="..\src\shared\compress.h" />
     <ClInclude Include="..\src\minisphere\legacy.h" />
     <ClInclude Include="..\src\minisphere\profiler.h" />

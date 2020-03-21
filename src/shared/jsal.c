@@ -2375,7 +2375,7 @@ jsal_debug_breakpoint_add(const char* filename, unsigned int line, unsigned int 
 	breakpoint.id = 0;
 	script_id = script_id_from_filename(filename);
 	if (script_id < UINT_MAX) {
-		if (JsDiagSetBreakpoint(script_id, line - 1, column - 1, &result) != JsNoError)
+		if (JsDiagSetBreakpoint(script_id, line, column, &result) != JsNoError)
 			goto finished;
 		push_value(result, true);
 		jsal_get_prop_string(-1, "breakpointId");
@@ -2423,8 +2423,8 @@ jsal_debug_inspect_call(int call_index)
 	/* [ ... ] -> [ ... filename function_name line column ] */
 
 	JsValueRef   backtrace;
-	unsigned int handle;
 	JsValueRef   function_data;
+	unsigned int handle;
 
 	if (JsDiagGetStackTrace(&backtrace) != JsNoError)
 		return false;
@@ -2843,7 +2843,7 @@ on_debugger_event(JsDiagDebugEvent event_type, JsValueRef data, void* userdata)
 			while (iter_next(&iter)) {
 				breakpoint = iter.ptr;
 				if (strcmp(filename, breakpoint->filename) == 0) {
-					if (JsDiagSetBreakpoint(script_id, breakpoint->line - 1, breakpoint->column - 1, &breakpoint_info) != JsNoError)
+					if (JsDiagSetBreakpoint(script_id, breakpoint->line, breakpoint->column, &breakpoint_info) != JsNoError)
 						continue;
 					push_value(breakpoint_info, true);
 					jsal_get_prop_string(-1, "breakpointId");

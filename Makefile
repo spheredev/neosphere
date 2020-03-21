@@ -56,6 +56,7 @@ engine_sources=src/minisphere/main.c \
    src/minisphere/profiler.c \
    src/minisphere/screen.c \
    src/minisphere/script.c \
+   src/minisphere/source_map.c \
    src/minisphere/spriteset.c \
    src/minisphere/table.c \
    src/minisphere/tileset.c \

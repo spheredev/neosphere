@@ -37,33 +37,26 @@
 #include "jsal.h"
 #include "ki.h"
 #include "sockets.h"
+#include "source_map.h"
 
 static int const TCP_DEBUG_PORT = 1208;
 
-struct source
-{
-	char*      name;
-	lstring_t* text;
-};
+static js_step_t  on_breakpoint_hit  (void);
+static void       on_throw_exception (void);
+static ki_atom_t* atom_from_value    (int stack_index);
+static bool       do_attach_debugger (void);
+static void       do_detach_debugger (bool is_shutdown);
+static bool       process_message    (js_step_t* out_step);
 
-static js_step_t  on_breakpoint_hit   (void);
-static void       on_throw_exception  (void);
-static ki_atom_t* atom_from_value     (int stack_index);
-static bool       do_attach_debugger  (void);
-static void       do_detach_debugger  (bool is_shutdown);
-static bool       process_message     (js_step_t* out_step);
-
-static ssj_mode_t   s_attach_mode;
-static color_t      s_banner_color;
-static lstring_t*   s_banner_text;
-static js_ref_t*    s_cell_data = NULL;
-static char*        s_compiler = NULL;
-static bool         s_have_source_map = false;
-static bool         s_is_attached = false;
-static bool         s_needs_attachment;
-static server_t*    s_server;
-static socket_t*    s_socket = NULL;
-static vector_t*    s_sources;
+static ssj_mode_t s_attach_mode;
+static color_t    s_banner_color;
+static char*      s_banner_text;
+static js_ref_t*  s_cell_data = NULL;
+static char*      s_compiler = NULL;
+static bool       s_is_attached = false;
+static bool       s_needs_attachment;
+static server_t*  s_server;
+static socket_t*  s_socket = NULL;
 
 void
 debugger_init(ssj_mode_t attach_mode, bool allow_remote)
@@ -71,6 +64,10 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 	const char* hostname;
 	size_t      json_size;
 	char*       json_text;
+	js_ref_t*   ref;
+	const char* source_name;
+	const char* source_text;
+	const char* url;
 
 	s_attach_mode = attach_mode;
 
@@ -79,9 +76,8 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 		jsal_debug_init(on_breakpoint_hit);
 	}
 
-	s_banner_text = lstr_new("debugger attached");
+	s_banner_text = strdup("debugger attached");
 	s_banner_color = mk_color(192, 192, 192, 255);
-	s_sources = vector_new(sizeof(struct source));
 
 	if ((json_text = game_read_file(g_game, "@/artifacts.json", &json_size))) {
 		jsal_push_lstring(json_text, json_size);
@@ -90,22 +86,47 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 		jsal_pop(1);
 	}
 
+	source_map_init();
+
 	// load the source map, if one is available
-	s_have_source_map = false;
 	if (s_cell_data != NULL) {
 		jsal_push_ref_weak(s_cell_data);
 		if (jsal_get_prop_string(-1, "compiler"))
 			s_compiler = strdup(jsal_get_string(-1));
 		if (jsal_get_prop_string(-2, "fileMap") && jsal_is_object(-1)) {
-			jsal_push_hidden_stash();
-			jsal_del_prop_string(-1, "debugMap");
-			jsal_push_new_object();
-			jsal_dup(-3);
-			jsal_put_prop_string(-2, "fileMap");
-			jsal_put_prop_string(-2, "debugMap");
-			s_have_source_map = true;
+			jsal_push_new_iterator(-1);
+			while (jsal_next(-1)) {
+				url = jsal_get_string(-1);
+				jsal_get_prop_string(-3, url);
+				source_name = jsal_require_string(-1);
+				source_map_add_alias(url, source_name);
+				jsal_pop(2);
+			}
+			jsal_pop(1);
 		}
-		jsal_pop(4);
+		if (jsal_get_prop_string(-3, "sources") && jsal_is_object(-1)) {
+			jsal_push_new_iterator(-1);
+			while (jsal_next(-1)) {
+				url = jsal_get_string(-1);
+				jsal_get_prop_string(-3, url);
+				source_text = jsal_require_string(-1);
+				source_map_add_source(url, source_text);
+				jsal_pop(2);
+			}
+			jsal_pop(1);
+		}
+		if (jsal_get_prop_string(-4, "sourceMaps") && jsal_is_object(-1)) {
+			jsal_push_new_iterator(-1);
+			while (jsal_next(-1)) {
+				url = jsal_get_string(-1);
+				jsal_get_prop_string(-3, url);
+				ref = jsal_ref(-1);
+				source_map_add_map(url, ref);
+				jsal_pop(2);
+			}
+			jsal_pop(1);
+		}
+		jsal_pop(5);
 	}
 
 	// listen for SSj connection on TCP port 1208. the listening socket will remain active
@@ -136,10 +157,6 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 void
 debugger_uninit()
 {
-	struct source* source;
-
-	iter_t iter;
-
 	if (s_attach_mode != SSJ_OFF) {
 		do_detach_debugger(true);
 		jsal_debug_uninit();
@@ -148,16 +165,9 @@ debugger_uninit()
 
 	jsal_unref(s_cell_data);
 	free(s_compiler);
+	free(s_banner_text);
 
-	if (s_sources != NULL) {
-		iter = vector_enum(s_sources);
-		while (iter_next(&iter)) {
-			source = iter.ptr;
-			lstr_free(source->text);
-			free(source->name);
-		}
-		vector_free(s_sources);
-	}
+	source_map_uninit();
 }
 
 void
@@ -225,89 +235,7 @@ debugger_compiler(void)
 const char*
 debugger_name(void)
 {
-	return lstr_cstr(s_banner_text);
-}
-
-const char*
-debugger_compiled_name(const char* source_name)
-{
-	// perform a reverse lookup on the source map to find the compiled name
-	// of an asset based on its name in the source tree.  this is needed to
-	// support SSj source code download, since SSj only knows the source names.
-
-	static char retval[SPHERE_PATH_MAX];
-
-	const char* this_source;
-
-	strncpy(retval, source_name, SPHERE_PATH_MAX - 1);
-	retval[SPHERE_PATH_MAX - 1] = '\0';
-	if (!s_have_source_map)
-		return retval;
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "debugMap");
-	if (jsal_get_prop_string(-1, "fileMap")) {
-		jsal_push_new_iterator(-1);
-		while (jsal_next(-1)) {
-			jsal_get_prop_string(-3, jsal_get_string(-1));
-			this_source = jsal_get_string(-1);
-			if (strcmp(this_source, source_name) == 0)
-				strncpy(retval, jsal_get_string(-2), SPHERE_PATH_MAX - 1);
-			jsal_pop(2);
-		}
-		jsal_pop(1);
-	}
-	jsal_pop(3);
-	return retval;
-}
-
-const char*
-debugger_source_name(const char* compiled_name)
-{
-	// note: pathname must be canonicalized using game_full_path() otherwise
-	//       the source map lookup will fail.
-
-	static char retval[SPHERE_PATH_MAX];
-
-	strncpy(retval, compiled_name, SPHERE_PATH_MAX - 1);
-	retval[SPHERE_PATH_MAX - 1] = '\0';
-	if (!s_have_source_map)
-		return retval;
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "debugMap");
-	if (!jsal_get_prop_string(-1, "fileMap"))
-		jsal_pop(3);
-	else {
-		jsal_get_prop_string(-1, compiled_name);
-		if (jsal_is_string(-1))
-			strncpy(retval, jsal_get_string(-1), SPHERE_PATH_MAX - 1);
-		jsal_pop(4);
-	}
-	return retval;
-}
-
-void
-debugger_add_source(const char* name, const lstring_t* text)
-{
-	struct source* source;
-	struct source  source_obj;
-
-	iter_t iter;
-
-	if (s_sources == NULL)
-		return;
-
-	iter = vector_enum(s_sources);
-	while ((source = iter_next(&iter))) {
-		if (strcmp(name, source->name) == 0) {
-			lstr_free(source->text);
-			source->text = lstr_dup(text);
-			return;
-		}
-	}
-
-	source_obj.name = strdup(name);
-	source_obj.text = lstr_dup(text);
-	vector_push(s_sources, &source_obj);
+	return s_banner_text;
 }
 
 void
@@ -338,6 +266,7 @@ on_breakpoint_hit(void)
 	int           column;
 	const char*   filename;
 	int           line;
+	mapping_t     mapping;
 	ki_message_t* message;
 	js_step_t     step_op;
 
@@ -347,15 +276,16 @@ on_breakpoint_hit(void)
 	audio_suspend();
 
 	filename = jsal_get_string(0);
-	line = jsal_get_int(1) + 1;
-	column = jsal_get_int(2) + 1;
+	line = jsal_get_int(1);
+	column = jsal_get_int(2);
+	mapping = source_map_lookup(filename, line, column);
 
 	message = ki_message_new(KI_NFY);
 	ki_message_add_int(message, KI_NFY_PAUSE);
-	ki_message_add_string(message, filename);
+	ki_message_add_string(message, mapping.filename);
 	ki_message_add_string(message, "");
-	ki_message_add_int(message, line);
-	ki_message_add_int(message, column);
+	ki_message_add_int(message, mapping.line + 1);
+	ki_message_add_int(message, mapping.column + 1);
 	ki_message_send(message, s_socket);
 	ki_message_free(message);
 
@@ -376,18 +306,29 @@ on_breakpoint_hit(void)
 static void
 on_throw_exception(void)
 {
+	int           column;
+	const char*   error_text;
+	const char*   filename;
+	int           line;
+	mapping_t     mapping;
 	ki_message_t* message;
 
 	if (s_socket == NULL)
 		return;
 
+	error_text = jsal_get_string(0);
+	filename = jsal_get_string(1);
+	line = jsal_get_int(2);
+	column = jsal_get_int(3);
+	mapping = source_map_lookup(filename, line, column);
+
 	message = ki_message_new(KI_NFY);
 	ki_message_add_int(message, KI_NFY_THROW);
 	ki_message_add_int(message, 1);
-	ki_message_add_string(message, jsal_get_string(0));
-	ki_message_add_string(message, jsal_get_string(1));
-	ki_message_add_int(message, jsal_get_int(2) + 1);
-	ki_message_add_int(message, jsal_get_int(3) + 1);
+	ki_message_add_string(message, error_text);
+	ki_message_add_string(message, mapping.filename);
+	ki_message_add_int(message, mapping.line + 1);
+	ki_message_add_int(message, mapping.column + 1);
 	ki_message_send(message, s_socket);
 	ki_message_free(message);
 }
@@ -454,28 +395,29 @@ do_detach_debugger(bool is_shutdown)
 static bool
 process_message(js_step_t* out_step)
 {
-	unsigned int   breakpoint_id;
-	int            call_index;
-	const char*    eval_code;
-	bool           eval_errored;
-	char*          file_data;
-	size_t         file_size;
-	const char*    filename;
-	unsigned int   handle;
-	unsigned int   line_number;
-	char*          platform_name;
-	ki_message_t*  reply;
-	ki_message_t*  request = NULL;
-	size2_t        resolution;
-	bool           resuming = false;
-	struct source* source;
+	unsigned int  breakpoint_id;
+	int           call_index;
+	int           column;
+	const char*   eval_code;
+	bool          eval_errored;
+	char*         file_data;
+	size_t        file_size;
+	const char*   filename;
+	unsigned int  handle;
+	unsigned int  line;
+	mapping_t     mapping;
+	char*         platform_name;
+	ki_message_t* reply;
+	ki_message_t* request = NULL;
+	size2_t       resolution;
+	bool          resuming = false;
+	const char*   source_text;
 
-	iter_t iter;
 	int i;
 
 	if (!s_is_attached) {
 		*out_step = JS_STEP_CONTINUE;
-		return false;
+		return false;  // TODO: should this be true?
 	}
 
 	if (!(request = ki_message_recv(s_socket)))
@@ -486,8 +428,9 @@ process_message(js_step_t* out_step)
 	switch (ki_message_int(request, 0)) {
 	case KI_REQ_ADD_BREAK:
 		filename = ki_message_string(request, 1);
-		line_number = ki_message_int(request, 2);
-		breakpoint_id = jsal_debug_breakpoint_add(filename, line_number, 1);
+		line = ki_message_int(request, 2) - 1;
+		mapping = source_map_reverse(filename, line, 0);
+		breakpoint_id = jsal_debug_breakpoint_add(mapping.filename, mapping.line, mapping.column);
 		ki_message_add_int(reply, breakpoint_id);
 		break;
 	case KI_REQ_DEL_BREAK:
@@ -503,18 +446,15 @@ process_message(js_step_t* out_step)
 		return true;
 	case KI_REQ_DOWNLOAD:
 		filename = ki_message_string(request, 1);
-		filename = debugger_compiled_name(filename);
 
-		// check if the data is in the source cache
-		iter = vector_enum(s_sources);
-		while ((source = iter_next(&iter))) {
-			if (strcmp(filename, source->name) == 0) {
-				ki_message_add_string(reply, lstr_cstr(source->text));
-				goto finished;
-			}
+		// first check if the requested filename exists in the source map
+		if ((source_text = source_map_source_text(filename))) {
+			ki_message_add_string(reply, source_text);
+			goto finished;
 		}
 
-		// no cache entry, try loading the file via SphereFS
+		// not present in source map, try loading from the file system
+		filename = source_map_url_of(filename);
 		if ((file_data = game_read_file(g_game, filename, &file_size))) {
 			ki_message_add_string(reply, file_data);
 			free(file_data);
@@ -552,8 +492,13 @@ process_message(js_step_t* out_step)
 	case KI_REQ_INSPECT_BREAKS:
 		i = 0;
 		while (jsal_debug_inspect_breakpoint(i++)) {
-			ki_message_add_string(reply, jsal_get_string(-3));
-			ki_message_add_int(reply, jsal_get_int(-2));
+			filename = jsal_get_string(-3);
+			line = jsal_get_int(-2);
+			column = jsal_get_int(-1);
+			mapping = source_map_lookup(filename, line, column);
+			ki_message_add_string(reply, mapping.filename);
+			ki_message_add_int(reply, mapping.line);
+			ki_message_add_int(reply, mapping.column);
 			jsal_pop(3);
 		}
 		break;
@@ -586,10 +531,14 @@ process_message(js_step_t* out_step)
 	case KI_REQ_INSPECT_STACK:
 		i = 0;
 		while (jsal_debug_inspect_call(i++)) {
-			ki_message_add_string(reply, jsal_get_string(-4));
+			filename = jsal_get_string(-4);
+			line = jsal_get_int(-2);
+			column = jsal_get_int(-1);
+			mapping = source_map_lookup(filename, line, column);
+			ki_message_add_string(reply, mapping.filename);
 			ki_message_add_string(reply, jsal_get_string(-3));
-			ki_message_add_int(reply, jsal_get_int(-2) + 1);
-			ki_message_add_int(reply, jsal_get_int(-1) + 1);
+			ki_message_add_int(reply, mapping.line + 1);
+			ki_message_add_int(reply, mapping.column + 1);
 			jsal_pop(4);
 		}
 		break;
@@ -613,7 +562,7 @@ process_message(js_step_t* out_step)
 		resuming = true;
 		break;
 	case KI_REQ_WATERMARK:
-		s_banner_text = lstr_new(ki_message_string(request, 1));
+		s_banner_text = strdup(ki_message_string(request, 1));
 		s_banner_color = mk_color(
 			ki_message_int(request, 2),
 			ki_message_int(request, 3),

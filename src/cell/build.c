@@ -47,14 +47,28 @@
 #include "xoroshiro.h"
 #include "wildmatch.h"
 
+struct source
+{
+	char*      filename;
+	lstring_t* text;
+};
+
+struct source_map
+{
+	char*     filename;
+	js_ref_t* map;
+};
+
 struct build
 {
-	bool          crashed;
-	fs_t*         fs;
-	vector_t*     old_artifacts;
-	vector_t*     targets;
-	time_t        timestamp;
-	visor_t*      visor;
+	bool      crashed;
+	fs_t*     fs;
+	vector_t* old_artifacts;
+	vector_t* sources;
+	vector_t* source_maps;
+	vector_t* targets;
+	time_t    timestamp;
+	visor_t*  visor;
 };
 
 enum file_op
@@ -115,6 +129,8 @@ static bool js_RNG_get_state                 (int num_args, bool is_ctor, intptr
 static bool js_RNG_set_state                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_iterator                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_RNG_next                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_addSource                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_SSj_sourceMap                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Target_get_fileName           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Target_get_name               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_TextDecoder               (int num_args, bool is_ctor, intptr_t magic);
@@ -152,14 +168,16 @@ static build_t* s_build;
 build_t*
 build_new(const path_t* source_path, const path_t* out_path)
 {
-	vector_t*    artifacts;
-	build_t*     build;
-	char*        filename;
-	fs_t*        fs;
-	char*        json;
-	size_t       json_size;
-	int          num_artifacts;
-	visor_t*     visor;
+	vector_t* artifacts;
+	build_t*  build;
+	char*     filename;
+	fs_t*     fs;
+	char*     json;
+	size_t    json_size;
+	int       num_artifacts;
+	vector_t* sources;
+	vector_t* source_maps;
+	visor_t*  visor;
 
 	int i;
 
@@ -220,6 +238,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_prop("RNG", "state", false, js_RNG_get_state, js_RNG_set_state);
 	api_define_method("RNG", "@@iterator", js_RNG_iterator, 0);
 	api_define_method("RNG", "next", js_RNG_next, 0);
+	api_define_func("SSj", "addSource", js_SSj_addSource, 0);
+	api_define_func("SSj", "sourceMap", js_SSj_sourceMap, 0);
 	api_define_class("Target", CELL_TARGET, NULL, js_Target_finalize, 0);
 	api_define_prop("Target", "fileName", false, js_Target_get_fileName, NULL);
 	api_define_prop("Target", "name", false, js_Target_get_name, NULL);
@@ -245,6 +265,9 @@ build_new(const path_t* source_path, const path_t* out_path)
 	jsal_push_new_object();
 	jsal_put_prop_string(-2, "manifest");
 	jsal_pop(1);
+
+	source_maps = vector_new(sizeof(struct source_map));
+	sources = vector_new(sizeof(struct source));
 
 	// create a Tool for the install() function to use
 	jsal_push_hidden_stash();
@@ -281,6 +304,8 @@ build_new(const path_t* source_path, const path_t* out_path)
 	build->fs = fs;
 	build->old_artifacts = artifacts;
 	build->targets = vector_new(sizeof(target_t*));
+	build->source_maps = source_maps;
+	build->sources = sources;
 	return build;
 }
 
@@ -490,16 +515,18 @@ build_package(build_t* build, const char* filename)
 bool
 build_run(build_t* build, bool want_debug, bool rebuild_all)
 {
-	const char*   filename;
-	vector_t*     filenames;
-	const char*   json;
-	size_t        json_size;
-	const char*   last_filename = "";
-	int           num_matches = 1;
-	const path_t* path;
-	const path_t* source_path;
-	vector_t*     sorted_targets;
-	target_t**    target_ptr;
+	const char*        filename;
+	vector_t*          filenames;
+	const char*        json;
+	size_t             json_size;
+	const char*        last_filename = "";
+	int                num_matches = 1;
+	const path_t*      path;
+	struct source*     source;
+	struct source_map* source_map;
+	const path_t*      source_path;
+	vector_t*          sorted_targets;
+	target_t**         target_ptr;
 
 	iter_t iter;
 
@@ -583,6 +610,24 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 			jsal_put_prop(-3);
 		}
 		jsal_put_prop_string(-2, "fileMap");
+
+		jsal_push_new_object();
+		iter = vector_enum(build->sources);
+		while ((source = iter_next(&iter))) {
+			jsal_push_string(source->filename);
+			jsal_push_lstring_t(source->text);
+			jsal_put_prop(-3);
+		}
+		jsal_put_prop_string(-2, "sources");
+
+		jsal_push_new_object();
+		iter = vector_enum(build->source_maps);
+		while ((source_map = iter_next(&iter))) {
+			jsal_push_string(source_map->filename);
+			jsal_push_ref_weak(source_map->map);
+			jsal_put_prop(-3);
+		}
+		jsal_put_prop_string(-2, "sourceMaps");
 	}
 	jsal_stringify(-1);
 	json = jsal_get_lstring(-1, &json_size);
@@ -1425,7 +1470,7 @@ js_FS_match(int num_args, bool is_ctor, intptr_t magic)
 		return true;
 	}
 	else {
-		jsal_error(JS_TYPE_ERROR, "'FS.match' second argument must be a string or array of strings");
+		jsal_error(JS_TYPE_ERROR, "'%s' is not a string or array of strings", jsal_to_string(1));
 	}
 }
 
@@ -1884,6 +1929,61 @@ js_RNG_next(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_number(xoro_gen_double(xoro));
 	jsal_put_prop_string(-2, "value");
 	return true;
+}
+
+static bool
+js_SSj_addSource(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char*   filename;
+	path_t*       short_path;
+	path_t*       short_path_origin;
+	struct source source;
+	lstring_t*    text;
+
+	filename = jsal_require_pathname(0, NULL, false);
+	text = jsal_require_lstring_t(1);
+
+	short_path = path_new(filename);
+	if (!path_hop_is(short_path, 0, "$")) {
+		path_free(short_path);
+		jsal_error(JS_TYPE_ERROR, "File '%s' is not in source tree", path_cstr(short_path));
+	}
+	short_path_origin = path_new("$/");
+	path_relativize(short_path, short_path_origin);
+	path_free(short_path_origin);
+	source.filename = strdup(path_cstr(short_path));
+	source.text = text;
+	vector_push(s_build->sources, &source);
+	path_free(short_path);
+	return false;
+}
+
+static bool
+js_SSj_sourceMap(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char*       filename;
+	struct source_map source_map;
+
+	filename = jsal_require_string(0);
+	if (!jsal_is_object(1) && !jsal_is_string(1))
+		jsal_error(JS_TYPE_ERROR, "'%s' is not an object or string", jsal_to_string(1));
+
+	// validate the source map provided as input
+	if (jsal_is_string(1))
+		jsal_parse(1);
+	if (!jsal_is_object(1)
+		|| !jsal_get_prop_string(1, "version")
+		|| !jsal_get_prop_string(1, "mappings")
+		|| jsal_get_int(-2) != 3
+		|| !jsal_is_string(-1))
+	{
+		jsal_error(JS_TYPE_ERROR, "Invalid source map provided to 'SSj.sourceMap'");
+	}
+
+	source_map.filename = strdup(filename);
+	source_map.map = jsal_ref(1);
+	vector_push(s_build->source_maps, &source_map);
+	return false;
 }
 
 static void

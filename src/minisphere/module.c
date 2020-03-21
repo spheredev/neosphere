@@ -33,7 +33,7 @@
 #include "minisphere.h"
 #include "module.h"
 
-#include "debugger.h"
+#include "source_map.h"
 
 struct module_ref
 {
@@ -171,8 +171,8 @@ module_exec(module_ref_t* it)
 		code_string = lstr_from_utf8(source, source_size, true);
 		free(source);
 		jsal_push_lstring_t(code_string);
-		debugger_add_source(pathname, code_string);
-		is_module_loaded = jsal_try_eval_module(pathname, debugger_source_name(pathname));
+		source_map_add_source(pathname, lstr_cstr(code_string));
+		is_module_loaded = jsal_try_eval_module(pathname, source_map_alias_of(pathname));
 		lstr_free(code_string);
 		if (!is_module_loaded)
 			goto on_error;
@@ -232,7 +232,7 @@ module_exec(module_ref_t* it)
 			strncmp(lstr_cstr(code_string), "#!", 2) == 0 ? "//" : "",  // shebang?
 			lstr_cstr(code_string));
 		lstr_free(code_string);
-		if (!jsal_try_compile(debugger_source_name(pathname)))
+		if (!jsal_try_compile(source_map_alias_of(pathname)))
 			goto on_error;
 		jsal_call(0);
 		jsal_push_new_object();
@@ -286,7 +286,7 @@ do_resolve_import(void)
 	const char*   pathname;
 	module_ref_t* ref;
 	char*         shim_name;
-	lstring_t*    shim_source;
+	char*         shim_source;
 	char*         source;
 	size_t        source_len;
 	const char*   specifier;
@@ -304,20 +304,20 @@ do_resolve_import(void)
 
 		// ES module shim, allows 'import' to work with CommonJS modules
 		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
-		shim_source = lstr_newf(
+		shim_source = strnewf(
 			"/* ES module shim for CommonJS module */\n"
 			"export default require(\"%s\");", pathname);
-		debugger_add_source(shim_name, shim_source);
+		source_map_add_source(shim_name, shim_source);
 		jsal_push_string(shim_name);
 		jsal_dup(-1);
-		jsal_push_lstring_t(shim_source);
+		jsal_push_string(shim_source);
 		free(shim_name);
-		lstr_free(shim_source);
+		free(shim_source);
 	}
 	else {
 		source = game_read_file(g_game, pathname, &source_len);
 		jsal_push_string(pathname);
-		jsal_push_string(debugger_source_name(pathname));
+		jsal_push_string(source_map_alias_of(pathname));
 		jsal_push_lstring(source, source_len);
 		free(source);
 	}
