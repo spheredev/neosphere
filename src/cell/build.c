@@ -63,6 +63,8 @@ struct build
 {
 	bool      crashed;
 	fs_t*     fs;
+	js_ref_t* install_tool;
+	js_ref_t* manifest;
 	vector_t* old_artifacts;
 	vector_t* sources;
 	vector_t* source_maps;
@@ -261,20 +263,16 @@ build_new(const path_t* source_path, const path_t* out_path)
 	api_define_const("FileOp", "Update", FILE_OP_UPDATE);
 
 	// game manifest (gets JSON encoded at end of build)
-	jsal_push_hidden_stash();
 	jsal_push_new_object();
-	jsal_put_prop_string(-2, "manifest");
-	jsal_pop(1);
+	build->manifest = jsal_pop_ref();
 
 	source_maps = vector_new(sizeof(struct source_map));
 	sources = vector_new(sizeof(struct source));
 
 	// create a Tool for the install() function to use
-	jsal_push_hidden_stash();
 	jsal_push_new_function(install_target, "doInstall", 0, false, 0);
 	jsal_push_class_obj(CELL_TOOL, tool_new("installing"), false);
-	jsal_put_prop_string(-2, "installTool");
-	jsal_pop(1);
+	build->install_tool = jsal_pop_ref();
 
 	// load artifacts from previous build
 	artifacts = vector_new(sizeof(char*));
@@ -816,8 +814,10 @@ write_manifests(build_t* build, bool debugging)
 
 	visor_begin_op(build->visor, "writing Sphere manifest files");
 
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "manifest");
+	// TODO: fix the stack management in this function so this extra push
+	//       isn't necessary
+	jsal_push_ref_weak(build->manifest);
+	jsal_push_ref_weak(build->manifest);
 
 	// validate game descriptor before writing manifests
 	jsal_get_prop_string(-1, "name");
@@ -1087,8 +1087,7 @@ js_install(int num_args, bool is_ctor, intptr_t magic)
 	dest_path = path_new_dir(jsal_require_string(0));
 
 	// retrieve the Install tool from the stash
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "installTool");
+	jsal_push_ref_weak(s_build->install_tool);
 	tool = jsal_require_class_obj(-1, CELL_TOOL);
 	jsal_pop(1);
 
@@ -1138,8 +1137,7 @@ js_Sphere_get_Compiler(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Sphere_get_Game(int num_args, bool is_ctor, intptr_t magic)
 {
-	jsal_push_hidden_stash();
-	jsal_get_prop_string(-1, "manifest");
+	jsal_push_ref_weak(s_build->manifest);
 	cache_value_to_this("Game");
 	return true;
 }
