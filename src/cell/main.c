@@ -83,13 +83,13 @@ main(int argc, char* argv[])
 	print_banner(true, false);
 	printf("\n");
 
-	build = build_new(s_in_path, s_out_path);
+	build = build_new(s_in_path, s_out_path, s_debug_build);
 	if (s_script_path != NULL && !build_eval(build, path_cstr(s_script_path)))
 		goto shutdown;
 	switch (s_mode) {
 	case MODE_BUILD:
 	case MODE_PACK:
-		if (!build_run(build, s_debug_build, s_want_rebuild))
+		if (!build_run(build, s_want_rebuild))
 			goto shutdown;
 		if (s_mode == MODE_PACK)
 			build_package(build, path_cstr(s_package_path));

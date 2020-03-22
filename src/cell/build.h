@@ -47,12 +47,12 @@ enum cell_class
 
 typedef struct build build_t;
 
-build_t* build_new      (const path_t* source_path, const path_t* out_path);
+build_t* build_new      (const path_t* source_path, const path_t* out_path, bool debuggable);
 void     build_free     (build_t* build);
 bool     build_clean    (build_t* build);
 bool     build_eval     (build_t* build, const char* filename);
 bool     build_init_dir (build_t* build);
 bool     build_package  (build_t* build, const char* filename);
-bool     build_run      (build_t* build, bool want_debug, bool rebuild_all);
+bool     build_run      (build_t* build, bool rebuild_all);
 
 #endif // SPHERE__BUILD_H__INCLUDED

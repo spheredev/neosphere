@@ -62,6 +62,7 @@ struct source_map
 struct build
 {
 	bool      crashed;
+	bool      debuggable;
 	fs_t*     fs;
 	js_ref_t* install_tool;
 	js_ref_t* manifest;
@@ -163,12 +164,12 @@ static bool    install_target       (int num_args, bool is_ctor, intptr_t magic)
 static void    make_file_targets    (fs_t* fs, const char* wildcard, const path_t* path, const path_t* subdir, vector_t* targets, bool recursive, time_t timestamp);
 static bool    package_dir          (build_t* build, spk_writer_t* spk, const char* from_dirname, const char* to_dirname, bool recursive);
 static int     sort_targets_by_path (const void* p_a, const void* p_b);
-static bool    write_manifests      (build_t* build, bool debugging);
+static bool    write_manifests      (build_t* build);
 
 static build_t* s_build;
 
 build_t*
-build_new(const path_t* source_path, const path_t* out_path)
+build_new(const path_t* source_path, const path_t* out_path, bool debuggable)
 {
 	vector_t* artifacts;
 	build_t*  build;
@@ -304,6 +305,7 @@ build_new(const path_t* source_path, const path_t* out_path)
 	build->targets = vector_new(sizeof(target_t*));
 	build->source_maps = source_maps;
 	build->sources = sources;
+	build->debuggable = debuggable;
 	return build;
 }
 
@@ -505,13 +507,15 @@ build_package(build_t* build, const char* filename)
 		path_free(out_path);
 		visor_end_op(build->visor);
 	}
+	if (build->debuggable)
+		spk_add_file(spk, build->fs, "@/artifacts.json", "artifacts.json");
 	spk_close(spk);
 	visor_end_op(build->visor);
 	return true;
 }
 
 bool
-build_run(build_t* build, bool want_debug, bool rebuild_all)
+build_run(build_t* build, bool rebuild_all)
 {
 	const char*        filename;
 	vector_t*          filenames;
@@ -569,7 +573,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 	// warnings are fine.
 	if (visor_num_errors(build->visor) == 0) {
 		clean_old_artifacts(build, true);
-		if (!write_manifests(build, want_debug)) {
+		if (!write_manifests(build)) {
 			fs_unlink(build->fs, "@/game.json");
 			fs_unlink(build->fs, "@/game.sgm");
 			goto finished;
@@ -594,7 +598,7 @@ build_run(build_t* build, bool want_debug, bool rebuild_all)
 		jsal_put_prop_index(-2, iter.index);
 	}
 	jsal_put_prop_string(-2, "builtTargets");
-	if (want_debug) {
+	if (build->debuggable) {
 		jsal_push_new_object();
 		iter = vector_enum(build->targets);
 		while ((target_ptr = iter_next(&iter))) {
@@ -796,7 +800,7 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 }
 
 static bool
-write_manifests(build_t* build, bool debugging)
+write_manifests(build_t* build)
 {
 	int         api_level;
 	int         api_version = 2;
@@ -935,7 +939,7 @@ write_manifests(build_t* build, bool debugging)
 				visor_end_op(build->visor);
 				return false;
 			}
-			if (strcmp(sandbox_mode, "full") != 0 && !debugging)
+			if (strcmp(sandbox_mode, "full") != 0 && !build->debuggable)
 				visor_print(build->visor, "full SphereFS sandboxing will be enforced");
 		}
 		if (jsal_get_prop_string(-2, "retrograde")) {
@@ -946,7 +950,7 @@ write_manifests(build_t* build, bool debugging)
 				return false;
 			}
 			flag_enabled = jsal_get_boolean(-1);
-			if (flag_enabled && !debugging)
+			if (flag_enabled && !build->debuggable)
 				visor_print(build->visor, "all supported APIs will be exposed");
 		}
 		if (jsal_get_prop_string(-3, "emptyPromises")) {
@@ -957,7 +961,7 @@ write_manifests(build_t* build, bool debugging)
 				return false;
 			}
 			flag_enabled = jsal_get_boolean(-1);
-			if (flag_enabled && !debugging)
+			if (flag_enabled && !build->debuggable)
 				visor_print(build->visor, "uncaught promise rejections will be fatal");
 		}
 		if (jsal_get_prop_string(-4, "strictImports")) {
@@ -1000,7 +1004,7 @@ write_manifests(build_t* build, bool debugging)
 	jsal_pop(9);
 
 	// write game.json (Sphere v2 JSON manifest)
-	if (!debugging)  // strip debug flags from release
+	if (!build->debuggable)  // strip debug flags from release
 		jsal_del_prop_string(-1, "development");
 	jsal_stringify(-1);
 	json_text = jsal_get_lstring(-1, &json_size);
