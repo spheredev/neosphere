@@ -40,22 +40,22 @@
 struct tool
 {
 	unsigned int refcount;
-	void*        callback_ptr;
+	js_ref_t*    callback_ref;
 	char*        verb;
 };
 
 tool_t*
 tool_new(const char* verb)
 {
-	js_ref_t* callback_ptr;
+	js_ref_t* callback_ref;
 	tool_t*   tool;
 
-	callback_ptr = jsal_pop_ref();
+	callback_ref = jsal_pop_ref();
 
 	if (!(tool = calloc(1, sizeof(tool_t))))
 		return NULL;
 	tool->verb = strdup(verb);
-	tool->callback_ptr = callback_ptr;
+	tool->callback_ref = callback_ref;
 	return tool_ref(tool);
 }
 
@@ -74,7 +74,7 @@ tool_unref(tool_t* tool)
 	if (tool == NULL || --tool->refcount > 0)
 		return;
 
-	jsal_unref(tool->callback_ptr);
+	jsal_unref(tool->callback_ref);
 	free(tool->verb);
 	free(tool);
 }
@@ -106,7 +106,7 @@ tool_run(tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, v
 
 	if (fs_stat(fs, path_cstr(out_path), &stats) == 0)
 		last_mtime = stats.st_mtime;
-	jsal_push_ref_weak(tool->callback_ptr);
+	jsal_push_ref_weak(tool->callback_ref);
 	jsal_push_string(path_cstr(out_path));
 	jsal_push_new_array();
 	iter = vector_enum(in_paths);

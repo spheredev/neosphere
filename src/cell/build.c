@@ -475,13 +475,16 @@ build_init_dir(build_t* it)
 }
 
 bool
-build_package(build_t* build, const char* filename)
+build_package(build_t* build, const char* filename, bool rebuilding)
 {
 	path_t*       in_path;
 	path_t*       out_path;
 	spk_writer_t* spk;
 
 	iter_t iter;
+
+	if (!build_run(build, rebuilding))
+		return false;
 
 	visor_begin_op(build->visor, "packaging game to '%s'", filename);
 	spk = spk_create(filename);
@@ -515,7 +518,7 @@ build_package(build_t* build, const char* filename)
 }
 
 bool
-build_run(build_t* build, bool rebuild_all)
+build_run(build_t* build, bool rebuilding)
 {
 	const char*        filename;
 	vector_t*          filenames;
@@ -565,7 +568,7 @@ build_run(build_t* build, bool rebuild_all)
 		path = target_path(*target_ptr);
 		if (path_num_hops(path) == 0 || !path_hop_is(path, 0, "@"))
 			continue;
-		target_build(*target_ptr, build->visor, rebuild_all);
+		target_build(*target_ptr, build->visor, rebuilding);
 	}
 	visor_end_op(build->visor);
 
@@ -1090,7 +1093,6 @@ js_install(int num_args, bool is_ctor, intptr_t magic)
 
 	dest_path = path_new_dir(jsal_require_string(0));
 
-	// retrieve the Install tool from the stash
 	jsal_push_ref_weak(s_build->install_tool);
 	tool = jsal_require_class_obj(-1, CELL_TOOL);
 	jsal_pop(1);

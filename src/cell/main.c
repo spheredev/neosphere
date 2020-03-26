@@ -88,11 +88,12 @@ main(int argc, char* argv[])
 		goto shutdown;
 	switch (s_mode) {
 	case MODE_BUILD:
-	case MODE_PACK:
 		if (!build_run(build, s_want_rebuild))
 			goto shutdown;
-		if (s_mode == MODE_PACK)
-			build_package(build, path_cstr(s_package_path));
+		break;
+	case MODE_PACK:
+		if (!build_package(build, path_cstr(s_package_path), s_want_rebuild))
+			goto shutdown;
 		break;
 	case MODE_CLEAN:
 		build_clean(build);

@@ -52,7 +52,7 @@ void     build_free     (build_t* build);
 bool     build_clean    (build_t* build);
 bool     build_eval     (build_t* build, const char* filename);
 bool     build_init_dir (build_t* build);
-bool     build_package  (build_t* build, const char* filename);
-bool     build_run      (build_t* build, bool rebuild_all);
+bool     build_package  (build_t* build, const char* filename, bool rebuilding);
+bool     build_run      (build_t* build, bool rebuilding);
 
 #endif // SPHERE__BUILD_H__INCLUDED
