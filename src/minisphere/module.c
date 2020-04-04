@@ -525,7 +525,7 @@ type_of_module(const path_t* path, bool node_compatible)
 					continue;  // invalid `package.json`, move on
 				}
 				jsal_get_prop_string(-1, "type");
-				type_string = jsal_is_string(-2) ? jsal_get_string(-2) : "commonjs";
+				type_string = jsal_is_string(-1) ? jsal_get_string(-1) : "commonjs";
 				type = strcmp(type_string, "module") == 0 ? MODULE_ESM
 					: MODULE_COMMONJS;
 				jsal_pop(2);
