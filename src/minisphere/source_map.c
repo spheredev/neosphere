@@ -119,6 +119,8 @@ source_map_alias_of(const char* url)
 
 	iter_t iter;
 
+	if (s_aliases == NULL)
+		return url;
 	iter = vector_enum(s_aliases);
 	while ((alias = iter_next(&iter))) {
 		if (strcmp(url, alias->url) == 0)
@@ -134,6 +136,8 @@ source_map_source_text(const char* filename)
 
 	iter_t iter;
 
+	if (s_sources == NULL)
+		return NULL;
 	iter = vector_enum(s_sources);
 	while ((source = iter_next(&iter))) {
 		if (strcmp(filename, source->filename) == 0)
@@ -149,6 +153,8 @@ source_map_url_of(const char* name)
 
 	iter_t iter;
 
+	if (s_aliases == NULL)
+		return name;
 	iter = vector_enum(s_aliases);
 	while ((alias = iter_next(&iter))) {
 		if (strcmp(name, alias->name) == 0)
@@ -287,6 +293,9 @@ source_map_add_source(const char* filename, const char* text)
 	char*         filename_copy = NULL;
 	struct source source_obj;
 	char*         text_copy = NULL;
+
+	if (s_sources == NULL)
+		return true;
 
 	if (!(filename_copy = strdup(filename)))
 		goto on_error;
