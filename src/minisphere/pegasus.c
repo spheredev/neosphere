@@ -457,10 +457,12 @@ static bool js_SoundStream_stop              (int num_args, bool is_ctor, intptr
 static bool js_SoundStream_write             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_Screen            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_blendOp           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_get_depthOp           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_height            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_transform         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_get_width             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_set_blendOp           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_set_depthOp           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_set_transform         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_clipTo                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_toTexture             (int num_args, bool is_ctor, intptr_t magic);
@@ -973,6 +975,7 @@ pegasus_init(int api_level)
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
 		api_define_prop("Mouse", "position", false, js_Mouse_get_position, NULL);
+		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
 		api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
 		api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
@@ -993,6 +996,14 @@ pegasus_init(int api_level)
 		api_define_const("Blend", "Target", BLEND_DEST);
 		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
 		api_define_const("Blend", "Zero", BLEND_ZERO);
+		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
+		api_define_const("DepthOp", "Equal", DEPTH_PASS);
+		api_define_const("DepthOp", "Greater", DEPTH_GREATER);
+		api_define_const("DepthOp", "GreaterOrEqual", DEPTH_GEQUAL);
+		api_define_const("DepthOp", "Less", DEPTH_LESS);
+		api_define_const("DepthOp", "LessOrEqual", DEPTH_LEQUAL);
+		api_define_const("DepthOp", "NeverPass", DEPTH_NEVER);
+		api_define_const("DepthOp", "NotEqual", DEPTH_NOTEQUAL);
 	}
 
 	// keep a local reference to Surface.Screen
@@ -4803,6 +4814,18 @@ js_Surface_get_blendOp(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_Surface_get_depthOp(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t* image;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
+
+	jsal_push_int(image_get_depth_op(image));
+	return true;
+}
+
+static bool
 js_Surface_get_height(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
@@ -4853,6 +4876,20 @@ js_Surface_set_blendOp(int num_args, bool is_ctor, intptr_t magic)
 	op = jsal_require_class_obj(0, PEGASUS_BLENDER);
 
 	image_set_blend_op(image, op);
+	return false;
+}
+
+static bool
+js_Surface_set_depthOp(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t*   image;
+	depth_op_t op;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
+	op = jsal_require_int(0);
+
+	image_set_depth_op(image, op);
 	return false;
 }
 

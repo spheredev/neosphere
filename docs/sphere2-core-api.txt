@@ -2144,6 +2144,24 @@ Surface#blendOp [R/W] [API 2]
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
 
+Surface#depthOp [R/W] [NEW]
+
+    Gets or sets the depth test criteria for 3D objects drawn to this surface.
+    The final Z coordinate of each pixel drawn is tested against the current
+    value in the depth buffer and is either rendered or skipped based on the
+	operation specified:
+    
+        DepthOp.AlwaysPass
+        DepthOp.NeverPass
+        DepthOp.Equal
+        DepthOp.Greater
+        DepthOp.GreaterOrEqual
+        DepthOp.Less
+        DepthOp.LessOrEqual
+        DepthOp.NotEqual
+
+	The default for new surfaces is `LessOrEqual`.
+
 Surface#transform [R/W] [API 1]
 
     Gets or sets a `Transform` representing the surface's projection matrix.

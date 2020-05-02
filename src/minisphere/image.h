@@ -40,6 +40,20 @@
 typedef struct image image_t;
 
 typedef
+enum depth_op
+{
+	DEPTH_PASS,
+	DEPTH_EQUAL,
+	DEPTH_GREATER,
+	DEPTH_GEQUAL,
+	DEPTH_LESS,
+	DEPTH_LEQUAL,
+	DEPTH_NEVER,
+	DEPTH_NOTEQUAL,
+
+} depth_op_t;
+
+typedef
 struct image_lock
 {
 	int       num_lines;
@@ -58,9 +72,11 @@ int             image_height             (const image_t* it);
 const char*     image_path               (const image_t* it);
 int             image_width              (const image_t* it);
 blend_op_t*     image_get_blend_op       (const image_t* it);
+depth_op_t      image_get_depth_op       (const image_t* it);
 rect_t          image_get_scissor        (const image_t* it);
 transform_t*    image_get_transform      (const image_t* it);
 void            image_set_blend_op       (image_t* it, blend_op_t* op);
+void            image_set_depth_op       (image_t* it, depth_op_t op);
 void            image_set_scissor        (image_t* it, rect_t value);
 void            image_set_transform      (image_t* it, transform_t* transform);
 bool            image_apply_color_fx     (image_t* it, color_fx_t matrix, int x, int y, int width, int height);

@@ -46,6 +46,8 @@ struct image
 	blend_op_t*     blend_op;
 	unsigned int    cache_hits;
 	bool            clipping_set;
+	depth_op_t      depth_op;
+	bool            have_depth;
 	image_lock_t    lock;
 	unsigned int    lock_count;
 	transform_t*    modelview;
@@ -67,11 +69,13 @@ static unsigned int s_next_image_id = 0;
 image_t*
 image_new(int width, int height, const color_t* pixels)
 {
-	image_t* image;
+	image_t*        image;
+	ALLEGRO_BITMAP* old_target;
 
 	console_log(3, "creating image #%u at %dx%d", s_next_image_id, width, height);
 	if (!(image = calloc(1, sizeof(image_t))))
 		goto on_error;
+	al_set_new_bitmap_depth(16);
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
 	image->id = s_next_image_id++;
@@ -79,6 +83,8 @@ image_new(int width, int height, const color_t* pixels)
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
+	image->have_depth = true;
+	image->depth_op = DEPTH_LEQUAL;
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	// the image must be fully constructed with a nonzero refcount before we call
@@ -87,6 +93,12 @@ image_new(int width, int height, const color_t* pixels)
 
 	if (pixels != NULL && !image_upload(image, pixels))
 		goto on_error;
+	if (image->have_depth) {
+		old_target = al_get_target_bitmap();
+		al_set_target_bitmap(image->bitmap);
+		al_clear_depth_buffer(1.0);
+		al_set_target_bitmap(old_target);
+	}
 
 	return image;
 
@@ -111,6 +123,8 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image->parent = image_ref(parent);
 	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
+	image->have_depth = parent->have_depth;
+	image->depth_op = parent->depth_op;
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 	return image_ref(image);
 
@@ -129,6 +143,7 @@ image_dup(const image_t* it)
 
 	if (!(image = calloc(1, sizeof(image_t))))
 		goto on_error;
+	al_set_new_bitmap_depth(it->have_depth ? 16 : 0);
 	if (!(image->bitmap = al_clone_bitmap(it->bitmap)))
 		goto on_error;
 	image->id = s_next_image_id++;
@@ -136,6 +151,8 @@ image_dup(const image_t* it)
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
+	image->have_depth = it->have_depth;
+	image->depth_op = it->depth_op;
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	return image_ref(image);
@@ -176,6 +193,7 @@ image_load(const char* filename)
 	if (memcmp(first_16, "\xFF\xD8", 2) == 0)
 		file_ext = ".jpg";
 
+	al_set_new_bitmap_depth(0);
 	if (!(image->bitmap = al_load_bitmap_flags_f(al_file, file_ext, ALLEGRO_NO_PREMULTIPLIED_ALPHA)))
 		goto on_error;
 	al_fclose(al_file);
@@ -184,6 +202,7 @@ image_load(const char* filename)
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
+	image->have_depth = false;
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	image->path = strdup(filename);
@@ -255,6 +274,12 @@ image_get_blend_op(const image_t* it)
 	return it->blend_op;
 }
 
+depth_op_t
+image_get_depth_op(const image_t* it)
+{
+	return it->depth_op;
+}
+
 rect_t
 image_get_scissor(const image_t* it)
 {
@@ -277,6 +302,26 @@ image_set_blend_op(image_t* it, blend_op_t* op)
 	blend_op_unref(prev_op);
 	if (it == s_last_image)
 		blend_op_apply(op);
+}
+
+void
+image_set_depth_op(image_t* it, depth_op_t op)
+{
+	int depth_func;
+	
+	it->depth_op = op;
+	if (it == s_last_image) {
+		depth_func = it->depth_op == DEPTH_PASS ? ALLEGRO_RENDER_ALWAYS
+			: it->depth_op == DEPTH_EQUAL ? ALLEGRO_RENDER_EQUAL
+			: it->depth_op == DEPTH_GEQUAL ? ALLEGRO_RENDER_GREATER_EQUAL
+			: it->depth_op == DEPTH_GREATER ? ALLEGRO_RENDER_GREATER
+			: it->depth_op == DEPTH_LESS ? ALLEGRO_RENDER_LESS
+			: it->depth_op == DEPTH_LEQUAL ? ALLEGRO_RENDER_LESS_EQUAL
+			: it->depth_op == DEPTH_NOTEQUAL ? ALLEGRO_RENDER_NOT_EQUAL
+			: ALLEGRO_RENDER_NEVER;
+		al_set_render_state(ALLEGRO_DEPTH_TEST, 1);
+		al_set_render_state(ALLEGRO_DEPTH_FUNCTION, depth_func);
+	}
 }
 
 void
@@ -586,6 +631,7 @@ image_lock(image_t* it, bool uploading, bool downloading)
 void
 image_render_to(image_t* it, transform_t* transform)
 {
+	int               depth_func;
 	ALLEGRO_TRANSFORM matrix;
 	rect_t            scissor;
 
@@ -615,6 +661,16 @@ image_render_to(image_t* it, transform_t* transform)
 		transform_make_clean(transform);
 	}
 	blend_op_apply(it->blend_op);
+	depth_func = it->depth_op == DEPTH_PASS ? ALLEGRO_RENDER_ALWAYS
+		: it->depth_op == DEPTH_EQUAL ? ALLEGRO_RENDER_EQUAL
+		: it->depth_op == DEPTH_GEQUAL ? ALLEGRO_RENDER_GREATER_EQUAL
+		: it->depth_op == DEPTH_GREATER ? ALLEGRO_RENDER_GREATER
+		: it->depth_op == DEPTH_LESS ? ALLEGRO_RENDER_LESS
+		: it->depth_op == DEPTH_LEQUAL ? ALLEGRO_RENDER_LESS_EQUAL
+		: it->depth_op == DEPTH_NOTEQUAL ? ALLEGRO_RENDER_NOT_EQUAL
+		: ALLEGRO_RENDER_NEVER;
+	al_set_render_state(ALLEGRO_DEPTH_TEST, 1);
+	al_set_render_state(ALLEGRO_DEPTH_FUNCTION, depth_func);
 	s_last_image = it;
 }
 

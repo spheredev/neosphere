@@ -430,6 +430,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 		image_set_scissor(it->backbuffer, mk_rect(0, 0, it->x_size, it->y_size));
 		image_render_to(it->backbuffer, NULL);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
+		al_clear_depth_buffer(1.0);
 		image_set_scissor(it->backbuffer, scissor);
 	}
 
