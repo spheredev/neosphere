@@ -2148,8 +2148,8 @@ Surface#depthOp [R/W] [NEW]
 
     Gets or sets the depth test criteria for 3D objects drawn to this surface.
     The final Z coordinate of each pixel drawn is tested against the current
-    value in the depth buffer and is either rendered or skipped based on the
-	operation specified:
+    value in the surface's depth buffer and is either rendered or skipped based
+    on the operation specified:
     
         DepthOp.AlwaysPass
         DepthOp.NeverPass
@@ -2177,6 +2177,12 @@ Surface#height [R/O] [API 1]
 
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
+
+Surface#clear([color[, depthValue]]); [NEW]
+
+    Clears the entire surface using the specified color and depth values.  If
+    not provided, `color` defaults to `Color.Transparent` and `depthValue`
+    defaults to 1.0.
 
 Surface#clipTo(x, y, width, height); [API 1]
 

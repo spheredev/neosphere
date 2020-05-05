@@ -2123,7 +2123,7 @@ js_CreateSurface(int num_args, bool is_ctor, intptr_t magic)
 
 	if (!(image = image_new(width, height, NULL)))
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
-	image_fill(image, fill_color);
+	image_fill(image, fill_color, 1.0f);
 	jsal_push_class_obj(SV1_SURFACE, image, false);
 	return true;
 }

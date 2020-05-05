@@ -464,6 +464,7 @@ static bool js_Surface_get_width             (int num_args, bool is_ctor, intptr
 static bool js_Surface_set_blendOp           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_set_depthOp           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_set_transform         (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_clear                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_clipTo                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_toTexture             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_TextDecoder               (int num_args, bool is_ctor, intptr_t magic);
@@ -983,6 +984,7 @@ pegasus_init(int api_level)
 		api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
+		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
@@ -4908,6 +4910,24 @@ js_Surface_set_transform(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_Surface_clear(int num_args, bool is_ctor, intptr_t magic)
+{
+	color_t  color = mk_color(0, 0, 0, 0);
+	float    depth = 1.0f;
+	image_t* image;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
+	if (num_args >= 1)
+		color = jsal_pegasus_require_color(0);
+	if (num_args >= 2)
+		depth = jsal_require_number(1);
+
+	image_fill(image, color, depth);
+	return false;
+}
+
+static bool
 js_Surface_clipTo(int num_args, bool is_ctor, intptr_t magic)
 {
 	int      height;
@@ -5160,7 +5180,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 			: mk_color(0, 0, 0, 0);
 		if (!(image = image_new(width, height, NULL)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-		image_fill(image, fill_color);
+		image_fill(image, fill_color, 1.0f);
 	}
 	else if ((src_image = jsal_get_class_obj(0, PEGASUS_TEXTURE))) {
 		// create a Texture from a Surface (or another Texture)

@@ -90,7 +90,7 @@ void            image_draw_scaled        (image_t* it, int x, int y, int width, 
 void            image_draw_scaled_masked (image_t* it, color_t mask, int x, int y, int width, int height);
 void            image_draw_tiled         (image_t* it, int x, int y, int width, int height);
 void            image_draw_tiled_masked  (image_t* it, color_t mask, int x, int y, int width, int height);
-void            image_fill               (image_t* it, color_t color);
+void            image_fill               (image_t* it, color_t color, float depth);
 bool            image_flip               (image_t* it, bool is_h_flip, bool is_v_flip);
 color_t         image_get_pixel          (image_t* it, int x, int y);
 image_lock_t*   image_lock               (image_t* it, bool uploading, bool downloading);

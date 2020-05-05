@@ -547,7 +547,7 @@ image_draw_tiled_masked(image_t* it, color_t mask, int x, int y, int width, int 
 }
 
 void
-image_fill(image_t* it, color_t color)
+image_fill(image_t* it, color_t color, float depth)
 {
 	int             clip_height;
 	int             clip_width;
@@ -561,6 +561,7 @@ image_fill(image_t* it, color_t color)
 	old_target = al_get_target_bitmap();
 	al_set_target_bitmap(it->bitmap);
 	al_clear_to_color(nativecolor(color));
+	al_clear_depth_buffer(depth);
 	al_set_target_bitmap(old_target);
 	al_set_clipping_rectangle(clip_x, clip_y, clip_width, clip_height);
 }
