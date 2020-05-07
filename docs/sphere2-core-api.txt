@@ -2180,9 +2180,12 @@ Surface#height [R/O] [API 1]
 
 Surface#clear([color[, depthValue]]); [NEW]
 
-    Clears the entire surface using the specified color and depth values.  If
-    not provided, `color` defaults to `Color.Transparent` and `depthValue`
-    defaults to 1.0.
+    Clears the entire surface using the specified color and depth value (depth
+    is automatically clamped between 0.0 and 1.0).  If not provided, `color`
+    defaults to `Color.Transparent` and `depthValue` to 1.0.
+    
+    Note: The backbuffer (`Surface.Screen`) is automatically cleared at the
+          beginning of each frame.
 
 Surface#clipTo(x, y, width, height); [API 1]
 
