@@ -42,6 +42,7 @@
 #include "audio.h"
 #include "blend_op.h"
 #include "byte_array.h"
+#include "compress.h"
 #include "debugger.h"
 #include "dispatch.h"
 #include "event_loop.h"
@@ -91,6 +92,7 @@ static bool js_CreateStringFromByteArray        (int num_args, bool is_ctor, int
 static bool js_CreateStringFromCode             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_CreateSurface                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_DeflateByteArray                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_DeflateFile                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_DestroyPerson                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_DetachCamera                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_DetachInput                      (int num_args, bool is_ctor, intptr_t magic);
@@ -221,6 +223,7 @@ static bool js_HashFromFile                     (int num_args, bool is_ctor, int
 static bool js_IgnorePersonObstructions         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_IgnoreTileObstructions           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_InflateByteArray                 (int num_args, bool is_ctor, intptr_t magic);
+static bool js_InflateFile                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_IsAnyKeyPressed                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_IsCameraAttached                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_IsCommandQueueEmpty              (int num_args, bool is_ctor, intptr_t magic);
@@ -619,6 +622,7 @@ vanilla_init(void)
 	api_define_func(NULL, "CreateStringFromCode", js_CreateStringFromCode, 0);
 	api_define_func(NULL, "CreateSurface", js_CreateSurface, 0);
 	api_define_func(NULL, "DeflateByteArray", js_DeflateByteArray, 0);
+	api_define_func(NULL, "DeflateFile", js_DeflateFile, 0);
 	api_define_func(NULL, "Delay", js_Delay, 0);
 	api_define_func(NULL, "DestroyPerson", js_DestroyPerson, 0);
 	api_define_func(NULL, "DetachCamera", js_DetachCamera, 0);
@@ -749,6 +753,7 @@ vanilla_init(void)
 	api_define_func(NULL, "IgnorePersonObstructions", js_IgnorePersonObstructions, 0);
 	api_define_func(NULL, "IgnoreTileObstructions", js_IgnoreTileObstructions, 0);
 	api_define_func(NULL, "InflateByteArray", js_InflateByteArray, 0);
+	api_define_func(NULL, "InflateFile", js_InflateFile, 0);
 	api_define_func(NULL, "IsAnyKeyPressed", js_IsAnyKeyPressed, 0);
 	api_define_func(NULL, "IsCameraAttached", js_IsCameraAttached, 0);
 	api_define_func(NULL, "IsCommandQueueEmpty", js_IsCommandQueueEmpty, 0);
@@ -2145,6 +2150,37 @@ js_DeflateByteArray(int num_args, bool is_ctor, intptr_t magic)
 	if (!(new_array = bytearray_deflate(input_array, level)))
 		jsal_error(JS_ERROR, "Couldn't deflate byte array");
 	jsal_push_sphere_bytearray(new_array);
+	return true;
+}
+
+static bool
+js_DeflateFile(int num_args, bool is_ctor, intptr_t magic)
+{
+	void*       input_data;
+	size_t      input_size;
+	const char* in_filename;
+	int         level = 6;
+	const char* out_filename;
+	void*       output_data;
+	size_t      output_size;
+
+	in_filename = jsal_require_pathname(0, "other", true, false);
+	out_filename = jsal_require_pathname(1, "other", true, true);
+	if (num_args >= 3)
+		level = jsal_to_int(2);
+
+	if (level < 0 || level > 9)
+		jsal_error(JS_RANGE_ERROR, "Invalid compression level '%d'", level);
+
+	if (!(input_data = game_read_file(g_game, in_filename, &input_size)))
+		jsal_error(JS_ERROR, "Couldn't read file '%s'", in_filename);
+	if (!(output_data = z_deflate(input_data, input_size, level, &output_size)))
+		jsal_error(JS_ERROR, "Couldn't deflate file contents");
+	if (!game_write_file(g_game, out_filename, output_data, output_size))
+		jsal_error(JS_ERROR, "Couldn't write deflated file to disk");
+	free(input_data);
+	free(output_data);
+	jsal_push_int(0);
 	return true;
 }
 
@@ -4264,6 +4300,32 @@ js_InflateByteArray(int num_args, bool is_ctor, intptr_t magic)
 	if (!(new_array = bytearray_inflate(array, max_size)))
 		jsal_error(JS_ERROR, "Couldn't inflate byte array");
 	jsal_push_sphere_bytearray(new_array);
+	return true;
+}
+
+static bool
+js_InflateFile(int num_args, bool is_ctor, intptr_t magic)
+{
+	void*       input_data;
+	size_t      input_size;
+	const char* in_filename;
+	int         level = 6;
+	const char* out_filename;
+	void*       output_data;
+	size_t      output_size;
+
+	in_filename = jsal_require_pathname(0, "other", true, false);
+	out_filename = jsal_require_pathname(1, "other", true, true);
+
+	if (!(input_data = game_read_file(g_game, in_filename, &input_size)))
+		jsal_error(JS_ERROR, "Couldn't read file '%s'", in_filename);
+	if (!(output_data = z_inflate(input_data, input_size, 0, &output_size)))
+		jsal_error(JS_ERROR, "Couldn't inflate file contents");
+	if (!game_write_file(g_game, out_filename, output_data, output_size))
+		jsal_error(JS_ERROR, "Couldn't write inflated file to disk");
+	free(input_data);
+	free(output_data);
+	jsal_push_int(0);
 	return true;
 }
 
