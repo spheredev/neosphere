@@ -1374,7 +1374,7 @@ Mouse.Default [R/O] [API 1]
 
     Note: miniSphere currently only supports a single mouse.
 
-Mouse#position [R/O] [NEW]
+Mouse#position [R/O] [API 3]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
 	game's rendering area.  This returns an array `[ x, y ]` which can be
