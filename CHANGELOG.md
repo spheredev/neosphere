@@ -1,7 +1,7 @@
 miniSphere Changelog
 ====================
 
-v6.0.0 - TBD
+v5.5.0 - TBD
 ------------
 
 * Adds support for loading TrueType fonts using the `Font` class.
@@ -12,6 +12,8 @@ v6.0.0 - TBD
 * Adds depth buffer support for surfaces.
 * Adds a new API, `Surface#clear()`, for clearing the entire contents of a
   surface including its depth buffer.
+* Adds support for Oozaru-compatible `/lib/foo.js` specifier format for loading
+  Sphere Runtime modules.
 * Fixes a bug where `Key.Tilde` isn't recognized on macOS.
 * Fixes a bug where trying to load something other than an RFN file using the
   font API can cause the engine to segfault.

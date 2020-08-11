@@ -216,7 +216,9 @@ path_is_file(const path_t* path)
 bool
 path_rooted(const path_t* path)
 {
-	const char* first_hop = path->num_hops >= 1 ? path->hops[0] : "-";
+	const char* first_hop;
+
+	first_hop = path->num_hops >= 1 ? path->hops[0] : "-";
 	return (strlen(first_hop) >= 2 && first_hop[1] == ':')
 		|| strcmp(first_hop, "") == 0;
 }
