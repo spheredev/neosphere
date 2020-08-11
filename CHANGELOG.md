@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.5.0 - TBD
-------------
+v5.5.0 - August 12, 2020
+------------------------
 
 * Adds support for loading TrueType fonts using the `Font` class.
 * Adds support for Node.js-like automatic module type detection for `.js`
@@ -14,6 +14,8 @@ v5.5.0 - TBD
   surface including its depth buffer.
 * Adds support for Oozaru-compatible `/lib/foo.js` specifier format for loading
   Sphere Runtime modules.
+* Canonizes the `.fromFile()` APIs, as well as a few other functions,
+  increasing the API level to 3.
 * Fixes a bug where `Key.Tilde` isn't recognized on macOS.
 * Fixes a bug where trying to load something other than an RFN file using the
   font API can cause the engine to segfault.

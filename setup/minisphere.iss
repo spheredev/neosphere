@@ -33,8 +33,8 @@
 ; solution configurations.
 #define AppName "miniSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "X.X.X"
-#define AppVersion4 "0.0.0.0"
+#define AppVersion3 "5.5.0"
+#define AppVersion4 "5.5.0.3322"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -69,6 +69,7 @@ UninstallDisplayName={#AppName} {#AppVersion3}
 UninstallDisplayIcon={app}\miniSphere.exe,0
 VersionInfoDescription={#AppName} {#AppVersion3} for Windows
 VersionInfoVersion={#AppVersion4}
+WizardStyle=modern
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
