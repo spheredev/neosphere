@@ -910,13 +910,13 @@ FileStream#position [R/W] [API 1]
           stream.  In this case the next write will be at the new position and
           the intervening space filled with NUL bytes.
 
-FileStream#asyncRead(num_bytes); [ASYNC] [NEW]
+FileStream#asyncRead(num_bytes); [ASYNC] [API 3]
 
     Instructs Sphere to read `num_bytes` from the file via the event loop.  The
     promise resolves with an ArrayBuffer containing the data read.  This is an
     asynchronous version of `read()` that can be used with `await`.
 
-FileStream#asyncWrite(data); [ASYNC] [NEW]
+FileStream#asyncWrite(data); [ASYNC] [API 3]
 
     Instructs Sphere to write `data`--either an ArrayBuffer, TypedArray view,
     or DataView--to the file via the event loop.  The promise resolves once all
@@ -1904,7 +1904,7 @@ Socket#remotePort [R/O] [API 1]
     connection.  Generally not very useful, but it's there if you need it.  If
     the socket is disconnected, accessing this will throw an error.
 
-Socket#asyncRead(num_bytes); [ASYNC] [NEW]
+Socket#asyncRead(num_bytes); [ASYNC] [API 3]
 
     Instructs Sphere to read `num_bytes` from the socket via the event loop.
     The promise resolves with an ArrayBuffer containing the data read.  This is
@@ -1914,7 +1914,7 @@ Socket#asyncRead(num_bytes); [ASYNC] [NEW]
           buffer to immediately satisfy it.  However, if the connection is lost
           before the read completes, Sphere will reject the promise.
 
-Socket#asyncWrite(data); [ASYNC] [NEW]
+Socket#asyncWrite(data); [ASYNC] [API 3]
 
     Instructs Sphere to write `data`--either an ArrayBuffer, TypedArray view,
     or DataView--to the socket via the event loop.  The promise resolves once
