@@ -1,6 +1,37 @@
 Release Notes
 =============
 
+miniSphere 5.5
+--------------
+
+* `Texture.fromFile()` and other `.fromFile()` functions have been canonized.
+  Calling the equivalent constructors in a game targeting API 3 will produce a
+  deprecation warning in the engine's terminal output; these constructors will
+  be completely disabled in API 4 in order to pave the way for full 
+  cross-compatibility with Oozaru.
+
+* miniSphere can now load TrueType fonts. To this end, `Font.fromFile()` will
+  accept an additional parameter specifying the size of the font.
+
+* When importing modules from folders, `package.json` handling has been updated
+  to be more consistent with Node.js behavior. In particular, the engine now
+  honors the `"type"` field, enabling it to load ES Module packages. 
+
+* There is now experimental support for depth buffering when rendering to
+  surfaces, including the backbuffer. The depth test can be customized by
+  setting `Surface#depthOp` to the desired value. See the API documentation for
+  more.
+
+* It is now possible to import or `require()` modules installed using `npm`
+  within Cellscript code.
+
+* When importing Sphere Runtime modules, you can now refer to them as using a
+  virtual path, e.g. `/lib/sphere-runtime.js`. This will improve your game's
+  Oozaru compatibility, since browsers don't yet support import maps. Keep in
+  mind, however, that this feature is experimental and may be subject to
+  breaking changes in future releases.
+
+
 miniSphere 5.4
 --------------
 

@@ -6,8 +6,7 @@ v5.5.1 - TBD
 
 * Adds a warning when calling constructors such as `new Texture()` with a
   filename in games targeting API level 3.
-* Fixes a bug where `.asyncRead` and `.asyncWrite` methods weren't supported in
-  retrograde mode, even when targeting API 3.
+* Fixes a bug where async read and write weren't supported in retrograde mode.
 
 v5.5.0 - August 12, 2020
 ------------------------

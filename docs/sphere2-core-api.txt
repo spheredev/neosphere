@@ -964,19 +964,22 @@ Font.Default [R/O] [API 1]
     Gets the engine's default font.  This is the font used for the FPS counter
     and system messages.
 
-Font.fromFile(filename); [ASYNC] [API 3]
+Font.fromFile(filename[, size]); [ASYNC] [API 3]
 
     Loads the RFN font file named by `filename` asynchronously and returns a
-    promise for the newly constructed Font object.
+    promise for the newly constructed Font object. `size` specifies the font
+    size in pixels for TrueType fonts; the size is ignored when loading RFN
+    fonts.
 
     Note: The promise is not guaranteed to resolve in the same frame, although
           in miniSphere it usually does.
 
-new Font(filename); [API 1]
+new Font(filename[, size]); [API 1]
 
-    Loads the RFN font file named by `filename` synchronously, without yielding
-    to the event loop, and returns the newly constructed Font object.  May not
-    be supported on all platforms.
+    Loads the font file named by `filename` synchronously, without yielding to
+    the event loop, and returns the newly constructed Font object.  `size`
+    specifies the font size in pixels for TrueType fonts; the size is ignored
+    when loading RFN fonts.
 
     Warning: This API is deprecated under API 3 and will be removed in API 4.
              Use `Font.fromFile()` instead.
