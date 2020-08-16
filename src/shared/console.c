@@ -55,3 +55,17 @@ console_log(int level, const char* fmt, ...)
 	va_end(ap);
 	fputc('\n', stdout);
 }
+
+void
+console_warn(int level, const char* fmt, ...)
+{
+	va_list ap;
+
+	if (level > s_verbosity)
+		return;
+	printf("\33[31;1mWARNING: \33[m");
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	fputc('\n', stdout);
+}

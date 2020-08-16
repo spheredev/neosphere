@@ -2280,6 +2280,9 @@ js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 	const char*  mode;
 	const char*  pathname;
 
+	if (is_ctor && game_api_level(g_game) >= 3)
+		console_warn(0, "use 'FileStream.fromFile' instead of 'new' when loading files");
+	
 	jsal_require_string(0);
 	file_op = jsal_require_int(1);
 	if (file_op < 0 || file_op >= FILE_OP_MAX)
@@ -2449,6 +2452,9 @@ js_new_Font(int num_args, bool is_ctor, intptr_t magic)
 	bool        kerning = true;
 	const char* pathname;
 	int         size = 12;
+
+	if (is_ctor && game_api_level(g_game) >= 3)
+		console_warn(0, "use 'Font.fromFile' instead of 'new' when loading files");
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
 	if (num_args >= 2) {
@@ -3768,6 +3774,9 @@ js_new_Sample(int num_args, bool is_ctor, intptr_t magic)
 	const char* filename;
 	sample_t*   sample;
 
+	if (is_ctor && game_api_level(g_game) >= 3)
+		console_warn(0, "use 'Sample.fromFile' instead of 'new' when loading files");
+
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!(sample = sample_new(filename, true)))
@@ -3963,6 +3972,9 @@ js_new_Shader(int num_args, bool is_ctor, intptr_t magic)
 	shader_t*   shader;
 	const char* vertex_pathname;
 
+	if (is_ctor && game_api_level(g_game) >= 3)
+		console_warn(0, "use 'Shader.fromFiles' instead of 'new' when loading files");
+	
 	jsal_require_object_coercible(0);
 	jsal_get_prop_string(0, "fragmentFile");
 	jsal_require_string(-1);
@@ -4203,6 +4215,9 @@ js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 	const char* hostname = NULL;
 	int         port;
 	socket_t*   socket;
+
+	if (is_ctor && game_api_level(g_game) >= 3)
+		console_warn(0, "use 'Socket.for' instead of 'new' when creating sockets");
 
 	if (num_args >= 2 || !is_ctor) {
 		hostname = jsal_require_string(0);
@@ -4471,6 +4486,8 @@ js_new_Sound(int num_args, bool is_ctor, intptr_t magic)
 
 	filename = jsal_require_pathname(0, NULL, false, false);
 
+	if (is_ctor && game_api_level(g_game) >= 3)
+		console_warn(0, "use 'Sound.fromFile' instead of 'new' when loading files");
 	if (!(sound = sound_new(filename)))
 		jsal_error(JS_ERROR, "Couldn't load sound file '%s'", filename);
 	jsal_push_class_obj(PEGASUS_SOUND, sound, is_ctor);
@@ -5192,6 +5209,8 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 	}
 	else {
 		// create an Image by loading an image file
+		if (game_api_level(g_game) >= 3)
+			console_warn(0, "use 'Texture.fromFile' instead of 'new' when loading files");
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);

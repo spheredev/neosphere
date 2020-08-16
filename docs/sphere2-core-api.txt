@@ -887,13 +887,11 @@ FileStream.fromFile(filename, file_op); [ASYNC] [API 3]
 
 new FileStream(filename, file_op); [API 1]
 
-    Similar to `FileStream.open`, but opens the file synchronously, without
-    yielding to the event loop.  This may not be supported on all platforms; if
-    not, you may want to consider using `FileStream.open()` instead.
+    Similar to `FileStream.fromFile`, but opens the file synchronously, without
+    yielding to the event loop.
 
-    Note: If `new FileStream()` isn't supported on a platform, synchronous
-          read and write won't be either.  In that case you will also need to
-          use `asyncRead()`/`asyncWrite()` to access the file contents.
+    Warning: This API is deprecated under API 3 and will be removed in API 4.
+             Use `FileStream.fromFile()` instead.
 
 FileStream#fileName [R/O] [API 1]
 
@@ -942,10 +940,16 @@ FileStream#read(num_bytes); [API 1]
     an ArrayBuffer containing the data read.  The file must be opened for
     reading.
 
+    Warning: This API is deprecated under API 3 and will be removed in API 4.
+             Use `FileStream#asyncRead()` instead.
+
 FileStream#write(data); [API 1]
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
+
+    Warning: This API is deprecated under API 3 and will be removed in API 4.
+             Use `FileStream#asyncWrite()` instead.
 
 
 `Font` Object
@@ -973,6 +977,9 @@ new Font(filename); [API 1]
     Loads the RFN font file named by `filename` synchronously, without yielding
     to the event loop, and returns the newly constructed Font object.  May not
     be supported on all platforms.
+
+    Warning: This API is deprecated under API 3 and will be removed in API 4.
+             Use `Font.fromFile()` instead.
 
 Font#fileName [R/O] [API 1]
 
@@ -1578,6 +1585,9 @@ new Sample(filename); [API 1]
     the event loop, and returns the newly constructed Sample object.  May not
     be supported on all platforms.
 
+    Warning: This API is deprecated under API 3 and will be removed in API 4.
+             Use `Sample.fromFile()` instead.
+
 Sample#fileName [R/O] [API 1]
 
     Gets the full SphereFS pathname of the audio file used to construct this
@@ -1987,6 +1997,10 @@ new Sound(filename); [API 1]
     the event loop, and returns the newly constructed Sound object.  May not be
     supported on all platforms.
 
+    Warning: This API is deprecated under API 3 and will be removed in API 4.
+             Use `Sound.fromFile()` instead.
+
+
 Sound#fileName [R/O] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Sound
@@ -2139,6 +2153,9 @@ new Surface(filename); [API 1]
     the event loop, and returns a Surface whose dimensions and initial content
     match that of the loaded image.  May not be supported on all platforms.
 
+    Warning: This API is deprecated under API 3 and will be removed in API 4.
+             Use `Surface.fromFile()` instead.
+
 Surface#blendOp [R/W] [API 2]
 
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
@@ -2228,6 +2245,9 @@ new Texture(filename); [API 1]
     Loads the image file named by `filename` synchronously, without yielding to
     the event loop, and returns the newly constructed Texture object.  May not
     be supported on all platforms.
+
+    Warning: This API is deprecated under API 3 and will be removed in API 4.
+             Use `Texture.fromFile()` instead.
 
 new Texture(width, height[, content]); [API 1]
 
