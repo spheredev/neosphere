@@ -1002,7 +1002,7 @@ pegasus_init(int api_level)
 		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
 		api_define_const("Blend", "Zero", BLEND_ZERO);
 		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
-		api_define_const("DepthOp", "Equal", DEPTH_PASS);
+		api_define_const("DepthOp", "Equal", DEPTH_EQUAL);
 		api_define_const("DepthOp", "Greater", DEPTH_GREATER);
 		api_define_const("DepthOp", "GreaterOrEqual", DEPTH_GEQUAL);
 		api_define_const("DepthOp", "Less", DEPTH_LESS);
