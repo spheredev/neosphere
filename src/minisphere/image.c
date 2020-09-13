@@ -84,7 +84,7 @@ image_new(int width, int height, const color_t* pixels)
 	image->scissor_box = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	image->have_depth = true;
-	image->depth_op = DEPTH_LEQUAL;
+	image->depth_op = DEPTH_PASS;
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	// the image must be fully constructed with a nonzero refcount before we call
@@ -96,7 +96,7 @@ image_new(int width, int height, const color_t* pixels)
 	if (image->have_depth) {
 		old_target = al_get_target_bitmap();
 		al_set_target_bitmap(image->bitmap);
-		al_clear_depth_buffer(1.0);
+		al_clear_depth_buffer(1.0f);
 		al_set_target_bitmap(old_target);
 	}
 
@@ -319,7 +319,7 @@ image_set_depth_op(image_t* it, depth_op_t op)
 			: it->depth_op == DEPTH_LEQUAL ? ALLEGRO_RENDER_LESS_EQUAL
 			: it->depth_op == DEPTH_NOTEQUAL ? ALLEGRO_RENDER_NOT_EQUAL
 			: ALLEGRO_RENDER_NEVER;
-		al_set_render_state(ALLEGRO_DEPTH_TEST, 1);
+		al_set_render_state(ALLEGRO_DEPTH_TEST, it->have_depth);
 		al_set_render_state(ALLEGRO_DEPTH_FUNCTION, depth_func);
 	}
 }

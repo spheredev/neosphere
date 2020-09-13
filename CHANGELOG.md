@@ -6,6 +6,7 @@ v5.5.1 - TBD
 
 * Adds a warning when calling constructors such as `new Texture()` with a
   filename in games targeting API level 3.
+* Changes the default `.depthOp` for surfaces to `DepthOp.AlwaysPass`.
 * Fixes a bug where async read and write weren't supported in retrograde mode.
 * Fixes a bug where `DepthOp.Equal` is treated like `DepthOp.AlwaysPass`.
 

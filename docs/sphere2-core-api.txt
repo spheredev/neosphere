@@ -2180,7 +2180,7 @@ Surface#depthOp [R/W] [NEW]
         DepthOp.LessOrEqual
         DepthOp.NotEqual
 
-	The default for new surfaces is `LessOrEqual`.
+	The default for new surfaces is `AlwaysPass`.
 
 Surface#transform [R/W] [API 1]
 
