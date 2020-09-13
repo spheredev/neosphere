@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-v5.5.1 - TBD
--------------
+v5.5.1 - September 13, 2020
+---------------------------
 
 * Adds a warning when calling constructors such as `new Texture()` with a
   filename in games targeting API level 3.

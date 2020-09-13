@@ -5,7 +5,7 @@ miniSphere
 [![Release](https://img.shields.io/github/release/fatcerberus/minisphere.svg)](https://github.com/fatcerberus/minisphere/releases/latest)
 
 **miniSphere** is a lightweight, fully sandboxed, JavaScript-powered game
-engine and the de facto successor to Chad Austin's original *Sphere* engine,
+engine and the official successor to Chad Austin's original *Sphere* engine,
 written from the ground up in C.  [Allegro 5](http://liballeg.org) holds up the
 backend, and JavaScript support is provided by [ChakraCore](https://github.com/Microsoft/ChakraCore),
 the same high-performance JavaScript engine that powers Microsoft Edge.
@@ -25,10 +25,10 @@ just yet.
 Download
 ========
 
-The latest stable miniSphere release at the time of this writing is
-**miniSphere 5.5.0**, released on Wednesday, August 12, 2020.  miniSphere
-binaries are provided through GitHub, and the latest version is always
-available for download here:
+The latest stable Sphere GDK release at the time of this writing is
+**Sphere 5.5.1**, released on Sunday, September 13, 2020.  Sphere GDK downloads
+are provided through GitHub, and the latest version is always available for
+download here:
 
 * <https://github.com/fatcerberus/minisphere/releases>
 

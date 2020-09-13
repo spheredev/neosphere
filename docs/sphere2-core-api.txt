@@ -1,8 +1,8 @@
 Sphere v2 Core API Reference
 ============================
 
-As the successor to the original Sphere engine, miniSphere implements nearly
-the entire Sphere v1 API.  However, the v1 API is quite dated and, as of
+As the official successor to the original Sphere engine, miniSphere implements
+nearly the entire Sphere v1 API.  However, the v1 API is quite dated and, as of
 miniSphere 4.0, has been deprecated in its entirety.  It is not documented here
 at all; while games using the legacy functions will continue to run, new code
 should be written against the modern Sphere v2 API, documented here.
@@ -10,6 +10,12 @@ should be written against the modern Sphere v2 API, documented here.
 In order to ease migration of existing Sphere v1 codebases to Sphere v2, legacy
 and modern API calls may be freely intermingled within the same codebase, and
 that holds true even when the engine is running in compatibility mode.
+
+This document will, at various points, refer to both "Sphere" and "miniSphere".
+Sphere refers to the platform as a whole, while miniSphere is specifically the
+implementation of the engine for PC operating systems. The other major
+implementation is Oozaru, for Web browsers, which is currently experimental.
+
 
 The Sphere Event Loop
 ---------------------

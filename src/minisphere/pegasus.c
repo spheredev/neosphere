@@ -976,6 +976,7 @@ pegasus_init(int api_level)
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
 		api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
+		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
 		api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
 		api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
 	}
@@ -986,7 +987,6 @@ pegasus_init(int api_level)
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
-		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
 		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
