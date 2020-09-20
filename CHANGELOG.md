@@ -4,7 +4,8 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
-* No changes yet.
+* Changes the `Music` functions in the Sphere Runtime to load audio files
+  asynchronously and return promises if applicable.
 
 
 v5.5.1 - September 13, 2020

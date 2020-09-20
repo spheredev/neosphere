@@ -291,19 +291,23 @@ story reasons.
 
     import { Music } from 'sphere-runtime';
 
-Music.adjustVolume(newVolume, time);
+Music.adjustVolume(newVolume, time); [ASYNC]
 
     Smoothly adjusts the BGM volume level and returns a promise that resolves
-    when the adjustment is complete.  Works with `await`.  `newVolume` should
-    be a value between 0 and 1, where 0 is silent and 1 is full volume.  `time`
-    is the amount of game time the adjustment should take, in frames.
+    when the adjustment is complete. `newVolume` should be a value between 0.0
+    and 1.0, where 0.0 is silent and 1.0 is full volume.  `time` is the amount
+    of game time the adjustment will take, in frames.
 
-Music.override(fileName[, fadeTime]);
+Music.override(fileName[, fadeTime]); [ASYNC]
 
     Overrides the BGM stack by playing the track specified by `fileName` at all
     times.  One example use is in RPGs, e.g. to override the battle music
     during an important storyline event.  `fadeTime` is the amount of crossfade
     to apply, in frames.
+
+    The audio file is loaded in the background; this function returns a promise
+    that resolves once the new track has begun playback. Keep this in mind if
+    you choose to `await` it.
 
     Overriding the BGM doesn't prevent music stack tracking.  Once the override
     is cancelled (by calling `reset()`), the song on top of the stack at that
@@ -313,12 +317,16 @@ Music.override(fileName[, fadeTime]);
           prefix.  The file extension is optional; if no extension is included,
           Sphere will find an appropriate file automatically.
 
-Music.play(fileName[, fadeTime]);
+Music.play(fileName[, fadeTime]); [ASYNC]
 
     Replaces the song on top of the music stack with the track named by
     `fileName`.  This is not an override; if `play()` or `push()` is called
     afterwards, the BGM will change.  `fadeTime` is the amount of crossfade to
     apply, in frames.
+
+    The audio file is loaded in the background; this function returns a promise
+    that resolves once the new track has begun playback. Keep this in mind if
+    you choose to `await` it.
 
     Note: `fileName` is relative to `@/music` unless it includes a SphereFS
           prefix.  The file extension is optional; if no extension is included,
@@ -329,11 +337,15 @@ Music.pop([fadeTime]);
     Pops the topmost song off the music stack.  This will resume playing
     whatever song was playing when the corresponding push() was done.
 
-Music.push(fileName[, fadeTime]);
+Music.push(fileName[, fadeTime]); [ASYNC]
 
     Pushes a new song to the music stack.  If pop() is called later, the
     previous BGM will resume from where it left off.  `fadeTime` is the amount
     of crossfade to apply, in frames.
+
+    The audio file is loaded in the background; this function returns a promise
+    that resolves once the new track has begun playback. Keep this in mind if
+    you choose to `await` it.
 
     Note: `fileName` is relative to `@/music` unless it includes a SphereFS
           prefix.  The file extension is optional; if no extension is included,
@@ -1242,20 +1254,20 @@ new Tween(object[, easing_type]);
     The default is `Easing.Sine`, which animates according to the trigonometric
     sine (`Math.sin`) function.
 
-Tween#easeIn(newValues, numFrames); [async]
+Tween#easeIn(newValues, numFrames); [ASYNC]
 
     Starts an animation such that the "tail" of the easing function (that is,
     the slower part of the animation) is applied at the beginning of the
     movement.  `newValues` is an object naming the properties to animate and
     the new values they should take by the end of the animation.
 
-Tween#easeOut(newValues, numFrames); [async]
+Tween#easeOut(newValues, numFrames); [ASYNC]
 
     Starts an animation such that the "tail" of the easing function is applied
     at the end of the movement.  `newValues` is an object naming the properties
     to animate and the new values they should be tweened to.
 
-Tween#easeInOut(newValues, numFrames); [async]
+Tween#easeInOut(newValues, numFrames); [ASYNC]
 
     Starts an animation which is a combination of `easeIn` and `easeOut`;
     movement will slow down in the middle of the animation before speeding up

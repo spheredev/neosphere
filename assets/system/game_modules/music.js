@@ -52,15 +52,15 @@ class Music extends null
 			mixer.volume = newVolume;
 	}
 
-	static override(fileName, fadeTime = 0)
+	static async override(fileName, fadeTime = 0)
 	{
-		crossfade(fileName, fadeTime, true);
+		await crossfade(fileName, fadeTime, true);
 		haveOverride = true;
 	}
 
-	static play(fileName, fadeTime = 0)
+	static async play(fileName, fadeTime = 0)
 	{
-		topmostSound = crossfade(fileName, fadeTime, false);
+		topmostSound = await crossfade(fileName, fadeTime, false);
 	}
 
 	static pop(fadeTime = 0)
@@ -76,10 +76,10 @@ class Music extends null
 		}
 	}
 
-	static push(fileName, fadeTime = 0)
+	static async push(fileName, fadeTime = 0)
 	{
 		let oldSound = topmostSound;
-		this.play(fileName, fadeTime);
+		await this.play(fileName, fadeTime);
 		oldSounds.push(oldSound);
 	}
 
@@ -107,14 +107,14 @@ function appearifyMixer()
 	}
 }
 
-function crossfade(fileName, frames = 0, forceChange)
+async function crossfade(fileName, frames = 0, forceChange)
 {
 	appearifyMixer();
 	let allowChange = !haveOverride || forceChange;
 	if (currentSound !== null && allowChange)
 		currentSound.tween.easeIn({ volume: 0.0 }, frames);
 	if (fileName !== null) {
-		let stream = new Sound(fileName);
+		let stream = await Sound.fromFile(fileName);
 		stream.repeat = true;
 		stream.volume = 0.0;
 		stream.play(mixer);
