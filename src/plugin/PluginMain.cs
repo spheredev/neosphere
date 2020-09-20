@@ -14,9 +14,9 @@ namespace Sphere.Gdk
 {
     public class PluginMain : IPluginMain
     {
-        public string Name { get; } = "miniSphere Support";
-        public string Description { get; } = "Supports miniSphere and the Sphere v2 toolchain.";
-        public string Version { get; } = "5.5.1";
+        public string Name { get; } = "Sphere v2 Support";
+        public string Description { get; } = "Provides support for Sphere v2 development.";
+        public string Version { get; } = "X.X.X";
         public string Author { get; } = "Fat Cerberus";
 
         internal PluginConf Conf { get; private set; }

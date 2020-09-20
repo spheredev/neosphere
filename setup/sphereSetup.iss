@@ -31,10 +31,10 @@
 ; before building the installer, you should build the complete Sphere GDK for
 ; both x86 and x64 using Visual Studio.  in other words, the entire "GDK" and "Redist"
 ; solution configurations.
-#define AppName "Sphere Development Kit"
+#define AppName "Sphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.5.1"
-#define AppVersion4 "5.5.1.3329"
+#define AppVersion3 "X.X.X"
+#define AppVersion4 "0.0.0"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -43,7 +43,7 @@
 #endif
 
 [Setup]
-OutputBaseFilename=SphereDKSetup-{#AppVersion3}
+OutputBaseFilename=sphereSetup-{#AppVersion3}
 OutputDir=.
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
@@ -59,7 +59,7 @@ ChangesAssociations=yes
 ChangesEnvironment=yes
 Compression=lzma
 DefaultDirName={autopf}\{#AppName}
-DefaultGroupName=Sphere Development Kit
+DefaultGroupName=Sphere Game Development
 DisableProgramGroupPage=yes
 DisableWelcomePage=no
 LicenseFile=../LICENSE.txt

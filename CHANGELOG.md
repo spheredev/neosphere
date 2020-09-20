@@ -1,6 +1,12 @@
 miniSphere Changelog
 ====================
 
+vX.X.X - TBD
+------------
+
+* No changes yet.
+
+
 v5.5.1 - September 13, 2020
 ---------------------------
 
