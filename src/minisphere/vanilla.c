@@ -4656,14 +4656,19 @@ js_ListenOnPort(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_LoadAnimation(int num_args, bool is_ctor, intptr_t magic)
 {
+#ifdef MINISPHERE_MNG
 	animation_t* anim;
 	const char*  filename;
 
 	filename = jsal_require_pathname(0, "animations", true, false);
+	
 	if (!(anim = animation_new(filename)))
 		jsal_error(JS_ERROR, "couldn't load animation '%s'", filename);
 	jsal_push_class_obj(SV1_ANIMATION, anim, false);
 	return true;
+#else
+	jsal_error(JS_ERROR, "MNG animation support is not available");
+#endif
 }
 
 static bool
@@ -6465,12 +6470,15 @@ js_UpdateMapEngine(int num_args, bool is_ctor, intptr_t magic)
 static void
 js_Animation_finalize(void* host_ptr)
 {
+#ifdef MINISPHERE_MNG
 	animation_unref(host_ptr);
+#endif
 }
 
 static bool
 js_Animation_get_height(int num_args, bool is_ctor, intptr_t magic)
 {
+#ifdef MINISPHERE_MNG
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6478,11 +6486,15 @@ js_Animation_get_height(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_int(animation_height(anim));
 	return true;
+#else
+	jsal_error(JS_ERROR, "MNG animation support is not available");
+#endif
 }
 
 static bool
 js_Animation_get_width(int num_args, bool is_ctor, intptr_t magic)
 {
+#ifdef MINISPHERE_MNG
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6490,11 +6502,15 @@ js_Animation_get_width(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_int(animation_width(anim));
 	return true;
+#else
+	jsal_error(JS_ERROR, "MNG animation support is not available");
+#endif
 }
 
 static bool
 js_Animation_drawFrame(int num_args, bool is_ctor, intptr_t magic)
 {
+#ifdef MINISPHERE_MNG
 	animation_t* anim;
 	int          x;
 	int          y;
@@ -6506,11 +6522,15 @@ js_Animation_drawFrame(int num_args, bool is_ctor, intptr_t magic)
 
 	image_draw(animation_frame(anim), x, y);
 	return false;
+#else
+	jsal_error(JS_ERROR, "MNG animation support is not available");
+#endif
 }
 
 static bool
 js_Animation_drawZoomedFrame(int num_args, bool is_ctor, intptr_t magic)
 {
+#ifdef MINISPHERE_MNG
 	animation_t* anim;
 	int          height;
 	double       scale;
@@ -6530,11 +6550,15 @@ js_Animation_drawZoomedFrame(int num_args, bool is_ctor, intptr_t magic)
 	height = animation_height(anim);
 	image_draw_scaled(animation_frame(anim), x, y, width * scale, height * scale);
 	return false;
+#else
+	jsal_error(JS_ERROR, "MNG animation support is not available");
+#endif
 }
 
 static bool
 js_Animation_getDelay(int num_args, bool is_ctor, intptr_t magic)
 {
+#ifdef MINISPHERE_MNG
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6542,11 +6566,15 @@ js_Animation_getDelay(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_int(animation_delay(anim));
 	return true;
+#else
+	jsal_error(JS_ERROR, "MNG animation support is not available");
+#endif
 }
 
 static bool
 js_Animation_getNumFrames(int num_args, bool is_ctor, intptr_t magic)
 {
+#ifdef MINISPHERE_MNG
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6554,11 +6582,15 @@ js_Animation_getNumFrames(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_int(animation_num_frames(anim));
 	return true;
+#else
+	jsal_error(JS_ERROR, "MNG animation support is not available");
+#endif
 }
 
 static bool
 js_Animation_readNextFrame(int num_args, bool is_ctor, intptr_t magic)
 {
+#ifdef MINISPHERE_MNG
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6566,6 +6598,9 @@ js_Animation_readNextFrame(int num_args, bool is_ctor, intptr_t magic)
 
 	animation_update(anim);
 	return false;
+#else
+	jsal_error(JS_ERROR, "MNG animation support is not available");
+#endif
 }
 
 static void

@@ -30,6 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+#if defined(MINISPHERE_MNG)
+
 #include "minisphere.h"
 #include "animation.h"
 
@@ -256,3 +258,5 @@ mng_cb_settimer(mng_handle stream, mng_uint32 msecs)
 	anim->delay = msecs;
 	return MNG_TRUE;
 }
+
+#endif

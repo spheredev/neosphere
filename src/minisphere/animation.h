@@ -33,6 +33,8 @@
 #ifndef SPHERE__ANIMATION_H__INCLUDED
 #define SPHERE__ANIMATION_H__INCLUDED
 
+#if defined(MINISPHERE_MNG)
+
 typedef struct animation animation_t;
 
 animation_t* animation_new        (const char* path);
@@ -44,5 +46,7 @@ int          animation_height     (const animation_t* anim);
 int          animation_num_frames (const animation_t* anim);
 int          animation_width      (const animation_t* anim);
 bool         animation_update     (animation_t* anim);
+
+#endif
 
 #endif // SPHERE__ANIMATION_H__INCLUDED
