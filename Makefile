@@ -190,6 +190,7 @@ bin/minisphere:
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
 	      -Ldep/lib \
 	      -Wl,-rpath=\$$ORIGIN \
+	      -DMINISPHERE_MNG_SUPPORT \
 	      $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
 
@@ -200,6 +201,7 @@ bin/spherun:
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
 	      -Ldep/lib \
 	      -Wl,-rpath=\$$ORIGIN \
+	      -DMINISPHERE_MNG_SUPPORT \
 	      -DMINISPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
 

@@ -32,7 +32,9 @@
 
 #include "minisphere.h"
 
+#if defined(MINISPHERE_MNG_SUPPORT)
 #include <libmng.h>
+#endif
 #include <zlib.h>
 
 #include "api.h"
@@ -921,8 +923,12 @@ print_banner(bool want_copyright, bool want_deps)
 			(al_version_id >> 16) & 0xFF, (al_version_id >> 8) & 0xFF,
 			(al_version_id & 0xFF) - 1);
 		printf("\n");
-		printf("    Allegro: v%-8s   libmng: v%s\n", al_version, mng_version_text());
-		printf("     Dyad.c: v%-8s     zlib: v%s\n", dyad_getVersion(), zlibVersion());
+		printf("    Allegro: v%-8s\n", al_version);
+#if defined(MINISPHERE_MNG_SUPPORT)
+		printf("     libmng: v%s\n", mng_version_text());
+#endif
+		printf("     Dyad.c: v%-8s\n", dyad_getVersion());
+		printf("       zlib: v% s\n", zlibVersion());
 		free(al_version);
 	}
 }

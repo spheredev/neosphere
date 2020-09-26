@@ -30,7 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#if defined(MINISPHERE_MNG)
+#if defined(MINISPHERE_MNG_SUPPORT)
 
 #include "minisphere.h"
 #include "animation.h"

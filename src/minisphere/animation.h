@@ -33,7 +33,7 @@
 #ifndef SPHERE__ANIMATION_H__INCLUDED
 #define SPHERE__ANIMATION_H__INCLUDED
 
-#if defined(MINISPHERE_MNG)
+#if defined(MINISPHERE_MNG_SUPPORT)
 
 typedef struct animation animation_t;
 

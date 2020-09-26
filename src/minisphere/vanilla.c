@@ -4656,7 +4656,7 @@ js_ListenOnPort(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_LoadAnimation(int num_args, bool is_ctor, intptr_t magic)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_t* anim;
 	const char*  filename;
 
@@ -6470,7 +6470,7 @@ js_UpdateMapEngine(int num_args, bool is_ctor, intptr_t magic)
 static void
 js_Animation_finalize(void* host_ptr)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_unref(host_ptr);
 #endif
 }
@@ -6478,7 +6478,7 @@ js_Animation_finalize(void* host_ptr)
 static bool
 js_Animation_get_height(int num_args, bool is_ctor, intptr_t magic)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6494,7 +6494,7 @@ js_Animation_get_height(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Animation_get_width(int num_args, bool is_ctor, intptr_t magic)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6510,7 +6510,7 @@ js_Animation_get_width(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Animation_drawFrame(int num_args, bool is_ctor, intptr_t magic)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_t* anim;
 	int          x;
 	int          y;
@@ -6530,7 +6530,7 @@ js_Animation_drawFrame(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Animation_drawZoomedFrame(int num_args, bool is_ctor, intptr_t magic)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_t* anim;
 	int          height;
 	double       scale;
@@ -6558,7 +6558,7 @@ js_Animation_drawZoomedFrame(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Animation_getDelay(int num_args, bool is_ctor, intptr_t magic)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6574,7 +6574,7 @@ js_Animation_getDelay(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Animation_getNumFrames(int num_args, bool is_ctor, intptr_t magic)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_t* anim;
 
 	jsal_push_this();
@@ -6590,7 +6590,7 @@ js_Animation_getNumFrames(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Animation_readNextFrame(int num_args, bool is_ctor, intptr_t magic)
 {
-#ifdef MINISPHERE_MNG
+#if defined(MINISPHERE_MNG_SUPPORT)
 	animation_t* anim;
 
 	jsal_push_this();
