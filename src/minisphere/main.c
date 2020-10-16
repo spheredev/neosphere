@@ -928,7 +928,7 @@ print_banner(bool want_copyright, bool want_deps)
 		printf("     libmng: v%s\n", mng_version_text());
 #endif
 		printf("     Dyad.c: v%-8s\n", dyad_getVersion());
-		printf("       zlib: v% s\n", zlibVersion());
+		printf("       zlib: v%s\n", zlibVersion());
 		free(al_version);
 	}
 }

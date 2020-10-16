@@ -371,7 +371,7 @@ print_banner(bool want_copyright, bool want_deps)
 			png_version % 100);
 		printf("\n");
 		printf("    libpng: v%-8s\n", png_version_string);
-		printf("      zlib: v% s\n", zlibVersion());
+		printf("      zlib: v%s\n", zlibVersion());
 	}
 }
 
