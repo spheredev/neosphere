@@ -10,4 +10,4 @@ install:
   - sudo apt-get install -qq liballegro5-dev liballegro-acodec5-dev liballegro-audio5-dev liballegro-dialog5-dev liballegro-image5-dev liballegro-physfs5-dev liballegro-ttf5-dev liballegro-video5-dev
   - sudo apt-get install -qq libmng-dev
   - sudo apt-get install -qq libpng-dev
-script: sudo make deps && make && sudo make install
+script: make deps && sudo make installdeps && make && sudo make install
