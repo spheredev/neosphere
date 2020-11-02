@@ -408,9 +408,7 @@ build_init_dir(build_t* it)
 	char          summary[256];
 	char*         summary_for_js;
 	char*         cellscript_template;
-	size_t        cellscript_template_len;
 	char*         mainjs_template;
-	size_t        mainjs_template_len;
 	time_t        current_time;
 	struct tm     tm;
 	char          current_year[5];
@@ -469,11 +467,11 @@ build_init_dir(build_t* it)
 	current_time = time(NULL);
 	tm = *localtime(&current_time);
 	sprintf(current_year, "%d", tm.tm_year + 1900);
-	cellscript_template = fs_fslurp(it->fs, "$/Cellscript.tmpl", &cellscript_template_len);
+	cellscript_template = fs_fslurp(it->fs, "$/Cellscript.tmpl", NULL);
 	cellscript_output = strfmt(cellscript_template, title_for_js, author_for_js, summary_for_js, "320", "240", NULL);
 	fs_fspew(it->fs, "$/Cellscript.js", cellscript_output, strlen(cellscript_output));
 	fs_unlink(it->fs, "$/Cellscript.tmpl");
-	mainjs_template = fs_fslurp(it->fs, "$/src/main.tmpl", &mainjs_template_len);
+	mainjs_template = fs_fslurp(it->fs, "$/src/main.tmpl", NULL);
 	mainjs_output = strfmt(mainjs_template, title_for_js, current_year, author_for_js, NULL);
 	fs_fspew(it->fs, "$/src/main.js", mainjs_output, strlen(mainjs_output));
 	fs_unlink(it->fs, "$/src/main.tmpl");

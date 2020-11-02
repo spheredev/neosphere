@@ -138,15 +138,17 @@ fslurp(const char* filename, size_t *out_size)
 {
 	void* buffer;
 	FILE* file = NULL;
-
+	size_t read_size;
 	if (!(file = fopen(filename, "rb")))
 		return false;
 	fseek(file, 0, SEEK_END);
-	*out_size = (size_t)ftell(file);
-	if (!(buffer = malloc(*out_size)))
+	read_size = (size_t)ftell(file);
+	if (out_size != NULL)
+		*out_size = read_size;
+	if (!(buffer = malloc(read_size)))
 		goto on_error;
 	fseek(file, 0, SEEK_SET);
-	if (fread(buffer, 1, *out_size, file) != *out_size)
+	if (fread(buffer, 1, read_size, file) != read_size)
 		goto on_error;
 	fclose(file);
 	return buffer;
