@@ -469,9 +469,11 @@ build_init_dir(build_t* it)
 	summary_for_js = strescq(summary, '"');
 	if (resolution[0] == '\0') {
 		visor_warn(it->visor, "no resolution entered, using default value");
-		*resolution = "320x240";
+		resolution_for_js = strescq("320x240", '\'');
 	}
-	resolution_for_js = strescq(resolution, '\'');
+	else {
+		resolution_for_js = strescq(resolution, '\'');
+	}
 	current_time = time(NULL);
 	tm = *localtime(&current_time);
 	sprintf(current_year, "%d", tm.tm_year + 1900);
