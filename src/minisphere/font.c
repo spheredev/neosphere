@@ -646,8 +646,6 @@ ttf_open(const char* path, int size, bool kerning, bool antialiasing)
 	return ttf_ref(font);
 
 on_error:
-	if (memfile != NULL)
-		al_fclose(memfile);
 	free(font);
 	return NULL;
 }
