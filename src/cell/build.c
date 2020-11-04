@@ -407,10 +407,8 @@ build_init_dir(build_t* it)
 	char*         mainjs_output;
 	char          summary[256];
 	char*         summary_for_js;
-	char          width[256];
-	char*         width_for_js;
-	char          height[256];
-	char*         height_for_js;
+	char          resolution[256];
+	char*         resolution_for_js;
 	char*         cellscript_template;
 	char*         mainjs_template;
 	time_t        current_time;
@@ -437,8 +435,7 @@ build_init_dir(build_t* it)
 		visor_prompt(it->visor, "title of new game?", title, sizeof title);
 		visor_prompt(it->visor, "author's name?", author, sizeof author);
 		visor_prompt(it->visor, "one-line summary?", summary, sizeof summary);
-		visor_prompt(it->visor, "screen width (default is 320)?", width, sizeof width);
-		visor_prompt(it->visor, "screen height (default is 240)?", height, sizeof height);
+		visor_prompt(it->visor, "screen resolution (default is 320x240)?", resolution, sizeof resolution);
 		visor_end_op(it->visor);
 	}
 	else {
@@ -470,25 +467,16 @@ build_init_dir(build_t* it)
 	title_for_js = strescq(title, '"');
 	author_for_js = strescq(author, '"');
 	summary_for_js = strescq(summary, '"');
-	if (width[0] == '\0') {
-		visor_warn(it->visor, "no width entered, using default value (320)");
-		width_for_js = "320";
+	if (resolution[0] == '\0') {
+		visor_warn(it->visor, "no resolution entered, using default value");
+		*resolution = "320x240";
 	}
-	else {
-		width_for_js = strescq(width, '\'');
-	}
-	if (height[0] == '\0') {
-		visor_warn(it->visor, "no height entered, using default value (240)");
-		height_for_js = "240";
-	}
-	else {
-		height_for_js = strescq(height, '\'');
-	}
+	resolution_for_js = strescq(resolution, '\'');
 	current_time = time(NULL);
 	tm = *localtime(&current_time);
 	sprintf(current_year, "%d", tm.tm_year + 1900);
 	cellscript_template = fs_fslurp(it->fs, "$/Cellscript.tmpl", NULL);
-	cellscript_output = strfmt(cellscript_template, title_for_js, author_for_js, summary_for_js, width_for_js, height_for_js, NULL);
+	cellscript_output = strfmt(cellscript_template, title_for_js, author_for_js, summary_for_js, resolution_for_js, NULL);
 	fs_fspew(it->fs, "$/Cellscript.js", cellscript_output, strlen(cellscript_output));
 	fs_unlink(it->fs, "$/Cellscript.tmpl");
 	mainjs_template = fs_fslurp(it->fs, "$/src/main.tmpl", NULL);
@@ -498,10 +486,7 @@ build_init_dir(build_t* it)
 	free(title_for_js);
 	free(author_for_js);
 	free(summary_for_js);
-	if(width[0] != '\0')
-		free(width_for_js);
-	if(height[0] != '\0')
-		free(height_for_js);
+	free(resolution_for_js);
 	free(cellscript_output);
 	free(cellscript_template);
 	free(mainjs_output);
