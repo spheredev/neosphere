@@ -1,15 +1,15 @@
 /*
- *  <title of your new Sphere game goes here>
- *  (c) <year> <whoever made the game>
+ *  {0}
+ *  (c) {1} {2}
  */
 
-import { Music, Prim, Thread } from 'sphere-runtime';
+import {{ Music, Prim, Thread }} from 'sphere-runtime';
 
 export default
 class MyGame extends Thread
-{
+{{
 	constructor()
-	{
+	{{
 		super();  // call the superclass constructor
 
 		/*
@@ -28,10 +28,10 @@ class MyGame extends Thread
 
 		// avoid boredom by playing some background music!
 		Music.play('@/music/vegetaSSj.ogg');
-	}
+	}}
 
 	on_update()
-	{
+	{{
 		/*
 		 *  put code in here to update game state, for example moving character
 		 *  sprites or updating animations.  this will be called once per frame
@@ -40,26 +40,26 @@ class MyGame extends Thread
 
 		this.x += this.xVel;
 		this.y += this.yVel;
-		if (this.x <= 0) {
+		if (this.x <= 0) {{
 			this.x = 0;
 			this.xVel = 1;
-		}
-		else if (this.x >= Surface.Screen.width - this.image.width) {
+		}}
+		else if (this.x >= Surface.Screen.width - this.image.width) {{
 			this.x = Surface.Screen.width - this.image.width;
 			this.xVel = -1;
-		}
-		if (this.y <= 0) {
+		}}
+		if (this.y <= 0) {{
 			this.y = 0;
 			this.yVel = 1;
-		}
-		else if (this.y >= Surface.Screen.height - this.image.height) {
+		}}
+		else if (this.y >= Surface.Screen.height - this.image.height) {{
 			this.y = Surface.Screen.height - this.image.height;
 			this.yVel = -1;
-		}
-	}
+		}}
+	}}
 
 	on_render()
-	{
+	{{
 		/*
 		 *  put code in here to draw things each frame.  don't do anything
 		 *  other than drawing-related things here, as render calls can be
@@ -78,5 +78,5 @@ class MyGame extends Thread
 
 		Prim.blit(Surface.Screen, this.x, this.y, this.image);
 		Prim.drawRectangle(Surface.Screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);
-	}
-}
+	}}
+}}

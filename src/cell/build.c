@@ -403,11 +403,17 @@ build_init_dir(build_t* it)
 	int           num_overwriting = 0;
 	path_t*       origin_path;
 	path_t*       out_path;
-	char*         output;
+	char*         cellscript_output;
+	char*         mainjs_output;
 	char          summary[256];
 	char*         summary_for_js;
-	char*         template;
-	size_t        template_len;
+	char          resolution[256];
+	char*         resolution_for_js;
+	char*         cellscript_template;
+	char*         mainjs_template;
+	time_t        current_time;
+	struct tm     tm;
+	char          current_year[5];
 	char          title[256];
 	char*         title_for_js;
 
@@ -429,6 +435,7 @@ build_init_dir(build_t* it)
 		visor_prompt(it->visor, "title of new game?", title, sizeof title);
 		visor_prompt(it->visor, "author's name?", author, sizeof author);
 		visor_prompt(it->visor, "one-line summary?", summary, sizeof summary);
+		visor_prompt(it->visor, "screen resolution (default is 320x240)?", resolution, sizeof resolution);
 		visor_end_op(it->visor);
 	}
 	else {
@@ -460,15 +467,32 @@ build_init_dir(build_t* it)
 	title_for_js = strescq(title, '"');
 	author_for_js = strescq(author, '"');
 	summary_for_js = strescq(summary, '"');
-	template = fs_fslurp(it->fs, "$/Cellscript.tmpl", &template_len);
-	output = strfmt(template, title_for_js, author_for_js, summary_for_js, "320", "240", NULL);
-	fs_fspew(it->fs, "$/Cellscript.js", output, strlen(output));
+	if (resolution[0] == '\0') {
+		visor_warn(it->visor, "no resolution entered, using default value");
+		resolution_for_js = strescq("320x240", '\'');
+	}
+	else {
+		resolution_for_js = strescq(resolution, '\'');
+	}
+	current_time = time(NULL);
+	tm = *localtime(&current_time);
+	sprintf(current_year, "%d", tm.tm_year + 1900);
+	cellscript_template = fs_fslurp(it->fs, "$/Cellscript.tmpl", NULL);
+	cellscript_output = strfmt(cellscript_template, title_for_js, author_for_js, summary_for_js, resolution_for_js, NULL);
+	fs_fspew(it->fs, "$/Cellscript.js", cellscript_output, strlen(cellscript_output));
 	fs_unlink(it->fs, "$/Cellscript.tmpl");
+	mainjs_template = fs_fslurp(it->fs, "$/src/main.tmpl", NULL);
+	mainjs_output = strfmt(mainjs_template, title_for_js, current_year, author_for_js, NULL);
+	fs_fspew(it->fs, "$/src/main.js", mainjs_output, strlen(mainjs_output));
+	fs_unlink(it->fs, "$/src/main.tmpl");
 	free(title_for_js);
 	free(author_for_js);
 	free(summary_for_js);
-	free(output);
-	free(template);
+	free(resolution_for_js);
+	free(cellscript_output);
+	free(cellscript_template);
+	free(mainjs_output);
+	free(mainjs_template);
 	visor_end_op(it->visor);
 
 	return true;
