@@ -196,6 +196,9 @@ needed, and their values can be accessed at runtime through `Sphere.Game`.
     value of this property will decide whether to start in fullscreen mode or
     not.
 
+    Note: Fullscreen mode is completely disabled while a debugger is attached,
+          to avoid interfering with breakpoints and exception handling.
+
 "resolution" {default: 320x240} [API 1]
 
     The default screen resolution of the game, expressed as a string of the
