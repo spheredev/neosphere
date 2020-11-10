@@ -981,6 +981,8 @@ report_error(const char* fmt, ...)
 static void
 show_error_screen(const char* message)
 {
+	image_t*               backbuffer;
+	blend_op_t*            blend_op;
 	wraptext_t*            error_info;
 	font_t*                font;
 	bool                   is_copied = false;
@@ -1009,15 +1011,21 @@ show_error_screen(const char* message)
 		goto show_error_box;
 	num_lines = wraptext_len(error_info);
 
-	// reset the projection to pixel-perfect orthographic, switch to the default shader and disable
-	// clipping.  no JavaScript code will execute past this point, so we won't step on any toes.
+	// reset the projection to pixel-perfect orthographic, the blend and depth-test modes to default, switch to
+	// the default shader, and disable clipping.  no JavaScript code will execute past this point, so we won't
+	// step on any toes.
 	screen_unskip_frame(g_screen);
-	image_render_to(screen_backbuffer(g_screen), NULL);
-	shader_use(NULL, true);
-	image_set_scissor(screen_backbuffer(g_screen), mk_rect(0, 0, resolution.width, resolution.height));
+	backbuffer = screen_backbuffer(g_screen);
+	blend_op = blend_op_new_sym(BLEND_OP_ADD, BLEND_ALPHA, BLEND_INV_ALPHA);
 	projection = transform_new();
 	transform_orthographic(projection, 0, 0, resolution.width, resolution.height, -1.0f, 1.0f);
+	image_render_to(backbuffer, NULL);
+	shader_use(NULL, true);
+	image_set_scissor(backbuffer, mk_rect(0, 0, resolution.width, resolution.height));
+	image_set_blend_op(backbuffer, blend_op);
+	image_set_depth_op(backbuffer, DEPTH_PASS);
 	image_set_transform(screen_backbuffer(g_screen), projection);
+	blend_op_unref(blend_op);
 	transform_unref(projection);
 
 	is_finished = false;
