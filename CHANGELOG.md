@@ -4,8 +4,15 @@ miniSphere Changelog
 vX.X.X - TBD
 ------------
 
+* Adds a prompt for the new game's screen resolution when running `cell init`.
 * Changes the `Music` functions in the Sphere Runtime to load audio files
   asynchronously and return promises if applicable.
+* Fixes a bug where trying to load a non-font file or unsupported font format
+  using `new Font()` or `Font.fromFile()` could cause the engine to segfault.
+* Fixes a bug where `cell init` could sometimes append garbage bytes to the end
+  of the generated Cellscript.
+* Fixes a bug where the depth and blend modes weren't reset before showing the
+  exception screen, sometimes making the error message unreadable.
 
 
 v5.5.1 - September 13, 2020
