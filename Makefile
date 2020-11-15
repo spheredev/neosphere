@@ -76,6 +76,7 @@ engine_libs= \
    -lallegro_dialog \
    -lallegro_font \
    -lallegro_image \
+   -lallegro_main \
    -lallegro_memfile \
    -lallegro_primitives \
    -lallegro_ttf \
@@ -129,9 +130,7 @@ ssj_sources=src/ssj/main.c \
 
 ifeq ($(os), Darwin)
 LINKER_ARGS=-Wl,-rpath,\$$ORIGIN
-engine_libs+=-lallegro_main
 CHAKRACORE_URL=https://aka.ms/chakracore/cc_osx_x64_1_11_15
-
 else
 LINKER_ARGS=-Wl,-rpath=\$$ORIGIN
 OPTIONS=-DMINISPHERE_MNG_SUPPORT
