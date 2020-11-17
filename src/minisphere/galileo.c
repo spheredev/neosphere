@@ -409,8 +409,8 @@ shader_ref(shader_t* it)
 void
 shader_unref(shader_t* it)
 {
-	struct uniform *uniform;
-	iter_t iter;
+	struct uniform* uniform;
+	iter_t          iter;
 
 	if (it == NULL || --it->refcount > 0)
 		return;
@@ -419,8 +419,7 @@ shader_unref(shader_t* it)
 
 	iter = vector_enum(it->uniforms);
 	while ((uniform = iter_next(&iter))) {
-		switch (uniform->type)
-		{
+		switch (uniform->type) {
 		case UNIFORM_FLOAT_ARR:
 			free(uniform->float_list);
 			break;
