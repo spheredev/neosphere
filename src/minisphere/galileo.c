@@ -409,10 +409,27 @@ shader_ref(shader_t* it)
 void
 shader_unref(shader_t* it)
 {
+	struct uniform *uniform;
+	iter_t iter;
+
 	if (it == NULL || --it->refcount > 0)
 		return;
 
 	console_log(3, "disposing shader program #%u no longer in use", it->id);
+
+	iter = vector_enum(it->uniforms);
+	while ((uniform = iter_next(&iter))) {
+		switch (uniform->type)
+		{
+		case UNIFORM_FLOAT_ARR:
+			free(uniform->float_list);
+			break;
+		case UNIFORM_INT_ARR:
+			free(uniform->int_list);
+			break;
+		}
+	}
+
 	al_destroy_shader(it->program);
 	vector_free(it->uniforms);
 	free(it);
@@ -831,8 +848,18 @@ free_cached_uniform(shader_t* shader, const char* name)
 
 	iter = vector_enum(shader->uniforms);
 	while ((uniform = iter_next(&iter))) {
-		if (strcmp(uniform->name, name) == 0)
+		if (strcmp(uniform->name, name) == 0) {
+			switch (uniform->type) {
+			case UNIFORM_FLOAT_ARR:
+				free(uniform->float_list);
+				break;
+			case UNIFORM_INT_ARR:
+				free(uniform->int_list);
+				break;
+			}
+
 			iter_remove(&iter);
+		}
 	}
 }
 
