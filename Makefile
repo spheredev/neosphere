@@ -1,8 +1,13 @@
 version=$(shell cat VERSION)
 pkgname=minisphere-$(version)
+os=$(shell uname)
 
 ifndef prefix
+ifeq ($(os), Darwin)
+prefix=/usr/local
+else
 prefix=/usr
+endif
 endif
 installdir=$(DESTDIR)$(prefix)
 
@@ -71,12 +76,12 @@ engine_libs= \
    -lallegro_dialog \
    -lallegro_font \
    -lallegro_image \
+   -lallegro_main \
    -lallegro_memfile \
    -lallegro_primitives \
    -lallegro_ttf \
    -lallegro \
    -lChakraCore \
-   -lmng \
    -lz \
    -lm
 
@@ -123,15 +128,28 @@ ssj_sources=src/ssj/main.c \
    src/ssj/parser.c \
    src/ssj/session.c
 
+ifeq ($(os), Darwin)
+LINKER_ARGS=-Wl,-rpath,\$$ORIGIN
+CHAKRACORE_URL=https://aka.ms/chakracore/cc_osx_x64_1_11_15
+else
+LINKER_ARGS=-Wl,-rpath=\$$ORIGIN
+OPTIONS=-DMINISPHERE_MNG_SUPPORT
+engine-libs+=-lmng
+CHAKRACORE_URL=https://aka.ms/chakracore/cc_linux_x64_1_11_15
+endif
+
 .PHONY: all
 all: minisphere spherun cell ssj
 
 .PHONY: deps
 deps:
 	mkdir -p dep
-	wget -O dep/libChakraCore.tar.gz https://aka.ms/chakracore/cc_linux_x64_1_11_15
+	wget -O dep/libChakraCore.tar.gz $(CHAKRACORE_URL)
 	cd dep && tar xzf libChakraCore.tar.gz --strip-components=1 ChakraCoreFiles/include ChakraCoreFiles/lib
-	cp dep/lib/libChakraCore.so $(installdir)/lib
+
+.PHONY: installdeps
+installdeps:
+	cp dep/lib/* $(installdir)/lib
 
 .PHONY: minisphere
 minisphere: bin/minisphere
@@ -189,8 +207,8 @@ bin/minisphere:
 	      -fno-omit-frame-pointer \
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
 	      -Ldep/lib \
-	      -Wl,-rpath=\$$ORIGIN \
-	      -DMINISPHERE_MNG_SUPPORT \
+	      $(LINKER_ARGS) \
+	      $(OPTIONS) \
 	      $(engine_sources) $(engine_libs)
 	cp -r assets/system bin
 
@@ -200,8 +218,8 @@ bin/spherun:
 	      -fno-omit-frame-pointer \
 	      -Idep/include -Isrc/shared -Isrc/minisphere \
 	      -Ldep/lib \
-	      -Wl,-rpath=\$$ORIGIN \
-	      -DMINISPHERE_MNG_SUPPORT \
+	      $(LINKER_ARGS) \
+	      $(OPTIONS) \
 	      -DMINISPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
 
@@ -211,10 +229,9 @@ bin/cell:
 	      -fno-omit-frame-pointer \
 	      -Idep/include -Isrc/shared \
 	      -Ldep/lib \
-	      -Wl,-rpath=\$$ORIGIN \
+	      $(LINKER_ARGS) \
 	      $(cell_sources) $(cell_libs)
 
 bin/ssj:
 	mkdir -p bin
 	$(CC) -o bin/ssj $(CFLAGS) -Isrc/shared $(ssj_sources)
-
