@@ -407,6 +407,7 @@ static bool js_Shader_setInt                 (int num_args, bool is_ctor, intptr
 static bool js_Shader_setIntArray            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setIntVector           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setMatrix              (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_setSampler             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shape_drawImmediate           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Shape                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shape_get_indexList           (int num_args, bool is_ctor, intptr_t magic);
@@ -990,6 +991,7 @@ pegasus_init(int api_level)
 		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
+		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
 		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
 		api_define_const("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);
@@ -3368,6 +3370,23 @@ js_Shader_setMatrix(int num_args, bool is_ctor, intptr_t magic)
 	transform = jsal_require_class_obj(1, PEGASUS_TRANSFORM);
 
 	shader_put_matrix(shader, name, transform);
+	return false;
+}
+
+static bool
+js_Shader_setSampler(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char*  name;
+	shader_t*    shader;
+	image_t*     texture;
+	int texture_unit;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	texture = jsal_require_class_obj(1, PEGASUS_TEXTURE);
+	texture_unit = jsal_require_int(2);
+	shader_put_sampler(shader, name, texture, texture_unit);
 	return false;
 }
 

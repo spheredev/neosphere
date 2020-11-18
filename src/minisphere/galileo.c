@@ -49,7 +49,9 @@ enum uniform_type
 	UNIFORM_FLOAT_ARR,
 	UNIFORM_FLOAT_VEC,
 	UNIFORM_MATRIX,
+	UNIFORM_SAMPLER
 };
+
 struct uniform
 {
 	char              name[256];
@@ -64,6 +66,10 @@ struct uniform
 		float             float_value;
 		float             float_vec[4];
 		ALLEGRO_TRANSFORM mat_value;
+		struct sampler {
+			image_t* texture;
+			int      texture_unit;
+		} sampler;
 	};
 };
 
@@ -421,6 +427,9 @@ shader_unref(shader_t* it)
 	iter = vector_enum(it->uniforms);
 	while ((uniform = iter_next(&iter))) {
 		switch (uniform->type) {
+		case UNIFORM_SAMPLER:
+			image_unref(uniform->sampler.texture);
+			break;
 		case UNIFORM_FLOAT_ARR:
 			free(uniform->float_list);
 			break;
@@ -591,10 +600,35 @@ shader_put_matrix(shader_t* it, const char* name, const transform_t* matrix)
 	}
 }
 
+void
+shader_put_sampler(shader_t* it, const char* name, const image_t* texture, int texture_unit)
+{
+	struct uniform unif;
+	ALLEGRO_BITMAP* bitmap;
+
+	bitmap = image_bitmap(texture);
+
+	if (s_last_shader == it) {
+		al_set_shader_sampler(name, bitmap, texture_unit);
+	}
+	else {
+		free_cached_uniform(it, name);
+		strncpy(unif.name, name, 255);
+		unif.name[255] = '\0';
+		unif.type = UNIFORM_SAMPLER;
+
+		unif.sampler.texture = image_ref(texture);
+		unif.sampler.texture_unit = texture_unit;
+		vector_push(it->uniforms, &unif);
+	}
+}
+
 bool
 shader_use(shader_t* it, bool force_set)
 {
 	ALLEGRO_SHADER* al_shader;
+	ALLEGRO_BITMAP* bitmap;
+
 	struct uniform* uniform;
 
 	iter_t iter;
@@ -641,6 +675,12 @@ shader_use(shader_t* it, bool force_set)
 				break;
 			case UNIFORM_MATRIX:
 				al_set_shader_matrix(uniform->name, &uniform->mat_value);
+				break;
+			case UNIFORM_SAMPLER:
+				bitmap = image_bitmap(uniform->sampler.texture);
+
+				al_set_shader_sampler(uniform->name, bitmap, uniform->sampler.texture_unit);
+				image_unref(uniform->sampler.texture);
 				break;
 			}
 		}
@@ -850,6 +890,9 @@ free_cached_uniform(shader_t* shader, const char* name)
 	while ((uniform = iter_next(&iter))) {
 		if (strcmp(uniform->name, name) == 0) {
 			switch (uniform->type) {
+			case UNIFORM_SAMPLER:
+				image_unref(uniform->sampler.texture);
+				break;
 			case UNIFORM_FLOAT_ARR:
 				free(uniform->float_list);
 				break;
