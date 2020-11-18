@@ -410,6 +410,7 @@ void
 shader_unref(shader_t* it)
 {
 	struct uniform* uniform;
+
 	iter_t          iter;
 
 	if (it == NULL || --it->refcount > 0)
