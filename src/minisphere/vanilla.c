@@ -2066,7 +2066,7 @@ js_CreateSpriteset(int num_args, bool is_ctor, intptr_t magic)
 
 	spriteset = spriteset_new();
 	spriteset_set_base(spriteset, mk_rect(0, 0, width, height));
-	image = image_new(width, height, NULL);
+	image = image_new(width, height, NULL, 0);
 	for (i = 0; i < num_images; ++i) {
 		// use the same image in all slots to save memory.  this works because
 		// images are read-only, so it doesn't matter that they all share the same
@@ -2126,7 +2126,7 @@ js_CreateSurface(int num_args, bool is_ctor, intptr_t magic)
 	height = jsal_to_int(1);
 	fill_color = num_args >= 3 ? jsal_require_sphere_color(2) : mk_color(0, 0, 0, 0);
 
-	if (!(image = image_new(width, height, NULL)))
+	if (!(image = image_new(width, height, NULL, 0)))
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	image_fill(image, fill_color, 1.0f);
 	jsal_push_class_obj(SV1_SURFACE, image, false);
@@ -8506,7 +8506,7 @@ js_Surface_cloneSection(int num_args, bool is_ctor, intptr_t magic)
 	width = jsal_to_int(2);
 	height = jsal_to_int(3);
 
-	if (!(new_image = image_new(width, height, NULL)))
+	if (!(new_image = image_new(width, height, NULL, 0)))
 		jsal_error(JS_ERROR, "couldn't create surface");
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));
@@ -9045,7 +9045,7 @@ js_Surface_rotate(int num_args, bool is_ctor, intptr_t magic)
 		// FIXME: implement in-place resizing for Surface#rotate()
 		jsal_error(JS_ERROR, "Resizing not implemented for Surface#rotate()");
 	}
-	if (!(new_image = image_new(new_width, new_height, NULL)))
+	if (!(new_image = image_new(new_width, new_height, NULL, 0)))
 		jsal_error(JS_ERROR, "Couldn't create new surface");
 	image_render_to(new_image, NULL);
 	al_clear_to_color(al_map_rgba(0, 0, 0, 0));

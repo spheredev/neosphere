@@ -61,7 +61,7 @@ struct image_lock
 	ptrdiff_t pitch;
 } image_lock_t;
 
-image_t*        image_new                (int width, int height, const color_t* pixels);
+image_t*        image_new                (int width, int height, const color_t* pixels, int multisample);
 image_t*        image_new_slice          (image_t* parent, int x, int y, int width, int height);
 image_t*        image_dup                (const image_t* it);
 image_t*        image_load               (const char* filename);

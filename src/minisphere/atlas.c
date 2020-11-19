@@ -61,7 +61,7 @@ atlas_new(int num_images, int max_width, int max_height)
 	atlas->max_width = max_width;
 	atlas->max_height = max_height;
 	atlas->size = mk_rect(0, 0, atlas->pitch * atlas->max_width, atlas->pitch * atlas->max_height);
-	if (!(atlas->image = image_new(atlas->size.x2, atlas->size.y2, NULL)))
+	if (!(atlas->image = image_new(atlas->size.x2, atlas->size.y2, NULL, 0)))
 		goto on_error;
 
 	atlas->id = s_next_atlas_id++;
