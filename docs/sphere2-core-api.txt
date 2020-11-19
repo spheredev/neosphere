@@ -2179,7 +2179,7 @@ new Surface(width, height[, options]); [NEW]
         The number of samples to use for multisample antialiasing. The default
         value is 0, which means multisampling is not enabled. A value of 1
         would mean one sample per pixel, effectively the same as not being
-        enabled. Normal values would be 4 or 8.
+        enabled. Normal values would be multiples of 2.
 
         This effectively multiplies the resolution of the texture by the value
         you choose internally, so can have a large effect on performance and
@@ -2324,7 +2324,7 @@ new Texture(width, height[, options]); [NEW]
         The number of samples to use for multisample antialiasing. The default
         value is 0, which means multisampling is not enabled. A value of 1
         would mean one sample per pixel, effectively the same as not being
-        enabled. Normal values would be 4 or 8.
+        enabled. Normal values would be multiples of 2.
 
         This effectively multiplies the resolution of the texture by the value
         you choose internally, so can have a large effect on performance and
