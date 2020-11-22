@@ -5,6 +5,7 @@ vX.X.X - TBD
 ------------
 
 * Adds a prompt for the new game's screen resolution when running `cell init`.
+* Improves compatibility of the Makefile with macOS.
 * Changes the `Music` functions in the Sphere Runtime to load audio files
   asynchronously and return promises if applicable.
 * Fixes a bug where trying to load a non-font file or unsupported font format
@@ -13,6 +14,8 @@ vX.X.X - TBD
   of the generated Cellscript.
 * Fixes a bug where the depth and blend modes weren't reset before showing the
   exception screen, sometimes making the error message unreadable.
+* Fixes a memory leak that can occur after setting array uniforms for a shader
+  which subsequently goes unused.
 
 
 v5.5.1 - September 13, 2020
