@@ -14,6 +14,9 @@ vX.X.X - TBD
   of the generated Cellscript.
 * Fixes a bug where the depth and blend modes weren't reset before showing the
   exception screen, sometimes making the error message unreadable.
+* Fixes a bug where SSj doesn't remove cleared breakpoints from the breakpoint
+  list, often leading to a segfault in either miniSphere or SSj as their
+  respective breakpoint lists get out of sync.
 * Fixes a memory leak that can occur after setting array uniforms for a shader
   which subsequently goes unused.
 

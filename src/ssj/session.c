@@ -427,6 +427,9 @@ handle_clear(session_t* session, command_t* cmd)
 		linenum = session->breaks[index].linenum;
 		if (!inferior_clear_breakpoint(session->inferior, handle))
 			return;
+		free(session->breaks[index].filename);
+		--session->num_breaks;
+		memmove(session->breaks + index, session->breaks + index + 1, sizeof(struct breakpoint) * (session->num_breaks - index));
 		printf("cleared breakpoint #%2d at %s:%d.\n", index,
 			session->breaks[index].filename, session->breaks[index].linenum);
 		if ((listing = inferior_get_listing(session->inferior, filename)))

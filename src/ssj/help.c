@@ -43,7 +43,7 @@ help_print(const char* command_name)
 
 			" bt, backtrace    Show a list of all function calls currently on the stack     \n"
 			" bp, breakpoint   Set a breakpoint at file:line (e.g. scripts/eaty-pig.js:812) \n"
-			" cb, clear        Clear a breakpoint set at file:line (see 'breakpoint')       \n"
+			" cb, clear        Clear the breakpoint with a given breakpoint index           \n"
 			" c,  continue     Run either until a breakpoint is hit or an error is thrown   \n"
 			" d,  down         Move down the call stack (inwards) from the selected frame   \n"
 			" e,  eval         Evaluate a JavaScript expression                             \n"
