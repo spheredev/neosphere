@@ -16,7 +16,9 @@ vX.X.X - TBD
   exception screen, sometimes making the error message unreadable.
 * Fixes a bug where SSj doesn't remove cleared breakpoints from the breakpoint
   list, often leading to a segfault in either miniSphere or SSj as their
-  respective breakpoint lists get out of sync.
+  respective breakpoint lists become out-of-sync.
+* Fixes a bug where breakpoints set in Sphere Studio keep being hit even after
+  clearing them in the IDE.
 * Fixes a memory leak that can occur after setting array uniforms for a shader
   which subsequently goes unused.
 

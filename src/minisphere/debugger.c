@@ -497,8 +497,8 @@ process_message(js_step_t* out_step)
 			column = jsal_get_int(-1);
 			mapping = source_map_lookup(filename, line, column);
 			ki_message_add_string(reply, mapping.filename);
-			ki_message_add_int(reply, mapping.line);
-			ki_message_add_int(reply, mapping.column);
+			ki_message_add_int(reply, mapping.line + 1);
+			ki_message_add_int(reply, mapping.column + 1);
 			jsal_pop(3);
 		}
 		break;
