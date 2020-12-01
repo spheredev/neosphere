@@ -134,7 +134,7 @@ CHAKRACORE_URL=https://aka.ms/chakracore/cc_osx_x64_1_11_15
 else
 LINKER_ARGS=-Wl,-rpath=\$$ORIGIN
 OPTIONS=-DMINISPHERE_MNG_SUPPORT
-engine-libs+=-lmng
+engine_libs+=-lmng
 CHAKRACORE_URL=https://aka.ms/chakracore/cc_linux_x64_1_11_15
 endif
 

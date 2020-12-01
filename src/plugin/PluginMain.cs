@@ -16,7 +16,7 @@ namespace Sphere.Gdk
     {
         public string Name { get; } = "Sphere v2 Support";
         public string Description { get; } = "Provides support for Sphere v2 development.";
-        public string Version { get; } = "X.X.X";
+        public string Version { get; } = "5.5.2";
         public string Author { get; } = "Fat Cerberus";
 
         internal PluginConf Conf { get; private set; }

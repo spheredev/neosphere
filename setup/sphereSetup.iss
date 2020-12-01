@@ -33,8 +33,8 @@
 ; solution configurations.
 #define AppName "Sphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "X.X.X"
-#define AppVersion4 "0.0.0"
+#define AppVersion3 "5.5.2"
+#define AppVersion4 "5.5.2.3345"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -43,7 +43,7 @@
 #endif
 
 [Setup]
-OutputBaseFilename=sphereSetup-{#AppVersion3}
+OutputBaseFilename=sphereSetup-{#AppVersion3}-msw
 OutputDir=.
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
@@ -51,7 +51,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion4}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=ï¿½2015-20209 Fat Cerberus
+AppCopyright=© 2015-2020 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x86 x64
 ArchitecturesInstallIn64BitMode=x64
@@ -67,7 +67,7 @@ SetupIconFile=..\msvs\spherical.ico
 SolidCompression=yes
 UninstallDisplayName={#AppName} {#AppVersion3}
 UninstallDisplayIcon={app}\miniSphere.exe,0
-VersionInfoDescription={#AppName} {#AppVersion3} for Windows
+VersionInfoDescription={#AppName} {#AppVersion3} Setup for Windows
 VersionInfoVersion={#AppVersion4}
 WizardStyle=modern
 

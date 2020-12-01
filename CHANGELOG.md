@@ -1,8 +1,8 @@
 miniSphere Changelog
 ====================
 
-vX.X.X - TBD
-------------
+v5.5.2 - November 30, 2020
+--------------------------
 
 * Adds a prompt for the new game's screen resolution when running `cell init`.
 * Improves compatibility of the Makefile with macOS.
@@ -21,7 +21,6 @@ vX.X.X - TBD
   clearing them in the IDE.
 * Fixes a memory leak that can occur after setting array uniforms for a shader
   which subsequently goes unused.
-
 
 v5.5.1 - September 13, 2020
 ---------------------------

@@ -26,7 +26,7 @@ Download
 ========
 
 The latest stable Sphere GDK release at the time of this writing is
-**Sphere 5.5.1**, released on Sunday, September 13, 2020.  Sphere GDK downloads
+**Sphere 5.5.2**, released on Monday, November 30, 2020.  Sphere GDK downloads
 are provided through GitHub, and the latest version is always available for
 download here:
 
