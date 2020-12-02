@@ -2159,6 +2159,34 @@ new Surface(width, height[, content]); [API 1]
           enough pixel data to cover the entire surface, a RangeError will be
           thrown.
 
+new Surface(width, height[, options]); [NEW]
+
+    Constructs a new Surface with the specified options. `width` and `height`
+    specify the size in pixels of the surface.
+
+    The following are all optional:
+
+    options.color
+        A `Color` with which the surface will be filled. The default is
+        `Color.Transparent`.
+
+    options.content:
+        A buffer object holding the RGBA pixel data to use to initialize the
+        image. The pixel data should not be padded (i.e. stride equal to
+        width).
+
+    options.multisample
+        The number of samples to use for multisample antialiasing. The default
+        value is 0, which means multisampling is not enabled. A value of 1
+        would mean one sample per pixel, effectively the same as not being
+        enabled. Normal values would be multiples of 2.
+
+        This effectively multiplies the resolution of the texture by the value
+        you choose internally, so can have a large effect on performance and
+        texture size.
+
+    If `content` is specified, both `color` and `multisample` will be ignored.
+
 new Surface(filename); [API 1]
 
     Loads the image file named by `filename` synchronously, without yielding to
@@ -2275,6 +2303,34 @@ new Texture(width, height[, content]); [API 1]
     Note: When passing a buffer for `content` and the buffer doesn't contain
           enough pixel data to cover the entire texture, a RangeError will be
           thrown.
+
+new Texture(width, height[, options]); [NEW]
+
+    Constructs a new Texture with the specified options. `width` and `height`
+    specify the size in pixels of the surface.
+
+    The following are all optional:
+
+    options.color
+        A `Color` with which the texture will be filled. The default is
+        `Color.Transparent`.
+
+    options.content:
+        A buffer object holding the RGBA pixel data to use to initialize the
+        image. The pixel data should not be padded (i.e. stride equal to
+        width).
+
+    options.multisample
+        The number of samples to use for multisample antialiasing. The default
+        value is 0, which means multisampling is not enabled. A value of 1
+        would mean one sample per pixel, effectively the same as not being
+        enabled. Normal values would be multiples of 2.
+
+        This effectively multiplies the resolution of the texture by the value
+        you choose internally, so can have a large effect on performance and
+        texture size.
+
+    If `content` is specified, both `color` and `multisample` will be ignored.
 
 new Texture(surface); [API 1]
 

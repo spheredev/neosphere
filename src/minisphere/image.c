@@ -67,7 +67,7 @@ static image_t*     s_last_image = NULL;
 static unsigned int s_next_image_id = 0;
 
 image_t*
-image_new(int width, int height, const color_t* pixels)
+image_new(int width, int height, const color_t* pixels, int multisample)
 {
 	image_t*        image;
 	ALLEGRO_BITMAP* old_target;
@@ -76,6 +76,7 @@ image_new(int width, int height, const color_t* pixels)
 	if (!(image = calloc(1, sizeof(image_t))))
 		goto on_error;
 	al_set_new_bitmap_depth(16);
+	al_set_new_bitmap_samples(multisample);
 	if ((image->bitmap = al_create_bitmap(width, height)) == NULL)
 		goto on_error;
 	image->id = s_next_image_id++;

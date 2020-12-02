@@ -159,7 +159,7 @@ font_load(const char* filename)
 	n_glyphs_per_row = ceil(sqrt(rfn.num_chars));
 	atlas_size_x = max_x * n_glyphs_per_row;
 	atlas_size_y = max_y * n_glyphs_per_row;
-	if ((atlas = image_new(atlas_size_x, atlas_size_y, NULL)) == NULL)
+	if ((atlas = image_new(atlas_size_x, atlas_size_y, NULL, 0)) == NULL)
 		goto on_error;
 
 	// pass 2: load glyph data

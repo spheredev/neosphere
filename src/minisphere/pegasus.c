@@ -539,9 +539,11 @@ static mixer_t*  s_def_mixer;
 static js_ref_t* s_screen_obj;
 
 static js_ref_t* s_key_color;
+static js_ref_t* s_key_content;
 static js_ref_t* s_key_done;
 static js_ref_t* s_key_get;
 static js_ref_t* s_key_inBackground;
+static js_ref_t* s_key_multisample;
 static js_ref_t* s_key_priority;
 static js_ref_t* s_key_set;
 static js_ref_t* s_key_stack;
@@ -571,9 +573,11 @@ pegasus_init(int api_level)
 		s_api_level_nominal = SPHERE_API_LEVEL_STABLE;
 
 	s_key_color = jsal_new_key("color");
+	s_key_content = jsal_new_key("content");
 	s_key_done = jsal_new_key("done");
 	s_key_get = jsal_new_key("get");
 	s_key_inBackground = jsal_new_key("inBackground");
+	s_key_multisample = jsal_new_key("multisample");
 	s_key_priority = jsal_new_key("priority");
 	s_key_set = jsal_new_key("set");
 	s_key_stack = jsal_new_key("stack");
@@ -5177,6 +5181,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 	color_t        fill_color;
 	int            height;
 	image_t*       image;
+	int            multisample;
 	image_t*       src_image;
 	int            width;
 
@@ -5189,8 +5194,36 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		height = jsal_require_int(1);
 		if (buffer_size < width * height * sizeof(color_t))
 			jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
-		if (!(image = image_new(width, height, buffer)))
+		if (!(image = image_new(width, height, buffer, 0)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
+	}
+	else if (num_args >= 3 && s_api_level >= 4 && jsal_is_object_coercible(2)) {
+		// create an Image with additional options
+		width = jsal_require_int(0);
+		height = jsal_require_int(1);
+
+		if (jsal_get_prop_key(2, s_key_multisample))
+			multisample = jsal_require_int(-1);
+		else
+			multisample = 0;
+
+
+		if (jsal_get_prop_key(2, s_key_content)) {
+			buffer = jsal_require_buffer_ptr(-1, &buffer_size);
+			if (buffer_size < width * height * sizeof(color_t))
+				jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
+			if (!(image = image_new(width, height, buffer, 0)))
+				jsal_error(JS_ERROR, "Couldn't create GPU texture");
+		}
+		else {
+			if (jsal_get_prop_key(2, s_key_color))
+				fill_color = jsal_pegasus_require_color(-1);
+			else
+				fill_color = mk_color(0, 0, 0, 0);
+			if (!(image = image_new(width, height, NULL, multisample)))
+				jsal_error(JS_ERROR, "Couldn't create GPU texture");
+			image_fill(image, fill_color, 1.0f);
+		}
 	}
 	else if (num_args >= 2) {
 		// create a Texture filled with a single pixel value
@@ -5198,7 +5231,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		height = jsal_require_int(1);
 		fill_color = num_args >= 3 ? jsal_pegasus_require_color(2)
 			: mk_color(0, 0, 0, 0);
-		if (!(image = image_new(width, height, NULL)))
+		if (!(image = image_new(width, height, NULL, 0)))
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 		image_fill(image, fill_color, 1.0f);
 	}
