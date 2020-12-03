@@ -1,0 +1,28 @@
+{
+	"compilerOptions": {
+		"target": "es2017",
+		"lib": [ "es2017" ],
+		"module": "es2015",
+		"baseUrl": "lib",
+		"paths": {
+			"@/*": [ "../*" ],
+			"$/*": [ "../scripts/*" ]
+		},
+
+		// ensure `tsc` will only type-check
+		"noEmit": true,
+
+		"allowJs": true,
+		"noEmitOnError": true,
+		"sourceMap": true,
+		"strict": true
+	},
+	"include": [
+		"types/**/*",
+		"scripts/**/*"
+	],
+	"exclude": [
+		"Cellscript.js",
+		"dist/**"
+    ]
+}

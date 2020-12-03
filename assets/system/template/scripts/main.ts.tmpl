@@ -3,11 +3,17 @@
  *  (c) {1} {2}
  */
 
-import {{ Music, Prim, Thread }} from 'sphere-runtime';
+import {{ Music, Prim, Thread, Random }} from 'sphere-runtime';
 
 export default
 class MyGame extends Thread
 {{
+	image = new Texture('@/images/justSaiyan.png');
+	x = 0;
+	y = 0;
+	xVel = 1;
+	yVel = 1;
+
 	constructor()
 	{{
 		super();  // call the superclass constructor
@@ -18,13 +24,6 @@ class MyGame extends Thread
 		 *  the Game object, or `global` to make global variables that are
 		 *  accessible game-wide.
 		 */
-
-		// initialize data for our session
-		this.image = new Texture('@/images/justSaiyan.png');
-		this.x = 0;
-		this.y = 0;
-		this.xVel = 1;
-		this.yVel = 1;
 
 		// avoid boredom by playing some background music!
 		Music.play('@/music/vegetaSSj.ogg');
@@ -66,15 +65,12 @@ class MyGame extends Thread
 		 *  skipped and are not guaranteed to match the frame rate.
 		 */
 
+		const sW = Surface.Screen.width;
+		const sH = Surface.Screen.height;
+
 		Prim.fill(Surface.Screen, Color.DodgerBlue);
-		Prim.drawSolidEllipse(Surface.Screen,
-			Surface.Screen.width / 2, Surface.Screen.height / 2,
-			Surface.Screen.width / 4, Surface.Screen.height / 4,
-			Color.Chartreuse, Color.DarkGreen);
-		Prim.drawEllipse(Surface.Screen,
-			Surface.Screen.width / 2, Surface.Screen.height / 2,
-			Surface.Screen.width / 4, Surface.Screen.height / 4,
-			Color.Black);
+		Prim.drawSolidEllipse(Surface.Screen, sW / 2, sH / 2, sW / 4, sH / 4, Color.Chartreuse, Color.DarkGreen);
+		Prim.drawEllipse(Surface.Screen, sW / 2, sH / 2, sW / 4, sH / 4, Color.Black);
 
 		Prim.blit(Surface.Screen, this.x, this.y, this.image);
 		Prim.drawRectangle(Surface.Screen, this.x, this.y, this.image.width, this.image.height, 2, Color.Black);

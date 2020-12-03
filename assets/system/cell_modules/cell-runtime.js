@@ -31,7 +31,7 @@
 **/
 
 // Cell-specific modules
-export { tsc } from 'compilers';
+export { tsc } from 'compile';
 
 // Sphere Runtime shared modules
 export { default as from } from 'from';
