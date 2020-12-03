@@ -1768,6 +1768,12 @@ Shader#setMatrix(name, transform); [API 1]
 
     Note: Matrix types other than `mat4` are not currently supported.
 
+Shader#setSampler(name, texture, texture_unit); [NEW]
+
+    Assigns a texture to a texture unit.
+
+    Note: Texture unit 0 is reserved for `al_tex`.
+
 
 `Shape` Object
 --------------
