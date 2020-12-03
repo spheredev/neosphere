@@ -30,6 +30,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
+// Cell-specific modules
+export { tsc } from 'compilers';
+
 // Sphere Runtime shared modules
 export { default as from } from 'from';
 export { default as DataStream } from 'data-stream';
