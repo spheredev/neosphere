@@ -17,13 +17,13 @@ this new commit.
 * Version number and release date in `README.md`
 * Version number and release date in manual pages (`manpages/*`)
 * Version number, release date, and changelog entries in `CHANGELOG.md`
-* Version number in `setup/minisphere.iss`
+* Version number in `setup/sphereSetup.iss`
 
 
 Build the Release
 -----------------
 
-* In Windows using Visual Studio 2017:
+* In Windows using Visual Studio 2019:
     - Run `git clean -xdf`, then build the following project configurations:
         + **minisphere:** x64 Redist, x64 Console, Win32 Redist, Win32 Console
         + **Cell:** x64 Console, Win32 Console
@@ -33,7 +33,7 @@ Build the Release
     - Compile `setup/minisphere.iss` using the latest version of Inno Setup
     - `minisphereSetup-X.Y.Z.exe` will be in `setup/`
 
-* Using a 64-bit installation of Ubuntu 16.04:
+* Using a 64-bit installation of Ubuntu:
     - Run `make clean all dist`
     - `minisphere_X.Y.Z.tar.gz` will be in `dist/`
 
@@ -45,5 +45,5 @@ Unleash the Beast!
 
 * Post a release to GitHub pointing at the new Git tag, and upload the
   following files built above:
-    - `minisphereSetup-X.Y.Z.exe`
+    - `sphereSetup-X.Y.Z-msw.exe`
     - `minisphere-X.Y.Z.tar.gz`
