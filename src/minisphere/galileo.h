@@ -101,7 +101,7 @@ void                   shader_put_int          (shader_t* it, const char* name, 
 void                   shader_put_int_array    (shader_t* it, const char* name, int values[], int size);
 void                   shader_put_int_vector   (shader_t* it, const char* name, int values[], int size);
 void                   shader_put_matrix       (shader_t* it, const char* name, const transform_t* transform);
-void                   shader_put_sampler      (shader_t* it, const char* name, const image_t* texture, int texture_unit);
+void                   shader_put_sampler      (shader_t* it, const char* name, image_t* texture, int texture_unit);
 bool                   shader_use              (shader_t* shader, bool force_set);
 shape_t*               shape_new               (vbo_t* vertices, ibo_t* indices, shape_type_t type, image_t* texture);
 shape_t*               shape_ref               (shape_t* it);

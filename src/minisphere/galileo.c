@@ -601,7 +601,7 @@ shader_put_matrix(shader_t* it, const char* name, const transform_t* matrix)
 }
 
 void
-shader_put_sampler(shader_t* it, const char* name, const image_t* texture, int texture_unit)
+shader_put_sampler(shader_t* it, const char* name, image_t* texture, int texture_unit)
 {
 	struct uniform unif;
 	ALLEGRO_BITMAP* bitmap;
