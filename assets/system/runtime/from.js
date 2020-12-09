@@ -301,7 +301,7 @@ class Query
 	shuffle()
 	{
 		return this.thru(all => {
-			for (let i = 0, len = all.length - 1; i < len; ++i) {
+			for (let i = 0, len = all.length; i < len - 1; ++i) {
 				const pick = i + Math.floor(Math.random() * (len - i));
 				const value = all[pick];
 				all[pick] = all[i];
