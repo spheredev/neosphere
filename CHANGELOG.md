@@ -4,7 +4,11 @@ miniSphere Changelog
 v5.6.0 - TBD
 ------------
 
-No changes since the previous release so far.
+* Adds support for multiple texture units and, by extension, additional
+  `sampler` uniforms in shaders.
+* Adds out-of-the-box support for projects written in TypeScript.
+* Adds TypeScript support to the project created by `cell init`.
+* Fixes a bug where `Query#shuffle()` never moves the last result from the end.
 
 
 v5.5.2 - November 30, 2020
