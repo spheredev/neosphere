@@ -1,6 +1,6 @@
-.TH SSJ 1 "xxxx-xx-xx" "miniSphere x.x.x" "Sphere Game Development Kit"
+.TH SSJ 1 "xxxx-xx-xx" "Sphere x.x.x" "Sphere: the JavaScript game platform"
 .SH NAME
-ssj - the JavaScript debugger for miniSphere
+ssj - the JavaScript debugger for neoSphere
 .SH SYNOPSIS
 .nh
 .na
@@ -13,7 +13,7 @@ ssj - the JavaScript debugger for miniSphere
 .ad
 .hy
 .SH DESCRIPTION
-When used in combination with the miniSphere game engine, SSj allows you step through a game's code and track its state as it executes.
+When used in combination with the neoSphere game engine, SSj allows you step through a game's code and track its state as it executes.
 In this regard it is similar in purpose to other CLI debuggers such as GDB.
 The debugger enables you to diagnose bugs and crashes as they happen by tracking program variables, function calls, and objects, all while your game is still running.
 .P
@@ -43,7 +43,7 @@ SSj will let you see that output.
 .P
 Unless you use the
 .B \-\-connect
-option (see below), SSj will start miniSphere for you.
+option (see below), SSj will start neoSphere for you.
 This avoids to need to open a separate terminal for debugging.
 Simply provide the name of a Sphere game directory or package as the last argument to the
 .BR ssj (1)
@@ -174,7 +174,7 @@ This can help you to regain your bearings after an extended debugging session.
 .BR quit " or " q
 Quit SSj.
 This will detach the debugger and return you to the shell.
-In most cases the miniSphere debug target will also close, unless SSj was started with the
+In most cases the neoSphere debug target will also close, unless SSj was started with the
 .B -c
 option to connect to a running instance.
 .P
@@ -186,7 +186,7 @@ with no arguments will show the list of usable commands and a short summary of t
 If you need help with a specific command, simply provide that command name as an argument to
 .BR help .
 .SH BUGS
-Report any bugs found in miniSphere or the GDK tools to:
+Report any bugs found in neoSphere or the Sphere GDK tools to:
 .br
 .B Bruce Pascoe <fatcerberus@icloud.com>
 .SH SEE ALSO

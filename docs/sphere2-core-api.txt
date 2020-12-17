@@ -1,7 +1,7 @@
 Sphere v2 Core API Reference
 ============================
 
-As the official successor to the original Sphere engine, miniSphere implements
+As the official successor to the original Sphere engine, neoSphere implements
 nearly the entire Sphere v1 API.  However, the v1 API is quite dated and, as of
 miniSphere 4.0, has been deprecated in its entirety.  It is not documented here
 at all; while games using the legacy functions will continue to run, new code
@@ -11,8 +11,8 @@ In order to ease migration of existing Sphere v1 codebases to Sphere v2, legacy
 and modern API calls may be freely intermingled within the same codebase, and
 that holds true even when the engine is running in compatibility mode.
 
-This document will, at various points, refer to both "Sphere" and "miniSphere".
-Sphere refers to the platform as a whole, while miniSphere is specifically the
+This document will, at various points, refer to both "Sphere" and "neoSphere".
+Sphere refers to the platform as a whole, while neoSphere is specifically the
 implementation of the engine for PC operating systems. The other major
 implementation is Oozaru, for Web browsers, which is currently experimental.
 
@@ -60,7 +60,7 @@ API level will be incremented and some of the experimental APIs will be
 "canonized" under the new API level.  Once that happens, those APIs are said to
 be frozen: no further breaking changes will be made to them.
 
-The maximum supported API level in this version of miniSphere is level 2.
+The maximum supported API level in this version of neoSphere is level 3.
 
 If a game uses only frozen APIs, it shouldn't be broken by upgrading to a newer
 engine version; this is the true goal of an API freeze.  If the behavior of a
@@ -177,8 +177,8 @@ needed, and their values can be accessed at runtime through `Sphere.Game`.
 "main" [REQUIRED] [API 1]
 
     The SphereFS path of the main JavaScript module (see below for more on
-    SphereFS).  This is the script miniSphere will run when the game is
-    started.  If no "main" field is present, the game will not start.
+    SphereFS).  This is the script neoSphere will run when the game is started.
+    If no "main" field is present, the game will not start.
 
 "apiLevel" {default: 1} [API 1]
 
@@ -232,7 +232,7 @@ needed, and their values can be accessed at runtime through `Sphere.Game`.
 
     If this is set to 1, the game runs in Sphere 1.x compatibility mode.  In
     compatibility mode, the main module is executed as traditional JS code,
-    and miniSphere calls the global `game()` function--if one is provided--to
+    and neoSphere calls the global `game()` function--if one is provided--to
     begin game execution.
 
     Note: Regardless of the version specified, both Sphere v1 and v2 APIs will
@@ -981,7 +981,7 @@ Font.fromFile(filename[, size]); [ASYNC] [API 3]
     fonts.
 
     Note: The promise is not guaranteed to resolve in the same frame, although
-          in miniSphere it usually does.
+          in neoSphere it usually does.
 
 new Font(filename[, size]); [API 1]
 
@@ -1109,7 +1109,7 @@ Joystick.P4 [R/O] [API 2]
 Joystick.getDevices(); [API 1]
 
     Gets an array of Joystick objects, one for each connected gamepad or
-    joystick.  miniSphere currently supports a maximum of 16 attached devices;
+    joystick.  neoSphere currently supports a maximum of 16 attached devices;
     this will never return more than that.
 
 Joystick#name [R/O] [API 1]
@@ -1266,7 +1266,7 @@ Keyboard.Default [R/O] [API 1]
 
     Gets a `Keyboard` object for the default keyboard device.
 
-    Note: miniSphere currently only supports a single keyboard.
+    Note: neoSphere currently only supports a single keyboard.
 
 Keyboard#capsLock [R/O] [API 1]
 Keyboard#numLock [R/O] [API 1]
@@ -1391,7 +1391,7 @@ Mouse.Default [R/O] [API 1]
 
     Gets a `Mouse` object for the default mouse device.
 
-    Note: miniSphere currently only supports a single mouse.
+    Note: neoSphere currently only supports a single mouse.
 
 Mouse#position [R/O] [API 3]
 
@@ -2007,7 +2007,7 @@ Sound.fromFile(filename); [ASYNC] [API 3]
     formats are **NOT** supported.
 
     Note: The promise is not guaranteed to resolve on the same frame, although
-          in miniSphere it usually does.
+          in neoSphere it usually does.
 
 new Sound(filename); [API 1]
 
@@ -2256,7 +2256,7 @@ Texture.fromFile(filename); [ASYNC] [API 3]
     promise for the newly constructed Texture object.
 
     Note: The promise is not guaranteed to resolve on the same frame, although
-          in miniSphere it usually does.
+          in neoSphere it usually does.
 
 new Texture(filename); [API 1]
 

@@ -248,7 +248,7 @@
             this.editorLabel1.Name = "editorLabel1";
             this.editorLabel1.Size = new System.Drawing.Size(562, 23);
             this.editorLabel1.TabIndex = 0;
-            this.editorLabel1.Text = "Where is miniSphere installed? (GDK tools required)";
+            this.editorLabel1.Text = "Where is Sphere installed?";
             this.editorLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // SettingsPage

@@ -9,7 +9,7 @@ the public API used to write build scripts.
 SphereFS File System
 --------------------
 
-Cell, like miniSphere, uses the SphereFS standard for file paths.  Under
+Cell, like neoSphere, uses the SphereFS standard for file paths.  Under
 SphereFS, when a relative path is used in an API call, it will usually be
 resolved relative to the entrypoint (in Cell, the location of Cellscript.js).
 To load files from a different location, you can use one of the SphereFS
@@ -22,7 +22,7 @@ prefixes:
     #/: The Sphere system directory.  This contains assets included with the
         engine.  In most cases this directory is read-only.  Build scripts
         should NOT try to write anything here as doing so can damage the host
-        miniSphere installation.
+        neoSphere installation.
 
 As an example, the following will create a FileStream to write the file
 `EatyPig.bin` in the root of the game package:

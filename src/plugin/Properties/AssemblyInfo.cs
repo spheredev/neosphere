@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Fat Cerberus")]
-[assembly: AssemblyProduct("miniSphere")]
+[assembly: AssemblyProduct("Sphere: the JavaScript game platform")]
 [assembly: AssemblyCopyright("© 2015-2020 Fat Cerberus")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

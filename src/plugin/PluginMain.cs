@@ -15,7 +15,7 @@ namespace Sphere.Gdk
     public class PluginMain : IPluginMain
     {
         public string Name { get; } = "Sphere v2 Support";
-        public string Description { get; } = "Provides support for Sphere v2 development.";
+        public string Description { get; } = "Provides support for the Sphere v2 platform.";
         public string Version { get; } = "x.x.x";
         public string Author { get; } = "Fat Cerberus";
 
@@ -29,7 +29,7 @@ namespace Sphere.Gdk
         {
             Conf = new PluginConf(conf);
 
-            PluginManager.Register(this, new miniSphereStarter(this), "miniSphere");
+            PluginManager.Register(this, new neoSphereStarter(this), "neoSphere");
             PluginManager.Register(this, new CellCompiler(this), "Cell");
             PluginManager.Register(this, new SettingsPage(this), "Sphere GDK Setup");
 
@@ -99,7 +99,7 @@ namespace Sphere.Gdk
                     @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}_is1");
                 if (key != null)
                 {
-                    // miniSphere is installed, get path from registry
+                    // Sphere is installed, get path from registry
                     string defaultPath = (string)key.GetValue(@"InstallLocation") ?? "";
                     string path = Conf.GetString("gdkPath", defaultPath);
                     return !string.IsNullOrWhiteSpace(path) ? path : defaultPath;

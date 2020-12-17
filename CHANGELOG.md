@@ -1,13 +1,14 @@
-miniSphere Changelog
-====================
+Sphere Changelog
+================
 
-v5.6.0 - TBD
+v6.0.0 - TBD
 ------------
 
 * Adds support for multiple texture units and, by extension, additional
   `sampler` uniforms in shaders.
 * Adds out-of-the-box support for projects written in TypeScript.
 * Adds TypeScript support to the project created by `cell init`.
+* Changes the name of the engine from miniSphere to neoSphere.
 * Fixes a bug where `Query#shuffle()` never moves the last result from the end.
 
 

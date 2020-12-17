@@ -1,5 +1,5 @@
 version=$(shell cat VERSION)
-pkgname=minisphere-$(version)
+pkgname=sphere-$(version)
 os=$(shell uname)
 
 ifndef prefix
@@ -19,7 +19,7 @@ ifndef CFLAGS
 CFLAGS=-O3
 endif
 
-engine_sources=src/minisphere/main.c \
+engine_sources=src/neosphere/main.c \
    src/shared/api.c \
    src/shared/compress.c \
    src/shared/console.c \
@@ -35,40 +35,40 @@ engine_sources=src/minisphere/main.c \
    src/shared/vector.c \
    src/shared/wildmatch.c \
    src/shared/xoroshiro.c \
-   src/minisphere/animation.c \
-   src/minisphere/atlas.c \
-   src/minisphere/audio.c \
-   src/minisphere/blend_op.c \
-   src/minisphere/byte_array.c \
-   src/minisphere/color.c \
-   src/minisphere/debugger.c \
-   src/minisphere/dispatch.c \
-   src/minisphere/event_loop.c \
-   src/minisphere/font.c \
-   src/minisphere/galileo.c \
-   src/minisphere/game.c \
-   src/minisphere/geometry.c \
-   src/minisphere/image.c \
-   src/minisphere/input.c \
-   src/minisphere/kev_file.c \
-   src/minisphere/legacy.c \
-   src/minisphere/logger.c \
-   src/minisphere/map_engine.c \
-   src/minisphere/module.c \
-   src/minisphere/obstruction.c \
-   src/minisphere/package.c \
-   src/minisphere/pegasus.c \
-   src/minisphere/profiler.c \
-   src/minisphere/screen.c \
-   src/minisphere/script.c \
-   src/minisphere/source_map.c \
-   src/minisphere/spriteset.c \
-   src/minisphere/table.c \
-   src/minisphere/tileset.c \
-   src/minisphere/transform.c \
-   src/minisphere/utility.c \
-   src/minisphere/vanilla.c \
-   src/minisphere/windowstyle.c
+   src/neosphere/animation.c \
+   src/neosphere/atlas.c \
+   src/neosphere/audio.c \
+   src/neosphere/blend_op.c \
+   src/neosphere/byte_array.c \
+   src/neosphere/color.c \
+   src/neosphere/debugger.c \
+   src/neosphere/dispatch.c \
+   src/neosphere/event_loop.c \
+   src/neosphere/font.c \
+   src/neosphere/galileo.c \
+   src/neosphere/game.c \
+   src/neosphere/geometry.c \
+   src/neosphere/image.c \
+   src/neosphere/input.c \
+   src/neosphere/kev_file.c \
+   src/neosphere/legacy.c \
+   src/neosphere/logger.c \
+   src/neosphere/map_engine.c \
+   src/neosphere/module.c \
+   src/neosphere/obstruction.c \
+   src/neosphere/package.c \
+   src/neosphere/pegasus.c \
+   src/neosphere/profiler.c \
+   src/neosphere/screen.c \
+   src/neosphere/script.c \
+   src/neosphere/source_map.c \
+   src/neosphere/spriteset.c \
+   src/neosphere/table.c \
+   src/neosphere/tileset.c \
+   src/neosphere/transform.c \
+   src/neosphere/utility.c \
+   src/neosphere/vanilla.c \
+   src/neosphere/windowstyle.c
 engine_libs= \
    -lallegro_acodec \
    -lallegro_audio \
@@ -133,13 +133,13 @@ LINKER_ARGS=-Wl,-rpath,\$$ORIGIN
 CHAKRACORE_URL=https://aka.ms/chakracore/cc_osx_x64_1_11_15
 else
 LINKER_ARGS=-Wl,-rpath=\$$ORIGIN
-OPTIONS=-DMINISPHERE_MNG_SUPPORT
+OPTIONS=-DNEOSPHERE_MNG_SUPPORT
 engine_libs+=-lmng
 CHAKRACORE_URL=https://aka.ms/chakracore/cc_linux_x64_1_11_15
 endif
 
 .PHONY: all
-all: minisphere spherun cell ssj
+all: neosphere spherun cell ssj
 
 .PHONY: deps
 deps:
@@ -151,11 +151,11 @@ deps:
 installdeps:
 	cp dep/lib/* $(installdir)/lib
 
-.PHONY: minisphere
-minisphere: bin/minisphere
+.PHONY: neosphere
+neosphere: bin/neosphere
 
 .PHONY: spherun
-spherun: bin/minisphere bin/spherun
+spherun: bin/neosphere bin/spherun
 
 .PHONY: cell
 cell: bin/cell
@@ -169,31 +169,31 @@ dist: all
 	cp -r assets desktop docs license manpages src dist/$(pkgname)
 	cp Makefile VERSION dist/$(pkgname)
 	cp CHANGELOG.md LICENSE.txt README.md dist/$(pkgname)
-	cd dist && tar czf $(pkgname).tar.gz $(pkgname) && rm -rf dist/$(pkgname)
+	cd dist && tar czf $(pkgname)-src.tar.gz $(pkgname) && rm -rf dist/$(pkgname)
 
 .PHONY: install
 install: all
 	mkdir -p $(installdir)/bin
 	mkdir -p $(installdir)/lib
-	mkdir -p $(installdir)/share/minisphere
+	mkdir -p $(installdir)/share/sphere
 	mkdir -p $(installdir)/share/applications
-	mkdir -p $(installdir)/share/doc/minisphere
+	mkdir -p $(installdir)/share/doc/sphere
 	mkdir -p $(installdir)/share/icons/hicolor/scalable/mimetypes
 	mkdir -p $(installdir)/share/mime/packages
 	mkdir -p $(installdir)/share/man/man1
 	mkdir -p $(installdir)/share/pixmaps
-	cp bin/minisphere bin/spherun bin/cell bin/ssj $(installdir)/bin
-	cp -r bin/system $(installdir)/share/minisphere
-	gzip docs/sphere2-core-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-core-api.gz
-	gzip docs/sphere2-hl-api.txt -c > $(installdir)/share/doc/minisphere/sphere2-hl-api.gz
-	gzip docs/cellscript-api.txt -c > $(installdir)/share/doc/minisphere/cellscript-api.gz
-	gzip manpages/minisphere.1 -c > $(installdir)/share/man/man1/minisphere.1.gz
+	cp bin/neosphere bin/spherun bin/cell bin/ssj $(installdir)/bin
+	cp -r bin/system $(installdir)/share/sphere
+	gzip docs/sphere2-core-api.txt -c > $(installdir)/share/doc/sphere/sphere2-core-api.gz
+	gzip docs/sphere2-hl-api.txt -c > $(installdir)/share/doc/sphere/sphere2-hl-api.gz
+	gzip docs/cellscript-api.txt -c > $(installdir)/share/doc/sphere/cellscript-api.gz
+	gzip manpages/neosphere.1 -c > $(installdir)/share/man/man1/neosphere.1.gz
 	gzip manpages/spherun.1 -c > $(installdir)/share/man/man1/spherun.1.gz
 	gzip manpages/cell.1 -c > $(installdir)/share/man/man1/cell.1.gz
 	gzip manpages/ssj.1 -c > $(installdir)/share/man/man1/ssj.1.gz
-	cp desktop/minisphere.desktop $(installdir)/share/applications
+	cp desktop/neosphere.desktop $(installdir)/share/applications
 	cp desktop/sphere-icon.svg $(installdir)/share/pixmaps
-	cp desktop/mimetypes/minisphere.xml $(installdir)/share/mime/packages
+	cp desktop/mimetypes/neosphere.xml $(installdir)/share/mime/packages
 	cp desktop/mimetypes/*.svg $(installdir)/share/icons/hicolor/scalable/mimetypes
 
 .PHONY: clean
@@ -201,11 +201,11 @@ clean:
 	rm -rf bin
 	rm -rf dist
 
-bin/minisphere:
+bin/neosphere:
 	mkdir -p bin
-	$(CC) -o bin/minisphere $(CFLAGS) \
+	$(CC) -o bin/neosphere $(CFLAGS) \
 	      -fno-omit-frame-pointer \
-	      -Idep/include -Isrc/shared -Isrc/minisphere \
+	      -Idep/include -Isrc/shared -Isrc/neosphere \
 	      -Ldep/lib \
 	      $(LINKER_ARGS) \
 	      $(OPTIONS) \
@@ -216,11 +216,11 @@ bin/spherun:
 	mkdir -p bin
 	$(CC) -o bin/spherun $(CFLAGS) \
 	      -fno-omit-frame-pointer \
-	      -Idep/include -Isrc/shared -Isrc/minisphere \
+	      -Idep/include -Isrc/shared -Isrc/neosphere \
 	      -Ldep/lib \
 	      $(LINKER_ARGS) \
 	      $(OPTIONS) \
-	      -DMINISPHERE_SPHERUN \
+	      -DNEOSPHERE_SPHERUN \
 	      $(engine_sources) $(engine_libs)
 
 bin/cell:

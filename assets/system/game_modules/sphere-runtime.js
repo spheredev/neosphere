@@ -13,7 +13,7 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- *  * Neither the name of miniSphere nor the names of its contributors may be
+ *  * Neither the name of Spherical nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
@@ -30,7 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-// miniSphere-specific modules
 export { default as Console } from 'console';
 export { default as FocusTarget } from 'focus-target';
 export { default as Music } from 'music';

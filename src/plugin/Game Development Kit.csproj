@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Sphere.Gdk</RootNamespace>
-    <AssemblyName>miniSphereGdkPlugin</AssemblyName>
+    <AssemblyName>neoSpherePlugin</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>
@@ -90,7 +90,7 @@
     </Compile>
     <Compile Include="Extensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Components\minisphereStarter.cs" />
+    <Compile Include="Components\neoSphereStarter.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Forms\ObjectViewer.resx">

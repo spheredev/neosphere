@@ -1,5 +1,5 @@
 /**
- *  miniSphere JavaScript game engine
+ *  Sphere: the JavaScript game platform
  *  Copyright (c) 2015-2020, Fat Cerberus
  *  All rights reserved.
  *
@@ -13,7 +13,7 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- *  * Neither the name of miniSphere nor the names of its contributors may be
+ *  * Neither the name of Spherical nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
@@ -33,7 +33,7 @@
 #ifndef SPHERE__VERSION_H__INCLUDED
 #define SPHERE__VERSION_H__INCLUDED
 
-#define SPHERE_ENGINE_NAME   "miniSphere"
+#define SPHERE_ENGINE_NAME   "neoSphere"
 #define SPHERE_COMPILER_NAME "Cell"
 #define SPHERE_DEBUGGER_NAME "SSj"
 

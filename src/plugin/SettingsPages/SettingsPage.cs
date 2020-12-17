@@ -51,7 +51,7 @@ namespace Sphere.Gdk.SettingsPages
         private void BrowseButton_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog fb = new FolderBrowserDialog();
-            fb.Description = "Select the folder where the miniSphere GDK is installed.";
+            fb.Description = "Select the folder where Sphere is installed.";
             fb.ShowNewFolderButton = false;
             if (fb.ShowDialog(this) == DialogResult.OK)
             {

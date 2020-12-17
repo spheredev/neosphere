@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+  <mime-type type="application/x-sphere-spk">
+    <comment>Sphere game package</comment>
+    <magic priority="100">
+      <match type="string" offset="0" value=".spk"/>
+    </magic>
+    <glob weight="100" pattern="*.spk"/>
+  </mime-type>
+  <mime-type type="application/x-sphere-sgm">
+    <comment>Sphere game manifest</comment>
+    <glob weight="100" pattern="*.sgm"/>
+  </mime-type>
+</mime-info>

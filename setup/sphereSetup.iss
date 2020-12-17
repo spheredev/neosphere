@@ -1,4 +1,4 @@
-;  miniSphere JavaScript game engine
+;  Sphere: JavaScript game platform
 ;  Copyright (c) 2015-2020, Fat Cerberus
 ;  All rights reserved.
 ;
@@ -12,7 +12,7 @@
 ;    this list of conditions and the following disclaimer in the documentation
 ;    and/or other materials provided with the distribution.
 ;
-;  * Neither the name of miniSphere nor the names of its contributors may be
+;  * Neither the name of Sphere nor the names of its contributors may be
 ;    used to endorse or promote products derived from this software without
 ;    specific prior written permission.
 ;
@@ -66,7 +66,7 @@ LicenseFile=../LICENSE.txt
 SetupIconFile=..\msvs\spherical.ico
 SolidCompression=yes
 UninstallDisplayName={#AppName} {#AppVersion3}
-UninstallDisplayIcon={app}\miniSphere.exe,0
+UninstallDisplayIcon={app}\neoSphere.exe,0
 VersionInfoDescription={#AppName} {#AppVersion3} Setup for Windows
 VersionInfoVersion={#AppVersion4}
 WizardStyle=modern
@@ -75,7 +75,7 @@ WizardStyle=modern
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "assoc"; Description: "&Associate these file extensions with miniSphere:"; GroupDescription: "Automatically open Sphere file types:"
+Name: "assoc"; Description: "&Associate these file extensions with neoSphere:"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/sgm"; Description: ".sgm - Sphere &legacy manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/s2gm"; Description: ".s2gm - Sphere game &manifest (game.s2gm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/spk"; Description: ".spk - Sphere &SPK game package"; GroupDescription: "Automatically open Sphere file types:"
@@ -87,13 +87,13 @@ Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescr
 
 [Files]
 ; 64-bit (x64) binaries
-Source: "..\msw64\miniSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
+Source: "..\msw64\neoSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 Source: "..\msw64\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
 ; 32-bit (x86) binaries
-Source: "..\msw\miniSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "..\msw\neoSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
 Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
@@ -109,31 +109,27 @@ Source: "..\msw\ide\*"; DestDir: "{app}\ide"; Flags: ignoreversion recursesubdir
 #endif
 
 [Registry]
-; miniSphere associations
-Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SPK"; Flags: uninsdeletevalue; Tasks: assoc/spk
-Root: HKCR; Subkey: "miniSphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc/spk
-Root: HKCR; Subkey: "miniSphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\miniSphere.exe,0"; Tasks: assoc/spk
-Root: HKCR; Subkey: "miniSphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\miniSphere.exe"" ""%1"""; Tasks: assoc/spk
-Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/sgm
-Root: HKCR; Subkey: "miniSphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
-Root: HKCR; Subkey: "miniSphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\miniSphere.exe,0"; Tasks: assoc/sgm
-Root: HKCR; Subkey: "miniSphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\miniSphere.exe"" ""%1"""; Tasks: assoc/sgm
-Root: HKCR; Subkey: ".s2gm"; ValueType: string; ValueName: ""; ValueData: "miniSphere.S2GM"; Flags: uninsdeletevalue; Tasks: assoc/s2gm
-Root: HKCR; Subkey: "miniSphere.S2GM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/s2gm
-Root: HKCR; Subkey: "miniSphere.S2GM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\miniSphere.exe,0"; Tasks: assoc/s2gm
-Root: HKCR; Subkey: "miniSphere.S2GM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\miniSphere.exe"" ""%1"""; Tasks: assoc/s2gm
+; neoSphere associations
+Root: HKCR; Subkey: ".spk"; ValueType: string; ValueName: ""; ValueData: "neoSphere.SPK"; Flags: uninsdeletevalue; Tasks: assoc/spk
+Root: HKCR; Subkey: "neoSphere.SPK"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Package"; Flags: uninsdeletekey; Tasks: assoc/spk
+Root: HKCR; Subkey: "neoSphere.SPK\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\neoSphere.exe,0"; Tasks: assoc/spk
+Root: HKCR; Subkey: "neoSphere.SPK\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\neoSphere.exe"" ""%1"""; Tasks: assoc/spk
+Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "neoSphere.SGM"; Flags: uninsdeletevalue; Tasks: assoc/sgm
+Root: HKCR; Subkey: "neoSphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
+Root: HKCR; Subkey: "neoSphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\neoSphere.exe,0"; Tasks: assoc/sgm
+Root: HKCR; Subkey: "neoSphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\neoSphere.exe"" ""%1"""; Tasks: assoc/sgm
 ; Sphere Studio associations
 #ifdef INCLUDE_SPHERE_STUDIO
-Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "miniSphere.SSPROJ"; Flags: uninsdeletevalue; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "miniSphere.SSPROJ"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "miniSphere.SSPROJ\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\ide\Sphere Studio.exe,0"; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "miniSphere.SSPROJ\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\ide\Sphere Studio.exe"" ""%1"""; Tasks: assoc_ss/ssproj
+Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "neoSphere.SSPROJ"; Flags: uninsdeletevalue; Tasks: assoc_ss/ssproj
+Root: HKCR; Subkey: "neoSphere.SSPROJ"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Tasks: assoc_ss/ssproj
+Root: HKCR; Subkey: "neoSphere.SSPROJ\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\ide\Sphere Studio.exe,0"; Tasks: assoc_ss/ssproj
+Root: HKCR; Subkey: "neoSphere.SSPROJ\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\ide\Sphere Studio.exe"" ""%1"""; Tasks: assoc_ss/ssproj
 #endif
 ; PATH
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app};{olddata}"; Tasks: path
 
 [Icons]
-Name: "{autoprograms}\miniSphere"; Filename: "{app}\miniSphere.exe"
+Name: "{autoprograms}\neoSphere"; Filename: "{app}\neoSphere.exe"
 #ifdef INCLUDE_SPHERE_STUDIO
 Name: "{autoprograms}\Sphere Studio"; Filename: "{app}\ide\Sphere Studio.exe"
 #endif

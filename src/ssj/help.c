@@ -1,5 +1,5 @@
 /**
- *  SSj, the Sphere JavaScript debugger
+ *  SSj: the Sphere JavaScript debugger
  *  Copyright (c) 2015-2020, Fat Cerberus
  *  All rights reserved.
  *
@@ -13,7 +13,7 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- *  * Neither the name of miniSphere nor the names of its contributors may be
+ *  * Neither the name of Spherical nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
@@ -227,7 +227,7 @@ help_print(const char* command_name)
 	else if (strcmp(command_name, "quit") == 0) {
 		printf(
 			"Quit SSj.  This will detach the debugger and return you to the shell.  In most \n"
-			"cases the miniSphere debug target will also close, unless SSj was started with \n"
+			"cases the neoSphere debug target will also close, unless SSj was started with  \n"
 			"the '-a' option to attach to a running instance.                               \n\n"
 			"SYNTAX:                                                                        \n"
 			"    quit                                                                       \n"

@@ -1,5 +1,5 @@
 /**
- *  SSj, the Sphere JavaScript debugger
+ *  SSj: the Sphere JavaScript debugger
  *  Copyright (c) 2015-2020, Fat Cerberus
  *  All rights reserved.
  *
@@ -13,7 +13,7 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- *  * Neither the name of miniSphere nor the names of its contributors may be
+ *  * Neither the name of Spherical nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
@@ -163,7 +163,7 @@ launch_game(path_t* game_path)
 		if (fork() != 0)
 			path_free(path);
 		else {
-			// suppress miniSphere's stdout. this is kind of a hack for now; eventually
+			// suppress neoSphere's stdout. this is kind of a hack for now; eventually
 			// I'd like to intermingle the engine's output with SSj's, like in native
 			// debuggers e.g. GDB.
 			dup2(open("/dev/null", O_WRONLY), STDOUT_FILENO);

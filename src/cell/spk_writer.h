@@ -1,5 +1,5 @@
 /**
- *  Cell, the Sphere packaging compiler
+ *  Cell: the Sphere packaging compiler
  *  Copyright (c) 2015-2020, Fat Cerberus
  *  All rights reserved.
  *
@@ -13,7 +13,7 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- *  * Neither the name of miniSphere nor the names of its contributors may be
+ *  * Neither the name of Spherical nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *

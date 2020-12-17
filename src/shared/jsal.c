@@ -1,5 +1,5 @@
 /**
- *  miniSphere JavaScript game engine
+ *  Sphere: the JavaScript game platform
  *  Copyright (c) 2015-2020, Fat Cerberus
  *  All rights reserved.
  *
@@ -13,7 +13,7 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- *  * Neither the name of miniSphere nor the names of its contributors may be
+ *  * Neither the name of Spherical nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
@@ -2350,7 +2350,7 @@ void
 jsal_debug_uninit(void)
 {
 	// this causes a crash on shutdown on recent ChakraCore builds, so it's commented out for now.
-	// as miniSphere currently runs the debugger nonstop, skipping this shouldn't have any ill effects.
+	// as neoSphere currently runs the debugger nonstop, skipping this shouldn't have any ill effects.
 	// the OS will clean up any leaks when the process terminates.
 	// https://github.com/microsoft/ChakraCore/issues/6160
 	//JsDiagStopDebugging(s_js_runtime, NULL);

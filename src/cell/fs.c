@@ -1,5 +1,5 @@
 /**
- *  Cell, the Sphere packaging compiler
+ *  Cell: the Sphere packaging compiler
  *  Copyright (c) 2015-2020, Fat Cerberus
  *  All rights reserved.
  *
@@ -13,7 +13,7 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- *  * Neither the name of miniSphere nor the names of its contributors may be
+ *  * Neither the name of Spherical nor the names of its contributors may be
  *    used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
@@ -75,7 +75,7 @@ fs_new(const char* root_dir, const char* game_dir, const char* home_dir)
 	fs->system_path = path_rebase(path_new("system/"), app_path);
 	if (!path_resolve(fs->system_path, NULL)) {
 		path_free(fs->system_path);
-		fs->system_path = path_rebase(path_new("../share/minisphere/system/"), app_path);
+		fs->system_path = path_rebase(path_new("../share/sphere/system/"), app_path);
 		path_resolve(fs->system_path, NULL);
 	}
 	if (home_dir != NULL)

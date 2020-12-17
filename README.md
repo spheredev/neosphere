@@ -1,36 +1,37 @@
-miniSphere
-==========
+Sphere: the JavaScript game platform
+====================================
 
-[![Build Status](https://travis-ci.org/fatcerberus/minisphere.svg?branch=master)](https://travis-ci.org/fatcerberus/minisphere)
-[![Release](https://img.shields.io/github/release/fatcerberus/minisphere.svg)](https://github.com/fatcerberus/minisphere/releases/latest)
+[![Build Status](https://www.travis-ci.com/fatcerberus/sphere.svg?branch=master)](https://www.travis-ci.com/fatcerberus/sphere)
+[![Release](https://img.shields.io/github/release/fatcerberus/sphere.svg)](https://github.com/fatcerberus/sphere/releases/latest)
 
-**miniSphere** is a lightweight, fully sandboxed, JavaScript-powered game
-engine and the official successor to Chad Austin's original *Sphere* engine,
-written from the ground up in C.  [Allegro 5](http://liballeg.org) holds up the
-backend, and JavaScript support is provided by [ChakraCore](https://github.com/Microsoft/ChakraCore),
-the same high-performance JavaScript engine that powers Microsoft Edge.
+**Sphere** is a lightweight, fully sandboxed, JavaScript-powered game
+development platform.  The engine, **neoSphere**, is the official successor to
+Chad Austin's original *Sphere* engine, written from the ground up in C.
+[Allegro 5](http://liballeg.org) holds up the backend, and JavaScript support
+is provided through [ChakraCore](https://github.com/Microsoft/ChakraCore), the
+same high-performance JavaScript engine that once powered Microsoft Edge.
 
 Sphere games are written in JavaScript, which gives game developers a great
-deal of power.  The API is also designed to be user-friendly and reasonably
+deal of power.  The API is designed to be user-friendly and reasonably
 accessible to novices, allowing coders of any skill level to pick up the engine
 and start hacking away.
 
 The game engine and associated command line tools are cross-platform and fairly
-portable.  miniSphere is officially supported on both Windows and Linux, and
-has been successfully built on macOS.  Mobile support (both iOS and Android) is
-currently being considered, although there are no concrete plans on that front
-just yet.
+portable.  Sphere is officially supported on Windows, macOS, and Linux, and
+there is a Web-based engine called **Oozaru** in the works.  Mobile support
+(both iOS and Android) is currently being considered, although there are no
+concrete plans on that front just yet.
 
 
 Download
 ========
 
-The latest stable Sphere GDK release at the time of this writing is
-**Sphere 5.5.2**, released on Monday, November 30, 2020.  Sphere GDK downloads
-are provided through GitHub, and the latest version is always available for
-download here:
+The latest stable Sphere release at the time of this writing is
+**Sphere 5.5.2**, released on Monday, November 30, 2020.  Sphere releases are
+provided through GitHub, so the latest version is always available for download
+here:
 
-* <https://github.com/fatcerberus/minisphere/releases>
+* <https://github.com/fatcerberus/sphere/releases>
 
 For an overview of breaking changes in the current stable release series, refer
 to [`RELEASES.md`](RELEASES.md).
@@ -42,12 +43,15 @@ The Sphere Toolchain
 The Game Engine
 ---------------
 
-The official Sphere game engine is known as **miniSphere**.
+The official Sphere engine implementation for desktop platforms is known as
+**neoSphere**.  There is also a Web-based version, currently in development,
+known as **Oozaru**, which has its own GitHub repository but is planned to
+eventually be merged into the main repository. 
 
 Sphere games are written in JavaScript.  The engine exposes a collection of
 low-level functions to the JavaScript environment, leaving higher-level game
-logic entirely up to script.  In this way, any kind of game you can imagine can
-be developed.
+logic entirely up to script.  In this way, any kind of game can be developed
+and you are not limited to a specific genre as in, for example, RPG Maker.
 
 Besides the low-level Core API, there is also a set of libraries written in
 JavaScript that any game is free to use, collectively called the
@@ -60,7 +64,7 @@ The Compiler
 ------------
 
 **Cell**, the Sphere compiler, uses JavaScript to control the build process.
-Like miniSphere, Cell is powered by ChakraCore and natively supports ES2015
+Like neoSphere, Cell is powered by ChakraCore and natively supports ES2015
 features like arrow functions, destructuring, and modules.  A basic Cellscript
 might look like this:
 
@@ -80,7 +84,7 @@ Object.assign(Sphere.Game, {
     main:       '@/scripts/main.js',
 });
 
-// install modules and scripts.  starting with miniSphere 5.0, Sphere supports
+// install modules and scripts.  starting with version 5.0, Sphere supports
 // ES2015+ out of the box so no transpile is necessary!
 install('@/scripts', files('src/*.js', true));
 
@@ -123,20 +127,20 @@ The Debugger
 ------------
 
 **SSj**, the Sphere debugger, is an easy-to-use command-line debugger for
-Sphere games.  The debugger allows you to step through your game's code and
-inspect the internal state of the code--variables, call stack, objects,
-etc.--while it executes.  Best of all, the original source files don't need to
-be present: SSj can download source code directly from the engine instance
-being debugged.
+Sphere games.  SSj works in tandem with neoSphere to allow you to step through
+your game's code and inspect the internal state of the code--variables, call
+stack, objects, etc.--while it executes.  Best of all, the original source
+files don't need to be present: SSj can download source code directly from the
+engine instance being debugged.
 
 A symbolic debugger like SSj is an invaluable tool for development and is a
-miniSphere exclusive: no such tool was ever available for the original engine!
+neoSphere exclusive: no such tool was ever available for the original engine!
 
 
 License
 =======
 
-miniSphere and its accompanying command-line tools are licensed under the terms
-of the BSD-3-clause license.  Practically speaking, this means the engine can
-be used for any purpose, even commercially, with no restriction other than
+The entire Sphere game development platform is licensed under the terms of the
+BSD-3-clause license.  Practically speaking, this means the engine and tools
+can be used for any purpose, even commercially, with no restriction other than
 maintain the original copyright notice.

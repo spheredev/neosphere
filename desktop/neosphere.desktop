@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=neoSphere
+Comment=neoSphere is a lightweight 2D game engine which uses JavaScript for game coding.  The engine boasts a high level of compatibility with the original Sphere RPG engine originally designed by Chad Austin, but includes many enhancements, such as a new JSON game manifest format and the ability to single-step through game code using the SSj command-line debugger.
+Exec=neosphere
+MimeType=application/x-sphere-spk;application/x-sphere-sgm;
+Icon=sphere-icon
+Terminal=false;
+Type=Application
+Categories=Application;Development;
