@@ -8,7 +8,9 @@ v6.0.0 - TBD
   `sampler` uniforms in shaders.
 * Adds out-of-the-box support for projects written in TypeScript.
 * Adds TypeScript support to the project created by `cell init`.
-* Changes the name of the engine from miniSphere to neoSphere.
+* Changes the name of the engine from "miniSphere" to "neoSphere".
+* Removes support for file-based constructors such as `new Texture()` in games
+  targeting API level 4 or higher.
 * Fixes a bug where `Query#shuffle()` never moves the last result from the end.
 
 
