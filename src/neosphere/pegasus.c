@@ -5189,6 +5189,7 @@ js_Texture_fromFile(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 {
+	int            api_level;
 	const color_t* buffer;
 	size_t         buffer_size;
 	int            class_id;
@@ -5228,7 +5229,10 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 	}
 	else {
 		// create an Image by loading an image file
-		if (game_api_level(g_game) >= 3)
+		api_level = game_api_level(g_game);
+		if (api_level >= 4)
+			jsal_error(JS_ERROR, "Non-async file loading unsupported under API 4+");
+		else if (api_level >= 3)
 			console_warn(0, "use 'Texture.fromFile' instead of 'new' when loading files");
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))

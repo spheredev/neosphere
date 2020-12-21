@@ -37,10 +37,10 @@
 #define SPHERE_COMPILER_NAME "Cell"
 #define SPHERE_DEBUGGER_NAME "SSj"
 
-#define SPHERE_VERSION "x.x.x"
+#define SPHERE_VERSION "5.5.2+"
 
 #define SPHERE_API_VERSION      2
-#define SPHERE_API_LEVEL        4
-#define SPHERE_API_LEVEL_STABLE 3
+#define SPHERE_API_LEVEL        5
+#define SPHERE_API_LEVEL_STABLE 4
 
 #endif // SPHERE__VERSION_H__INCLUDED
