@@ -185,6 +185,15 @@ needed, and their values can be accessed at runtime through `Sphere.Game`.
     The minimum API level required to run the game.  Only valid if `version` is
     set to 2.
 
+    While generally all API functions and classes are made available to game
+    code regardless of this setting (except when using SpheRun in retrograde
+    mode), sometimes changes are made to the API that can break existing code;
+    in that case the engine will emulate the older behavior unless `apiLevel`
+    is set to the API level where the change was introduced (or higher).
+
+    Note: `apiLevel` must be set to 4 or higher if you need your game to run in
+          Oozaru.
+
 "author" {default: none} [API 1]
 
     The name of the person or company who developed the game.
