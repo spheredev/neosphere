@@ -121,7 +121,7 @@ namespace Sphere.Gdk.Components
 
                 Panes.Console.Print(string.Format("SSj Blue " + m_plugin.Version + " Sphere JavaScript debugger"));
                 Panes.Console.Print(string.Format("the graphical symbolic JS debugger for Sphere"));
-                Panes.Console.Print(string.Format("(c) 2015-2020 Fat Cerberus"));
+                Panes.Console.Print(string.Format("(c) 2015-2021 Fat Cerberus"));
                 Panes.Console.Print("");
             }), null);
         }

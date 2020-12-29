@@ -60,7 +60,7 @@ API level will be incremented and some of the experimental APIs will be
 "canonized" under the new API level.  Once that happens, those APIs are said to
 be frozen: no further breaking changes will be made to them.
 
-The maximum supported API level in this version of neoSphere is level 3.
+The maximum supported API level in this version of neoSphere is level 4.
 
 If a game uses only frozen APIs, it shouldn't be broken by upgrading to a newer
 engine version; this is the true goal of an API freeze.  If the behavior of a
@@ -177,8 +177,8 @@ needed, and their values can be accessed at runtime through `Sphere.Game`.
 "main" [REQUIRED] [API 1]
 
     The SphereFS path of the main JavaScript module (see below for more on
-    SphereFS).  This is the script neoSphere will run when the game is started.
-    If no "main" field is present, the game will not start.
+    SphereFS).  This is the script the engine will run when the game is
+    started.  If no "main" field is present, the game will not start.
 
 "apiLevel" {default: 1} [API 1]
 

@@ -1,6 +1,6 @@
 /**
  *  SSj: the Sphere JavaScript debugger
- *  Copyright (c) 2015-2020, Fat Cerberus
+ *  Copyright (c) 2015-2021, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -350,7 +350,7 @@ print_banner(bool want_copyright, bool want_deps)
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("the powerful symbolic JS debugger for Sphere\n");
-		printf("(c) 2015-2020 Fat Cerberus\n");
+		printf("(c) 2015-2021 Fat Cerberus\n");
 	}
 	if (want_deps) {
 		printf("\n");

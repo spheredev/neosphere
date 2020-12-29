@@ -1,5 +1,5 @@
 ;  Sphere: JavaScript game platform
-;  Copyright (c) 2015-2020, Fat Cerberus
+;  Copyright (c) 2015-2021, Fat Cerberus
 ;  All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion4}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=� 2015-2020 Fat Cerberus
+AppCopyright=� 2015-2021 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x86 x64
 ArchitecturesInstallIn64BitMode=x64

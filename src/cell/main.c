@@ -1,6 +1,6 @@
 /**
  *  Cell: the Sphere packaging compiler
- *  Copyright (c) 2015-2020, Fat Cerberus
+ *  Copyright (c) 2015-2021, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -361,7 +361,7 @@ print_banner(bool want_copyright, bool want_deps)
 		sizeof(void*) == 8 ? "x64" : "x86");
 	if (want_copyright) {
 		printf("the JavaScript-powered build engine for Sphere\n");
-		printf("(c) 2015-2020 Fat Cerberus\n");
+		printf("(c) 2015-2021 Fat Cerberus\n");
 	}
 	if (want_deps) {
 		png_version = png_access_version_number();
