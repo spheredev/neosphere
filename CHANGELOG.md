@@ -1,17 +1,19 @@
 Sphere Changelog
 ================
 
-v6.0.0 - TBD
+v5.6.0 - TBD
 ------------
 
 * Adds support for multiple texture units and, by extension, additional
   `sampler` uniforms in shaders.
-* Adds out-of-the-box support for projects written in TypeScript.
-* Adds TypeScript support to the project created by `cell init`.
+* Adds experimental out-of-the-box support for projects written in TypeScript.
+* Adds TypeScript support to the template project created by `cell init`.
 * Changes the name of the engine from "miniSphere" to "neoSphere".
 * Removes support for file-based constructors such as `new Texture()` in games
   targeting API level 4 or higher.
-* Fixes a bug where `Query#shuffle()` never moves the last result from the end.
+* Fixes a bug where `Query#shuffle()` doesn't shuffle the final result.
+* Fixes a bug where `Mouse#position` returns an array with the coordinates in
+  the wrong order.
 
 
 v5.5.2 - November 30, 2020

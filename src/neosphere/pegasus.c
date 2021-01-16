@@ -3421,8 +3421,8 @@ js_Mouse_get_position(int num_args, bool is_ctor, intptr_t magic)
 
 	screen_get_mouse_xy(g_screen, &x, &y);
 	jsal_push_new_array();
-	jsal_push_int(x);
 	jsal_push_int(y);
+	jsal_push_int(x);
 	jsal_put_prop_index(-3, 0);
 	jsal_put_prop_index(-2, 1);
 	return true;
