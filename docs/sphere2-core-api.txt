@@ -108,7 +108,7 @@ level as well as experimental features.
 
 All class constructors, methods, properties, and manifest fields listed below
 include the API level they were introduced in, e.g. `API 1` or else, for new
-experimental features which haven't yet been canonized, `NEW`.
+experimental features which haven't yet been canonized, `EXP`.
 
 
 SphereFS File System
@@ -402,7 +402,7 @@ BlendOp.Subtract [R/O] [API 2]
     destination pixel values, respectively.  These modes cover most common use
     cases, so the engine provides them for convenience.
 
-new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [NEW]
+new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [EXP]
 
     Constructs a new BlendOp which blends colors according to the given
     parameters.
@@ -551,7 +551,7 @@ new DirectoryStream(dir_name[, options]); [API 1]
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
 
-    options.recursive [default: false] [NEW]
+    options.recursive [default: false] [EXP]
 
         If `recursive` is true, the DirectoryStream will descend into
         subdirectories to list files they contain.  The output will not contain
@@ -608,13 +608,13 @@ DirectoryStream#next(); [API 1]
             directory paths end in a slash (`/`) per SphereFS canonicalization
             rules.
 
-		value.depth [NEW]
+		value.depth [EXP]
 
 		    The subdirectory nesting level of the entry, relative to the
 		    directory being streamed.  This is equal to the number of nested
 		    subdirectories which must be entered to find this entry.
 
-		value.extension [NEW]
+		value.extension [EXP]
 
 		    The filename extension (everything starting from the last dot `.`),
 		    for file entries.  If the file has no extension, this is `null`.
@@ -670,7 +670,7 @@ Dispatch.now(callback); [API 1]
           latter runs at the beginning of the next frame; Dispatch.now() jobs
           always run during the same frame they were issued.
 
-Dispatch.onExit(callback); [NEW]
+Dispatch.onExit(callback); [EXP]
 
     Sets up a one-time job to call `callback` after the event loop exits.  This
     is useful when you need to ensure something always runs before the engine
@@ -801,7 +801,7 @@ FS.fullPath(pathname[, base_dir]); [API 1]
           returned by this function will end in a forward slash (`/`) even if
           the input pathname did not.
 
-FS.match(pathname, pattern); [NEW]
+FS.match(pathname, pattern); [EXP]
 
     Determines whether `pathname` matches the pattern string(s) given by
     `pattern`.  `pattern` can be either a single pattern, or an array of them.
@@ -1678,7 +1678,7 @@ Server#accept(); [API 1]
     empty, a RangeError will be thrown, so you should check the value of
     `numPending` first to see if there are any connections in the backlog.
 
-Server#acceptNext(); [ASYNC] [NEW]
+Server#acceptNext(); [ASYNC] [EXP]
 
     Instructs Sphere to accept the next available client connection via the
     event loop.  The promise resolves with a Socket representing that
@@ -1778,11 +1778,12 @@ Shader#setMatrix(name, transform); [API 1]
 
     Note: Matrix types other than `mat4` are not currently supported.
 
-Shader#setSampler(name, texture, texture_unit); [NEW]
+Shader#setSampler(name, texture, texture_unit); [EXP]
 
     Assigns a texture to a texture unit.
 
-    Note: Texture unit 0 is reserved for `al_tex`.
+    Note: Texture unit 0 is reserved for use by Sphere, typically accessed in
+          shaders via `al_tex`.
 
 
 `Shape` Object
@@ -2189,7 +2190,7 @@ Surface#blendOp [R/W] [API 2]
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
 
-Surface#depthOp [R/W] [NEW]
+Surface#depthOp [R/W] [EXP]
 
     Gets or sets the depth test criteria for 3D objects drawn to this surface.
     The final Z coordinate of each pixel drawn is tested against the current
@@ -2223,7 +2224,7 @@ Surface#height [R/O] [API 1]
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
 
-Surface#clear([color[, depthValue]]); [NEW]
+Surface#clear([color[, depthValue]]); [EXP]
 
     Clears the entire surface using the specified color and depth value (depth
     is automatically clamped between 0.0 and 1.0).  If not provided, `color`
@@ -2309,7 +2310,7 @@ Texture#height [R/O] [API 1]
 
     Gets the width or height of the texture, in pixels.
 
-Texture#download(); [NEW]
+Texture#download(); [EXP]
 
     Downloads the 32-bit RGBA pixel data from the texture and returns it as a
     new Uint8ClampedArray.
@@ -2318,7 +2319,7 @@ Texture#download(); [NEW]
           shouldn't be done at render time if you can avoid it.  Use a Surface
           for render-to-texture effects if at all possible.
 
-Texture#upload(content); [NEW]
+Texture#upload(content); [EXP]
 
     Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
     array) to the texture.  Enough data must be provided to completely rewrite
@@ -2432,14 +2433,14 @@ new VertexList(vertices); [API 1]
 The somewhat cryptically-named `Z` namespace hosts functions used for data
 compression.
 
-Z.deflate(data[, level]); [NEW]
+Z.deflate(data[, level]); [EXP]
 
     Compresses the data in an ArrayBuffer or TypedArray using the DEFLATE
     compression method.  `level` specifies the compression level from
     0 (no compression) to 9 (maximum), with 7 being the default.  Returns an
     ArrayBuffer containing the compressed data.
 
-Z.inflate(data[, max_size]); [NEW]
+Z.inflate(data[, max_size]); [EXP]
 
     Decompresses data in an ArrayBuffer or TypedArray which was previously
     compressed using DEFLATE.  `max_size` is optional and specifies an upper
