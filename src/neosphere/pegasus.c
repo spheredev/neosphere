@@ -975,19 +975,45 @@ pegasus_init(int api_level)
 		api_define_prop("Mouse", "position", false, js_Mouse_get_position, NULL);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
-		api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
-		api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
-		api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
-		api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
+		if (api_level <= 3) {
+			api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
+			api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
+			api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
+			api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
+		}
 	}
 	
 	if (api_level >= 4) {
+		api_define_async_func("FS", "createDirectory", js_FS_createDirectory, 0);
+		api_define_async_func("FS", "deleteFile", js_FS_deleteFile, 0);
+		api_define_async_func("FS", "directoryExists", js_FS_directoryExists, 0);
+		api_define_async_func("FS", "evaluateScript", js_FS_evaluateScript, 0);
+		api_define_async_func("FS", "fileExists", js_FS_fileExists, 0);
+		api_define_async_func("FS", "readFile", js_FS_readFile, 0);
+		api_define_async_func("FS", "removeDirectory", js_FS_removeDirectory, 0);
+		api_define_async_func("FS", "rename", js_FS_rename, 0);
+		api_define_async_func("FS", "writeFile", js_FS_writeFile, 0);
+		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
+		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
+		api_define_const("DepthOp", "Equal", DEPTH_EQUAL);
+		api_define_const("DepthOp", "Greater", DEPTH_GREATER);
+		api_define_const("DepthOp", "GreaterOrEqual", DEPTH_GEQUAL);
+		api_define_const("DepthOp", "Less", DEPTH_LESS);
+		api_define_const("DepthOp", "LessOrEqual", DEPTH_LEQUAL);
+		api_define_const("DepthOp", "NeverPass", DEPTH_NEVER);
+		api_define_const("DepthOp", "NotEqual", DEPTH_NOTEQUAL);
+		api_define_async_method("FileStream", "read", js_FileStream_read, 0);
+		api_define_async_method("FileStream", "write", js_FileStream_write, 0);
+		api_define_async_method("Socket", "read", js_Socket_read, 0);
+		api_define_async_method("Socket", "write", js_Socket_write, 0);
+	}
+	
+	if (api_level >= 5) {
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
-		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
 		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
@@ -1003,14 +1029,6 @@ pegasus_init(int api_level)
 		api_define_const("Blend", "Target", BLEND_DEST);
 		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
 		api_define_const("Blend", "Zero", BLEND_ZERO);
-		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
-		api_define_const("DepthOp", "Equal", DEPTH_EQUAL);
-		api_define_const("DepthOp", "Greater", DEPTH_GREATER);
-		api_define_const("DepthOp", "GreaterOrEqual", DEPTH_GEQUAL);
-		api_define_const("DepthOp", "Less", DEPTH_LESS);
-		api_define_const("DepthOp", "LessOrEqual", DEPTH_LEQUAL);
-		api_define_const("DepthOp", "NeverPass", DEPTH_NEVER);
-		api_define_const("DepthOp", "NotEqual", DEPTH_NOTEQUAL);
 	}
 
 	// keep a local reference to Surface.Screen
@@ -2286,7 +2304,7 @@ js_new_FileStream(int num_args, bool is_ctor, intptr_t magic)
 	if (is_ctor) {
 		api_level = game_api_level(g_game);
 		if (api_level >= 4)
-			jsal_error(JS_ERROR, "Non-async FileStream unsupported under API 4+");
+			jsal_error(JS_ERROR, "'new FileStream' from file system unsupported in API 4+");
 		if (api_level >= 3)
 			console_warn(0, "use 'FileStream.fromFile' instead of 'new' to open files");
 	}
@@ -2465,7 +2483,7 @@ js_new_Font(int num_args, bool is_ctor, intptr_t magic)
 	if (is_ctor) {
 		api_level = game_api_level(g_game);
 		if (api_level >= 4)
-			jsal_error(JS_ERROR, "Non-async file loading unsupported under API 4+");
+			jsal_error(JS_ERROR, "'new Font' from file system unsupported in API 4+");
 		if (api_level >= 3)
 			console_warn(0, "use 'Font.fromFile' instead of 'new' when loading files");
 	}
@@ -3809,7 +3827,7 @@ js_new_Sample(int num_args, bool is_ctor, intptr_t magic)
 	if (is_ctor) {
 		api_level = game_api_level(g_game);
 		if (api_level >= 4)
-			jsal_error(JS_ERROR, "Non-async file loading unsupported under API 4+");
+			jsal_error(JS_ERROR, "'new Sample' from file system unsupported in API 4+");
 		if (api_level >= 3)
 			console_warn(0, "use 'Sample.fromFile' instead of 'new' when loading files");
 	}
@@ -4013,7 +4031,7 @@ js_new_Shader(int num_args, bool is_ctor, intptr_t magic)
 	if (is_ctor) {
 		api_level = game_api_level(g_game);
 		if (api_level >= 4)
-			jsal_error(JS_ERROR, "Non-async file loading unsupported under API 4+");
+			jsal_error(JS_ERROR, "'new Shader' from file system unsupported in API 4+");
 		if (api_level >= 3)
 			console_warn(0, "use 'Shader.fromFiles' instead of 'new' when loading files");
 	}
@@ -4263,7 +4281,7 @@ js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 	if (is_ctor) {
 		api_level = game_api_level(g_game);
 		if (api_level >= 4)
-			jsal_error(JS_ERROR, "Non-async networking unsupported under API 4+");
+			jsal_error(JS_ERROR, "'new Socket' unsupported in API 4+");
 		if (api_level >= 3)
 			console_warn(0, "use 'Socket.for' instead of 'new' when creating sockets");
 	}
@@ -4539,7 +4557,7 @@ js_new_Sound(int num_args, bool is_ctor, intptr_t magic)
 	if (is_ctor) {
 		api_level = game_api_level(g_game);
 		if (api_level >= 4)
-			jsal_error(JS_ERROR, "Non-async file loading unsupported under API 4+");
+			jsal_error(JS_ERROR, "'new Sound' from file system unsupported in API 4+");
 		if (api_level >= 3)
 			console_warn(0, "use 'Sound.fromFile' instead of 'new' when loading files");
 	}
@@ -5268,7 +5286,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		// create an Image by loading an image file
 		api_level = game_api_level(g_game);
 		if (api_level >= 4)
-			jsal_error(JS_ERROR, "Non-async file loading unsupported under API 4+");
+			jsal_error(JS_ERROR, "'new Texture' from file system unsupported in API 4+");
 		else if (api_level >= 3)
 			console_warn(0, "use 'Texture.fromFile' instead of 'new' when loading files");
 		filename = jsal_require_pathname(0, NULL, false, false);

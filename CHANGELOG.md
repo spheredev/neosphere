@@ -8,6 +8,8 @@ v5.6.0 - TBD
   `sampler` uniforms in shaders.
 * Adds experimental out-of-the-box support for projects written in TypeScript.
 * Adds TypeScript support to the template project created by `cell init`.
+* Changes several file system functions to return promises when targeting API
+  level 4 or higher.
 * Changes the name of the engine from "miniSphere" to "neoSphere".
 * Removes support for file-based constructors such as `new Texture()` in games
   targeting API level 4 or higher.
