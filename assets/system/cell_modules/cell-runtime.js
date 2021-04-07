@@ -1,5 +1,5 @@
 /**
- *  Sphere Runtime for Cellscripts
+ *  Sphere: the JavaScript game platform
  *  Copyright (c) 2015-2021, Fat Cerberus
  *  All rights reserved.
  *
@@ -13,8 +13,8 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  *
- *  * Neither the name of Sphere nor the names of its contributors may be used
- *    to endorse or promote products derived from this software without
+ *  * Neither the name of Spherical nor the names of its contributors may be
+ *    used to endorse or promote products derived from this software without
  *    specific prior written permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -34,7 +34,7 @@
 export { tsc } from 'compile';
 
 // Sphere Runtime shared modules
+export { default as BufferStream } from 'buffer-stream';
 export { default as from } from 'from';
-export { default as DataStream } from 'data-stream';
 export { default as Logger } from 'logger';
 export { default as Random } from 'random';
