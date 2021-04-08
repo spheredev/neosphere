@@ -1,5 +1,5 @@
 /**
- *  SSj: the Sphere JavaScript debugger
+ *  Sphere: the JavaScript game platform
  *  Copyright (c) 2015-2021, Fat Cerberus
  *  All rights reserved.
  *

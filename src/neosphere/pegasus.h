@@ -1,5 +1,5 @@
 /**
- *  neoSphere: a JavaScript game engine
+ *  Sphere: the JavaScript game platform
  *  Copyright (c) 2015-2021, Fat Cerberus
  *  All rights reserved.
  *
@@ -64,7 +64,7 @@ enum pegasus_type
 	PEGASUS_VERTEX_LIST,
 };
 
-void pegasus_init   (int api_level);
+void pegasus_init   (int api_level, int target_api_level);
 void pegasus_uninit (void);
 
 #endif // SPHERE__PEGASUS_H__INCLUDED

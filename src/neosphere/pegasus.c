@@ -1,5 +1,5 @@
 /**
- *  neoSphere: a JavaScript game engine
+ *  Sphere: the JavaScript game platform
  *  Copyright (c) 2015-2021, Fat Cerberus
  *  All rights reserved.
  *
@@ -554,7 +554,7 @@ static js_ref_t* s_key_y;
 static js_ref_t* s_key_z;
 
 void
-pegasus_init(int api_level)
+pegasus_init(int api_level, int target_api_level)
 {
 	const struct blender*   p_blender;
 	const struct x11_color* p_color;
@@ -976,7 +976,7 @@ pegasus_init(int api_level)
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
-		if (api_level <= 3) {
+		if (target_api_level <= 3) {
 			api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
 			api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
 			api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
@@ -985,15 +985,6 @@ pegasus_init(int api_level)
 	}
 	
 	if (api_level >= 4) {
-		api_define_async_func("FS", "createDirectory", js_FS_createDirectory, 0);
-		api_define_async_func("FS", "deleteFile", js_FS_deleteFile, 0);
-		api_define_async_func("FS", "directoryExists", js_FS_directoryExists, 0);
-		api_define_async_func("FS", "evaluateScript", js_FS_evaluateScript, 0);
-		api_define_async_func("FS", "fileExists", js_FS_fileExists, 0);
-		api_define_async_func("FS", "readFile", js_FS_readFile, 0);
-		api_define_async_func("FS", "removeDirectory", js_FS_removeDirectory, 0);
-		api_define_async_func("FS", "rename", js_FS_rename, 0);
-		api_define_async_func("FS", "writeFile", js_FS_writeFile, 0);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
 		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
 		api_define_const("DepthOp", "Equal", DEPTH_EQUAL);
@@ -1003,10 +994,21 @@ pegasus_init(int api_level)
 		api_define_const("DepthOp", "LessOrEqual", DEPTH_LEQUAL);
 		api_define_const("DepthOp", "NeverPass", DEPTH_NEVER);
 		api_define_const("DepthOp", "NotEqual", DEPTH_NOTEQUAL);
-		api_define_async_method("FileStream", "read", js_FileStream_read, 0);
-		api_define_async_method("FileStream", "write", js_FileStream_write, 0);
-		api_define_async_method("Socket", "read", js_Socket_read, 0);
-		api_define_async_method("Socket", "write", js_Socket_write, 0);
+		if (target_api_level >= 4) {
+			api_define_async_func("FS", "createDirectory", js_FS_createDirectory, 0);
+			api_define_async_func("FS", "deleteFile", js_FS_deleteFile, 0);
+			api_define_async_func("FS", "directoryExists", js_FS_directoryExists, 0);
+			api_define_async_func("FS", "evaluateScript", js_FS_evaluateScript, 0);
+			api_define_async_func("FS", "fileExists", js_FS_fileExists, 0);
+			api_define_async_func("FS", "readFile", js_FS_readFile, 0);
+			api_define_async_func("FS", "removeDirectory", js_FS_removeDirectory, 0);
+			api_define_async_func("FS", "rename", js_FS_rename, 0);
+			api_define_async_func("FS", "writeFile", js_FS_writeFile, 0);
+			api_define_async_method("FileStream", "read", js_FileStream_read, 0);
+			api_define_async_method("FileStream", "write", js_FileStream_write, 0);
+			api_define_async_method("Socket", "read", js_Socket_read, 0);
+			api_define_async_method("Socket", "write", js_Socket_write, 0);
+		}
 	}
 	
 	if (api_level >= 5) {
@@ -1951,8 +1953,6 @@ js_FS_createDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_mkdir(g_game, pathname))
@@ -1965,8 +1965,6 @@ js_FS_deleteFile(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_unlink(g_game, pathname))
@@ -1979,8 +1977,6 @@ js_FS_directoryExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	jsal_push_boolean(game_dir_exists(g_game, pathname));
@@ -2006,8 +2002,6 @@ js_FS_evaluateScript(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* filename;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	if (!game_file_exists(g_game, filename))
@@ -2049,8 +2043,6 @@ js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
 	jsal_push_boolean(game_file_exists(g_game, pathname));
@@ -2134,8 +2126,6 @@ js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 	char*       p_line;
 	char*       p_newline;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, false);
 	if (s_api_level >= 2 && num_args >= 2 && !jsal_is_undefined(1))
 		type = jsal_require_int(1);
@@ -2204,8 +2194,6 @@ js_FS_removeDirectory(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
 	if (!game_rmdir(g_game, pathname))
@@ -2219,8 +2207,6 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 	const char* new_pathname;
 	const char* old_pathname;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	old_pathname = jsal_require_pathname(0, NULL, false, true);
 	new_pathname = jsal_require_pathname(1, NULL, false, true);
 
@@ -2247,8 +2233,6 @@ js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 
 	int i;
 
-	if (game_api_level(g_game) < 2)  // async only in API 2+
-		jsal_set_async_call_flag(false);
 	if (num_args < 2)
 		jsal_error(JS_RANGE_ERROR, "'FS.writeFile' requires 2 arguments");
 	pathname = jsal_require_pathname(0, NULL, false, true);

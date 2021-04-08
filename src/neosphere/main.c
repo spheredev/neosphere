@@ -1,5 +1,5 @@
 /**
- *  neoSphere: a JavaScript game engine
+ *  Sphere: the JavaScript game platform
  *  Copyright (c) 2015-2021, Fat Cerberus
  *  All rights reserved.
  *
@@ -324,7 +324,7 @@ main(int argc, char* argv[])
 	modules_init(game_strict_imports(g_game));
 	vanilla_init();
 	if (api_version >= 2)
-		pegasus_init(api_level);
+		pegasus_init(api_level, game_api_level(g_game));
 
 	// switch to fullscreen if necessary and initialize clipping
 	if (fullscreen_mode == FULLSCREEN_ON || (fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game)))
