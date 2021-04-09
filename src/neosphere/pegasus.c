@@ -977,13 +977,15 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
 		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
 		if (target_api_level <= 3) {
+			// these are unnecessary when targeting API level 4+ because in that case
+			// the standard versions are async by default.
 			api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
 			api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
 			api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
 			api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
 		}
 	}
-	
+
 	if (api_level >= 4) {
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
 		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
@@ -995,6 +997,8 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_const("DepthOp", "NeverPass", DEPTH_NEVER);
 		api_define_const("DepthOp", "NotEqual", DEPTH_NOTEQUAL);
 		if (target_api_level >= 4) {
+			// when targeting API level 4 or higher, all functions that access the file system
+			// are async by default for maximum cross-compatibility with Oozaru.
 			api_define_async_func("FS", "createDirectory", js_FS_createDirectory, 0);
 			api_define_async_func("FS", "deleteFile", js_FS_deleteFile, 0);
 			api_define_async_func("FS", "directoryExists", js_FS_directoryExists, 0);
@@ -1010,7 +1014,7 @@ pegasus_init(int api_level, int target_api_level)
 			api_define_async_method("Socket", "write", js_Socket_write, 0);
 		}
 	}
-	
+
 	if (api_level >= 5) {
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("FS", "match", js_FS_match, 0);

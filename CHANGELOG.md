@@ -8,11 +8,13 @@ v5.6.0 - TBD
   `sampler` uniforms in shaders.
 * Adds experimental out-of-the-box support for projects written in TypeScript.
 * Adds TypeScript support to the template project created by `cell init`.
-* Changes several file system functions to return promises when targeting API
-  level 4 or higher.
+* Adds a new class, `BufferStream`, to the Sphere Runtime.
+* Changes all API functions that access the file system to return promises when
+  called by a game that targets API level 4 or higher.
 * Changes the name of the engine from "miniSphere" to "neoSphere".
 * Removes support for file-based constructors such as `new Texture()` in games
   targeting API level 4 or higher.
+* Removes the `DataStream` class from the Sphere Runtime.
 * Fixes a bug where `Query#shuffle()` doesn't shuffle the final result.
 * Fixes a bug where `Mouse#position` returns an array with the coordinates in
   the wrong order.

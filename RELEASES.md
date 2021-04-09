@@ -1,6 +1,29 @@
 Release Notes
 =============
 
+miniSphere 5.6
+--------------
+
+* neoSphere 5.6 introduces support for API level 4, which includes several
+  breaking changes in order to prepare for integration of Oozaru with the main
+  Sphere toolchain.  When called by a game whose `apiLevel` (in `game.json`) is
+  set to 4 or higher, all functions and methods that access the file system
+  will now return promises, and `new Texture()` et al will throw errors when
+  called with a filename.  In order to maintain backwards compatibility, games
+  targeting API level 3 or lower will continue to get the older behavior for
+  these APIs.
+
+* Because individual `FileStream` reads are now asynchronous, `DataStream` is
+  no longer an efficient way to read binary data from a file and has been
+  removed from the Sphere Runtime API and its role has been replaced by a new
+  `BufferStream` class.  In general, code using `DataStream` to read structured
+  data from binary files should instead call `FS.readFile()` using
+  `DataType.Raw` and construct a `BufferStream` from the resulting data buffer.
+
+* `cell init` will now create a TypeScript project.  Note that this change is
+  experimental and may be removed in a future release.
+
+
 miniSphere 5.5
 --------------
 
