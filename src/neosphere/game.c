@@ -72,7 +72,6 @@ struct game
 	fs_safety_t    safety;
 	lstring_t*     save_id;
 	path_t*        script_path;
-	bool           strict_imports;
 	lstring_t*     summary;
 	enum fs_type   type;
 	int            version;
@@ -526,12 +525,6 @@ const path_t*
 game_script_path(const game_t* it)
 {
 	return it->script_path;
-}
-
-bool
-game_strict_imports(const game_t* it)
-{
-	return it->strict_imports;
 }
 
 const char*
@@ -1136,9 +1129,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 			game->empty_promises = jsal_get_boolean(-1);
 		if (jsal_get_prop_string(-2, "retrograde") && jsal_is_boolean(-1))
 			game->retrograde = jsal_get_boolean(-1);
-		if (jsal_get_prop_string(-3, "strictImports") && jsal_is_boolean(-1))
-			game->strict_imports = jsal_get_boolean(-1);
-		if (jsal_get_prop_string(-4, "sandbox") && jsal_is_string(-1)) {
+		if (jsal_get_prop_string(-3, "sandbox") && jsal_is_string(-1)) {
 			sandbox_mode = jsal_get_string(-1);
 			game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
 				: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED

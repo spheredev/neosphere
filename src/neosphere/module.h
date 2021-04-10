@@ -43,7 +43,7 @@ enum module_type
     MODULE_JSON,
 } module_type_t;
 
-void          modules_init    (bool enable_cjs);
+void          modules_init    (int api_level);
 bool          module_eval     (const char* specifier, bool node_compatible);
 module_ref_t* module_resolve  (const char* specifier, const char* importer, bool node_compatible);
 void          module_free     (module_ref_t* it);

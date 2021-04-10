@@ -143,6 +143,7 @@ main(int argc, char* argv[])
 	bool                 retro_mode;
 	const path_t*        script_path;
 	ssj_mode_t           ssj_mode;
+	int                  target_api_level;
 	int                  use_frameskip;
 	int                  use_verbosity;
 #if defined(_WIN32)
@@ -311,9 +312,10 @@ main(int argc, char* argv[])
 	
 	// in retrograde mode, only provide access to functions up to the targeted
 	// API level, nothing newer.
+	target_api_level = game_api_level(g_game);
 	if (retro_mode || game_retro_api(g_game)) {
 		api_version = game_version(g_game);
-		api_level = game_api_level(g_game);
+		api_level = target_api_level;
 	}
 	else {
 		api_version = SPHERE_API_VERSION;
@@ -321,7 +323,7 @@ main(int argc, char* argv[])
 	}
 	
 	api_init();
-	modules_init(game_strict_imports(g_game));
+	modules_init(target_api_level);
 	vanilla_init();
 	if (api_version >= 2)
 		pegasus_init(api_level, game_api_level(g_game));
@@ -350,8 +352,8 @@ main(int argc, char* argv[])
 	// evaluate the main script (v1) or module (v2)
 	script_path = game_script_path(g_game);
 	api_version = game_version(g_game);
-	if (game_strict_imports(g_game) && api_version >= 2 && path_extension_is(script_path, ".cjs")) {
-		jsal_push_new_error(JS_TYPE_ERROR, "CommonJS main '%s' unsupported with strictImports", path_cstr(script_path));
+	if (target_api_level >= 4 && api_version >= 2 && path_extension_is(script_path, ".cjs")) {
+		jsal_push_new_error(JS_TYPE_ERROR, "CommonJS main '%s' unsupported when targeting API 4+", path_cstr(script_path));
 		goto on_js_error;
 	}
 	eval_succeeded = api_version >= 2

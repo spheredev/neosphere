@@ -49,27 +49,29 @@ static module_ref_t* load_package_json (const char* filename);
 static void          push_new_require  (const char* module_id);
 static module_type_t type_of_module    (const path_t* path, bool node_compatible);
 
+static int  s_api_level;
 static int  s_next_module_id = 1;
-static bool s_strict_imports;
 
 void
-modules_init(bool strict_imports)
+modules_init(int api_level)
 {
-	s_strict_imports = strict_imports;
+	s_api_level = api_level;
 
 	jsal_on_import_module(do_resolve_import);
 
-	// initialize CommonJS cache and global require()
-	jsal_push_hidden_stash();
-	jsal_push_new_bare_object();
-	jsal_put_prop_string(-2, "moduleCache");
-	jsal_pop(1);
+	if (s_api_level < 4) {
+		// initialize CommonJS cache and global require()
+		jsal_push_hidden_stash();
+		jsal_push_new_bare_object();
+		jsal_put_prop_string(-2, "moduleCache");
+		jsal_pop(1);
 
-	jsal_push_global_object();
-	push_new_require(NULL);
-	jsal_to_propdesc_value(true, false, true);
-	jsal_def_prop_string(-2, "require");
-	jsal_pop(1);
+		jsal_push_global_object();
+		push_new_require(NULL);
+		jsal_to_propdesc_value(true, false, true);
+		jsal_def_prop_string(-2, "require");
+		jsal_pop(1);
+	}
 }
 
 bool
@@ -308,8 +310,8 @@ do_resolve_import(void)
 		jsal_throw();
 	pathname = module_pathname(ref);
 	if (module_type(ref) == MODULE_COMMONJS) {
-		if (s_strict_imports)
-			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported in strict imports mode", specifier);
+		if (s_api_level >= 4)
+			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported when targeting API 4+", specifier);
 
 		// ES module shim, allows 'import' to work with CommonJS modules
 		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
@@ -368,7 +370,7 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 	if (strncmp(specifier, "./", 2) == 0 || strncmp(specifier, "../", 3) == 0 || game_is_prefix_path(g_game, specifier)) {
 		// relative-path specifier or SphereFS prefix, resolve from file system
 		base_path = path_new(importer != NULL ? importer : "./");
-		strict_mode = s_strict_imports && !node_compatible;
+		strict_mode = s_api_level >= 4 && !node_compatible;
 	}
 	else {
 		// bare specifier, resolve from designated module directory
@@ -391,7 +393,7 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 		free(filename);
 		if (game_file_exists(g_game, path_cstr(path))) {
 			if (strict_mode && !PATTERNS[i].strict_aware)
-				jsal_error(JS_URI_ERROR, "Abbreviated import '%s' unsupported in strict imports mode", specifier);
+				jsal_error(JS_URI_ERROR, "Abbreviated import '%s' unsupported when targeting API 4+", specifier);
 			if (strcmp(path_filename(path), "package.json") == 0) {
 				if (!(ref = load_package_json(path_cstr(path))))
 					goto next_filename;
@@ -561,8 +563,8 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 	if (jsal_get_prop_string(-1, "id"))
 		caller_id = jsal_get_string(-1);
 
-	if (s_strict_imports)
-		jsal_error(JS_TYPE_ERROR, "require() unsupported in strict imports mode");
+	if (s_api_level >= 4)
+		jsal_error(JS_TYPE_ERROR, "require() unsupported when targeting API 4+");
 
 	if (!(ref = module_resolve(specifier, caller_id, true)))
 		jsal_throw();

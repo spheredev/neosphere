@@ -829,7 +829,7 @@ sort_targets_by_path(const void* p_a, const void* p_b)
 static bool
 write_manifests(build_t* build)
 {
-	int         api_level;
+	int         api_level = 1;
 	int         api_version = 2;
 	bool        flag_enabled;
 	FILE*       file;
@@ -938,6 +938,12 @@ write_manifests(build_t* build)
 		}
 		if (api_version <= 1 && path_extension_is(main_path, ".mjs"))
 			visor_warn(build->visor, "'main': '%s' will not run as a module", path_cstr(main_path));
+		if (api_level >= 4 && path_extension_is(main_path, ".cjs")) {
+			visor_error(build->visor, "CommonJS main '%s' unsupported when targeting API 4+", path_cstr(main_path));
+			jsal_pop(7);
+			visor_end_op(build->visor);
+			return false;
+		}
 		jsal_push_string(path_cstr(main_path));
 		jsal_put_prop_string(-7, "main");
 	}
@@ -993,22 +999,7 @@ write_manifests(build_t* build)
 			if (flag_enabled && !build->debuggable)
 				visor_print(build->visor, "uncaught promise rejections will be fatal");
 		}
-		if (jsal_get_prop_string(-4, "strictImports")) {
-			if (!jsal_is_boolean(-1)) {
-				visor_error(build->visor, "'strictImports': must be boolean (true or false)");
-				jsal_pop(13);
-				visor_end_op(build->visor);
-				return false;
-			}
-			flag_enabled = jsal_get_boolean(-1);
-			if (flag_enabled && path_extension_is(main_path, ".cjs")) {
-				visor_error(build->visor, "CommonJS main '%s' unsupported with strictImports", path_cstr(main_path));
-				jsal_pop(13);
-				visor_end_op(build->visor);
-				return false;
-			}
-		}
-		jsal_pop(4);
+		jsal_pop(3);
 	}
 	else if (!jsal_is_undefined(-1)) {
 		visor_error(build->visor, "'development': must be an object {}");

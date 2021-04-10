@@ -83,7 +83,6 @@ bool            game_retro_api           (const game_t* it);
 fs_safety_t     game_safety              (const game_t* it);
 const char*     game_save_id             (const game_t* it);
 const path_t*   game_script_path         (const game_t* it);
-bool            game_strict_imports      (const game_t* it);
 const char*     game_summary             (const game_t* it);
 int             game_version             (const game_t* it);
 bool            game_is_prefix_path      (const game_t* it, const char* pathname);
