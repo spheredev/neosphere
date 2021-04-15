@@ -16,6 +16,8 @@ v5.6.0 - TBD
 * Removes support for file-based constructors such as `new Texture()` when
   targeting API level 4 or higher.
 * Removes the `DataStream` class from the Sphere Runtime.
+* Removes the Sphere v1 "startup game" in favor of showing a standard
+  file-select dialog when launching neoSphere.
 * Fixes a bug where `Query#shuffle()` doesn't shuffle the final result.
 * Fixes a bug where `Mouse#position` returns an array with the coordinates in
   the wrong order.
