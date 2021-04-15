@@ -324,9 +324,10 @@ main(int argc, char* argv[])
 	
 	api_init();
 	modules_init(target_api_level);
-	vanilla_init();
+	if (api_version == 1 || target_api_level < 4)
+		vanilla_init();
 	if (api_version >= 2)
-		pegasus_init(api_level, game_api_level(g_game));
+		pegasus_init(api_level, target_api_level);
 
 	// switch to fullscreen if necessary and initialize clipping
 	if (fullscreen_mode == FULLSCREEN_ON || (fullscreen_mode == FULLSCREEN_AUTO && game_fullscreen(g_game)))

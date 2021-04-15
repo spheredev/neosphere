@@ -12,7 +12,10 @@ v5.6.0 - TBD
 * Changes all API functions that access the file system to return promises when
   called by a game that targets API level 4 or higher.
 * Changes the name of the engine from "miniSphere" to "neoSphere".
-* Removes support for file-based constructors such as `new Texture()` in games
+* Renames the user data directory from "miniSphere" to "neoSphere".
+* Removes support for all Sphere v1 API features (including the map engine)
+  when targeting API level 4 or higher.
+* Removes support for file-based constructors such as `new Texture()` when
   targeting API level 4 or higher.
 * Removes the `DataStream` class from the Sphere Runtime.
 * Fixes a bug where `Query#shuffle()` doesn't shuffle the final result.

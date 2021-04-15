@@ -13,6 +13,11 @@ miniSphere 5.6
   targeting API level 3 or lower will continue to get the older behavior for
   these APIs.
 
+* When `game.json` specifies an `apiLevel` of 4 or higher, the entire Sphere v1
+  API, including `MapEngine()`, will be disabled.  If you still rely on these
+  old functions, you will need to completely port to Sphere v2 before setting
+  your game's `apiLevel` to 4.
+
 * Because individual `FileStream` reads are now asynchronous, `DataStream` is
   no longer an efficient way to read binary data from a file and has been
   removed from the Sphere Runtime API and its role has been replaced by a new
@@ -22,6 +27,10 @@ miniSphere 5.6
 
 * `cell init` will now create a TypeScript project.  Note that this change is
   experimental and may be removed in a future release.
+
+* neoSphere now users "neoSphere" for the name of its user data directory (in
+  the user's Documents folder), instead of "miniSphere", to go along with
+  engine rename.
 
 
 miniSphere 5.5
