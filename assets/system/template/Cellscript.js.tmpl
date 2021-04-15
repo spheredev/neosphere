@@ -5,8 +5,6 @@
  * and packaging games.
  */
 
-import {{ tsc }} from 'cell-runtime';
-
 // describe the game we're building.  everything in Sphere.Game gets written to
 // the game manifest (game.json) at the end of the build.
 
@@ -44,8 +42,8 @@ Object.assign(Sphere.Game,
 //       `path/to/file`, is relative to the location of the Cellscript, not the
 //       game's JSON manifest like in Sphere.
 
-install('@/images', files('images/*.png', true));
-install('@/music',  files('music/*.ogg', true));
-install('@/',       files('icon.png'));
+install('@/scripts', files('scripts/*.js', true));
 
-tsc('@/', 'tsconfig.json');
+install('@/', files('icon.png'));
+install('@/images', files('images/*.png', true));
+install('@/music', files('music/*.ogg', true));

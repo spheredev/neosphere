@@ -481,10 +481,10 @@ build_init_dir(build_t* it)
 	cellscript_output = strfmt(cellscript_template, title_for_js, author_for_js, summary_for_js, resolution_for_js, NULL);
 	fs_fspew(it->fs, "$/Cellscript.js", cellscript_output, strlen(cellscript_output));
 	fs_unlink(it->fs, "$/Cellscript.js.tmpl");
-	mainjs_template = fs_fslurp(it->fs, "$/scripts/main.ts.tmpl", NULL);
+	mainjs_template = fs_fslurp(it->fs, "$/scripts/main.js.tmpl", NULL);
 	mainjs_output = strfmt(mainjs_template, title_for_js, current_year, author_for_js, NULL);
-	fs_fspew(it->fs, "$/scripts/main.ts", mainjs_output, strlen(mainjs_output));
-	fs_unlink(it->fs, "$/scripts/main.ts.tmpl");
+	fs_fspew(it->fs, "$/scripts/main.js", mainjs_output, strlen(mainjs_output));
+	fs_unlink(it->fs, "$/scripts/main.js.tmpl");
 	free(title_for_js);
 	free(author_for_js);
 	free(summary_for_js);

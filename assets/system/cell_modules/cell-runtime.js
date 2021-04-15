@@ -30,9 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-// Cell-specific modules
-export { tsc } from 'compile';
-
 // Sphere Runtime shared modules
 export { default as BufferStream } from 'buffer-stream';
 export { default as from } from 'from';
