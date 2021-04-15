@@ -100,7 +100,6 @@ module_resolve(const char* specifier, const char* importer, bool node_compatible
 		{ true,  "#/runtime" },
 	};
 
-	path_t*       path;
 	module_ref_t* ref = NULL;
 
 	int i;
@@ -111,22 +110,12 @@ module_resolve(const char* specifier, const char* importer, bool node_compatible
 		return NULL;
 	}
 
-	// special case for `/lib/foo.js`. ideally, it would be better to support this at a lower
-	// level, e.g. by codifying it as part of SphereFS. this will do for now, though.
-	path = path_new(specifier);
-	if (strncmp(path_cstr(path), "/lib/", 5) == 0) {
-		path_remove_hop(path, 0);
-		path_remove_hop(path, 0);
-		specifier = path_cstr(path);
-	}
-
 	for (i = 0; i < sizeof PATHS / sizeof PATHS[0]; ++i) {
 		if ((ref = find_module(specifier, importer, PATHS[i].path, node_compatible && !PATHS[i].esm_only)))
 			break;  // short-circuit
 	}
 	if (ref == NULL)
 		jsal_push_new_error(JS_URI_ERROR, "Couldn't find JS module '%s'", specifier);
-	path_free(path);
 	return ref;
 }
 

@@ -25,9 +25,6 @@ miniSphere 5.6
   data from binary files should instead call `FS.readFile()` using
   `DataType.Raw` and construct a `BufferStream` from the resulting data buffer.
 
-* `cell init` will now create a TypeScript project.  Note that this change is
-  experimental and may be removed in a future release.
-
 * neoSphere now users "neoSphere" for the name of its user data directory (in
   the user's Documents folder), instead of "miniSphere", to go along with
   engine rename.

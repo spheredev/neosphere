@@ -6,8 +6,6 @@ v5.6.0 - TBD
 
 * Adds support for multiple texture units and, by extension, additional
   `sampler` uniforms in shaders.
-* Adds experimental out-of-the-box support for projects written in TypeScript.
-* Adds TypeScript support to the template project created by `cell init`.
 * Adds a new class, `BufferStream`, to the Sphere Runtime.
 * Changes all API functions that access the file system to return promises when
   called by a game that targets API level 4 or higher.
