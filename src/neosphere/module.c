@@ -295,12 +295,14 @@ do_resolve_import(void)
 	if (!jsal_is_null(1))
 		caller_id = jsal_require_string(1);
 
+	if (game_is_prefix_path(g_game, specifier) && s_api_level >= 4)
+		jsal_error(JS_URI_ERROR, "SphereFS import '%s' not supported under API 4+", specifier);
 	if (!(ref = module_resolve(specifier, caller_id, false)))
 		jsal_throw();
 	pathname = module_pathname(ref);
 	if (module_type(ref) == MODULE_COMMONJS) {
 		if (s_api_level >= 4)
-			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' unsupported when targeting API 4+", specifier);
+			jsal_error(JS_TYPE_ERROR, "CommonJS import '%s' not supported under API 4+", specifier);
 
 		// ES module shim, allows 'import' to work with CommonJS modules
 		shim_name = strnewf("%%/moduleShim-%d.js", s_next_module_id++);
@@ -382,7 +384,7 @@ find_module(const char* specifier, const char* importer, const char* lib_dir_nam
 		free(filename);
 		if (game_file_exists(g_game, path_cstr(path))) {
 			if (strict_mode && !PATTERNS[i].strict_aware)
-				jsal_error(JS_URI_ERROR, "Abbreviated import '%s' unsupported when targeting API 4+", specifier);
+				jsal_error(JS_URI_ERROR, "Abbreviated import '%s' not supported under API 4+", specifier);
 			if (strcmp(path_filename(path), "package.json") == 0) {
 				if (!(ref = load_package_json(path_cstr(path))))
 					goto next_filename;
@@ -553,7 +555,7 @@ js_require(int num_args, bool is_ctor, intptr_t magic)
 		caller_id = jsal_get_string(-1);
 
 	if (s_api_level >= 4)
-		jsal_error(JS_TYPE_ERROR, "require() unsupported when targeting API 4+");
+		jsal_error(JS_TYPE_ERROR, "require() not supported under API 4+");
 
 	if (!(ref = module_resolve(specifier, caller_id, true)))
 		jsal_throw();
