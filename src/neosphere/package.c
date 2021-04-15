@@ -294,7 +294,7 @@ asset_fopen(package_t* package, const char* pathname, const char* mode)
 	console_log(4, "opening '%s' (%s) from package #%u", pathname, mode, package->id);
 
 	// get path to local cache file
-	cache_path = path_rebase(path_new("Sphere/.spkCache/"), home_path());
+	cache_path = path_rebase(path_new("neoSphere/.spkCache/"), home_path());
 	path_append_dir(cache_path, path_filename(package->path));
 	local_path = path_rebase(path_new(pathname), cache_path);
 	path_free(cache_path);

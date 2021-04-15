@@ -348,7 +348,7 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 			game_filename = path_is_file(game_root)
 				? path_filename(game_root)
 				: path_hop(game_root, path_num_hops(game_root) - 1);
-			path = path_rebase(path_new("Sphere/Screenshots/"), home_path());
+			path = path_rebase(path_new("neoSphere/Screenshots/"), home_path());
 			path_mkdir(path);
 			time(&datetime);
 			strftime(timestamp, 100, "%Y%m%d", localtime(&datetime));

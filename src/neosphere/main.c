@@ -233,7 +233,7 @@ main(int argc, char* argv[])
 
 	// locate the game manifest
 	console_log(1, "searching for a game to launch");
-	games_path = path_rebase(path_new("Sphere/Games/"), home_path());
+	games_path = path_rebase(path_new("neoSphere/Games/"), home_path());
 	path_mkdir(games_path);
 	if (s_game_path == NULL) {
 		// no game specified on command line, see if we have a startup game

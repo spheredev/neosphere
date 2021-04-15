@@ -2747,7 +2747,7 @@ js_GetGameList(int num_args, bool is_ctor, intptr_t magic)
 
 	// build search paths
 	paths[0] = path_rebase(path_new("games/"), engine_path());
-	paths[1] = path_rebase(path_new("Sphere/Games/"), home_path());
+	paths[1] = path_rebase(path_new("neoSphere/Games/"), home_path());
 
 	// search for supported games
 	jsal_push_new_array();
