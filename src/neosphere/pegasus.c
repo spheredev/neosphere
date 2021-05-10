@@ -987,7 +987,26 @@ pegasus_init(int api_level, int target_api_level)
 	}
 
 	if (api_level >= 4) {
+		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
+		api_define_func("FS", "match", js_FS_match, 0);
+		api_define_func("Z", "deflate", js_Z_deflate, 0);
+		api_define_func("Z", "inflate", js_Z_inflate, 0);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
+		api_define_method("Surface", "clear", js_Surface_clear, 0);
+		api_define_method("Texture", "download", js_Texture_download, 0);
+		api_define_method("Texture", "upload", js_Texture_upload, 0);
+		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
+		api_define_const("BlendType", "Add", BLEND_OP_ADD);
+		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
+		api_define_const("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);
+		api_define_const("Blend", "Alpha", BLEND_ALPHA);
+		api_define_const("Blend", "AlphaInverse", BLEND_INV_ALPHA);
+		api_define_const("Blend", "One", BLEND_ONE);
+		api_define_const("Blend", "Source", BLEND_SRC);
+		api_define_const("Blend", "SourceInverse", BLEND_INV_SRC);
+		api_define_const("Blend", "Target", BLEND_DEST);
+		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
+		api_define_const("Blend", "Zero", BLEND_ZERO);
 		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
 		api_define_const("DepthOp", "Equal", DEPTH_EQUAL);
 		api_define_const("DepthOp", "Greater", DEPTH_GREATER);
@@ -1013,28 +1032,6 @@ pegasus_init(int api_level, int target_api_level)
 			api_define_async_method("Socket", "read", js_Socket_read, 0);
 			api_define_async_method("Socket", "write", js_Socket_write, 0);
 		}
-	}
-
-	if (api_level >= 5) {
-		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
-		api_define_func("FS", "match", js_FS_match, 0);
-		api_define_func("Z", "deflate", js_Z_deflate, 0);
-		api_define_func("Z", "inflate", js_Z_inflate, 0);
-		api_define_method("Surface", "clear", js_Surface_clear, 0);
-		api_define_method("Texture", "download", js_Texture_download, 0);
-		api_define_method("Texture", "upload", js_Texture_upload, 0);
-		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
-		api_define_const("BlendType", "Add", BLEND_OP_ADD);
-		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
-		api_define_const("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);
-		api_define_const("Blend", "Alpha", BLEND_ALPHA);
-		api_define_const("Blend", "AlphaInverse", BLEND_INV_ALPHA);
-		api_define_const("Blend", "One", BLEND_ONE);
-		api_define_const("Blend", "Source", BLEND_SRC);
-		api_define_const("Blend", "SourceInverse", BLEND_INV_SRC);
-		api_define_const("Blend", "Target", BLEND_DEST);
-		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
-		api_define_const("Blend", "Zero", BLEND_ZERO);
 	}
 
 	// keep a local reference to Surface.Screen

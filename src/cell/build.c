@@ -978,8 +978,6 @@ write_manifests(build_t* build)
 	jsal_pop(8);
 
 	// write game.json (Sphere v2 JSON manifest)
-	if (!build->debuggable)  // strip debug flags from release
-		jsal_del_prop_string(-1, "development");
 	jsal_stringify(-1);
 	json_text = jsal_get_lstring(-1, &json_size);
 	fs_fspew(build->fs, "@/game.json", json_text, json_size);
