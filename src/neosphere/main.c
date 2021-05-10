@@ -313,7 +313,7 @@ main(int argc, char* argv[])
 	// in retrograde mode, only provide access to functions up to the targeted
 	// API level, nothing newer.
 	target_api_level = game_api_level(g_game);
-	if (retro_mode || game_retro_api(g_game)) {
+	if (retro_mode) {
 		api_version = game_version(g_game);
 		api_level = target_api_level;
 	}
@@ -585,37 +585,32 @@ on_reject_promise(void)
 	const char* error_text;
 	const char* error_url = NULL;
 
-	if (game_empty_promises(g_game)) {
-		jsal_dup(0);
-		error_text = jsal_to_string(-1);
-		if (jsal_is_error(1)) {
-			jsal_get_prop_string(1, "column");
-			jsal_get_prop_string(1, "line");
-			jsal_get_prop_string(1, "source");
-			jsal_get_prop_string(1, "stack");
-			jsal_get_prop_string(1, "url");
-			error_column = jsal_get_int(-5) + 1;
-			error_line = jsal_get_int(-4) + 1;
-			error_source = jsal_get_string(-3);
-			error_stack = jsal_get_string(-2);
-			error_url = jsal_get_string(-1);
-			if (error_stack != NULL)
-				error_text = error_stack;
-		}
-		if (error_url != NULL) {
-			fprintf(stderr, "EXCEPTION: unhandled JavaScript promise rejection at %s:%d:%d.\n", error_url, error_line, error_column);
-			fprintf(stderr, "%s\n", error_text);
-			fprintf(stderr, "   %d %s\n", error_line, error_source);
-		}
-		else {
-			fprintf(stderr, "EXCEPTION: unhandled JavaScript promise rejection.\n");
-			fprintf(stderr, "%s\n", error_text);
-		}
-		return true;
+	jsal_dup(0);
+	error_text = jsal_to_string(-1);
+	if (jsal_is_error(1)) {
+		jsal_get_prop_string(1, "column");
+		jsal_get_prop_string(1, "line");
+		jsal_get_prop_string(1, "source");
+		jsal_get_prop_string(1, "stack");
+		jsal_get_prop_string(1, "url");
+		error_column = jsal_get_int(-5) + 1;
+		error_line = jsal_get_int(-4) + 1;
+		error_source = jsal_get_string(-3);
+		error_stack = jsal_get_string(-2);
+		error_url = jsal_get_string(-1);
+		if (error_stack != NULL)
+			error_text = error_stack;
+	}
+	if (error_url != NULL) {
+		fprintf(stderr, "EXCEPTION: unhandled JS promise rejection at %s:%d:%d.\n", error_url, error_line, error_column);
+		fprintf(stderr, "%s\n", error_text);
+		fprintf(stderr, "   %d %s\n", error_line, error_source);
 	}
 	else {
-		return false;
+		fprintf(stderr, "EXCEPTION: unhandled JS promise rejection.\n");
+		fprintf(stderr, "%s\n", error_text);
 	}
+	return false;
 }
 
 static void

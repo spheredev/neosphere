@@ -60,16 +60,13 @@ struct game
 	image_t*       default_arrow_up;
 	font_t*        default_font;
 	windowstyle_t* default_windowstyle;
-	bool           empty_promises;
 	vector_t*      file_type_map;
 	bool           fullscreen;
 	js_ref_t*      manifest;
 	lstring_t*     name;
 	package_t*     package;
 	size2_t        resolution;
-	bool           retrograde;
 	path_t*        root_path;
-	fs_safety_t    safety;
 	lstring_t*     save_id;
 	path_t*        script_path;
 	lstring_t*     summary;
@@ -118,7 +115,6 @@ game_open(const char* game_path)
 	console_log(1, "opening '%s' from game #%u", game_path, s_next_game_id);
 
 	game = game_ref(calloc(1, sizeof(game_t)));
-	game->safety = FS_SAFETY_FULL;
 
 	game->id = s_next_game_id;
 	path = path_new(game_path);
@@ -137,7 +133,6 @@ game_open(const char* game_path)
 	else if (path_is_file(path)) {  // non-SPK file, assume JS script
 		game->type = FS_LOCAL;
 		game->root_path = path_strip(path_dup(path));
-		game->safety = FS_SAFETY_NONE;
 
 		// synthesize a game manifest for the script.  this way we make this trick of running
 		// a bare script transparent to the rest of the engine, keeping things simple.
@@ -227,10 +222,6 @@ game_open(const char* game_path)
 		}
 	}
 
-	// always use full sandbox enforcement for SPK packages
-	if (game->type == FS_PACKAGE)
-		game->safety = FS_SAFETY_FULL;
-	
 	load_default_assets(game);
 
 	resolution = game_resolution(game);
@@ -359,12 +350,6 @@ windowstyle_t*
 game_default_windowstyle(const game_t* it)
 {
 	return it->default_windowstyle;
-}
-
-bool
-game_empty_promises(const game_t* it)
-{
-	return it->empty_promises;
 }
 
 bool
@@ -502,18 +487,6 @@ game_resolution(const game_t* it)
 	return it->resolution;
 }
 
-bool
-game_retro_api(const game_t* it)
-{
-	return it->retrograde;
-}
-
-fs_safety_t
-game_safety(const game_t* it)
-{
-	return it->safety;
-}
-
 const char*
 game_save_id(const game_t* it)
 {
@@ -561,8 +534,7 @@ game_is_writable(const game_t* it, const char* pathname, bool v1_mode)
 	path = game_full_path(g_game, pathname, NULL, v1_mode);
 	prefix = path_hop(path, 0);  // safe, prefix is always present
 	return strcmp(prefix, "~") == 0
-		|| (strcmp(prefix, "@") == 0 && (v1_mode || it->safety < FS_SAFETY_FULL))
-		|| it->safety == FS_SAFETY_NONE;
+		|| (strcmp(prefix, "@") == 0 && v1_mode);
 }
 
 bool
@@ -1051,9 +1023,6 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	int         res_x;
 	int         res_y;
 	int         stack_top;
-#if defined(NEOSPHERE_SPHERUN)
-	const char* sandbox_mode;
-#endif
 
 	stack_top = jsal_get_top();
 
@@ -1119,24 +1088,6 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 		game->fullscreen = jsal_get_boolean(-1);
 	else
 		game->fullscreen = game->version < 2;
-
-	// for SpheRun only: load dev configuration from manifest.  otherwise use defaults to avoid
-	// security issues in production.
-	game->safety = FS_SAFETY_FULL;
-#if defined(NEOSPHERE_SPHERUN)
-	if (jsal_get_prop_string(-10, "development") && jsal_is_object(-1)) {
-		if (jsal_get_prop_string(-1, "emptyPromises") && jsal_is_boolean(-1))
-			game->empty_promises = jsal_get_boolean(-1);
-		if (jsal_get_prop_string(-2, "retrograde") && jsal_is_boolean(-1))
-			game->retrograde = jsal_get_boolean(-1);
-		if (jsal_get_prop_string(-3, "sandbox") && jsal_is_string(-1)) {
-			sandbox_mode = jsal_get_string(-1);
-			game->safety = strcmp(sandbox_mode, "none") == 0 ? FS_SAFETY_NONE
-				: strcmp(sandbox_mode, "relaxed") == 0 ? FS_SAFETY_RELAXED
-				: FS_SAFETY_FULL;
-		}
-	}
-#endif
 
 	jsal_set_top(stack_top);
 	return true;

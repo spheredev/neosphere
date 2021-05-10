@@ -831,13 +831,11 @@ write_manifests(build_t* build)
 {
 	int         api_level = 1;
 	int         api_version = 2;
-	bool        flag_enabled;
 	FILE*       file;
 	int         height;
 	size_t      json_size;
 	const char* json_text;
 	path_t*     main_path;
-	const char* sandbox_mode;
 	const char* save_id;
 	path_t*     script_path;
 	size_t      span;
@@ -964,64 +962,20 @@ write_manifests(build_t* build)
 		visor_warn(build->visor, "'saveID': no save ID - '~/' prefix will be disabled");
 	}
 
-	jsal_get_prop_string(-9, "development");
-	if (jsal_is_object(-1) && !jsal_is_array(-1)) {
-		if (jsal_get_prop_string(-1, "sandbox")) {
-			sandbox_mode = jsal_to_string(-1);
-			if (strcmp(sandbox_mode, "full") != 0 && strcmp(sandbox_mode, "relaxed") != 0 && strcmp(sandbox_mode, "none") != 0) {
-				visor_error(build->visor, "'sandbox': must be one of 'full', 'relaxed', 'none'");
-				jsal_pop(10);
-				visor_end_op(build->visor);
-				return false;
-			}
-			if (strcmp(sandbox_mode, "full") != 0 && !build->debuggable)
-				visor_print(build->visor, "full SphereFS sandboxing will be enforced");
-		}
-		if (jsal_get_prop_string(-2, "retrograde")) {
-			if (!jsal_is_boolean(-1)) {
-				visor_error(build->visor, "'retrograde': must be boolean (true or false)");
-				jsal_pop(11);
-				visor_end_op(build->visor);
-				return false;
-			}
-			flag_enabled = jsal_get_boolean(-1);
-			if (flag_enabled && !build->debuggable)
-				visor_print(build->visor, "all supported APIs will be exposed");
-		}
-		if (jsal_get_prop_string(-3, "emptyPromises")) {
-			if (!jsal_is_boolean(-1)) {
-				visor_error(build->visor, "'emptyPromises': must be boolean (true or false)");
-				jsal_pop(12);
-				visor_end_op(build->visor);
-				return false;
-			}
-			flag_enabled = jsal_get_boolean(-1);
-			if (flag_enabled && !build->debuggable)
-				visor_print(build->visor, "uncaught promise rejections will be fatal");
-		}
-		jsal_pop(3);
-	}
-	else if (!jsal_is_undefined(-1)) {
-		visor_error(build->visor, "'development': must be an object {}");
-		jsal_pop(9);
-		visor_end_op(build->visor);
-		return false;
-	}
-
 	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
 	// note: SGMv1 requires the main script path to be relative to '@/scripts'.
 	//       this differs from Sv2 (game.json), where it's relative to '@/'.
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
 	script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
-	fprintf(file, "name=%s\n", jsal_to_string(-9));
-	fprintf(file, "author=%s\n", jsal_to_string(-8));
-	fprintf(file, "description=%s\n", jsal_to_string(-7));
+	fprintf(file, "name=%s\n", jsal_to_string(-8));
+	fprintf(file, "author=%s\n", jsal_to_string(-7));
+	fprintf(file, "description=%s\n", jsal_to_string(-6));
 	fprintf(file, "screen_width=%d\n", width);
 	fprintf(file, "screen_height=%d\n", height);
 	fprintf(file, "script=%s\n", path_cstr(script_path));
 	fclose(file);
 	path_free(script_path);
-	jsal_pop(9);
+	jsal_pop(8);
 
 	// write game.json (Sphere v2 JSON manifest)
 	if (!build->debuggable)  // strip debug flags from release
