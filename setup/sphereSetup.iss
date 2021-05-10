@@ -33,7 +33,7 @@
 ; solution configurations.
 #define AppName "Sphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.6.0"
+#define AppVersion3 "5.6.0+"
 #define AppVersion4 "5.6.0.3375"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
