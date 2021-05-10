@@ -1,20 +1,14 @@
 Sphere Changelog
 ================
 
-v5.6.0 - TBD
-------------
+v5.6.0 - May 10, 2021
+---------------------
 
 * Adds support for multiple texture units and, by extension, additional
   `sampler` uniforms in shaders.
 * Adds a new class, `BufferStream`, to the Sphere Runtime.
-* Changes all API functions that access the file system to return promises when
-  called by a game that targets API level 4 or higher.
 * Changes the name of the engine from "miniSphere" to "neoSphere".
 * Renames the user data directory from "miniSphere" to "neoSphere".
-* Removes support for all Sphere v1 API features (including the map engine)
-  when targeting API level 4 or higher.
-* Removes support for file-based constructors such as `new Texture()` when
-  targeting API level 4 or higher.
 * Removes the `DataStream` class from the Sphere Runtime.
 * Removes the Sphere v1 "startup game" in favor of showing a standard
   file-select dialog when launching neoSphere.

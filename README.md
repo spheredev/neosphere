@@ -27,7 +27,7 @@ Download
 ========
 
 The latest stable Sphere release at the time of this writing is
-**Sphere 5.5.2**, released on Monday, November 30, 2020.  Sphere releases are
+**Sphere 5.6.0**, released on Monday, May 10, 2021.  Sphere releases are
 provided through GitHub, so the latest version is always available for download
 here:
 
@@ -74,13 +74,13 @@ might look like this:
 // all values defined on Sphere.Game are JSON encoded at the end of the build
 // and written to game.json.
 Object.assign(Sphere.Game, {
-    version:  2,  // target Sphere v2
-    apiLevel: 1,  // API L1 or higher
+    version:  2,  // target the Sphere v2 API
+    apiLevel: 3,  // require API level 3+
 
     name:       "My Game",
     author:     "Some Guy",
     summary:    "This game is awesome.",
-    resolution: '320x240',
+    resolution: '768x480',
     main:       '@/scripts/main.js',
 });
 
