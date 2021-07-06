@@ -1,6 +1,13 @@
 Sphere Changelog
 ================
 
+v5.6.1 - July 6, 2021
+---------------------
+
+* Removes support for 32-bit versions of Windows.
+* Fixes a bug where Cell would show a deprecation warning even when targeting
+  API level 3.
+
 v5.6.0 - May 10, 2021
 ---------------------
 

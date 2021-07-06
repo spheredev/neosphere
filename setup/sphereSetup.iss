@@ -28,13 +28,13 @@
 ;  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 ;  POSSIBILITY OF SUCH DAMAGE.
 
-; before building the installer, you should build the complete Sphere GDK for
-; both x86 and x64 using Visual Studio.  in other words, the entire "GDK" and "Redist"
-; solution configurations.
+; before building the installer, you should build the complete Sphere GDK using
+; Visual Studio.  in other words, the entire "GDK" and "Redist" solution
+; configurations.
 #define AppName "Sphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.6.0+"
-#define AppVersion4 "5.6.0.3375"
+#define AppVersion3 "5.6.1"
+#define AppVersion4 "5.6.1.3378"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -53,7 +53,7 @@ AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
 AppCopyright=� 2015-2021 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
-ArchitecturesAllowed=x86 x64
+ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
 ChangesAssociations=yes
 ChangesEnvironment=yes
@@ -87,17 +87,11 @@ Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescr
 
 [Files]
 ; 64-bit (x64) binaries
-Source: "..\msw64\neoSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "..\msw64\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "..\msw64\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "..\msw64\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-Source: "..\msw64\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: Is64BitInstallMode
-; 32-bit (x86) binaries
-Source: "..\msw\neoSphere.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
-Source: "..\msw\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion; Check: not Is64BitInstallMode
+Source: "..\msw\neoSphere.exe"; DestDir: "{app}"; Flags: ignoreversion;
+Source: "..\msw\spherun.exe"; DestDir: "{app}"; Flags: ignoreversion;
+Source: "..\msw\cell.exe"; DestDir: "{app}"; Flags: ignoreversion;
+Source: "..\msw\ssj.exe"; DestDir: "{app}"; Flags: ignoreversion;
+Source: "..\msw\ChakraCore.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; everything else
 Source: "..\msw\gdk-cp.bat"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\msw\documentation\sphere2-core-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion
