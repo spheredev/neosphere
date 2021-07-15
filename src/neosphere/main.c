@@ -278,17 +278,21 @@ main(int argc, char* argv[])
 		longjmp(exit_label, 1);
 	}
 
-	if (game_version(g_game) > SPHERE_API_VERSION || game_api_level(g_game) > SPHERE_API_LEVEL_STABLE) {
+	if (game_version(g_game) > SPHERE_API_VERSION || game_api_level(g_game) > SPHERE_API_LEVEL) {
 #if !defined(NEOSPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Start Game", game_name(g_game),
-			"This game was developed for a newer edition of the Sphere API than your version of neoSphere ("SPHERE_VERSION") supports.  "
-			"You'll need to upgrade your Sphere installation before you can play this game.",
+			"This game was developed for a newer version of the Sphere API than your copy of neoSphere ("SPHERE_VERSION") supports.  "
+			"You'll need to use a newer version of Sphere to play this game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
 		fprintf(stderr, "ERROR: Sphere v%d level %d API required\n",
 			game_version(g_game), game_api_level(g_game));
 #endif
 		longjmp(exit_label, 1);
+	}
+
+	if (game_api_level(g_game) > SPHERE_API_LEVEL_STABLE) {
+		fprintf(stderr, "WARNING: game targets beta Sphere API v%d level %d\n", game_version(g_game), game_api_level(g_game));
 	}
 
 	// set up the render context ("screen") so we can draw stuff

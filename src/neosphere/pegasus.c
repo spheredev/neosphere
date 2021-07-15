@@ -571,6 +571,10 @@ pegasus_init(int api_level, int target_api_level)
 	if (s_api_level_nominal > SPHERE_API_LEVEL_STABLE)
 		s_api_level_nominal = SPHERE_API_LEVEL_STABLE;
 
+	// if game specifically targets the beta API, advertise it
+	if (target_api_level > SPHERE_API_LEVEL_STABLE)
+		s_api_level_nominal = target_api_level;
+
 	s_key_color = jsal_new_key("color");
 	s_key_done = jsal_new_key("done");
 	s_key_get = jsal_new_key("get");
