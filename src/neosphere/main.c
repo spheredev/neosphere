@@ -285,14 +285,14 @@ main(int argc, char* argv[])
 			"You'll need to use a newer version of Sphere to play this game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
-		fprintf(stderr, "ERROR: Sphere v%d level %d API required\n",
+		fprintf(stderr, "\33[31;1mERROR:\33[m Sphere v%d level %d API required\n",
 			game_version(g_game), game_api_level(g_game));
 #endif
 		longjmp(exit_label, 1);
 	}
 
 	if (game_api_level(g_game) > SPHERE_API_LEVEL_STABLE) {
-		fprintf(stderr, "WARNING: game targets beta Sphere API v%d level %d\n", game_version(g_game), game_api_level(g_game));
+		fprintf(stderr, "\33[31;1mWARNING:\33[m game targets unreleased API v%d level %d\n", game_version(g_game), game_api_level(g_game));
 	}
 
 	// set up the render context ("screen") so we can draw stuff
