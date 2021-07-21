@@ -561,7 +561,7 @@ pegasus_init(int api_level, int target_api_level)
 
 	console_log(1, "initializing Sphere v%d API (API %d)", API_VERSION, api_level);
 	if (target_api_level > SPHERE_API_LEVEL_STABLE)
-		console_warn(0, "game requires API level '%d' which is still in beta", target_api_level);
+		console_warn(0, "game requires API level %d which is still in beta", target_api_level);
 
 	s_api_level = api_level;
 

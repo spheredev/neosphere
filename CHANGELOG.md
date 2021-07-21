@@ -1,6 +1,13 @@
 Sphere Changelog
 ================
 
+v5.6.2 - July 21, 2021
+----------------------
+
+* Adds support for targeting the future Sphere API level (currently API 4).
+* Fixes a bug where `cell init` produces a Cellscript that targets API level 4
+  instead of the current stable API 3.
+
 v5.6.1 - July 6, 2021
 ---------------------
 
