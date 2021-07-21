@@ -161,7 +161,7 @@ Here's a sample manifest:
         "summary": "Follow Scott Starcross in his quest to stop the Primus.",
         "main": "@/bin/main.mjs"
         "version": 2,
-        "apiLevel": 1,
+        "apiLevel": 3,
         "resolution": "320x240",
     }
 
@@ -184,16 +184,12 @@ needed, and their values can be accessed at runtime through `Sphere.Game`.
 
     The minimum API level required to run the game.  This field is only valid
     if the `version` field (see below) is set to 2.  The current valid range
-    for `apiLevel` is 1-4, but see note on Oozaru compatibility below.
+    for `apiLevel` is 1-3.
 
     While generally all API functions and classes are available to game code
     regardless of this setting, sometimes changes are made to the API that can
     break existing code; in that case the engine will emulate the older
     behavior for games targeting API levels prior to to breaking change.
-
-    Note: `apiLevel` must be set to 4 or higher when targeting Oozaru.
-          neoSphere will continue to support API levels 1-3 for backwards
-          compatibility, but Oozaru won't launch any game targeting these.
 
 "author" {default: none} [API 1]
 

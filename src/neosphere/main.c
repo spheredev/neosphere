@@ -291,10 +291,6 @@ main(int argc, char* argv[])
 		longjmp(exit_label, 1);
 	}
 
-	if (game_api_level(g_game) > SPHERE_API_LEVEL_STABLE) {
-		fprintf(stderr, "\33[31;1mWARNING:\33[m game targets unreleased API v%d level %d\n", game_version(g_game), game_api_level(g_game));
-	}
-
 	// set up the render context ("screen") so we can draw stuff
 	resolution = game_resolution(g_game);
 	if (!(icon = image_load("@/icon.png")))
