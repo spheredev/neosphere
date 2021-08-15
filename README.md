@@ -27,7 +27,7 @@ Download
 ========
 
 The latest stable Sphere release at the time of this writing is
-**Sphere 5.6.2**, released on Wednesday, July 21, 2021.  Sphere releases are
+**Sphere 5.6.3**, released on Sunday, August 15, 2021.  Sphere releases are
 provided through GitHub, so the latest version is always available for download
 here:
 

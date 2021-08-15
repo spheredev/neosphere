@@ -33,8 +33,8 @@
 ; configurations.
 #define AppName "Sphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.6.2+"
-#define AppVersion4 "0.0.0.0"
+#define AppVersion3 "5.6.3"
+#define AppVersion4 "5.6.3.3384"
 
 ; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
 ; into msw/ide/ before building the installer.
@@ -51,7 +51,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion4}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=ï¿½ 2015-2021 Fat Cerberus
+AppCopyright=© 2015-2021 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
