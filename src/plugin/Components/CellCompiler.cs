@@ -27,25 +27,36 @@ namespace Sphere.Gdk.Components
             CopyDirectory(Path.Combine(m_main.Conf.GdkPath, "system", "template"), project.RootPath);
             con.Print("OK.\n");
 
-            con.Print("Generating Cellscript.js... ");
-            var cellTemplatePath = Path.Combine(project.RootPath, "Cellscript.tmpl");
+            var cellTemplatePath = Path.Combine(project.RootPath, "Cellscript.js.tmpl");
+            var scriptTemplatePath = Path.Combine(project.RootPath, "scripts\\main.js.tmpl");
             try
             {
-                var scriptPath = Path.Combine(project.RootPath, "Cellscript.js");
+                con.Print("Generating Cellscript... ");
+                var cellscriptPath = Path.Combine(project.RootPath, "Cellscript.js");
+                var mainScriptPath = Path.Combine(project.RootPath, "scripts\\main.js");
                 var template = File.ReadAllText(cellTemplatePath);
                 var script = string.Format(template,
                     JSifyString(project.Name, '"'), JSifyString(project.Author, '"'),
                     JSifyString(project.Summary, '"'),
-                    project.ScreenWidth, project.ScreenHeight);
-                File.WriteAllText(scriptPath, script);
+                    $"{project.ScreenWidth}x{project.ScreenHeight}");
+                File.WriteAllText(cellscriptPath, script);
                 File.Delete(cellTemplatePath);
+                con.Print("OK.\n");
+                con.Print("Generating main module... ");
+                template = File.ReadAllText(scriptTemplatePath);
+                script = string.Format(template,
+                    JSifyString(project.Name, '"'), JSifyString(project.Author, '"'),
+                    JSifyString(project.Summary, '"'),
+                    $"{project.ScreenWidth}x{project.ScreenHeight}");
+                File.WriteAllText(mainScriptPath, script);
+                File.Delete(scriptTemplatePath);
+                con.Print("OK.\n");
             }
             catch (Exception exc)
             {
                 con.Print(string.Format("\n[error] {0}\n", exc.Message));
                 return false;
             }
-            con.Print("OK.\n");
 
             con.Print("Success!\n");
             return true;

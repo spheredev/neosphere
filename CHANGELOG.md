@@ -1,6 +1,12 @@
 Sphere Changelog
 ================
 
+v5.6.3 - TBD
+------------
+
+* Fixes a bug where creating a new project with Sphere Studio would fail due to
+  changes to the project template.
+
 v5.6.2 - July 21, 2021
 ----------------------
 
