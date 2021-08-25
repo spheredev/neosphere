@@ -1,6 +1,12 @@
 Sphere Changelog
 ================
 
+v5.6.4 - TBD
+------------
+
+* Changes SSj's `--no-pause` option to `--pause` and makes not pausing on
+  startup the default behavior.
+
 v5.6.3 - August 15, 2021
 ------------------------
 

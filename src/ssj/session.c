@@ -130,9 +130,8 @@ session_free(session_t* it)
 void
 session_run(session_t* it, bool run_now)
 {
-	if (run_now) {
+	if (run_now)
 		inferior_resume(it->inferior, OP_RESUME);
-	}
 	if (inferior_attached(it->inferior)) {
 		autoselect_frame(it);
 		preview_frame(it, it->frame);

@@ -44,7 +44,7 @@
 struct cmdline
 {
 	path_t* path;
-	bool    run_now;
+	bool    pause_on_start;
 	bool    show_trace;
 };
 
@@ -89,7 +89,7 @@ main(int argc, char* argv[])
 		goto on_error;
 	printf("\n");
 	session = session_new(inferior);
-	session_run(session, cmdline->run_now);
+	session_run(session, !cmdline->pause_on_start);
 	session_free(session);
 	inferior_free(inferior);
 
@@ -238,8 +238,8 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 			}
 			else if (strcmp(argv[i], "--connect") == 0)
 				have_target = true;
-			else if (strcmp(argv[i], "--no-pause") == 0)
-				cmdline->run_now = true;
+			else if (strcmp(argv[i], "--pause") == 0)
+				cmdline->pause_on_start = true;
 			else if (strcmp(argv[i], "--trace") == 0)
 				cmdline->show_trace = true;
 			else {
@@ -257,8 +257,8 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 				case 'h':
 					print_usage();
 					goto on_output_only;
-				case 'n':
-					cmdline->run_now = true;
+				case 'p':
+					cmdline->pause_on_start = true;
 					break;
 				case 't':
 					cmdline->show_trace = true;
@@ -369,7 +369,7 @@ print_usage(void)
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("   -c  --connect    Connect to a SpheRun instance which is already running     \n");
-	printf("   -n  --no-pause   Prevent the debugger from triggering a breakpoint on attach\n");
+	printf("   -p  --pause      Start the debugger with engine execution paused            \n");
 	printf("   -t  --trace      Show trace-level output, for example, from SSj.trace()     \n");
 	printf("   -v  --version    Show the version number of SSj and its dependencies        \n");
 	printf("   -h  --help       Show this help text                                        \n");
