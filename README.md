@@ -5,31 +5,19 @@ Sphere: the JavaScript game platform
 [![Release](https://img.shields.io/github/release/fatcerberus/sphere.svg)](https://github.com/fatcerberus/sphere/releases/latest)
 
 **Sphere** is a lightweight, fully sandboxed, JavaScript-powered game
-development platform.  The engine, **neoSphere**, is the official successor to
-Chad Austin's original *Sphere* engine, written from the ground up in C.
-[Allegro 5](http://liballeg.org) holds up the backend, and JavaScript support
-is provided through [ChakraCore](https://github.com/Microsoft/ChakraCore), the
-same high-performance JavaScript engine that once powered Microsoft Edge.
-
-Sphere games are written in JavaScript, which gives game developers a great
-deal of power.  The API is designed to be user-friendly and reasonably
-accessible to novices, allowing coders of any skill level to pick up the engine
-and start hacking away.
-
-The game engine and associated command line tools are cross-platform and fairly
-portable.  Sphere is officially supported on Windows, macOS, and Linux, and
-there is a Web-based engine called **Oozaru** in the works.  Mobile support
-(both iOS and Android) is currently being considered, although there are no
-concrete plans on that front just yet.
+development platform, a complete rewrite of Chad Austin's original *Sphere*
+engine, written from the ground up in C.  Graphics and audio support are
+provided by [Allegro 5](http://liballeg.org), and JavaScript support is enabled
+by [ChakraCore](https://github.com/Microsoft/ChakraCore), the same JavaScript
+engine that once powered Microsoft Edge.
 
 
 Download
 ========
 
-The latest stable Sphere release at the time of this writing is
+The latest official Sphere release at the time of this writing is
 **Sphere 5.6.3**, released on Sunday, August 15, 2021.  Sphere releases are
-provided through GitHub, so the latest version is always available for download
-here:
+provided through GitHub and the latest version can always be found here:
 
 * <https://github.com/fatcerberus/sphere/releases>
 
@@ -37,8 +25,13 @@ For an overview of breaking changes in the current stable release series, refer
 to [`RELEASES.md`](RELEASES.md).
 
 
-The Sphere Toolchain
-====================
+The Sphere Toolbox
+==================
+
+Sphere games are written in JavaScript, which gives game developers a great
+deal of power.  The API is designed to be user-friendly and reasonably
+accessible to novices, allowing coders of any skill level to pick up the engine
+and start hacking away.
 
 The Game Engine
 ---------------
@@ -81,14 +74,13 @@ Object.assign(Sphere.Game, {
     author:     "Some Guy",
     summary:    "This game is awesome.",
     resolution: '768x480',
-    main:       '@/scripts/main.js',
+    main:       'scripts/main.js',
 });
 
-// install modules and scripts.  starting with version 5.0, Sphere supports
-// ES2015+ out of the box so no transpile is necessary!
+// install JavaScript modules
 install('@/scripts', files('src/*.js', true));
 
-// install game assets
+// install non-code game assets
 install('@/images', files('images/*.png', true));
 install('@/music',  files('music/*.ogg', true));
 install('@/sounds', files('sounds/*.wav', true));

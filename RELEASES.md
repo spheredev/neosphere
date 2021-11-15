@@ -10,8 +10,8 @@ miniSphere 5.6
   data from binary files should instead call `FS.readFile()` with
   `DataType.Raw` and construct a `BufferStream` from the resulting data buffer.
 
-* neoSphere now users "neoSphere" for the name of its user data directory (in
-  the user's Documents folder), instead of "miniSphere", to go along with
+* neoSphere now uses "neoSphere" for the name of its user data directory (in
+  the user's Documents folder), instead of "miniSphere", to align with the
   engine rename.
 
 * The legacy Sphere v1 "startup game" has been removed. When launched,

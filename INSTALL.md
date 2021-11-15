@@ -26,12 +26,11 @@ Windows
 -------
 
 You can build a complete 64-bit distribution of Sphere using the included
-Visual Studio solution `sphere.sln` located in `msvs/`.  Visual Studio 2019 or
-later is required; as of this writing, Visual Studio Community 2019 can be
-downloaded free of charge from here:
+Visual Studio solution `sphere.sln` located in `msvs/`.  Visual Studio 2022 or
+later is required, which can be downloaded free of charge here:
 
-[Download Visual Studio Community 2019]
-(https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx)
+[Download Microsoft Visual Studio]
+(https://visualstudio.microsoft.com/)
 
 Allegro is provided through NuGet, and static libraries and/or source are
 included for all other dependencies besides ChakraCore, so no additional 
