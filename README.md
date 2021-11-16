@@ -4,20 +4,21 @@ Sphere: the JavaScript game platform
 [![Build Status](https://www.travis-ci.com/fatcerberus/sphere.svg?branch=master)](https://www.travis-ci.com/fatcerberus/sphere)
 [![Release](https://img.shields.io/github/release/fatcerberus/sphere.svg)](https://github.com/fatcerberus/sphere/releases/latest)
 
-**Sphere** is a lightweight, fully sandboxed, JavaScript-powered game
-development platform, a complete rewrite of Chad Austin's original *Sphere*
-engine, written from the ground up in C.  Graphics and audio support are
-provided by [Allegro 5](http://liballeg.org), and JavaScript support is enabled
-by [ChakraCore](https://github.com/Microsoft/ChakraCore), the same JavaScript
-engine that once powered Microsoft Edge.
+**neoSphere** is a lightweight, fully sandboxed, JavaScript-powered game
+development platform.  It is a complete rewrite of Chad Austin's original
+*Sphere* engine, written from the ground up in C.  Graphics and audio support
+are provided by [Allegro 5](http://liballeg.org), and JavaScript support is
+enabled by [ChakraCore](https://github.com/Microsoft/ChakraCore), the same
+JavaScript engine that once powered Microsoft Edge.
 
 
 Download
 ========
 
-The latest official Sphere release at the time of this writing is
-**Sphere 5.6.3**, released on Sunday, August 15, 2021.  Sphere releases are
-provided through GitHub and the latest version can always be found here:
+The current stable neoSphere release at the time of this writing is
+**neoSphere 5.6.4**, released on Tuesday, November 16, 2021.  neoSphere
+releases are provided through GitHub and the latest version can always be found
+here:
 
 * <https://github.com/fatcerberus/sphere/releases>
 

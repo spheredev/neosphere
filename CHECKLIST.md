@@ -12,12 +12,10 @@ this new commit.
 * Version number in `VERSION`
 * Version number in Win32 resources (`msvs/*.rc`)
 * Version number in `src/shared/version.h`
-* Version number in `src/plugin/PluginMain.cs`
-* Version number in `src/plugin/Properties/AssemblyInfo.cs`
 * Version number and release date in `README.md`
 * Version number and release date in manual pages (`manpages/*`)
 * Version number, release date, and changelog entries in `CHANGELOG.md`
-* Version number in `setup/sphereSetup.iss`
+* Version number in `setup/neoSphereSetup.iss`
 
 
 Build the Release

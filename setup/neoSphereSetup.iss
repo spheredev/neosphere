@@ -33,8 +33,8 @@
 ; configurations.
 #define AppName "neoSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.6.3+"
-#define AppVersion4 "0.0.0.0"
+#define AppVersion3 "5.6.4"
+#define AppVersion4 "5.6.4.3391"
 
 [Setup]
 OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
@@ -73,7 +73,7 @@ Name: "assoc"; Description: "&Associate these file extensions with neoSphere:"; 
 Name: "assoc/sgm"; Description: ".sgm - Sphere &legacy manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/s2gm"; Description: ".s2gm - Sphere game &manifest (game.s2gm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/spk"; Description: ".spk - Sphere &SPK game package"; GroupDescription: "Automatically open Sphere file types:"
-Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescription: "Develop on the command line:"; Flags: checkedonce unchecked
+Name: "path"; Description: "Add the Sphere GDK tools to %&PATH%"; GroupDescription: "Develop on the command line:"; Flags: checkedonce unchecked
 
 [Files]
 ; 64-bit (x64) binaries

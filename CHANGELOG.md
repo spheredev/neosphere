@@ -1,12 +1,13 @@
 Sphere Changelog
 ================
 
-v5.6.4 - TBD
-------------
+v5.6.4 - November 16, 2021
+--------------------------
 
 * Changes SSj's `--no-pause` option to `--pause` and makes not pausing on
   startup the default behavior.
 * Changes the label color for warnings in the terminal from red to yellow.
+* Removes all Sphere Studio components from the neoSphere codebase.
 
 v5.6.3 - August 15, 2021
 ------------------------
