@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31424.327
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "neoSphere", "neosphere.vcxproj", "{9DA07B08-F2C7-4FFC-8770-9933EAB9D103}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Cell compiler", "cell.vcxproj", "{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game Development Kit", "..\src\plugin\Game Development Kit.csproj", "{D242F8EF-7D85-4B6B-9446-6758B68A7F54}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SSj debugger", "ssj.vcxproj", "{9C731E06-D435-43AF-8730-7BD51A6C731D}"
 EndProject
@@ -35,14 +33,6 @@ Global
 		{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}.Profile|x64.Build.0 = Profile|x64
 		{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}.Redist|x64.ActiveCfg = Console|x64
 		{9B7F1952-706E-4F2B-A9DC-CFF3EB5FA880}.Redist|x64.Build.0 = Console|x64
-		{D242F8EF-7D85-4B6B-9446-6758B68A7F54}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D242F8EF-7D85-4B6B-9446-6758B68A7F54}.Debug|x64.Build.0 = Debug|Any CPU
-		{D242F8EF-7D85-4B6B-9446-6758B68A7F54}.GDK|x64.ActiveCfg = Release|Any CPU
-		{D242F8EF-7D85-4B6B-9446-6758B68A7F54}.GDK|x64.Build.0 = Release|Any CPU
-		{D242F8EF-7D85-4B6B-9446-6758B68A7F54}.Profile|x64.ActiveCfg = Release|Any CPU
-		{D242F8EF-7D85-4B6B-9446-6758B68A7F54}.Profile|x64.Build.0 = Release|Any CPU
-		{D242F8EF-7D85-4B6B-9446-6758B68A7F54}.Redist|x64.ActiveCfg = Release|Any CPU
-		{D242F8EF-7D85-4B6B-9446-6758B68A7F54}.Redist|x64.Build.0 = Release|Any CPU
 		{9C731E06-D435-43AF-8730-7BD51A6C731D}.Debug|x64.ActiveCfg = Debug|x64
 		{9C731E06-D435-43AF-8730-7BD51A6C731D}.Debug|x64.Build.0 = Debug|x64
 		{9C731E06-D435-43AF-8730-7BD51A6C731D}.GDK|x64.ActiveCfg = Console|x64

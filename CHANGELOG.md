@@ -6,6 +6,7 @@ v5.6.4 - TBD
 
 * Changes SSj's `--no-pause` option to `--pause` and makes not pausing on
   startup the default behavior.
+* Changes the label color for warnings in the terminal from red to yellow.
 
 v5.6.3 - August 15, 2021
 ------------------------
