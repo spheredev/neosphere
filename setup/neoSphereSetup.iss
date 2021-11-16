@@ -31,19 +31,13 @@
 ; before building the installer, you should build the complete Sphere GDK using
 ; Visual Studio.  in other words, the entire "GDK" and "Redist" solution
 ; configurations.
-#define AppName "Sphere"
+#define AppName "neoSphere"
 #define AppPublisher "Fat Cerberus"
 #define AppVersion3 "5.6.3+"
 #define AppVersion4 "0.0.0.0"
 
-; to create a bundle with Sphere Studio, copy the Sphere Studio binaries
-; into msw/ide/ before building the installer.
-#ifexist "../msw/ide/Sphere Studio.exe"
-#define INCLUDE_SPHERE_STUDIO
-#endif
-
 [Setup]
-OutputBaseFilename=sphereSetup-{#AppVersion3}-msw
+OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
 OutputDir=.
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
@@ -51,7 +45,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion4}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=� 2015-2021 Fat Cerberus
+AppCopyright=(c) 2015-2021 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
@@ -79,10 +73,6 @@ Name: "assoc"; Description: "&Associate these file extensions with neoSphere:"; 
 Name: "assoc/sgm"; Description: ".sgm - Sphere &legacy manifest (game.sgm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/s2gm"; Description: ".s2gm - Sphere game &manifest (game.s2gm)"; GroupDescription: "Automatically open Sphere file types:"
 Name: "assoc/spk"; Description: ".spk - Sphere &SPK game package"; GroupDescription: "Automatically open Sphere file types:"
-#ifdef INCLUDE_SPHERE_STUDIO
-Name: "assoc_ss"; Description: "&Associate these file extensions with Sphere Studio:"; GroupDescription: "Automatically open Sphere file types:"
-Name: "assoc_ss/ssproj"; Description: ".ssproj - Sphere Studio project file"; GroupDescription: "Automatically open Sphere file types:"
-#endif
 Name: "path"; Description: "Add the GDK tools to the system %&PATH%"; GroupDescription: "Develop on the command line:"; Flags: checkedonce unchecked
 
 [Files]
@@ -98,9 +88,6 @@ Source: "..\msw\documentation\sphere2-core-api.txt"; DestDir: "{app}\documentati
 Source: "..\msw\documentation\sphere2-hl-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion
 Source: "..\msw\documentation\cellscript-api.txt"; DestDir: "{app}\documentation"; Flags: ignoreversion
 Source: "..\msw\system\*"; DestDir: "{app}\system"; Flags: ignoreversion recursesubdirs createallsubdirs
-#ifdef INCLUDE_SPHERE_STUDIO
-Source: "..\msw\ide\*"; DestDir: "{app}\ide"; Flags: ignoreversion recursesubdirs
-#endif
 
 [Registry]
 ; neoSphere associations
@@ -112,30 +99,15 @@ Root: HKCR; Subkey: ".sgm"; ValueType: string; ValueName: ""; ValueData: "neoSph
 Root: HKCR; Subkey: "neoSphere.SGM"; ValueType: string; ValueName: ""; ValueData: "Sphere Game Manifest"; Flags: uninsdeletekey; Tasks: assoc/sgm
 Root: HKCR; Subkey: "neoSphere.SGM\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\neoSphere.exe,0"; Tasks: assoc/sgm
 Root: HKCR; Subkey: "neoSphere.SGM\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\neoSphere.exe"" ""%1"""; Tasks: assoc/sgm
-; Sphere Studio associations
-#ifdef INCLUDE_SPHERE_STUDIO
-Root: HKCR; Subkey: ".ssproj"; ValueType: string; ValueName: ""; ValueData: "neoSphere.SSPROJ"; Flags: uninsdeletevalue; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "neoSphere.SSPROJ"; ValueType: string; ValueName: ""; ValueData: "Sphere Studio Project"; Flags: uninsdeletekey; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "neoSphere.SSPROJ\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\ide\Sphere Studio.exe,0"; Tasks: assoc_ss/ssproj
-Root: HKCR; Subkey: "neoSphere.SSPROJ\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\ide\Sphere Studio.exe"" ""%1"""; Tasks: assoc_ss/ssproj
-#endif
 ; PATH
 Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; ValueType: expandsz; ValueName: "Path"; ValueData: "{app};{olddata}"; Tasks: path
 
 [Icons]
 Name: "{autoprograms}\neoSphere"; Filename: "{app}\neoSphere.exe"
-#ifdef INCLUDE_SPHERE_STUDIO
-Name: "{autoprograms}\Sphere Studio"; Filename: "{app}\ide\Sphere Studio.exe"
-#endif
 Name: "{group}\Sphere GDK Command Prompt"; Filename: "%comspec%"; Parameters: "/k ""{app}\gdk-cp.bat"""
 Name: "{group}\Cellscript API Reference"; Filename: "{app}\documentation\cellscript-api.txt"
 Name: "{group}\Core API Reference"; Filename: "{app}\documentation\sphere2-core-api.txt"
 Name: "{group}\Sphere Runtime API Reference"; Filename: "{app}\documentation\sphere2-hl-api.txt"
-
-[Run]
-#ifdef INCLUDE_SPHERE_STUDIO
-Filename: "{app}\ide\Sphere Studio.exe"; Description: "Start using Sphere Studio"; Flags: postinstall nowait skipifsilent
-#endif
 
 [Code]
 procedure InitializeWizard;
