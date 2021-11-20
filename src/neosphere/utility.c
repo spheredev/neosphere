@@ -41,6 +41,22 @@
 #include "path.h"
 
 const path_t*
+app_data_path(void)
+{
+	static path_t* retval = NULL;
+
+	ALLEGRO_PATH* al_path;
+
+	if (retval == NULL) {
+		al_path = al_get_standard_path(ALLEGRO_USER_DATA_PATH);
+		retval = path_new_dir(al_path_cstr(al_path, '/'));
+		al_destroy_path(al_path);
+	}
+	path_mkdir(retval);
+	return retval;
+}
+
+const path_t*
 assets_path(void)
 {
 	static path_t* retval = NULL;

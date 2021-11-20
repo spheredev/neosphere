@@ -1191,7 +1191,7 @@ resolve_pathname(const game_t* game, const char* pathname, path_t* *out_path, en
 		if (game_save_id(game) == NULL)
 			goto on_error;  // no save ID, can't resolve path
 		*out_path = path_new(&pathname[2]);
-		origin = path_rebase(path_new("neoSphere/Save Data/"), home_path());
+		origin = path_rebase(path_new("neoSphere Saves/"), home_path());
 		path_append_dir(origin, game_save_id(game));
 		path_rebase(*out_path, origin);
 		path_free(origin);

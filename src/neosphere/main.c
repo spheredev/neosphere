@@ -136,7 +136,6 @@ main(int argc, char* argv[])
 	ALLEGRO_FILECHOOSER* file_dialog;
 	int                  fullscreen_mode;
 	int                  game_args_offset;
-	path_t*              games_path;
 	image_t*             icon;
 	size2_t              resolution;
 	jmp_buf              restart_label;
@@ -233,8 +232,6 @@ main(int argc, char* argv[])
 
 	// locate the game manifest
 	console_log(1, "searching for a game to launch");
-	games_path = path_rebase(path_new("neoSphere/Games/"), home_path());
-	path_mkdir(games_path);
 	if (s_game_path == NULL) {
 		// no game specified on command line, see if we have a startup game
 		find_startup_game(&s_game_path);
@@ -245,10 +242,10 @@ main(int argc, char* argv[])
 	}
 	else {
 		// no game path provided and no startup game, let user find one
-		dialog_name = lstr_newf("%s - Select a Sphere game to launch", SPHERE_ENGINE_NAME);
-		file_dialog = al_create_native_file_dialog(path_cstr(games_path),
+		dialog_name = lstr_newf("%s - Find a Sphere game to launch", SPHERE_ENGINE_NAME);
+		file_dialog = al_create_native_file_dialog(path_cstr(home_path()),
 			lstr_cstr(dialog_name),
-			"game.sgm;game.s2gm;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+			"game.sgm;game.json;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		al_show_native_file_dialog(NULL, file_dialog);
 		lstr_free(dialog_name);
 		if (al_get_native_file_dialog_count(file_dialog) > 0) {
@@ -260,11 +257,9 @@ main(int argc, char* argv[])
 		else {
 			// user cancelled the dialog box
 			al_destroy_native_file_dialog(file_dialog);
-			path_free(games_path);
 			return EXIT_SUCCESS;
 		}
 	}
-	path_free(games_path);
 
 	if (g_game == NULL) {
 		// if after all that, we still don't have a valid game_t pointer, bail out;
