@@ -626,7 +626,6 @@ initialize_engine(void)
 	console_log(1, "initializing Allegro %u.%u.%u.%u",
 		al_version >> 24, (al_version >> 16) & 0xFF, (al_version >> 8) & 0xFF,
 		(al_version & 0xFF) - 1);
-	al_set_org_name("Fat Cerberus");
 	al_set_app_name("neoSphere");
 	if (!al_init())
 		goto on_error;
