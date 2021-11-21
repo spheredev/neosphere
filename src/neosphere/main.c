@@ -266,7 +266,7 @@ main(int argc, char* argv[])
 		// there's not much else we can do.
 #if !defined(NEOSPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Load Game", path_cstr(s_game_path),
-			"neoSphere either couldn't read the game manifest or a manifest file was not found.  Check that the directory listed above contains a valid Sphere game manifest file.\n\n"
+			"Either the engine couldn't read the game manifest or a manifest file was not found.  Check that the directory listed above contains a valid Sphere game manifest file.\n\n"
 			"For Sphere game developers:\nUsing SpheRun to start the game from the command line may yield more insight.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #endif
@@ -276,8 +276,8 @@ main(int argc, char* argv[])
 	if (game_version(g_game) > SPHERE_API_VERSION || game_api_level(g_game) > SPHERE_API_LEVEL) {
 #if !defined(NEOSPHERE_SPHERUN)
 		al_show_native_message_box(NULL, "Unable to Start Game", game_name(g_game),
-			"This game was developed for a newer version of the Sphere API than your copy of neoSphere ("SPHERE_VERSION") supports.  "
-			"You'll need to use a newer version of Sphere to play this game.",
+			"This game was developed for a newer version of the Sphere API than your version of neoSphere ("SPHERE_VERSION") supports.  "
+			"You'll need to use a newer version of neoSphere to play this game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
 		fprintf(stderr, "\33[31;1mERROR:\33[m Sphere v%d level %d API required\n",
@@ -292,7 +292,7 @@ main(int argc, char* argv[])
 		icon = image_load("#/icon.png");
 	g_screen = screen_new(game_name(g_game), icon, resolution, use_frameskip, game_default_font(g_game));
 	if (g_screen == NULL) {
-		al_show_native_message_box(NULL, "Unable to Create Render Context", "neoSphere couldn't create a render context.",
+		al_show_native_message_box(NULL, "Unable to Create Render Context", "The engine couldn't create a render context.",
 			"Your hardware may be too old to run neoSphere, or there could be a problem with the drivers on this system.  Check that your graphics drivers in particular are fully installed and up-to-date.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 		return EXIT_FAILURE;
@@ -1073,6 +1073,6 @@ show_error_screen(const char* message)
 show_error_box:
 	// use a native message box only as a last resort
 	al_show_native_message_box(NULL, "Script Error",
-		"neoSphere encountered an error during game execution.",
+		"neoSphere encountered an error during JavaScript execution.",
 		message, NULL, ALLEGRO_MESSAGEBOX_ERROR);
 }

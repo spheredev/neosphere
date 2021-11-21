@@ -4,8 +4,10 @@ Sphere Changelog
 v5.7.0 - TBD
 ------------
 
+* Changes the Documents folder hierarchy so both screenshots and save data are
+  put into a single `Sphere Saves` directory.
 * Fixes an issue where neoSphere automatically creates a new empty folder for
-  games on startup after it's been deleted.
+  games on every startup.
 
 v5.6.4 - November 16, 2021
 --------------------------
