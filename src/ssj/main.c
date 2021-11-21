@@ -364,7 +364,7 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   ssj [--trace] [--no-pause] <game-path>\n");
+	printf("   ssj [--trace] [--pause] <game-path>\n");
 	printf("   ssj --connect [--trace] [--no-pause]\n");
 	printf("\n");
 	printf("OPTIONS:\n");

@@ -8,7 +8,7 @@ ssj - the JavaScript debugger for neoSphere
 .B ssj
 .RB [ \-\-connect ]
 .RB [ \-\-trace ]
-.RB [ \-\-no\-pause ]
+.RB [ \-\-pause ]
 .RI [ gamefile ]
 .ad
 .hy
@@ -59,12 +59,12 @@ If this option is used,
 .I gamefile
 will be ignored.
 .TP
-.BR \-n ", " \-\-no\-pause
-Avoids triggering a breakpoint upon attachment.
-Normally SSj automatically pauses execution so you can see the program exactly as it was when the debugger attached.
+.BR \-p ", " \-\-pause
+Automatically triggers a breakpoint upon attaching the debugger.
+Normally, game code continues executing as normal once the debugger has been attached.
 The
-.B \-\-no\-pause
-option disables this behavior.
+.B \-\-pause
+option pauses execution immediately so you can see the current state of the game at attachment.
 .TP
 .B \-\-version
 Show the version number of SSj along with the version numbers of any libraries it depends on.
