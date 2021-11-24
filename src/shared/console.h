@@ -33,8 +33,9 @@
 #ifndef SPHERE__CONSOLE_H__INCLUDED
 #define SPHERE__CONSOLE_H__INCLUDED
 
-void console_init (int verbosity);
-void console_log  (int level, const char* fmt, ...);
-void console_warn (int level, const char* fmt, ...);
+void console_init  (int verbosity);
+void console_error (const char* fmt, ...);
+void console_log   (int level, const char* fmt, ...);
+void console_warn  (int level, const char* fmt, ...);
 
 #endif // SPHERE__CONSOLE_H__INCLUDED

@@ -104,13 +104,13 @@ game_t*
 game_open(const char* game_path)
 {
 	game_t*     game;
+	void*       json_data = NULL;
+	size_t      json_size;
 	lstring_t*  json_text;
 	package_t*  package;
 	path_t*     path;
 	size2_t     resolution;
 	kev_file_t* sgm_file;
-	size_t      sgm_size;
-	char*       sgm_text = NULL;
 
 	console_log(1, "opening '%s' from game #%u", game_path, s_next_game_id);
 
@@ -161,7 +161,6 @@ game_open(const char* game_path)
 		jsal_put_prop_string(-2, "resolution");
 		jsal_push_string(path_cstr(game->script_path));
 		jsal_put_prop_string(-2, "main");
-
 		game->manifest = jsal_pop_ref();
 	}
 #endif
@@ -174,21 +173,8 @@ game_open(const char* game_path)
 
 	// try to load the game manifest if one hasn't been synthesized already
 	if (game->name == NULL) {
-		if ((sgm_text = game_read_file(game, "@/game.json", &sgm_size))) {
-			console_log(1, "parsing JSON manifest for game #%u", s_next_game_id);
-			json_text = lstr_from_utf8(sgm_text, sgm_size, true);
-			if (!try_load_s2gm(game, json_text)) {
-				console_log(0, "%s", jsal_to_string(-1));
-				console_log(0, "   @ [@/game.json:0]");
-				jsal_pop(1);
-				goto on_error;
-			}
-			lstr_free(json_text);
-			free(sgm_text);
-			sgm_text = NULL;
-		}
-		else if ((sgm_file = kev_open(game, "@/game.sgm", false))) {
-			console_log(1, "parsing SGM manifest for game #%u", s_next_game_id);
+		if ((sgm_file = kev_open(game, "@/game.sgm", false))) {
+			console_log(1, "parsing Sphere game manifest for game #%u", s_next_game_id);
 			game->version = 1;
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
@@ -199,8 +185,22 @@ game_open(const char* game_path)
 			game->script_path = game_full_path(game, kev_read_string(sgm_file, "script", "main.js"), "@/scripts", true);
 			game->fullscreen = true;
 			kev_close(sgm_file);
-
-			// generate a JSON manifest (used by, e.g., Sphere.Game)
+		}
+		if ((json_data = game_read_file(game, "@/game.json", &json_size))) {
+			console_log(1, "parsing JSON metadata for game #%u", s_next_game_id);
+			json_text = lstr_from_utf8(json_data, json_size, true);
+			if (!try_load_s2gm(game, json_text)) {
+				console_error("%s", jsal_to_string(-1));
+				console_error("   @ [@/game.json:0]");
+				jsal_pop(1);
+				goto on_error;
+			}
+			lstr_free(json_text);
+			free(json_data);
+			json_data = NULL;
+		}
+		else if (game->version > 0) {
+			// no `game.json`, synthesize JSON metadata (used by, e.g., Sphere.Game)
 			jsal_push_new_object();
 			jsal_push_int(game->version);
 			jsal_put_prop_string(-2, "version");
@@ -214,7 +214,6 @@ game_open(const char* game_path)
 			jsal_put_prop_string(-2, "resolution");
 			jsal_push_string(path_cstr(game->script_path));
 			jsal_put_prop_string(-2, "main");
-
 			game->manifest = jsal_pop_ref();
 		}
 		else {
@@ -236,7 +235,7 @@ game_open(const char* game_path)
 on_error:
 	console_log(1, "couldn't open game #%u ", s_next_game_id++);
 	path_free(path);
-	free(sgm_text);
+	free(json_data);
 	if (game != NULL) {
 		package_unref(game->package);
 		free(game);
@@ -1033,26 +1032,38 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 
 	game->manifest = jsal_ref(-1);
 
-	if (!jsal_get_prop_string(-1, "name") || !jsal_is_string(-1))
-		goto on_error;
-	game->name = lstr_new(jsal_get_string(-1));
+	// note: fields corresponding to a value in `game.sgm` are filled only if either:
+	//           1. they are present in the JSON metadata
+	//           2. the caller didn't already fill them
+	//       this is so that, if `game.sgm` is loaded first, its values are treated as defaults,
+	//       keeping neoSphere fully compatible with the classic workflow.
+	if (jsal_get_prop_string(-1, "name") && jsal_is_string(-1))
+		game->name = lstr_new(jsal_get_string(-1));
+	else if (game->name == NULL)
+		game->name = lstr_new("Untitled");
 
-	if (!jsal_get_prop_string(-2, "resolution") || !jsal_is_string(-1))
-		goto on_error;
-	res_string = jsal_get_string(-1);
-	if (sscanf(res_string, "%dx%d", &res_x, &res_y) != 2) {
-		printf("invalid `resolution` in JSON manifest '%s'\n", res_string);
-		goto on_error;
+	if (jsal_get_prop_string(-2, "resolution") && jsal_is_string(-1)) {
+		res_string = jsal_get_string(-1);
+		if (sscanf(res_string, "%dx%d", &res_x, &res_y) != 2) {
+			jsal_push_new_error(JS_TYPE_ERROR, "Invalid string '%s' for 'resolution'", res_string);
+			goto on_json_error;
+		}
+		game->resolution = mk_size2(res_x, res_y);
 	}
-	game->resolution = mk_size2(res_x, res_y);
+	else if (game->resolution.width == 0 || game->resolution.height == 0) {
+		game->resolution = mk_size2(320, 240);
+	}
 
-	if (!jsal_get_prop_string(-3, "main") || !jsal_is_string(-1))
-		goto on_error;
-	game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
-	if (!path_hop_is(game->script_path, 0, "@")) {
-		jsal_push_new_error(JS_TYPE_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
-			path_hop(game->script_path, 0));
-		goto on_json_error;
+	if (jsal_get_prop_string(-3, "main") && jsal_is_string(-1)) {
+		game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
+		if (!path_hop_is(game->script_path, 0, "@")) {
+			jsal_push_new_error(JS_TYPE_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
+				path_hop(game->script_path, 0));
+			goto on_json_error;
+		}
+	}
+	else if (game->script_path == NULL) {
+		game->script_path = path_new("@/script/main.js");
 	}
 	if (!game_file_exists(game, path_cstr(game->script_path))) {
 		jsal_push_new_error(JS_TYPE_ERROR, "Main script not found '%s'",
@@ -1060,7 +1071,6 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 		goto on_json_error;
 	}
 
-	// game summary is optional, use a default summary if one is not provided.
 	if (jsal_get_prop_string(-4, "version") && jsal_is_number(-1))
 		game->version = jsal_get_number(-1);
 	else
@@ -1073,12 +1083,12 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 
 	if (jsal_get_prop_string(-6, "author") && jsal_is_string(-1))
 		game->author = lstr_new(jsal_get_string(-1));
-	else
+	else if (game->author == NULL)
 		game->author = lstr_new("Author Unknown");
 
 	if (jsal_get_prop_string(-7, "summary") && jsal_is_string(-1))
 		game->summary = lstr_new(jsal_get_string(-1));
-	else
+	else if (game->summary == NULL)
 		game->summary = lstr_new("No information available.");
 
 	if (jsal_get_prop_string(-8, "saveID") && jsal_is_string(-1))
@@ -1090,19 +1100,32 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 		game->fullscreen = game->version < 2;
 
 	jsal_set_top(stack_top);
+
+	jsal_push_ref_weak(game->manifest);
+	jsal_push_lstring_t(game->name);
+	jsal_put_prop_string(-2, "name");
+	jsal_push_lstring_t(game->author);
+	jsal_put_prop_string(-2, "author");
+	jsal_push_lstring_t(game->summary);
+	jsal_put_prop_string(-2, "summary");
+	jsal_push_sprintf("%dx%d", game->resolution.width, game->resolution.height);
+	jsal_put_prop_string(-2, "resolution");
+	jsal_push_string(path_cstr(game->script_path));
+	jsal_put_prop_string(-2, "main");
+	jsal_push_int(game->version);
+	jsal_put_prop_string(-2, "version");
+	jsal_push_int(game->api_level);
+	jsal_put_prop_string(-2, "apiLevel");
+	jsal_pop(1);
+
 	return true;
 
 on_json_error:
-	printf("ERROR in game manifest '%s'\n", path_cstr(game_path(game)));
+	console_error("error in JSON metadata '%s'", path_cstr(game_path(game)));
 	error_ref = jsal_ref(-1);
 	jsal_set_top(stack_top);
 	jsal_push_ref(error_ref);
 	jsal_unref(error_ref);
-	return false;
-
-on_error:
-	jsal_set_top(stack_top);
-	jsal_push_new_error(JS_ERROR, "couldn't load JSON manifest");
 	return false;
 }
 
