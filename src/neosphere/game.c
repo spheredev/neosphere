@@ -62,7 +62,6 @@ struct game
 	windowstyle_t* default_windowstyle;
 	vector_t*      file_type_map;
 	bool           fullscreen;
-	bool           legacy_mode;
 	js_ref_t*      manifest;
 	lstring_t*     name;
 	package_t*     package;
@@ -184,10 +183,8 @@ game_open(const char* game_path)
 			game->resolution = mk_size2(
 				kev_read_float(sgm_file, "screen_width", 320.0),
 				kev_read_float(sgm_file, "screen_height", 240.0));
-			if ((script_name = kev_read_string(sgm_file, "script", NULL)) != NULL) {
+			if ((script_name = kev_read_string(sgm_file, "script", NULL)) != NULL)
 				game->script_path = game_full_path(game, script_name, "@/scripts", true);
-				game->legacy_mode = true;
-			}
 			game->fullscreen = true;
 			kev_close(sgm_file);
 		}
@@ -448,12 +445,6 @@ bool
 game_fullscreen(const game_t* it)
 {
 	return it->fullscreen;
-}
-
-bool
-game_legacy(const game_t* it)
-{
-	return it->legacy_mode;
 }
 
 const js_ref_t*
@@ -1048,12 +1039,45 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	//           2. the caller didn't already fill them
 	//       this is so that, if `game.sgm` is loaded first, its values are treated as defaults,
 	//       keeping neoSphere fully compatible with the classic workflow.
-	if (jsal_get_prop_string(-1, "name") && jsal_is_string(-1))
+	if (jsal_get_prop_string(-1, "version") && jsal_is_number(-1))
+		game->version = jsal_get_number(-1);
+	else if (game->version == 0)
+		game->version = 2;
+
+	if (jsal_get_prop_string(-2, "apiLevel") && jsal_is_number(-1)) {
+		game->api_level = jsal_get_number(-1);
+		if (game->version < 2)
+			game->version = 2;
+	}
+	else {
+		game->api_level = 1;
+	}
+
+	if (jsal_get_prop_string(-3, "main") && jsal_is_string(-1)) {
+		game->version = 2;
+		game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
+		if (!path_hop_is(game->script_path, 0, "@")) {
+			jsal_push_new_error(JS_TYPE_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
+				path_hop(game->script_path, 0));
+			goto on_json_error;
+		}
+		if (!game_file_exists(game, path_cstr(game->script_path))) {
+			jsal_push_new_error(JS_REF_ERROR, "Main script not found '%s'",
+				path_cstr(game->script_path));
+			goto on_json_error;
+		}
+	}
+	else if (game->version >= 2) {
+		jsal_push_new_error(JS_ERROR, "No main script defined in JSON manifest");
+		goto on_json_error;
+	}
+
+	if (jsal_get_prop_string(-4, "name") && jsal_is_string(-1))
 		game->name = lstr_new(jsal_get_string(-1));
 	else if (game->name == NULL)
 		game->name = lstr_new("Untitled");
 
-	if (jsal_get_prop_string(-2, "resolution") && jsal_is_string(-1)) {
+	if (jsal_get_prop_string(-5, "resolution") && jsal_is_string(-1)) {
 		res_string = jsal_get_string(-1);
 		if (sscanf(res_string, "%dx%d", &res_x, &res_y) != 2) {
 			jsal_push_new_error(JS_TYPE_ERROR, "Invalid string '%s' for 'resolution'", res_string);
@@ -1064,38 +1088,6 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	else if (game->resolution.width == 0 || game->resolution.height == 0) {
 		game->resolution = mk_size2(320, 240);
 	}
-
-	if (jsal_get_prop_string(-3, "main") && jsal_is_string(-1)) {
-		game->legacy_mode = false;
-		game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
-		if (!path_hop_is(game->script_path, 0, "@")) {
-			jsal_push_new_error(JS_TYPE_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
-				path_hop(game->script_path, 0));
-			goto on_json_error;
-		}
-	}
-	else if (game->script_path == NULL) {
-		jsal_push_new_error(JS_ERROR, "No main script defined in game manifest");
-		goto on_json_error;
-	}
-	if (!game_file_exists(game, path_cstr(game->script_path))) {
-		jsal_push_new_error(JS_REF_ERROR, "Main script not found '%s'",
-			path_cstr(game->script_path));
-		goto on_json_error;
-	}
-
-	if (jsal_get_prop_string(-4, "apiLevel") && jsal_is_number(-1)) {
-		game->api_level = jsal_get_number(-1);
-		game->version = 2;
-	}
-	else {
-		game->api_level = 1;
-	}
-
-	if (jsal_get_prop_string(-5, "version") && jsal_is_number(-1))
-		game->version = jsal_get_number(-1);
-	else if (game->version == 0)
-		game->version = 1;
 
 	if (jsal_get_prop_string(-6, "author") && jsal_is_string(-1))
 		game->author = lstr_new(jsal_get_string(-1));
