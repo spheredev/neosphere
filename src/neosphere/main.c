@@ -136,6 +136,7 @@ main(int argc, char* argv[])
 	ALLEGRO_FILECHOOSER* file_dialog;
 	int                  fullscreen_mode;
 	int                  game_args_offset;
+	bool                 have_esm_main;
 	image_t*             icon;
 	size2_t              resolution;
 	jmp_buf              restart_label;
@@ -242,7 +243,7 @@ main(int argc, char* argv[])
 	}
 	else {
 		// no game path provided and no startup game, let user find one
-		dialog_name = lstr_newf("%s - Find a Sphere game to launch", SPHERE_ENGINE_NAME);
+		dialog_name = lstr_newf("%s - Select a Sphere game to launch", SPHERE_ENGINE_NAME);
 		file_dialog = al_create_native_file_dialog(path_cstr(home_path()),
 			lstr_cstr(dialog_name),
 			"game.sgm;game.json;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
@@ -347,12 +348,12 @@ main(int argc, char* argv[])
 
 	// evaluate the main script (v1) or module (v2)
 	script_path = game_script_path(g_game);
-	api_version = game_version(g_game);
+	have_esm_main = !game_legacy(g_game);
 	if (target_api_level >= 4 && api_version >= 2 && path_extension_is(script_path, ".cjs")) {
 		jsal_push_new_error(JS_TYPE_ERROR, "CommonJS main '%s' unsupported when targeting API 4+", path_cstr(script_path));
 		goto on_js_error;
 	}
-	eval_succeeded = api_version >= 2
+	eval_succeeded = have_esm_main
 		? module_eval(path_cstr(script_path), false)
 		: script_eval(path_cstr(script_path));
 	if (!eval_succeeded)
@@ -360,7 +361,7 @@ main(int argc, char* argv[])
 
 	// in Sphere v2 mode, the main script is loaded as a module (either CommonJS or ESM).
 	// check for a default export and `new` it if possible, then call obj.start().
-	if (api_version >= 2 && jsal_is_object(-1)) {
+	if (have_esm_main && jsal_is_object(-1)) {
 		jsal_get_prop_string(-1, "default");
 		if (jsal_is_async_function(-1)) {
 			// async functions aren't constructible, so call those normally.
@@ -385,10 +386,9 @@ main(int argc, char* argv[])
 		jsal_pop(2);
 	}
 
-	// if we're running in Sphere v1 mode, call the global game() function.  note
-	// that, in contrast to Sphere 1.x, it's not an error if this function doesn't
-	// exist.
-	if (api_version <= 1) {
+	// if we're running in Sphere 1.x legacy mode, call the global game() function.  note
+	// that, in contrast to Sphere 1.x, it's not an error if this function doesn't exist.
+	if (!have_esm_main) {
 		jsal_get_global_string("game");
 		if (jsal_is_function(-1)) {
 			for (i = game_args_offset; i < argc; ++i)

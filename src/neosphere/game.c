@@ -62,6 +62,7 @@ struct game
 	windowstyle_t* default_windowstyle;
 	vector_t*      file_type_map;
 	bool           fullscreen;
+	bool           legacy_mode;
 	js_ref_t*      manifest;
 	lstring_t*     name;
 	package_t*     package;
@@ -181,10 +182,12 @@ game_open(const char* game_path)
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			game->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
 			game->resolution = mk_size2(
-				kev_read_float(sgm_file, "screen_width", 320),
-				kev_read_float(sgm_file, "screen_height", 240));
-			if ((script_name = kev_read_string(sgm_file, "script", NULL)) != NULL)
+				kev_read_float(sgm_file, "screen_width", 320.0),
+				kev_read_float(sgm_file, "screen_height", 240.0));
+			if ((script_name = kev_read_string(sgm_file, "script", NULL)) != NULL) {
 				game->script_path = game_full_path(game, script_name, "@/scripts", true);
+				game->legacy_mode = true;
+			}
 			game->fullscreen = true;
 			kev_close(sgm_file);
 		}
@@ -445,6 +448,12 @@ bool
 game_fullscreen(const game_t* it)
 {
 	return it->fullscreen;
+}
+
+bool
+game_legacy(const game_t* it)
+{
+	return it->legacy_mode;
 }
 
 const js_ref_t*
@@ -1057,7 +1066,7 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 	}
 
 	if (jsal_get_prop_string(-3, "main") && jsal_is_string(-1)) {
-		game->version = 2;
+		game->legacy_mode = false;
 		game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
 		if (!path_hop_is(game->script_path, 0, "@")) {
 			jsal_push_new_error(JS_TYPE_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
