@@ -906,7 +906,7 @@ write_manifests(build_t* build)
 		if (api_version >= 2)
 			visor_warn(build->visor, "'apiLevel': missing value: targeting API level 1");
 	}
-	
+
 	// note: SGMv1 encodes the resolution width and height as separate fields.
 	jsal_get_prop_string(-6, "resolution");
 	if (!jsal_is_string(-1)
@@ -962,19 +962,21 @@ write_manifests(build_t* build)
 		visor_warn(build->visor, "'saveID': no save ID - '~/' prefix will be disabled");
 	}
 
-	// write game.sgm (SGMv1, for compatibility with Sphere 1.x)
-	// note: SGMv1 requires the main script path to be relative to '@/scripts'.
-	//       this differs from Sv2 (game.json), where it's relative to '@/'.
+	// write game.sgm (legacy manifest, for compatibility with Sphere 1.x)
+	// note: SGM requires the main script path to be relative to '@/scripts'.
+	//       this differs from Sphere v2 (game.json), where it's relative to '@/'.
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
-	script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
 	fprintf(file, "name=%s\n", jsal_to_string(-8));
 	fprintf(file, "author=%s\n", jsal_to_string(-7));
 	fprintf(file, "description=%s\n", jsal_to_string(-6));
-	fprintf(file, "screen_width=%d\n", width);
-	fprintf(file, "screen_height=%d\n", height);
-	fprintf(file, "script=%s\n", path_cstr(script_path));
+	if (api_version < 2) {
+		script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
+		fprintf(file, "screen_width=%d\n", width);
+		fprintf(file, "screen_height=%d\n", height);
+		fprintf(file, "script=%s\n", path_cstr(script_path));
+		path_free(script_path);
+	}
 	fclose(file);
-	path_free(script_path);
 	jsal_pop(8);
 
 	// write game.json (Sphere v2 JSON manifest)
