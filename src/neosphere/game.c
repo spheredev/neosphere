@@ -94,7 +94,7 @@ struct file
 
 static bool      help_list_dir       (vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive);
 static void      load_default_assets (game_t* game);
-static bool      load_json_data      (game_t* game, const lstring_t* json_text);
+static bool      parse_json_data     (game_t* game, const lstring_t* json_text);
 static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs, bool recursive);
 static bool      resolve_pathname    (const game_t* game, const char* pathname, path_t* *out_path, enum fs_type *out_fs_type);
 
@@ -209,7 +209,7 @@ game_open(const char* game_path)
 			else {
 				// legacy Sphere v1 manifest, likely created by Sphere 1.x
 				if (script_filename[0] == '\0') {
-					console_error("missing 'script' in Sphere v1 game manifest");
+					console_error("missing 'script' field in Sphere v1 game manifest");
 					goto on_error;
 				}
 				game->script_path = game_full_path(game, script_filename, "@/scripts", true);
@@ -218,7 +218,7 @@ game_open(const char* game_path)
 					kev_read_int(sgm_file, "screen_height", 240));
 			}
 			if (!game_file_exists(game, path_cstr(game->script_path))) {
-				console_error("JS script '%s' named in game manifest not found", path_cstr(game->script_path));
+				console_error("JS module '%s' named in game manifest not found", path_cstr(game->script_path));
 				goto on_error;
 			}
 			kev_close(sgm_file);
@@ -227,7 +227,7 @@ game_open(const char* game_path)
 		if ((json_data = game_read_file(game, "@/game.json", &json_size))) {
 			console_log(1, "parsing JSON metadata for game #%u", s_next_game_id);
 			json_text = lstr_from_utf8(json_data, json_size, true);
-			if (!load_json_data(game, json_text)) {
+			if (!parse_json_data(game, json_text)) {
 				console_error("%s", jsal_to_string(-1));
 				console_error("   @ [@/game.json:0]");
 				jsal_pop(1);
@@ -1050,11 +1050,12 @@ load_default_assets(game_t* game)
 }
 
 static bool
-load_json_data(game_t* game, const lstring_t* json_text)
+parse_json_data(game_t* game, const lstring_t* json_text)
 {
-	// IMPORTANT: `game.json` is an auxilliary manifest.  as such, the code here assumes that 'game.sgm`
-	//            (the primary Sphere game manifest) was already processed and the game object initialized
-	//            accordingly.
+	// note: when `game.sgm` is present, `game.json` is purely auxilliary. thus, if the `game_t`
+	//       has been initialized as a Sphere v1 game prior to this call, it should not be upgraded
+	//       to Sphere v2 unless there is proof otherwise (an explicit API level or JS entrypoint in
+	//       the JSON data, for example).
 
 	int         api_version;
 	js_ref_t*   error_ref;
@@ -1074,12 +1075,19 @@ load_json_data(game_t* game, const lstring_t* json_text)
 
 	if (jsal_get_prop_string(-1, "version") && jsal_is_number(-1)) {
 		api_version = jsal_get_number(-1);
-		if (api_version >= 2 && game->version < 2) {
+		if (api_version < 2) {
+			jsal_push_new_error(JS_ERROR, "'version' in JSON metadata must be at least 2 if specified");
+			goto on_json_error;
+		}
+		if (game->version < 2) {
 			// main manifest targets Sphere v1, ignore the script path there
 			path_free(game->script_path);
 			game->version = api_version;
 			game->script_path = NULL;
 		}
+	}
+	else if (game->version == 0) {
+		game->version = 2;
 	}
 
 	if (jsal_get_prop_string(-2, "apiLevel") && jsal_is_number(-1)) {
@@ -1091,7 +1099,7 @@ load_json_data(game_t* game, const lstring_t* json_text)
 			game->script_path = NULL;
 		}
 	}
-	else {
+	else if (game->api_level == 0) {
 		game->api_level = 1;
 	}
 
@@ -1101,18 +1109,18 @@ load_json_data(game_t* game, const lstring_t* json_text)
 		path_free(game->script_path);
 		game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
 		if (!path_hop_is(game->script_path, 0, "@")) {
-			jsal_push_new_error(JS_TYPE_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
+			jsal_push_new_error(JS_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
 				path_hop(game->script_path, 0));
 			goto on_json_error;
 		}
 		if (!game_file_exists(game, path_cstr(game->script_path))) {
-			jsal_push_new_error(JS_REF_ERROR, "Main script not found '%s'",
+			jsal_push_new_error(JS_ERROR, "JS module '%s' named in JSON metadata not found",
 				path_cstr(game->script_path));
 			goto on_json_error;
 		}
 	}
 	else if (game->script_path == NULL && game->version >= 2) {
-		jsal_push_new_error(JS_ERROR, "No main script defined in game manifest or JSON metadata");
+		jsal_push_new_error(JS_ERROR, "No JS entry point found in game manifest or JSON metadata");
 		goto on_json_error;
 	}
 
@@ -1121,10 +1129,20 @@ load_json_data(game_t* game, const lstring_t* json_text)
 	else if (game->name == NULL)
 		game->name = lstr_new("Untitled");
 
-	if (jsal_get_prop_string(-5, "resolution") && jsal_is_string(-1)) {
+	if (jsal_get_prop_string(-5, "author") && jsal_is_string(-1))
+		game->author = lstr_new(jsal_get_string(-1));
+	else if (game->author == NULL)
+		game->author = lstr_new("Author Unknown");
+
+	if (jsal_get_prop_string(-6, "summary") && jsal_is_string(-1))
+		game->summary = lstr_new(jsal_get_string(-1));
+	else if (game->summary == NULL)
+		game->summary = lstr_new("No information available.");
+
+	if (jsal_get_prop_string(-7, "resolution") && jsal_is_string(-1)) {
 		res_string = jsal_get_string(-1);
 		if (sscanf(res_string, "%dx%d", &res_x, &res_y) != 2) {
-			jsal_push_new_error(JS_TYPE_ERROR, "Invalid string '%s' for 'resolution'", res_string);
+			jsal_push_new_error(JS_ERROR, "Invalid resolution string '%s' in JSON metadata", res_string);
 			goto on_json_error;
 		}
 		game->resolution = mk_size2(res_x, res_y);
@@ -1132,16 +1150,6 @@ load_json_data(game_t* game, const lstring_t* json_text)
 	else if (game->resolution.width == 0 || game->resolution.height == 0) {
 		game->resolution = mk_size2(320, 240);
 	}
-
-	if (jsal_get_prop_string(-6, "author") && jsal_is_string(-1))
-		game->author = lstr_new(jsal_get_string(-1));
-	else if (game->author == NULL)
-		game->author = lstr_new("Author Unknown");
-
-	if (jsal_get_prop_string(-7, "summary") && jsal_is_string(-1))
-		game->summary = lstr_new(jsal_get_string(-1));
-	else if (game->summary == NULL)
-		game->summary = lstr_new("No information available.");
 
 	if (jsal_get_prop_string(-8, "saveID") && jsal_is_string(-1))
 		game->save_id = lstr_new(jsal_get_string(-1));
