@@ -966,6 +966,8 @@ write_manifests(build_t* build)
 	//       this differs from Sphere v2 `main`, which is relative to '@/'.
 	file = fs_fopen(build->fs, "@/game.sgm", "wb");
 	fprintf(file, "version=%d\n", api_version);
+	if (api_version >= 2)
+		fprintf(file, "api=%d\n", api_level);
 	fprintf(file, "name=%s\n", jsal_to_string(-8));
 	fprintf(file, "author=%s\n", jsal_to_string(-7));
 	fprintf(file, "description=%s\n", jsal_to_string(-6));

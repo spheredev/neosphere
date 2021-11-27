@@ -197,7 +197,7 @@ game_open(const char* game_path)
 				// this is a Sphere v2 game manifest
 				if (game->version < 2)
 					game->version = 2;
-				game->api_level = kev_read_int(sgm_file, "api_level", 1);
+				game->api_level = kev_read_int(sgm_file, "api", 1);
 				game->script_path = game_full_path(game, main_filename, NULL, false);
 				res_string = kev_read_string(sgm_file, "resolution", "320x240");
 				if (sscanf(res_string, "%dx%d", &res_x, &res_y) != 2) {
