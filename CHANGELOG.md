@@ -4,9 +4,8 @@ Sphere Changelog
 v5.7.0 - TBD
 ------------
 
-* Adds support for pulling default values for title, author, etc. from a
-  `game.sgm` if the corresponding values aren't present in the game's JSON
-  manifest.
+* Adds support for keeping Sphere v2 control information (main module,
+  API level, etc.) in `game.sgm`.
 * Changes the Documents folder hierarchy so both screenshots and save data are
   put into a single `Sphere Saves` directory.
 * Fixes an issue where neoSphere automatically creates a new empty folder for

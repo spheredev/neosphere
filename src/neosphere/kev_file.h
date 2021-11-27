@@ -43,10 +43,12 @@ int          kev_num_keys     (kev_file_t* it);
 const char*  kev_get_key      (kev_file_t* it, int index);
 bool         kev_read_bool    (kev_file_t* it, const char* key, bool def_value);
 double       kev_read_float   (kev_file_t* it, const char* key, double def_value);
+int          kev_read_int     (kev_file_t* it, const char* key, int def_value);
 const char*  kev_read_string  (kev_file_t* it, const char* key, const char* def_value);
 bool         kev_save         (kev_file_t* it);
 void         kev_write_bool   (kev_file_t* it, const char* key, bool value);
 void         kev_write_float  (kev_file_t* it, const char* key, double value);
+void         kev_write_int    (kev_file_t* it, const char* key, int value);
 void         kev_write_string (kev_file_t* it, const char* key, const char* value);
 
 #endif // SPHERE__FILE_H__INCLUDED

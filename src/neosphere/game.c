@@ -94,9 +94,9 @@ struct file
 
 static bool      help_list_dir       (vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive);
 static void      load_default_assets (game_t* game);
+static bool      load_json_data      (game_t* game, const lstring_t* json_text);
 static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs, bool recursive);
 static bool      resolve_pathname    (const game_t* game, const char* pathname, path_t* *out_path, enum fs_type *out_fs_type);
-static bool      try_load_s2gm       (game_t* game, const lstring_t* json_text);
 
 static unsigned int s_next_game_id = 1;
 
@@ -107,11 +107,15 @@ game_open(const char* game_path)
 	void*       json_data = NULL;
 	size_t      json_size;
 	lstring_t*  json_text;
+	const char* main_filename;
 	package_t*  package;
 	path_t*     path;
 	size2_t     resolution;
-	const char* script_name;
-	kev_file_t* sgm_file;
+	const char* res_string;
+	int         res_x;
+	int         res_y;
+	const char* script_filename;
+	kev_file_t* sgm_file = NULL;
 
 	console_log(1, "opening '%s' from game #%u", game_path, s_next_game_id);
 
@@ -176,22 +180,54 @@ game_open(const char* game_path)
 	if (game->name == NULL) {
 		if ((sgm_file = kev_open(game, "@/game.sgm", false))) {
 			console_log(1, "parsing Sphere game manifest for game #%u", s_next_game_id);
-			game->version = 1;
+			game->version = kev_read_int(sgm_file, "version", 1);
+			if (game->version < 1) {
+				console_error("invalid 'version' value '%d' in game manifest", game->version);
+				goto on_error;
+			}
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			game->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
-			game->resolution = mk_size2(
-				kev_read_float(sgm_file, "screen_width", 320.0),
-				kev_read_float(sgm_file, "screen_height", 240.0));
-			if ((script_name = kev_read_string(sgm_file, "script", NULL)) != NULL)
-				game->script_path = game_full_path(game, script_name, "@/scripts", true);
+#if !defined(NEOSPHERE_SPHERUN)
 			game->fullscreen = true;
+#endif
+			main_filename = kev_read_string(sgm_file, "main", "");
+			script_filename = kev_read_string(sgm_file, "script", "");
+			if (game->version >= 2 || main_filename[0] != '\0') {
+				// this is a Sphere v2 game manifest
+				if (game->version < 2)
+					game->version = 2;
+				game->api_level = kev_read_int(sgm_file, "api_level", 1);
+				game->script_path = game_full_path(game, main_filename, NULL, false);
+				res_string = kev_read_string(sgm_file, "resolution", "320x240");
+				if (sscanf(res_string, "%dx%d", &res_x, &res_y) != 2) {
+					console_error("invalid resolution string '%s' in game manifest", res_string);
+					goto on_error;
+				}
+				game->resolution = mk_size2(res_x, res_y);
+			}
+			else {
+				// legacy Sphere v1 manifest, likely created by Sphere 1.x
+				if (script_filename[0] == '\0') {
+					console_error("missing 'script' in Sphere v1 game manifest");
+					goto on_error;
+				}
+				game->script_path = game_full_path(game, script_filename, "@/scripts", true);
+				game->resolution = mk_size2(
+					kev_read_int(sgm_file, "screen_width", 320),
+					kev_read_int(sgm_file, "screen_height", 240));
+			}
+			if (!game_file_exists(game, path_cstr(game->script_path))) {
+				console_error("JS script '%s' named in game manifest not found", path_cstr(game->script_path));
+				goto on_error;
+			}
 			kev_close(sgm_file);
+			sgm_file = NULL;
 		}
 		if ((json_data = game_read_file(game, "@/game.json", &json_size))) {
 			console_log(1, "parsing JSON metadata for game #%u", s_next_game_id);
 			json_text = lstr_from_utf8(json_data, json_size, true);
-			if (!try_load_s2gm(game, json_text)) {
+			if (!load_json_data(game, json_text)) {
 				console_error("%s", jsal_to_string(-1));
 				console_error("   @ [@/game.json:0]");
 				jsal_pop(1);
@@ -238,6 +274,7 @@ on_error:
 	console_log(1, "couldn't open game #%u ", s_next_game_id++);
 	path_free(path);
 	free(json_data);
+	kev_close(sgm_file);
 	if (game != NULL) {
 		package_unref(game->package);
 		free(game);
@@ -1013,12 +1050,13 @@ load_default_assets(game_t* game)
 }
 
 static bool
-try_load_s2gm(game_t* game, const lstring_t* json_text)
+load_json_data(game_t* game, const lstring_t* json_text)
 {
-	// note: this whole thing needs to be cleaned up.  it's pretty bad when Chakra
-	//       does the JSON parsing for us yet the JSON manifest loader is STILL more
-	//       complicated than the game.sgm loader.
+	// IMPORTANT: `game.json` is an auxilliary manifest.  as such, the code here assumes that 'game.sgm`
+	//            (the primary Sphere game manifest) was already processed and the game object initialized
+	//            accordingly.
 
+	int         api_version;
 	js_ref_t*   error_ref;
 	const char* res_string;
 	int         res_x;
@@ -1034,27 +1072,33 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 
 	game->manifest = jsal_ref(-1);
 
-	// note: fields corresponding to a value in `game.sgm` are filled only if either:
-	//           1. they are present in the JSON metadata
-	//           2. the caller didn't already fill them
-	//       this is so that, if `game.sgm` is loaded first, its values are treated as defaults,
-	//       keeping neoSphere fully compatible with the classic workflow.
-	if (jsal_get_prop_string(-1, "version") && jsal_is_number(-1))
-		game->version = jsal_get_number(-1);
-	else if (game->version == 0)
-		game->version = 2;
+	if (jsal_get_prop_string(-1, "version") && jsal_is_number(-1)) {
+		api_version = jsal_get_number(-1);
+		if (api_version >= 2 && game->version < 2) {
+			// main manifest targets Sphere v1, ignore the script path there
+			path_free(game->script_path);
+			game->version = api_version;
+			game->script_path = NULL;
+		}
+	}
 
 	if (jsal_get_prop_string(-2, "apiLevel") && jsal_is_number(-1)) {
 		game->api_level = jsal_get_number(-1);
-		if (game->version < 2)
+		if (game->version < 2) {
+			// main manifest targets Sphere v1, ignore the script path there
+			path_free(game->script_path);
 			game->version = 2;
+			game->script_path = NULL;
+		}
 	}
 	else {
 		game->api_level = 1;
 	}
 
 	if (jsal_get_prop_string(-3, "main") && jsal_is_string(-1)) {
-		game->version = 2;
+		if (game->version < 2)
+			game->version = 2;
+		path_free(game->script_path);
 		game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
 		if (!path_hop_is(game->script_path, 0, "@")) {
 			jsal_push_new_error(JS_TYPE_ERROR, "Illegal SphereFS prefix '%s/' in 'main'",
@@ -1067,8 +1111,8 @@ try_load_s2gm(game_t* game, const lstring_t* json_text)
 			goto on_json_error;
 		}
 	}
-	else if (game->version >= 2) {
-		jsal_push_new_error(JS_ERROR, "No main script defined in JSON manifest");
+	else if (game->script_path == NULL && game->version >= 2) {
+		jsal_push_new_error(JS_ERROR, "No main script defined in game manifest or JSON metadata");
 		goto on_json_error;
 	}
 

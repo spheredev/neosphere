@@ -159,6 +159,22 @@ kev_read_float(kev_file_t* it, const char* key, double def_value)
 	return value;
 }
 
+int
+kev_read_int(kev_file_t* it, const char* key, int def_value)
+{
+	char        def_string[500];
+	const char* string;
+	double      value;
+
+	if (it == NULL)
+		return def_value;
+
+	sprintf(def_string, "%d", def_value);
+	string = kev_read_string(it, key, def_string);
+	value = atoi(string);
+	return value;
+}
+
 const char*
 kev_read_string(kev_file_t* it, const char* key, const char* def_value)
 {
@@ -226,8 +242,19 @@ kev_write_float(kev_file_t* it, const char* key, double value)
 {
 	char string[500];
 
-	console_log(3, "writing number to kevfile #%u, key '%s'", it->id, key);
+	console_log(3, "writing float to kevfile #%u, key '%s'", it->id, key);
 	sprintf(string, "%g", value);
+	al_set_config_value(it->conf, NULL, key, string);
+	it->modified = true;
+}
+
+void
+kev_write_int(kev_file_t* it, const char* key, int value)
+{
+	char string[500];
+
+	console_log(3, "writing int to kevfile #%u, key '%s'", it->id, key);
+	sprintf(string, "%d", value);
 	al_set_config_value(it->conf, NULL, key, string);
 	it->modified = true;
 }
