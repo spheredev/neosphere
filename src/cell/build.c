@@ -82,6 +82,7 @@ enum file_op
 	FILE_OP_MAX,
 };
 
+static bool js_describe                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_error                         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_files                         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_install                       (int num_args, bool is_ctor, intptr_t magic);
@@ -194,6 +195,7 @@ build_new(const path_t* source_path, const path_t* out_path, bool debuggable)
 	// initialize the Cellscript API
 	api_init();
 	modules_init(fs, false);
+	api_define_func(NULL, "describe", js_describe, 0);
 	api_define_func(NULL, "error", js_error, 0);
 	api_define_func(NULL, "files", js_files, 0);
 	api_define_func(NULL, "install", js_install, 0);
@@ -953,7 +955,7 @@ write_manifests(build_t* build)
 
 	jsal_get_prop_string(-8, "saveID");
 	if ((save_id = jsal_get_string(-1))) {
-		span = strspn(save_id, "abcdefghijklmnopqrstuvwxyzABCDEFGHIKLMNOPQRSTUVWXYZ0123456789-_.");
+		span = strspn(save_id, " abcdefghijklmnopqrstuvwxyzABCDEFGHIKLMNOPQRSTUVWXYZ0123456789-_.");
 		if (span != strlen(save_id))
 			visor_error(build->visor, "'saveID': invalid character '%c' in save ID", save_id[span]);
 	}
@@ -971,17 +973,20 @@ write_manifests(build_t* build)
 	fprintf(file, "name=%s\n", jsal_to_string(-8));
 	fprintf(file, "author=%s\n", jsal_to_string(-7));
 	fprintf(file, "description=%s\n", jsal_to_string(-6));
-	if (api_version < 2) {
+	if (api_version >= 2) {
+		script_path = fs_relative_path(path_cstr(main_path), "@/");
+		if (save_id != NULL)
+			fprintf(file, "saveID=%s\n", save_id);
+		fprintf(file, "resolution=%dx%d\n", width, height);
+		fprintf(file, "main=%s\n", path_cstr(script_path));
+		path_free(script_path);
+	}
+	else {
 		script_path = fs_relative_path(path_cstr(main_path), "@/scripts");
 		fprintf(file, "screen_width=%d\n", width);
 		fprintf(file, "screen_height=%d\n", height);
 		fprintf(file, "script=%s\n", path_cstr(script_path));
 		path_free(script_path);
-	}
-	else {
-		script_path = fs_relative_path(path_cstr(main_path), "@/");
-		fprintf(file, "resolution=%dx%d\n", width, height);
-		fprintf(file, "main=%s\n", path_cstr(script_path));
 	}
 	fclose(file);
 	jsal_pop(8);
@@ -995,6 +1000,24 @@ write_manifests(build_t* build)
 	visor_end_op(build->visor);
 	path_free(main_path);
 	return true;
+}
+
+static bool
+js_describe(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* key;
+
+	jsal_require_object(0);
+
+	jsal_push_ref_weak(s_build->manifest);
+	jsal_push_new_iterator(0);
+	while (jsal_next(-1)) {
+		key = jsal_get_string(-1);
+		jsal_get_prop_string(0, key);
+		jsal_put_prop_string(-4, key);
+		jsal_pop(1);
+	}
+	return false;
 }
 
 static bool

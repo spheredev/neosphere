@@ -94,7 +94,7 @@ struct file
 
 static bool      help_list_dir       (vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive);
 static void      load_default_assets (game_t* game);
-static bool      parse_json_data     (game_t* game, const lstring_t* json_text);
+static bool      parse_json_data     (game_t* game, const char* pathname);
 static vector_t* read_directory      (const game_t* game, const char* dirname, bool want_dirs, bool recursive);
 static bool      resolve_pathname    (const game_t* game, const char* pathname, path_t* *out_path, enum fs_type *out_fs_type);
 
@@ -105,8 +105,6 @@ game_open(const char* game_path)
 {
 	game_t*     game;
 	void*       json_data = NULL;
-	size_t      json_size;
-	lstring_t*  json_text;
 	const char* main_filename;
 	package_t*  package;
 	path_t*     path;
@@ -114,10 +112,11 @@ game_open(const char* game_path)
 	const char* res_string;
 	int         res_x;
 	int         res_y;
+	const char* save_id;
 	const char* script_filename;
 	kev_file_t* sgm_file = NULL;
 
-	console_log(1, "opening '%s' from game #%u", game_path, s_next_game_id);
+	console_log(1, "opening '%s' as game #%u", game_path, s_next_game_id);
 
 	game = game_ref(calloc(1, sizeof(game_t)));
 
@@ -179,7 +178,7 @@ game_open(const char* game_path)
 	// try to load the game manifest if one hasn't been synthesized already
 	if (game->name == NULL) {
 		if ((sgm_file = kev_open(game, "@/game.sgm", false))) {
-			console_log(1, "parsing Sphere game manifest for game #%u", s_next_game_id);
+			console_log(1, "parsing Sphere game manifest for game #%u", game->id);
 			game->version = kev_read_int(sgm_file, "version", 1);
 			if (game->version < 1) {
 				console_error("invalid 'version' value '%d' in game manifest", game->version);
@@ -188,9 +187,6 @@ game_open(const char* game_path)
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			game->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
-#if !defined(NEOSPHERE_SPHERUN)
-			game->fullscreen = true;
-#endif
 			main_filename = kev_read_string(sgm_file, "main", "");
 			script_filename = kev_read_string(sgm_file, "script", "");
 			if (game->version >= 2 || main_filename[0] != '\0') {
@@ -205,6 +201,9 @@ game_open(const char* game_path)
 					goto on_error;
 				}
 				game->resolution = mk_size2(res_x, res_y);
+				save_id = kev_read_string(sgm_file, "saveID", "");
+				if (save_id[0] != '\0')
+					game->save_id = lstr_new(save_id);
 			}
 			else {
 				// legacy Sphere v1 manifest, likely created by Sphere 1.x
@@ -224,18 +223,13 @@ game_open(const char* game_path)
 			kev_close(sgm_file);
 			sgm_file = NULL;
 		}
-		if ((json_data = game_read_file(game, "@/game.json", &json_size))) {
-			console_log(1, "parsing JSON metadata for game #%u", s_next_game_id);
-			json_text = lstr_from_utf8(json_data, json_size, true);
-			if (!parse_json_data(game, json_text)) {
+		if ((game_file_exists(game, "@/game.json"))) {
+			if (!parse_json_data(game, "@/game.json")) {
 				console_error("%s", jsal_to_string(-1));
 				console_error("   @ [@/game.json:0]");
 				jsal_pop(1);
 				goto on_error;
 			}
-			lstr_free(json_text);
-			free(json_data);
-			json_data = NULL;
 		}
 		else if (game->version > 0) {
 			// no `game.json`, synthesize JSON metadata (used by, e.g., Sphere.Game)
@@ -264,7 +258,7 @@ game_open(const char* game_path)
 	resolution = game_resolution(game);
 	console_log(1, "         title: %s", game_name(game));
 	console_log(1, "        author: %s", game_author(game));
-	console_log(1, "    resolution: %dx%d", resolution.width, resolution.height);
+	console_log(1, "    resolution: %d x %d", resolution.width, resolution.height);
 	console_log(1, "       save ID: %s", game_save_id(game));
 
 	s_next_game_id++;
@@ -1050,7 +1044,7 @@ load_default_assets(game_t* game)
 }
 
 static bool
-parse_json_data(game_t* game, const lstring_t* json_text)
+parse_json_data(game_t* game, const char* pathname)
 {
 	// note: when `game.sgm` is present, `game.json` is purely auxilliary. thus, if the `game_t`
 	//       has been initialized as a Sphere v1 game prior to this call, it should not be upgraded
@@ -1059,15 +1053,20 @@ parse_json_data(game_t* game, const lstring_t* json_text)
 
 	int         api_version;
 	js_ref_t*   error_ref;
+	size_t      json_size;
+	const char* json_text;
 	const char* res_string;
 	int         res_x;
 	int         res_y;
 	int         stack_top;
 
+	console_log(1, "parsing JSON metadata for game #%u", game->id);
+
 	stack_top = jsal_get_top();
 
 	// load required entries
-	jsal_push_lstring_t(json_text);
+	json_text = game_read_file(game, pathname, &json_size);
+	jsal_push_lstring(json_text, json_size);
 	if (!jsal_try_parse(-1))
 		goto on_json_error;
 
@@ -1156,8 +1155,6 @@ parse_json_data(game_t* game, const lstring_t* json_text)
 
 	if (jsal_get_prop_string(-9, "fullScreen") && jsal_is_boolean(-1))
 		game->fullscreen = jsal_get_boolean(-1);
-	else
-		game->fullscreen = game->version < 2;
 
 	jsal_set_top(stack_top);
 

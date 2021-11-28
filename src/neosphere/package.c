@@ -98,11 +98,14 @@ package_open(const char* path)
 	if (!(package = calloc(1, sizeof(package_t))))
 		goto on_error;
 
-	if (!(package->file = al_fopen(path, "rb"))) goto on_error;
+	if (!(package->file = al_fopen(path, "rb")))
+		goto on_error;
 	if (al_fread(package->file, &spk_hdr, sizeof(struct spk_header)) != sizeof(struct spk_header))
 		goto on_error;
-	if (memcmp(spk_hdr.signature, ".spk", 4) != 0) goto on_error;
-	if (spk_hdr.version != 1) goto on_error;
+	if (memcmp(spk_hdr.signature, ".spk", 4) != 0)
+		goto on_error;
+	if (spk_hdr.version != 1)
+		goto on_error;
 
 	package->path = path_new(path);
 
@@ -113,13 +116,15 @@ package_open(const char* path)
 	for (i = 0; i < spk_hdr.num_files; ++i) {
 		if (al_fread(package->file, &spk_entry_hdr, sizeof(struct spk_entry_hdr)) != sizeof(struct spk_entry_hdr))
 			goto on_error;
-		if (spk_entry_hdr.version != 1) goto on_error;
+		if (spk_entry_hdr.version != 1)
+			goto on_error;
 		spk_entry.pack_size = spk_entry_hdr.compress_size;
 		spk_entry.file_size = spk_entry_hdr.file_size;
 		spk_entry.offset = spk_entry_hdr.offset;
 		al_fread(package->file, spk_entry.file_path, spk_entry_hdr.filename_size);
 		spk_entry.file_path[spk_entry_hdr.filename_size] = '\0';
-		if (!vector_push(package->index, &spk_entry)) goto on_error;
+		if (!vector_push(package->index, &spk_entry))
+			goto on_error;
 	}
 
 	package->id = s_next_package_id++;

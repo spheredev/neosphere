@@ -177,7 +177,7 @@ main(int argc, char* argv[])
 	printf("\n");
 
 	// print out options
-	console_log(1, "parsing command line");
+	console_log(1, "parsing command line arguments");
 	console_log(1, "    game path: %s", s_game_path != NULL ? path_cstr(s_game_path) : "<none provided>");
 	console_log(1, "    retrograde API: %s", retro_mode ? "yes" : "no");
 	console_log(1, "    fullscreen: %s",

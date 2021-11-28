@@ -6,6 +6,7 @@ v5.7.0 - TBD
 
 * Adds support for keeping Sphere v2 control information (main module,
   API level, etc.) in `game.sgm`.
+* Adds back support for the `describe()` function in Cellscripts.
 * Changes the Documents folder hierarchy so both screenshots and save data are
   put into a single `Sphere Saves` directory.
 * Fixes an issue where neoSphere automatically creates a new empty folder for

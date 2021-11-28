@@ -77,15 +77,18 @@ Sphere.Version [read-only]
     An integer specifying which version of the Cellscript API is supported by
     the compiler (e.g., 2).
 
-Sphere.Game [non-replaceable]
+Sphere.Game [read-only]
 
-    An object whose properties will be written to the game's JSON manifest at
-    the end of the build.  For example, `Sphere.Game.name` is the game title.
-    If you need to set multiple fields at once, use `Object.assign()`.
+    An object whose properties describe the game being compiled.  JavaScript
+    code cannot modify this object's properties directly; its contents always
+    reflect the most recent call to `describe()`.
 
-    Note: You are free to do as you please with this object, but keep in mind
-          that only JSON-compatible values will actually be written out to
-          `game.json`.
+describe(game_description);
+
+    Provides information (for example, title, author, API level, etc.) about
+    the game being built.  Calls to this function are cumulative and the values
+    are validated by Cell during the call.  If a `describe()` call fails, the
+    build will be cancelled.
 
 error(message);
 

@@ -246,9 +246,9 @@ debugger_log(const char* text, ki_log_op_t op, bool use_console)
 
 	if (use_console) {
 		heading = op == KI_LOG_TRACE ? "\33[32mtrace"
-			: op == KI_LOG_WARN ? "\33[31;1mWARN"
-			: "\33[34;1mlog";
-		console_log(0, "%s:\33[m %s", heading, text);
+			: op == KI_LOG_WARN ? "\33[31;1m warn"
+			: "\33[30;1m game";
+		printf("%s  %s\33[m\n", heading, text);
 	}
 	if (s_socket != NULL) {
 		notify = ki_message_new(KI_NFY);
@@ -353,7 +353,7 @@ do_attach_debugger(void)
 {
 	double timeout;
 
-	printf("waiting for SSj debugger to connect...\n");
+	console_log(0, "waiting for SSj debugger to connect...");
 	fflush(stdout);
 	timeout = al_get_time() + 30.0;
 	while (s_socket == NULL && al_get_time() < timeout) {
@@ -361,7 +361,7 @@ do_attach_debugger(void)
 		sphere_sleep(0.05);
 	}
 	if (s_socket == NULL)  // did we time out?
-		printf("timed out waiting for SSj\n");
+		console_warn(0, "timed out waiting for SSj");
 	return s_socket != NULL;
 }
 

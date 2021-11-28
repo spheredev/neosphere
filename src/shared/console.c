@@ -48,7 +48,7 @@ console_error(const char* fmt, ...)
 {
 	va_list ap;
 
-	printf("\33[31;1mERROR: \33[m");
+	printf("\33[31;1merror  \33[m");
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
@@ -62,10 +62,11 @@ console_log(int level, const char* fmt, ...)
 
 	if (level > s_verbosity)
 		return;
+	printf("  log  ");
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
-	fputc('\n', stdout);
+	fputs("\n", stdout);
 }
 
 void
@@ -75,9 +76,9 @@ console_warn(int level, const char* fmt, ...)
 
 	if (level > s_verbosity)
 		return;
-	printf("\33[33;1mWARNING: \33[m");
+	printf("\33[33;1m warn  ");
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
-	fputc('\n', stdout);
+	fputs("\33[m\n", stdout);
 }
