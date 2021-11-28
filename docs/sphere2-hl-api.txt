@@ -95,20 +95,27 @@ Console#undefineObject(objectName);
 `DataStream` Object
 -------------------
 
-A `DataStream` object allows you to read from structured binary files like
-those used for Sphere game assets (maps, tilesets, etc.) based on a simple JSON
-schema.  You can also read individual binary values from the file.
-
-`DataStream` is a subclass of `FileStream` and supports all the same methods.
-See the Core API reference for information on `FileStream`.
+A `DataStream` object allows you to easily read from an ArrayBuffer or typed
+array containing structured binary data.  You can also read individual binary
+values from the file.
 
     import { DataStream } from 'sphere-runtime';
 
-new DataStream(fileName, fileOp);
+DataStream.fromFile(filename);
 
-    Constructs a `DataStream` object which can be used to read binary data from
-    `fileName`.  `fileOp` specifies the access requested; refer to the API
-    documentation for FileStream for more information on this parameter.
+    Loads the file specified by `filename` into memory and returns a new
+    `DataStream` which can be used to read data from it.
+
+new DataStream(buffer);
+
+    Constructs a DataStream object which can be used to read raw binary data
+    from `buffer`, which can be either a JavaScript ArrayBuffer or one of the
+    typed array types, such as Uint8Array.
+
+DataStream#readBytes(numBytes);
+
+    Reads the specified number of bytes from the stream and returns a
+    Uint8Array containing the data read.
 
 DataStream#readFloat32([littleEndian]);
 DataStream#readFloat64([littleEndian]);
@@ -149,52 +156,26 @@ DataStream#readStruct(desc);
     following will read the 256-byte header from a Sphere v1 format map file:
 
         rmp_header = myReader.readStruct({
-            signature: { type: 'fstring', length: 4 },
-            version: { type: 'uint16le' },
-            type: { type: 'uint8' },
-            numLayers: { type: 'uint8' },
-            reserved1: { type: 'raw', size: 1 },
-            numEntities: { type: 'uint16le' },
-            startX: { type: 'uint16le' },
-            startY: { type: 'uint16le' },
-            startLayer: { type: 'uint8' },
-            startDir: { type: 'uint8' },
-            numStrings: { type: 'uint16le' },
-            numZones: { type: 'uint16le' },
-            repeating: { type: 'bool' },
-            reserved2: { type: 'raw', size: 234 },
+            signature: 'string/4',
+            version: 'uint16-le',
+            type: 'uint8',
+            numLayers: type: 'uint8',
+            reserved1: 'skip/1',
+            numEntities: 'uint16-le',
+            startX: 'uint16-le',
+            startY: 'uint16-le',
+            startLayer: 'uint8',
+            startDir: 'uint8',
+            numStrings: 'uint16-le',
+            numZones: 'uint16-le',
+            repeating: 'bool',
+            reserved2: 'skip/234',
         });
 
-DataStream#writeFloat32(value[, littleEndian]);
-DataStream#writeFloat64(value[, littleEndian]);
+DataStream#skipAhead(numBytes);
 
-    Writes a floating point value to the data file.  If `littleEndian` is true,
-    writes in little-endian mode.  Otherwise writes in big-endian mode.
-
-DataStream#writeInt8(value);
-DataStream#writeInt16(value[, littleEndian]);
-DataStream#writeInt32(value[, littleEndian]);
-DataStream#writeUint8(value);
-DataStream#writeUint16(value[, littleEndian]);
-DataStream#writeUint32(value[, littleEndian]);
-
-    Writes an integer value to the data file.  If `littleEndian` is true,
-    writes in little-endian mode.  Otherwise writes in big-endian mode.
-
-    Note: "writeUint" variants write unsigned values.  "writeInt" variants
-          write signed ("two's complement") values.
-
-DataStream#writeStringRaw(value);
-
-    Writes a UTF-8 string to the data file.
-
-DataStream#writeString8(value);
-DataStream#writeString16(value[, littleEndian]);
-DataStream#writeString32(value[, littleEndian]);
-
-    Writes a UTF-8 length-prefixed string to the data file, where the length is
-    stored as an unsigned integer.  If `littleEndian` is true, writes in
-    little-endian mode.  Otherwise, writes in big-endian mode.
+    Skips ahead in the stream by the specified number of bytes, ignoring the
+	data within the skipped span.
 
 
 `FocusTarget` Object

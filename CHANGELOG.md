@@ -11,6 +11,8 @@ v5.7.0 - TBD
   put into a single `Sphere Saves` directory.
 * Fixes an issue where neoSphere automatically creates a new empty folder for
   games on every startup.
+* Fixes a bug where Cell rejects save IDs containing spaces as invalid.
+
 
 v5.6.4 - November 16, 2021
 --------------------------

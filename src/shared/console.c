@@ -76,7 +76,7 @@ console_warn(int level, const char* fmt, ...)
 
 	if (level > s_verbosity)
 		return;
-	printf("\33[33;1m warn  ");
+	printf("\33[33;1m WARN  ");
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);

@@ -31,8 +31,14 @@
 **/
 
 export default
-class BufferStream
+class DataStream
 {
+	static async fromFile(fileName)
+	{
+		const buffer = await FS.readFile(fileName, DataType.Raw);
+		return new DataStream(buffer);
+	}
+
 	constructor(buffer)
 	{
 		this.textDec = new TextDecoder();
@@ -152,10 +158,12 @@ class BufferStream
 	{
 		let retval = {};
 		for (const key of Object.keys(manifest)) {
-			const matches = manifest[key].match(/(string|zstring|reserve)\/([0-9]*)/);
+			const matches = manifest[key].match(/(string|stringz|skip)\/([0-9]*)/);
 			const valueType = matches !== null ? matches[1] : manifest[key];
 			const numBytes = matches !== null ? parseInt(matches[2], 10) : 0;
 			switch (valueType) {
+				case 'bool':
+					retval[key] = this.readUint8() !== 0;
 				case 'float32-be':
 					retval[key] = this.readFloat32();
 					break;
@@ -183,7 +191,7 @@ class BufferStream
 				case 'int32-le':
 					retval[key] = this.readInt32(true);
 					break;
-				case 'reserve':
+				case 'skip':
 					retval[key] = null;
 					this.skipAhead(numBytes);
 					break;
@@ -223,6 +231,24 @@ class BufferStream
 				case 'string32-le':
 					retval[key] = this.readStringU32(true);
 					break;
+				case 'stringz':
+					retval[key] = this.readString(numBytes, true);
+					break;
+				case 'stringz8': case 'stringz8-be': case 'stringz8-le':
+					retval[key] = this.readStringU8(true);
+					break;
+				case 'stringz16-be':
+					retval[key] = this.readStringU16(false, true);
+					break;
+				case 'stringz16-le':
+					retval[key] = this.readStringU16(true, true);
+					break;
+				case 'stringz32-be':
+					retval[key] = this.readStringU32(false, true);
+					break;
+				case 'stringz32-le':
+					retval[key] = this.readStringU32(true, true);
+					break;
 				case 'uint8': case 'uint8-be': case 'uint8-le':
 					retval[key] = this.readUint8();
 					break;
@@ -237,24 +263,6 @@ class BufferStream
 					break;
 				case 'uint32-le':
 					retval[key] = this.readUint32(true);
-					break;
-				case 'zstring':
-					retval[key] = this.readString(numBytes, true);
-					break;
-				case 'zstring8': case 'zstring8-be': case 'zstring8-le':
-					retval[key] = this.readStringU8(true);
-					break;
-				case 'zstring16-be':
-					retval[key] = this.readStringU16(false, true);
-					break;
-				case 'zstring16-le':
-					retval[key] = this.readStringU16(true, true);
-					break;
-				case 'zstring32-be':
-					retval[key] = this.readStringU32(false, true);
-					break;
-				case 'zstring32-le':
-					retval[key] = this.readStringU32(true, true);
 					break;
 				default:
 					throw RangeError(`Unknown readStruct() value type '${valueType}'`);
