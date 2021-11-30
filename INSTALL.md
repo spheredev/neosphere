@@ -1,15 +1,16 @@
-Sphere Installation Instructions
-================================
+neoSphere Installation Instructions
+===================================
 
-Sphere compiles on all three major platforms (Windows, Linux, and macOS).  This
-file contains instructions for how to compile and install Sphere for Windows
-and Linux; macOS is more complicated and you will probably have to set up your
-own build harness.
+neoSphere compiles on all three major platforms (Windows, Linux, and macOS).
+This file contains instructions for how to compile and install neoSphere for
+Windows and Linux; macOS is more complicated and you will probably have to set
+up your own build harness.
 
 Before you get started, you will need to download the ChakraCore binaries for
-your platform here, as they are too large to include in the Sphere repository:
+your platform here, as they are too large to include in the neoSphere
+repository:
 
-https://github.com/Microsoft/ChakraCore/releases
+https://github.com/chakra-core/ChakraCore/releases
 
 Copy `ChakraCore.lib` (and for Windows builds, `ChakraCore.dll`) into `dep/lib`
 and the following header files into `dep/include`:
@@ -32,7 +33,7 @@ later is required, which can be downloaded free of charge here:
 [Download Microsoft Visual Studio]
 (https://visualstudio.microsoft.com/)
 
-Allegro is provided through NuGet, and static libraries and/or source are
+Allegro is available through NuGet, and static libraries and/or source are
 included for all other dependencies besides ChakraCore, so no additional 
 software is required to build for Windows.
 

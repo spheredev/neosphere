@@ -1,4 +1,4 @@
-;  Sphere: JavaScript game platform
+;  neoSphere JavaScript game platform
 ;  Copyright (c) 2015-2021, Fat Cerberus
 ;  All rights reserved.
 ;

@@ -1,8 +1,8 @@
 Release Notes
 =============
 
-miniSphere 5.6
---------------
+neoSphere 5.6
+-------------
 
 * In preparation for `FileStream` access becoming asynchronous, `DataStream`
   has been removed from the Sphere Runtime API and its role replaced by the new

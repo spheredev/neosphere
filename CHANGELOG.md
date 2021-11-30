@@ -1,5 +1,5 @@
-Sphere Changelog
-================
+neoSphere Changelog
+===================
 
 v5.7.0 - TBD
 ------------

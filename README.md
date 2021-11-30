@@ -1,26 +1,30 @@
-Sphere: the JavaScript game platform
-====================================
+neoSphere JavaScript game platform
+==================================
 
-[![Build Status](https://www.travis-ci.com/fatcerberus/sphere.svg?branch=master)](https://www.travis-ci.com/fatcerberus/sphere)
-[![Release](https://img.shields.io/github/release/fatcerberus/sphere.svg)](https://github.com/fatcerberus/sphere/releases/latest)
+[![Release](https://img.shields.io/github/release/fatcerberus/neosphere.svg)](https://github.com/fatcerberus/sphere/releases/latest)
 
 **neoSphere** is a lightweight, fully sandboxed, JavaScript-powered game
-development platform.  It is a complete rewrite of Chad Austin's original
-*Sphere* engine, written from the ground up in C.  Graphics and audio support
-are provided by [Allegro 5](http://liballeg.org), and JavaScript support is
-enabled by [ChakraCore](https://github.com/Microsoft/ChakraCore), the same
-JavaScript engine that once powered Microsoft Edge.
+engine and development platform.  It is a complete rewrite of Chad Austin's
+original *Sphere* engine, written from the ground up in C.  While neoSphere is
+backwards compatible with the original engine (henceforth referred to as
+**Sphere 1.x**), it also brings with it a new, modern API and a collection of
+powerful development tools.
+
+Graphics and audio support are provided through
+[Allegro 5](http://liballeg.org), and JavaScript support is enabled by
+[ChakraCore](https://github.com/Microsoft/ChakraCore), the same JavaScript
+engine that once powered Microsoft Edge.
 
 
 Download
 ========
 
-The current stable neoSphere release at the time of this writing is
+The most recent stable neoSphere release at the time of this writing is
 **neoSphere 5.6.4**, released on Tuesday, November 16, 2021.  neoSphere
 releases are provided through GitHub and the latest version can always be found
 here:
 
-* <https://github.com/fatcerberus/sphere/releases>
+* <https://github.com/fatcerberus/neosphere/releases>
 
 For an overview of breaking changes in the current stable release series, refer
 to [`RELEASES.md`](RELEASES.md).
