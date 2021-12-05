@@ -398,6 +398,7 @@ process_message(js_step_t* out_step)
 	unsigned int  breakpoint_id;
 	int           call_index;
 	int           column;
+	char*         engine_name;
 	const char*   eval_code;
 	bool          eval_errored;
 	char*         file_data;
@@ -406,7 +407,6 @@ process_message(js_step_t* out_step)
 	unsigned int  handle;
 	unsigned int  line;
 	mapping_t     mapping;
-	char*         platform_name;
 	ki_message_t* reply;
 	ki_message_t* request = NULL;
 	size2_t       resolution;
@@ -479,15 +479,17 @@ process_message(js_step_t* out_step)
 		jsal_pop(3);
 		break;
 	case KI_REQ_GAME_INFO:
-		platform_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
+		engine_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 		resolution = game_resolution(g_game);
-		ki_message_add_string(reply, platform_name);
+		ki_message_add_string(reply, engine_name);
 		ki_message_add_string(reply, game_name(g_game));
 		ki_message_add_string(reply, game_author(g_game));
 		ki_message_add_string(reply, game_summary(g_game));
 		ki_message_add_int(reply, resolution.width);
 		ki_message_add_int(reply, resolution.height);
-		free(platform_name);
+		ki_message_add_int(reply, game_version(g_game));
+		ki_message_add_int(reply, game_api_level(g_game));
+		free(engine_name);
 		break;
 	case KI_REQ_INSPECT_BREAKS:
 		i = 0;

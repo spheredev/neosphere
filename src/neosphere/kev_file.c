@@ -49,18 +49,18 @@ kev_open(game_t* game, const char* filename, bool can_create)
 {
 	kev_file_t*   kev_file;
 	ALLEGRO_FILE* memfile = NULL;
-	void*         slurp;
-	size_t        slurp_size;
+	void*         file_data;
+	size_t        file_size;
 
 	console_log(2, "opening kevfile #%u '%s'", s_next_file_id, filename);
 	if (!(kev_file = calloc(1, sizeof(kev_file_t))))
 		return NULL;
-	if ((slurp = game_read_file(game, filename, &slurp_size))) {
-		memfile = al_open_memfile(slurp, slurp_size, "rb");
+	if ((file_data = game_read_file(game, filename, &file_size))) {
+		memfile = al_open_memfile(file_data, file_size, "rb");
 		if (!(kev_file->conf = al_load_config_file_f(memfile)))
 			goto on_error;
 		al_fclose(memfile);
-		free(slurp);
+		free(file_data);
 	}
 	else {
 		console_log(3, "    '%s' doesn't exist", filename);

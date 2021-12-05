@@ -55,9 +55,12 @@ struct inferior
 	bool           is_detached;
 	bool           paused;
 	char*          title;
+	int            api_version;
+	int            api_level;
 	char*          author;
 	backtrace_t*   calls;
 	int            frame_index;
+	bool           have_api_info;
 	bool           have_debug_info;
 	int            line_no;
 	int            protocol;
@@ -88,32 +91,32 @@ inferiors_uninit(void)
 inferior_t*
 inferior_new(const char* hostname, int port, bool show_trace)
 {
-	inferior_t*   obj;
-	char*         platform_name;
+	char*         engine_name;
+	inferior_t*   inferior;
 	ki_message_t* reply;
 	ki_message_t* request;
 	clock_t       timeout;
 
-	if (!(obj = calloc(1, sizeof(inferior_t))))
+	if (!(inferior = calloc(1, sizeof(inferior_t))))
 		goto on_error;
 	printf("connecting to %s:%d... ", hostname, port);
 	fflush(stdout);
-	obj->socket = socket_new(1024, true);
-	socket_set_no_delay(obj->socket, true);
-	if (!socket_connect(obj->socket, hostname, port))
+	inferior->socket = socket_new(1024, true);
+	socket_set_no_delay(inferior->socket, true);
+	if (!socket_connect(inferior->socket, hostname, port))
 		goto on_error;
 	timeout = clock() + 60 * CLOCKS_PER_SEC;
-	while (!socket_connected(obj->socket)) {
-		if (socket_closed(obj->socket))
-			socket_connect(obj->socket, hostname, port);
+	while (!socket_connected(inferior->socket)) {
+		if (socket_closed(inferior->socket))
+			socket_connect(inferior->socket, hostname, port);
 		if (clock() > timeout)
 			goto timed_out;
 		sockets_update();
 	}
 
 	printf("OK.\n");
-	obj->protocol = do_handshake(obj->socket);
-	if (obj->protocol == 0)
+	inferior->protocol = do_handshake(inferior->socket);
+	if (inferior->protocol == 0)
 		goto on_error;
 
 	// set watermark (shown on bottom left)
@@ -123,38 +126,44 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	ki_message_add_int(request, 255);
 	ki_message_add_int(request, 224);
 	ki_message_add_int(request, 0);
-	if (!(reply = inferior_request(obj, request)))
+	if (!(reply = inferior_request(inferior, request)))
 		goto on_error;
 	ki_message_free(reply);
 
-	printf("downloading game information... ");
+	printf("requesting game information... ");
 	request = ki_message_new(KI_REQ);
 	ki_message_add_int(request, KI_REQ_GAME_INFO);
-	if (!(reply = inferior_request(obj, request)))
+	if (!(reply = inferior_request(inferior, request)))
 		goto on_error;
-	platform_name = strdup(ki_message_string(reply, 0));
-	obj->title = strdup(ki_message_string(reply, 1));
-	obj->author = strdup(ki_message_string(reply, 2));
+	engine_name = strdup(ki_message_string(reply, 0));
+	inferior->title = strdup(ki_message_string(reply, 1));
+	inferior->author = strdup(ki_message_string(reply, 2));
+	if (ki_message_len(reply) >= 8) {
+		inferior->api_version = ki_message_int(reply, 6);
+		inferior->api_level = ki_message_int(reply, 7);
+		inferior->have_api_info = true;
+	}
 	ki_message_free(reply);
 	printf("OK.\n");
 
-	printf("    engine: \33[37;1m%s\33[m\n", platform_name);
-	printf("    title:  \33[37;1m%s\33[m\n", obj->title);
-	printf("    author: \33[37;1m%s\33[m\n", obj->author);
+	printf("    title:  \33[37;1m%s\33[m\n", inferior->title);
+	if (inferior->have_api_info)
+		printf("    API:    \33[37;1mSphere v%d API level %d\33[m\n", inferior->api_version, inferior->api_level);
+	printf("    engine: \33[37;1m%s\33[m\n", engine_name);
 
-	free(platform_name);
+	free(engine_name);
 
-	obj->id = s_next_inferior_id++;
-	obj->show_trace = show_trace;
-	return obj;
+	inferior->id = s_next_inferior_id++;
+	inferior->show_trace = show_trace;
+	return inferior;
 
 timed_out:
 	printf("\33[31merror!\33[m\n");
-	free(obj);
+	free(inferior);
 	return NULL;
 
 on_error:
-	free(obj);
+	free(inferior);
 	return NULL;
 }
 
