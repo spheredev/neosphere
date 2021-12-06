@@ -7,6 +7,8 @@ v5.7.0 - TBD
 * Adds support for targeting Sphere v2 without having to include `game.json`.
 * Adds back support for the `describe()` function in Cellscripts.
 * Adds support for showing a game's targeted API level in SSj.
+* Adds the ability to automatically step over Sphere Runtime code while
+  debugging.
 * Changes the Documents folder hierarchy so both screenshots and save data are
   put into a single `Sphere Saves` directory.
 * Fixes an issue where neoSphere annoyingly creates an empty directory for

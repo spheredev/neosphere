@@ -49,6 +49,7 @@ static void       do_detach_debugger (bool is_shutdown);
 static bool       process_message    (js_step_t* out_step);
 
 static ssj_mode_t s_attach_mode;
+static js_step_t  s_auto_step_op;
 static color_t    s_banner_color;
 static char*      s_banner_text;
 static js_ref_t*  s_cell_data = NULL;
@@ -152,6 +153,8 @@ debugger_init(ssj_mode_t attach_mode, bool allow_remote)
 	s_needs_attachment = s_attach_mode == SSJ_ACTIVE;
 	if (s_needs_attachment && !do_attach_debugger())
 		sphere_abort(NULL);  // no attachment, exit
+	
+	s_auto_step_op = JS_STEP_IN;
 }
 
 void
@@ -280,6 +283,9 @@ on_breakpoint_hit(void)
 	column = jsal_get_int(2);
 	mapping = source_map_lookup(filename, line, column);
 
+	if (strncmp(mapping.filename, "#/", 2) == 0)
+		return s_auto_step_op;
+	
 	message = ki_message_new(KI_NFY);
 	ki_message_add_int(message, KI_NFY_PAUSE);
 	ki_message_add_string(message, mapping.filename);
@@ -300,6 +306,7 @@ on_breakpoint_hit(void)
 
 	audio_resume();
 
+	s_auto_step_op = step_op == JS_STEP_CONTINUE ? JS_STEP_IN : step_op;
 	return step_op;
 }
 
