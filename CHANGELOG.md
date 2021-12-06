@@ -4,15 +4,16 @@ neoSphere Changelog
 v5.7.0 - TBD
 ------------
 
-* Adds support for Sphere v2 control information (main module, API level, etc.)
-  in `game.sgm`.
+* Adds support for targeting Sphere v2 without having to include `game.json`.
 * Adds back support for the `describe()` function in Cellscripts.
 * Adds support for showing a game's targeted API level in SSj.
 * Changes the Documents folder hierarchy so both screenshots and save data are
   put into a single `Sphere Saves` directory.
-* Fixes an issue where neoSphere automatically creates a new empty folder for
-  Sphere v1 games on every startup.
+* Fixes an issue where neoSphere annoyingly creates an empty directory for
+  Sphere v1 games in the user's Documents folder on every startup.
 * Fixes a bug where Cell rejects save IDs containing spaces as invalid.
+* Fixes a bug where the engine may segfault on startup if it's unable to launch
+  the requested game.
 
 
 v5.6.4 - November 16, 2021

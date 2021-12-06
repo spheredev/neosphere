@@ -228,9 +228,9 @@ do_command_line(session_t* session)
 	filename = backtrace_get_filename(calls, session->frame);
 	line_no = backtrace_get_linenum(calls, session->frame);
 	if (line_no != 0)
-		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(ssj)\33[m ", filename, line_no, function_name);
+		printf("\n\33[36;1m%s:%d %s\33[m\n\33[33;1m(SSj)\33[m ", filename, line_no, function_name);
 	else
-		printf("\n\33[36;1msyscall %s\33[m\n\33[33;1m(ssj)\33[m ", function_name);
+		printf("\n\33[36;1msyscall %s\33[m\n\33[33;1m(SSjj)\33[m ", function_name);
 	idx = 0;
 	while ((ch = getchar()) != '\n') {
 		if (idx >= sizeof buffer - 1) {

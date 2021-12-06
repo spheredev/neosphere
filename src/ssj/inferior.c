@@ -105,7 +105,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	socket_set_no_delay(inferior->socket, true);
 	if (!socket_connect(inferior->socket, hostname, port))
 		goto on_error;
-	timeout = clock() + 60 * CLOCKS_PER_SEC;
+	timeout = clock() + 10 * CLOCKS_PER_SEC;
 	while (!socket_connected(inferior->socket)) {
 		if (socket_closed(inferior->socket))
 			socket_connect(inferior->socket, hostname, port);
@@ -158,7 +158,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	return inferior;
 
 timed_out:
-	printf("\33[31merror!\33[m\n");
+	printf("\33[31mtimed out!\33[m\n");
 	free(inferior);
 	return NULL;
 

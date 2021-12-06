@@ -68,6 +68,7 @@ static int compare_segments (const void* a, const void* b);
 static int vlq_decode_next  (const char* start, int* out_array, int max_values);
 
 static vector_t* s_aliases;
+static bool      s_enabled;
 static vector_t* s_maps;
 static vector_t* s_sources;
 
@@ -77,6 +78,7 @@ source_map_init(void)
 	s_sources = vector_new(sizeof(struct source));
 	s_maps = vector_new(sizeof(struct map));
 	s_aliases = vector_new(sizeof(struct alias));
+	s_enabled = true;
 }
 
 void
@@ -88,6 +90,9 @@ source_map_uninit(void)
 
 	iter_t iter;
 
+	if (!s_enabled)
+		return;
+	
 	iter = vector_enum(s_aliases);
 	while ((alias = iter_next(&iter))) {
 		free(alias->name);
@@ -110,6 +115,8 @@ source_map_uninit(void)
 		free(source->text);
 	}
 	vector_free(s_sources);
+	
+	s_enabled = false;
 }
 
 const char*

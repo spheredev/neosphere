@@ -1,5 +1,5 @@
 version=$(shell cat VERSION)
-pkgname=sphere-$(version)
+pkgname=neosphere-$(version)
 os=$(shell uname)
 
 ifndef prefix

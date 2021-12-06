@@ -270,6 +270,7 @@ main(int argc, char* argv[])
 			"For Sphere game developers:\nUsing SpheRun to start the game from the command line may yield more insight.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #endif
+		console_error("no valid Sphere manifest at '%s'", path_cstr(s_game_path));
 		longjmp(exit_label, 1);
 	}
 
@@ -280,7 +281,7 @@ main(int argc, char* argv[])
 			"You'll need to use a newer version of neoSphere to play this game.",
 			NULL, ALLEGRO_MESSAGEBOX_ERROR);
 #else
-		fprintf(stderr, "\33[31;1mERROR:\33[m Sphere v%d level %d API required\n",
+		console_error("game requires at least Sphere v%d level %d API",
 			game_version(g_game), game_api_level(g_game));
 #endif
 		longjmp(exit_label, 1);

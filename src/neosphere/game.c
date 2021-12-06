@@ -1074,15 +1074,16 @@ parse_json_data(game_t* game, const char* pathname)
 
 	if (jsal_get_prop_string(-1, "version") && jsal_is_number(-1)) {
 		api_version = jsal_get_number(-1);
-		if (api_version < 2) {
-			jsal_push_new_error(JS_ERROR, "'version' in JSON metadata must be at least 2 if specified");
-			goto on_json_error;
-		}
-		if (game->version < 2) {
-			// main manifest targets Sphere v1, ignore the script path there
+		if (api_version >= game->version) {
+			// main manifest is legacy, ignore the script path there
 			path_free(game->script_path);
 			game->version = api_version;
 			game->script_path = NULL;
+		}
+		else {
+			jsal_push_new_error(JS_ERROR, "'version' in JSON metadata earlier than main manifest (%d < %d)",
+				api_version, game->version);
+			goto on_json_error;
 		}
 	}
 	else if (game->version == 0) {
@@ -1092,7 +1093,7 @@ parse_json_data(game_t* game, const char* pathname)
 	if (jsal_get_prop_string(-2, "apiLevel") && jsal_is_number(-1)) {
 		game->api_level = jsal_get_number(-1);
 		if (game->version < 2) {
-			// main manifest targets Sphere v1, ignore the script path there
+			// main manifest is legacy, ignore the script path there
 			path_free(game->script_path);
 			game->version = 2;
 			game->script_path = NULL;
@@ -1104,7 +1105,7 @@ parse_json_data(game_t* game, const char* pathname)
 
 	if (jsal_get_prop_string(-3, "main") && jsal_is_string(-1)) {
 		if (game->version < 2)
-			game->version = 2;
+			game->version = 2;  // main manifest is legacy
 		path_free(game->script_path);
 		game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
 		if (!path_hop_is(game->script_path, 0, "@")) {
