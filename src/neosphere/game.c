@@ -1051,7 +1051,7 @@ parse_json_data(game_t* game, const char* pathname)
 	//       to Sphere v2 unless there is proof otherwise (an explicit API level or JS entrypoint in
 	//       the JSON data, for example).
 
-	int         api_version;
+	int         api_version = 0;
 	js_ref_t*   error_ref;
 	size_t      json_size;
 	const char* json_text;
@@ -1064,7 +1064,6 @@ parse_json_data(game_t* game, const char* pathname)
 
 	stack_top = jsal_get_top();
 
-	// load required entries
 	json_text = game_read_file(game, pathname, &json_size);
 	jsal_push_lstring(json_text, json_size);
 	if (!jsal_try_parse(-1))
@@ -1091,11 +1090,13 @@ parse_json_data(game_t* game, const char* pathname)
 	}
 
 	if (jsal_get_prop_string(-2, "apiLevel") && jsal_is_number(-1)) {
+		if (api_version == 0)
+			api_version = 2;
 		game->api_level = jsal_get_number(-1);
-		if (game->version < 2) {
+		if (game->version < api_version) {
 			// main manifest is legacy, ignore the script path there
 			path_free(game->script_path);
-			game->version = 2;
+			game->version = api_version;
 			game->script_path = NULL;
 		}
 	}
@@ -1104,8 +1105,8 @@ parse_json_data(game_t* game, const char* pathname)
 	}
 
 	if (jsal_get_prop_string(-3, "main") && jsal_is_string(-1)) {
-		if (game->version < 2)
-			game->version = 2;  // main manifest is legacy
+		if (api_version == 0)
+			game->version = 2;
 		path_free(game->script_path);
 		game->script_path = game_full_path(game, jsal_get_string(-1), NULL, false);
 		if (!path_hop_is(game->script_path, 0, "@")) {
