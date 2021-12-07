@@ -136,19 +136,19 @@ class DataStream
 		return value;
 	}
 
-	readStringU8(stripNUL = false)
+	readLPStr8(stripNUL = false)
 	{
 		const length = this.readUint8();
 		return this.readString(length, stripNUL);
 	}
 
-	readStringU16(littleEndian = false, stripNUL = false)
+	readLPStr16(littleEndian = false, stripNUL = false)
 	{
 		const length = this.readUint16(littleEndian);
 		return this.readString(length, stripNUL);
 	}
 
-	readStringU32(littleEndian = false, stripNUL = false)
+	readLPStr32(littleEndian = false, stripNUL = false)
 	{
 		const length = this.readUint32(littleEndian);
 		return this.readString(length, stripNUL);
@@ -158,12 +158,30 @@ class DataStream
 	{
 		let retval = {};
 		for (const key of Object.keys(manifest)) {
-			const matches = manifest[key].match(/(string|stringz|skip)\/([0-9]*)/);
+			const matches = manifest[key].match(/(string|cstring|raw|nil)\/([0-9]*)/);
 			const valueType = matches !== null ? matches[1] : manifest[key];
 			const numBytes = matches !== null ? parseInt(matches[2], 10) : 0;
 			switch (valueType) {
 				case 'bool':
 					retval[key] = this.readUint8() !== 0;
+				case 'cstring':
+					retval[key] = this.readString(numBytes, true);
+					break;
+				case 'cstr8': case 'cstr8-be': case 'cstr8-le':
+					retval[key] = this.readLPStr8(true);
+					break;
+				case 'cstr16-be':
+					retval[key] = this.readLPStr16(false, true);
+					break;
+				case 'cstr16-le':
+					retval[key] = this.readLPStr16(true, true);
+					break;
+				case 'cstr32-be':
+					retval[key] = this.readLPStr32(false, true);
+					break;
+				case 'cstr32-le':
+					retval[key] = this.readLPStr32(true, true);
+					break;
 				case 'float32-be':
 					retval[key] = this.readFloat32();
 					break;
@@ -191,63 +209,30 @@ class DataStream
 				case 'int32-le':
 					retval[key] = this.readInt32(true);
 					break;
-				case 'skip':
+				case 'lpstr8': case 'lpstr8-be': case 'lpstr8-le':
+					retval[key] = this.readLPStr8();
+					break;
+				case 'lpstr16-be':
+					retval[key] = this.readLPStr16();
+					break;
+				case 'lpstr16-le':
+					retval[key] = this.readLPStr16(true);
+					break;
+				case 'lpstr32-be':
+					retval[key] = this.readLPStr32();
+					break;
+				case 'lpstr32-le':
+					retval[key] = this.readLPStr32(true);
+					break;
+				case 'nil':
 					retval[key] = null;
 					this.skipAhead(numBytes);
 					break;
-				case 'string':
-					retval[key] = this.readString(numBytes);
-					break;
-				case 'string8': case 'string8-be': case 'string8-le':
-					retval[key] = this.readStringU8();
-					break;
-				case 'string16-be':
-					retval[key] = this.readStringU16();
-					break;
-				case 'string16-le':
-					retval[key] = this.readStringU16(true);
-					break;
-				case 'string32-be':
-					retval[key] = this.readStringU32();
-					break;
-				case 'string32-le':
-					retval[key] = this.readStringU32(true);
+				case 'raw':
+					retval[key] = this.readBytes(numBytes).buffer;
 					break;
 				case 'string':
 					retval[key] = this.readString(numBytes);
-					break;
-				case 'string8': case 'string8-be': case 'string8-le':
-					retval[key] = this.readStringU8();
-					break;
-				case 'string16-be':
-					retval[key] = this.readStringU16();
-					break;
-				case 'string16-le':
-					retval[key] = this.readStringU16(true);
-					break;
-				case 'string32-be':
-					retval[key] = this.readStringU32();
-					break;
-				case 'string32-le':
-					retval[key] = this.readStringU32(true);
-					break;
-				case 'stringz':
-					retval[key] = this.readString(numBytes, true);
-					break;
-				case 'stringz8': case 'stringz8-be': case 'stringz8-le':
-					retval[key] = this.readStringU8(true);
-					break;
-				case 'stringz16-be':
-					retval[key] = this.readStringU16(false, true);
-					break;
-				case 'stringz16-le':
-					retval[key] = this.readStringU16(true, true);
-					break;
-				case 'stringz32-be':
-					retval[key] = this.readStringU32(false, true);
-					break;
-				case 'stringz32-le':
-					retval[key] = this.readStringU32(true, true);
 					break;
 				case 'uint8': case 'uint8-be': case 'uint8-le':
 					retval[key] = this.readUint8();

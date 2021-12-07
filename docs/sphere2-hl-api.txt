@@ -101,10 +101,10 @@ values from the file.
 
     import { DataStream } from 'sphere-runtime';
 
-DataStream.fromFile(filename);
+DataStream.fromFile(filename); [ASYNC]
 
-    Loads the file specified by `filename` into memory and returns a new
-    `DataStream` which can be used to read data from it.
+    Loads the file specified by `filename` into memory and returns a promise
+    for a new `DataStream` which can be used to read data from it.
 
 new DataStream(buffer);
 
@@ -136,41 +136,52 @@ DataStream#readUint32([littleEndian]);
     Note: "readUint" variants read unsigned values.  "readInt" variants read
           signed ("two's complement") values.
 
-DataStream#readStringRaw(length);
+DataStream#readString(length[, stripNUL]);
 
     Reads a UTF-8 string from the data file.  `length` specifies how many bytes
-    to read.
+    to read.  If `stripNUL` is true and the string ends in a NUL character
+    (character 0), the NUL will be removed from the returned string.
 
-DataStream#readString8();
-DataStream#readString16([littleEndian]);
-DataStream#readString32([littleEndian]);
+DataStream#readLPStr8([stripNUL]);
+DataStream#readLPStr16([littleEndian][, stripNUL]);
+DataStream#readLPStr32([littleEndian][, stripNUL]);
 
-    Reads a UTF-8 length-prefixed string from the data file, where the length
+    Reads a length-prefixed UTF-8 string from the data file, where the length
     in bytes is stored as an unsigned integer.  If `littleEndian` is true,
-    reads in little-endian mode.  Otherwise, reads in big-endian mode.
+    reads in little-endian mode.  Otherwise, reads in big-endian mode.  If
+    `stripNUL` is true and the string ends in a NUL character (character 0),
+    the NUL will be removed from the returned string.
 
 DataStream#readStruct(desc);
 
-    Reads an object from the data file, based on `desc`.  The descriptor is an
-    object describing the layout and typing of the data; for example, the
-    following will read the 256-byte header from a Sphere v1 format map file:
+    Reads data en masse from the stream.  `desc` is an object describing the
+    layout and typing of the data, and the function returns an object whose
+    properties correspond to the properties of `desc`.  Valid values for the
+    properties of `desc` and their corresponding data formats are:
 
-        rmp_header = myReader.readStruct({
-            signature: 'string/4',
-            version: 'uint16-le',
-            type: 'uint8',
-            numLayers: type: 'uint8',
-            reserved1: 'skip/1',
-            numEntities: 'uint16-le',
-            startX: 'uint16-le',
-            startY: 'uint16-le',
-            startLayer: 'uint8',
-            startDir: 'uint8',
-            numStrings: 'uint16-le',
-            numZones: 'uint16-le',
-            repeating: 'bool',
-            reserved2: 'skip/234',
-        });
+	    'bool':                     1-byte Boolean, any nonzero byte is `true`
+	    'float32-be', 'float32-le': 4-byte single-precision floating point number
+	    'float64-be', 'float64-le': 8-byte double-precision floating point number
+	    'int8':                     1-byte signed integer (-/+ 127)
+	    'int16-be'/'int16-le':      2-byte signed integer (-/+ 32,767)
+	    'int32-be'/'int32-le':      4-byte signed integer (-/+ 2,147,483,647)
+	    'uint8':                    1-byte unsigned int (0-255)
+	    'uint16-be', 'uint16-le':   1-byte unsigned int (0-65,535)
+	    'uint32-be', 'uint32-le':   1-byte unsigned int (0-4,294,967,295)
+	    'string/<n>':               Raw UTF-8 string `n` bytes long
+	    'cstring/<n>':              Raw UTF-8 string `n` bytes long including a
+	                                NUL terminator
+	    'cstr8':                    String with 1-byte length (up to 255 chars)
+	                                including a NUL terminator
+	    'cstr16-be', 'cstr16-le':   String with 2-byte length (up to 64k chars)
+	                                including a NUL terminator
+	    'cstr32-be', 'cstr32-le':   String with 4-byte length (up to 4bn chars)
+	                                including a NUL terminator
+	    'lpstr8':                   String with 1-byte length (up to 255 chars)
+	    'lpstr16-be', 'lpstr16-le': String with 2-byte length (up to 64k chars)
+	    'lpstr32-be', 'lpstr32-le': String with 4-byte length (up to 4bn chars)
+	    'raw/<n>'                   Raw ArrayBuffer data `n` bytes in size
+		'nil/<n>'                   `n` bytes of padding; content is ignored.
 
 DataStream#skipAhead(numBytes);
 

@@ -4,7 +4,7 @@ neoSphere Changelog
 v5.7.0 - TBD
 ------------
 
-* Adds support for targeting Sphere v2 without having to include `game.json`.
+* Adds support for targeting Sphere v2 without a JSON manifest.
 * Adds back support for the `describe()` function in Cellscripts.
 * Adds support for showing a game's targeted API level in SSj.
 * Adds the ability to automatically step over Sphere Runtime code while
@@ -14,7 +14,7 @@ v5.7.0 - TBD
 * Fixes an issue where neoSphere annoyingly creates an empty directory for
   Sphere v1 games in the user's Documents folder on every startup.
 * Fixes a bug where Cell rejects save IDs containing spaces as invalid.
-* Fixes a bug where the engine may segfault on startup if it's unable to launch
+* Fixes a bug where the engine may crash on startup if it's unable to launch
   the requested game.
 
 
