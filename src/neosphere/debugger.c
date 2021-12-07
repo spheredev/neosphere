@@ -277,16 +277,16 @@ on_breakpoint_hit(void)
 	if (s_socket == NULL)
 		return JS_STEP_CONTINUE;
 
-	audio_suspend();
-
 	filename = jsal_get_string(0);
 	line = jsal_get_int(1);
 	column = jsal_get_int(2);
 	mapping = source_map_lookup(filename, line, column);
-
+	
 	if (strncmp(mapping.filename, "#/", 2) == 0)
 		return s_auto_step_op;
-	
+
+	audio_suspend();
+
 	message = ki_message_new(KI_NFY);
 	ki_message_add_int(message, KI_NFY_PAUSE);
 	ki_message_add_string(message, mapping.filename);
