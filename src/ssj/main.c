@@ -160,8 +160,9 @@ launch_game(path_t* game_path)
 		goto on_error;
 	}
 	else {
-		if (fork() != 0)
+		if (fork() != 0) {
 			path_free(path);
+		}
 		else {
 			// suppress neoSphere's stdout. this is kind of a hack for now; eventually
 			// I'd like to intermingle the engine's output with SSj's, like in native

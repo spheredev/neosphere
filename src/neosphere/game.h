@@ -64,6 +64,7 @@ game_t*         game_ref                 (game_t* it);
 void            game_unref               (game_t* it);
 int             game_api_level           (const game_t* it);
 const char*     game_author              (const game_t* it);
+const char*     game_compiler            (const game_t* it);
 image_t*        game_default_arrow       (const game_t* it);
 image_t*        game_default_arrow_down  (const game_t* it);
 image_t*        game_default_arrow_up    (const game_t* it);

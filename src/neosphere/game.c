@@ -55,6 +55,7 @@ struct game
 	unsigned int   id;
 	int            api_level;
 	lstring_t*     author;
+	lstring_t*     compiler;
 	image_t*       default_arrow;
 	image_t*       default_arrow_down;
 	image_t*       default_arrow_up;
@@ -103,6 +104,7 @@ static unsigned int s_next_game_id = 1;
 game_t*
 game_open(const char* game_path)
 {
+	const char* compiler;
 	game_t*     game;
 	void*       json_data = NULL;
 	const char* main_filename;
@@ -187,6 +189,9 @@ game_open(const char* game_path)
 			game->name = lstr_new(kev_read_string(sgm_file, "name", "Untitled"));
 			game->author = lstr_new(kev_read_string(sgm_file, "author", "Author Unknown"));
 			game->summary = lstr_new(kev_read_string(sgm_file, "description", "No information available."));
+			compiler = kev_read_string(sgm_file, "compiler", NULL);
+			if (compiler != NULL)
+				game->compiler = lstr_new(compiler);
 			main_filename = kev_read_string(sgm_file, "main", "");
 			script_filename = kev_read_string(sgm_file, "script", "");
 			if (game->version >= 2 || main_filename[0] != '\0') {
@@ -325,6 +330,14 @@ const char*
 game_author(const game_t* it)
 {
 	return lstr_cstr(it->author);
+}
+
+const char*
+game_compiler(const game_t* it)
+{
+	return it->compiler != NULL
+		? lstr_cstr(it->compiler)
+		: NULL;
 }
 
 bool

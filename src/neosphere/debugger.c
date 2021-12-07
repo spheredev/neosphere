@@ -248,10 +248,11 @@ debugger_log(const char* text, ki_log_op_t op, bool use_console)
 	ki_message_t* notify;
 
 	if (use_console) {
-		heading = op == KI_LOG_TRACE ? "\33[32mtrace"
-			: op == KI_LOG_WARN ? "\33[31;1m warn"
-			: "\33[30;1m game";
-		printf("%s  %s\33[m\n", heading, text);
+		heading = op == KI_LOG_TRACE ? "\33[30;1mtrace\33[m: "
+			: op == KI_LOG_WARN ? "\33[31;1mwarn\33[m: "
+			: op == KI_LOG_ERROR ? "\33[33;1merror\33[m: "
+			: "";
+		printf("%s%s\33[m\n", heading, text);
 	}
 	if (s_socket != NULL) {
 		notify = ki_message_new(KI_NFY);
@@ -405,6 +406,7 @@ process_message(js_step_t* out_step)
 	unsigned int  breakpoint_id;
 	int           call_index;
 	int           column;
+	const char*   compiler;
 	char*         engine_name;
 	const char*   eval_code;
 	bool          eval_errored;
@@ -488,6 +490,7 @@ process_message(js_step_t* out_step)
 	case KI_REQ_GAME_INFO:
 		engine_name = strnewf("%s %s", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 		resolution = game_resolution(g_game);
+		compiler = debugger_compiler();
 		ki_message_add_string(reply, engine_name);
 		ki_message_add_string(reply, game_name(g_game));
 		ki_message_add_string(reply, game_author(g_game));
@@ -496,6 +499,8 @@ process_message(js_step_t* out_step)
 		ki_message_add_int(reply, resolution.height);
 		ki_message_add_int(reply, game_version(g_game));
 		ki_message_add_int(reply, game_api_level(g_game));
+		if (compiler != NULL)
+			ki_message_add_string(reply, compiler);
 		free(engine_name);
 		break;
 	case KI_REQ_INSPECT_BREAKS:

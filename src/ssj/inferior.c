@@ -59,6 +59,7 @@ struct inferior
 	int            api_level;
 	char*          author;
 	backtrace_t*   calls;
+	char*          compiler;
 	int            frame_index;
 	bool           have_api_info;
 	bool           have_debug_info;
@@ -143,13 +144,18 @@ inferior_new(const char* hostname, int port, bool show_trace)
 		inferior->api_level = ki_message_int(reply, 7);
 		inferior->have_api_info = true;
 	}
+	if (ki_message_len(reply) >= 9) {
+		inferior->compiler = strdup(ki_message_string(reply, 8));
+	}
 	ki_message_free(reply);
 	printf("OK.\n");
 
-	printf("    title:  \33[37;1m%s\33[m\n", inferior->title);
+	printf("   engine:   \33[37;1m%s\33[m\n", engine_name);
+	printf("   title:    \33[37;1m%s\33[m\n", inferior->title);
 	if (inferior->have_api_info)
-		printf("    API:    \33[37;1mSphere v%d API level %d\33[m\n", inferior->api_version, inferior->api_level);
-	printf("    engine: \33[37;1m%s\33[m\n", engine_name);
+		printf("   API:      \33[37;1mSphere v%d API level %d\33[m\n", inferior->api_version, inferior->api_level);
+	if (inferior->compiler != NULL)
+		printf("   compiler: \33[37;1m%s\33[m\n", inferior->compiler);
 
 	free(engine_name);
 
@@ -178,6 +184,7 @@ inferior_free(inferior_t* it)
 		free(it->sources[i].filename);
 	}
 	socket_close(it->socket);
+	free(it->compiler);
 	free(it->title);
 	free(it->author);
 	free(it);
@@ -587,14 +594,13 @@ handle_notify(inferior_t* inferior, const ki_message_t* msg)
 			return false;
 		case KI_NFY_LOG:
 			log_op = (enum ki_log_op)ki_message_int(msg, 1);
-			heading = log_op == KI_LOG_TRACE ? "trace"
-				: "log";
 			if (log_op == KI_LOG_TRACE && !inferior->show_trace)
 				break;
-			else
-				printf("\33[36m");
+			heading = log_op == KI_LOG_TRACE ? "\33[37;1mtrace\33[m"
+				: log_op == KI_LOG_WARN ? "\33[31;1mwarn\33[m"
+				: log_op == KI_LOG_ERROR ? "\33[33;1merror\33[m"
+				: "\33[36;1mlog\33[m";
 			printf("%s: %s\n", heading, ki_message_string(msg, 2));
-			printf("\33[m");
 			break;
 		case KI_NFY_PAUSE:
 			inferior->paused = true;
