@@ -820,6 +820,12 @@ FS.readFile(pathname[, data_type]); [API 1]
             specific meaning to the individual bytes; that's up to your game's
             code.  Returns a Uint8Array.
 
+        DataType.JSON
+
+            Interpret the file as UTF-8-encoded JSON data.  Returns the result
+            of running `JSON.parse()` on the contents of the file.  Requires
+            API level 4 or higher.
+
         DataType.Lines
 
             Interpret the file as plain text (UTF-8).  Returns an array of
@@ -2010,8 +2016,7 @@ Sound.fromFile(filename); [ASYNC] [API 3]
 
     Loads the audio file named by `filename` asynchronously and returns a
     promise for the newly constructed `Sound` object.  Supported sound formats
-    are Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.  Note that mp3 and MIDI
-    formats are **NOT** supported.
+    are mp3, Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.
 
     Note: The promise is not guaranteed to resolve on the same frame, although
           in neoSphere it usually does.
@@ -2024,7 +2029,6 @@ new Sound(filename); [API 1]
 
     Warning: This API is deprecated under API 3 and will be removed in API 4.
              Use `Sound.fromFile()` instead.
-
 
 Sound#fileName [R/O] [API 1]
 
@@ -2192,7 +2196,7 @@ Surface#depthOp [R/W] [EXP]
     The final Z coordinate of each pixel drawn is tested against the current
     value in the surface's depth buffer and is either rendered or skipped based
     on the operation specified:
-    
+
         DepthOp.AlwaysPass
         DepthOp.NeverPass
         DepthOp.Equal
@@ -2225,7 +2229,7 @@ Surface#clear([color[, depthValue]]); [EXP]
     Clears the entire surface using the specified color and depth value (depth
     is automatically clamped between 0.0 and 1.0).  If not provided, `color`
     defaults to `Color.Transparent` and `depthValue` to 1.0.
-    
+
     Note: The backbuffer (`Surface.Screen`) is automatically cleared at the
           beginning of each frame.
 

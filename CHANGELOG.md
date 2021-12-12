@@ -9,8 +9,11 @@ v5.7.0 - TBD
 * Adds support for showing a game's targeted API level in SSj.
 * Adds the ability to automatically step over Sphere Runtime code while
   debugging.
+* Adds a new JSON read mode for `FS.readFile()`.
 * Changes the Documents folder hierarchy so both screenshots and save data are
   put into a single `Sphere Saves` directory.
+* Removes support for the undocumented `JSON.fromFile()` function when
+  targeting Sphere v2 API level 4 or higher.
 * Fixes an issue where neoSphere annoyingly creates an empty directory for
   Sphere v1 games in the user's Documents folder on every startup.
 * Fixes a bug where Cell rejects save IDs containing spaces as invalid.

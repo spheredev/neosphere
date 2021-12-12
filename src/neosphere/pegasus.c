@@ -60,6 +60,7 @@
 enum data_type
 {
 	DATA_BYTES,
+	DATA_JSON,
 	DATA_LINES,
 	DATA_RAW,
 	DATA_TEXT,
@@ -971,7 +972,8 @@ pegasus_init(int api_level, int target_api_level)
 	if (api_level >= 3) {
 		api_define_async_func("FileStream", "fromFile", js_new_FileStream, 0);
 		api_define_async_func("Font", "fromFile", js_new_Font, 0);
-		api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
+		if (target_api_level <= 3)
+			api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
 		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
 		api_define_async_func("Socket", "for", js_new_Socket, 0);
 		api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
@@ -1013,6 +1015,7 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_const("Blend", "Target", BLEND_DEST);
 		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
 		api_define_const("Blend", "Zero", BLEND_ZERO);
+		api_define_const("DataType", "JSON", DATA_JSON);
 		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
 		api_define_const("DepthOp", "Equal", DEPTH_EQUAL);
 		api_define_const("DepthOp", "Greater", DEPTH_GREATER);
@@ -2128,7 +2131,7 @@ js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 	size_t      file_size;
 	int         line_index = 0;
 	const char* pathname;
-	lstring_t*  string;
+	lstring_t*  text;
 	int         type = DATA_TEXT;
 	char*       p_line;
 	char*       p_newline;
@@ -2141,30 +2144,40 @@ js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_RANGE_ERROR, "Invalid DataType constant value '%d'", type);
 
 	if (!(file_data = game_read_file(g_game, pathname, &file_size)))
-		jsal_error(JS_ERROR, "Couldn't read file '%s'", pathname);
+		jsal_error(JS_ERROR, "Failed to load contents of file '%s'", pathname);
 	switch (type) {
 	case DATA_BYTES:
 		jsal_push_new_buffer(JS_UINT8ARRAY, file_size, &buffer);
 		memcpy(buffer, file_data, file_size);
 		break;
+	case DATA_JSON:
+		if (!(text = lstr_from_utf8(file_data, file_size, true))) {
+			jsal_push_new_error(JS_ERROR, "Failed to decode text in file '%s'.", pathname);
+			goto on_error;
+		}
+		jsal_push_lstring_t(text);
+		lstr_free(text);
+		if (!jsal_try_parse(-1))
+			goto on_error;
+		break;
 	case DATA_LINES:
 		jsal_push_new_array();
 		p_line = file_data;
 		while ((p_newline = strpbrk(p_line, "\r\n"))) {
-			string = lstr_from_utf8(p_line, p_newline - p_line, line_index == 0);
-			jsal_push_lstring_t(string);
+			text = lstr_from_utf8(p_line, p_newline - p_line, line_index == 0);
+			jsal_push_lstring_t(text);
 			jsal_put_prop_index(-2, line_index++);
-			lstr_free(string);
+			lstr_free(text);
 			if (*p_newline == '\r' && *(p_newline + 1) == '\n')
 				p_line = p_newline + 2;
 			else
 				p_line = p_newline + 1;
 		}
 		if (*p_line != '\0') {
-			string = lstr_from_utf8(p_line, strlen(p_line), line_index == 0);
-			jsal_push_lstring_t(string);
+			text = lstr_from_utf8(p_line, strlen(p_line), line_index == 0);
+			jsal_push_lstring_t(text);
 			jsal_put_prop_index(-2, line_index++);
-			lstr_free(string);
+			lstr_free(text);
 		}
 		break;
 	case DATA_RAW:
@@ -2172,12 +2185,16 @@ js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 		memcpy(buffer, file_data, file_size);
 		break;
 	case DATA_TEXT:
-		string = lstr_from_utf8(file_data, file_size, true);
-		jsal_push_lstring_t(string);
-		lstr_free(string);
+		text = lstr_from_utf8(file_data, file_size, true);
+		jsal_push_lstring_t(text);
+		lstr_free(text);
 	}
 	free(file_data);
 	return true;
+
+on_error:
+	free(file_data);
+	jsal_throw();
 }
 
 static bool
@@ -2413,7 +2430,7 @@ js_FileStream_read(int num_args, bool is_ctor, intptr_t magic)
 		num_bytes = jsal_require_int(0);
 
 	if (num_bytes < 0)
-		jsal_error(JS_RANGE_ERROR, "Invalid read size '%d'", num_bytes);
+		jsal_error(JS_RANGE_ERROR, "Invalid FileStream read size '%d'", num_bytes);
 
 	if (num_args < 1) {  // if no arguments, read entire file back to front
 		position = file_position(file);
@@ -2721,15 +2738,22 @@ js_IndexList_finalize(void* host_ptr)
 static bool
 js_JSON_fromFile(int num_args, bool is_ctor, intptr_t magic)
 {
-	char*       json;
-	size_t      json_size;
+	char*       file_data;
+	size_t      file_size;
+	lstring_t*  json_text;
 	const char* pathname;
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
 
-	if (!(json = game_read_file(g_game, pathname, &json_size)))
-		jsal_error(JS_ERROR, "Couldn't load JSON file '%s'", pathname);
-	jsal_push_lstring(json, json_size);
+	if (!(file_data = game_read_file(g_game, pathname, &file_size)))
+		jsal_error(JS_ERROR, "Failed to load contents of file '%s'.", pathname);
+	if (!(json_text = lstr_from_utf8(file_data, file_size, true))) {
+		free(file_data);
+		jsal_error(JS_ERROR, "Failed to decode text in file '%s'.", pathname);
+	}
+	free(file_data);
+	jsal_push_lstring_t(json_text);
+	lstr_free(json_text);
 	if (!jsal_try_parse(-1))
 		jsal_throw();
 	return true;
