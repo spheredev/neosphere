@@ -1,6 +1,36 @@
 Release Notes
 =============
 
+neoSphere 5.7
+-------------
+
+* It is now possible to target Sphere v2 using only a `game.sgm` file.  To that
+  end, Cell will now include the necessary fields in the SGM file when building
+  a game targeting Sphere v2.  For full backward compatibility, a corresponding
+  `game.json` will still be generated in the distribution.
+
+* Save data (i.e. files written into `~/...`) is now stored in a `Sphere Saves`
+  folder under the user's Documents folder.  If you have any save data stored
+  in the old location (neoSphere -> Save Data under Documents), you'll need to
+  move it to the new location if you want your games to continue to pick it up.
+
+* `BufferStream` has been renamed back to `DataStream` for consistency with the
+  naming of JavaScript's built-in `DataView`, which serves a similar purpose.
+  The class is also better documented now.
+
+* When targeting API level 4, `JSON.fromFile()` will no longer work.
+  `FS.readFile()` should be used instead, with its new JSON read mode (refer to
+  the API documentation).  For backward compatibility, `JSON.fromFile()` will
+  continue to work in games targeting API level 3 and under.
+
+* The `describe()` function has been re-added to the Cellscript API and should
+  be preferred going forward, instead of assigning directly to `Sphere.Game`.
+
+* When debugging a Sphere game in SSj, code originating inside one of the
+  `sphere-runtime` modules is now skipped over.  This allows Step Into to be
+  used more freely without the need to wade through system code.
+
+
 neoSphere 5.6
 -------------
 
