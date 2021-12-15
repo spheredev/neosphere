@@ -20,7 +20,7 @@ Download
 ========
 
 The most recent stable neoSphere release at the time of this writing is
-**neoSphere 5.6.4**, released on Tuesday, November 16, 2021.  neoSphere
+**neoSphere 5.7.0**, released on Wednesday, December 15, 2021.  neoSphere
 releases are provided through GitHub and the latest version can always be found
 here:
 

@@ -1,8 +1,8 @@
 neoSphere Changelog
 ===================
 
-v5.7.0 - TBD
-------------
+v5.7.0 - December 15, 2021
+--------------------------
 
 * Adds support for targeting Sphere v2 without a JSON manifest.
 * Adds back support for the `describe()` function in Cellscripts.
