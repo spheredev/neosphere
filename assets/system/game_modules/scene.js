@@ -30,7 +30,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-import Thread from 'thread';
+import Task from 'task';
 
 let defaultPriority = 0.0;
 
@@ -200,7 +200,7 @@ class Scene
 			throw new Error("missing end() in scene definition");
 		this.timeline.goTo(0);
 		this.timeline.start();
-		return Thread.join(this.timeline);
+		return Task.join(this.timeline);
 	}
 
 	stop()
@@ -209,7 +209,7 @@ class Scene
 	}
 }
 
-class Timeline extends Thread
+class Timeline extends Task
 {
 	constructor(scene, threadOptions)
 	{
@@ -254,15 +254,15 @@ class Timeline extends Thread
 		let op = this.ops[this.pc++];
 		let thread = new OpThread(this.scene, op, this.threadOptions);
 		await thread.start();
-		await Thread.join(thread);
+		await Task.join(thread);
 		if (this.pc >= this.ops.length) {
-			await Thread.join(...this.children);
+			await Task.join(...this.children);
 			this.stop();
 		}
 	}
 }
 
-class OpThread extends Thread
+class OpThread extends Task
 {
 	constructor(scene, op, threadOptions)
 	{

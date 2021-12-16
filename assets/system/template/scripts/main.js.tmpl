@@ -3,14 +3,14 @@
  *  (c) {1} {2}
  */
 
-import {{ Music, Prim, Thread, Random }} from 'sphere-runtime';
+import {{ Music, Prim, Task, Random }} from 'sphere-runtime';
 
 export default
-class MyGame extends Thread
+class MyGame extends Task
 {{
 	constructor()
 	{{
-		super();  // call the `Thread` constructor
+		super();  // call the `Task` constructor
 	}}
 
 	async on_startUp()

@@ -32,11 +32,11 @@
 
 import Logger from 'logger';
 import Prim from 'prim';
-import Thread from 'thread';
+import Task from 'task';
 import Tween, { Easing } from 'tween';
 
 export default
-class Console extends Thread
+class Console extends Task
 {
 	constructor(options = {})
 	{

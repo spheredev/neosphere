@@ -37,19 +37,19 @@ const canDispatchOnExit = 'onExit' in Dispatch;
 const canPauseJobs = 'pause' in Dispatch.now(() => {});
 
 export default
-class Thread
+class Task
 {
-	get [Symbol.toStringTag]() { return 'Thread'; }
+	get [Symbol.toStringTag]() { return 'Task'; }
 
-	static async join(...threads)
+	static async join(...tasks)
 	{
-		const promises = threads.map(it => it._onThreadStop);
+		const promises = tasks.map(it => it._onTaskStop);
 		return Promise.all(promises);
 	}
 
 	constructor(options = {})
 	{
-		if (new.target === Thread)
+		if (new.target === Task)
 			throw new Error(`'${new.target.name}' is abstract and cannot be instantiated`);
 
 		options = Object.assign({}, {
@@ -61,8 +61,8 @@ class Thread
 		this._exitJob = null;
 		this._focusTarget = new FocusTarget(options);
 		this._inBackground = options.inBackground;
-		this._onThreadStart = null;
-		this._onThreadStop = Pact.resolve();
+		this._onTaskStart = null;
+		this._onTaskStop = Pact.resolve();
 		this._priority = options.priority;
 		this._renderJob = null;
 		this._started = false;
@@ -93,18 +93,18 @@ class Thread
 	pause()
 	{
 		if (!canPauseJobs)
-			throw new RangeError("Thread#pause requires a newer Sphere version");
+			throw new RangeError("Task#pause requires a newer Sphere version");
 		if (!this.running)
-			throw new Error("Thread is not running");
+			throw new Error("Task is not running");
 		this._updateJob.pause();
 	}
 
 	resume()
 	{
 		if (!canPauseJobs)
-			throw new RangeError("Thread#resume requires a newer Sphere version");
+			throw new RangeError("Task#resume requires a newer Sphere version");
 		if (!this.running)
-			throw new Error("Thread is not running");
+			throw new Error("Task is not running");
 		this._updateJob.resume();
 		this._renderJob.resume();
 	}
@@ -116,8 +116,8 @@ class Thread
 
 		this._bootstrapping = true;
 		this._started = true;
-		this._onThreadStart = new Pact();
-		this._onThreadStop = new Pact();
+		this._onTaskStart = new Pact();
+		this._onTaskStop = new Pact();
 
 		// Dispatch.onExit() ensures the shutdown handler is always called
 		if (canDispatchOnExit)
@@ -137,7 +137,7 @@ class Thread
 			async () => {
 				if (this._bootstrapping) {
 					await this.on_startUp();
-					this._onThreadStart.resolve();
+					this._onTaskStart.resolve();
 					this._bootstrapping = false;
 				}
 				if (this.hasFocus)
@@ -148,12 +148,12 @@ class Thread
 				priority:     this._priority,
 			});
 
-		// after thread terminates, remove it from the input queue
-		this._onThreadStop.then(() => {
+		// after task terminates, remove it from the input queue
+		this._onTaskStop.then(() => {
 			this._focusTarget.dispose();
 		});
 
-		return this._onThreadStart;
+		return this._onTaskStart;
 	}
 
 	async stop()
@@ -168,15 +168,15 @@ class Thread
 		this._renderJob.cancel();
 		this._started = false;
 		await this.on_shutDown();
-		this._onThreadStop.resolve();
+		this._onTaskStop.resolve();
 	}
 
 	suspend()
 	{
 		if (!canPauseJobs)
-			throw new RangeError("Thread#suspend requires a newer Sphere version");
+			throw new RangeError("Task#suspend requires a newer Sphere version");
 		if (!this.running)
-			throw new Error("Thread is not running");
+			throw new Error("Task is not running");
 		this._updateJob.pause();
 		this._renderJob.pause();
 	}
@@ -184,9 +184,9 @@ class Thread
 	takeFocus()
 	{
 		if (!this.running)
-			throw new Error("Thread is not running");
-		if (this.on_inputCheck === Thread.on_inputCheck)
-			throw new TypeError("Thread is not enabled for user input");
+			throw new Error("Task is not running");
+		if (this.on_inputCheck === Task.on_inputCheck)
+			throw new TypeError("Task is not enabled for user input");
 
 		this._focusTarget.takeFocus();
 	}
@@ -194,9 +194,9 @@ class Thread
 	yieldFocus()
 	{
 		if (!this.running)
-			throw new Error("Thread is not running");
-		if (this.on_inputCheck === Thread.on_inputCheck)
-			throw new TypeError("Thread is not enabled for user input");
+			throw new Error("Task is not running");
+		if (this.on_inputCheck === Task.on_inputCheck)
+			throw new TypeError("Task is not enabled for user input");
 
 		this._focusTarget.yield();
 	}

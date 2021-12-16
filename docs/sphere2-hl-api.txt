@@ -966,7 +966,7 @@ Scene.defineOp(name, def);
 
         def.update(scene); [optional]
 
-            The scenelet's update function.  As with threads, this is called
+            The scenelet's update function.  As with tasks, this is called
             once per game frame and should return `true` to continue scenelet
             execution or `false` to finish.
 
@@ -1063,149 +1063,148 @@ Scene#stop();
           condition.
 
 
-`Thread` Object
+`Task` Object
 ---------------
 
-Using `Thread`, independent threads can be started and stopped at will, each
-with its own update and render handler.  This allows game processes to run in
-parallel.  For example, you might have a thread to run the in-game clock and
+Using `Task`, individual game processes can be started and stopped at will,
+each with its own update and render handler.  This allows game processes to run
+in parallel.  For example, you might have a task to run the in-game clock and
 another to run your battle system.
 
-While `Thread` objects are not true, native threads (JS is single-threaded!),
-they come close.  An update handler can freely `await` on the result of a
-promise and other threads will happily continue on their way, all without
-blocking the event loop.
+While `Task` objects are not true, native threads (JS is single-threaded!),
+they come close.  A task's update handler can freely `await` on the result of a
+promise and other tasks will happily continue on their way, without tying up
+the event loop.
 
-    import { Thread } from 'sphere-runtime';
+    import { Task } from 'sphere-runtime';
 
-Thread.join(thread[, ...]);
+Task.join(task[, ...]);
 
-    Returns a promise that resolves upon termination of one or more threads.
-    Works with `await`.  If multiple threads are specified, the promise will
-    not resolve until all of them have finished.  If all specified threads are
+    Returns a promise that resolves upon termination of one or more tasks.
+    Works with `await`.  If multiple tasks are specified, the promise will
+    not resolve until all of them have finished.  If all specified tasks are
     already stopped, the promise resolves immediately.
 
-new Thread(options);
+new Task(options);
 
-    Constructs a Thread object.  This can only be invoked as a `super()` call;
-    calling this directly as `new Thread()` will produce a TypeError.
+    Constructs a Task object.  This can only be invoked as a `super()` call;
+    calling this directly as `new Task()` will produce a TypeError.
 
     options.inBackground [default: false]
 
-        The thread represents a background task.  Specify this for threads you
-        want to run in the background without keeping the event loop alive past
-        its time.
+        If `true`, this is a background task.  Specify this for tasks you want
+        to run in the background without keeping the event loop alive past its
+        time.
 
     options.priority [default: 0.0]
 
-        The thread priority.  Higher priority threads will be updated
-        sooner and rendered later in a frame.  Especially useful to enforce
-        rendering order.
+        The task priority.  Higher priority tasks will be updated sooner and
+        rendered later in a frame.  Especially useful to enforce rendering
+        order.
 
-Thread#hasFocus [GET]
+Task#hasFocus [GET]
 
-    `true` if the thread has input focus, `false` otherwise.
+    `true` if the task's FocusTarget has the input focus, `false` otherwise.
 
-Thread#priority [GET]
+Task#priority [GET]
 
-    Gets the priority of the thread.  This is set when the thread is created
-    and can't be changed afterwards.
+    Gets the priority of the task.  This is set when the task is created and
+    can't be changed afterwards.
 
-Thread#running [GET]
+Task#running [GET]
 
-    `true` if this thread is running (even if it's awaiting a promise),
-    otherwise `false`.
+    `true` if this task is running (even if it's awaiting a promise), otherwise
+    `false`.
 
-Thread#on_startUp(); [event handler]
+Task#on_startUp(); [event handler]
 
-    Implement this in your subclass to provide code to run each time the thread
+    Implement this in your subclass to provide code to run each time the task
     starts running.  This allows you to perform asynchronous operations on
-    thread start, since you can't use `await` in a constructor.
+    task start, since you can't use `await` in a constructor.
 
-Thread#on_shutDown(); [event handler]
+Task#on_shutDown(); [event handler]
 
-    Implement this in your subclass to provide code to run when the thread
-    terminates.  This handler will run both if the thread is stopped manually
-    (see `Thread#stop()`) and as a result of the event loop exiting, e.g., if
+    Implement this in your subclass to provide code to run when the task
+    terminates.  This handler will run both if the task is stopped manually
+    (see `Task#stop()`) and as a result of the event loop exiting, e.g., if
     the user closes the game window.
 
-Thread#on_inputCheck(); [event handler]
+Task#on_inputCheck(); [event handler]
 
     Implement this in your subclass to provide code to accept user input.  This
-    will be called once per frame, but only if the thread has first been given
-    the focus by calling `Thread#takeFocus()`.
+    will be called once per frame, but only if the task has first been given
+    the focus by calling `Task#takeFocus()`.
 
-Thread#on_render(); [event handler]
+Task#on_render(); [event handler]
 
     Implement this in your subclass to provide code to draw objects associated
-    with the thread.  Renders may be skipped in order to maintain the game's
+    with the task.  Renders may be skipped in order to maintain the game's
     desired frame rate, so you'll want to avoid putting any "business logic" in
     here.
 
     IMPORTANT: Do not use `await` in the render handler.  Doing so is undefined
                behavior; bad things will happen.
 
-Thread#on_update(); [event handler]
+Task#on_update(); [event handler]
 
     Implement this in your subclass to provide code to be executed every frame.
     The value of `Sphere.frameRate` (see the Core API documentation) determines
     how often updates will be done.
 
-Thread#pause();
+Task#pause();
 
-    Pauses the thread.  While a thread is paused, its update and input check
-    callbacks won't be called, but render calls will continue to be performed
-    as usual.  If the thread is in the middle of an update when this is called,
-    that update will still run to completion.
+    Pauses the task.  While a task is paused, its `on_update()` and
+    `on_inputCheck()` callbacks won't be called, but render calls will continue
+    to be performed as usual.  If the task is in the middle of an update when
+    this is called, that update will still run to completion.
 
-    Note: Paused threads can still keep the event loop alive unless they were
+    Note: Paused tasks can still keep the event loop alive unless they were
           created with the `inBackground` option enabled.
 
-Thread#resume();
+Task#resume();
 
-    Resumes the thread after it was paused with Thread#pause() or
-    Thread#suspend().  If the thread is not paused or suspended, this does
-    nothing.
+    Resumes the task after it was paused with Task#pause() or Task#suspend().
+    If the task is not paused or suspended, this does nothing.
 
-Thread#start();
+Task#start();
 
-    Starts the thread.  All threads are created in stopped state and must be
-    started by calling Thread#start() before their handlers will execute.
-    Returns a promise that resolves after the thread's `on_startUp()` handler
+    Starts the task.  All tasks are created in stopped state and must be
+    started by calling Task#start() before their handlers will execute.
+    Returns a promise that resolves after the task's `on_startUp()` handler
     has run to completion.
 
-Thread#stop();
+Task#stop();
 
-    Stops the thread.  Any outstanding Thread#join() promises for this thread
-    will resolve and Sphere will stop calling the thread handlers.  If the
-    thread currently has input focus, calling this also yields the focus.
+    Stops the task.  Any outstanding Task#join() promises for this task will
+    resolve and Sphere will stop calling the task handlers.  If the task
+    currently has input focus, calling this also yields the focus.
 
-    Note: If the thread's update handler is paused at an `await` expression
+    Note: If the task's update handler is paused at an `await` expression
           when this method is called, the asynchronous operation being awaited
           will not be canceled and that update will still run to completion.
 
-Thread#suspend();
+Task#suspend();
 
-    Suspends the thread.  This is like Thread#pause() (see above), but also
+    Suspends the task.  This is like Task#pause() (see above), but also
     suspends rendering.
 
-    Note: Suspended threads can still keep the event loop alive unless they
+    Note: Suspended tasks can still keep the event loop alive unless they
           were created with the `inBackground` option enabled.
 
-Thread#takeFocus();
+Task#takeFocus();
 
-    Gives this thread focus.  Only the thread in focus will receive inputCheck
-    events (see Thread#on_inputCheck() above).  If a higher-priority entity
+    Gives this task focus.  Only the task in focus will receive inputCheck
+    events (see Task#on_inputCheck() above).  If a higher-priority entity
     already has focus when this is called, the focus will be given only once
     the higher-priority task(s) yield.
 
     Note: This can take the focus away from any code holding a FocusTarget
-          (see above), not just other threads.
+          (see above), not just other tasks.
 
-Thread#yieldFocus();
+Task#yieldFocus();
 
-    If this thread currently has focus, calling this gives focus back to the
-    previously-focused entity.  Nothing happens if the thread doesn't currently
+    If this task currently has focus, calling this gives focus back to the
+    previously-focused entity.  Nothing happens if the task doesn't currently
     have focus.
 
 
