@@ -6,6 +6,21 @@ standard objects used for higher-level tasks, collectively known as the
 Sphere Runtime.  This file documents the API.
 
 
+`RT` Namespace
+--------------
+
+The `RT` namespace is the default export of the `sphere-runtime` module and
+provides information about the Sphere Runtime itself.
+
+    import RT from 'sphere-runtime';
+
+RT.Version [GET]
+
+    The API revision of the Sphere Runtime.
+    
+    Note: Because the Sphere Runtime API hasn't yet been finalized, this will
+		  be `0` in current versions of neoSphere and Oozaru.
+
 `Console` Object
 ----------------
 
@@ -47,7 +62,7 @@ new Console(options);
         A string specifying the text to display in front of the command
         line.
 
-Console#visible [R/W]
+Console#visible [GET] [SET]
 
     Gets or sets whether this Console is visible to the player.  Setting this
     to `true` will show the console, while setting to `false` will hide it.
@@ -211,7 +226,7 @@ new FocusTarget(options);
         when another target tries to take the focus via `Focus#take()` (see
         below).
 
-FocusTarget#hasFocus [R/O]
+FocusTarget#hasFocus [GET]
 
     `true` if the target is currently in focus, `false` otherwise.
 
@@ -922,7 +937,7 @@ immediately.  However, if you start playback in an async function, you can use
 the JavaScript `await` keyword to suspend the function and have the event loop
 automatically resume it once the scene has run to completion.
 
-Scene.defaultPriority [R/W]
+Scene.defaultPriority [GET] [SET]
 
     The Dispatch priority to use for new scenes.  Changing this value allows
     you control where in the render order your cutscene elements (such as
@@ -999,7 +1014,7 @@ new Scene([options]);
         Note: The default priority for new scenes is determined by the value of
               `Scene.defaultPriority` (see above).
 
-Scene#running [R/O]
+Scene#running [GET]
 
     `true` if scene execution is in progress, `false` if not.
 
@@ -1102,16 +1117,16 @@ new Thread(options);
         sooner and rendered later in a frame.  Especially useful to enforce
         rendering order.
 
-Thread#hasFocus [R/O]
+Thread#hasFocus [GET]
 
     `true` if the thread has input focus, `false` otherwise.
 
-Thread#priority [R/O]
+Thread#priority [GET]
 
     Gets the priority of the thread.  This is set when the thread is created
     and can't be changed afterwards.
 
-Thread#running [R/O]
+Thread#running [GET]
 
     `true` if this thread is running (even if it's awaiting a promise),
     otherwise `false`.

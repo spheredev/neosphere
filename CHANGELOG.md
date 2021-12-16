@@ -1,10 +1,11 @@
 neoSphere Changelog
 ===================
 
-v5.7.1 - TBD
+v6.0.0 - TBD
 ------------
 
-No changes yet.
+* Adds `RT.Version` for getting the current API revision of the Sphere Runtime.
+
 
 v5.7.0 - December 15, 2021
 --------------------------
