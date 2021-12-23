@@ -5,6 +5,8 @@ v6.0.0 - TBD
 ------------
 
 * Adds `RT.Version` for getting the current API revision of the Sphere Runtime.
+* Adds new `Texture#ready` and `Texture#whenReady` properties, to allow a game
+  to check if a texture is fully loaded before using it.
 
 
 v5.7.0 - December 15, 2021

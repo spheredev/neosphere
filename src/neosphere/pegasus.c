@@ -481,6 +481,8 @@ static bool js_Texture_fromFile              (int num_args, bool is_ctor, intptr
 static bool js_new_Texture                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_fileName          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_height            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_get_ready             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_get_whenReady         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_width             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_download              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_upload                (int num_args, bool is_ctor, intptr_t magic);
@@ -1001,6 +1003,8 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
 		api_define_method("Surface", "clear", js_Surface_clear, 0);
+		api_define_prop("Texture", "ready", false, js_Texture_get_ready, NULL);
+		api_define_prop("Texture", "whenReady", false, js_Texture_get_whenReady, NULL);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
@@ -5259,7 +5263,6 @@ js_Texture_fromFile(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 {
-	int            api_level;
 	const color_t* buffer;
 	size_t         buffer_size;
 	int            class_id;
@@ -5299,11 +5302,6 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 	}
 	else {
 		// create an Image by loading an image file
-		api_level = game_api_level(g_game);
-		if (api_level >= 4)
-			jsal_error(JS_ERROR, "'new Texture' from file system unsupported in API 4+");
-		else if (api_level >= 3)
-			console_warn(0, "use 'Texture.fromFile' instead of 'new' when loading files");
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);
@@ -5344,6 +5342,34 @@ js_Texture_get_height(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_int(image_height(image));
 	cache_value_to_this("height");
+	return true;
+}
+
+static bool
+js_Texture_get_ready(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t* image;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
+
+	jsal_push_boolean(true);
+	return true;
+}
+
+static bool
+js_Texture_get_whenReady(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t*  image;
+	js_ref_t* resolver;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
+
+	jsal_push_new_promise(&resolver, NULL);
+	jsal_push_ref_weak(resolver);
+	jsal_call(0);
+	jsal_unref(resolver);
 	return true;
 }
 

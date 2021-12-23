@@ -254,14 +254,14 @@ communicate with the underlying Sphere platform.  The properties provide access
 to the engine's name, version number, and API level, and there are several
 methods for managing execution.
 
-Sphere.Engine [R/O] [API 1]
+Sphere.Engine [GET] [API 1]
 
     A string specifying the name and version number of the game engine.  The
     version number takes the form X.Y.Z, where X is the major version, Y is the
     minor version, and Z is the patch level.
 
-Sphere.Version [R/O] [API 1]
-Sphere.APILevel [R/O] [API 1]
+Sphere.Version [GET] [API 1]
+Sphere.APILevel [GET] [API 1]
 
     The Sphere API version and level supported by the engine, respectively.
     `Version` indicates which version of the Sphere API is supported (e.g., 2),
@@ -269,13 +269,13 @@ Sphere.APILevel [R/O] [API 1]
     methods, or properties are added to the Core API, the API level is
     increased.
 
-Sphere.Compiler [R/O] [API 1]
+Sphere.Compiler [GET] [API 1]
 
     A string specifying the name and version number of the compiler or build
     tool used to make the game distribution.  If no compiler information is
     available for the current game, this evaluates to `undefined`.
 
-Sphere.Game [R/O] [API 1]
+Sphere.Game [GET] [API 1]
 
     An object whose properties describe the currently running game.  Initially,
     this consists of everything in the JSON manifest, plus whatever fields are
@@ -285,7 +285,7 @@ Sphere.Game [R/O] [API 1]
           modified, and this will be visible to game code.  The engine itself
           won't see the changes, however.
 
-Sphere.frameRate [R/W] [API 1]
+Sphere.frameRate [GET] [SET] [API 1]
 
     Gets or sets the frame rate.  Set this to Infinity to disable the frame
     limiter.  The default is 60 FPS.
@@ -294,12 +294,12 @@ Sphere.frameRate [R/W] [API 1]
     set to 60 (the default), the event loop will perform 60 iterations per
     second, skipping renders as necessary to meet that goal.
 
-Sphere.frameSkip [R/W] [API 1]
+Sphere.frameSkip [GET] [SET] [API 1]
 
     Gets or sets the maximum number of frames the engine is allowed to skip in
     order to maintain the desired frame rate.
 
-Sphere.fullScreen [R/W] [API 1]
+Sphere.fullScreen [GET] [SET] [API 1]
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
@@ -308,7 +308,7 @@ Sphere.fullScreen [R/W] [API 1]
           windowed mode and any change to the value of `screen.fullScreen` will
           be silently ignored.
 
-Sphere.main [R/O] [API 1]
+Sphere.main [GET] [API 1]
 
     Gets a reference to the game's main object, when the main module exports a
     constructor or class.  This object is created by the engine on startup by
@@ -381,18 +381,18 @@ For convenience, predefined BlendOp objects are provided in the API for the
 most common blending operations, but you can easily make new ones if these
 don't meet your needs.
 
-BlendOp.Default [R/O] [API 2]
+BlendOp.Default [GET] [API 2]
 
     The default blending mode.  If no blending operation is specified for a
     surface, it will use this mode.  This represents traditional alpha
     blending; the final rendered pixel is a weighted average of the source and
     destination pixels, based on the alpha value of the source pixel.
 
-BlendOp.Add [R/O] [API 2]
-BlendOp.Average [R/O] [API 2]
-BlendOp.Multiply [R/O] [API 2]
-BlendOp.Replace [R/O] [API 2]
-BlendOp.Subtract [R/O] [API 2]
+BlendOp.Add [GET] [API 2]
+BlendOp.Average [GET] [API 2]
+BlendOp.Multiply [GET] [API 2]
+BlendOp.Replace [GET] [API 2]
+BlendOp.Subtract [GET] [API 2]
 
     Adds, averages, multiplies, replaces, and subtracts the source and
     destination pixel values, respectively.  These modes cover most common use
@@ -453,10 +453,10 @@ new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [EXP]
 The `Color` object represents an RGB color value.  It also has an alpha
 component and can therefore represent translucent colors.
 
-Color.Red [R/O] [API 1]
-Color.Green [R/O] [API 1]
-Color.Blue [R/O] [API 1]
-Color.Transparent [R/O] [API 1]
+Color.Red [GET] [API 1]
+Color.Green [GET] [API 1]
+Color.Blue [GET] [API 1]
+Color.Transparent [GET] [API 1]
 etc...
 
     Gets a copy of a predefined color.  The entire X11 color set is provided,
@@ -502,17 +502,17 @@ new Color(red, green, blue[, alpha]); [API 1]
     the range [0.0, 1.0]; out-of-range values are silently clamped.  `alpha`
     specifies the color's opacity and defaults to 1.0 if not provided.
 
-Color#r [R/W] [API 1]
-Color#g [R/W] [API 1]
-Color#b [R/W] [API 1]
-Color#a [R/W] [API 1]
+Color#r [GET] [SET] [API 1]
+Color#g [GET] [SET] [API 1]
+Color#b [GET] [SET] [API 1]
+Color#a [GET] [SET] [API 1]
 
     Gets or sets the individual components of the color (red, green, blue, or
     alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
     HDR is not supported and the engine will automatically clamp such colors
     when rendered.
 
-Color#name [R/O] [API 1]
+Color#name [GET] [API 1]
 
     Gets the name of the Color according to its component values such that
     Color.of(color.name) will give back a Color with the same values.  Useful
@@ -553,12 +553,12 @@ new DirectoryStream(dir_name[, options]); [API 1]
         subdirectories to list files they contain.  The output will not contain
         any directory entries in this case, only file entries.
 
-DirectoryStream#fileCount [R/O] [API 1]
+DirectoryStream#fileCount [GET] [API 1]
 
     Gets the number of entries (both files and directories) in the directory
     listing.
 
-DirectoryStream#fileName [R/O] [API 1]
+DirectoryStream#fileName [GET] [API 1]
 
     Gets the full SphereFS pathname of the directory whose entries are being
     enumerated.
@@ -566,7 +566,7 @@ DirectoryStream#fileName [R/O] [API 1]
     Note: Under SphereFS canonicalization rules, the pathname of a directory
           always ends in a slash (`/`).
 
-DirectoryStream#position [R/W] [API 1]
+DirectoryStream#position [GET] [SET] [API 1]
 
     Gets or sets the position within the stream.  This is an index into the
     directory specifying which entry will be read next.
@@ -914,15 +914,15 @@ new FileStream(filename, file_op); [API 1]
     Warning: This API is deprecated under API 3 and will be removed in API 4.
              Use `FileStream.fromFile()` instead.
 
-FileStream#fileName [R/O] [API 1]
+FileStream#fileName [GET] [API 1]
 
     Gets the full SphereFS pathname of the underlying file.
 
-FileStream#fileSize [R/O] [API 1]
+FileStream#fileSize [GET] [API 1]
 
     Gets the size of the underlying file, in bytes.
 
-FileStream#position [R/W] [API 1]
+FileStream#position [GET] [SET] [API 1]
 
     Gets or sets the file position, which determines where in the file the next
     read or write will start from.  Expressed in bytes.
@@ -980,7 +980,7 @@ The `Font` object specifies a typeface that can be used when drawing text.
 Sphere provides a default font which is the same for all games, or you can load
 one from an RFN font file.
 
-Font.Default [R/O] [API 1]
+Font.Default [GET] [API 1]
 
     Gets the engine's default font.  This is the font used for the FPS counter
     and system messages.
@@ -1005,12 +1005,12 @@ new Font(filename[, size]); [API 1]
     Warning: This API is deprecated under API 3 and will be removed in API 4.
              Use `Font.fromFile()` instead.
 
-Font#fileName [R/O] [API 1]
+Font#fileName [GET] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Font
     object.
 
-Font#height [R/O] [API 1]
+Font#height [GET] [API 1]
 
     Gets the line height, in pixels, for text rendered using this font.
 
@@ -1099,16 +1099,16 @@ JobToken#resume(); [API 3]
 `Joystick` Object
 -----------------
 
-Joystick.Null [R/O] [API 1]
+Joystick.Null [GET] [API 1]
 
     Gets the null joystick.  When polled, a null joystick returns neutral
     values for all inputs.  Joystick.Null can be used in place of a real
     Joystick object to simplify input code.
 
-Joystick.P1 [R/O] [API 2]
-Joystick.P2 [R/O] [API 2]
-Joystick.P3 [R/O] [API 2]
-Joystick.P4 [R/O] [API 2]
+Joystick.P1 [GET] [API 2]
+Joystick.P2 [GET] [API 2]
+Joystick.P3 [GET] [API 2]
+Joystick.P4 [GET] [API 2]
 
    Gets the default joystick for the respective player.  If there are many
    joystick or gamepad devices attached, there is no guarantee which ones these
@@ -1124,16 +1124,16 @@ Joystick.getDevices(); [API 1]
     joystick.  neoSphere currently supports a maximum of 16 attached devices;
     this will never return more than that.
 
-Joystick#name [R/O] [API 1]
+Joystick#name [GET] [API 1]
 
     Gets the name of the device, as reported by the operating system.  Xbox
     controllers, for example, are typically reported as "XInput Joystick <n>".
 
-Joystick#numAxes [R/O] [API 1]
+Joystick#numAxes [GET] [API 1]
 
     Gets the number of analog axes supported by the device.
 
-Joystick#numButtons [R/O] [API 1]
+Joystick#numButtons [GET] [API 1]
 
     Gets the number of buttons supported by the device.
 
@@ -1274,15 +1274,15 @@ Key [enumeration] [API 1]
           below the function keys, while NumPad0-NumPad9 refer to the numbers
           on the numeric keypad.
 
-Keyboard.Default [R/O] [API 1]
+Keyboard.Default [GET] [API 1]
 
     Gets a `Keyboard` object for the default keyboard device.
 
     Note: neoSphere currently only supports a single keyboard.
 
-Keyboard#capsLock [R/O] [API 1]
-Keyboard#numLock [R/O] [API 1]
-Keyboard#scrollLock [R/O] [API 1]
+Keyboard#capsLock [GET] [API 1]
+Keyboard#numLock [GET] [API 1]
+Keyboard#scrollLock [GET] [API 1]
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
@@ -1319,7 +1319,7 @@ Mixers are used to group related audio together and adjust their parameters as
 a class; this is useful, for example, for implementing global volume controls
 in your game.
 
-Mixer.Default [R/O] [API 1]
+Mixer.Default [GET] [API 1]
 
     Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
     16-bit stereo sound, i.e. CD quality.
@@ -1336,7 +1336,7 @@ new Mixer(frequency, bits[, channels]); [API 1]
     not supported by the system, an error will be thrown ("unable to create
     hardware voice").
 
-Mixer#volume [R/W] [API 1]
+Mixer#volume [GET] [SET] [API 1]
 
     Gets or sets the output volume of the mixer.  This will affect the volume
     of any sounds played through the mixer.
@@ -1360,11 +1360,11 @@ new Model(shapes[, shader]); [API 1]
     identity matrix.  If `shader` is not provided, the default shader program
     will be used (see `Shader.Default`).
 
-Model#shader [R/W] [API 1]
+Model#shader [GET] [SET] [API 1]
 
     Gets or sets the Shader to use when drawing this model.
 
-Model#transform [R/W] [API 1]
+Model#transform [GET] [SET] [API 1]
 
     Gets or sets the transformation matrix to use when drawing this model.
 
@@ -1399,13 +1399,13 @@ MouseKey [enumeration] [API 1]
         MouseKey.Back
         MouseKey.Forward
 
-Mouse.Default [R/O] [API 1]
+Mouse.Default [GET] [API 1]
 
     Gets a `Mouse` object for the default mouse device.
 
     Note: neoSphere currently only supports a single mouse.
 
-Mouse#position [R/O] [API 3]
+Mouse#position [GET] [API 3]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
 	game's rendering area.  This returns an array `[ x, y ]` which can be
@@ -1413,8 +1413,8 @@ Mouse#position [R/O] [API 3]
 
 	    let [ mouseX, mouseY ] = mouse.position;
 
-Mouse#x [R/O] [API 1]
-Mouse#y [R/O] [API 1]
+Mouse#x [GET] [API 1]
+Mouse#y [GET] [API 1]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
     game's rendering area.
@@ -1495,7 +1495,7 @@ new RNG(); [API 1]
     Constructs a new random number generator seeded from the current system
     time.
 
-RNG#state [R/W] [API 1]
+RNG#state [GET] [SET] [API 1]
 
     Gets or sets the current state of this generator.  State is encoded as
     a 32-digit hexadecimal string which makes it easy to save and restore.
@@ -1612,7 +1612,7 @@ new Sample(filename); [API 1]
     Warning: This API is deprecated under API 3 and will be removed in API 4.
              Use `Sample.fromFile()` instead.
 
-Sample#fileName [R/O] [API 1]
+Sample#fileName [GET] [API 1]
 
     Gets the full SphereFS pathname of the audio file used to construct this
     Sample object.
@@ -1661,14 +1661,14 @@ new Server(port[, backlog_size]); [API 1]
     `backlog_size` specifies the size of the backlog and defaults to 128.  If
     the backlog fills, new connections will be refused.
 
-Server#noDelay [R/W] [API 2]
+Server#noDelay [GET] [SET] [API 2]
 
     Gets or sets a boolean value indicating whether Nagle's algorithm is turned
     off for this server.  This doesn't directly affect the server but will be
     used as the initial setting of `noDelay` for all sockets returned by
     `accept()` or `acceptNext()`.
 
-Server#numPending [R/O] [API 2]
+Server#numPending [GET] [API 2]
 
     Gets the number of pending connections currently in the backlog.  If the
     number of pending connections is allowed to reach the backlog size
@@ -1701,7 +1701,7 @@ manipulates vertices and pixels as they are rendered to a surface.  Shaders are
 written in the GLSL shader programming language, which is beyond the scope of
 this document.
 
-Shader.Default [R/O] [API 1]
+Shader.Default [GET] [API 1]
 
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
@@ -1834,17 +1834,17 @@ new Shape(type[, texture], vertexList[, indexList]); [API 1]
     the vertex list will comprise the shape.  If `indexList` is not specified,
     all vertices from `vertexList` will be used.
 
-Shape#indexList [R/W] [API 1]
+Shape#indexList [GET] [SET] [API 1]
 
     Gets or sets the index list used to select vertices for this shape.  Set
     this to `null` to use the entire vertex list.
 
-Shape#texture [R/W] [API 1]
+Shape#texture [GET] [SET] [API 1]
 
     The Image to use when texturing the shape. This can be null, in which case
     the vertex colors alone will determine the shape's appearance.
 
-Shape#vertexList [R/W] [API 1]
+Shape#vertexList [GET] [SET] [API 1]
 
     Gets or sets the vertex list containing vertices for this shape.
 
@@ -1883,13 +1883,13 @@ new Socket([hostname, port]); [API 1]
     be created in a disconnected state and you must call `connectTo()` manually
     to connect it.
 
-Socket#bytesAvailable [R/O] [API 1]
+Socket#bytesAvailable [GET] [API 1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     This is the maximum amount of data you can retrieve using `read()` on the
     current frame without it throwing a RangeError.
 
-Socket#bytesPending [R/O] [API 1]
+Socket#bytesPending [GET] [API 1]
 
     Gets the number of bytes of data currently in this socket's write-behind
     buffer.  This is the amount of data which has been written to the socket
@@ -1897,13 +1897,13 @@ Socket#bytesPending [R/O] [API 1]
 
     Accessing this property on a disconnected socket will throw a TypeError.
 
-Socket#bytesReceived [R/O] [API 2]
+Socket#bytesReceived [GET] [API 2]
 
     Gets the total number of bytes of data received through this socket since
     it was last connected, including data still in the socket's receive buffer
     and not yet read by the game.
 
-Socket#bytesSent [R/O] [API 2]
+Socket#bytesSent [GET] [API 2]
 
     Gets the total number of bytes of data transmitted through this socket
     since it was last connected.
@@ -1911,25 +1911,25 @@ Socket#bytesSent [R/O] [API 2]
     Note: This only counts bytes actually sent over the network.  Data still
           waiting in the socket's write-behind buffer is not counted.
 
-Socket#connected [R/O] [API 1]
+Socket#connected [GET] [API 1]
 
     Gets whether the connection has been established.  As long as this is
     false, you won't be able to call most methods (except `connectTo`) on the
     socket object.
 
-Socket#noDelay [R/W] [API 2]
+Socket#noDelay [GET] [SET] [API 2]
 
     Gets or sets a boolean value indicating whether Nagle's algorithm is turned
     off for this socket.  If `false` (the default), the operating system may
     delay transmission of small writes while waiting on acknowledgement of a
     previous transmission.
 
-Socket#remoteAddress [R/O] [API 1]
+Socket#remoteAddress [GET] [API 1]
 
     Gets the IP address of the upstream end of the socket.  If the socket is
     disconnected, accessing this will throw an error.
 
-Socket#remotePort [R/O] [API 1]
+Socket#remotePort [GET] [API 1]
 
     Gets the port that the remote machine is using for its side of the
     connection.  Generally not very useful, but it's there if you need it.  If
@@ -2030,40 +2030,40 @@ new Sound(filename); [API 1]
     Warning: This API is deprecated under API 3 and will be removed in API 4.
              Use `Sound.fromFile()` instead.
 
-Sound#fileName [R/O] [API 1]
+Sound#fileName [GET] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Sound
     object.
 
-Sound#length [R/O] [API 1]
+Sound#length [GET] [API 1]
 
     Gets the length of the sound in microseconds.
 
-Sound#pan [R/W] [API 1]
+Sound#pan [GET] [SET] [API 1]
 
     Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
     left, and 1.0 is full right.
 
-Sound#playing [R/O] [API 1]
+Sound#playing [GET] [API 1]
 
     true if the sound is currently playing, false otherwise.
 
-Sound#position [R/W] [API 1]
+Sound#position [GET] [SET] [API 1]
 
     Gets or sets the playback position within the sound, in seconds.
 
-Sound#repeat [R/W] [API 1]
+Sound#repeat [GET] [SET] [API 1]
 
     Gets or sets whether the sound will automatically repeat when it reaches
     the end.
 
-Sound#speed [R/W] [API 1]
+Sound#speed [GET] [SET] [API 1]
 
     Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
     speed, etc.  Note that changing the playback speed affects the pitch as
     well.
 
-Sound#volume [R/W] [API 1]
+Sound#volume [GET] [SET] [API 1]
 
     Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
     volume.  Higher values are allowed, but may introduce distortion due to
@@ -2103,7 +2103,7 @@ new SoundStream([frequency[, bits[, channels]]]); [API 1]
 
     The default stream format is 8-bit 22050Hz with 1 channel.
 
-SoundStream#length [R/O] [API 1]
+SoundStream#length [GET] [API 1]
 
     Gets the amount of audio currently buffered into the stream, in seconds.
     Playback will pause if the buffer is exhausted; To ensure skip-free
@@ -2149,7 +2149,7 @@ enables render-to-texture effects to be implemented.
 Note: Surfaces can only be used as textures under API level 2 or higher.  When
       targeting API level 1 you must call `.toTexture()` (see below) first.
 
-Surface.Screen [R/O] [API 1]
+Surface.Screen [GET] [API 1]
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
@@ -2185,12 +2185,12 @@ new Surface(filename); [API 1]
     Warning: This API is deprecated under API 3 and will be removed in API 4.
              Use `Surface.fromFile()` instead.
 
-Surface#blendOp [R/W] [API 2]
+Surface#blendOp [GET] [SET] [API 2]
 
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
 
-Surface#depthOp [R/W] [EXP]
+Surface#depthOp [GET] [SET] [EXP]
 
     Gets or sets the depth test criteria for 3D objects drawn to this surface.
     The final Z coordinate of each pixel drawn is tested against the current
@@ -2208,7 +2208,7 @@ Surface#depthOp [R/W] [EXP]
 
 	The default for new surfaces is `AlwaysPass`.
 
-Surface#transform [R/W] [API 1]
+Surface#transform [GET] [SET] [API 1]
 
     Gets or sets a `Transform` representing the surface's projection matrix.
     When rendering is done on the surface, the projection matrix is the last
@@ -2218,8 +2218,8 @@ Surface#transform [R/W] [API 1]
           When a surface is created, Sphere sets its transform to an
           orthographic matrix suitable for pixel-perfect 2D rendering.
 
-Surface#width [R/O] [API 1]
-Surface#height [R/O] [API 1]
+Surface#width [GET] [API 1]
+Surface#height [GET] [API 1]
 
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
@@ -2264,19 +2264,19 @@ a Surface object instead.
 Texture.fromFile(filename); [ASYNC] [API 3]
 
     Loads the image file named by `filename` asynchronously and returns a
-    promise for the newly constructed Texture object.
-
-    Note: The promise is not guaranteed to resolve on the same frame, although
-          in neoSphere it usually does.
+    promise for the newly constructed Texture object. The promise doesn't
+    resolve until the texture is fully loaded and ready for use.
 
 new Texture(filename); [API 1]
 
-    Loads the image file named by `filename` synchronously, without yielding to
-    the event loop, and returns the newly constructed Texture object.  May not
-    be supported on all platforms.
+    Starts loading the image file named by `filename` and returns a texture
+    using that image. The file may be loaded in the background; if this
+    happens, the texture cannot be used until loading has completed; see
+    `Texture#ready` and `Texture#whenReady` for more information.
 
-    Warning: This API is deprecated under API 3 and will be removed in API 4.
-             Use `Texture.fromFile()` instead.
+    Note: For backwards compatibility, neoSphere always returns a fully loaded
+          texture from `new Texture()`.  For full compatibility with Oozaru,
+          however, you shouldn't assume this is true.
 
 new Texture(width, height[, content]); [API 1]
 
@@ -2299,16 +2299,30 @@ new Texture(surface); [API 1]
     Subsequent modifications to the surface will not affect the contents of the
     new texture.
 
-Texture#fileName [R/O] [API 1]
+Texture#fileName [GET] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Texture
     object.  For synthesized textures, e.g. those created from a surface, this
     is `null`.
 
-Texture#width [R/O] [API 1]
-Texture#height [R/O] [API 1]
+Texture#ready [GET] [EXP]
 
-    Gets the width or height of the texture, in pixels.
+    Gets a boolean value indicating whether a texture created by passing a
+    filename to the texture constructor has finished loading and is ready for
+    use. If this is `false`, attempting to access the underlying texture, e.g.
+    for rendering, will throw an error.
+
+Texture#whenReady [GET] [EXP]
+
+    Gets a promise that resolves when the texture is ready for use. This can be
+    useful if you want to start loading an image in the background, but you
+    know you won't depend on it until later.
+
+Texture#width [GET] [API 1]
+Texture#height [GET] [API 1]
+
+    Gets the width or height of the texture, in pixels. Throws an error if the
+    texture isn't ready for use yet.
 
 Texture#download(); [EXP]
 
@@ -2337,7 +2351,7 @@ new Transform(); [API 1]
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
 
-Transform#matrix [R/O]
+Transform#matrix [GET]
 
     Gets an object you can use to access the cells of the underlying matrix.
     The object is used like a two-dimensional array:
