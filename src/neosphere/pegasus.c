@@ -482,10 +482,10 @@ static bool js_new_Texture                   (int num_args, bool is_ctor, intptr
 static bool js_Texture_get_fileName          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_height            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_ready             (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Texture_get_whenReady         (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_width             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_download              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_upload                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Texture_whenReady             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Transform                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Transform_get_matrix          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Transform_set_matrix          (int num_args, bool is_ctor, intptr_t magic);
@@ -999,12 +999,12 @@ pegasus_init(int api_level, int target_api_level)
 	if (api_level >= 4) {
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
+		api_define_func("Texture", "whenReady", js_Texture_whenReady, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
 		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_prop("Texture", "ready", false, js_Texture_get_ready, NULL);
-		api_define_prop("Texture", "whenReady", false, js_Texture_get_whenReady, NULL);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
@@ -5358,22 +5358,6 @@ js_Texture_get_ready(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Texture_get_whenReady(int num_args, bool is_ctor, intptr_t magic)
-{
-	image_t*  image;
-	js_ref_t* resolver;
-
-	jsal_push_this();
-	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
-
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref_weak(resolver);
-	jsal_call(0);
-	jsal_unref(resolver);
-	return true;
-}
-
-static bool
 js_Texture_get_width(int num_args, bool is_ctor, intptr_t magic)
 {
 	image_t* image;
@@ -5429,6 +5413,22 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 	if (!image_upload(image, buffer))
 		jsal_error(JS_ERROR, "Couldn't upload data to GPU texture");
 	return false;
+}
+
+static bool
+js_Texture_whenReady(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t*  image;
+	js_ref_t* resolver;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
+
+	jsal_push_new_promise(&resolver, NULL);
+	jsal_push_ref_weak(resolver);
+	jsal_call(0);
+	jsal_unref(resolver);
+	return true;
 }
 
 static bool

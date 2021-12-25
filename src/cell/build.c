@@ -1092,7 +1092,7 @@ js_install(int num_args, bool is_ctor, intptr_t magic)
 
 	int i;
 
-	dest_path = path_new_dir(jsal_require_string(0));
+	dest_path = path_new_dir(jsal_require_pathname(0, "@/", true));
 
 	jsal_push_ref_weak(s_build->install_tool);
 	tool = jsal_require_class_obj(-1, CELL_TOOL);
@@ -2224,7 +2224,7 @@ js_Tool_stage(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	tool = jsal_require_class_obj(-1, CELL_TOOL);
-	out_path = path_new(jsal_require_pathname(0, NULL, true));
+	out_path = path_new(jsal_require_pathname(0, "@/", true));
 	jsal_require_array(1);
 	if (num_args >= 3)
 		jsal_require_object_coercible(2);
