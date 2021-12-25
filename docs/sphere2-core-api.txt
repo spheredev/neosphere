@@ -2272,7 +2272,7 @@ new Texture(filename); [API 1]
     Starts loading the image file named by `filename` and returns a texture
     using that image. The file may be loaded in the background; if this
     happens, the texture cannot be used until loading has completed; see
-    `Texture#ready` and `Texture#whenReady` for more information.
+    `Texture#ready` and `Texture#whenReady()` for more information.
 
     Note: For backwards compatibility, neoSphere always returns a fully loaded
           texture from `new Texture()`.  For full compatibility with Oozaru,
@@ -2312,12 +2312,6 @@ Texture#ready [GET] [EXP]
     use. If this is `false`, attempting to access the underlying texture, e.g.
     for rendering, will throw an error.
 
-Texture#whenReady [GET] [EXP]
-
-    Gets a promise that resolves when the texture is ready for use. This can be
-    useful if you want to start loading an image in the background, but you
-    know you won't depend on it until later.
-
 Texture#width [GET] [API 1]
 Texture#height [GET] [API 1]
 
@@ -2338,6 +2332,12 @@ Texture#upload(content); [EXP]
     Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
     array) to the texture.  Enough data must be provided to completely rewrite
     the texture or a RangeError will be thrown.
+
+Texture#whenReady() [ASYNC] [EXP]
+
+    Returns a promise that resolves when the texture is ready for use. If the
+    texture is already ready for use, the promise resolves on the same frame.
+    The promise rejects if the texture can't be loaded.
 
 
 `Transform` Object

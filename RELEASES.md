@@ -1,6 +1,24 @@
 Release Notes
 =============
 
+neoSphere 6.0
+-------------
+
+* New APIs have been added for detecting when a texture has finished loading in
+  engines that load assets in the background, e.g. Oozaru.  `Texture#ready` is
+  a boolean property indicating whether the texture is ready to use, and
+  `Texture#whenReady()` returns a promise that resolves when loading has
+  finished.  This enables games to continue using `new Texture()` while giving
+  them an engine-agnostic means to account for Oozaru's background-loading
+  behavior.  Note that for backward compatibility, `new Texture()` will
+  continue to return fully-loaded textures under neoSphere.
+
+* Cell's `install()` and `Tool#stage()` functions now take an output path
+  relative to `@/` rather than `$/`.  This is not a breaking change as `$/` was
+  previously read-only (meaning relative paths here didn't work at all), and
+  paths beginning with an explicit `@/` will continue to be accepted.
+
+
 neoSphere 5.7
 -------------
 

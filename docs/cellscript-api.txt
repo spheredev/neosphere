@@ -9,28 +9,31 @@ the public API used to write build scripts.
 SphereFS File System
 --------------------
 
-Cell, like neoSphere, uses the SphereFS standard for file paths.  Under
-SphereFS, when a relative path is used in an API call, it will usually be
-resolved relative to the entrypoint (in Cell, the location of Cellscript.js).
-To load files from a different location, you can use one of the SphereFS
-prefixes:
+Cell, like neoSphere, uses SphereFS file and directory paths.  Under SphereFS,
+when a relative path is used in an API call, it is typically resolved relative
+to the entrypoint (in Cell, the location of Cellscript.js).  To reference files
+and directories in a different location, you can specify the root using a
+SphereFS root prefix:
 
-    @/: The root of the game package being compiled.
-    $/: The source directory, i.e. the directory containing the Cellscript.
+    @/: The root of the game package being compiled. This is where Cell will
+        create `game.sgm` and so aligns with what `@/` means in game code.
+    $/: The project root, i.e., the directory containing `Cellscript.js`. This
+        root is read-only; Cell code cannot modify the contents of the source
+        tree directly.
     ~/: When used in a Sphere game, this specifies the current user's save data
-        directory.  In Cell, using this prefix is a sandboxing violation.
-    #/: The Sphere system directory.  This contains assets included with the
-        engine.  In most cases this directory is read-only.  Build scripts
-        should NOT try to write anything here as doing so can damage the host
-        neoSphere installation.
+        directory.  Using this prefix in Cell will throw an error.
+    #/: The Sphere system directory, which contains assets included with the
+        engine.  This directory is read-only.
 
 As an example, the following will create a FileStream to write the file
 `EatyPig.bin` in the root of the game package:
 
-    var file = new FileStream("@/EatyPig.bin", FileOp.Write);
+    var file = new FileStream("@/eatyPig.bin", FileOp.Write);
 
-Absolute paths are NOT allowed, and any attempt to circumvent the sandbox, e.g.
-"@/../maggie.fat", will be met with a sandbox violation error.
+Note that absolute paths referring directly to a file on the host file system
+are disallowed, and any attempt to circumvent the sandbox by traversing upwards
+from a SphereFS root, e.g. `@/../maggie.fat`, will produce a sandbox violation
+error.
 
 
 Sphere v2 API
@@ -55,8 +58,8 @@ following are provided:
         - `test` module
         - `xml` module
 
-Refer to `sphere2-api.txt` and/or `miniRT-api.txt` for more information on how
-to use those APIs.
+Refer to `sphere2-core-api.txt` and/or `sphere2-hl-api.txt` for more
+information on how to use those APIs.
 
 
 Core Cellscript API
@@ -111,7 +114,7 @@ install(directory, sources);
 
     Copies all specified Targets into a given directory at build time.  To copy
     existing files, you can use a files() builder to populate `sources`. (see
-    above).
+    above).  `directory` is resolved relative to `@/` by default.
 
 warn(message);
 
@@ -176,8 +179,8 @@ new Tool(buildFunc[, status_text]);
 Tool#stage(pathname, sources);
 
     Instructs Cell to build `pathname`, which can name either a file or
-    directory, using this Tool.  Returns a Target object representing the
-    output.
+    directory, using this Tool.  `pathname` is resolved relative to `@/' by
+    default.  Returns a Target object representing the output.
 
     Note: If `pathname` is a directory path, Cell will consider the target to
           be perpetually out-of-date and run the tool during every build.  If
