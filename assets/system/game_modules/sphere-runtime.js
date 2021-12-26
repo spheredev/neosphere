@@ -30,12 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-export default
-class RT
-{
-    static get Version() { return 0; }
-}
-
 export { default as Console } from 'console';
 export { default as FocusTarget } from 'focus-target';
 export { default as Music } from 'music';

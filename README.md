@@ -1,5 +1,5 @@
-neoSphere JavaScript game platform
-==================================
+neoSphere: a JavaScript-based game engine
+=========================================
 
 [![Release](https://img.shields.io/github/release/fatcerberus/neosphere.svg)](https://github.com/fatcerberus/sphere/releases/latest)
 
@@ -19,15 +19,14 @@ engine that once powered Microsoft Edge.
 Download
 ========
 
-The most recent stable neoSphere release at the time of this writing is
-**neoSphere 5.7.0**, released on Wednesday, December 15, 2021.  neoSphere
-releases are provided through GitHub and the latest version can always be found
-here:
+**neoSphere 5.7.0** is the current stable version of neoSphere and was released
+on Wednesday, December 15, 2021.  neoSphere releases are provided through
+GitHub and the latest version can always be found here:
 
 * <https://github.com/fatcerberus/neosphere/releases>
 
-For an overview of breaking changes in the current stable release series, refer
-to [`RELEASES.md`](RELEASES.md).
+For an overview of breaking changes in each version, refer to
+[`RELEASES.md`](RELEASES.md).
 
 
 The Sphere Toolbox
@@ -69,9 +68,7 @@ might look like this:
 ```js
 /* Cellscript.js */
 
-// all values defined on Sphere.Game are JSON encoded at the end of the build
-// and written to game.json.
-Object.assign(Sphere.Game, {
+describe({
     version:  2,  // target the Sphere v2 API
     apiLevel: 3,  // require API level 3+
 
@@ -83,7 +80,7 @@ Object.assign(Sphere.Game, {
 });
 
 // install JavaScript modules
-install('@/scripts', files('src/*.js', true));
+install('@/scripts', files('scripts/*.js', true));
 
 // install non-code game assets
 install('@/images', files('images/*.png', true));

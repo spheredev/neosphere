@@ -4,7 +4,6 @@ neoSphere Changelog
 v6.0.0 - TBD
 ------------
 
-* Adds `RT.Version` for getting the current API revision of the Sphere Runtime.
 * Adds new `Texture#ready` and `Texture#whenReady()` APIs, to allow a game to
   check if a texture is fully loaded before using it.
 * Changes the handling of the first parameter of Cell's `install()` to be
