@@ -6,6 +6,22 @@ standard objects used for higher-level tasks, collectively known as the
 Sphere Runtime.  This file documents the API.
 
 
+`RT` Namespace
+--------------
+
+The `RT` namespace is the default export of the `sphere-runtime` module and
+provides information about the Sphere Runtime itself.
+
+    import RT from 'sphere-runtime';
+
+RT.Version [GET]
+
+    The API revision of the Sphere Runtime.
+    
+    Note: Because the Sphere Runtime API hasn't yet been finalized, this will
+		  be `0` in current versions of neoSphere and Oozaru.
+
+
 `Console` Object
 ----------------
 
