@@ -4,8 +4,8 @@ neoSphere Changelog
 v6.0.0 - TBD
 ------------
 
-* Adds new `Texture#ready` and `Texture#whenReady()` APIs, to allow a game to
-  check if a texture is fully loaded before using it.
+* Adds new `.ready` and `.whenReady()` APIs which allow games to check if an
+  asset (texture, sound, etc.) is completely loaded before using it.
 * Changes the handling of the first parameter of Cell's `install()` to be
   relative to `@/` by default, instead of `$/`.
 

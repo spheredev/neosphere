@@ -19,13 +19,12 @@ engine that once powered Microsoft Edge.
 Download
 ========
 
-**neoSphere 5.7.0** is the current stable version of neoSphere and was released
-on Wednesday, December 15, 2021.  neoSphere releases are provided through
-GitHub and the latest version can always be found here:
+**neoSphere 5.7.0** was released on Tuesday, December 14, 2021 and can be
+downloaded from the Releases page:
 
 * <https://github.com/fatcerberus/neosphere/releases>
 
-For an overview of breaking changes in each version, refer to
+For an overview of the breaking changes in each release, refer to
 [`RELEASES.md`](RELEASES.md).
 
 

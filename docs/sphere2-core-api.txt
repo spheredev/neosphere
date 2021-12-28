@@ -2312,6 +2312,10 @@ Texture#ready [GET] [EXP]
     use. If this is `false`, attempting to access the underlying texture, e.g.
     for rendering, will throw an error.
 
+	Note: If texture loading fails, accessing this property will throw an
+	      error.  This gives your game a means to recover from the case that an
+	      asset can't be loaded.
+
 Texture#width [GET] [API 1]
 Texture#height [GET] [API 1]
 

@@ -338,10 +338,12 @@ static bool js_Font_get_Default              (int num_args, bool is_ctor, intptr
 static bool js_new_Font                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_get_fileName             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_get_height               (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_get_ready                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_drawText                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_getTextSize              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_heightOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_widthOf                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Font_whenReady                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JSON_fromFile                 (int num_args, bool is_ctor, intptr_t magic);
@@ -388,8 +390,10 @@ static bool js_RNG_iterator                  (int num_args, bool is_ctor, intptr
 static bool js_RNG_next                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Sample                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_get_fileName           (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sample_get_ready              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_play                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_stopAll                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sample_whenReady              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Server                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Server_get_noDelay            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Server_get_numPending         (int num_args, bool is_ctor, intptr_t magic);
@@ -398,6 +402,7 @@ static bool js_Server_accept                 (int num_args, bool is_ctor, intptr
 static bool js_Server_close                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_get_Default            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Shader                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_get_ready              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_clone                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setBoolean             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setColorVector         (int num_args, bool is_ctor, intptr_t magic);
@@ -409,6 +414,7 @@ static bool js_Shader_setIntArray            (int num_args, bool is_ctor, intptr
 static bool js_Shader_setIntVector           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setMatrix              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setSampler             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Shader_whenReady              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shape_drawImmediate           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Shape                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shape_get_indexList           (int num_args, bool is_ctor, intptr_t magic);
@@ -440,6 +446,7 @@ static bool js_Sound_get_length              (int num_args, bool is_ctor, intptr
 static bool js_Sound_get_pan                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_playing             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_position            (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_get_ready               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_repeat              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_speed               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_volume              (int num_args, bool is_ctor, intptr_t magic);
@@ -451,6 +458,7 @@ static bool js_Sound_set_volume              (int num_args, bool is_ctor, intptr
 static bool js_Sound_pause                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_play                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_stop                    (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Sound_whenReady               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_SoundStream               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SoundStream_get_length        (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SoundStream_play              (int num_args, bool is_ctor, intptr_t magic);
@@ -998,13 +1006,21 @@ pegasus_init(int api_level, int target_api_level)
 
 	if (api_level >= 4) {
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
+		api_define_func("Font", "whenReady", js_Font_whenReady, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
+		api_define_func("Sample", "whenReady", js_Sample_whenReady, 0);
+		api_define_func("Shader", "whenReady", js_Shader_whenReady, 0);
+		api_define_func("Sound", "whenReady", js_Sound_whenReady, 0);
 		api_define_func("Texture", "whenReady", js_Texture_whenReady, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
+		api_define_prop("Font", "ready", false, js_Font_get_ready, NULL);
+		api_define_prop("Sample", "ready", false, js_Sample_get_ready, NULL);
+		api_define_prop("Shader", "ready", false, js_Shader_get_ready, NULL);
+		api_define_prop("Sound", "ready", false, js_Sound_get_ready, NULL);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
-		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_prop("Texture", "ready", false, js_Texture_get_ready, NULL);
+		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
 		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
@@ -2486,19 +2502,10 @@ static bool
 js_new_Font(int num_args, bool is_ctor, intptr_t magic)
 {
 	bool        antialiasing = false;
-	int         api_level;
 	ttf_t*      font;
 	bool        kerning = true;
 	const char* pathname;
 	int         size = 12;
-
-	if (is_ctor) {
-		api_level = game_api_level(g_game);
-		if (api_level >= 4)
-			jsal_error(JS_ERROR, "'new Font' from file system unsupported in API 4+");
-		if (api_level >= 3)
-			console_warn(0, "use 'Font.fromFile' instead of 'new' when loading files");
-	}
 
 	pathname = jsal_require_pathname(0, NULL, false, false);
 	if (num_args >= 2) {
@@ -2547,6 +2554,18 @@ js_Font_get_height(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_int(ttf_height(font));
 	cache_value_to_this("height");
+	return true;
+}
+
+static bool
+js_Font_get_ready(int num_args, bool is_ctor, intptr_t magic)
+{
+	ttf_t* font;
+
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
+
+	jsal_push_boolean(true);
 	return true;
 }
 
@@ -2669,6 +2688,22 @@ js_Font_widthOf(int num_args, bool is_ctor, intptr_t magic)
 	text = jsal_to_string(0);
 
 	jsal_push_int(ttf_get_width(font, text));
+	return true;
+}
+
+static bool
+js_Font_whenReady(int num_args, bool is_ctor, intptr_t magic)
+{
+	ttf_t*    font;
+	js_ref_t* resolver;
+
+	jsal_push_this();
+	font = jsal_require_class_obj(-1, PEGASUS_FONT);
+
+	jsal_push_new_promise(&resolver, NULL);
+	jsal_push_ref_weak(resolver);
+	jsal_call(0);
+	jsal_unref(resolver);
 	return true;
 }
 
@@ -3212,234 +3247,6 @@ js_Model_draw(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Shader_clone(int num_args, bool is_ctor, intptr_t magic)
-{
-	shader_t* dolly;
-	shader_t* shader;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-
-	dolly = shader_dup(shader);
-	jsal_push_class_obj(PEGASUS_SHADER, dolly, false);
-	return true;
-}
-
-static bool
-js_Shader_setBoolean(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* name;
-	shader_t*   shader;
-	bool        value;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	value = jsal_require_boolean(1);
-
-	shader_put_bool(shader, name, value);
-	return false;
-}
-
-static bool
-js_Shader_setColorVector(int num_args, bool is_ctor, intptr_t magic)
-{
-	color_t     color;
-	const char* name;
-	shader_t*   shader;
-	float       values[4];
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	color = jsal_pegasus_require_color(1);
-
-	values[0] = color.r / 255.0;
-	values[1] = color.g / 255.0;
-	values[2] = color.b / 255.0;
-	values[3] = color.a / 255.0;
-	shader_put_float_vector(shader, name, values, 4);
-	return false;
-}
-
-static bool
-js_Shader_setFloat(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* name;
-	shader_t*   shader;
-	float       value;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	value = jsal_require_number(1);
-
-	shader_put_float(shader, name, value);
-	return false;
-}
-
-static bool
-js_Shader_setFloatArray(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* name;
-	shader_t*   shader;
-	int         size;
-	float*      values;
-
-	int i;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	if (!jsal_is_array(1))
-		jsal_error(JS_TYPE_ERROR, "Expected an array as second argument");
-
-	size = jsal_get_length(1);
-
-	values = alloca(size * sizeof(float));
-	for (i = 0; i < size; ++i) {
-		jsal_get_prop_index(1, i);
-		values[i] = jsal_require_number(-1);
-		jsal_pop(1);
-	}
-	shader_put_float_array(shader, name, values, size);
-	return false;
-}
-
-static bool
-js_Shader_setFloatVector(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* name;
-	shader_t*   shader;
-	int         size;
-	float       values[4];
-
-	int i;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	jsal_require_array(1);
-
-	size = jsal_get_length(1);
-	if (size < 2 || size > 4)
-		jsal_error(JS_RANGE_ERROR, "Invalid number of components '%d'", size);
-
-	for (i = 0; i < size; ++i) {
-		jsal_get_prop_index(1, i);
-		values[i] = jsal_require_number(-1);
-		jsal_pop(1);
-	}
-	shader_put_float_vector(shader, name, values, size);
-	return false;
-}
-
-static bool
-js_Shader_setInt(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* name;
-	shader_t*   shader;
-	int         value;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	value = jsal_require_int(1);
-
-	shader_put_int(shader, name, value);
-	return false;
-}
-
-static bool
-js_Shader_setIntArray(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* name;
-	shader_t*   shader;
-	int         size;
-	int*        values;
-
-	int i;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	if (!jsal_is_array(1))
-		jsal_error(JS_TYPE_ERROR, "Expected array as second argument");
-
-	size = jsal_get_length(1);
-	values = alloca(size * sizeof(int));
-	for (i = 0; i < size; ++i) {
-		jsal_get_prop_index(1, i);
-		values[i] = jsal_require_int(-1);
-		jsal_pop(1);
-	}
-	shader_put_int_array(shader, name, values, size);
-	return false;
-}
-
-static bool
-js_Shader_setIntVector(int num_args, bool is_ctor, intptr_t magic)
-{
-	shader_t*   shader;
-	const char* name;
-	int         size;
-	int         values[4];
-
-	int i;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	if (!jsal_is_array(1))
-		jsal_error(JS_TYPE_ERROR, "Expected array as second argument");
-
-	size = jsal_get_length(1);
-	if (size < 2 || size > 4)
-		jsal_error(JS_RANGE_ERROR, "Invalid number of components '%d'", size);
-
-	for (i = 0; i < size; ++i) {
-		jsal_get_prop_index(1, i);
-		values[i] = jsal_require_int(-1);
-		jsal_pop(1);
-	}
-	shader_put_int_vector(shader, name, values, size);
-	return false;
-}
-
-static bool
-js_Shader_setMatrix(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char*  name;
-	shader_t*    shader;
-	transform_t* transform;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	transform = jsal_require_class_obj(1, PEGASUS_TRANSFORM);
-
-	shader_put_matrix(shader, name, transform);
-	return false;
-}
-
-static bool
-js_Shader_setSampler(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char*  name;
-	shader_t*    shader;
-	image_t*     texture;
-	int texture_unit;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-	name = jsal_require_string(0);
-	texture = jsal_require_class_obj(1, PEGASUS_TEXTURE);
-	texture_unit = jsal_require_int(2);
-	shader_put_sampler(shader, name, texture, texture_unit);
-	return false;
-}
-
-static bool
 js_Mouse_get_Default(int num_args, bool is_ctor, intptr_t magic)
 {
 	jsal_push_class_obj(PEGASUS_MOUSE, NULL, false);
@@ -3839,17 +3646,8 @@ js_SSj_profile(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Sample(int num_args, bool is_ctor, intptr_t magic)
 {
-	int         api_level;
 	const char* filename;
 	sample_t*   sample;
-
-	if (is_ctor) {
-		api_level = game_api_level(g_game);
-		if (api_level >= 4)
-			jsal_error(JS_ERROR, "'new Sample' from file system unsupported in API 4+");
-		if (api_level >= 3)
-			console_warn(0, "use 'Sample.fromFile' instead of 'new' when loading files");
-	}
 
 	filename = jsal_require_pathname(0, NULL, false, false);
 
@@ -3874,6 +3672,18 @@ js_Sample_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
 
 	jsal_push_string(sample_path(sample));
+	return true;
+}
+
+static bool
+js_Sample_get_ready(int num_args, bool is_ctor, intptr_t magic)
+{
+	sample_t* sample;
+
+	jsal_push_this();
+	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
+
+	jsal_push_boolean(true);
 	return true;
 }
 
@@ -3919,6 +3729,22 @@ js_Sample_stopAll(int num_args, bool is_ctor, intptr_t magic)
 
 	sample_stop_all(sample);
 	return false;
+}
+
+static bool
+js_Sample_whenReady(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* resolver;
+	sample_t* sample;
+
+	jsal_push_this();
+	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
+
+	jsal_push_new_promise(&resolver, NULL);
+	jsal_push_ref_weak(resolver);
+	jsal_call(0);
+	jsal_unref(resolver);
+	return true;
 }
 
 static bool
@@ -4042,18 +3868,9 @@ js_Shader_get_Default(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Shader(int num_args, bool is_ctor, intptr_t magic)
 {
-	int         api_level;
 	const char* fragment_pathname;
 	shader_t*   shader;
 	const char* vertex_pathname;
-
-	if (is_ctor) {
-		api_level = game_api_level(g_game);
-		if (api_level >= 4)
-			jsal_error(JS_ERROR, "'new Shader' from file system unsupported in API 4+");
-		if (api_level >= 3)
-			console_warn(0, "use 'Shader.fromFiles' instead of 'new' when loading files");
-	}
 
 	jsal_require_object_coercible(0);
 	jsal_get_prop_string(0, "fragmentFile");
@@ -4073,6 +3890,262 @@ static void
 js_Shader_finalize(void* host_ptr)
 {
 	shader_unref(host_ptr);
+}
+
+static bool
+js_Shader_get_ready(int num_args, bool is_ctor, intptr_t magic)
+{
+	shader_t* shader;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+
+	jsal_push_boolean(true);
+	return true;
+}
+
+static bool
+js_Shader_clone(int num_args, bool is_ctor, intptr_t magic)
+{
+	shader_t* dolly;
+	shader_t* shader;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+
+	dolly = shader_dup(shader);
+	jsal_push_class_obj(PEGASUS_SHADER, dolly, false);
+	return true;
+}
+
+static bool
+js_Shader_setBoolean(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* name;
+	shader_t* shader;
+	bool        value;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	value = jsal_require_boolean(1);
+
+	shader_put_bool(shader, name, value);
+	return false;
+}
+
+static bool
+js_Shader_setColorVector(int num_args, bool is_ctor, intptr_t magic)
+{
+	color_t     color;
+	const char* name;
+	shader_t* shader;
+	float       values[4];
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	color = jsal_pegasus_require_color(1);
+
+	values[0] = color.r / 255.0;
+	values[1] = color.g / 255.0;
+	values[2] = color.b / 255.0;
+	values[3] = color.a / 255.0;
+	shader_put_float_vector(shader, name, values, 4);
+	return false;
+}
+
+static bool
+js_Shader_setFloat(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* name;
+	shader_t* shader;
+	float       value;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	value = jsal_require_number(1);
+
+	shader_put_float(shader, name, value);
+	return false;
+}
+
+static bool
+js_Shader_setFloatArray(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* name;
+	shader_t* shader;
+	int         size;
+	float* values;
+
+	int i;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	if (!jsal_is_array(1))
+		jsal_error(JS_TYPE_ERROR, "Expected an array as second argument");
+
+	size = jsal_get_length(1);
+
+	values = alloca(size * sizeof(float));
+	for (i = 0; i < size; ++i) {
+		jsal_get_prop_index(1, i);
+		values[i] = jsal_require_number(-1);
+		jsal_pop(1);
+	}
+	shader_put_float_array(shader, name, values, size);
+	return false;
+}
+
+static bool
+js_Shader_setFloatVector(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* name;
+	shader_t* shader;
+	int         size;
+	float       values[4];
+
+	int i;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	jsal_require_array(1);
+
+	size = jsal_get_length(1);
+	if (size < 2 || size > 4)
+		jsal_error(JS_RANGE_ERROR, "Invalid number of components '%d'", size);
+
+	for (i = 0; i < size; ++i) {
+		jsal_get_prop_index(1, i);
+		values[i] = jsal_require_number(-1);
+		jsal_pop(1);
+	}
+	shader_put_float_vector(shader, name, values, size);
+	return false;
+}
+
+static bool
+js_Shader_setInt(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* name;
+	shader_t* shader;
+	int         value;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	value = jsal_require_int(1);
+
+	shader_put_int(shader, name, value);
+	return false;
+}
+
+static bool
+js_Shader_setIntArray(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* name;
+	shader_t* shader;
+	int         size;
+	int* values;
+
+	int i;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	if (!jsal_is_array(1))
+		jsal_error(JS_TYPE_ERROR, "Expected array as second argument");
+
+	size = jsal_get_length(1);
+	values = alloca(size * sizeof(int));
+	for (i = 0; i < size; ++i) {
+		jsal_get_prop_index(1, i);
+		values[i] = jsal_require_int(-1);
+		jsal_pop(1);
+	}
+	shader_put_int_array(shader, name, values, size);
+	return false;
+}
+
+static bool
+js_Shader_setIntVector(int num_args, bool is_ctor, intptr_t magic)
+{
+	shader_t* shader;
+	const char* name;
+	int         size;
+	int         values[4];
+
+	int i;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	if (!jsal_is_array(1))
+		jsal_error(JS_TYPE_ERROR, "Expected array as second argument");
+
+	size = jsal_get_length(1);
+	if (size < 2 || size > 4)
+		jsal_error(JS_RANGE_ERROR, "Invalid number of components '%d'", size);
+
+	for (i = 0; i < size; ++i) {
+		jsal_get_prop_index(1, i);
+		values[i] = jsal_require_int(-1);
+		jsal_pop(1);
+	}
+	shader_put_int_vector(shader, name, values, size);
+	return false;
+}
+
+static bool
+js_Shader_setMatrix(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* name;
+	shader_t* shader;
+	transform_t* transform;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	transform = jsal_require_class_obj(1, PEGASUS_TRANSFORM);
+
+	shader_put_matrix(shader, name, transform);
+	return false;
+}
+
+static bool
+js_Shader_setSampler(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* name;
+	shader_t* shader;
+	image_t* texture;
+	int texture_unit;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+	name = jsal_require_string(0);
+	texture = jsal_require_class_obj(1, PEGASUS_TEXTURE);
+	texture_unit = jsal_require_int(2);
+	shader_put_sampler(shader, name, texture, texture_unit);
+	return false;
+}
+
+static bool
+js_Shader_whenReady(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* resolver;
+	shader_t* shader;
+
+	jsal_push_this();
+	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
+
+	jsal_push_new_promise(&resolver, NULL);
+	jsal_push_ref_weak(resolver);
+	jsal_call(0);
+	jsal_unref(resolver);
+	return true;
 }
 
 static bool
@@ -4292,18 +4365,9 @@ js_Shape_draw(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 {
-	int         api_level;
 	const char* hostname = NULL;
 	int         port;
 	socket_t*   socket;
-
-	if (is_ctor) {
-		api_level = game_api_level(g_game);
-		if (api_level >= 4)
-			jsal_error(JS_ERROR, "'new Socket' unsupported in API 4+");
-		if (api_level >= 3)
-			console_warn(0, "use 'Socket.for' instead of 'new' when creating sockets");
-	}
 
 	if (num_args >= 2 || !is_ctor) {
 		hostname = jsal_require_string(0);
@@ -4567,19 +4631,10 @@ js_Socket_write(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Sound(int num_args, bool is_ctor, intptr_t magic)
 {
-	int         api_level;
 	const char* filename;
 	sound_t*    sound;
 
 	filename = jsal_require_pathname(0, NULL, false, false);
-
-	if (is_ctor) {
-		api_level = game_api_level(g_game);
-		if (api_level >= 4)
-			jsal_error(JS_ERROR, "'new Sound' from file system unsupported in API 4+");
-		if (api_level >= 3)
-			console_warn(0, "use 'Sound.fromFile' instead of 'new' when loading files");
-	}
 
 	if (!(sound = sound_new(filename)))
 		jsal_error(JS_ERROR, "Couldn't load sound file '%s'", filename);
@@ -4641,6 +4696,18 @@ js_Sound_set_pan(int num_args, bool is_ctor, intptr_t magic)
 
 	sound_set_pan(sound, new_pan);
 	return false;
+}
+
+static bool
+js_Sound_get_ready(int num_args, bool is_ctor, intptr_t magic)
+{
+	sound_t* sound;
+
+	jsal_push_this();
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
+
+	jsal_push_boolean(true);
+	return true;
 }
 
 static bool
@@ -4803,6 +4870,22 @@ js_Sound_stop(int num_args, bool is_ctor, intptr_t magic)
 
 	sound_stop(sound);
 	return false;
+}
+
+static bool
+js_Sound_whenReady(int num_args, bool is_ctor, intptr_t magic)
+{
+	js_ref_t* resolver;
+	sound_t*  sound;
+
+	jsal_push_this();
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
+
+	jsal_push_new_promise(&resolver, NULL);
+	jsal_push_ref_weak(resolver);
+	jsal_call(0);
+	jsal_unref(resolver);
+	return true;
 }
 
 static bool
