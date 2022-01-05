@@ -33,8 +33,8 @@
 ; configurations.
 #define AppName "neoSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.7.1"
-#define AppVersion4 "5.7.1.3424"
+#define AppVersion3 "WiP"
+#define AppVersion4 "0.0.0.0"
 
 [Setup]
 OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
@@ -62,7 +62,7 @@ SolidCompression=yes
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\neoSphere.exe,0
 VersionInfoDescription={#AppName} {#AppVersion3} Setup for Windows
-VersionInfoVersion={#AppVersion4}
+VersionInfoVersion={#AppVersion3}
 WizardStyle=modern
 
 [Languages]

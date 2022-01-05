@@ -1,6 +1,12 @@
 neoSphere Changelog
 ===================
 
+v5.7.2 - TBD
+------------
+
+* Disables `new Surface(fileName)` for games targeting API 4 or higher.
+
+
 v5.7.1 - January 04, 2022
 -------------------------
 

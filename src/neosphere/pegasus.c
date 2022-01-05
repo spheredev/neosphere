@@ -549,6 +549,7 @@ static int       s_api_level;
 static int       s_api_level_nominal;
 static mixer_t*  s_def_mixer;
 static js_ref_t* s_screen_obj;
+static int       s_target_api_level;
 
 static js_ref_t* s_key_color;
 static js_ref_t* s_key_done;
@@ -575,6 +576,7 @@ pegasus_init(int api_level, int target_api_level)
 		console_warn(0, "game targets unreleased Sphere v2 API level '%d'", target_api_level);
 
 	s_api_level = api_level;
+	s_target_api_level = target_api_level;
 
 	s_def_mixer = mixer_new(44100, 16, 2);
 
@@ -5359,7 +5361,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 	class_id = (int)magic;
 
 	if (num_args >= 3 && jsal_is_buffer(2)) {
-		// create an Image from an ArrayBuffer or similar object
+		// create a texture from an ArrayBuffer or similar object
 		buffer = jsal_get_buffer_ptr(2, &buffer_size);
 		width = jsal_require_int(0);
 		height = jsal_require_int(1);
@@ -5384,7 +5386,10 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 			jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	}
 	else {
-		// create an Image by loading an image file
+		if (class_id == PEGASUS_SURFACE && s_target_api_level >= 4)
+			jsal_error(JS_RANGE_ERROR, "new Surface() doesn't support background loading.");
+
+		// create an texture by loading an image file
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);
