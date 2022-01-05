@@ -42,7 +42,7 @@ OutputDir=.
 AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
 AppVerName={#AppName} {#AppVersion3}
-AppVersion={#AppVersion4}
+AppVersion={#AppVersion3}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
 AppCopyright=(c) 2015-2022 Fat Cerberus
@@ -62,7 +62,7 @@ SolidCompression=yes
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\neoSphere.exe,0
 VersionInfoDescription={#AppName} {#AppVersion3} Setup for Windows
-VersionInfoVersion={#AppVersion3}
+VersionInfoVersion={#AppVersion4}
 WizardStyle=modern
 
 [Languages]

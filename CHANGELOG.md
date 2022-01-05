@@ -1,8 +1,8 @@
 neoSphere Changelog
 ===================
 
-v5.7.2 - TBD
-------------
+Since Last Release
+------------------
 
 * Disables `new Surface(fileName)` for games targeting API 4 or higher.
 
