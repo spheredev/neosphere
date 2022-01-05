@@ -1,6 +1,15 @@
 Release Notes
 =============
 
+neoSphere 6.0
+-------------
+
+* The Sphere Runtime `Thread` class has been renamed to `Task` to better
+  reflect that they are managed by the event loop.  If your game currently uses
+  `Thread` objects, you'll need to update your code to work with neoSphere 6.0
+  and later.
+
+
 neoSphere 5.7
 -------------
 

@@ -5,6 +5,7 @@ Since Last Release
 ------------------
 
 * Adds `RT.Version` for getting the current API revision of the Sphere Runtime.
+* Renames `Thread` to `Task` to better reflect its method of operation.
 * Disables `new Surface(fileName)` for games targeting API 4 or higher.
 
 
