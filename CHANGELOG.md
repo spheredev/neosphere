@@ -1,14 +1,13 @@
 neoSphere Changelog
 ===================
 
-v6.0.0 - TBD
-------------
+v5.7.1 - January 04, 2022
+-------------------------
 
 * Adds new `.ready` and `.whenReady()` APIs which allow games to check if an
   asset (texture, sound, etc.) is completely loaded before using it.
 * Changes the handling of the first parameter of Cell's `install()` to be
   relative to `@/` by default, instead of `$/`.
-
 
 v5.7.0 - December 15, 2021
 --------------------------

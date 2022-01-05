@@ -33,8 +33,8 @@
 ; configurations.
 #define AppName "neoSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.7.0+"
-#define AppVersion4 "0.0.0.0"
+#define AppVersion3 "5.7.1"
+#define AppVersion4 "5.7.1.3424"
 
 [Setup]
 OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
@@ -59,7 +59,7 @@ DisableWelcomePage=no
 LicenseFile=../LICENSE.txt
 SetupIconFile=..\msvs\spherical.ico
 SolidCompression=yes
-UninstallDisplayName={#AppName} {#AppVersion3}
+UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\neoSphere.exe,0
 VersionInfoDescription={#AppName} {#AppVersion3} Setup for Windows
 VersionInfoVersion={#AppVersion4}

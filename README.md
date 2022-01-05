@@ -19,8 +19,8 @@ engine that once powered Microsoft Edge.
 Download
 ========
 
-**neoSphere 5.7.0** was released on Tuesday, December 14, 2021 and can be
-downloaded from the Releases page:
+**neoSphere 5.7.1**, released on January 4, 2022, can be downloaded from the
+neoSphere GitHub Releases page:
 
 * <https://github.com/fatcerberus/neosphere/releases>
 
