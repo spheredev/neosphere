@@ -47,6 +47,7 @@ struct image
 	unsigned int    cache_hits;
 	bool            clipping_set;
 	depth_op_t      depth_op;
+	image_flags_t   flags;
 	bool            have_depth;
 	image_lock_t    lock;
 	unsigned int    lock_count;
@@ -153,6 +154,7 @@ image_dup(const image_t* it)
 	image->transform = transform_new();
 	image->have_depth = it->have_depth;
 	image->depth_op = it->depth_op;
+	image->flags = it->flags;
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
 
 	return image_ref(image);
@@ -280,6 +282,12 @@ image_get_depth_op(const image_t* it)
 	return it->depth_op;
 }
 
+image_flags_t
+image_get_flags(const image_t* it)
+{
+	return it->flags;
+}
+
 rect_t
 image_get_scissor(const image_t* it)
 {
@@ -322,6 +330,12 @@ image_set_depth_op(image_t* it, depth_op_t op)
 		al_set_render_state(ALLEGRO_DEPTH_TEST, it->have_depth);
 		al_set_render_state(ALLEGRO_DEPTH_FUNCTION, depth_func);
 	}
+}
+
+void
+image_set_flags(image_t* it, image_flags_t flags)
+{
+	it->flags = flags;
 }
 
 void

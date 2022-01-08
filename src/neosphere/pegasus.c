@@ -5393,6 +5393,8 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);
+		if (s_target_api_level >= 4)
+			image_set_flags(image, IMAGE_LOADING);
 	}
 	jsal_push_class_obj(class_id, image, true);
 	return true;
@@ -5428,6 +5430,8 @@ js_Texture_get_height(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
+	if (image_get_flags(image) & IMAGE_LOADING)
+		jsal_error(JS_ERROR, "Use of background-loaded texture without a ready check");
 	jsal_push_int(image_height(image));
 	cache_value_to_this("height");
 	return true;
@@ -5436,12 +5440,18 @@ js_Texture_get_height(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Texture_get_ready(int num_args, bool is_ctor, intptr_t magic)
 {
-	image_t* image;
+	image_flags_t flags;
+	image_t*      image;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
-	jsal_push_boolean(true);
+	// neoSphere doesn't yet support background loading, so just clear the loading flag
+	// unconditionally.
+	flags = image_get_flags(image) & ~IMAGE_LOADING;
+	image_set_flags(image, flags);
+
+	jsal_push_boolean((flags & IMAGE_LOADING) == 0x0);
 	return true;
 }
 
@@ -5453,6 +5463,8 @@ js_Texture_get_width(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
+	if (image_get_flags(image) & IMAGE_LOADING)
+		jsal_error(JS_ERROR, "Use of background-loaded texture without a ready check");
 	jsal_push_int(image_width(image));
 	cache_value_to_this("width");
 	return true;
@@ -5471,6 +5483,8 @@ js_Texture_download(int num_args, bool is_ctor, intptr_t magic)
 
 	if (image == screen_backbuffer(g_screen))
 		jsal_error(JS_RANGE_ERROR, "Cannot download directly from the backbuffer");
+	if (image_get_flags(image) & IMAGE_LOADING)
+		jsal_error(JS_ERROR, "Use of background-loaded texture without a ready check");
 	width = image_width(image);
 	height = image_height(image);
 	jsal_push_new_buffer(JS_UINT8ARRAY_CLAMPED, width * height * sizeof(color_t), &buffer);
@@ -5494,6 +5508,8 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 
 	if (image == screen_backbuffer(g_screen))
 		jsal_error(JS_RANGE_ERROR, "Cannot upload directly to the backbuffer");
+	if (image_get_flags(image) & IMAGE_LOADING)
+		jsal_error(JS_ERROR, "Use of background-loaded texture without a ready check");
 	width = image_width(image);
 	height = image_height(image);
 	if (buffer_size < width * height * sizeof(color_t))
@@ -5506,16 +5522,12 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Texture_whenReady(int num_args, bool is_ctor, intptr_t magic)
 {
-	image_t*  image;
-	js_ref_t* resolver;
+	image_t* image;
 
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref_weak(resolver);
-	jsal_call(0);
-	jsal_unref(resolver);
+	events_ready_texture(jsal_ref(-1));
 	return true;
 }
 

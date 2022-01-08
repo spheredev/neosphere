@@ -44,6 +44,7 @@ enum task_type
 	TASK_CLOSE_SOCKET,
 	TASK_CONNECT,
 	TASK_READ_SOCKET,
+	TASK_READY_TEXTURE,
 	TASK_WRITE_SOCKET,
 };
 
@@ -57,6 +58,7 @@ struct task
 	js_ref_t*      buffer_ref;
 	int            bytes_left;
 	uint8_t*       ptr;
+	js_ref_t*      texture_ref;
 };
 
 static void         free_task             (struct task* task);
@@ -158,6 +160,15 @@ events_read_socket(socket_t* socket, int num_bytes)
 }
 
 void
+events_ready_texture(js_ref_t* texture)
+{
+	struct task* task;
+
+	task = push_new_task_promise(TASK_READY_TEXTURE);
+	task->texture_ref = texture;
+}
+
+void
 events_write_socket(socket_t* socket, const void* data, int num_bytes)
 {
 	struct task* task;
@@ -185,11 +196,13 @@ events_run_main_loop(void)
 void
 events_tick(int api_version, bool clear_screen, int framerate)
 {
-	int          bytes_read;
-	socket_t*    client;
-	bool         task_errored;
-	bool         task_finished;
-	struct task* task;
+	int           bytes_read;
+	socket_t*     client;
+	image_flags_t flags;
+	image_t*      image;
+	bool          task_errored;
+	bool          task_finished;
+	struct task*  task;
 
 	int i;
 
@@ -252,6 +265,13 @@ events_tick(int api_version, bool clear_screen, int framerate)
 				task_errored = true;
 			}
 			break;
+		case TASK_READY_TEXTURE:
+			jsal_push_ref_weak(task->texture_ref);
+			image = jsal_get_class_obj(-1, PEGASUS_TEXTURE);
+			flags = image_get_flags(image) & ~IMAGE_LOADING;
+			image_set_flags(image, flags);
+			task_finished = true;
+			break;
 		case TASK_WRITE_SOCKET:
 			if (socket_bytes_out(task->socket) >= task->bytes_left) {
 				jsal_push_undefined();
@@ -307,6 +327,7 @@ free_task(struct task* task)
 	jsal_unref(task->resolver);
 	socket_unref(task->socket);
 	server_unref(task->server);
+	jsal_unref(task->texture_ref);
 }
 
 static bool

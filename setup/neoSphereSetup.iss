@@ -33,7 +33,7 @@
 ; configurations.
 #define AppName "neoSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "6.0-WiP"
+#define AppVersion3 "5.7.1+"
 #define AppVersion4 "0.0.0.0"
 
 [Setup]
