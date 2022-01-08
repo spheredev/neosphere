@@ -42,7 +42,7 @@ export { default as Music } from 'music';
 export { default as Pact } from 'pact';
 export { default as Prim } from 'prim';
 export { default as Scene } from 'scene';
-export { default as Task } from 'task';
+export { default as Task, default as Thread } from 'task';
 export { default as Tween, Easing } from 'tween';
 
 // Sphere Runtime shared modules
