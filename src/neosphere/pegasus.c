@@ -540,6 +540,7 @@ static void js_VertexList_finalize      (void* host_ptr);
 
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
+static void      ensure_texture_ready        (int index);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
 static color_t   jsal_pegasus_require_color  (int index);
@@ -1171,6 +1172,17 @@ create_joystick_objects(void)
 	}
 	jsal_put_prop_string(-2, "joystickObjects");
 	jsal_pop(1);
+}
+
+static void
+ensure_texture_ready(int index)
+{
+	image_t* image;
+
+	image = jsal_get_class_obj(index, PEGASUS_TEXTURE);
+
+	if (image_get_flags(image) & IMAGE_LOADING)
+		jsal_error(JS_ERROR, "Use of background-loaded texture without a readiness check");
 }
 
 static bool
@@ -5389,10 +5401,13 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		if (class_id == PEGASUS_SURFACE && s_target_api_level >= 4)
 			jsal_error(JS_RANGE_ERROR, "new Surface() doesn't support background loading.");
 
-		// create an texture by loading an image file
+		// create a texture from the content of an image file
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(image = image_load(filename)))
 			jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);
+		
+		// set loading flag if targeting API 4+ so the game has to do a readiness check
+		// (mimic background loading)
 		if (s_target_api_level >= 4)
 			image_set_flags(image, IMAGE_LOADING);
 	}
@@ -5430,8 +5445,7 @@ js_Texture_get_height(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
-	if (image_get_flags(image) & IMAGE_LOADING)
-		jsal_error(JS_ERROR, "Use of background-loaded texture without a ready check");
+	ensure_texture_ready(-1);
 	jsal_push_int(image_height(image));
 	cache_value_to_this("height");
 	return true;
@@ -5463,8 +5477,7 @@ js_Texture_get_width(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
-	if (image_get_flags(image) & IMAGE_LOADING)
-		jsal_error(JS_ERROR, "Use of background-loaded texture without a ready check");
+	ensure_texture_ready(-1);
 	jsal_push_int(image_width(image));
 	cache_value_to_this("width");
 	return true;
@@ -5483,8 +5496,7 @@ js_Texture_download(int num_args, bool is_ctor, intptr_t magic)
 
 	if (image == screen_backbuffer(g_screen))
 		jsal_error(JS_RANGE_ERROR, "Cannot download directly from the backbuffer");
-	if (image_get_flags(image) & IMAGE_LOADING)
-		jsal_error(JS_ERROR, "Use of background-loaded texture without a ready check");
+	ensure_texture_ready(-1);
 	width = image_width(image);
 	height = image_height(image);
 	jsal_push_new_buffer(JS_UINT8ARRAY_CLAMPED, width * height * sizeof(color_t), &buffer);
@@ -5508,8 +5520,7 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 
 	if (image == screen_backbuffer(g_screen))
 		jsal_error(JS_RANGE_ERROR, "Cannot upload directly to the backbuffer");
-	if (image_get_flags(image) & IMAGE_LOADING)
-		jsal_error(JS_ERROR, "Use of background-loaded texture without a ready check");
+	ensure_texture_ready(-1);
 	width = image_width(image);
 	height = image_height(image);
 	if (buffer_size < width * height * sizeof(color_t))
