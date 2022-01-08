@@ -1008,12 +1008,7 @@ pegasus_init(int api_level, int target_api_level)
 
 	if (api_level >= 4) {
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
-		api_define_func("Font", "whenReady", js_Font_whenReady, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
-		api_define_func("Sample", "whenReady", js_Sample_whenReady, 0);
-		api_define_func("Shader", "whenReady", js_Shader_whenReady, 0);
-		api_define_func("Sound", "whenReady", js_Sound_whenReady, 0);
-		api_define_func("Texture", "whenReady", js_Texture_whenReady, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
 		api_define_prop("Font", "ready", false, js_Font_get_ready, NULL);
@@ -1022,10 +1017,15 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_prop("Sound", "ready", false, js_Sound_get_ready, NULL);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
 		api_define_prop("Texture", "ready", false, js_Texture_get_ready, NULL);
+		api_define_method("Font", "whenReady", js_Font_whenReady, 0);
+		api_define_method("Sample", "whenReady", js_Sample_whenReady, 0);
+		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
+		api_define_method("Shader", "whenReady", js_Shader_whenReady, 0);
+		api_define_method("Sound", "whenReady", js_Sound_whenReady, 0);
 		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
-		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
+		api_define_method("Texture", "whenReady", js_Texture_whenReady, 0);
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
 		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
 		api_define_const("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);

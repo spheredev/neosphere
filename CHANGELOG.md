@@ -5,8 +5,10 @@ Since Last Release
 ------------------
 
 * Adds `RT.Version` for getting the current API revision of the Sphere Runtime.
-* Renames `Thread` to `Task`, retaining the former as an alias.
-* Disables `new Surface(fileName)` for games targeting API 4 or higher.
+* Renames `Thread` to `Task`, retaining the former as a temporary alias.
+* Removes support for `new Surface(fileName)` and `Surface.fromFile()` in games
+  targeting API 4 or higher.
+* Fixes a bug which made `Texture.whenReady()` et al unavailable for use.
 
 
 v5.7.1 - January 04, 2022
