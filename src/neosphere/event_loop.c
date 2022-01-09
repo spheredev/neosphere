@@ -35,6 +35,7 @@
 
 #include "api.h"
 #include "dispatch.h"
+#include "loader.h"
 #include "pegasus.h"
 #include "sockets.h"
 
@@ -198,11 +199,10 @@ events_tick(int api_version, bool clear_screen, int framerate)
 {
 	int           bytes_read;
 	socket_t*     client;
-	image_flags_t flags;
-	image_t*      image;
 	bool          task_errored;
 	bool          task_finished;
 	struct task*  task;
+	texture_t*    texture;
 
 	int i;
 
@@ -267,9 +267,12 @@ events_tick(int api_version, bool clear_screen, int framerate)
 			break;
 		case TASK_READY_TEXTURE:
 			jsal_push_ref_weak(task->texture_ref);
-			image = jsal_get_class_obj(-1, PEGASUS_TEXTURE);
-			flags = image_get_flags(image) & ~IMAGE_LOADING;
-			image_set_flags(image, flags);
+			texture = jsal_get_class_obj(-1, PEGASUS_TEXTURE);
+			if (!texture_load(texture)) {
+				jsal_pop(1);
+				jsal_push_new_error(JS_ERROR, "%s", texture_error(texture));
+				task_errored = true;
+			}
 			task_finished = true;
 			break;
 		case TASK_WRITE_SOCKET:

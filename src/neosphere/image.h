@@ -54,12 +54,6 @@ enum depth_op
 } depth_op_t;
 
 typedef
-enum image_flags
-{
-	IMAGE_LOADING = 0x1,
-} image_flags_t;
-
-typedef
 struct image_lock
 {
 	int       num_lines;
@@ -79,12 +73,10 @@ const char*     image_path               (const image_t* it);
 int             image_width              (const image_t* it);
 blend_op_t*     image_get_blend_op       (const image_t* it);
 depth_op_t      image_get_depth_op       (const image_t* it);
-image_flags_t   image_get_flags          (const image_t* it);
 rect_t          image_get_scissor        (const image_t* it);
 transform_t*    image_get_transform      (const image_t* it);
 void            image_set_blend_op       (image_t* it, blend_op_t* op);
 void            image_set_depth_op       (image_t* it, depth_op_t op);
-void            image_set_flags          (image_t* it, image_flags_t flags);
 void            image_set_scissor        (image_t* it, rect_t value);
 void            image_set_transform      (image_t* it, transform_t* transform);
 bool            image_apply_color_fx     (image_t* it, color_fx_t matrix, int x, int y, int width, int height);

@@ -52,6 +52,7 @@ engine_sources=src/neosphere/main.c \
    src/neosphere/input.c \
    src/neosphere/kev_file.c \
    src/neosphere/legacy.c \
+   src/neosphere/loader.c \
    src/neosphere/logger.c \
    src/neosphere/map_engine.c \
    src/neosphere/module.c \

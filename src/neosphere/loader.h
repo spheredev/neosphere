@@ -30,23 +30,20 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__EVENT_LOOP_H__INCLUDED
-#define SPHERE__EVENT_LOOP_H__INCLUDED
+#ifndef SPHERE__LOADER_H__INCLUDED
+#define SPHERE__LOADER_H__INCLUDED
 
-#include "sockets.h"
+#include "image.h"
 
-void events_init           (void);
-void events_uninit         (void);
-bool events_exiting        (void);
-int  events_get_frame_rate (void);
-void events_set_frame_rate (int frame_rate);
-void events_accept_client  (server_t* server);
-void events_close_socket   (socket_t* socket);
-void events_connect_to     (socket_t* socket, const char* hostname, int port);
-void events_read_socket    (socket_t* socket, int num_bytes);
-void events_ready_texture  (js_ref_t* texture);
-bool events_run_main_loop  (void);
-void events_write_socket   (socket_t* socket, const void* data, int num_bytes);
-void events_tick           (int api_version, bool clear_screen, int framerate);
+typedef struct texture texture_t;
 
-#endif // SPHERE__EVENT_LOOP_H__INCLUDED
+texture_t*  texture_from_file  (const char* filename);
+texture_t*  texture_from_image (image_t* image);
+texture_t*  texture_ref        (texture_t* it);
+void        texture_unref      (texture_t* it);
+const char* texture_error      (const texture_t* it);
+const char* texture_filename   (const texture_t* it);
+image_t*    texture_image      (const texture_t* it);
+bool        texture_load       (texture_t* it);
+
+#endif // SPHERE__LOADER_H__INCLUDED
