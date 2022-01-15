@@ -9,7 +9,10 @@ Since Last Release
 * Renames `Thread` to `Task`, retaining the former as a temporary alias.
 * Removes support for `new Surface(fileName)` and `Surface.fromFile()` in games
   targeting API 4 or higher.
+* Fixes an issue with the `cell init` template that left new projects with an
+  invalid `describe()` call in their Cellscripts.
 * Fixes a bug which made `Texture.whenReady()` et al unavailable for use.
+
 
 
 v5.7.1 - January 04, 2022
