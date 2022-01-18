@@ -5367,9 +5367,12 @@ js_Texture_fromFile(int num_args, bool is_ctor, intptr_t magic)
 
 	class_id = (int)magic;
 	if (!(texture = texture_from_file(filename)))
-		jsal_error(JS_ERROR, "Couldn't allocate texture object for '%s'", filename);
-	if (!texture_load(texture))
-		jsal_error(JS_ERROR, "%s", texture_error(texture));
+		jsal_error(JS_ERROR, "Couldn't allocate a texture object for '%s'", filename);
+	if (!texture_load(texture)) {
+		jsal_push_new_error(JS_ERROR, "%s", texture_error(texture));
+		texture_unref(texture);
+		jsal_throw();
+	}
 	jsal_push_class_obj(class_id, texture, false);
 	return true;
 }
@@ -5425,10 +5428,13 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		// create a new texture from the content of an image file
 		filename = jsal_require_pathname(0, NULL, false, false);
 		if (!(texture = texture_from_file(filename)))
-			jsal_error(JS_ERROR, "Couldn't load texture file '%s'", filename);
+			jsal_error(JS_ERROR, "Couldn't allocate a texture object for '%s'.", filename);
 		if (s_target_api_level <= 3) {
-			if (!texture_load(texture))
-				jsal_error(JS_ERROR, "%s", texture_error(texture));
+			if (!texture_load(texture)) {
+				jsal_push_new_error(JS_ERROR, "%s", texture_error(texture));
+				texture_unref(texture);
+				jsal_throw();
+			}
 		}
 	}
 	jsal_push_class_obj(class_id, texture, true);

@@ -109,12 +109,12 @@ texture_load(texture_t* it)
 		return true;
 	if (it->error_text != NULL)
 		return false;
-	if (image = image_load(it->filename)) {
+	if ((image = image_load(it->filename))) {
 		it->image = image;
 		return true;
 	}
 	else {
-		it->error_text = strnewf("Unable to load a texture from '%s'", it->filename);
+		it->error_text = strnewf("Unable to load an image from '%s'.", it->filename);
 		return false;
 	}
 }
