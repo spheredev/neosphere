@@ -12,6 +12,8 @@ Since Last Release
 * Fixes an issue with the `cell init` template that left new projects with an
   invalid `describe()` call in their Cellscripts.
 * Fixes a bug which made `Texture.whenReady()` et al unavailable for use.
+* Fixes a bug that caused the engine to stop responding to debugger commands
+  while the JavaScript error screen was being displayed.
 
 
 

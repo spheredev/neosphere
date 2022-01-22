@@ -975,6 +975,7 @@ show_error_screen(const char* message)
 {
 	image_t*               backbuffer;
 	blend_op_t*            blend_op;
+	bool                   debugging;
 	wraptext_t*            error_info;
 	font_t*                font;
 	bool                   is_copied = false;
@@ -1021,6 +1022,7 @@ show_error_screen(const char* message)
 	transform_unref(projection);
 
 	is_finished = false;
+	debugging = debugger_attached();
 	frames_till_close = 30;
 	while (!is_finished) {
 		al_draw_filled_rounded_rectangle(32, 48, resolution.width - 32, resolution.height - 32, 5, 5, al_map_rgba(48, 16, 16, 255));
@@ -1048,11 +1050,13 @@ show_error_screen(const char* message)
 				TEXT_ALIGN_CENTER,
 				is_copied ? "[space]/[esc] to close" : "[ctrl+c] to copy  [space]/[esc] to close");
 		}
+		debugger_update();
 		screen_flip(g_screen, 30, true);
 		if (frames_till_close <= 0) {
 			al_get_keyboard_state(&keyboard);
 			is_finished = al_key_down(&keyboard, ALLEGRO_KEY_ESCAPE)
-				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE);
+				|| al_key_down(&keyboard, ALLEGRO_KEY_SPACE)
+				|| debugging && !debugger_attached();
 
 			// if Ctrl+C is pressed, copy the error message and location to clipboard
 			if ((al_key_down(&keyboard, ALLEGRO_KEY_LCTRL) || al_key_down(&keyboard, ALLEGRO_KEY_RCTRL))
