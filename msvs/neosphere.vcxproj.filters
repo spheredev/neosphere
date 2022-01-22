@@ -165,7 +165,7 @@
     <ClCompile Include="..\src\neosphere\source_map.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\neosphere\loader.c">
+    <ClCompile Include="..\src\neosphere\asset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -332,7 +332,7 @@
     <ClInclude Include="..\src\neosphere\source_map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\neosphere\loader.h">
+    <ClInclude Include="..\src\neosphere\asset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

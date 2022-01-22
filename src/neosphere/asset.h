@@ -30,20 +30,31 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__LOADER_H__INCLUDED
-#define SPHERE__LOADER_H__INCLUDED
+#ifndef SPHERE__ASSET_H__INCLUDED
+#define SPHERE__ASSET_H__INCLUDED
 
+#include "audio.h"
 #include "image.h"
 
-typedef struct texture texture_t;
+typedef enum asset_type
+{
+	ASSET_SOUND,
+	ASSET_TEXTURE,
+} asset_type_t;
 
-texture_t*  texture_from_file  (const char* filename);
-texture_t*  texture_from_image (image_t* image);
-texture_t*  texture_ref        (texture_t* it);
-void        texture_unref      (texture_t* it);
-const char* texture_error      (const texture_t* it);
-const char* texture_filename   (const texture_t* it);
-image_t*    texture_image      (const texture_t* it);
-bool        texture_load       (texture_t* it);
+typedef struct asset asset_t;
 
-#endif // SPHERE__LOADER_H__INCLUDED
+asset_t*     asset_from_file  (const char* filename, asset_type_t type);
+asset_t*     asset_from_image (image_t* image);
+asset_t*     asset_from_sound (sound_t* sound);
+asset_t*     asset_ref        (asset_t* it);
+void         asset_unref      (asset_t* it);
+const char*  asset_error      (const asset_t* it);
+const char*  asset_filename   (const asset_t* it);
+image_t*     asset_image      (const asset_t* it);
+void*        asset_resource   (const asset_t* it);
+sound_t*     asset_sound      (const asset_t* it);
+asset_type_t asset_type       (const asset_t* it);
+bool         asset_load       (asset_t* it);
+
+#endif // SPHERE__ASSET_H__INCLUDED

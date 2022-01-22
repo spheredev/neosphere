@@ -265,7 +265,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <ClCompile Include="..\src\neosphere\blend_op.c" />
     <ClCompile Include="..\src\neosphere\event_loop.c" />
-    <ClCompile Include="..\src\neosphere\loader.c" />
+    <ClCompile Include="..\src\neosphere\asset.c" />
     <ClCompile Include="..\src\neosphere\module.c" />
     <ClCompile Include="..\src\neosphere\source_map.c" />
     <ClCompile Include="..\src\shared\compress.c" />
@@ -318,7 +318,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
   <ItemGroup>
     <ClInclude Include="..\src\neosphere\blend_op.h" />
     <ClInclude Include="..\src\neosphere\event_loop.h" />
-    <ClInclude Include="..\src\neosphere\loader.h" />
+    <ClInclude Include="..\src\neosphere\asset.h" />
     <ClInclude Include="..\src\neosphere\module.h" />
     <ClInclude Include="..\src\neosphere\source_map.h" />
     <ClInclude Include="..\src\shared\compress.h" />

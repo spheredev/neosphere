@@ -31,40 +31,58 @@
 **/
 
 #include "neosphere.h"
-#include "loader.h"
+#include "asset.h"
 
-struct texture
+#include "audio.h"
+#include "image.h"
+
+struct asset
 {
 	unsigned int refcount;
+	asset_type_t type;
 	char*        error_text;
 	char*        filename;
-	image_t*     image;
+	void*        resource;
 };
 
-texture_t*
-texture_from_file(const char* filename)
+asset_t*
+asset_from_file(const char* filename, asset_type_t type)
 {
-	texture_t* texture;
+	asset_t* asset;
 
-	if (!(texture = calloc(1, sizeof(texture_t))))
+	if (!(asset = calloc(1, sizeof(asset_t))))
 		return NULL;
-	texture->filename = strdup(filename);
-	return texture_ref(texture);
+	asset->type = type;
+	asset->filename = strdup(filename);
+	return asset_ref(asset);
 }
 
-texture_t*
-texture_from_image(image_t* image)
+asset_t*
+asset_from_image(image_t* image)
 {
-	texture_t* texture;
+	asset_t* asset;
 
-	if (!(texture = calloc(1, sizeof(texture_t))))
+	if (!(asset = calloc(1, sizeof(asset_t))))
 		return NULL;
-	texture->image = image_ref(image);
-	return texture_ref(texture);
+	asset->type = ASSET_TEXTURE;
+	asset->resource = image_ref(image);
+	return asset_ref(asset);
 }
 
-texture_t*
-texture_ref(texture_t* it)
+asset_t*
+asset_from_sound(sound_t* sound)
+{
+	asset_t* asset;
+
+	if (!(asset = calloc(1, sizeof(asset_t))))
+		return NULL;
+	asset->type = ASSET_SOUND;
+	asset->resource = sound_ref(sound);
+	return asset_ref(asset);
+}
+
+asset_t*
+asset_ref(asset_t* it)
 {
 	if (it != NULL)
 		++it->refcount;
@@ -72,49 +90,88 @@ texture_ref(texture_t* it)
 }
 
 void
-texture_unref(texture_t* it)
+asset_unref(asset_t* it)
 {
 	if (it == NULL || --it->refcount > 0)
 		return;
-	image_unref(it->image);
+	switch (it->type) {
+	case ASSET_TEXTURE:
+		image_unref(it->resource);
+		break;
+	}
 	free(it->error_text);
 	free(it->filename);
 	free(it);
 }
 
 const char*
-texture_error(const texture_t* it)
+asset_error(const asset_t* it)
 {
 	return it->error_text;
 }
 
 const char*
-texture_filename(const texture_t* it)
+asset_filename(const asset_t* it)
 {
 	return it->filename;
 }
 
 image_t*
-texture_image(const texture_t* it)
+asset_image(const asset_t* it)
 {
-	return it->image;
+	return it->type == ASSET_TEXTURE ? it->resource : NULL;
+}
+
+void*
+asset_resource(const asset_t* it)
+{
+	return it->resource;
+}
+
+sound_t*
+asset_sound(const asset_t* it)
+{
+	return it->type == ASSET_SOUND ? it->resource : NULL;
+}
+
+asset_type_t
+asset_type(const asset_t* it)
+{
+	return it->type;
 }
 
 bool
-texture_load(texture_t* it)
+asset_load(asset_t* it)
 {
 	image_t* image;
-	
-	if (it->image != NULL)
+	sound_t* sound;
+
+	if (it->resource != NULL)
 		return true;
 	if (it->error_text != NULL)
 		return false;
-	if ((image = image_load(it->filename))) {
-		it->image = image;
-		return true;
-	}
-	else {
-		it->error_text = strnewf("Unable to load an image from '%s'.", it->filename);
+	switch (it->type) {
+	case ASSET_SOUND:
+		if ((sound = sound_new(it->filename))) {
+			it->resource = sound;
+			return true;
+		}
+		else {
+			it->error_text = strnewf("Unable to load audio from '%s'.", it->filename);
+			return false;
+		}
+		break;
+	case ASSET_TEXTURE:
+		if ((image = image_load(it->filename))) {
+			it->resource = image;
+			return true;
+		}
+		else {
+			it->error_text = strnewf("Unable to load image from '%s'.", it->filename);
+			return false;
+		}
+		break;
+	default:
 		return false;
 	}
 }

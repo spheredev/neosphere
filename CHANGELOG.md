@@ -16,7 +16,6 @@ Since Last Release
   while the JavaScript error screen was being displayed.
 
 
-
 v5.7.1 - January 04, 2022
 -------------------------
 

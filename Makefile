@@ -36,6 +36,7 @@ engine_sources=src/neosphere/main.c \
    src/shared/wildmatch.c \
    src/shared/xoroshiro.c \
    src/neosphere/animation.c \
+   src/neosphere/asset.c \
    src/neosphere/atlas.c \
    src/neosphere/audio.c \
    src/neosphere/blend_op.c \
@@ -52,7 +53,6 @@ engine_sources=src/neosphere/main.c \
    src/neosphere/input.c \
    src/neosphere/kev_file.c \
    src/neosphere/legacy.c \
-   src/neosphere/loader.c \
    src/neosphere/logger.c \
    src/neosphere/map_engine.c \
    src/neosphere/module.c \

@@ -34,8 +34,8 @@
 #include "event_loop.h"
 
 #include "api.h"
+#include "asset.h"
 #include "dispatch.h"
-#include "loader.h"
 #include "pegasus.h"
 #include "sockets.h"
 
@@ -45,7 +45,7 @@ enum task_type
 	TASK_CLOSE_SOCKET,
 	TASK_CONNECT,
 	TASK_READ_SOCKET,
-	TASK_READY_TEXTURE,
+	TASK_READY_ASSET,
 	TASK_WRITE_SOCKET,
 };
 
@@ -59,7 +59,8 @@ struct task
 	js_ref_t*      buffer_ref;
 	int            bytes_left;
 	uint8_t*       ptr;
-	js_ref_t*      texture_ref;
+	asset_t*       asset;
+	js_ref_t*      asset_ref;
 };
 
 static void         free_task             (struct task* task);
@@ -161,12 +162,13 @@ events_read_socket(socket_t* socket, int num_bytes)
 }
 
 void
-events_ready_texture(js_ref_t* texture)
+events_ready_asset(asset_t* asset, js_ref_t* object_ref)
 {
 	struct task* task;
 
-	task = push_new_task_promise(TASK_READY_TEXTURE);
-	task->texture_ref = texture;
+	task = push_new_task_promise(TASK_READY_ASSET);
+	task->asset = asset_ref(asset);
+	task->asset_ref = object_ref;
 }
 
 void
@@ -197,12 +199,11 @@ events_run_main_loop(void)
 void
 events_tick(int api_version, bool clear_screen, int framerate)
 {
-	int           bytes_read;
-	socket_t*     client;
-	bool          task_errored;
-	bool          task_finished;
-	struct task*  task;
-	texture_t*    texture;
+	int          bytes_read;
+	socket_t*    client;
+	bool         task_errored;
+	bool         task_finished;
+	struct task* task;
 
 	int i;
 
@@ -265,12 +266,11 @@ events_tick(int api_version, bool clear_screen, int framerate)
 				task_errored = true;
 			}
 			break;
-		case TASK_READY_TEXTURE:
-			jsal_push_ref_weak(task->texture_ref);
-			texture = jsal_get_class_obj(-1, PEGASUS_TEXTURE);
-			if (!texture_load(texture)) {
+		case TASK_READY_ASSET:
+			jsal_push_ref_weak(task->asset_ref);
+			if (!asset_load(task->asset)) {
 				jsal_pop(1);
-				jsal_push_new_error(JS_ERROR, "%s", texture_error(texture));
+				jsal_push_new_error(JS_ERROR, "%s", asset_error(task->asset));
 				task_errored = true;
 			}
 			task_finished = true;
@@ -330,7 +330,8 @@ free_task(struct task* task)
 	jsal_unref(task->resolver);
 	socket_unref(task->socket);
 	server_unref(task->server);
-	jsal_unref(task->texture_ref);
+	jsal_unref(task->asset_ref);
+	asset_unref(task->asset);
 }
 
 static bool
