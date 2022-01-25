@@ -184,12 +184,12 @@ needed, and their values can be accessed at runtime through `Sphere.Game`.
 
     The minimum API level required to run the game.  This field is only valid
     if the `version` field (see below) is set to 2.  The current valid range
-    for `apiLevel` is 1-3.
+    for `apiLevel` is 1-4.
 
     While generally all API functions and classes are available to game code
     regardless of this setting, sometimes changes are made to the API that can
-    break existing code; in that case the engine will emulate the older
-    behavior for games targeting API levels prior to to breaking change.
+    break existing code; in those cases the engine will emulate the older
+    behavior if `apiLevel` predates the breaking change.
 
 "author" {default: none} [API 1]
 
@@ -254,14 +254,14 @@ communicate with the underlying Sphere platform.  The properties provide access
 to the engine's name, version number, and API level, and there are several
 methods for managing execution.
 
-Sphere.Engine [GET] [API 1]
+Sphere.Engine [get] [API 1]
 
     A string specifying the name and version number of the game engine.  The
     version number takes the form X.Y.Z, where X is the major version, Y is the
     minor version, and Z is the patch level.
 
-Sphere.Version [GET] [API 1]
-Sphere.APILevel [GET] [API 1]
+Sphere.Version [get] [API 1]
+Sphere.APILevel [get] [API 1]
 
     The Sphere API version and level supported by the engine, respectively.
     `Version` indicates which version of the Sphere API is supported (e.g., 2),
@@ -269,13 +269,13 @@ Sphere.APILevel [GET] [API 1]
     methods, or properties are added to the Core API, the API level is
     increased.
 
-Sphere.Compiler [GET] [API 1]
+Sphere.Compiler [get] [API 1]
 
     A string specifying the name and version number of the compiler or build
     tool used to make the game distribution.  If no compiler information is
     available for the current game, this evaluates to `undefined`.
 
-Sphere.Game [GET] [API 1]
+Sphere.Game [get] [API 1]
 
     An object whose properties describe the currently running game.  Initially,
     this consists of everything in the JSON manifest, plus whatever fields are
@@ -285,7 +285,7 @@ Sphere.Game [GET] [API 1]
           modified, and this will be visible to game code.  The engine itself
           won't see the changes, however.
 
-Sphere.frameRate [GET] [SET] [API 1]
+Sphere.frameRate [get] [set] [API 1]
 
     Gets or sets the frame rate.  Set this to Infinity to disable the frame
     limiter.  The default is 60 FPS.
@@ -294,12 +294,12 @@ Sphere.frameRate [GET] [SET] [API 1]
     set to 60 (the default), the event loop will perform 60 iterations per
     second, skipping renders as necessary to meet that goal.
 
-Sphere.frameSkip [GET] [SET] [API 1]
+Sphere.frameSkip [get] [set] [API 1]
 
     Gets or sets the maximum number of frames the engine is allowed to skip in
     order to maintain the desired frame rate.
 
-Sphere.fullScreen [GET] [SET] [API 1]
+Sphere.fullScreen [get] [set] [API 1]
 
     Gets or sets whether the engine is running in fullscreen mode.  Set this to
     `true` for fullscreen, or `false` for windowed.
@@ -308,7 +308,7 @@ Sphere.fullScreen [GET] [SET] [API 1]
           windowed mode and any change to the value of `screen.fullScreen` will
           be silently ignored.
 
-Sphere.main [GET] [API 1]
+Sphere.main [get] [API 1]
 
     Gets a reference to the game's main object, when the main module exports a
     constructor or class.  This object is created by the engine on startup by
@@ -360,7 +360,7 @@ Sphere.shutDown(); [API 1]
           after control has returned to the event loop.  Note that dispatching
           new update or render jobs before then will cancel the request!
 
-Sphere.sleep(frames); [ASYNC] [API 1]
+Sphere.sleep(frames); [async] [API 1]
 
     Returns a promise that resolves after the specified number of frames have
     elapsed.  Can be used with `await`.  This is useful to delay execution of a
@@ -381,18 +381,18 @@ For convenience, predefined BlendOp objects are provided in the API for the
 most common blending operations, but you can easily make new ones if these
 don't meet your needs.
 
-BlendOp.Default [GET] [API 2]
+BlendOp.Default [get] [API 2]
 
     The default blending mode.  If no blending operation is specified for a
     surface, it will use this mode.  This represents traditional alpha
     blending; the final rendered pixel is a weighted average of the source and
     destination pixels, based on the alpha value of the source pixel.
 
-BlendOp.Add [GET] [API 2]
-BlendOp.Average [GET] [API 2]
-BlendOp.Multiply [GET] [API 2]
-BlendOp.Replace [GET] [API 2]
-BlendOp.Subtract [GET] [API 2]
+BlendOp.Add [get] [API 2]
+BlendOp.Average [get] [API 2]
+BlendOp.Multiply [get] [API 2]
+BlendOp.Replace [get] [API 2]
+BlendOp.Subtract [get] [API 2]
 
     Adds, averages, multiplies, replaces, and subtracts the source and
     destination pixel values, respectively.  These modes cover most common use
@@ -453,10 +453,10 @@ new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [EXP]
 The `Color` object represents an RGB color value.  It also has an alpha
 component and can therefore represent translucent colors.
 
-Color.Red [GET] [API 1]
-Color.Green [GET] [API 1]
-Color.Blue [GET] [API 1]
-Color.Transparent [GET] [API 1]
+Color.Red [get] [API 1]
+Color.Green [get] [API 1]
+Color.Blue [get] [API 1]
+Color.Transparent [get] [API 1]
 etc...
 
     Gets a copy of a predefined color.  The entire X11 color set is provided,
@@ -502,17 +502,17 @@ new Color(red, green, blue[, alpha]); [API 1]
     the range [0.0, 1.0]; out-of-range values are silently clamped.  `alpha`
     specifies the color's opacity and defaults to 1.0 if not provided.
 
-Color#r [GET] [SET] [API 1]
-Color#g [GET] [SET] [API 1]
-Color#b [GET] [SET] [API 1]
-Color#a [GET] [SET] [API 1]
+Color#r [get] [set] [API 1]
+Color#g [get] [set] [API 1]
+Color#b [get] [set] [API 1]
+Color#a [get] [set] [API 1]
 
     Gets or sets the individual components of the color (red, green, blue, or
     alpha).  Range is [0.0,1.0]; while values outside this range are accepted,
     HDR is not supported and the engine will automatically clamp such colors
     when rendered.
 
-Color#name [GET] [API 1]
+Color#name [get] [API 1]
 
     Gets the name of the Color according to its component values such that
     Color.of(color.name) will give back a Color with the same values.  Useful
@@ -553,12 +553,12 @@ new DirectoryStream(dir_name[, options]); [API 1]
         subdirectories to list files they contain.  The output will not contain
         any directory entries in this case, only file entries.
 
-DirectoryStream#fileCount [GET] [API 1]
+DirectoryStream#fileCount [get] [API 1]
 
     Gets the number of entries (both files and directories) in the directory
     listing.
 
-DirectoryStream#fileName [GET] [API 1]
+DirectoryStream#fileName [get] [API 1]
 
     Gets the full SphereFS pathname of the directory whose entries are being
     enumerated.
@@ -566,7 +566,7 @@ DirectoryStream#fileName [GET] [API 1]
     Note: Under SphereFS canonicalization rules, the pathname of a directory
           always ends in a slash (`/`).
 
-DirectoryStream#position [GET] [SET] [API 1]
+DirectoryStream#position [get] [set] [API 1]
 
     Gets or sets the position within the stream.  This is an index into the
     directory specifying which entry will be read next.
@@ -879,7 +879,7 @@ formats that aren't directly supported by the engine.  Sphere makes no attempt
 to interpret the data in the file and simply provides access to the raw bytes
 it contains.
 
-FileStream.fromFile(filename, file_op); [ASYNC] [API 3]
+FileStream.fromFile(filename, file_op); [async] [API 3]
 
     Opens a file asynchronously and returns a promise for a `FileStream` that
     provides access to the contents of the file.  `file_op` specifies the file
@@ -909,20 +909,20 @@ FileStream.fromFile(filename, file_op); [ASYNC] [API 3]
 new FileStream(filename, file_op); [API 1]
 
     Similar to `FileStream.fromFile`, but opens the file synchronously, without
-    yielding to the event loop.
+    interrupting the calling function, and returns the new object directly.
 
-    Warning: This API is deprecated under API 3 and will be removed in API 4.
-             Use `FileStream.fromFile()` instead.
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `FileStream.fromFile()` instead.
 
-FileStream#fileName [GET] [API 1]
+FileStream#fileName [get] [API 1]
 
     Gets the full SphereFS pathname of the underlying file.
 
-FileStream#fileSize [GET] [API 1]
+FileStream#fileSize [get] [API 1]
 
     Gets the size of the underlying file, in bytes.
 
-FileStream#position [GET] [SET] [API 1]
+FileStream#position [get] [set] [API 1]
 
     Gets or sets the file position, which determines where in the file the next
     read or write will start from.  Expressed in bytes.
@@ -931,13 +931,13 @@ FileStream#position [GET] [SET] [API 1]
           stream.  In this case the next write will be at the new position and
           the intervening space filled with NUL bytes.
 
-FileStream#asyncRead(num_bytes); [ASYNC] [API 3]
+FileStream#asyncRead(num_bytes); [async] [API 3]
 
     Instructs Sphere to read `num_bytes` from the file via the event loop.  The
     promise resolves with an ArrayBuffer containing the data read.  This is an
     asynchronous version of `read()` that can be used with `await`.
 
-FileStream#asyncWrite(data); [ASYNC] [API 3]
+FileStream#asyncWrite(data); [async] [API 3]
 
     Instructs Sphere to write `data`--either an ArrayBuffer, TypedArray view,
     or DataView--to the file via the event loop.  The promise resolves once all
@@ -961,16 +961,16 @@ FileStream#read(num_bytes); [API 1]
     an ArrayBuffer containing the data read.  The file must be opened for
     reading.
 
-    Warning: This API is deprecated under API 3 and will be removed in API 4.
-             Use `FileStream#asyncRead()` instead.
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `FileStream#asyncRead()` instead.
 
 FileStream#write(data); [API 1]
 
     Writes data to the file and advances the file pointer.  `data` should be an
     ArrayBuffer, TypedArray or DataView containing the data to be written.
 
-    Warning: This API is deprecated under API 3 and will be removed in API 4.
-             Use `FileStream#asyncWrite()` instead.
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `FileStream#asyncWrite()` instead.
 
 
 `Font` Object
@@ -980,20 +980,17 @@ The `Font` object specifies a typeface that can be used when drawing text.
 Sphere provides a default font which is the same for all games, or you can load
 one from an RFN font file.
 
-Font.Default [GET] [API 1]
+Font.Default [get] [API 1]
 
     Gets the engine's default font.  This is the font used for the FPS counter
     and system messages.
 
-Font.fromFile(filename[, size]); [ASYNC] [API 3]
+Font.fromFile(filename[, size]); [async] [API 3]
 
-    Loads the RFN font file named by `filename` asynchronously and returns a
-    promise for the newly constructed Font object. `size` specifies the font
+    Loads the font file named by `filename` asynchronously and returns a
+    promise for the newly constructed `Font` object. `size` specifies the font
     size in pixels for TrueType fonts; the size is ignored when loading RFN
     fonts.
-
-    Note: The promise is not guaranteed to resolve in the same frame, although
-          in neoSphere it usually does.
 
 new Font(filename[, size]); [API 1]
 
@@ -1002,15 +999,15 @@ new Font(filename[, size]); [API 1]
     specifies the font size in pixels for TrueType fonts; the size is ignored
     when loading RFN fonts.
 
-    Warning: This API is deprecated under API 3 and will be removed in API 4.
-             Use `Font.fromFile()` instead.
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `Font.fromFile()` instead.
 
-Font#fileName [GET] [API 1]
+Font#fileName [get] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Font
     object.
 
-Font#height [GET] [API 1]
+Font#height [get] [API 1]
 
     Gets the line height, in pixels, for text rendered using this font.
 
@@ -1099,16 +1096,16 @@ JobToken#resume(); [API 3]
 `Joystick` Object
 -----------------
 
-Joystick.Null [GET] [API 1]
+Joystick.Null [get] [API 1]
 
     Gets the null joystick.  When polled, a null joystick returns neutral
     values for all inputs.  Joystick.Null can be used in place of a real
     Joystick object to simplify input code.
 
-Joystick.P1 [GET] [API 2]
-Joystick.P2 [GET] [API 2]
-Joystick.P3 [GET] [API 2]
-Joystick.P4 [GET] [API 2]
+Joystick.P1 [get] [API 2]
+Joystick.P2 [get] [API 2]
+Joystick.P3 [get] [API 2]
+Joystick.P4 [get] [API 2]
 
    Gets the default joystick for the respective player.  If there are many
    joystick or gamepad devices attached, there is no guarantee which ones these
@@ -1124,16 +1121,16 @@ Joystick.getDevices(); [API 1]
     joystick.  neoSphere currently supports a maximum of 16 attached devices;
     this will never return more than that.
 
-Joystick#name [GET] [API 1]
+Joystick#name [get] [API 1]
 
     Gets the name of the device, as reported by the operating system.  Xbox
     controllers, for example, are typically reported as "XInput Joystick <n>".
 
-Joystick#numAxes [GET] [API 1]
+Joystick#numAxes [get] [API 1]
 
     Gets the number of analog axes supported by the device.
 
-Joystick#numButtons [GET] [API 1]
+Joystick#numButtons [get] [API 1]
 
     Gets the number of buttons supported by the device.
 
@@ -1274,15 +1271,15 @@ Key [enumeration] [API 1]
           below the function keys, while NumPad0-NumPad9 refer to the numbers
           on the numeric keypad.
 
-Keyboard.Default [GET] [API 1]
+Keyboard.Default [get] [API 1]
 
     Gets a `Keyboard` object for the default keyboard device.
 
     Note: neoSphere currently only supports a single keyboard.
 
-Keyboard#capsLock [GET] [API 1]
-Keyboard#numLock [GET] [API 1]
-Keyboard#scrollLock [GET] [API 1]
+Keyboard#capsLock [get] [API 1]
+Keyboard#numLock [get] [API 1]
+Keyboard#scrollLock [get] [API 1]
 
     Gets the state of the corresponding lock key.  true if the lock is on,
     false if not.
@@ -1319,7 +1316,7 @@ Mixers are used to group related audio together and adjust their parameters as
 a class; this is useful, for example, for implementing global volume controls
 in your game.
 
-Mixer.Default [GET] [API 1]
+Mixer.Default [get] [API 1]
 
     Gets the default Audialis audio mixer.  The default mixer outputs 44.1 kHz
     16-bit stereo sound, i.e. CD quality.
@@ -1336,7 +1333,7 @@ new Mixer(frequency, bits[, channels]); [API 1]
     not supported by the system, an error will be thrown ("unable to create
     hardware voice").
 
-Mixer#volume [GET] [SET] [API 1]
+Mixer#volume [get] [set] [API 1]
 
     Gets or sets the output volume of the mixer.  This will affect the volume
     of any sounds played through the mixer.
@@ -1360,11 +1357,11 @@ new Model(shapes[, shader]); [API 1]
     identity matrix.  If `shader` is not provided, the default shader program
     will be used (see `Shader.Default`).
 
-Model#shader [GET] [SET] [API 1]
+Model#shader [get] [set] [API 1]
 
     Gets or sets the Shader to use when drawing this model.
 
-Model#transform [GET] [SET] [API 1]
+Model#transform [get] [set] [API 1]
 
     Gets or sets the transformation matrix to use when drawing this model.
 
@@ -1399,13 +1396,13 @@ MouseKey [enumeration] [API 1]
         MouseKey.Back
         MouseKey.Forward
 
-Mouse.Default [GET] [API 1]
+Mouse.Default [get] [API 1]
 
     Gets a `Mouse` object for the default mouse device.
 
     Note: neoSphere currently only supports a single mouse.
 
-Mouse#position [GET] [API 3]
+Mouse#position [get] [API 3]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
 	game's rendering area.  This returns an array `[ x, y ]` which can be
@@ -1413,8 +1410,8 @@ Mouse#position [GET] [API 3]
 
 	    let [ mouseX, mouseY ] = mouse.position;
 
-Mouse#x [GET] [API 1]
-Mouse#y [GET] [API 1]
+Mouse#x [get] [API 1]
+Mouse#y [get] [API 1]
 
     Gets the immediate X and Y position of the mouse cursor relative to the
     game's rendering area.
@@ -1495,7 +1492,7 @@ new RNG(); [API 1]
     Constructs a new random number generator seeded from the current system
     time.
 
-RNG#state [GET] [SET] [API 1]
+RNG#state [get] [set] [API 1]
 
     Gets or sets the current state of this generator.  State is encoded as
     a 32-digit hexadecimal string which makes it easy to save and restore.
@@ -1592,7 +1589,7 @@ for a `Sample` is loaded into memory in its entirety and multiple instances can
 be played simultaneously with no latency, making this very useful for sound
 effects.
 
-Sample.fromFile(filename); [ASYNC] [API 3]
+Sample.fromFile(filename); [async] [API 3]
 
     Loads the audio file named by `filename` asynchronously and returns a
     promise for the newly constructed Sample object.  Supported formats are
@@ -1605,14 +1602,13 @@ Sample.fromFile(filename); [ASYNC] [API 3]
 
 new Sample(filename); [API 1]
 
-    Loads the audio file named by `filename` synchronously, without yielding to
-    the event loop, and returns the newly constructed Sample object.  May not
-    be supported on all platforms.
+    Loads an audio file named by `filename` and returns a new `Sample` object
+    created from it.
 
-    Warning: This API is deprecated under API 3 and will be removed in API 4.
-             Use `Sample.fromFile()` instead.
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `Sample.fromFile()` instead.
 
-Sample#fileName [GET] [API 1]
+Sample#fileName [get] [API 1]
 
     Gets the full SphereFS pathname of the audio file used to construct this
     Sample object.
@@ -1661,14 +1657,14 @@ new Server(port[, backlog_size]); [API 1]
     `backlog_size` specifies the size of the backlog and defaults to 128.  If
     the backlog fills, new connections will be refused.
 
-Server#noDelay [GET] [SET] [API 2]
+Server#noDelay [get] [set] [API 2]
 
     Gets or sets a boolean value indicating whether Nagle's algorithm is turned
     off for this server.  This doesn't directly affect the server but will be
     used as the initial setting of `noDelay` for all sockets returned by
     `accept()` or `acceptNext()`.
 
-Server#numPending [GET] [API 2]
+Server#numPending [get] [API 2]
 
     Gets the number of pending connections currently in the backlog.  If the
     number of pending connections is allowed to reach the backlog size
@@ -1680,7 +1676,7 @@ Server#accept(); [API 1]
     empty, a RangeError will be thrown, so you should check the value of
     `numPending` first to see if there are any connections in the backlog.
 
-Server#acceptNext(); [ASYNC] [EXP]
+Server#acceptNext(); [async] [EXP]
 
     Instructs Sphere to accept the next available client connection via the
     event loop.  The promise resolves with a Socket representing that
@@ -1701,12 +1697,12 @@ manipulates vertices and pixels as they are rendered to a surface.  Shaders are
 written in the GLSL shader programming language, which is beyond the scope of
 this document.
 
-Shader.Default [GET] [API 1]
+Shader.Default [get] [API 1]
 
     Gets the default Galileo shader program.  This is a very barebones shader
     that performs only basic transformations and texture mapping.
 
-Shader.fromFiles(options); [ASYNC] [API 3]
+Shader.fromFiles(options); [async] [API 3]
 
     Loads the shader source files specified in `options` asynchronously and
     returns a promise for the newly constructed Shader object.
@@ -1727,6 +1723,9 @@ new Shader(options); [API 1]
     documentation of `Shader.fromFiles` above) synchronously, without yielding
     to the event loop, and returns the newly constructed Shader object.  May
     not be supported on all platforms.
+
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `Shader.fromFiles()` instead.
 
 Shader#clone(); [API 1]
 
@@ -1834,17 +1833,17 @@ new Shape(type[, texture], vertexList[, indexList]); [API 1]
     the vertex list will comprise the shape.  If `indexList` is not specified,
     all vertices from `vertexList` will be used.
 
-Shape#indexList [GET] [SET] [API 1]
+Shape#indexList [get] [set] [API 1]
 
     Gets or sets the index list used to select vertices for this shape.  Set
     this to `null` to use the entire vertex list.
 
-Shape#texture [GET] [SET] [API 1]
+Shape#texture [get] [set] [API 1]
 
     The Image to use when texturing the shape. This can be null, in which case
     the vertex colors alone will determine the shape's appearance.
 
-Shape#vertexList [GET] [SET] [API 1]
+Shape#vertexList [get] [set] [API 1]
 
     Gets or sets the vertex list containing vertices for this shape.
 
@@ -1870,7 +1869,7 @@ return immediately; data is buffered which allows the game to read or write at
 at any time with no rate limit; and if a connection is lost, the socket can be
 reconnected by simply calling its `connectTo()` method again.
 
-Socket.for(hostname, port); [ASYNC] [API 3]
+Socket.for(hostname, port); [async] [API 3]
 
     Connects to the specified host and port and returns a promise for a newly
     constructed Socket object for the connection.  If the connection attempt
@@ -1883,13 +1882,13 @@ new Socket([hostname, port]); [API 1]
     be created in a disconnected state and you must call `connectTo()` manually
     to connect it.
 
-Socket#bytesAvailable [GET] [API 1]
+Socket#bytesAvailable [get] [API 1]
 
     Gets the number of bytes of data currently in this socket's receive buffer.
     This is the maximum amount of data you can retrieve using `read()` on the
     current frame without it throwing a RangeError.
 
-Socket#bytesPending [GET] [API 1]
+Socket#bytesPending [get] [API 1]
 
     Gets the number of bytes of data currently in this socket's write-behind
     buffer.  This is the amount of data which has been written to the socket
@@ -1897,13 +1896,13 @@ Socket#bytesPending [GET] [API 1]
 
     Accessing this property on a disconnected socket will throw a TypeError.
 
-Socket#bytesReceived [GET] [API 2]
+Socket#bytesReceived [get] [API 2]
 
     Gets the total number of bytes of data received through this socket since
     it was last connected, including data still in the socket's receive buffer
     and not yet read by the game.
 
-Socket#bytesSent [GET] [API 2]
+Socket#bytesSent [get] [API 2]
 
     Gets the total number of bytes of data transmitted through this socket
     since it was last connected.
@@ -1911,31 +1910,31 @@ Socket#bytesSent [GET] [API 2]
     Note: This only counts bytes actually sent over the network.  Data still
           waiting in the socket's write-behind buffer is not counted.
 
-Socket#connected [GET] [API 1]
+Socket#connected [get] [API 1]
 
     Gets whether the connection has been established.  As long as this is
     false, you won't be able to call most methods (except `connectTo`) on the
     socket object.
 
-Socket#noDelay [GET] [SET] [API 2]
+Socket#noDelay [get] [set] [API 2]
 
     Gets or sets a boolean value indicating whether Nagle's algorithm is turned
     off for this socket.  If `false` (the default), the operating system may
     delay transmission of small writes while waiting on acknowledgement of a
     previous transmission.
 
-Socket#remoteAddress [GET] [API 1]
+Socket#remoteAddress [get] [API 1]
 
     Gets the IP address of the upstream end of the socket.  If the socket is
     disconnected, accessing this will throw an error.
 
-Socket#remotePort [GET] [API 1]
+Socket#remotePort [get] [API 1]
 
     Gets the port that the remote machine is using for its side of the
     connection.  Generally not very useful, but it's there if you need it.  If
     the socket is disconnected, accessing this will throw an error.
 
-Socket#asyncRead(num_bytes); [ASYNC] [API 3]
+Socket#asyncRead(num_bytes); [async] [API 3]
 
     Instructs Sphere to read `num_bytes` from the socket via the event loop.
     The promise resolves with an ArrayBuffer containing the data read.  This is
@@ -1945,7 +1944,7 @@ Socket#asyncRead(num_bytes); [ASYNC] [API 3]
           buffer to immediately satisfy it.  However, if the connection is lost
           before the read completes, Sphere will reject the promise.
 
-Socket#asyncWrite(data); [ASYNC] [API 3]
+Socket#asyncWrite(data); [async] [API 3]
 
     Instructs Sphere to write `data`--either an ArrayBuffer, TypedArray view,
     or DataView--to the socket via the event loop.  The promise resolves once
@@ -1955,13 +1954,13 @@ Socket#asyncWrite(data); [ASYNC] [API 3]
     Note: If the connection is lost before the write completes, Sphere will
           reject the promise.
 
-Socket#close(); [ASYNC] [API 1]
+Socket#close(); [async] [API 1]
 
     Disconnects the socket.  Data remaining the socket's write-behind buffer
     will be written out before the connection is closed.  The promise resolves
     once the socket is no longer connected.
 
-Socket#connectTo(hostname, port); [ASYNC] [API 1]
+Socket#connectTo(hostname, port); [async] [API 1]
 
     Connects the socket to `hostname` on `port`.  `hostname` can either be a
     domain name (e.g. google.com) or IP address (e.g. 127.0.0.1).  The promise
@@ -2012,58 +2011,54 @@ A `Sound` represents a streaming audio file.  Because the sound is streamed, it
 remains compressed, saving RAM; however, only one instance of the sound can be
 played at a time.
 
-Sound.fromFile(filename); [ASYNC] [API 3]
+Sound.fromFile(filename); [async] [API 3]
 
     Loads the audio file named by `filename` asynchronously and returns a
     promise for the newly constructed `Sound` object.  Supported sound formats
     are mp3, Ogg Vorbis (.ogg), WAV, MOD, S3M, IT, and FLAC.
 
-    Note: The promise is not guaranteed to resolve on the same frame, although
-          in neoSphere it usually does.
-
 new Sound(filename); [API 1]
 
-    Loads the audio file named by `filename` synchronously, without yielding to
-    the event loop, and returns the newly constructed Sound object.  May not be
-    supported on all platforms.
+    Loads the audio file named by `filename` and returns the newly constructed
+    `Sound` object.
 
-    Warning: This API is deprecated under API 3 and will be removed in API 4.
-             Use `Sound.fromFile()` instead.
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `Sound.fromFile()` instead.
 
-Sound#fileName [GET] [API 1]
+Sound#fileName [get] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Sound
     object.
 
-Sound#length [GET] [API 1]
+Sound#length [get] [API 1]
 
     Gets the length of the sound in microseconds.
 
-Sound#pan [GET] [SET] [API 1]
+Sound#pan [get] [set] [API 1]
 
     Gets or sets the current pan (balance). 0.0 is dead center, -1.0 is full
     left, and 1.0 is full right.
 
-Sound#playing [GET] [API 1]
+Sound#playing [get] [API 1]
 
     true if the sound is currently playing, false otherwise.
 
-Sound#position [GET] [SET] [API 1]
+Sound#position [get] [set] [API 1]
 
     Gets or sets the playback position within the sound, in seconds.
 
-Sound#repeat [GET] [SET] [API 1]
+Sound#repeat [get] [set] [API 1]
 
     Gets or sets whether the sound will automatically repeat when it reaches
     the end.
 
-Sound#speed [GET] [SET] [API 1]
+Sound#speed [get] [set] [API 1]
 
     Gets the current playback speed of the sound.  1.0 is normal, 2.0 is double
     speed, etc.  Note that changing the playback speed affects the pitch as
     well.
 
-Sound#volume [GET] [SET] [API 1]
+Sound#volume [get] [set] [API 1]
 
     Gets or sets the current volume of the sound.  0.0 is silent, 1.0 is full
     volume.  Higher values are allowed, but may introduce distortion due to
@@ -2103,7 +2098,7 @@ new SoundStream([frequency[, bits[, channels]]]); [API 1]
 
     The default stream format is 8-bit 22050Hz with 1 channel.
 
-SoundStream#length [GET] [API 1]
+SoundStream#length [get] [API 1]
 
     Gets the amount of audio currently buffered into the stream, in seconds.
     Playback will pause if the buffer is exhausted; To ensure skip-free
@@ -2149,13 +2144,13 @@ enables render-to-texture effects to be implemented.
 Note: Surfaces can only be used as textures under API level 2 or higher.  When
       targeting API level 1 you must call `.toTexture()` (see below) first.
 
-Surface.Screen [GET] [API 1]
+Surface.Screen [get] [API 1]
 
     A special Surface object representing the backbuffer.  Anything drawn to
     this surface will automatically become visible on the screen the next time
     the event loop regains control.
 
-Surface.fromFile(filename); [ASYNC] [API 3]
+Surface.fromFile(filename); [async] [API 3]
 
     Loads the image file named by `filename` asynchronously and returns a
     promise for a Surface whose dimensions and initial content match that of
@@ -2182,15 +2177,15 @@ new Surface(filename); [API 1]
     the event loop, and returns a Surface whose dimensions and initial content
     match that of the loaded image.  May not be supported on all platforms.
 
-    Warning: This API is deprecated under API 3 and will be removed in API 4.
-             Use `Surface.fromFile()` instead.
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `Surface.fromFile()` instead.
 
-Surface#blendOp [GET] [SET] [API 2]
+Surface#blendOp [get] [set] [API 2]
 
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
 
-Surface#depthOp [GET] [SET] [EXP]
+Surface#depthOp [get] [set] [EXP]
 
     Gets or sets the depth test criteria for 3D objects drawn to this surface.
     The final Z coordinate of each pixel drawn is tested against the current
@@ -2208,7 +2203,7 @@ Surface#depthOp [GET] [SET] [EXP]
 
 	The default for new surfaces is `AlwaysPass`.
 
-Surface#transform [GET] [SET] [API 1]
+Surface#transform [get] [set] [API 1]
 
     Gets or sets a `Transform` representing the surface's projection matrix.
     When rendering is done on the surface, the projection matrix is the last
@@ -2218,8 +2213,8 @@ Surface#transform [GET] [SET] [API 1]
           When a surface is created, Sphere sets its transform to an
           orthographic matrix suitable for pixel-perfect 2D rendering.
 
-Surface#width [GET] [API 1]
-Surface#height [GET] [API 1]
+Surface#width [get] [API 1]
+Surface#height [get] [API 1]
 
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
@@ -2261,22 +2256,19 @@ directly using the Core API; it must be used to texture a `Shape`.
 Note that Textures are read-only.  If you need a writable texture, you can use
 a Surface object instead.
 
-Texture.fromFile(filename); [ASYNC] [API 3]
+Texture.fromFile(filename); [async] [API 3]
 
     Loads the image file named by `filename` asynchronously and returns a
-    promise for the newly constructed Texture object. The promise doesn't
-    resolve until the texture is fully loaded and ready for use.
+    promise for a new `Texture` object.  Supported formats are BMP, PNG, and
+    JPG.
 
 new Texture(filename); [API 1]
 
-    Starts loading the image file named by `filename` and returns a texture
-    using that image. The file may be loaded in the background; if this
-    happens, the texture cannot be used until loading has completed; see
-    `Texture#ready` and `Texture#whenReady()` for more information.
+    Loads the image file named by `filename` and immediately returns a texture
+    containing that image.
 
-    Note: For backwards compatibility, neoSphere always returns a fully loaded
-          texture from `new Texture()`.  For full compatibility with Oozaru,
-          however, you shouldn't assume this is true.
+    Note: This call is not supported when targeting API 4 or higher. Use
+          `Texture.fromFile()` instead.
 
 new Texture(width, height[, content]); [API 1]
 
@@ -2299,25 +2291,14 @@ new Texture(surface); [API 1]
     Subsequent modifications to the surface will not affect the contents of the
     new texture.
 
-Texture#fileName [GET] [API 1]
+Texture#fileName [get] [API 1]
 
     Gets the full SphereFS pathname of the file used to construct this Texture
     object.  For synthesized textures, e.g. those created from a surface, this
     is `null`.
 
-Texture#ready [GET] [EXP]
-
-    Gets a boolean value indicating whether a texture created by passing a
-    filename to the texture constructor has finished loading and is ready for
-    use. If this is `false`, attempting to access the underlying texture, e.g.
-    for rendering, will throw an error.
-
-	Note: If texture loading fails, accessing this property will throw an
-	      error.  This gives your game a means to recover from the case that an
-	      asset can't be loaded.
-
-Texture#width [GET] [API 1]
-Texture#height [GET] [API 1]
+Texture#width [get] [API 1]
+Texture#height [get] [API 1]
 
     Gets the width or height of the texture, in pixels. Throws an error if the
     texture isn't ready for use yet.
@@ -2337,12 +2318,6 @@ Texture#upload(content); [EXP]
     array) to the texture.  Enough data must be provided to completely rewrite
     the texture or a RangeError will be thrown.
 
-Texture#whenReady() [ASYNC] [EXP]
-
-    Returns a promise that resolves when the texture is ready for use. If the
-    texture is already ready for use, the promise resolves on the same frame.
-    The promise rejects if the texture can't be loaded.
-
 
 `Transform` Object
 ------------------
@@ -2355,7 +2330,7 @@ new Transform(); [API 1]
     Constructs a transformation matrix.  The object represents a 4x4 matrix
     and is initialized to identity.
 
-Transform#matrix [GET]
+Transform#matrix [get]
 
     Gets an object you can use to access the cells of the underlying matrix.
     The object is used like a two-dimensional array:

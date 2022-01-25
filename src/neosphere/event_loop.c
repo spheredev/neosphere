@@ -34,7 +34,6 @@
 #include "event_loop.h"
 
 #include "api.h"
-#include "asset.h"
 #include "dispatch.h"
 #include "pegasus.h"
 #include "sockets.h"
@@ -45,7 +44,6 @@ enum task_type
 	TASK_CLOSE_SOCKET,
 	TASK_CONNECT,
 	TASK_READ_SOCKET,
-	TASK_READY_ASSET,
 	TASK_WRITE_SOCKET,
 };
 
@@ -59,8 +57,6 @@ struct task
 	js_ref_t*      buffer_ref;
 	int            bytes_left;
 	uint8_t*       ptr;
-	asset_t*       asset;
-	js_ref_t*      asset_ref;
 };
 
 static void         free_task             (struct task* task);
@@ -162,16 +158,6 @@ events_read_socket(socket_t* socket, int num_bytes)
 }
 
 void
-events_ready_asset(asset_t* asset, js_ref_t* object_ref)
-{
-	struct task* task;
-
-	task = push_new_task_promise(TASK_READY_ASSET);
-	task->asset = asset_ref(asset);
-	task->asset_ref = object_ref;
-}
-
-void
 events_write_socket(socket_t* socket, const void* data, int num_bytes)
 {
 	struct task* task;
@@ -266,15 +252,6 @@ events_tick(int api_version, bool clear_screen, int framerate)
 				task_errored = true;
 			}
 			break;
-		case TASK_READY_ASSET:
-			jsal_push_ref_weak(task->asset_ref);
-			if (!asset_load(task->asset)) {
-				jsal_pop(1);
-				jsal_push_new_error(JS_ERROR, "%s", asset_error(task->asset));
-				task_errored = true;
-			}
-			task_finished = true;
-			break;
 		case TASK_WRITE_SOCKET:
 			if (socket_bytes_out(task->socket) >= task->bytes_left) {
 				jsal_push_undefined();
@@ -330,8 +307,6 @@ free_task(struct task* task)
 	jsal_unref(task->resolver);
 	socket_unref(task->socket);
 	server_unref(task->server);
-	jsal_unref(task->asset_ref);
-	asset_unref(task->asset);
 }
 
 static bool

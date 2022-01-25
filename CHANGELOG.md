@@ -5,13 +5,12 @@ Since Last Release
 ------------------
 
 * Adds `RT.Version` for getting the current API revision of the Sphere Runtime.
-* Adds logic to enforce readiness checks for `Texture` under API 4 and higher.
 * Renames `Thread` to `Task`, retaining the former as a temporary alias.
+* Removes the `.ready` and `.whenReady()` APIs added in the previous release.
 * Removes support for `new Surface(fileName)` and `Surface.fromFile()` in games
   targeting API 4 or higher.
 * Fixes an issue with the `cell init` template that left new projects with an
   invalid `describe()` call in their Cellscripts.
-* Fixes a bug which made `Texture.whenReady()` et al unavailable for use.
 * Fixes a bug that caused the engine to stop responding to debugger commands
   while the JavaScript error screen was being displayed.
 

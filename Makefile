@@ -36,7 +36,6 @@ engine_sources=src/neosphere/main.c \
    src/shared/wildmatch.c \
    src/shared/xoroshiro.c \
    src/neosphere/animation.c \
-   src/neosphere/asset.c \
    src/neosphere/atlas.c \
    src/neosphere/audio.c \
    src/neosphere/blend_op.c \

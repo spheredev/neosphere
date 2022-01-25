@@ -34,7 +34,6 @@
 #include "pegasus.h"
 
 #include "api.h"
-#include "asset.h"
 #include "audio.h"
 #include "blend_op.h"
 #include "color.h"
@@ -339,12 +338,10 @@ static bool js_Font_get_Default              (int num_args, bool is_ctor, intptr
 static bool js_new_Font                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_get_fileName             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_get_height               (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Font_get_ready                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_drawText                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_getTextSize              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_heightOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_widthOf                  (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Font_whenReady                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Font_wordWrap                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_IndexList                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_JSON_fromFile                 (int num_args, bool is_ctor, intptr_t magic);
@@ -391,10 +388,8 @@ static bool js_RNG_iterator                  (int num_args, bool is_ctor, intptr
 static bool js_RNG_next                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Sample                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_get_fileName           (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Sample_get_ready              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_play                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sample_stopAll                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Sample_whenReady              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Server                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Server_get_noDelay            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Server_get_numPending         (int num_args, bool is_ctor, intptr_t magic);
@@ -403,7 +398,6 @@ static bool js_Server_accept                 (int num_args, bool is_ctor, intptr
 static bool js_Server_close                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_get_Default            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Shader                    (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Shader_get_ready              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_clone                  (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setBoolean             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setColorVector         (int num_args, bool is_ctor, intptr_t magic);
@@ -415,7 +409,6 @@ static bool js_Shader_setIntArray            (int num_args, bool is_ctor, intptr
 static bool js_Shader_setIntVector           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setMatrix              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shader_setSampler             (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Shader_whenReady              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shape_drawImmediate           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Shape                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Shape_get_indexList           (int num_args, bool is_ctor, intptr_t magic);
@@ -447,7 +440,6 @@ static bool js_Sound_get_length              (int num_args, bool is_ctor, intptr
 static bool js_Sound_get_pan                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_playing             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_position            (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Sound_get_ready               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_repeat              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_speed               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_get_volume              (int num_args, bool is_ctor, intptr_t magic);
@@ -459,7 +451,6 @@ static bool js_Sound_set_volume              (int num_args, bool is_ctor, intptr
 static bool js_Sound_pause                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_play                    (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Sound_stop                    (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Sound_whenReady               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_SoundStream               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SoundStream_get_length        (int num_args, bool is_ctor, intptr_t magic);
 static bool js_SoundStream_play              (int num_args, bool is_ctor, intptr_t magic);
@@ -490,11 +481,9 @@ static bool js_Texture_fromFile              (int num_args, bool is_ctor, intptr
 static bool js_new_Texture                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_fileName          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_height            (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Texture_get_ready             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_get_width             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_download              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_upload                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_Texture_whenReady             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Transform                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Transform_get_matrix          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Transform_set_matrix          (int num_args, bool is_ctor, intptr_t magic);
@@ -541,10 +530,8 @@ static void js_VertexList_finalize      (void* host_ptr);
 
 static void      cache_value_to_this         (const char* key);
 static void      create_joystick_objects     (void);
-static void*     jsal_pegasus_get_asset      (int index, int class_id);
 static void      jsal_pegasus_push_color     (color_t color, bool in_ctor);
 static void      jsal_pegasus_push_job_token (int64_t token);
-static void*     jsal_pegasus_require_asset  (int index, int class_id);
 static color_t   jsal_pegasus_require_color  (int index);
 static script_t* jsal_pegasus_require_script (int index);
 
@@ -1014,21 +1001,11 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
-		api_define_prop("Font", "ready", false, js_Font_get_ready, NULL);
-		api_define_prop("Sample", "ready", false, js_Sample_get_ready, NULL);
-		api_define_prop("Shader", "ready", false, js_Shader_get_ready, NULL);
-		api_define_prop("Sound", "ready", false, js_Sound_get_ready, NULL);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
-		api_define_prop("Texture", "ready", false, js_Texture_get_ready, NULL);
-		api_define_method("Font", "whenReady", js_Font_whenReady, 0);
-		api_define_method("Sample", "whenReady", js_Sample_whenReady, 0);
 		api_define_method("Shader", "setSampler", js_Shader_setSampler, 0);
-		api_define_method("Shader", "whenReady", js_Shader_whenReady, 0);
-		api_define_method("Sound", "whenReady", js_Sound_whenReady, 0);
 		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
-		api_define_method("Texture", "whenReady", js_Texture_whenReady, 0);
 		api_define_const("BlendType", "Add", BLEND_OP_ADD);
 		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
 		api_define_const("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);
@@ -1113,22 +1090,6 @@ pegasus_uninit(void)
 	jsal_unref(s_key_z);
 }
 
-static void*
-jsal_pegasus_get_asset(int index, int class_id)
-{
-	asset_t*    asset;
-	const char* error_text;
-	void*       resource;
-
-	if (!(asset = jsal_get_class_obj(index, class_id)))
-		return NULL;
-	if (error_text = asset_error(asset))
-		jsal_error(JS_ERROR, "%s", error_text);
-	if (!(resource = asset_resource(asset)))
-		jsal_error(JS_ERROR, "Asset '%s' was used without a ready check.", asset_filename(asset));
-	return resource;
-}
-
 static void
 jsal_pegasus_push_color(color_t color, bool in_ctor)
 {
@@ -1145,13 +1106,6 @@ jsal_pegasus_push_job_token(int64_t token)
 
 	jsal_push_class_fatobj(PEGASUS_JOB_TOKEN, false, sizeof(int64_t), (void**)&ptr);
 	*ptr = token;
-}
-
-static void*
-jsal_pegasus_require_asset(int index, int class_id)
-{
-	jsal_require_class_obj(index, class_id);
-	return jsal_pegasus_get_asset(index, class_id);
 }
 
 static color_t
@@ -2548,8 +2502,11 @@ js_new_Font(int num_args, bool is_ctor, intptr_t magic)
 			kerning = jsal_require_boolean(-1);
 	}
 
+	if (is_ctor && s_target_api_level >= 4)
+		jsal_error(JS_ERROR, "'new Font' can't be used when targeting API 4 or higher.");
+
 	if (!(font = ttf_open(pathname, -size, kerning, antialiasing)))
-		jsal_error(JS_ERROR, "Couldn't load font file '%s'", pathname);
+		jsal_error(JS_ERROR, "Unable to load a font from file '%s'.", pathname);
 	jsal_push_class_obj(PEGASUS_FONT, font, is_ctor);
 	return true;
 }
@@ -2586,18 +2543,6 @@ js_Font_get_height(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_Font_get_ready(int num_args, bool is_ctor, intptr_t magic)
-{
-	ttf_t* font;
-
-	jsal_push_this();
-	font = jsal_require_class_obj(-1, PEGASUS_FONT);
-
-	jsal_push_boolean(true);
-	return true;
-}
-
-static bool
 js_Font_drawText(int num_args, bool is_ctor, intptr_t magic)
 {
 	color_t     color;
@@ -2614,7 +2559,7 @@ js_Font_drawText(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	font = jsal_require_class_obj(-1, PEGASUS_FONT);
-	surface = jsal_pegasus_require_asset(0, PEGASUS_SURFACE);
+	surface = jsal_require_class_obj(0, PEGASUS_SURFACE);
 	x = jsal_require_int(1);
 	y = jsal_require_int(2);
 	text = jsal_to_string(3);
@@ -2716,22 +2661,6 @@ js_Font_widthOf(int num_args, bool is_ctor, intptr_t magic)
 	text = jsal_to_string(0);
 
 	jsal_push_int(ttf_get_width(font, text));
-	return true;
-}
-
-static bool
-js_Font_whenReady(int num_args, bool is_ctor, intptr_t magic)
-{
-	ttf_t*    font;
-	js_ref_t* resolver;
-
-	jsal_push_this();
-	font = jsal_require_class_obj(-1, PEGASUS_FONT);
-
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref_weak(resolver);
-	jsal_call(0);
-	jsal_unref(resolver);
 	return true;
 }
 
@@ -3266,7 +3195,7 @@ js_Model_draw(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	model = jsal_require_class_obj(-1, PEGASUS_MODEL);
-	surface = num_args >= 1 ? jsal_pegasus_require_asset(0, PEGASUS_SURFACE)
+	surface = num_args >= 1 ? jsal_require_class_obj(0, PEGASUS_SURFACE)
 		: screen_backbuffer(g_screen);
 
 	if (!screen_skipping_frame(g_screen))
@@ -3679,8 +3608,11 @@ js_new_Sample(int num_args, bool is_ctor, intptr_t magic)
 
 	filename = jsal_require_pathname(0, NULL, false, false);
 
+	if (is_ctor && s_target_api_level >= 4)
+		jsal_error(JS_ERROR, "'new Sample' can't be used when targeting API 4 or higher.");
+
 	if (!(sample = sample_new(filename, true)))
-		jsal_error(JS_ERROR, "Couldn't load sample file '%s'", filename);
+		jsal_error(JS_ERROR, "Unable to load an audio sample from file '%s'.", filename);
 	jsal_push_class_obj(PEGASUS_SAMPLE, sample, is_ctor);
 	return true;
 }
@@ -3700,18 +3632,6 @@ js_Sample_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
 
 	jsal_push_string(sample_path(sample));
-	return true;
-}
-
-static bool
-js_Sample_get_ready(int num_args, bool is_ctor, intptr_t magic)
-{
-	sample_t* sample;
-
-	jsal_push_this();
-	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
-
-	jsal_push_boolean(true);
 	return true;
 }
 
@@ -3757,22 +3677,6 @@ js_Sample_stopAll(int num_args, bool is_ctor, intptr_t magic)
 
 	sample_stop_all(sample);
 	return false;
-}
-
-static bool
-js_Sample_whenReady(int num_args, bool is_ctor, intptr_t magic)
-{
-	js_ref_t* resolver;
-	sample_t* sample;
-
-	jsal_push_this();
-	sample = jsal_require_class_obj(-1, PEGASUS_SAMPLE);
-
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref_weak(resolver);
-	jsal_call(0);
-	jsal_unref(resolver);
-	return true;
 }
 
 static bool
@@ -3906,6 +3810,9 @@ js_new_Shader(int num_args, bool is_ctor, intptr_t magic)
 	jsal_get_prop_string(0, "vertexFile");
 	jsal_require_string(-1);
 
+	if (is_ctor && s_target_api_level >= 4)
+		jsal_error(JS_ERROR, "'new Shader' can't be used when targeting API 4 or higher.");
+
 	fragment_pathname = jsal_require_pathname(-2, NULL, false, false);
 	vertex_pathname = jsal_require_pathname(-1, NULL, false, false);
 	if (!(shader = shader_new(vertex_pathname, fragment_pathname)))
@@ -3918,18 +3825,6 @@ static void
 js_Shader_finalize(void* host_ptr)
 {
 	shader_unref(host_ptr);
-}
-
-static bool
-js_Shader_get_ready(int num_args, bool is_ctor, intptr_t magic)
-{
-	shader_t* shader;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-
-	jsal_push_boolean(true);
-	return true;
 }
 
 static bool
@@ -4154,26 +4049,10 @@ js_Shader_setSampler(int num_args, bool is_ctor, intptr_t magic)
 	jsal_push_this();
 	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
 	name = jsal_require_string(0);
-	texture = jsal_pegasus_require_asset(1, PEGASUS_TEXTURE);
+	texture = jsal_require_class_obj(1, PEGASUS_TEXTURE);
 	texture_unit = jsal_require_int(2);
 	shader_put_sampler(shader, name, texture, texture_unit);
 	return false;
-}
-
-static bool
-js_Shader_whenReady(int num_args, bool is_ctor, intptr_t magic)
-{
-	js_ref_t* resolver;
-	shader_t* shader;
-
-	jsal_push_this();
-	shader = jsal_require_class_obj(-1, PEGASUS_SHADER);
-
-	jsal_push_new_promise(&resolver, NULL);
-	jsal_push_ref_weak(resolver);
-	jsal_call(0);
-	jsal_unref(resolver);
-	return true;
 }
 
 static bool
@@ -4191,12 +4070,12 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, intptr_t magic)
 
 	int i;
 
-	if ((surface = jsal_pegasus_get_asset(0, PEGASUS_SURFACE))) {
+	if ((surface = jsal_get_class_obj(0, PEGASUS_SURFACE))) {
 		type = jsal_require_int(1);
 		array_idx = 2;
 		if (num_args >= 4) {
 			if (!jsal_is_null(2) && !jsal_is_undefined(2))
-				texture = jsal_pegasus_require_asset(2, PEGASUS_TEXTURE);
+				texture = jsal_require_class_obj(2, PEGASUS_TEXTURE);
 			array_idx = 3;
 		}
 	}
@@ -4206,7 +4085,7 @@ js_Shape_drawImmediate(int num_args, bool is_ctor, intptr_t magic)
 		array_idx = 1;
 		if (num_args >= 3) {
 			if (!jsal_is_null(1) && !jsal_is_undefined(1))
-				texture = jsal_pegasus_require_asset(2, PEGASUS_TEXTURE);
+				texture = jsal_require_class_obj(2, PEGASUS_TEXTURE);
 			array_idx = 2;
 		}
 	}
@@ -4257,7 +4136,7 @@ js_new_Shape(int num_args, bool is_ctor, intptr_t magic)
 	vbo_t*       vbo;
 
 	type = jsal_require_int(0);
-	if ((texture = jsal_pegasus_get_asset(1, PEGASUS_TEXTURE)) || jsal_is_null(1)) {
+	if ((texture = jsal_get_class_obj(1, PEGASUS_TEXTURE)) || jsal_is_null(1)) {
 		vbo = jsal_require_class_obj(2, PEGASUS_VERTEX_LIST);
 		if (num_args >= 4)
 			ibo = jsal_require_class_obj(3, PEGASUS_INDEX_LIST);
@@ -4381,7 +4260,7 @@ js_Shape_draw(int num_args, bool is_ctor, intptr_t magic)
 
 	jsal_push_this();
 	shape = jsal_require_class_obj(-1, PEGASUS_SHAPE);
-	surface = num_args >= 1 ? jsal_pegasus_require_asset(0, PEGASUS_SURFACE)
+	surface = num_args >= 1 ? jsal_require_class_obj(0, PEGASUS_SURFACE)
 		: screen_backbuffer(g_screen);
 	if (num_args >= 2)
 		transform = jsal_require_class_obj(1, PEGASUS_TRANSFORM);
@@ -4401,6 +4280,9 @@ js_new_Socket(int num_args, bool is_ctor, intptr_t magic)
 		hostname = jsal_require_string(0);
 		port = jsal_require_int(1);
 	}
+
+	if (is_ctor && s_target_api_level >= 4)
+		jsal_error(JS_ERROR, "'new Socket' can't be used when targeting API 4 or higher.");
 
 	if (is_ctor) {
 		socket = socket_new(1024, false);
@@ -4659,41 +4541,35 @@ js_Socket_write(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_new_Sound(int num_args, bool is_ctor, intptr_t magic)
 {
-	asset_t*    asset;
 	const char* filename;
+	sound_t*    sound;
 
 	filename = jsal_require_pathname(0, NULL, false, false);
 
-	if (!(asset = asset_from_file(filename, ASSET_SOUND)))
-		jsal_error(JS_ERROR, "Failed to allocate an asset handle for '%s'", filename);
-	if (is_ctor && s_target_api_level <= 3) {
-		if (!asset_load(asset)) {
-			jsal_push_new_error(JS_ERROR, "%s", asset_error(asset));
-			asset_unref(asset);
-			jsal_throw();
-		}
-	}
-	jsal_push_class_obj(PEGASUS_SOUND, asset, is_ctor);
-	if (!is_ctor)
-		events_ready_asset(asset, jsal_ref(-1));
+	if (is_ctor && s_target_api_level >= 4)
+		jsal_error(JS_ERROR, "'new Sound' can't be used when targeting API 4 or higher.");
+
+	if (!(sound = sound_new(filename)))
+		jsal_error(JS_ERROR, "Unable to load an audio stream from file '%s'.", filename);
+	jsal_push_class_obj(PEGASUS_SOUND, sound, is_ctor);
 	return true;
 }
 
 static void
 js_Sound_finalize(void* host_ptr)
 {
-	asset_unref(host_ptr);
+	sound_unref(host_ptr);
 }
 
 static bool
 js_Sound_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
-	asset_t* asset;
+	sound_t* sound;
 
 	jsal_push_this();
-	asset = jsal_require_class_obj(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
-	jsal_push_string(asset_filename(asset));
+	jsal_push_string(sound_path(sound));
 	return true;
 }
 
@@ -4703,7 +4579,7 @@ js_Sound_get_length(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_len(sound));
 	return true;
@@ -4715,7 +4591,7 @@ js_Sound_get_pan(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_pan(sound));
 	return true;
@@ -4728,25 +4604,11 @@ js_Sound_set_pan(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 	new_pan = jsal_require_number(0);
 
 	sound_set_pan(sound, new_pan);
 	return false;
-}
-
-static bool
-js_Sound_get_ready(int num_args, bool is_ctor, intptr_t magic)
-{
-	asset_t* asset;
-
-	jsal_push_this();
-	asset = jsal_require_class_obj(-1, PEGASUS_SOUND);
-
-	if (!asset_load(asset))
-		jsal_error(JS_ERROR, "%s", asset_error(asset));
-	jsal_push_boolean_true();
-	return true;
 }
 
 static bool
@@ -4755,7 +4617,7 @@ js_Sound_get_speed(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_speed(sound));
 	return true;
@@ -4768,7 +4630,7 @@ js_Sound_set_speed(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 	new_speed = jsal_require_number(0);
 
 	sound_set_speed(sound, new_speed);
@@ -4781,7 +4643,7 @@ js_Sound_get_playing(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_boolean(sound_playing(sound));
 	return true;
@@ -4793,7 +4655,7 @@ js_Sound_get_position(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_tell(sound));
 	return true;
@@ -4806,7 +4668,7 @@ js_Sound_set_position(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 	new_pos = jsal_require_number(0);
 
 	sound_seek(sound, new_pos);
@@ -4819,7 +4681,7 @@ js_Sound_get_repeat(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_boolean(sound_repeat(sound));
 	return true;
@@ -4832,7 +4694,7 @@ js_Sound_set_repeat(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 	is_looped = jsal_require_boolean(0);
 
 	sound_set_repeat(sound, is_looped);
@@ -4845,7 +4707,7 @@ js_Sound_get_volume(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	jsal_push_number(sound_gain(sound));
 	return true;
@@ -4858,7 +4720,7 @@ js_Sound_set_volume(int num_args, bool is_ctor, intptr_t magic)
 	float    volume;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 	volume = jsal_require_number(0);
 
 	sound_set_gain(sound, volume);
@@ -4871,7 +4733,7 @@ js_Sound_pause(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	sound_pause(sound, true);
 	return false;
@@ -4884,7 +4746,7 @@ js_Sound_play(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	if (num_args < 1) {
 		if (sound_mixer(sound) != NULL)
@@ -4905,22 +4767,10 @@ js_Sound_stop(int num_args, bool is_ctor, intptr_t magic)
 	sound_t* sound;
 
 	jsal_push_this();
-	sound = jsal_pegasus_require_asset(-1, PEGASUS_SOUND);
+	sound = jsal_require_class_obj(-1, PEGASUS_SOUND);
 
 	sound_stop(sound);
 	return false;
-}
-
-static bool
-js_Sound_whenReady(int num_args, bool is_ctor, intptr_t magic)
-{
-	asset_t* asset;
-
-	jsal_push_this();
-	asset = jsal_require_class_obj(-1, PEGASUS_SOUND);
-
-	events_ready_asset(asset, jsal_ref(-1));
-	return true;
 }
 
 static bool
@@ -5024,11 +4874,10 @@ js_SoundStream_write(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_get_Screen(int num_args, bool is_ctor, intptr_t magic)
 {
-	asset_t* asset;
+	image_t* image;
 
-	if (!(asset = asset_from_image(screen_backbuffer(g_screen))))
-		jsal_error(JS_ERROR, "Failed to allocate a texture object for Surface.Screen");
-	jsal_push_class_obj(PEGASUS_SURFACE, asset, false);
+	image = screen_backbuffer(g_screen);
+	jsal_push_class_obj(PEGASUS_SURFACE, image_ref(image), false);
 	cache_value_to_this("Screen");
 	return true;
 }
@@ -5040,7 +4889,7 @@ js_Surface_get_blendOp(int num_args, bool is_ctor, intptr_t magic)
 	blend_op_t* op;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	op = image_get_blend_op(image);
 	jsal_push_class_obj(PEGASUS_BLENDER, blend_op_ref(op), false);
@@ -5053,7 +4902,7 @@ js_Surface_get_depthOp(int num_args, bool is_ctor, intptr_t magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_get_depth_op(image));
 	return true;
@@ -5065,7 +4914,7 @@ js_Surface_get_height(int num_args, bool is_ctor, intptr_t magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_height(image));
 	cache_value_to_this("height");
@@ -5079,7 +4928,7 @@ js_Surface_get_transform(int num_args, bool is_ctor, intptr_t magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	transform = image_get_transform(image);
 	jsal_push_class_obj(PEGASUS_TRANSFORM, transform_ref(transform), false);
@@ -5092,7 +4941,7 @@ js_Surface_get_width(int num_args, bool is_ctor, intptr_t magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	jsal_push_int(image_width(image));
 	cache_value_to_this("width");
@@ -5106,7 +4955,7 @@ js_Surface_set_blendOp(int num_args, bool is_ctor, intptr_t magic)
 	blend_op_t* op;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 	op = jsal_require_class_obj(0, PEGASUS_BLENDER);
 
 	image_set_blend_op(image, op);
@@ -5120,7 +4969,7 @@ js_Surface_set_depthOp(int num_args, bool is_ctor, intptr_t magic)
 	depth_op_t op;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 	op = jsal_require_int(0);
 
 	image_set_depth_op(image, op);
@@ -5134,7 +4983,7 @@ js_Surface_set_transform(int num_args, bool is_ctor, intptr_t magic)
 	transform_t* transform;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 	transform = jsal_require_class_obj(0, PEGASUS_TRANSFORM);
 
 	image_set_transform(image, transform);
@@ -5149,7 +4998,7 @@ js_Surface_clear(int num_args, bool is_ctor, intptr_t magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 	if (num_args >= 1)
 		color = jsal_pegasus_require_color(0);
 	if (num_args >= 2)
@@ -5169,7 +5018,7 @@ js_Surface_clipTo(int num_args, bool is_ctor, intptr_t magic)
 	int      y;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 	x = jsal_require_int(0);
 	y = jsal_require_int(1);
 	width = jsal_require_int(2);
@@ -5186,7 +5035,7 @@ js_Surface_toTexture(int num_args, bool is_ctor, intptr_t magic)
 	image_t* new_image;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_SURFACE);
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	if ((new_image = image_dup(image)) == NULL)
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
@@ -5366,24 +5215,22 @@ js_TextEncoder_encode(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Texture_fromFile(int num_args, bool is_ctor, intptr_t magic)
 {
-	asset_t*    asset;
 	int         class_id;
 	const char* filename;
+	image_t*    image;
 
 	filename = jsal_require_pathname(0, NULL, false, false);
 
 	class_id = (int)magic;
-	if (!(asset = asset_from_file(filename, ASSET_TEXTURE)))
-		jsal_error(JS_ERROR, "Failed to allocate an asset handle for '%s'", filename);
-	jsal_push_class_obj(class_id, asset, false);
-	events_ready_asset(asset, jsal_ref(-1));
+	if (!(image = image_load(filename)))
+		jsal_error(JS_ERROR, "Unable to load an image from file '%s'.", filename);
+	jsal_push_class_obj(class_id, image, false);
 	return true;
 }
 
 static bool
 js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 {
-	asset_t*       asset;
 	const color_t* buffer;
 	size_t         buffer_size;
 	int            class_id;
@@ -5404,8 +5251,7 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		if (buffer_size < width * height * sizeof(color_t))
 			jsal_error(JS_RANGE_ERROR, "Not enough data in pixel buffer");
 		if (!(image = image_new(width, height, buffer)))
-			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-		asset = asset_from_image(image);
+			jsal_error(JS_ERROR, "Couldn't create a %d x %d GPU texture", width, height);
 	}
 	else if (num_args >= 2) {
 		// create a Texture filled with a single pixel value
@@ -5414,52 +5260,44 @@ js_new_Texture(int num_args, bool is_ctor, intptr_t magic)
 		fill_color = num_args >= 3 ? jsal_pegasus_require_color(2)
 			: mk_color(0, 0, 0, 0);
 		if (!(image = image_new(width, height, NULL)))
-			jsal_error(JS_ERROR, "Couldn't create GPU texture");
+			jsal_error(JS_ERROR, "Couldn't create a %d x %d GPU texture", width, height);
 		image_fill(image, fill_color, 1.0f);
-		asset = asset_from_image(image);
 	}
-	else if ((src_image = jsal_pegasus_get_asset(0, PEGASUS_TEXTURE))) {
+	else if ((src_image = jsal_get_class_obj(0, PEGASUS_TEXTURE))) {
 		// create a Texture from a Surface (or another Texture)
 		if (!(image = image_dup(src_image)))
-			jsal_error(JS_ERROR, "Couldn't create GPU texture");
-		asset = asset_from_image(image);
+			jsal_error(JS_ERROR, "Couldn't create a GPU texture");
 	}
 	else {
-		if (class_id == PEGASUS_SURFACE && s_target_api_level >= 4)
-			jsal_error(JS_RANGE_ERROR, "new Surface() doesn't support background loading.");
+		filename = jsal_require_pathname(0, NULL, false, false);
+
+		if (s_target_api_level >= 4)
+			jsal_error(JS_RANGE_ERROR, "'new Texture' from a file is not supported when targeting API 4 or higher.");
 
 		// create a new texture from the content of an image file
-		filename = jsal_require_pathname(0, NULL, false, false);
-		if (!(asset = asset_from_file(filename, ASSET_TEXTURE)))
-			jsal_error(JS_ERROR, "Couldn't allocate a texture object for '%s'.", filename);
-		if (s_target_api_level <= 3) {
-			if (!asset_load(asset)) {
-				jsal_push_new_error(JS_ERROR, "%s", asset_error(asset));
-				asset_unref(asset);
-				jsal_throw();
-			}
-		}
+		if (!(image = image_load(filename)))
+			jsal_error(JS_ERROR, "Couldn't load an image from file '%s'.", filename);
 	}
-	jsal_push_class_obj(class_id, asset, true);
+	jsal_push_class_obj(class_id, image, true);
 	return true;
 }
 
 static void
 js_Texture_finalize(void* host_ptr)
 {
-	asset_unref(host_ptr);
+	image_unref(host_ptr);
 }
 
 static bool
 js_Texture_get_fileName(int num_args, bool is_ctor, intptr_t magic)
 {
-	asset_t*    asset;
 	const char* filename;
+	image_t*    image;
 
 	jsal_push_this();
-	asset = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
-	if ((filename = asset_filename(asset)))
+	if ((filename = image_path(image)))
 		jsal_push_string(filename);
 	else
 		jsal_push_undefined();
@@ -5472,24 +5310,10 @@ js_Texture_get_height(int num_args, bool is_ctor, intptr_t magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_TEXTURE);
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	jsal_push_int(image_height(image));
 	cache_value_to_this("height");
-	return true;
-}
-
-static bool
-js_Texture_get_ready(int num_args, bool is_ctor, intptr_t magic)
-{
-	asset_t* asset;
-
-	jsal_push_this();
-	asset = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
-
-	if (!asset_load(asset))
-		jsal_error(JS_ERROR, "%s", asset_error(asset));
-	jsal_push_boolean_true();
 	return true;
 }
 
@@ -5499,7 +5323,7 @@ js_Texture_get_width(int num_args, bool is_ctor, intptr_t magic)
 	image_t* image;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_TEXTURE);
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	jsal_push_int(image_width(image));
 	cache_value_to_this("width");
@@ -5515,7 +5339,7 @@ js_Texture_download(int num_args, bool is_ctor, intptr_t magic)
 	int      width;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_TEXTURE);
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 
 	if (image == screen_backbuffer(g_screen))
 		jsal_error(JS_RANGE_ERROR, "Cannot download directly from the backbuffer");
@@ -5537,7 +5361,7 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 	int            width;
 
 	jsal_push_this();
-	image = jsal_pegasus_require_asset(-1, PEGASUS_TEXTURE);
+	image = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
 	buffer = jsal_require_buffer_ptr(0, &buffer_size);
 
 	if (image == screen_backbuffer(g_screen))
@@ -5549,18 +5373,6 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 	if (!image_upload(image, buffer))
 		jsal_error(JS_ERROR, "Couldn't upload data to GPU texture");
 	return false;
-}
-
-static bool
-js_Texture_whenReady(int num_args, bool is_ctor, intptr_t magic)
-{
-	asset_t* asset;
-
-	jsal_push_this();
-	asset = jsal_require_class_obj(-1, PEGASUS_TEXTURE);
-
-	events_ready_asset(asset, jsal_ref(-1));
-	return true;
 }
 
 static bool

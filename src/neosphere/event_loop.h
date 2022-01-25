@@ -33,7 +33,6 @@
 #ifndef SPHERE__EVENT_LOOP_H__INCLUDED
 #define SPHERE__EVENT_LOOP_H__INCLUDED
 
-#include "asset.h"
 #include "sockets.h"
 
 void events_init           (void);
@@ -45,7 +44,6 @@ void events_accept_client  (server_t* server);
 void events_close_socket   (socket_t* socket);
 void events_connect_to     (socket_t* socket, const char* hostname, int port);
 void events_read_socket    (socket_t* socket, int num_bytes);
-void events_ready_asset    (asset_t* asset, js_ref_t* object_ref);
 bool events_run_main_loop  (void);
 void events_write_socket   (socket_t* socket, const void* data, int num_bytes);
 void events_tick           (int api_version, bool clear_screen, int framerate);
