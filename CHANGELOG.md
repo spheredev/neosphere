@@ -1,8 +1,8 @@
 neoSphere Changelog
 ===================
 
-Since Last Release
-------------------
+v5.7.2 - January 25, 2022
+-------------------------
 
 * Adds `RT.Version` for getting the current API revision of the Sphere Runtime.
 * Renames `Thread` to `Task`, retaining the former as a temporary alias.
@@ -14,9 +14,8 @@ Since Last Release
 * Fixes a bug that caused the engine to stop responding to debugger commands
   while the JavaScript error screen was being displayed.
 
-
-v5.7.1 - January 04, 2022
--------------------------
+v5.7.1 - January 4, 2022
+------------------------
 
 * Adds new `.ready` and `.whenReady()` APIs which allow games to check if an
   asset (texture, sound, etc.) is completely loaded before using it.

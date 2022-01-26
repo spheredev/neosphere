@@ -5219,9 +5219,12 @@ js_Texture_fromFile(int num_args, bool is_ctor, intptr_t magic)
 	const char* filename;
 	image_t*    image;
 
+	class_id = (int)magic;
 	filename = jsal_require_pathname(0, NULL, false, false);
 
-	class_id = (int)magic;
+	if (class_id == PEGASUS_SURFACE && s_target_api_level >= 4)
+		jsal_error(JS_ERROR, "'Surface.fromFile' is not supported when targeting API 4 or higher.");
+
 	if (!(image = image_load(filename)))
 		jsal_error(JS_ERROR, "Unable to load an image from file '%s'.", filename);
 	jsal_push_class_obj(class_id, image, false);
