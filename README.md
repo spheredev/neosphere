@@ -1,7 +1,7 @@
 neoSphere: a JavaScript-based game engine
 =========================================
 
-[![Release](https://img.shields.io/github/release/fatcerberus/neosphere.svg)](https://github.com/fatcerberus/sphere/releases/latest)
+[![Release](https://img.shields.io/github/release/spheredev/neosphere.svg)](https://github.com/spheredev/neosphere/releases/latest)
 
 **neoSphere** is a lightweight, fully sandboxed, JavaScript-powered game
 engine and development platform.  It is a complete rewrite of Chad Austin's

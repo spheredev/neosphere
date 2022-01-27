@@ -130,7 +130,7 @@ class Console extends Task
 
 		this.log(`initializing the Sphere Runtime Console`);
 		this.log(`  ${Sphere.Game.name} by ${Sphere.Game.author}`);
-		this.log(`  Sphere v${Sphere.Version} API ${Sphere.APILevel} (${Sphere.Engine})`);
+		this.log(`  Sphere v${Sphere.Version} API level ${Sphere.APILevel} (${Sphere.Engine})`);
 		this.log("");
 
 		super.start();
