@@ -38,7 +38,7 @@
 
 #include "jsal.h"
 
-void   api_init                (void);
+void   api_init                (bool node_compatible);
 void   api_define_async_func   (const char* namespace_name, const char* name, js_function_t callback, intptr_t magic);
 void   api_define_async_method (const char* class_name, const char* name, js_function_t callback, intptr_t magic);
 void   api_define_const        (const char* enum_name, const char* name, double value);

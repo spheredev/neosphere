@@ -318,7 +318,7 @@ main(int argc, char* argv[])
 		api_level = SPHERE_API_LEVEL;
 	}
 	
-	api_init();
+	api_init(target_api_level <= 3);
 	modules_init(target_api_level);
 	if (api_version == 1 || (api_version == 2 && target_api_level < 4))
 		vanilla_init();

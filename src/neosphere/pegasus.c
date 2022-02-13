@@ -796,7 +796,7 @@ pegasus_init(int api_level, int target_api_level)
 	// the do-nothing versions are implemented in JavaScript.  doing so allows the JIT to compile them
 	// away completely; there's no need to call into the engine if nothing needs to be done anyway.
 	jsal_push_string(
-		"Object.defineProperty(global, 'SSj', {"
+		"Object.defineProperty(globalThis, 'SSj', {"
 		"    writable: true,"
 		"    enumerable: false,"
 		"    configurable: true,"
@@ -810,7 +810,7 @@ pegasus_init(int api_level, int target_api_level)
 		"        trace() {},"
 		"    },"
 		"});"
-		"Object.defineProperty(global, 'print', {"
+		"Object.defineProperty(globalThis, 'print', {"
 		"    writable: true,"
 		"    enumerable: false,"
 		"    configurable: true,"

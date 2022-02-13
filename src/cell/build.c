@@ -193,7 +193,7 @@ build_new(const path_t* source_path, const path_t* out_path, bool debuggable)
 	visor_begin_op(visor, "setting up the Cell build environment");
 
 	// initialize the Cellscript API
-	api_init();
+	api_init(true);
 	modules_init(fs, false);
 	api_define_func(NULL, "describe", js_describe, 0);
 	api_define_func(NULL, "error", js_error, 0);

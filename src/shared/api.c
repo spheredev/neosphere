@@ -66,22 +66,20 @@ static vector_t* s_classes;
 static js_ref_t* s_key_prototype;
 
 void
-api_init(void)
+api_init(bool node_compatible)
 {
 	s_classes = vector_new(sizeof(struct class_data));
 
 	s_key_prototype = jsal_new_key("prototype");
 
-	// JavaScript 'global' binding (like Node.js)
-	// also map global 'exports' to the global object, as TypeScript likes to add
-	// exports even when compiling scripts as program code.
-	jsal_push_global_object();
-	jsal_push_global_object();
-	jsal_to_propdesc_value(false, false, false);
-	jsal_dup(-1);
-	jsal_def_prop_string(-3, "global");
-	jsal_def_prop_string(-2, "exports");
-	jsal_pop(1);
+	if (node_compatible) {
+		// Node.js-compatible 'global' binding
+		jsal_push_global_object();
+		jsal_push_global_object();
+		jsal_to_propdesc_value(false, false, false);
+		jsal_def_prop_string(-2, "global");
+		jsal_pop(1);
+	}
 }
 
 void
