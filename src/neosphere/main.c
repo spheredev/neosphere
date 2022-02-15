@@ -124,7 +124,6 @@ main(int argc, char* argv[])
 
 	int                  api_level;
 	int                  api_version;
-	bool                 eval_succeeded;
 	lstring_t*           dialog_name;
 	int                  error_column = 0;
 	int                  error_line = 0;
@@ -349,46 +348,21 @@ main(int argc, char* argv[])
 	// evaluate the main script (v1) or module (v2)
 	script_path = game_script_path(g_game);
 	api_version = game_version(g_game);
-	if (target_api_level >= 4 && api_version >= 2 && path_extension_is(script_path, ".cjs")) {
-		jsal_push_new_error(JS_TYPE_ERROR, "CommonJS main '%s' unsupported when targeting API 4+", path_cstr(script_path));
-		goto on_js_error;
-	}
-	eval_succeeded = api_version >= 2
-		? module_eval(path_cstr(script_path), false)
-		: script_eval(path_cstr(script_path));
-	if (!eval_succeeded)
-		goto on_js_error;
-
-	// in Sphere v2 mode, the main script is loaded as a module (either CommonJS or ESM).
-	// check for a default export and `new` it if possible, then call obj.start().
-	if (api_version >= 2 && jsal_is_object(-1)) {
-		jsal_get_prop_string(-1, "default");
-		if (jsal_is_async_function(-1)) {
-			// async functions aren't constructible, so call those normally.
-			for (i = game_args_offset; i < argc; ++i)
-				jsal_push_string(argv[i]);
-			if (!jsal_try_call(argc - game_args_offset))
-				goto on_js_error;
+	if (api_version >= 2) {
+		// Sphere v2 mode: call the default export, if there is one.  the module ready
+		// callback deals with actually calling it.
+		if (path_extension_is(script_path, ".cjs") && target_api_level >= 4) {
+			jsal_push_new_error(JS_TYPE_ERROR, "CommonJS main '%s' unsupported when targeting API 4+", path_cstr(script_path));
+			goto on_js_error;
 		}
-		else if (jsal_is_function(-1)) {
-			if (!jsal_try_construct(0))
-				goto on_js_error;
-			g_main_object = jsal_ref(-1);
-			jsal_get_prop_string(-1, "start");
-			jsal_pull(-2);
-			if (jsal_vm_enabled() && jsal_is_function(-2)) {
-				for (i = game_args_offset; i < argc; ++i)
-					jsal_push_string(argv[i]);
-				if (!jsal_try_call_method(argc - game_args_offset))
-					goto on_js_error;
-			}
-		}
-		jsal_pop(2);
+		if (!module_eval(path_cstr(script_path), false))
+			goto on_js_error;
 	}
-
-	// if we're running in Sphere 1.x legacy mode, call the global game() function.  note
-	// that, in contrast to Sphere 1.x, it's not an error if this function doesn't exist.
-	if (api_version <= 1) {
+	else {
+		// Sphere v1 mode: call the global game() function.  note that, in contrast to
+		// Sphere 1.x, it's not an error if this function doesn't exist.
+		if (!script_eval(path_cstr(script_path)))
+			goto on_js_error;
 		jsal_get_global_string("game");
 		if (jsal_is_function(-1)) {
 			for (i = game_args_offset; i < argc; ++i)
@@ -570,6 +544,34 @@ on_enqueue_js_job(void)
 	dispatch_defer(script, 0, JOB_ON_TICK, true);
 }
 
+static void
+on_module_complete(const char* specifier, bool has_error)
+{
+	// temporary hack: if there's an exception, JSAL puts it on the stack.  but since it also converts any exceptions
+	// we throw into uncaught promise rejections, we can just rethrow it.
+	if (has_error)
+		jsal_throw();
+
+	// in Sphere v2 mode, the main script is loaded as a module.  check for a default export
+	// and `new` it if possible, then call obj.start().
+	if (strcmp(specifier, path_cstr(game_script_path(g_game))) == 0) {
+		jsal_get_prop_string(0, "default");
+		if (jsal_is_async_function(-1)) {
+			// async functions aren't constructible, so call those normally.
+			jsal_call(0);
+		}
+		else if (jsal_is_function(-1)) {
+			jsal_construct(0);
+			g_main_object = jsal_ref(-1);
+			jsal_get_prop_string(-1, "start");
+			jsal_pull(-2);
+			if (jsal_vm_enabled() && jsal_is_function(-2))
+				jsal_call_method(0);
+		}
+		jsal_pop(2);
+	}
+}
+
 static bool
 on_reject_promise(void)
 {
@@ -649,6 +651,7 @@ initialize_engine(void)
 	console_log(1, "initializing JavaScript");
 	if (!jsal_init())
 		goto on_error;
+	jsal_on_module_complete(on_module_complete);
 	jsal_on_enqueue_job(on_enqueue_js_job);
 	jsal_on_reject_promise(on_reject_promise);
 

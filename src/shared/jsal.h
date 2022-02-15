@@ -97,6 +97,7 @@ typedef void      (* js_job_callback_t)    (void);
 typedef bool      (* js_reject_callback_t) (void);
 typedef void      (* js_throw_callback_t)  (void);
 typedef void      (* js_import_callback_t) (void);
+typedef void      (* js_module_callback_t) (const char* specifier, bool has_error);
 
 bool         jsal_init                     (void);
 void         jsal_uninit                   (void);
@@ -105,6 +106,7 @@ bool         jsal_busy                     (void);
 bool         jsal_vm_enabled               (void);
 void         jsal_on_enqueue_job           (js_job_callback_t callback);
 void         jsal_on_import_module         (js_import_callback_t callback);
+void         jsal_on_module_complete       (js_module_callback_t callback); 
 void         jsal_on_reject_promise        (js_reject_callback_t callback);
 void         jsal_call                     (int num_args);
 void         jsal_call_method              (int num_args);

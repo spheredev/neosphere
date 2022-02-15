@@ -122,6 +122,7 @@ static void CHAKRA_CALLBACK        on_finalize_host_object     (void* userdata);
 static JsValueRef CHAKRA_CALLBACK  on_js_to_native_call        (JsValueRef callee, JsValueRef argv[], unsigned short argc, JsNativeFunctionInfo* env, void* userdata);
 static JsErrorCode CHAKRA_CALLBACK on_notify_module_ready      (JsModuleRecord module, JsValueRef exception);
 static void CHAKRA_CALLBACK        on_reject_promise_unhandled (JsValueRef promise, JsValueRef reason, bool handled, void* userdata);
+static void CHAKRA_CALLBACK        on_report_module_completion (JsModuleRecord module, JsValueRef exception);
 static void CHAKRA_CALLBACK        on_resolve_reject_promise   (JsValueRef function, void* userdata);
 static void                        decode_debugger_value       (void);
 static const char*                 filename_from_script_id     (unsigned int script_id);
@@ -166,6 +167,7 @@ static js_ref_t*            s_key_set;
 static js_ref_t*            s_key_value;
 static js_ref_t*            s_key_writable;
 static vector_t*            s_module_cache;
+static js_module_callback_t s_module_callback = NULL;
 static vector_t*            s_module_jobs;
 static JsValueRef           s_newtarget_value = JS_INVALID_REFERENCE;
 static JsSourceContext      s_next_source_context = 1;
@@ -204,6 +206,7 @@ jsal_init(void)
 	JsSetModuleHostInfo(NULL, JsModuleHostInfo_FetchImportedModuleCallback, on_fetch_imported_module);
 	JsSetModuleHostInfo(NULL, JsModuleHostInfo_FetchImportedModuleFromScriptCallback, on_fetch_dynamic_import);
 	JsSetModuleHostInfo(NULL, JsModuleHostInfo_NotifyModuleReadyCallback, on_notify_module_ready);
+	JsSetModuleHostInfo(NULL, JsModuleHostInfo_ReportModuleCompletionCallback, on_report_module_completion);
 
 	// set up the stash, used to store JS values behind the scenes.
 	JsCreateObject(&s_stash);
@@ -395,6 +398,14 @@ void
 jsal_on_import_module(js_import_callback_t callback)
 {
 	s_import_callback = callback;
+}
+
+void
+jsal_on_module_complete(js_module_callback_t callback)
+{
+	/* callback stack: [ namespace ] */
+
+	s_module_callback = callback;
 }
 
 void
@@ -1541,7 +1552,8 @@ jsal_push_new_promise(js_ref_t* *out_resolver, js_ref_t* *out_rejector)
 	JsValueRef resolver;
 
 	JsCreatePromise(&promise, &resolver, &rejector);
-	*out_resolver = make_ref(resolver, false);
+	if (out_resolver != NULL)
+		*out_resolver = make_ref(resolver, false);
 	if (out_rejector != NULL)
 		*out_rejector = make_ref(rejector, false);
 	return push_value(promise, false);
@@ -3144,6 +3156,53 @@ on_reject_promise_unhandled(JsValueRef promise, JsValueRef reason, bool handled,
 			}
 		}
 	}
+}
+
+static void CHAKRA_CALLBACK
+on_report_module_completion(JsModuleRecord module, JsValueRef exception)
+{
+	jsal_jmpbuf  label;
+	jsal_jmpbuf* last_catch_label;
+	int          last_stack_base;
+	JsValueRef   namespace;
+	js_ref_t*    rejector;
+	char*        specifier;
+	JsValueRef   specifier_ref;
+
+	JsGetModuleHostInfo(module, JsModuleHostInfo_HostDefined, &specifier_ref);
+	push_value(specifier_ref, true);
+	specifier = strdup(jsal_get_string(-1));
+	jsal_pop(1);
+
+	last_catch_label = s_catch_label;
+	last_stack_base = s_stack_base;
+	s_stack_base = vector_len(s_value_stack);
+	if (exception == JS_INVALID_REFERENCE) {
+		JsGetModuleNamespace(module, &namespace);
+		push_value(namespace, true);
+	}
+	else {
+		push_value(exception, true);
+	}
+	if (jsal_setjmp(label) == 0) {
+		s_catch_label = &label;
+		if (s_module_callback != NULL)
+			s_module_callback(specifier, exception != JS_INVALID_REFERENCE);
+	}
+	else {
+		// if an error gets thrown into C code, 'jsal_throw()' leaves it on top
+		// of the value stack.
+		exception = pop_value();
+		jsal_push_new_promise(NULL, &rejector);
+		jsal_push_ref_weak(rejector);
+		push_value(exception, false);
+		jsal_call(1);
+	}
+	resize_stack(s_stack_base);
+	s_catch_label = last_catch_label;
+	s_stack_base = last_stack_base;
+
+	free(specifier);
 }
 
 static void CHAKRA_CALLBACK
