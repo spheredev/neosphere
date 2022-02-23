@@ -473,6 +473,13 @@ etc...
     The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
     false, but this is rarely an issue in practice.
 
+Color.fromRGBA(r, g, b[, alpha]); [API 4]
+
+    Constructs a Color corresponding to the specified 8-bit RGBA values.
+    Values range 0-255; the function will throw an error if passed a value
+    outside this range.  If `alpha` (opacity) is not provided, it defaults to
+    255.
+
 Color.is(color1, color2); [API 1]
 
     Returns true if `color1` refers to the same physical color as `color2`

@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+neoSphere 5.8
+-------------
+
+* Support for the `global` binding is now disabled when targeting API level 4
+  and higher.  Going forward, games should use the ECMA standard `globalThis`
+  to access the global object.
+
+
 neoSphere 5.7
 -------------
 

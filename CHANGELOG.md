@@ -1,6 +1,15 @@
 neoSphere Changelog
 ===================
 
+v5.8.0 - TBD
+------------
+
+* Adds `Color.fromRGBA()` API for constructing colors from 8-bit component
+  values.
+* Adds a new predefined color, `Color.EatyPig`.
+* Removes support for `global` when targeting API 4 or higher.
+
+
 v5.7.2 - January 25, 2022
 -------------------------
 

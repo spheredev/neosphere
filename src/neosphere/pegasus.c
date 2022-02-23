@@ -257,6 +257,7 @@ COLORS[] =
 	{ 2, "PurwaBlue", 155, 225, 255, 255 },
 	{ 2, "RebeccaPurple", 102, 51, 153, 255 },
 	{ 2, "StankyBean", 197, 162, 171, 255 },
+	{ 4, "EatyPig", 231, 142, 165, 255 },
 	{ 0, NULL, 0, 0, 0, 0 }
 };
 
@@ -281,6 +282,7 @@ static bool js_Sphere_sleep                  (int num_args, bool is_ctor, intptr
 static bool js_BlendOp_get_Default           (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_BlendOp                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Color_get_Default             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Color_fromRGBA                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Color_is                      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Color_mix                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Color_of                      (int num_args, bool is_ctor, intptr_t magic);
@@ -997,6 +999,7 @@ pegasus_init(int api_level, int target_api_level)
 	}
 
 	if (api_level >= 4) {
+		api_define_func("Color", "fromRGBA", js_Color_fromRGBA, 0);
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
@@ -1422,6 +1425,32 @@ js_Color_get_Default(int num_args, bool is_ctor, intptr_t magic)
 
 	data = &COLORS[magic];
 	jsal_pegasus_push_color(mk_color(data->r, data->g, data->b, data->a), false);
+	return true;
+}
+
+static bool
+js_Color_fromRGBA(int num_args, bool is_ctor, intptr_t magic)
+{
+	double r;
+	double g;
+	double b;
+	double alpha = 255.0;
+
+	r = jsal_require_number(0);
+	g = jsal_require_number(1);
+	b = jsal_require_number(2);
+	if (!jsal_is_undefined(3))
+		alpha = jsal_require_number(3);
+
+	if (r < 0.0 || r > 255.0)
+		jsal_error(JS_RANGE_ERROR, "Invalid RGBA red value %g", r);
+	if (g < 0.0 || g > 255.0)
+		jsal_error(JS_RANGE_ERROR, "Invalid RGBA green value %g", g);
+	if (b < 0.0 || b > 255.0)
+		jsal_error(JS_RANGE_ERROR, "Invalid RGBA blue value %g", b);
+	if (alpha < 0.0 || alpha > 255.0)
+		jsal_error(JS_RANGE_ERROR, "Invalid RGBA alpha value %g", alpha);
+	jsal_pegasus_push_color(mk_color(r, g, b, alpha), false);
 	return true;
 }
 
