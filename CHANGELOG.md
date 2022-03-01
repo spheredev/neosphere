@@ -4,8 +4,11 @@ neoSphere Changelog
 v5.8.0 - TBD
 ------------
 
-* Adds `Color.fromRGBA()` API for constructing colors from 8-bit component
-  values.
+* Adds a new API, `Color.fromRGBA()`, for constructing colors from 8-bit RGBA
+  component values.
+* Adds a new API, `Transform.Identity`, for quickly getting an identity matrix.
+* Adds new static methods to `Transform` to construct basic transformations
+  without the need to call `new Transform()` first.
 * Adds a new predefined color, `Color.EatyPig`.
 * Removes support for `global` when targeting API 4 or higher.
 

@@ -486,6 +486,7 @@ static bool js_Texture_get_height            (int num_args, bool is_ctor, intptr
 static bool js_Texture_get_width             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_download              (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Texture_upload                (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Transform_get_Identity        (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_Transform                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Transform_get_matrix          (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Transform_set_matrix          (int num_args, bool is_ctor, intptr_t magic);
@@ -999,9 +1000,15 @@ pegasus_init(int api_level, int target_api_level)
 	}
 
 	if (api_level >= 4) {
+		api_define_static_prop("Transform", "Identity", js_Transform_get_Identity, NULL, 0);
 		api_define_func("Color", "fromRGBA", js_Color_fromRGBA, 0);
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
+		api_define_func("Transform", "project2D", js_Transform_project2D, 1);
+		api_define_func("Transform", "project3D", js_Transform_project3D, 1);
+		api_define_func("Transform", "rotate", js_Transform_rotate, 1);
+		api_define_func("Transform", "scale", js_Transform_scale, 1);
+		api_define_func("Transform", "translate", js_Transform_translate, 1);
 		api_define_func("Z", "deflate", js_Z_deflate, 0);
 		api_define_func("Z", "inflate", js_Z_inflate, 0);
 		api_define_prop("Surface", "depthOp", false, js_Surface_get_depthOp, js_Surface_set_depthOp);
@@ -5408,6 +5415,16 @@ js_Texture_upload(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
+js_Transform_get_Identity(int num_args, bool is_ctor, intptr_t magic)
+{
+	transform_t* transform;
+
+	transform = transform_new();
+	jsal_push_class_obj(PEGASUS_TRANSFORM, transform, false);
+	return true;
+}
+
+static bool
 js_new_Transform(int num_args, bool is_ctor, intptr_t magic)
 {
 	transform_t* transform;
@@ -5515,14 +5532,23 @@ js_Transform_identity(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Transform_project2D(int num_args, bool is_ctor, intptr_t magic)
 {
+	bool         static_call;
 	transform_t* transform;
 	float        x1, x2;
 	float        y1, y2;
 	float        z1 = -1.0f;
 	float        z2 = 1.0f;
 
-	jsal_push_this();
-	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	static_call = magic != 0;
+	if (!static_call) {
+		jsal_push_this();
+		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	}
+	else {
+		transform = transform_new();
+		jsal_push_class_obj(PEGASUS_TRANSFORM, transform, false);
+	}
+
 	x1 = jsal_require_number(0);
 	y1 = jsal_require_number(1);
 	x2 = jsal_require_number(2);
@@ -5542,11 +5568,20 @@ js_Transform_project3D(int num_args, bool is_ctor, intptr_t magic)
 	float        aspect;
 	float        fov;
 	float        fw, fh;
+	bool         static_call;
 	transform_t* transform;
 	float        z1, z2;
 
-	jsal_push_this();
-	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	static_call = magic != 0;
+	if (!static_call) {
+		jsal_push_this();
+		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	}
+	else {
+		transform = transform_new();
+		jsal_push_class_obj(PEGASUS_TRANSFORM, transform, false);
+	}
+
 	fov = jsal_require_number(0);
 	aspect = jsal_require_number(1);
 	z1 = jsal_require_number(2);
@@ -5569,14 +5604,23 @@ static bool
 js_Transform_rotate(int num_args, bool is_ctor, intptr_t magic)
 {
 	float        norm;
+	bool         static_call;
 	float        theta;
 	transform_t* transform;
 	float        vx = 0.0;
 	float        vy = 0.0;
 	float        vz = 1.0;
 
-	jsal_push_this();
-	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	static_call = magic != 0;
+	if (!static_call) {
+		jsal_push_this();
+		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	}
+	else {
+		transform = transform_new();
+		jsal_push_class_obj(PEGASUS_TRANSFORM, transform, false);
+	}
+
 	theta = jsal_require_number(0);
 	if (num_args >= 2) {
 		vx = jsal_require_number(1);
@@ -5600,13 +5644,22 @@ js_Transform_rotate(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Transform_scale(int num_args, bool is_ctor, intptr_t magic)
 {
+	bool         static_call;
 	float        sx;
 	float        sy;
 	float        sz = 1.0;
 	transform_t* transform;
 
-	jsal_push_this();
-	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	static_call = magic != 0;
+	if (!static_call) {
+		jsal_push_this();
+		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	}
+	else {
+		transform = transform_new();
+		jsal_push_class_obj(PEGASUS_TRANSFORM, transform, false);
+	}
+
 	sx = jsal_require_number(0);
 	sy = jsal_require_number(1);
 	if (num_args >= 3)
@@ -5622,10 +5675,19 @@ js_Transform_translate(int num_args, bool is_ctor, intptr_t magic)
 	float        dx;
 	float        dy;
 	float        dz = 0.0;
+	bool         static_call;
 	transform_t* transform;
 
-	jsal_push_this();
-	transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	static_call = magic != 0;
+	if (!static_call) {
+		jsal_push_this();
+		transform = jsal_require_class_obj(-1, PEGASUS_TRANSFORM);
+	}
+	else {
+		transform = transform_new();
+		jsal_push_class_obj(PEGASUS_TRANSFORM, transform, false);
+	}
+
 	dx = jsal_require_number(0);
 	dy = jsal_require_number(1);
 	if (num_args >= 3)

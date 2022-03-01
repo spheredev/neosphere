@@ -2332,10 +2332,58 @@ Texture#upload(content); [EXP]
 A `Transform` represents a transformation matrix used to convert vertex
 coordinates for shapes drawn to a surface.
 
+Transform.Identity [get] [API 4]
+
+    Gets the identity transformation matrix.  This transformation simply uses
+    vertex values as is, without modifying them in any way.
+
+Transform.project2D(left, top, right, bottom[, near, far]); [API 4]
+
+    Returns an orthographic projection transform used for rendering in 2D.  For
+    pixel-perfect rendering, set `left` and `top` to 0 and `right` and `bottom`
+    to the pixel size of the surface being drawn to.  This is the default
+    projection transform for all new surfaces, including `Surface.Screen`.
+
+    `near` and `far` are distances relative to the front of the "camera" beyond
+	which objects will not be visible.  If not provided, `near` defaults to
+	-1.0 and `far` defaults to 1.0.
+
+Transform.project3D(fov, aspect_ratio, near, far); [API 4]
+
+    Returns a perspective transform that projects a scene into 3D.  `fov` is
+    the extent of the camera's field of view, in degrees.  `aspect` is the
+    aspect ratio of the scene, and to avoid distortion should usually match the
+    aspect ratio of the surface being projected onto.
+
+    `near` and `far` define the distances in front of the camera beyond which
+    objects will not be visible.  For 3D projections, these must be nonzero and
+    positive, or an error will be thrown.
+
+Transform.rotate(angle[, vx, vy, vz]); [API 4]
+
+    Returns a transform which can be used to rotate an object or scene about an
+    arbitrary axis.  `angle` is the amount of rotation to apply, in degrees.
+    (vx, vy, vz) is the vector to be rotated around.  For example, the default
+    is (0, 0, 1) which produces a rotation about the Z (depth) axis.
+
+Transform.scale(sx, sy[, sz]); [API 4]
+
+    Returns a transform which scales all vertex coordinates by a given amount.
+    `sx`, `sy`, and `sz` are the scaling factors for each coordinate.  If `sz`
+    is not provided, it defaults to 1.0, which leaves the Z coordinate
+    unchanged.
+
+Transform.translate(tx, ty[, tz]); [API 4]
+
+    Returns a transform which translates (moves) all vertex coordinates by a
+    given distance.  `tx`, `ty`, and `tz` are the distances to move along each
+    axis.  If `tz` is not provided, it defaults to 0.0, which leaves the Z
+    coordinate unchanged.
+
 new Transform(); [API 1]
 
     Constructs a transformation matrix.  The object represents a 4x4 matrix
-    and is initialized to identity.
+    and is initialized to `Transform.Identity`.
 
 Transform#matrix [get]
 
@@ -2347,7 +2395,7 @@ Transform#matrix [get]
 
 Transform#identity(); [API 1]
 
-    Re-initializes this matrix as an identity matrix.
+    Resets this transform's underlying matrix to the identity matrix.
 
 Transform#compose(otherMatrix); [API 1]
 
@@ -2356,37 +2404,28 @@ Transform#compose(otherMatrix); [API 1]
 
 Transform#project2D(left, top, right, bottom[, near, far]); [API 1]
 
-    Multiplies this transform's matrix with an orthographic (parallel)
-    projection.
+    Adds a 2D orthographic projection to this transform.  This is equivalent to
+    calling `compose()` with the transform returned by `Transform.project2D()`.
 
 Transform#project3D(fov, aspect, near, far); [API 1]
 
-    Multiplies this transform's matrix with a 3D perspective projection.  `fov`
-    is the size of the vertical field of view, in degrees.  `aspect` should
-    match the aspect ratio of the game.  For example, if the game resolution
-    is 1280x720, then `aspect` would usually be (16 / 9).
-
-    `near` and `far` define the distances in front of the "camera" beyond which
-    objects will be clipped.  They must be nonzero and positive, or an error
-    will be thrown.
+    Adds a 3D perspective projection to this transform.  This is equivalent to
+    calling `compose()` with the transform returned by `Transform.project3D()`.
 
 Transform#rotate(angle[, vx, vy, vz]); [API 1]
 
-    Applies a rotation transformation to this matrix.  `angle` is the amount of
-    rotation to apply, in degrees.  (vx, vy, vz) is the vector to rotate about.
-    For example, the default is (0, 0, 1) which rotates about the Z axis.
+    Adds a rotation to this transform.  This is equivalent to calling
+    `compose()` with the transform returned by `Transform.rotate()`.
 
 Transform#scale(sx, sy[, sz]); [API 1]
 
-    Applies a scaling transformation to this matrix.  `sx`, `sy`, and `sz` are
-    the scaling factors for each axis.  If `sz` is omitted, it defaults to 1.0
-    and the Z axis is not scaled.
+    Adds a scaling transformation to this transform.  This is equivalent to
+    calling `compose()` with the transform returned by `Transform.scale()`.
 
 Transform#translate(tx, ty[, tz]); [API 1]
 
-    Applies a translation transformation to this matrix.  `tx`, `ty`, and `tz`
-    are the amount of translation to apply along each axis.  If `tz` is
-    omitted, it defaults to 0.0 and the Z axis is not translated.
+    Adds a translation to this transform.  This is equivalent to calling
+    `compose()` with the transform returned by `Transform.translate()`.
 
 
 `VertexList` Object
