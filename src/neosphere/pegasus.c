@@ -5468,8 +5468,8 @@ js_Transform_get_matrix(int num_args, bool is_ctor, intptr_t magic)
 			jsal_push_new_object();
 			for (j = 0; j < 4; ++j) {
 				jsal_dup(cell_desc_idx);
-				jsal_push_new_function(js_Transform_get_matrix, "get", 0, false, (intptr_t)&values[j * 4 + i]);
-				jsal_push_new_function(js_Transform_set_matrix, "set", 0, false, (intptr_t)&values[j * 4 + i]);
+				jsal_push_new_function(js_Transform_get_matrix, "get", 0, false, (intptr_t)&values[i * 4 + j]);
+				jsal_push_new_function(js_Transform_set_matrix, "set", 0, false, (intptr_t)&values[i * 4 + j]);
 				jsal_put_prop_key(-3, s_key_set);
 				jsal_put_prop_key(-2, s_key_get);
 				jsal_def_prop_index(-2, j);

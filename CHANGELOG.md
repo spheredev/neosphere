@@ -10,6 +10,7 @@ v5.8.0 - TBD
 * Adds new static methods to `Transform` to construct basic transformations
   without the need to call `new Transform()` first.
 * Adds a new predefined color, `Color.EatyPig`.
+* Fixes a bug that caused the dimensions of `Transform#matrix` to be swapped.
 * Removes support for `global` when targeting API 4 or higher.
 
 
