@@ -4,6 +4,10 @@ Release Notes
 neoSphere 5.8
 -------------
 
+* It is now possible to construct standard transformation matrices directly
+  using static methods of the `Transform` class, without the need to call
+  `new Transform()` first.  See the API documentation for more information.
+
 * Support for the `global` binding is now disabled when targeting API level 4
   and higher.  Going forward, games should use the ECMA standard `globalThis`
   to access the global object.

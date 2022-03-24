@@ -1,8 +1,8 @@
 neoSphere Changelog
 ===================
 
-v5.8.0 - TBD
-------------
+v5.8.0 - March 23, 2022
+-----------------------
 
 * Adds a new API, `Color.fromRGBA()`, for constructing colors from 8-bit RGBA
   component values.
