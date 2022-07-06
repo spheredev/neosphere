@@ -1,6 +1,11 @@
 neoSphere Changelog
 ===================
 
+v5.8.1 - TBD
+------------
+
+No changes yet.
+
 v5.8.0 - March 23, 2022
 -----------------------
 
