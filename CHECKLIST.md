@@ -12,7 +12,6 @@ this new commit.
 * Version number in `VERSION`
 * Version number in Win32 resources (`msvs/*.rc`)
 * Version number in `src/shared/version.h`
-* Version number and release date in `README.md`
 * Version number and release date in manual pages (`manpages/*`)
 * Version number, release date, and changelog entries in `CHANGELOG.md`
 * Version number in `setup/neoSphereSetup.iss`
@@ -21,7 +20,7 @@ this new commit.
 Build the Release
 -----------------
 
-* In Windows using Visual Studio 2019:
+* In Windows using Visual Studio 2022:
     - Run `git clean -xdf`, then build the following project configurations:
         + **neoSphere:** x64 Redist, x64 Console, Win32 Redist, Win32 Console
         + **Cell:** x64 Console, Win32 Console
