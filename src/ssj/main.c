@@ -347,11 +347,10 @@ print_cell_quote(void)
 static void
 print_banner(bool want_copyright, bool want_deps)
 {
-	printf("%s %s Sphere JavaScript debugger [%s]\n", SPHERE_DEBUGGER_NAME, SPHERE_VERSION,
-		sizeof(void*) == 8 ? "x64" : "x86");
+	printf("%s %s Sphere JavaScript debugger\n", SPHERE_DEBUGGER_NAME, SPHERE_VERSION);
 	if (want_copyright) {
 		printf("the powerful symbolic JS debugger for neoSphere\n");
-		printf("(c) 2015-2022 Fat Cerberus\n");
+		printf("(c) 2022 Fat Cerberus\n");
 	}
 	if (want_deps) {
 		printf("\n");

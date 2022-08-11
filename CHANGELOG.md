@@ -4,7 +4,7 @@ neoSphere Changelog
 v5.8.1 - TBD
 ------------
 
-No changes yet.
+* Removes the architecture (x86/x64) from the command-line header.
 
 v5.8.0 - March 23, 2022
 -----------------------
