@@ -1,6 +1,6 @@
 /**
  *  Sphere: the JavaScript game platform
- *  Copyright (c) 2015-2022, Fat Cerberus
+ *  Copyright (c) 2015-2023, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 #define SPHERE_COMPILER_NAME "Cell"
 #define SPHERE_DEBUGGER_NAME "SSj"
 
-#define SPHERE_VERSION "5.8.1"
+#define SPHERE_VERSION "5.8.1+"
 
 #define SPHERE_API_VERSION      2
 #define SPHERE_API_LEVEL        4
