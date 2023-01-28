@@ -1,11 +1,11 @@
 neoSphere Changelog
 ===================
 
-TBD - TBD
----------
+v5.8.2 - January 27, 2023
+-------------------------
 
-* No changes yet.
-
+* Changes the SSj badge to say "SSj CLI" instead of just "SSj", to make it
+  clearer that a command-line debugger is attached.
 
 v5.8.1 - August 12, 2022
 ------------------------

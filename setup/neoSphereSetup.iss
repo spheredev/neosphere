@@ -33,8 +33,8 @@
 ; configurations.
 #define AppName "neoSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.8.1+"
-#define AppVersion4 "0.0.0.0"
+#define AppVersion3 "5.8.2"
+#define AppVersion4 "5.8.2.3453"
 
 [Setup]
 OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
