@@ -33,8 +33,8 @@
 ; configurations.
 #define AppName "neoSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.8.2"
-#define AppVersion4 "5.8.2.3453"
+#define AppVersion3 "5.8.2+"
+#define AppVersion4 "0.0.0.0"
 
 [Setup]
 OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
@@ -45,7 +45,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion3}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=(c) 2015-2022 Fat Cerberus
+AppCopyright=(c) 2015-2023 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
