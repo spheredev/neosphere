@@ -1003,6 +1003,12 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_static_prop("Transform", "Identity", js_Transform_get_Identity, NULL, 0);
 		api_define_func("Color", "fromRGBA", js_Color_fromRGBA, 0);
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
+		api_define_async_func("File", "delete", js_FS_deleteFile, 0);
+		api_define_async_func("File", "exists", js_FS_fileExists, 0);
+		api_define_async_func("File", "load", js_FS_readFile, 0);
+		api_define_async_func("File", "rename", js_FS_rename, 0);
+		api_define_async_func("File", "run", js_FS_evaluateScript, 0);
+		api_define_async_func("File", "save", js_FS_writeFile, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Transform", "project2D", js_Transform_project2D, 1);
 		api_define_func("Transform", "project3D", js_Transform_project3D, 1);
@@ -1036,23 +1042,6 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_const("DepthOp", "LessOrEqual", DEPTH_LEQUAL);
 		api_define_const("DepthOp", "NeverPass", DEPTH_NEVER);
 		api_define_const("DepthOp", "NotEqual", DEPTH_NOTEQUAL);
-		if (target_api_level >= 4) {
-			// when targeting API level 4 or higher, all functions that access the file system
-			// are async by default for maximum cross-compatibility with Oozaru.
-			api_define_async_func("FS", "createDirectory", js_FS_createDirectory, 0);
-			api_define_async_func("FS", "deleteFile", js_FS_deleteFile, 0);
-			api_define_async_func("FS", "directoryExists", js_FS_directoryExists, 0);
-			api_define_async_func("FS", "evaluateScript", js_FS_evaluateScript, 0);
-			api_define_async_func("FS", "fileExists", js_FS_fileExists, 0);
-			api_define_async_func("FS", "readFile", js_FS_readFile, 0);
-			api_define_async_func("FS", "removeDirectory", js_FS_removeDirectory, 0);
-			api_define_async_func("FS", "rename", js_FS_rename, 0);
-			api_define_async_func("FS", "writeFile", js_FS_writeFile, 0);
-			api_define_async_method("FileStream", "read", js_FileStream_read, 0);
-			api_define_async_method("FileStream", "write", js_FileStream_write, 0);
-			api_define_async_method("Socket", "read", js_Socket_read, 0);
-			api_define_async_method("Socket", "write", js_Socket_write, 0);
-		}
 	}
 
 	// keep a local reference to Surface.Screen

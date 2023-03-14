@@ -1,6 +1,12 @@
 neoSphere Changelog
 ===================
 
+v5.9.0 - TBD
+------------
+
+* Adds new asynchronous, Oozaru-compatible `File` APIs.
+
+
 v5.8.2 - January 27, 2023
 -------------------------
 
