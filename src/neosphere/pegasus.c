@@ -257,7 +257,7 @@ COLORS[] =
 	{ 2, "PurwaBlue", 155, 225, 255, 255 },
 	{ 2, "RebeccaPurple", 102, 51, 153, 255 },
 	{ 2, "StankyBean", 197, 162, 171, 255 },
-	{ 4, "EatyPig", 231, 142, 165, 255 },
+	{ 4, "EatyPink", 231, 142, 165, 255 },
 	{ 0, NULL, 0, 0, 0, 0 }
 };
 
@@ -314,20 +314,20 @@ static bool js_Dispatch_onExit               (int num_args, bool is_ctor, intptr
 static bool js_Dispatch_onRender             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Dispatch_onUpdate             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_createDirectory            (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_deleteFile                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_directoryExists            (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_directoryOf                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_evaluateScript             (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_extensionOf                (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_fileExists                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fileNameOf                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_fullPath                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_match                      (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_readFile                   (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_relativePath               (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_rename                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FS_removeDirectory            (int num_args, bool is_ctor, intptr_t magic);
-static bool js_FS_writeFile                  (int num_args, bool is_ctor, intptr_t magic);
+static bool js_File_exists                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_File_load                     (int num_args, bool is_ctor, intptr_t magic);
+static bool js_File_remove                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_File_rename                   (int num_args, bool is_ctor, intptr_t magic);
+static bool js_File_run                      (int num_args, bool is_ctor, intptr_t magic);
+static bool js_File_save                     (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_FileStream                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_get_fileName       (int num_args, bool is_ctor, intptr_t magic);
 static bool js_FileStream_get_fileSize       (int num_args, bool is_ctor, intptr_t magic);
@@ -652,16 +652,16 @@ pegasus_init(int api_level, int target_api_level)
 	api_define_method("Font", "getTextSize", js_Font_getTextSize, 0);
 	api_define_method("Font", "wordWrap", js_Font_wordWrap, 0);
 	api_define_func("FS", "createDirectory", js_FS_createDirectory, 0);
-	api_define_func("FS", "deleteFile", js_FS_deleteFile, 0);
+	api_define_func("FS", "deleteFile", js_File_remove, 0);
 	api_define_func("FS", "directoryExists", js_FS_directoryExists, 0);
-	api_define_func("FS", "evaluateScript", js_FS_evaluateScript, 0);
-	api_define_func("FS", "fileExists", js_FS_fileExists, 0);
+	api_define_func("FS", "evaluateScript", js_File_run, 0);
+	api_define_func("FS", "fileExists", js_File_exists, 0);
 	api_define_func("FS", "fullPath", js_FS_fullPath, 0);
-	api_define_func("FS", "readFile", js_FS_readFile, 0);
+	api_define_func("FS", "readFile", js_File_load, 0);
 	api_define_func("FS", "relativePath", js_FS_relativePath, 0);
 	api_define_func("FS", "removeDirectory", js_FS_removeDirectory, 0);
-	api_define_func("FS", "rename", js_FS_rename, 0);
-	api_define_func("FS", "writeFile", js_FS_writeFile, 0);
+	api_define_func("FS", "rename", js_File_rename, 0);
+	api_define_func("FS", "writeFile", js_File_save, 0);
 	api_define_class("IndexList", PEGASUS_INDEX_LIST, js_new_IndexList, js_IndexList_finalize, 0);
 	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, NULL, 0);
 	api_define_method("JobToken", "cancel", js_JobToken_cancel, 0);
@@ -1003,12 +1003,12 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_static_prop("Transform", "Identity", js_Transform_get_Identity, NULL, 0);
 		api_define_func("Color", "fromRGBA", js_Color_fromRGBA, 0);
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
-		api_define_async_func("File", "delete", js_FS_deleteFile, 0);
-		api_define_async_func("File", "exists", js_FS_fileExists, 0);
-		api_define_async_func("File", "load", js_FS_readFile, 0);
-		api_define_async_func("File", "rename", js_FS_rename, 0);
-		api_define_async_func("File", "run", js_FS_evaluateScript, 0);
-		api_define_async_func("File", "save", js_FS_writeFile, 0);
+		api_define_async_func("File", "exists", js_File_exists, 0);
+		api_define_async_func("File", "load", js_File_load, 0);
+		api_define_async_func("File", "remove", js_File_remove, 0);
+		api_define_async_func("File", "rename", js_File_rename, 0);
+		api_define_async_func("File", "run", js_File_run, 0);
+		api_define_async_func("File", "save", js_File_save, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Transform", "project2D", js_Transform_project2D, 1);
 		api_define_func("Transform", "project3D", js_Transform_project3D, 1);
@@ -1998,18 +1998,6 @@ js_FS_createDirectory(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_FS_deleteFile(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* pathname;
-
-	pathname = jsal_require_pathname(0, NULL, false, true);
-
-	if (!game_unlink(g_game, pathname))
-		jsal_error(JS_ERROR, "Couldn't delete file '%s'", pathname);
-	return false;
-}
-
-static bool
 js_FS_directoryExists(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
@@ -2031,20 +2019,6 @@ js_FS_directoryOf(int num_args, bool is_ctor, intptr_t magic)
 	path = path_strip(path_new(pathname));
 	jsal_push_string(path_cstr(path));
 	path_free(path);
-	return true;
-}
-
-static bool
-js_FS_evaluateScript(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* filename;
-
-	filename = jsal_require_pathname(0, NULL, false, false);
-
-	if (!game_file_exists(g_game, filename))
-		jsal_error(JS_ERROR, "Script file not found '%s'", filename);
-	if (!script_eval(filename))
-		jsal_throw();
 	return true;
 }
 
@@ -2073,17 +2047,6 @@ js_FS_extensionOf(int num_args, bool is_ctor, intptr_t magic)
 		path_free(path);
 		jsal_error(JS_TYPE_ERROR, "'FS.extensionOf' cannot be called on a directory");
 	}
-}
-
-static bool
-js_FS_fileExists(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* pathname;
-
-	pathname = jsal_require_pathname(0, NULL, false, false);
-
-	jsal_push_boolean(game_file_exists(g_game, pathname));
-	return true;
 }
 
 static bool
@@ -2151,7 +2114,49 @@ js_FS_match(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
+js_FS_relativePath(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* base_pathname;
+	path_t*     path;
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL, false, false);
+	base_pathname = jsal_require_pathname(1, NULL, false, false);
+
+	path = game_relative_path(g_game, pathname, base_pathname);
+	jsal_push_string(path_cstr(path));
+	path_free(path);
+	return true;
+}
+
+static bool
+js_FS_removeDirectory(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* pathname;
+
+	pathname = jsal_require_pathname(0, NULL, false, true);
+
+	if (!game_rmdir(g_game, pathname))
+		jsal_error(JS_ERROR, "Couldn't remove directory '%s'", pathname);
+	return false;
+}
+
+static bool
+js_File_exists(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* pathname;
+
+	if (s_target_api_level >= 4 && !jsal_is_async_call())
+		jsal_error(JS_RANGE_ERROR, "'FS.fileExists' is not supported when targeting API 4 or higher");
+	
+	pathname = jsal_require_pathname(0, NULL, false, false);
+
+	jsal_push_boolean(game_file_exists(g_game, pathname));
+	return true;
+}
+
+static bool
+js_File_load(int num_args, bool is_ctor, intptr_t magic)
 {
 	void*       buffer;
 	void*       file_data;
@@ -2163,6 +2168,9 @@ js_FS_readFile(int num_args, bool is_ctor, intptr_t magic)
 	char*       p_line;
 	char*       p_newline;
 
+	if (s_target_api_level >= 4 && !jsal_is_async_call())
+		jsal_error(JS_RANGE_ERROR, "'FS.readFile' is not supported when targeting API 4 or higher");
+	
 	pathname = jsal_require_pathname(0, NULL, false, false);
 	if (s_api_level >= 2 && num_args >= 2 && !jsal_is_undefined(1))
 		type = jsal_require_int(1);
@@ -2225,39 +2233,29 @@ on_error:
 }
 
 static bool
-js_FS_relativePath(int num_args, bool is_ctor, intptr_t magic)
-{
-	const char* base_pathname;
-	path_t*     path;
-	const char* pathname;
-
-	pathname = jsal_require_pathname(0, NULL, false, false);
-	base_pathname = jsal_require_pathname(1, NULL, false, false);
-
-	path = game_relative_path(g_game, pathname, base_pathname);
-	jsal_push_string(path_cstr(path));
-	path_free(path);
-	return true;
-}
-
-static bool
-js_FS_removeDirectory(int num_args, bool is_ctor, intptr_t magic)
+js_File_remove(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* pathname;
 
+	if (s_target_api_level >= 4 && !jsal_is_async_call())
+		jsal_error(JS_RANGE_ERROR, "'FS.deleteFile' is not supported when targeting API 4 or higher");
+	
 	pathname = jsal_require_pathname(0, NULL, false, true);
 
-	if (!game_rmdir(g_game, pathname))
-		jsal_error(JS_ERROR, "Couldn't remove directory '%s'", pathname);
+	if (!game_unlink(g_game, pathname))
+		jsal_error(JS_ERROR, "Couldn't delete file '%s'", pathname);
 	return false;
 }
 
 static bool
-js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
+js_File_rename(int num_args, bool is_ctor, intptr_t magic)
 {
 	const char* new_pathname;
 	const char* old_pathname;
 
+	if (s_target_api_level >= 4 && !jsal_is_async_call())
+		jsal_error(JS_RANGE_ERROR, "'FS.rename' is not supported when targeting API 4 or higher");
+	
 	old_pathname = jsal_require_pathname(0, NULL, false, true);
 	new_pathname = jsal_require_pathname(1, NULL, false, true);
 
@@ -2267,7 +2265,24 @@ js_FS_rename(int num_args, bool is_ctor, intptr_t magic)
 }
 
 static bool
-js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
+js_File_run(int num_args, bool is_ctor, intptr_t magic)
+{
+	const char* filename;
+
+	if (s_target_api_level >= 4 && !jsal_is_async_call())
+		jsal_error(JS_RANGE_ERROR, "'FS.evaluateScript' is not supported when targeting API 4 or higher");
+	
+	filename = jsal_require_pathname(0, NULL, false, false);
+
+	if (!game_file_exists(g_game, filename))
+		jsal_error(JS_ERROR, "Script file not found '%s'", filename);
+	if (!script_eval(filename))
+		jsal_throw();
+	return true;
+}
+
+static bool
+js_File_save(int num_args, bool is_ctor, intptr_t magic)
 {
 #if defined(_WIN32)
 	const char* const NEWLINE = "\r\n";
@@ -2283,6 +2298,9 @@ js_FS_writeFile(int num_args, bool is_ctor, intptr_t magic)
 	lstring_t*  text = NULL;
 
 	int i;
+
+	if (s_target_api_level >= 4 && !jsal_is_async_call())
+		jsal_error(JS_RANGE_ERROR, "'FS.writeFile' is not supported when targeting API 4 or higher");
 
 	if (num_args < 2)
 		jsal_error(JS_RANGE_ERROR, "'FS.writeFile' requires 2 arguments");

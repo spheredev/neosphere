@@ -153,7 +153,7 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	printf("   engine:   \33[37;1m%s\33[m\n", engine_name);
 	printf("   title:    \33[37;1m%s\33[m\n", inferior->title);
 	if (inferior->have_api_info)
-		printf("   API:      \33[37;1mSphere v%d API level %d\33[m\n", inferior->api_version, inferior->api_level);
+		printf("   API:      \33[37;1mSphere v%d level %d\33[m\n", inferior->api_version, inferior->api_level);
 	if (inferior->compiler != NULL)
 		printf("   compiler: \33[37;1m%s\33[m\n", inferior->compiler);
 

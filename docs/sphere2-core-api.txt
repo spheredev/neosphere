@@ -877,6 +877,78 @@ FS.writeFile(pathname, data); [API 1]
     it will be overwritten.
 
 
+`File` Object
+-------------
+
+Introduced with API level 4 for cross-compatibility with Oozaru, these
+functions allow working with files asynchronously.  All of these functions
+return promises which resolve only once the operation has completed.  This
+allows the engine to load files, which may have to be downloaded from the Web,
+in the background without blocking other operations.
+
+async File.load(pathname[, data_type]); [API 4]
+
+    Starts loading a file into memory and returns a promise for the full
+    contents of the file.  The optional parameter `data_type` specifies what
+    kind of data the file contains and can be one of the following:
+
+        DataType.Bytes
+
+            Interpret the file as a sequence of bytes.  Sphere assigns no
+            specific meaning to the individual bytes; that's up to your game's
+            code.  The promise resolves to a Uint8Array containing the raw
+            data stored in the file.
+
+        DataType.JSON
+
+            Interpret the file as UTF-8-encoded JSON data.  The promise
+            resolves to the result of running `JSON.parse()` on the contents of
+            the file.  If the file is not valid JSON, the promise is rejected
+            instead.
+
+        DataType.Lines
+
+            Interpret the file as plain text (UTF-8).  The promise resolves to
+            an array of strings: one string for each line of text in the file.
+
+        DataType.Raw
+
+            Don't attempt to interpret the content of the file at all.  The
+            promise resolves to an ArrayBuffer containing the raw data stored
+            in the file.
+
+        DataType.Text (default)
+
+            Interpret the file as plain text (UTF-8).  The promise resolves to
+            a string containing the entire text content of the file, including
+            end-of-line characters.
+
+async File.remove(pathname); [API 4]
+
+    Deletes the file named by `pathname`.  The promise resolves once the file
+    has been removed from the file system.
+
+async File.run(pathname); [API 4]
+
+    Loads the JavaScript file named by `pathname` and executes it in the global
+    scope.  Returns a promise which resolves with the result of evaluating the
+    script.  This can be useful for executing older scripts that were written
+    before `import` was introduced.
+
+    Note: Depending on the script being evaluated, this function can--and
+          likely will--create new global functions and variables.  Be sure you
+          know what you're doing!
+
+async File.save(pathname, data); [API 4]
+
+    Saves `data`, which can be either a string, array of strings, ArrayBuffer,
+    or TypedArray, to the file named by `pathname`.  The promise resolves once
+    the file has been fully written.
+
+    Note: If a file already exists by the given name, its contents will be
+          completely overwritten with the new data.
+
+
 `FileStream` Object
 -------------------
 
