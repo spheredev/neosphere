@@ -886,6 +886,11 @@ return promises which resolve only once the operation has completed.  This
 allows the engine to load files, which may have to be downloaded from the Web,
 in the background without blocking other operations.
 
+async File.exists(pathname); [API 4]
+
+    Starts checking if the file named by `pathname` exists and returns a
+    promise that resolves to `true` if it does, or `false` otherwise.
+
 async File.load(pathname[, data_type]); [API 4]
 
     Starts loading a file into memory and returns a promise for the full
@@ -926,7 +931,14 @@ async File.load(pathname[, data_type]); [API 4]
 async File.remove(pathname); [API 4]
 
     Deletes the file named by `pathname`.  The promise resolves once the file
-    has been removed from the file system.
+    has been removed from the file system.  If the file to be deleted doesn't
+    exist, this call still completes successfully.
+
+async File.rename(pathname, new_name); [API 4]
+
+    Starts renaming the file named by `pathname` to `new_name` and returns A
+    promise that resolves once the renaming operating has finished.  Note that
+    the promise rejects if the file to be renamed doesn't exist.
 
 async File.run(pathname); [API 4]
 
