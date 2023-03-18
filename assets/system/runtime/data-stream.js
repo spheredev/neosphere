@@ -35,7 +35,9 @@ class DataStream
 {
 	static async fromFile(fileName)
 	{
-		const buffer = await FS.readFile(fileName, DataType.Raw);
+		const buffer = Sphere.APILevel >= 4
+			? await File.load(fileName, DataType.Raw)
+			: FS.readFile(fileName, DataType.Raw);
 		return new DataStream(buffer);
 	}
 
