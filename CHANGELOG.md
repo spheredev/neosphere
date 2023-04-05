@@ -1,11 +1,12 @@
 neoSphere Changelog
 ===================
 
-v5.9.0 - TBD
+v5.8.3 - TBD
 ------------
 
 * Adds new asynchronous, Oozaru-compatible `File` APIs.
-
+* Adds a new predefined color, `Color.CosmicLatte`.
+* Renames `Color.EatyPig` to `Color.EatyPink`.
 
 v5.8.2 - January 27, 2023
 -------------------------
