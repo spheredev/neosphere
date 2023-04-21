@@ -398,7 +398,7 @@ BlendOp.Subtract [get] [API 2]
     destination pixel values, respectively.  These modes cover most common use
     cases, so the engine provides them for convenience.
 
-new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [EXP]
+new BlendOp(operator, sf, df[, alpha_op, sf_alpha, df_alpha]) [experimental]
 
     Constructs a new BlendOp which blends colors according to the given
     parameters.
@@ -473,7 +473,7 @@ etc...
     The downside to this is that e.g. `Color.Red === Color.Red` evaluates to
     false, but this is rarely an issue in practice.
 
-Color.fromRGBA(r, g, b[, alpha]); [API 4]
+Color.fromRGBA(r, g, b[, alpha]); [experimental]
 
     Constructs a Color corresponding to the specified 8-bit RGBA values.
     Values range 0-255; the function will throw an error if passed a value
@@ -554,7 +554,7 @@ new DirectoryStream(dir_name[, options]); [API 1]
     Constructs a new DirectoryStream which reads entries from `dir_name`.  If
     the directory named by `dir_name` doesn't exist, throws an error.
 
-    options.recursive [default: false] [EXP]
+    options.recursive [default: false] [experimental]
 
         If `recursive` is true, the DirectoryStream will descend into
         subdirectories to list files they contain.  The output will not contain
@@ -611,13 +611,13 @@ DirectoryStream#next(); [API 1]
             directory paths end in a slash (`/`) per SphereFS canonicalization
             rules.
 
-		value.depth [EXP]
+		value.depth [experimental]
 
 		    The subdirectory nesting level of the entry, relative to the
 		    directory being streamed.  This is equal to the number of nested
 		    subdirectories which must be entered to find this entry.
 
-		value.extension [EXP]
+		value.extension [experimental]
 
 		    The filename extension (everything starting from the last dot `.`),
 		    for file entries.  If the file has no extension, this is `null`.
@@ -673,7 +673,7 @@ Dispatch.now(callback); [API 1]
           latter runs at the beginning of the next frame; Dispatch.now() jobs
           always run during the same frame they were issued.
 
-Dispatch.onExit(callback); [EXP]
+Dispatch.onExit(callback); [experimental]
 
     Sets up a one-time job to call `callback` after the event loop exits.  This
     is useful when you need to ensure something always runs before the engine
@@ -804,7 +804,7 @@ FS.fullPath(pathname[, base_dir]); [API 1]
           returned by this function will end in a forward slash (`/`) even if
           the input pathname did not.
 
-FS.match(pathname, pattern); [EXP]
+FS.match(pathname, pattern); [experimental]
 
     Determines whether `pathname` matches the pattern string(s) given by
     `pattern`.  `pattern` can be either a single pattern, or an array of them.
@@ -886,12 +886,12 @@ return promises which resolve only once the operation has completed.  This
 allows the engine to load files, which may have to be downloaded from the Web,
 in the background without blocking other operations.
 
-async File.exists(pathname); [API 4]
+async File.exists(pathname); [experimental]
 
     Starts checking if the file named by `pathname` exists and returns a
     promise that resolves to `true` if it does, or `false` otherwise.
 
-async File.load(pathname[, data_type]); [API 4]
+async File.load(pathname[, data_type]); [experimental]
 
     Starts loading a file into memory and returns a promise for the full
     contents of the file.  The optional parameter `data_type` specifies what
@@ -928,19 +928,19 @@ async File.load(pathname[, data_type]); [API 4]
             a string containing the entire text content of the file, including
             end-of-line characters.
 
-async File.remove(pathname); [API 4]
+async File.remove(pathname); [experimental]
 
     Deletes the file named by `pathname`.  The promise resolves once the file
     has been removed from the file system.  If the file to be deleted doesn't
     exist, this call still completes successfully.
 
-async File.rename(pathname, new_name); [API 4]
+async File.rename(pathname, new_name); [experimental]
 
     Starts renaming the file named by `pathname` to `new_name` and returns A
     promise that resolves once the renaming operating has finished.  Note that
     the promise rejects if the file to be renamed doesn't exist.
 
-async File.run(pathname); [API 4]
+async File.run(pathname); [experimental]
 
     Loads the JavaScript file named by `pathname` and executes it in the global
     scope.  Returns a promise which resolves with the result of evaluating the
@@ -951,7 +951,7 @@ async File.run(pathname); [API 4]
           likely will--create new global functions and variables.  Be sure you
           know what you're doing!
 
-async File.save(pathname, data); [API 4]
+async File.save(pathname, data); [experimental]
 
     Saves `data`, which can be either a string, array of strings, ArrayBuffer,
     or TypedArray, to the file named by `pathname`.  The promise resolves once
@@ -1767,7 +1767,7 @@ Server#accept(); [API 1]
     empty, a RangeError will be thrown, so you should check the value of
     `numPending` first to see if there are any connections in the backlog.
 
-Server#acceptNext(); [async] [EXP]
+Server#acceptNext(); [async] [experimental]
 
     Instructs Sphere to accept the next available client connection via the
     event loop.  The promise resolves with a Socket representing that
@@ -1870,7 +1870,7 @@ Shader#setMatrix(name, transform); [API 1]
 
     Note: Matrix types other than `mat4` are not currently supported.
 
-Shader#setSampler(name, texture, texture_unit); [EXP]
+Shader#setSampler(name, texture, texture_unit); [experimental]
 
     Assigns a texture to a texture unit.
 
@@ -2276,7 +2276,7 @@ Surface#blendOp [get] [set] [API 2]
     Gets or sets the blending operation (see `BlendOp` above) for objects drawn
     to this surface.
 
-Surface#depthOp [get] [set] [EXP]
+Surface#depthOp [get] [set] [experimental]
 
     Gets or sets the depth test criteria for 3D objects drawn to this surface.
     The final Z coordinate of each pixel drawn is tested against the current
@@ -2310,7 +2310,7 @@ Surface#height [get] [API 1]
     Gets the width and height of the surface, in pixels.  For the screen, this
     is the game's nominal resolution, i.e. the resolution it renders at.
 
-Surface#clear([color[, depthValue]]); [EXP]
+Surface#clear([color[, depthValue]]); [experimental]
 
     Clears the entire surface using the specified color and depth value (depth
     is automatically clamped between 0.0 and 1.0).  If not provided, `color`
@@ -2394,7 +2394,7 @@ Texture#height [get] [API 1]
     Gets the width or height of the texture, in pixels. Throws an error if the
     texture isn't ready for use yet.
 
-Texture#download(); [EXP]
+Texture#download(); [experimental]
 
     Downloads the 32-bit RGBA pixel data from the texture and returns it as a
     new Uint8ClampedArray.
@@ -2403,7 +2403,7 @@ Texture#download(); [EXP]
           shouldn't be done at render time if you can avoid it.  Use a Surface
           for render-to-texture effects if at all possible.
 
-Texture#upload(content); [EXP]
+Texture#upload(content); [experimental]
 
     Uploads 32-bit RGBA pixel data from `content` (an ArrayBuffer or typed
     array) to the texture.  Enough data must be provided to completely rewrite
@@ -2416,12 +2416,12 @@ Texture#upload(content); [EXP]
 A `Transform` represents a transformation matrix used to convert vertex
 coordinates for shapes drawn to a surface.
 
-Transform.Identity [get] [API 4]
+Transform.Identity [get] [experimental]
 
     Gets the identity transformation matrix.  This transformation simply uses
     vertex values as is, without modifying them in any way.
 
-Transform.project2D(left, top, right, bottom[, near, far]); [API 4]
+Transform.project2D(left, top, right, bottom[, near, far]); [experimental]
 
     Returns an orthographic projection transform used for rendering in 2D.  For
     pixel-perfect rendering, set `left` and `top` to 0 and `right` and `bottom`
@@ -2432,7 +2432,7 @@ Transform.project2D(left, top, right, bottom[, near, far]); [API 4]
 	which objects will not be visible.  If not provided, `near` defaults to
 	-1.0 and `far` defaults to 1.0.
 
-Transform.project3D(fov, aspect_ratio, near, far); [API 4]
+Transform.project3D(fov, aspect_ratio, near, far); [experimental]
 
     Returns a perspective transform that projects a scene into 3D.  `fov` is
     the extent of the camera's field of view, in degrees.  `aspect` is the
@@ -2443,21 +2443,21 @@ Transform.project3D(fov, aspect_ratio, near, far); [API 4]
     objects will not be visible.  For 3D projections, these must be nonzero and
     positive, or an error will be thrown.
 
-Transform.rotate(angle[, vx, vy, vz]); [API 4]
+Transform.rotate(angle[, vx, vy, vz]); [experimental]
 
     Returns a transform which can be used to rotate an object or scene about an
     arbitrary axis.  `angle` is the amount of rotation to apply, in degrees.
     (vx, vy, vz) is the vector to be rotated around.  For example, the default
     is (0, 0, 1) which produces a rotation about the Z (depth) axis.
 
-Transform.scale(sx, sy[, sz]); [API 4]
+Transform.scale(sx, sy[, sz]); [experimental]
 
     Returns a transform which scales all vertex coordinates by a given amount.
     `sx`, `sy`, and `sz` are the scaling factors for each coordinate.  If `sz`
     is not provided, it defaults to 1.0, which leaves the Z coordinate
     unchanged.
 
-Transform.translate(tx, ty[, tz]); [API 4]
+Transform.translate(tx, ty[, tz]); [experimental]
 
     Returns a transform which translates (moves) all vertex coordinates by a
     given distance.  `tx`, `ty`, and `tz` are the distances to move along each
@@ -2556,14 +2556,14 @@ new VertexList(vertices); [API 1]
 The somewhat cryptically-named `Z` namespace hosts functions used for data
 compression.
 
-Z.deflate(data[, level]); [EXP]
+Z.deflate(data[, level]); [experimental]
 
     Compresses the data in an ArrayBuffer or TypedArray using the DEFLATE
     compression method.  `level` specifies the compression level from
     0 (no compression) to 9 (maximum), with 7 being the default.  Returns an
     ArrayBuffer containing the compressed data.
 
-Z.inflate(data[, max_size]); [EXP]
+Z.inflate(data[, max_size]); [experimental]
 
     Decompresses data in an ArrayBuffer or TypedArray which was previously
     compressed using DEFLATE.  `max_size` is optional and specifies an upper

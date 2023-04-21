@@ -4,11 +4,10 @@ Release Notes
 neoSphere 5.9
 -------------
 
-* When targeting API level 4 or higher, functions such as `FS.readFile()` which
-  access the file system synchronously are now completely disabled because
-  these functions are unable to be supported in Oozaru.  Games targeting API 4
-  or higher should instead use the asynchronous `File` API, introduced in this
-  release.  Refer to the API documentation for information on usage.
+* When targeting API level 4 or higher, functions like `FS.readFile()` that
+  access the file system synchronously are now completely disabled.  Games
+  targeting API 4+ should instead use the asynchronous `File` API, introduced
+  in this release.  See the API documentation for usage.
 
 
 neoSphere 5.8
