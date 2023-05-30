@@ -936,7 +936,7 @@ async File.remove(pathname); [experimental]
 
 async File.rename(pathname, new_name); [experimental]
 
-    Starts renaming the file named by `pathname` to `new_name` and returns A
+    Starts renaming the file named by `pathname` to `new_name` and returns a
     promise that resolves once the renaming operating has finished.  Note that
     the promise rejects if the file to be renamed doesn't exist.
 

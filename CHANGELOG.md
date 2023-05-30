@@ -1,8 +1,8 @@
 neoSphere Changelog
 ===================
 
-v5.9.0 - TBD
-------------
+v5.9.0 - May 30, 2023
+---------------------
 
 * Adds new experimental asynchronous `File` API for games targeting API 4+.
 * Adds a new predefined color, `Color.CosmicLatte`.
