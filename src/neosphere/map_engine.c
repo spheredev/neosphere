@@ -790,7 +790,7 @@ map_trigger_at(int x, int y, int layer)
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	iter = vector_enum(s_map->triggers);
 	while ((trigger = iter_next(&iter))) {
-		if (trigger->z != layer && false)  // layer ignored for compatibility
+		if (trigger->z != layer && (false))  // layer ignored for compatibility
 			continue;
 		bounds.x1 = trigger->x - tile_w / 2;
 		bounds.y1 = trigger->y - tile_h / 2;
@@ -823,7 +823,7 @@ map_zone_at(int x, int y, int layer, int which)
 
 	iter = vector_enum(s_map->zones);
 	while ((zone = iter_next(&iter))) {
-		if (zone->layer != layer && false)  // layer ignored for compatibility
+		if (zone->layer != layer && (false))  // layer ignored for compatibility
 			continue;
 		if (is_point_in_rect(x, y, zone->bounds) && --which < 0)
 			return iter.index;
@@ -2225,7 +2225,7 @@ get_trigger_at(int x, int y, int layer, int* out_index)
 	tileset_get_size(s_map->tileset, &tile_w, &tile_h);
 	iter = vector_enum(s_map->triggers);
 	while ((trigger = iter_next(&iter))) {
-		if (trigger->z != layer && false)  // layer ignored for compatibility reasons
+		if (trigger->z != layer && (false))  // layer ignored for compatibility reasons
 			continue;
 		bounds.x1 = trigger->x - tile_w / 2;
 		bounds.y1 = trigger->y - tile_h / 2;
@@ -2252,7 +2252,7 @@ get_zone_at(int x, int y, int layer, int which, int* out_index)
 
 	iter = vector_enum(s_map->zones); i = -1;
 	while ((zone = iter_next(&iter))) {
-		if (zone->layer != layer && false)  // layer ignored for compatibility
+		if (zone->layer != layer && (false))  // layer ignored for compatibility
 			continue;
 		if (is_point_in_rect(x, y, zone->bounds) && which-- == 0) {
 			found_item = zone;
