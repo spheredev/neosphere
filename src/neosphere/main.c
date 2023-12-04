@@ -1,6 +1,6 @@
 /**
  *  Sphere: the JavaScript game platform
- *  Copyright (c) 2015-2023, Fat Cerberus
+ *  Copyright (c) 2015-2024, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -910,7 +910,7 @@ print_banner(bool want_copyright, bool want_deps)
 	printf("%s %s JS game engine\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 	if (want_copyright) {
 		printf("a lightweight JavaScript-powered game engine\n");
-		printf("(c) 2023 Fat Cerberus\n");
+		printf("(c) 2024 Fat Cerberus\n");
 	}
 	if (want_deps) {
 		al_version_id = al_get_allegro_version();

@@ -1,6 +1,11 @@
 neoSphere Changelog
 ===================
 
+v5.9.1 - December 3, 2023
+-------------------------
+
+* Updates the copyright date to 2024.
+
 v5.9.0 - May 30, 2023
 ---------------------
 

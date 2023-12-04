@@ -1,5 +1,5 @@
 ;  neoSphere JavaScript game platform
-;  Copyright (c) 2015-2023, Fat Cerberus
+;  Copyright (c) 2015-2024, Fat Cerberus
 ;  All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,8 @@
 ; configurations.
 #define AppName "neoSphere"
 #define AppPublisher "Fat Cerberus"
-#define AppVersion3 "5.9.0+"
-#define AppVersion4 "0.0.0.0"
+#define AppVersion3 "5.9.1"
+#define AppVersion4 "5.9.1.3464"
 
 [Setup]
 OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
@@ -45,7 +45,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion3}
 AppPublisher=Fat Cerberus
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=(c) 2015-2023 Fat Cerberus
+AppCopyright=(c) 2024 Fat Cerberus
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
