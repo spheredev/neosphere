@@ -116,7 +116,7 @@ class Query
 
 	all(predicate)
 	{
-		return this.run$(new FindOp((it, key, memo) => !predicate(it) ? (memo.value = false, true) : false, true));
+		return this.run$(new FindOp((it, key, memo) => !predicate(it, key) ? (memo.value = false, true) : false, true));
 	}
 
 	allIn(values)
@@ -127,7 +127,7 @@ class Query
 
 	any(predicate)
 	{
-		return this.run$(new FindOp((it, key, memo) => predicate(it) ? (memo.value = true, true) : false, false));
+		return this.run$(new FindOp((it, key, memo) => predicate(it, key) ? (memo.value = true, true) : false, false));
 	}
 
 	anyIn(values)
@@ -601,10 +601,11 @@ class LastOp extends QueryOp
 		return this.lastValue;
 	}
 
-	step(value)
+	step(value, source, key)
 	{
-		if (this.predicate(value))
+		if (this.predicate(value, key))
 			this.lastValue = value;
+		return true;
 	}
 }
 
@@ -730,9 +731,9 @@ class SelectManyOp extends QueryOp
 		super.initialize();
 	}
 
-	step(value)
+	step(value, source, key)
 	{
-		const itemSource = this.selector(value);
+		const itemSource = this.selector(value, key);
 		return feedMeSeymour(this.nextOp, itemSource);
 	}
 }
@@ -756,13 +757,14 @@ class SingleOp extends QueryOp
 		return this.lastValue;
 	}
 
-	step(value)
+	step(value, source, key)
 	{
-		if (this.predicate(value)) {
+		if (this.predicate(value, key)) {
 			if (++this.count > 1)
 				throw new Error("Query would return too many results");
 			this.lastValue = value;
 		}
+		return true;
 	}
 }
 
