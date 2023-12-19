@@ -470,9 +470,9 @@ class AggregateOp extends QueryOp
 		return this.accumulator;
 	}
 
-	step(value)
+	step(value, source, key)
 	{
-		this.accumulator = this.aggregator(this.accumulator, value);
+		this.accumulator = this.aggregator(this.accumulator, value, key);
 		return true;
 	}
 }
