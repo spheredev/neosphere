@@ -1,8 +1,8 @@
 neoSphere Changelog
 ===================
 
-v5.9.2 - TBD
-------------
+v5.9.2 - December 22, 2023
+--------------------------
 
 * Fixes a bug that causes `DirectoryStream` to report directories as files when
   running from an SPK package.
