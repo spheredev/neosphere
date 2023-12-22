@@ -4,6 +4,8 @@ neoSphere Changelog
 v5.9.2 - TBD
 ------------
 
+* Fixes a bug that causes `DirectoryStream` to report directories as files when
+  running from an SPK package.
 * Fixes a bug where `Query` doesn't pass a key to certain callbacks while
   querying object properties.
 * Fixes a bug that causes `Query#last()` to return the first match instead.

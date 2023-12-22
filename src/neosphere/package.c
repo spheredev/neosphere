@@ -272,13 +272,15 @@ package_list_dir(package_t* package, const char* dirname, bool want_dirs, bool r
 			// if we got to this point, we have a valid directory name
 			found_dirname = strdup(maybe_dirname);
 			*strchr(found_dirname, '/') = '\0';
-			path = path_new(found_dirname);
+			path = path_new_dir(found_dirname);
 			iter2 = vector_enum(list);
 			is_in_set = false;
 			while ((item = iter_next(&iter2)))
 				is_in_set |= path_is(path, *item) == 0;
 			if (!is_in_set)  // avoid duplicate listings
 				vector_push(list, &path);
+			else
+				path_free(path);
 			free(found_dirname);
 		}
 	}
