@@ -3695,10 +3695,10 @@ js_Sample_play(int num_args, bool is_ctor, intptr_t magic)
 		jsal_require_object_coercible(1);
 		jsal_get_prop_string(1, "volume");
 		if (!jsal_is_undefined(-1))
-			volume = jsal_require_number(-3);
+			volume = jsal_require_number(-1);
 		jsal_get_prop_string(1, "pan");
 		if (!jsal_is_undefined(-1))
-			pan = jsal_require_number(-2);
+			pan = jsal_require_number(-1);
 		jsal_get_prop_string(1, "speed");
 		if (!jsal_is_undefined(-1))
 			speed = jsal_require_number(-1);
