@@ -244,7 +244,7 @@ main(int argc, char* argv[])
 		dialog_name = lstr_newf("%s - Select a Sphere game to launch", SPHERE_ENGINE_NAME);
 		file_dialog = al_create_native_file_dialog(path_cstr(home_path()),
 			lstr_cstr(dialog_name),
-			"game.sgm;game.json;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
+			"*.sgm;*.json;*.spk", ALLEGRO_FILECHOOSER_FILE_MUST_EXIST);
 		al_show_native_file_dialog(NULL, file_dialog);
 		lstr_free(dialog_name);
 		if (al_get_native_file_dialog_count(file_dialog) > 0) {

@@ -1,8 +1,8 @@
 neoSphere Changelog
 ===================
 
-v5.9.3 - TBD
-------------
+v5.9.3 - May 30, 2024
+---------------------
 
 * Fixes a bug where passing an `options` object to `Sample#play()` doesn't work
   properly and may throw an exception.
