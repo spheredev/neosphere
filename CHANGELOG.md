@@ -1,6 +1,11 @@
 neoSphere Changelog
 ===================
 
+v5.9.4 - WiP
+------------
+
+* Fixes a bug that caused SSj to show Sphere v1 games as targeting API level 0.
+
 v5.9.3 - May 30, 2024
 ---------------------
 

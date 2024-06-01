@@ -150,12 +150,16 @@ inferior_new(const char* hostname, int port, bool show_trace)
 	ki_message_free(reply);
 	printf("OK.\n");
 
-	printf("   engine:   \33[37;1m%s\33[m\n", engine_name);
-	printf("   title:    \33[37;1m%s\33[m\n", inferior->title);
-	if (inferior->have_api_info)
-		printf("   API:      \33[37;1mSphere v%d level %d\33[m\n", inferior->api_version, inferior->api_level);
+	printf("   engine:    \33[37;1m%s\33[m\n", engine_name);
+	printf("   title:     \33[37;1m%s\33[m\n", inferior->title);
+	if (inferior->have_api_info) {
+		if (inferior->api_version >= 2)
+			printf("   API level: \33[37;1mSphere v%d level %d\33[m\n", inferior->api_version, inferior->api_level);
+		else
+			printf("   API level: \33[37;1mSphere v%d\33[m\n", inferior->api_version);
+	}
 	if (inferior->compiler != NULL)
-		printf("   compiler: \33[37;1m%s\33[m\n", inferior->compiler);
+		printf("   compiler:  \33[37;1m%s\33[m\n", inferior->compiler);
 
 	free(engine_name);
 
