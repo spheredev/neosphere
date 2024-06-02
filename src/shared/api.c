@@ -100,279 +100,16 @@ api_uninit(void)
 }
 
 void
-api_define_async_func(const char* namespace_name, const char* name, js_function_t callback, intptr_t magic)
-{
-	jsal_push_global_object();
-
-	// ensure the namespace object exists
-	if (namespace_name != NULL) {
-		if (!jsal_get_prop_string(-1, namespace_name)) {
-			jsal_push_new_object();
-			jsal_replace(-2);
-
-			// <namespace>[Symbol.toStringTag] = <name>;
-			jsal_push_known_symbol("toStringTag");
-			jsal_push_string(namespace_name);
-			jsal_to_propdesc_value(false, false, false);
-			jsal_def_prop(-3);
-
-			// global.<name> = <namespace>
-			jsal_dup(-1);
-			jsal_to_propdesc_value(true, false, true);
-			jsal_def_prop_string(-3, namespace_name);
-		}
-	}
-
-	jsal_push_new_function(callback, name, 0, true, magic);
-	jsal_to_propdesc_value(true, false, true);
-	jsal_def_prop_string(-2, name);
-
-	if (namespace_name != NULL)
-		jsal_pop(1);
-	jsal_pop(1);
-}
-
-void
-api_define_async_method(const char* class_name, const char* name, js_function_t callback, intptr_t magic)
-{
-	jsal_push_global_object();
-	if (class_name != NULL) {
-		// load the prototype from the prototype stash
-		jsal_push_class_prototype(class_id_from_name(class_name));
-	}
-
-	jsal_push_new_function(callback, name, 0, true, magic);
-	jsal_to_propdesc_value(true, false, true);
-	if (strncmp(name, "@@", 2) == 0) {
-		jsal_push_known_symbol(&name[2]);
-		jsal_pull(-2);
-		jsal_def_prop(-3);
-	}
-	else {
-		jsal_def_prop_string(-2, name);
-	}
-
-	if (class_name != NULL)
-		jsal_pop(1);
-	jsal_pop(1);
-}
-
-void
-api_define_const(const char* enum_name, const char* name, double value)
-{
-	jsal_push_global_object();
-
-	// ensure the namespace object exists
-	if (enum_name != NULL) {
-		if (!jsal_get_prop_string(-1, enum_name)) {
-			jsal_push_new_object();
-			jsal_replace(-2);
-
-			// <namespace>[Symbol.toStringTag] = <name>;
-			jsal_push_known_symbol("toStringTag");
-			jsal_push_string(enum_name);
-			jsal_to_propdesc_value(false, false, false);
-			jsal_def_prop(-3);
-
-			// global.<name> = <namespace>
-			jsal_dup(-1);
-			jsal_to_propdesc_value(true, false, true);
-			jsal_def_prop_string(-3, enum_name);
-		}
-	}
-
-	jsal_push_number(value);
-	jsal_to_propdesc_value(false, false, true);
-	jsal_def_prop_string(-2, name);
-	if (enum_name != NULL) {
-		// generate a TypeScript-style bidirectional enumeration:
-		//     enum[key] = value
-		//     enum[value] = key
-		jsal_push_number(value);
-		jsal_to_string(-1);
-		jsal_push_string(name);
-		jsal_to_propdesc_value(false, false, true);
-		jsal_def_prop(-3);
-	}
-
-	if (enum_name != NULL)
-		jsal_pop(1);
-	jsal_pop(1);
-}
-
-void
 api_define_class(const char* name, int class_id, js_function_t constructor, js_finalizer_t finalizer, intptr_t magic)
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
 
-	api_define_subclass(name, class_id, -1, constructor, finalizer, magic);
+	api_define_class_ex(name, class_id, -1, constructor, finalizer, magic);
 }
 
 void
-api_define_func(const char* namespace_name, const char* name, js_function_t callback, intptr_t magic)
-{
-	jsal_push_global_object();
-
-	// ensure the namespace object exists
-	if (namespace_name != NULL) {
-		if (!jsal_get_prop_string(-1, namespace_name)) {
-			jsal_push_new_object();
-			jsal_replace(-2);
-
-			// <namespace>[Symbol.toStringTag] = <name>;
-			jsal_push_known_symbol("toStringTag");
-			jsal_push_string(namespace_name);
-			jsal_to_propdesc_value(false, false, false);
-			jsal_def_prop(-3);
-
-			// global.<name> = <namespace>
-			jsal_dup(-1);
-			jsal_to_propdesc_value(true, false, true);
-			jsal_def_prop_string(-3, namespace_name);
-		}
-	}
-
-	jsal_push_new_function(callback, name, 0, false, magic);
-	jsal_to_propdesc_value(true, false, true);
-	jsal_def_prop_string(-2, name);
-
-	if (namespace_name != NULL)
-		jsal_pop(1);
-	jsal_pop(1);
-}
-
-void
-api_define_method(const char* class_name, const char* name, js_function_t callback, intptr_t magic)
-{
-	jsal_push_global_object();
-	if (class_name != NULL) {
-		// load the prototype from the prototype stash
-		jsal_push_class_prototype(class_id_from_name(class_name));
-	}
-
-	jsal_push_new_function(callback, name, 0, false, magic);
-	jsal_to_propdesc_value(true, false, true);
-	if (strncmp(name, "@@", 2) == 0) {
-		jsal_push_known_symbol(&name[2]);
-		jsal_pull(-2);
-		jsal_def_prop(-3);
-	}
-	else {
-		jsal_def_prop_string(-2, name);
-	}
-
-	if (class_name != NULL)
-		jsal_pop(1);
-	jsal_pop(1);
-}
-
-void
-api_define_object(const char* namespace_name, const char* name, int class_id, void* udata)
-{
-	jsal_push_global_object();
-
-	// ensure the namespace object exists
-	if (namespace_name != NULL) {
-		if (!jsal_get_prop_string(-1, namespace_name)) {
-			jsal_push_new_object();
-			jsal_replace(-2);
-
-			// <namespace>[Symbol.toStringTag] = <name>;
-			jsal_push_known_symbol("toStringTag");
-			jsal_push_string(namespace_name);
-			jsal_to_propdesc_value(false, false, false);
-			jsal_def_prop(-3);
-
-			// global.<name> = <namespace>
-			jsal_dup(-1);
-			jsal_to_propdesc_value(true, false, true);
-			jsal_def_prop_string(-3, namespace_name);
-		}
-	}
-
-	jsal_push_class_obj(class_id, udata, false);
-	jsal_to_propdesc_value(false, false, true);
-	jsal_def_prop_string(-2, name);
-	if (namespace_name != NULL)
-		jsal_pop(1);
-	jsal_pop(1);
-}
-
-void
-api_define_prop(const char* class_name, const char* name, bool enumerable, js_function_t getter, js_function_t setter)
-{
-	jsal_push_global_object();
-	if (class_name != NULL) {
-		// load the prototype from the prototype stash
-		jsal_push_class_prototype(class_id_from_name(class_name));
-	}
-
-	// populate the property descriptor
-	jsal_push_new_object();
-	jsal_push_boolean_true();
-	jsal_put_prop_string(-2, "configurable");
-	jsal_push_boolean(enumerable);
-	jsal_put_prop_string(-2, "enumerable");
-	if (getter != NULL) {
-		jsal_push_new_function(getter, "get", 0, false, 0);
-		jsal_put_prop_string(-2, "get");
-	}
-	if (setter != NULL) {
-		jsal_push_new_function(setter, "set", 0, false, 0);
-		jsal_put_prop_string(-2, "set");
-	}
-
-	jsal_def_prop_string(-2, name);
-	if (class_name != NULL)
-		jsal_pop(1);
-	jsal_pop(1);
-}
-
-void
-api_define_static_prop(const char* namespace_name, const char* name, js_function_t getter, js_function_t setter, intptr_t magic)
-{
-	jsal_push_global_object();
-
-	// ensure the namespace object exists
-	if (namespace_name != NULL) {
-		if (!jsal_get_prop_string(-1, namespace_name)) {
-			jsal_push_new_object();
-			jsal_replace(-2);
-
-			// <namespace>[Symbol.toStringTag] = <name>;
-			jsal_push_known_symbol("toStringTag");
-			jsal_push_string(namespace_name);
-			jsal_to_propdesc_value(false, false, false);
-			jsal_def_prop(-3);
-
-			// global.<name> = <namespace>
-			jsal_dup(-1);
-			jsal_to_propdesc_value(true, false, true);
-			jsal_def_prop_string(-3, namespace_name);
-		}
-	}
-
-	// populate the property descriptor
-	jsal_push_new_object();
-	jsal_push_boolean_true();
-	jsal_put_prop_string(-2, "configurable");
-	if (getter != NULL) {
-		jsal_push_new_function(getter, "get", 0, false, magic);
-		jsal_put_prop_string(-2, "get");
-	}
-	if (setter != NULL) {
-		jsal_push_new_function(setter, "set", 0, false, magic);
-		jsal_put_prop_string(-2, "set");
-	}
-	jsal_def_prop_string(-2, name);
-	if (namespace_name != NULL)
-		jsal_pop(1);
-	jsal_pop(1);
-}
-
-void
-api_define_subclass(const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer, intptr_t magic)
+api_define_class_ex(const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer, intptr_t magic)
 {
 	// note: if no constructor function is given, a constructor binding will not be created.
 	//       this is useful for types which can only be created via factory methods.
@@ -432,6 +169,270 @@ api_define_subclass(const char* name, int class_id, int super_id, js_function_t 
 	jsal_pop(1);
 }
 
+void
+api_define_const_number(const char* enum_name, const char* name, double value)
+{
+	jsal_push_global_object();
+
+	// ensure the namespace object exists
+	if (enum_name != NULL) {
+		if (!jsal_get_prop_string(-1, enum_name)) {
+			jsal_push_new_object();
+			jsal_replace(-2);
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_string(enum_name);
+			jsal_to_propdesc_value(false, false, false);
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
+			jsal_dup(-1);
+			jsal_to_propdesc_value(true, false, true);
+			jsal_def_prop_string(-3, enum_name);
+		}
+	}
+
+	jsal_push_number(value);
+	jsal_to_propdesc_value(false, false, true);
+	jsal_def_prop_string(-2, name);
+	if (enum_name != NULL) {
+		// generate a TypeScript-style bidirectional enumeration:
+		//     enum[key] = value
+		//     enum[value] = key
+		jsal_push_number(value);
+		jsal_to_string(-1);
+		jsal_push_string(name);
+		jsal_to_propdesc_value(false, false, true);
+		jsal_def_prop(-3);
+	}
+
+	if (enum_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
+api_define_const_string(const char* enum_name, const char* name, const char* value)
+{
+	jsal_push_global_object();
+
+	// ensure the namespace object exists
+	if (enum_name != NULL) {
+		if (!jsal_get_prop_string(-1, enum_name)) {
+			jsal_push_new_object();
+			jsal_replace(-2);
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_string(enum_name);
+			jsal_to_propdesc_value(false, false, false);
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
+			jsal_dup(-1);
+			jsal_to_propdesc_value(true, false, true);
+			jsal_def_prop_string(-3, enum_name);
+		}
+	}
+
+	jsal_push_string(value);
+	jsal_to_propdesc_value(false, false, true);
+	jsal_def_prop_string(-2, name);
+
+	if (enum_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
+api_define_func(const char* namespace_name, const char* name, js_function_t callback, intptr_t magic)
+{
+	jsal_push_global_object();
+
+	// ensure the namespace object exists
+	if (namespace_name != NULL) {
+		if (!jsal_get_prop_string(-1, namespace_name)) {
+			jsal_push_new_object();
+			jsal_replace(-2);
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_string(namespace_name);
+			jsal_to_propdesc_value(false, false, false);
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
+			jsal_dup(-1);
+			jsal_to_propdesc_value(true, false, true);
+			jsal_def_prop_string(-3, namespace_name);
+		}
+	}
+
+	jsal_push_new_function(callback, name, 0, false, magic);
+	jsal_to_propdesc_value(true, false, true);
+	jsal_def_prop_string(-2, name);
+
+	if (namespace_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
+api_define_func_async(const char* namespace_name, const char* name, js_function_t callback, intptr_t magic)
+{
+	jsal_push_global_object();
+
+	// ensure the namespace object exists
+	if (namespace_name != NULL) {
+		if (!jsal_get_prop_string(-1, namespace_name)) {
+			jsal_push_new_object();
+			jsal_replace(-2);
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_string(namespace_name);
+			jsal_to_propdesc_value(false, false, false);
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
+			jsal_dup(-1);
+			jsal_to_propdesc_value(true, false, true);
+			jsal_def_prop_string(-3, namespace_name);
+		}
+	}
+
+	jsal_push_new_function(callback, name, 0, true, magic);
+	jsal_to_propdesc_value(true, false, true);
+	jsal_def_prop_string(-2, name);
+
+	if (namespace_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
+api_define_method(const char* class_name, const char* name, js_function_t callback, intptr_t magic)
+{
+	jsal_push_global_object();
+	if (class_name != NULL) {
+		// load the prototype from the prototype stash
+		jsal_push_class_prototype(class_id_from_name(class_name));
+	}
+
+	jsal_push_new_function(callback, name, 0, false, magic);
+	jsal_to_propdesc_value(true, false, true);
+	if (strncmp(name, "@@", 2) == 0) {
+		jsal_push_known_symbol(&name[2]);
+		jsal_pull(-2);
+		jsal_def_prop(-3);
+	}
+	else {
+		jsal_def_prop_string(-2, name);
+	}
+
+	if (class_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
+api_define_method_async(const char* class_name, const char* name, js_function_t callback, intptr_t magic)
+{
+	jsal_push_global_object();
+	if (class_name != NULL) {
+		// load the prototype from the prototype stash
+		jsal_push_class_prototype(class_id_from_name(class_name));
+	}
+
+	jsal_push_new_function(callback, name, 0, true, magic);
+	jsal_to_propdesc_value(true, false, true);
+	if (strncmp(name, "@@", 2) == 0) {
+		jsal_push_known_symbol(&name[2]);
+		jsal_pull(-2);
+		jsal_def_prop(-3);
+	}
+	else {
+		jsal_def_prop_string(-2, name);
+	}
+
+	if (class_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
+api_define_prop(const char* class_name, const char* name, bool enumerable, js_function_t getter, js_function_t setter)
+{
+	jsal_push_global_object();
+	if (class_name != NULL) {
+		// load the prototype from the prototype stash
+		jsal_push_class_prototype(class_id_from_name(class_name));
+	}
+
+	// populate the property descriptor
+	jsal_push_new_object();
+	jsal_push_boolean_true();
+	jsal_put_prop_string(-2, "configurable");
+	jsal_push_boolean(enumerable);
+	jsal_put_prop_string(-2, "enumerable");
+	if (getter != NULL) {
+		jsal_push_new_function(getter, "get", 0, false, 0);
+		jsal_put_prop_string(-2, "get");
+	}
+	if (setter != NULL) {
+		jsal_push_new_function(setter, "set", 0, false, 0);
+		jsal_put_prop_string(-2, "set");
+	}
+
+	jsal_def_prop_string(-2, name);
+	if (class_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
+void
+api_define_prop_static(const char* namespace_name, const char* name, js_function_t getter, js_function_t setter, intptr_t magic)
+{
+	jsal_push_global_object();
+
+	// ensure the namespace object exists
+	if (namespace_name != NULL) {
+		if (!jsal_get_prop_string(-1, namespace_name)) {
+			jsal_push_new_object();
+			jsal_replace(-2);
+
+			// <namespace>[Symbol.toStringTag] = <name>;
+			jsal_push_known_symbol("toStringTag");
+			jsal_push_string(namespace_name);
+			jsal_to_propdesc_value(false, false, false);
+			jsal_def_prop(-3);
+
+			// global.<name> = <namespace>
+			jsal_dup(-1);
+			jsal_to_propdesc_value(true, false, true);
+			jsal_def_prop_string(-3, namespace_name);
+		}
+	}
+
+	// populate the property descriptor
+	jsal_push_new_object();
+	jsal_push_boolean_true();
+	jsal_put_prop_string(-2, "configurable");
+	if (getter != NULL) {
+		jsal_push_new_function(getter, "get", 0, false, magic);
+		jsal_put_prop_string(-2, "get");
+	}
+	if (setter != NULL) {
+		jsal_push_new_function(setter, "set", 0, false, magic);
+		jsal_put_prop_string(-2, "set");
+	}
+	jsal_def_prop_string(-2, name);
+	if (namespace_name != NULL)
+		jsal_pop(1);
+	jsal_pop(1);
+}
+
 void*
 jsal_get_class_obj(int index, int class_id)
 {
@@ -471,13 +472,13 @@ jsal_push_class_obj(int class_id, void* udata, bool in_ctor)
 {
 	int index;
 
-	index = jsal_push_class_fatobj(class_id, in_ctor, 0, NULL);
+	index = jsal_push_class_obj_fat(class_id, in_ctor, 0, NULL);
 	jsal_set_class_ptr(index, udata);
 	return index;
 }
 
 int
-jsal_push_class_fatobj(int class_id, bool in_ctor, size_t data_size, void* *out_data_ptr)
+jsal_push_class_obj_fat(int class_id, bool in_ctor, size_t data_size, void* *out_data_ptr)
 {
 	struct class_data*  class_data;
 	js_finalizer_t      finalizer = NULL;

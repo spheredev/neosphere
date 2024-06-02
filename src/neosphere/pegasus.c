@@ -599,15 +599,15 @@ pegasus_init(int api_level, int target_api_level)
 	s_key_z = jsal_new_key("z");
 
 	// initialize the Sphere v2 API
-	api_define_static_prop("Sphere", "APILevel", js_Sphere_get_APILevel, NULL, 0);
-	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL, 0);
-	api_define_static_prop("Sphere", "Engine", js_Sphere_get_Engine, NULL, 0);
-	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL, 0);
-	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL, 0);
-	api_define_static_prop("Sphere", "frameRate", js_Sphere_get_frameRate, js_Sphere_set_frameRate, 0);
-	api_define_static_prop("Sphere", "frameSkip", js_Sphere_get_frameSkip, js_Sphere_set_frameSkip, 0);
-	api_define_static_prop("Sphere", "fullScreen", js_Sphere_get_fullScreen, js_Sphere_set_fullScreen, 0);
-	api_define_static_prop("Sphere", "main", js_Sphere_get_main, NULL, 0);
+	api_define_prop_static("Sphere", "APILevel", js_Sphere_get_APILevel, NULL, 0);
+	api_define_prop_static("Sphere", "Compiler", js_Sphere_get_Compiler, NULL, 0);
+	api_define_prop_static("Sphere", "Engine", js_Sphere_get_Engine, NULL, 0);
+	api_define_prop_static("Sphere", "Game", js_Sphere_get_Game, NULL, 0);
+	api_define_prop_static("Sphere", "Version", js_Sphere_get_Version, NULL, 0);
+	api_define_prop_static("Sphere", "frameRate", js_Sphere_get_frameRate, js_Sphere_set_frameRate, 0);
+	api_define_prop_static("Sphere", "frameSkip", js_Sphere_get_frameSkip, js_Sphere_set_frameSkip, 0);
+	api_define_prop_static("Sphere", "fullScreen", js_Sphere_get_fullScreen, js_Sphere_set_fullScreen, 0);
+	api_define_prop_static("Sphere", "main", js_Sphere_get_main, NULL, 0);
 	api_define_func("Sphere", "abort", js_Sphere_abort, 0);
 	api_define_func("Sphere", "now", js_Sphere_now, 0);
 	api_define_func("Sphere", "restart", js_Sphere_restart, 0);
@@ -646,7 +646,7 @@ pegasus_init(int api_level, int target_api_level)
 	api_define_method("FileStream", "read", js_FileStream_read, 0);
 	api_define_method("FileStream", "write", js_FileStream_write, 0);
 	api_define_class("Font", PEGASUS_FONT, js_new_Font, js_Font_finalize, 0);
-	api_define_static_prop("Font", "Default", js_Font_get_Default, NULL, 0);
+	api_define_prop_static("Font", "Default", js_Font_get_Default, NULL, 0);
 	api_define_prop("Font", "fileName", false, js_Font_get_fileName, NULL);
 	api_define_prop("Font", "height", false, js_Font_get_height, NULL);
 	api_define_method("Font", "drawText", js_Font_drawText, 0);
@@ -667,7 +667,7 @@ pegasus_init(int api_level, int target_api_level)
 	api_define_class("JobToken", PEGASUS_JOB_TOKEN, NULL, NULL, 0);
 	api_define_method("JobToken", "cancel", js_JobToken_cancel, 0);
 	api_define_class("Joystick", PEGASUS_JOYSTICK, NULL, NULL, 0);
-	api_define_static_prop("Joystick", "Null", js_Joystick_get_Default, NULL, 0);
+	api_define_prop_static("Joystick", "Null", js_Joystick_get_Default, NULL, 0);
 	api_define_func("Joystick", "getDevices", js_Joystick_getDevices, 0);
 	api_define_prop("Joystick", "name", false, js_Joystick_get_name, NULL);
 	api_define_prop("Joystick", "numAxes", false, js_Joystick_get_numAxes, NULL);
@@ -675,7 +675,7 @@ pegasus_init(int api_level, int target_api_level)
 	api_define_method("Joystick", "getPosition", js_Joystick_getPosition, 0);
 	api_define_method("Joystick", "isPressed", js_Joystick_isPressed, 0);
 	api_define_class("Keyboard", PEGASUS_KEYBOARD, NULL, NULL, 0);
-	api_define_static_prop("Keyboard", "Default", js_Keyboard_get_Default, NULL, 0);
+	api_define_prop_static("Keyboard", "Default", js_Keyboard_get_Default, NULL, 0);
 	api_define_prop("Keyboard", "capsLock", false, js_Keyboard_get_capsLock, NULL);
 	api_define_prop("Keyboard", "numLock", false, js_Keyboard_get_numLock, NULL);
 	api_define_prop("Keyboard", "scrollLock", false, js_Keyboard_get_scrollLock, NULL);
@@ -684,14 +684,14 @@ pegasus_init(int api_level, int target_api_level)
 	api_define_method("Keyboard", "getKey", js_Keyboard_getKey, 0);
 	api_define_method("Keyboard", "isPressed", js_Keyboard_isPressed, 0);
 	api_define_class("Mixer", PEGASUS_MIXER, js_new_Mixer, js_Mixer_finalize, 0);
-	api_define_static_prop("Mixer", "Default", js_Mixer_get_Default, NULL, 0);
+	api_define_prop_static("Mixer", "Default", js_Mixer_get_Default, NULL, 0);
 	api_define_prop("Mixer", "volume", false, js_Mixer_get_volume, js_Mixer_set_volume);
 	api_define_class("Model", PEGASUS_MODEL, js_new_Model, js_Model_finalize, 0);
 	api_define_prop("Model", "shader", false, js_Model_get_shader, js_Model_set_shader);
 	api_define_prop("Model", "transform", false, js_Model_get_transform, js_Model_set_transform);
 	api_define_method("Model", "draw", js_Model_draw, 0);
 	api_define_class("Mouse", PEGASUS_MOUSE, NULL, NULL, 0);
-	api_define_static_prop("Mouse", "Default", js_Mouse_get_Default, NULL, 0);
+	api_define_prop_static("Mouse", "Default", js_Mouse_get_Default, NULL, 0);
 	api_define_prop("Mouse", "x", false, js_Mouse_get_x, NULL);
 	api_define_prop("Mouse", "y", false, js_Mouse_get_y, NULL);
 	api_define_method("Mouse", "clearQueue", js_Mouse_clearQueue, 0);
@@ -711,7 +711,7 @@ pegasus_init(int api_level, int target_api_level)
 	api_define_method("Server", "accept", js_Server_accept, 0);
 	api_define_method("Server", "close", js_Server_close, 0);
 	api_define_class("Shader", PEGASUS_SHADER, js_new_Shader, js_Shader_finalize, 0);
-	api_define_static_prop("Shader", "Default", js_Shader_get_Default, NULL, 0);
+	api_define_prop_static("Shader", "Default", js_Shader_get_Default, NULL, 0);
 	api_define_method("Shader", "clone", js_Shader_clone, 0);
 	api_define_method("Shader", "setBoolean", js_Shader_setBoolean, 0);
 	api_define_method("Shader", "setColorVector", js_Shader_setColorVector, 0);
@@ -778,8 +778,8 @@ pegasus_init(int api_level, int target_api_level)
 	api_define_method("Transform", "translate", js_Transform_translate, 0);
 	api_define_class("VertexList", PEGASUS_VERTEX_LIST, js_new_VertexList, js_VertexList_finalize, 0);
 
-	api_define_subclass("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
-	api_define_static_prop("Surface", "Screen", js_Surface_get_Screen, NULL, 0);
+	api_define_class_ex("Surface", PEGASUS_SURFACE, PEGASUS_TEXTURE, js_new_Texture, js_Texture_finalize, PEGASUS_SURFACE);
+	api_define_prop_static("Surface", "Screen", js_Surface_get_Screen, NULL, 0);
 	api_define_prop("Surface", "height", false, js_Surface_get_height, 0);
 	api_define_prop("Surface", "transform", false, js_Surface_get_transform, js_Surface_set_transform);
 	api_define_prop("Surface", "width", false, js_Surface_get_width, 0);
@@ -825,127 +825,127 @@ pegasus_init(int api_level, int target_api_level)
 	jsal_pop(1);
 #endif
 
-	api_define_const("FileOp", "Read", FILE_OP_READ);
-	api_define_const("FileOp", "Write", FILE_OP_WRITE);
-	api_define_const("FileOp", "Update", FILE_OP_UPDATE);
-	api_define_const("Key", "Alt", ALLEGRO_KEY_ALT);
-	api_define_const("Key", "AltGr", ALLEGRO_KEY_ALTGR);
-	api_define_const("Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
-	api_define_const("Key", "Backslash", ALLEGRO_KEY_BACKSLASH);
-	api_define_const("Key", "Backspace", ALLEGRO_KEY_BACKSPACE);
-	api_define_const("Key", "CapsLock", ALLEGRO_KEY_CAPSLOCK);
-	api_define_const("Key", "CloseBrace", ALLEGRO_KEY_CLOSEBRACE);
-	api_define_const("Key", "Comma", ALLEGRO_KEY_COMMA);
-	api_define_const("Key", "Delete", ALLEGRO_KEY_DELETE);
-	api_define_const("Key", "Down", ALLEGRO_KEY_DOWN);
-	api_define_const("Key", "End", ALLEGRO_KEY_END);
-	api_define_const("Key", "Enter", ALLEGRO_KEY_ENTER);
-	api_define_const("Key", "Equals", ALLEGRO_KEY_EQUALS);
-	api_define_const("Key", "Escape", ALLEGRO_KEY_ESCAPE);
-	api_define_const("Key", "F1", ALLEGRO_KEY_F1);
-	api_define_const("Key", "F2", ALLEGRO_KEY_F2);
-	api_define_const("Key", "F3", ALLEGRO_KEY_F3);
-	api_define_const("Key", "F4", ALLEGRO_KEY_F4);
-	api_define_const("Key", "F5", ALLEGRO_KEY_F5);
-	api_define_const("Key", "F6", ALLEGRO_KEY_F6);
-	api_define_const("Key", "F7", ALLEGRO_KEY_F7);
-	api_define_const("Key", "F8", ALLEGRO_KEY_F8);
-	api_define_const("Key", "F9", ALLEGRO_KEY_F9);
-	api_define_const("Key", "F10", ALLEGRO_KEY_F10);
-	api_define_const("Key", "F11", ALLEGRO_KEY_F11);
-	api_define_const("Key", "F12", ALLEGRO_KEY_F12);
-	api_define_const("Key", "Home", ALLEGRO_KEY_HOME);
-	api_define_const("Key", "Hyphen", ALLEGRO_KEY_MINUS);
-	api_define_const("Key", "Insert", ALLEGRO_KEY_INSERT);
-	api_define_const("Key", "LCtrl", ALLEGRO_KEY_LCTRL);
-	api_define_const("Key", "LShift", ALLEGRO_KEY_LSHIFT);
-	api_define_const("Key", "Left", ALLEGRO_KEY_LEFT);
-	api_define_const("Key", "NumLock", ALLEGRO_KEY_NUMLOCK);
-	api_define_const("Key", "OpenBrace", ALLEGRO_KEY_OPENBRACE);
-	api_define_const("Key", "PageDown", ALLEGRO_KEY_PGDN);
-	api_define_const("Key", "PageUp", ALLEGRO_KEY_PGUP);
-	api_define_const("Key", "Period", ALLEGRO_KEY_FULLSTOP);
-	api_define_const("Key", "RCtrl", ALLEGRO_KEY_RCTRL);
-	api_define_const("Key", "RShift", ALLEGRO_KEY_RSHIFT);
-	api_define_const("Key", "Right", ALLEGRO_KEY_RIGHT);
-	api_define_const("Key", "ScrollLock", ALLEGRO_KEY_SCROLLLOCK);
-	api_define_const("Key", "Semicolon", ALLEGRO_KEY_SEMICOLON);
-	api_define_const("Key", "Slash", ALLEGRO_KEY_SLASH);
-	api_define_const("Key", "Space", ALLEGRO_KEY_SPACE);
-	api_define_const("Key", "Tab", ALLEGRO_KEY_TAB);
-	api_define_const("Key", "Tilde", ALLEGRO_KEY_TILDE);
-	api_define_const("Key", "Up", ALLEGRO_KEY_UP);
-	api_define_const("Key", "A", ALLEGRO_KEY_A);
-	api_define_const("Key", "B", ALLEGRO_KEY_B);
-	api_define_const("Key", "C", ALLEGRO_KEY_C);
-	api_define_const("Key", "D", ALLEGRO_KEY_D);
-	api_define_const("Key", "E", ALLEGRO_KEY_E);
-	api_define_const("Key", "F", ALLEGRO_KEY_F);
-	api_define_const("Key", "G", ALLEGRO_KEY_G);
-	api_define_const("Key", "H", ALLEGRO_KEY_H);
-	api_define_const("Key", "I", ALLEGRO_KEY_I);
-	api_define_const("Key", "J", ALLEGRO_KEY_J);
-	api_define_const("Key", "K", ALLEGRO_KEY_K);
-	api_define_const("Key", "L", ALLEGRO_KEY_L);
-	api_define_const("Key", "M", ALLEGRO_KEY_M);
-	api_define_const("Key", "N", ALLEGRO_KEY_N);
-	api_define_const("Key", "O", ALLEGRO_KEY_O);
-	api_define_const("Key", "P", ALLEGRO_KEY_P);
-	api_define_const("Key", "Q", ALLEGRO_KEY_Q);
-	api_define_const("Key", "R", ALLEGRO_KEY_R);
-	api_define_const("Key", "S", ALLEGRO_KEY_S);
-	api_define_const("Key", "T", ALLEGRO_KEY_T);
-	api_define_const("Key", "U", ALLEGRO_KEY_U);
-	api_define_const("Key", "V", ALLEGRO_KEY_V);
-	api_define_const("Key", "W", ALLEGRO_KEY_W);
-	api_define_const("Key", "X", ALLEGRO_KEY_X);
-	api_define_const("Key", "Y", ALLEGRO_KEY_Y);
-	api_define_const("Key", "Z", ALLEGRO_KEY_Z);
-	api_define_const("Key", "D1", ALLEGRO_KEY_1);
-	api_define_const("Key", "D2", ALLEGRO_KEY_2);
-	api_define_const("Key", "D3", ALLEGRO_KEY_3);
-	api_define_const("Key", "D4", ALLEGRO_KEY_4);
-	api_define_const("Key", "D5", ALLEGRO_KEY_5);
-	api_define_const("Key", "D6", ALLEGRO_KEY_6);
-	api_define_const("Key", "D7", ALLEGRO_KEY_7);
-	api_define_const("Key", "D8", ALLEGRO_KEY_8);
-	api_define_const("Key", "D9", ALLEGRO_KEY_9);
-	api_define_const("Key", "D0", ALLEGRO_KEY_0);
-	api_define_const("Key", "NumPad1", ALLEGRO_KEY_PAD_1);
-	api_define_const("Key", "NumPad2", ALLEGRO_KEY_PAD_2);
-	api_define_const("Key", "NumPad3", ALLEGRO_KEY_PAD_3);
-	api_define_const("Key", "NumPad4", ALLEGRO_KEY_PAD_4);
-	api_define_const("Key", "NumPad5", ALLEGRO_KEY_PAD_5);
-	api_define_const("Key", "NumPad6", ALLEGRO_KEY_PAD_6);
-	api_define_const("Key", "NumPad7", ALLEGRO_KEY_PAD_7);
-	api_define_const("Key", "NumPad8", ALLEGRO_KEY_PAD_8);
-	api_define_const("Key", "NumPad9", ALLEGRO_KEY_PAD_9);
-	api_define_const("Key", "NumPad0", ALLEGRO_KEY_PAD_0);
-	api_define_const("Key", "NumPadEnter", ALLEGRO_KEY_PAD_ENTER);
-	api_define_const("Key", "Add", ALLEGRO_KEY_PAD_PLUS);
-	api_define_const("Key", "Decimal", ALLEGRO_KEY_PAD_DELETE);
-	api_define_const("Key", "Divide", ALLEGRO_KEY_PAD_SLASH);
-	api_define_const("Key", "Multiply", ALLEGRO_KEY_PAD_ASTERISK);
-	api_define_const("Key", "Subtract", ALLEGRO_KEY_PAD_MINUS);
-	api_define_const("MouseKey", "Left", MOUSE_KEY_LEFT);
-	api_define_const("MouseKey", "Right", MOUSE_KEY_RIGHT);
-	api_define_const("MouseKey", "Middle", MOUSE_KEY_MIDDLE);
-	api_define_const("MouseKey", "WheelUp", MOUSE_KEY_WHEEL_UP);
-	api_define_const("MouseKey", "WheelDown", MOUSE_KEY_WHEEL_DOWN);
-	api_define_const("ShapeType", "Fan", SHAPE_TRI_FAN);
-	api_define_const("ShapeType", "Lines", SHAPE_LINES);
-	api_define_const("ShapeType", "LineLoop", SHAPE_LINE_LOOP);
-	api_define_const("ShapeType", "LineStrip", SHAPE_LINE_STRIP);
-	api_define_const("ShapeType", "Points", SHAPE_POINTS);
-	api_define_const("ShapeType", "Triangles", SHAPE_TRIANGLES);
-	api_define_const("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
+	api_define_const_number("FileOp", "Read", FILE_OP_READ);
+	api_define_const_number("FileOp", "Write", FILE_OP_WRITE);
+	api_define_const_number("FileOp", "Update", FILE_OP_UPDATE);
+	api_define_const_number("Key", "Alt", ALLEGRO_KEY_ALT);
+	api_define_const_number("Key", "AltGr", ALLEGRO_KEY_ALTGR);
+	api_define_const_number("Key", "Apostrophe", ALLEGRO_KEY_QUOTE);
+	api_define_const_number("Key", "Backslash", ALLEGRO_KEY_BACKSLASH);
+	api_define_const_number("Key", "Backspace", ALLEGRO_KEY_BACKSPACE);
+	api_define_const_number("Key", "CapsLock", ALLEGRO_KEY_CAPSLOCK);
+	api_define_const_number("Key", "CloseBrace", ALLEGRO_KEY_CLOSEBRACE);
+	api_define_const_number("Key", "Comma", ALLEGRO_KEY_COMMA);
+	api_define_const_number("Key", "Delete", ALLEGRO_KEY_DELETE);
+	api_define_const_number("Key", "Down", ALLEGRO_KEY_DOWN);
+	api_define_const_number("Key", "End", ALLEGRO_KEY_END);
+	api_define_const_number("Key", "Enter", ALLEGRO_KEY_ENTER);
+	api_define_const_number("Key", "Equals", ALLEGRO_KEY_EQUALS);
+	api_define_const_number("Key", "Escape", ALLEGRO_KEY_ESCAPE);
+	api_define_const_number("Key", "F1", ALLEGRO_KEY_F1);
+	api_define_const_number("Key", "F2", ALLEGRO_KEY_F2);
+	api_define_const_number("Key", "F3", ALLEGRO_KEY_F3);
+	api_define_const_number("Key", "F4", ALLEGRO_KEY_F4);
+	api_define_const_number("Key", "F5", ALLEGRO_KEY_F5);
+	api_define_const_number("Key", "F6", ALLEGRO_KEY_F6);
+	api_define_const_number("Key", "F7", ALLEGRO_KEY_F7);
+	api_define_const_number("Key", "F8", ALLEGRO_KEY_F8);
+	api_define_const_number("Key", "F9", ALLEGRO_KEY_F9);
+	api_define_const_number("Key", "F10", ALLEGRO_KEY_F10);
+	api_define_const_number("Key", "F11", ALLEGRO_KEY_F11);
+	api_define_const_number("Key", "F12", ALLEGRO_KEY_F12);
+	api_define_const_number("Key", "Home", ALLEGRO_KEY_HOME);
+	api_define_const_number("Key", "Hyphen", ALLEGRO_KEY_MINUS);
+	api_define_const_number("Key", "Insert", ALLEGRO_KEY_INSERT);
+	api_define_const_number("Key", "LCtrl", ALLEGRO_KEY_LCTRL);
+	api_define_const_number("Key", "LShift", ALLEGRO_KEY_LSHIFT);
+	api_define_const_number("Key", "Left", ALLEGRO_KEY_LEFT);
+	api_define_const_number("Key", "NumLock", ALLEGRO_KEY_NUMLOCK);
+	api_define_const_number("Key", "OpenBrace", ALLEGRO_KEY_OPENBRACE);
+	api_define_const_number("Key", "PageDown", ALLEGRO_KEY_PGDN);
+	api_define_const_number("Key", "PageUp", ALLEGRO_KEY_PGUP);
+	api_define_const_number("Key", "Period", ALLEGRO_KEY_FULLSTOP);
+	api_define_const_number("Key", "RCtrl", ALLEGRO_KEY_RCTRL);
+	api_define_const_number("Key", "RShift", ALLEGRO_KEY_RSHIFT);
+	api_define_const_number("Key", "Right", ALLEGRO_KEY_RIGHT);
+	api_define_const_number("Key", "ScrollLock", ALLEGRO_KEY_SCROLLLOCK);
+	api_define_const_number("Key", "Semicolon", ALLEGRO_KEY_SEMICOLON);
+	api_define_const_number("Key", "Slash", ALLEGRO_KEY_SLASH);
+	api_define_const_number("Key", "Space", ALLEGRO_KEY_SPACE);
+	api_define_const_number("Key", "Tab", ALLEGRO_KEY_TAB);
+	api_define_const_number("Key", "Tilde", ALLEGRO_KEY_TILDE);
+	api_define_const_number("Key", "Up", ALLEGRO_KEY_UP);
+	api_define_const_number("Key", "A", ALLEGRO_KEY_A);
+	api_define_const_number("Key", "B", ALLEGRO_KEY_B);
+	api_define_const_number("Key", "C", ALLEGRO_KEY_C);
+	api_define_const_number("Key", "D", ALLEGRO_KEY_D);
+	api_define_const_number("Key", "E", ALLEGRO_KEY_E);
+	api_define_const_number("Key", "F", ALLEGRO_KEY_F);
+	api_define_const_number("Key", "G", ALLEGRO_KEY_G);
+	api_define_const_number("Key", "H", ALLEGRO_KEY_H);
+	api_define_const_number("Key", "I", ALLEGRO_KEY_I);
+	api_define_const_number("Key", "J", ALLEGRO_KEY_J);
+	api_define_const_number("Key", "K", ALLEGRO_KEY_K);
+	api_define_const_number("Key", "L", ALLEGRO_KEY_L);
+	api_define_const_number("Key", "M", ALLEGRO_KEY_M);
+	api_define_const_number("Key", "N", ALLEGRO_KEY_N);
+	api_define_const_number("Key", "O", ALLEGRO_KEY_O);
+	api_define_const_number("Key", "P", ALLEGRO_KEY_P);
+	api_define_const_number("Key", "Q", ALLEGRO_KEY_Q);
+	api_define_const_number("Key", "R", ALLEGRO_KEY_R);
+	api_define_const_number("Key", "S", ALLEGRO_KEY_S);
+	api_define_const_number("Key", "T", ALLEGRO_KEY_T);
+	api_define_const_number("Key", "U", ALLEGRO_KEY_U);
+	api_define_const_number("Key", "V", ALLEGRO_KEY_V);
+	api_define_const_number("Key", "W", ALLEGRO_KEY_W);
+	api_define_const_number("Key", "X", ALLEGRO_KEY_X);
+	api_define_const_number("Key", "Y", ALLEGRO_KEY_Y);
+	api_define_const_number("Key", "Z", ALLEGRO_KEY_Z);
+	api_define_const_number("Key", "D1", ALLEGRO_KEY_1);
+	api_define_const_number("Key", "D2", ALLEGRO_KEY_2);
+	api_define_const_number("Key", "D3", ALLEGRO_KEY_3);
+	api_define_const_number("Key", "D4", ALLEGRO_KEY_4);
+	api_define_const_number("Key", "D5", ALLEGRO_KEY_5);
+	api_define_const_number("Key", "D6", ALLEGRO_KEY_6);
+	api_define_const_number("Key", "D7", ALLEGRO_KEY_7);
+	api_define_const_number("Key", "D8", ALLEGRO_KEY_8);
+	api_define_const_number("Key", "D9", ALLEGRO_KEY_9);
+	api_define_const_number("Key", "D0", ALLEGRO_KEY_0);
+	api_define_const_number("Key", "NumPad1", ALLEGRO_KEY_PAD_1);
+	api_define_const_number("Key", "NumPad2", ALLEGRO_KEY_PAD_2);
+	api_define_const_number("Key", "NumPad3", ALLEGRO_KEY_PAD_3);
+	api_define_const_number("Key", "NumPad4", ALLEGRO_KEY_PAD_4);
+	api_define_const_number("Key", "NumPad5", ALLEGRO_KEY_PAD_5);
+	api_define_const_number("Key", "NumPad6", ALLEGRO_KEY_PAD_6);
+	api_define_const_number("Key", "NumPad7", ALLEGRO_KEY_PAD_7);
+	api_define_const_number("Key", "NumPad8", ALLEGRO_KEY_PAD_8);
+	api_define_const_number("Key", "NumPad9", ALLEGRO_KEY_PAD_9);
+	api_define_const_number("Key", "NumPad0", ALLEGRO_KEY_PAD_0);
+	api_define_const_number("Key", "NumPadEnter", ALLEGRO_KEY_PAD_ENTER);
+	api_define_const_number("Key", "Add", ALLEGRO_KEY_PAD_PLUS);
+	api_define_const_number("Key", "Decimal", ALLEGRO_KEY_PAD_DELETE);
+	api_define_const_number("Key", "Divide", ALLEGRO_KEY_PAD_SLASH);
+	api_define_const_number("Key", "Multiply", ALLEGRO_KEY_PAD_ASTERISK);
+	api_define_const_number("Key", "Subtract", ALLEGRO_KEY_PAD_MINUS);
+	api_define_const_number("MouseKey", "Left", MOUSE_KEY_LEFT);
+	api_define_const_number("MouseKey", "Right", MOUSE_KEY_RIGHT);
+	api_define_const_number("MouseKey", "Middle", MOUSE_KEY_MIDDLE);
+	api_define_const_number("MouseKey", "WheelUp", MOUSE_KEY_WHEEL_UP);
+	api_define_const_number("MouseKey", "WheelDown", MOUSE_KEY_WHEEL_DOWN);
+	api_define_const_number("ShapeType", "Fan", SHAPE_TRI_FAN);
+	api_define_const_number("ShapeType", "Lines", SHAPE_LINES);
+	api_define_const_number("ShapeType", "LineLoop", SHAPE_LINE_LOOP);
+	api_define_const_number("ShapeType", "LineStrip", SHAPE_LINE_STRIP);
+	api_define_const_number("ShapeType", "Points", SHAPE_POINTS);
+	api_define_const_number("ShapeType", "Triangles", SHAPE_TRIANGLES);
+	api_define_const_number("ShapeType", "TriStrip", SHAPE_TRI_STRIP);
 
 	if (api_level >= 2) {
 		api_define_class("BlendOp", PEGASUS_BLENDER, api_level >= 3 ? js_new_BlendOp : NULL, js_BlendOp_finalize, 0);
-		api_define_static_prop("Joystick", "P1", js_Joystick_get_Default, NULL, 1);
-		api_define_static_prop("Joystick", "P2", js_Joystick_get_Default, NULL, 2);
-		api_define_static_prop("Joystick", "P3", js_Joystick_get_Default, NULL, 3);
-		api_define_static_prop("Joystick", "P4", js_Joystick_get_Default, NULL, 4);
+		api_define_prop_static("Joystick", "P1", js_Joystick_get_Default, NULL, 1);
+		api_define_prop_static("Joystick", "P2", js_Joystick_get_Default, NULL, 2);
+		api_define_prop_static("Joystick", "P3", js_Joystick_get_Default, NULL, 3);
+		api_define_prop_static("Joystick", "P4", js_Joystick_get_Default, NULL, 4);
 		api_define_func("FS", "directoryOf", js_FS_directoryOf, 0);
 		api_define_func("FS", "extensionOf", js_FS_extensionOf, 0);
 		api_define_func("FS", "fileNameOf", js_FS_fileNameOf, 0);
@@ -960,56 +960,56 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_method("Font", "widthOf", js_Font_widthOf, 0);
 		api_define_method("Socket", "disconnect", js_Socket_disconnect, 0);
 		api_define_method("Socket", "peek", js_Socket_peek, 0);
-		api_define_const("DataType", "Bytes", DATA_BYTES);
-		api_define_const("DataType", "Lines", DATA_LINES);
-		api_define_const("DataType", "Raw", DATA_RAW);
-		api_define_const("DataType", "Text", DATA_TEXT);
-		api_define_const("MouseKey", "Back", MOUSE_KEY_BACK);
-		api_define_const("MouseKey", "Forward", MOUSE_KEY_FORWARD);
+		api_define_const_number("DataType", "Bytes", DATA_BYTES);
+		api_define_const_number("DataType", "Lines", DATA_LINES);
+		api_define_const_number("DataType", "Raw", DATA_RAW);
+		api_define_const_number("DataType", "Text", DATA_TEXT);
+		api_define_const_number("MouseKey", "Back", MOUSE_KEY_BACK);
+		api_define_const_number("MouseKey", "Forward", MOUSE_KEY_FORWARD);
 
 		// register predefined BlendOp accessors
 		p_blender = BLENDERS;
 		while (p_blender->name != NULL) {
-			api_define_static_prop("BlendOp", p_blender->name, js_BlendOp_get_Default, NULL, (intptr_t)(p_blender - BLENDERS));
+			api_define_prop_static("BlendOp", p_blender->name, js_BlendOp_get_Default, NULL, (intptr_t)(p_blender - BLENDERS));
 			++p_blender;
 		}
 	}
 
 	if (api_level >= 3) {
-		api_define_async_func("FileStream", "fromFile", js_new_FileStream, 0);
-		api_define_async_func("Font", "fromFile", js_new_Font, 0);
+		api_define_func_async("FileStream", "fromFile", js_new_FileStream, 0);
+		api_define_func_async("Font", "fromFile", js_new_Font, 0);
 		if (target_api_level <= 3)
-			api_define_async_func("JSON", "fromFile", js_JSON_fromFile, 0);
-		api_define_async_func("Sample", "fromFile", js_new_Sample, 0);
-		api_define_async_func("Socket", "for", js_new_Socket, 0);
-		api_define_async_func("Shader", "fromFiles", js_new_Shader, 0);
-		api_define_async_func("Sound", "fromFile", js_new_Sound, 0);
-		api_define_async_func("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
-		api_define_async_func("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
+			api_define_func_async("JSON", "fromFile", js_JSON_fromFile, 0);
+		api_define_func_async("Sample", "fromFile", js_new_Sample, 0);
+		api_define_func_async("Socket", "for", js_new_Socket, 0);
+		api_define_func_async("Shader", "fromFiles", js_new_Shader, 0);
+		api_define_func_async("Sound", "fromFile", js_new_Sound, 0);
+		api_define_func_async("Surface", "fromFile", js_Texture_fromFile, PEGASUS_SURFACE);
+		api_define_func_async("Texture", "fromFile", js_Texture_fromFile, PEGASUS_TEXTURE);
 		api_define_prop("Mouse", "position", false, js_Mouse_get_position, NULL);
 		api_define_method("JobToken", "pause", js_JobToken_pause_resume, (intptr_t)true);
 		api_define_method("JobToken", "resume", js_JobToken_pause_resume, (intptr_t)false);
-		api_define_async_method("Server", "acceptNext", js_Server_accept, 0);
+		api_define_method_async("Server", "acceptNext", js_Server_accept, 0);
 		if (target_api_level <= 3) {
 			// these are unnecessary when targeting API level 4+ because in that case
 			// the standard versions are async by default.
-			api_define_async_method("FileStream", "asyncRead", js_FileStream_read, 0);
-			api_define_async_method("FileStream", "asyncWrite", js_FileStream_write, 0);
-			api_define_async_method("Socket", "asyncRead", js_Socket_read, 0);
-			api_define_async_method("Socket", "asyncWrite", js_Socket_write, 0);
+			api_define_method_async("FileStream", "asyncRead", js_FileStream_read, 0);
+			api_define_method_async("FileStream", "asyncWrite", js_FileStream_write, 0);
+			api_define_method_async("Socket", "asyncRead", js_Socket_read, 0);
+			api_define_method_async("Socket", "asyncWrite", js_Socket_write, 0);
 		}
 	}
 
 	if (api_level >= 4) {
-		api_define_static_prop("Transform", "Identity", js_Transform_get_Identity, NULL, 0);
+		api_define_prop_static("Transform", "Identity", js_Transform_get_Identity, NULL, 0);
 		api_define_func("Color", "fromRGBA", js_Color_fromRGBA, 0);
 		api_define_func("Dispatch", "onExit", js_Dispatch_onExit, 0);
-		api_define_async_func("File", "exists", js_File_exists, 0);
-		api_define_async_func("File", "load", js_File_load, 0);
-		api_define_async_func("File", "remove", js_File_remove, 0);
-		api_define_async_func("File", "rename", js_File_rename, 0);
-		api_define_async_func("File", "run", js_File_run, 0);
-		api_define_async_func("File", "save", js_File_save, 0);
+		api_define_func_async("File", "exists", js_File_exists, 0);
+		api_define_func_async("File", "load", js_File_load, 0);
+		api_define_func_async("File", "remove", js_File_remove, 0);
+		api_define_func_async("File", "rename", js_File_rename, 0);
+		api_define_func_async("File", "run", js_File_run, 0);
+		api_define_func_async("File", "save", js_File_save, 0);
 		api_define_func("FS", "match", js_FS_match, 0);
 		api_define_func("Transform", "project2D", js_Transform_project2D, 1);
 		api_define_func("Transform", "project3D", js_Transform_project3D, 1);
@@ -1023,26 +1023,26 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_method("Surface", "clear", js_Surface_clear, 0);
 		api_define_method("Texture", "download", js_Texture_download, 0);
 		api_define_method("Texture", "upload", js_Texture_upload, 0);
-		api_define_const("BlendType", "Add", BLEND_OP_ADD);
-		api_define_const("BlendType", "Subtract", BLEND_OP_SUB);
-		api_define_const("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);
-		api_define_const("Blend", "Alpha", BLEND_ALPHA);
-		api_define_const("Blend", "AlphaInverse", BLEND_INV_ALPHA);
-		api_define_const("Blend", "One", BLEND_ONE);
-		api_define_const("Blend", "Source", BLEND_SRC);
-		api_define_const("Blend", "SourceInverse", BLEND_INV_SRC);
-		api_define_const("Blend", "Target", BLEND_DEST);
-		api_define_const("Blend", "TargetInverse", BLEND_INV_DEST);
-		api_define_const("Blend", "Zero", BLEND_ZERO);
-		api_define_const("DataType", "JSON", DATA_JSON);
-		api_define_const("DepthOp", "AlwaysPass", DEPTH_PASS);
-		api_define_const("DepthOp", "Equal", DEPTH_EQUAL);
-		api_define_const("DepthOp", "Greater", DEPTH_GREATER);
-		api_define_const("DepthOp", "GreaterOrEqual", DEPTH_GEQUAL);
-		api_define_const("DepthOp", "Less", DEPTH_LESS);
-		api_define_const("DepthOp", "LessOrEqual", DEPTH_LEQUAL);
-		api_define_const("DepthOp", "NeverPass", DEPTH_NEVER);
-		api_define_const("DepthOp", "NotEqual", DEPTH_NOTEQUAL);
+		api_define_const_number("BlendType", "Add", BLEND_OP_ADD);
+		api_define_const_number("BlendType", "Subtract", BLEND_OP_SUB);
+		api_define_const_number("BlendType", "SubtractInverse", BLEND_OP_SUB_INV);
+		api_define_const_number("Blend", "Alpha", BLEND_ALPHA);
+		api_define_const_number("Blend", "AlphaInverse", BLEND_INV_ALPHA);
+		api_define_const_number("Blend", "One", BLEND_ONE);
+		api_define_const_number("Blend", "Source", BLEND_SRC);
+		api_define_const_number("Blend", "SourceInverse", BLEND_INV_SRC);
+		api_define_const_number("Blend", "Target", BLEND_DEST);
+		api_define_const_number("Blend", "TargetInverse", BLEND_INV_DEST);
+		api_define_const_number("Blend", "Zero", BLEND_ZERO);
+		api_define_const_number("DataType", "JSON", DATA_JSON);
+		api_define_const_number("DepthOp", "AlwaysPass", DEPTH_PASS);
+		api_define_const_number("DepthOp", "Equal", DEPTH_EQUAL);
+		api_define_const_number("DepthOp", "Greater", DEPTH_GREATER);
+		api_define_const_number("DepthOp", "GreaterOrEqual", DEPTH_GEQUAL);
+		api_define_const_number("DepthOp", "Less", DEPTH_LESS);
+		api_define_const_number("DepthOp", "LessOrEqual", DEPTH_LEQUAL);
+		api_define_const_number("DepthOp", "NeverPass", DEPTH_NEVER);
+		api_define_const_number("DepthOp", "NotEqual", DEPTH_NOTEQUAL);
 	}
 
 	// keep a local reference to Surface.Screen
@@ -1095,7 +1095,7 @@ jsal_pegasus_push_color(color_t color, bool in_ctor)
 {
 	color_t* color_ptr;
 
-	jsal_push_class_fatobj(PEGASUS_COLOR, in_ctor, sizeof(color_t), (void**)&color_ptr);
+	jsal_push_class_obj_fat(PEGASUS_COLOR, in_ctor, sizeof(color_t), (void**)&color_ptr);
 	*color_ptr = color;
 }
 
@@ -1104,7 +1104,7 @@ jsal_pegasus_push_job_token(int64_t token)
 {
 	int64_t* ptr;
 
-	jsal_push_class_fatobj(PEGASUS_JOB_TOKEN, false, sizeof(int64_t), (void**)&ptr);
+	jsal_push_class_obj_fat(PEGASUS_JOB_TOKEN, false, sizeof(int64_t), (void**)&ptr);
 	*ptr = token;
 }
 
@@ -1145,7 +1145,7 @@ create_joystick_objects(void)
 	jsal_push_new_array();
 	num_devices = joy_num_devices();
 	for (i = 0; i < num_devices; ++i) {
-		jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), (void**)&device);
+		jsal_push_class_obj_fat(PEGASUS_JOYSTICK, false, sizeof(int), (void**)&device);
 		jsal_put_prop_index(-2, i);
 		*device = i;
 	}
@@ -2829,7 +2829,7 @@ js_Joystick_get_Default(int num_args, bool is_ctor, intptr_t magic)
 	int* device;
 	char prop_name[8];
 
-	jsal_push_class_fatobj(PEGASUS_JOYSTICK, false, sizeof(int), (void**)&device);
+	jsal_push_class_obj_fat(PEGASUS_JOYSTICK, false, sizeof(int), (void**)&device);
 	*device = (int)(magic - 1);
 
 	if (magic > 0)

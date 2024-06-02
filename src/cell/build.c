@@ -200,9 +200,9 @@ build_new(const path_t* source_path, const path_t* out_path, bool debuggable)
 	api_define_func(NULL, "files", js_files, 0);
 	api_define_func(NULL, "install", js_install, 0);
 	api_define_func(NULL, "warn", js_warn, 0);
-	api_define_static_prop("Sphere", "Compiler", js_Sphere_get_Compiler, NULL, 0);
-	api_define_static_prop("Sphere", "Game", js_Sphere_get_Game, NULL, 0);
-	api_define_static_prop("Sphere", "Version", js_Sphere_get_Version, NULL, 0);
+	api_define_prop_static("Sphere", "Compiler", js_Sphere_get_Compiler, NULL, 0);
+	api_define_prop_static("Sphere", "Game", js_Sphere_get_Game, NULL, 0);
+	api_define_prop_static("Sphere", "Version", js_Sphere_get_Version, NULL, 0);
 	api_define_class("DirectoryStream", CELL_DIR_STREAM, js_new_DirectoryStream, js_DirectoryStream_finalize, 0);
 	api_define_prop("DirectoryStream", "fileCount", false, js_DirectoryStream_get_fileCount, NULL);
 	api_define_prop("DirectoryStream", "fileName", false, js_DirectoryStream_get_fileName, NULL);
@@ -261,9 +261,9 @@ build_new(const path_t* source_path, const path_t* out_path, bool debuggable)
 	api_define_func("Z", "deflate", js_Z_deflate, 0);
 	api_define_func("Z", "inflate", js_Z_inflate, 0);
 
-	api_define_const("FileOp", "Read", FILE_OP_READ);
-	api_define_const("FileOp", "Write", FILE_OP_WRITE);
-	api_define_const("FileOp", "Update", FILE_OP_UPDATE);
+	api_define_const_number("FileOp", "Read", FILE_OP_READ);
+	api_define_const_number("FileOp", "Write", FILE_OP_WRITE);
+	api_define_const_number("FileOp", "Update", FILE_OP_UPDATE);
 
 	// game manifest (gets JSON encoded at end of build)
 	jsal_push_new_object();

@@ -39,22 +39,23 @@
 #include "jsal.h"
 
 void   api_init                (bool node_compatible);
-void   api_define_async_func   (const char* namespace_name, const char* name, js_function_t callback, intptr_t magic);
-void   api_define_async_method (const char* class_name, const char* name, js_function_t callback, intptr_t magic);
-void   api_define_const        (const char* enum_name, const char* name, double value);
+void   api_uninit              (void);
 void   api_define_class        (const char* name, int class_id, js_function_t constructor, js_finalizer_t finalizer, intptr_t magic);
+void   api_define_class_ex     (const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer, intptr_t magic);
+void   api_define_const_number (const char* enum_name, const char* name, double value);
+void   api_define_const_string (const char* enum_name, const char* name, const char* value);
 void   api_define_func         (const char* namespace_name, const char* name, js_function_t callback, intptr_t magic);
+void   api_define_func_async   (const char* namespace_name, const char* name, js_function_t callback, intptr_t magic);
 void   api_define_method       (const char* class_name, const char* name, js_function_t callback, intptr_t magic);
-void   api_define_object       (const char* namespace_name, const char* name, int class_id, void* udata);
+void   api_define_method_async (const char* class_name, const char* name, js_function_t callback, intptr_t magic);
 void   api_define_prop         (const char* class_name, const char* name, bool enumerable, js_function_t getter, js_function_t setter);
-void   api_define_static_prop  (const char* namespace_name, const char* name, js_function_t getter, js_function_t setter, intptr_t magic);
-void   api_define_subclass     (const char* name, int class_id, int super_id, js_function_t constructor, js_finalizer_t finalizer, intptr_t magic);
+void   api_define_prop_static  (const char* namespace_name, const char* name, js_function_t getter, js_function_t setter, intptr_t magic);
 
 void* jsal_get_class_obj        (int index, int class_id);
 bool  jsal_is_class_obj         (int index, int class_id);
 int   jsal_push_class_name      (int class_id);
 int   jsal_push_class_obj       (int class_id, void* udata, bool in_ctor);
-int   jsal_push_class_fatobj    (int class_id, bool in_ctor, size_t data_size, void* *out_data_ptr);
+int   jsal_push_class_obj_fat   (int class_id, bool in_ctor, size_t data_size, void* *out_data_ptr);
 int   jsal_push_class_prototype (int class_id);
 void* jsal_require_class_obj    (int index, int class_id);
 void  jsal_set_class_ptr        (int index, void* ptr);
