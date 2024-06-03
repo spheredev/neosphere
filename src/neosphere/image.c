@@ -38,6 +38,12 @@
 #include "galileo.h"
 #include "transform.h"
 
+struct clip
+{
+	clip_op_t clip_op;
+	rect_t    rect;
+};
+
 struct image
 {
 	unsigned int    refcount;
@@ -46,6 +52,7 @@ struct image
 	blend_op_t*     blend_op;
 	unsigned int    cache_hits;
 	bool            clipping_set;
+	vector_t*       clips;
 	depth_op_t      depth_op;
 	bool            have_depth;
 	image_lock_t    lock;
@@ -60,8 +67,9 @@ struct image
 	image_t*        parent;
 };
 
-static void cache_pixels   (image_t* image);
-static void uncache_pixels (image_t* image);
+static void cache_pixels       (image_t* image);
+static void recompute_clipping (image_t* image);
+static void uncache_pixels     (image_t* image);
 
 static image_t*     s_last_image = NULL;
 static unsigned int s_next_image_id = 0;
@@ -250,6 +258,12 @@ image_bitmap(image_t* it)
 	return it->bitmap;
 }
 
+bool
+image_can_unclip(const image_t* it)
+{
+	return it->clips != NULL && vector_len(it->clips) > 0;
+}
+
 int
 image_height(const image_t* it)
 {
@@ -260,6 +274,12 @@ const char*
 image_path(const image_t* it)
 {
 	return it->path;
+}
+
+rect_t
+image_scissor_box(const image_t* it)
+{
+	return it->scissor_box;
 }
 
 int
@@ -278,12 +298,6 @@ depth_op_t
 image_get_depth_op(const image_t* it)
 {
 	return it->depth_op;
-}
-
-rect_t
-image_get_scissor(const image_t* it)
-{
-	return it->scissor_box;
 }
 
 transform_t*
@@ -325,16 +339,6 @@ image_set_depth_op(image_t* it, depth_op_t op)
 }
 
 void
-image_set_scissor(image_t* it, rect_t value)
-{
-	it->scissor_box = value;
-	if (it == s_last_image)
-		al_set_clipping_rectangle(value.x1, value.y1, value.x2 - value.x1, value.y2 - value.y1);
-	else
-		it->clipping_set = false;
-}
-
-void
 image_set_transform(image_t* it, transform_t* transform)
 {
 	transform_t* old_value;
@@ -373,7 +377,7 @@ image_apply_color_fx_4(image_t* it, color_fx_t ul_mat, color_fx_t ur_mat, color_
 
 	int           i1, i2;
 	image_lock_t* lock;
-	color_fx_t mat_1, mat_2, mat_3;
+	color_fx_t    mat_1, mat_2, mat_3;
 	color_t*      pixel;
 
 	int i_x, i_y;
@@ -442,6 +446,23 @@ image_blit(image_t* it, image_t* target_image, int x, int y)
 	al_draw_bitmap(image_bitmap(it), x, y, 0x0);
 	al_set_blender(blend_op, blend_mode_src, blend_mode_dest);
 	al_set_target_bitmap(old_target);
+}
+
+void
+image_clip_to(image_t* it, rect_t rect, clip_op_t clip_op)
+{
+	struct clip clip;
+	
+	if (it->clips == NULL)
+		it->clips = vector_new(sizeof(struct clip));
+	if (clip_op == CLIP_RESET) {
+		vector_clear(it->clips);
+		clip_op = CLIP_OVERRIDE;
+	}
+	clip.clip_op = clip_op;
+	clip.rect = rect;
+	vector_push(it->clips, &clip);
+	recompute_clipping(it);
 }
 
 bool
@@ -770,6 +791,13 @@ image_set_pixel(image_t* it, int x, int y, color_t color)
 }
 
 void
+image_unclip(image_t* it)
+{
+	vector_pop(it->clips, 1);
+	recompute_clipping(it);
+}
+
+void
 image_unlock(image_t* it, image_lock_t* lock)
 {
 	// if the caller provides the wrong lock pointer, the image
@@ -836,6 +864,37 @@ cache_pixels(image_t* image)
 on_error:
 	if (lock != NULL)
 		al_unlock_bitmap(image->bitmap);
+}
+
+static void
+recompute_clipping(image_t* image)
+{
+	struct clip* clip;
+
+	iter_t iter;
+
+	image->scissor_box = mk_rect(0, 0, image->width, image->height);
+	iter = vector_enum(image->clips);
+	while ((clip = iter_next(&iter))) {
+		// note: CLIP_RESET should never appear in the clipping stack.
+		switch (clip->clip_op) {
+		case CLIP_NARROW:
+			image->scissor_box = rect_intersect(image->scissor_box, clip->rect);
+			break;
+		case CLIP_OVERRIDE:
+			image->scissor_box = clip->rect;
+			break;
+		}
+	}
+	if (image == s_last_image) {
+		al_set_clipping_rectangle(image->scissor_box.x1,
+								  image->scissor_box.y1,
+								  image->scissor_box.x2 - image->scissor_box.x1,
+								  image->scissor_box.y2 - image->scissor_box.y1);
+	}
+	else {
+		image->clipping_set = false;
+	}
 }
 
 static void

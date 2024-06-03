@@ -1017,7 +1017,7 @@ show_error_screen(const char* message)
 	transform_orthographic(projection, 0, 0, resolution.width, resolution.height, -1.0f, 1.0f);
 	image_render_to(backbuffer, NULL);
 	shader_use(NULL, true);
-	image_set_scissor(backbuffer, mk_rect(0, 0, resolution.width, resolution.height));
+	image_clip_to(backbuffer, mk_rect(0, 0, resolution.width, resolution.height), CLIP_RESET);
 	image_set_blend_op(backbuffer, blend_op);
 	image_set_depth_op(backbuffer, DEPTH_PASS);
 	image_set_transform(screen_backbuffer(g_screen), projection);

@@ -2319,10 +2319,34 @@ Surface#clear([color[, depthValue]]); [experimental]
     Note: The backbuffer (`Surface.Screen`) is automatically cleared at the
           beginning of each frame.
 
-Surface#clipTo(x, y, width, height); [API 1]
+Surface#clipTo(x, y, width, height[, clip_op]); [API 1]
 
-    Sets the surface's clipping rectangle.  Values are expressed in pixels.
-    Anything drawn outside of the clipping rectangle won't be rendered.
+    Changes the surface's clipping rectangle according to the specified
+    `clip_op`.  Values are expressed in pixels. Anything drawn outside of the
+    clipping rectangle won't be rendered.
+
+    `clip_op`, if specified, must be one of the following:
+
+        ClipOp.Narrow
+
+            Narrows down from the existing clipping rectangle. The resulting
+            clipping rectangle will be the intersection of the previous one and
+            the one specified in this call.
+
+        ClipOp.Override
+
+            Completely replaces the existing clipping rectangle with a new one.
+
+        ClipOp.Reset
+
+            Clears all previous clipping changes and starts over fresh with a
+            new clipping rectangle.  This is the only clipping operation that
+            is not reversible; calling `Surface#unclip()` afterwards will just
+            disable clipping entirely.
+
+    For backward compatibility reasons, the default `clip_op` when targeting
+    API level 3 or lower is `ClipOp.Reset`; for API 4 and higher, the default
+    is `ClipOp.Narrow`.
 
     Note: When setting the clipping rectangle for the screen, the effect only
           lasts until the next frame.
@@ -2335,6 +2359,13 @@ Surface#toTexture(); [API 1]
 
     Note: It is not necessary to call this when targeting API level 2 or later;
           as noted above, the surface itself can be used as a texture.
+
+Surface#unclip(); [experimental]
+
+    Undoes a previous change to the clipping rectangle via `Surface#clipTo()`.
+
+    Note: Because `ClipOp.Reset` clears the clipping stack, undoing it will
+          just disable clipping.
 
 
 `Texture` Object

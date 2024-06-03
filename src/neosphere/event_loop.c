@@ -203,7 +203,7 @@ events_tick(int api_version, bool clear_screen, int framerate)
 	// flip the backbuffer.  if this is a Sphere v2 frame, also reset clipping.
 	screen_flip(g_screen, framerate, clear_screen);
 	if (api_version >= 2)
-		image_set_scissor(screen_backbuffer(g_screen), screen_bounds(g_screen));
+		image_clip_to(screen_backbuffer(g_screen), screen_bounds(g_screen), CLIP_RESET);
 
 	if (!dispatch_run(JOB_ON_UPDATE))
 		return;
@@ -218,7 +218,7 @@ events_tick(int api_version, bool clear_screen, int framerate)
 		task_errored = false;
 		switch (task->type) {
 		case TASK_ACCEPT_CLIENT:
-			if (client = server_accept(task->server)) {
+			if ((client = server_accept(task->server))) {
 				jsal_push_class_obj(PEGASUS_SOCKET, client, false);
 				task_finished = true;
 			}

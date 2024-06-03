@@ -1,6 +1,18 @@
 Release Notes
 =============
 
+neoSphere 5.10
+--------------
+
+* `Surface#clipTo()` now takes an optional additional parameter which
+  determines how the clipping box should be modified.  The engine also now
+  maintains a stack of clipping changes for each surface that allows them to be
+  undone via `Surface#unclip()`.  When targeting API level 4 or higher, the
+  default clipping operation is `ClipOp.Narrow`, which is incompatible with the
+  previous behavior. If you are targeting API level 4 or plan to in the future,
+  you will need to update your code accordingly.
+
+
 neoSphere 5.9
 -------------
 

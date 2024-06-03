@@ -2607,7 +2607,7 @@ js_GetClippingRectangle(int num_args, bool is_ctor, intptr_t magic)
 {
 	rect_t clip;
 
-	clip = image_get_scissor(screen_backbuffer(g_screen));
+	clip = image_scissor_box(screen_backbuffer(g_screen));
 
 	jsal_push_new_object();
 	jsal_push_int(clip.x1);
@@ -5368,8 +5368,8 @@ js_SetClippingRectangle(int num_args, bool is_ctor, intptr_t magic)
 	width = jsal_to_int(2);
 	height = jsal_to_int(3);
 
-	image_set_scissor(screen_backbuffer(g_screen),
-		mk_rect(x, y, x + width, y + height));
+	image_clip_to(screen_backbuffer(g_screen),
+		mk_rect(x, y, x + width, y + height), CLIP_RESET);
 	return false;
 }
 
@@ -6955,7 +6955,6 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 	int         height;
 	int         line_height;
 	const char* line_text;
-	rect_t      old_clip_box;
 	int         width;
 	int         x;
 	int         y;
@@ -6980,9 +6979,7 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 	// intersect our own clipping box with the one set by the user to ensure we
 	// don't accidentally draw outside of it
 	backbuffer = screen_backbuffer(g_screen);
-	old_clip_box = image_get_scissor(backbuffer);
-	image_set_scissor(backbuffer,
-		rect_intersect(mk_rect(x, y, x + width, y + height), old_clip_box));
+	image_clip_to(backbuffer, mk_rect(x, y, x + width, y + height), CLIP_NARROW);
 
 	wraptext = font_wrap(font, text, width);
 	line_height = font_height(font);
@@ -6994,7 +6991,7 @@ js_Font_drawTextBox(int num_args, bool is_ctor, intptr_t magic)
 		y += line_height;
 	}
 	wraptext_free(wraptext);
-	image_set_scissor(backbuffer, old_clip_box);
+	image_unclip(backbuffer);
 	return false;
 }
 

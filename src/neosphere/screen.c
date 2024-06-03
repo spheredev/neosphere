@@ -303,7 +303,6 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	ALLEGRO_BITMAP*   old_target;
 	path_t*           path;
 	const char*       pathname;
-	rect_t            scissor;
 	int               screen_cx;
 	int               screen_cy;
 	int               serial = 1;
@@ -426,12 +425,11 @@ screen_flip(screen_t* it, int framerate, bool need_clear)
 	++it->num_frames;
 	if (!it->skipping_frame && need_clear) {
 		// disable clipping so we can clear the whole backbuffer.
-		scissor = image_get_scissor(it->backbuffer);
-		image_set_scissor(it->backbuffer, mk_rect(0, 0, it->x_size, it->y_size));
+		image_clip_to(it->backbuffer, mk_rect(0, 0, it->x_size, it->y_size), CLIP_OVERRIDE);
 		image_render_to(it->backbuffer, NULL);
 		al_clear_to_color(al_map_rgba(0, 0, 0, 255));
 		al_clear_depth_buffer(1.0f);
-		image_set_scissor(it->backbuffer, scissor);
+		image_unclip(it->backbuffer);
 	}
 
 #if defined(NEOSPHERE_SPHERUN)

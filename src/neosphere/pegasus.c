@@ -472,6 +472,7 @@ static bool js_Surface_set_transform         (int num_args, bool is_ctor, intptr
 static bool js_Surface_clear                 (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_clipTo                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_Surface_toTexture             (int num_args, bool is_ctor, intptr_t magic);
+static bool js_Surface_unclip                (int num_args, bool is_ctor, intptr_t magic);
 static bool js_new_TextDecoder               (int num_args, bool is_ctor, intptr_t magic);
 static bool js_TextDecoder_get_encoding      (int num_args, bool is_ctor, intptr_t magic);
 static bool js_TextDecoder_get_fatal         (int num_args, bool is_ctor, intptr_t magic);
@@ -785,6 +786,7 @@ pegasus_init(int api_level, int target_api_level)
 	api_define_prop("Surface", "width", false, js_Surface_get_width, 0);
 	api_define_method("Surface", "clipTo", js_Surface_clipTo, 0);
 	api_define_method("Surface", "toTexture", js_Surface_toTexture, 0);
+	api_define_method("Surface", "unclip", js_Surface_unclip, 0);
 
 	// the 'SSj' functions only do anything under SpheRun; in production they are no-ops
 #if defined(NEOSPHERE_SPHERUN)
@@ -1034,6 +1036,9 @@ pegasus_init(int api_level, int target_api_level)
 		api_define_const_number("Blend", "Target", BLEND_DEST);
 		api_define_const_number("Blend", "TargetInverse", BLEND_INV_DEST);
 		api_define_const_number("Blend", "Zero", BLEND_ZERO);
+		api_define_const_number("ClipOp", "Narrow", CLIP_NARROW);
+		api_define_const_number("ClipOp", "Override", CLIP_OVERRIDE);
+		api_define_const_number("ClipOp", "Reset", CLIP_RESET);
 		api_define_const_number("DataType", "JSON", DATA_JSON);
 		api_define_const_number("DepthOp", "AlwaysPass", DEPTH_PASS);
 		api_define_const_number("DepthOp", "Equal", DEPTH_EQUAL);
@@ -5055,20 +5060,27 @@ js_Surface_clear(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Surface_clipTo(int num_args, bool is_ctor, intptr_t magic)
 {
-	int      height;
-	image_t* image;
-	int      width;
-	int      x;
-	int      y;
+	clip_op_t clip_op = CLIP_NARROW;
+	int       height;
+	image_t*  image;
+	int       width;
+	int       x;
+	int       y;
 
+	// when targeting API 3 or earlier, default to ClipOp.Reset
+	if (s_target_api_level <= 3)
+		clip_op = CLIP_RESET;
+	
 	jsal_push_this();
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 	x = jsal_require_int(0);
 	y = jsal_require_int(1);
 	width = jsal_require_int(2);
 	height = jsal_require_int(3);
+	if (num_args >= 5)
+		clip_op = jsal_require_int(4);
 
-	image_set_scissor(image, mk_rect(x, y, x + width, y + height));
+	image_clip_to(image, mk_rect(x, y, x + width, y + height), clip_op);
 	return false;
 }
 
@@ -5085,6 +5097,20 @@ js_Surface_toTexture(int num_args, bool is_ctor, intptr_t magic)
 		jsal_error(JS_ERROR, "Couldn't create GPU texture");
 	jsal_push_class_obj(PEGASUS_TEXTURE, new_image, false);
 	return true;
+}
+
+static bool
+js_Surface_unclip(int num_args, bool is_ctor, intptr_t magic)
+{
+	image_t* image;
+
+	jsal_push_this();
+	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
+
+	if (!image_can_unclip(image))
+		jsal_error(JS_RANGE_ERROR, "No clipping operations to undo");
+	image_unclip(image);
+	return false;
 }
 
 static bool
