@@ -51,6 +51,7 @@ struct image
 	ALLEGRO_BITMAP* bitmap;
 	blend_op_t*     blend_op;
 	unsigned int    cache_hits;
+	rect_t          clipping;
 	bool            clipping_set;
 	vector_t*       clips;
 	depth_op_t      depth_op;
@@ -60,16 +61,15 @@ struct image
 	transform_t*    modelview;
 	char*           path;
 	color_t*        pixel_cache;
-	rect_t          scissor_box;
 	transform_t*    transform;
 	int             width;
 	int             height;
 	image_t*        parent;
 };
 
-static void cache_pixels       (image_t* image);
-static void recompute_clipping (image_t* image);
-static void uncache_pixels     (image_t* image);
+static void cache_pixels     (image_t* image);
+static void compute_clipping (image_t* image);
+static void uncache_pixels   (image_t* image);
 
 static image_t*     s_last_image = NULL;
 static unsigned int s_next_image_id = 0;
@@ -89,7 +89,7 @@ image_new(int width, int height, const color_t* pixels)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = mk_rect(0, 0, image->width, image->height);
+	image->clipping = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	image->have_depth = true;
 	image->depth_op = DEPTH_PASS;
@@ -129,7 +129,7 @@ image_new_slice(image_t* parent, int x, int y, int width, int height)
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
 	image->parent = image_ref(parent);
-	image->scissor_box = mk_rect(0, 0, image->width, image->height);
+	image->clipping = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	image->have_depth = parent->have_depth;
 	image->depth_op = parent->depth_op;
@@ -157,7 +157,7 @@ image_dup(const image_t* it)
 	image->id = s_next_image_id++;
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = mk_rect(0, 0, image->width, image->height);
+	image->clipping = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	image->have_depth = it->have_depth;
 	image->depth_op = it->depth_op;
@@ -208,7 +208,7 @@ image_load(const char* filename)
 	free(slurp);
 	image->width = al_get_bitmap_width(image->bitmap);
 	image->height = al_get_bitmap_height(image->bitmap);
-	image->scissor_box = mk_rect(0, 0, image->width, image->height);
+	image->clipping = mk_rect(0, 0, image->width, image->height);
 	image->transform = transform_new();
 	image->have_depth = false;
 	transform_orthographic(image->transform, 0.0f, 0.0f, image->width, image->height, -1.0f, 1.0f);
@@ -264,6 +264,12 @@ image_can_unclip(const image_t* it)
 	return it->clips != NULL && vector_len(it->clips) > 0;
 }
 
+rect_t
+image_clipping(const image_t* it)
+{
+	return it->clipping;
+}
+
 int
 image_height(const image_t* it)
 {
@@ -274,12 +280,6 @@ const char*
 image_path(const image_t* it)
 {
 	return it->path;
-}
-
-rect_t
-image_scissor_box(const image_t* it)
-{
-	return it->scissor_box;
 }
 
 int
@@ -462,7 +462,7 @@ image_clip_to(image_t* it, rect_t rect, clip_op_t clip_op)
 	clip.clip_op = clip_op;
 	clip.rect = rect;
 	vector_push(it->clips, &clip);
-	recompute_clipping(it);
+	compute_clipping(it);
 }
 
 bool
@@ -653,17 +653,17 @@ image_lock(image_t* it, bool uploading, bool downloading)
 void
 image_render_to(image_t* it, transform_t* transform)
 {
+	rect_t            clipping;
 	int               depth_func;
 	ALLEGRO_TRANSFORM matrix;
-	rect_t            scissor;
 
 	if (it != s_last_image) {
 		al_set_target_bitmap(it->bitmap);
 		shader_use(NULL, true);
 	}
-	scissor = it->scissor_box;
+	clipping = it->clipping;
 	if (!it->clipping_set) {
-		al_set_clipping_rectangle(scissor.x1, scissor.y1, scissor.x2 - scissor.x1, scissor.y2 - scissor.y1);
+		al_set_clipping_rectangle(clipping.x1, clipping.y1, clipping.x2 - clipping.x1, clipping.y2 - clipping.y1);
 		it->clipping_set = true;
 	}
 	if (transform_dirty(it->transform)) {
@@ -794,7 +794,7 @@ void
 image_unclip(image_t* it)
 {
 	vector_pop(it->clips, 1);
-	recompute_clipping(it);
+	compute_clipping(it);
 }
 
 void
@@ -867,30 +867,30 @@ on_error:
 }
 
 static void
-recompute_clipping(image_t* image)
+compute_clipping(image_t* image)
 {
 	struct clip* clip;
 
 	iter_t iter;
 
-	image->scissor_box = mk_rect(0, 0, image->width, image->height);
+	image->clipping = mk_rect(0, 0, image->width, image->height);
 	iter = vector_enum(image->clips);
 	while ((clip = iter_next(&iter))) {
-		// note: CLIP_RESET should never appear in the clipping stack.
+		// note: CLIP_RESET should never appear in the clip stack.
 		switch (clip->clip_op) {
 		case CLIP_NARROW:
-			image->scissor_box = rect_intersect(image->scissor_box, clip->rect);
+			image->clipping = rect_intersect(image->clipping, clip->rect);
 			break;
 		case CLIP_OVERRIDE:
-			image->scissor_box = clip->rect;
+			image->clipping = clip->rect;
 			break;
 		}
 	}
 	if (image == s_last_image) {
-		al_set_clipping_rectangle(image->scissor_box.x1,
-								  image->scissor_box.y1,
-								  image->scissor_box.x2 - image->scissor_box.x1,
-								  image->scissor_box.y2 - image->scissor_box.y1);
+		al_set_clipping_rectangle(image->clipping.x1,
+								  image->clipping.y1,
+								  image->clipping.x2 - image->clipping.x1,
+								  image->clipping.y2 - image->clipping.y1);
 	}
 	else {
 		image->clipping_set = false;

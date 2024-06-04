@@ -1,6 +1,6 @@
 /**
  *  Sphere: the JavaScript game platform
- *  Copyright (c) 2015-2022, Fat Cerberus
+ *  Copyright (c) 2015-2024, Fat Cerberus
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -220,7 +220,10 @@ class Console extends Task
 				this.font.drawText(Surface.Screen, 5, y, this.buffer[lineInBuffer], Color.White.fadeTo(this.view.fade * 0.75));
 			}
 		}
-		Surface.Screen.clipTo(0, 0, Surface.Screen.width, Surface.Screen.height);
+		if (Sphere.Game.apiLevel >= 4)
+			Surface.Screen.unclip();
+		else
+			Surface.Screen.clipTo(0, 0, Surface.Screen.width, Surface.Screen.height);
 	}
 
 	on_update()

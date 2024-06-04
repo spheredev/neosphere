@@ -5108,7 +5108,7 @@ js_Surface_unclip(int num_args, bool is_ctor, intptr_t magic)
 	image = jsal_require_class_obj(-1, PEGASUS_SURFACE);
 
 	if (!image_can_unclip(image))
-		jsal_error(JS_RANGE_ERROR, "No clipping operations to undo");
+		jsal_error(JS_RANGE_ERROR, "No clipping rectangle changes to undo");
 	image_unclip(image);
 	return false;
 }

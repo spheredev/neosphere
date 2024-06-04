@@ -2605,18 +2605,18 @@ js_GetCameraY(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_GetClippingRectangle(int num_args, bool is_ctor, intptr_t magic)
 {
-	rect_t clip;
+	rect_t clipping;
 
-	clip = image_scissor_box(screen_backbuffer(g_screen));
+	clipping = image_clipping(screen_backbuffer(g_screen));
 
 	jsal_push_new_object();
-	jsal_push_int(clip.x1);
+	jsal_push_int(clipping.x1);
 	jsal_put_prop_string(-2, "x");
-	jsal_push_int(clip.y1);
+	jsal_push_int(clipping.y1);
 	jsal_put_prop_string(-2, "y");
-	jsal_push_int(clip.x2 - clip.x1);
+	jsal_push_int(clipping.x2 - clipping.x1);
 	jsal_put_prop_string(-2, "width");
-	jsal_push_int(clip.y2 - clip.y1);
+	jsal_push_int(clipping.y2 - clipping.y1);
 	jsal_put_prop_string(-2, "height");
 	return true;
 }

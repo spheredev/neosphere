@@ -17,7 +17,7 @@ provides information about the Sphere Runtime itself.
 RT.Version [GET]
 
     The API revision of the Sphere Runtime.
-    
+
     Note: Because the Sphere Runtime API hasn't yet been finalized, this will
 		  be `0` in current versions of neoSphere and Oozaru.
 
