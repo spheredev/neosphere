@@ -82,7 +82,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\tinydir;..\vendor\wildmatch;..\dep\include;include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
@@ -106,7 +106,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
       <Optimization>MaxSpeed</Optimization>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>None</DebugInformationFormat>
-      <AdditionalIncludeDirectories>include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\tinydir;..\vendor\wildmatch;..\dep\include;include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -134,7 +134,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
       <Optimization>MaxSpeed</Optimization>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <AdditionalIncludeDirectories>include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\tinydir;..\vendor\wildmatch;..\dep\include;include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -174,8 +174,8 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\cell\main.c" />
     <ClCompile Include="..\src\cell\spk_writer.c" />
     <ClCompile Include="..\src\cell\utility.c" />
-    <ClCompile Include="..\src\shared\wildmatch.c" />
     <ClCompile Include="..\src\shared\xoroshiro.c" />
+    <ClCompile Include="..\vendor\wildmatch\wildmatch.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\cell\fs.h" />
@@ -193,15 +193,15 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\shared\lstring.h" />
     <ClInclude Include="..\src\shared\path.h" />
     <ClInclude Include="..\src\shared\posix.h" />
-    <ClInclude Include="..\src\shared\tinydir.h" />
     <ClInclude Include="..\src\shared\unicode.h" />
     <ClInclude Include="..\src\shared\vector.h" />
     <ClInclude Include="..\src\shared\version.h" />
     <ClInclude Include="..\src\cell\cell.h" />
     <ClInclude Include="..\src\cell\spk_writer.h" />
     <ClInclude Include="..\src\cell\utility.h" />
-    <ClInclude Include="..\src\shared\wildmatch.h" />
     <ClInclude Include="..\src\shared\xoroshiro.h" />
+    <ClInclude Include="..\vendor\tinydir\tinydir.h" />
+    <ClInclude Include="..\vendor\wildmatch\wildmatch.h" />
     <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>

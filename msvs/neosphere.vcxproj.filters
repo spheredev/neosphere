@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\shared\dyad.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\lstring.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -99,9 +96,6 @@
     <ClCompile Include="..\src\shared\api.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\md5.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\neosphere\transform.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -156,20 +150,23 @@
     <ClCompile Include="..\src\neosphere\event_loop.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\wildmatch.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\neosphere\module.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\neosphere\source_map.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\vendor\dyad\dyad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\md5\md5.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\wildmatch\wildmatch.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\shared\dyad.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\shared\lstring.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -254,9 +251,6 @@
     <ClInclude Include="..\src\shared\api.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\md5.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\neosphere\transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -311,22 +305,28 @@
     <ClInclude Include="..\src\shared\compress.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\tinydir.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\neosphere\blend_op.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\neosphere\event_loop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\wildmatch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\neosphere\module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\neosphere\source_map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\dyad\dyad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\md5\md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\tinydir\tinydir.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\wildmatch\wildmatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -69,13 +69,13 @@
     <ClCompile Include="..\src\cell\image.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\shared\wildmatch.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\cell\tileset.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\cell\module.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\vendor\wildmatch\wildmatch.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -84,9 +84,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\path.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\shared\tinydir.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\unicode.h">
@@ -146,13 +143,16 @@
     <ClInclude Include="..\src\cell\image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\shared\wildmatch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\cell\tileset.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\cell\module.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\wildmatch\wildmatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\tinydir\tinydir.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

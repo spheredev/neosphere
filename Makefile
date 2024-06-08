@@ -20,6 +20,9 @@ CFLAGS=-O3
 endif
 
 engine_sources=src/neosphere/main.c \
+   vendor/dyad/dyad.c \
+   vendor/md5/md5.c \
+   vendor/wildmatch/wildmatch.c \
    src/shared/api.c \
    src/shared/compress.c \
    src/shared/console.c \
@@ -86,6 +89,7 @@ engine_libs= \
    -lm
 
 cell_sources=src/cell/main.c \
+   vendor/wildmatch/wildmatch.c \
    src/shared/api.c \
    src/shared/compress.c \
    src/shared/encoding.c \
@@ -113,6 +117,7 @@ cell_libs= \
    -lm
 
 ssj_sources=src/ssj/main.c \
+   vendor/dyad/dyad.c \
    src/shared/console.c \
    src/shared/dyad.c \
    src/shared/ki.c \
@@ -205,7 +210,7 @@ bin/neosphere:
 	mkdir -p bin
 	$(CC) -o bin/neosphere $(CFLAGS) \
 	      -fno-omit-frame-pointer \
-	      -Idep/include -Isrc/shared -Isrc/neosphere \
+	      -Isrc/shared -Idep/include -Ivendor/dyad -Ivendor/md5 -Ivendor/tinydir -I vendor/wildmatch \
 	      -Ldep/lib \
 	      $(LINKER_ARGS) \
 	      $(OPTIONS) \
@@ -216,7 +221,7 @@ bin/spherun:
 	mkdir -p bin
 	$(CC) -o bin/spherun $(CFLAGS) \
 	      -fno-omit-frame-pointer \
-	      -Idep/include -Isrc/shared -Isrc/neosphere \
+	      -Isrc/shared -Idep/include -Ivendor/dyad -Ivendor/md5 -Ivendor/tinydir -I vendor/wildmatch \
 	      -Ldep/lib \
 	      $(LINKER_ARGS) \
 	      $(OPTIONS) \
@@ -227,11 +232,13 @@ bin/cell:
 	mkdir -p bin
 	$(CC) -o bin/cell $(CFLAGS) \
 	      -fno-omit-frame-pointer \
-	      -Idep/include -Isrc/shared \
+	      -Isrc/shared -Idep/include -Ivendor/tinydir -Ivendor/wildmatch \
 	      -Ldep/lib \
 	      $(LINKER_ARGS) \
 	      $(cell_sources) $(cell_libs)
 
 bin/ssj:
 	mkdir -p bin
-	$(CC) -o bin/ssj $(CFLAGS) -Isrc/shared $(ssj_sources)
+	$(CC) -o bin/ssj $(CFLAGS) \
+	      -Isrc/shared -Ivendor/dyad \
+	      $(ssj_sources)

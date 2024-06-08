@@ -144,7 +144,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AdditionalIncludeDirectories>..\src\neosphere;include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\dyad;..\vendor\md5;..\vendor\tinydir;..\vendor\wildmatch;..\dep\include;include</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
     </ClCompile>
     <Link>
@@ -173,7 +173,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\neosphere;include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\dyad;..\vendor\md5;..\vendor\tinydir;..\vendor\wildmatch;..\dep\include;include</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -207,7 +207,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\neosphere;include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\dyad;..\vendor\md5;..\vendor\tinydir;..\vendor\wildmatch;..\dep\include;include</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -241,7 +241,7 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\src\neosphere;include;..\dep\include;..\src\shared</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\dyad;..\vendor\md5;..\vendor\tinydir;..\vendor\wildmatch;..\dep\include;include</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
       <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
@@ -279,10 +279,8 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\shared\console.c" />
     <ClCompile Include="..\src\shared\encoding.c" />
     <ClCompile Include="..\src\shared\ki.c" />
-    <ClCompile Include="..\src\shared\dyad.c" />
     <ClCompile Include="..\src\shared\jsal.c" />
     <ClCompile Include="..\src\shared\lstring.c" />
-    <ClCompile Include="..\src\shared\md5.c" />
     <ClCompile Include="..\src\shared\path.c" />
     <ClCompile Include="..\src\shared\sockets.c" />
     <ClCompile Include="..\src\shared\unicode.c" />
@@ -311,8 +309,10 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     <ClCompile Include="..\src\neosphere\tileset.c" />
     <ClCompile Include="..\src\neosphere\utility.c" />
     <ClCompile Include="..\src\neosphere\windowstyle.c" />
-    <ClCompile Include="..\src\shared\wildmatch.c" />
     <ClCompile Include="..\src\shared\xoroshiro.c" />
+    <ClCompile Include="..\vendor\dyad\dyad.c" />
+    <ClCompile Include="..\vendor\md5\md5.c" />
+    <ClCompile Include="..\vendor\wildmatch\wildmatch.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\neosphere\blend_op.h" />
@@ -329,16 +329,13 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\neosphere\screen.h" />
     <ClInclude Include="..\src\shared\api.h" />
     <ClInclude Include="..\src\shared\console.h" />
-    <ClInclude Include="..\src\shared\dyad.h" />
     <ClInclude Include="..\src\shared\encoding.h" />
     <ClInclude Include="..\src\shared\jsal.h" />
     <ClInclude Include="..\src\shared\ki.h" />
     <ClInclude Include="..\src\shared\lstring.h" />
-    <ClInclude Include="..\src\shared\md5.h" />
     <ClInclude Include="..\src\shared\path.h" />
     <ClInclude Include="..\src\shared\posix.h" />
     <ClInclude Include="..\src\shared\sockets.h" />
-    <ClInclude Include="..\src\shared\tinydir.h" />
     <ClInclude Include="..\src\shared\unicode.h" />
     <ClInclude Include="..\src\shared\vector.h" />
     <ClInclude Include="..\src\shared\version.h" />
@@ -366,8 +363,11 @@ xcopy /y /d /e /f "..\dep\lib\*.dll" "$(OutDir)"</Command>
     <ClInclude Include="..\src\neosphere\tileset.h" />
     <ClInclude Include="..\src\neosphere\utility.h" />
     <ClInclude Include="..\src\neosphere\windowstyle.h" />
-    <ClInclude Include="..\src\shared\wildmatch.h" />
     <ClInclude Include="..\src\shared\xoroshiro.h" />
+    <ClInclude Include="..\vendor\dyad\dyad.h" />
+    <ClInclude Include="..\vendor\md5\md5.h" />
+    <ClInclude Include="..\vendor\tinydir\tinydir.h" />
+    <ClInclude Include="..\vendor\wildmatch\wildmatch.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

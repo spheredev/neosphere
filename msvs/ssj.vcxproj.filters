@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\shared\dyad.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\shared\path.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -66,11 +63,11 @@
     <ClCompile Include="..\src\shared\xoroshiro.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\vendor\dyad\dyad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\shared\dyad.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\shared\path.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -126,6 +123,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\shared\xoroshiro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\vendor\dyad\dyad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
