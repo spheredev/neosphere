@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__TOOL_H__INCLUDED
-#define SPHERE__TOOL_H__INCLUDED
+#ifndef CELL_TOOL_H_INCLUDED
+#define CELL_TOOL_H_INCLUDED
 
 #include "fs.h"
 #include "visor.h"
@@ -43,4 +43,4 @@ tool_t* tool_ref   (tool_t* tool);
 void    tool_unref (tool_t* tool);
 bool    tool_run   (tool_t* tool, visor_t* visor, const fs_t* fs, const path_t* out_path, vector_t* in_paths);
 
-#endif // SPHERE__TOOL_H__INCLUDED
+#endif // !CELL_TOOL_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__VANILLA_H__INCLUDED
-#define SPHERE__VANILLA_H__INCLUDED
+#ifndef NEOSPHERE_VANILLA_H_INCLUDED
+#define NEOSPHERE_VANILLA_H_INCLUDED
 
 #include "byte_array.h"
 #include "jsal.h"
@@ -69,4 +69,4 @@ color_fx_t   jsal_require_sphere_color_fx  (int index);
 script_t*    jsal_require_sphere_script    (int index, const char* name);
 spriteset_t* jsal_require_sphere_spriteset (int index);
 
-#endif // SPHERE__VANILLA_H__INCLUDED
+#endif // !NEOSPHERE_VANILLA_H_INCLUDED

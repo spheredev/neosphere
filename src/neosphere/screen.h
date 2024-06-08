@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__DISPLAY_H__INCLUDED
-#define SPHERE__DISPLAY_H__INCLUDED
+#ifndef NEOSPHERE_DISPLAY_H_INCLUDED
+#define NEOSPHERE_DISPLAY_H_INCLUDED
 
 #include "font.h"
 #include "geometry.h"
@@ -63,4 +63,4 @@ void             screen_toggle_fps        (screen_t* it);
 void             screen_toggle_fullscreen (screen_t* it);
 void             screen_unskip_frame      (screen_t* it);
 
-#endif // SPHERE__DISPLAY_H__INCLUDED
+#endif // !NEOSPHERE_DISPLAY_H_INCLUDED

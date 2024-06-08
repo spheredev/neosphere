@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__BUILD_H__INCLUDED
-#define SPHERE__BUILD_H__INCLUDED
+#ifndef CELL_BUILD_H_INCLUDED
+#define CELL_BUILD_H_INCLUDED
 
 enum cell_class
 {
@@ -55,4 +55,4 @@ bool     build_init_dir (build_t* build);
 bool     build_package  (build_t* build, const char* filename, bool rebuilding);
 bool     build_run      (build_t* build, bool rebuilding);
 
-#endif // SPHERE__BUILD_H__INCLUDED
+#endif // !CELL_BUILD_H_INCLUDED

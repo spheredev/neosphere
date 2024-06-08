@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__PROFILER_H__INCLUDED
-#define SPHERE__PROFILER_H__INCLUDED
+#ifndef NEOSPHERE_PROFILER_H_INCLUDED
+#define NEOSPHERE_PROFILER_H_INCLUDED
 
 #include "jsal.h"
 
@@ -40,4 +40,4 @@ void      profiler_uninit    (void);
 bool      profiler_enabled   (void);
 js_ref_t* profiler_attach_to (js_ref_t* function, const char* description);
 
-#endif // SPHERE__PROFILER_H__INCLUDED
+#endif // !NEOSPHERE_PROFILER_H_INCLUDED

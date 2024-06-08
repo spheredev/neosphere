@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__BYTE_ARRAY_H__INCLUDED
-#define SPHERE__BYTE_ARRAY_H__INCLUDED
+#ifndef NEOSPHERE_BYTE_ARRAY_H_INCLUDED
+#define NEOSPHERE_BYTE_ARRAY_H_INCLUDED
 
 typedef struct bytearray bytearray_t;
 
@@ -49,4 +49,4 @@ bytearray_t*   bytearray_inflate      (bytearray_t* array, int max_size);
 void           bytearray_set          (bytearray_t* array, int index, uint8_t value);
 bytearray_t*   bytearray_slice        (bytearray_t* array, int start, int length);
 
-#endif // SPHERE__BYTE_ARRAY_H__INCLUDED
+#endif // !NEOSPHERE_BYTE_ARRAY_H_INCLUDED

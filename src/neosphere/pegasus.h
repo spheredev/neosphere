@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__PEGASUS_H__INCLUDED
-#define SPHERE__PEGASUS_H__INCLUDED
+#ifndef NEOSPHERE_PEGASUS_H_INCLUDED
+#define NEOSPHERE_PEGASUS_H_INCLUDED
 
 enum pegasus_type
 {
@@ -67,4 +67,4 @@ enum pegasus_type
 void pegasus_init   (int api_level, int target_api_level);
 void pegasus_uninit (void);
 
-#endif // SPHERE__PEGASUS_H__INCLUDED
+#endif // !NEOSPHERE_PEGASUS_H_INCLUDED

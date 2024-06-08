@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__FONT_H__INCLUDED
-#define SPHERE__FONT_H__INCLUDED
+#ifndef NEOSPHERE_FONT_H_INCLUDED
+#define NEOSPHERE_FONT_H_INCLUDED
 
 #include "color.h"
 #include "image.h"
@@ -79,4 +79,4 @@ int         wraptext_len      (const wraptext_t* it);
 const char* wraptext_line     (const wraptext_t* it, int line_index);
 bool        wraptext_add_line (wraptext_t* it, const char* text, size_t length);
 
-#endif // SPHERE__FONT_H__INCLUDED
+#endif // !NEOSPHERE_FONT_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__SOCKETS_H__INCLUDED
-#define SPHERE__SOCKETS_H__INCLUDED
+#ifndef SPHERE_SOCKETS_H_INCLUDED
+#define SPHERE_SOCKETS_H_INCLUDED
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -71,4 +71,4 @@ int         socket_peek          (socket_t* it, void* buffer, int num_bytes);
 int         socket_read          (socket_t* it, void* buffer, int num_bytes);
 int         socket_write         (socket_t* it, const void* data, int num_bytes);
 
-#endif // SPHERE__SOCKETS_H__INCLUDED
+#endif // !SPHERE_SOCKETS_H_INCLUDED

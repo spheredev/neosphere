@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__PATH_H__INCLUDED
-#define SPHERE__PATH_H__INCLUDED
+#ifndef SPHERE_PATH_H_INCLUDED
+#define SPHERE_PATH_H_INCLUDED
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -70,4 +70,4 @@ path_t*     path_set_dir      (path_t* path, const char* pathname);
 path_t*     path_strip        (path_t* path);
 path_t*     path_to_dir       (path_t* path);
 
-#endif // SPHERE__PATH_H__INCLUDED
+#endif // !SPHERE_PATH_H_INCLUDED

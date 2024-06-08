@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__SESSION_H__INCLUDED
-#define SPHERE__SESSION_H__INCLUDED
+#ifndef SSJ_SESSION_H_INCLUDED
+#define SSJ_SESSION_H_INCLUDED
 
 #include "inferior.h"
 #include "parser.h"
@@ -42,4 +42,4 @@ session_t*  session_new  (inferior_t* inferior);
 void        session_free (session_t* ses);
 void        session_run  (session_t* ses, bool run_now);
 
-#endif // SPHERE__SESSION_H__INCLUDED
+#endif // !SSJ_SESSION_H_INCLUDED

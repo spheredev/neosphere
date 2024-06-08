@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__LOGGER_H__INCLUDED
-#define SPHERE__LOGGER_H__INCLUDED
+#ifndef NEOSPHERE_LOGGER_H_INCLUDED
+#define NEOSPHERE_LOGGER_H_INCLUDED
 
 typedef struct logger logger_t;
 
@@ -42,4 +42,4 @@ bool      logger_begin_block (logger_t* logger, const char* title);
 void      logger_end_block   (logger_t* logger);
 void      logger_write       (logger_t* logger, const char* prefix, const char* text);
 
-#endif // SPHERE__LOGGER_H__INCLUDED
+#endif // !NEOSPHERE_LOGGER_H_INCLUDED

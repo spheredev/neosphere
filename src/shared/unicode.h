@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__UNICODE_H__INCLUDED
-#define SPHERE__UNICODE_H__INCLUDED
+#ifndef SPHERE_UNICODE_H_INCLUDED
+#define SPHERE_UNICODE_H_INCLUDED
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -54,4 +54,4 @@ utf8_ret_t     utf8_decode_end   (utf8_decode_t* cx);
 utf8_ret_t     utf8_decode_next  (utf8_decode_t* cx, uint8_t byte, uint32_t *out_codepoint);
 size_t         utf8_emit         (uint32_t codepoint, uint8_t* *p_ptr);
 
-#endif // SPHERE__UNICODE_H__INCLUDED
+#endif // !SPHERE_UNICODE_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__TILESET_H__INCLUDED
-#define SPHERE__TILESET_H__INCLUDED
+#ifndef NEOSPHERE_TILESET_H_INCLUDED
+#define NEOSPHERE_TILESET_H_INCLUDED
 
 #include "atlas.h"
 #include "image.h"
@@ -56,4 +56,4 @@ bool             tileset_set_name  (tileset_t* tileset, int tile_index, const ls
 void             tileset_draw      (const tileset_t* tileset, color_t mask, float x, float y, int tile_index);
 void             tileset_update    (tileset_t* tileset);
 
-#endif // SPHERE__TILESET_H__INCLUDED
+#endif // !NEOSPHERE_TILESET_H_INCLUDED

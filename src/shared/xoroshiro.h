@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__XOROSHIRO_H__INCLUDED
-#define SPHERE__XOROSHIRO_H__INCLUDED
+#ifndef SPHERE_XOROSHIRO_H_INCLUDED
+#define SPHERE_XOROSHIRO_H_INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -48,4 +48,4 @@ uint64_t xoro_gen_uint   (xoro_t* xoro);
 void     xoro_jump       (xoro_t* xoro);
 void     xoro_reseed     (xoro_t* xoro, uint64_t seed);
 
-#endif // SPHERE__XOROSHIRO_H__INCLUDED
+#endif // !SPHERE_XOROSHIRO_H_INCLUDED

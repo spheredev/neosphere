@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__LSTRING_H__INCLUDED
-#define SPHERE__LSTRING_H__INCLUDED
+#ifndef SPHERE_LSTRING_H_INCLUDED
+#define SPHERE_LSTRING_H_INCLUDED
 
 #include <stdarg.h>
 #include <stdbool.h>
@@ -52,4 +52,4 @@ int         lstr_cmp         (const lstring_t* string1, const lstring_t* string2
 lstring_t*  lstr_dup         (const lstring_t* string);
 size_t      lstr_len         (const lstring_t* string);
 
-#endif // SPHERE__LSTRING_H__INCLUDED
+#endif // !SPHERE_LSTRING_H_INCLUDED

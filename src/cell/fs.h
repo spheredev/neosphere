@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__FS_H__INCLUDED
-#define SPHERE__FS_H__INCLUDED
+#ifndef CELL_FS_H_INCLUDED
+#define CELL_FS_H_INCLUDED
 
 typedef struct directory directory_t;
 typedef struct fs        fs_t;
@@ -65,4 +65,4 @@ const path_t* directory_next      (directory_t* it);
 void          directory_rewind    (directory_t* it);
 bool          directory_seek      (directory_t* it, int position);
 
-#endif // SPHERE__FS_H__INCLUDED
+#endif // !CELL_FS_H_INCLUDED

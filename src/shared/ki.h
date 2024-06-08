@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__KI_H__INCLUDED
-#define SPHERE__KI_H__INCLUDED
+#ifndef SPHERE_KI_H_INCLUDED
+#define SPHERE_KI_H_INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -157,4 +157,4 @@ void             ki_message_add_string (ki_message_t* it, const char* value);
 ki_message_t*    ki_message_recv       (socket_t* socket);
 bool             ki_message_send       (const ki_message_t* it, socket_t* socket);
 
-#endif // SPHERE__KI_H__INCLUDED
+#endif // !SPHERE_KI_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__PACKAGE_H__INCLUDED
-#define SPHERE__PACKAGE_H__INCLUDED
+#ifndef NEOSPHERE_PACKAGE_H_INCLUDED
+#define NEOSPHERE_PACKAGE_H_INCLUDED
 
 typedef struct asset    asset_t;
 typedef struct package  package_t;
@@ -60,4 +60,4 @@ void*       asset_fslurp        (package_t* it, const char* path, size_t *out_si
 long long   asset_ftell         (asset_t* file);
 size_t      asset_fwrite        (const void* buf, size_t size, size_t count, asset_t* file);
 
-#endif // SPHERE__PACKAGE_H__INCLUDED
+#endif // !NEOSPHERE_PACKAGE_H_INCLUDED

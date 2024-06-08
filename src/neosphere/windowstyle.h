@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__WINDOWSTYLE_H__INCLUDED
-#define SPHERE__WINDOWSTYLE_H__INCLUDED
+#ifndef NEOSPHERE_WINDOWSTYLE_H_INCLUDED
+#define NEOSPHERE_WINDOWSTYLE_H_INCLUDED
 
 #include "color.h"
 
@@ -44,4 +44,4 @@ color_t        winstyle_get_mask (const windowstyle_t* it);
 void           winstyle_set_mask (windowstyle_t* it, color_t color);
 void           winstyle_draw     (windowstyle_t* it, int x, int y, int width, int height);
 
-#endif // SPHERE__WINDOWSTYLE_H__INCLUDED
+#endif // !NEOSPHERE_WINDOWSTYLE_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__ENCODING_H__INCLUDED
-#define SPHERE__ENCODING_H__INCLUDED
+#ifndef SPHERE_ENCODING_H_INCLUDED
+#define SPHERE_ENCODING_H_INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -52,4 +52,4 @@ encoder_t* encoder_ref        (encoder_t* encoder);
 void       encoder_free       (encoder_t* encoder);
 uint8_t*   encoder_run        (encoder_t* encoder, const lstring_t* string, size_t *out_size);
 
-#endif // SPHERE__ENCODING_H__INCLUDED
+#endif // !SPHERE_ENCODING_H_INCLUDED

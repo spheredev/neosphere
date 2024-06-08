@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__IMAGE_H__INCLUDED
-#define SPHERE__IMAGE_H__INCLUDED
+#ifndef CELL_IMAGE_H_INCLUDED
+#define CELL_IMAGE_H_INCLUDED
 
 #include <stdint.h>
 
@@ -47,4 +47,4 @@ int       image_width  (const image_t* image);
 bool      image_save   (const image_t* image, const fs_t* fs, const char* filename);
 image_t*  image_slice  (const image_t* image, int x, int y, int width, int height);
 
-#endif // SPHERE__IMAGE_H__INCLUDED
+#endif // !CELL_IMAGE_H_INCLUDED

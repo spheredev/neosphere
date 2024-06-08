@@ -30,12 +30,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__CONSOLE_H__INCLUDED
-#define SPHERE__CONSOLE_H__INCLUDED
+#ifndef SPHERE_CONSOLE_H_INCLUDED
+#define SPHERE_CONSOLE_H_INCLUDED
 
 void console_init  (int verbosity);
 void console_error (const char* fmt, ...);
 void console_log   (int level, const char* fmt, ...);
 void console_warn  (int level, const char* fmt, ...);
 
-#endif // SPHERE__CONSOLE_H__INCLUDED
+#endif // !SPHERE_CONSOLE_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__IMAGE_H__INCLUDED
-#define SPHERE__IMAGE_H__INCLUDED
+#ifndef NEOSPHERE_IMAGE_H_INCLUDED
+#define NEOSPHERE_IMAGE_H_INCLUDED
 
 #include "blend_op.h"
 #include "geometry.h"
@@ -112,4 +112,4 @@ void            image_unclip             (image_t* it);
 void            image_unlock             (image_t* it, image_lock_t* lock);
 bool            image_upload             (image_t* it, const color_t* pixels);
 
-#endif // SPHERE__IMAGE_H__INCLUDED
+#endif // !NEOSPHERE_IMAGE_H_INCLUDED

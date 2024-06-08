@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__MAP_ENGINE_H__INCLUDED
-#define SPHERE__MAP_ENGINE_H__INCLUDED
+#ifndef NEOSPHERE_MAP_ENGINE_H_INCLUDED
+#define NEOSPHERE_MAP_ENGINE_H_INCLUDED
 
 #include "color.h"
 #include "geometry.h"
@@ -236,4 +236,4 @@ void             zone_set_script              (int zone_index, script_t* script)
 void             zone_set_steps               (int zone_index, int steps);
 void             zone_activate                (int zone_index);
 
-#endif // SPHERE__MAP_ENGINE_H__INCLUDED
+#endif // !NEOSPHERE_MAP_ENGINE_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__LISTING_H__INCLUDED
-#define SPHERE__LISTING_H__INCLUDED
+#ifndef SSJ_LISTING_H_INCLUDED
+#define SSJ_LISTING_H_INCLUDED
 
 typedef struct listing listing_t;
 
@@ -41,4 +41,4 @@ int          listing_cloc     (const listing_t* it);
 const char*  listing_get_line (const listing_t* it, int line_index);
 void         listing_print    (const listing_t* it, int lineno, int num_lines, int active_lineno);
 
-#endif // SPHERE__LISTING_H__INCLUDED
+#endif // !SSJ_LISTING_H_INCLUDED

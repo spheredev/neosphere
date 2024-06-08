@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__DEBUGGER_H__INCLUDED
-#define SPHERE__DEBUGGER_H__INCLUDED
+#ifndef NEOSPHERE_DEBUGGER_H_INCLUDED
+#define NEOSPHERE_DEBUGGER_H_INCLUDED
 
 #include "color.h"
 #include "ki.h"
@@ -53,4 +53,4 @@ const char* debugger_compiler (void);
 const char* debugger_name     (void);
 void        debugger_log      (const char* text, ki_log_op_t op, bool use_console);
 
-#endif // SPHERE__DEBUGGER_H__INCLUDED
+#endif // !NEOSPHERE_DEBUGGER_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__TABLE_H__INCLUDED
-#define SPHERE__TABLE_H__INCLUDED
+#ifndef NEOSPHERE_TABLE_H_INCLUDED
+#define NEOSPHERE_TABLE_H_INCLUDED
 
 #include <stdbool.h>
 
@@ -45,4 +45,4 @@ void     table_add_percentage (table_t* it, int column, double value);
 void     table_add_text       (table_t* it, int column, const char* text);
 void     table_print          (const table_t* it);
 
-#endif // SPHERE__TABLE_H__INCLUDED
+#endif // !NEOSPHERE_TABLE_H_INCLUDED

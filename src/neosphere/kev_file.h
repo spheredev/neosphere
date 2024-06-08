@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__FILE_H__INCLUDED
-#define SPHERE__FILE_H__INCLUDED
+#ifndef NEOSPHERE_FILE_H_INCLUDED
+#define NEOSPHERE_FILE_H_INCLUDED
 
 #include "game.h"
 
@@ -51,4 +51,4 @@ void         kev_write_float  (kev_file_t* it, const char* key, double value);
 void         kev_write_int    (kev_file_t* it, const char* key, int value);
 void         kev_write_string (kev_file_t* it, const char* key, const char* value);
 
-#endif // SPHERE__FILE_H__INCLUDED
+#endif // !NEOSPHERE_FILE_H_INCLUDED

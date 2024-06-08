@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__SCRIPT_H__INCLUDED
-#define SPHERE__SCRIPT_H__INCLUDED
+#ifndef NEOSPHERE_SCRIPT_H_INCLUDED
+#define NEOSPHERE_SCRIPT_H_INCLUDED
 
 typedef struct script script_t;
 
@@ -45,4 +45,4 @@ script_t* script_ref          (script_t* script);
 void      script_unref        (script_t* script);
 void      script_run          (script_t* script, bool allow_reentry);
 
-#endif // SPHERE__SCRIPT_H__INCLUDED
+#endif // !NEOSPHERE_SCRIPT_H_INCLUDED

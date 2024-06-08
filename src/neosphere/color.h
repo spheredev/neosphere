@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__COLOR_H__INCLUDED
-#define SPHERE__COLOR_H__INCLUDED
+#ifndef NEOSPHERE_COLOR_H_INCLUDED
+#define NEOSPHERE_COLOR_H_INCLUDED
 
 typedef
 struct color
@@ -57,4 +57,4 @@ color_t       color_transform (color_t color, color_fx_t matrix);
 color_fx_t    mk_color_fx     (int rn, int rr, int rg, int rb, int gn, int gr, int gg, int gb, int bn, int br, int bg, int bb);
 color_fx_t    color_fx_mix    (color_fx_t mat1, color_fx_t mat2, int w1, int w2);
 
-#endif // SPHERE__COLOR_H__INCLUDED
+#endif // !NEOSPHERE_COLOR_H_INCLUDED

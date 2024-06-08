@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__BLEND_OP_H__INCLUDED
-#define SPHERE__BLEND_OP_H__INCLUDED
+#ifndef NEOSPHERE_BLEND_OP_H_INCLUDED
+#define NEOSPHERE_BLEND_OP_H_INCLUDED
 
 typedef struct blend_op blend_op_t;
 
@@ -67,4 +67,4 @@ void        blend_op_unref     (blend_op_t* it);
 void        blend_op_set_const (blend_op_t* it, float r, float g, float b, float a);
 void        blend_op_apply     (const blend_op_t* it);
 
-#endif // SPHERE__BLEND_OP_H__INCLUDED
+#endif // !NEOSPHERE_BLEND_OP_H_INCLUDED

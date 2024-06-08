@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__OBJECTVIEW_H__INCLUDED
-#define SPHERE__OBJECTVIEW_H__INCLUDED
+#ifndef SSJ_OBJECTVIEW_H_INCLUDED
+#define SSJ_OBJECTVIEW_H_INCLUDED
 
 #include "ki.h"
 
@@ -65,4 +65,4 @@ const ki_atom_t* objview_get_value    (const objview_t* obj, int index);
 void             objview_add_accessor (objview_t* obj, const char* key, const ki_atom_t* getter, const ki_atom_t* setter, unsigned int flags);
 void             objview_add_value    (objview_t* obj, const char* key, const char* class_name, const ki_atom_t* value, unsigned int flags);
 
-#endif // SPHERE__OBJECTVIEW_H__INCLUDED
+#endif // !SSJ_OBJECTVIEW_H_INCLUDED

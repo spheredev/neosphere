@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__EVENT_LOOP_H__INCLUDED
-#define SPHERE__EVENT_LOOP_H__INCLUDED
+#ifndef NEOSPHERE_EVENT_LOOP_H_INCLUDED
+#define NEOSPHERE_EVENT_LOOP_H_INCLUDED
 
 #include "sockets.h"
 
@@ -48,4 +48,4 @@ bool events_run_main_loop  (void);
 void events_write_socket   (socket_t* socket, const void* data, int num_bytes);
 void events_tick           (int api_version, bool clear_screen, int framerate);
 
-#endif // SPHERE__EVENT_LOOP_H__INCLUDED
+#endif // !NEOSPHERE_EVENT_LOOP_H_INCLUDED

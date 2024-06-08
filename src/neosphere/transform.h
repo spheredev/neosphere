@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__TRANSFORM_H__INCLUDED
-#define SPHERE__TRANSFORM_H__INCLUDED
+#ifndef NEOSPHERE_TRANSFORM_H_INCLUDED
+#define NEOSPHERE_TRANSFORM_H_INCLUDED
 
 typedef struct transform transform_t;
 
@@ -51,4 +51,4 @@ void                     transform_rotate       (transform_t* it, float theta, f
 void                     transform_scale        (transform_t* it, float sx, float sy, float sz);
 void                     transform_translate    (transform_t* it, float dx, float dy, float dz);
 
-#endif // SPHERE__TRANSFORM_H__INCLUDED
+#endif // !NEOSPHERE_TRANSFORM_H_INCLUDED

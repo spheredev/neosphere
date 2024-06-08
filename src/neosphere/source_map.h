@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__SOURCE_MAP_H__INCLUDED
-#define SPHERE__SOURCE_MAP_H__INCLUDED
+#ifndef NEOSPHERE_SOURCE_MAP_H_INCLUDED
+#define NEOSPHERE_SOURCE_MAP_H_INCLUDED
 
 typedef
 struct mapping
@@ -52,4 +52,4 @@ bool        source_map_add_source  (const char* filename, const char* text);
 mapping_t   source_map_lookup      (const char* url, int line, int column);
 mapping_t   source_map_reverse     (const char* filename, int line, int column);
 
-#endif // SPHERE__SOURCE_MAP_H__INCLUDED
+#endif // !NEOSPHERE_SOURCE_MAP_H_INCLUDED

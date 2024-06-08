@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__GEOMETRY_H__INCLUDED
-#define SPHERE__GEOMETRY_H__INCLUDED
+#ifndef NEOSPHERE_GEOMETRY_H_INCLUDED
+#define NEOSPHERE_GEOMETRY_H_INCLUDED
 
 typedef
 struct point2
@@ -90,4 +90,4 @@ rectf_t  rectf_scale        (rectf_t rect, float x_scale, float y_scale);
 rectf_t  rectf_translate    (rectf_t rect, float x_offset, float y_offset);
 size2_t  mk_size2           (int width, int height);
 
-#endif // SPHERE__GEOMETRY_H__INCLUDED
+#endif // !NEOSPHERE_GEOMETRY_H_INCLUDED

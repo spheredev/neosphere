@@ -30,9 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__CELL_H__INCLUDED
-#define SPHERE__CELL_H__INCLUDED
-
 #include "posix.h"
 
 #include "jsal.h"
@@ -59,5 +56,3 @@
 #endif
 
 #include "version.h"
-
-#endif // SPHERE__CELL_H__INCLUDED

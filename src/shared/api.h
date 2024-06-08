@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__API_H__INCLUDED
-#define SPHERE__API_H__INCLUDED
+#ifndef SPHERE_API_H_INCLUDED
+#define SPHERE_API_H_INCLUDED
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -60,4 +60,4 @@ int   jsal_push_class_prototype (int class_id);
 void* jsal_require_class_obj    (int index, int class_id);
 void  jsal_set_class_ptr        (int index, void* ptr);
 
-#endif // SPHERE__API_H__INCLUDED
+#endif // !SPHERE_API_H_INCLUDED

@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__VISOR_H__INCLUDED
-#define SPHERE__VISOR_H__INCLUDED
+#ifndef CELL_VISOR_H_INCLUDED
+#define CELL_VISOR_H_INCLUDED
 
 typedef struct visor visor_t;
 
@@ -48,4 +48,4 @@ void      visor_print      (visor_t* visor, const char* fmt, ...);
 void      visor_prompt     (visor_t* visor, const char* prompt, char* buffer, size_t bufsize);
 void      visor_warn       (visor_t* visor, const char* fmt, ...);
 
-#endif // SPHERE__VISOR_H__INCLUDED
+#endif // !CELL_VISOR_H_INCLUDED

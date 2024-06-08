@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__ANIMATION_H__INCLUDED
-#define SPHERE__ANIMATION_H__INCLUDED
+#ifndef NEOSPHERE_ANIMATION_H_INCLUDED
+#define NEOSPHERE_ANIMATION_H_INCLUDED
 
 #if defined(NEOSPHERE_MNG_SUPPORT)
 
@@ -49,4 +49,4 @@ bool         animation_update     (animation_t* anim);
 
 #endif
 
-#endif // SPHERE__ANIMATION_H__INCLUDED
+#endif // !NEOSPHERE_ANIMATION_H_INCLUDED

@@ -30,9 +30,6 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__SSJ_H__INCLUDED
-#define SPHERE__SSJ_H__INCLUDED
-
 #ifdef _MSC_VER
 #define _USE_MATH_DEFINES
 #endif
@@ -65,5 +62,3 @@
 
 bool  launch_game (path_t* game_path);
 char* strnewf     (const char* fmt, ...);
-
-#endif // SPHERE__SSJ_H__INCLUDED

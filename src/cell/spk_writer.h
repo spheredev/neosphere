@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__SPK_WRITER_H__INCLUDED
-#define SPHERE__SPK_WRITER_H__INCLUDED
+#ifndef CELL_SPK_WRITER_H_INCLUDED
+#define CELL_SPK_WRITER_H_INCLUDED
 
 #include "fs.h"
 
@@ -41,4 +41,4 @@ spk_writer_t* spk_create   (const char* filename);
 void          spk_close    (spk_writer_t* writer);
 bool          spk_add_file (spk_writer_t* writer, fs_t* fs, const char* filename, const char* spk_pathname);
 
-#endif // SPHERE__SPK_WRITER_H__INCLUDED
+#endif // !CELL_SPK_WRITER_H_INCLUDED

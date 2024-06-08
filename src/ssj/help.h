@@ -30,9 +30,9 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__HELP_H__INCLUDED
-#define SPHERE__HELP_H__INCLUDED
+#ifndef SSJ_HELP_H_INCLUDED
+#define SSJ_HELP_H_INCLUDED
 
 void help_print (const char* command_name);
 
-#endif // SPHERE__HELP_H__INCLUDED
+#endif // !SSJ_HELP_H_INCLUDED

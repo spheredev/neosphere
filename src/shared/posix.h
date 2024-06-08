@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__POSIX_H__INCLUDED
-#define SPHERE__POSIX_H__INCLUDED
+#ifndef SPHERE_POSIX_H_INCLUDED
+#define SPHERE_POSIX_H_INCLUDED
 
 #if defined(_MSC_VER)
 
@@ -56,4 +56,4 @@
 
 #endif
 
-#endif // SPHERE__POSIX_H__INCLUDED
+#endif // !SPHERE_POSIX_H_INCLUDED

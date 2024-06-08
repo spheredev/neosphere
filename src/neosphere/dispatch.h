@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__DISPATCH_H__INCLUDED
-#define SPHERE__DISPATCH_H__INCLUDED
+#ifndef NEOSPHERE_DISPATCH_H_INCLUDED
+#define NEOSPHERE_DISPATCH_H_INCLUDED
 
 #include "script.h"
 
@@ -56,4 +56,4 @@ void    dispatch_pause      (int64_t token, bool paused);
 int64_t dispatch_recur      (script_t* script, double priority, bool background, job_type_t hint);
 bool    dispatch_run        (job_type_t hint);
 
-#endif // SPHERE__DISPATCH_H__INCLUDED
+#endif // !NEOSPHERE_DISPATCH_H_INCLUDED

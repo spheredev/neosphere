@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__MODULE_H__INCLUDED
-#define SPHERE__MODULE_H__INCLUDED
+#ifndef NEOSPHERE_MODULE_H_INCLUDED
+#define NEOSPHERE_MODULE_H_INCLUDED
 
 typedef struct module_ref module_ref_t;
 
@@ -51,4 +51,4 @@ const char*   module_pathname (const module_ref_t* it);
 module_type_t module_type     (const module_ref_t* it);
 bool          module_exec     (module_ref_t* it);
 
-#endif // SPHERE__MODULE_H__INCLUDED
+#endif // !NEOSPHERE_MODULE_H_INCLUDED

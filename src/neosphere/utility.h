@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__UTILITY_H__INCLUDED
-#define SPHERE__UTILITY_H__INCLUDED
+#ifndef NEOSPHERE_UTILITY_H_INCLUDED
+#define NEOSPHERE_UTILITY_H_INCLUDED
 
 #include "game.h"
 #include "geometry.h"
@@ -58,4 +58,4 @@ lstring_t*  read_lstring_raw       (file_t* file, size_t length, bool trim_nul);
 char*       strnewf                (const char* fmt, ...);
 bool        write_lstring          (file_t* file, const lstring_t* string, bool include_nul);
 
-#endif // SPHERE__UTILITY_H__INCLUDED
+#endif // !NEOSPHERE_UTILITY_H_INCLUDED

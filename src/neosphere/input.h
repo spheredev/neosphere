@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__INPUT_H__INCLUDED
-#define SPHERE__INPUT_H__INCLUDED
+#ifndef NEOSPHERE_INPUT_H_INCLUDED
+#define NEOSPHERE_INPUT_H_INCLUDED
 
 #include "script.h"
 
@@ -115,4 +115,4 @@ void  attach_input_display (void);
 void  update_bound_keys    (bool use_map_keys);
 void  update_input         (void);
 
-#endif // SPHERE__INPUT_H__INCLUDED
+#endif // !NEOSPHERE_INPUT_H_INCLUDED

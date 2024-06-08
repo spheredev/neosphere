@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__TARGET_H__INCLUDED
-#define SPHERE__TARGET_H__INCLUDED
+#ifndef CELL_TARGET_H_INCLUDED
+#define CELL_TARGET_H_INCLUDED
 
 #include "fs.h"
 #include "tool.h"
@@ -48,4 +48,4 @@ const path_t* target_source_path (const target_t* target);
 void          target_add_source  (target_t* target, target_t* source);
 bool          target_build       (target_t* target, visor_t* visor, bool force_build);
 
-#endif // SPHERE__TARGET_H__INCLUDED
+#endif // !CELL_TARGET_H_INCLUDED

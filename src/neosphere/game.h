@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__GAME_H__INCLUDED
-#define SPHERE__GAME_H__INCLUDED
+#ifndef NEOSPHERE_GAME_H_INCLUDED
+#define NEOSPHERE_GAME_H_INCLUDED
 
 #include "font.h"
 #include "geometry.h"
@@ -109,4 +109,4 @@ size_t          file_read                (file_t* it, void* buf, size_t count, s
 bool            file_seek                (file_t* it, long long offset, whence_t whence);
 size_t          file_write               (file_t* it, const void* buf, size_t count, size_t size);
 
-#endif // SPHERE__GAME_H__INCLUDED
+#endif // !NEOSPHERE_GAME_H_INCLUDED

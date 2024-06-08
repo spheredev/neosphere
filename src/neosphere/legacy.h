@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__LEGACY_H__INCLUDED
-#define SPHERE__LEGACY_H__INCLUDED
+#ifndef NEOSPHERE_LEGACY_H_INCLUDED
+#define NEOSPHERE_LEGACY_H_INCLUDED
 
 typedef struct socket_v1 socket_v1_t;
 
@@ -45,4 +45,4 @@ int            socket_v1_bytes_avail (const socket_v1_t* it);
 int            socket_v1_read        (socket_v1_t* it, void* buffer, int num_bytes);
 void           socket_v1_write       (socket_v1_t* it, const void* data, int num_bytes);
 
-#endif // SPHERE__LEGACY_H__INCLUDED
+#endif // !NEOSPHERE_LEGACY_H_INCLUDED

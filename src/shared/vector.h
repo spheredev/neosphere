@@ -30,8 +30,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
 **/
 
-#ifndef SPHERE__VECTOR_H__INCLUDED
-#define SPHERE__VECTOR_H__INCLUDED
+#ifndef SPHERE_VECTOR_H_INCLUDED
+#define SPHERE_VECTOR_H_INCLUDED
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -66,4 +66,4 @@ vector_t* vector_sort    (vector_t* vector, int(*comparer)(const void* in_a, con
 void*     iter_next     (iter_t* inout_iter);
 void      iter_remove   (iter_t* iter);
 
-#endif // SPHERE__VECTOR_H__INCLUDED
+#endif // !SPHERE_VECTOR_H_INCLUDED
