@@ -12,6 +12,9 @@ neoSphere 5.10
   previous behavior. If you are targeting API level 4 or plan to in the future,
   you will need to update your code accordingly.
 
+* SSj's command-line interface has been overhauled to align with Cell's.  Run
+  `ssj help` for a primer on the new syntax.
+
 
 neoSphere 5.9
 -------------
@@ -88,7 +91,7 @@ miniSphere 5.5
 * `Texture.fromFile()` and other `.fromFile()` functions have been canonized.
   Calling the equivalent constructors in a game targeting API 3 will produce a
   deprecation warning in the engine's terminal output; these constructors will
-  be completely disabled in API 4 in order to pave the way for full 
+  be completely disabled in API 4 in order to pave the way for full
   cross-compatibility with Oozaru.
 
 * miniSphere can now load TrueType fonts. To this end, `Font.fromFile()` will
@@ -96,7 +99,7 @@ miniSphere 5.5
 
 * When importing modules from folders, `package.json` handling has been updated
   to be more consistent with Node.js behavior. In particular, the engine now
-  honors the `"type"` field, enabling it to load ES Module packages. 
+  honors the `"type"` field, enabling it to load ES Module packages.
 
 * There is now experimental support for depth buffering when rendering to
   surfaces, including the backbuffer. The depth test can be customized by

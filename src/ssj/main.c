@@ -41,11 +41,18 @@
 #include <mach-o/dyld.h>
 #endif
 
+enum mode
+{
+	MODE_ATTACH,
+	MODE_RUN,
+};
+
 struct cmdline
 {
-	path_t* path;
-	bool    pause_on_start;
-	bool    show_trace;
+	enum mode mode;
+	path_t*   game_path;
+	bool      pause_on_start;
+	bool      show_trace;
 };
 
 static struct cmdline* parse_command_line (int argc, char* argv[], int *out_retval);
@@ -80,7 +87,7 @@ main(int argc, char* argv[])
 	print_banner(true, false);
 	printf("\n");
 
-	if (cmdline->path != NULL && !launch_game(cmdline->path))
+	if (cmdline->mode == MODE_RUN && !launch_game(cmdline->game_path))
 		goto on_error;
 
 	inferiors_init();
@@ -203,13 +210,15 @@ strnewf(const char* fmt, ...)
 static void
 free_cmdline(struct cmdline* obj)
 {
-	path_free(obj->path);
+	path_free(obj->game_path);
 	free(obj);
 }
 
 static struct cmdline*
 parse_command_line(int argc, char* argv[], int *out_retval)
 {
+	int             args_index = 1;
+	const char*     command = "run";
 	struct cmdline* cmdline;
 	bool            have_target = false;
 	const char*     short_args;
@@ -223,7 +232,39 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 		return NULL;
 	}
 	*out_retval = EXIT_SUCCESS;
-	for (i = 1; i < argc; ++i) {
+
+	if (argc >= 2 && argv[1][0] != '-') {
+		args_index = 2;
+		command = argv[1];
+		if (strcmp(command, "attach") == 0 || strcmp(command, "a") == 0) {
+			command = "attach";
+			cmdline->mode = MODE_ATTACH;
+			have_target = true;
+		}
+		else if (strcmp(command, "run") == 0 || strcmp(command, "r") == 0) {
+			command = "run";
+			cmdline->mode = MODE_RUN;
+		}
+		else if (strcmp(command, "help") == 0 || strcmp(command, "h") == 0) {
+			print_usage();
+			goto on_output_only;
+		}
+		else if (strcmp(command, "version") == 0 || strcmp(command, "v") == 0) {
+			print_banner(true, true);
+			goto on_output_only;
+		}
+		else if (strcmp(command, "explode") == 0) {
+			print_cell_quote();
+			goto on_output_only;
+		}
+		else {
+			printf("ssj: '%s' is not a valid SSj command\n", command);
+			*out_retval = EXIT_FAILURE;
+			goto on_output_only;
+		}
+	}
+
+	for (i = args_index; i < argc; ++i) {
 		if (strstr(argv[i], "--") == argv[i]) {
 			if (strcmp(argv[i], "--help") == 0) {
 				print_usage();
@@ -233,18 +274,12 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 				print_banner(true, true);
 				goto on_output_only;
 			}
-			else if (strcmp(argv[i], "--explode") == 0) {
-				print_cell_quote();
-				goto on_output_only;
-			}
-			else if (strcmp(argv[i], "--connect") == 0)
-				have_target = true;
 			else if (strcmp(argv[i], "--pause") == 0)
 				cmdline->pause_on_start = true;
 			else if (strcmp(argv[i], "--trace") == 0)
 				cmdline->show_trace = true;
 			else {
-				printf("ssj: error: unknown option '%s'\n", argv[i]);
+				printf("ssj: invalid option '%s' for 'ssj %s'\n", argv[i], command);
 				goto on_output_only;
 			}
 		}
@@ -252,9 +287,6 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 			short_args = argv[i];
 			for (i_arg = strlen(short_args) - 1; i_arg >= 1; --i_arg) {
 				switch (short_args[i_arg]) {
-				case 'c':
-					have_target = true;
-					break;
 				case 'h':
 					print_usage();
 					goto on_output_only;
@@ -268,16 +300,16 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 					print_banner(true, true);
 					goto on_output_only;
 				default:
-					printf("ssj: error: unknown option '-%c'\n", short_args[i_arg]);
+					printf("ssj: invalid option '-%c' for 'ssj %s'\n", short_args[i_arg], command);
 					*out_retval = EXIT_FAILURE;
 					goto on_output_only;
 				}
 			}
 		}
 		else {
-			path_free(cmdline->path);
-			cmdline->path = path_resolve(path_new(argv[i]), NULL);
-			if (cmdline->path == NULL) {
+			path_free(cmdline->game_path);
+			cmdline->game_path = path_resolve(path_new(argv[i]), NULL);
+			if (cmdline->game_path == NULL) {
 				printf("ssj: error: cannot resolve pathname '%s'\n", argv[i]);
 				*out_retval = EXIT_FAILURE;
 				goto on_output_only;
@@ -354,7 +386,7 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("   Dyad.c: v%s\n", dyad_getVersion());
+		printf("   Dyad.c   v%s\n", dyad_getVersion());
 	}
 }
 
@@ -364,13 +396,12 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   ssj [--trace] [--pause] <game-path>\n");
-	printf("   ssj --connect [--trace] [--no-pause]\n");
+	printf("   ssj attach [--trace] [--pause]\n");
+	printf("   ssj run [--trace] [--pause] <game-path>\n");
+	printf("   ssj help\n");
 	printf("\n");
 	printf("OPTIONS:\n");
-	printf("   -c  --connect    Connect to a SpheRun instance which is already running     \n");
-	printf("   -p  --pause      Start the debugger with engine execution paused            \n");
-	printf("   -t  --trace      Show trace-level output, for example, from SSj.trace()     \n");
-	printf("   -v  --version    Show the version number of SSj and its dependencies        \n");
-	printf("   -h  --help       Show this help text                                        \n");
+	printf("   for run/attach:\n");
+	printf("   -p  --pause     Pause JavaScript execution immediately upon attachment    \n");
+	printf("   -t  --trace     Show trace-level output, for example, from SSj.trace()    \n");
 }

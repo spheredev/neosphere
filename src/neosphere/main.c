@@ -918,12 +918,12 @@ print_banner(bool want_copyright, bool want_deps)
 			(al_version_id >> 16) & 0xFF, (al_version_id >> 8) & 0xFF,
 			(al_version_id & 0xFF) - 1);
 		printf("\n");
-		printf("    Allegro: v%-8s\n", al_version);
+		printf("   Allegro   v%-8s\n", al_version);
 #if defined(NEOSPHERE_MNG_SUPPORT)
-		printf("     libmng: v%s\n", mng_version_text());
+		printf("   libmng    v%s\n", mng_version_text());
 #endif
-		printf("     Dyad.c: v%-8s\n", dyad_getVersion());
-		printf("       zlib: v%s\n", zlibVersion());
+		printf("   Dyad.c    v%-8s\n", dyad_getVersion());
+		printf("   zlib      v%s\n", zlibVersion());
 		free(al_version);
 	}
 }
