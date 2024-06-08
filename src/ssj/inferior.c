@@ -601,8 +601,8 @@ handle_notify(inferior_t* inferior, const ki_message_t* msg)
 			if (log_op == KI_LOG_TRACE && !inferior->show_trace)
 				break;
 			heading = log_op == KI_LOG_TRACE ? "\33[37;1mtrace\33[m"
-				: log_op == KI_LOG_WARN ? "\33[31;1mwarn\33[m"
-				: log_op == KI_LOG_ERROR ? "\33[33;1merror\33[m"
+				: log_op == KI_LOG_WARN ? "\33[33;1mwarn\33[m"
+				: log_op == KI_LOG_ERROR ? "\33[31;1merror\33[m"
 				: "\33[36;1mlog\33[m";
 			printf("%s: %s\n", heading, ki_message_string(msg, 2));
 			break;

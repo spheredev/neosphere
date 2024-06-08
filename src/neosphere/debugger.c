@@ -249,8 +249,8 @@ debugger_log(const char* text, ki_log_op_t op, bool use_console)
 
 	if (use_console) {
 		heading = op == KI_LOG_TRACE ? "\33[30;1mtrace\33[m: "
-			: op == KI_LOG_WARN ? "\33[31;1mwarn\33[m: "
-			: op == KI_LOG_ERROR ? "\33[33;1merror\33[m: "
+			: op == KI_LOG_WARN ? "\33[33;1mwarn\33[m: "
+			: op == KI_LOG_ERROR ? "\33[31;1merror\33[m: "
 			: "";
 		printf("%s%s\33[m\n", heading, text);
 	}
