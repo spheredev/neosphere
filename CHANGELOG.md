@@ -9,6 +9,7 @@ v5.10.0 - WiP
 * Adds a `Surface#unclip()` method for undoing the previous clipping change.
 * Improves the SSj command-line interface, aligning its syntax with Cell's.
 * Fixes a bug that caused SSj to show Sphere v1 games as targeting API level 0.
+* Fixes a bug that occasionally caused Cell's terminal output to be scrambled.
 
 
 v5.9.3 - May 30, 2024

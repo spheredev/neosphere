@@ -101,7 +101,6 @@ visor_begin_op(visor_t* visor, const char* fmt, ...)
 	print_indent(visor->indent_level);
 	vprintf(fmt, ap);
 	printf("...\n");
-	fflush(stdout);
 	va_end(ap);
 
 	++visor->indent_level;
@@ -123,7 +122,6 @@ visor_error(visor_t* visor, const char* fmt, ...)
 	printf("E: ");
 	vprintf(fmt, ap);
 	printf("\n");
-	fflush(stdout);
 	va_end(ap);
 
 	++visor->num_errors;
@@ -139,7 +137,6 @@ visor_print(visor_t* visor, const char* fmt, ...)
 	printf("i: ");
 	vprintf(fmt, ap);
 	printf("\n");
-	fflush(stdout);
 	va_end(ap);
 }
 
@@ -172,7 +169,6 @@ visor_warn(visor_t* visor, const char* fmt, ...)
 	printf("W: ");
 	vprintf(fmt, ap);
 	printf("\n");
-	fflush(stdout);
 	va_end(ap);
 
 	++visor->num_warns;
