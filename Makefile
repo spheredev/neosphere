@@ -26,17 +26,14 @@ engine_sources=src/neosphere/main.c \
    src/shared/api.c \
    src/shared/compress.c \
    src/shared/console.c \
-   src/shared/dyad.c \
    src/shared/encoding.c \
    src/shared/jsal.c \
    src/shared/ki.c \
    src/shared/lstring.c \
-   src/shared/md5.c \
    src/shared/path.c \
    src/shared/sockets.c \
    src/shared/unicode.c \
    src/shared/vector.c \
-   src/shared/wildmatch.c \
    src/shared/xoroshiro.c \
    src/neosphere/animation.c \
    src/neosphere/atlas.c \
@@ -98,7 +95,6 @@ cell_sources=src/cell/main.c \
    src/shared/path.c \
    src/shared/unicode.c \
    src/shared/vector.c \
-   src/shared/wildmatch.c \
    src/shared/xoroshiro.c \
    src/cell/build.c \
    src/cell/fs.c \
@@ -120,7 +116,6 @@ ssj_sources=src/ssj/main.c \
    vendor/civetweb/civetweb.c \
    vendor/dyad/dyad.c \
    src/shared/console.c \
-   src/shared/dyad.c \
    src/shared/ki.c \
    src/shared/path.c \
    src/shared/sockets.c \
