@@ -117,6 +117,7 @@ cell_libs= \
    -lm
 
 ssj_sources=src/ssj/main.c \
+   vendor/civetweb/civetweb.c \
    vendor/dyad/dyad.c \
    src/shared/console.c \
    src/shared/dyad.c \
@@ -127,11 +128,13 @@ ssj_sources=src/ssj/main.c \
    src/shared/xoroshiro.c \
    src/ssj/backtrace.c \
    src/ssj/help.c \
+   src/ssj/host.c \
    src/ssj/inferior.c \
    src/ssj/listing.c \
    src/ssj/objview.c \
    src/ssj/parser.c \
-   src/ssj/session.c
+   src/ssj/session.c \
+   src/ssj/utility.c
 
 ifeq ($(os), Darwin)
 LINKER_ARGS=-Wl,-rpath,\$$ORIGIN
@@ -240,5 +243,5 @@ bin/cell:
 bin/ssj:
 	mkdir -p bin
 	$(CC) -o bin/ssj $(CFLAGS) \
-	      -Isrc/shared -Ivendor/dyad \
+	      -Isrc/shared -Ivendor/civetweb -Ivendor/dyad \
 	      $(ssj_sources)

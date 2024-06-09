@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en-US">
+	<head> <meta charset="utf-8">
+		<title>Oozaru: Sphere for the Web</title>
+		<link rel="stylesheet" href="styles.css">
+		<script type="importmap">{
+			"imports": {
+				"sphere-runtime": "./runtime/sphere-runtime.js"
+			}
+		}</script>
+		<script type="module" src="scripts/main.js"></script>
+	</head>
+	<body>
+		<nav id="menu">
+			<a href="."><img alt="Sphere logo" src="logo-dark.svg" width=48 height=48></a>
+			<div id="title">
+				<span id="name">Oozaru</span> <span id="gameTitle">Sphere for the Web</span><br>
+				<span id="copyright">&copy; 2016-2024 Fat Cerberus</span>
+			</div>
+		</nav>
+		<div id="tv">
+			<div id="screen-container">
+				<canvas id="screen" width=640 height=480 tabindex=0></canvas>
+				<div id="overlay">
+					<p><img src="logo-light.svg"></p>
+					<p id="engine-name">
+						<b>Oozaru JS Game Engine</b><br>
+						Click to Start
+					</p>
+				</div>
+			</div>
+			<div id="panel">
+				<pre id="readout"></pre>
+			</div>
+		</div>
+	</body>
+</html>

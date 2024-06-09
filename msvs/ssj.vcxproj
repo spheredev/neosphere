@@ -81,8 +81,8 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\src\shared;..\vendor\dyad;..\dep\include;include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>OPENSSL_API_1_1;USE_IPV6;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\civetweb;..\vendor\dyad;..\dep\include;include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -98,8 +98,8 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\src\shared;..\vendor\dyad;..\dep\include;include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>OPENSSL_API_1_1;USE_IPV6;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\civetweb;..\vendor\dyad;..\dep\include;include</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <DebugInformationFormat>
       </DebugInformationFormat>
@@ -122,11 +122,10 @@
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\src\shared;..\vendor\dyad;..\dep\include;include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>OPENSSL_API_1_1;USE_IPV6;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\src\shared;..\vendor\civetweb;..\vendor\dyad;..\dep\include;include</AdditionalIncludeDirectories>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -134,7 +133,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <GenerateDebugInformation>No</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalDependencies>ws2_32.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>lib;..\dep\lib</AdditionalLibraryDirectories>
@@ -151,13 +150,16 @@
     <ClCompile Include="..\src\shared\xoroshiro.c" />
     <ClCompile Include="..\src\ssj\backtrace.c" />
     <ClCompile Include="..\src\ssj\objview.c" />
+    <ClCompile Include="..\src\ssj\host.c" />
     <ClCompile Include="..\src\ssj\session.c" />
     <ClCompile Include="..\src\ssj\parser.c" />
     <ClCompile Include="..\src\ssj\help.c" />
     <ClCompile Include="..\src\ssj\main.c" />
     <ClCompile Include="..\src\ssj\inferior.c" />
     <ClCompile Include="..\src\ssj\listing.c" />
+    <ClCompile Include="..\src\ssj\utility.c" />
     <ClCompile Include="..\vendor\dyad\dyad.c" />
+    <ClCompile Include="..\vendor\civetweb\civetweb.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\shared\console.h" />
@@ -172,13 +174,16 @@
     <ClInclude Include="..\src\shared\xoroshiro.h" />
     <ClInclude Include="..\src\ssj\backtrace.h" />
     <ClInclude Include="..\src\ssj\objview.h" />
+    <ClInclude Include="..\src\ssj\host.h" />
     <ClInclude Include="..\src\ssj\session.h" />
     <ClInclude Include="..\src\ssj\parser.h" />
     <ClInclude Include="..\src\ssj\help.h" />
     <ClInclude Include="..\src\ssj\inferior.h" />
     <ClInclude Include="..\src\ssj\listing.h" />
     <ClInclude Include="..\src\ssj\ssj.h" />
+    <ClInclude Include="..\src\ssj\utility.h" />
     <ClInclude Include="..\vendor\dyad\dyad.h" />
+    <ClInclude Include="..\vendor\civetweb\civetweb.h" />
     <ClInclude Include="resource2.h" />
   </ItemGroup>
   <ItemGroup>

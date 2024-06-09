@@ -7,6 +7,8 @@ v5.10.0 - WiP
 * Adds a `clipOp` parameter to `Surface#clipTo()` that lets games control how
   the clipping box is changed by the call.
 * Adds a `Surface#unclip()` method for undoing the previous clipping change.
+* Adds the ability to host an Oozaru instance for local testing by using
+  `ssj host`.
 * Improves the SSj command-line interface, aligning its syntax with Cell's.
 * Fixes a bug that caused SSj to show Sphere v1 games as targeting API level 0.
 * Fixes a bug that occasionally caused Cell's terminal output to be scrambled.

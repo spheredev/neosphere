@@ -32,7 +32,9 @@
 
 #include "ssj.h"
 
+#include <civetweb.h>
 #include "dyad.h"
+#include "host.h"
 #include "inferior.h"
 #include "session.h"
 #include "xoroshiro.h"
@@ -44,6 +46,7 @@
 enum mode
 {
 	MODE_ATTACH,
+	MODE_HOST,
 	MODE_RUN,
 };
 
@@ -89,6 +92,10 @@ main(int argc, char* argv[])
 
 	if (cmdline->mode == MODE_RUN && !launch_game(cmdline->game_path))
 		goto on_error;
+	if (cmdline->mode == MODE_HOST) {
+		host_run(cmdline->game_path);
+		return EXIT_SUCCESS;
+	}
 
 	inferiors_init();
 
@@ -241,6 +248,10 @@ parse_command_line(int argc, char* argv[], int *out_retval)
 			cmdline->mode = MODE_ATTACH;
 			have_target = true;
 		}
+		else if (strcmp(command, "host") == 0 || strcmp(command, "h") == 0) {
+			command = "host";
+			cmdline->mode = MODE_HOST;
+		}
 		else if (strcmp(command, "run") == 0 || strcmp(command, "r") == 0) {
 			command = "run";
 			cmdline->mode = MODE_RUN;
@@ -386,7 +397,8 @@ print_banner(bool want_copyright, bool want_deps)
 	}
 	if (want_deps) {
 		printf("\n");
-		printf("   Dyad.c   v%s\n", dyad_getVersion());
+		printf("   CivetWeb   v%s\n", mg_version());
+		printf("   Dyad.c     v%s\n", dyad_getVersion());
 	}
 }
 
@@ -397,6 +409,7 @@ print_usage(void)
 	printf("\n");
 	printf("USAGE:\n");
 	printf("   ssj attach [--trace] [--pause]\n");
+	printf("   ssj host <game-path>\n");
 	printf("   ssj run [--trace] [--pause] <game-path>\n");
 	printf("   ssj help\n");
 	printf("\n");

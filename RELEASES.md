@@ -4,6 +4,12 @@ Release Notes
 neoSphere 5.10
 --------------
 
+* It is now possible to run a game in the browser using the new `ssj host`
+  command.  This allows you to test your game in the Oozaru engine without
+  having to find a place to host the engine on the Internet.  Note that the web
+  server `ssj host` spins up is very rudimentally and only intended for testing
+  and debugging; it should not be used in production.
+
 * `Surface#clipTo()` now takes an optional additional parameter which
   determines how the clipping box should be modified.  The engine also now
   maintains a stack of clipping changes for each surface that allows them to be

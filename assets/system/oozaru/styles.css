@@ -1,0 +1,153 @@
+body {
+	align-items: center;
+	background-color: #222;
+	color: #CC7;
+	display: flex;
+	flex-direction: column;
+	font-size: 11pt;
+	height: 100vh;
+	margin: 0;
+}
+
+#menu {
+	align-items: center;
+	background-color: #CCC;
+	display: flex;
+	color: #000;
+	border-bottom-left-radius: 0.5rem;
+	border-bottom-right-radius: 0.5rem;
+	box-shadow: 2pt 2pt 4pt #000, -2pt -2pt 4pt #000;
+	font-family: system-ui;
+	flex-direction: row;
+	padding: 0.25em 0.5em;
+}
+
+#menu > * {
+	margin: 0.25rem;
+}
+
+#menu > #title {
+	line-height: 1;
+	padding-right: 1em;
+	text-align: right;
+}
+
+#menu > #title > #name {
+	color: #000;
+	font-variant: small-caps;
+	font-weight: bold;
+}
+
+#menu > #title > #copyright {
+	font-size: 8pt;
+	padding-right: 1em;
+}
+
+#menu > .game {
+	cursor: pointer;
+	filter: grayscale(100%);
+	transition: filter 0.25s ease;
+}
+
+#menu > .game.running {
+	filter: unset;
+}
+
+#menu > .game:hover {
+	filter: unset;
+}
+
+#menu > .game:active {
+	filter: brightness(150%);
+}
+
+#tv {
+	align-items: center;
+	background: #224;
+	border-radius: 1rem;
+	box-shadow: 4pt 4pt 8pt #000, -4pt -4pt 8pt #000;
+	color: #CCC;
+	display: flex;
+	flex-direction: column;
+	font-family: system-ui;
+	margin: auto;
+	padding: 1rem;
+	text-align: center;
+}
+
+#tv > * {
+	margin: 1rem;
+}
+
+#tv canvas {
+	background-color: #000;
+	border: 1px solid #000;
+	flex: none;
+	image-rendering: pixelated;
+}
+
+#tv hr {
+	background-color: #448;
+	border-color: #336;
+	width: 100%;
+}
+
+#tv pre {
+	background-color: #111;
+	border: 1px solid #444;
+	box-shadow: 4px 4px 8px #000, -4px -4px 8px #000;
+	color: #CCC;
+	margin: 0;
+	overflow: auto;
+	padding: 1em !important;
+	text-align: left;
+}
+
+#tv ul {
+	list-style-position: inside;
+	padding: 0;
+}
+
+#tv #screen-container {
+	position: relative;
+}
+
+#tv #overlay {
+	position: absolute;
+	pointer-events: none;
+	transition: opacity 0.25s ease;
+	left: 195px;
+	top: 150px;
+	width: 250px;
+	height: 150px;
+}
+
+#tv #panel {
+	align-items: flex-start;
+	display: flex;
+	flex-direction: row-reverse;
+	justify-content: center;
+	padding: 0.5rem;
+}
+
+#tv #panel > * {
+	padding: 0;
+}
+
+#tv #readout {
+	background-color: #300;
+	border: 1px solid #700;
+	box-shadow: 4px 4px 8px #200, -4px -4px 8px #200;
+	color: #FCC;
+	display: none;
+	margin-right: 1rem;
+	width: auto;
+}
+
+#tv #readout::first-line {
+	font-weight: bold;
+}
+
+#tv #readout.visible {
+	display: unset;
+}
