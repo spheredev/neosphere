@@ -380,11 +380,10 @@ print_usage(void)
 	print_banner(true, false);
 	printf("\n");
 	printf("USAGE:\n");
-	printf("   cell init [<dir-name>]\n");
 	printf("   cell build [options]\n");
 	printf("   cell clean [options]\n");
+	printf("   cell init [<dir-name>]\n");
 	printf("   cell pack [options] <packfile-name>\n");
-	printf("   cell help\n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("   -i  --in-dir    Set the source directory (default is current working dir) \n");

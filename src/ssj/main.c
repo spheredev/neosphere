@@ -392,7 +392,7 @@ print_banner(bool want_copyright, bool want_deps)
 {
 	printf("%s %s Sphere JavaScript debugger\n", SPHERE_DEBUGGER_NAME, SPHERE_VERSION);
 	if (want_copyright) {
-		printf("the powerful symbolic JS debugger for neoSphere\n");
+		printf("the powerful JS symbolic debugger for Sphere\n");
 		printf("(c) 2015-2024 Fat Cerberus\n");
 	}
 	if (want_deps) {
@@ -411,7 +411,6 @@ print_usage(void)
 	printf("   ssj attach [--trace] [--pause]\n");
 	printf("   ssj host <game-path>\n");
 	printf("   ssj run [--trace] [--pause] <game-path>\n");
-	printf("   ssj help\n");
 	printf("\n");
 	printf("OPTIONS:\n");
 	printf("   for run/attach:\n");
