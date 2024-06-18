@@ -61,7 +61,7 @@ host_run(const path_t* game_path)
 	path_append(s_engine_path, "system/oozaru/");
 	s_game_path = game_path;
 
-	printf("starting up Oozaru web server\n");
+	printf("initializing a web server to host Oozaru...\n");
 	mg_init_library(MG_FEATURES_IPV6);
 	server = mg_start(NULL, NULL, MG_OPTIONS);
 	mg_set_request_handler(server, "/", handle_web_request, NULL);
@@ -74,7 +74,7 @@ host_run(const path_t* game_path)
 	while (!s_exiting) {
 		stall(0.25);
 	}
-	printf("\33[36;1mCtrl+C detected, shutting down SSj\33[m\n");
+	printf("shutting down Oozaru web server and SSj...\n");
 	mg_stop(server);
 	mg_exit_library();
 	signal(SIGINT, SIG_DFL);
@@ -128,7 +128,7 @@ handle_web_request(struct mg_connection* conn, void* udata)
 		mg_send_http_error(conn, status, "an eaty pig ate it.");
 	}
 	if (status != 200)
-		printf("\33[33;1mwarn\33[m: HTTP %d %s\n", status, request->local_uri);
+		printf("\33[33;1mwarning\33[m: HTTP %d - %s\n", status, request->local_uri);
 	path_free(local_path);
 	return status;
 }

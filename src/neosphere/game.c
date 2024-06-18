@@ -39,7 +39,6 @@
 #include "jsal.h"
 #include "kev_file.h"
 #include "package.h"
-#include "tinydir.h"
 #include "windowstyle.h"
 
 enum fs_type
@@ -343,18 +342,21 @@ game_compiler(const game_t* it)
 bool
 game_dir_exists(const game_t* it, const char* dirname)
 {
-	path_t*      dir_path = NULL;
-	enum fs_type fs_type;
-	struct stat  stats;
+	path_t*           dir_path = NULL;
+	ALLEGRO_FS_ENTRY* fs_entry = NULL;
+	enum fs_type      fs_type;
+	bool              is_dir;
 
 	if (!resolve_pathname(it, dirname, &dir_path, &fs_type))
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
-		if (stat(path_cstr(dir_path), &stats) != 0)
+		if (!(fs_entry = al_create_fs_entry(path_cstr(dir_path))))
 			goto on_error;
+		is_dir = !!(al_get_fs_entry_mode(fs_entry) & ALLEGRO_FILEMODE_ISDIR);
 		path_free(dir_path);
-		return (stats.st_mode & S_IFDIR) == S_IFDIR;
+		al_destroy_fs_entry(fs_entry);
+		return is_dir;
 	case FS_PACKAGE:
 		if (!package_dir_exists(it->package, path_cstr(dir_path)))
 			goto on_error;
@@ -363,6 +365,7 @@ game_dir_exists(const game_t* it, const char* dirname)
 	}
 
 on_error:
+	al_destroy_fs_entry(fs_entry);
 	path_free(dir_path);
 	return false;
 }
@@ -400,18 +403,21 @@ game_default_windowstyle(const game_t* it)
 bool
 game_file_exists(const game_t* it, const char* filename)
 {
-	enum fs_type fs_type;
-	path_t*      path = NULL;
-	struct stat  stats;
+	ALLEGRO_FS_ENTRY* fs_entry = NULL;
+	enum fs_type      fs_type;
+	bool              is_file;
+	path_t*           path = NULL;
 
 	if (!resolve_pathname(it, filename, &path, &fs_type))
 		goto on_error;
 	switch (fs_type) {
 	case FS_LOCAL:
-		if (stat(path_cstr(path), &stats) != 0)
+		if (!(fs_entry = al_create_fs_entry(path_cstr(path))))
 			goto on_error;
+		is_file = !!(al_get_fs_entry_mode(fs_entry) & ALLEGRO_FILEMODE_ISFILE);
 		path_free(path);
-		return (stats.st_mode & S_IFREG) == S_IFREG;
+		al_destroy_fs_entry(fs_entry);
+		return is_file;
 	case FS_PACKAGE:
 		if (!package_file_exists(it->package, path_cstr(path)))
 			goto on_error;
@@ -420,6 +426,7 @@ game_file_exists(const game_t* it, const char* filename)
 	}
 
 on_error:
+	al_destroy_fs_entry(fs_entry);
 	path_free(path);
 	return false;
 }
@@ -592,7 +599,7 @@ game_mkdir(game_t* it, const char* dirname)
 		return false;
 	switch (fs_type) {
 	case FS_LOCAL:
-		return path_mkdir(path);
+		return al_make_directory(path_cstr(path));
 	case FS_PACKAGE:
 		return false;
 	default:
@@ -968,45 +975,52 @@ file_write(file_t* it, const void* buf, size_t count, size_t size)
 }
 
 static bool
-help_list_dir(vector_t* list, const char* dirname, const path_t* origin_path, bool want_dirs, bool recursive)
+help_list_dir(vector_t* list, const char* pathname, const path_t* origin_path, bool want_dirs, bool recursive)
 {
-	tinydir_dir  dir_info;
-	tinydir_file file_info;
-	path_t*      path;
-	path_t*      subdir_origin;
-	path_t*      subdir_path;
+	ALLEGRO_FS_ENTRY* dir_fs_entry = NULL;
+	const char*       filename;
+	ALLEGRO_FS_ENTRY* fs_entry = NULL;
+	path_t*           fs_path;
+	bool              is_dir;
+	path_t*           path;
+	path_t*           subdir_origin;
+	path_t*           subdir_path;
 
-	size_t i;
-
-	if (tinydir_open_sorted(&dir_info, dirname) != 0)
-		return false;
-	for (i = 0; i < dir_info.n_files; ++i) {
-		tinydir_readfile_n(&dir_info, &file_info, i);
-		if (strcmp(file_info.name, ".") == 0 || strcmp(file_info.name, "..") == 0)
-			continue;
-		if ((bool)file_info.is_dir == want_dirs) {
-			path = file_info.is_dir
-				? path_new_dir(file_info.name)
-				: path_new(file_info.name);
+	if (!(dir_fs_entry = al_create_fs_entry(pathname)))
+		goto on_error;
+	if (!al_open_directory(dir_fs_entry))
+		goto on_error;
+	while ((fs_entry = al_read_directory(dir_fs_entry))) {
+		fs_path = path_new(al_get_fs_entry_name(fs_entry));
+		filename = path_filename(fs_path);
+		is_dir = !!(al_get_fs_entry_mode(fs_entry) & ALLEGRO_FILEMODE_ISDIR);
+		if (is_dir == want_dirs) {
+			path = is_dir ? path_new_dir(filename) : path_new(filename);
 			path_rebase(path, origin_path);
 			vector_push(list, &path);
 		}
-		if (file_info.is_dir && recursive) {
-			subdir_path = path_new_dir(dirname);
+		path_free(fs_path);
+		if (is_dir && recursive) {
+			subdir_path = path_new_dir(pathname);
 			subdir_origin = path_dup(origin_path);
-			path_append_dir(subdir_path, file_info.name);
-			path_append_dir(subdir_origin, file_info.name);
+			path_append_dir(subdir_path, filename);
+			path_append_dir(subdir_origin, filename);
 			if (!help_list_dir(list, path_cstr(subdir_path), subdir_origin, want_dirs, recursive))
 				goto on_error;
 			path_free(subdir_path);
 			path_free(subdir_origin);
 		}
+		al_destroy_fs_entry(fs_entry);
 	}
-	tinydir_close(&dir_info);
+	al_close_directory(dir_fs_entry);
 	return true;
 
 on_error:
-	tinydir_close(&dir_info);
+	al_destroy_fs_entry(fs_entry);
+	if (dir_fs_entry != NULL) {
+		al_close_directory(dir_fs_entry);
+		al_destroy_fs_entry(dir_fs_entry);
+	}
 	return false;
 }
 
