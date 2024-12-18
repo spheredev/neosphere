@@ -1,5 +1,5 @@
 ;  neoSphere JavaScript game platform
-;  Copyright (c) 2015-2024, Fat Cerberus
+;  Copyright (c) 2015-2024, Where'd She Go? LLC
 ;  All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 ; Visual Studio.  in other words, the entire "GDK" and "Redist" solution
 ; configurations.
 #define AppName "neoSphere"
-#define AppPublisher "Fat Cerberus"
+#define AppPublisher "Where'd She Go? LLC"
 #define AppVersion3 "5.10.0w"
 #define AppVersion4 "0.0.0.0"
 
@@ -43,9 +43,9 @@ AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
 AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion3}
-AppPublisher=Fat Cerberus
+AppPublisher=Where'd She Go? LLC
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=(c) 2024 Fat Cerberus
+AppCopyright=(c) 2015-2024 Where'd She Go? LLC
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x64
 ArchitecturesInstallIn64BitMode=x64
