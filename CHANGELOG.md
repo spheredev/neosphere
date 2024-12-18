@@ -12,6 +12,8 @@ v5.10.0 - WiP
 * Improves the SSj command-line interface, aligning its syntax with Cell's.
 * Fixes a bug that caused SSj to show Sphere v1 games as targeting API level 0.
 * Fixes a bug that occasionally caused Cell's terminal output to be scrambled.
+* Fixes a bug that could cause file system access to fail when the underlying
+  file or directory has a pathname containing non-ASCII characters.
 
 
 v5.9.3 - May 30, 2024

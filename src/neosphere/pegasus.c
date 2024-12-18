@@ -3058,13 +3058,18 @@ js_Keyboard_clearQueue(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_Keyboard_getKey(int num_args, bool is_ctor, intptr_t magic)
 {
+	key_event_t event;
+	
 	jsal_push_this();
 	jsal_require_class_obj(-1, PEGASUS_KEYBOARD);
 
-	if (kb_queue_len() > 0)
-		jsal_push_int(kb_get_key());
-	else
+	if (kb_queue_len() > 0) {
+		event = kb_get_key();
+		jsal_push_int(event.keycode);
+	}
+	else {
 		jsal_push_null();
+	}
 	return true;
 }
 

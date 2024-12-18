@@ -41,11 +41,11 @@
 
 struct key_queue
 {
-	int num_keys;
-	int keys[255];
+	int         num_keys;
+	key_event_t keys[255];
 };
 
-static void queue_key       (int keycode);
+static void queue_key       (int keycode, uint32_t cp);
 static void queue_mouse_key (mouse_key_t key, int x, int y, int delta);
 
 static vector_t*            s_bound_buttons;
@@ -372,17 +372,17 @@ kb_clear_queue(void)
 	s_key_queue.num_keys = 0;
 }
 
-int
+key_event_t
 kb_get_key(void)
 {
-	int keycode;
+	key_event_t event = { 0, 0 };
 
 	if (s_key_queue.num_keys == 0)
-		return 0;
-	keycode = s_key_queue.keys[0];
+		return event;
+	event = s_key_queue.keys[0];
 	--s_key_queue.num_keys;
-	memmove(s_key_queue.keys, &s_key_queue.keys[1], sizeof(int) * s_key_queue.num_keys);
-	return keycode;
+	memmove(s_key_queue.keys, &s_key_queue.keys[1], sizeof(key_event_t) * s_key_queue.num_keys);
+	return event;
 }
 
 void
@@ -584,11 +584,11 @@ update_input(void)
 				|| keycode == ALLEGRO_KEY_LSHIFT || keycode == ALLEGRO_KEY_RSHIFT)
 			{
 				if (keycode == ALLEGRO_KEY_LCTRL || keycode == ALLEGRO_KEY_RCTRL)
-					queue_key(ALLEGRO_KEY_LCTRL);
+					queue_key(ALLEGRO_KEY_LCTRL, 0);
 				if (keycode == ALLEGRO_KEY_ALT || keycode == ALLEGRO_KEY_ALTGR)
-					queue_key(ALLEGRO_KEY_ALT);
+					queue_key(ALLEGRO_KEY_ALT, 0);
 				if (keycode == ALLEGRO_KEY_LSHIFT || keycode == ALLEGRO_KEY_RSHIFT)
-					queue_key(ALLEGRO_KEY_LSHIFT);
+					queue_key(ALLEGRO_KEY_LSHIFT, 0);
 			}
 
 			break;
@@ -611,7 +611,7 @@ update_input(void)
 					screen_toggle_fullscreen(g_screen);
 				}
 				else {
-					queue_key(keycode);
+					queue_key(keycode, event.keyboard.unichar);
 				}
 				break;
 			case ALLEGRO_KEY_F10:
@@ -627,7 +627,7 @@ update_input(void)
 					jsal_debug_breakpoint_inject();
 				break;
 			default:
-				queue_key(keycode);
+				queue_key(keycode, event.keyboard.unichar);
 				break;
 			}
 		}
@@ -696,14 +696,15 @@ kb_bind_key(int keycode, script_t* on_down_script, script_t* on_up_script)
 }
 
 static void
-queue_key(int keycode)
+queue_key(int keycode, uint32_t cp)
 {
 	int key_index;
 
 	if (s_key_queue.num_keys < 255) {
 		key_index = s_key_queue.num_keys;
 		++s_key_queue.num_keys;
-		s_key_queue.keys[key_index] = keycode;
+		s_key_queue.keys[key_index].keycode = keycode;
+		s_key_queue.keys[key_index].cp = cp;
 	}
 }
 

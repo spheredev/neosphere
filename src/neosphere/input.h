@@ -77,6 +77,13 @@ enum mouse_key
 } mouse_key_t;
 
 typedef
+struct key_event
+{
+	int      keycode;
+	uint32_t cp;
+} key_event_t;
+
+typedef
 struct mouse_event
 {
 	mouse_key_t key;
@@ -101,7 +108,7 @@ bool          kb_is_toggled      (int keycode);
 int           kb_queue_len       (void);
 void          kb_bind_key        (int keycode, script_t* on_down_script, script_t* on_up_script);
 void          kb_clear_queue     (void);
-int           kb_get_key         (void);
+key_event_t   kb_get_key         (void);
 void          kb_load_keymap     (void);
 void          kb_save_keymap     (void);
 bool          mouse_is_key_down  (mouse_key_t key);

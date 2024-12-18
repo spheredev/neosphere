@@ -2803,9 +2803,12 @@ js_GetJoystickAxis(int num_args, bool is_ctor, intptr_t magic)
 static bool
 js_GetKey(int num_args, bool is_ctor, intptr_t magic)
 {
+	key_event_t event;
+	
 	while (kb_queue_len() == 0)
 		sphere_sleep(0.05);
-	jsal_push_int(kb_get_key());
+	event = kb_get_key();
+	jsal_push_int(event.keycode);
 	return true;
 }
 
