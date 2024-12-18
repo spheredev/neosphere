@@ -1,9 +1,10 @@
 neoSphere Changelog
 ===================
 
-v5.10.0 - WiP
--------------
+v5.10.0 - December 18, 2024
+---------------------------
 
+* Rebranding! neoSphere is now produced by **Where'd She Go? LLC**.
 * Adds a `clipOp` parameter to `Surface#clipTo()` that lets games control how
   the clipping box is changed by the call.
 * Adds a `Surface#unclip()` method for undoing the previous clipping change.

@@ -1,6 +1,6 @@
 /**
  *  Oozaru: Sphere for the Web
- *  Copyright (c) 2016-2024, Fat Cerberus
+ *  Copyright (c) 2016-2024, Where'd She Go? LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -100,6 +100,9 @@ class Game
 	static async launch()
 	{
 		document.title = `${Game.manifest.name} - ${Version.engine}`;
+		document.getElementById('gameTitle').innerHTML = Game.manifest.name;
+		document.getElementById('copyright').innerHTML = `game by ${Game.manifest.author}`;
+
 		Galileo.rerez(Game.manifest.resolution.x, Game.manifest.resolution.y);
 
 		// load and execute the game's main module.  if it exports a startup

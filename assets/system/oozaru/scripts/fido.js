@@ -1,6 +1,6 @@
 /**
  *  Oozaru: Sphere for the Web
- *  Copyright (c) 2016-2024, Fat Cerberus
+ *  Copyright (c) 2016-2024, Where'd She Go? LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without

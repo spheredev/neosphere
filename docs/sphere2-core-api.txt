@@ -157,7 +157,7 @@ Here's a sample manifest:
     {
         "name": "Spectacles: Bruce's Story",
         "saveID": "fatCerberus.spectacles",
-        "author": "Fat Cerberus",
+        "author": "Where'd She Go? Productions",
         "summary": "Follow Scott Starcross in his quest to stop the Primus.",
         "main": "@/bin/main.mjs"
         "version": 2,
