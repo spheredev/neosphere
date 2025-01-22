@@ -1,6 +1,11 @@
 neoSphere Changelog
 ===================
 
+v5.10.1 - TBD
+-------------
+
+* No notable changes yet.
+
 v5.10.0 - December 18, 2024
 ---------------------------
 

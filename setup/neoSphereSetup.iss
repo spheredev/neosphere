@@ -1,5 +1,5 @@
 ;  neoSphere JavaScript game platform
-;  Copyright (c) 2015-2024, Where'd She Go? LLC
+;  Copyright (c) 2015-2025, Where'd She Go? LLC
 ;  All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,8 @@
 ; configurations.
 #define AppName "neoSphere"
 #define AppPublisher "Where'd She Go? LLC"
-#define AppVersion3 "5.10.0"
-#define AppVersion4 "5.10.0.3487"
+#define AppVersion3 "5.10.1w"
+#define AppVersion4 "0.0.0.0"
 
 [Setup]
 OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
@@ -45,7 +45,7 @@ AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion3}
 AppPublisher=Where'd She Go? LLC
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=(c) 2015-2024 Where'd She Go? LLC
+AppCopyright=(c) 2015-2025 Where'd She Go? LLC
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible

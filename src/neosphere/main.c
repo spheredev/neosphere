@@ -1,6 +1,6 @@
 /**
  *  Sphere: the JavaScript game platform
- *  Copyright (c) 2015-2024, Where'd She Go? LLC
+ *  Copyright (c) 2015-2025, Where'd She Go? LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -112,6 +112,7 @@ static const char* const ERROR_TEXT[][2] =
 	{ "this game has over nine thousand errors", "what, 9000, there's no way that can be right" },
 	{ "a wild ERROR appeared and used CRASH", "it's super effective" },
 	{ "cat... alligator... why not adopt both?", "that can't possibly end badly" },
+	{ "your game sucked into the void", "if this keeps up, it might suck out of existence" },
 };
 
 int
@@ -910,7 +911,7 @@ print_banner(bool want_copyright, bool want_deps)
 	printf("%s %s JS game engine\n", SPHERE_ENGINE_NAME, SPHERE_VERSION);
 	if (want_copyright) {
 		printf("a lightweight JavaScript-powered game engine\n");
-		printf("(c) 2015-2024 Where'd She Go? LLC\n");
+		printf("(c) 2015-2025 Where'd She Go? LLC\n");
 	}
 	if (want_deps) {
 		al_version_id = al_get_allegro_version();

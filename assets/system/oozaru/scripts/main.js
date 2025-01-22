@@ -1,6 +1,6 @@
 /**
  *  Oozaru: Sphere for the Web
- *  Copyright (c) 2016-2024, Where'd She Go? LLC
+ *  Copyright (c) 2016-2025, Where'd She Go? LLC
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ async function main()
 	const engineNameSpan = document.getElementById('name');
 	const copyrightSpan = document.getElementById('copyright');
 	engineNameSpan.innerText = Version.engine;
-	copyrightSpan.innerText = `© ${Version.copyright}`;
+	copyrightSpan.innerText = Version.copyright;
 	let useDistDir = true;
 	try {
 		const gameList = await Fido.fetchJSON('games/index.json');
