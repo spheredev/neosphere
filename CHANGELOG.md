@@ -1,10 +1,10 @@
 neoSphere Changelog
 ===================
 
-v5.10.1 - TBD
--------------
+v5.10.1 - November 27, 2025
+---------------------------
 
-* No notable changes yet.
+* Fixes branding - **Where'd She Go?** - no "LLC".
 
 v5.10.0 - December 18, 2024
 ---------------------------

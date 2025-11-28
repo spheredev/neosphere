@@ -1,5 +1,5 @@
 ;  neoSphere JavaScript game platform
-;  Copyright (c) 2015-2025, Where'd She Go? LLC
+;  Copyright (c) 2015-2025, Where'd She Go?
 ;  All rights reserved.
 ;
 ;  Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,9 @@
 ; Visual Studio.  in other words, the entire "GDK" and "Redist" solution
 ; configurations.
 #define AppName "neoSphere"
-#define AppPublisher "Where'd She Go? LLC"
-#define AppVersion3 "5.10.1w"
-#define AppVersion4 "0.0.0.0"
+#define AppPublisher "Where'd She Go?"
+#define AppVersion3 "5.10.1"
+#define AppVersion4 "5.10.1.3489"
 
 [Setup]
 OutputBaseFilename=neoSphereSetup-{#AppVersion3}-msw
@@ -43,9 +43,9 @@ AppId={{10C19C9F-1E29-45D8-A534-8FEF98C7C2FF}
 AppName={#AppName}
 AppVerName={#AppName} {#AppVersion3}
 AppVersion={#AppVersion3}
-AppPublisher=Where'd She Go? LLC
+AppPublisher=Where'd She Go?
 AppUpdatesURL=http://forums.spheredev.org/index.php/topic,1215.0.html
-AppCopyright=(c) 2015-2025 Where'd She Go? LLC
+AppCopyright=(c) 2015-2025 Where'd She Go?
 AlwaysShowDirOnReadyPage=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible

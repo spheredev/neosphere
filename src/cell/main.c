@@ -1,6 +1,6 @@
 /**
  *  Sphere: the JavaScript game platform
- *  Copyright (c) 2015-2025, Where'd She Go? LLC
+ *  Copyright (c) 2015-2025, Where'd She Go?
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -360,7 +360,7 @@ print_banner(bool want_copyright, bool want_deps)
 	printf("%s %s Sphere packaging compiler\n", SPHERE_COMPILER_NAME, SPHERE_VERSION);
 	if (want_copyright) {
 		printf("the JavaScript-powered build engine for Sphere\n");
-		printf("(c) 2015-2025 Where'd She Go? LLC\n");
+		printf("(c) 2015-2025 Where'd She Go?\n");
 	}
 	if (want_deps) {
 		png_version = png_access_version_number();

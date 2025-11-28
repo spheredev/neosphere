@@ -1,6 +1,6 @@
 /**
  *  Oozaru JavaScript game engine
- *  Copyright (c) 2015-2018, Fat Cerberus
+ *  Copyright (c) 2015-2025, Where'd She Go?
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
